@@ -7,7 +7,7 @@
   the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
   and re-saved.
 
-  Created with Projucer version: 7.0.2
+  Created with Projucer version: 7.0.5
 
   ------------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ MainComponent::MainComponent ()
 {
     //[Constructor_pre] You can add your own custom stuff here..
     formatManager.registerBasicFormats();
-    thread.startThread (3);
+    thread.startThread();
     //[/Constructor_pre]
 
     waveFormViewport.reset (new juce::Viewport ("waveform viewport"));
