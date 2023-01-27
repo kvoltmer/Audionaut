@@ -33,6 +33,7 @@ MainComponent::MainComponent ()
     //[Constructor_pre] You can add your own custom stuff here..
     formatManager.registerBasicFormats();
     thread.startThread();
+    
     //[/Constructor_pre]
 
     waveFormViewport.reset (new juce::Viewport ("waveform viewport"));
