@@ -3,7 +3,23 @@
 <JUCERPROJECT id="gxtGxr" name="AppAudium" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="HQG80L" name="AppAudium">
+    <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
+      <FILE id="ynCVR0" name="EngineAccess.h" compile="0" resource="0" file="Source/Util/EngineAccess.h"/>
+    </GROUP>
     <GROUP id="{69119DF9-CC06-2A24-1C4A-CFAF02C4B8BB}" name="Source">
+      <FILE id="nq90j1" name="MainWindow.h" compile="0" resource="0" file="Source/MainWindow.h"/>
+      <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <FILE id="fjWrqk" name="AudioResource.cpp" compile="1" resource="0"
+              file="Source/Engine/AudioResource.cpp"/>
+        <FILE id="IvbeUH" name="AudioResource.h" compile="0" resource="0" file="Source/Engine/AudioResource.h"/>
+        <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
+              file="Source/Engine/AudiumEngine.cpp"/>
+        <FILE id="Oik4J0" name="AudiumEngine.h" compile="0" resource="0" file="Source/Engine/AudiumEngine.h"/>
+        <FILE id="vrVrPX" name="AudioResourceContainer.cpp" compile="1" resource="0"
+              file="Source/Engine/AudioResourceContainer.cpp"/>
+        <FILE id="ycq2G7" name="AudioResourceContainer.h" compile="0" resource="0"
+              file="Source/Engine/AudioResourceContainer.h"/>
+      </GROUP>
       <FILE id="GMUyKK" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
       <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
@@ -22,10 +38,10 @@
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX">
+    <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="AppAudium"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="AppAudium"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="AppAudium" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="AppAudium" headerPath="$(SRCROOT)/../../Source"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>

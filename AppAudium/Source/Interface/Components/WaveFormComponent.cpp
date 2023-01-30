@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "WaveFormComponent.h"
+#include "Util/EngineAccess.h"
 
 WaveFormComponent::WaveFormComponent (AudioFormatManager& formatManager,
                    AudioTransportSource& source)
@@ -36,6 +37,11 @@ WaveFormComponent::~WaveFormComponent()
 
 void WaveFormComponent::setURL (const URL& url)
 {
+
+    auto e = getAudiumEngine(this);
+    e->getAudioResourceContainer()->addAudioResource(url);
+    
+    
     if (auto inputSource = makeInputSource (url))
     {
         thumbnail.setSource (inputSource.release());

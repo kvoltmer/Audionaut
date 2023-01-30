@@ -31,6 +31,7 @@
 MainComponent::MainComponent ()
 {
     //[Constructor_pre] You can add your own custom stuff here..
+
     formatManager.registerBasicFormats();
     thread.startThread();
     //[/Constructor_pre]
@@ -103,7 +104,7 @@ void MainComponent::resized()
     //[UserPreResize] Add your own custom resize code here..
     //[/UserPreResize]
 
-    waveFormViewport->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (0.4991f));
+    waveFormViewport->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (0.4989f));
     //[UserResized] Add your own custom resize handling here..
     //[/UserResized]
 }
@@ -195,7 +196,7 @@ BEGIN_JUCER_METADATA
                  initialHeight="400">
   <BACKGROUND backgroundColour="ff7bc7ed"/>
   <VIEWPORT name="waveform viewport" id="b74af6eff132eb11" memberName="waveFormViewport"
-            virtualName="" explicitFocusOrder="0" pos="0 0 100% 49.911%"
+            virtualName="" explicitFocusOrder="0" pos="0 0 100% 49.894%"
             vscroll="1" hscroll="1" scrollbarThickness="8" contentType="0"
             jucerFile="" contentClass="" constructorParams=""/>
   <SLIDER name="new slider" id="d8bc4db2e68bdf68" memberName="zoomSlider"
