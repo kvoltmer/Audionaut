@@ -25,6 +25,7 @@
 using namespace juce;
 
 class WaveFormComponent;
+class AudiumEngine;
 
 //[/Headers]
 
