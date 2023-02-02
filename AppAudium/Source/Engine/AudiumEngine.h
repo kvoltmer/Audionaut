@@ -11,7 +11,7 @@
 #pragma once
 
 #include <memory>
-
+#include <JuceHeader.h>
 #include "AudioResourceContainer.h"
 
 /// The Audium engine
@@ -23,7 +23,11 @@ public:
     
     AudioResourceContainer* getAudioResourceContainer() { return audioResourceContainer.get();}
     
+    //juce::AudioFormatManager& getAudioFormatManager() { return formatManager; }
+    
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
+
+
 };

@@ -14,12 +14,5 @@
 #include "Engine/AudiumEngine.h"
 
 /// helper to access the engine from anywhere in UI code
-std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component)
-{
-    auto topLevelComponent = component->getTopLevelComponent();
-    jassert(topLevelComponent);
-    auto mainWindow = dynamic_cast<MainWindow*>(topLevelComponent);
-    jassert(mainWindow);
-    return mainWindow->getEngine();
-}
+std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component);
 

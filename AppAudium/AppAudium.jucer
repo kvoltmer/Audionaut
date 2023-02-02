@@ -3,10 +3,12 @@
 <JUCERPROJECT id="gxtGxr" name="AppAudium" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="HQG80L" name="AppAudium">
-    <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
-      <FILE id="ynCVR0" name="EngineAccess.h" compile="0" resource="0" file="Source/Util/EngineAccess.h"/>
-    </GROUP>
     <GROUP id="{69119DF9-CC06-2A24-1C4A-CFAF02C4B8BB}" name="Source">
+      <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
+        <FILE id="DdTX0t" name="EngineAccess.cpp" compile="1" resource="0"
+              file="Source/Util/EngineAccess.cpp"/>
+        <FILE id="ynCVR0" name="EngineAccess.h" compile="0" resource="0" file="Source/Util/EngineAccess.h"/>
+      </GROUP>
       <FILE id="nq90j1" name="MainWindow.h" compile="0" resource="0" file="Source/MainWindow.h"/>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
         <FILE id="fjWrqk" name="AudioResource.cpp" compile="1" resource="0"

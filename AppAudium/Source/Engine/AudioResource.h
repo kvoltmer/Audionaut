@@ -11,11 +11,21 @@
 #pragma once
 #include <JuceHeader.h>
 
+
+
+
 class AudioResource {
     
 public:
-    AudioResource(juce::URL resource);
+    AudioResource(juce::URL resource, juce::AudioFormatManager& formatManager);
     
 private:
     juce::URL resource;
+    
+    /// TODO: capsulate?
+    juce::AudioThumbnailCache thumbnailCache  { 5 };
+    
+public:
+    
+    juce::AudioThumbnail thumbnail;
 };
