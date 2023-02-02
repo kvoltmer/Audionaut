@@ -19,6 +19,7 @@
 
 //[Headers] You can add your own extra header files here...
 #include "WaveFormComponent.h"
+#include "Util/EngineAccess.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -31,7 +32,8 @@
 MainComponent::MainComponent ()
 {
     //[Constructor_pre] You can add your own custom stuff here..
-    formatManager.registerBasicFormats();
+
+
     thread.startThread();
     //[/Constructor_pre]
 
@@ -56,7 +58,7 @@ MainComponent::MainComponent ()
 
 
     //[Constructor] You can add your own custom stuff here..
-    waveFormComponent.reset(new WaveFormComponent(formatManager, transportSource));
+    waveFormComponent.reset(new WaveFormComponent(transportSource));
     waveFormComponent->setSize(getWidth(), waveFormViewport->getHeight());
     waveFormComponent->addChangeListener (this);
 
@@ -103,7 +105,7 @@ void MainComponent::resized()
     //[UserPreResize] Add your own custom resize code here..
     //[/UserPreResize]
 
-    waveFormViewport->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (0.4991f));
+    waveFormViewport->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (0.4989f));
     //[UserResized] Add your own custom resize handling here..
     //[/UserResized]
 }
@@ -146,32 +148,33 @@ void MainComponent::showAudioResource (URL resource)
 bool MainComponent::loadURLIntoTransport (const URL& audioURL)
 {
     // unload the previous file source and delete it..
-    transportSource.stop();
-    transportSource.setSource (nullptr);
-    currentAudioFileSource.reset();
-
-    const auto source = makeInputSource (audioURL);
-
-    if (source == nullptr)
-        return false;
-
-    auto stream = rawToUniquePtr (source->createInputStream());
-
-    if (stream == nullptr)
-        return false;
-
-    auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream)));
-
-    if (reader == nullptr)
-        return false;
-
-    currentAudioFileSource = std::make_unique<AudioFormatReaderSource> (reader.release(), true);
-
-    // ..and plug it into our transport source
-    transportSource.setSource (currentAudioFileSource.get(),
-                               32768,                   // tells it to buffer this many samples ahead
-                               &thread,                 // this is the background thread to use for reading-ahead
-                               currentAudioFileSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
+    /// TODO: 
+//    transportSource.stop();
+//    transportSource.setSource (nullptr);
+//    currentAudioFileSource.reset();
+//
+//    const auto source = makeInputSource (audioURL);
+//
+//    if (source == nullptr)
+//        return false;
+//
+//    auto stream = rawToUniquePtr (source->createInputStream());
+//
+//    if (stream == nullptr)
+//        return false;
+//
+//    auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream)));
+//
+//    if (reader == nullptr)
+//        return false;
+//
+//    currentAudioFileSource = std::make_unique<AudioFormatReaderSource> (reader.release(), true);
+//
+//    // ..and plug it into our transport source
+//    transportSource.setSource (currentAudioFileSource.get(),
+//                               32768,                   // tells it to buffer this many samples ahead
+//                               &thread,                 // this is the background thread to use for reading-ahead
+//                               currentAudioFileSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
 
     return true;
 }
@@ -195,7 +198,7 @@ BEGIN_JUCER_METADATA
                  initialHeight="400">
   <BACKGROUND backgroundColour="ff7bc7ed"/>
   <VIEWPORT name="waveform viewport" id="b74af6eff132eb11" memberName="waveFormViewport"
-            virtualName="" explicitFocusOrder="0" pos="0 0 100% 49.911%"
+            virtualName="" explicitFocusOrder="0" pos="0 0 100% 49.894%"
             vscroll="1" hscroll="1" scrollbarThickness="8" contentType="0"
             jucerFile="" contentClass="" constructorParams=""/>
   <SLIDER name="new slider" id="d8bc4db2e68bdf68" memberName="zoomSlider"

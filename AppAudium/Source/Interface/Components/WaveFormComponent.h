@@ -11,27 +11,12 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <memory>
 
 using namespace juce;
 
-//==============================================================================
-/*
-*/
 
-inline std::unique_ptr<InputSource> makeInputSource (const URL& url)
-{
-   #if JUCE_ANDROID
-    if (auto doc = AndroidDocument::fromDocument (url))
-        return std::make_unique<AndroidDocumentInputSource> (doc);
-   #endif
-
-   #if ! JUCE_IOS
-    if (url.isLocalFile())
-        return std::make_unique<FileInputSource> (url.getLocalFile());
-   #endif
-
-    return std::make_unique<URLInputSource> (url);
-}
+class AudioResource;
 
 //==============================================================================
 class WaveFormComponent  : public Component,
@@ -42,8 +27,7 @@ class WaveFormComponent  : public Component,
                            private Timer
 {
 public:
-    WaveFormComponent (AudioFormatManager& formatManager,
-                       AudioTransportSource& source);
+    WaveFormComponent (AudioTransportSource& source);
 
     ~WaveFormComponent() override;
 
@@ -77,11 +61,11 @@ public:
 
 private:
     AudioTransportSource& transportSource;
-    //Slider& zoomSlider;
+
     ScrollBar scrollbar  { false };
 
-    AudioThumbnailCache thumbnailCache  { 5 };
-    AudioThumbnail thumbnail;
+    std::shared_ptr<AudioResource> audioResource;
+
     Range<double> visibleRange;
     bool isFollowingTransport = false;
     URL lastFileDropped;
