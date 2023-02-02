@@ -33,7 +33,7 @@ WaveFormComponent::~WaveFormComponent()
  
     if (audioResource != nullptr)
     {
-        audioResource->thumbnail.removeChangeListener(this);
+        audioResource->getThumbnail().removeChangeListener(this);
     }
 }
 
@@ -43,9 +43,9 @@ void WaveFormComponent::setURL (const URL& url)
     if (resource != nullptr)
     {
         audioResource = resource;
-        audioResource->thumbnail.addChangeListener (this);
+        audioResource->getThumbnail().addChangeListener (this);
 
-        Range<double> newRange (0.0, audioResource->thumbnail.getTotalLength());
+        Range<double> newRange (0.0, audioResource->getThumbnail().getTotalLength());
         scrollbar.setRangeLimits (newRange);
         setRange (newRange);
 
@@ -60,9 +60,9 @@ URL WaveFormComponent::getLastDroppedFile() const noexcept
 
 void WaveFormComponent::setZoomFactor (double amount)
 {
-    if (audioResource->thumbnail.getTotalLength() > 0)
+    if (audioResource->getThumbnail().getTotalLength() > 0)
     {
-        auto newScale = jmax (0.001, audioResource->thumbnail.getTotalLength() * (1.0 - jlimit (0.0, 0.99, amount)));
+        auto newScale = jmax (0.001, audioResource->getThumbnail().getTotalLength() * (1.0 - jlimit (0.0, 0.99, amount)));
         auto timeAtCentre = xToTime ((float) getWidth() / 2.0f);
 
         setRange ({ timeAtCentre - newScale * 0.5, timeAtCentre + newScale * 0.5 });
@@ -94,12 +94,12 @@ void WaveFormComponent::paint (Graphics& g)
 //        g.setGradientFill(gradient);
 
     if (audioResource != nullptr &&
-        audioResource->thumbnail.getTotalLength() > 0.0)
+        audioResource->getThumbnail().getTotalLength() > 0.0)
     {
         auto thumbArea = getLocalBounds();
 
         thumbArea.removeFromBottom (scrollbar.getHeight() + 4);
-        audioResource->thumbnail.drawChannels (g, thumbArea.reduced (2),
+        audioResource->getThumbnail().drawChannels (g, thumbArea.reduced (2),
                                 visibleRange.getStart(), visibleRange.getEnd(), 1.0f);
     }
     else
@@ -150,10 +150,10 @@ void WaveFormComponent::mouseUp (const MouseEvent&)
 void WaveFormComponent::mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel)
 {
     /* TODO
-    if (thumbnail.getTotalLength() > 0.0)
+    if (getThumbnail().getTotalLength() > 0.0)
     {
         auto newStart = visibleRange.getStart() - wheel.deltaX * (visibleRange.getLength()) / 10.0;
-        newStart = jlimit (0.0, jmax (0.0, thumbnail.getTotalLength() - (visibleRange.getLength())), newStart);
+        newStart = jlimit (0.0, jmax (0.0, getThumbnail().getTotalLength() - (visibleRange.getLength())), newStart);
 
         if (canMoveTransport())
             setRange ({ newStart, newStart + visibleRange.getLength() });

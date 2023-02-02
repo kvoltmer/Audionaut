@@ -19,13 +19,16 @@ class AudioResource {
 public:
     AudioResource(juce::URL resource, juce::AudioFormatManager& formatManager);
     
+    juce::AudioThumbnail& getThumbnail() { return thumbnail; }
+    
 private:
     juce::URL resource;
     
-    /// TODO: capsulate?
+    /// TODO: maybe capsulate?
     juce::AudioThumbnailCache thumbnailCache  { 5 };
-    
-public:
-    
     juce::AudioThumbnail thumbnail;
+    
+private:
+    //==============================================================================
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResource)
 };
