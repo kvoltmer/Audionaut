@@ -27,4 +27,7 @@ private:
     std::vector<std::shared_ptr<AudioResource>> audioResources;
     
     juce::AudioFormatManager formatManager;
+    
+    //==============================================================================
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceContainer)
 };

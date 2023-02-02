@@ -23,11 +23,9 @@ public:
     
     AudioResourceContainer* getAudioResourceContainer() { return audioResourceContainer.get();}
     
-    //juce::AudioFormatManager& getAudioFormatManager() { return formatManager; }
-    
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
-
-
+    //==============================================================================
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumEngine)
 };

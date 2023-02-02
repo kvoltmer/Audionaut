@@ -37,7 +37,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     {
         auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(url, formatManager));
         audioResources.push_back(audioResource);
-        audioResource->thumbnail.setSource (inputSource.release());
+        audioResource->getThumbnail().setSource (inputSource.release());
         return audioResource;
     }
     
