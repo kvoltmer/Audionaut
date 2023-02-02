@@ -12,13 +12,11 @@
 #include "WaveFormComponent.h"
 #include "Util/EngineAccess.h"
 
-WaveFormComponent::WaveFormComponent (AudioFormatManager& formatManager,
-                   AudioTransportSource& source)
-    : transportSource (source),
-      //thumbnail (512, formatManager, thumbnailCache)
-      thumbnail (4096, formatManager, thumbnailCache)
+WaveFormComponent::WaveFormComponent (AudioTransportSource& source)
+    : transportSource (source)
 {
-    thumbnail.addChangeListener (this);
+    
+    audioResource = nullptr;
 
     addAndMakeVisible (scrollbar);
     scrollbar.setRangeLimits (visibleRange);
@@ -32,21 +30,22 @@ WaveFormComponent::WaveFormComponent (AudioFormatManager& formatManager,
 WaveFormComponent::~WaveFormComponent()
 {
     scrollbar.removeListener (this);
-    thumbnail.removeChangeListener (this);
+ 
+    if (audioResource != nullptr)
+    {
+        audioResource->thumbnail.removeChangeListener(this);
+    }
 }
 
 void WaveFormComponent::setURL (const URL& url)
 {
-
-    auto e = getAudiumEngine(this);
-    e->getAudioResourceContainer()->addAudioResource(url);
-    
-    
-    if (auto inputSource = makeInputSource (url))
+    auto resource = getAudiumEngine(this)->getAudioResourceContainer()->addAudioResource(url);
+    if (resource != nullptr)
     {
-        thumbnail.setSource (inputSource.release());
+        audioResource = resource;
+        audioResource->thumbnail.addChangeListener (this);
 
-        Range<double> newRange (0.0, thumbnail.getTotalLength());
+        Range<double> newRange (0.0, audioResource->thumbnail.getTotalLength());
         scrollbar.setRangeLimits (newRange);
         setRange (newRange);
 
@@ -61,9 +60,9 @@ URL WaveFormComponent::getLastDroppedFile() const noexcept
 
 void WaveFormComponent::setZoomFactor (double amount)
 {
-    if (thumbnail.getTotalLength() > 0)
+    if (audioResource->thumbnail.getTotalLength() > 0)
     {
-        auto newScale = jmax (0.001, thumbnail.getTotalLength() * (1.0 - jlimit (0.0, 0.99, amount)));
+        auto newScale = jmax (0.001, audioResource->thumbnail.getTotalLength() * (1.0 - jlimit (0.0, 0.99, amount)));
         auto timeAtCentre = xToTime ((float) getWidth() / 2.0f);
 
         setRange ({ timeAtCentre - newScale * 0.5, timeAtCentre + newScale * 0.5 });
@@ -94,12 +93,13 @@ void WaveFormComponent::paint (Graphics& g)
 //                                Colours::lightyellow, b.getX(), b.getY(), false);
 //        g.setGradientFill(gradient);
 
-    if (thumbnail.getTotalLength() > 0.0)
+    if (audioResource != nullptr &&
+        audioResource->thumbnail.getTotalLength() > 0.0)
     {
         auto thumbArea = getLocalBounds();
 
         thumbArea.removeFromBottom (scrollbar.getHeight() + 4);
-        thumbnail.drawChannels (g, thumbArea.reduced (2),
+        audioResource->thumbnail.drawChannels (g, thumbArea.reduced (2),
                                 visibleRange.getStart(), visibleRange.getEnd(), 1.0f);
     }
     else

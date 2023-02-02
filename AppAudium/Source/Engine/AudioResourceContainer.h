@@ -18,10 +18,13 @@ class AudioResourceContainer {
     
     
 public:
-    void addAudioResource (juce::URL resource);
+    AudioResourceContainer();
+    
+    std::shared_ptr<AudioResource> addAudioResource (juce::URL resource);
     
 private:
     
-    std::vector<std::unique_ptr<AudioResource>> audioResources;
+    std::vector<std::shared_ptr<AudioResource>> audioResources;
     
+    juce::AudioFormatManager formatManager;
 };

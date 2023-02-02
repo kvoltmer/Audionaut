@@ -19,6 +19,7 @@
 
 //[Headers] You can add your own extra header files here...
 #include "WaveFormComponent.h"
+#include "Util/EngineAccess.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -32,7 +33,7 @@ MainComponent::MainComponent ()
 {
     //[Constructor_pre] You can add your own custom stuff here..
 
-    formatManager.registerBasicFormats();
+
     thread.startThread();
     //[/Constructor_pre]
 
@@ -57,7 +58,7 @@ MainComponent::MainComponent ()
 
 
     //[Constructor] You can add your own custom stuff here..
-    waveFormComponent.reset(new WaveFormComponent(formatManager, transportSource));
+    waveFormComponent.reset(new WaveFormComponent(transportSource));
     waveFormComponent->setSize(getWidth(), waveFormViewport->getHeight());
     waveFormComponent->addChangeListener (this);
 
@@ -147,32 +148,33 @@ void MainComponent::showAudioResource (URL resource)
 bool MainComponent::loadURLIntoTransport (const URL& audioURL)
 {
     // unload the previous file source and delete it..
-    transportSource.stop();
-    transportSource.setSource (nullptr);
-    currentAudioFileSource.reset();
-
-    const auto source = makeInputSource (audioURL);
-
-    if (source == nullptr)
-        return false;
-
-    auto stream = rawToUniquePtr (source->createInputStream());
-
-    if (stream == nullptr)
-        return false;
-
-    auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream)));
-
-    if (reader == nullptr)
-        return false;
-
-    currentAudioFileSource = std::make_unique<AudioFormatReaderSource> (reader.release(), true);
-
-    // ..and plug it into our transport source
-    transportSource.setSource (currentAudioFileSource.get(),
-                               32768,                   // tells it to buffer this many samples ahead
-                               &thread,                 // this is the background thread to use for reading-ahead
-                               currentAudioFileSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
+    /// TODO: 
+//    transportSource.stop();
+//    transportSource.setSource (nullptr);
+//    currentAudioFileSource.reset();
+//
+//    const auto source = makeInputSource (audioURL);
+//
+//    if (source == nullptr)
+//        return false;
+//
+//    auto stream = rawToUniquePtr (source->createInputStream());
+//
+//    if (stream == nullptr)
+//        return false;
+//
+//    auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream)));
+//
+//    if (reader == nullptr)
+//        return false;
+//
+//    currentAudioFileSource = std::make_unique<AudioFormatReaderSource> (reader.release(), true);
+//
+//    // ..and plug it into our transport source
+//    transportSource.setSource (currentAudioFileSource.get(),
+//                               32768,                   // tells it to buffer this many samples ahead
+//                               &thread,                 // this is the background thread to use for reading-ahead
+//                               currentAudioFileSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
 
     return true;
 }
