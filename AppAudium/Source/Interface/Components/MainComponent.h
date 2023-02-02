@@ -25,6 +25,7 @@
 using namespace juce;
 
 class WaveFormComponent;
+class AudiumEngine;
 
 //[/Headers]
 
@@ -64,7 +65,6 @@ private:
     //[UserVariables]   -- You can add your own custom variables in this section.
     std::unique_ptr<WaveFormComponent> waveFormComponent;
 
-    AudioFormatManager formatManager;
     TimeSliceThread thread  { "audio file preview" };
 
     AudioDeviceManager audioDeviceManager;
