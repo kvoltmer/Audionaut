@@ -22,6 +22,10 @@ public:
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL resource);
     
+    int getAudioResourceSize() const { return (int)audioResources.size(); }
+    
+    std::shared_ptr<AudioResource> getAudioResource(int index) { return audioResources[index]; }
+    
 private:
     
     std::vector<std::shared_ptr<AudioResource>> audioResources;

@@ -10,11 +10,12 @@
 
 #include "AudioResource.h"
 
-
-
-
 AudioResource::AudioResource(juce::URL resource, juce::AudioFormatManager& formatManager) :
     resource(resource),
     thumbnail (4096, formatManager, thumbnailCache)
+{
+}
+
+AudioResource::~AudioResource()
 {
 }

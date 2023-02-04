@@ -32,6 +32,8 @@ public:
     ~WaveFormComponent() override;
 
     void setURL (const URL& url);
+    
+    void setAudioResource (std::shared_ptr<AudioResource> audioResource);
 
     URL getLastDroppedFile() const noexcept;
 
@@ -59,6 +61,7 @@ public:
 
     void mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel) override;
 
+    
 private:
     AudioTransportSource& transportSource;
 

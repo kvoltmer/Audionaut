@@ -37,6 +37,18 @@ WaveFormComponent::~WaveFormComponent()
     }
 }
 
+void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> audioResource)
+{
+    this->audioResource = audioResource;
+    audioResource->getThumbnail().addChangeListener (this);
+
+    Range<double> newRange (0.0, audioResource->getThumbnail().getTotalLength());
+    scrollbar.setRangeLimits (newRange);
+    setRange (newRange);
+
+    startTimerHz (40);
+}
+
 void WaveFormComponent::setURL (const URL& url)
 {
     auto resource = getAudiumEngine(this)->getAudioResourceContainer()->addAudioResource(url);
