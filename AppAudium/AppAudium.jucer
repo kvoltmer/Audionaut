@@ -33,7 +33,12 @@
           <FILE id="DcKSZR" name="WaveFormComponent.h" compile="0" resource="0"
                 file="Source/Interface/Components/WaveFormComponent.h"/>
         </GROUP>
-        <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Controls"/>
+        <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Controls">
+          <FILE id="xPbK3J" name="WaveFormTableListBoxModel.cpp" compile="1"
+                resource="0" file="Source/Interface/Controls/WaveFormTableListBoxModel.cpp"/>
+          <FILE id="QyEhQD" name="WaveFormTableListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Controls/WaveFormTableListBoxModel.h"/>
+        </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Views"/>
       </GROUP>
     </GROUP>

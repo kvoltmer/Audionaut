@@ -21,7 +21,7 @@ public:
     AudiumEngine(std::shared_ptr<AudioResourceContainer> container);
     ~AudiumEngine();
     
-    AudioResourceContainer* getAudioResourceContainer() { return audioResourceContainer.get();}
+    std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() { return audioResourceContainer; }
     
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;

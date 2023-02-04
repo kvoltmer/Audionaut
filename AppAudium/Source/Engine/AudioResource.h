@@ -18,6 +18,7 @@ class AudioResource {
     
 public:
     AudioResource(juce::URL resource, juce::AudioFormatManager& formatManager);
+    ~AudioResource();
     
     juce::AudioThumbnail& getThumbnail() { return thumbnail; }
     

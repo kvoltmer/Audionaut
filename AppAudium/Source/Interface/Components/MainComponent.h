@@ -21,6 +21,7 @@
 
 //[Headers]     -- You can add your own extra header files here --
 #include <JuceHeader.h>
+#include "Interface/Controls/WaveFormTableListBoxModel.h"
 
 using namespace juce;
 
@@ -41,11 +42,12 @@ class AudiumEngine;
 */
 class MainComponent  : public juce::Component,
                        private juce::ChangeListener,
+                       public FileDragAndDropTarget,
                        public juce::Slider::Listener
 {
 public:
     //==============================================================================
-    MainComponent ();
+    MainComponent (std::shared_ptr<AudiumEngine> audiumEngine);
     ~MainComponent() override;
 
     //==============================================================================
@@ -53,17 +55,22 @@ public:
     void changeListenerCallback (ChangeBroadcaster* source) override;
     void showAudioResource (URL resource);
     bool loadURLIntoTransport (const URL& audioURL);
+    bool isInterestedInFileDrag (const StringArray& /*files*/) override;
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;
     void resized() override;
     void sliderValueChanged (juce::Slider* sliderThatWasMoved) override;
+    void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
 
 
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
     std::unique_ptr<WaveFormComponent> waveFormComponent;
+
+    std::unique_ptr<TableListBox> waveFormTableListBox;
+    std::unique_ptr<WaveFormTableListBoxModel> waveFormTableListBoxModel;
 
     TimeSliceThread thread  { "audio file preview" };
 
@@ -74,11 +81,12 @@ private:
     AudioTransportSource transportSource;
     std::unique_ptr<AudioFormatReaderSource> currentAudioFileSource;
 
+    double zoomFactor;
     //[/UserVariables]
 
     //==============================================================================
-    std::unique_ptr<juce::Viewport> waveFormViewport;
     std::unique_ptr<juce::Slider> zoomSlider;
+    std::unique_ptr<juce::Label> waveform__background;
 
 
     //==============================================================================

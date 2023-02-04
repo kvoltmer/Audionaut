@@ -30,7 +30,7 @@ public:
         audiumEngine(audiumEngine)
     {
         setUsingNativeTitleBar (true);
-        setContentOwned (new MainComponent(), true);
+        setContentOwned (new MainComponent(audiumEngine), true);
 
        #if JUCE_IOS || JUCE_ANDROID
         setFullScreen (true);
