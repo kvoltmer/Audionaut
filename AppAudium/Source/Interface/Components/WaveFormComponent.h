@@ -74,6 +74,8 @@ private:
     URL lastFileDropped;
 
     DrawableRectangle currentPositionMarker;
+    
+    Colour currentColour;
 
     float timeToX (const double time) const
     {

@@ -52,7 +52,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     waveform__background->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     waveform__background->setJustificationType (juce::Justification::centred);
     waveform__background->setEditable (false, false, false);
-    waveform__background->setColour (juce::Label::backgroundColourId, juce::Colour (0xdb202020));
+    waveform__background->setColour (juce::Label::backgroundColourId, juce::Colour (0xff292929));
     waveform__background->setColour (juce::TextEditor::textColourId, juce::Colours::black);
     waveform__background->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
 
@@ -253,7 +253,7 @@ BEGIN_JUCER_METADATA
           textBoxEditable="1" textBoxWidth="80" textBoxHeight="20" skewFactor="2.0"
           needsCallback="1"/>
   <LABEL name="waveform background" id="3e76c9516fa31cfd" memberName="waveform__background"
-         virtualName="" explicitFocusOrder="0" pos="0 0 100% 50M" bkgCol="db202020"
+         virtualName="" explicitFocusOrder="0" pos="0 0 100% 50M" bkgCol="ff292929"
          edTextCol="ff000000" edBkgCol="0" labelText="" editableSingleClick="0"
          editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
          fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="36"/>
