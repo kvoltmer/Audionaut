@@ -12,6 +12,15 @@
 #include "WaveFormComponent.h"
 #include "Util/EngineAccess.h"
 
+// iterating 2 palettes where the frist one has less colours to gain more variaty
+static int currentWaveFormColour = 0;
+static const int numWaveFormColours = 15;
+static const uint32 waveFormColourScheme[numWaveFormColours] = {
+    0xff70d6ff,0xffff70a6,0xffff9770,0xffffd670,0xffe9ff70, // first palette
+    0xfffbf8cc,0xfffde4cf,0xffffcfd2,0xfff1c0e8,0xffcfbaf0,0xffa3c4f3,0xff90dbf4,0xff8eecf5,0xff98f5e1,0xffb9fbc0 // second palette
+};
+
+
 WaveFormComponent::WaveFormComponent (AudioTransportSource& source)
     : transportSource (source)
 {
@@ -25,6 +34,9 @@ WaveFormComponent::WaveFormComponent (AudioTransportSource& source)
 
     currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
     addAndMakeVisible (currentPositionMarker);
+    
+    currentColour = Colour(waveFormColourScheme[currentWaveFormColour++]);
+    if (currentWaveFormColour >= numWaveFormColours) currentWaveFormColour = 0;
 }
 
 WaveFormComponent::~WaveFormComponent()
@@ -96,8 +108,8 @@ void WaveFormComponent::setFollowsTransport (bool shouldFollow)
 
 void WaveFormComponent::paint (Graphics& g)
 {
-    g.fillAll (Colours::darkgrey);
-    g.setColour (Colours::lightblue);
+    g.fillAll (currentColour.withAlpha(0.25f));
+    g.setColour (currentColour);
     
 //        auto a = getLocalBounds().getTopLeft();
 //        auto b = getLocalBounds().getBottomRight();
