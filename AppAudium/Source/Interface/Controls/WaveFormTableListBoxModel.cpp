@@ -49,16 +49,15 @@ juce::Component* WaveFormTableListBoxModel::refreshComponentForCell (int rowNumb
     {
         if (existingComponentToUpdate == nullptr)
         {
-
             auto component = new WaveFormComponent(transportSource, *scrollbar);
             component->setAudioResource(audioResourceContainer->getAudioResource(rowNumber));
-            
             return component;
         }
         else
         {
             auto component = dynamic_cast<WaveFormComponent*>(existingComponentToUpdate);
             jassert(component);
+            component->updateTotalLength();
             return component;
         }
     }

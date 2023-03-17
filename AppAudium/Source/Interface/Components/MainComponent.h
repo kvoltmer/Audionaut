@@ -43,7 +43,6 @@ class AudiumEngine;
 class MainComponent  : public juce::Component,
                        private juce::ChangeListener,
                        public FileDragAndDropTarget,
-                       public juce::Slider::Listener,
                        public juce::Button::Listener
 {
 public:
@@ -61,7 +60,6 @@ public:
 
     void paint (juce::Graphics& g) override;
     void resized() override;
-    void sliderValueChanged (juce::Slider* sliderThatWasMoved) override;
     void buttonClicked (juce::Button* buttonThatWasClicked) override;
     void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
 
@@ -87,7 +85,6 @@ private:
     //[/UserVariables]
 
     //==============================================================================
-    std::unique_ptr<juce::Slider> zoomSlider;
     std::unique_ptr<juce::Label> waveform__background;
     std::unique_ptr<juce::TextButton> zoomOutButton;
     std::unique_ptr<juce::TextButton> zoomInButton;
