@@ -18,9 +18,9 @@
 */
 
 //[Headers] You can add your own extra header files here...
-#include "WaveFormComponent.h"
 #include "WaveFormTableListBox.h"
 #include "Util/EngineAccess.h"
+#include "Interface/Handlers/ZoomHandler.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -33,8 +33,6 @@
 MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 {
     //[Constructor_pre] You can add your own custom stuff here..
-
-    //zoomFactor = 1.0;
 
     thread.startThread();
     //[/Constructor_pre]
@@ -70,19 +68,19 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     //[Constructor] You can add your own custom stuff here..
 
-
-    waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(audiumEngine->getAudioResourceContainer()));
+    zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer()));
+    waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(audiumEngine->getAudioResourceContainer(), zoomHandler));
     waveFormTableListBox.reset(new WaveFormTableListBox("waveform table", waveFormTableListBoxModel.get()));
-    // kvo: hack
-    waveFormTableListBoxModel->setHorizontalScrollBar(&waveFormTableListBox->getHorizontalScrollBar());
+    
+    zoomHandler->setHorizontalScrollBar(&waveFormTableListBox->getHorizontalScrollBar());
+
     waveFormTableListBox->setHeaderHeight(0);
     waveFormTableListBox->setRowHeight(200);
     waveFormTableListBox->getHeader().addColumn("waveform", 1, getWidth());
     addAndMakeVisible(waveFormTableListBox.get());
     waveFormTableListBox->setBounds(waveform__background->getBounds());
+    zoomHandler->setWidth(waveform__background->getWidth());
     waveFormTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
-
-    //auto scroll = waveFormTableListBox->getHorizontalScrollBar();
 
     audioDeviceManager.addAudioCallback (&audioSourcePlayer);
     audioSourcePlayer.setSource (&transportSource);
@@ -131,10 +129,8 @@ void MainComponent::resized()
     //[UserResized] Add your own custom resize handling here..
     if (waveFormTableListBox != nullptr)
     {
+        //zoomHandler->setWidth(waveform__background->getWidth());
         waveFormTableListBox->setBounds(waveform__background->getBounds());
-        //waveFormTableListBox->getHeader().setColumnWidth(1, (waveform__background->getWidth() * zoomFactor));
-
-        //waveFormTableListBox->getHeader().setColumnWidth(1, (waveform__background->getWidth()));
     }
 
     //[/UserResized]
@@ -148,19 +144,17 @@ void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
     if (buttonThatWasClicked == zoomOutButton.get())
     {
         //[UserButtonCode_zoomOutButton] -- add your button handler code here..
-        auto zoom = waveFormTableListBoxModel->zoomOut();
-
-        auto width = waveform__background->getWidth() * zoom;
+        auto width = waveform__background->getWidth() * zoomHandler->zoomOut();
         waveFormTableListBox->getHeader().setColumnWidth(1, width);
+        zoomHandler->setWidth(width);
         //[/UserButtonCode_zoomOutButton]
     }
     else if (buttonThatWasClicked == zoomInButton.get())
     {
         //[UserButtonCode_zoomInButton] -- add your button handler code here..
-        auto zoom = waveFormTableListBoxModel->zoomIn();
-
-        auto width = waveform__background->getWidth() * zoom;
+        auto width = waveform__background->getWidth() * zoomHandler->zoomIn();
         waveFormTableListBox->getHeader().setColumnWidth(1, width);
+        zoomHandler->setWidth(width);
         //[/UserButtonCode_zoomInButton]
     }
 
@@ -187,8 +181,6 @@ void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX
 
 void MainComponent::changeListenerCallback (ChangeBroadcaster* source)
 {
-//    if (source == waveFormComponent.get())
-//        showAudioResource (URL (waveFormComponent->getLastDroppedFile()));
 }
 
 void MainComponent::showAudioResource (URL resource)

@@ -14,6 +14,7 @@
 #include <JuceHeader.h>
 #include "Engine/AudioResourceContainer.h"
 #include "Interface/Components/WaveFormComponent.h"
+#include "Interface/Handlers/ZoomHandler.h"
 
 class WaveFormTableListBoxModel : public juce::TableListBoxModel
 {
@@ -21,7 +22,8 @@ class WaveFormTableListBoxModel : public juce::TableListBoxModel
     
 public:
     
-    WaveFormTableListBoxModel(std::shared_ptr<AudioResourceContainer> audioResourceContainer);
+    WaveFormTableListBoxModel(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                              std::shared_ptr<ZoomHandler> zoomHandler);
     ~WaveFormTableListBoxModel();
     
     int getNumRows() override;
@@ -40,24 +42,15 @@ public:
     juce::Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
                                               juce::Component* existingComponentToUpdate) override;
     
-    void setZoomFactor(double zoom) { zoomFactor = zoom; }
-    
-    double zoomIn();
-    
-    double zoomOut();
         
-    void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
     
 private:
     
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
+    std::shared_ptr<ZoomHandler> zoomHandler;
+        
     /// TODO: remove this...
     juce::AudioTransportSource transportSource;
-    
-    double zoomFactor;
-    
-    
-    juce::ScrollBar* scrollbar;
-    
+
 };
