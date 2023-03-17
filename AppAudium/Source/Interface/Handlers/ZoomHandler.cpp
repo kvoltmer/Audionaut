@@ -24,20 +24,23 @@ ZoomHandler::~ZoomHandler()
 double ZoomHandler::zoomIn()
 {
     zoomFactor *= 2.0;
-    // std::cout << "zoom = " << zoomFactor <<  std::endl;
     return zoomFactor;
 }
 
 double ZoomHandler::zoomOut()
 {
     zoomFactor /= 2.0;
-    // std::cout << "zoom = " << zoomFactor <<  std::endl;
     return zoomFactor;
 }
 
 void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
 {
     scrollbar = thescrollbar;
+}
+
+Range<double> ZoomHandler::getCurrentRange() const noexcept
+{
+    return scrollbar->getCurrentRange();
 }
 
 void ZoomHandler::updateTotalLength()
