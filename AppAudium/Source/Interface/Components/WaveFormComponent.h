@@ -23,23 +23,19 @@ class WaveFormComponent  : public Component,
                            public ChangeListener,
                            public FileDragAndDropTarget,
                            public ChangeBroadcaster,
-                           private ScrollBar::Listener,
+                           public ScrollBar::Listener,
                            private Timer
 {
 public:
-    WaveFormComponent (AudioTransportSource& source);
+    WaveFormComponent (AudioTransportSource& source, ScrollBar& scrollbar);
 
     ~WaveFormComponent() override;
-
-    void setURL (const URL& url);
     
     void setAudioResource (std::shared_ptr<AudioResource> audioResource);
 
     URL getLastDroppedFile() const noexcept;
 
-    void setZoomFactor (double amount);
-
-    void setRange (Range<double> newRange);
+    void setTotalRangeInSeconds (Range<double> newRange);
 
     void setFollowsTransport (bool shouldFollow);
 
@@ -65,11 +61,11 @@ public:
 private:
     AudioTransportSource& transportSource;
 
-    ScrollBar scrollbar  { false };
+    ScrollBar& scrollbar;
 
     std::shared_ptr<AudioResource> audioResource;
 
-    Range<double> visibleRange;
+    Range<double> totalRange;
     bool isFollowingTransport = false;
     URL lastFileDropped;
 
@@ -79,15 +75,15 @@ private:
 
     float timeToX (const double time) const
     {
-        if (visibleRange.getLength() <= 0)
+        if (totalRange.getLength() <= 0)
             return 0;
 
-        return (float) getWidth() * (float) ((time - visibleRange.getStart()) / visibleRange.getLength());
+        return (float) getWidth() * (float) ((time - totalRange.getStart()) / totalRange.getLength());
     }
 
     double xToTime (const float x) const
     {
-        return (x / (float) getWidth()) * (visibleRange.getLength()) + visibleRange.getStart();
+        return (x / (float) getWidth()) * (totalRange.getLength()) + totalRange.getStart();
     }
 
     bool canMoveTransport() const noexcept
@@ -95,19 +91,18 @@ private:
         return ! (isFollowingTransport && transportSource.isPlaying());
     }
 
-    void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override
-    {
-        if (scrollBarThatHasMoved == &scrollbar)
-            if (! (isFollowingTransport && transportSource.isPlaying()))
-                setRange (visibleRange.movedToStartAt (newRangeStart));
-    }
+    void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override;
 
     void timerCallback() override
     {
         if (canMoveTransport())
             updateCursorPosition();
         else
-            setRange (visibleRange.movedToStartAt (transportSource.getCurrentPosition() - (visibleRange.getLength() / 2.0)));
+        {
+            /// TODO: scrolling 
+            jassertfalse;
+            // setRange (visibleRange.movedToStartAt (transportSource.getCurrentPosition() - (visibleRange.getLength() / 2.0)));
+        }
     }
 
     void updateCursorPosition()
@@ -115,6 +110,6 @@ private:
         currentPositionMarker.setVisible (transportSource.isPlaying() || isMouseButtonDown());
 
         currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
-                                                              1.5f, (float) (getHeight() - scrollbar.getHeight())));
+                                                              1.5f, (float) (getHeight() /*  - scrollbar.getHeight()*/)));
     }
 };

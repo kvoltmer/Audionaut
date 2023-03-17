@@ -13,7 +13,7 @@
 
 WaveFormTableListBoxModel::WaveFormTableListBoxModel(std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
     audioResourceContainer(audioResourceContainer),
-    zoomFactor(0.0)
+    zoomFactor(1.0)
 {
 }
 
@@ -45,26 +45,46 @@ void WaveFormTableListBoxModel::paintCell (juce::Graphics&,
 juce::Component* WaveFormTableListBoxModel::refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
                                                                      juce::Component* existingComponentToUpdate)
 {
-    std::cout << "refreshComponentForCell row " << rowNumber << " col " << columnId <<  std::endl;
-
     if (columnId == 1)
     {
         if (existingComponentToUpdate == nullptr)
         {
-            auto component = new WaveFormComponent(transportSource);
+
+            auto component = new WaveFormComponent(transportSource, *scrollbar);
             component->setAudioResource(audioResourceContainer->getAudioResource(rowNumber));
-            //component->setZoomFactor(zoomFactor);
-            waveFormComponentCache.push_back(component);
+            
             return component;
         }
         else
         {
             auto component = dynamic_cast<WaveFormComponent*>(existingComponentToUpdate);
-            component->setZoomFactor(zoomFactor);
-            
-            return existingComponentToUpdate;
+            jassert(component);
+            return component;
         }
     }
     
     return nullptr;
 }
+
+double WaveFormTableListBoxModel::zoomIn()
+{
+    zoomFactor *= 2.0;
+    std::cout << "zoom = " << zoomFactor <<  std::endl;
+    setZoomFactor(zoomFactor);
+    return zoomFactor;
+}
+
+double WaveFormTableListBoxModel::zoomOut()
+{
+    zoomFactor /= 2.0;
+    std::cout << "zoom = " << zoomFactor <<  std::endl;
+    setZoomFactor(zoomFactor);
+    return zoomFactor;
+}
+
+void WaveFormTableListBoxModel::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
+{
+    scrollbar = thescrollbar;
+    
+}
+

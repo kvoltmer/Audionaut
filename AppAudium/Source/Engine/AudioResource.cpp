@@ -9,8 +9,11 @@
 */
 
 #include "AudioResource.h"
-
-AudioResource::AudioResource(juce::URL resource, juce::AudioFormatManager& formatManager) :
+#include "AudioResourceContainer.h"
+AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
+                             juce::URL resource,
+                             juce::AudioFormatManager& formatManager) :
+    audioResourceContainer(audioResourceContainer),
     resource(resource),
     thumbnail (4096, formatManager, thumbnailCache)
 {
@@ -18,4 +21,10 @@ AudioResource::AudioResource(juce::URL resource, juce::AudioFormatManager& forma
 
 AudioResource::~AudioResource()
 {
+}
+
+
+double AudioResource::getTotalLengthMax() const
+{
+    return audioResourceContainer.getTotalLengthMax();
 }

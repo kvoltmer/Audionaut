@@ -26,11 +26,15 @@ public:
     
     std::shared_ptr<AudioResource> getAudioResource(int index) { return audioResources[index]; }
     
+    /// returns the maximum length of all audio resources
+    double getTotalLengthMax() const;
+    
 private:
     
     std::vector<std::shared_ptr<AudioResource>> audioResources;
     
     juce::AudioFormatManager formatManager;
+    
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceContainer)
