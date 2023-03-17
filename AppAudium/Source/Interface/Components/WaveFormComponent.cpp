@@ -21,22 +21,21 @@ static const uint32 waveFormColourScheme[numWaveFormColours] = {
 };
 
 
-WaveFormComponent::WaveFormComponent (AudioTransportSource& source)
-    : transportSource (source)
+WaveFormComponent::WaveFormComponent (AudioTransportSource& source, ScrollBar& scrollbar) :
+    transportSource (source),
+    scrollbar(scrollbar)
 {
-    
     audioResource = nullptr;
 
-    addAndMakeVisible (scrollbar);
-    scrollbar.setRangeLimits (visibleRange);
-    scrollbar.setAutoHide (false);
     scrollbar.addListener (this);
 
     currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
     addAndMakeVisible (currentPositionMarker);
     
+    /// simply iteraterate our colour scheme and assign our current colour
     currentColour = Colour(waveFormColourScheme[currentWaveFormColour++]);
-    if (currentWaveFormColour >= numWaveFormColours) currentWaveFormColour = 0;
+    if (currentWaveFormColour >= numWaveFormColours)
+        currentWaveFormColour = 0;
 }
 
 WaveFormComponent::~WaveFormComponent()
@@ -54,27 +53,10 @@ void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> audioRe
     this->audioResource = audioResource;
     audioResource->getThumbnail().addChangeListener (this);
 
-    Range<double> newRange (0.0, audioResource->getThumbnail().getTotalLength());
-    scrollbar.setRangeLimits (newRange);
-    setRange (newRange);
+    Range<double> newRange (0.0, audioResource->getTotalLengthMax());
+    setTotalRangeInSeconds (newRange);
 
     startTimerHz (40);
-}
-
-void WaveFormComponent::setURL (const URL& url)
-{
-    auto resource = getAudiumEngine(this)->getAudioResourceContainer()->addAudioResource(url);
-    if (resource != nullptr)
-    {
-        audioResource = resource;
-        audioResource->getThumbnail().addChangeListener (this);
-
-        Range<double> newRange (0.0, audioResource->getThumbnail().getTotalLength());
-        scrollbar.setRangeLimits (newRange);
-        setRange (newRange);
-
-        startTimerHz (40);
-    }
 }
 
 URL WaveFormComponent::getLastDroppedFile() const noexcept
@@ -82,23 +64,19 @@ URL WaveFormComponent::getLastDroppedFile() const noexcept
     return lastFileDropped;
 }
 
-void WaveFormComponent::setZoomFactor (double amount)
+void WaveFormComponent::setTotalRangeInSeconds (Range<double> newRange)
 {
-    if (audioResource->getThumbnail().getTotalLength() > 0)
-    {
-        auto newScale = jmax (0.001, audioResource->getThumbnail().getTotalLength() * (1.0 - jlimit (0.0, 0.99, amount)));
-        auto timeAtCentre = xToTime ((float) getWidth() / 2.0f);
+    totalRange = newRange;
 
-        setRange ({ timeAtCentre - newScale * 0.5, timeAtCentre + newScale * 0.5 });
-    }
-}
-
-void WaveFormComponent::setRange (Range<double> newRange)
-{
-    visibleRange = newRange;
-    scrollbar.setCurrentRange (visibleRange);
     updateCursorPosition();
     repaint();
+}
+
+void WaveFormComponent::scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart)
+{
+    if (! (isFollowingTransport && transportSource.isPlaying()))
+    {
+    }
 }
 
 void WaveFormComponent::setFollowsTransport (bool shouldFollow)
@@ -111,20 +89,35 @@ void WaveFormComponent::paint (Graphics& g)
     g.fillAll (currentColour.withAlpha(0.25f));
     g.setColour (currentColour);
     
-//        auto a = getLocalBounds().getTopLeft();
-//        auto b = getLocalBounds().getBottomRight();
-//        ColourGradient gradient(Colours::lightgreen, a.getX(), a.getY(),
-//                                Colours::lightyellow, b.getX(), b.getY(), false);
-//        g.setGradientFill(gradient);
 
     if (audioResource != nullptr &&
         audioResource->getThumbnail().getTotalLength() > 0.0)
     {
         auto thumbArea = getLocalBounds();
+    
+#if 1 /// visible range only
+        
+        // the visible range is the scrollbar's range
+        auto visibleRange = scrollbar.getCurrentRange();
+        
+        // adjust the drawing area
+        thumbArea.setX(visibleRange.getStart());
+        thumbArea.setWidth(visibleRange.getLength());
+                       
+        // convert pixels to seconds (drawChannels expects start and end in seconds)
+        Range<double> rangeInSeconds(xToTime(visibleRange.getStart()), xToTime(visibleRange.getEnd()));
+        
+        audioResource->getThumbnail().drawChannels (g, thumbArea,
+                                                    rangeInSeconds.getStart(), rangeInSeconds.getEnd(), 1.0f);
+        
+//        std::cout << "DRAW visible start " << visibleRange.getStart() << " length " << visibleRange.getLength() << std::endl;
+//        std::cout << "DRAW seconds start " << rangeInSeconds.getStart() << " length " << rangeInSeconds.getLength() << std::endl;
 
-        thumbArea.removeFromBottom (scrollbar.getHeight() + 4);
-        audioResource->getThumbnail().drawChannels (g, thumbArea.reduced (2),
-                                visibleRange.getStart(), visibleRange.getEnd(), 1.0f);
+#else /// draw entire waveform at once
+        
+        audioResource->getThumbnail().drawChannels (g, thumbArea,
+                                                    totalRange.getStart(), totalRange.getEnd(), 1.0f);
+#endif
     }
     else
     {
@@ -135,7 +128,6 @@ void WaveFormComponent::paint (Graphics& g)
 
 void WaveFormComponent::resized()
 {
-    scrollbar.setBounds (getLocalBounds().removeFromBottom (14).reduced (2));
 }
 
 void WaveFormComponent::changeListenerCallback (ChangeBroadcaster*)
@@ -173,19 +165,7 @@ void WaveFormComponent::mouseUp (const MouseEvent&)
 
 void WaveFormComponent::mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel)
 {
-    /* TODO
-    if (getThumbnail().getTotalLength() > 0.0)
-    {
-        auto newStart = visibleRange.getStart() - wheel.deltaX * (visibleRange.getLength()) / 10.0;
-        newStart = jlimit (0.0, jmax (0.0, getThumbnail().getTotalLength() - (visibleRange.getLength())), newStart);
-
-        if (canMoveTransport())
-            setRange ({ newStart, newStart + visibleRange.getLength() });
-
-        if (wheel.deltaY != 0.0f)
-            zoomSlider.setValue (zoomSlider.getValue() - wheel.deltaY);
-
-        repaint();
-    }
-    */
 }
+
+
+

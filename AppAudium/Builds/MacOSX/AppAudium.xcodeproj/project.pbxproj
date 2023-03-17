@@ -33,6 +33,7 @@
 		9D99CD2A2F0E3FFF17004F30 /* CoreMIDI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3F436BA69588E2039CDFB0F5 /* CoreMIDI.framework */; };
 		A86367AB3AC2419DC8A01E7A /* Main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6B3294D1096D746B93DAF8EB /* Main.cpp */; };
 		A88A358B1261DB60A7CB582F /* AudioResourceContainer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8AD81791B89E55FB8C43535A /* AudioResourceContainer.cpp */; };
+		B5DE896CF58F75AE1B3294E5 /* WaveFormTableListBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 395D5E3A0DE1D05EA2D3D186 /* WaveFormTableListBox.cpp */; };
 		D378E780FCD2FF4680CF5E6D /* include_juce_audio_utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = EFB67C5172FD56D59C0F3443 /* include_juce_audio_utils.mm */; };
 		D50EA7BFEDBE0DB7D353D9A1 /* include_juce_audio_basics.mm in Sources */ = {isa = PBXBuildFile; fileRef = 326D33688206104FED891964 /* include_juce_audio_basics.mm */; };
 		D6A79C7A4AF7054520DA5345 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C0222C44693315A9F66945C /* IOKit.framework */; };
@@ -56,6 +57,7 @@
 		326D33688206104FED891964 /* include_juce_audio_basics.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_basics.mm; path = ../../JuceLibraryCode/include_juce_audio_basics.mm; sourceTree = SOURCE_ROOT; };
 		332BA11702CE2968C66F90B4 /* AudioResource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioResource.cpp; path = ../../Source/Engine/AudioResource.cpp; sourceTree = SOURCE_ROOT; };
 		381C16B10EEBED549FB2BBD2 /* juce_data_structures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_data_structures; path = ../../../Submodules/juce/modules/juce_data_structures; sourceTree = SOURCE_ROOT; };
+		395D5E3A0DE1D05EA2D3D186 /* WaveFormTableListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = WaveFormTableListBox.cpp; path = ../../Source/Interface/Components/WaveFormTableListBox.cpp; sourceTree = SOURCE_ROOT; };
 		3F436BA69588E2039CDFB0F5 /* CoreMIDI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMIDI.framework; path = System/Library/Frameworks/CoreMIDI.framework; sourceTree = SDKROOT; };
 		456D6880C88C5B41AA87CBB2 /* CoreAudioKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudioKit.framework; path = System/Library/Frameworks/CoreAudioKit.framework; sourceTree = SDKROOT; };
 		5021A59AD0929868402BFD6B /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -95,6 +97,7 @@
 		B7346F39611AE01C1EAFEC0C /* Info-App.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-App.plist"; sourceTree = SOURCE_ROOT; };
 		BC325BA600975DA123084DA3 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		BD120C92EBF0312BF1D4DBB1 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		D21CAA32A0B321DD3B2D794D /* WaveFormTableListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormTableListBox.h; path = ../../Source/Interface/Components/WaveFormTableListBox.h; sourceTree = SOURCE_ROOT; };
 		E138ACDCC3A702D0B7A742EF /* include_juce_dsp.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_dsp.mm; path = ../../JuceLibraryCode/include_juce_dsp.mm; sourceTree = SOURCE_ROOT; };
 		E8D352FF7BE59C5D849A1BA1 /* WaveFormComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormComponent.h; path = ../../Source/Interface/Components/WaveFormComponent.h; sourceTree = SOURCE_ROOT; };
 		EBCAA43C5258D98640A638F6 /* juce_audio_formats */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_formats; path = ../../../Submodules/juce/modules/juce_audio_formats; sourceTree = SOURCE_ROOT; };
@@ -235,6 +238,8 @@
 				A3346CAE6FB6CD785EE49D2D /* MainComponent.h */,
 				8F7CB431E1C1A59D06BA574D /* WaveFormComponent.cpp */,
 				E8D352FF7BE59C5D849A1BA1 /* WaveFormComponent.h */,
+				395D5E3A0DE1D05EA2D3D186 /* WaveFormTableListBox.cpp */,
+				D21CAA32A0B321DD3B2D794D /* WaveFormTableListBox.h */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -383,6 +388,7 @@
 				A86367AB3AC2419DC8A01E7A /* Main.cpp in Sources */,
 				71175A5E1AF2FE25885C5CFC /* MainComponent.cpp in Sources */,
 				591171F07F22952C7C96DA08 /* WaveFormComponent.cpp in Sources */,
+				B5DE896CF58F75AE1B3294E5 /* WaveFormTableListBox.cpp in Sources */,
 				5662A06F9B1EF74F06463AAE /* WaveFormTableListBoxModel.cpp in Sources */,
 				99F8B7CF1F50B336192CD3FA /* include_juce_analytics.cpp in Sources */,
 				D50EA7BFEDBE0DB7D353D9A1 /* include_juce_audio_basics.mm in Sources */,

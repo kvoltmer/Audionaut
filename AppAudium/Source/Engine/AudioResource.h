@@ -12,17 +12,25 @@
 #include <JuceHeader.h>
 
 
-
+class AudioResourceContainer;
 
 class AudioResource {
     
 public:
-    AudioResource(juce::URL resource, juce::AudioFormatManager& formatManager);
+    AudioResource(AudioResourceContainer& audioResourceContainer,
+                  juce::URL resource,
+                  juce::AudioFormatManager& formatManager);
     ~AudioResource();
     
     juce::AudioThumbnail& getThumbnail() { return thumbnail; }
     
+    /// returns the maximum length of all audio resources
+    double getTotalLengthMax() const;
+
 private:
+
+    AudioResourceContainer& audioResourceContainer;
+    
     juce::URL resource;
     
     /// TODO: maybe capsulate?

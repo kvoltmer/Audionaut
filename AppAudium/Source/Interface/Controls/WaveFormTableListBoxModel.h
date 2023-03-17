@@ -42,16 +42,22 @@ public:
     
     void setZoomFactor(double zoom) { zoomFactor = zoom; }
     
+    double zoomIn();
+    
+    double zoomOut();
+        
+    void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
+    
 private:
     
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
-    
-    /// TODO: not sure if we will need this
-    std::vector<WaveFormComponent*> waveFormComponentCache;
     
     /// TODO: remove this...
     juce::AudioTransportSource transportSource;
     
     double zoomFactor;
+    
+    
+    juce::ScrollBar* scrollbar;
     
 };
