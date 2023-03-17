@@ -24,6 +24,10 @@
       </GROUP>
       <FILE id="GMUyKK" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
       <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
+        <GROUP id="{4C550296-51BB-D3A6-E49C-7CC8B0E75CC8}" name="Handlers">
+          <FILE id="R9tlys" name="ZoomHandler.cpp" compile="1" resource="0" file="Source/Interface/Handlers/ZoomHandler.cpp"/>
+          <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
+        </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
           <FILE id="uZah0s" name="MainComponent.cpp" compile="1" resource="0"
                 file="Source/Interface/Components/MainComponent.cpp"/>

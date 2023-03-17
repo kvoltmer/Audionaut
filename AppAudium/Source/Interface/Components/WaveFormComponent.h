@@ -13,10 +13,13 @@
 #include <JuceHeader.h>
 #include <memory>
 
+#include "Interface/Handlers/ZoomHandler.h"
+
 using namespace juce;
 
 
 class AudioResource;
+
 
 //==============================================================================
 class WaveFormComponent  : public Component,
@@ -27,16 +30,11 @@ class WaveFormComponent  : public Component,
                            private Timer
 {
 public:
-    WaveFormComponent (AudioTransportSource& source, ScrollBar& scrollbar);
+    WaveFormComponent (AudioTransportSource& source, std::shared_ptr<ZoomHandler> zoomHandler);
 
     ~WaveFormComponent() override;
     
     void setAudioResource (std::shared_ptr<AudioResource> audioResource);
-    
-    /// update the total length  (short and long waveforms)
-    void updateTotalLength();
-
-    void setTotalRangeInSeconds (Range<double> newRange);
     
     URL getLastDroppedFile() const noexcept;
 
@@ -64,30 +62,17 @@ public:
 private:
     AudioTransportSource& transportSource;
 
-    ScrollBar& scrollbar;
+    std::shared_ptr<ZoomHandler> zoomHandler;
 
     std::shared_ptr<AudioResource> audioResource;
 
-    Range<double> totalRange;
+    
     bool isFollowingTransport = false;
     URL lastFileDropped;
 
     DrawableRectangle currentPositionMarker;
     
     Colour currentColour;
-
-    float timeToX (const double time) const
-    {
-        if (totalRange.getLength() <= 0)
-            return 0;
-
-        return (float) getWidth() * (float) ((time - totalRange.getStart()) / totalRange.getLength());
-    }
-
-    double xToTime (const float x) const
-    {
-        return (x / (float) getWidth()) * (totalRange.getLength()) + totalRange.getStart();
-    }
 
     bool canMoveTransport() const noexcept
     {
@@ -112,7 +97,7 @@ private:
     {
         currentPositionMarker.setVisible (transportSource.isPlaying() || isMouseButtonDown());
 
-        currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
-                                                              1.5f, (float) (getHeight() /*  - scrollbar.getHeight()*/)));
+//        currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
+//                                                              1.5f, (float) (getHeight() /*  - scrollbar.getHeight()*/)));
     }
 };

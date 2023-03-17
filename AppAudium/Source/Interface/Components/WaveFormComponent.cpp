@@ -21,14 +21,12 @@ static const uint32 waveFormColourScheme[numWaveFormColours] = {
 };
 
 
-WaveFormComponent::WaveFormComponent (AudioTransportSource& source, ScrollBar& scrollbar) :
+WaveFormComponent::WaveFormComponent (AudioTransportSource& source, std::shared_ptr<ZoomHandler> zoomHandler) :
     transportSource (source),
-    scrollbar(scrollbar)
+    zoomHandler(zoomHandler)
 {
     audioResource = nullptr;
-
-    // not needed
-    scrollbar.addListener (this);
+    
 
     currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
     addAndMakeVisible (currentPositionMarker);
@@ -41,9 +39,6 @@ WaveFormComponent::WaveFormComponent (AudioTransportSource& source, ScrollBar& s
 
 WaveFormComponent::~WaveFormComponent()
 {
-    // not needed
-    scrollbar.removeListener (this);
- 
     if (audioResource != nullptr)
     {
         audioResource->getThumbnail().removeChangeListener(this);
@@ -55,23 +50,7 @@ void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> audioRe
     this->audioResource = audioResource;
     audioResource->getThumbnail().addChangeListener (this);
 
-    updateTotalLength();
-
     startTimerHz (40);
-}
-
-void WaveFormComponent::updateTotalLength()
-{
-    Range<double> newRange (0.0, audioResource->getTotalLengthMax());
-    setTotalRangeInSeconds (newRange);
-}
-
-void WaveFormComponent::setTotalRangeInSeconds (Range<double> newRange)
-{
-    totalRange = newRange;
-
-    updateCursorPosition();
-    repaint();
 }
 
 URL WaveFormComponent::getLastDroppedFile() const noexcept
@@ -105,14 +84,14 @@ void WaveFormComponent::paint (Graphics& g)
 #if 1 /// visible range only
         
         // the visible range is the scrollbar's range
-        auto visibleRange = scrollbar.getCurrentRange();
+        auto visibleRange = zoomHandler->getHorizontalScrollBar()->getCurrentRange();
         
         // adjust the drawing area
         thumbArea.setX(visibleRange.getStart());
         thumbArea.setWidth(visibleRange.getLength());
                        
         // convert pixels to seconds (drawChannels expects start and end in seconds)
-        Range<double> rangeInSeconds(xToTime(visibleRange.getStart()), xToTime(visibleRange.getEnd()));
+        Range<double> rangeInSeconds(zoomHandler->xToTime(visibleRange.getStart()), zoomHandler->xToTime(visibleRange.getEnd()));
         
         audioResource->getThumbnail().drawChannels (g, thumbArea,
                                                     rangeInSeconds.getStart(), rangeInSeconds.getEnd(), 1.0f);
@@ -162,7 +141,7 @@ void WaveFormComponent::mouseDown (const MouseEvent& e)
 void WaveFormComponent::mouseDrag (const MouseEvent& e)
 {
     if (canMoveTransport())
-        transportSource.setPosition (jmax (0.0, xToTime ((float) e.x)));
+        transportSource.setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
 }
 
 void WaveFormComponent::mouseUp (const MouseEvent&)

@@ -25,8 +25,8 @@
 
 using namespace juce;
 
-class WaveFormComponent;
 class AudiumEngine;
+class ZoomHandler;
 
 //[/Headers]
 
@@ -67,8 +67,8 @@ public:
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
-    std::unique_ptr<WaveFormComponent> waveFormComponent;
-
+    
+    std::shared_ptr<ZoomHandler> zoomHandler;
     std::unique_ptr<TableListBox> waveFormTableListBox;
     std::unique_ptr<WaveFormTableListBoxModel> waveFormTableListBoxModel;
 
@@ -81,7 +81,6 @@ private:
     AudioTransportSource transportSource;
     std::unique_ptr<AudioFormatReaderSource> currentAudioFileSource;
 
-    double zoomFactor;
     //[/UserVariables]
 
     //==============================================================================
