@@ -25,9 +25,11 @@ public:
     
     double zoomOut();
     
-    void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
+    Range<double> getVisibleRange() const noexcept;
     
-    Range<double> getCurrentRange() const noexcept;
+    Range<double> getVisibleRangeInSeconds() const noexcept;
+    
+    void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
     
     void updateTotalLength();
     
