@@ -32,10 +32,13 @@ public:
     ~WaveFormComponent() override;
     
     void setAudioResource (std::shared_ptr<AudioResource> audioResource);
-
-    URL getLastDroppedFile() const noexcept;
+    
+    /// update the total length  (short and long waveforms)
+    void updateTotalLength();
 
     void setTotalRangeInSeconds (Range<double> newRange);
+    
+    URL getLastDroppedFile() const noexcept;
 
     void setFollowsTransport (bool shouldFollow);
 

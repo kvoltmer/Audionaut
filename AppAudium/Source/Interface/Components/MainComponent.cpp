@@ -39,14 +39,6 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     thread.startThread();
     //[/Constructor_pre]
 
-    zoomSlider.reset (new juce::Slider ("new slider"));
-    addAndMakeVisible (zoomSlider.get());
-    zoomSlider->setRange (0, 1, 0);
-    zoomSlider->setSliderStyle (juce::Slider::LinearHorizontal);
-    zoomSlider->setTextBoxStyle (juce::Slider::TextBoxLeft, false, 80, 20);
-    zoomSlider->addListener (this);
-    zoomSlider->setSkewFactor (2);
-
     waveform__background.reset (new juce::Label ("waveform background",
                                                  juce::String()));
     addAndMakeVisible (waveform__background.get());
@@ -91,7 +83,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     waveFormTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
 
     //auto scroll = waveFormTableListBox->getHorizontalScrollBar();
-    
+
     audioDeviceManager.addAudioCallback (&audioSourcePlayer);
     audioSourcePlayer.setSource (&transportSource);
     //[/Constructor]
@@ -102,7 +94,6 @@ MainComponent::~MainComponent()
     //[Destructor_pre]. You can add your own custom destruction code here..
     //[/Destructor_pre]
 
-    zoomSlider = nullptr;
     waveform__background = nullptr;
     zoomOutButton = nullptr;
     zoomInButton = nullptr;
@@ -134,10 +125,9 @@ void MainComponent::resized()
     //[UserPreResize] Add your own custom resize code here..
     //[/UserPreResize]
 
-    zoomSlider->setBounds (16, getHeight() - 9 - 24, 192, 24);
-    waveform__background->setBounds (0, 0, proportionOfWidth (1.0000f), getHeight() - 45);
-    zoomOutButton->setBounds (getWidth() - 69, getHeight() - 33, 24, 24);
-    zoomInButton->setBounds (getWidth() - 37, getHeight() - 33, 24, 24);
+    waveform__background->setBounds (0, 0, proportionOfWidth (1.0000f), getHeight() - 40);
+    zoomOutButton->setBounds (getWidth() - 55, getHeight() - 30, 20, 20);
+    zoomInButton->setBounds (getWidth() - 30, getHeight() - 30, 20, 20);
     //[UserResized] Add your own custom resize handling here..
     if (waveFormTableListBox != nullptr)
     {
@@ -150,32 +140,6 @@ void MainComponent::resized()
     //[/UserResized]
 }
 
-void MainComponent::sliderValueChanged (juce::Slider* sliderThatWasMoved)
-{
-    //[UsersliderValueChanged_Pre]
-    //[/UsersliderValueChanged_Pre]
-
-    if (sliderThatWasMoved == zoomSlider.get())
-    {
-        //[UserSliderCode_zoomSlider] -- add your slider handling code here..
-
-        //zoomFactor = zoomSlider->getValue();
-        //auto test = (1.0 - jlimit (0.0, 0.99, zoomFactor));
-        //std::cout << test << std::endl;
-        //auto newScale = jmax (0.001, audioResource->getThumbnail().getTotalLength() * (1.0 - jlimit (0.0, 0.99, amount)));
-        //waveFormTableListBox->getHeader().setColumnWidth(1, (waveform__background->getWidth()));
-
-        // alternative....
-        waveFormTableListBoxModel->setZoomFactor(zoomSlider->getValue());
-        waveFormTableListBox->updateContent();
-
-        //[/UserSliderCode_zoomSlider]
-    }
-
-    //[UsersliderValueChanged_Post]
-    //[/UsersliderValueChanged_Post]
-}
-
 void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
 {
     //[UserbuttonClicked_Pre]
@@ -185,7 +149,7 @@ void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
     {
         //[UserButtonCode_zoomOutButton] -- add your button handler code here..
         auto zoom = waveFormTableListBoxModel->zoomOut();
-        
+
         auto width = waveform__background->getWidth() * zoom;
         waveFormTableListBox->getHeader().setColumnWidth(1, width);
         //[/UserButtonCode_zoomOutButton]
@@ -194,7 +158,7 @@ void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
     {
         //[UserButtonCode_zoomInButton] -- add your button handler code here..
         auto zoom = waveFormTableListBoxModel->zoomIn();
-        
+
         auto width = waveform__background->getWidth() * zoom;
         waveFormTableListBox->getHeader().setColumnWidth(1, width);
         //[/UserButtonCode_zoomInButton]
@@ -297,21 +261,16 @@ BEGIN_JUCER_METADATA
     <METHOD name="filesDropped (const juce::StringArray&amp; filenames, int mouseX, int mouseY)"/>
   </METHODS>
   <BACKGROUND backgroundColour="ff7b7c7d"/>
-  <SLIDER name="new slider" id="d8bc4db2e68bdf68" memberName="zoomSlider"
-          virtualName="" explicitFocusOrder="0" pos="16 9Rr 192 24" min="0.0"
-          max="1.0" int="0.0" style="LinearHorizontal" textBoxPos="TextBoxLeft"
-          textBoxEditable="1" textBoxWidth="80" textBoxHeight="20" skewFactor="2.0"
-          needsCallback="1"/>
   <LABEL name="waveform background" id="3e76c9516fa31cfd" memberName="waveform__background"
-         virtualName="" explicitFocusOrder="0" pos="0 0 100% 45M" bkgCol="ff292929"
+         virtualName="" explicitFocusOrder="0" pos="0 0 100% 40M" bkgCol="ff292929"
          edTextCol="ff000000" edBkgCol="0" labelText="" editableSingleClick="0"
          editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
          fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="36"/>
   <TEXTBUTTON name="zoom out" id="74eb6ad258b2dac6" memberName="zoomOutButton"
-              virtualName="" explicitFocusOrder="0" pos="69R 33R 24 24" bgColOn="ffffffff"
+              virtualName="" explicitFocusOrder="0" pos="55R 30R 20 20" bgColOn="ffffffff"
               buttonText="-" connectedEdges="0" needsCallback="1" radioGroupId="0"/>
   <TEXTBUTTON name="zoom in" id="d0a0bea7a59bd68d" memberName="zoomInButton"
-              virtualName="" explicitFocusOrder="0" pos="37R 33R 24 24" bgColOn="ffffffff"
+              virtualName="" explicitFocusOrder="0" pos="30R 30R 20 20" bgColOn="ffffffff"
               buttonText="+" connectedEdges="0" needsCallback="1" radioGroupId="0"/>
 </JUCER_COMPONENT>
 

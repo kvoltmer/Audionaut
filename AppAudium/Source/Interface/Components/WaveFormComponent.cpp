@@ -27,6 +27,7 @@ WaveFormComponent::WaveFormComponent (AudioTransportSource& source, ScrollBar& s
 {
     audioResource = nullptr;
 
+    // not needed
     scrollbar.addListener (this);
 
     currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
@@ -40,6 +41,7 @@ WaveFormComponent::WaveFormComponent (AudioTransportSource& source, ScrollBar& s
 
 WaveFormComponent::~WaveFormComponent()
 {
+    // not needed
     scrollbar.removeListener (this);
  
     if (audioResource != nullptr)
@@ -53,15 +55,15 @@ void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> audioRe
     this->audioResource = audioResource;
     audioResource->getThumbnail().addChangeListener (this);
 
-    Range<double> newRange (0.0, audioResource->getTotalLengthMax());
-    setTotalRangeInSeconds (newRange);
+    updateTotalLength();
 
     startTimerHz (40);
 }
 
-URL WaveFormComponent::getLastDroppedFile() const noexcept
+void WaveFormComponent::updateTotalLength()
 {
-    return lastFileDropped;
+    Range<double> newRange (0.0, audioResource->getTotalLengthMax());
+    setTotalRangeInSeconds (newRange);
 }
 
 void WaveFormComponent::setTotalRangeInSeconds (Range<double> newRange)
@@ -70,6 +72,11 @@ void WaveFormComponent::setTotalRangeInSeconds (Range<double> newRange)
 
     updateCursorPosition();
     repaint();
+}
+
+URL WaveFormComponent::getLastDroppedFile() const noexcept
+{
+    return lastFileDropped;
 }
 
 void WaveFormComponent::scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart)
