@@ -84,7 +84,7 @@ void WaveFormComponent::paint (Graphics& g)
 #if 1 /// visible range only
         
         // the visible range is the scrollbar's range
-        auto visibleRange = zoomHandler->getHorizontalScrollBar()->getCurrentRange();
+        auto visibleRange = zoomHandler->getCurrentRange();
         
         // adjust the drawing area
         thumbArea.setX(visibleRange.getStart());

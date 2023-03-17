@@ -27,7 +27,7 @@ public:
     
     void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
     
-    juce::ScrollBar* getHorizontalScrollBar() const { return scrollbar; }
+    Range<double> getCurrentRange() const noexcept;
     
     void updateTotalLength();
     
