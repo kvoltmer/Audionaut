@@ -33,15 +33,26 @@ double ZoomHandler::zoomOut()
     return zoomFactor;
 }
 
+Range<double> ZoomHandler::getVisibleRange() const noexcept
+{
+    return scrollbar->getCurrentRange();
+}
+
+Range<double> ZoomHandler::getVisibleRangeInSeconds() const noexcept
+{
+    // the visible range is the scrollbar's range
+    auto visibleRange = getVisibleRange();
+    
+    // convert pixels to seconds (drawChannels expects start and end in seconds)
+    return Range<double> (xToTime(visibleRange.getStart()), xToTime(visibleRange.getEnd()));
+}
+
 void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
 {
     scrollbar = thescrollbar;
 }
 
-Range<double> ZoomHandler::getCurrentRange() const noexcept
-{
-    return scrollbar->getCurrentRange();
-}
+
 
 void ZoomHandler::updateTotalLength()
 {
