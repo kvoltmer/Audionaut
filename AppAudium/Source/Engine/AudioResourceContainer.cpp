@@ -10,7 +10,7 @@
 
 #include "AudioResourceContainer.h"
 
-std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
+static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
 {
    #if JUCE_ANDROID
     if (auto doc = AndroidDocument::fromDocument (url))
