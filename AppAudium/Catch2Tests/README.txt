@@ -10,5 +10,5 @@ run:
 
 
 note:
-we use find_package(Catch2) so we assume catch2 is installed
+you can use find_package(Catch2) in case catch2 is installed
 

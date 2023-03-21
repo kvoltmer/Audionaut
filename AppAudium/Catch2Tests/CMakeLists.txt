@@ -23,9 +23,9 @@ message(STATUS "source file root at: ${SRC_PATH}")
 add_subdirectory(${SUBMODULES_PATH}/JUCE juce-bin)                    # If you've put JUCE in a subdirectory called JUCE
 
 # Catch2
-find_package(Catch2)
+#find_package(Catch2)
 
-#add_subdirectory(${SUBMODULES_PATH}/Catch2 catch2-bin)
+add_subdirectory(${SUBMODULES_PATH}/Catch2 catch2-bin)
 
 # `juce_add_console_app` adds an executable target with the name passed as the first argument
 # (ConsoleAppExample here). This target is a normal CMake target, but has a lot of extra properties
