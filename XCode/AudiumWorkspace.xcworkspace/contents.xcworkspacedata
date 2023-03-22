@@ -2,9 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:../AppAudium/Builds/MacOSX/AppAudium.xcodeproj">
+      location = "group:../AppAudium/Catch2Tests/_build/AUDIUM_TESTS.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:../AppAudium/Catch2Tests/Catch2Tests.xcodeproj">
+      location = "group:../AppAudium/Builds/MacOSX/AppAudium.xcodeproj">
    </FileRef>
 </Workspace>

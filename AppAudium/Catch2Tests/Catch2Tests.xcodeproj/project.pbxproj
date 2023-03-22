@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		BB8997E329CB52CC00F8EC8B /* FactorialTest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = FactorialTest.cpp; sourceTree = "<group>"; };
+		BB8997E429CB52CC00F8EC8B /* ZoomHandlerTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ZoomHandlerTests.cpp; sourceTree = "<group>"; };
+		BB8997E529CB52CC00F8EC8B /* JuceTest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = JuceTest.cpp; sourceTree = "<group>"; };
 		BBC2982929C9F4FC006C589F /* BuildAndRunTests.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = BuildAndRunTests.sh; sourceTree = "<group>"; };
 		BBC2982A29C9F5F8006C589F /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -17,6 +20,9 @@
 			children = (
 				BBC2982929C9F4FC006C589F /* BuildAndRunTests.sh */,
 				BBC2982A29C9F5F8006C589F /* README.txt */,
+				BB8997E329CB52CC00F8EC8B /* FactorialTest.cpp */,
+				BB8997E529CB52CC00F8EC8B /* JuceTest.cpp */,
+				BB8997E429CB52CC00F8EC8B /* ZoomHandlerTests.cpp */,
 			);
 			sourceTree = "<group>";
 		};
