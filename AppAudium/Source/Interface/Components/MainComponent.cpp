@@ -34,7 +34,8 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 {
     //[Constructor_pre] You can add your own custom stuff here..
 
-    thread.startThread();
+    this->audiumEngine = audiumEngine;
+
     //[/Constructor_pre]
 
     waveform__background.reset (new juce::Label ("waveform background",
@@ -59,6 +60,12 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     zoomInButton->addListener (this);
     zoomInButton->setColour (juce::TextButton::buttonOnColourId, juce::Colours::white);
 
+    startStopButton.reset (new juce::TextButton ("start stop"));
+    addAndMakeVisible (startStopButton.get());
+    startStopButton->setButtonText (TRANS("start"));
+    startStopButton->addListener (this);
+    startStopButton->setColour (juce::TextButton::buttonOnColourId, juce::Colours::white);
+
 
     //[UserPreSize]
     //[/UserPreSize]
@@ -71,7 +78,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer()));
     waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(audiumEngine->getAudioResourceContainer(), zoomHandler));
     waveFormTableListBox.reset(new WaveFormTableListBox("waveform table", waveFormTableListBoxModel.get()));
-    
+
     zoomHandler->setHorizontalScrollBar(&waveFormTableListBox->getHorizontalScrollBar());
 
     waveFormTableListBox->setHeaderHeight(0);
@@ -81,9 +88,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     waveFormTableListBox->setBounds(waveform__background->getBounds());
     zoomHandler->setWidth(waveform__background->getWidth());
     waveFormTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
-
-    audioDeviceManager.addAudioCallback (&audioSourcePlayer);
-    audioSourcePlayer.setSource (&transportSource);
+    
     //[/Constructor]
 }
 
@@ -95,13 +100,10 @@ MainComponent::~MainComponent()
     waveform__background = nullptr;
     zoomOutButton = nullptr;
     zoomInButton = nullptr;
+    startStopButton = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
-    transportSource  .setSource (nullptr);
-    audioSourcePlayer.setSource (nullptr);
-
-    audioDeviceManager.removeAudioCallback (&audioSourcePlayer);
 
     //[/Destructor]
 }
@@ -126,6 +128,7 @@ void MainComponent::resized()
     waveform__background->setBounds (0, 0, proportionOfWidth (1.0000f), getHeight() - 40);
     zoomOutButton->setBounds (getWidth() - 55, getHeight() - 30, 20, 20);
     zoomInButton->setBounds (getWidth() - 30, getHeight() - 30, 20, 20);
+    startStopButton->setBounds (10, getHeight() - 30, 40, 20);
     //[UserResized] Add your own custom resize handling here..
     if (waveFormTableListBox != nullptr)
     {
@@ -157,6 +160,22 @@ void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
         zoomHandler->setWidth(width);
         //[/UserButtonCode_zoomInButton]
     }
+    else if (buttonThatWasClicked == startStopButton.get())
+    {
+        //[UserButtonCode_startStopButton] -- add your button handler code here..
+        if (startStopButton->getButtonText() == String("start"))
+        {
+            audiumEngine->getAudioResourceContainer()->start();
+            startStopButton->setButtonText("stop");
+        }
+        else if (startStopButton->getButtonText() == String("stop"))
+        {
+            audiumEngine->getAudioResourceContainer()->stop();
+            startStopButton->setButtonText("start");
+        }
+        
+        //[/UserButtonCode_startStopButton]
+    }
 
     //[UserbuttonClicked_Post]
     //[/UserbuttonClicked_Post]
@@ -185,43 +204,10 @@ void MainComponent::changeListenerCallback (ChangeBroadcaster* source)
 
 void MainComponent::showAudioResource (URL resource)
 {
-    if (loadURLIntoTransport (resource))
-        currentAudioFile = std::move (resource);
-
-    //zoomSlider.setValue (0, dontSendNotification);
 }
 
 bool MainComponent::loadURLIntoTransport (const URL& audioURL)
 {
-    // unload the previous file source and delete it..
-    /// TODO:
-//    transportSource.stop();
-//    transportSource.setSource (nullptr);
-//    currentAudioFileSource.reset();
-//
-//    const auto source = makeInputSource (audioURL);
-//
-//    if (source == nullptr)
-//        return false;
-//
-//    auto stream = rawToUniquePtr (source->createInputStream());
-//
-//    if (stream == nullptr)
-//        return false;
-//
-//    auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream)));
-//
-//    if (reader == nullptr)
-//        return false;
-//
-//    currentAudioFileSource = std::make_unique<AudioFormatReaderSource> (reader.release(), true);
-//
-//    // ..and plug it into our transport source
-//    transportSource.setSource (currentAudioFileSource.get(),
-//                               32768,                   // tells it to buffer this many samples ahead
-//                               &thread,                 // this is the background thread to use for reading-ahead
-//                               currentAudioFileSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
-
     return true;
 }
 
@@ -264,6 +250,9 @@ BEGIN_JUCER_METADATA
   <TEXTBUTTON name="zoom in" id="d0a0bea7a59bd68d" memberName="zoomInButton"
               virtualName="" explicitFocusOrder="0" pos="30R 30R 20 20" bgColOn="ffffffff"
               buttonText="+" connectedEdges="0" needsCallback="1" radioGroupId="0"/>
+  <TEXTBUTTON name="start stop" id="9fa553b12148ec1a" memberName="startStopButton"
+              virtualName="" explicitFocusOrder="0" pos="10 30R 40 20" bgColOn="ffffffff"
+              buttonText="start" connectedEdges="0" needsCallback="1" radioGroupId="0"/>
 </JUCER_COMPONENT>
 
 END_JUCER_METADATA

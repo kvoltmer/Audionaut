@@ -9,6 +9,7 @@
 */
 
 #include "AudioResourceContainer.h"
+#include "AudioPlayer.h"
 
 static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
 {
@@ -28,6 +29,12 @@ static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL&
 AudioResourceContainer::AudioResourceContainer()
 {
     formatManager.registerBasicFormats();
+    thread.startThread();
+    
+    /** Resets everything to a default device setup, clearing any stored settings. */
+    auto result = audioDeviceManager.initialiseWithDefaultDevices (0, 2);
+    std::cout << result.toStdString() << std::endl;
+    //audioDeviceManager.playTestSound();
 }
 
 
@@ -35,9 +42,10 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 {
     if (auto inputSource = makeAudioInputSource (url))
     {
-        auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, url, formatManager));
+        auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(audioDeviceManager, inputSource.get(), formatManager, &thread));
+        auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, inputSource.get(), formatManager, audioPlayer));
         audioResources.push_back(audioResource);
-        audioResource->getThumbnail().setSource (inputSource.release());
+        inputSource.release();
         return audioResource;
     }
     
@@ -55,3 +63,18 @@ double AudioResourceContainer::getTotalLengthMax() const
     return length;
 }
 
+void AudioResourceContainer::start()
+{
+    for (auto & element : audioResources)
+    {
+        element->start();
+    }
+}
+
+void AudioResourceContainer::stop()
+{
+    for (auto & element : audioResources)
+    {
+        element->stop();
+    }
+}

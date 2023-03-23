@@ -32,7 +32,6 @@ void WaveFormTableListBoxModel::paintRowBackground (juce::Graphics& g,
                                  int width, int height,
                                  bool rowIsSelected)
 {
-    g.fillAll (juce::Colour (0x00000000));
 }
 
 void WaveFormTableListBoxModel::paintCell (juce::Graphics&,

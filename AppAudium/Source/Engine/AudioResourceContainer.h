@@ -29,11 +29,22 @@ public:
     /// returns the maximum length of all audio resources
     double getTotalLengthMax() const;
     
+    void start();
+    
+    void stop();
+    
 private:
     
     std::vector<std::shared_ptr<AudioResource>> audioResources;
     
+    /// TODO: find a proper home for this
     juce::AudioFormatManager formatManager;
+    
+    /// TODO: find a proper home for this
+    juce::AudioDeviceManager audioDeviceManager;
+    
+    /// TODO: find a proper home for this
+    juce::TimeSliceThread thread  { "audio file read ahead" };
     
     
     //==============================================================================
