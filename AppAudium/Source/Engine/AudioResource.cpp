@@ -10,13 +10,17 @@
 
 #include "AudioResource.h"
 #include "AudioResourceContainer.h"
+#include "AudioPlayer.h"
+
 AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
-                             juce::URL resource,
-                             juce::AudioFormatManager& formatManager) :
+                             juce::InputSource* inputSource,
+                             juce::AudioFormatManager& formatManager,
+                             std::shared_ptr<AudioPlayer> audioPlayer) :
     audioResourceContainer(audioResourceContainer),
-    resource(resource),
-    thumbnail (4096, formatManager, thumbnailCache)
+    thumbnail (4096, formatManager, thumbnailCache),
+    audioPlayer(audioPlayer)
 {
+    thumbnail.setSource(inputSource);
 }
 
 AudioResource::~AudioResource()
@@ -27,4 +31,14 @@ AudioResource::~AudioResource()
 double AudioResource::getTotalLengthMax() const
 {
     return audioResourceContainer.getTotalLengthMax();
+}
+
+void AudioResource::start()
+{
+    audioPlayer->start();
+}
+
+void AudioResource::stop()
+{
+    audioPlayer->stop();
 }

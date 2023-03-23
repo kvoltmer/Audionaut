@@ -67,19 +67,12 @@ public:
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
-    
+
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::unique_ptr<TableListBox> waveFormTableListBox;
     std::unique_ptr<WaveFormTableListBoxModel> waveFormTableListBoxModel;
 
-    TimeSliceThread thread  { "audio file preview" };
-
-    AudioDeviceManager audioDeviceManager;
-
-    URL currentAudioFile;
-    AudioSourcePlayer audioSourcePlayer;
-    AudioTransportSource transportSource;
-    std::unique_ptr<AudioFormatReaderSource> currentAudioFileSource;
+    std::shared_ptr<AudiumEngine> audiumEngine;
 
     //[/UserVariables]
 
@@ -87,6 +80,7 @@ private:
     std::unique_ptr<juce::Label> waveform__background;
     std::unique_ptr<juce::TextButton> zoomOutButton;
     std::unique_ptr<juce::TextButton> zoomInButton;
+    std::unique_ptr<juce::TextButton> startStopButton;
 
 
     //==============================================================================
