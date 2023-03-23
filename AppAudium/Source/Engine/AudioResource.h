@@ -37,6 +37,7 @@ public:
     
     void stop();
 
+    juce::AudioTransportSource* getAudioTransportSource();
 
 private:
 

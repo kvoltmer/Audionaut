@@ -49,7 +49,7 @@ juce::Component* WaveFormTableListBoxModel::refreshComponentForCell (int rowNumb
     {
         if (existingComponentToUpdate == nullptr)
         {
-            auto component = new WaveFormComponent(transportSource, zoomHandler);
+            auto component = new WaveFormComponent(zoomHandler);
             component->setAudioResource(audioResourceContainer->getAudioResource(rowNumber));
             zoomHandler->updateTotalLength();
             return component;

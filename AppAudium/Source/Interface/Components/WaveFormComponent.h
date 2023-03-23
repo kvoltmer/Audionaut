@@ -30,7 +30,7 @@ class WaveFormComponent  : public Component,
                            private Timer
 {
 public:
-    WaveFormComponent (AudioTransportSource& source, std::shared_ptr<ZoomHandler> zoomHandler);
+    WaveFormComponent (std::shared_ptr<ZoomHandler> zoomHandler);
 
     ~WaveFormComponent() override;
     
@@ -60,7 +60,6 @@ public:
 
     
 private:
-    AudioTransportSource& transportSource;
 
     std::shared_ptr<ZoomHandler> zoomHandler;
 
@@ -68,6 +67,8 @@ private:
 
     
     bool isFollowingTransport = false;
+    
+    /// TODO: remove this
     URL lastFileDropped;
 
     DrawableRectangle currentPositionMarker;
@@ -76,7 +77,7 @@ private:
 
     bool canMoveTransport() const noexcept
     {
-        return ! (isFollowingTransport && transportSource.isPlaying());
+        return ! (isFollowingTransport && audioResource->getAudioTransportSource()->isPlaying());
     }
 
     void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override;
@@ -95,9 +96,12 @@ private:
 
     void updateCursorPosition()
     {
-        currentPositionMarker.setVisible (transportSource.isPlaying() || isMouseButtonDown());
+        currentPositionMarker.setVisible (audioResource->getAudioTransportSource()->isPlaying() || isMouseButtonDown());
 
-//        currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
-//                                                              1.5f, (float) (getHeight() /*  - scrollbar.getHeight()*/)));
+        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX (audioResource->getAudioTransportSource()->getCurrentPosition()) - 0.75f, 0,
+                                                              1.5f, (float) (getHeight() /*  - scrollbar.getHeight()*/)));
+        
+    
     }
+    
 };
