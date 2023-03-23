@@ -21,8 +21,7 @@ static const uint32 waveFormColourScheme[numWaveFormColours] = {
 };
 
 
-WaveFormComponent::WaveFormComponent (AudioTransportSource& source, std::shared_ptr<ZoomHandler> zoomHandler) :
-    transportSource (source),
+WaveFormComponent::WaveFormComponent (std::shared_ptr<ZoomHandler> zoomHandler) :
     zoomHandler(zoomHandler)
 {
     audioResource = nullptr;
@@ -60,7 +59,7 @@ URL WaveFormComponent::getLastDroppedFile() const noexcept
 
 void WaveFormComponent::scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart)
 {
-    if (! (isFollowingTransport && transportSource.isPlaying()))
+    if (! (isFollowingTransport && audioResource->getAudioTransportSource()->isPlaying()))
     {
     }
 }
@@ -141,12 +140,12 @@ void WaveFormComponent::mouseDown (const MouseEvent& e)
 void WaveFormComponent::mouseDrag (const MouseEvent& e)
 {
     if (canMoveTransport())
-        transportSource.setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
+        audioResource->getAudioTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
 }
 
 void WaveFormComponent::mouseUp (const MouseEvent&)
 {
-    transportSource.start();
+    //audioResource->getAudioTransportSource()->start();
 }
 
 void WaveFormComponent::mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel)

@@ -49,8 +49,5 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
     std::shared_ptr<ZoomHandler> zoomHandler;
-        
-    /// TODO: remove this...
-    juce::AudioTransportSource transportSource;
 
 };

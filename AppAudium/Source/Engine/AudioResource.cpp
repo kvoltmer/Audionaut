@@ -42,3 +42,8 @@ void AudioResource::stop()
 {
     audioPlayer->stop();
 }
+
+juce::AudioTransportSource* AudioResource::getAudioTransportSource()
+{
+    return audioPlayer->getAudioTransportSource();
+}

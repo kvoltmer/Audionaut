@@ -29,12 +29,13 @@ public:
     
     void stop();
     
+    juce::AudioTransportSource* getAudioTransportSource() { return &audioTransportSource; }
+    
 private:
     juce::AudioSourcePlayer audioSourcePlayer;
     juce::AudioTransportSource audioTransportSource;
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     
     juce::AudioDeviceManager& audioDeviceManager;
-    
 
 };
