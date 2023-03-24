@@ -78,3 +78,10 @@ void AudioResourceContainer::stop()
         element->stop();
     }
 }
+
+void AudioResourceContainer::playStop()
+{
+    isPlaying ? stop() : start();
+    isPlaying = !isPlaying;
+}
+

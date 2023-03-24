@@ -33,6 +33,8 @@ public:
     
     void stop();
     
+    void playStop();
+    
 private:
     
     std::vector<std::shared_ptr<AudioResource>> audioResources;
@@ -46,6 +48,8 @@ private:
     /// TODO: find a proper home for this
     juce::TimeSliceThread thread  { "audio file read ahead" };
     
+    /// TODO: find a proper home for this
+    bool isPlaying = false;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceContainer)
