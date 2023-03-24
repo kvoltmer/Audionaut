@@ -19,7 +19,7 @@
     This class implements the desktop window that contains an instance of
     our MainComponent class.
 */
-class AudiumMainWindow    : public juce::DocumentWindow
+class AudiumMainWindow    : public juce::DocumentWindow, public juce::ApplicationCommandTarget
 {
 public:
     AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine);
@@ -34,6 +34,13 @@ public:
     */
     
     std::shared_ptr<AudiumEngine> getEngine() const { return audiumEngine; }
+    
+    
+    //==============================================================================
+    ApplicationCommandTarget* getNextCommandTarget() override;
+    void getAllCommands (Array <CommandID>& commands) override;
+    void getCommandInfo (CommandID commandID, ApplicationCommandInfo& result) override;
+    bool perform (const InvocationInfo& info) override;
     
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)

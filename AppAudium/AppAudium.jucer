@@ -5,6 +5,8 @@
   <MAINGROUP id="HQG80L" name="AppAudium">
     <GROUP id="{69119DF9-CC06-2A24-1C4A-CFAF02C4B8BB}" name="Source">
       <GROUP id="{1D37A931-400E-3356-8013-12CBF3C1C146}" name="Application">
+        <FILE id="b3jfES" name="AudiumCommandIDs.h" compile="0" resource="0"
+              file="Source/Application/AudiumCommandIDs.h"/>
         <FILE id="w7HBCe" name="AudiumApplication.cpp" compile="1" resource="0"
               file="Source/Application/AudiumApplication.cpp"/>
         <FILE id="HVvYus" name="AudiumApplication.h" compile="0" resource="0"
@@ -14,7 +16,6 @@
         <FILE id="fEnXvH" name="AudiumMainWindow.h" compile="0" resource="0"
               file="Source/Application/AudiumMainWindow.h"/>
         <FILE id="aJEqT2" name="Main.cpp" compile="1" resource="0" file="Source/Application/Main.cpp"/>
-        <FILE id="YhcSH2" name="MainWindow.h" compile="0" resource="0" file="Source/Application/MainWindow.h"/>
       </GROUP>
       <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
         <FILE id="DdTX0t" name="EngineAccess.cpp" compile="1" resource="0"
