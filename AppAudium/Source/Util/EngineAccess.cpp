@@ -14,7 +14,7 @@ std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component)
 {
     auto topLevelComponent = component->getTopLevelComponent();
     jassert(topLevelComponent);
-    auto mainWindow = dynamic_cast<MainWindow*>(topLevelComponent);
+    auto mainWindow = dynamic_cast<AudiumMainWindow*>(topLevelComponent);
     jassert(mainWindow);
     return mainWindow->getEngine();
 }

@@ -4,12 +4,23 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="HQG80L" name="AppAudium">
     <GROUP id="{69119DF9-CC06-2A24-1C4A-CFAF02C4B8BB}" name="Source">
+      <GROUP id="{1D37A931-400E-3356-8013-12CBF3C1C146}" name="Application">
+        <FILE id="w7HBCe" name="AudiumApplication.cpp" compile="1" resource="0"
+              file="Source/Application/AudiumApplication.cpp"/>
+        <FILE id="HVvYus" name="AudiumApplication.h" compile="0" resource="0"
+              file="Source/Application/AudiumApplication.h"/>
+        <FILE id="jQr6Jb" name="AudiumMainWindow.cpp" compile="1" resource="0"
+              file="Source/Application/AudiumMainWindow.cpp"/>
+        <FILE id="fEnXvH" name="AudiumMainWindow.h" compile="0" resource="0"
+              file="Source/Application/AudiumMainWindow.h"/>
+        <FILE id="aJEqT2" name="Main.cpp" compile="1" resource="0" file="Source/Application/Main.cpp"/>
+        <FILE id="YhcSH2" name="MainWindow.h" compile="0" resource="0" file="Source/Application/MainWindow.h"/>
+      </GROUP>
       <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
         <FILE id="DdTX0t" name="EngineAccess.cpp" compile="1" resource="0"
               file="Source/Util/EngineAccess.cpp"/>
         <FILE id="ynCVR0" name="EngineAccess.h" compile="0" resource="0" file="Source/Util/EngineAccess.h"/>
       </GROUP>
-      <FILE id="nq90j1" name="MainWindow.h" compile="0" resource="0" file="Source/MainWindow.h"/>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
         <FILE id="xDqbFz" name="AudioPlayer.cpp" compile="1" resource="0" file="Source/Engine/AudioPlayer.cpp"/>
         <FILE id="bN94Ur" name="AudioPlayer.h" compile="0" resource="0" file="Source/Engine/AudioPlayer.h"/>
@@ -24,7 +35,6 @@
         <FILE id="ycq2G7" name="AudioResourceContainer.h" compile="0" resource="0"
               file="Source/Engine/AudioResourceContainer.h"/>
       </GROUP>
-      <FILE id="GMUyKK" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
       <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
         <GROUP id="{4C550296-51BB-D3A6-E49C-7CC8B0E75CC8}" name="Handlers">
           <FILE id="R9tlys" name="ZoomHandler.cpp" compile="1" resource="0" file="Source/Interface/Handlers/ZoomHandler.cpp"/>
