@@ -14,5 +14,7 @@
 #include "Engine/AudiumEngine.h"
 
 /// helper to access the engine from anywhere in UI code
-std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component);
 
+#if 0
+std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component);
+#endif

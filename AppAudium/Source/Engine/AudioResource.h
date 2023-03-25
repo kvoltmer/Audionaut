@@ -38,6 +38,8 @@ public:
     void stop();
 
     juce::AudioTransportSource* getAudioTransportSource();
+    
+    bool isThumbnailFullyLoaded() const { return thumbnail.isFullyLoaded(); }
 
 private:
 

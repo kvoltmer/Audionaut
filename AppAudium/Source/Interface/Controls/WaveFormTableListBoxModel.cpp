@@ -51,14 +51,12 @@ juce::Component* WaveFormTableListBoxModel::refreshComponentForCell (int rowNumb
         {
             auto component = new WaveFormComponent(zoomHandler);
             component->setAudioResource(audioResourceContainer->getAudioResource(rowNumber));
-            zoomHandler->updateTotalLength();
             return component;
         }
         else
         {
             auto component = dynamic_cast<WaveFormComponent*>(existingComponentToUpdate);
             jassert(component);
-            zoomHandler->updateTotalLength();
             return component;
         }
     }

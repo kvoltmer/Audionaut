@@ -10,6 +10,7 @@
 
 #include "Util/EngineAccess.h"
 
+#if 0
 std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component)
 {
     auto topLevelComponent = component->getTopLevelComponent();
@@ -18,3 +19,4 @@ std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component)
     jassert(mainWindow);
     return mainWindow->getEngine();
 }
+#endif

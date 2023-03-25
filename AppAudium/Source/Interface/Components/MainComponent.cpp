@@ -186,7 +186,7 @@ void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX
     //[UserCode_filesDropped] -- Add your code here...
 
     auto url = URL (File (filenames[0]));
-    auto resource = getAudiumEngine(this)->getAudioResourceContainer()->addAudioResource(url);
+    auto resource = audiumEngine->getAudioResourceContainer()->addAudioResource(url);
 
     waveFormTableListBox->updateContent();
 
