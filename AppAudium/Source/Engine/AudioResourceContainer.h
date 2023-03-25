@@ -20,6 +20,8 @@ class AudioResourceContainer {
 public:
     AudioResourceContainer();
     
+    void initializeAudioDevice();
+    
     std::shared_ptr<AudioResource> addAudioResource (juce::URL resource);
     
     int getAudioResourceSize() const { return (int)audioResources.size(); }

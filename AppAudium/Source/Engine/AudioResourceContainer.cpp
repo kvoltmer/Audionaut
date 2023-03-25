@@ -30,13 +30,15 @@ AudioResourceContainer::AudioResourceContainer()
 {
     formatManager.registerBasicFormats();
     thread.startThread();
-    
+
+}
+
+void AudioResourceContainer::initializeAudioDevice()
+{
     /** Resets everything to a default device setup, clearing any stored settings. */
     auto result = audioDeviceManager.initialiseWithDefaultDevices (0, 2);
     std::cout << result.toStdString() << std::endl;
-    //audioDeviceManager.playTestSound();
 }
-
 
 std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url)
 {

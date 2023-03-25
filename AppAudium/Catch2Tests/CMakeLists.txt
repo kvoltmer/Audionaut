@@ -46,6 +46,9 @@ juce_generate_juce_header(${APP_NAME})
 file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
         ${SRC_PATH}/Interface/Handlers/*.cpp
+        ${SRC_PATH}/Interface/Components/*.cpp
+        ${SRC_PATH}/Interface/Controls/*.cpp
+        ${SRC_PATH}/Util/*.cpp
         )
         
 file(GLOB SRC_TESTS

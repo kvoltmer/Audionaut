@@ -3,6 +3,10 @@
 <JUCERPROJECT id="gxtGxr" name="AppAudium" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="HQG80L" name="AppAudium">
+    <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
+      <FILE id="pY6hrq" name="README.txt" compile="0" resource="0" file="Catch2Tests/README.txt"/>
+      <FILE id="A4Cl9P" name="CMakeLists.txt" compile="0" resource="0" file="Catch2Tests/CMakeLists.txt"/>
+    </GROUP>
     <GROUP id="{69119DF9-CC06-2A24-1C4A-CFAF02C4B8BB}" name="Source">
       <GROUP id="{1D37A931-400E-3356-8013-12CBF3C1C146}" name="Application">
         <FILE id="b3jfES" name="AudiumCommandIDs.h" compile="0" resource="0"

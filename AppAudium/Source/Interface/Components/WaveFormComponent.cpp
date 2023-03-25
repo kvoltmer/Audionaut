@@ -46,6 +46,7 @@ WaveFormComponent::~WaveFormComponent()
 
 void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> audioResource)
 {
+    zoomHandler->updateTotalLength();
     this->audioResource = audioResource;
     audioResource->getThumbnail().addChangeListener (this);
 

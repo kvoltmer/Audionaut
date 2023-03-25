@@ -13,6 +13,7 @@
 ZoomHandler::ZoomHandler(std::shared_ptr<AudioResourceContainer> container) :
     audioResourceContainer(container),
     zoomFactor(1.0),
+    scrollbar(nullptr),
     width(0)
 {
 }
@@ -35,6 +36,7 @@ double ZoomHandler::zoomOut()
 
 Range<double> ZoomHandler::getVisibleRange() const noexcept
 {
+    jassert(scrollbar);
     return scrollbar->getCurrentRange();
 }
 

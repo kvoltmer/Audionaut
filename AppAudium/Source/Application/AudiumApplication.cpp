@@ -34,6 +34,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
 
     /// TODO: create factory class
     auto container = std::shared_ptr<AudioResourceContainer>(new AudioResourceContainer());
+    container->initializeAudioDevice();
     audiumEngine.reset(new AudiumEngine(container));
     
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
