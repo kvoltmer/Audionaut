@@ -50,6 +50,8 @@ private:
     /// TODO: find a proper home for this
     juce::TimeSliceThread thread  { "audio file read ahead" };
     
+    juce::AudioThumbnailCache thumbnailCache  { 5 };
+    
     /// TODO: find a proper home for this
     bool isPlaying = false;
     

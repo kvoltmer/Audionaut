@@ -87,8 +87,8 @@ void WaveFormComponent::paint (Graphics& g)
         auto visibleRange = zoomHandler->getVisibleRange();
         
         // adjust the drawing area
-        thumbArea.setX(visibleRange.getStart());
-        thumbArea.setWidth(visibleRange.getLength());
+        thumbArea.setX(static_cast<int>(visibleRange.getStart()));
+        thumbArea.setWidth(static_cast<int>(visibleRange.getLength()));
                        
         
         auto rangeInSeconds = zoomHandler->getVisibleRangeInSeconds();

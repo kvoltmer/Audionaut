@@ -45,7 +45,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     if (auto inputSource = makeAudioInputSource (url))
     {
         auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(audioDeviceManager, inputSource.get(), formatManager, &thread));
-        auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, inputSource.get(), formatManager, audioPlayer));
+        auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, inputSource.get(), formatManager, audioPlayer, thumbnailCache));
         audioResources.push_back(audioResource);
         inputSource.release();
         return audioResource;

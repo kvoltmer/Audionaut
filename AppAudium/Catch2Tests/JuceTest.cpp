@@ -17,7 +17,7 @@ static bool writeComponentImageToFile (const File& file, Component& comp, Rectan
     return false;
 }
 
-TEST_CASE( "resource container", "[AudioResourceContainer]" ) {
+TEST_CASE( "waveform component test", "[WaveFormComponent]" ) {
     
     juce::MessageManager::getInstance(); // Force the MessageManager singleton to create an instance
     juce::MessageManagerLock mmLock(Thread::getCurrentThread());
