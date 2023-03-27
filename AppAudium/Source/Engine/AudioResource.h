@@ -25,7 +25,8 @@ public:
     AudioResource(AudioResourceContainer& audioResourceContainer,
                   juce::InputSource* inputSource,
                   juce::AudioFormatManager& formatManager,
-                  std::shared_ptr<AudioPlayer> audioPlayer);
+                  std::shared_ptr<AudioPlayer> audioPlayer,
+                  juce::AudioThumbnailCache& thumbnailCache);
     ~AudioResource();
     
     juce::AudioThumbnail& getThumbnail() { return thumbnail; }
@@ -47,7 +48,6 @@ private:
     
     
     /// TODO: maybe capsulate?
-    juce::AudioThumbnailCache thumbnailCache  { 5 };
     juce::AudioThumbnail thumbnail;
     
     std::shared_ptr<AudioPlayer> audioPlayer;

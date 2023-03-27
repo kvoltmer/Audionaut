@@ -15,7 +15,8 @@
 AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
                              juce::InputSource* inputSource,
                              juce::AudioFormatManager& formatManager,
-                             std::shared_ptr<AudioPlayer> audioPlayer) :
+                             std::shared_ptr<AudioPlayer> audioPlayer,
+                             juce::AudioThumbnailCache& thumbnailCache) :
     audioResourceContainer(audioResourceContainer),
     thumbnail (4096, formatManager, thumbnailCache),
     audioPlayer(audioPlayer)
