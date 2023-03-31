@@ -13,11 +13,13 @@
 #include "AudioPlayer.h"
 
 AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
+                             juce::URL url,
                              juce::InputSource* inputSource,
                              juce::AudioFormatManager& formatManager,
                              std::shared_ptr<AudioPlayer> audioPlayer,
                              juce::AudioThumbnailCache& thumbnailCache) :
     owner(audioResourceContainer),
+    url(url),
     thumbnail (4096, formatManager, thumbnailCache),
     audioPlayer(audioPlayer)
 {
@@ -47,4 +49,9 @@ void AudioResource::stop()
 juce::AudioTransportSource* AudioResource::getAudioTransportSource()
 {
     return audioPlayer->getAudioTransportSource();
+}
+
+juce::String AudioResource::getFileName() const
+{
+    return url.getLocalFile().getFileNameWithoutExtension();
 }

@@ -23,6 +23,7 @@ class AudioResource {
     
 public:
     AudioResource(AudioResourceContainer& audioResourceContainer,
+                  juce::URL url,
                   juce::InputSource* inputSource,
                   juce::AudioFormatManager& formatManager,
                   std::shared_ptr<AudioPlayer> audioPlayer,
@@ -42,9 +43,13 @@ public:
     
     bool isThumbnailFullyLoaded() const { return thumbnail.isFullyLoaded(); }
 
+    juce::String getFileName() const;
+    
 private:
 
     AudioResourceContainer& owner;
+    
+    juce::URL url;
     
     juce::AudioThumbnail thumbnail;
     
