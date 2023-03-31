@@ -17,7 +17,7 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
                              juce::AudioFormatManager& formatManager,
                              std::shared_ptr<AudioPlayer> audioPlayer,
                              juce::AudioThumbnailCache& thumbnailCache) :
-    audioResourceContainer(audioResourceContainer),
+    owner(audioResourceContainer),
     thumbnail (4096, formatManager, thumbnailCache),
     audioPlayer(audioPlayer)
 {
@@ -31,7 +31,7 @@ AudioResource::~AudioResource()
 
 double AudioResource::getTotalLengthMax() const
 {
-    return audioResourceContainer.getTotalLengthMax();
+    return owner.getTotalLengthMax();
 }
 
 void AudioResource::start()

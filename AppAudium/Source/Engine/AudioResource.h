@@ -44,10 +44,8 @@ public:
 
 private:
 
-    AudioResourceContainer& audioResourceContainer;
+    AudioResourceContainer& owner;
     
-    
-    /// TODO: maybe capsulate?
     juce::AudioThumbnail thumbnail;
     
     std::shared_ptr<AudioPlayer> audioPlayer;
