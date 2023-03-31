@@ -147,7 +147,6 @@ void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
     {
         //[UserButtonCode_zoomOutButton] -- add your button handler code here..
         auto width = waveform__background->getWidth() * zoomHandler->zoomOut();
-        //waveFormTableListBox->setBounds(waveform__background->getX(), waveform__background->getY(), width, waveform__background->getHeight());
         waveFormTableListBox->setMinimumContentWidth(width);
         zoomHandler->setWidth(width);
         //[/UserButtonCode_zoomOutButton]
@@ -156,7 +155,6 @@ void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
     {
         //[UserButtonCode_zoomInButton] -- add your button handler code here..
         auto width = waveform__background->getWidth() * zoomHandler->zoomIn();
-        //waveFormTableListBox->setBounds(waveform__background->getX(), waveform__background->getY(), width, waveform__background->getHeight());
         waveFormTableListBox->setMinimumContentWidth(width);
         zoomHandler->setWidth(width);
         //[/UserButtonCode_zoomInButton]
