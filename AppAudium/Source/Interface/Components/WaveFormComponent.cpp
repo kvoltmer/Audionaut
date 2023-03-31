@@ -104,12 +104,34 @@ void WaveFormComponent::paint (Graphics& g)
         audioResource->getThumbnail().drawChannels (g, thumbArea,
                                                     totalRange.getStart(), totalRange.getEnd(), 1.0f);
 #endif
+        
+        /// draw filename label
+        /// offset is x = 5, y = 5
+        /// background is expanded by 2 pixels
+        
+        g.setFont (12.0f);
+        
+        Rectangle<int> bonds(zoomHandler->getVisibleRange().getStart() + 5,
+                             5,
+                             g.getCurrentFont().getStringWidth(audioResource->getFileName()),
+                             g.getCurrentFont().getHeight());
+        
+        g.setColour(Colours::black);
+        g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
+        
+        g.setColour (Colours::white);
+        g.drawFittedText (audioResource->getFileName(), bonds, Justification::topLeft, 1);
     }
     else
     {
         g.setFont (14.0f);
-        g.drawFittedText ("(Drag & drop audio files here)", getLocalBounds(), Justification::centred, 2);
+        g.drawFittedText ("audio resource not available", getLocalBounds(), Justification::centred, 2);
     }
+    
+    
+
+
+    
 }
 
 void WaveFormComponent::resized()
