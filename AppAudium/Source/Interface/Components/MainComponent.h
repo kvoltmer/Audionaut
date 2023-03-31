@@ -22,6 +22,7 @@
 //[Headers]     -- You can add your own extra header files here --
 #include <JuceHeader.h>
 #include "Interface/Controls/WaveFormTableListBoxModel.h"
+#include "Interface/Components/WaveFormTableListBox.h"
 
 using namespace juce;
 
@@ -69,7 +70,7 @@ private:
     //[UserVariables]   -- You can add your own custom variables in this section.
 
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::unique_ptr<TableListBox> waveFormTableListBox;
+    std::unique_ptr<WaveFormTableListBox> waveFormTableListBox;
     std::unique_ptr<WaveFormTableListBoxModel> waveFormTableListBoxModel;
 
     std::shared_ptr<AudiumEngine> audiumEngine;

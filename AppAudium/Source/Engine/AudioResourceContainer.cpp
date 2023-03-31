@@ -44,6 +44,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 {
     if (auto inputSource = makeAudioInputSource (url))
     {
+        /// TODO: create factory
         auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(audioDeviceManager, inputSource.get(), formatManager, &thread));
         auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, url, inputSource.get(), formatManager, audioPlayer, thumbnailCache));
         audioResources.push_back(audioResource);
@@ -53,6 +54,16 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     
     return nullptr;
 }
+
+std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int index) const
+{
+    if (index < getAudioResourceSize())
+    {
+        return audioResources[(std::size_t)index];
+    }
+    return nullptr;
+}
+
 
 double AudioResourceContainer::getTotalLengthMax() const
 {

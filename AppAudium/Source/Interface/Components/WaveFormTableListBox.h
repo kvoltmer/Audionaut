@@ -15,14 +15,12 @@
 //==============================================================================
 /*
 */
-class WaveFormTableListBox  : public juce::TableListBox
+class WaveFormTableListBox  : public juce::ListBox
 {
 public:
     WaveFormTableListBox (const juce::String& componentName = juce::String(),
-                  juce::TableListBoxModel* model = nullptr);
+                  juce::ListBoxModel* model = nullptr);
     ~WaveFormTableListBox() override;
-    
-    void listWasScrolled() override;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormTableListBox)
