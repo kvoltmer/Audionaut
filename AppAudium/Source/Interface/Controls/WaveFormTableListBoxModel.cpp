@@ -27,39 +27,35 @@ int WaveFormTableListBoxModel::getNumRows()
     return audioResourceContainer->getAudioResourceSize();
 }
 
-void WaveFormTableListBoxModel::paintRowBackground (juce::Graphics& g,
-                                 int rowNumber,
-                                 int width, int height,
-                                 bool rowIsSelected)
-{
-}
-
-void WaveFormTableListBoxModel::paintCell (juce::Graphics&,
-                        int rowNumber,
-                        int columnId,
+void WaveFormTableListBoxModel::paintListBoxItem ( int rowNumber,
+                        juce::Graphics& g,
                         int width, int height,
                         bool rowIsSelected)
 {
+    
 }
 
-juce::Component* WaveFormTableListBoxModel::refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
+juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumber, bool isRowSelected,
                                                                      juce::Component* existingComponentToUpdate)
 {
-    if (columnId == 1)
+
+    if (existingComponentToUpdate == nullptr)
     {
-        if (existingComponentToUpdate == nullptr)
+        auto audioResource = audioResourceContainer->getAudioResource(rowNumber);
+        if (audioResource != nullptr)
         {
             auto component = new WaveFormComponent(zoomHandler);
-            component->setAudioResource(audioResourceContainer->getAudioResource(rowNumber));
-            return component;
-        }
-        else
-        {
-            auto component = dynamic_cast<WaveFormComponent*>(existingComponentToUpdate);
-            jassert(component);
+            component->setAudioResource(audioResource);
             return component;
         }
     }
+    else
+    {
+        auto component = dynamic_cast<WaveFormComponent*>(existingComponentToUpdate);
+        jassert(component);
+        return component;
+    }
+    
     
     return nullptr;
 }

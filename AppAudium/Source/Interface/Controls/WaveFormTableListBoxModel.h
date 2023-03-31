@@ -16,7 +16,7 @@
 #include "Interface/Components/WaveFormComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 
-class WaveFormTableListBoxModel : public juce::TableListBoxModel
+class WaveFormTableListBoxModel : public juce::ListBoxModel
 {
     
     
@@ -28,22 +28,15 @@ public:
     
     int getNumRows() override;
 
-    void paintRowBackground (juce::Graphics&,
-                                     int rowNumber,
-                                     int width, int height,
-                                     bool rowIsSelected) override;
-
-    void paintCell (juce::Graphics&,
-                            int rowNumber,
-                            int columnId,
+    void paintListBoxItem ( int rowNumber,
+                            juce::Graphics& g,
                             int width, int height,
                             bool rowIsSelected) override;
-
-    juce::Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
-                                              juce::Component* existingComponentToUpdate) override;
+    
+    juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
+                                                juce::Component* existingComponentToUpdate) override;
     
         
-    
 private:
     
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;

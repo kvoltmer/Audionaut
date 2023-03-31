@@ -13,17 +13,12 @@
 
 //==============================================================================
 WaveFormTableListBox::WaveFormTableListBox (const juce::String& componentName,
-              juce::TableListBoxModel* model) :
-    juce::TableListBox(componentName, model)
+              juce::ListBoxModel* model) :
+    juce::ListBox(componentName, model)
 {
-    
 }
 
 WaveFormTableListBox::~WaveFormTableListBox()
-{
-}
-
-void WaveFormTableListBox::listWasScrolled()
 {
 }
 

@@ -26,7 +26,7 @@ public:
     
     int getAudioResourceSize() const { return (int)audioResources.size(); }
     
-    std::shared_ptr<AudioResource> getAudioResource(int index) { return audioResources[(std::size_t)index]; }
+    std::shared_ptr<AudioResource> getAudioResource(int index) const;
     
     /// returns the maximum length of all audio resources
     double getTotalLengthMax() const;
