@@ -41,6 +41,12 @@
               file="Source/Engine/AudioResourceContainer.h"/>
       </GROUP>
       <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
+        <GROUP id="{5B27ED8A-CA94-0C20-47D2-019C8929A810}" name="Widgets">
+          <FILE id="SSghHx" name="audium_ListBox.cpp" compile="1" resource="0"
+                file="Source/Interface/Widgets/audium_ListBox.cpp"/>
+          <FILE id="zmkbt8" name="audium_ListBox.h" compile="0" resource="0"
+                file="Source/Interface/Widgets/audium_ListBox.h"/>
+        </GROUP>
         <GROUP id="{4C550296-51BB-D3A6-E49C-7CC8B0E75CC8}" name="Handlers">
           <FILE id="R9tlys" name="ZoomHandler.cpp" compile="1" resource="0" file="Source/Interface/Handlers/ZoomHandler.cpp"/>
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>

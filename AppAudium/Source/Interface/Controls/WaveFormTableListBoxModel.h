@@ -15,8 +15,9 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Interface/Components/WaveFormComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Widgets/audium_ListBox.h"
 
-class WaveFormTableListBoxModel : public juce::ListBoxModel
+class WaveFormTableListBoxModel : public audium::ListBoxModel
 {
     
     
@@ -35,7 +36,13 @@ public:
     
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override;
+
     
+    int getRowHeight (int rowNumber) const override;
+    
+    void selectedRowsChanged (int lastRowSelected) override;
+    
+    void deleteKeyPressed (int lastRowSelected) override;
         
 private:
     

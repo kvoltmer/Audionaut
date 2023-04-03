@@ -78,17 +78,21 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(audiumEngine->getAudioResourceContainer(), zoomHandler));
     waveFormTableListBox.reset(new WaveFormTableListBox("waveform table", waveFormTableListBoxModel.get()));
 
+    
+    
     zoomHandler->setHorizontalScrollBar(&waveFormTableListBox->getHorizontalScrollBar());
 
-    
-    waveFormTableListBox->setRowHeight(200);
+
+    //waveFormTableListBox->setRowHeight(200);
+    waveFormTableListBox->setMultipleSelectionEnabled(true);
+    /// TODO: bug?
     waveFormTableListBox->setMinimumContentWidth(waveform__background->getWidth());
     waveFormTableListBox->setBounds(waveform__background->getBounds());
     waveFormTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
     addAndMakeVisible(waveFormTableListBox.get());
-    
+
     zoomHandler->setWidth(waveform__background->getWidth());
-    
+
     //[/Constructor]
 }
 
@@ -172,7 +176,7 @@ void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
             audiumEngine->getAudioResourceContainer()->stop();
             startStopButton->setButtonText("start");
         }
-        
+
         //[/UserButtonCode_startStopButton]
     }
 

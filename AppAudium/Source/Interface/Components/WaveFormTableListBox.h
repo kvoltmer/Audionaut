@@ -11,15 +11,16 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Interface/Widgets/audium_ListBox.h"
 
 //==============================================================================
 /*
 */
-class WaveFormTableListBox  : public juce::ListBox
+class WaveFormTableListBox  : public audium::ListBox
 {
 public:
     WaveFormTableListBox (const juce::String& componentName = juce::String(),
-                  juce::ListBoxModel* model = nullptr);
+                          audium::ListBoxModel* model = nullptr);
     ~WaveFormTableListBox() override;
 
 private:

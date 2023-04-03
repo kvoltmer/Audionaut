@@ -20,6 +20,7 @@
 		4389F0A70D95B391299DD65C /* CoreAudioKit.framework */ = {isa = PBXBuildFile; fileRef = 456D6880C88C5B41AA87CBB2; };
 		488B5BA2D84097998A7E56BB /* include_juce_events.mm */ = {isa = PBXBuildFile; fileRef = 0CDA913D361373B7AC9537C3; };
 		4ABF177467832242153DF416 /* Main.cpp */ = {isa = PBXBuildFile; fileRef = 6635C70632EE050E628A48F0; };
+		4AEB71E53A29D683D72A9F41 /* audium_ListBox.cpp */ = {isa = PBXBuildFile; fileRef = A96B870D734284F177524816; };
 		4CA291EE967A9CDB338E14FD /* include_juce_dsp.mm */ = {isa = PBXBuildFile; fileRef = E138ACDCC3A702D0B7A742EF; };
 		5662A06F9B1EF74F06463AAE /* WaveFormTableListBoxModel.cpp */ = {isa = PBXBuildFile; fileRef = 6DACACE5E34ECC2F3F3CDD94; };
 		591171F07F22952C7C96DA08 /* WaveFormComponent.cpp */ = {isa = PBXBuildFile; fileRef = 8F7CB431E1C1A59D06BA574D; };
@@ -70,6 +71,7 @@
 		456D6880C88C5B41AA87CBB2 /* CoreAudioKit.framework */ /* CoreAudioKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudioKit.framework; path = System/Library/Frameworks/CoreAudioKit.framework; sourceTree = SDKROOT; };
 		462481D51BD3607FCD44651D /* AudiumApplication.cpp */ /* AudiumApplication.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumApplication.cpp; path = ../../Source/Application/AudiumApplication.cpp; sourceTree = SOURCE_ROOT; };
 		5021A59AD0929868402BFD6B /* Accelerate.framework */ /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		51A9292E8F72CB69DDEC3999 /* audium_ListBox.h */ /* audium_ListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = audium_ListBox.h; path = ../../Source/Interface/Widgets/audium_ListBox.h; sourceTree = SOURCE_ROOT; };
 		520E7150F3B0BE3B50B1C93A /* AudiumEngine.cpp */ /* AudiumEngine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumEngine.cpp; path = ../../Source/Engine/AudiumEngine.cpp; sourceTree = SOURCE_ROOT; };
 		5344BD32D0ED9D07F10C2309 /* include_juce_audio_devices.mm */ /* include_juce_audio_devices.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_devices.mm; path = ../../JuceLibraryCode/include_juce_audio_devices.mm; sourceTree = SOURCE_ROOT; };
 		54BC936418EEB155207FA796 /* juce_dsp */ /* juce_dsp */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_dsp; path = ../../../Submodules/juce/modules/juce_dsp; sourceTree = SOURCE_ROOT; };
@@ -101,6 +103,7 @@
 		9C0222C44693315A9F66945C /* IOKit.framework */ /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		A224A208AE5292EA25E5E2C4 /* include_juce_core.mm */ /* include_juce_core.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_core.mm; path = ../../JuceLibraryCode/include_juce_core.mm; sourceTree = SOURCE_ROOT; };
 		A3346CAE6FB6CD785EE49D2D /* MainComponent.h */ /* MainComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MainComponent.h; path = ../../Source/Interface/Components/MainComponent.h; sourceTree = SOURCE_ROOT; };
+		A96B870D734284F177524816 /* audium_ListBox.cpp */ /* audium_ListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_ListBox.cpp; path = ../../Source/Interface/Widgets/audium_ListBox.cpp; sourceTree = SOURCE_ROOT; };
 		A9B61645C4E1D292FC719BF4 /* juce_gui_basics */ /* juce_gui_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_basics; path = ../../../Submodules/juce/modules/juce_gui_basics; sourceTree = SOURCE_ROOT; };
 		AD65FA93588D128E5669D0B8 /* WaveFormTableListBoxModel.h */ /* WaveFormTableListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormTableListBoxModel.h; path = ../../Source/Interface/Controls/WaveFormTableListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		B49AA8C79C8A8C9FCDA5A44C /* WebKit.framework */ /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
@@ -187,6 +190,15 @@
 				F6A2B10C9F67009466562221,
 			);
 			name = Source;
+			sourceTree = "<group>";
+		};
+		1397994DC312F9449DB97082 /* Widgets */ = {
+			isa = PBXGroup;
+			children = (
+				A96B870D734284F177524816,
+				51A9292E8F72CB69DDEC3999,
+			);
+			name = Widgets;
 			sourceTree = "<group>";
 		};
 		25D1D904AC998285FF5F0115 /* Controls */ = {
@@ -322,6 +334,7 @@
 		F6A2B10C9F67009466562221 /* Interface */ = {
 			isa = PBXGroup;
 			children = (
+				1397994DC312F9449DB97082,
 				39BA290D074F3377CDFD6338,
 				C5B7D745189C4E7C39DE95A8,
 				25D1D904AC998285FF5F0115,
@@ -437,6 +450,7 @@
 				3F9482CA60D21CF6105DE20B,
 				3886E546FC38F3D25492FB2C,
 				A88A358B1261DB60A7CB582F,
+				4AEB71E53A29D683D72A9F41,
 				8D8400584C5C1D895C098B5A,
 				71175A5E1AF2FE25885C5CFC,
 				591171F07F22952C7C96DA08,
