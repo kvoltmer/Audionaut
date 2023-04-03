@@ -45,6 +45,9 @@ public:
 
     juce::String getFileName() const;
     
+    /// TODO: move this to WaveFormTableListBoxModel
+    int height = 100;
+    
 private:
 
     AudioResourceContainer& owner;

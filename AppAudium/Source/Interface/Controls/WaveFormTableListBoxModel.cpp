@@ -32,7 +32,12 @@ void WaveFormTableListBoxModel::paintListBoxItem ( int rowNumber,
                         int width, int height,
                         bool rowIsSelected)
 {
-    
+    if (rowIsSelected)
+    {
+        auto thumbArea = Rectangle<int>(0, 0, width, height);
+        g.setColour (Colours::yellow);
+        g.drawRoundedRectangle (thumbArea.toFloat(), 3.0f, 1.0f);
+    }
 }
 
 juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumber, bool isRowSelected,
@@ -60,7 +65,24 @@ juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumbe
     return nullptr;
 }
 
+int WaveFormTableListBoxModel::getRowHeight (int rowNumber) const
+{
+    if (rowNumber < audioResourceContainer->getAudioResourceSize())
+    {
+        auto audioResource = audioResourceContainer->getAudioResource(rowNumber);
+        return audioResource->height;
+    }
+    jassertfalse;
+    return 0;
+}
 
+void WaveFormTableListBoxModel::selectedRowsChanged (int lastRowSelected)
+{
+    std::cout << "selectedRowsChanged: " << lastRowSelected << std::endl;
+}
 
-
+void WaveFormTableListBoxModel::deleteKeyPressed (int lastRowSelected)
+{
+    std::cout << "deleteKeyPressed: " << lastRowSelected << std::endl;
+}
 

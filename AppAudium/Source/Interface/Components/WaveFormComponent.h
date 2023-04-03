@@ -64,7 +64,11 @@ private:
     std::shared_ptr<ZoomHandler> zoomHandler;
 
     std::shared_ptr<AudioResource> audioResource;
-
+    
+    
+    
+    std::unique_ptr<ResizableEdgeComponent> resizableEdgeComponent;
+    std::unique_ptr<ResizableBorderComponent> resizableBorderComponent;
     
     bool isFollowingTransport = false;
     

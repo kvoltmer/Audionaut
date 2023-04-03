@@ -26,6 +26,8 @@ WaveFormComponent::WaveFormComponent (std::shared_ptr<ZoomHandler> zoomHandler) 
 {
     audioResource = nullptr;
     
+    //setInterceptsMouseClicks(false, false);
+    
 
     currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
     addAndMakeVisible (currentPositionMarker);
@@ -34,6 +36,16 @@ WaveFormComponent::WaveFormComponent (std::shared_ptr<ZoomHandler> zoomHandler) 
     currentColour = Colour(waveFormColourScheme[currentWaveFormColour++]);
     if (currentWaveFormColour >= numWaveFormColours)
         currentWaveFormColour = 0;
+    
+    
+//    resizableEdgeComponent.reset(new ResizableEdgeComponent(this, nullptr, ResizableEdgeComponent::bottomEdge));
+//    addAndMakeVisible(resizableEdgeComponent.get());
+//    resizableEdgeComponent->setBounds(getBounds());
+    
+    resizableBorderComponent.reset(new ResizableBorderComponent(this, nullptr));
+    addAndMakeVisible(resizableBorderComponent.get());
+    resizableBorderComponent->setBounds(getBounds());
+    
 }
 
 WaveFormComponent::~WaveFormComponent()
@@ -129,6 +141,9 @@ void WaveFormComponent::paint (Graphics& g)
     }
     
     
+//    auto thumbArea = getLocalBounds();
+//    g.setColour (Colours::yellow);
+//    g.fillRoundedRectangle (thumbArea.toFloat(), 3.0f);
 
 
     
@@ -136,6 +151,22 @@ void WaveFormComponent::paint (Graphics& g)
 
 void WaveFormComponent::resized()
 {
+    if (resizableBorderComponent) resizableBorderComponent->setBounds(getBounds());
+    
+    if (resizableEdgeComponent) resizableEdgeComponent->setBounds(getBounds());
+    
+    if (audioResource != nullptr &&
+        audioResource->height != getBounds().getHeight())
+    {
+        audioResource->height = getBounds().getHeight();
+        
+        if (WaveFormTableListBox* list = this->findParentComponentOfClass<WaveFormTableListBox>())
+        {
+            list->updateContent();
+        }
+        
+    }
+    
 }
 
 void WaveFormComponent::changeListenerCallback (ChangeBroadcaster*)
@@ -157,22 +188,26 @@ void WaveFormComponent::filesDropped (const StringArray& files, int /*x*/, int /
 
 void WaveFormComponent::mouseDown (const MouseEvent& e)
 {
+    getParentComponent()->mouseDown(e);
     mouseDrag (e);
 }
 
 void WaveFormComponent::mouseDrag (const MouseEvent& e)
 {
+    getParentComponent()->mouseDrag(e);
+    
     if (canMoveTransport())
         audioResource->getAudioTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
 }
 
-void WaveFormComponent::mouseUp (const MouseEvent&)
+void WaveFormComponent::mouseUp (const MouseEvent& e)
 {
-    //audioResource->getAudioTransportSource()->start();
+    getParentComponent()->mouseUp(e);
 }
 
-void WaveFormComponent::mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel)
+void WaveFormComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
 {
+    getParentComponent()->mouseWheelMove(e, wheel);
 }
 
 

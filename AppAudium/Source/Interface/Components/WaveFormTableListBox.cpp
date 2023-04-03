@@ -13,8 +13,8 @@
 
 //==============================================================================
 WaveFormTableListBox::WaveFormTableListBox (const juce::String& componentName,
-              juce::ListBoxModel* model) :
-    juce::ListBox(componentName, model)
+                                            audium::ListBoxModel* model) :
+    audium::ListBox(componentName, model)
 {
 }
 
