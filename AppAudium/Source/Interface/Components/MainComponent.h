@@ -70,8 +70,8 @@ private:
     //[UserVariables]   -- You can add your own custom variables in this section.
 
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::unique_ptr<WaveFormTableListBox> waveFormTableListBox;
-    std::unique_ptr<WaveFormTableListBoxModel> waveFormTableListBoxModel;
+    std::shared_ptr<WaveFormTableListBox> waveFormTableListBox;
+    std::shared_ptr<WaveFormTableListBoxModel> waveFormTableListBoxModel;
 
     std::shared_ptr<AudiumEngine> audiumEngine;
 

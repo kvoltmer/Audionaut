@@ -11,8 +11,10 @@
 
 #include "WaveFormTableListBoxModel.h"
 
-WaveFormTableListBoxModel::WaveFormTableListBoxModel(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+WaveFormTableListBoxModel::WaveFormTableListBoxModel(std::shared_ptr<WaveFormTableListBox> owner,
+                                                     std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                                                      std::shared_ptr<ZoomHandler> zoomHandler) :
+    owner(owner),
     audioResourceContainer(audioResourceContainer),
     zoomHandler(zoomHandler)
 {
@@ -35,8 +37,8 @@ void WaveFormTableListBoxModel::paintListBoxItem ( int rowNumber,
     if (rowIsSelected)
     {
         auto thumbArea = Rectangle<int>(0, 0, width, height);
-        g.setColour (Colours::yellow);
-        g.drawRoundedRectangle (thumbArea.toFloat(), 3.0f, 1.0f);
+        g.setColour (Colours::lightgrey);
+        g.drawRoundedRectangle (thumbArea.toFloat(), 3.0f, 2.0f);
     }
 }
 
@@ -58,6 +60,11 @@ juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumbe
     {
         auto component = dynamic_cast<WaveFormComponent*>(existingComponentToUpdate);
         jassert(component);
+        auto audioResource = audioResourceContainer->getAudioResource(rowNumber);
+        if (audioResource != nullptr)
+        {
+            component->setAudioResource(audioResource);
+        }
         return component;
     }
     
@@ -83,6 +90,23 @@ void WaveFormTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 
 void WaveFormTableListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
-    std::cout << "deleteKeyPressed: " << lastRowSelected << std::endl;
+//    if (WaveFormTableListBox* list = this->findParentComponentOfClass<WaveFormTableListBox>())
+//    {
+//        list->updateContent();
+//    }
+    
+    //std::cout << "deleteKeyPressed: " << lastRowSelected << std::endl;
+    auto selected = owner->getSelectedRows();
+    
+    for (int i = selected.size()-1; i >= 0; i--)
+    {
+        std::cout << "selected = " << selected[i] << std::endl;
+        
+        audioResourceContainer->removeAudioResource(selected[i]);
+        
+    }
+    std::cout << "---------" << std::endl;
+    
+    owner->updateContent();
 }
 

@@ -16,6 +16,7 @@
 #include "Interface/Components/WaveFormComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
+#include "Interface/Components/WaveFormTableListBox.h"
 
 class WaveFormTableListBoxModel : public audium::ListBoxModel
 {
@@ -23,7 +24,8 @@ class WaveFormTableListBoxModel : public audium::ListBoxModel
     
 public:
     
-    WaveFormTableListBoxModel(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+    WaveFormTableListBoxModel(std::shared_ptr<WaveFormTableListBox> owner,
+                              std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                               std::shared_ptr<ZoomHandler> zoomHandler);
     ~WaveFormTableListBoxModel();
     
@@ -49,5 +51,7 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
     std::shared_ptr<ZoomHandler> zoomHandler;
+    
+    std::shared_ptr<WaveFormTableListBox> owner;
 
 };

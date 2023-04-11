@@ -24,6 +24,8 @@ public:
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL resource);
     
+    bool removeAudioResource (int atIndex);
+    
     int getAudioResourceSize() const { return (int)audioResources.size(); }
     
     std::shared_ptr<AudioResource> getAudioResource(int index) const;
