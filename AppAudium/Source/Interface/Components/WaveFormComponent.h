@@ -30,7 +30,8 @@ class WaveFormComponent  : public Component,
                            private Timer
 {
 public:
-    WaveFormComponent (std::shared_ptr<ZoomHandler> zoomHandler);
+    WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
+                       std::shared_ptr<ZoomHandler> zoomHandler);
 
     ~WaveFormComponent() override;
     
@@ -57,15 +58,12 @@ public:
     void mouseUp (const MouseEvent&) override;
 
     void mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel) override;
-
     
 private:
+    
+    std::shared_ptr<AudioResource> audioResource;
 
     std::shared_ptr<ZoomHandler> zoomHandler;
-
-    std::shared_ptr<AudioResource> audioResource;
-    
-    
     
     std::unique_ptr<ResizableEdgeComponent> resizableEdgeComponent;
     std::unique_ptr<ResizableBorderComponent> resizableBorderComponent;
@@ -77,7 +75,6 @@ private:
 
     DrawableRectangle currentPositionMarker;
     
-    Colour currentColour;
 
     bool canMoveTransport() const noexcept
     {

@@ -48,6 +48,9 @@ public:
     /// TODO: move this to WaveFormTableListBoxModel
     int height = 100;
     
+    /// TODO: move this to a gui state
+    juce::Colour currentColour;
+    
 private:
 
     AudioResourceContainer& owner;
