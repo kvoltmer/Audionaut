@@ -21,21 +21,20 @@ static const uint32 waveFormColourScheme[numWaveFormColours] = {
 };
 
 
-WaveFormComponent::WaveFormComponent (std::shared_ptr<ZoomHandler> zoomHandler) :
+WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResource, std::shared_ptr<ZoomHandler> zoomHandler) :
     zoomHandler(zoomHandler)
 {
-    audioResource = nullptr;
+
+    setAudioResource(audioResource);
     
-    //setInterceptsMouseClicks(false, false);
-    
+    /// simply iteraterate our colour scheme and assign our current colour
+    assert(this->audioResource);
+    this->audioResource->currentColour = Colour(waveFormColourScheme[currentWaveFormColour++]);
+    if (currentWaveFormColour >= numWaveFormColours)
+        currentWaveFormColour = 0;
 
     currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
     addAndMakeVisible (currentPositionMarker);
-    
-    /// simply iteraterate our colour scheme and assign our current colour
-    currentColour = Colour(waveFormColourScheme[currentWaveFormColour++]);
-    if (currentWaveFormColour >= numWaveFormColours)
-        currentWaveFormColour = 0;
     
     
 //    resizableEdgeComponent.reset(new ResizableEdgeComponent(this, nullptr, ResizableEdgeComponent::bottomEdge));
@@ -61,7 +60,6 @@ void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> audioRe
     zoomHandler->updateTotalLength();
     this->audioResource = audioResource;
     audioResource->getThumbnail().addChangeListener (this);
-
     startTimerHz (40);
 }
 
@@ -84,13 +82,12 @@ void WaveFormComponent::setFollowsTransport (bool shouldFollow)
 
 void WaveFormComponent::paint (Graphics& g)
 {
-    g.fillAll (currentColour.withAlpha(0.25f));
-    g.setColour (currentColour);
-    
-
     if (audioResource != nullptr &&
         audioResource->getThumbnail().getTotalLength() > 0.0)
     {
+        g.fillAll (audioResource->currentColour.withAlpha(0.25f));
+        g.setColour (audioResource->currentColour);
+        
         auto thumbArea = getLocalBounds();
     
 #if 1 /// draw visible range 
