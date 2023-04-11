@@ -55,6 +55,17 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     return nullptr;
 }
 
+
+bool AudioResourceContainer::removeAudioResource (int atIndex)
+{
+    if (atIndex < 0 || atIndex >= audioResources.size())
+        return false;
+    
+    audioResources.erase(audioResources.begin() + atIndex);
+    
+    return true;
+}
+
 std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int index) const
 {
     if (index < getAudioResourceSize())

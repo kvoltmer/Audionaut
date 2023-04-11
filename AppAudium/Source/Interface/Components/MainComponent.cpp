@@ -75,8 +75,11 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     //[Constructor] You can add your own custom stuff here..
 
     zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer()));
-    waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(audiumEngine->getAudioResourceContainer(), zoomHandler));
-    waveFormTableListBox.reset(new WaveFormTableListBox("waveform table", waveFormTableListBoxModel.get()));
+    waveFormTableListBox.reset(new WaveFormTableListBox("waveform table", nullptr));
+    waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(waveFormTableListBox,
+                                                                  audiumEngine->getAudioResourceContainer(),
+                                                                  zoomHandler));
+    waveFormTableListBox->setModel(waveFormTableListBoxModel.get());
 
     
     
