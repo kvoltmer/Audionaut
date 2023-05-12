@@ -13,15 +13,17 @@
 #include <JuceHeader.h>
 
 #include "AudiumMainWindow.h"
+#include "AudiumMenuModel.h"
+#include "Application/AudiumCommandIDs.h"
 
 class AudiumEngine;
 
 //==============================================================================
-class AudiumApplication  : public juce::JUCEApplication
+class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
 {
 public:
     //==============================================================================
-    AudiumApplication() {}
+    AudiumApplication() = default;
     
     static AudiumApplication& getApp();
     static juce::ApplicationCommandManager& getCommandManager();
@@ -39,16 +41,63 @@ public:
     void anotherInstanceStarted (const juce::String& commandLine) override;
 
     //==============================================================================
-    //MenuBarModel* getMenuModel();
+    MenuBarModel* getMenuModel();
 
     void getAllCommands (juce::Array<CommandID>&) override;
     void getCommandInfo (CommandID commandID, ApplicationCommandInfo&) override;
     bool perform (const InvocationInfo&) override;
     
+    
+    StringArray getMenuNames();
+    PopupMenu createMenu (const String& menuName);
+    PopupMenu createFileMenu();
+    PopupMenu createEditMenu();
+    PopupMenu createViewMenu();
+    void handleMainMenuCommand (int menuItemID);
+    PopupMenu createExtraAppleMenuItems();
+
 private:
+
     std::unique_ptr<AudiumMainWindow> mainWindow;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
+    std::unique_ptr<AudiumMenuModel> menuModel;
     
     void initCommandManager();
+    void handleAsyncUpdate() override;
+    
+    
+    //==============================================================================
+   #if JUCE_MAC
+    class AppleMenuRebuildListener  : private MenuBarModel::Listener
+    {
+    public:
+        AppleMenuRebuildListener()
+        {
+            if (auto* model = AudiumApplication::getApp().getMenuModel())
+                model->addListener (this);
+        }
+
+        ~AppleMenuRebuildListener() override
+        {
+            if (auto* model = AudiumApplication::getApp().getMenuModel())
+                model->removeListener (this);
+        }
+
+    private:
+        void menuBarItemsChanged (MenuBarModel*) override  {}
+
+        void menuCommandInvoked (MenuBarModel*,
+                                 const ApplicationCommandTarget::InvocationInfo& info) override
+        {
+            if (info.commandID == CommandIDs::enableNewVersionCheck)
+                Timer::callAfterDelay (50, [] { AudiumApplication::getApp().rebuildAppleMenu(); });
+        }
+    };
+
+    void rebuildAppleMenu();
+
+    std::unique_ptr<AppleMenuRebuildListener> appleMenuRebuildListener;
+   #endif
+    
 };

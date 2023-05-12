@@ -9,6 +9,10 @@
     </GROUP>
     <GROUP id="{69119DF9-CC06-2A24-1C4A-CFAF02C4B8BB}" name="Source">
       <GROUP id="{1D37A931-400E-3356-8013-12CBF3C1C146}" name="Application">
+        <FILE id="IsMeaZ" name="AudiumMenuModel.cpp" compile="1" resource="0"
+              file="Source/Application/AudiumMenuModel.cpp"/>
+        <FILE id="dWDQh6" name="AudiumMenuModel.h" compile="0" resource="0"
+              file="Source/Application/AudiumMenuModel.h"/>
         <FILE id="b3jfES" name="AudiumCommandIDs.h" compile="0" resource="0"
               file="Source/Application/AudiumCommandIDs.h"/>
         <FILE id="w7HBCe" name="AudiumApplication.cpp" compile="1" resource="0"

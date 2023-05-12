@@ -21,22 +21,21 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEng
 {
     setUsingNativeTitleBar (true);
     setContentOwned (new MainComponent(audiumEngine), true);
-
+    
+#if ! JUCE_MAC
+ setMenuBar (ProjucerApplication::getApp().getMenuModel());
+#endif
     
     auto& commandManager = AudiumApplication::getCommandManager();
 
     auto registerAllAppCommands = [&]
     {
         commandManager.registerAllCommandsForTarget (this);
-        //commandManager.registerAllCommandsForTarget (getProjectContentComponent());
     };
 
     auto updateAppKeyMappings = [&]
     {
         commandManager.getKeyMappings()->resetToDefaultMappings();
-
-//        if (auto keys = getGlobalProperties().getXmlValue ("keyMappings"))
-//            commandManager.getKeyMappings()->restoreFromXml (*keys);
 
         addKeyListener (commandManager.getKeyMappings());
     };
@@ -44,7 +43,6 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEng
     
     registerAllAppCommands();
     updateAppKeyMappings();
-    
     
     
    #if JUCE_IOS || JUCE_ANDROID
@@ -55,6 +53,13 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEng
    #endif
 
     setVisible (true);
+}
+
+AudiumMainWindow::~AudiumMainWindow()
+{
+#if ! JUCE_MAC
+    setMenuBar (nullptr);
+#endif
 }
 
 void AudiumMainWindow::closeButtonPressed()

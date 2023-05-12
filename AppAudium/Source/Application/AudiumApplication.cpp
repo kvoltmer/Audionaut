@@ -12,8 +12,11 @@
 #include "Interface/Components/MainComponent.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
-#include "Application/AudiumCommandIDs.h"
+#include "Application/AudiumMenuModel.h"
+#include "Util/EngineAccess.h"
 
+
+//==============================================================================
 AudiumApplication& AudiumApplication::getApp()
 {
     AudiumApplication* const app = dynamic_cast<AudiumApplication*> (JUCEApplication::getInstance());
@@ -39,13 +42,34 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
     
+    // do further initialisation in a moment when the message loop has started
+    triggerAsyncUpdate();
+}
+
+void AudiumApplication::handleAsyncUpdate()
+{
+    menuModel.reset (new AudiumMenuModel());
+    
+   #if JUCE_MAC
+    rebuildAppleMenu();
+    appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
+   #endif
 }
 
 void AudiumApplication::shutdown()
 {
     // Add your application's shutdown code here..
 
+#if JUCE_MAC
+    MenuBarModel::setMacMainMenu (nullptr);
+#endif
+    
+    menuModel.reset();
+    commandManager.reset();
+    
     mainWindow = nullptr; // (deletes our window)
+    
+    
 }
 
 
@@ -67,9 +91,147 @@ void AudiumApplication::initCommandManager()
 {
     commandManager.reset (new ApplicationCommandManager());
     commandManager->registerAllCommandsForTarget (this);
+}
+
+MenuBarModel* AudiumApplication::getMenuModel()
+{
+    return menuModel.get();
+}
+
+StringArray AudiumApplication::getMenuNames()
+{
+    StringArray currentMenuNames { "File", "Edit", "View"};
+    return currentMenuNames;
+}
+
+PopupMenu AudiumApplication::createMenu (const String& menuName)
+{
+    if (menuName == "File")
+        return createFileMenu();
+
+    if (menuName == "Edit")
+        return createEditMenu();
+
+    if (menuName == "View")
+        return createViewMenu();
+
+    jassertfalse; // names have changed?
+    return {};
+}
+
+PopupMenu AudiumApplication::createFileMenu()
+{
+    PopupMenu menu;
+    menu.addCommandItem (commandManager.get(), CommandIDs::newProject);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::openProject);
+
+    {
+        PopupMenu recentFiles;
+
+        //settings->recentFiles.createPopupMenuItems (recentFiles, recentProjectsBaseID, true, true);
+
+        if (recentFiles.getNumItems() > 0)
+        {
+            recentFiles.addSeparator();
+            recentFiles.addCommandItem (commandManager.get(), CommandIDs::clearRecentFiles);
+        }
+
+        menu.addSubMenu ("Open Recent", recentFiles);
+    }
+
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::saveProject);
+    menu.addCommandItem (commandManager.get(), CommandIDs::saveProjectAs);
+    menu.addCommandItem (commandManager.get(), CommandIDs::defaultProject);
+    menu.addSeparator();
+
+   #if ! JUCE_MAC
+    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
+    menu.addCommandItem (commandManager.get(), CommandIDs::enableNewVersionCheck);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showGlobalPathsWindow);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::quit);
+   #endif
+
+    return menu;
+}
+
+PopupMenu AudiumApplication::createEditMenu()
+{
+    PopupMenu menu;
+    menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::undo);
+    menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::redo);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::cut);
+    menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::copy);
+    menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::paste);
+    menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::del);
+    menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::selectAll);
+    menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::deselectAll);
+    menu.addSeparator();
+//    menu.addCommandItem (commandManager.get(), CommandIDs::showFindPanel);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::findSelection);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::findNext);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::findPrevious);
+    return menu;
+}
+
+PopupMenu AudiumApplication::createViewMenu()
+{
+    PopupMenu menu;
+//    menu.addCommandItem (commandManager.get(), CommandIDs::showProjectSettings);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::showFileExplorerPanel);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::showModulesPanel);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::showExportersPanel);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::showExporterSettings);
+//
+//    menu.addSeparator();
+//    createColourSchemeItems (menu);
+
+    return menu;
+}
+
+PopupMenu AudiumApplication::createExtraAppleMenuItems()
+{
+    PopupMenu menu;
+    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+    return menu;
+}
 
 
-    //registerGUIEditorCommands();
+void AudiumApplication::handleMainMenuCommand (int menuItemID)
+{
+//    if (menuItemID >= recentProjectsBaseID && menuItemID < (recentProjectsBaseID + 100))
+//    {
+//        // open a file from the "recent files" menu
+//        openFile (settings->recentFiles.getFile (menuItemID - recentProjectsBaseID), nullptr);
+//    }
+//    else if (menuItemID >= openWindowsBaseID && menuItemID < (openWindowsBaseID + 100))
+//    {
+//        if (auto* window = mainWindowList.windows.getUnchecked (menuItemID - openWindowsBaseID))
+//            window->toFront (true);
+//    }
+//    else if (menuItemID >= activeDocumentsBaseID && menuItemID < (activeDocumentsBaseID + 200))
+//    {
+//        if (auto* doc = openDocumentManager.getOpenDocument (menuItemID - activeDocumentsBaseID))
+//            mainWindowList.openDocument (doc, true);
+//        else
+//            jassertfalse;
+//    }
+//    else if (menuItemID == showPathsID)
+//    {
+//        showPathsWindow (true);
+//    }
+//    else if (menuItemID >= examplesBaseID && menuItemID < (examplesBaseID + numExamples))
+//    {
+//        findAndLaunchExample (menuItemID - examplesBaseID);
+//    }
+//    else
+//    {
+//        handleGUIEditorMenuCommand (menuItemID);
+//    }
 }
 
 //==============================================================================
@@ -77,7 +239,29 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
 {
     JUCEApplication::getAllCommands (commands);
 
-    const CommandID ids[] = { CommandIDs::newProject };
+    const CommandID ids[] = { CommandIDs::newProject,
+                                CommandIDs::openProject,
+                                CommandIDs::defaultProject,
+                                CommandIDs::saveProject,
+                                CommandIDs::saveProjectAs,
+//                              CommandIDs::launchDemoRunner,
+//                              CommandIDs::closeAllWindows,
+//                              CommandIDs::closeAllDocuments,
+//                              CommandIDs::clearRecentFiles,
+//                              CommandIDs::saveAll,
+//                              CommandIDs::showGlobalPathsWindow,
+//                              CommandIDs::showUTF8Tool,
+//                              CommandIDs::showSVGPathTool,
+//                              CommandIDs::enableGUIEditor,
+//                              CommandIDs::showAboutWindow,
+//                              CommandIDs::checkForNewVersion,
+//                             CommandIDs::enableNewVersionCheck
+//                              CommandIDs::showForum,
+//                              CommandIDs::showAPIModules,
+//                              CommandIDs::showAPIClasses,
+//                              CommandIDs::showTutorials,
+//                              CommandIDs::loginLogout
+    };
 
     commands.addArray (ids, numElementsInArray (ids));
 }
@@ -91,15 +275,25 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
         result.defaultKeypresses.add (KeyPress ('n', ModifierKeys::commandModifier, 0));
         break;
 
-    case CommandIDs::open:
+    case CommandIDs::openProject:
         result.setInfo ("Open...", "Opens a project", CommandCategories::general, 0);
         result.defaultKeypresses.add (KeyPress ('o', ModifierKeys::commandModifier, 0));
         break;
+            
+    case CommandIDs::defaultProject:
+        result.setInfo ("Save as Default", "Save this project as default", CommandCategories::general, 0);
+        //result.defaultKeypresses.add (KeyPress ('o', ModifierKeys::commandModifier, 0));
+        break;
+            
+    case CommandIDs::saveProject:
+        result.setInfo ("Save", "Saves a project", CommandCategories::general, 0);
+        result.defaultKeypresses.add (KeyPress ('s', ModifierKeys::commandModifier, 0));
+        break;
 
-//    case CommandIDs::saveAll:
-//        result.setInfo ("Save All", "Saves all open documents", CommandCategories::general, 0);
-//        result.defaultKeypresses.add (KeyPress ('s', ModifierKeys::commandModifier | ModifierKeys::altModifier, 0));
-//        break;
+    case CommandIDs::saveProjectAs:
+        result.setInfo ("Save as...", "Saves the current project to a new location", CommandCategories::general, 0);
+        result.defaultKeypresses.add ({ 's', ModifierKeys::commandModifier | ModifierKeys::shiftModifier, 0 });
+        break;
 
     case CommandIDs::showAboutWindow:
         result.setInfo ("About", "Shows the 'About' page.", CommandCategories::general, 0);
@@ -108,13 +302,6 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::checkForNewVersion:
         result.setInfo ("Check for New Version...", "Checks the web server for a new version", CommandCategories::general, 0);
         break;
-
-//    case CommandIDs::enableNewVersionCheck:
-//        result.setInfo ("Automatically Check for New Versions",
-//                        "Enables automatic background checking for new versions of JUCE.",
-//                        CommandCategories::general,
-//                        (isAutomaticVersionCheckingEnabled() ? ApplicationCommandInfo::isTicked : 0));
-//        break;
 
     default:
         JUCEApplication::getCommandInfo (commandID, result);
@@ -127,15 +314,23 @@ bool AudiumApplication::perform (const InvocationInfo& info)
     switch (info.commandID)
     {
         case CommandIDs::newProject:
-            //createNewProject();
+            notImplemented();
             break;
-        case CommandIDs::open:
+        case CommandIDs::openProject:
+            notImplemented();
             //askUserToOpenFile();
             break;
-        case CommandIDs::saveDocument:
-            //saveAllDocuments();
+        case CommandIDs::defaultProject:
+            notImplemented();
+            break;
+        case CommandIDs::saveProject:
+            notImplemented();
+            break;
+        case CommandIDs::saveProjectAs:
+            notImplemented();
             break;
         case CommandIDs::showAboutWindow:
+            notImplemented();
             //showAboutWindow();
             break;
 
@@ -145,3 +340,15 @@ bool AudiumApplication::perform (const InvocationInfo& info)
 
     return true;
 }
+
+
+#if JUCE_MAC
+ void AudiumApplication::rebuildAppleMenu()
+ {
+     auto extraAppleMenuItems = createExtraAppleMenuItems();
+
+     // workaround broken "Open Recent" submenu: not passing the
+     // submenu's title here avoids the defect in JuceMainMenuHandler::addMenuItem
+     MenuBarModel::setMacMainMenu (menuModel.get(), &extraAppleMenuItems); //, "Open Recent");
+ }
+#endif

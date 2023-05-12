@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		090A584AB0AC23AB9528BCCD /* EngineAccess.cpp */ = {isa = PBXBuildFile; fileRef = 15B08AD17A4543A6F9323602; };
 		09DA1E72737CDFF5EBF24565 /* include_juce_gui_basics.mm */ = {isa = PBXBuildFile; fileRef = 93967D9818A6F5B95C07B32B; };
+		0ED909B948FDDBF4CB7E2510 /* AudiumMenuModel.cpp */ = {isa = PBXBuildFile; fileRef = 6281C6C7B678AEFB2F47C339; };
 		14C53151AB22EE2F0BA96F36 /* AudioToolbox.framework */ = {isa = PBXBuildFile; fileRef = BC325BA600975DA123084DA3; };
 		23874446D4D448B966D134F7 /* QuartzCore.framework */ = {isa = PBXBuildFile; fileRef = BD120C92EBF0312BF1D4DBB1; };
 		28D0D35B318F71C7C90D0E5E /* WebKit.framework */ = {isa = PBXBuildFile; fileRef = B49AA8C79C8A8C9FCDA5A44C; };
@@ -62,6 +63,7 @@
 		20C02FEAB38C7AE1951EA655 /* juce_gui_extra */ /* juce_gui_extra */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_extra; path = ../../../Submodules/juce/modules/juce_gui_extra; sourceTree = SOURCE_ROOT; };
 		22AD7FAA33DF69C2DCCA4667 /* DiscRecording.framework */ /* DiscRecording.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiscRecording.framework; path = System/Library/Frameworks/DiscRecording.framework; sourceTree = SDKROOT; };
 		25423A74B016191855679F72 /* include_juce_audio_processors.mm */ /* include_juce_audio_processors.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_processors.mm; path = ../../JuceLibraryCode/include_juce_audio_processors.mm; sourceTree = SOURCE_ROOT; };
+		2E146D46199124CB4DC74349 /* AudiumMenuModel.h */ /* AudiumMenuModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumMenuModel.h; path = ../../Source/Application/AudiumMenuModel.h; sourceTree = SOURCE_ROOT; };
 		3112F89ABC344D7CA74013C6 /* AudiumMainWindow.h */ /* AudiumMainWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumMainWindow.h; path = ../../Source/Application/AudiumMainWindow.h; sourceTree = SOURCE_ROOT; };
 		326D33688206104FED891964 /* include_juce_audio_basics.mm */ /* include_juce_audio_basics.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_basics.mm; path = ../../JuceLibraryCode/include_juce_audio_basics.mm; sourceTree = SOURCE_ROOT; };
 		332BA11702CE2968C66F90B4 /* AudioResource.cpp */ /* AudioResource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioResource.cpp; path = ../../Source/Engine/AudioResource.cpp; sourceTree = SOURCE_ROOT; };
@@ -80,6 +82,7 @@
 		5CB2F1A3CC2EAFD3BB0E4541 /* AudioResourceContainer.h */ /* AudioResourceContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResourceContainer.h; path = ../../Source/Engine/AudioResourceContainer.h; sourceTree = SOURCE_ROOT; };
 		6236F154DF8AAC28C4F42CBA /* Foundation.framework */ /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		62374E864665EF60C8BCB2C9 /* JuceHeader.h */ /* JuceHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = JuceHeader.h; path = ../../JuceLibraryCode/JuceHeader.h; sourceTree = SOURCE_ROOT; };
+		6281C6C7B678AEFB2F47C339 /* AudiumMenuModel.cpp */ /* AudiumMenuModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumMenuModel.cpp; path = ../../Source/Application/AudiumMenuModel.cpp; sourceTree = SOURCE_ROOT; };
 		6373A60BC5F852259A3F5976 /* Cocoa.framework */ /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		65EE5B24CA6AA1915694E01E /* App */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppAudium.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		65FA0FE104D1D2422632E136 /* AudiumCommandIDs.h */ /* AudiumCommandIDs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumCommandIDs.h; path = ../../Source/Application/AudiumCommandIDs.h; sourceTree = SOURCE_ROOT; };
@@ -269,6 +272,8 @@
 		8AB4BBA656222F367D79E3A0 /* Application */ = {
 			isa = PBXGroup;
 			children = (
+				6281C6C7B678AEFB2F47C339,
+				2E146D46199124CB4DC74349,
 				65FA0FE104D1D2422632E136,
 				462481D51BD3607FCD44651D,
 				87121392AC06CCE30AB209C5,
@@ -442,6 +447,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0ED909B948FDDBF4CB7E2510,
 				94856FC278508DBFE75FBA58,
 				DD7FA514741BD80EB9EA9F19,
 				4ABF177467832242153DF416,
