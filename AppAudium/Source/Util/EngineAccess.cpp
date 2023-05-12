@@ -20,3 +20,8 @@ std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component)
     return mainWindow->getEngine();
 }
 #endif
+
+void notImplemented()
+{
+    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "no implementation", "not yet implemented");
+}

@@ -23,6 +23,7 @@ class AudiumMainWindow    : public juce::DocumentWindow, public juce::Applicatio
 {
 public:
     AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine);
+    ~AudiumMainWindow();
 
     void closeButtonPressed() override;
 
