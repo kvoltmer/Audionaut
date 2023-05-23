@@ -95,6 +95,8 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     addAndMakeVisible(waveFormTableListBox.get());
 
     zoomHandler->setWidth(waveform__background->getWidth());
+    
+    updateUI();
 
     //[/Constructor]
 }
@@ -196,8 +198,7 @@ void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX
         auto url = URL (File (filenames[i]));
         audiumEngine->getAudioResourceContainer()->addAudioResource(url);
     }
-    waveFormTableListBox->updateContent();
-
+    updateUI();
 
     //[/UserCode_filesDropped]
 }
@@ -225,6 +226,10 @@ bool MainComponent::isInterestedInFileDrag (const StringArray& /*files*/)
     return true;
 }
 
+void MainComponent::updateUI()
+{
+    waveFormTableListBox->updateContent();
+}
 
 //[/MiscUserCode]
 

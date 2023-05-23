@@ -109,3 +109,25 @@ void AudioResourceContainer::playStop()
     isPlaying = !isPlaying;
 }
 
+bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
+{
+    outputStream.writeInt((int)audioResources.size());
+    for (auto & resource : audioResources)
+    {
+        resource->writeToStream(outputStream);
+    }
+    return true;
+}
+
+bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream)
+{
+    audioResources.clear();
+    auto numResources = inputStream.readInt();
+    for (auto i = 0; i < numResources; i++)
+    {
+        auto inString = inputStream.readString();
+        addAudioResource(juce::URL(inString));
+    }
+    
+    return true;
+}

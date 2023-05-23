@@ -51,6 +51,9 @@ public:
     /// TODO: move this to a gui state
     juce::Colour currentColour;
     
+    bool writeToStream (juce::OutputStream& outputStream);
+    bool readFromStream (juce::InputStream& inputStream);
+    
 private:
 
     AudioResourceContainer& owner;

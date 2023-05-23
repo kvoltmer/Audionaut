@@ -55,6 +55,9 @@ public:
     PopupMenu createViewMenu();
     void handleMainMenuCommand (int menuItemID);
     PopupMenu createExtraAppleMenuItems();
+    
+    void askUserToOpenFile();
+    void saveProjectAs();
 
 private:
 
@@ -62,6 +65,7 @@ private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<AudiumMenuModel> menuModel;
+    std::unique_ptr<juce::FileChooser> chooser;
     
     void initCommandManager();
     void handleAsyncUpdate() override;
