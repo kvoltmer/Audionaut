@@ -55,3 +55,18 @@ juce::String AudioResource::getFileName() const
 {
     return url.getLocalFile().getFileNameWithoutExtension();
 }
+
+bool AudioResource::writeToStream (juce::OutputStream& outputStream)
+{
+    const juce::String name = url.toString(true);
+    outputStream.writeString(name);
+    return true;
+}
+
+bool AudioResource::readFromStream (juce::InputStream& inputStream)
+{
+//    auto inString = inputStream.readString();
+//    url = juce::URL(inString);
+//    owner->addAudioResource()
+    return true;
+}

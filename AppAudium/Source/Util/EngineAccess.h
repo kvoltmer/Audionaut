@@ -20,3 +20,4 @@ std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component);
 #endif
 
 void notImplemented();
+

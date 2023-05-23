@@ -9,6 +9,9 @@
 */
 
 #include "AudiumEngine.h"
+#include "Util/Preferences.h"
+
+const char* AudiumEngine::projectFileExtension = ".audium";
 
 AudiumEngine::AudiumEngine(std::shared_ptr<AudioResourceContainer> container) :
     audioResourceContainer(container)
@@ -19,3 +22,72 @@ AudiumEngine::~AudiumEngine()
 {
     
 }
+
+void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> callback)
+{
+    if (! file.exists())
+    {
+        if (callback != nullptr)
+            callback (false);
+
+        return;
+    }
+    
+    if (file.hasFileExtension (projectFileExtension))
+    {
+        juce::FileInputStream inputStream(file);
+        if (inputStream.openedOk())
+        {
+            /// TODO: std::move (callback)
+            readFromStream(inputStream);
+        }
+    }
+    currentFile = file;
+}
+
+void AudiumEngine::saveFile (const juce::File& file, std::function<void (bool)> callback)
+{
+    if (! file.exists())
+    {
+        auto result = file.create();
+        if (result != juce::Result::ok())
+        {
+            if (callback != nullptr)
+                callback (false);
+        
+            return;
+        }
+    }
+    
+    juce::TemporaryFile temp (file);
+    
+    {
+        juce::FileOutputStream out (temp.getFile());
+
+        if (! (out.openedOk()))
+        {
+            return;
+        }
+        
+        //callback(writeToStream(fo));
+        writeToStream(out);
+    }
+
+    temp.overwriteTargetFileWithTemporary();
+    currentFile = file;
+}
+
+bool AudiumEngine::writeToStream (juce::OutputStream& out)
+{
+    out.writeString ("AudiumEngineFormat");
+    return audioResourceContainer->writeToStream(out);
+}
+
+bool AudiumEngine::readFromStream (juce::InputStream& in)
+{
+    auto name = in.readString();
+    jassert(name == "AudiumEngineFormat");
+    return audioResourceContainer->readFromStream(in);
+}
+
+

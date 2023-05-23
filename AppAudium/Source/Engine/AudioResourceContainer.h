@@ -39,6 +39,9 @@ public:
     
     void playStop();
     
+    bool writeToStream (juce::OutputStream& outputStream);
+    bool readFromStream (juce::InputStream& inputStream);
+    
 private:
     
     std::vector<std::shared_ptr<AudioResource>> audioResources;

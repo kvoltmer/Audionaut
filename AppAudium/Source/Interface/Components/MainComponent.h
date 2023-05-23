@@ -57,6 +57,7 @@ public:
     void showAudioResource (URL resource);
     bool loadURLIntoTransport (const URL& audioURL);
     bool isInterestedInFileDrag (const StringArray& /*files*/) override;
+    void updateUI();
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;

@@ -14,7 +14,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Application/AudiumMenuModel.h"
 #include "Util/EngineAccess.h"
-
+#include "Util/Preferences.h"
 
 //==============================================================================
 AudiumApplication& AudiumApplication::getApp()
@@ -33,14 +33,21 @@ juce::ApplicationCommandManager& AudiumApplication::getCommandManager()
 
 void AudiumApplication::initialise (const juce::String& commandLine)
 {
+    Preferences::init(getApplicationName());
     initCommandManager();
 
     /// TODO: create factory class
     auto container = std::shared_ptr<AudioResourceContainer>(new AudioResourceContainer());
     container->initializeAudioDevice();
     audiumEngine.reset(new AudiumEngine(container));
+    if (Preferences::valueExists(Preferences::defaultFile))
+    {
+        audiumEngine->openFile(juce::File(Preferences::getValue(Preferences::defaultFile)), nullptr);
+    }
     
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
+    
+
     
     // do further initialisation in a moment when the message loop has started
     triggerAsyncUpdate();
@@ -54,11 +61,13 @@ void AudiumApplication::handleAsyncUpdate()
     rebuildAppleMenu();
     appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
    #endif
+    
 }
 
 void AudiumApplication::shutdown()
 {
     // Add your application's shutdown code here..
+    Preferences::synchronize();
 
 #if JUCE_MAC
     MenuBarModel::setMacMainMenu (nullptr);
@@ -208,30 +217,6 @@ void AudiumApplication::handleMainMenuCommand (int menuItemID)
 //        // open a file from the "recent files" menu
 //        openFile (settings->recentFiles.getFile (menuItemID - recentProjectsBaseID), nullptr);
 //    }
-//    else if (menuItemID >= openWindowsBaseID && menuItemID < (openWindowsBaseID + 100))
-//    {
-//        if (auto* window = mainWindowList.windows.getUnchecked (menuItemID - openWindowsBaseID))
-//            window->toFront (true);
-//    }
-//    else if (menuItemID >= activeDocumentsBaseID && menuItemID < (activeDocumentsBaseID + 200))
-//    {
-//        if (auto* doc = openDocumentManager.getOpenDocument (menuItemID - activeDocumentsBaseID))
-//            mainWindowList.openDocument (doc, true);
-//        else
-//            jassertfalse;
-//    }
-//    else if (menuItemID == showPathsID)
-//    {
-//        showPathsWindow (true);
-//    }
-//    else if (menuItemID >= examplesBaseID && menuItemID < (examplesBaseID + numExamples))
-//    {
-//        findAndLaunchExample (menuItemID - examplesBaseID);
-//    }
-//    else
-//    {
-//        handleGUIEditorMenuCommand (menuItemID);
-//    }
 }
 
 //==============================================================================
@@ -244,23 +229,6 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::defaultProject,
                                 CommandIDs::saveProject,
                                 CommandIDs::saveProjectAs,
-//                              CommandIDs::launchDemoRunner,
-//                              CommandIDs::closeAllWindows,
-//                              CommandIDs::closeAllDocuments,
-//                              CommandIDs::clearRecentFiles,
-//                              CommandIDs::saveAll,
-//                              CommandIDs::showGlobalPathsWindow,
-//                              CommandIDs::showUTF8Tool,
-//                              CommandIDs::showSVGPathTool,
-//                              CommandIDs::enableGUIEditor,
-//                              CommandIDs::showAboutWindow,
-//                              CommandIDs::checkForNewVersion,
-//                             CommandIDs::enableNewVersionCheck
-//                              CommandIDs::showForum,
-//                              CommandIDs::showAPIModules,
-//                              CommandIDs::showAPIClasses,
-//                              CommandIDs::showTutorials,
-//                              CommandIDs::loginLogout
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -282,7 +250,6 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
             
     case CommandIDs::defaultProject:
         result.setInfo ("Save as Default", "Save this project as default", CommandCategories::general, 0);
-        //result.defaultKeypresses.add (KeyPress ('o', ModifierKeys::commandModifier, 0));
         break;
             
     case CommandIDs::saveProject:
@@ -317,17 +284,19 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             notImplemented();
             break;
         case CommandIDs::openProject:
-            notImplemented();
-            //askUserToOpenFile();
+            askUserToOpenFile();
             break;
         case CommandIDs::defaultProject:
-            notImplemented();
+            if (audiumEngine->getCurrentFile() != File{})
+            {
+                Preferences::setValue(Preferences::defaultFile, audiumEngine->getCurrentFile().getFullPathName());
+            }
             break;
         case CommandIDs::saveProject:
             notImplemented();
             break;
         case CommandIDs::saveProjectAs:
-            notImplemented();
+            saveProjectAs();
             break;
         case CommandIDs::showAboutWindow:
             notImplemented();
@@ -352,3 +321,46 @@ bool AudiumApplication::perform (const InvocationInfo& info)
      MenuBarModel::setMacMainMenu (menuModel.get(), &extraAppleMenuItems); //, "Open Recent");
  }
 #endif
+
+
+void AudiumApplication::askUserToOpenFile()
+{
+    chooser = std::make_unique<juce::FileChooser> ("Open File", File(), "*" + String(AudiumEngine::projectFileExtension));
+    auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles;
+
+    chooser->launchAsync (flags, [this] (const FileChooser& fc)
+    {
+        const auto result = fc.getResult();
+
+        if (result != File{})
+        {
+            /// TODO: provide and handle callback
+            audiumEngine->openFile(result, nullptr);
+            auto comp = dynamic_cast<MainComponent*>(mainWindow->getContentComponent());
+            if (comp != nullptr)
+            {
+                comp->updateUI();
+            }
+        }
+    });
+}
+
+void AudiumApplication::saveProjectAs()
+{
+    //chooser = std::make_unique<FileChooser> (("Save As..."), File::SpecialLocationType::userDesktopDirectory, "*");
+    chooser = std::make_unique<FileChooser> (("Save As..."));
+    auto flags = FileBrowserComponent::saveMode
+               | FileBrowserComponent::canSelectFiles
+               | FileBrowserComponent::warnAboutOverwriting;
+
+    chooser->launchAsync (flags, [this] (const FileChooser& fc)
+    {
+        const auto result = fc.getResult();
+        
+        if (result != File{})
+        {
+            /// TODO: provide and handle callback
+            audiumEngine->saveFile(result, nullptr);
+        }
+    });
+}
