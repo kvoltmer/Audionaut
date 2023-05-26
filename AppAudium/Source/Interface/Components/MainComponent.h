@@ -28,6 +28,7 @@ using namespace juce;
 
 class AudiumEngine;
 class ZoomHandler;
+class RegionSelector;
 
 //[/Headers]
 
@@ -71,6 +72,7 @@ private:
     //[UserVariables]   -- You can add your own custom variables in this section.
 
     std::shared_ptr<ZoomHandler> zoomHandler;
+    std::shared_ptr<RegionSelector> regionSelector;
     std::shared_ptr<WaveFormTableListBox> waveFormTableListBox;
     std::shared_ptr<WaveFormTableListBoxModel> waveFormTableListBoxModel;
 

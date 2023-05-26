@@ -13,9 +13,11 @@
 
 WaveFormTableListBoxModel::WaveFormTableListBoxModel(std::shared_ptr<WaveFormTableListBox> owner,
                                                      std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                                                     std::shared_ptr<ZoomHandler> zoomHandler) :
+                                                     std::shared_ptr<ZoomHandler> zoomHandler,
+                                                     std::shared_ptr<RegionSelector> regionSelector) :
     audioResourceContainer(audioResourceContainer),
     zoomHandler(zoomHandler),
+    regionSelector(regionSelector),
     owner(owner)
 {
 }
@@ -51,7 +53,7 @@ juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumbe
         auto audioResource = audioResourceContainer->getAudioResource(rowNumber);
         if (audioResource != nullptr)
         {
-            auto component = new WaveFormComponent(audioResource, zoomHandler);
+            auto component = new WaveFormComponent(audioResource, zoomHandler, regionSelector);
             return component;
         }
     }

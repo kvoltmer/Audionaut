@@ -21,8 +21,11 @@ static const uint32 waveFormColourScheme[numWaveFormColours] = {
 };
 
 
-WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResource, std::shared_ptr<ZoomHandler> zoomHandler) :
-    zoomHandler(zoomHandler)
+WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
+                                      std::shared_ptr<ZoomHandler> zoomHandler,
+                                      std::shared_ptr<RegionSelector> regionSelector) :
+    zoomHandler(zoomHandler),
+    regionSelector(regionSelector)
 {
 
     setAudioResource(audioResource);
@@ -37,13 +40,15 @@ WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResour
     addAndMakeVisible (currentPositionMarker);
     
     
-//    resizableEdgeComponent.reset(new ResizableEdgeComponent(this, nullptr, ResizableEdgeComponent::bottomEdge));
-//    addAndMakeVisible(resizableEdgeComponent.get());
-//    resizableEdgeComponent->setBounds(getBounds());
+    resizableEdgeComponent.reset(new ResizableEdgeComponent(this, nullptr, ResizableEdgeComponent::bottomEdge));
+    //addAndMakeVisible(resizableEdgeComponent.get());
+    auto rect = getBounds();
+    rect.setHeight(0);
+    resizableEdgeComponent->setBounds(rect);
     
-    resizableBorderComponent.reset(new ResizableBorderComponent(this, nullptr));
-    addAndMakeVisible(resizableBorderComponent.get());
-    resizableBorderComponent->setBounds(getBounds());
+//    resizableBorderComponent.reset(new ResizableBorderComponent(this, nullptr));
+//    addAndMakeVisible(resizableBorderComponent.get());
+//    resizableBorderComponent->setBounds(getBounds());
     
 }
 
@@ -195,6 +200,7 @@ void WaveFormComponent::mouseDrag (const MouseEvent& e)
     
     if (canMoveTransport())
         audioResource->getAudioTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
+        
 }
 
 void WaveFormComponent::mouseUp (const MouseEvent& e)
