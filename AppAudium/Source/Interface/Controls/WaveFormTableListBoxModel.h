@@ -17,6 +17,7 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Components/WaveFormTableListBox.h"
+#include "Interface/Components/RegionSelector.h"
 
 class WaveFormTableListBoxModel : public audium::ListBoxModel
 {
@@ -26,7 +27,8 @@ public:
     
     WaveFormTableListBoxModel(std::shared_ptr<WaveFormTableListBox> owner,
                               std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                              std::shared_ptr<ZoomHandler> zoomHandler);
+                              std::shared_ptr<ZoomHandler> zoomHandler,
+                              std::shared_ptr<RegionSelector> RegionSelector);
     ~WaveFormTableListBoxModel();
     
     int getNumRows() override;
@@ -51,6 +53,9 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
     std::shared_ptr<ZoomHandler> zoomHandler;
+    
+    /// remove this
+    std::shared_ptr<RegionSelector> regionSelector;
     
     std::shared_ptr<WaveFormTableListBox> owner;
 

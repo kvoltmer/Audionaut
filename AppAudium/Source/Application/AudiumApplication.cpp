@@ -37,9 +37,10 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     initCommandManager();
 
     /// TODO: create factory class
-    auto container = std::shared_ptr<AudioResourceContainer>(new AudioResourceContainer());
-    container->initializeAudioDevice();
-    audiumEngine.reset(new AudiumEngine(container));
+    audioResourceContainer.reset(new AudioResourceContainer());
+    //auto container = std::shared_ptr<AudioResourceContainer>(new AudioResourceContainer());
+    audioResourceContainer->initializeAudioDevice();
+    audiumEngine.reset(new AudiumEngine(audioResourceContainer));
     if (Preferences::valueExists(Preferences::defaultFile))
     {
         audiumEngine->openFile(juce::File(Preferences::getValue(Preferences::defaultFile)), nullptr);
@@ -77,6 +78,8 @@ void AudiumApplication::shutdown()
     commandManager.reset();
     
     mainWindow = nullptr; // (deletes our window)
+    audiumEngine = nullptr;
+    audioResourceContainer = nullptr;
     
     
 }

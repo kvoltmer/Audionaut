@@ -76,9 +76,13 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer()));
     waveFormTableListBox.reset(new WaveFormTableListBox("waveform table", nullptr));
+    
+    
+    
     waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(waveFormTableListBox,
                                                                   audiumEngine->getAudioResourceContainer(),
-                                                                  zoomHandler));
+                                                                  zoomHandler,
+                                                                  regionSelector));
     waveFormTableListBox->setModel(waveFormTableListBoxModel.get());
 
     
@@ -94,6 +98,10 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     waveFormTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
     addAndMakeVisible(waveFormTableListBox.get());
 
+    // selection component
+    regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler));
+    addAndMakeVisible(regionSelector.get());
+    
     zoomHandler->setWidth(waveform__background->getWidth());
     
     updateUI();
@@ -114,6 +122,14 @@ MainComponent::~MainComponent()
 
     //[Destructor]. You can add your own custom destruction code here..
 
+    regionSelector = nullptr;
+    waveFormTableListBox->setModel(nullptr);
+    waveFormTableListBox = nullptr;
+    waveFormTableListBoxModel = nullptr;
+    zoomHandler = nullptr;
+    
+
+    
     //[/Destructor]
 }
 

@@ -33,6 +33,11 @@ AudioResourceContainer::AudioResourceContainer()
 
 }
 
+AudioResourceContainer::~AudioResourceContainer()
+{
+    audioResources.clear();
+}
+
 void AudioResourceContainer::initializeAudioDevice()
 {
     /** Resets everything to a default device setup, clearing any stored settings. */

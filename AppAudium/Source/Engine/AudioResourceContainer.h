@@ -20,6 +20,8 @@ class AudioResourceContainer {
 public:
     AudioResourceContainer();
     
+    ~AudioResourceContainer();
+    
     void initializeAudioDevice();
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL resource);
@@ -41,6 +43,7 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
+    
     
 private:
     

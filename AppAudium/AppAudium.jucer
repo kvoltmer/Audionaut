@@ -69,6 +69,10 @@
                 file="Source/Interface/Components/WaveFormTableListBox.cpp"/>
           <FILE id="YDsbqV" name="WaveFormTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Components/WaveFormTableListBox.h"/>
+          <FILE id="S03XzX" name="RegionSelector.cpp" compile="1" resource="0"
+                file="Source/Interface/Components/RegionSelector.cpp"/>
+          <FILE id="DEoTJN" name="RegionSelector.h" compile="0" resource="0"
+                file="Source/Interface/Components/RegionSelector.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Controls">
           <FILE id="xPbK3J" name="WaveFormTableListBoxModel.cpp" compile="1"

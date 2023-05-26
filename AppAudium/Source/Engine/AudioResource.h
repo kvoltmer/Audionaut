@@ -54,6 +54,8 @@ public:
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
+    AudioResourceContainer& getContainer() const { return owner; }
+    
 private:
 
     AudioResourceContainer& owner;

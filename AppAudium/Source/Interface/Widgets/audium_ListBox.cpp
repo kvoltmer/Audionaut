@@ -847,8 +847,28 @@ int ListBox::getRowContainingPosition (const int x, const int y) const noexcept
 {
     if (isPositiveAndBelow (x, getWidth()))
     {
-        const int row = (viewport->getViewPositionY() + y - viewport->getY()) / rowHeight;
-
+        auto pos = (viewport->getViewPositionY() + y - viewport->getY());
+        
+        
+        int row = -1;
+        auto rowTop = 0;
+        auto rowBottom = 0;
+        for (auto r = 0; r < totalItems; r++)
+        {
+            if (auto* m = getModel())
+            {
+                rowBottom += m->getRowHeight (r);
+                
+                if (pos >= rowTop && pos < rowBottom)
+                {
+                    row = r;
+                    break;
+                }
+                
+                rowTop = rowBottom;
+            }
+        }
+        
         if (isPositiveAndBelow (row, totalItems))
             return row;
     }
@@ -1036,6 +1056,19 @@ void ListBox::setRowHeight (const int newHeight)
     rowHeight = jmax (1, newHeight);
     viewport->setSingleStepSizes (20, rowHeight);
     updateContent();
+}
+
+int ListBox::getAllRowsHeight() const noexcept
+{
+    auto newH = 0;
+    for (auto r = 0; r < totalItems; r++)
+    {
+        if (auto* m = getModel())
+            newH += m->getRowHeight (r);
+    }
+    
+    return newH;
+    
 }
 
 int ListBox::getNumRowsOnScreen() const noexcept

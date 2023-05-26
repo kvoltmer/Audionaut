@@ -14,6 +14,7 @@
 #include <memory>
 
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Components/RegionSelector.h"
 
 using namespace juce;
 
@@ -31,7 +32,8 @@ class WaveFormComponent  : public Component,
 {
 public:
     WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
-                       std::shared_ptr<ZoomHandler> zoomHandler);
+                       std::shared_ptr<ZoomHandler> zoomHandler,
+                       std::shared_ptr<RegionSelector> regionSelector);
 
     ~WaveFormComponent() override;
     
@@ -64,6 +66,9 @@ private:
     std::shared_ptr<AudioResource> audioResource;
 
     std::shared_ptr<ZoomHandler> zoomHandler;
+    
+    /// remove this
+    std::shared_ptr<RegionSelector> regionSelector;
     
     std::unique_ptr<ResizableEdgeComponent> resizableEdgeComponent;
     std::unique_ptr<ResizableBorderComponent> resizableBorderComponent;
@@ -104,5 +109,8 @@ private:
         
     
     }
+    
+private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormComponent)
     
 };

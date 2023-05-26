@@ -454,6 +454,11 @@ public:
         @see getRowHeight
     */
     void setRowHeight (int newHeight);
+    
+    /**
+        kvo
+    */
+    int getAllRowsHeight() const noexcept;
 
     /** Returns the height of a row in the list.
         @see setRowHeight
