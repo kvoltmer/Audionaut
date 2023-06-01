@@ -75,18 +75,16 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     //[Constructor] You can add your own custom stuff here..
 
     zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer()));
-    waveFormTableListBox.reset(new WaveFormTableListBox("waveform table", nullptr));
-    
-    
-    
+    waveFormTableListBox.reset(new WaveFormTableListBox("waveform listbox", nullptr));
+    regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler, audiumEngine->getAudioRegionContainer()));
     waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(waveFormTableListBox,
                                                                   audiumEngine->getAudioResourceContainer(),
                                                                   zoomHandler,
                                                                   regionSelector));
     waveFormTableListBox->setModel(waveFormTableListBoxModel.get());
 
-    
-    
+
+
     zoomHandler->setHorizontalScrollBar(&waveFormTableListBox->getHorizontalScrollBar());
 
 
@@ -99,11 +97,12 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     addAndMakeVisible(waveFormTableListBox.get());
 
     // selection component
-    regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler));
+
+    //waveFormTableListBox->getViewport()->addAndMakeVisible(regionSelector.get());
     addAndMakeVisible(regionSelector.get());
-    
+
     zoomHandler->setWidth(waveform__background->getWidth());
-    
+
     updateUI();
 
     //[/Constructor]
@@ -127,9 +126,9 @@ MainComponent::~MainComponent()
     waveFormTableListBox = nullptr;
     waveFormTableListBoxModel = nullptr;
     zoomHandler = nullptr;
-    
 
-    
+
+
     //[/Destructor]
 }
 
@@ -174,6 +173,7 @@ void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
         auto width = waveform__background->getWidth() * zoomHandler->zoomOut();
         waveFormTableListBox->setMinimumContentWidth(width);
         zoomHandler->setWidth(width);
+        regionSelector->updateFromEngine();
         //[/UserButtonCode_zoomOutButton]
     }
     else if (buttonThatWasClicked == zoomInButton.get())
@@ -182,6 +182,7 @@ void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
         auto width = waveform__background->getWidth() * zoomHandler->zoomIn();
         waveFormTableListBox->setMinimumContentWidth(width);
         zoomHandler->setWidth(width);
+        regionSelector->updateFromEngine();
         //[/UserButtonCode_zoomInButton]
     }
     else if (buttonThatWasClicked == startStopButton.get())

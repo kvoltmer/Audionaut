@@ -40,7 +40,8 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     audioResourceContainer.reset(new AudioResourceContainer());
     //auto container = std::shared_ptr<AudioResourceContainer>(new AudioResourceContainer());
     audioResourceContainer->initializeAudioDevice();
-    audiumEngine.reset(new AudiumEngine(audioResourceContainer));
+    std::shared_ptr<AudioRegionContainer> audioRegionContainer = std::shared_ptr<AudioRegionContainer>(new AudioRegionContainer());
+    audiumEngine.reset(new AudiumEngine(audioResourceContainer, audioRegionContainer));
     if (Preferences::valueExists(Preferences::defaultFile))
     {
         audiumEngine->openFile(juce::File(Preferences::getValue(Preferences::defaultFile)), nullptr);
@@ -187,6 +188,7 @@ PopupMenu AudiumApplication::createEditMenu()
 //    menu.addCommandItem (commandManager.get(), CommandIDs::findSelection);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::findNext);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::findPrevious);
+    menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
     return menu;
 }
 

@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Interface/Components/MainComponent.h"
+#include "Util/NewRegionDialog.h"
 
 //==============================================================================
 /*
@@ -46,4 +47,5 @@ public:
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
     std::shared_ptr<AudiumEngine> audiumEngine;
+    NewRegionDialog newRegionDialog;
 };

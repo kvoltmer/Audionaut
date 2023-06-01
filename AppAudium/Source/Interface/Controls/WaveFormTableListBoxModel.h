@@ -47,6 +47,8 @@ public:
     void selectedRowsChanged (int lastRowSelected) override;
     
     void deleteKeyPressed (int lastRowSelected) override;
+    
+    void listWasScrolled() override;
         
 private:
     

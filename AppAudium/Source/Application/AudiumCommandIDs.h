@@ -26,6 +26,8 @@ namespace CommandIDs
         clearRecentFiles        = 0x300049,
         
         playStop                = 0x300050,
+        
+        createRegion            = 0x300060,
 
         enableSnapToGrid        = 0x300070,
         zoomIn                  = 0x300071,

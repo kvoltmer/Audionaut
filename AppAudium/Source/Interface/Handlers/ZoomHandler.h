@@ -37,9 +37,9 @@ public:
     
     void setWidth(int newWidth) { width = newWidth; }
     
-    float timeToX (const double time) const;
+    double timeToX (const double time) const;
 
-    double xToTime (const float x) const;
+    double xToTime (const double x) const;
 
 private:
     

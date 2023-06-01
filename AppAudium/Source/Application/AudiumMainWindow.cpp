@@ -11,6 +11,7 @@
 #include "AudiumMainWindow.h"
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
+#include "Util/EngineAccess.h"
 
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
     : DocumentWindow (name,
@@ -80,7 +81,8 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
 {
     const CommandID ids[] =
     {
-        CommandIDs::playStop
+        CommandIDs::playStop,
+        CommandIDs::createRegion
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -94,8 +96,10 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Play/Stop", "Play and stop", CommandCategories::transport, 0);
             result.defaultKeypresses.add (KeyPress (' ', ModifierKeys::noModifiers, 0));
             break;
-
-
+        case CommandIDs::createRegion:
+            result.setInfo ("Create Region", "Creates a new Region", CommandCategories::editing, 0);
+            result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::commandModifier, 0));
+            break;
         default:
             break;
     }
@@ -107,6 +111,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     {
         case CommandIDs::playStop:
             getEngine()->getAudioResourceContainer()->playStop();
+            break;
+        case CommandIDs::createRegion:
+            newRegionDialog.createNewRegion(getEngine());
             break;
 
         default:

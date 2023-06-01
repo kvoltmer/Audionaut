@@ -13,15 +13,19 @@
 #include <memory>
 #include <JuceHeader.h>
 #include "AudioResourceContainer.h"
+#include "AudioRegionContainer.h"
 
 /// The Audium engine
 class AudiumEngine {
     
 public:
-    AudiumEngine(std::shared_ptr<AudioResourceContainer> container);
+    AudiumEngine(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                 std::shared_ptr<AudioRegionContainer> audioRegionContainer);
     ~AudiumEngine();
     
-    std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() { return audioResourceContainer; }
+    std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
+    
+    std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     
     void openFile (const juce::File& file, std::function<void (bool)> callback);
     void saveFile (const juce::File& file, std::function<void (bool)> callback);
@@ -35,6 +39,7 @@ public:
     
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     
     juce::File currentFile;
     

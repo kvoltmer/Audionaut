@@ -63,17 +63,17 @@ void ZoomHandler::updateTotalLength()
     totalRange = newRange;
 }
 
-float ZoomHandler::timeToX (const double time) const
+double ZoomHandler::timeToX (const double time) const
 {
     if (totalRange.getLength() <= 0)
         return 0;
 
     jassert(getWidth() > 0);
-    return (float) getWidth() * (float) ((time - totalRange.getStart()) / totalRange.getLength());
+    return (double) getWidth() * (double) ((time - totalRange.getStart()) / totalRange.getLength());
 }
 
-double ZoomHandler::xToTime (const float x) const
+double ZoomHandler::xToTime (const double x) const
 {
     jassert(getWidth() > 0);
-    return (x / (float) getWidth()) * (totalRange.getLength()) + totalRange.getStart();
+    return (x / (double) getWidth()) * (totalRange.getLength()) + totalRange.getStart();
 }
