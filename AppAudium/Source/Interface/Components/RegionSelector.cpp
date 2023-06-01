@@ -11,6 +11,7 @@
 
 #include "RegionSelector.h"
 #include "Interface/Components/WaveFormComponent.h"
+#include "Engine/AudioRegionContainer.h"
 
 void RegionSelector::paint (Graphics& g)
 {
@@ -23,19 +24,27 @@ void RegionSelector::paint (Graphics& g)
 
 void RegionSelector::mouseDown (const juce::MouseEvent& e)
 {
-    // clear old selection or modify?
-    //audioResource->getAudioTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
-    //startX = jmax (0.0, zoomHandler->xToTime ((float) e.x));
     
-    // click outside the selection will reset the selection
+    /// click outside -> reset current selection
     auto parentPosition = e.getEventRelativeTo(owner.get()).getPosition();
-    if(! getBoundsInParent().contains(parentPosition))
+    
+    /// filter mouse postion to avoid scrollbar conflict
+    /// TODO: maybe attach mouse listener to the viewport
+    if (owner->getHeight() - parentPosition.getY() < 10)
+    {
+        avoidDragging = true;
+        return;
+    }
+    
+    avoidDragging = false;
+    
+    if (!getBoundsInParent().contains(parentPosition))
     {
         setSize (0, 0);
         dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
         currentDragMode = RegionSelector::outsideEdge;
     }
-    else
+    else /// click inside -> modify current selection
     {
         moveStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
         currentDragMode = getDragMode(e.getPosition().getX());
@@ -44,7 +53,15 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
 
 void RegionSelector::mouseDrag (const juce::MouseEvent& e)
 {
-   
+    // filter mouse postion to avoid scrollbar conflict
+    /// TODO: maybe attach mouse listener to the viewport
+    auto parentPosition = e.getEventRelativeTo(owner.get()).getPosition();
+    if (avoidDragging ||
+        owner->getHeight() - parentPosition.getY() < 10)
+    {
+        return;
+    }
+    
     auto delta =  e.getEventRelativeTo(owner.get()).getPosition().getX() - moveStartPos.getX();
     moveStartPos = e.getEventRelativeTo(owner.get()).getPosition();
     
@@ -81,7 +98,27 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
             break;
     }
 
-    // create a new selectin rectange
+    createRectangleAndSetBonds();
+    
+    
+    auto offset = zoomHandler->getVisibleRange().getStart();
+    auto start = jmax (0.0, zoomHandler->xToTime ((double) dragStartPos.getX() + offset));
+    auto end = jmax (0.0, zoomHandler->xToTime ((double) dragEndPos.getX() + offset));
+    
+    // calc engine values
+    Range<double> pos(start, end);
+    if (end < start)
+    {
+        pos = Range<double>(end, start);
+    }
+    
+    // set value in the engine
+    audioRegionContainer->setSelectedRegion(pos);
+}
+
+void RegionSelector::createRectangleAndSetBonds()
+{
+    // create a rectange
     auto rect = Rectangle<int> (dragStartPos, dragEndPos);
     
     rect.setTop(owner->getBounds().getY());
@@ -106,8 +143,20 @@ void RegionSelector::mouseMove (const juce::MouseEvent& e)
     
 }
 
-void RegionSelector::update()
+void RegionSelector::updateFromEngine()
 {
+    auto pos = audioRegionContainer->getSelectedRegion();
+    if (!pos.isEmpty())
+    {
+        auto start = zoomHandler->timeToX(pos.getStart());
+        auto end = zoomHandler->timeToX(pos.getEnd());
+        auto offset = zoomHandler->getVisibleRange().getStart();
+        
+        dragStartPos.setX(start - offset);
+        dragEndPos.setX(end - offset);
+    
+        createRectangleAndSetBonds();
+    }
 }
 
 void RegionSelector::updateMouseZone (const juce::MouseEvent& e)

@@ -13,6 +13,7 @@
 #include "Interface/Widgets/audium_ListBox.h"
 
 class ZoomHandler;
+class AudioRegionContainer;
 
 class RegionSelector : public juce::Component
 {
@@ -27,9 +28,11 @@ public:
     };
     
     RegionSelector (std::shared_ptr<audium::ListBox> lb,
-                      std::shared_ptr<ZoomHandler> zoomHandler) :
+                    std::shared_ptr<ZoomHandler> zoomHandler,
+                    std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
         owner (lb),
-        zoomHandler(zoomHandler)
+        zoomHandler(zoomHandler),
+        audioRegionContainer(audioRegionContainer)
     {
         owner->addMouseListener (this, true);
     }
@@ -49,17 +52,18 @@ public:
 
     void mouseUp (const juce::MouseEvent&) override;
     
-    void update();
-    
     void updateMouseZone (const juce::MouseEvent& e);
 
     const Edge getDragMode(int x) const;
+    
+    void updateFromEngine();
     
 private:
     
     std::shared_ptr<audium::ListBox> owner;
     
     std::shared_ptr<ZoomHandler> zoomHandler;
+    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     
     const int borderSize = 10;
     const int expandedWidth = 2;
@@ -69,6 +73,10 @@ private:
     Point<int> moveStartPos;
     
     Edge currentDragMode = outsideEdge;
+    
+    bool avoidDragging = true;
+    
+    void createRectangleAndSetBonds();
     
     
 };

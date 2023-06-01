@@ -29,10 +29,18 @@
         <FILE id="DdTX0t" name="EngineAccess.cpp" compile="1" resource="0"
               file="Source/Util/EngineAccess.cpp"/>
         <FILE id="ynCVR0" name="EngineAccess.h" compile="0" resource="0" file="Source/Util/EngineAccess.h"/>
+        <FILE id="Y6BYrp" name="NewRegionDialog.h" compile="0" resource="0"
+              file="Source/Util/NewRegionDialog.h"/>
         <FILE id="rysRho" name="Preferences.cpp" compile="1" resource="0" file="Source/Util/Preferences.cpp"/>
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <FILE id="ZckA0q" name="AudioRegionContainer.cpp" compile="1" resource="0"
+              file="Source/Engine/AudioRegionContainer.cpp"/>
+        <FILE id="vB01Hj" name="AudioRegionContainer.h" compile="0" resource="0"
+              file="Source/Engine/AudioRegionContainer.h"/>
+        <FILE id="HHfhXq" name="AudioRegion.cpp" compile="1" resource="0" file="Source/Engine/AudioRegion.cpp"/>
+        <FILE id="Dh5Eq6" name="AudioRegion.h" compile="0" resource="0" file="Source/Engine/AudioRegion.h"/>
         <FILE id="xDqbFz" name="AudioPlayer.cpp" compile="1" resource="0" file="Source/Engine/AudioPlayer.cpp"/>
         <FILE id="bN94Ur" name="AudioPlayer.h" compile="0" resource="0" file="Source/Engine/AudioPlayer.h"/>
         <FILE id="fjWrqk" name="AudioResource.cpp" compile="1" resource="0"
@@ -58,6 +66,8 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
+          <FILE id="zjPOWk" name="NewRegionDialog.h" compile="0" resource="0"
+                file="Source/Interface/Components/NewRegionDialog.h"/>
           <FILE id="uZah0s" name="MainComponent.cpp" compile="1" resource="0"
                 file="Source/Interface/Components/MainComponent.cpp"/>
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>

@@ -112,3 +112,9 @@ void WaveFormTableListBoxModel::deleteKeyPressed (int lastRowSelected)
     owner->updateContent();
 }
 
+void WaveFormTableListBoxModel::listWasScrolled()
+{
+    jassert(regionSelector);
+    regionSelector->updateFromEngine();
+}
+

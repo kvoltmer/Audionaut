@@ -13,8 +13,10 @@
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 
-AudiumEngine::AudiumEngine(std::shared_ptr<AudioResourceContainer> container) :
-    audioResourceContainer(container)
+AudiumEngine::AudiumEngine(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                           std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
+    audioResourceContainer(audioResourceContainer),
+    audioRegionContainer(audioRegionContainer)
 {
 }
 
