@@ -33,13 +33,16 @@ private:
     void createNewRegionInternal(std::shared_ptr<AudiumEngine> engine)
     {
         audiumEngine = engine;
-        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Create new Region"),
+        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Create New Region"),
                                                           TRANS ("Please enter the name for the new region"),
                                                           MessageBoxIconType::NoIcon, nullptr);
 
         asyncAlertWindow->addTextEditor (getClassNameFieldName(), String(), String(), false);
         asyncAlertWindow->addButton (TRANS ("Create Region"),  1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"),        0, KeyPress (KeyPress::escapeKey));
+        
+        //asyncAlertWindow->getTextEditor(getClassNameFieldName())->grabKeyboardFocus();
+
 
         auto resultCallback = [safeThis = WeakReference<NewRegionDialog> { this }, this] (int result)
         {

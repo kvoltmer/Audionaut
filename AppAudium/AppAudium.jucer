@@ -66,8 +66,6 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
-          <FILE id="zjPOWk" name="NewRegionDialog.h" compile="0" resource="0"
-                file="Source/Interface/Components/NewRegionDialog.h"/>
           <FILE id="uZah0s" name="MainComponent.cpp" compile="1" resource="0"
                 file="Source/Interface/Components/MainComponent.cpp"/>
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>

@@ -119,7 +119,6 @@
 		A9B61645C4E1D292FC719BF4 /* juce_gui_basics */ /* juce_gui_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_basics; path = ../../../Submodules/juce/modules/juce_gui_basics; sourceTree = SOURCE_ROOT; };
 		AA6A70E8E5EC8AF8DF2B1A7E /* AudioRegionContainer.h */ /* AudioRegionContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegionContainer.h; path = ../../Source/Engine/AudioRegionContainer.h; sourceTree = SOURCE_ROOT; };
 		AD65FA93588D128E5669D0B8 /* WaveFormTableListBoxModel.h */ /* WaveFormTableListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormTableListBoxModel.h; path = ../../Source/Interface/Controls/WaveFormTableListBoxModel.h; sourceTree = SOURCE_ROOT; };
-		B196CE5D1B4A1DEB7C63BDFD /* NewRegionDialog.h */ /* NewRegionDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NewRegionDialog.h; path = ../../Source/Interface/Components/NewRegionDialog.h; sourceTree = SOURCE_ROOT; };
 		B49AA8C79C8A8C9FCDA5A44C /* WebKit.framework */ /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		B68082B3B751BB87D6C198BD /* juce_analytics */ /* juce_analytics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_analytics; path = ../../../Submodules/juce/modules/juce_analytics; sourceTree = SOURCE_ROOT; };
 		B7346F39611AE01C1EAFEC0C /* Info-App.plist */ /* Info-App.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-App.plist"; path = "Info-App.plist"; sourceTree = SOURCE_ROOT; };
@@ -313,7 +312,6 @@
 		C5B7D745189C4E7C39DE95A8 /* Components */ = {
 			isa = PBXGroup;
 			children = (
-				B196CE5D1B4A1DEB7C63BDFD,
 				11ABDB8E5A840910E3FD71B8,
 				A3346CAE6FB6CD785EE49D2D,
 				8F7CB431E1C1A59D06BA574D,

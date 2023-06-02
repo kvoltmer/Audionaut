@@ -82,14 +82,20 @@ void AudiumEngine::saveFile (const juce::File& file, std::function<void (bool)> 
 bool AudiumEngine::writeToStream (juce::OutputStream& out)
 {
     out.writeString ("AudiumEngineFormat");
-    return audioResourceContainer->writeToStream(out);
+    bool result = true;
+    result |= audioResourceContainer->writeToStream(out);
+    result |= audioRegionContainer->writeToStream(out);
+    return result;
 }
 
 bool AudiumEngine::readFromStream (juce::InputStream& in)
 {
     auto name = in.readString();
     jassert(name == "AudiumEngineFormat");
-    return audioResourceContainer->readFromStream(in);
+    bool result = true;
+    result |= audioResourceContainer->readFromStream(in);
+    result |= audioRegionContainer->readFromStream(in);
+    return result;
 }
 
 

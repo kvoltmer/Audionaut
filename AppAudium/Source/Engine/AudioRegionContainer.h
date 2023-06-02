@@ -18,14 +18,18 @@ class AudioRegionContainer
 public:
     AudioRegionContainer() = default;
     
-    void createRegion(juce::String regionName);
+    std::shared_ptr<AudioRegion> createRegion(juce::String regionName);
     
     void setSelectedRegion(juce::Range<double> pos);
     juce::Range<double> getSelectedRegion() const;
         
+    bool writeToStream (juce::OutputStream& outputStream);
+    bool readFromStream (juce::InputStream& inputStream);
+    
 private:
     AudioRegion selectedRegion;
     
     std::vector<std::shared_ptr<AudioRegion>> audioRegions;
     
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionContainer)
 };

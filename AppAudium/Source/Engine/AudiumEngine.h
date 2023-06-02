@@ -23,10 +23,6 @@ public:
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer);
     ~AudiumEngine();
     
-    std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
-    
-    std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
-    
     void openFile (const juce::File& file, std::function<void (bool)> callback);
     void saveFile (const juce::File& file, std::function<void (bool)> callback);
     
@@ -36,6 +32,9 @@ public:
     static const char* projectFileExtension;
     
     const juce::File getCurrentFile() const { return currentFile; }
+    
+    std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
+    std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
