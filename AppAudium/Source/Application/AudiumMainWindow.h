@@ -48,4 +48,5 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
     std::shared_ptr<AudiumEngine> audiumEngine;
     NewRegionDialog newRegionDialog;
+    std::shared_ptr<MainComponent> mainComponent;
 };

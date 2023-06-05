@@ -21,7 +21,8 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEng
     audiumEngine(audiumEngine)
 {
     setUsingNativeTitleBar (true);
-    setContentOwned (new MainComponent(audiumEngine), true);
+    mainComponent.reset(new MainComponent(audiumEngine));
+    setContentOwned (mainComponent.get(), true);
     
 #if ! JUCE_MAC
  setMenuBar (ProjucerApplication::getApp().getMenuModel());
@@ -82,7 +83,9 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
     const CommandID ids[] =
     {
         CommandIDs::playStop,
-        CommandIDs::createRegion
+        CommandIDs::createRegion,
+        CommandIDs::zoomIn,
+        CommandIDs::zoomOut
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -97,8 +100,17 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress (' ', ModifierKeys::noModifiers, 0));
             break;
         case CommandIDs::createRegion:
-            result.setInfo ("Create Region", "Creates a new Region", CommandCategories::editing, 0);
+            result.setInfo ("Create Region", "Creates a new region", CommandCategories::editing, 0);
             result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::commandModifier, 0));
+            break;
+            
+        case CommandIDs::zoomIn:
+            result.setInfo ("Zoom In", "Zoom in", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::ctrlModifier, 0));
+            break;
+        case CommandIDs::zoomOut:
+            result.setInfo ("Zoom Out", "Zoom out", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::ctrlModifier, 0));
             break;
         default:
             break;
@@ -114,6 +126,13 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::createRegion:
             newRegionDialog.createNewRegion(getEngine());
+            break;
+            
+        case CommandIDs::zoomIn:
+            mainComponent->zoomIn();
+            break;
+        case CommandIDs::zoomOut:
+            mainComponent->zoomOut();
             break;
 
         default:
