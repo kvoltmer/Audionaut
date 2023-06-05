@@ -195,14 +195,10 @@ PopupMenu AudiumApplication::createEditMenu()
 PopupMenu AudiumApplication::createViewMenu()
 {
     PopupMenu menu;
-//    menu.addCommandItem (commandManager.get(), CommandIDs::showProjectSettings);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::showFileExplorerPanel);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::showModulesPanel);
+    menu.addCommandItem (commandManager.get(), CommandIDs::zoomIn);
+    menu.addCommandItem (commandManager.get(), CommandIDs::zoomOut);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::showExportersPanel);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::showExporterSettings);
-//
-//    menu.addSeparator();
-//    createColourSchemeItems (menu);
 
     return menu;
 }

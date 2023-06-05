@@ -47,24 +47,6 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     waveform__background->setColour (juce::TextEditor::textColourId, juce::Colours::black);
     waveform__background->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
 
-    zoomOutButton.reset (new juce::TextButton ("zoom out"));
-    addAndMakeVisible (zoomOutButton.get());
-    zoomOutButton->setButtonText (TRANS("-"));
-    zoomOutButton->addListener (this);
-    zoomOutButton->setColour (juce::TextButton::buttonOnColourId, juce::Colours::white);
-
-    zoomInButton.reset (new juce::TextButton ("zoom in"));
-    addAndMakeVisible (zoomInButton.get());
-    zoomInButton->setButtonText (TRANS("+"));
-    zoomInButton->addListener (this);
-    zoomInButton->setColour (juce::TextButton::buttonOnColourId, juce::Colours::white);
-
-    startStopButton.reset (new juce::TextButton ("start stop"));
-    addAndMakeVisible (startStopButton.get());
-    startStopButton->setButtonText (TRANS("start"));
-    startStopButton->addListener (this);
-    startStopButton->setColour (juce::TextButton::buttonOnColourId, juce::Colours::white);
-
 
     //[UserPreSize]
     //[/UserPreSize]
@@ -114,9 +96,6 @@ MainComponent::~MainComponent()
     //[/Destructor_pre]
 
     waveform__background = nullptr;
-    zoomOutButton = nullptr;
-    zoomInButton = nullptr;
-    startStopButton = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
@@ -149,10 +128,7 @@ void MainComponent::resized()
     //[UserPreResize] Add your own custom resize code here..
     //[/UserPreResize]
 
-    waveform__background->setBounds (0, 0, proportionOfWidth (1.0000f), getHeight() - 40);
-    zoomOutButton->setBounds (getWidth() - 55, getHeight() - 30, 20, 20);
-    zoomInButton->setBounds (getWidth() - 30, getHeight() - 30, 20, 20);
-    startStopButton->setBounds (10, getHeight() - 30, 40, 20);
+    waveform__background->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (1.0000f));
     //[UserResized] Add your own custom resize handling here..
     if (waveFormTableListBox != nullptr)
     {
@@ -160,50 +136,6 @@ void MainComponent::resized()
     }
 
     //[/UserResized]
-}
-
-void MainComponent::buttonClicked (juce::Button* buttonThatWasClicked)
-{
-    //[UserbuttonClicked_Pre]
-    //[/UserbuttonClicked_Pre]
-
-    if (buttonThatWasClicked == zoomOutButton.get())
-    {
-        //[UserButtonCode_zoomOutButton] -- add your button handler code here..
-        auto width = waveform__background->getWidth() * zoomHandler->zoomOut();
-        waveFormTableListBox->setMinimumContentWidth(width);
-        zoomHandler->setWidth(width);
-        regionSelector->updateFromEngine();
-        //[/UserButtonCode_zoomOutButton]
-    }
-    else if (buttonThatWasClicked == zoomInButton.get())
-    {
-        //[UserButtonCode_zoomInButton] -- add your button handler code here..
-        auto width = waveform__background->getWidth() * zoomHandler->zoomIn();
-        waveFormTableListBox->setMinimumContentWidth(width);
-        zoomHandler->setWidth(width);
-        regionSelector->updateFromEngine();
-        //[/UserButtonCode_zoomInButton]
-    }
-    else if (buttonThatWasClicked == startStopButton.get())
-    {
-        //[UserButtonCode_startStopButton] -- add your button handler code here..
-        if (startStopButton->getButtonText() == String("start"))
-        {
-            audiumEngine->getAudioResourceContainer()->start();
-            startStopButton->setButtonText("stop");
-        }
-        else if (startStopButton->getButtonText() == String("stop"))
-        {
-            audiumEngine->getAudioResourceContainer()->stop();
-            startStopButton->setButtonText("start");
-        }
-
-        //[/UserButtonCode_startStopButton]
-    }
-
-    //[UserbuttonClicked_Post]
-    //[/UserbuttonClicked_Post]
 }
 
 void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
@@ -248,6 +180,22 @@ void MainComponent::updateUI()
     waveFormTableListBox->updateContent();
 }
 
+void MainComponent::zoomIn()
+{
+    auto width = waveform__background->getWidth() * zoomHandler->zoomIn();
+    waveFormTableListBox->setMinimumContentWidth(width);
+    zoomHandler->setWidth(width);
+    regionSelector->updateFromEngine();
+}
+
+void MainComponent::zoomOut()
+{
+    auto width = waveform__background->getWidth() * zoomHandler->zoomOut();
+    waveFormTableListBox->setMinimumContentWidth(width);
+    zoomHandler->setWidth(width);
+    regionSelector->updateFromEngine();
+}
+
 //[/MiscUserCode]
 
 
@@ -270,19 +218,10 @@ BEGIN_JUCER_METADATA
   </METHODS>
   <BACKGROUND backgroundColour="ff7b7c7d"/>
   <LABEL name="waveform background" id="3e76c9516fa31cfd" memberName="waveform__background"
-         virtualName="" explicitFocusOrder="0" pos="0 0 100% 40M" bkgCol="ff292929"
+         virtualName="" explicitFocusOrder="0" pos="0 0 100% 100%" bkgCol="ff292929"
          edTextCol="ff000000" edBkgCol="0" labelText="" editableSingleClick="0"
          editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
          fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="36"/>
-  <TEXTBUTTON name="zoom out" id="74eb6ad258b2dac6" memberName="zoomOutButton"
-              virtualName="" explicitFocusOrder="0" pos="55R 30R 20 20" bgColOn="ffffffff"
-              buttonText="-" connectedEdges="0" needsCallback="1" radioGroupId="0"/>
-  <TEXTBUTTON name="zoom in" id="d0a0bea7a59bd68d" memberName="zoomInButton"
-              virtualName="" explicitFocusOrder="0" pos="30R 30R 20 20" bgColOn="ffffffff"
-              buttonText="+" connectedEdges="0" needsCallback="1" radioGroupId="0"/>
-  <TEXTBUTTON name="start stop" id="9fa553b12148ec1a" memberName="startStopButton"
-              virtualName="" explicitFocusOrder="0" pos="10 30R 40 20" bgColOn="ffffffff"
-              buttonText="start" connectedEdges="0" needsCallback="1" radioGroupId="0"/>
 </JUCER_COMPONENT>
 
 END_JUCER_METADATA

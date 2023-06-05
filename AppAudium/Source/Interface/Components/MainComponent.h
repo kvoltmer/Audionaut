@@ -44,8 +44,7 @@ class RegionSelector;
 */
 class MainComponent  : public juce::Component,
                        private juce::ChangeListener,
-                       public FileDragAndDropTarget,
-                       public juce::Button::Listener
+                       public FileDragAndDropTarget
 {
 public:
     //==============================================================================
@@ -59,11 +58,13 @@ public:
     bool loadURLIntoTransport (const URL& audioURL);
     bool isInterestedInFileDrag (const StringArray& /*files*/) override;
     void updateUI();
+
+    void zoomIn();
+    void zoomOut();
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;
     void resized() override;
-    void buttonClicked (juce::Button* buttonThatWasClicked) override;
     void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
 
 
@@ -82,9 +83,6 @@ private:
 
     //==============================================================================
     std::unique_ptr<juce::Label> waveform__background;
-    std::unique_ptr<juce::TextButton> zoomOutButton;
-    std::unique_ptr<juce::TextButton> zoomInButton;
-    std::unique_ptr<juce::TextButton> startStopButton;
 
 
     //==============================================================================
