@@ -18,8 +18,9 @@
 */
 
 //[Headers] You can add your own extra header files here...
-#include "Util/EngineAccess.h"
-#include "Interface/Handlers/ZoomHandler.h"
+#include "WaveFormPanelComponent.h"
+#include "Engine/AudiumEngine.h"
+#include "RegionPanelComponent.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -34,18 +35,12 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     //[Constructor_pre] You can add your own custom stuff here..
 
     this->audiumEngine = audiumEngine;
+    waveFormPanelComponent.reset(new WaveFormPanelComponent(audiumEngine));
+    regionPanelComponent.reset(new RegionPanelComponent());
+    stretchableLayoutManager.reset(new StretchableLayoutManager());
+    stretchableLayoutResizerBar.reset(new StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, true));
 
     //[/Constructor_pre]
-
-    waveform__background.reset (new juce::Label ("waveform background",
-                                                 juce::String()));
-    addAndMakeVisible (waveform__background.get());
-    waveform__background->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
-    waveform__background->setJustificationType (juce::Justification::centred);
-    waveform__background->setEditable (false, false, false);
-    waveform__background->setColour (juce::Label::backgroundColourId, juce::Colour (0xff292929));
-    waveform__background->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-    waveform__background->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
 
 
     //[UserPreSize]
@@ -56,37 +51,23 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     //[Constructor] You can add your own custom stuff here..
 
-    zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer()));
-    waveFormTableListBox.reset(new WaveFormTableListBox("waveform listbox", nullptr));
-    regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler, audiumEngine->getAudioRegionContainer()));
-    waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(waveFormTableListBox,
-                                                                  audiumEngine->getAudioResourceContainer(),
-                                                                  zoomHandler,
-                                                                  regionSelector));
-    waveFormTableListBox->setModel(waveFormTableListBoxModel.get());
+    addAndMakeVisible(waveFormPanelComponent.get());
+    addAndMakeVisible(stretchableLayoutResizerBar.get());
+    addAndMakeVisible(regionPanelComponent.get());
+    
+    stretchableLayoutManager->setItemLayout (0,          // for item 0
+                                             -0.0, -1.0,    // size must be between 0% and 100% of the available space
+                                             -0.8);      // and its preferred size in % of the total available space
 
-
-
-    zoomHandler->setHorizontalScrollBar(&waveFormTableListBox->getHorizontalScrollBar());
-
-
-    //waveFormTableListBox->setRowHeight(200);
-    waveFormTableListBox->setMultipleSelectionEnabled(true);
-    /// TODO: bug?
-    waveFormTableListBox->setMinimumContentWidth(waveform__background->getWidth());
-    waveFormTableListBox->setBounds(waveform__background->getBounds());
-    waveFormTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
-    addAndMakeVisible(waveFormTableListBox.get());
-
-    // selection component
-
-    //waveFormTableListBox->getViewport()->addAndMakeVisible(regionSelector.get());
-    addAndMakeVisible(regionSelector.get());
-
-    zoomHandler->setWidth(waveform__background->getWidth());
-
-    updateUI();
-
+    stretchableLayoutManager->setItemLayout (1, // for item 1
+                                             3, 3, 3);
+    
+    stretchableLayoutManager->setItemLayout (2,          // for item 2
+                                             -0.1, -0.5, // size must be between 0% and 50% of the available space
+                                             200);        // its preferred size in pixels
+    
+    resized();
+    
     //[/Constructor]
 }
 
@@ -95,19 +76,9 @@ MainComponent::~MainComponent()
     //[Destructor_pre]. You can add your own custom destruction code here..
     //[/Destructor_pre]
 
-    waveform__background = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
-
-    regionSelector = nullptr;
-    waveFormTableListBox->setModel(nullptr);
-    waveFormTableListBox = nullptr;
-    waveFormTableListBoxModel = nullptr;
-    zoomHandler = nullptr;
-
-
-
     //[/Destructor]
 }
 
@@ -117,7 +88,7 @@ void MainComponent::paint (juce::Graphics& g)
     //[UserPrePaint] Add your own custom painting code here..
     //[/UserPrePaint]
 
-    g.fillAll (juce::Colour (0xff7b7c7d));
+    g.fillAll (juce::Colour (0xff282829));
 
     //[UserPaint] Add your own custom painting code here..
     //[/UserPaint]
@@ -128,13 +99,19 @@ void MainComponent::resized()
     //[UserPreResize] Add your own custom resize code here..
     //[/UserPreResize]
 
-    waveform__background->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (1.0000f));
     //[UserResized] Add your own custom resize handling here..
-    if (waveFormTableListBox != nullptr)
-    {
-        waveFormTableListBox->setBounds(waveform__background->getBounds());
-    }
 
+    // make a list of two of our child components that we want to reposition
+    Component* comps[] = {  waveFormPanelComponent.get(),
+                            stretchableLayoutResizerBar.get(),
+                            regionPanelComponent.get() };
+
+    // this will position the 3 components, one above the other, to fit
+    // horizontically into the rectangle provided.
+    stretchableLayoutManager->layOutComponents (comps, 3,
+                               0, 0, getWidth(), getHeight(),
+                               false, true);
+    
     //[/UserResized]
 }
 
@@ -177,23 +154,17 @@ bool MainComponent::isInterestedInFileDrag (const StringArray& /*files*/)
 
 void MainComponent::updateUI()
 {
-    waveFormTableListBox->updateContent();
+    waveFormPanelComponent->updateUI();
 }
 
 void MainComponent::zoomIn()
 {
-    auto width = waveform__background->getWidth() * zoomHandler->zoomIn();
-    waveFormTableListBox->setMinimumContentWidth(width);
-    zoomHandler->setWidth(width);
-    regionSelector->updateFromEngine();
+    waveFormPanelComponent->zoomIn();
 }
 
 void MainComponent::zoomOut()
 {
-    auto width = waveform__background->getWidth() * zoomHandler->zoomOut();
-    waveFormTableListBox->setMinimumContentWidth(width);
-    zoomHandler->setWidth(width);
-    regionSelector->updateFromEngine();
+    waveFormPanelComponent->zoomOut();
 }
 
 //[/MiscUserCode]
@@ -216,12 +187,7 @@ BEGIN_JUCER_METADATA
   <METHODS>
     <METHOD name="filesDropped (const juce::StringArray&amp; filenames, int mouseX, int mouseY)"/>
   </METHODS>
-  <BACKGROUND backgroundColour="ff7b7c7d"/>
-  <LABEL name="waveform background" id="3e76c9516fa31cfd" memberName="waveform__background"
-         virtualName="" explicitFocusOrder="0" pos="0 0 100% 100%" bkgCol="ff292929"
-         edTextCol="ff000000" edBkgCol="0" labelText="" editableSingleClick="0"
-         editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="36"/>
+  <BACKGROUND backgroundColour="ff282829"/>
 </JUCER_COMPONENT>
 
 END_JUCER_METADATA

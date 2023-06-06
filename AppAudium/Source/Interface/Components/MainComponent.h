@@ -21,14 +21,13 @@
 
 //[Headers]     -- You can add your own extra header files here --
 #include <JuceHeader.h>
-#include "Interface/Controls/WaveFormTableListBoxModel.h"
-#include "Interface/Components/WaveFormTableListBox.h"
+
 
 using namespace juce;
 
 class AudiumEngine;
-class ZoomHandler;
-class RegionSelector;
+class WaveFormPanelComponent;
+class RegionPanelComponent;
 
 //[/Headers]
 
@@ -72,17 +71,17 @@ public:
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
 
-    std::shared_ptr<ZoomHandler> zoomHandler;
-    std::shared_ptr<RegionSelector> regionSelector;
-    std::shared_ptr<WaveFormTableListBox> waveFormTableListBox;
-    std::shared_ptr<WaveFormTableListBoxModel> waveFormTableListBoxModel;
-
     std::shared_ptr<AudiumEngine> audiumEngine;
 
+    std::unique_ptr<WaveFormPanelComponent> waveFormPanelComponent;
+    std::unique_ptr<RegionPanelComponent> regionPanelComponent;
+    
+    std::unique_ptr<StretchableLayoutManager> stretchableLayoutManager;
+    std::unique_ptr<StretchableLayoutResizerBar> stretchableLayoutResizerBar;
+    
     //[/UserVariables]
 
     //==============================================================================
-    std::unique_ptr<juce::Label> waveform__background;
 
 
     //==============================================================================
