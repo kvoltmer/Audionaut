@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include "WaveFormComponent.h"
 #include "Util/EngineAccess.h"
+#include "WaveFormTableListBox.h"
 
 // iterating 2 palettes where the frist one has less colours to gain more variaty
 static int currentWaveFormColour = 0;
