@@ -19,7 +19,7 @@ RegionPanelComponent::RegionPanelComponent(std::shared_ptr<AudiumEngine> audiumE
     audiumEngine(audiumEngine)
 {
     regionTableListBox.reset(new RegionTableListBox());
-    regionTableListBoxModel.reset(new RegionTableListBoxModel(audiumEngine->getAudioRegionContainer()));
+    regionTableListBoxModel.reset(new RegionTableListBoxModel(regionTableListBox, audiumEngine->getAudioRegionContainer()));
     
     regionTableListBox->setModel(regionTableListBoxModel.get());
     regionTableListBox->setMultipleSelectionEnabled(true);
@@ -52,4 +52,9 @@ void RegionPanelComponent::resized()
     // This method is where you should set the bounds of any child
     // components that your component contains..
     regionTableListBox->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (1.0000f));
+}
+
+void RegionPanelComponent::updateUI()
+{
+    regionTableListBox->updateContent();
 }

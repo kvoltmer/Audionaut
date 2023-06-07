@@ -13,6 +13,7 @@
 #include <iostream>
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Interface/Components/MainComponent.h"
 
 using namespace juce;
 
@@ -21,18 +22,19 @@ class NewRegionDialog
     
 public:
     
-    void createNewRegion(std::shared_ptr<AudiumEngine> engine)
+    void createNewRegion(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<MainComponent> mainComponent)
     {
-        createNewRegionInternal(engine);
+        createNewRegionInternal(engine, mainComponent);
     }
     
 private:
     
     static String getClassNameFieldName()  { return "Region Name"; }
     
-    void createNewRegionInternal(std::shared_ptr<AudiumEngine> engine)
+    void createNewRegionInternal(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<MainComponent> component)
     {
         audiumEngine = engine;
+        mainComponent = component;
         asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Create New Region"),
                                                           TRANS ("Please enter the name for the new region"),
                                                           MessageBoxIconType::NoIcon, nullptr);
@@ -65,7 +67,7 @@ private:
                 return;
             }
 
-            safeThis->createNewRegionInternal(audiumEngine);
+            safeThis->createNewRegionInternal(audiumEngine, mainComponent);
         };
 
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);
@@ -74,11 +76,15 @@ private:
     void create(String name)
     {
         audiumEngine->getAudioRegionContainer()->createRegion(name);
+        mainComponent->updateUI();
     }
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;
 
     std::shared_ptr<AudiumEngine> audiumEngine;
+    
+    /// TODO: this is old fashion
+    std::shared_ptr<MainComponent> mainComponent;
     
     JUCE_DECLARE_WEAK_REFERENCEABLE (NewRegionDialog)
 };

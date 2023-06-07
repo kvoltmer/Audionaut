@@ -10,12 +10,15 @@
 
 #include <JuceHeader.h>
 #include "RegionTableListBoxModel.h"
+#include "Interface/ColourIds.h"
+#include "Interface/Controls/RegionTableListBox.h"
 
 //==============================================================================
-RegionTableListBoxModel::RegionTableListBoxModel(std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
+RegionTableListBoxModel::RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
+                                                 std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
+    owner(owner),
     audioRegionContainer(audioRegionContainer)
 {
-    
 }
 
 RegionTableListBoxModel::~RegionTableListBoxModel()
@@ -27,19 +30,13 @@ int RegionTableListBoxModel::getNumRows()
     return audioRegionContainer->getNumRegions();
 }
 
-juce::Colour defaultHighlightColourId(0x2340009);
-juce::Colour defaultTextColourId(0x2340002);
-juce::Colour defaultHighlightedTextColourId(0x234000a);
-
-
-
 void RegionTableListBoxModel::paintRowBackground (juce::Graphics& g,
                                  int rowNumber,
                                  int width, int height,
                                  bool rowIsSelected)
 {
     if (rowIsSelected)
-        g.fillAll (defaultHighlightColourId);
+        g.fillAll (owner->findColour(defaultHighlightColourId));
 }
 
 void RegionTableListBoxModel::paintCell (juce::Graphics& g,
@@ -60,9 +57,9 @@ void RegionTableListBoxModel::paintCell (juce::Graphics& g,
 //            text = File::descriptionOfSizeInBytes ((int64) r->data.getSize());
 
         if (rowIsSelected)
-            g.setColour (juce::Colours::green);// defaultHighlightedTextColourId);
+            g.setColour (owner->findColour (defaultHighlightedTextColourId));
         else
-            g.setColour (juce::Colours::red);
+            g.setColour (owner->findColour (defaultTextColourId));
 
         g.setFont (13.0f);
         g.drawText (text, 4, 0, width - 6, height, juce::Justification::centredLeft, true);

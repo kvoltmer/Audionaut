@@ -15,6 +15,7 @@
 #include "AudiumMainWindow.h"
 #include "AudiumMenuModel.h"
 #include "Application/AudiumCommandIDs.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 class AudiumEngine;
 
@@ -58,6 +59,8 @@ public:
     
     void askUserToOpenFile();
     void saveProjectAs();
+    
+    AudiumLookAndFeel lookAndFeel;
 
 private:
 

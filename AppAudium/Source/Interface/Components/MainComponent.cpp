@@ -155,6 +155,7 @@ bool MainComponent::isInterestedInFileDrag (const StringArray& /*files*/)
 void MainComponent::updateUI()
 {
     waveFormPanelComponent->updateUI();
+    regionPanelComponent->updateUI();
 }
 
 void MainComponent::zoomIn()

@@ -125,7 +125,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             getEngine()->getAudioResourceContainer()->playStop();
             break;
         case CommandIDs::createRegion:
-            newRegionDialog.createNewRegion(getEngine());
+            newRegionDialog.createNewRegion(getEngine(), mainComponent);
             break;
             
         case CommandIDs::zoomIn:
