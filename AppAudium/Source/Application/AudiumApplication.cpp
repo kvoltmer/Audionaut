@@ -34,6 +34,7 @@ juce::ApplicationCommandManager& AudiumApplication::getCommandManager()
 void AudiumApplication::initialise (const juce::String& commandLine)
 {
     Preferences::init(getApplicationName());
+    LookAndFeel::setDefaultLookAndFeel (&lookAndFeel);
     initCommandManager();
 
     /// TODO: create factory class
