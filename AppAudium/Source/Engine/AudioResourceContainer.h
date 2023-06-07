@@ -28,7 +28,7 @@ public:
     
     bool removeAudioResource (int atIndex);
     
-    int getAudioResourceSize() const { return (int)audioResources.size(); }
+    int getAudioResourceSize() const { return static_cast<int>(audioResources.size()); }
     
     std::shared_ptr<AudioResource> getAudioResource(int index) const;
     

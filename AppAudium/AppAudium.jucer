@@ -81,22 +81,31 @@
                 file="Source/Interface/Components/WaveFormComponent.cpp"/>
           <FILE id="DcKSZR" name="WaveFormComponent.h" compile="0" resource="0"
                 file="Source/Interface/Components/WaveFormComponent.h"/>
-          <FILE id="wm9IjJ" name="WaveFormTableListBox.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/WaveFormTableListBox.cpp"/>
-          <FILE id="YDsbqV" name="WaveFormTableListBox.h" compile="0" resource="0"
-                file="Source/Interface/Components/WaveFormTableListBox.h"/>
-          <FILE id="S03XzX" name="RegionSelector.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/RegionSelector.cpp"/>
-          <FILE id="DEoTJN" name="RegionSelector.h" compile="0" resource="0"
-                file="Source/Interface/Components/RegionSelector.h"/>
         </GROUP>
-        <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Controls">
-          <FILE id="xPbK3J" name="WaveFormTableListBoxModel.cpp" compile="1"
-                resource="0" file="Source/Interface/Controls/WaveFormTableListBoxModel.cpp"/>
-          <FILE id="QyEhQD" name="WaveFormTableListBoxModel.h" compile="0" resource="0"
-                file="Source/Interface/Controls/WaveFormTableListBoxModel.h"/>
+        <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
+          <FILE id="wVfIgI" name="RegionTableListBoxModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/RegionTableListBoxModel.cpp"/>
+          <FILE id="XJwywE" name="RegionTableListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/RegionTableListBoxModel.h"/>
+          <FILE id="BsvGs7" name="WaveFormTableListBoxModel.cpp" compile="1"
+                resource="0" file="Source/Interface/Models/WaveFormTableListBoxModel.cpp"/>
+          <FILE id="lIpNfO" name="WaveFormTableListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/WaveFormTableListBoxModel.h"/>
         </GROUP>
-        <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Views"/>
+        <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="kQnaR9" name="RegionSelector.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/RegionSelector.cpp"/>
+          <FILE id="RfQeV6" name="RegionSelector.h" compile="0" resource="0"
+                file="Source/Interface/Controls/RegionSelector.h"/>
+          <FILE id="SZYJrj" name="RegionTableListBox.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/RegionTableListBox.cpp"/>
+          <FILE id="rVsr42" name="RegionTableListBox.h" compile="0" resource="0"
+                file="Source/Interface/Controls/RegionTableListBox.h"/>
+          <FILE id="sKgt7C" name="WaveFormTableListBox.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/WaveFormTableListBox.cpp"/>
+          <FILE id="rUFHxk" name="WaveFormTableListBox.h" compile="0" resource="0"
+                file="Source/Interface/Controls/WaveFormTableListBox.h"/>
+        </GROUP>
       </GROUP>
     </GROUP>
   </MAINGROUP>

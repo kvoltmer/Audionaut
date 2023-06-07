@@ -16,8 +16,8 @@
 #include "Interface/Components/WaveFormComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
-#include "Interface/Components/WaveFormTableListBox.h"
-#include "Interface/Components/RegionSelector.h"
+#include "Interface/Controls/WaveFormTableListBox.h"
+#include "Interface/Controls/RegionSelector.h"
 
 class WaveFormTableListBoxModel : public audium::ListBoxModel
 {
