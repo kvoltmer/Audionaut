@@ -14,7 +14,7 @@
 #include <memory>
 
 #include "Interface/Handlers/ZoomHandler.h"
-#include "Interface/Components/RegionSelector.h"
+#include "Interface/Controls/RegionSelector.h"
 
 using namespace juce;
 

@@ -26,6 +26,9 @@ public:
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
+    int getNumRegions() const { return static_cast<int>(audioRegions.size()); }
+    AudioRegion* getRegion(int index) const { return audioRegions[index].get(); }
+    
 private:
     AudioRegion selectedRegion;
     

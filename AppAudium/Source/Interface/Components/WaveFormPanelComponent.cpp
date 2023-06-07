@@ -10,8 +10,8 @@
 
 #include <JuceHeader.h>
 #include "WaveFormPanelComponent.h"
-#include "Interface/Controls/WaveFormTableListBoxModel.h"
-#include "Interface/Components/WaveFormTableListBox.h"
+#include "Interface/Models/WaveFormTableListBoxModel.h"
+#include "Interface/Controls/WaveFormTableListBox.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Handlers/ZoomHandler.h"
 

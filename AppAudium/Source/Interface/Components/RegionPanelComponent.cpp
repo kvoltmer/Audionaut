@@ -10,42 +10,46 @@
 
 #include <JuceHeader.h>
 #include "RegionPanelComponent.h"
+#include "Interface/Models/RegionTableListBoxModel.h"
+#include "Interface/Controls/RegionTableListBox.h"
+#include "Engine/AudiumEngine.h"
 
 //==============================================================================
-RegionPanelComponent::RegionPanelComponent()
+RegionPanelComponent::RegionPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+    audiumEngine(audiumEngine)
 {
-    // In your constructor, you should add any child components, and
-    // initialise any special settings that your component needs.
+    regionTableListBox.reset(new RegionTableListBox());
+    regionTableListBoxModel.reset(new RegionTableListBoxModel(audiumEngine->getAudioRegionContainer()));
+    
+    regionTableListBox->setModel(regionTableListBoxModel.get());
+    regionTableListBox->setMultipleSelectionEnabled(true);
+    regionTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
+    addAndMakeVisible(regionTableListBox.get());
+    
+    regionTableListBox->getHeader().addColumn ("name", 1, 150, 80, 400);
+    regionTableListBox->getHeader().addColumn ("original file", 2, 350, 80, 800);
+    regionTableListBox->getHeader().addColumn ("size", 3, 100, 40, 150);
+    //regionTableListBox->getHeader().addColumn ("reload", 4, 100, 100, 100, TableHeaderComponent::notResizableOrSortable);
+    regionTableListBox->getHeader().setStretchToFitActive (true);
 
+    regionTableListBox->setOutlineThickness (1);
+    regionTableListBox->updateContent();
 }
 
 RegionPanelComponent::~RegionPanelComponent()
 {
+    regionTableListBox->setModel(nullptr);
+    regionTableListBox = nullptr;
+    regionTableListBoxModel = nullptr;
 }
 
-void RegionPanelComponent::paint (juce::Graphics& g)
+void RegionPanelComponent::paint (juce::Graphics&)
 {
-    /* This demo code just fills the component's background and
-       draws some placeholder text to get you started.
-
-       You should replace everything in this method with your own
-       drawing code..
-    */
-
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
-
-    g.setColour (juce::Colours::grey);
-    g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-
-    g.setColour (juce::Colours::white);
-    g.setFont (14.0f);
-    g.drawText ("RegionPanelComponent", getLocalBounds(),
-                juce::Justification::centred, true);   // draw some placeholder text
 }
 
 void RegionPanelComponent::resized()
 {
     // This method is where you should set the bounds of any child
     // components that your component contains..
-
+    regionTableListBox->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (1.0000f));
 }

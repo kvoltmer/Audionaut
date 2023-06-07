@@ -75,10 +75,10 @@ private:
 
     std::unique_ptr<WaveFormPanelComponent> waveFormPanelComponent;
     std::unique_ptr<RegionPanelComponent> regionPanelComponent;
-    
+
     std::unique_ptr<StretchableLayoutManager> stretchableLayoutManager;
     std::unique_ptr<StretchableLayoutResizerBar> stretchableLayoutResizerBar;
-    
+
     //[/UserVariables]
 
     //==============================================================================

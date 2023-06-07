@@ -36,7 +36,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     this->audiumEngine = audiumEngine;
     waveFormPanelComponent.reset(new WaveFormPanelComponent(audiumEngine));
-    regionPanelComponent.reset(new RegionPanelComponent());
+    regionPanelComponent.reset(new RegionPanelComponent(audiumEngine));
     stretchableLayoutManager.reset(new StretchableLayoutManager());
     stretchableLayoutResizerBar.reset(new StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, true));
 
@@ -54,20 +54,20 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     addAndMakeVisible(waveFormPanelComponent.get());
     addAndMakeVisible(stretchableLayoutResizerBar.get());
     addAndMakeVisible(regionPanelComponent.get());
-    
+
     stretchableLayoutManager->setItemLayout (0,          // for item 0
                                              -0.0, -1.0,    // size must be between 0% and 100% of the available space
                                              -0.8);      // and its preferred size in % of the total available space
 
     stretchableLayoutManager->setItemLayout (1, // for item 1
                                              3, 3, 3);
-    
+
     stretchableLayoutManager->setItemLayout (2,          // for item 2
                                              -0.1, -0.5, // size must be between 0% and 50% of the available space
                                              200);        // its preferred size in pixels
-    
+
     resized();
-    
+
     //[/Constructor]
 }
 
@@ -101,7 +101,7 @@ void MainComponent::resized()
 
     //[UserResized] Add your own custom resize handling here..
 
-    // make a list of two of our child components that we want to reposition
+    // the list of components that we want to reposition
     Component* comps[] = {  waveFormPanelComponent.get(),
                             stretchableLayoutResizerBar.get(),
                             regionPanelComponent.get() };
@@ -111,7 +111,7 @@ void MainComponent::resized()
     stretchableLayoutManager->layOutComponents (comps, 3,
                                0, 0, getWidth(), getHeight(),
                                false, true);
-    
+
     //[/UserResized]
 }
 

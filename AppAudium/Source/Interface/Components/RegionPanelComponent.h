@@ -15,15 +15,24 @@
 //==============================================================================
 /*
 */
+class RegionTableListBox;
+class RegionTableListBoxModel;
+class AudiumEngine;
+
 class RegionPanelComponent  : public juce::Component
 {
 public:
-    RegionPanelComponent();
+    RegionPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);
     ~RegionPanelComponent() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
+    
+    std::shared_ptr<RegionTableListBox> regionTableListBox;
+    std::shared_ptr<RegionTableListBoxModel> regionTableListBoxModel;
+    std::shared_ptr<AudiumEngine> audiumEngine;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionPanelComponent)
 };
