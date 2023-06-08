@@ -37,6 +37,9 @@ public:
                             int columnId,
                             int width, int height,
                             bool rowIsSelected) override;
+    
+    void selectedRowsChanged (int lastRowSelected) override;
+    
 private:
     
     std::shared_ptr<RegionTableListBox> owner;

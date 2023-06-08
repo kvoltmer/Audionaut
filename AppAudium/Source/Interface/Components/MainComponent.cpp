@@ -67,6 +67,8 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
                                              200);        // its preferred size in pixels
 
     resized();
+    
+    audiumEngine->getAudioRegionContainer()->addActionListener(this);
 
     //[/Constructor]
 }
@@ -74,6 +76,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 MainComponent::~MainComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
+    audiumEngine->getAudioRegionContainer()->removeActionListener(this);
     //[/Destructor_pre]
 
 
@@ -133,19 +136,31 @@ void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
-void MainComponent::changeListenerCallback (ChangeBroadcaster* source)
+void MainComponent::actionListenerCallback (const String& message)
 {
+    std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
+    
+    if (message == regionCreatedAction)
+    {
+        regionPanelComponent->updateUI();
+    }
+    else if (message == regionClearedAction)
+    {
+        regionPanelComponent->clearSelection();
+    }
+    else if (message == regionModifiedAction) // do nothing
+    {
+        ;
+    }
+    else if (message == regionSelectedAction)
+    {
+        waveFormPanelComponent->updateUI();
+    }
+    else // update everything
+    {
+        updateUI();
+    }
 }
-
-void MainComponent::showAudioResource (URL resource)
-{
-}
-
-bool MainComponent::loadURLIntoTransport (const URL& audioURL)
-{
-    return true;
-}
-
 
 bool MainComponent::isInterestedInFileDrag (const StringArray& /*files*/)
 {

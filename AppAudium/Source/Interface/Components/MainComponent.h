@@ -42,7 +42,7 @@ class RegionPanelComponent;
                                                                     //[/Comments]
 */
 class MainComponent  : public juce::Component,
-                       private juce::ChangeListener,
+                       private juce::ActionListener,
                        public FileDragAndDropTarget
 {
 public:
@@ -52,9 +52,7 @@ public:
 
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
-    void changeListenerCallback (ChangeBroadcaster* source) override;
-    void showAudioResource (URL resource);
-    bool loadURLIntoTransport (const URL& audioURL);
+    void actionListenerCallback (const String& message) override;
     bool isInterestedInFileDrag (const StringArray& /*files*/) override;
     void updateUI();
 

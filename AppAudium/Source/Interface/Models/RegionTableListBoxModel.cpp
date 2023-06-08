@@ -66,3 +66,8 @@ void RegionTableListBoxModel::paintCell (juce::Graphics& g,
     }
     
 }
+
+void RegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
+{
+    audioRegionContainer->setSelectedRegion(lastRowSelected);
+}
