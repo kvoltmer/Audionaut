@@ -46,7 +46,7 @@ void AudioRegionContainer::setRegionPosition(juce::Range<double> pos)
 void AudioRegionContainer::clearSelection()
 {
     selectedRowNumber = -1;
-    selectedRegion.position = juce::Range<double>();
+    //selectedRegion.position = juce::Range<double>();
     sendActionMessage(regionClearedAction);
 }
 
@@ -55,18 +55,18 @@ juce::Range<double> AudioRegionContainer::getRegionPosition() const
     return selectedRegion.position;
 }
 
-AudioRegion* AudioRegionContainer::getRegion(int rowNumber) const
+std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) const
 {
     if (rowNumber >= 0 && rowNumber < audioRegions.size())
     {
-        return audioRegions[rowNumber].get();
+        return audioRegions[rowNumber];
     }
     return nullptr;
 }
 
 void AudioRegionContainer::setSelectedRegion(int rowNumber)
 {
-    if (const AudioRegion* const r = getRegion(rowNumber))
+    if (const AudioRegion* const r = getRegion(rowNumber).get())
     {
         selectedRegion = *r;
         selectedRowNumber = rowNumber;
