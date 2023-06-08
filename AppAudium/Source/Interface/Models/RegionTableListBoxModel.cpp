@@ -50,12 +50,14 @@ void RegionTableListBoxModel::paintCell (juce::Graphics& g,
         juce::String text;
 
         if (columnId == 1)
+        {
             text = r->name;
-//        else if (columnId == 2)
-//            text = r->originalFilename;
-//        else if (columnId == 3)
-//            text = File::descriptionOfSizeInBytes ((int64) r->data.getSize());
-
+        }
+        else if (columnId == 2)
+        {
+            text = juce::String(r->position.getLength(), 2);
+        }
+        
         if (rowIsSelected)
             g.setColour (owner->findColour (defaultHighlightedTextColourId));
         else
@@ -70,4 +72,20 @@ void RegionTableListBoxModel::paintCell (juce::Graphics& g,
 void RegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
     audioRegionContainer->setSelectedRegion(lastRowSelected);
+}
+
+void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
+{
+    auto selected = owner->getSelectedRows();
+    
+    for (int i = selected.size()-1; i >= 0; i--)
+    {
+        std::cout << "selected = " << selected[i] << std::endl;
+        audioRegionContainer->deleteRegion(selected[i]);
+    }
+}
+
+void RegionTableListBoxModel::returnKeyPressed (int lastRowSelected)
+{
+    
 }

@@ -148,15 +148,20 @@ void RegionSelector::mouseMove (const juce::MouseEvent& e)
 void RegionSelector::updateFromEngine()
 {
     auto pos = audioRegionContainer->getRegionPosition();
-    if (!pos.isEmpty())
+    if (pos.isEmpty())
     {
+        setVisible(false);
+    }
+    else
+    {
+        setVisible(true);
+        
         auto start = zoomHandler->timeToX(pos.getStart());
         auto end = zoomHandler->timeToX(pos.getEnd());
         auto offset = zoomHandler->getVisibleRange().getStart();
         
         dragStartPos.setX(start - offset);
         dragEndPos.setX(end - offset);
-    
         createRectangleAndSetBonds();
     }
 }

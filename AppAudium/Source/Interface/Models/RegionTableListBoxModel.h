@@ -40,6 +40,10 @@ public:
     
     void selectedRowsChanged (int lastRowSelected) override;
     
+    void deleteKeyPressed (int lastRowSelected) override;
+
+    void returnKeyPressed (int lastRowSelected) override;
+    
 private:
     
     std::shared_ptr<RegionTableListBox> owner;
