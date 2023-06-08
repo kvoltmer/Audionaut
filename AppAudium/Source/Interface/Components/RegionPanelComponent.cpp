@@ -57,4 +57,12 @@ void RegionPanelComponent::resized()
 void RegionPanelComponent::updateUI()
 {
     regionTableListBox->updateContent();
+    
+    auto selectedRow = audiumEngine->getAudioRegionContainer()->getSelectedRegion();
+    regionTableListBox->selectRangeOfRows(selectedRow, selectedRow);
+}
+
+void RegionPanelComponent::clearSelection()
+{
+    regionTableListBox->deselectAllRows();
 }

@@ -11,26 +11,62 @@
 
 #include "AudioRegionContainer.h"
 
-std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String regionName)
+void AudioRegionContainer::createRegion(juce::String regionName, juce::Range<double> position)
 {
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion());
-    audioRegion->position = selectedRegion.position;
+    audioRegion->position = position;
     audioRegion->name = regionName;
     audioRegions.push_back(audioRegion);
-    //std::cout << "region created" << std::endl;
-    return audioRegion;
+    selectedRowNumber = static_cast<int>(audioRegions.size() - 1);
+    sendActionMessage(regionCreatedAction);
 }
 
-void AudioRegionContainer::setSelectedRegion(juce::Range<double> pos)
+void AudioRegionContainer::setRegionPosition(juce::Range<double> pos)
 {
     selectedRegion.position = pos;
+    if (selectedRowNumber >= 0)
+    {
+        getRegion(selectedRowNumber)->position = pos;
+    }
     
-    std::cout << "start " << pos.getStart() << " end " << pos.getEnd() << std::endl;
+    //std::cout << "start " << pos.getStart() << " end " << pos.getEnd() << std::endl;
+    sendActionMessage(regionModifiedAction);
 }
 
-juce::Range<double> AudioRegionContainer::getSelectedRegion() const
+void AudioRegionContainer::clearSelection()
+{
+    selectedRowNumber = -1;
+    selectedRegion.position = juce::Range<double>();
+    sendActionMessage(regionClearedAction);
+}
+
+juce::Range<double> AudioRegionContainer::getRegionPosition() const
 {
     return selectedRegion.position;
+}
+
+AudioRegion* AudioRegionContainer::getRegion(int rowNumber) const
+{
+    if (rowNumber >= 0 && rowNumber < audioRegions.size())
+    {
+        return audioRegions[rowNumber].get();
+    }
+    return nullptr;
+}
+
+void AudioRegionContainer::setSelectedRegion(int rowNumber)
+{
+    if (const AudioRegion* const r = getRegion(rowNumber))
+    {
+        selectedRegion = *r;
+        selectedRowNumber = rowNumber;
+        sendActionMessage (regionSelectedAction);
+    }
+}
+
+int AudioRegionContainer::getSelectedRegion() const
+{
+    return selectedRowNumber;
 }
 
 bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
@@ -53,9 +89,11 @@ bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
         auto numRegions = inputStream.readInt();
         for (auto i = 0; i < numRegions; i++)
         {
-            auto region = createRegion(inputStream.readString());
-            region->position.setStart(inputStream.readInt());
-            region->position.setEnd(inputStream.readInt());
+            auto regionName = inputStream.readString();
+            auto start = inputStream.readInt();
+            auto end = inputStream.readInt();
+            juce::Range<double> position(start, end);
+            createRegion(regionName, position);
         }
     }
     return true;

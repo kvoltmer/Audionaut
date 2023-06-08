@@ -73,6 +73,7 @@ void WaveFormPanelComponent::resized()
 void WaveFormPanelComponent::updateUI()
 {
     waveFormTableListBox->updateContent();
+    regionSelector->updateFromEngine();
 }
 
 void WaveFormPanelComponent::zoomIn()

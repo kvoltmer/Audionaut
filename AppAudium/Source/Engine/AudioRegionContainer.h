@@ -12,25 +12,35 @@
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
 
-class AudioRegionContainer
+const char* const regionCreatedAction   = "region created";
+const char* const regionClearedAction   = "region cleared";
+const char* const regionModifiedAction  = "region modified";
+const char* const regionSelectedAction  = "region selected";
+
+class AudioRegionContainer : public juce::ActionBroadcaster
 {
                                             
 public:
     AudioRegionContainer() = default;
     
-    std::shared_ptr<AudioRegion> createRegion(juce::String regionName);
+    void createRegion(juce::String regionName, juce::Range<double> position);
     
-    void setSelectedRegion(juce::Range<double> pos);
-    juce::Range<double> getSelectedRegion() const;
+    void setRegionPosition(juce::Range<double> pos);
+    juce::Range<double> getRegionPosition() const;
         
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
     int getNumRegions() const { return static_cast<int>(audioRegions.size()); }
-    AudioRegion* getRegion(int index) const { return audioRegions[index].get(); }
+    AudioRegion* getRegion(int index) const;
+    
+    void setSelectedRegion(int rowNumber);
+    int getSelectedRegion() const;
+    void clearSelection();
     
 private:
     AudioRegion selectedRegion;
+    int selectedRowNumber = -1;
     
     std::vector<std::shared_ptr<AudioRegion>> audioRegions;
     

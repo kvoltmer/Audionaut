@@ -38,11 +38,13 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
     
     avoidDragging = false;
     
+    /// click outside the selection?
     if (!getBoundsInParent().contains(parentPosition))
     {
         setSize (0, 0);
         dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
         currentDragMode = RegionSelector::outsideEdge;
+        audioRegionContainer->clearSelection();
     }
     else /// click inside -> modify current selection
     {
@@ -113,7 +115,7 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
     }
     
     // set value in the engine
-    audioRegionContainer->setSelectedRegion(pos);
+    audioRegionContainer->setRegionPosition(pos);
 }
 
 void RegionSelector::createRectangleAndSetBonds()
@@ -145,7 +147,7 @@ void RegionSelector::mouseMove (const juce::MouseEvent& e)
 
 void RegionSelector::updateFromEngine()
 {
-    auto pos = audioRegionContainer->getSelectedRegion();
+    auto pos = audioRegionContainer->getRegionPosition();
     if (!pos.isEmpty())
     {
         auto start = zoomHandler->timeToX(pos.getStart());
