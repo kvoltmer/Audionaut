@@ -38,6 +38,9 @@ public:
                             int width, int height,
                             bool rowIsSelected) override;
     
+//    juce::Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
+//                                                juce::Component* existingComponentToUpdate) override;
+    
     void selectedRowsChanged (int lastRowSelected) override;
     
     void deleteKeyPressed (int lastRowSelected) override;

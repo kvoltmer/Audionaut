@@ -47,7 +47,6 @@ void WaveFormTableListBoxModel::paintListBoxItem ( int rowNumber,
 juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumber, bool isRowSelected,
                                                                      juce::Component* existingComponentToUpdate)
 {
-
     if (existingComponentToUpdate == nullptr)
     {
         auto audioResource = audioResourceContainer->getAudioResource(rowNumber);

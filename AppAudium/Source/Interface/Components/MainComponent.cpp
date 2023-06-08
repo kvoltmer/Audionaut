@@ -67,7 +67,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
                                              200);        // its preferred size in pixels
 
     resized();
-    
+
     audiumEngine->getAudioRegionContainer()->addActionListener(this);
 
     //[/Constructor]
@@ -139,7 +139,7 @@ void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX
 void MainComponent::actionListenerCallback (const String& message)
 {
     std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
-    
+
     if (message == regionCreatedAction)
     {
         regionPanelComponent->updateUI();
@@ -196,7 +196,7 @@ void MainComponent::zoomOut()
 BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="MainComponent" componentName=""
-                 parentClasses="public juce::Component, private juce::ChangeListener, public FileDragAndDropTarget"
+                 parentClasses="public juce::Component, private juce::ActionListener, public FileDragAndDropTarget"
                  constructorParams="std::shared_ptr&lt;AudiumEngine&gt; audiumEngine"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="400">

@@ -34,7 +34,7 @@ public:
     bool readFromStream (juce::InputStream& inputStream);
     
     int getNumRegions() const { return static_cast<int>(audioRegions.size()); }
-    AudioRegion* getRegion(int index) const;
+    std::shared_ptr<AudioRegion> getRegion(int index) const;
     
     void setSelectedRegion(int rowNumber);
     int getSelectedRegion() const;

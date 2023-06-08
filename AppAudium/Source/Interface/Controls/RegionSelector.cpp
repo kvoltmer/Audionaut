@@ -150,12 +150,10 @@ void RegionSelector::updateFromEngine()
     auto pos = audioRegionContainer->getRegionPosition();
     if (pos.isEmpty())
     {
-        setVisible(false);
+        setSize(0, 0);
     }
     else
     {
-        setVisible(true);
-        
         auto start = zoomHandler->timeToX(pos.getStart());
         auto end = zoomHandler->timeToX(pos.getEnd());
         auto offset = zoomHandler->getVisibleRange().getStart();
