@@ -16,6 +16,7 @@ const char* const regionCreatedAction   = "region created";
 const char* const regionClearedAction   = "region cleared";
 const char* const regionModifiedAction  = "region modified";
 const char* const regionSelectedAction  = "region selected";
+const char* const regionDeletedAction   = "region deleted";
 
 class AudioRegionContainer : public juce::ActionBroadcaster
 {
@@ -24,6 +25,7 @@ public:
     AudioRegionContainer() = default;
     
     void createRegion(juce::String regionName, juce::Range<double> position);
+    void deleteRegion(int rowNumber);
     
     void setRegionPosition(juce::Range<double> pos);
     juce::Range<double> getRegionPosition() const;

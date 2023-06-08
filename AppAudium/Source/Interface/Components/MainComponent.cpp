@@ -150,13 +150,13 @@ void MainComponent::actionListenerCallback (const String& message)
     }
     else if (message == regionModifiedAction) // do nothing
     {
-        ;
+        regionPanelComponent->updateUI();
     }
     else if (message == regionSelectedAction)
     {
         waveFormPanelComponent->updateUI();
     }
-    else // update everything
+    else // update everything (eg. region deleted)
     {
         updateUI();
     }

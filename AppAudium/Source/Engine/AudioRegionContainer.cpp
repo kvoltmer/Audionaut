@@ -21,6 +21,16 @@ void AudioRegionContainer::createRegion(juce::String regionName, juce::Range<dou
     sendActionMessage(regionCreatedAction);
 }
 
+void AudioRegionContainer::deleteRegion(int atIndex)
+{
+    clearSelection();
+    if (atIndex >= 0 && atIndex < audioRegions.size())
+    {
+        audioRegions.erase(audioRegions.begin() + atIndex);
+        sendActionMessage(regionDeletedAction);
+    }
+}
+
 void AudioRegionContainer::setRegionPosition(juce::Range<double> pos)
 {
     selectedRegion.position = pos;

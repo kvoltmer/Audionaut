@@ -26,10 +26,9 @@ RegionPanelComponent::RegionPanelComponent(std::shared_ptr<AudiumEngine> audiumE
     regionTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
     addAndMakeVisible(regionTableListBox.get());
     
-    regionTableListBox->getHeader().addColumn ("name", 1, 150, 80, 400);
-    regionTableListBox->getHeader().addColumn ("original file", 2, 350, 80, 800);
-    regionTableListBox->getHeader().addColumn ("size", 3, 100, 40, 150);
-    //regionTableListBox->getHeader().addColumn ("reload", 4, 100, 100, 100, TableHeaderComponent::notResizableOrSortable);
+    regionTableListBox->getHeader().addColumn ("name", 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+    regionTableListBox->getHeader().addColumn ("length", 2, 150, 80, 800, juce::TableHeaderComponent::notSortable);
+    
     regionTableListBox->getHeader().setStretchToFitActive (true);
 
     regionTableListBox->setOutlineThickness (1);
@@ -56,10 +55,15 @@ void RegionPanelComponent::resized()
 
 void RegionPanelComponent::updateUI()
 {
+    /// If your ListBox doesn’t use custom components,
+    /// then updateContents() will only update the contents if the number of rows changed, otherwise it does nothing.
     regionTableListBox->updateContent();
     
     auto selectedRow = audiumEngine->getAudioRegionContainer()->getSelectedRegion();
     regionTableListBox->selectRangeOfRows(selectedRow, selectedRow);
+    
+    /// repaint does the trick
+    regionTableListBox->repaint();
 }
 
 void RegionPanelComponent::clearSelection()
