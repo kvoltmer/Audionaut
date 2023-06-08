@@ -43,7 +43,7 @@ private:
         asyncAlertWindow->addButton (TRANS ("Create Region"),  1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"),        0, KeyPress (KeyPress::escapeKey));
         
-        //asyncAlertWindow->getTextEditor(getClassNameFieldName())->grabKeyboardFocus();
+
 
 
         auto resultCallback = [safeThis = WeakReference<NewRegionDialog> { this }, this] (int result)
@@ -71,6 +71,9 @@ private:
         };
 
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);
+        auto editor = asyncAlertWindow->getTextEditor(getClassNameFieldName());
+        if (editor != nullptr)
+            editor->toFront(true);
     }
     
     void create(String name)
@@ -83,7 +86,7 @@ private:
 
     std::shared_ptr<AudiumEngine> audiumEngine;
     
-    /// TODO: this is old fashion
+    /// TODO: this is old fashion, a broadcast "change message" would be more elegant
     std::shared_ptr<MainComponent> mainComponent;
     
     JUCE_DECLARE_WEAK_REFERENCEABLE (NewRegionDialog)
