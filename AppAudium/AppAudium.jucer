@@ -98,10 +98,9 @@
                 file="Source/Interface/Models/WaveFormTableListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
-          <FILE id="VYpNeU" name="RegionNameTextEditor.h" compile="0" resource="0"
-                file="Source/Interface/Controls/RegionNameTextEditor.h"/>
           <FILE id="kQnaR9" name="RegionSelector.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/RegionSelector.cpp"/>
+          <FILE id="M14ssi" name="RegionEditor.h" compile="0" resource="0" file="Source/Interface/Controls/RegionEditor.h"/>
           <FILE id="RfQeV6" name="RegionSelector.h" compile="0" resource="0"
                 file="Source/Interface/Controls/RegionSelector.h"/>
           <FILE id="SZYJrj" name="RegionTableListBox.cpp" compile="1" resource="0"
