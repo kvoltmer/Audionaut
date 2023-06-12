@@ -12,7 +12,7 @@
 #include "RegionTableListBoxModel.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Controls/RegionTableListBox.h"
-#include "Interface/Controls/RegionNameTextEditor.h"
+#include "Interface/Controls/RegionEditor.h"
 
 //==============================================================================
 RegionTableListBoxModel::RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
@@ -70,51 +70,30 @@ void RegionTableListBoxModel::paintCell (juce::Graphics& g,
     
 }
 
-//juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
-//                                            juce::Component* existingComponentToUpdate)
-//{
-//    if (existingComponentToUpdate == nullptr)
-//    {
-//        if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
-//        {
-//            if (columnId == 0)
-//            {
-//                return new RegionNameTextEditor(audioRegionContainer->getRegion(rowNumber));
-//            }
-//            else
-//            {
-//                return new juce::TextEditor();
-//            }
-//        }
-//    }
-//    else
-//    {
-//        if (columnId == 0)
-//        {
-//            auto component = dynamic_cast<RegionNameTextEditor*>(existingComponentToUpdate);
-//            jassert(component);
-//            if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
-//            {
-//                // update since row might have changed after delete
-//                //component->
-//            }
-//            return component;
-//        }
-//        else
-//        {
-//            auto component = dynamic_cast<juce::TextEditor*>(existingComponentToUpdate);
-//            jassert(component);
-//            if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
-//            {
-//                // update since row might have changed after delete
-//                //component->
-//            }
-//            return component;
-//        }
-//    }
-//    
-//    return nullptr;
-//}
+juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
+                                            juce::Component* existingComponentToUpdate)
+{
+    if (existingComponentToUpdate == nullptr)
+    {
+        if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
+        {
+            return new RegionEditor(owner, audioRegionContainer, columnId, rowNumber);
+        }
+    }
+    else
+    {
+        auto component = dynamic_cast<RegionEditor*>(existingComponentToUpdate);
+        if (component != nullptr)
+        {
+            // update since row might have changed after delete
+            component->update(columnId, rowNumber, isRowSelected);
+        }
+        return component;
+
+    }
+    
+    return nullptr;
+}
 
 void RegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
@@ -131,7 +110,5 @@ void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
     }
 }
 
-void RegionTableListBoxModel::returnKeyPressed (int lastRowSelected)
-{
-    
-}
+
+

@@ -108,3 +108,25 @@ bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
     }
     return true;
 }
+
+void AudioRegionContainer::setRegionName(int rowNumber, juce::String newName)
+{
+    if (AudioRegion* r = getRegion(rowNumber).get())
+    {
+        r->name = newName;
+    }
+}
+
+void AudioRegionContainer::setRegionLength(int rowNumber, double newLength)
+{
+    if (AudioRegion* r = getRegion(rowNumber).get())
+    {
+        r->position.setLength(newLength);
+    }
+    if (rowNumber == selectedRowNumber)
+    {
+        selectedRegion.position.setLength(newLength);
+    }
+    
+    sendActionMessage (regionLengthAction);
+}

@@ -38,15 +38,13 @@ public:
                             int width, int height,
                             bool rowIsSelected) override;
     
-//    juce::Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
-//                                                juce::Component* existingComponentToUpdate) override;
+    juce::Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
+                                                juce::Component* existingComponentToUpdate) override;
     
     void selectedRowsChanged (int lastRowSelected) override;
     
     void deleteKeyPressed (int lastRowSelected) override;
 
-    void returnKeyPressed (int lastRowSelected) override;
-    
 private:
     
     std::shared_ptr<RegionTableListBox> owner;
