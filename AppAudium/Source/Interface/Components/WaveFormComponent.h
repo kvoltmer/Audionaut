@@ -27,19 +27,15 @@ class WaveFormComponent  : public Component,
                            public ChangeListener,
                            public FileDragAndDropTarget,
                            public ChangeBroadcaster,
-                           public ScrollBar::Listener,
-                           private Timer
+                           public ScrollBar::Listener
 {
 public:
     WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
-                       std::shared_ptr<ZoomHandler> zoomHandler,
-                       std::shared_ptr<RegionSelector> regionSelector);
+                       std::shared_ptr<ZoomHandler> zoomHandler);
 
     ~WaveFormComponent() override;
     
     void setAudioResource (std::shared_ptr<AudioResource> audioResource);
-    
-    URL getLastDroppedFile() const noexcept;
 
     void setFollowsTransport (bool shouldFollow);
 
@@ -67,48 +63,10 @@ private:
 
     std::shared_ptr<ZoomHandler> zoomHandler;
     
-    /// remove this
-    std::shared_ptr<RegionSelector> regionSelector;
-    
     std::unique_ptr<ResizableEdgeComponent> resizableEdgeComponent;
     std::unique_ptr<ResizableBorderComponent> resizableBorderComponent;
-    
-    bool isFollowingTransport = false;
-    
-    /// TODO: remove this
-    URL lastFileDropped;
-
-    DrawableRectangle currentPositionMarker;
-    
-
-    bool canMoveTransport() const noexcept
-    {
-        return ! (isFollowingTransport && audioResource->getAudioTransportSource()->isPlaying());
-    }
 
     void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override;
-
-    void timerCallback() override
-    {
-        if (canMoveTransport())
-            updateCursorPosition();
-        else
-        {
-            /// TODO: scrolling 
-            jassertfalse;
-            // setRange (visibleRange.movedToStartAt (transportSource.getCurrentPosition() - (visibleRange.getLength() / 2.0)));
-        }
-    }
-
-    void updateCursorPosition()
-    {
-        currentPositionMarker.setVisible (audioResource->getAudioTransportSource()->isPlaying() || isMouseButtonDown());
-
-        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX (audioResource->getAudioTransportSource()->getCurrentPosition()) - 0.75f, 0,
-                                                              1.5f, (float) (getHeight() /*  - scrollbar.getHeight()*/)));
-        
-    
-    }
     
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormComponent)

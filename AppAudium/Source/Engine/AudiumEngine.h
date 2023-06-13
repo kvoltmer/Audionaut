@@ -36,6 +36,8 @@ public:
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     
+    juce::AudioTransportSource* getAudioTransportSource() const;
+    
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;

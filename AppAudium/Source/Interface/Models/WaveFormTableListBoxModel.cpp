@@ -52,7 +52,7 @@ juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumbe
         auto audioResource = audioResourceContainer->getAudioResource(rowNumber);
         if (audioResource != nullptr)
         {
-            auto component = new WaveFormComponent(audioResource, zoomHandler, regionSelector);
+            auto component = new WaveFormComponent(audioResource, zoomHandler);
             return component;
         }
     }

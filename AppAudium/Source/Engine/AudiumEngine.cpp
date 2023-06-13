@@ -98,4 +98,13 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
     return result;
 }
 
+juce::AudioTransportSource* AudiumEngine::getAudioTransportSource() const
+{
+    /// TODO: this is a workaround
+    if (audioResourceContainer->getAudioResource(0) != nullptr)
+    {
+        return audioResourceContainer->getAudioResource(0)->getAudioTransportSource();
+    }
+    return nullptr;
+}
 
