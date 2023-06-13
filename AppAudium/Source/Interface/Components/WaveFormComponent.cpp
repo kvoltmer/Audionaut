@@ -23,10 +23,8 @@ static const uint32 waveFormColourScheme[numWaveFormColours] = {
 
 
 WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
-                                      std::shared_ptr<ZoomHandler> zoomHandler,
-                                      std::shared_ptr<RegionSelector> regionSelector) :
-    zoomHandler(zoomHandler),
-    regionSelector(regionSelector)
+                                      std::shared_ptr<ZoomHandler> zoomHandler) :
+    zoomHandler(zoomHandler)
 {
 
     setAudioResource(audioResource);
@@ -36,10 +34,6 @@ WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResour
     this->audioResource->currentColour = Colour(waveFormColourScheme[currentWaveFormColour++]);
     if (currentWaveFormColour >= numWaveFormColours)
         currentWaveFormColour = 0;
-
-    currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
-    addAndMakeVisible (currentPositionMarker);
-    
     
     resizableEdgeComponent.reset(new ResizableEdgeComponent(this, nullptr, ResizableEdgeComponent::bottomEdge));
     //addAndMakeVisible(resizableEdgeComponent.get());
@@ -66,24 +60,13 @@ void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> audioRe
     zoomHandler->updateTotalLength();
     this->audioResource = audioResource;
     audioResource->getThumbnail().addChangeListener (this);
-    startTimerHz (40);
-}
-
-URL WaveFormComponent::getLastDroppedFile() const noexcept
-{
-    return lastFileDropped;
 }
 
 void WaveFormComponent::scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart)
 {
-    if (! (isFollowingTransport && audioResource->getAudioTransportSource()->isPlaying()))
-    {
-    }
-}
-
-void WaveFormComponent::setFollowsTransport (bool shouldFollow)
-{
-    isFollowingTransport = shouldFollow;
+//    if (! (isFollowingTransport && audioResource->getAudioTransportSource()->isPlaying()))
+//    {
+//    }
 }
 
 void WaveFormComponent::paint (Graphics& g)
@@ -185,7 +168,7 @@ bool WaveFormComponent::isInterestedInFileDrag (const StringArray& /*files*/)
 
 void WaveFormComponent::filesDropped (const StringArray& files, int /*x*/, int /*y*/)
 {
-    lastFileDropped = URL (File (files[0]));
+    /// TODO: replace current audio resource
     sendChangeMessage();
 }
 
@@ -199,9 +182,9 @@ void WaveFormComponent::mouseDrag (const MouseEvent& e)
 {
     getParentComponent()->mouseDrag(e);
     
-    if (canMoveTransport())
-        audioResource->getAudioTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
-        
+//    if (canMoveTransport())
+//        audioResource->getAudioTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
+//
 }
 
 void WaveFormComponent::mouseUp (const MouseEvent& e)

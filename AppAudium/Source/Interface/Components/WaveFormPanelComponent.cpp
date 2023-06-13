@@ -14,6 +14,7 @@
 #include "Interface/Controls/WaveFormTableListBox.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Controls/PlayPositionMarker.h"
 
 //==============================================================================
 WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
@@ -28,7 +29,8 @@ WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> aud
                                                                   regionSelector));
     waveFormTableListBox->setModel(waveFormTableListBoxModel.get());
 
-
+    playPositionMarker.reset(new PlayPositionMarker(zoomHandler, audiumEngine));
+    addAndMakeVisible(playPositionMarker.get());
 
     zoomHandler->setHorizontalScrollBar(&waveFormTableListBox->getHorizontalScrollBar());
 
@@ -56,6 +58,7 @@ WaveFormPanelComponent::~WaveFormPanelComponent()
     waveFormTableListBox = nullptr;
     waveFormTableListBoxModel = nullptr;
     zoomHandler = nullptr;
+    playPositionMarker = nullptr;
 }
 
 void WaveFormPanelComponent::paint (juce::Graphics&)
@@ -64,10 +67,8 @@ void WaveFormPanelComponent::paint (juce::Graphics&)
 
 void WaveFormPanelComponent::resized()
 {
-    if (waveFormTableListBox != nullptr)
-    {
-        waveFormTableListBox->setBounds(getBounds());
-    }
+    waveFormTableListBox->setBounds(getBounds());
+    playPositionMarker->setBounds(getBounds());
 }
 
 void WaveFormPanelComponent::updateUI()
