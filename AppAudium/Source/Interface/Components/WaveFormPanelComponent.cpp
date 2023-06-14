@@ -22,7 +22,7 @@ WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> aud
 {
     zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer()));
     waveFormTableListBox.reset(new WaveFormTableListBox("waveform listbox", nullptr));
-    regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler, audiumEngine->getAudioRegionContainer()));
+    regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler, audiumEngine));
     waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(waveFormTableListBox,
                                                                   audiumEngine->getAudioResourceContainer(),
                                                                   zoomHandler,

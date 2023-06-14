@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/AudiumTransportSource.h"
 
 //==============================================================================
 /*
@@ -39,45 +40,12 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        /* This demo code just fills the component's background and
-           draws some placeholder text to get you started.
-
-           You should replace everything in this method with your own
-           drawing code..
-        */
-
-//        g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
-//
-//        g.setColour (juce::Colours::grey);
-//        g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-//
-//        g.setColour (juce::Colours::white);
-//        g.setFont (14.0f);
-//        g.drawText ("PlayPositionMarker", getLocalBounds(),
-//                    juce::Justification::centred, true);   // draw some placeholder text
     }
 
     void resized() override
     {
-        // This method is where you should set the bounds of any child
-        // components that your component contains..
         auto bonds = getParentComponent()->getBounds();
         setBounds(bonds);
-
-    }
-    
-    void updateCursorPosition()
-    {
-        //currentPositionMarker.setVisible (audioResource->getAudioTransportSource()->isPlaying() || isMouseButtonDown());
-        auto pos = 0.0;
-        if (audiumEngine->getAudioTransportSource() != nullptr)
-        {
-            pos = audiumEngine->getAudioTransportSource()->getCurrentPosition();
-        }
-        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX (pos) - 0.75f, 0,
-                                                              1.5f, (float) (getHeight() /*  - scrollbar.getHeight()*/)));
-        
-    
     }
     
     void timerCallback() override
@@ -90,6 +58,19 @@ public:
 //            jassertfalse;
 //            // setRange (visibleRange.movedToStartAt (transportSource.getCurrentPosition() - (visibleRange.getLength() / 2.0)));
 //        }
+    }
+    
+    void updateCursorPosition()
+    {
+        auto pos = 0.0;
+        auto transportSource = audiumEngine->getAudiumTransportSource();
+        if (transportSource != nullptr)
+        {
+            currentPositionMarker.setVisible(transportSource->isPlaying());
+            pos = transportSource->getCurrentPosition();
+        }
+        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX (pos) - 0.75f, 0,
+                                                              1.5f, (float) (getHeight() /*  - scrollbar.getHeight()*/)));
     }
     
     void setFollowsTransport (bool shouldFollow)
@@ -108,7 +89,7 @@ public:
         getParentComponent()->mouseDrag(e);
         
         if (canMoveTransport())
-            audiumEngine->getAudioTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
+            audiumEngine->getAudiumTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
             
     }
 
@@ -118,7 +99,7 @@ private:
     
     bool canMoveTransport() const noexcept
     {
-        auto tps = audiumEngine->getAudioTransportSource();
+        auto tps = audiumEngine->getAudiumTransportSource();
         return ! (isFollowingTransport && tps != nullptr && tps->isPlaying());
     }
     

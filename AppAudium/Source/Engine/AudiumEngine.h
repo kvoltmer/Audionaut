@@ -15,12 +15,15 @@
 #include "AudioResourceContainer.h"
 #include "AudioRegionContainer.h"
 
+class AudiumTransportSource;
+
 /// The Audium engine
 class AudiumEngine {
     
 public:
     AudiumEngine(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                 std::shared_ptr<AudioRegionContainer> audioRegionContainer);
+                 std::shared_ptr<AudioRegionContainer> audioRegionContainer,
+                 std::shared_ptr<AudiumTransportSource> audiumTransportSource);
     ~AudiumEngine();
     
     void openFile (const juce::File& file, std::function<void (bool)> callback);
@@ -36,13 +39,15 @@ public:
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     
-    juce::AudioTransportSource* getAudioTransportSource() const;
+    AudiumTransportSource* getAudiumTransportSource() const;
     
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     
     juce::File currentFile;
+    
+    std::shared_ptr<AudiumTransportSource> audiumTransportSource;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumEngine)

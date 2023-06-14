@@ -45,6 +45,7 @@
 		A88A358B1261DB60A7CB582F /* AudioResourceContainer.cpp */ = {isa = PBXBuildFile; fileRef = 8AD81791B89E55FB8C43535A; };
 		AA764E8498C8571488AA408D /* AudioPlayer.cpp */ = {isa = PBXBuildFile; fileRef = C0F42D1AD5797776F32C49B7; };
 		B4761499FFAF18FAF559310B /* RegionPanelComponent.cpp */ = {isa = PBXBuildFile; fileRef = 09BD1A5D2DFDF839C78E7B94; };
+		C1F2BF608E87542C92DB90CC /* AudiumTransportSource.cpp */ = {isa = PBXBuildFile; fileRef = 6C130BDB78946EA580823A67; };
 		C33DF7E8E1BE9838CE2B0781 /* WaveFormPanelComponent.cpp */ = {isa = PBXBuildFile; fileRef = 1D197404B5A186E5717266AD; };
 		D378E780FCD2FF4680CF5E6D /* include_juce_audio_utils.mm */ = {isa = PBXBuildFile; fileRef = EFB67C5172FD56D59C0F3443; };
 		D50EA7BFEDBE0DB7D353D9A1 /* include_juce_audio_basics.mm */ = {isa = PBXBuildFile; fileRef = 326D33688206104FED891964; };
@@ -105,6 +106,7 @@
 		65FA0FE104D1D2422632E136 /* AudiumCommandIDs.h */ /* AudiumCommandIDs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumCommandIDs.h; path = ../../Source/Application/AudiumCommandIDs.h; sourceTree = SOURCE_ROOT; };
 		6635C70632EE050E628A48F0 /* Main.cpp */ /* Main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Main.cpp; path = ../../Source/Application/Main.cpp; sourceTree = SOURCE_ROOT; };
 		685048203793CB093B04D748 /* juce_graphics */ /* juce_graphics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_graphics; path = ../../../Submodules/juce/modules/juce_graphics; sourceTree = SOURCE_ROOT; };
+		6C130BDB78946EA580823A67 /* AudiumTransportSource.cpp */ /* AudiumTransportSource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumTransportSource.cpp; path = ../../Source/Engine/AudiumTransportSource.cpp; sourceTree = SOURCE_ROOT; };
 		6DA263F7CDEFFDFAC0EB223E /* RegionSelector.h */ /* RegionSelector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionSelector.h; path = ../../Source/Interface/Controls/RegionSelector.h; sourceTree = SOURCE_ROOT; };
 		6F75568B0D072582C1F4CE0A /* RegionTableListBox.h */ /* RegionTableListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionTableListBox.h; path = ../../Source/Interface/Controls/RegionTableListBox.h; sourceTree = SOURCE_ROOT; };
 		71E41C3B64900112AA3F7101 /* WaveFormTableListBox.cpp */ /* WaveFormTableListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = WaveFormTableListBox.cpp; path = ../../Source/Interface/Controls/WaveFormTableListBox.cpp; sourceTree = SOURCE_ROOT; };
@@ -152,6 +154,7 @@
 		EBCAA43C5258D98640A638F6 /* juce_audio_formats */ /* juce_audio_formats */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_formats; path = ../../../Submodules/juce/modules/juce_audio_formats; sourceTree = SOURCE_ROOT; };
 		ECB46507DAEC7211AEAFD67D /* Preferences.h */ /* Preferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Preferences.h; path = ../../Source/Util/Preferences.h; sourceTree = SOURCE_ROOT; };
 		EFB67C5172FD56D59C0F3443 /* include_juce_audio_utils.mm */ /* include_juce_audio_utils.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_utils.mm; path = ../../JuceLibraryCode/include_juce_audio_utils.mm; sourceTree = SOURCE_ROOT; };
+		F0A4B905FCA6B20DBF3DD3C3 /* AudiumTransportSource.h */ /* AudiumTransportSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumTransportSource.h; path = ../../Source/Engine/AudiumTransportSource.h; sourceTree = SOURCE_ROOT; };
 		F1196F8D001317AABA13211C /* AudioResource.h */ /* AudioResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResource.h; path = ../../Source/Engine/AudioResource.h; sourceTree = SOURCE_ROOT; };
 		F5F7DEF8952E76FA005897ED /* CMakeLists.txt */ /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = CMakeLists.txt; path = ../../Catch2Tests/CMakeLists.txt; sourceTree = SOURCE_ROOT; };
 		F606AA824C91677FAABA4C90 /* juce_audio_utils */ /* juce_audio_utils */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_utils; path = ../../../Submodules/juce/modules/juce_audio_utils; sourceTree = SOURCE_ROOT; };
@@ -407,6 +410,8 @@
 		FCB7E52916C7F60CEA2D39E3 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
+				6C130BDB78946EA580823A67,
+				F0A4B905FCA6B20DBF3DD3C3,
 				D4D5A4A65120A0024822645B,
 				AA6A70E8E5EC8AF8DF2B1A7E,
 				4DE814A90D92C1476D1E560A,
@@ -514,6 +519,7 @@
 				4ABF177467832242153DF416,
 				090A584AB0AC23AB9528BCCD,
 				6BD9E0BBB60EAD02583E8F7C,
+				C1F2BF608E87542C92DB90CC,
 				F83BD807066141684D3FFFA1,
 				ED856071EC90DCF2523AF785,
 				AA764E8498C8571488AA408D,

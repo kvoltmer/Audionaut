@@ -12,6 +12,8 @@
 #include "RegionSelector.h"
 #include "Interface/Components/WaveFormComponent.h"
 #include "Engine/AudioRegionContainer.h"
+#include "Engine/AudiumEngine.h"
+#include "Engine/AudiumTransportSource.h"
 
 void RegionSelector::paint (Graphics& g)
 {
@@ -44,7 +46,7 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
         setSize (0, 0);
         dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
         currentDragMode = RegionSelector::outsideEdge;
-        audioRegionContainer->clearSelection();
+        audiumEngine->getAudioRegionContainer()->clearSelection();
     }
     else /// click inside -> modify current selection
     {
@@ -115,7 +117,7 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
     }
     
     // set value in the engine
-    audioRegionContainer->setRegionPosition(pos);
+    audiumEngine->getAudioRegionContainer()->setRegionPosition(pos);
 }
 
 void RegionSelector::createRectangleAndSetBonds()
@@ -130,8 +132,12 @@ void RegionSelector::createRectangleAndSetBonds()
     setBounds(rect.expanded(expandedWidth, 0));
 }
 
-void RegionSelector::mouseUp (const juce::MouseEvent&)
+void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
+    auto offset = zoomHandler->getVisibleRange().getStart();
+    auto start = jmax (0.0, zoomHandler->xToTime ((double) dragStartPos.getX() - offset));
+     
+    audiumEngine->getAudiumTransportSource()->setPosition (start);
 }
 
 void RegionSelector::mouseMove (const juce::MouseEvent& e)
@@ -147,7 +153,7 @@ void RegionSelector::mouseMove (const juce::MouseEvent& e)
 
 void RegionSelector::updateFromEngine()
 {
-    auto pos = audioRegionContainer->getRegionPosition();
+    auto pos = audiumEngine->getAudioRegionContainer()->getRegionPosition();
     if (pos.isEmpty())
     {
         setSize(0, 0);
