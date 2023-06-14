@@ -35,6 +35,10 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <FILE id="hC6yQM" name="AudiumTransportSource.cpp" compile="1" resource="0"
+              file="Source/Engine/AudiumTransportSource.cpp"/>
+        <FILE id="ZxK2Aj" name="AudiumTransportSource.h" compile="0" resource="0"
+              file="Source/Engine/AudiumTransportSource.h"/>
         <FILE id="ZckA0q" name="AudioRegionContainer.cpp" compile="1" resource="0"
               file="Source/Engine/AudioRegionContainer.cpp"/>
         <FILE id="vB01Hj" name="AudioRegionContainer.h" compile="0" resource="0"

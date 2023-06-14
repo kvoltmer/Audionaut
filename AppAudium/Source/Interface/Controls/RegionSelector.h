@@ -13,7 +13,7 @@
 #include "Interface/Widgets/audium_ListBox.h"
 
 class ZoomHandler;
-class AudioRegionContainer;
+class AudiumEngine;
 
 class RegionSelector : public juce::Component
 {
@@ -29,10 +29,10 @@ public:
     
     RegionSelector (std::shared_ptr<audium::ListBox> lb,
                     std::shared_ptr<ZoomHandler> zoomHandler,
-                    std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
+                    std::shared_ptr<AudiumEngine> audiumEngine) :
         owner (lb),
         zoomHandler(zoomHandler),
-        audioRegionContainer(audioRegionContainer)
+        audiumEngine(audiumEngine)
     {
         owner->addMouseListener (this, true);
     }
@@ -63,7 +63,7 @@ private:
     std::shared_ptr<audium::ListBox> owner;
     
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
+    std::shared_ptr<AudiumEngine> audiumEngine;
     
     const int borderSize = 10;
     const int expandedWidth = 2;

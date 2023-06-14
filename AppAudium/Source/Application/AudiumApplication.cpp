@@ -15,6 +15,7 @@
 #include "Application/AudiumMenuModel.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
+#include "Engine/AudiumTransportSource.h"
 
 //==============================================================================
 AudiumApplication& AudiumApplication::getApp()
@@ -41,8 +42,9 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     audioResourceContainer.reset(new AudioResourceContainer());
     //auto container = std::shared_ptr<AudioResourceContainer>(new AudioResourceContainer());
     audioResourceContainer->initializeAudioDevice();
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer = std::shared_ptr<AudioRegionContainer>(new AudioRegionContainer());
-    audiumEngine.reset(new AudiumEngine(audioResourceContainer, audioRegionContainer));
+    auto audioRegionContainer = std::shared_ptr<AudioRegionContainer>(new AudioRegionContainer());
+    auto audiumTransportSource = std::shared_ptr<AudiumTransportSource>(new AudiumTransportSource(audioResourceContainer));
+    audiumEngine.reset(new AudiumEngine(audioResourceContainer, audioRegionContainer, audiumTransportSource));
     if (Preferences::valueExists(Preferences::defaultFile))
     {
         audiumEngine->openFile(juce::File(Preferences::getValue(Preferences::defaultFile)), nullptr);
