@@ -104,10 +104,8 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
 
     createRectangleAndSetBonds();
     
-    
-    auto offset = zoomHandler->getVisibleRange().getStart();
-    auto start = jmax (0.0, zoomHandler->xToTime ((double) dragStartPos.getX() + offset));
-    auto end = jmax (0.0, zoomHandler->xToTime ((double) dragEndPos.getX() + offset));
+    auto start = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
+    auto end = zoomHandler->xToTimeWithOffset(dragEndPos.getX());
     
     // calc engine values
     Range<double> pos(start, end);
@@ -134,21 +132,26 @@ void RegionSelector::createRectangleAndSetBonds()
 
 void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
-    auto offset = zoomHandler->getVisibleRange().getStart();
-    auto start = jmax (0.0, zoomHandler->xToTime ((double) dragStartPos.getX() - offset));
-     
-    audiumEngine->getAudiumTransportSource()->setPosition (start);
+    // set transport position if not currently playing
+    if (not audiumEngine->getAudiumTransportSource()->isPlaying())
+    {
+        auto pos = 0.0;
+        if (dragEndPos.getX() < dragStartPos.getX())
+        {
+            pos = zoomHandler->xToTimeWithOffset(dragEndPos.getX());
+        }
+        else
+        {
+            pos = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
+        }
+        audiumEngine->getAudiumTransportSource()->setPosition (pos);
+    }
+    
 }
 
 void RegionSelector::mouseMove (const juce::MouseEvent& e)
 {
     updateMouseZone (e);
-    
-    //auto pos = e.getEventRelativeTo (owner.get()).position.toInt();
-    //auto row = owner->getRowContainingPosition (pos.x, pos.y);
-    //std::cout << "x " << pos.getX() << std::endl;
-    //std::cout << row << " --------" << pos.getX() << "---------" << pos.getY() << std::endl;
-    
 }
 
 void RegionSelector::updateFromEngine()
@@ -160,20 +163,16 @@ void RegionSelector::updateFromEngine()
     }
     else
     {
-        auto start = zoomHandler->timeToX(pos.getStart());
-        auto end = zoomHandler->timeToX(pos.getEnd());
-        auto offset = zoomHandler->getVisibleRange().getStart();
-        
-        dragStartPos.setX(start - offset);
-        dragEndPos.setX(end - offset);
+        auto start = zoomHandler->timeToXWithOffset(pos.getStart());
+        auto end = zoomHandler->timeToXWithOffset(pos.getEnd());
+        dragStartPos.setX(start);
+        dragEndPos.setX(end);
         createRectangleAndSetBonds();
     }
 }
 
 void RegionSelector::updateMouseZone (const juce::MouseEvent& e)
 {
-    //std::cout << "updateMouseZone " << e.getPosition().getX() << " " << getWidth() <<  std::endl;
-    
     auto x = e.getPosition().getX();
     
     switch (getDragMode(x)) {
@@ -191,7 +190,6 @@ void RegionSelector::updateMouseZone (const juce::MouseEvent& e)
 
 const RegionSelector::Edge RegionSelector::getDragMode(int x) const
 {
-    //std::cout << "x " << x << std::endl;
     if (x < borderSize)
     {
         return RegionSelector::leftEdge;

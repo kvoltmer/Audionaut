@@ -71,6 +71,8 @@ void AudioRegionContainer::setSelectedRegion(int rowNumber)
         selectedRegion = *r;
         selectedRowNumber = rowNumber;
         sendActionMessage (regionSelectedAction);
+        
+        
     }
 }
 
