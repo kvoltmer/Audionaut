@@ -18,6 +18,8 @@ void AudiumTransportSource::setPosition (double newPosition)
     {
         audioResourceContainer->getAudioResource(i)->getAudioTransportSource()->setPosition(newPosition);
     }
+    
+    std::cout << "setPosition " << newPosition << std::endl;
 }
 
 double AudiumTransportSource::getCurrentPosition() const
@@ -47,7 +49,7 @@ bool AudiumTransportSource::isPlaying() const
 {
     if (audioResourceContainer->getAudioResource(0) != nullptr)
     {
-        return audioResourceContainer->getAudioResource(0)->getAudioTransportSource()->getCurrentPosition();
+        return audioResourceContainer->getAudioResource(0)->getAudioTransportSource()->isPlaying();
     }
     
     return false;

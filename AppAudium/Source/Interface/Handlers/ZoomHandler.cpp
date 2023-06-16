@@ -77,3 +77,17 @@ double ZoomHandler::xToTime (const double x) const
     jassert(getWidth() > 0);
     return (x / (double) getWidth()) * (totalRange.getLength()) + totalRange.getStart();
 }
+
+int ZoomHandler::timeToXWithOffset (const double time) const
+{
+    auto x = timeToX(time);
+    auto offset = getVisibleRange().getStart();
+    return juce::jmax (0.0, x - offset);
+}
+
+double ZoomHandler::xToTimeWithOffset (const int x) const
+{
+    auto offset = getVisibleRange().getStart();
+    return juce::jmax (0.0, xToTime (static_cast<double>(x) + offset));
+}
+

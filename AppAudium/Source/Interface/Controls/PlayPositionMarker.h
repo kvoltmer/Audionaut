@@ -69,8 +69,8 @@ public:
             currentPositionMarker.setVisible(transportSource->isPlaying());
             pos = transportSource->getCurrentPosition();
         }
-        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX (pos) - 0.75f, 0,
-                                                              1.5f, (float) (getHeight() /*  - scrollbar.getHeight()*/)));
+        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToXWithOffset(pos) - 0.75f, 0,
+                                                              1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
     }
     
     void setFollowsTransport (bool shouldFollow)
@@ -87,21 +87,11 @@ public:
     void mouseDrag (const MouseEvent& e) override
     {
         getParentComponent()->mouseDrag(e);
-        
-        if (canMoveTransport())
-            audiumEngine->getAudiumTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
-            
     }
 
 private:
     
     bool isFollowingTransport = false;
-    
-    bool canMoveTransport() const noexcept
-    {
-        auto tps = audiumEngine->getAudiumTransportSource();
-        return ! (isFollowingTransport && tps != nullptr && tps->isPlaying());
-    }
     
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<AudiumEngine> audiumEngine;

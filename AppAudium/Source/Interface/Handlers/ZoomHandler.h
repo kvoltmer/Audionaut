@@ -37,11 +37,18 @@ public:
     
     void setWidth(int newWidth) { width = newWidth; }
     
+    int timeToXWithOffset (const double time) const;
+    
+    double xToTimeWithOffset (const int x) const;
+    
+    int getScrollBarHeight() const { return scrollbar->getHeight(); }
+
+private:
+    
     double timeToX (const double time) const;
 
     double xToTime (const double x) const;
-
-private:
+    
     
     // the audio resource container
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
