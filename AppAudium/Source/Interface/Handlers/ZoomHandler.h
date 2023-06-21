@@ -43,12 +43,11 @@ public:
     
     int getScrollBarHeight() const { return scrollbar->getHeight(); }
 
-private:
-    
     double timeToX (const double time) const;
 
     double xToTime (const double x) const;
     
+private:
     
     // the audio resource container
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;

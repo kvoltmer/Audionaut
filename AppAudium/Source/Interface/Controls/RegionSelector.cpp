@@ -31,8 +31,9 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
     auto parentPosition = e.getEventRelativeTo(owner.get()).getPosition();
     
     /// filter mouse postion to avoid scrollbar conflict
-    /// TODO: maybe attach mouse listener to the viewport
-    if (owner->getHeight() - parentPosition.getY() < 10)
+    /// TODO: get rid of this workaround: maybe attach mouse listener to the viewport
+    if (owner->getHeight() - parentPosition.getY() < 10 ||
+        parentPosition.getY() < owner->getHeaderComponent()->getHeight())
     {
         avoidDragging = true;
         return;
@@ -123,7 +124,7 @@ void RegionSelector::createRectangleAndSetBonds()
     // create a rectange
     auto rect = Rectangle<int> (dragStartPos, dragEndPos);
     
-    rect.setTop(owner->getBounds().getY());
+    rect.setTop(owner->getBounds().getY() + owner->getHeaderComponent()->getHeight());
     rect.setHeight(owner->getAllRowsHeight());
     
     // set the size of this component, the width is expanded to simplify selection dragging
@@ -133,7 +134,8 @@ void RegionSelector::createRectangleAndSetBonds()
 void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
     // set transport position if not currently playing
-    if (not audiumEngine->getAudiumTransportSource()->isPlaying())
+    if (!avoidDragging &&
+        !audiumEngine->getAudiumTransportSource()->isPlaying())
     {
         auto pos = 0.0;
         if (dragEndPos.getX() < dragStartPos.getX())
