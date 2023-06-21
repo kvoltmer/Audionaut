@@ -10,6 +10,7 @@
 
 #include "AudiumLookAndFeel.h"
 #include "ColourIds.h"
+#include "Interface/Widgets/audium_ListBox.h"
 
 using namespace juce;
 
@@ -42,4 +43,10 @@ void AudiumLookAndFeel::setupColours()
     setColour (contentHeaderBackgroundColourId,      Colours::black);
     setColour (widgetBackgroundColourId,             Colour (0xff495358));
     setColour (secondaryWidgetBackgroundColourId,    Colour (0xff303b41));
+    
+    // testing...
+    //setColour (TableHeaderComponent::backgroundColourId, Colours::red);
+    //setColour (TableHeaderComponent::outlineColourId, Colours::red);
+    //setColour (audium::ListBox::outlineColourId, Colours::red);
+    
 }

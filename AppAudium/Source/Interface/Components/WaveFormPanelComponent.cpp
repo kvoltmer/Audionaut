@@ -15,11 +15,15 @@
 #include "Util/EngineAccess.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/PlayPositionMarker.h"
+#include "Interface/Controls/TransportPositionControl.h"
 
 //==============================================================================
 WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
+    /// TODO: handle this in a more elegant way
+    auto initialWidth = 1000;
+    
     zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer()));
     waveFormTableListBox.reset(new WaveFormTableListBox("waveform listbox", nullptr));
     regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler, audiumEngine));
@@ -28,7 +32,12 @@ WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> aud
                                                                   zoomHandler,
                                                                   regionSelector));
     waveFormTableListBox->setModel(waveFormTableListBoxModel.get());
-
+    auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(waveFormTableListBox, zoomHandler, audiumEngine));
+    waveFormTableListBox->setHeaderComponent(std::move(headerComponent));
+    waveFormTableListBox->getHeaderComponent()->setSize(initialWidth, 25);
+    waveFormTableListBox->setMinimumContentWidth(initialWidth);
+    waveFormTableListBox->setOutlineThickness(0);
+    
     playPositionMarker.reset(new PlayPositionMarker(zoomHandler, audiumEngine));
     addAndMakeVisible(playPositionMarker.get());
 
@@ -42,9 +51,8 @@ WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> aud
     // selection component
     addAndMakeVisible(regionSelector.get());
     
-    /// TODO: handle this in a more elegant way
-    auto initialWidth = 1000;
-    waveFormTableListBox->setMinimumContentWidth(initialWidth);
+    
+    
     zoomHandler->setWidth(initialWidth);
 
     updateUI();
@@ -53,8 +61,9 @@ WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> aud
 
 WaveFormPanelComponent::~WaveFormPanelComponent()
 {
-    regionSelector = nullptr;
+    waveFormTableListBox->setHeaderComponent(nullptr);
     waveFormTableListBox->setModel(nullptr);
+    regionSelector = nullptr;
     waveFormTableListBox = nullptr;
     waveFormTableListBoxModel = nullptr;
     zoomHandler = nullptr;

@@ -113,6 +113,8 @@
                 file="Source/Interface/Controls/RegionTableListBox.cpp"/>
           <FILE id="rVsr42" name="RegionTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/RegionTableListBox.h"/>
+          <FILE id="t9n5bB" name="TransportPositionControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/TransportPositionControl.h"/>
           <FILE id="sKgt7C" name="WaveFormTableListBox.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/WaveFormTableListBox.cpp"/>
           <FILE id="rUFHxk" name="WaveFormTableListBox.h" compile="0" resource="0"
