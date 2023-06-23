@@ -120,6 +120,9 @@
           <FILE id="rUFHxk" name="WaveFormTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/WaveFormTableListBox.h"/>
         </GROUP>
+        <GROUP id="{251C6FB2-3F49-498C-8DDC-157FCCAC8565}" name="Views">
+          <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
+        </GROUP>
       </GROUP>
     </GROUP>
   </MAINGROUP>

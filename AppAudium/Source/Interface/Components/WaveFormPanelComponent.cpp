@@ -54,6 +54,9 @@ WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> aud
     
     
     zoomHandler->setWidth(initialWidth);
+    
+    // make sure the play postition view is on top 
+    playPositionMarker->toFront(false);
 
     updateUI();
 

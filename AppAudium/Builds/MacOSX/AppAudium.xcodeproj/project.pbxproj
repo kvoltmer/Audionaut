@@ -67,6 +67,7 @@
 		05B46617E562A6E50F8D63E8 /* ZoomHandler.h */ /* ZoomHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ZoomHandler.h; path = ../../Source/Interface/Handlers/ZoomHandler.h; sourceTree = SOURCE_ROOT; };
 		09BD1A5D2DFDF839C78E7B94 /* RegionPanelComponent.cpp */ /* RegionPanelComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionPanelComponent.cpp; path = ../../Source/Interface/Components/RegionPanelComponent.cpp; sourceTree = SOURCE_ROOT; };
 		0CDA913D361373B7AC9537C3 /* include_juce_events.mm */ /* include_juce_events.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_events.mm; path = ../../JuceLibraryCode/include_juce_events.mm; sourceTree = SOURCE_ROOT; };
+		0E351B81876F1819B0545519 /* TransportView.h */ /* TransportView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TransportView.h; path = ../../Source/Interface/Views/TransportView.h; sourceTree = SOURCE_ROOT; };
 		0FD945ADBA6A9876218C04E5 /* RegionPanelComponent.h */ /* RegionPanelComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionPanelComponent.h; path = ../../Source/Interface/Components/RegionPanelComponent.h; sourceTree = SOURCE_ROOT; };
 		104BFF64B92517E032E9A097 /* include_juce_audio_processors_ara.cpp */ /* include_juce_audio_processors_ara.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_audio_processors_ara.cpp; path = ../../JuceLibraryCode/include_juce_audio_processors_ara.cpp; sourceTree = SOURCE_ROOT; };
 		11ABDB8E5A840910E3FD71B8 /* MainComponent.cpp */ /* MainComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MainComponent.cpp; path = ../../Source/Interface/Components/MainComponent.cpp; sourceTree = SOURCE_ROOT; };
@@ -349,6 +350,14 @@
 			name = Controls;
 			sourceTree = "<group>";
 		};
+		AFC9DC8F53530AC727AC6073 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				0E351B81876F1819B0545519,
+			);
+			name = Views;
+			sourceTree = "<group>";
+		};
 		C5B7D745189C4E7C39DE95A8 /* Components */ = {
 			isa = PBXGroup;
 			children = (
@@ -405,6 +414,7 @@
 				C5B7D745189C4E7C39DE95A8,
 				25D1D904AC998285FF5F0115,
 				A60DF503B2F410F6DDB29C77,
+				AFC9DC8F53530AC727AC6073,
 			);
 			name = Interface;
 			sourceTree = "<group>";
