@@ -12,6 +12,8 @@
 
 #include <JuceHeader.h>
 
+#include "Interface/Views/TransportView.h"
+
 //==============================================================================
 /*
 */
@@ -26,8 +28,16 @@ public:
         zoomHandler(zoomHandler),
         audiumEngine(audiumEngine)
     {
+        transportView.reset(new TransportView(zoomHandler));
+        addAndMakeVisible(transportView.get());
+        transportView->toBack();
+        
         currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
         addAndMakeVisible (currentPositionMarker);
+        
+        mouseOverMarker.setFill (Colours::red.withAlpha (0.85f));
+        addAndMakeVisible (mouseOverMarker);
+        
         startTimerHz (40);
     }
 
@@ -37,29 +47,11 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        /* This demo code just fills the component's background and
-           draws some placeholder text to get you started.
-
-           You should replace everything in this method with your own
-           drawing code..
-        */
-
-        g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
-
-//        g.setColour (juce::Colours::grey);
-//        g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-
-        g.setColour (juce::Colours::white);
-        g.setFont (14.0f);
-        g.drawText ("TransportPositionControl", getLocalBounds(),
-                    juce::Justification::centred, true);   // draw some placeholder text
     }
 
     void resized() override
     {
-        // This method is where you should set the bounds of any child
-        // components that your component contains..
-
+        transportView->setBounds(getBounds());
     }
     
     void timerCallback() override
@@ -70,10 +62,11 @@ public:
         {
             pos = transportSource->getCurrentPosition();
         }
-        //auto point = juce::Point(zoomHandler->timeToXWithOffset(pos) - 0.75f, 0);
-        //auto local = getLocalPoint(owner, point);
-        /// TODO: fixme
-        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToXWithOffset(pos) - 0.75f, 0,
+        
+        // NOT visible when playing, note: PlayPositionMarker is visible when playing
+        currentPositionMarker.setVisible(!transportSource->isPlaying());
+        
+        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX(pos) - 0.75f, 0,
                                                               1.5f, (float) getHeight()));
     }
     
@@ -89,7 +82,21 @@ public:
         auto relativePos = e.getEventRelativeTo(owner.get()).getPosition();
         auto pos = zoomHandler->xToTimeWithOffset(relativePos.getX());;
         audiumEngine->getAudiumTransportSource()->setPosition (pos);
-        
+    }
+    
+    void mouseMove (const MouseEvent& e) override
+    {
+        mouseOverMarker.setRectangle (Rectangle<float> (e.getPosition().getX() - 0.75f, 0,
+                                                              1.5f, (float) getHeight()));
+    }
+    
+    void mouseEnter (const MouseEvent&) override
+    {
+        mouseOverMarker.setVisible(true);
+    }
+    void mouseExit (const MouseEvent&) override
+    {
+        mouseOverMarker.setVisible(false);
     }
 
 private:
@@ -99,6 +106,9 @@ private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     
     juce::DrawableRectangle currentPositionMarker;
+    juce::DrawableRectangle mouseOverMarker;
+    
+    std::unique_ptr<TransportView> transportView;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportPositionControl)
 };

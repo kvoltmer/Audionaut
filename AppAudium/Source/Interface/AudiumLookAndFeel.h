@@ -12,8 +12,6 @@
 
 #include <JuceHeader.h>
 
-
-//class RegionSelector : public juce::Component
 class AudiumLookAndFeel : public juce::LookAndFeel_V4
 {
 public:

@@ -32,6 +32,8 @@ public:
         currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
         addAndMakeVisible (currentPositionMarker);
         startTimerHz (40);
+        
+        setInterceptsMouseClicks(false, true);
     }
 
     ~PlayPositionMarker() override
@@ -40,6 +42,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
+        //g.fillAll (juce::Colours::red);
     }
 
     void resized() override
@@ -69,6 +72,7 @@ public:
             currentPositionMarker.setVisible(transportSource->isPlaying());
             pos = transportSource->getCurrentPosition();
         }
+        
         currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToXWithOffset(pos) - 0.75f, 0,
                                                               1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
     }
@@ -78,16 +82,16 @@ public:
         isFollowingTransport = shouldFollow;
     }
     
-    void mouseDown (const MouseEvent& e) override
-    {
-        getParentComponent()->mouseDown(e);
-        mouseDrag (e);
-    }
-    
-    void mouseDrag (const MouseEvent& e) override
-    {
-        getParentComponent()->mouseDrag(e);
-    }
+//    void mouseDown (const MouseEvent& e) override
+//    {
+//        getParentComponent()->mouseDown(e);
+//        mouseDrag (e);
+//    }
+//    
+//    void mouseDrag (const MouseEvent& e) override
+//    {
+//        getParentComponent()->mouseDrag(e);
+//    }
 
 private:
     
