@@ -45,7 +45,6 @@ WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> aud
 
 
     waveFormTableListBox->setMultipleSelectionEnabled(true);
-    waveFormTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
     addAndMakeVisible(waveFormTableListBox.get());
 
     // selection component

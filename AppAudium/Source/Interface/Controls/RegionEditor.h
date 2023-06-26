@@ -57,9 +57,9 @@ public:
         setText (text, juce::dontSendNotification);
         
         if (isSelected)
-            setColour (juce::Label::textColourId, findColour (defaultHighlightedTextColourId));
+            setColour (juce::Label::textColourId, findColour (audium::defaultHighlightedTextColourId));
         else
-            setColour (juce::Label::textColourId, findColour (defaultTextColourId));
+            setColour (juce::Label::textColourId, findColour (audium::defaultTextColourId));
     }
     
     /// this is odd but a click on the label should also select the row

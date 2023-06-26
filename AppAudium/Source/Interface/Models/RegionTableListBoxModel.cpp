@@ -37,7 +37,7 @@ void RegionTableListBoxModel::paintRowBackground (juce::Graphics& g,
                                  bool rowIsSelected)
 {
     if (rowIsSelected)
-        g.fillAll (owner->findColour(defaultHighlightColourId));
+        g.fillAll (owner->findColour(audium::defaultHighlightColourId));
 }
 
 void RegionTableListBoxModel::paintCell (juce::Graphics& g,
@@ -60,9 +60,9 @@ void RegionTableListBoxModel::paintCell (juce::Graphics& g,
         }
         
         if (rowIsSelected)
-            g.setColour (owner->findColour (defaultHighlightedTextColourId));
+            g.setColour (owner->findColour (audium::defaultHighlightedTextColourId));
         else
-            g.setColour (owner->findColour (defaultTextColourId));
+            g.setColour (owner->findColour (audium::defaultTextColourId));
 
         g.setFont (13.0f);
         g.drawText (text, 4, 0, width - 6, height, juce::Justification::centredLeft, true);

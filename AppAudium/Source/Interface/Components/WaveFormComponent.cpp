@@ -12,6 +12,7 @@
 #include "WaveFormComponent.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Controls/WaveFormTableListBox.h"
+#include "Interface/ColourIds.h"
 
 // iterating 2 palettes where the frist one has less colours to gain more variaty
 static int currentWaveFormColour = 0;
@@ -117,7 +118,7 @@ void WaveFormComponent::paint (Graphics& g)
         g.setColour(Colours::black);
         g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
         
-        g.setColour (Colours::white);
+        g.setColour (findColour(audium::defaultTextColourId));
         g.drawFittedText (audioResource->getFileName(), bonds, Justification::topLeft, 1);
     }
     else
