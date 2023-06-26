@@ -47,6 +47,12 @@ public:
 
     double xToTime (const double x) const;
     
+    // returns a String in the format Min:Sec
+    static juce::String secondsToFormattedString(const int seconds);
+    
+    // returns the number of time segments for a given width. (1 second is the smallest possible grid)
+    int numSegmentsForWidth(const int width, int& seconds);
+    
 private:
     
     // the audio resource container
