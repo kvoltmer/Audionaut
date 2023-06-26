@@ -24,12 +24,22 @@ AudiumLookAndFeel::~AudiumLookAndFeel()
 {
 }
 
+
+LookAndFeel_V4::ColourScheme AudiumLookAndFeel::getDarkAudiumColourScheme()
+{
+    /// TODO: define and use all colours
+    return { 0xff323e44, 0xff263238, 0xff323e44,
+             0xff8e989b, 0xffffffff, Colours::grey,
+             0xffffffff, 0xff181f22, 0xffffffff };
+}
+
 void AudiumLookAndFeel::setupColours()
 {
+    setColourScheme(getDarkAudiumColourScheme());
     
     setColour (backgroundColourId,                   Colours::darkgrey);
     
-    setColour (secondaryBackgroundColourId,          Colour (0xff263238));
+    setColour (secondaryBackgroundColourId,          Colours::darkgrey.darker());
     
     setColour (defaultTextColourId,                  Colour(Colours::lightgrey).brighter());
     
@@ -52,8 +62,12 @@ void AudiumLookAndFeel::setupColours()
 
     
     // Table
-    setColour(TableListBox::backgroundColourId, findColour(audium::backgroundColourId).darker());
-    setColour(TableHeaderComponent::backgroundColourId, findColour(audium::backgroundColourId).darker());
+    setColour(TableListBox::backgroundColourId, findColour(secondaryBackgroundColourId));
+    setColour(TableHeaderComponent::backgroundColourId, findColour(secondaryBackgroundColourId));
     setColour(TableHeaderComponent::textColourId, findColour(audium::defaultTextColourId));
     
 }
+
+
+
+

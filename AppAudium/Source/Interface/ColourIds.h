@@ -17,7 +17,7 @@ namespace audium {
 enum ColourIds
 {
     backgroundColourId                = 0x2340000, // used
-    secondaryBackgroundColourId       = 0x2340001,
+    secondaryBackgroundColourId       = 0x2340001, // used
     defaultTextColourId               = 0x2340002, // used
     widgetTextColourId                = 0x2340003,
     defaultButtonBackgroundColourId   = 0x2340004,

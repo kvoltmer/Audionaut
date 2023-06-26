@@ -17,6 +17,9 @@ class AudiumLookAndFeel : public juce::LookAndFeel_V4
 public:
     AudiumLookAndFeel();
     ~AudiumLookAndFeel() override;
+    
+    static LookAndFeel_V4::ColourScheme getDarkAudiumColourScheme();
+    
 private:
     void setupColours();
 };
