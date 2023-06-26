@@ -135,7 +135,8 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
     // set transport position if not currently playing
     if (!avoidDragging &&
-        !audiumEngine->getAudiumTransportSource()->isPlaying())
+        !audiumEngine->getAudiumTransportSource()->isPlaying() &&
+        getBounds().getWidth() > 1)
     {
         auto pos = 0.0;
         if (dragEndPos.getX() < dragStartPos.getX())
