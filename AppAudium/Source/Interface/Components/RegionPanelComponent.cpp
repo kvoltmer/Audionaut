@@ -30,7 +30,7 @@ RegionPanelComponent::RegionPanelComponent(std::shared_ptr<AudiumEngine> audiumE
     regionTableListBox->getHeader().addColumn ("Length", 2, 150, 80, 800, juce::TableHeaderComponent::notSortable);
     regionTableListBox->getHeader().setStretchToFitActive (true);
     regionTableListBox->setHeaderHeight(25);
-    regionTableListBox->setOutlineThickness (1);
+    regionTableListBox->setOutlineThickness (0);
     regionTableListBox->updateContent();
 }
 
