@@ -91,3 +91,48 @@ double ZoomHandler::xToTimeWithOffset (const int x) const
     return juce::jmax (0.0, xToTime (static_cast<double>(x) + offset));
 }
 
+juce::String ZoomHandler::secondsToFormattedString(const int seconds)
+{
+    int min = (seconds > 0.0) ? (seconds / 60) : 0;
+    int sec = seconds - (min * 60);
+    return juce::String::formatted("%d:%.2d\n", min, sec);
+}
+
+int round2grid(int x)
+{
+    if (x < 1)
+    {
+        return 1;
+    }
+    else if (x < 5)
+    {
+        return 5;
+    }
+    else if (x < 15)
+    {
+        return 15;
+    }
+    else
+    {
+        return x + 30 - x % 30;
+    }
+}
+
+int ZoomHandler::numSegmentsForWidth(const int width, int& seconds)
+{
+    jassert(width > 0);
+    
+    if (width > 0)
+    {
+        auto pixelsPerSec = width / xToTime(width);
+        assert(pixelsPerSec > 0);
+        // the duration for 100 pixels
+        auto duration = int(100 / pixelsPerSec);
+        // round to grid and assign the seconds parameter
+        seconds = round2grid(duration);
+        int itemWidth = timeToX(seconds);
+        return (width / itemWidth) + 1;
+    }
+    
+    return 0;
+}
