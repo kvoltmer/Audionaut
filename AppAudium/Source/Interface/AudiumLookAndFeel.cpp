@@ -13,6 +13,7 @@
 #include "Interface/Widgets/audium_ListBox.h"
 
 using namespace juce;
+using namespace audium;
 
 AudiumLookAndFeel::AudiumLookAndFeel()
 {
@@ -25,9 +26,13 @@ AudiumLookAndFeel::~AudiumLookAndFeel()
 
 void AudiumLookAndFeel::setupColours()
 {
-    setColour (backgroundColourId,                   Colour (0xff323e44));
+    
+    setColour (backgroundColourId,                   Colours::darkgrey);
+    
     setColour (secondaryBackgroundColourId,          Colour (0xff263238));
-    setColour (defaultTextColourId,                  Colours::white);
+    
+    setColour (defaultTextColourId,                  Colour(Colours::lightgrey).brighter());
+    
     setColour (widgetTextColourId,                   Colours::white);
     setColour (defaultButtonBackgroundColourId,      Colour (0xffa45c94));
     setColour (secondaryButtonBackgroundColourId,    Colours::black);
@@ -44,9 +49,11 @@ void AudiumLookAndFeel::setupColours()
     setColour (widgetBackgroundColourId,             Colour (0xff495358));
     setColour (secondaryWidgetBackgroundColourId,    Colour (0xff303b41));
     
-    // testing...
-    //setColour (TableHeaderComponent::backgroundColourId, Colours::red);
-    //setColour (TableHeaderComponent::outlineColourId, Colours::red);
-    //setColour (audium::ListBox::outlineColourId, Colours::red);
+
+    
+    // Table
+    setColour(TableListBox::backgroundColourId, findColour(audium::backgroundColourId).darker());
+    setColour(TableHeaderComponent::backgroundColourId, findColour(audium::backgroundColourId).darker());
+    setColour(TableHeaderComponent::textColourId, findColour(audium::defaultTextColourId));
     
 }

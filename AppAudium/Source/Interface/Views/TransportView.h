@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Interface/ColourIds.h"
 
 //==============================================================================
 /*
@@ -30,7 +31,8 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        g.fillAll(juce::Colours::darkgrey);
+        // background
+        g.fillAll(findColour(audium::backgroundColourId));
         
                 
         // draw the timeline in Min::Sec
@@ -42,6 +44,8 @@ public:
             auto x = 0;
             auto seconds = 0;
             
+            auto textColour = findColour(audium::defaultTextColourId);
+            
             for (auto i = 0; i < numSegments; i++)
             {
                 // draw segment divider
@@ -49,7 +53,7 @@ public:
                 g.drawLine(x, 0, x + 1, getHeight());
                 
                 // draw text in Min:Sec format
-                g.setColour (juce::Colours::white);
+                g.setColour (textColour);
                 g.setFont (12.0f);
                 Rectangle<int> bonds(x + 5, 0, itemWidth, getHeight());
                 g.drawFittedText (ZoomHandler::secondsToFormattedString(seconds), bonds, juce::Justification::centredLeft, true);

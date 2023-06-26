@@ -13,6 +13,7 @@
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Engine/AudiumEngine.h"
+#include "Interface/ColourIds.h"
 
 //==============================================================================
 RegionPanelComponent::RegionPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
@@ -23,11 +24,10 @@ RegionPanelComponent::RegionPanelComponent(std::shared_ptr<AudiumEngine> audiumE
     
     regionTableListBox->setModel(regionTableListBoxModel.get());
     regionTableListBox->setMultipleSelectionEnabled(true);
-    regionTableListBox->setColour(juce::TableListBox::backgroundColourId, juce::Colour (0x00000000));
     addAndMakeVisible(regionTableListBox.get());
     
-    regionTableListBox->getHeader().addColumn ("name", 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-    regionTableListBox->getHeader().addColumn ("length", 2, 150, 80, 800, juce::TableHeaderComponent::notSortable);
+    regionTableListBox->getHeader().addColumn ("Regions", 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+    regionTableListBox->getHeader().addColumn ("Length", 2, 150, 80, 800, juce::TableHeaderComponent::notSortable);
     regionTableListBox->getHeader().setStretchToFitActive (true);
     regionTableListBox->setHeaderHeight(25);
     regionTableListBox->setOutlineThickness (1);
