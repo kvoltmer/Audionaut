@@ -379,6 +379,8 @@ public:
                 rowComp->setBounds (0, rowY, w, rowH);
                 rowY += rowH;
                 rowComp->update (row, owner.isRowSelected (row));
+                /// TODO: this is a temp fix for missing repaint when zooming out
+                rowComp->repaint();
             }
         }
         
@@ -420,11 +422,16 @@ public:
         */
 
         if (owner.headerComponent != nullptr)
+        {
             owner.headerComponent->setBounds (owner.outlineThickness + content.getX(),
                                               owner.outlineThickness,
                                               jmax (owner.getWidth() - owner.outlineThickness * 2,
                                                     content.getWidth()),
                                               owner.headerComponent->getHeight());
+        
+            /// TODO: this is a temp fix for missing repaint when zooming out
+            owner.headerComponent->repaint();
+        }
     }
 
     void selectRow (const int row, const int rowH, const bool dontScroll,
