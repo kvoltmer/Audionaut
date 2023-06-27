@@ -63,7 +63,7 @@ void AudiumLookAndFeel::setupColours()
     
     // Table
     setColour(TableListBox::backgroundColourId, findColour(secondaryBackgroundColourId));
-    setColour(TableHeaderComponent::backgroundColourId, findColour(secondaryBackgroundColourId));
+    setColour(TableHeaderComponent::backgroundColourId, findColour(backgroundColourId));
     setColour(TableHeaderComponent::textColourId, findColour(audium::defaultTextColourId));
     
 }
