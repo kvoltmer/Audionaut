@@ -17,7 +17,7 @@
 #include "Application/AudiumCommandIDs.h"
 #include "Interface/AudiumLookAndFeel.h"
 
-class AudiumEngine;
+class AudiumFactory;
 
 //==============================================================================
 class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
@@ -66,7 +66,6 @@ private:
 
     std::unique_ptr<AudiumMainWindow> mainWindow;
     std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
