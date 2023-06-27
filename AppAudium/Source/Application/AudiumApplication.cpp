@@ -12,10 +12,10 @@
 #include "Interface/Components/MainComponent.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
-#include "Engine/AudiumTransportSource.h"
 
 //==============================================================================
 AudiumApplication& AudiumApplication::getApp()
@@ -37,22 +37,16 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     Preferences::init(getApplicationName());
     LookAndFeel::setDefaultLookAndFeel (&lookAndFeel);
     initCommandManager();
+    
+    // create audium engine
+    audiumEngine = AudiumFactory::createAudiumEngine();
 
-    /// TODO: create factory class
-    audioResourceContainer.reset(new AudioResourceContainer());
-    //auto container = std::shared_ptr<AudioResourceContainer>(new AudioResourceContainer());
-    audioResourceContainer->initializeAudioDevice();
-    auto audioRegionContainer = std::shared_ptr<AudioRegionContainer>(new AudioRegionContainer());
-    auto audiumTransportSource = std::shared_ptr<AudiumTransportSource>(new AudiumTransportSource(audioResourceContainer));
-    audiumEngine.reset(new AudiumEngine(audioResourceContainer, audioRegionContainer, audiumTransportSource));
     if (Preferences::valueExists(Preferences::defaultFile))
     {
         audiumEngine->openFile(juce::File(Preferences::getValue(Preferences::defaultFile)), nullptr);
     }
     
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
-    
-
     
     // do further initialisation in a moment when the message loop has started
     triggerAsyncUpdate();
@@ -83,8 +77,6 @@ void AudiumApplication::shutdown()
     
     mainWindow = nullptr; // (deletes our window)
     audiumEngine = nullptr;
-    audioResourceContainer = nullptr;
-    
     
 }
 
