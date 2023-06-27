@@ -60,7 +60,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
                                              -0.8);      // and its preferred size in % of the total available space
 
     stretchableLayoutManager->setItemLayout (1, // for item 1
-                                             3, 3, 3);
+                                             2, 2, 2);
 
     stretchableLayoutManager->setItemLayout (2,          // for item 2
                                              -0.1, -0.5, // size must be between 0% and 50% of the available space
