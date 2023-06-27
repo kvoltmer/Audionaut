@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    RegionPanelComponent.h
+    RightPanelComponent.h
     Created: 6 Jun 2023 11:50:49am
     Author:  Klaus Voltmer
 
@@ -15,15 +15,15 @@
 //==============================================================================
 /*
 */
-class RegionTableListBox;
-class RegionTableListBoxModel;
 class AudiumEngine;
+class PlayListComponent;
+class RegionComponent;
 
-class RegionPanelComponent  : public juce::Component
+class RightPanelComponent  : public juce::Component
 {
 public:
-    RegionPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);
-    ~RegionPanelComponent() override;
+    RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);
+    ~RightPanelComponent() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -31,10 +31,12 @@ public:
     void clearSelection();
 
 private:
-    
-    std::shared_ptr<RegionTableListBox> regionTableListBox;
-    std::shared_ptr<RegionTableListBoxModel> regionTableListBoxModel;
     std::shared_ptr<AudiumEngine> audiumEngine;
+
+    std::unique_ptr<RegionComponent> regionComponent;
+    std::unique_ptr<juce::StretchableLayoutManager> stretchableLayoutManager;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> stretchableLayoutResizerBar;
+    std::unique_ptr<PlayListComponent> playListComponent;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionPanelComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RightPanelComponent)
 };

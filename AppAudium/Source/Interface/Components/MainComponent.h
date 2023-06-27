@@ -26,8 +26,8 @@
 using namespace juce;
 
 class AudiumEngine;
-class WaveFormPanelComponent;
-class RegionPanelComponent;
+class MiddlePanelComponent;
+class RightPanelComponent;
 
 //[/Headers]
 
@@ -71,8 +71,8 @@ private:
 
     std::shared_ptr<AudiumEngine> audiumEngine;
 
-    std::unique_ptr<WaveFormPanelComponent> waveFormPanelComponent;
-    std::unique_ptr<RegionPanelComponent> regionPanelComponent;
+    std::unique_ptr<MiddlePanelComponent> middlePanelComponent;
+    std::unique_ptr<RightPanelComponent> rightPanelComponent;
 
     std::unique_ptr<StretchableLayoutManager> stretchableLayoutManager;
     std::unique_ptr<StretchableLayoutResizerBar> stretchableLayoutResizerBar;

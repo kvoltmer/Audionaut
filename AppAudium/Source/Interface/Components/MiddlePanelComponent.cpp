@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    WaveFormPanelComponent.cpp
+    MiddlePanelComponent.cpp
     Created: 6 Jun 2023 11:51:48am
     Author:  Klaus Voltmer
 
@@ -9,7 +9,7 @@
 */
 
 #include <JuceHeader.h>
-#include "WaveFormPanelComponent.h"
+#include "MiddlePanelComponent.h"
 #include "Interface/Models/WaveFormTableListBoxModel.h"
 #include "Interface/Controls/WaveFormTableListBox.h"
 #include "Util/EngineAccess.h"
@@ -18,7 +18,7 @@
 #include "Interface/Controls/TransportPositionControl.h"
 
 //==============================================================================
-WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+MiddlePanelComponent::MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
     /// TODO: handle this in a more elegant way
@@ -61,7 +61,7 @@ WaveFormPanelComponent::WaveFormPanelComponent(std::shared_ptr<AudiumEngine> aud
 
 }
 
-WaveFormPanelComponent::~WaveFormPanelComponent()
+MiddlePanelComponent::~MiddlePanelComponent()
 {
     waveFormTableListBox->setHeaderComponent(nullptr);
     waveFormTableListBox->setModel(nullptr);
@@ -72,23 +72,23 @@ WaveFormPanelComponent::~WaveFormPanelComponent()
     playPositionMarker = nullptr;
 }
 
-void WaveFormPanelComponent::paint (juce::Graphics&)
+void MiddlePanelComponent::paint (juce::Graphics&)
 {
 }
 
-void WaveFormPanelComponent::resized()
+void MiddlePanelComponent::resized()
 {
     waveFormTableListBox->setBounds(getBounds());
     playPositionMarker->setBounds(getBounds());
 }
 
-void WaveFormPanelComponent::updateUI()
+void MiddlePanelComponent::updateUI()
 {
     waveFormTableListBox->updateContent();
     regionSelector->updateFromEngine();
 }
 
-void WaveFormPanelComponent::zoomIn()
+void MiddlePanelComponent::zoomIn()
 {
     auto width = getWidth() * zoomHandler->zoomIn();
     waveFormTableListBox->setMinimumContentWidth(width);
@@ -96,7 +96,7 @@ void WaveFormPanelComponent::zoomIn()
     regionSelector->updateFromEngine();
 }
 
-void WaveFormPanelComponent::zoomOut()
+void MiddlePanelComponent::zoomOut()
 {
     auto width = getWidth() * zoomHandler->zoomOut();
     waveFormTableListBox->setMinimumContentWidth(width);

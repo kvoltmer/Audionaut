@@ -18,9 +18,9 @@
 */
 
 //[Headers] You can add your own extra header files here...
-#include "WaveFormPanelComponent.h"
+#include "MiddlePanelComponent.h"
 #include "Engine/AudiumEngine.h"
-#include "RegionPanelComponent.h"
+#include "RightPanelComponent.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -35,8 +35,8 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     //[Constructor_pre] You can add your own custom stuff here..
 
     this->audiumEngine = audiumEngine;
-    waveFormPanelComponent.reset(new WaveFormPanelComponent(audiumEngine));
-    regionPanelComponent.reset(new RegionPanelComponent(audiumEngine));
+    middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
+    rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
     stretchableLayoutManager.reset(new StretchableLayoutManager());
     stretchableLayoutResizerBar.reset(new StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, true));
 
@@ -51,19 +51,19 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     //[Constructor] You can add your own custom stuff here..
 
-    addAndMakeVisible(waveFormPanelComponent.get());
+    addAndMakeVisible(middlePanelComponent.get());
     addAndMakeVisible(stretchableLayoutResizerBar.get());
-    addAndMakeVisible(regionPanelComponent.get());
+    addAndMakeVisible(rightPanelComponent.get());
 
     stretchableLayoutManager->setItemLayout (0,          // for item 0
-                                             -0.0, -1.0,    // size must be between 0% and 100% of the available space
+                                             25, -1.0,    // size must be between 25pix and 100% of the available space
                                              -0.8);      // and its preferred size in % of the total available space
 
     stretchableLayoutManager->setItemLayout (1, // for item 1
                                              2, 2, 2);
 
     stretchableLayoutManager->setItemLayout (2,          // for item 2
-                                             -0.1, -0.5, // size must be between 0% and 50% of the available space
+                                             25, -1.0, // size must be between 25pix and 50% of the available space
                                              200);        // its preferred size in pixels
 
     resized();
@@ -105,9 +105,9 @@ void MainComponent::resized()
     //[UserResized] Add your own custom resize handling here..
 
     // the list of components that we want to reposition
-    Component* comps[] = {  waveFormPanelComponent.get(),
+    Component* comps[] = {  middlePanelComponent.get(),
                             stretchableLayoutResizerBar.get(),
-                            regionPanelComponent.get() };
+                            rightPanelComponent.get() };
 
     // this will position the 3 components, one above the other, to fit
     // horizontically into the rectangle provided.
@@ -142,19 +142,19 @@ void MainComponent::actionListenerCallback (const String& message)
 
     if (message == regionCreatedAction)
     {
-        regionPanelComponent->updateUI();
+        rightPanelComponent->updateUI();
     }
     else if (message == regionClearedAction)
     {
-        regionPanelComponent->clearSelection();
+        rightPanelComponent->clearSelection();
     }
     else if (message == regionModifiedAction) // do nothing
     {
-        regionPanelComponent->updateUI();
+        rightPanelComponent->updateUI();
     }
     else if (message == regionSelectedAction)
     {
-        waveFormPanelComponent->updateUI();
+        middlePanelComponent->updateUI();
     }
     else // update everything (eg. region deleted)
     {
@@ -169,18 +169,18 @@ bool MainComponent::isInterestedInFileDrag (const StringArray& /*files*/)
 
 void MainComponent::updateUI()
 {
-    waveFormPanelComponent->updateUI();
-    regionPanelComponent->updateUI();
+    middlePanelComponent->updateUI();
+    rightPanelComponent->updateUI();
 }
 
 void MainComponent::zoomIn()
 {
-    waveFormPanelComponent->zoomIn();
+    middlePanelComponent->zoomIn();
 }
 
 void MainComponent::zoomOut()
 {
-    waveFormPanelComponent->zoomOut();
+    middlePanelComponent->zoomOut();
 }
 
 //[/MiscUserCode]
