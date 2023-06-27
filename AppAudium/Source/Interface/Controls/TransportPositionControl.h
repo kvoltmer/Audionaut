@@ -32,7 +32,7 @@ public:
         addAndMakeVisible(transportView.get());
         transportView->toBack();
         
-        currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
+        currentPositionMarker.setFill (Colours::white);
         addAndMakeVisible (currentPositionMarker);
         
         mouseOverMarker.setFill (Colours::red.withAlpha (0.85f));

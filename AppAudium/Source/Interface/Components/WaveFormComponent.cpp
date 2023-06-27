@@ -115,7 +115,7 @@ void WaveFormComponent::paint (Graphics& g)
                              g.getCurrentFont().getStringWidth(audioResource->getFileName()),
                              g.getCurrentFont().getHeight());
         
-        g.setColour(Colours::black);
+        g.setColour(Colours::black.withAlpha(0.25f));
         g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
         
         g.setColour (findColour(audium::defaultTextColourId));
