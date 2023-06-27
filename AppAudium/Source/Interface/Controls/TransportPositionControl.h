@@ -63,11 +63,23 @@ public:
             pos = transportSource->getCurrentPosition();
         }
         
-        // NOT visible when playing, note: PlayPositionMarker is visible when playing
-        currentPositionMarker.setVisible(!transportSource->isPlaying());
-        
         currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX(pos) - 0.75f, 0,
                                                               1.5f, (float) getHeight()));
+    
+        if (transportSource->isPlaying())
+        {
+            currentPositionMarker.setVisible(false);
+        }
+        else
+        {
+            counter++;
+            if (counter > 20)
+            {
+                // toggle
+                currentPositionMarker.setVisible( !currentPositionMarker.isVisible());
+                counter = 0;
+            }
+        }
     }
     
     
@@ -109,6 +121,8 @@ private:
     juce::DrawableRectangle mouseOverMarker;
     
     std::unique_ptr<TransportView> transportView;
+    
+    int counter = 0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportPositionControl)
 };
