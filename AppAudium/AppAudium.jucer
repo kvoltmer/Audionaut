@@ -78,21 +78,25 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
-          <FILE id="YrE1eb" name="WaveFormPanelComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/WaveFormPanelComponent.cpp"/>
-          <FILE id="T5q4JY" name="WaveFormPanelComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/WaveFormPanelComponent.h"/>
-          <FILE id="QZqS4F" name="RegionPanelComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/RegionPanelComponent.cpp"/>
-          <FILE id="Pzojdi" name="RegionPanelComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/RegionPanelComponent.h"/>
           <FILE id="uZah0s" name="MainComponent.cpp" compile="1" resource="0"
                 file="Source/Interface/Components/MainComponent.cpp"/>
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
+          <FILE id="YrE1eb" name="MiddlePanelComponent.cpp" compile="1" resource="0"
+                file="Source/Interface/Components/MiddlePanelComponent.cpp"/>
+          <FILE id="T5q4JY" name="MiddlePanelComponent.h" compile="0" resource="0"
+                file="Source/Interface/Components/MiddlePanelComponent.h"/>
+          <FILE id="QZqS4F" name="RightPanelComponent.cpp" compile="1" resource="0"
+                file="Source/Interface/Components/RightPanelComponent.cpp"/>
+          <FILE id="Pzojdi" name="RightPanelComponent.h" compile="0" resource="0"
+                file="Source/Interface/Components/RightPanelComponent.h"/>
           <FILE id="nADoLU" name="WaveFormComponent.cpp" compile="1" resource="0"
                 file="Source/Interface/Components/WaveFormComponent.cpp"/>
           <FILE id="DcKSZR" name="WaveFormComponent.h" compile="0" resource="0"
                 file="Source/Interface/Components/WaveFormComponent.h"/>
+          <FILE id="WNptEX" name="RegionComponent.h" compile="0" resource="0"
+                file="Source/Interface/Components/RegionComponent.h"/>
+          <FILE id="opvZsf" name="PlayListComponent.h" compile="0" resource="0"
+                file="Source/Interface/Components/PlayListComponent.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
           <FILE id="wVfIgI" name="RegionTableListBoxModel.cpp" compile="1" resource="0"

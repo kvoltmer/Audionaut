@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    WaveFormPanelComponent.h
+    MiddlePanelComponent.h
     Created: 6 Jun 2023 11:51:48am
     Author:  Klaus Voltmer
 
@@ -23,11 +23,11 @@ class WaveFormTableListBox;
 class WaveFormTableListBoxModel;
 class PlayPositionMarker;
 
-class WaveFormPanelComponent  : public juce::Component
+class MiddlePanelComponent  : public juce::Component
 {
 public:
-    WaveFormPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);
-    ~WaveFormPanelComponent() override;
+    MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);
+    ~MiddlePanelComponent() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -44,5 +44,5 @@ private:
     std::shared_ptr<WaveFormTableListBoxModel>  waveFormTableListBoxModel;
     std::shared_ptr<PlayPositionMarker>         playPositionMarker;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormPanelComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MiddlePanelComponent)
 };
