@@ -13,10 +13,10 @@
 
 std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {
-    auto audioResourceContainer = std::shared_ptr<AudioResourceContainer>(new AudioResourceContainer());
-    auto audioRegionContainer   = std::shared_ptr<AudioRegionContainer>(new AudioRegionContainer());
-    auto audiumTransportSource  = std::shared_ptr<AudiumTransportSource>(new AudiumTransportSource(audioResourceContainer));
-    auto audiumEngine           = std::shared_ptr<AudiumEngine>(new AudiumEngine(audioResourceContainer, audioRegionContainer, audiumTransportSource));
+    auto audioResourceContainer = std::shared_ptr<AudioResourceContainer>   (new AudioResourceContainer());
+    auto audioRegionContainer   = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer());
+    auto audiumTransportSource  = std::shared_ptr<AudiumTransportSource>    (new AudiumTransportSource(audioResourceContainer));
+    auto audiumEngine           = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioResourceContainer, audioRegionContainer, audiumTransportSource));
     
     // this should happen outside of the factory
     audioResourceContainer->initializeAudioDevice();
