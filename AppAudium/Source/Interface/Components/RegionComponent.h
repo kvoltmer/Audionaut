@@ -70,8 +70,6 @@ public:
 
     void resized() override
     {
-        // This method is where you should set the bounds of any child
-        // components that your component contains..
         regionTableListBox->setBounds(0, 0, getWidth(), getHeight());
     }
     

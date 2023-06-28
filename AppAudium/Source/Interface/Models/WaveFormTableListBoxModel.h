@@ -19,9 +19,7 @@
 #include "Interface/Controls/WaveFormTableListBox.h"
 #include "Interface/Controls/RegionSelector.h"
 
-class WaveFormTableListBoxModel : public audium::ListBoxModel
-{
-    
+class WaveFormTableListBoxModel : public audium::ListBoxModel {
     
 public:
     

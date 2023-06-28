@@ -18,8 +18,7 @@ class RegionTableListBox;
 /*
 */
 
-class RegionTableListBoxModel  : public juce::TableListBoxModel
-{
+class RegionTableListBoxModel  : public juce::TableListBoxModel {
 public:
     RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
                             std::shared_ptr<AudioRegionContainer> audioRegionContainer);

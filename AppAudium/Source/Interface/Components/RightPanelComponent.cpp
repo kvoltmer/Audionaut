@@ -22,7 +22,7 @@ RightPanelComponent::RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEng
     regionComponent.reset(new RegionComponent(audiumEngine));
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
     stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, false));
-    playListComponent.reset(new PlayListComponent());
+    playListComponent.reset(new PlayListComponent(audiumEngine));
     
     addAndMakeVisible(regionComponent.get());
     addAndMakeVisible(stretchableLayoutResizerBar.get());

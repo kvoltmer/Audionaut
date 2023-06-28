@@ -64,7 +64,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     stretchableLayoutManager->setItemLayout (2,          // for item 2
                                              25, -1.0, // size must be between 25pix and 50% of the available space
-                                             200);        // its preferred size in pixels
+                                             400);        // its preferred size in pixels
 
     resized();
 

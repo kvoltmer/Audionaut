@@ -14,6 +14,7 @@
 #include <JuceHeader.h>
 #include "AudioResourceContainer.h"
 #include "AudioRegionContainer.h"
+#include "Engine/PlayList/PlayListContainer.h"
 
 class AudiumTransportSource;
 
@@ -23,6 +24,7 @@ class AudiumEngine {
 public:
     AudiumEngine(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
+                 std::shared_ptr<PlayListContainer> playListContainer,
                  std::shared_ptr<AudiumTransportSource> audiumTransportSource);
     ~AudiumEngine();
     
@@ -38,12 +40,14 @@ public:
     
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
+    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     
     AudiumTransportSource* getAudiumTransportSource() const;
     
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
+    std::shared_ptr<PlayListContainer> playListContainer;
     
     juce::File currentFile;
     
