@@ -108,7 +108,11 @@
                 file="Source/Interface/Components/PlayListComponent.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
-          <FILE id="d7zG98" name="PlayListTableListBoxModel.h" compile="0" resource="0"
+          <FILE id="eE3Tt0" name="PlayListTableListBoxItem.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/PlayListTableListBoxItem.cpp"/>
+          <FILE id="gXfKLs" name="PlayListTableListBoxItem.h" compile="0" resource="0"
+                file="Source/Interface/Models/PlayListTableListBoxItem.h"/>
+          <FILE id="C4FINa" name="PlayListTableListBoxModel.h" compile="0" resource="0"
                 file="Source/Interface/Models/PlayListTableListBoxModel.h"/>
           <FILE id="wVfIgI" name="RegionTableListBoxModel.cpp" compile="1" resource="0"
                 file="Source/Interface/Models/RegionTableListBoxModel.cpp"/>

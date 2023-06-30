@@ -19,7 +19,7 @@ class AudiumEngine;
 class PlayListComponent;
 class RegionComponent;
 
-class RightPanelComponent  : public juce::Component
+class RightPanelComponent  : public juce::Component, public juce::DragAndDropContainer
 {
 public:
     RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);

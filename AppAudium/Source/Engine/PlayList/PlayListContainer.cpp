@@ -11,6 +11,7 @@
 #include "PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudioRegion.h"
+#include "Engine/AudioRegionContainer.h"
 
 void PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioRegion)
 {
@@ -19,6 +20,18 @@ void PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioReg
     
     //sendActionMessage(regionCreatedAction);
 }
+
+void PlayListContainer::createPlayListItem(int regionNumber, int insertIndex)
+{
+    /// TODO: implement insertIndex
+    auto region = audioRegionContainer->getRegion(regionNumber);
+    auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(region));
+    playListItems.push_back(playListItem);
+    
+    //sendActionMessage(regionCreatedAction);
+}
+
+
 
 std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) const
 {

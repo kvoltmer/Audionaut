@@ -42,6 +42,9 @@ public:
     
     void update(int columnId, int rowNumber, bool isSelected)
     {
+        this->columnId = columnId;
+        this->rowNumber = rowNumber;
+        
         juce::String text = "n/a";
         if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
         {
@@ -69,6 +72,15 @@ public:
         juce::Label::mouseDown(e);
     }
     
+    void mouseDrag(const juce::MouseEvent& e) override
+    {
+        if( juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(this))
+        {
+            container->startDragging("RegionEditor", this);
+            //container->startDragging("PlayListTableListBoxItem", this);
+        }
+    }
+    
     /// override juce::Label::Listener
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
@@ -80,6 +92,20 @@ public:
         {
             audioRegionContainer->setRegionLength(rowNumber, labelThatHasChanged->getText().getDoubleValue());
         }
+    }
+    
+    juce::String getRegionName() const
+    {
+        if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
+        {
+            return r->name;
+        }
+        return "n/a";
+    }
+    
+    int getRowNumber() const
+    {
+        return rowNumber;
     }
 
 private:

@@ -45,29 +45,7 @@ void RegionTableListBoxModel::paintCell (juce::Graphics& g,
                         int columnId,
                         int width, int height,
                         bool rowIsSelected)
-{
-    if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
-    {
-        juce::String text;
-
-        if (columnId == 1)
-        {
-            text = r->name;
-        }
-        else if (columnId == 2)
-        {
-            text = juce::String(r->position.getLength(), 2);
-        }
-        
-        if (rowIsSelected)
-            g.setColour (owner->findColour (audium::defaultHighlightedTextColourId));
-        else
-            g.setColour (owner->findColour (audium::defaultTextColourId));
-
-        g.setFont (13.0f);
-        g.drawText (text, 4, 0, width - 6, height, juce::Justification::centredLeft, true);
-    }
-    
+{    
 }
 
 juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
@@ -87,9 +65,8 @@ juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber
         {
             // update since row might have changed after delete
             component->update(columnId, rowNumber, isRowSelected);
+            return component;
         }
-        return component;
-
     }
     
     return nullptr;
