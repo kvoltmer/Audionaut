@@ -13,8 +13,10 @@
 #include <JuceHeader.h>
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/AudioRegion.h"
 #include "Interface/Controls/PlayListTableListBox.h"
 #include "Interface/ColourIds.h"
+#include "Interface/Models/PlayListTableListBoxItem.h"
 
 class PlayListTableListBoxModel : public juce::TableListBoxModel {
     
@@ -46,51 +48,27 @@ public:
                             int width, int height,
                             bool rowIsSelected) override
     {
-        if (auto r = playListContainer->getPlayListItem(rowNumber))
-        {
-            juce::String text;
-
-            if (columnId == 1)
-            {
-                text = r->getRegion()->name;
-            }
-            else if (columnId == 2)
-            {
-                text = juce::String(r->getRegion()->position.getLength(), 2);
-            }
-
-            if (rowIsSelected)
-                g.setColour (listBox->findColour (audium::defaultHighlightedTextColourId));
-            else
-                g.setColour (listBox->findColour (audium::defaultTextColourId));
-
-            g.setFont (13.0f);
-            g.drawText (text, 4, 0, width - 6, height, juce::Justification::centredLeft, true);
-        }
-        
     }
 
     juce::Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-//        if (existingComponentToUpdate == nullptr)
-//        {
-//            if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
-//            {
-//                return new RegionEditor(owner, audioRegionContainer, columnId, rowNumber);
-//            }
-//        }
-//        else
-//        {
-//            auto component = dynamic_cast<RegionEditor*>(existingComponentToUpdate);
-//            if (component != nullptr)
-//            {
-//                // update since row might have changed after delete
-//                component->update(columnId, rowNumber, isRowSelected);
-//            }
-//            return component;
-//
-//        }
+        if (existingComponentToUpdate == nullptr)
+        {
+            if (const PlayListItem* const p = playListContainer->getPlayListItem(rowNumber).get())
+            {
+                return new PlayListTableListBoxItem(this, columnId, rowNumber);
+            }
+        }
+        else
+        {
+            auto component = dynamic_cast<PlayListTableListBoxItem*>(existingComponentToUpdate);
+            if (component != nullptr)
+            {
+                component->update(columnId, rowNumber, isRowSelected);
+                return component;
+            }
+        }
         
         return nullptr;
     }
@@ -109,12 +87,18 @@ public:
 //            audioRegionContainer->deleteRegion(selected[i]);
 //        }
     }
-
-private:
     
+    juce::var getDragSourceDescription (const juce::SparseSet< int > &rowsToDescribe) override
+    {
+        return "PlayListTableListBoxModel";
+    }
+
     
     std::shared_ptr<PlayListTableListBox> listBox;
+
     std::shared_ptr<PlayListContainer> playListContainer;
+    
+private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListTableListBoxModel)
 };
