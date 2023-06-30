@@ -43,6 +43,17 @@ public:
     void selectedRowsChanged (int lastRowSelected) override;
     
     void deleteKeyPressed (int lastRowSelected) override;
+    
+    /** To allow rows from your table to be dragged-and-dropped, implement this method.
+
+        If this returns a non-null variant then when the user drags a row, the table will try to
+        find a DragAndDropContainer in its parent hierarchy, and will use it to trigger a
+        drag-and-drop operation, using this string as the source description, and the listbox
+        itself as the source component.
+
+        @see getDragSourceCustomData, DragAndDropContainer::startDragging
+    */
+    juce::var getDragSourceDescription (const juce::SparseSet<int>& currentlySelectedRows) override;
 
 private:
     
