@@ -70,7 +70,7 @@ public:
 
     void resized() override
     {
-        regionTableListBox->setBounds(0, 0, getWidth(), getHeight());
+        regionTableListBox->setBounds(getLocalBounds());
     }
     
     void updateUI()

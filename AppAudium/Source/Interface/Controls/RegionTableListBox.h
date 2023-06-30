@@ -15,7 +15,7 @@
 //==============================================================================
 /*
 */
-class RegionTableListBox  : public juce::TableListBox
+class RegionTableListBox  : public juce::TableListBox, juce::DragAndDropContainer
 {
 public:
     RegionTableListBox();

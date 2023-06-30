@@ -61,7 +61,7 @@ public:
 
     void resized() override
     {
-        playListTableListBox->setBounds(0, 0, getWidth(), getHeight());
+        playListTableListBox->setBounds(getLocalBounds());
     }
 
 private:

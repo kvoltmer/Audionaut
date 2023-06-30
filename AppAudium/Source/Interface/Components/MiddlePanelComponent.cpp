@@ -78,8 +78,8 @@ void MiddlePanelComponent::paint (juce::Graphics&)
 
 void MiddlePanelComponent::resized()
 {
-    waveFormTableListBox->setBounds(getBounds());
-    playPositionMarker->setBounds(getBounds());
+    waveFormTableListBox->setBounds(getLocalBounds());
+    playPositionMarker->setBounds(getLocalBounds());
 }
 
 void MiddlePanelComponent::updateUI()

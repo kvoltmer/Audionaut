@@ -110,5 +110,8 @@ void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
     }
 }
 
-
+juce::var RegionTableListBoxModel::getDragSourceDescription (const juce::SparseSet<int>& currentlySelectedRows)
+{
+    return "region";//getParentItem()->getUniqueName() + "||" + config->getName();
+}
 
