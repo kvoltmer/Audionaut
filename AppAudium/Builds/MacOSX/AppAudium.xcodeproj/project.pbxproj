@@ -54,6 +54,7 @@
 		D378E780FCD2FF4680CF5E6D /* include_juce_audio_utils.mm */ = {isa = PBXBuildFile; fileRef = EFB67C5172FD56D59C0F3443; };
 		D50EA7BFEDBE0DB7D353D9A1 /* include_juce_audio_basics.mm */ = {isa = PBXBuildFile; fileRef = 326D33688206104FED891964; };
 		D6A79C7A4AF7054520DA5345 /* IOKit.framework */ = {isa = PBXBuildFile; fileRef = 9C0222C44693315A9F66945C; };
+		D82711FF1693025F8D7B4D89 /* PlayListComponent.cpp */ = {isa = PBXBuildFile; fileRef = 4D42F16EEFD4F0B44843469A; };
 		DD7FA514741BD80EB9EA9F19 /* AudiumMainWindow.cpp */ = {isa = PBXBuildFile; fileRef = 99CF1EA9B471BEDBBEEAACCB; };
 		E5BC37445419CCDC9A21E3AB /* include_juce_audio_devices.mm */ = {isa = PBXBuildFile; fileRef = 5344BD32D0ED9D07F10C2309; };
 		E6C80767828DC715C269562F /* Cocoa.framework */ = {isa = PBXBuildFile; fileRef = 6373A60BC5F852259A3F5976; };
@@ -93,6 +94,7 @@
 		456D6880C88C5B41AA87CBB2 /* CoreAudioKit.framework */ /* CoreAudioKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudioKit.framework; path = System/Library/Frameworks/CoreAudioKit.framework; sourceTree = SDKROOT; };
 		462481D51BD3607FCD44651D /* AudiumApplication.cpp */ /* AudiumApplication.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumApplication.cpp; path = ../../Source/Application/AudiumApplication.cpp; sourceTree = SOURCE_ROOT; };
 		483FBB3F0EC1E3D8EFB8E078 /* AudiumLookAndFeel.h */ /* AudiumLookAndFeel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumLookAndFeel.h; path = ../../Source/Interface/AudiumLookAndFeel.h; sourceTree = SOURCE_ROOT; };
+		4D42F16EEFD4F0B44843469A /* PlayListComponent.cpp */ /* PlayListComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListComponent.cpp; path = ../../Source/Interface/Components/PlayListComponent.cpp; sourceTree = SOURCE_ROOT; };
 		4DE814A90D92C1476D1E560A /* AudioRegion.cpp */ /* AudioRegion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegion.cpp; path = ../../Source/Engine/AudioRegion.cpp; sourceTree = SOURCE_ROOT; };
 		4EE72AD6BDA07FF8371B7B94 /* WaveFormTableListBox.h */ /* WaveFormTableListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormTableListBox.h; path = ../../Source/Interface/Controls/WaveFormTableListBox.h; sourceTree = SOURCE_ROOT; };
 		5021A59AD0929868402BFD6B /* Accelerate.framework */ /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -401,6 +403,7 @@
 				8F7CB431E1C1A59D06BA574D,
 				E8D352FF7BE59C5D849A1BA1,
 				0275401896FB2AB0F96B7DC8,
+				4D42F16EEFD4F0B44843469A,
 				CC708129065E348D5CDF5802,
 			);
 			name = Components;
@@ -584,6 +587,7 @@
 				C363DA09FED4A66EEB76769F,
 				745C6EDD035CD184F5B13154,
 				591171F07F22952C7C96DA08,
+				D82711FF1693025F8D7B4D89,
 				63AE7E83398F33BA6144FBD5,
 				3CC8732FBE5A8FEFD49D5D4B,
 				70AFBF51C79B82A4CF6015A4,

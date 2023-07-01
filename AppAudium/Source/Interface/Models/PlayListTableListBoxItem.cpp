@@ -16,48 +16,24 @@
 
 void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetails)
 {
+    auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
+    auto insertIndex = rowNumber + (before ? 0 : 1);
+    
+    std::cout << "row number: " << rowNumber + (before ? 0 : 1) << std::endl;
+    
     if ( PlayListTableListBoxItem* item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
-        
-        for (auto & item : playListModel->playListContainer->playListItems)
-        {
-            std::cout << item->getRegion()->name << std::endl;
-        }
-        
-        if( dragSourceDetails.localPosition.y < getHeight() / 2 )
-        {
-            MoveItemBefore(playListModel->playListContainer->playListItems,
-                           item->rowNumber,
-                           rowNumber);
-        }
-        else
-        {
-            MoveItemAfter(playListModel->playListContainer->playListItems,
-                          item->rowNumber,   //the current position
-                          rowNumber);    //drop it AFTER the item it was dropped on
-        }
-        
-        std::cout << "playListItems: " << std::endl;
-        
-        for (auto & item : playListModel->playListContainer->playListItems)
-        {
-            std::cout << item->getRegion()->name << std::endl;
-        }
-
-        // TODO: use your own update system
-        playListModel->listBox->owner->triggerAsyncUpdate();
+        MoveItemBefore(playListModel->playListContainer->playListItems,
+                       item->rowNumber,
+                       insertIndex);
     }
-    
     else if ( RegionEditor* item = dynamic_cast<RegionEditor*>(dragSourceDetails.sourceComponent.get()))
     {
-        
-        
-        playListModel->playListContainer->createPlayListItem(item->getRowNumber(), rowNumber);
-        std::cout << "item added: " << item->getRegionName() << std::endl;
-        
-        // TODO: use your own update system
-        playListModel->listBox->owner->triggerAsyncUpdate();
+        playListModel->playListContainer->createPlayListItem(item->getRowNumber(), insertIndex);
     }
+    
+    // TODO: use your own update system
+    playListModel->listBox->owner->triggerAsyncUpdate();
     
     hideInsertLines();
 }

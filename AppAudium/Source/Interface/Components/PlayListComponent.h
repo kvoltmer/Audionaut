@@ -18,7 +18,7 @@
 //==============================================================================
 /*
 */
-class PlayListComponent  : public juce::Component, public juce::AsyncUpdater
+class PlayListComponent  : public juce::Component, public juce::DragAndDropTarget, public juce::AsyncUpdater
 {
 public:
     PlayListComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
@@ -58,6 +58,56 @@ public:
     void handleAsyncUpdate() override
     {
         playListTableListBox->updateContent();
+    }
+    
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override
+    {
+        return true;
+    }
+    
+//    void updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+//    {
+//        if( dragSourceDetails.localPosition.y < getHeight() / 2 )
+//        {
+//            insertBefore = true;
+//            insertAfter = false;
+//        }
+//        else
+//        {
+//            insertAfter = true;
+//            insertBefore = false;
+//        }
+//
+//        repaint();
+//    }
+    
+//    void hideInsertLines()
+//    {
+//        insertBefore = false;
+//        insertAfter = false;
+//
+//        repaint();
+//    }
+    void itemDragEnter (const SourceDetails &dragSourceDetails) override
+    {
+        //updateInsertLines(dragSourceDetails);
+    }
+    
+    void itemDragMove (const SourceDetails &dragSourceDetails) override
+    {
+        //updateInsertLines(dragSourceDetails);
+    }
+    
+    void itemDragExit (const SourceDetails &dragSourceDetails) override
+    {
+        //hideInsertLines();
+    }
+    
+    void itemDropped (const SourceDetails &dragSourceDetails) override;
+    
+    bool shouldDrawDragImageWhenOver () override
+    {
+        return true;
     }
 
 private:

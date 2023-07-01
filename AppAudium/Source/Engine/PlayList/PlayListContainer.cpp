@@ -21,12 +21,16 @@ void PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioReg
     //sendActionMessage(regionCreatedAction);
 }
 
-void PlayListContainer::createPlayListItem(int regionNumber, int insertIndex)
+void PlayListContainer::createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore)
 {
-    /// TODO: implement insertIndex
-    auto region = audioRegionContainer->getRegion(regionNumber);
+    jassert( indexOfItemToPlaceBefore >= 0);
+    jassert( indexOfItemToPlaceBefore <= playListItems.size());
+    
+    auto region = audioRegionContainer->getRegion(regionIndex);
+    jassert(region != nullptr);
+    
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(region));
-    playListItems.push_back(playListItem);
+    playListItems.insert(playListItems.begin() + indexOfItemToPlaceBefore, playListItem);
     
     //sendActionMessage(regionCreatedAction);
 }
