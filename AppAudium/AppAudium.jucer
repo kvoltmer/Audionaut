@@ -104,6 +104,8 @@
                 file="Source/Interface/Components/WaveFormComponent.h"/>
           <FILE id="WNptEX" name="RegionComponent.h" compile="0" resource="0"
                 file="Source/Interface/Components/RegionComponent.h"/>
+          <FILE id="u5f0RK" name="PlayListComponent.cpp" compile="1" resource="0"
+                file="Source/Interface/Components/PlayListComponent.cpp"/>
           <FILE id="opvZsf" name="PlayListComponent.h" compile="0" resource="0"
                 file="Source/Interface/Components/PlayListComponent.h"/>
         </GROUP>
