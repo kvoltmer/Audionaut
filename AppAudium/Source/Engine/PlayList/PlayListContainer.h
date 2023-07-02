@@ -41,7 +41,7 @@ void MoveItemBefore(C& container, size_t currentIndex, size_t indexOfItemToPlace
     }
 }
 
-class PlayListContainer {
+class PlayListContainer : public juce::ActionBroadcaster {
     
 public:
     PlayListContainer(std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
@@ -51,6 +51,7 @@ public:
     
     void createPlayListItem(std::shared_ptr<AudioRegion> audioRegion);
     void createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
+    void deletePlayListItem(int atIndex);
     
     int getNumItems() const
     {

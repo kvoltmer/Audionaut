@@ -35,6 +35,15 @@ void PlayListContainer::createPlayListItem(int regionIndex, int indexOfItemToPla
     //sendActionMessage(regionCreatedAction);
 }
 
+void PlayListContainer::deletePlayListItem(int atIndex)
+{
+    if (atIndex >= 0 && atIndex < playListItems.size())
+    {
+        playListItems.erase(playListItems.begin() + atIndex);
+        sendActionMessage(playListDeletedAction);
+    }
+}
+
 std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) const
 {
     if (index >= 0 && index < playListItems.size())
