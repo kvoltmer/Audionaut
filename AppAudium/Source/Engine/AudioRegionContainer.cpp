@@ -64,6 +64,21 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) cons
     return nullptr;
 }
 
+int AudioRegionContainer::getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const
+{
+    auto it = std::find(audioRegions.begin(), audioRegions.end(), searchRegion);
+    if (it == audioRegions.end())
+    {
+        return -1; // not found
+    }
+    else
+    {
+        auto index = std::distance(audioRegions.begin(), it);
+        return static_cast<int>(index);
+    }
+    
+}
+
 void AudioRegionContainer::setSelectedRegion(int rowNumber)
 {
     if (const AudioRegion* const r = getRegion(rowNumber).get())
@@ -87,8 +102,8 @@ bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
     for (auto & region : audioRegions)
     {
         outputStream.writeString(region->name);
-        outputStream.writeInt(region->position.getStart());
-        outputStream.writeInt(region->position.getEnd());
+        outputStream.writeDouble(region->position.getStart());
+        outputStream.writeDouble(region->position.getEnd());
     }
     return true;
 }
@@ -102,8 +117,8 @@ bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
         for (auto i = 0; i < numRegions; i++)
         {
             auto regionName = inputStream.readString();
-            auto start = inputStream.readInt();
-            auto end = inputStream.readInt();
+            auto start = inputStream.readDouble();
+            auto end = inputStream.readDouble();
             juce::Range<double> position(start, end);
             createRegion(regionName, position);
         }

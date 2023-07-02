@@ -36,6 +36,7 @@ public:
     
     int getNumRegions() const { return static_cast<int>(audioRegions.size()); }
     std::shared_ptr<AudioRegion> getRegion(int index) const;
+    int getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const;
     
     void setSelectedRegion(int rowNumber);
     int getSelectedRegion() const;
