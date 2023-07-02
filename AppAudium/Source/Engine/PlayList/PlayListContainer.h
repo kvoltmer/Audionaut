@@ -56,6 +56,9 @@ public:
     {
         return static_cast<int>(playListItems.size());
     }
+    
+    bool writeToStream (juce::OutputStream& outputStream);
+    bool readFromStream (juce::InputStream& inputStream);
 
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
     
