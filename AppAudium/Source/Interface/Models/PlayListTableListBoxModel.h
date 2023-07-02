@@ -80,12 +80,12 @@ public:
 
     void deleteKeyPressed (int lastRowSelected) override
     {
-//        auto selected = owner->getSelectedRows();
-//
-//        for (int i = selected.size()-1; i >= 0; i--)
-//        {
-//            audioRegionContainer->deleteRegion(selected[i]);
-//        }
+        auto selected = listBox->getSelectedRows();
+
+        for (int i = selected.size()-1; i >= 0; i--)
+        {
+            playListContainer->deletePlayListItem(selected[i]);
+        }
     }
     
     juce::var getDragSourceDescription (const juce::SparseSet< int > &rowsToDescribe) override

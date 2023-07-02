@@ -69,6 +69,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     resized();
 
     audiumEngine->getAudioRegionContainer()->addActionListener(this);
+    audiumEngine->getPlayListContainer()->addActionListener(this);
 
     //[/Constructor]
 }
@@ -77,6 +78,7 @@ MainComponent::~MainComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
     audiumEngine->getAudioRegionContainer()->removeActionListener(this);
+    audiumEngine->getPlayListContainer()->removeActionListener(this);
     //[/Destructor_pre]
 
 

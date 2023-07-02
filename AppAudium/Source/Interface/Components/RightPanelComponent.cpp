@@ -72,7 +72,7 @@ void RightPanelComponent::resized()
 void RightPanelComponent::updateUI()
 {
     regionComponent->updateUI();
-    //playListComponent-> ?
+    playListComponent->updateUI();
 }
 
 void RightPanelComponent::clearSelection()

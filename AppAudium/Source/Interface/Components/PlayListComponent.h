@@ -109,6 +109,11 @@ public:
     {
         return true;
     }
+    
+    void updateUI()
+    {
+        playListTableListBox->updateContent();
+    }
 
 private:
     
