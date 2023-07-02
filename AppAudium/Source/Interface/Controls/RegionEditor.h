@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
+#include "Engine/AudioRegionContainer.h"
 #include "Interface/Controls/RegionTableListBox.h"
 
 //==============================================================================

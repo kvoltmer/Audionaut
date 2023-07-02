@@ -11,9 +11,12 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Engine/AudioRegionContainer.h"
+
 
 class RegionTableListBox;
+class PlayListContainer;
+class AudioRegionContainer;
+
 //==============================================================================
 /*
 */
@@ -21,7 +24,8 @@ class RegionTableListBox;
 class RegionTableListBoxModel  : public juce::TableListBoxModel {
 public:
     RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
-                            std::shared_ptr<AudioRegionContainer> audioRegionContainer);
+                            std::shared_ptr<AudioRegionContainer> audioRegionContainer,
+                            std::shared_ptr<PlayListContainer> playListContainer);
     ~RegionTableListBoxModel() override;
 
     int getNumRows() override;
@@ -50,6 +54,7 @@ private:
     
     std::shared_ptr<RegionTableListBox> owner;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
+    std::shared_ptr<PlayListContainer> playListContainer;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionTableListBoxModel)
 };

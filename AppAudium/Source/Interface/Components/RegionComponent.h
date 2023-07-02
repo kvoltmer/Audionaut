@@ -27,7 +27,9 @@ public:
         audiumEngine(audiumEngine)
     {
         regionTableListBox.reset(new RegionTableListBox());
-        regionTableListBoxModel.reset(new RegionTableListBoxModel(regionTableListBox, audiumEngine->getAudioRegionContainer()));
+        regionTableListBoxModel.reset(new RegionTableListBoxModel(regionTableListBox,
+                                                                  audiumEngine->getAudioRegionContainer(),
+                                                                  audiumEngine->getPlayListContainer()));
 
         regionTableListBox->setModel(regionTableListBoxModel.get());
         regionTableListBox->setMultipleSelectionEnabled(true);

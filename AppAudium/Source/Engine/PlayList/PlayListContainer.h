@@ -51,7 +51,8 @@ public:
     
     void createPlayListItem(std::shared_ptr<AudioRegion> audioRegion);
     void createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
-    void deletePlayListItem(int atIndex);
+    void deletePlayListItem(int atIndex, bool sendNotification = true);
+    void deleteAssociatedItems(std::shared_ptr<AudioRegion> audioRegion);
     
     int getNumItems() const
     {
