@@ -13,12 +13,16 @@
 #include "Interface/ColourIds.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Controls/RegionEditor.h"
+#include "Engine/AudioRegionContainer.h"
+#include "Engine/PlayList/PlayListContainer.h"
 
 //==============================================================================
 RegionTableListBoxModel::RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
-                                                 std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
+                                                 std::shared_ptr<AudioRegionContainer> audioRegionContainer,
+                                                 std::shared_ptr<PlayListContainer> playListContainer) :
     owner(owner),
-    audioRegionContainer(audioRegionContainer)
+    audioRegionContainer(audioRegionContainer),
+    playListContainer(playListContainer)
 {
 }
 
@@ -83,6 +87,9 @@ void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
     
     for (int i = selected.size()-1; i >= 0; i--)
     {
+        auto region = audioRegionContainer->getRegion(selected[i]);
+        jassert(region);
+        playListContainer->deleteAssociatedItems(region);
         audioRegionContainer->deleteRegion(selected[i]);
     }
 }

@@ -35,12 +35,24 @@ void PlayListContainer::createPlayListItem(int regionIndex, int indexOfItemToPla
     //sendActionMessage(regionCreatedAction);
 }
 
-void PlayListContainer::deletePlayListItem(int atIndex)
+void PlayListContainer::deletePlayListItem(int atIndex, bool sendNotification)
 {
     if (atIndex >= 0 && atIndex < playListItems.size())
     {
         playListItems.erase(playListItems.begin() + atIndex);
-        sendActionMessage(playListDeletedAction);
+        if (sendNotification)
+            sendActionMessage(playListDeletedAction);
+    }
+}
+
+void PlayListContainer::deleteAssociatedItems(std::shared_ptr<AudioRegion> audioRegion)
+{
+    for (int i = static_cast<int>(playListItems.size() - 1); i >= 0; i--)
+    {
+        if (getPlayListItem(i)->getRegion() == audioRegion)
+        {
+            deletePlayListItem(i, false);
+        }
     }
 }
 
