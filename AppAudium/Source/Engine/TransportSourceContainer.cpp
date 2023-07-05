@@ -18,6 +18,15 @@ std::shared_ptr<juce::AudioTransportSource> TransportSourceContainer::createNewT
     return transportSource;
 }
 
+void TransportSourceContainer::removeTransportSource(std::shared_ptr<juce::AudioTransportSource> audioTransportSource)
+{
+    auto it = std::find(audioTransportSources.begin(), audioTransportSources.end(), audioTransportSource);
+    if (it != audioTransportSources.end())
+    {
+        audioTransportSources.erase(it);
+    }
+}
+
 void TransportSourceContainer::setPosition (double newPosition)
 {
     for (auto & transportSource : audioTransportSources)

@@ -72,6 +72,7 @@ bool AudioResourceContainer::removeAudioResource (int atIndex)
     if (atIndex < 0 || atIndex >= audioResources.size())
         return false;
     
+    transportSourceContainer->removeTransportSource(audioResources[atIndex]->getAudioTransportSource());
     audioResources.erase(audioResources.begin() + atIndex);
     
     return true;
