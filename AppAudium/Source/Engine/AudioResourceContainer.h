@@ -20,11 +20,10 @@ class AudioResourceContainer {
     
     
 public:
-    AudioResourceContainer(std::shared_ptr<TransportSourceProvider> transportSourceProvider);
+    AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
+                           std::shared_ptr<TransportSourceProvider> transportSourceProvider);
     
     ~AudioResourceContainer();
-    
-    void initializeAudioDevice();
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL resource);
     
@@ -46,14 +45,12 @@ private:
     
     std::vector<std::shared_ptr<AudioResource>> audioResources;
     
+    std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<TransportSourceProvider> transportSourceProvider;
     
     /// TODO: find a proper home for this
     juce::AudioFormatManager formatManager;
-    
-    /// TODO: find a proper home for this
-    juce::AudioDeviceManager audioDeviceManager;
-    
+        
     /// TODO: find a proper home for this
     juce::TimeSliceThread thread  { "audio file read ahead" };
     

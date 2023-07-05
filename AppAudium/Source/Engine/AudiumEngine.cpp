@@ -13,19 +13,30 @@
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 
-AudiumEngine::AudiumEngine(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+AudiumEngine::AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
+                           std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                            std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                            std::shared_ptr<PlayListContainer> playListContainer,
-                           std::shared_ptr<TransportSourceProvider> transportSourceProvider) :
+                           std::shared_ptr<TransportSourceProvider> transportSourceProvider,
+                           std::shared_ptr<PlayListScheduler> playListScheduler) :
+    audioDeviceManager(audioDeviceManager),
     audioResourceContainer(audioResourceContainer),
     audioRegionContainer(audioRegionContainer),
     playListContainer(playListContainer),
-    transportSourceProvider(transportSourceProvider)
+    transportSourceProvider(transportSourceProvider),
+    playListScheduler(playListScheduler)
 {
 }
 
 AudiumEngine::~AudiumEngine()
 {
+}
+
+void AudiumEngine::initialise()
+{
+    /** Resets everything to a default device setup, clearing any stored settings. */
+    auto result = audioDeviceManager->initialiseWithDefaultDevices (0, 2);
+    std::cout << result.toStdString() << std::endl;
 }
 
 void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> callback)

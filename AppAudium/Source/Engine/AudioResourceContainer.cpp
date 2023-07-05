@@ -27,7 +27,9 @@ static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL&
     return std::make_unique<juce::URLInputSource> (url);
 }
 
-AudioResourceContainer::AudioResourceContainer(std::shared_ptr<TransportSourceProvider> transportSourceProvider) :
+AudioResourceContainer::AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
+                                               std::shared_ptr<TransportSourceProvider> transportSourceProvider) :
+    audioDeviceManager(audioDeviceManager),
     transportSourceProvider(transportSourceProvider)
 {
     formatManager.registerBasicFormats();
@@ -37,13 +39,6 @@ AudioResourceContainer::AudioResourceContainer(std::shared_ptr<TransportSourcePr
 AudioResourceContainer::~AudioResourceContainer()
 {
     audioResources.clear();
-}
-
-void AudioResourceContainer::initializeAudioDevice()
-{
-    /** Resets everything to a default device setup, clearing any stored settings. */
-    auto result = audioDeviceManager.initialiseWithDefaultDevices (0, 2);
-    std::cout << result.toStdString() << std::endl;
 }
 
 std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url)

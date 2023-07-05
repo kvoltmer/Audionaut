@@ -17,16 +17,21 @@
 #include "Engine/PlayList/PlayListContainer.h"
 
 class TransportSourceProvider;
+class PlayListScheduler;
 
 /// The Audium engine
 class AudiumEngine {
     
 public:
-    AudiumEngine(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+    AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
+                 std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                  std::shared_ptr<PlayListContainer> playListContainer,
-                 std::shared_ptr<TransportSourceProvider> transportSourceProvider);
+                 std::shared_ptr<TransportSourceProvider> transportSourceProvider,
+                 std::shared_ptr<PlayListScheduler> playListScheduler);
     ~AudiumEngine();
+    
+    void initialise();
     
     void openFile (const juce::File& file, std::function<void (bool)> callback);
     void saveFile (const juce::File& file, std::function<void (bool)> callback);
@@ -44,10 +49,12 @@ public:
     std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
     
 private:
+    std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceProvider> transportSourceProvider;
+    std::shared_ptr<PlayListScheduler> playListScheduler;
     
     juce::File currentFile;
     

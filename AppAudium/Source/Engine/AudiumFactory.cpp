@@ -10,20 +10,24 @@
 
 #include "AudiumFactory.h"
 #include "Engine/TransportSourceProvider.h"
+#include "Engine/PlayList/PlayListSchedulder.h"
 
 std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {
-    auto transportSourceProvider   = std::shared_ptr<TransportSourceProvider> (new TransportSourceProvider());
-    auto audioResourceContainer     = std::shared_ptr<AudioResourceContainer>   (new AudioResourceContainer(transportSourceProvider));
+    auto audioDeviceManager         = std::shared_ptr<juce::AudioDeviceManager> (new juce::AudioDeviceManager());
+    auto transportSourceProvider    = std::shared_ptr<TransportSourceProvider>  (new TransportSourceProvider());
+    auto audioResourceContainer     = std::shared_ptr<AudioResourceContainer>   (new AudioResourceContainer(audioDeviceManager,
+                                                                                                            transportSourceProvider));
     auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer());
     auto playListContainer          = std::shared_ptr<PlayListContainer>        (new PlayListContainer(audioRegionContainer));
-    auto audiumEngine               = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioResourceContainer,
+    auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioDeviceManager));
+    auto audiumEngine               = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioDeviceManager,
+                                                                                                  audioResourceContainer,
                                                                                                   audioRegionContainer,
                                                                                                   playListContainer,
-                                                                                                  transportSourceProvider));
+                                                                                                  transportSourceProvider,
+                                                                                                  playListScheduler));
     
-    // this should happen outside of the factory
-    audioResourceContainer->initializeAudioDevice();
 
     return audiumEngine;
 }
