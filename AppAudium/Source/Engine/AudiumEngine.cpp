@@ -16,11 +16,11 @@ const char* AudiumEngine::projectFileExtension = ".audium";
 AudiumEngine::AudiumEngine(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                            std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                            std::shared_ptr<PlayListContainer> playListContainer,
-                           std::shared_ptr<AudiumTransportSource> audiumTransportSource) :
+                           std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
     audioResourceContainer(audioResourceContainer),
     audioRegionContainer(audioRegionContainer),
     playListContainer(playListContainer),
-    audiumTransportSource(audiumTransportSource)
+    transportSourceContainer(transportSourceContainer)
 {
 }
 
@@ -110,15 +110,8 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
     return false;
 }
 
-AudiumTransportSource* AudiumEngine::getAudiumTransportSource() const
+TransportSourceContainer* AudiumEngine::getTransportSourceContainer() const
 {
-    return audiumTransportSource.get();
-    
-//    /// TODO: this is a workaround
-//    if (audioResourceContainer->getAudioResource(0) != nullptr)
-//    {
-//        return audioResourceContainer->getAudioResource(0)->getAudioTransportSource();
-//    }
-//    return nullptr;
+    return transportSourceContainer.get();
 }
 

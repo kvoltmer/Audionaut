@@ -9,18 +9,18 @@
 */
 
 #include "AudiumFactory.h"
-#include "Engine/AudiumTransportSource.h"
+#include "Engine/TransportSourceContainer.h"
 
 std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {
-    auto audioResourceContainer = std::shared_ptr<AudioResourceContainer>   (new AudioResourceContainer());
-    auto audioRegionContainer   = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer());
-    auto audiumTransportSource  = std::shared_ptr<AudiumTransportSource>    (new AudiumTransportSource(audioResourceContainer));
-    auto playListContainer      = std::shared_ptr<PlayListContainer>        (new PlayListContainer(audioRegionContainer));
-    auto audiumEngine           = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioResourceContainer,
-                                                                                              audioRegionContainer,
-                                                                                              playListContainer,
-                                                                                              audiumTransportSource));
+    auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
+    auto audioResourceContainer     = std::shared_ptr<AudioResourceContainer>   (new AudioResourceContainer(transportSourceContainer));
+    auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer());
+    auto playListContainer          = std::shared_ptr<PlayListContainer>        (new PlayListContainer(audioRegionContainer));
+    auto audiumEngine               = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioResourceContainer,
+                                                                                                  audioRegionContainer,
+                                                                                                  playListContainer,
+                                                                                                  transportSourceContainer));
     
     // this should happen outside of the factory
     audioResourceContainer->initializeAudioDevice();

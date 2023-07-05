@@ -14,11 +14,14 @@
 #include <JuceHeader.h>
 #include "AudioResource.h"
 
+class TransportSourceContainer;
+
+
 class AudioResourceContainer {
     
     
 public:
-    AudioResourceContainer();
+    AudioResourceContainer(std::shared_ptr<TransportSourceContainer> transportSourceContainer);
     
     ~AudioResourceContainer();
     
@@ -48,6 +51,8 @@ public:
 private:
     
     std::vector<std::shared_ptr<AudioResource>> audioResources;
+    
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     
     /// TODO: find a proper home for this
     juce::AudioFormatManager formatManager;
