@@ -40,6 +40,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     
     // create audium engine
     audiumEngine = AudiumFactory::createAudiumEngine();
+    audiumEngine->initialise();
 
     if (Preferences::valueExists(Preferences::defaultFile))
     {

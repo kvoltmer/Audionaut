@@ -20,7 +20,7 @@ class AudioPlayer
 
 public:
     AudioPlayer(std::shared_ptr<juce::AudioTransportSource> audioTransportSource,
-                juce::AudioDeviceManager& audioDeviceManager,
+                std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                 juce::InputSource* inputSource,
                 juce::AudioFormatManager& formatManager,
                 juce::TimeSliceThread* readAheadThread);
@@ -37,7 +37,6 @@ private:
     
     std::shared_ptr<juce::AudioTransportSource> audioTransportSource;
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
-    
-    juce::AudioDeviceManager& audioDeviceManager;
+    std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
 
 };

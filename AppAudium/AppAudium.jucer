@@ -43,6 +43,10 @@
           <FILE id="y8wZY3" name="PlayListItem.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListItem.cpp"/>
           <FILE id="iSTHS0" name="PlayListItem.h" compile="0" resource="0" file="Source/Engine/PlayList/PlayListItem.h"/>
+          <FILE id="Y4jg8M" name="PlayListSchedulder.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/PlayListSchedulder.cpp"/>
+          <FILE id="ge1APd" name="PlayListSchedulder.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/PlayListSchedulder.h"/>
         </GROUP>
         <FILE id="MOhFAt" name="AudiumFactory.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumFactory.cpp"/>

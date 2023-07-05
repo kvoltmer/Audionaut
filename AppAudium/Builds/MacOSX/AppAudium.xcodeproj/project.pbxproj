@@ -48,6 +48,7 @@
 		9AA5ACB43D75D718D1D16B1E /* RegionSelector.cpp */ = {isa = PBXBuildFile; fileRef = BC912F2C45ABACEAA30761C1; };
 		9BD51542B2F2439918432C79 /* WaveFormTableListBox.cpp */ = {isa = PBXBuildFile; fileRef = 71E41C3B64900112AA3F7101; };
 		9D99CD2A2F0E3FFF17004F30 /* CoreMIDI.framework */ = {isa = PBXBuildFile; fileRef = 3F436BA69588E2039CDFB0F5; };
+		A3C33213E668172077D12EDF /* PlayListSchedulder.cpp */ = {isa = PBXBuildFile; fileRef = 5FDE194D40B5377D323656FA; };
 		A88A358B1261DB60A7CB582F /* AudioResourceContainer.cpp */ = {isa = PBXBuildFile; fileRef = 8AD81791B89E55FB8C43535A; };
 		AA764E8498C8571488AA408D /* AudioPlayer.cpp */ = {isa = PBXBuildFile; fileRef = C0F42D1AD5797776F32C49B7; };
 		C363DA09FED4A66EEB76769F /* MiddlePanelComponent.cpp */ = {isa = PBXBuildFile; fileRef = FCFE7BAFE60434E7AC10F171; };
@@ -80,6 +81,7 @@
 		165654E9D1DC2FF03045843C /* AudiumEngine.h */ /* AudiumEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumEngine.h; path = ../../Source/Engine/AudiumEngine.h; sourceTree = SOURCE_ROOT; };
 		1CC6D2F41DEFEC0E947D67C4 /* ZoomHandler.cpp */ /* ZoomHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ZoomHandler.cpp; path = ../../Source/Interface/Handlers/ZoomHandler.cpp; sourceTree = SOURCE_ROOT; };
 		20C02FEAB38C7AE1951EA655 /* juce_gui_extra */ /* juce_gui_extra */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_extra; path = ../../../Submodules/juce/modules/juce_gui_extra; sourceTree = SOURCE_ROOT; };
+		21C9E838D244BC3BAE7D2B1D /* PlayListSchedulder.h */ /* PlayListSchedulder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListSchedulder.h; path = ../../Source/Engine/PlayList/PlayListSchedulder.h; sourceTree = SOURCE_ROOT; };
 		22AD7FAA33DF69C2DCCA4667 /* DiscRecording.framework */ /* DiscRecording.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiscRecording.framework; path = System/Library/Frameworks/DiscRecording.framework; sourceTree = SDKROOT; };
 		24F5063E15B125FCE205B79F /* RegionTableListBoxModel.h */ /* RegionTableListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionTableListBoxModel.h; path = ../../Source/Interface/Models/RegionTableListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		25423A74B016191855679F72 /* include_juce_audio_processors.mm */ /* include_juce_audio_processors.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_processors.mm; path = ../../JuceLibraryCode/include_juce_audio_processors.mm; sourceTree = SOURCE_ROOT; };
@@ -106,6 +108,7 @@
 		57548F766A379B66DB3C67F7 /* RecentFilesMenuTemplate.nib */ /* RecentFilesMenuTemplate.nib */ = {isa = PBXFileReference; lastKnownFileType = file.nib; name = RecentFilesMenuTemplate.nib; path = RecentFilesMenuTemplate.nib; sourceTree = SOURCE_ROOT; };
 		5833D355E3B47D94CA049A4E /* TransportSourceProvider.h */ /* TransportSourceProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TransportSourceProvider.h; path = ../../Source/Engine/TransportSourceProvider.h; sourceTree = SOURCE_ROOT; };
 		5CB2F1A3CC2EAFD3BB0E4541 /* AudioResourceContainer.h */ /* AudioResourceContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResourceContainer.h; path = ../../Source/Engine/AudioResourceContainer.h; sourceTree = SOURCE_ROOT; };
+		5FDE194D40B5377D323656FA /* PlayListSchedulder.cpp */ /* PlayListSchedulder.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListSchedulder.cpp; path = ../../Source/Engine/PlayList/PlayListSchedulder.cpp; sourceTree = SOURCE_ROOT; };
 		6236F154DF8AAC28C4F42CBA /* Foundation.framework */ /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		62374E864665EF60C8BCB2C9 /* JuceHeader.h */ /* JuceHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = JuceHeader.h; path = ../../JuceLibraryCode/JuceHeader.h; sourceTree = SOURCE_ROOT; };
 		6281C6C7B678AEFB2F47C339 /* AudiumMenuModel.cpp */ /* AudiumMenuModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumMenuModel.cpp; path = ../../Source/Application/AudiumMenuModel.cpp; sourceTree = SOURCE_ROOT; };
@@ -265,6 +268,8 @@
 				8D37E966475206DF93CB732C,
 				78220737D71F4A95C1825E8A,
 				09200639918EB49CFF3382BE,
+				5FDE194D40B5377D323656FA,
+				21C9E838D244BC3BAE7D2B1D,
 			);
 			name = PlayList;
 			sourceTree = "<group>";
@@ -572,6 +577,7 @@
 				6BD9E0BBB60EAD02583E8F7C,
 				3511CED8CECC0D7EB195CB8F,
 				40A419903992121036F44F2D,
+				A3C33213E668172077D12EDF,
 				377A71C14E6F732FE2521BD7,
 				77EC7DF6B1A9709308030A9F,
 				F83BD807066141684D3FFFA1,

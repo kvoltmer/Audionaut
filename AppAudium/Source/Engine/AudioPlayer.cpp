@@ -11,14 +11,14 @@
 #include "AudioPlayer.h"
 
 AudioPlayer::AudioPlayer(std::shared_ptr<juce::AudioTransportSource> audioTransportSource,
-                         juce::AudioDeviceManager& audioDeviceManager,
+                         std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                          juce::InputSource* inputSource,
                          juce::AudioFormatManager& formatManager,
                          juce::TimeSliceThread* readAheadThread) :
     audioTransportSource(audioTransportSource),
     audioDeviceManager(audioDeviceManager)
 {
-    audioDeviceManager.addAudioCallback(&audioSourcePlayer);
+    audioDeviceManager->addAudioCallback(&audioSourcePlayer);
     audioSourcePlayer.setSource (audioTransportSource.get());
     
 
@@ -48,7 +48,7 @@ AudioPlayer::~AudioPlayer()
     audioTransportSource->setSource (nullptr);
     audioSourcePlayer.setSource (nullptr);
     
-    audioDeviceManager.removeAudioCallback(&audioSourcePlayer);
+    audioDeviceManager->removeAudioCallback(&audioSourcePlayer);
 }
 
 void AudioPlayer::start()
