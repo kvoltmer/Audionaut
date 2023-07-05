@@ -57,7 +57,7 @@ public:
     void timerCallback() override
     {
         auto pos = 0.0;
-        auto transportSource = audiumEngine->getAudiumTransportSource();
+        auto transportSource = audiumEngine->getTransportSourceContainer();
         if (transportSource != nullptr)
         {
             pos = transportSource->getCurrentPosition();
@@ -93,7 +93,7 @@ public:
         // set transport position
         auto relativePos = e.getEventRelativeTo(owner.get()).getPosition();
         auto pos = zoomHandler->xToTimeWithOffset(relativePos.getX());;
-        audiumEngine->getAudiumTransportSource()->setPosition (pos);
+        audiumEngine->getTransportSourceContainer()->setPosition (pos);
     }
     
     void mouseMove (const MouseEvent& e) override

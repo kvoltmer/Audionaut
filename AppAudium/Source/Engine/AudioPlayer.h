@@ -19,7 +19,8 @@ class AudioPlayer
 {
 
 public:
-    AudioPlayer(juce::AudioDeviceManager& audioDeviceManager,
+    AudioPlayer(std::shared_ptr<juce::AudioTransportSource> audioTransportSource,
+                juce::AudioDeviceManager& audioDeviceManager,
                 juce::InputSource* inputSource,
                 juce::AudioFormatManager& formatManager,
                 juce::TimeSliceThread* readAheadThread);
@@ -29,11 +30,13 @@ public:
     
     void stop();
     
-    juce::AudioTransportSource* getAudioTransportSource() { return &audioTransportSource; }
+    /// TODO: remove this
+    juce::AudioTransportSource* getAudioTransportSource() { return audioTransportSource.get(); }
     
 private:
     juce::AudioSourcePlayer audioSourcePlayer;
-    juce::AudioTransportSource audioTransportSource;
+    
+    std::shared_ptr<juce::AudioTransportSource> audioTransportSource;
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     
     juce::AudioDeviceManager& audioDeviceManager;

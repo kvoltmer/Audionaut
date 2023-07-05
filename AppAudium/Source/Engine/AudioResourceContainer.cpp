@@ -10,6 +10,7 @@
 
 #include "AudioResourceContainer.h"
 #include "AudioPlayer.h"
+#include "TransportSourceContainer.h"
 
 static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
 {
@@ -26,11 +27,11 @@ static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL&
     return std::make_unique<juce::URLInputSource> (url);
 }
 
-AudioResourceContainer::AudioResourceContainer()
+AudioResourceContainer::AudioResourceContainer(std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
+    transportSourceContainer(transportSourceContainer)
 {
     formatManager.registerBasicFormats();
     thread.startThread();
-
 }
 
 AudioResourceContainer::~AudioResourceContainer()
@@ -50,7 +51,12 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     if (auto inputSource = makeAudioInputSource (url))
     {
         /// TODO: create factory
-        auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(audioDeviceManager, inputSource.get(), formatManager, &thread));
+        auto transportSource = transportSourceContainer->createNewTransportSource();
+        auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(transportSource,
+                                                                        audioDeviceManager,
+                                                                        inputSource.get(),
+                                                                        formatManager,
+                                                                        &thread));
         auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, url, inputSource.get(), formatManager, audioPlayer, thumbnailCache));
         audioResources.push_back(audioResource);
         inputSource.release();

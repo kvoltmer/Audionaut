@@ -10,14 +10,16 @@
 
 #include "AudioPlayer.h"
 
-AudioPlayer::AudioPlayer(juce::AudioDeviceManager& audioDeviceManager,
+AudioPlayer::AudioPlayer(std::shared_ptr<juce::AudioTransportSource> audioTransportSource,
+                         juce::AudioDeviceManager& audioDeviceManager,
                          juce::InputSource* inputSource,
                          juce::AudioFormatManager& formatManager,
                          juce::TimeSliceThread* readAheadThread) :
+    audioTransportSource(audioTransportSource),
     audioDeviceManager(audioDeviceManager)
 {
     audioDeviceManager.addAudioCallback(&audioSourcePlayer);
-    audioSourcePlayer.setSource (&audioTransportSource);
+    audioSourcePlayer.setSource (audioTransportSource.get());
     
 
     auto stream = rawToUniquePtr (inputSource->createInputStream());
@@ -33,7 +35,7 @@ AudioPlayer::AudioPlayer(juce::AudioDeviceManager& audioDeviceManager,
     audioFormatReaderSource = std::make_unique<juce::AudioFormatReaderSource> (reader.release(), true);
 
     // plug it into the transport source
-    audioTransportSource.setSource (audioFormatReaderSource.get(),
+    audioTransportSource->setSource (audioFormatReaderSource.get(),
                                     32768,                   // tells it to buffer this many samples ahead
                                     readAheadThread,                 // this is the background thread to use for reading-ahead
                                     audioFormatReaderSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
@@ -43,7 +45,7 @@ AudioPlayer::AudioPlayer(juce::AudioDeviceManager& audioDeviceManager,
 
 AudioPlayer::~AudioPlayer()
 {
-    audioTransportSource.setSource (nullptr);
+    audioTransportSource->setSource (nullptr);
     audioSourcePlayer.setSource (nullptr);
     
     audioDeviceManager.removeAudioCallback(&audioSourcePlayer);
@@ -51,10 +53,10 @@ AudioPlayer::~AudioPlayer()
 
 void AudioPlayer::start()
 {
-    audioTransportSource.start();
+    audioTransportSource->start();
 }
 
 void AudioPlayer::stop()
 {
-    audioTransportSource.stop();
+    audioTransportSource->stop();
 }
