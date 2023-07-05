@@ -13,7 +13,7 @@
 #include "Interface/Components/WaveFormComponent.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/TransportSourceProvider.h"
 
 void RegionSelector::paint (Graphics& g)
 {
@@ -135,7 +135,7 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
     // set transport position if not currently playing
     if (!avoidDragging &&
-        !audiumEngine->getTransportSourceContainer()->isPlaying() &&
+        !audiumEngine->getTransportSourceProvider()->isPlaying() &&
         getBounds().getWidth() > 1)
     {
         auto pos = 0.0;
@@ -147,7 +147,7 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
         {
             pos = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
         }
-        audiumEngine->getTransportSourceContainer()->setPosition (pos);
+        audiumEngine->getTransportSourceProvider()->setPosition (pos);
     }
     
 }

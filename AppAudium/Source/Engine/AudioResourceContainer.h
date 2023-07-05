@@ -14,13 +14,13 @@
 #include <JuceHeader.h>
 #include "AudioResource.h"
 
-class TransportSourceContainer;
+class TransportSourceProvider;
 
 class AudioResourceContainer {
     
     
 public:
-    AudioResourceContainer(std::shared_ptr<TransportSourceContainer> transportSourceContainer);
+    AudioResourceContainer(std::shared_ptr<TransportSourceProvider> transportSourceProvider);
     
     ~AudioResourceContainer();
     
@@ -37,11 +37,6 @@ public:
     /// returns the maximum length of all audio resources
     double getTotalLengthMax() const;
     
-    void start();
-    
-    void stop();
-    
-    void playStop();
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
@@ -51,7 +46,7 @@ private:
     
     std::vector<std::shared_ptr<AudioResource>> audioResources;
     
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<TransportSourceProvider> transportSourceProvider;
     
     /// TODO: find a proper home for this
     juce::AudioFormatManager formatManager;
