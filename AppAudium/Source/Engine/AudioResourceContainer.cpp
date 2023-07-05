@@ -10,7 +10,7 @@
 
 #include "AudioResourceContainer.h"
 #include "AudioPlayer.h"
-#include "TransportSourceContainer.h"
+#include "TransportSourceProvider.h"
 
 static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
 {
@@ -27,8 +27,8 @@ static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL&
     return std::make_unique<juce::URLInputSource> (url);
 }
 
-AudioResourceContainer::AudioResourceContainer(std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
-    transportSourceContainer(transportSourceContainer)
+AudioResourceContainer::AudioResourceContainer(std::shared_ptr<TransportSourceProvider> transportSourceProvider) :
+    transportSourceProvider(transportSourceProvider)
 {
     formatManager.registerBasicFormats();
     thread.startThread();
@@ -51,7 +51,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     if (auto inputSource = makeAudioInputSource (url))
     {
         /// TODO: create factory
-        auto transportSource = transportSourceContainer->createNewTransportSource();
+        auto transportSource = transportSourceProvider->createNewTransportSource();
         auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(transportSource,
                                                                         audioDeviceManager,
                                                                         inputSource.get(),
@@ -72,7 +72,7 @@ bool AudioResourceContainer::removeAudioResource (int atIndex)
     if (atIndex < 0 || atIndex >= audioResources.size())
         return false;
     
-    transportSourceContainer->removeTransportSource(audioResources[atIndex]->getAudioTransportSource());
+    transportSourceProvider->removeTransportSource(audioResources[atIndex]->getAudioTransportSource());
     audioResources.erase(audioResources.begin() + atIndex);
     
     return true;
@@ -97,28 +97,6 @@ double AudioResourceContainer::getTotalLengthMax() const
         length = std::max(length, element->getThumbnail().getTotalLength());
     }
     return length;
-}
-
-void AudioResourceContainer::start()
-{
-    for (auto & element : audioResources)
-    {
-        element->start();
-    }
-}
-
-void AudioResourceContainer::stop()
-{
-    for (auto & element : audioResources)
-    {
-        element->stop();
-    }
-}
-
-void AudioResourceContainer::playStop()
-{
-    isPlaying ? stop() : start();
-    isPlaying = !isPlaying;
 }
 
 bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)

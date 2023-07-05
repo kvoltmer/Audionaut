@@ -16,7 +16,7 @@
 #include "AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
-class TransportSourceContainer;
+class TransportSourceProvider;
 
 /// The Audium engine
 class AudiumEngine {
@@ -25,7 +25,7 @@ public:
     AudiumEngine(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                  std::shared_ptr<PlayListContainer> playListContainer,
-                 std::shared_ptr<TransportSourceContainer> transportSourceContainer);
+                 std::shared_ptr<TransportSourceProvider> transportSourceProvider);
     ~AudiumEngine();
     
     void openFile (const juce::File& file, std::function<void (bool)> callback);
@@ -41,14 +41,13 @@ public:
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
-    
-    TransportSourceContainer* getTransportSourceContainer() const;
+    std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
     
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<TransportSourceProvider> transportSourceProvider;
     
     juce::File currentFile;
     

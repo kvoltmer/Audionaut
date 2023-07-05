@@ -12,6 +12,7 @@
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
+#include "Engine/TransportSourceProvider.h"
 
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
     : DocumentWindow (name,
@@ -122,7 +123,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     switch (info.commandID)
     {
         case CommandIDs::playStop:
-            getEngine()->getAudioResourceContainer()->playStop();
+            getEngine()->getTransportSourceProvider()->playStop();
             break;
         case CommandIDs::createRegion:
             newRegionDialog.createNewRegion(getEngine());

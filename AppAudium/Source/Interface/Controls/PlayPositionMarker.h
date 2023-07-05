@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/TransportSourceProvider.h"
 
 //==============================================================================
 /*
@@ -66,7 +66,7 @@ public:
     void updateCursorPosition()
     {
         auto pos = 0.0;
-        auto transportSource = audiumEngine->getTransportSourceContainer();
+        auto transportSource = audiumEngine->getTransportSourceProvider();
         if (transportSource != nullptr)
         {
             currentPositionMarker.setVisible(transportSource->isPlaying());

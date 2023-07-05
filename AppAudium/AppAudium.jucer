@@ -47,10 +47,10 @@
         <FILE id="MOhFAt" name="AudiumFactory.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumFactory.cpp"/>
         <FILE id="GYoHLK" name="AudiumFactory.h" compile="0" resource="0" file="Source/Engine/AudiumFactory.h"/>
-        <FILE id="hC6yQM" name="TransportSourceContainer.cpp" compile="1" resource="0"
-              file="Source/Engine/TransportSourceContainer.cpp"/>
-        <FILE id="ZxK2Aj" name="TransportSourceContainer.h" compile="0" resource="0"
-              file="Source/Engine/TransportSourceContainer.h"/>
+        <FILE id="hC6yQM" name="TransportSourceProvider.cpp" compile="1" resource="0"
+              file="Source/Engine/TransportSourceProvider.cpp"/>
+        <FILE id="ZxK2Aj" name="TransportSourceProvider.h" compile="0" resource="0"
+              file="Source/Engine/TransportSourceProvider.h"/>
         <FILE id="ZckA0q" name="AudioRegionContainer.cpp" compile="1" resource="0"
               file="Source/Engine/AudioRegionContainer.cpp"/>
         <FILE id="vB01Hj" name="AudioRegionContainer.h" compile="0" resource="0"
