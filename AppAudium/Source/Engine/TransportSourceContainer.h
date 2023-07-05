@@ -22,6 +22,7 @@ public:
     ~TransportSourceContainer() = default;
     
     std::shared_ptr<juce::AudioTransportSource> createNewTransportSource();
+    void removeTransportSource(std::shared_ptr<juce::AudioTransportSource> audioTransportSource);
     
     void setPosition (double newPosition);
     double getCurrentPosition() const;

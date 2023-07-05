@@ -30,8 +30,7 @@ public:
     
     void stop();
     
-    /// TODO: remove this
-    juce::AudioTransportSource* getAudioTransportSource() { return audioTransportSource.get(); }
+    std::shared_ptr<juce::AudioTransportSource> getAudioTransportSource() { return audioTransportSource; }
     
 private:
     juce::AudioSourcePlayer audioSourcePlayer;

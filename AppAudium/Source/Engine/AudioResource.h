@@ -39,7 +39,7 @@ public:
     
     void stop();
 
-    juce::AudioTransportSource* getAudioTransportSource();
+    std::shared_ptr<juce::AudioTransportSource> getAudioTransportSource();
     
     bool isThumbnailFullyLoaded() const { return thumbnail.isFullyLoaded(); }
 
