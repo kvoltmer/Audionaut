@@ -14,8 +14,9 @@
 #include <memory>
 #include <JuceHeader.h>
 
+#include "Engine/AudioRegion.h"
+
 class PlayListItem;
-class AudioRegion;
 class AudioRegionContainer;
 
 
@@ -64,9 +65,13 @@ public:
 
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
     
+    AudioRegion::RegionData getPlayListDataAtIndex(int index) const;
+    
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
     
 private:
+    
+    juce::CriticalSection readLock;
     
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     

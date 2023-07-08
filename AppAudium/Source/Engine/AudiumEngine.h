@@ -47,6 +47,7 @@ public:
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
+    std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;

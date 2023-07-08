@@ -13,6 +13,8 @@
 #include <JuceHeader.h>
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/PlayListSchedulder.h"
+#include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegion.h"
 #include "Interface/Controls/PlayListTableListBox.h"
 #include "Interface/ColourIds.h"
@@ -22,15 +24,15 @@ class PlayListTableListBoxModel : public juce::TableListBoxModel {
     
 public:
     PlayListTableListBoxModel(std::shared_ptr<PlayListTableListBox> listBox,
-                              std::shared_ptr<PlayListContainer> playListContainer) :
+                              std::shared_ptr<AudiumEngine> engine) :
         listBox(listBox),
-        playListContainer(playListContainer)
+        audiumEngine(engine)
     {
     }
     
     int getNumRows() override
     {
-        return playListContainer->getNumItems();
+        return audiumEngine->getPlayListContainer()->getNumItems();
     }
 
     void paintRowBackground (juce::Graphics& g,
@@ -55,7 +57,7 @@ public:
     {
         if (existingComponentToUpdate == nullptr)
         {
-            if (const PlayListItem* const p = playListContainer->getPlayListItem(rowNumber).get())
+            if (const PlayListItem* const p = audiumEngine->getPlayListContainer()->getPlayListItem(rowNumber).get())
             {
                 return new PlayListTableListBoxItem(this, columnId, rowNumber);
             }
@@ -84,7 +86,7 @@ public:
 
         for (int i = selected.size()-1; i >= 0; i--)
         {
-            playListContainer->deletePlayListItem(selected[i]);
+            audiumEngine->getPlayListContainer()->deletePlayListItem(selected[i]);
         }
     }
     
@@ -92,13 +94,23 @@ public:
     {
         return "PlayListTableListBoxModel";
     }
+    
+    void cellDoubleClicked (int rowNumber, int columnId, const juce::MouseEvent&) override
+    {
+        // this is not being called
+        audiumEngine->getPlayListScheduler()->setPlayListItemIndex(rowNumber);
+    }
 
     
     std::shared_ptr<PlayListTableListBox> listBox;
+    
+    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(); }
+    std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
 
-    std::shared_ptr<PlayListContainer> playListContainer;
     
 private:
+    
+    std::shared_ptr<AudiumEngine> audiumEngine;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListTableListBoxModel)
 };

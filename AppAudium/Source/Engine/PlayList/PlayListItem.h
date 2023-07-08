@@ -24,6 +24,8 @@ public:
     
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
+    juce::Range<double> getRegionData() const;
+    
 private:
     
     std::shared_ptr<AudioRegion> audioRegion;

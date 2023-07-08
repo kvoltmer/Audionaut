@@ -45,6 +45,8 @@ struct PlayListTableListBoxItem : public juce::Component, public juce::DragAndDr
         getParentComponent()->mouseDown(e);
     }
     
+    void mouseDoubleClick (const juce::MouseEvent&) override;
+    
     bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override
     {
         return true;

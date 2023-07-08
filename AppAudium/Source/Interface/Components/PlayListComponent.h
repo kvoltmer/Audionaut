@@ -25,7 +25,7 @@ public:
         audiumEngine(audiumEngine)
     {
         playListTableListBox.reset(new PlayListTableListBox(this));
-        playListTableListBoxModel.reset(new PlayListTableListBoxModel(playListTableListBox, audiumEngine->getPlayListContainer()));
+        playListTableListBoxModel.reset(new PlayListTableListBoxModel(playListTableListBox, audiumEngine));
 
         playListTableListBox->setModel(playListTableListBoxModel.get());
         playListTableListBox->setMultipleSelectionEnabled(true);
