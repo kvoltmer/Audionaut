@@ -23,13 +23,13 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
     
     if ( PlayListTableListBoxItem* item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
-        MoveItemBefore(playListModel->playListContainer->playListItems,
+        MoveItemBefore(playListModel->getPlayListContainer()->playListItems,
                        item->rowNumber,
                        insertIndex);
     }
     else if ( RegionEditor* item = dynamic_cast<RegionEditor*>(dragSourceDetails.sourceComponent.get()))
     {
-        playListModel->playListContainer->createPlayListItem(item->getRowNumber(), insertIndex);
+        playListModel->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
     }
     
     // TODO: use your own update system
@@ -46,7 +46,7 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
     }
     
     
-    if (auto r = playListModel->playListContainer->getPlayListItem(rowNumber))
+    if (auto r = playListModel->getPlayListContainer()->getPlayListItem(rowNumber))
     {
         juce::String text;
 
@@ -80,4 +80,10 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
         g.setColour(juce::Colours::red);
         g.fillRect(0, 0, getWidth(), 3);
     }
+}
+
+void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
+{
+    playListModel->getPlayListScheduler()->setPlayListItemIndex(rowNumber);
+    std::cout << "mouseDoubleClick" << rowNumber << std::endl;
 }

@@ -16,10 +16,13 @@ class AudioRegion
     
 public:
     AudioRegion() = default;
+    typedef class juce::Range<double> RegionData;
     
-    juce::Range<double> position;
+    RegionData position;
     
     juce::String name;
+    
+    
     
 private:
     JUCE_LEAK_DETECTOR (AudioRegion)

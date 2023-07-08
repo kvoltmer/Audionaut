@@ -65,6 +65,18 @@ std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) cons
     return nullptr;
 }
 
+AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) const
+{
+    const juce::ScopedLock sl (readLock);
+    if (index >= 0 && index < playListItems.size())
+    {
+        return playListItems[index]->getRegionData();
+    }
+    
+    // returns empty range
+    return AudioRegion::RegionData();
+}
+
 bool PlayListContainer::writeToStream (juce::OutputStream& outputStream)
 {
     outputStream.writeInt(static_cast<int>(playListItems.size()));
