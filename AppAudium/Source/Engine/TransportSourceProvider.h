@@ -31,7 +31,7 @@ public:
     void start();
     void stop();
     bool isPlaying() const;
-    void playStop();
+    bool playStop();
     
 private:
     

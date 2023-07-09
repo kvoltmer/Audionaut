@@ -74,7 +74,16 @@ bool TransportSourceProvider::isPlaying() const
     return false;
 }
 
-void TransportSourceProvider::playStop()
+bool TransportSourceProvider::playStop()
 {
-    isPlaying() ? stop() : start();
+    if (isPlaying())
+    {
+        stop();
+        return false;
+    }
+    else
+    {
+        start();
+        return true;
+    }
 }

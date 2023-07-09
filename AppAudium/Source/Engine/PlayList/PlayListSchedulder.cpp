@@ -39,41 +39,26 @@ void PlayListScheduler::audioDeviceIOCallbackWithContext (const float* const* in
 
     const juce::ScopedLock sl (readLock);
 
-    if (isPlaying())
+    
+    auto sampleOffset = 0;
+    if (sampleTimer.process(numSamples, sampleOffset))
     {
-        for (int i = 0; i < numSamples; ++i)
+        currentRegionData = playListContainer->getPlayListDataAtIndex(playListItemIndex);
+        if (currentRegionData.isEmpty())
         {
-            jassert(samplesUntilNextEvent >= 0);
-            if (samplesUntilNextEvent == 0)
-            {
-                currentRegionData = playListContainer->getPlayListDataAtIndex(nextPlayListItemIndex);
-                if (!currentRegionData.isEmpty())
-                {
-                    auto offset = samplesToSeconds(i);
-                    transportSourceProvider->setPosition(currentRegionData.getStart() + offset);
-                    if (!transportSourceProvider->isPlaying())
-                    {
-                        transportSourceProvider->start();
-                    }
-                    
-                    auto length = currentRegionData.getLength();
-                    samplesUntilNextEvent = secondsToSamples(length);
-                    std::cout << "playing index " << nextPlayListItemIndex << " length " << length << std::endl;
-                    nextPlayListItemIndex++;
-                }
-                else
-                {
-                    stop();
-                    std::cout << "EOF" << std::endl;
-                }
-            }
+            stop();
+        }
+        else
+        {
+            transportSourceProvider->setPosition(currentRegionData.getStart() - samplesToSeconds(sampleOffset));
+            if (!transportSourceProvider->isPlaying())
+                transportSourceProvider->start();
             
-            // sample tick
-            samplesUntilNextEvent--;
+            sampleTimer.schedule(secondsToSamples(currentRegionData.getLength()));
+            
+            playListItemIndex++;
         }
     }
-    
-
     
     // clear output
     for (int i = 0; i < totalNumOutputChannels; ++i)
@@ -84,17 +69,16 @@ void PlayListScheduler::audioDeviceIOCallbackWithContext (const float* const* in
 
 void PlayListScheduler::start()
 {
-    playing = true;
+    sampleTimer.schedule();
 }
 void PlayListScheduler::stop()
 {
-    playing = false;
+    sampleTimer.invalidate();
 }
 
 void PlayListScheduler::setPlayListItemIndex(int playListItemIndex)
 {
-    nextPlayListItemIndex = playListItemIndex;
-    samplesUntilNextEvent = 0;
+    this->playListItemIndex = playListItemIndex;
     start();
 }
 
