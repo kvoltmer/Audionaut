@@ -170,6 +170,7 @@
 		D7C195F3EDBBAD3B3DCF40F5 /* AudioRegion.h */ /* AudioRegion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegion.h; path = ../../Source/Engine/AudioRegion.h; sourceTree = SOURCE_ROOT; };
 		D983C7A6E23DC948014EE2B0 /* ColourIds.h */ /* ColourIds.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ColourIds.h; path = ../../Source/Interface/ColourIds.h; sourceTree = SOURCE_ROOT; };
 		D9FAA2A57A4D9ABA8A264176 /* WaveFormTableListBoxModel.cpp */ /* WaveFormTableListBoxModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = WaveFormTableListBoxModel.cpp; path = ../../Source/Interface/Models/WaveFormTableListBoxModel.cpp; sourceTree = SOURCE_ROOT; };
+		DD3D293D5BE7C2DD00072E80 /* SampleTimer.h */ /* SampleTimer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SampleTimer.h; path = ../../Source/Engine/PlayList/SampleTimer.h; sourceTree = SOURCE_ROOT; };
 		E138ACDCC3A702D0B7A742EF /* include_juce_dsp.mm */ /* include_juce_dsp.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_dsp.mm; path = ../../JuceLibraryCode/include_juce_dsp.mm; sourceTree = SOURCE_ROOT; };
 		E8D352FF7BE59C5D849A1BA1 /* WaveFormComponent.h */ /* WaveFormComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormComponent.h; path = ../../Source/Interface/Components/WaveFormComponent.h; sourceTree = SOURCE_ROOT; };
 		EBCAA43C5258D98640A638F6 /* juce_audio_formats */ /* juce_audio_formats */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_formats; path = ../../../Submodules/juce/modules/juce_audio_formats; sourceTree = SOURCE_ROOT; };
@@ -264,6 +265,7 @@
 		1553603921B6F3477E1E9060 /* PlayList */ = {
 			isa = PBXGroup;
 			children = (
+				DD3D293D5BE7C2DD00072E80,
 				F0C4F5AE7B7A830FDF5AEC81,
 				8D37E966475206DF93CB732C,
 				78220737D71F4A95C1825E8A,

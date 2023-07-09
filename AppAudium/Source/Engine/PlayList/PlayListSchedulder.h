@@ -11,6 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
+#include "Engine/PlayList/SampleTimer.h"
 
 class TransportSourceProvider;
 class PlayListContainer;
@@ -43,7 +44,7 @@ public:
     void start();
     void stop();
     void setPlayListItemIndex(int playListItemIndex);
-    bool isPlaying() const noexcept { return playing; }
+    bool isPlaying() const noexcept { return sampleTimer.isActive(); }
     
 private:
     
@@ -51,12 +52,12 @@ private:
     std::shared_ptr<TransportSourceProvider> transportSourceProvider;
     std::shared_ptr<PlayListContainer> playListContainer;
     
+    SampleTimer sampleTimer;
+
     double sampleRate = 0.0;
     int bufferSize = 0;
     
-    std::atomic<bool> playing = false;
-    std::atomic<int> nextPlayListItemIndex = 0;
-    int samplesUntilNextEvent = 0;
+    std::atomic<int> playListItemIndex = 0;
     AudioRegion::RegionData currentRegionData;
     
     juce::CriticalSection readLock;
