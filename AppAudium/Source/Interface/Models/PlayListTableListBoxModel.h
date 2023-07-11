@@ -75,11 +75,6 @@ public:
         return nullptr;
     }
 
-    void selectedRowsChanged (int lastRowSelected) override
-    {
-        //audioRegionContainer->setSelectedRegion(lastRowSelected);
-    }
-
     void deleteKeyPressed (int lastRowSelected) override
     {
         auto selected = listBox->getSelectedRows();
@@ -99,6 +94,14 @@ public:
     {
         // this is not being called
         audiumEngine->getPlayListScheduler()->setPlayListItemIndex(rowNumber);
+    }
+    
+    void selectedRowsChanged (int lastRowSelected) override
+    {
+        // selecting a playListItem also selects the region
+        auto playListItem = audiumEngine->getPlayListContainer()->getPlayListItem(lastRowSelected);
+        auto regionIndex = audiumEngine->getAudioRegionContainer()->getRegionIndex(playListItem->getRegion());
+        audiumEngine->getAudioRegionContainer()->setSelectedRegion(regionIndex);
     }
 
     
