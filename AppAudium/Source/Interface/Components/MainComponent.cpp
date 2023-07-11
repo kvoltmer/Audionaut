@@ -21,6 +21,7 @@
 #include "MiddlePanelComponent.h"
 #include "Engine/AudiumEngine.h"
 #include "RightPanelComponent.h"
+#include "Engine/ActionMessages.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -144,7 +145,7 @@ void MainComponent::actionListenerCallback (const String& message)
 
     if (message == regionCreatedAction)
     {
-        rightPanelComponent->updateUI();
+        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
     }
     else if (message == regionClearedAction)
     {
@@ -152,11 +153,15 @@ void MainComponent::actionListenerCallback (const String& message)
     }
     else if (message == regionModifiedAction) // do nothing
     {
-        rightPanelComponent->updateUI();
+        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
     }
     else if (message == regionSelectedAction)
     {
         middlePanelComponent->updateUI();
+    }
+    else if (message == playListItemTriggered)
+    {
+        rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
     }
     else // update everything (eg. region deleted)
     {

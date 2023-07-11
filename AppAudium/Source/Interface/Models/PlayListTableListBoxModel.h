@@ -106,7 +106,7 @@ public:
     
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(); }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
-
+    std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return audiumEngine->getTransportSourceProvider(); }
     
 private:
     

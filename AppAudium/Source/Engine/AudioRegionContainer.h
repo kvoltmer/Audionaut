@@ -12,14 +12,6 @@
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
 
-const char* const regionCreatedAction   = "region created";
-const char* const regionClearedAction   = "region cleared";
-const char* const regionModifiedAction  = "region modified";
-const char* const regionSelectedAction  = "region selected";
-const char* const regionDeletedAction   = "region deleted";
-const char* const regionLengthAction    = "region length";
-const char* const playListDeletedAction = "playlist deleted";
-
 class AudioRegionContainer : public juce::ActionBroadcaster
 {
                                             

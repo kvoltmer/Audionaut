@@ -152,6 +152,7 @@
 		A96B870D734284F177524816 /* audium_ListBox.cpp */ /* audium_ListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_ListBox.cpp; path = ../../Source/Interface/Widgets/audium_ListBox.cpp; sourceTree = SOURCE_ROOT; };
 		A9B61645C4E1D292FC719BF4 /* juce_gui_basics */ /* juce_gui_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_basics; path = ../../../Submodules/juce/modules/juce_gui_basics; sourceTree = SOURCE_ROOT; };
 		AA6A70E8E5EC8AF8DF2B1A7E /* AudioRegionContainer.h */ /* AudioRegionContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegionContainer.h; path = ../../Source/Engine/AudioRegionContainer.h; sourceTree = SOURCE_ROOT; };
+		AD2284B76A676919EAA61ACB /* ActionMessages.h */ /* ActionMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ActionMessages.h; path = ../../Source/Engine/ActionMessages.h; sourceTree = SOURCE_ROOT; };
 		B3F7743AD9CF9AA670222093 /* TransportSourceProvider.cpp */ /* TransportSourceProvider.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TransportSourceProvider.cpp; path = ../../Source/Engine/TransportSourceProvider.cpp; sourceTree = SOURCE_ROOT; };
 		B49AA8C79C8A8C9FCDA5A44C /* WebKit.framework */ /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		B68082B3B751BB87D6C198BD /* juce_analytics */ /* juce_analytics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_analytics; path = ../../../Submodules/juce/modules/juce_analytics; sourceTree = SOURCE_ROOT; };
@@ -465,6 +466,7 @@
 		FCB7E52916C7F60CEA2D39E3 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
+				AD2284B76A676919EAA61ACB,
 				1553603921B6F3477E1E9060,
 				8E9C7D080EF760C529538571,
 				6D607E75B6930036BF08F513,

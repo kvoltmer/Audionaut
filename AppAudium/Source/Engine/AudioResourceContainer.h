@@ -40,6 +40,7 @@ public:
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
+    std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
     
 private:
     

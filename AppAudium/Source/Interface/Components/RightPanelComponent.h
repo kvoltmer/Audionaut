@@ -25,11 +25,18 @@ public:
     RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);
     ~RightPanelComponent() override;
 
+    enum UIContext {
+        EntireContext,
+        PlayListContext,
+        RegionListContext
+    };
+    
     void paint (juce::Graphics&) override;
     void resized() override;
-    void updateUI();
+    void updateUI(UIContext context = EntireContext);
     void clearSelection();
 
+    
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
 

@@ -44,6 +44,8 @@ public:
     void start();
     void stop();
     void setPlayListItemIndex(int playListItemIndex);
+    int getPlayListItemIndex() const noexcept { return currentPlayListItemIndex; }
+    double getPlayListItemProgress(int playListItemIndex) const;
     bool isPlaying() const noexcept { return sampleTimer.isActive(); }
     
 private:
@@ -57,7 +59,8 @@ private:
     double sampleRate = 0.0;
     int bufferSize = 0;
     
-    std::atomic<int> playListItemIndex = 0;
+    std::atomic<int> currentPlayListItemIndex = 0;
+    std::atomic<int> nextPlayListItemIndex = 0;
     AudioRegion::RegionData currentRegionData;
     
     juce::CriticalSection readLock;
