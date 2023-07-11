@@ -69,10 +69,23 @@ void RightPanelComponent::resized()
                                true, true);
 }
 
-void RightPanelComponent::updateUI()
+void RightPanelComponent::updateUI(UIContext context)
 {
-    regionComponent->updateUI();
-    playListComponent->updateUI();
+    switch (context) {
+        case EntireContext:
+            regionComponent->updateUI();
+            playListComponent->updateUI();
+            break;
+        case PlayListContext:
+            playListComponent->updateUI();
+            break;
+        case RegionListContext:
+            regionComponent->updateUI();
+            break;
+        default:
+            break;
+    }
+    
 }
 
 void RightPanelComponent::clearSelection()

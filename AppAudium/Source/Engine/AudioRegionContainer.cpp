@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "AudioRegionContainer.h"
+#include "Engine/ActionMessages.h"
 
 void AudioRegionContainer::createRegion(juce::String regionName, juce::Range<double> position)
 {

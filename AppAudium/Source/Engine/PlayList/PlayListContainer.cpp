@@ -12,6 +12,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudioRegion.h"
 #include "Engine/AudioRegionContainer.h"
+#include "Engine/ActionMessages.h"
 
 void PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioRegion)
 {

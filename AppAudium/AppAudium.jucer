@@ -35,6 +35,8 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <FILE id="ELbTXp" name="ActionMessages.h" compile="0" resource="0"
+              file="Source/Engine/ActionMessages.h"/>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
           <FILE id="UTFjED" name="SampleTimer.h" compile="0" resource="0" file="Source/Engine/PlayList/SampleTimer.h"/>
           <FILE id="kNVT0n" name="PlayListContainer.cpp" compile="1" resource="0"

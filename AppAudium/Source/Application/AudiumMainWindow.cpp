@@ -128,6 +128,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             {
                 getEngine()->getPlayListScheduler()->stop();
             }
+            mainComponent->updateUI();
             break;
         case CommandIDs::createRegion:
             newRegionDialog.createNewRegion(getEngine());

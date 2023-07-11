@@ -11,6 +11,7 @@
 #include "PlayListSchedulder.h"
 #include "Engine/TransportSourceProvider.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/ActionMessages.h"
 
 PlayListScheduler::PlayListScheduler(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                                      std::shared_ptr<TransportSourceProvider> transportSourceProvider,
@@ -43,7 +44,7 @@ void PlayListScheduler::audioDeviceIOCallbackWithContext (const float* const* in
     auto sampleOffset = 0;
     if (sampleTimer.process(numSamples, sampleOffset))
     {
-        currentRegionData = playListContainer->getPlayListDataAtIndex(playListItemIndex);
+        currentRegionData = playListContainer->getPlayListDataAtIndex(nextPlayListItemIndex);
         if (currentRegionData.isEmpty())
         {
             stop();
@@ -55,9 +56,10 @@ void PlayListScheduler::audioDeviceIOCallbackWithContext (const float* const* in
                 transportSourceProvider->start();
             
             sampleTimer.schedule(secondsToSamples(currentRegionData.getLength()));
-            
-            playListItemIndex++;
+            currentPlayListItemIndex = nextPlayListItemIndex.load();
+            nextPlayListItemIndex++;
         }
+        playListContainer->sendActionMessage(playListItemTriggered);
     }
     
     // clear output
@@ -78,8 +80,28 @@ void PlayListScheduler::stop()
 
 void PlayListScheduler::setPlayListItemIndex(int playListItemIndex)
 {
-    this->playListItemIndex = playListItemIndex;
+    nextPlayListItemIndex = playListItemIndex;
+    currentPlayListItemIndex = playListItemIndex;
     start();
+}
+
+double PlayListScheduler::getPlayListItemProgress(int playListItemIndex) const
+{
+    if (playListItemIndex == getPlayListItemIndex() &&
+        !currentRegionData.isEmpty())
+    {
+        
+        auto pos = transportSourceProvider->getCurrentPosition();
+        auto progress = ((pos - currentRegionData.getStart()) / currentRegionData.getLength());
+        return progress;
+        
+    }
+//    auto region = playListModel->getPlayListContainer()->getPlayListItem(itemPlaying)->getRegion()->position;
+//    auto pos = playListModel->getTransportSourceProvider()->getCurrentPosition();
+//    auto progress = ((pos - region.getStart()) / region.getLength());;
+    //std::cout << region.getStart() << " " << region.getEnd() << " " << pos << " " << test << std::endl;
+    
+    return 0.0;
 }
 
 void PlayListScheduler::audioDeviceAboutToStart (juce::AudioIODevice* device)
