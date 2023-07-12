@@ -29,6 +29,8 @@ public:
     
     Range<double> getVisibleRangeInSeconds() const noexcept;
     
+    Range<double> getTotalRange() const noexcept;
+    
     void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
     
     void updateTotalLength();
