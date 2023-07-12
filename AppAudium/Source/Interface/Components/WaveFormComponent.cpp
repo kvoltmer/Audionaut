@@ -80,7 +80,7 @@ void WaveFormComponent::paint (Graphics& g)
         
         auto thumbArea = getLocalBounds();
     
-#if 1 /// draw visible range 
+#if 0 /// draw visible range
         
         // the visible range is the scrollbar's range
         auto visibleRange = zoomHandler->getVisibleRange();
@@ -100,6 +100,7 @@ void WaveFormComponent::paint (Graphics& g)
 
 #else /// draw entire waveform at once
         
+        auto totalRange = zoomHandler->getTotalRange();
         audioResource->getThumbnail().drawChannels (g, thumbArea,
                                                     totalRange.getStart(), totalRange.getEnd(), 1.0f);
 #endif

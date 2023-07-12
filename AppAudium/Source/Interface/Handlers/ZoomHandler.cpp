@@ -63,6 +63,11 @@ void ZoomHandler::updateTotalLength()
     totalRange = newRange;
 }
 
+Range<double> ZoomHandler::getTotalRange() const noexcept
+{
+    return totalRange;
+}
+
 double ZoomHandler::timeToX (const double time) const
 {
     if (totalRange.getLength() <= 0)
