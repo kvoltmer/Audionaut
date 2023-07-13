@@ -99,13 +99,7 @@ struct PlayListTableListBoxItem : public juce::Component, public juce::DragAndDr
     
     void timerCallback() override;
     
-    void update(int columnId, int rowNumber, bool isSelected)
-    {
-        this->columnNumber = columnId;
-        this->rowNumber = rowNumber;
-        selected = isSelected;
-        repaint();
-    }
+    void update(int columnId, int rowNumber, bool isSelected);
     
     void drawLinearProgress (juce::Graphics& g, double progress);
     
