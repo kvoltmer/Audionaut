@@ -9,23 +9,64 @@
 */
 
 #pragma once
-#include <JuceHeader.h>
 
+#include <memory>
 
+#include <juce_core/juce_core.h>
+#include <juce_audio_formats/juce_audio_formats.h>
+#include <juce_audio_utils/juce_audio_utils.h>
 
+class AudioResourceContainer;
+class AudioPlayer;
 
 class AudioResource {
     
 public:
-    AudioResource(juce::URL resource, juce::AudioFormatManager& formatManager);
+    AudioResource(AudioResourceContainer& audioResourceContainer,
+                  juce::URL url,
+                  juce::InputSource* inputSource,
+                  juce::AudioFormatManager& formatManager,
+                  std::shared_ptr<AudioPlayer> audioPlayer,
+                  juce::AudioThumbnailCache& thumbnailCache);
+    ~AudioResource();
+    
+    juce::AudioThumbnail& getThumbnail() { return thumbnail; }
+    
+    /// returns the maximum length of all audio resources
+    double getTotalLengthMax() const;
+    
+    void start();
+    
+    void stop();
+
+    std::shared_ptr<juce::AudioTransportSource> getAudioTransportSource();
+    
+    bool isThumbnailFullyLoaded() const { return thumbnail.isFullyLoaded(); }
+
+    juce::String getFileName() const;
+    
+    /// TODO: move this to WaveFormTableListBoxModel
+    int height = 100;
+    
+    /// TODO: move this to a gui state
+    juce::Colour currentColour;
+    
+    bool writeToStream (juce::OutputStream& outputStream);
+    bool readFromStream (juce::InputStream& inputStream);
+    
+    AudioResourceContainer& getContainer() const { return owner; }
     
 private:
-    juce::URL resource;
+
+    AudioResourceContainer& owner;
     
-    /// TODO: capsulate?
-    juce::AudioThumbnailCache thumbnailCache  { 5 };
-    
-public:
+    juce::URL url;
     
     juce::AudioThumbnail thumbnail;
+    
+    std::shared_ptr<AudioPlayer> audioPlayer;
+    
+private:
+    //==============================================================================
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResource)
 };

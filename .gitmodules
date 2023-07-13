@@ -1,3 +1,6 @@
 [submodule "Submodules/JUCE"]
 	path = Submodules/JUCE
 	url = git@github.com:juce-framework/JUCE.git
+[submodule "Submodules/Catch2"]
+	path = Submodules/Catch2
+	url = https://github.com/catchorg/Catch2.git

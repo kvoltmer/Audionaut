@@ -11,107 +11,150 @@
 #include <JuceHeader.h>
 #include "WaveFormComponent.h"
 #include "Util/EngineAccess.h"
+#include "Interface/Controls/WaveFormTableListBox.h"
+#include "Interface/ColourIds.h"
 
-WaveFormComponent::WaveFormComponent (AudioTransportSource& source)
-    : transportSource (source)
+// iterating 2 palettes where the frist one has less colours to gain more variaty
+static int currentWaveFormColour = 0;
+static const int numWaveFormColours = 15;
+static const uint32 waveFormColourScheme[numWaveFormColours] = {
+    0xff70d6ff,0xffff70a6,0xffff9770,0xffffd670,0xffe9ff70, // first palette
+    0xfffbf8cc,0xfffde4cf,0xffffcfd2,0xfff1c0e8,0xffcfbaf0,0xffa3c4f3,0xff90dbf4,0xff8eecf5,0xff98f5e1,0xffb9fbc0 // second palette
+};
+
+
+WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
+                                      std::shared_ptr<ZoomHandler> zoomHandler) :
+    zoomHandler(zoomHandler)
 {
+
+    setAudioResource(audioResource);
     
-    audioResource = nullptr;
-
-    addAndMakeVisible (scrollbar);
-    scrollbar.setRangeLimits (visibleRange);
-    scrollbar.setAutoHide (false);
-    scrollbar.addListener (this);
-
-    currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
-    addAndMakeVisible (currentPositionMarker);
+    /// simply iteraterate our colour scheme and assign our current colour
+    assert(this->audioResource);
+    this->audioResource->currentColour = Colour(waveFormColourScheme[currentWaveFormColour++]);
+    if (currentWaveFormColour >= numWaveFormColours)
+        currentWaveFormColour = 0;
+    
+    resizableEdgeComponent.reset(new ResizableEdgeComponent(this, nullptr, ResizableEdgeComponent::bottomEdge));
+    //addAndMakeVisible(resizableEdgeComponent.get());
+    auto rect = getBounds();
+    rect.setHeight(0);
+    resizableEdgeComponent->setBounds(rect);
+    
+//    resizableBorderComponent.reset(new ResizableBorderComponent(this, nullptr));
+//    addAndMakeVisible(resizableBorderComponent.get());
+//    resizableBorderComponent->setBounds(getBounds());
+    
 }
 
 WaveFormComponent::~WaveFormComponent()
 {
-    scrollbar.removeListener (this);
- 
     if (audioResource != nullptr)
     {
-        audioResource->thumbnail.removeChangeListener(this);
+        audioResource->getThumbnail().removeChangeListener(this);
     }
 }
 
-void WaveFormComponent::setURL (const URL& url)
+void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> audioResource)
 {
-    auto resource = getAudiumEngine(this)->getAudioResourceContainer()->addAudioResource(url);
-    if (resource != nullptr)
-    {
-        audioResource = resource;
-        audioResource->thumbnail.addChangeListener (this);
-
-        Range<double> newRange (0.0, audioResource->thumbnail.getTotalLength());
-        scrollbar.setRangeLimits (newRange);
-        setRange (newRange);
-
-        startTimerHz (40);
-    }
+    zoomHandler->updateTotalLength();
+    this->audioResource = audioResource;
+    audioResource->getThumbnail().addChangeListener (this);
 }
 
-URL WaveFormComponent::getLastDroppedFile() const noexcept
+void WaveFormComponent::scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart)
 {
-    return lastFileDropped;
-}
-
-void WaveFormComponent::setZoomFactor (double amount)
-{
-    if (audioResource->thumbnail.getTotalLength() > 0)
-    {
-        auto newScale = jmax (0.001, audioResource->thumbnail.getTotalLength() * (1.0 - jlimit (0.0, 0.99, amount)));
-        auto timeAtCentre = xToTime ((float) getWidth() / 2.0f);
-
-        setRange ({ timeAtCentre - newScale * 0.5, timeAtCentre + newScale * 0.5 });
-    }
-}
-
-void WaveFormComponent::setRange (Range<double> newRange)
-{
-    visibleRange = newRange;
-    scrollbar.setCurrentRange (visibleRange);
-    updateCursorPosition();
-    repaint();
-}
-
-void WaveFormComponent::setFollowsTransport (bool shouldFollow)
-{
-    isFollowingTransport = shouldFollow;
+//    if (! (isFollowingTransport && audioResource->getAudioTransportSource()->isPlaying()))
+//    {
+//    }
 }
 
 void WaveFormComponent::paint (Graphics& g)
 {
-    g.fillAll (Colours::darkgrey);
-    g.setColour (Colours::lightblue);
-    
-//        auto a = getLocalBounds().getTopLeft();
-//        auto b = getLocalBounds().getBottomRight();
-//        ColourGradient gradient(Colours::lightgreen, a.getX(), a.getY(),
-//                                Colours::lightyellow, b.getX(), b.getY(), false);
-//        g.setGradientFill(gradient);
-
     if (audioResource != nullptr &&
-        audioResource->thumbnail.getTotalLength() > 0.0)
+        audioResource->getThumbnail().getTotalLength() > 0.0)
     {
+        g.fillAll (audioResource->currentColour.withAlpha(0.25f));
+        g.setColour (audioResource->currentColour);
+        
         auto thumbArea = getLocalBounds();
+    
+#if 0 /// draw visible range
+        
+        // the visible range is the scrollbar's range
+        auto visibleRange = zoomHandler->getVisibleRange();
+        
+        // adjust the drawing area
+        thumbArea.setX(static_cast<int>(visibleRange.getStart()));
+        thumbArea.setWidth(static_cast<int>(visibleRange.getLength()));
+                       
+        
+        auto rangeInSeconds = zoomHandler->getVisibleRangeInSeconds();
+        
+        audioResource->getThumbnail().drawChannels (g, thumbArea,
+                                                    rangeInSeconds.getStart(), rangeInSeconds.getEnd(), 1.0f);
+        
+//        std::cout << "DRAW visible start " << visibleRange.getStart() << " length " << visibleRange.getLength() << std::endl;
+//        std::cout << "DRAW seconds start " << rangeInSeconds.getStart() << " length " << rangeInSeconds.getLength() << std::endl;
 
-        thumbArea.removeFromBottom (scrollbar.getHeight() + 4);
-        audioResource->thumbnail.drawChannels (g, thumbArea.reduced (2),
-                                visibleRange.getStart(), visibleRange.getEnd(), 1.0f);
+#else /// draw entire waveform at once
+        
+        auto totalRange = zoomHandler->getTotalRange();
+        audioResource->getThumbnail().drawChannels (g, thumbArea,
+                                                    totalRange.getStart(), totalRange.getEnd(), 1.0f);
+#endif
+        
+        /// draw filename label
+        /// offset is x = 5, y = 5
+        /// background is expanded by 2 pixels
+        
+        g.setFont (12.0f);
+        
+        Rectangle<int> bonds(zoomHandler->getVisibleRange().getStart() + 5,
+                             5,
+                             g.getCurrentFont().getStringWidth(audioResource->getFileName()),
+                             g.getCurrentFont().getHeight());
+        
+        g.setColour(Colours::black.withAlpha(0.25f));
+        g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
+        
+        g.setColour (findColour(audium::defaultTextColourId));
+        g.drawFittedText (audioResource->getFileName(), bonds, Justification::topLeft, 1);
     }
     else
     {
         g.setFont (14.0f);
-        g.drawFittedText ("(Drag & drop audio files here)", getLocalBounds(), Justification::centred, 2);
+        g.drawFittedText ("audio resource not available", getLocalBounds(), Justification::centred, 2);
     }
+    
+    
+//    auto thumbArea = getLocalBounds();
+//    g.setColour (Colours::yellow);
+//    g.fillRoundedRectangle (thumbArea.toFloat(), 3.0f);
+
+
+    
 }
 
 void WaveFormComponent::resized()
 {
-    scrollbar.setBounds (getLocalBounds().removeFromBottom (14).reduced (2));
+    if (resizableBorderComponent) resizableBorderComponent->setBounds(getBounds());
+    
+    if (resizableEdgeComponent) resizableEdgeComponent->setBounds(getBounds());
+    
+    if (audioResource != nullptr &&
+        audioResource->height != getBounds().getHeight())
+    {
+        audioResource->height = getBounds().getHeight();
+        
+        if (WaveFormTableListBox* list = this->findParentComponentOfClass<WaveFormTableListBox>())
+        {
+            list->updateContent();
+        }
+        
+    }
+    
 }
 
 void WaveFormComponent::changeListenerCallback (ChangeBroadcaster*)
@@ -127,41 +170,34 @@ bool WaveFormComponent::isInterestedInFileDrag (const StringArray& /*files*/)
 
 void WaveFormComponent::filesDropped (const StringArray& files, int /*x*/, int /*y*/)
 {
-    lastFileDropped = URL (File (files[0]));
+    /// TODO: replace current audio resource
     sendChangeMessage();
 }
 
 void WaveFormComponent::mouseDown (const MouseEvent& e)
 {
+    getParentComponent()->mouseDown(e);
     mouseDrag (e);
 }
 
 void WaveFormComponent::mouseDrag (const MouseEvent& e)
 {
-    if (canMoveTransport())
-        transportSource.setPosition (jmax (0.0, xToTime ((float) e.x)));
+    getParentComponent()->mouseDrag(e);
+    
+//    if (canMoveTransport())
+//        audioResource->getAudioTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
+//
 }
 
-void WaveFormComponent::mouseUp (const MouseEvent&)
+void WaveFormComponent::mouseUp (const MouseEvent& e)
 {
-    transportSource.start();
+    getParentComponent()->mouseUp(e);
 }
 
-void WaveFormComponent::mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel)
+void WaveFormComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
 {
-    /* TODO
-    if (thumbnail.getTotalLength() > 0.0)
-    {
-        auto newStart = visibleRange.getStart() - wheel.deltaX * (visibleRange.getLength()) / 10.0;
-        newStart = jlimit (0.0, jmax (0.0, thumbnail.getTotalLength() - (visibleRange.getLength())), newStart);
-
-        if (canMoveTransport())
-            setRange ({ newStart, newStart + visibleRange.getLength() });
-
-        if (wheel.deltaY != 0.0f)
-            zoomSlider.setValue (zoomSlider.getValue() - wheel.deltaY);
-
-        repaint();
-    }
-    */
+    getParentComponent()->mouseWheelMove(e, wheel);
 }
+
+
+
