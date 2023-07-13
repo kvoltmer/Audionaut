@@ -22,10 +22,12 @@
 //[Headers]     -- You can add your own extra header files here --
 #include <JuceHeader.h>
 
+
 using namespace juce;
 
-class WaveFormComponent;
 class AudiumEngine;
+class MiddlePanelComponent;
+class RightPanelComponent;
 
 //[/Headers]
 
@@ -40,45 +42,44 @@ class AudiumEngine;
                                                                     //[/Comments]
 */
 class MainComponent  : public juce::Component,
-                       private juce::ChangeListener,
-                       public juce::Slider::Listener
+                       private juce::ActionListener,
+                       public FileDragAndDropTarget
 {
 public:
     //==============================================================================
-    MainComponent ();
+    MainComponent (std::shared_ptr<AudiumEngine> audiumEngine);
     ~MainComponent() override;
 
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
-    void changeListenerCallback (ChangeBroadcaster* source) override;
-    void showAudioResource (URL resource);
-    bool loadURLIntoTransport (const URL& audioURL);
+    void actionListenerCallback (const String& message) override;
+    bool isInterestedInFileDrag (const StringArray& /*files*/) override;
+    void updateUI();
+
+    void zoomIn();
+    void zoomOut();
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;
     void resized() override;
-    void sliderValueChanged (juce::Slider* sliderThatWasMoved) override;
+    void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
 
 
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
-    std::unique_ptr<WaveFormComponent> waveFormComponent;
 
-    TimeSliceThread thread  { "audio file preview" };
+    std::shared_ptr<AudiumEngine> audiumEngine;
 
-    AudioDeviceManager audioDeviceManager;
+    std::unique_ptr<MiddlePanelComponent> middlePanelComponent;
+    std::unique_ptr<RightPanelComponent> rightPanelComponent;
 
-    URL currentAudioFile;
-    AudioSourcePlayer audioSourcePlayer;
-    AudioTransportSource transportSource;
-    std::unique_ptr<AudioFormatReaderSource> currentAudioFileSource;
+    std::unique_ptr<StretchableLayoutManager> stretchableLayoutManager;
+    std::unique_ptr<StretchableLayoutResizerBar> stretchableLayoutResizerBar;
 
     //[/UserVariables]
 
     //==============================================================================
-    std::unique_ptr<juce::Viewport> waveFormViewport;
-    std::unique_ptr<juce::Slider> zoomSlider;
 
 
     //==============================================================================

@@ -13,21 +13,53 @@
 #include <memory>
 #include <JuceHeader.h>
 #include "AudioResourceContainer.h"
+#include "AudioRegionContainer.h"
+#include "Engine/PlayList/PlayListContainer.h"
+
+class TransportSourceProvider;
+class PlayListScheduler;
 
 /// The Audium engine
 class AudiumEngine {
     
 public:
-    AudiumEngine(std::shared_ptr<AudioResourceContainer> container);
+    AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
+                 std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                 std::shared_ptr<AudioRegionContainer> audioRegionContainer,
+                 std::shared_ptr<PlayListContainer> playListContainer,
+                 std::shared_ptr<TransportSourceProvider> transportSourceProvider,
+                 std::shared_ptr<PlayListScheduler> playListScheduler);
     ~AudiumEngine();
     
-    AudioResourceContainer* getAudioResourceContainer() { return audioResourceContainer.get();}
+    void initialise();
     
-    //juce::AudioFormatManager& getAudioFormatManager() { return formatManager; }
+    void openFile (const juce::File& file, std::function<void (bool)> callback);
+    void saveFile (const juce::File& file, std::function<void (bool)> callback);
+    
+    bool writeToStream (juce::OutputStream& outputStream);
+    bool readFromStream (juce::InputStream& inputStream);
+    
+    static const char* projectFileExtension;
+    
+    const juce::File getCurrentFile() const { return currentFile; }
+    
+    std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
+    std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
+    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
+    std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
+    std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
 private:
+    std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
+    std::shared_ptr<PlayListContainer> playListContainer;
+    std::shared_ptr<TransportSourceProvider> transportSourceProvider;
+    std::shared_ptr<PlayListScheduler> playListScheduler;
     
-
-
+    juce::File currentFile;
+    
+    
+    //==============================================================================
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumEngine)
 };

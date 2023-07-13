@@ -18,8 +18,10 @@
 */
 
 //[Headers] You can add your own extra header files here...
-#include "WaveFormComponent.h"
-#include "Util/EngineAccess.h"
+#include "MiddlePanelComponent.h"
+#include "Engine/AudiumEngine.h"
+#include "RightPanelComponent.h"
+#include "Engine/ActionMessages.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -29,62 +31,60 @@
 //[/MiscUserDefs]
 
 //==============================================================================
-MainComponent::MainComponent ()
+MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 {
     //[Constructor_pre] You can add your own custom stuff here..
 
+    this->audiumEngine = audiumEngine;
+    middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
+    rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
+    stretchableLayoutManager.reset(new StretchableLayoutManager());
+    stretchableLayoutResizerBar.reset(new StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, true));
 
-    thread.startThread();
     //[/Constructor_pre]
-
-    waveFormViewport.reset (new juce::Viewport ("waveform viewport"));
-    addAndMakeVisible (waveFormViewport.get());
-
-    zoomSlider.reset (new juce::Slider ("new slider"));
-    addAndMakeVisible (zoomSlider.get());
-    zoomSlider->setRange (0, 1, 0);
-    zoomSlider->setSliderStyle (juce::Slider::LinearHorizontal);
-    zoomSlider->setTextBoxStyle (juce::Slider::TextBoxLeft, false, 80, 20);
-    zoomSlider->addListener (this);
-    zoomSlider->setSkewFactor (2);
-
-    zoomSlider->setBounds (392, 280, 192, 24);
 
 
     //[UserPreSize]
     //[/UserPreSize]
 
-    setSize (600, 400);
+    setSize (1200, 400);
 
 
     //[Constructor] You can add your own custom stuff here..
-    waveFormComponent.reset(new WaveFormComponent(transportSource));
-    waveFormComponent->setSize(getWidth(), waveFormViewport->getHeight());
-    waveFormComponent->addChangeListener (this);
 
-    waveFormViewport->setViewedComponent(waveFormComponent.get(), false);
+    addAndMakeVisible(middlePanelComponent.get());
+    addAndMakeVisible(stretchableLayoutResizerBar.get());
+    addAndMakeVisible(rightPanelComponent.get());
 
-    audioDeviceManager.addAudioCallback (&audioSourcePlayer);
-    audioSourcePlayer.setSource (&transportSource);
+    stretchableLayoutManager->setItemLayout (0,          // for item 0
+                                             25, -1.0,    // size must be between 25pix and 100% of the available space
+                                             -0.8);      // and its preferred size in % of the total available space
+
+    stretchableLayoutManager->setItemLayout (1, // for item 1
+                                             2, 2, 2);
+
+    stretchableLayoutManager->setItemLayout (2,          // for item 2
+                                             25, -1.0, // size must be between 25pix and 50% of the available space
+                                             400);        // its preferred size in pixels
+
+    resized();
+
+    audiumEngine->getAudioRegionContainer()->addActionListener(this);
+    audiumEngine->getPlayListContainer()->addActionListener(this);
+
     //[/Constructor]
 }
 
 MainComponent::~MainComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
+    audiumEngine->getAudioRegionContainer()->removeActionListener(this);
+    audiumEngine->getPlayListContainer()->removeActionListener(this);
     //[/Destructor_pre]
 
-    waveFormViewport = nullptr;
-    zoomSlider = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
-    transportSource  .setSource (nullptr);
-    audioSourcePlayer.setSource (nullptr);
-
-    audioDeviceManager.removeAudioCallback (&audioSourcePlayer);
-
-    waveFormComponent->removeChangeListener (this);
     //[/Destructor]
 }
 
@@ -94,7 +94,7 @@ void MainComponent::paint (juce::Graphics& g)
     //[UserPrePaint] Add your own custom painting code here..
     //[/UserPrePaint]
 
-    g.fillAll (juce::Colour (0xff7bc7ed));
+    g.fillAll (juce::Colour (0xff282829));
 
     //[UserPaint] Add your own custom painting code here..
     //[/UserPaint]
@@ -105,78 +105,89 @@ void MainComponent::resized()
     //[UserPreResize] Add your own custom resize code here..
     //[/UserPreResize]
 
-    waveFormViewport->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (0.4989f));
     //[UserResized] Add your own custom resize handling here..
+
+    // the list of components that we want to reposition
+    Component* comps[] = {  middlePanelComponent.get(),
+                            stretchableLayoutResizerBar.get(),
+                            rightPanelComponent.get() };
+
+    // this will position the 3 components, one above the other, to fit
+    // horizontically into the rectangle provided.
+    stretchableLayoutManager->layOutComponents (comps, 3,
+                               0, 0, getWidth(), getHeight(),
+                               false, true);
+
     //[/UserResized]
 }
 
-void MainComponent::sliderValueChanged (juce::Slider* sliderThatWasMoved)
+void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
 {
-    //[UsersliderValueChanged_Pre]
-    //[/UsersliderValueChanged_Pre]
+    //[UserCode_filesDropped] -- Add your code here...
 
-    if (sliderThatWasMoved == zoomSlider.get())
+    for (auto i = 0; i < filenames.size(); i++)
     {
-        //[UserSliderCode_zoomSlider] -- add your slider handling code here..
-        waveFormComponent->setZoomFactor(zoomSlider->getValue());
-        //[/UserSliderCode_zoomSlider]
+        auto url = URL (File (filenames[i]));
+        audiumEngine->getAudioResourceContainer()->addAudioResource(url);
     }
+    updateUI();
 
-    //[UsersliderValueChanged_Post]
-    //[/UsersliderValueChanged_Post]
+    //[/UserCode_filesDropped]
 }
 
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
-void MainComponent::changeListenerCallback (ChangeBroadcaster* source)
+void MainComponent::actionListenerCallback (const String& message)
 {
-    if (source == waveFormComponent.get())
-        showAudioResource (URL (waveFormComponent->getLastDroppedFile()));
+    std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
+
+    if (message == regionCreatedAction)
+    {
+        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
+    }
+    else if (message == regionClearedAction)
+    {
+        rightPanelComponent->clearSelection();
+    }
+    else if (message == regionModifiedAction) // do nothing
+    {
+        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
+    }
+    else if (message == regionSelectedAction)
+    {
+        middlePanelComponent->updateUI();
+    }
+    else if (message == playListItemTriggered)
+    {
+        rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
+    }
+    else // update everything (eg. region deleted)
+    {
+        updateUI();
+    }
 }
 
-void MainComponent::showAudioResource (URL resource)
+bool MainComponent::isInterestedInFileDrag (const StringArray& /*files*/)
 {
-    if (loadURLIntoTransport (resource))
-        currentAudioFile = std::move (resource);
-
-    //zoomSlider.setValue (0, dontSendNotification);
-    waveFormComponent->setURL (currentAudioFile);
-}
-
-bool MainComponent::loadURLIntoTransport (const URL& audioURL)
-{
-    // unload the previous file source and delete it..
-    /// TODO: 
-//    transportSource.stop();
-//    transportSource.setSource (nullptr);
-//    currentAudioFileSource.reset();
-//
-//    const auto source = makeInputSource (audioURL);
-//
-//    if (source == nullptr)
-//        return false;
-//
-//    auto stream = rawToUniquePtr (source->createInputStream());
-//
-//    if (stream == nullptr)
-//        return false;
-//
-//    auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream)));
-//
-//    if (reader == nullptr)
-//        return false;
-//
-//    currentAudioFileSource = std::make_unique<AudioFormatReaderSource> (reader.release(), true);
-//
-//    // ..and plug it into our transport source
-//    transportSource.setSource (currentAudioFileSource.get(),
-//                               32768,                   // tells it to buffer this many samples ahead
-//                               &thread,                 // this is the background thread to use for reading-ahead
-//                               currentAudioFileSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
-
     return true;
+}
+
+void MainComponent::updateUI()
+{
+    middlePanelComponent->updateUI();
+    rightPanelComponent->updateUI();
+}
+
+void MainComponent::zoomIn()
+{
+    middlePanelComponent->zoomIn();
+}
+
+void MainComponent::zoomOut()
+{
+    middlePanelComponent->zoomOut();
 }
 
 //[/MiscUserCode]
@@ -192,20 +203,14 @@ bool MainComponent::loadURLIntoTransport (const URL& audioURL)
 BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="MainComponent" componentName=""
-                 parentClasses="public juce::Component, private juce::ChangeListener"
-                 constructorParams="" variableInitialisers="" snapPixels="8" snapActive="1"
-                 snapShown="1" overlayOpacity="0.330" fixedSize="0" initialWidth="600"
-                 initialHeight="400">
-  <BACKGROUND backgroundColour="ff7bc7ed"/>
-  <VIEWPORT name="waveform viewport" id="b74af6eff132eb11" memberName="waveFormViewport"
-            virtualName="" explicitFocusOrder="0" pos="0 0 100% 49.894%"
-            vscroll="1" hscroll="1" scrollbarThickness="8" contentType="0"
-            jucerFile="" contentClass="" constructorParams=""/>
-  <SLIDER name="new slider" id="d8bc4db2e68bdf68" memberName="zoomSlider"
-          virtualName="" explicitFocusOrder="0" pos="392 280 192 24" min="0.0"
-          max="1.0" int="0.0" style="LinearHorizontal" textBoxPos="TextBoxLeft"
-          textBoxEditable="1" textBoxWidth="80" textBoxHeight="20" skewFactor="2.0"
-          needsCallback="1"/>
+                 parentClasses="public juce::Component, private juce::ActionListener, public FileDragAndDropTarget"
+                 constructorParams="std::shared_ptr&lt;AudiumEngine&gt; audiumEngine"
+                 variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
+                 overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="400">
+  <METHODS>
+    <METHOD name="filesDropped (const juce::StringArray&amp; filenames, int mouseX, int mouseY)"/>
+  </METHODS>
+  <BACKGROUND backgroundColour="ff282829"/>
 </JUCER_COMPONENT>
 
 END_JUCER_METADATA

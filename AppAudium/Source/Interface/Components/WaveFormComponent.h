@@ -13,31 +13,29 @@
 #include <JuceHeader.h>
 #include <memory>
 
+#include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Controls/RegionSelector.h"
+
 using namespace juce;
 
 
 class AudioResource;
+
 
 //==============================================================================
 class WaveFormComponent  : public Component,
                            public ChangeListener,
                            public FileDragAndDropTarget,
                            public ChangeBroadcaster,
-                           private ScrollBar::Listener,
-                           private Timer
+                           public ScrollBar::Listener
 {
 public:
-    WaveFormComponent (AudioTransportSource& source);
+    WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
+                       std::shared_ptr<ZoomHandler> zoomHandler);
 
     ~WaveFormComponent() override;
-
-    void setURL (const URL& url);
-
-    URL getLastDroppedFile() const noexcept;
-
-    void setZoomFactor (double amount);
-
-    void setRange (Range<double> newRange);
+    
+    void setAudioResource (std::shared_ptr<AudioResource> audioResource);
 
     void setFollowsTransport (bool shouldFollow);
 
@@ -58,58 +56,19 @@ public:
     void mouseUp (const MouseEvent&) override;
 
     void mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel) override;
-
+    
 private:
-    AudioTransportSource& transportSource;
-
-    ScrollBar scrollbar  { false };
-
+    
     std::shared_ptr<AudioResource> audioResource;
 
-    Range<double> visibleRange;
-    bool isFollowingTransport = false;
-    URL lastFileDropped;
+    std::shared_ptr<ZoomHandler> zoomHandler;
+    
+    std::unique_ptr<ResizableEdgeComponent> resizableEdgeComponent;
+    std::unique_ptr<ResizableBorderComponent> resizableBorderComponent;
 
-    DrawableRectangle currentPositionMarker;
-
-    float timeToX (const double time) const
-    {
-        if (visibleRange.getLength() <= 0)
-            return 0;
-
-        return (float) getWidth() * (float) ((time - visibleRange.getStart()) / visibleRange.getLength());
-    }
-
-    double xToTime (const float x) const
-    {
-        return (x / (float) getWidth()) * (visibleRange.getLength()) + visibleRange.getStart();
-    }
-
-    bool canMoveTransport() const noexcept
-    {
-        return ! (isFollowingTransport && transportSource.isPlaying());
-    }
-
-    void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override
-    {
-        if (scrollBarThatHasMoved == &scrollbar)
-            if (! (isFollowingTransport && transportSource.isPlaying()))
-                setRange (visibleRange.movedToStartAt (newRangeStart));
-    }
-
-    void timerCallback() override
-    {
-        if (canMoveTransport())
-            updateCursorPosition();
-        else
-            setRange (visibleRange.movedToStartAt (transportSource.getCurrentPosition() - (visibleRange.getLength() / 2.0)));
-    }
-
-    void updateCursorPosition()
-    {
-        currentPositionMarker.setVisible (transportSource.isPlaying() || isMouseButtonDown());
-
-        currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
-                                                              1.5f, (float) (getHeight() - scrollbar.getHeight())));
-    }
+    void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override;
+    
+private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormComponent)
+    
 };
