@@ -31,7 +31,7 @@ public:
         playListTableListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(playListTableListBox.get());
         
-        playListTableListBox->getHeader().addColumn ("Regions", 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        playListTableListBox->getHeader().addColumn ("Playlist", 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
         playListTableListBox->getHeader().addColumn ("Fade", 2, 150, 80, 800, juce::TableHeaderComponent::notSortable);
         playListTableListBox->getHeader().setStretchToFitActive (true);
         playListTableListBox->setHeaderHeight(25);

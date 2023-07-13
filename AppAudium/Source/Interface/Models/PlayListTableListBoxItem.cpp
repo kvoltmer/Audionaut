@@ -77,8 +77,11 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
                     startTimerHz(25);
                 }
                 
+                // progress
                 auto progress = playListModel->getPlayListScheduler()->getPlayListItemProgress(rowNumber);
                 drawLinearProgress(g, progress);
+            
+                
             }
             else if (isTimerRunning())
             {
@@ -136,5 +139,26 @@ void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
 
 void PlayListTableListBoxItem::timerCallback()
 {
+    repaint();
+}
+
+void PlayListTableListBoxItem::update(int columnId, int rowNumber, bool isSelected)
+{
+    this->columnNumber = columnId;
+    this->rowNumber = rowNumber;
+    selected = isSelected;
+    
+    
+//    if (playListModel->getTransportSourceProvider()->isPlaying())
+//    {
+//        auto playing = playListModel->getPlayListScheduler()->getPlayListItemIndex();
+//        if (playing == rowNumber &&
+//            !selected)
+//        {
+//            playListModel->
+//            selected = true;
+//        }
+//    }
+    
     repaint();
 }

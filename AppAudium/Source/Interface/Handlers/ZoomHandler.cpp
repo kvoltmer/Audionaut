@@ -9,17 +9,23 @@
 */
 
 #include "ZoomHandler.h"
+#include "Engine/AudioResourceContainer.h"
+#include "Engine/TransportSourceProvider.h"
 
-ZoomHandler::ZoomHandler(std::shared_ptr<AudioResourceContainer> container) :
+ZoomHandler::ZoomHandler(std::shared_ptr<AudioResourceContainer> container,
+                         std::shared_ptr<TransportSourceProvider> transportSourceProvider) :
     audioResourceContainer(container),
+    transportSourceProvider(transportSourceProvider),
     zoomFactor(1.0),
     scrollbar(nullptr),
     width(0)
 {
+    startTimerHz(40);
 }
 
 ZoomHandler::~ZoomHandler()
 {
+    stopTimer();
 }
 
 double ZoomHandler::zoomIn()
@@ -34,19 +40,19 @@ double ZoomHandler::zoomOut()
     return zoomFactor;
 }
 
-Range<double> ZoomHandler::getVisibleRange() const noexcept
+juce::Range<double> ZoomHandler::getVisibleRange() const noexcept
 {
     jassert(scrollbar);
     return scrollbar->getCurrentRange();
 }
 
-Range<double> ZoomHandler::getVisibleRangeInSeconds() const noexcept
+juce::Range<double> ZoomHandler::getVisibleRangeInSeconds() const noexcept
 {
     // the visible range is the scrollbar's range
     auto visibleRange = getVisibleRange();
     
     // convert pixels to seconds (drawChannels expects start and end in seconds)
-    return Range<double> (xToTime(visibleRange.getStart()), xToTime(visibleRange.getEnd()));
+    return juce::Range<double> (xToTime(visibleRange.getStart()), xToTime(visibleRange.getEnd()));
 }
 
 void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
@@ -58,12 +64,12 @@ void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
 
 void ZoomHandler::updateTotalLength()
 {
-    Range<double> newRange (0.0, audioResourceContainer->getTotalLengthMax());
+    juce::Range<double> newRange (0.0, audioResourceContainer->getTotalLengthMax());
     
     totalRange = newRange;
 }
 
-Range<double> ZoomHandler::getTotalRange() const noexcept
+juce::Range<double> ZoomHandler::getTotalRange() const noexcept
 {
     return totalRange;
 }
@@ -140,4 +146,35 @@ int ZoomHandler::numSegmentsForWidth(const int width, int& seconds)
     }
     
     return 0;
+}
+
+void ZoomHandler::jumpToPlayPosition()
+{
+    
+    auto posX = timeToX(transportSourceProvider->getCurrentPosition());
+    auto range = getVisibleRange();
+    //std::cout << pos << " " << posX << " range: " << range.getStart() << " " << range.getEnd() << std::endl;
+    
+    if (!range.contains(posX))
+    {
+        auto newStart = posX - (range.getLength() / 2);
+        auto newRange = range.movedToStartAt(newStart);
+        scrollbar->setCurrentRange(newRange);
+        
+    }
+    
+}
+
+void ZoomHandler::timerCallback()
+{
+    if (transportSourceProvider->isPlaying())
+    {
+        auto posX = timeToX(transportSourceProvider->getCurrentPosition());
+        if(!getVisibleRange().contains(posX))
+        {
+            auto newStart = posX - (getVisibleRange().getLength() / 2);
+            auto newRange = getVisibleRange().movedToStartAt(newStart);
+            scrollbar->setCurrentRange(newRange);
+        }
+    }
 }

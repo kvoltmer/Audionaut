@@ -83,6 +83,9 @@ bool TransportSourceProvider::playStop()
     }
     else
     {
+        // workaround
+        setPosition(getCurrentPosition());
+        
         start();
         return true;
     }

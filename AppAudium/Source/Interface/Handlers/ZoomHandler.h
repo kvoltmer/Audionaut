@@ -11,25 +11,26 @@
 #pragma once
 #include <memory>
 #include <JuceHeader.h>
-#include "Engine/AudioResourceContainer.h"
 
-using namespace juce;
+class AudioResourceContainer;
+class TransportSourceProvider;
 
-class ZoomHandler {
+class ZoomHandler : private juce::Timer {
     
 public:
-    ZoomHandler(std::shared_ptr<AudioResourceContainer> container);
+    ZoomHandler(std::shared_ptr<AudioResourceContainer> container,
+                std::shared_ptr<TransportSourceProvider> transportSourceProvider);
     ~ZoomHandler();
     
     double zoomIn();
     
     double zoomOut();
     
-    Range<double> getVisibleRange() const noexcept;
+    juce::Range<double> getVisibleRange() const noexcept;
     
-    Range<double> getVisibleRangeInSeconds() const noexcept;
+    juce::Range<double> getVisibleRangeInSeconds() const noexcept;
     
-    Range<double> getTotalRange() const noexcept;
+    juce::Range<double> getTotalRange() const noexcept;
     
     void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
     
@@ -55,10 +56,15 @@ public:
     // returns the number of time segments for a given width. (1 second is the smallest possible grid)
     int numSegmentsForWidth(const int width, int& seconds);
     
+    void jumpToPlayPosition();
+    
+    void timerCallback() override;
+    
 private:
     
-    // the audio resource container
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    
+    std::shared_ptr<TransportSourceProvider> transportSourceProvider;
     
     // zoom factor
     double zoomFactor;
@@ -67,7 +73,7 @@ private:
     juce::ScrollBar* scrollbar;
 
     // the total range in seconds
-    Range<double> totalRange;
+    juce::Range<double> totalRange;
     
     // the width in pixels
     int width;

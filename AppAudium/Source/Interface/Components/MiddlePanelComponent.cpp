@@ -24,7 +24,8 @@ MiddlePanelComponent::MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumE
     /// TODO: handle this in a more elegant way
     auto initialWidth = 1000;
     
-    zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer()));
+    zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer(),
+                                      audiumEngine->getTransportSourceProvider()));
     waveFormTableListBox.reset(new WaveFormTableListBox("waveform listbox", nullptr));
     regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler, audiumEngine));
     waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(waveFormTableListBox,
@@ -94,6 +95,7 @@ void MiddlePanelComponent::zoomIn()
     waveFormTableListBox->setMinimumContentWidth(width);
     zoomHandler->setWidth(width);
     regionSelector->updateFromEngine();
+    zoomHandler->jumpToPlayPosition();
 }
 
 void MiddlePanelComponent::zoomOut()
