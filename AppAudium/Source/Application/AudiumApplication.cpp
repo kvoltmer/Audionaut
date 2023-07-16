@@ -290,7 +290,14 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             }
             break;
         case CommandIDs::saveProject:
-            notImplemented();
+            if (audiumEngine->getCurrentFile() == File{})
+            {
+                saveProjectAs();
+            }
+            else
+            {
+                saveProject();
+            }
             break;
         case CommandIDs::saveProjectAs:
             saveProjectAs();
@@ -360,4 +367,10 @@ void AudiumApplication::saveProjectAs()
             audiumEngine->saveFile(result, nullptr);
         }
     });
+}
+
+void AudiumApplication::saveProject()
+{
+    /// TODO: provide and handle callback
+    audiumEngine->saveFile(audiumEngine->getCurrentFile(), nullptr);
 }
