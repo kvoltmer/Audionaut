@@ -38,6 +38,8 @@ public:
     void setRegionName(int rowNumber, juce::String newName);
     void setRegionLength(int rowNumber, double newLength);
     
+    void cleanup() { audioRegions.clear(); }
+    
 private:
     AudioRegion selectedRegion;
     int selectedRowNumber = -1;

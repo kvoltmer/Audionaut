@@ -30,6 +30,7 @@ public:
     
     static bool getString (const std::string& key, std::string& value);
 
+    static void removeKey(const String& key);
 
     static String s_RegistryName;
     

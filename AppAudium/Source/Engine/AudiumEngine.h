@@ -43,6 +43,8 @@ public:
     
     const juce::File getCurrentFile() const { return currentFile; }
     
+    void cleanup();
+    
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
@@ -58,6 +60,12 @@ private:
     std::shared_ptr<PlayListScheduler> playListScheduler;
     
     juce::File currentFile;
+    
+
+    /// TODO: thread save container
+    // std::is_trivially_copyable
+    // std::array, has a static size set at compile time. It does not have internal pointers and can therefore be copied simply by using memcpy. It therefore is trivial to copy.
+    std::atomic<std::array<int, 3>> test;
     
     
     //==============================================================================

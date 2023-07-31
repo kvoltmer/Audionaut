@@ -121,3 +121,11 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
     return false;
 }
 
+void AudiumEngine::cleanup()
+{
+    playListContainer->cleanup();
+    audioRegionContainer->cleanup();
+    audioResourceContainer->cleanup();
+    
+    currentFile = File();
+}

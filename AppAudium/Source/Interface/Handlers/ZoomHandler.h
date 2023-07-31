@@ -56,7 +56,7 @@ public:
     // returns the number of time segments for a given width. (1 second is the smallest possible grid)
     int numSegmentsForWidth(const int width, int& seconds);
     
-    void jumpToPlayPosition();
+    void focusViewOnPlayPosition();
     
     void timerCallback() override;
     

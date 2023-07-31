@@ -148,7 +148,7 @@ int ZoomHandler::numSegmentsForWidth(const int width, int& seconds)
     return 0;
 }
 
-void ZoomHandler::jumpToPlayPosition()
+void ZoomHandler::focusViewOnPlayPosition()
 {
     
     auto posX = timeToX(transportSourceProvider->getCurrentPosition());
