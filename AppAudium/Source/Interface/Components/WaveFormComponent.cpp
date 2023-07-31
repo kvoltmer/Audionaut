@@ -80,7 +80,7 @@ void WaveFormComponent::paint (Graphics& g)
         
         auto thumbArea = getLocalBounds();
     
-#if 0 /// draw visible range
+#if 1 /// draw visible range
         
         // the visible range is the scrollbar's range
         auto visibleRange = zoomHandler->getVisibleRange();

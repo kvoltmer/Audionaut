@@ -278,7 +278,8 @@ bool AudiumApplication::perform (const InvocationInfo& info)
     switch (info.commandID)
     {
         case CommandIDs::newProject:
-            notImplemented();
+            audiumEngine->cleanup();
+            updateUI();
             break;
         case CommandIDs::openProject:
             askUserToOpenFile();
@@ -288,9 +289,20 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             {
                 Preferences::setValue(Preferences::defaultFile, audiumEngine->getCurrentFile().getFullPathName());
             }
+            else
+            {
+                Preferences::removeKey(Preferences::defaultFile);
+            }
             break;
         case CommandIDs::saveProject:
-            notImplemented();
+            if (audiumEngine->getCurrentFile() == File{})
+            {
+                saveProjectAs();
+            }
+            else
+            {
+                saveProject();
+            }
             break;
         case CommandIDs::saveProjectAs:
             saveProjectAs();
@@ -320,6 +332,7 @@ bool AudiumApplication::perform (const InvocationInfo& info)
 #endif
 
 
+
 void AudiumApplication::askUserToOpenFile()
 {
     chooser = std::make_unique<juce::FileChooser> ("Open File", File(), "*" + String(AudiumEngine::projectFileExtension));
@@ -333,11 +346,7 @@ void AudiumApplication::askUserToOpenFile()
         {
             /// TODO: provide and handle callback
             audiumEngine->openFile(result, nullptr);
-            auto comp = dynamic_cast<MainComponent*>(mainWindow->getContentComponent());
-            if (comp != nullptr)
-            {
-                comp->updateUI();
-            }
+            updateUI();
         }
     });
 }
@@ -360,4 +369,19 @@ void AudiumApplication::saveProjectAs()
             audiumEngine->saveFile(result, nullptr);
         }
     });
+}
+
+void AudiumApplication::saveProject()
+{
+    /// TODO: provide and handle callback
+    audiumEngine->saveFile(audiumEngine->getCurrentFile(), nullptr);
+}
+
+void AudiumApplication::updateUI()
+{
+    auto comp = dynamic_cast<MainComponent*>(mainWindow->getContentComponent());
+    if (comp != nullptr)
+    {
+        comp->updateUI();
+    }
 }

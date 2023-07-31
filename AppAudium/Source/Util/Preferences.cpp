@@ -158,6 +158,14 @@ bool Preferences::valueExists(const String& key)
 #endif
 }
 
+void Preferences::removeKey(const String& key)
+{
+    if (valueExists(key))
+    {
+        setValue(key, "");
+    }
+}
+
 bool Preferences::getString (const std::string& key, std::string& value)
 {
     if (valueExists(key)) {

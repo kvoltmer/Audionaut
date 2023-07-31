@@ -95,7 +95,7 @@ void MiddlePanelComponent::zoomIn()
     waveFormTableListBox->setMinimumContentWidth(width);
     zoomHandler->setWidth(width);
     regionSelector->updateFromEngine();
-    zoomHandler->jumpToPlayPosition();
+    zoomHandler->focusViewOnPlayPosition();
 }
 
 void MiddlePanelComponent::zoomOut()
@@ -104,4 +104,5 @@ void MiddlePanelComponent::zoomOut()
     waveFormTableListBox->setMinimumContentWidth(width);
     zoomHandler->setWidth(width);
     regionSelector->updateFromEngine();
+    zoomHandler->focusViewOnPlayPosition();
 }

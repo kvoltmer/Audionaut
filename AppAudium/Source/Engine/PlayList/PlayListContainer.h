@@ -62,6 +62,8 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
+    
+    void cleanup() { playListItems.clear(); }
 
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
     

@@ -59,6 +59,8 @@ public:
     
     void askUserToOpenFile();
     void saveProjectAs();
+    void saveProject();
+    void updateUI();
     
     AudiumLookAndFeel lookAndFeel;
 

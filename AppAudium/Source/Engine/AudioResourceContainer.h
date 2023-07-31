@@ -42,6 +42,8 @@ public:
     
     std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
     
+    void cleanup() { audioResources.clear(); }
+    
 private:
     
     std::vector<std::shared_ptr<AudioResource>> audioResources;
