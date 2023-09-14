@@ -113,14 +113,14 @@ void WaveFormComponent::paint (Graphics& g)
         
         Rectangle<int> bonds(zoomHandler->getVisibleRange().getStart() + 5,
                              5,
-                             g.getCurrentFont().getStringWidth(audioResource->getFileName()),
+                             g.getCurrentFont().getStringWidth(audioResource->getFileNameWithoutExtension()),
                              g.getCurrentFont().getHeight());
         
         g.setColour(Colours::black.withAlpha(0.25f));
         g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
         
         g.setColour (findColour(audium::defaultTextColourId));
-        g.drawFittedText (audioResource->getFileName(), bonds, Justification::topLeft, 1);
+        g.drawFittedText (audioResource->getFileNameWithoutExtension(), bonds, Justification::topLeft, 1);
     }
     else
     {

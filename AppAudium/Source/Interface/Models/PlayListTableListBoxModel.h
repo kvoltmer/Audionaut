@@ -100,8 +100,11 @@ public:
     {
         // selecting a playListItem also selects the region
         auto playListItem = audiumEngine->getPlayListContainer()->getPlayListItem(lastRowSelected);
-        auto regionIndex = audiumEngine->getAudioRegionContainer()->getRegionIndex(playListItem->getRegion());
-        audiumEngine->getAudioRegionContainer()->setSelectedRegion(regionIndex);
+        if (playListItem != nullptr)
+        {
+            auto regionIndex = audiumEngine->getAudioRegionContainer()->getRegionIndex(playListItem->getRegion());
+            audiumEngine->getAudioRegionContainer()->setSelectedRegion(regionIndex);
+        }
     }
 
     

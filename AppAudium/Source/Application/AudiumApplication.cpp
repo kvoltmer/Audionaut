@@ -185,6 +185,7 @@ PopupMenu AudiumApplication::createEditMenu()
 //    menu.addCommandItem (commandManager.get(), CommandIDs::findNext);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::findPrevious);
     menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
+    menu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
     return menu;
 }
 
@@ -354,7 +355,7 @@ void AudiumApplication::askUserToOpenFile()
 void AudiumApplication::saveProjectAs()
 {
     //chooser = std::make_unique<FileChooser> (("Save As..."), File::SpecialLocationType::userDesktopDirectory, "*");
-    chooser = std::make_unique<FileChooser> (("Save As..."));
+    chooser = std::make_unique<FileChooser> (("Save As..."), File(), "*" + String(AudiumEngine::projectFileExtension));
     auto flags = FileBrowserComponent::saveMode
                | FileBrowserComponent::canSelectFiles
                | FileBrowserComponent::warnAboutOverwriting;

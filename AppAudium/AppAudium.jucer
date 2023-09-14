@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="gxtGxr" name="AppAudium" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/">
   <MAINGROUP id="HQG80L" name="AppAudium">
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
       <FILE id="pY6hrq" name="README.txt" compile="0" resource="0" file="Catch2Tests/README.txt"/>
@@ -35,6 +35,10 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
+          <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
+          <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
+        </GROUP>
         <FILE id="ELbTXp" name="ActionMessages.h" compile="0" resource="0"
               file="Source/Engine/ActionMessages.h"/>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">

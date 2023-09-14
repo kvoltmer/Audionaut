@@ -32,6 +32,8 @@ public:
     
     std::shared_ptr<juce::AudioTransportSource> getAudioTransportSource() { return audioTransportSource; }
     
+    double sampleRate = 0.0;
+    
 private:
     juce::AudioSourcePlayer audioSourcePlayer;
     
@@ -39,4 +41,5 @@ private:
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
 
+    
 };

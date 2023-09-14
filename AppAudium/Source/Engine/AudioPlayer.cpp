@@ -34,11 +34,14 @@ AudioPlayer::AudioPlayer(std::shared_ptr<juce::AudioTransportSource> audioTransp
 
     audioFormatReaderSource = std::make_unique<juce::AudioFormatReaderSource> (reader.release(), true);
 
+    sampleRate = audioFormatReaderSource->getAudioFormatReader()->sampleRate;
     // plug it into the transport source
     audioTransportSource->setSource (audioFormatReaderSource.get(),
                                     32768,                   // tells it to buffer this many samples ahead
                                     readAheadThread,                 // this is the background thread to use for reading-ahead
-                                    audioFormatReaderSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
+                                    sampleRate);     // allows for sample rate correction
+
+    
     
 }
 

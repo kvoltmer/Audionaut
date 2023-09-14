@@ -15,6 +15,7 @@
 #include "Engine/TransportSourceProvider.h"
 #include "Engine/PlayList/PlayListSchedulder.h"
 
+
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
     : DocumentWindow (name,
                       juce::Desktop::getInstance().getDefaultLookAndFeel()
@@ -86,6 +87,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
     {
         CommandIDs::playStop,
         CommandIDs::createRegion,
+        CommandIDs::autoEdit,
         CommandIDs::zoomIn,
         CommandIDs::zoomOut
     };
@@ -105,7 +107,10 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Create Region", "Creates a new region", CommandCategories::editing, 0);
             result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::commandModifier, 0));
             break;
-            
+        case CommandIDs::autoEdit:
+            result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
+            result.defaultKeypresses.add (KeyPress ('e', ModifierKeys::commandModifier, 0));
+            break;
         case CommandIDs::zoomIn:
             result.setInfo ("Zoom In", "Zoom in", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::ctrlModifier, 0));
@@ -133,7 +138,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
         case CommandIDs::createRegion:
             newRegionDialog.createNewRegion(getEngine());
             break;
-            
+        case CommandIDs::autoEdit:
+            getEngine()->invokeAutoEdit();
+            break;
         case CommandIDs::zoomIn:
             mainComponent->zoomIn();
             break;

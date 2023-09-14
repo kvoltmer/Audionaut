@@ -51,9 +51,14 @@ std::shared_ptr<juce::AudioTransportSource> AudioResource::getAudioTransportSour
     return audioPlayer->getAudioTransportSource();
 }
 
-juce::String AudioResource::getFileName() const
+const juce::String AudioResource::getFileNameWithoutExtension() const
 {
     return url.getLocalFile().getFileNameWithoutExtension();
+}
+
+const juce::String AudioResource::getFullPathName() const
+{
+    return url.getLocalFile().getFullPathName();
 }
 
 bool AudioResource::writeToStream (juce::OutputStream& outputStream)
@@ -69,4 +74,9 @@ bool AudioResource::readFromStream (juce::InputStream& inputStream)
 //    url = juce::URL(inString);
 //    owner->addAudioResource()
     return true;
+}
+
+double AudioResource::getSampleRate() const
+{
+    return audioPlayer->sampleRate;
 }
