@@ -51,6 +51,8 @@ public:
     std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
+    void invokeAutoEdit();
+    
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
