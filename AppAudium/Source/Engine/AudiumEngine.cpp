@@ -10,6 +10,7 @@
 
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
+#include "Engine/AutoEdit/AutoEdit.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 
@@ -56,13 +57,25 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> 
         {
             /// TODO: std::move (callback)
             readFromStream(inputStream);
+            currentFile = file;
         }
     }
-    currentFile = file;
+    else
+    {
+        std::cout << "error: missing project file extension" << std::endl;
+    }
+    
 }
 
-void AudiumEngine::saveFile (const juce::File& file, std::function<void (bool)> callback)
+void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> callback)
 {
+    juce::File file = f;
+    
+    if (! file.hasFileExtension (projectFileExtension))
+    {
+        file = juce::File(file.getFullPathName() + projectFileExtension);
+    }
+    
     if (! file.exists())
     {
         auto result = file.create();
@@ -128,4 +141,15 @@ void AudiumEngine::cleanup()
     audioResourceContainer->cleanup();
     
     currentFile = File();
+}
+
+void AudiumEngine::invokeAutoEdit()
+{
+    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioResourceContainer,
+                                                    audioRegionContainer,
+                                                    playListContainer));
+    if (autoEdit->invokeAutoEdit())
+    {
+        autoEdit->applyAutoEditResult();
+    }
 }
