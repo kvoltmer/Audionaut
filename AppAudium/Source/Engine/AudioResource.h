@@ -43,10 +43,12 @@ public:
     
     bool isThumbnailFullyLoaded() const { return thumbnail.isFullyLoaded(); }
 
-    juce::String getFileName() const;
+    const juce::String getFileNameWithoutExtension() const;
+    
+    const juce::String getFullPathName() const;
     
     /// TODO: move this to WaveFormTableListBoxModel
-    int height = 100;
+    int height = 200;
     
     /// TODO: move this to a gui state
     juce::Colour currentColour;
@@ -55,6 +57,8 @@ public:
     bool readFromStream (juce::InputStream& inputStream);
     
     AudioResourceContainer& getContainer() const { return owner; }
+    
+    double getSampleRate() const;
     
 private:
 

@@ -28,6 +28,7 @@ namespace CommandIDs
         playStop                = 0x300050,
         
         createRegion            = 0x300060,
+        autoEdit                = 0x300061,
 
         enableSnapToGrid        = 0x300070,
         zoomIn                  = 0x300071,
