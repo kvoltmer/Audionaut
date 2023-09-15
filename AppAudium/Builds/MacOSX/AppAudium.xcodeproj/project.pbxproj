@@ -29,6 +29,7 @@
 		4ABF177467832242153DF416 /* Main.cpp */ = {isa = PBXBuildFile; fileRef = 6635C70632EE050E628A48F0; };
 		4AEB71E53A29D683D72A9F41 /* audium_ListBox.cpp */ = {isa = PBXBuildFile; fileRef = A96B870D734284F177524816; };
 		4CA291EE967A9CDB338E14FD /* include_juce_dsp.mm */ = {isa = PBXBuildFile; fileRef = E138ACDCC3A702D0B7A742EF; };
+		5286B01DB14BE28BDA88F629 /* AutoEditComponent.cpp */ = {isa = PBXBuildFile; fileRef = E7074F66C3DD69F43FBB467D; };
 		591171F07F22952C7C96DA08 /* WaveFormComponent.cpp */ = {isa = PBXBuildFile; fileRef = 8F7CB431E1C1A59D06BA574D; };
 		63AE7E83398F33BA6144FBD5 /* PlayListTableListBoxItem.cpp */ = {isa = PBXBuildFile; fileRef = 7E44DB630C41B875C940DDCD; };
 		68EB658E314D29C5272125F7 /* include_juce_audio_processors.mm */ = {isa = PBXBuildFile; fileRef = 25423A74B016191855679F72; };
@@ -100,6 +101,7 @@
 		4D42F16EEFD4F0B44843469A /* PlayListComponent.cpp */ /* PlayListComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListComponent.cpp; path = ../../Source/Interface/Components/PlayListComponent.cpp; sourceTree = SOURCE_ROOT; };
 		4DE814A90D92C1476D1E560A /* AudioRegion.cpp */ /* AudioRegion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegion.cpp; path = ../../Source/Engine/AudioRegion.cpp; sourceTree = SOURCE_ROOT; };
 		4EE72AD6BDA07FF8371B7B94 /* WaveFormTableListBox.h */ /* WaveFormTableListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormTableListBox.h; path = ../../Source/Interface/Controls/WaveFormTableListBox.h; sourceTree = SOURCE_ROOT; };
+		4F52032EA1179E2EDC03E78A /* AutoEditComponent.h */ /* AutoEditComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoEditComponent.h; path = ../../Source/Interface/Dialogs/AutoEditComponent.h; sourceTree = SOURCE_ROOT; };
 		5021A59AD0929868402BFD6B /* Accelerate.framework */ /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		51A9292E8F72CB69DDEC3999 /* audium_ListBox.h */ /* audium_ListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = audium_ListBox.h; path = ../../Source/Interface/Widgets/audium_ListBox.h; sourceTree = SOURCE_ROOT; };
 		520E7150F3B0BE3B50B1C93A /* AudiumEngine.cpp */ /* AudiumEngine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumEngine.cpp; path = ../../Source/Engine/AudiumEngine.cpp; sourceTree = SOURCE_ROOT; };
@@ -138,7 +140,6 @@
 		8D37E966475206DF93CB732C /* PlayListContainer.h */ /* PlayListContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListContainer.h; path = ../../Source/Engine/PlayList/PlayListContainer.h; sourceTree = SOURCE_ROOT; };
 		8DCF650D089A100D7636D993 /* juce_audio_basics */ /* juce_audio_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_basics; path = ../../../Submodules/juce/modules/juce_audio_basics; sourceTree = SOURCE_ROOT; };
 		8E9C7D080EF760C529538571 /* AudiumFactory.cpp */ /* AudiumFactory.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumFactory.cpp; path = ../../Source/Engine/AudiumFactory.cpp; sourceTree = SOURCE_ROOT; };
-		8F257C78E3330C3EA1C34E7C /* NewRegionDialog.h */ /* NewRegionDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NewRegionDialog.h; path = ../../Source/Util/NewRegionDialog.h; sourceTree = SOURCE_ROOT; };
 		8F7CB431E1C1A59D06BA574D /* WaveFormComponent.cpp */ /* WaveFormComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = WaveFormComponent.cpp; path = ../../Source/Interface/Components/WaveFormComponent.cpp; sourceTree = SOURCE_ROOT; };
 		9292A8E7A85A45C8828834D3 /* RegionTableListBoxModel.cpp */ /* RegionTableListBoxModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionTableListBoxModel.cpp; path = ../../Source/Interface/Models/RegionTableListBoxModel.cpp; sourceTree = SOURCE_ROOT; };
 		93967D9818A6F5B95C07B32B /* include_juce_gui_basics.mm */ /* include_juce_gui_basics.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_gui_basics.mm; path = ../../JuceLibraryCode/include_juce_gui_basics.mm; sourceTree = SOURCE_ROOT; };
@@ -169,6 +170,7 @@
 		C7202C377D3DE8D18030C3B9 /* README.txt */ /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = README.txt; path = ../../Catch2Tests/README.txt; sourceTree = SOURCE_ROOT; };
 		CA39B6E9F9CE7E4D8C8168A4 /* TransportPositionControl.h */ /* TransportPositionControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TransportPositionControl.h; path = ../../Source/Interface/Controls/TransportPositionControl.h; sourceTree = SOURCE_ROOT; };
 		CC708129065E348D5CDF5802 /* PlayListComponent.h */ /* PlayListComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListComponent.h; path = ../../Source/Interface/Components/PlayListComponent.h; sourceTree = SOURCE_ROOT; };
+		CD915B059555AF45DF4EB0A9 /* AutoEditDialog.h */ /* AutoEditDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoEditDialog.h; path = ../../Source/Interface/Dialogs/AutoEditDialog.h; sourceTree = SOURCE_ROOT; };
 		D39B6E305F09D4CB6A072101 /* MiddlePanelComponent.h */ /* MiddlePanelComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MiddlePanelComponent.h; path = ../../Source/Interface/Components/MiddlePanelComponent.h; sourceTree = SOURCE_ROOT; };
 		D4D5A4A65120A0024822645B /* AudioRegionContainer.cpp */ /* AudioRegionContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegionContainer.cpp; path = ../../Source/Engine/AudioRegionContainer.cpp; sourceTree = SOURCE_ROOT; };
 		D7C195F3EDBBAD3B3DCF40F5 /* AudioRegion.h */ /* AudioRegion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegion.h; path = ../../Source/Engine/AudioRegion.h; sourceTree = SOURCE_ROOT; };
@@ -176,6 +178,7 @@
 		D9FAA2A57A4D9ABA8A264176 /* WaveFormTableListBoxModel.cpp */ /* WaveFormTableListBoxModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = WaveFormTableListBoxModel.cpp; path = ../../Source/Interface/Models/WaveFormTableListBoxModel.cpp; sourceTree = SOURCE_ROOT; };
 		DD3D293D5BE7C2DD00072E80 /* SampleTimer.h */ /* SampleTimer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SampleTimer.h; path = ../../Source/Engine/PlayList/SampleTimer.h; sourceTree = SOURCE_ROOT; };
 		E138ACDCC3A702D0B7A742EF /* include_juce_dsp.mm */ /* include_juce_dsp.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_dsp.mm; path = ../../JuceLibraryCode/include_juce_dsp.mm; sourceTree = SOURCE_ROOT; };
+		E7074F66C3DD69F43FBB467D /* AutoEditComponent.cpp */ /* AutoEditComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AutoEditComponent.cpp; path = ../../Source/Interface/Dialogs/AutoEditComponent.cpp; sourceTree = SOURCE_ROOT; };
 		E8D352FF7BE59C5D849A1BA1 /* WaveFormComponent.h */ /* WaveFormComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormComponent.h; path = ../../Source/Interface/Components/WaveFormComponent.h; sourceTree = SOURCE_ROOT; };
 		EBCAA43C5258D98640A638F6 /* juce_audio_formats */ /* juce_audio_formats */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_formats; path = ../../../Submodules/juce/modules/juce_audio_formats; sourceTree = SOURCE_ROOT; };
 		EC172FD2CA563F06B6901917 /* RightPanelComponent.h */ /* RightPanelComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RightPanelComponent.h; path = ../../Source/Interface/Components/RightPanelComponent.h; sourceTree = SOURCE_ROOT; };
@@ -185,6 +188,7 @@
 		F1196F8D001317AABA13211C /* AudioResource.h */ /* AudioResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResource.h; path = ../../Source/Engine/AudioResource.h; sourceTree = SOURCE_ROOT; };
 		F5F7DEF8952E76FA005897ED /* CMakeLists.txt */ /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = CMakeLists.txt; path = ../../Catch2Tests/CMakeLists.txt; sourceTree = SOURCE_ROOT; };
 		F606AA824C91677FAABA4C90 /* juce_audio_utils */ /* juce_audio_utils */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_utils; path = ../../../Submodules/juce/modules/juce_audio_utils; sourceTree = SOURCE_ROOT; };
+		F62ECD7362B186DC805B431E /* NewRegionDialog.h */ /* NewRegionDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NewRegionDialog.h; path = ../../Source/Interface/Dialogs/NewRegionDialog.h; sourceTree = SOURCE_ROOT; };
 		F9816C9AA6BF2BC4109172C2 /* include_juce_data_structures.mm */ /* include_juce_data_structures.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_data_structures.mm; path = ../../JuceLibraryCode/include_juce_data_structures.mm; sourceTree = SOURCE_ROOT; };
 		FB12E15EC8D6A7508A7AD628 /* juce_events */ /* juce_events */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_events; path = ../../../Submodules/juce/modules/juce_events; sourceTree = SOURCE_ROOT; };
 		FCFE7BAFE60434E7AC10F171 /* MiddlePanelComponent.cpp */ /* MiddlePanelComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MiddlePanelComponent.cpp; path = ../../Source/Interface/Components/MiddlePanelComponent.cpp; sourceTree = SOURCE_ROOT; };
@@ -299,7 +303,6 @@
 			children = (
 				15B08AD17A4543A6F9323602,
 				84484F21C03C97F770F1A3FE,
-				8F257C78E3330C3EA1C34E7C,
 				352338A322365BD5C3C74D37,
 				ECB46507DAEC7211AEAFD67D,
 			);
@@ -386,6 +389,17 @@
 			name = Catch2Tests;
 			sourceTree = "<group>";
 		};
+		9BE2411EEC9E2E92208463DB /* Dialogs */ = {
+			isa = PBXGroup;
+			children = (
+				E7074F66C3DD69F43FBB467D,
+				4F52032EA1179E2EDC03E78A,
+				CD915B059555AF45DF4EB0A9,
+				F62ECD7362B186DC805B431E,
+			);
+			name = Dialogs;
+			sourceTree = "<group>";
+		};
 		A60DF503B2F410F6DDB29C77 /* Controls */ = {
 			isa = PBXGroup;
 			children = (
@@ -462,6 +476,7 @@
 		F6A2B10C9F67009466562221 /* Interface */ = {
 			isa = PBXGroup;
 			children = (
+				9BE2411EEC9E2E92208463DB,
 				8715E10D92C11AA88EAF3D05,
 				483FBB3F0EC1E3D8EFB8E078,
 				D983C7A6E23DC948014EE2B0,
@@ -604,6 +619,7 @@
 				3F9482CA60D21CF6105DE20B,
 				3886E546FC38F3D25492FB2C,
 				A88A358B1261DB60A7CB582F,
+				5286B01DB14BE28BDA88F629,
 				2C317733B07AECA65EA0862F,
 				4AEB71E53A29D683D72A9F41,
 				8D8400584C5C1D895C098B5A,

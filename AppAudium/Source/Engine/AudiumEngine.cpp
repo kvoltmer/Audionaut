@@ -143,12 +143,12 @@ void AudiumEngine::cleanup()
     currentFile = File();
 }
 
-void AudiumEngine::invokeAutoEdit()
+void AudiumEngine::invokeAutoEdit(const AutoEditConfig config)
 {
     std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioResourceContainer,
                                                     audioRegionContainer,
                                                     playListContainer));
-    if (autoEdit->invokeAutoEdit())
+    if (autoEdit->invokeAutoEdit(config))
     {
         autoEdit->applyAutoEditResult();
     }

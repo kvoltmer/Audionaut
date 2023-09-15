@@ -18,6 +18,7 @@
 
 class TransportSourceProvider;
 class PlayListScheduler;
+struct AutoEditConfig;
 
 /// The Audium engine
 class AudiumEngine {
@@ -51,7 +52,7 @@ public:
     std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
-    void invokeAutoEdit();
+    void invokeAutoEdit(const AutoEditConfig config);
     
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
