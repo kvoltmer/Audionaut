@@ -125,6 +125,7 @@ void AutoEdit::applyAutoEditResult()
             position.setStart(static_cast<double>(elem["start"]) / sampleRate);
             position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
             juce::String regionName = "seg-" + juce::String(counter++);
+            // CREATE REGION
             audioRegionContainer->createRegion(regionName, position);
         }
         segFile.close();
@@ -151,9 +152,12 @@ void AutoEdit::applyAutoEditResult()
             jassert(juce::String(filename).contains(region->name));
             
             auto insertIndex = static_cast<int>(playListContainer->playListItems.size());
+            // CREATE PLAYLIST ITEM
             playListContainer->createPlayListItem(elem["index"], insertIndex);
             
+            // is the duration consitant?
             double duration = elem["duration"];
+            jassert(juce::approximatelyEqual(duration, region->position.getLength()));
         }
         songFile.close();
     }
@@ -166,48 +170,3 @@ void AutoEdit::applyAutoEditResult()
     // updateUI
     playListContainer->sendActionMessage("");
 }
-
-
-//        FILE *fp = nullptr;
-//        char path[1035];
-//
-//        // Open the command for reading.
-//        fp = popen(str.c_str(), "r");
-//        if (fp == nullptr)
-//        {
-//            printf("Failed to run command\n" );
-//            return;
-//        }
-//
-//        // Read the output a line at a time - output it.
-//        while (fgets(path, sizeof(path), fp) != nullptr)
-//        {
-//            printf("%s", path);
-//        }
-//
-//        // close
-//        pclose(fp);
-
-
-//    std::string str = "/opt/homebrew/bin/python3 --version";
-//    //str = str + " -o a.out " + filename;
-//
-//    const char *command = str.c_str();
-//    system(command);
-    
-//    juce::ChildProcess cp;
-    
-    // cp.start (StringArray ("zsh", "-c", "ps aux | grep chrome"));
-    // cp.start (StringArray ("zsh", "-c", "pwd"));
-    // cp.start (StringArray ("/opt/homebrew/bin/python3", "--version"));
-    
-    // cp.start (StringArray ("/opt/homebrew/bin/python3", "/Users/klausvoltmer/dev/smp_audio/scripts/automain.py", "--verbose", "autoedit"));
-    // cp.start (StringArray ("zsh", "-c", "/opt/homebrew/bin/python3 /Users/klausvoltmer/dev/playground/ess.py"));
-    //cp.start (StringArray ("zsh", "-c", "echo $ZDOTDIR"));
-    //cp.start (StringArray ("zsh", "-c", "ENV=/Users/klausvoltmer/.zshrc exec zsh | echo $PATH"));
-    
-    // python3 scripts/automain.py --verbose autoedit --filenames ./TRK18-stereo.WAV
-    
-//    juce::String output = cp.readAllProcessOutput();
-//    DBG ("Command Output:\n" + output + "\n");
-//    uint32 exitCode = cp.getExitCode();
