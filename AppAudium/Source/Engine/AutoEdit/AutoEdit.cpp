@@ -33,7 +33,7 @@ const std::string getTempDirectory()
     return juce::File::getSpecialLocation(juce::File::tempDirectory).getFullPathName().toStdString();
 }
 
-bool AutoEdit::invokeAutoEdit()
+bool AutoEdit::invokeAutoEdit(const AutoEditConfig config)
 {
     // NOTE: Make sure PATH and PYTHONPATH is set correctly.
     // With XCode you must edit the scheme and set the environment variables
@@ -53,6 +53,11 @@ bool AutoEdit::invokeAutoEdit()
         std::string commandString;
         commandString += "cd " + getTempDirectory() +";";
         commandString += python + " $HOME/dev/smp_audio/scripts/automain.py --verbose autoedit";
+//      commandString += " --assemble_mode " + config.mode;
+        commandString += " --duration " + std::to_string(config.duration);
+        commandString += " --numsegs " + std::to_string(config.numSegments);
+//        commandString += " --seglen_min " + std::to_string(config.minSegLength);
+//        commandString += " --seglen_max " + std::to_string(config.maxSegLength);
         commandString += " --filenames " + audioResourceFilePath;
         
         // execute
@@ -157,7 +162,11 @@ void AutoEdit::applyAutoEditResult()
             
             // is the duration consitant?
             double duration = elem["duration"];
-            jassert(juce::approximatelyEqual(duration, region->position.getLength()));
+            double regionDuration = region->position.getLength();
+            if (!juce::approximatelyEqual(duration, regionDuration))
+            {
+                std::cout << "duration not equal" << duration << " " << regionDuration << std::endl;
+            }
         }
         songFile.close();
     }

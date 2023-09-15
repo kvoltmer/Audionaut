@@ -139,7 +139,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             newRegionDialog.createNewRegion(getEngine());
             break;
         case CommandIDs::autoEdit:
-            getEngine()->invokeAutoEdit();
+            autoEditDialog.invokeAutoEdit(getEngine(), mainComponent);
             break;
         case CommandIDs::zoomIn:
             mainComponent->zoomIn();

@@ -16,6 +16,14 @@ class AudioResourceContainer;
 class AudioRegionContainer;
 class PlayListContainer;
 
+struct AutoEditConfig {
+    std::string mode = "random";
+    double duration = 60.0;
+    int numSegments = 20;
+    double minSegLength = 2.0;
+    double maxSegLength = 60.0;
+};
+
 class AutoEdit {
     
 public:
@@ -23,7 +31,7 @@ public:
              std::shared_ptr<AudioRegionContainer> audioRegionContainer,
              std::shared_ptr<PlayListContainer> playListContainer);
     
-    bool invokeAutoEdit();
+    bool invokeAutoEdit(const AutoEditConfig config);
     void applyAutoEditResult();
     
 private:

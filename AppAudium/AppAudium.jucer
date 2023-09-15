@@ -29,8 +29,6 @@
         <FILE id="DdTX0t" name="EngineAccess.cpp" compile="1" resource="0"
               file="Source/Util/EngineAccess.cpp"/>
         <FILE id="ynCVR0" name="EngineAccess.h" compile="0" resource="0" file="Source/Util/EngineAccess.h"/>
-        <FILE id="Y6BYrp" name="NewRegionDialog.h" compile="0" resource="0"
-              file="Source/Util/NewRegionDialog.h"/>
         <FILE id="rysRho" name="Preferences.cpp" compile="1" resource="0" file="Source/Util/Preferences.cpp"/>
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
@@ -82,6 +80,16 @@
               file="Source/Engine/AudioResourceContainer.h"/>
       </GROUP>
       <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
+        <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
+          <FILE id="y2L75o" name="AutoEditComponent.cpp" compile="1" resource="0"
+                file="Source/Interface/Dialogs/AutoEditComponent.cpp"/>
+          <FILE id="rN8IxH" name="AutoEditComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AutoEditComponent.h"/>
+          <FILE id="HO4Dqt" name="AutoEditDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AutoEditDialog.h"/>
+          <FILE id="sr4hwK" name="NewRegionDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/NewRegionDialog.h"/>
+        </GROUP>
         <FILE id="CYohEV" name="AudiumLookAndFeel.cpp" compile="1" resource="0"
               file="Source/Interface/AudiumLookAndFeel.cpp"/>
         <FILE id="HYtvw9" name="AudiumLookAndFeel.h" compile="0" resource="0"
