@@ -20,9 +20,11 @@ using namespace juce;
 
 
 class AudioResource;
-
+class AudioRegionView;
+class PlayListContainer;
 
 //==============================================================================
+/// TODO: rename this class to something like TrackComponent
 class WaveFormComponent  : public Component,
                            public ChangeListener,
                            public FileDragAndDropTarget,
@@ -31,6 +33,7 @@ class WaveFormComponent  : public Component,
 {
 public:
     WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
+                       std::shared_ptr<PlayListContainer> playListContainer,
                        std::shared_ptr<ZoomHandler> zoomHandler);
 
     ~WaveFormComponent() override;
@@ -39,7 +42,7 @@ public:
 
     void setFollowsTransport (bool shouldFollow);
 
-    void paint (Graphics& g) override;
+    //void paint (Graphics& g) override;
 
     void resized() override;
 
@@ -60,11 +63,9 @@ public:
 private:
     
     std::shared_ptr<AudioResource> audioResource;
-
+    std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    
-    std::unique_ptr<ResizableEdgeComponent> resizableEdgeComponent;
-    std::unique_ptr<ResizableBorderComponent> resizableBorderComponent;
+    std::vector<std::shared_ptr<AudioRegionView>> audioRegionViews;
 
     void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override;
     

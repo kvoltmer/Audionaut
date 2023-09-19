@@ -48,7 +48,8 @@ public:
     const juce::String getFullPathName() const;
     
     /// TODO: move this to WaveFormTableListBoxModel
-    int height = 100;
+    int getHeight() const { return height * getNumChannels(); }
+    
     
     /// TODO: move this to a gui state
     juce::Colour currentColour;
@@ -59,7 +60,8 @@ public:
     AudioResourceContainer& getContainer() const { return owner; }
     
     double getSampleRate() const;
-    
+    unsigned int getNumChannels() const;
+
 private:
 
     AudioResourceContainer& owner;
@@ -69,6 +71,8 @@ private:
     juce::AudioThumbnail thumbnail;
     
     std::shared_ptr<AudioPlayer> audioPlayer;
+    
+    int height = 100;
     
 private:
     //==============================================================================
