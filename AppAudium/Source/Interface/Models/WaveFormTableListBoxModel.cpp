@@ -28,7 +28,7 @@ WaveFormTableListBoxModel::~WaveFormTableListBoxModel()
 
 int WaveFormTableListBoxModel::getNumRows()
 {
-    return audioResourceContainer->getAudioResourceSize();
+    return audioResourceContainer->getNumAudioResources();
 }
 
 void WaveFormTableListBoxModel::paintListBoxItem ( int rowNumber,
@@ -75,7 +75,7 @@ juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumbe
 
 int WaveFormTableListBoxModel::getRowHeight (int rowNumber) const
 {
-    if (rowNumber < audioResourceContainer->getAudioResourceSize())
+    if (rowNumber < audioResourceContainer->getNumAudioResources())
     {
         auto audioResource = audioResourceContainer->getAudioResource(rowNumber);
         return audioResource->height;

@@ -12,13 +12,16 @@
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
 
+class AudioResourceContainer;
+
 class AudioRegionContainer : public juce::ActionBroadcaster
 {
                                             
 public:
     AudioRegionContainer() = default;
     
-    void createRegion(juce::String regionName, juce::Range<double> position);
+    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer);
+    std::shared_ptr<AudioRegion> createRegion(juce::String regionName, juce::Range<double> position);
     void deleteRegion(int rowNumber);
     
     void setRegionPosition(juce::Range<double> pos);

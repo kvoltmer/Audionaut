@@ -11,15 +11,28 @@
 
 #include "AudioRegionContainer.h"
 #include "Engine/ActionMessages.h"
+#include "Engine/AudioResourceContainer.h"
 
-void AudioRegionContainer::createRegion(juce::String regionName, juce::Range<double> position)
+std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer)
+{
+    jassert(getNumRegions() == 0);
+    jassert(audioResourceContainer->getNumAudioResources() > 0);
+    
+    auto name = audioResourceContainer->getAudioResource(0)->getFileNameWithoutExtension();
+    auto totalLength = audioResourceContainer->getTotalLengthMax();
+    return createRegion(name, juce::Range(0.0, totalLength));
+}
+
+std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String regionName, juce::Range<double> position)
 {
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion());
     audioRegion->position = position;
     audioRegion->name = regionName;
     audioRegions.push_back(audioRegion);
-    selectedRowNumber = static_cast<int>(audioRegions.size() - 1);
+    // don't select by default
+    // selectedRowNumber = static_cast<int>(audioRegions.size() - 1);
     sendActionMessage(regionCreatedAction);
+    return audioRegion;
 }
 
 void AudioRegionContainer::deleteRegion(int atIndex)

@@ -75,7 +75,7 @@ bool AudioResourceContainer::removeAudioResource (int atIndex)
 
 std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int index) const
 {
-    if (index < getAudioResourceSize())
+    if (index < getNumAudioResources())
     {
         return audioResources[(std::size_t)index];
     }

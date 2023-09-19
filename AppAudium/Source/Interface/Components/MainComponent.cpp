@@ -130,6 +130,7 @@ void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX
         auto url = URL (File (filenames[i]));
         audiumEngine->getAudioResourceContainer()->addAudioResource(url);
     }
+    audiumEngine->createDefaultRegionAndPlayList();
     updateUI();
 
     //[/UserCode_filesDropped]
