@@ -126,12 +126,22 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
         {
             if (playListContainer->readFromStream(in))
             {
+                createDefaultRegionAndPlayList();
                 return true;
             }
         }
     }
-    
     return false;
+}
+
+void AudiumEngine::createDefaultRegionAndPlayList()
+{
+    if (audioRegionContainer->getNumRegions() == 0)
+    {
+        auto region = audioRegionContainer->createDefaultRegion(audioResourceContainer);
+        jassert(playListContainer->getNumItems() == 0);
+        playListContainer->createPlayListItem(region);
+    }
 }
 
 void AudiumEngine::cleanup()

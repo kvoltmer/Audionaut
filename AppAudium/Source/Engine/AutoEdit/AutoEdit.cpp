@@ -45,7 +45,7 @@ bool AutoEdit::invokeAutoEdit(const AutoEditConfig config)
     
     
     // For now we simply use the first audio resource of the project
-    if (audioResourceContainer->getAudioResourceSize() > 0)
+    if (audioResourceContainer->getNumAudioResources() > 0)
     {
         audioResourceFilePath = audioResourceContainer->getAudioResource(0)->getFullPathName().toStdString();
         

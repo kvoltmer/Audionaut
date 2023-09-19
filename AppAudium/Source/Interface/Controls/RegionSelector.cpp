@@ -123,8 +123,8 @@ void RegionSelector::createRectangleAndSetBonds()
 {
     // create a rectange
     auto rect = Rectangle<int> (dragStartPos, dragEndPos);
-    
-    rect.setTop(owner->getBounds().getY() + owner->getHeaderComponent()->getHeight());
+    auto headerHeight = owner->getHeaderComponent() ? owner->getHeaderComponent()->getHeight() : 0;
+    rect.setTop(owner->getBounds().getY() + headerHeight);
     rect.setHeight(owner->getAllRowsHeight());
     
     // set the size of this component, the width is expanded to simplify selection dragging

@@ -48,7 +48,7 @@ public:
     const juce::String getFullPathName() const;
     
     /// TODO: move this to WaveFormTableListBoxModel
-    int height = 200;
+    int height = 100;
     
     /// TODO: move this to a gui state
     juce::Colour currentColour;

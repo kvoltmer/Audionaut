@@ -39,6 +39,7 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
+    void createDefaultRegionAndPlayList();
     
     static const char* projectFileExtension;
     
