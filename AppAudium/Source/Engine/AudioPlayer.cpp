@@ -35,6 +35,7 @@ AudioPlayer::AudioPlayer(std::shared_ptr<juce::AudioTransportSource> audioTransp
     audioFormatReaderSource = std::make_unique<juce::AudioFormatReaderSource> (reader.release(), true);
 
     sampleRate = audioFormatReaderSource->getAudioFormatReader()->sampleRate;
+    numChannels = audioFormatReaderSource->getAudioFormatReader()->numChannels;
     // plug it into the transport source
     audioTransportSource->setSource (audioFormatReaderSource.get(),
                                     32768,                   // tells it to buffer this many samples ahead

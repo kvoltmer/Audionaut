@@ -30,6 +30,7 @@ MiddlePanelComponent::MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumE
     regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler, audiumEngine));
     waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(waveFormTableListBox,
                                                                   audiumEngine->getAudioResourceContainer(),
+                                                                  audiumEngine->getPlayListContainer(),
                                                                   zoomHandler,
                                                                   regionSelector));
     waveFormTableListBox->setModel(waveFormTableListBoxModel.get());

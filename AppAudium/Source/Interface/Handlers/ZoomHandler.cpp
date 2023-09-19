@@ -76,10 +76,16 @@ juce::Range<double> ZoomHandler::getTotalRange() const noexcept
 
 double ZoomHandler::timeToX (const double time) const
 {
+    /// TODO: this is ugly
+    if (getWidth() == 0)
+    {
+        return 0.0;
+    }
+    
     if (totalRange.getLength() <= 0)
         return 0;
 
-    jassert(getWidth() > 0);
+    //jassert(getWidth() > 0);
     return (double) getWidth() * (double) ((time - totalRange.getStart()) / totalRange.getLength());
 }
 

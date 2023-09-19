@@ -18,7 +18,7 @@ class PlayListContainer;
 
 struct AutoEditConfig {
     std::string mode = "random";
-    double duration = 60.0;
+    double duration = 120.0;
     int numSegments = 20;
     double minSegLength = 2.0;
     double maxSegLength = 60.0;

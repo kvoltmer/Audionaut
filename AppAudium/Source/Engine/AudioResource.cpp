@@ -80,3 +80,8 @@ double AudioResource::getSampleRate() const
 {
     return audioPlayer->sampleRate;
 }
+
+unsigned int AudioResource::getNumChannels() const
+{
+    return audioPlayer->numChannels;
+}

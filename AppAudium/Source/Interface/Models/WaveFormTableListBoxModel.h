@@ -13,6 +13,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Components/WaveFormComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
@@ -25,6 +26,7 @@ public:
     
     WaveFormTableListBoxModel(std::shared_ptr<WaveFormTableListBox> owner,
                               std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                              std::shared_ptr<PlayListContainer> playListContainer,
                               std::shared_ptr<ZoomHandler> zoomHandler,
                               std::shared_ptr<RegionSelector> RegionSelector);
     ~WaveFormTableListBoxModel();
@@ -51,7 +53,7 @@ public:
 private:
     
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
-    
+    std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<ZoomHandler> zoomHandler;
     
     /// remove this
