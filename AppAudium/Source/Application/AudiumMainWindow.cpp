@@ -13,7 +13,7 @@
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
 #include "Engine/TransportSourceProvider.h"
-#include "Engine/PlayList/PlayListSchedulder.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)

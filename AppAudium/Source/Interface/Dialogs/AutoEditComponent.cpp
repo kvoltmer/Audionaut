@@ -84,7 +84,7 @@ AutoEditComponent::AutoEditComponent ()
     duration->setScrollbarsShown (true);
     duration->setCaretVisible (true);
     duration->setPopupMenuEnabled (true);
-    duration->setText (TRANS("120.0"));
+    duration->setText (TRANS("60.0"));
 
     duration->setBounds (149, 39, 150, 24);
 
