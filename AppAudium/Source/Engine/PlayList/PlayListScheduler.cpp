@@ -1,14 +1,14 @@
 /*
   ==============================================================================
 
-    PlayListSchedulder.cpp
+    PlayListScheduler.cpp
     Created: 5 Jul 2023 3:22:44pm
     Author:  Klaus Voltmer
 
   ==============================================================================
 */
 
-#include "PlayListSchedulder.h"
+#include "PlayListScheduler.h"
 #include "Engine/TransportSourceProvider.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/ActionMessages.h"

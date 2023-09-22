@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListContainer.h"
-#include "Engine/PlayList/PlayListSchedulder.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegion.h"
 #include "Interface/Controls/PlayListTableListBox.h"
