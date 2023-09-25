@@ -45,9 +45,16 @@ juce_generate_juce_header(${APP_NAME})
 
 file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
+        ${SRC_PATH}/Engine/AutoEdit/*.cpp
+        ${SRC_PATH}/Engine/PlayList/*.cpp
+        ${SRC_PATH}/Interface/*.cpp
         ${SRC_PATH}/Interface/Handlers/*.cpp
         ${SRC_PATH}/Interface/Components/*.cpp
         ${SRC_PATH}/Interface/Controls/*.cpp
+        ${SRC_PATH}/Interface/Dialogs/*.cpp
+        ${SRC_PATH}/Interface/Models/*.cpp
+        ${SRC_PATH}/Interface/Views/*.cpp
+        ${SRC_PATH}/Interface/Widgets/*.cpp
         ${SRC_PATH}/Util/*.cpp
         )
         
@@ -65,6 +72,7 @@ target_sources(${APP_NAME}
         
 target_include_directories(${APP_NAME}
                         PUBLIC ../Source/
+                        PUBLIC ../../Submodules/json/include
                         )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer

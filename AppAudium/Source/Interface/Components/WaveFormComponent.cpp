@@ -32,8 +32,12 @@ WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResour
     playListContainer(playListContainer),
     zoomHandler(zoomHandler)
 {
-
+    jassert(this->playListContainer);
+    jassert(this->zoomHandler);
+    
     setAudioResource(audioResource);
+    
+    jassert(this->audioResource);
     
     /// simply iteraterate our colour scheme and assign our current colour
     assert(this->audioResource);
