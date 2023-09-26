@@ -59,9 +59,10 @@ file(GLOB SRC_AUDIUM
         )
         
 file(GLOB SRC_TESTS
-        JuceTest.cpp
+        #JuceTest.cpp
         FactorialTest.cpp
         ZoomHandlerTests.cpp
+        ResourceContainerTests.cpp
         )
 
 target_sources(${APP_NAME}

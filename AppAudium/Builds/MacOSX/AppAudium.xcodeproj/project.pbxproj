@@ -186,6 +186,7 @@
 		EBCAA43C5258D98640A638F6 /* juce_audio_formats */ /* juce_audio_formats */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_formats; path = ../../../Submodules/juce/modules/juce_audio_formats; sourceTree = SOURCE_ROOT; };
 		EC172FD2CA563F06B6901917 /* RightPanelComponent.h */ /* RightPanelComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RightPanelComponent.h; path = ../../Source/Interface/Components/RightPanelComponent.h; sourceTree = SOURCE_ROOT; };
 		ECB46507DAEC7211AEAFD67D /* Preferences.h */ /* Preferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Preferences.h; path = ../../Source/Util/Preferences.h; sourceTree = SOURCE_ROOT; };
+		ECF8E3AB7F9A00386B651718 /* AudioResourceGroup.h */ /* AudioResourceGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResourceGroup.h; path = ../../Source/Engine/AudioResourceGroup.h; sourceTree = SOURCE_ROOT; };
 		EFB67C5172FD56D59C0F3443 /* include_juce_audio_utils.mm */ /* include_juce_audio_utils.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_utils.mm; path = ../../JuceLibraryCode/include_juce_audio_utils.mm; sourceTree = SOURCE_ROOT; };
 		F0C4F5AE7B7A830FDF5AEC81 /* PlayListContainer.cpp */ /* PlayListContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListContainer.cpp; path = ../../Source/Engine/PlayList/PlayListContainer.cpp; sourceTree = SOURCE_ROOT; };
 		F1196F8D001317AABA13211C /* AudioResource.h */ /* AudioResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResource.h; path = ../../Source/Engine/AudioResource.h; sourceTree = SOURCE_ROOT; };
@@ -513,6 +514,7 @@
 				BC1EBB5D32E106083809E731,
 				332BA11702CE2968C66F90B4,
 				F1196F8D001317AABA13211C,
+				ECF8E3AB7F9A00386B651718,
 				520E7150F3B0BE3B50B1C93A,
 				165654E9D1DC2FF03045843C,
 				8AD81791B89E55FB8C43535A,

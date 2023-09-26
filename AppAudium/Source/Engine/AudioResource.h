@@ -47,15 +47,14 @@ public:
     
     const juce::String getFullPathName() const;
     
+    const juce::String getUrlAsString() const;
+    
     /// TODO: move this to WaveFormTableListBoxModel
     int getHeight() const { return height * getNumChannels(); }
     
     
     /// TODO: move this to a gui state
     juce::Colour currentColour;
-    
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
     
     AudioResourceContainer& getContainer() const { return owner; }
     
