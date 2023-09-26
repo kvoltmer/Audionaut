@@ -71,6 +71,8 @@
         <FILE id="fjWrqk" name="AudioResource.cpp" compile="1" resource="0"
               file="Source/Engine/AudioResource.cpp"/>
         <FILE id="IvbeUH" name="AudioResource.h" compile="0" resource="0" file="Source/Engine/AudioResource.h"/>
+        <FILE id="XDfgpU" name="AudioResourceGroup.h" compile="0" resource="0"
+              file="Source/Engine/AudioResourceGroup.h"/>
         <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumEngine.cpp"/>
         <FILE id="Oik4J0" name="AudiumEngine.h" compile="0" resource="0" file="Source/Engine/AudiumEngine.h"/>

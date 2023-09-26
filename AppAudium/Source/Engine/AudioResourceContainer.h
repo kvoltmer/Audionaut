@@ -13,6 +13,7 @@
 #include <memory>
 #include <JuceHeader.h>
 #include "AudioResource.h"
+#include "AudioResourceGroup.h"
 
 class TransportSourceProvider;
 
@@ -25,7 +26,7 @@ public:
     
     ~AudioResourceContainer();
     
-    std::shared_ptr<AudioResource> addAudioResource (juce::URL resource);
+    std::shared_ptr<AudioResource> addAudioResource (juce::URL resource, std::shared_ptr<AudioResourceGroup> group = nullptr);
     
     bool removeAudioResource (int atIndex);
     
@@ -44,9 +45,13 @@ public:
     
     void cleanup() { audioResources.clear(); }
     
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(std::shared_ptr<AudioResourceGroup> group) const;
+    
+    std::vector<std::shared_ptr<AudioResourceGroup>> getAudioResourceGroups() const;
+    
 private:
     
-    std::vector<std::shared_ptr<AudioResource>> audioResources;
+    std::multimap < std::shared_ptr<AudioResourceGroup>, std::shared_ptr<AudioResource> > audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<TransportSourceProvider> transportSourceProvider;

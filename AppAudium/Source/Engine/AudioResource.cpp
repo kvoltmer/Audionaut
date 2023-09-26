@@ -61,19 +61,10 @@ const juce::String AudioResource::getFullPathName() const
     return url.getLocalFile().getFullPathName();
 }
 
-bool AudioResource::writeToStream (juce::OutputStream& outputStream)
+const juce::String AudioResource::getUrlAsString() const
 {
-    const juce::String name = url.toString(true);
-    outputStream.writeString(name);
-    return true;
-}
-
-bool AudioResource::readFromStream (juce::InputStream& inputStream)
-{
-//    auto inString = inputStream.readString();
-//    url = juce::URL(inString);
-//    owner->addAudioResource()
-    return true;
+    // Returns a string version of the URL.
+    return url.toString(true);
 }
 
 double AudioResource::getSampleRate() const

@@ -41,7 +41,7 @@ AudioResourceContainer::~AudioResourceContainer()
     audioResources.clear();
 }
 
-std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url)
+std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url, std::shared_ptr<AudioResourceGroup> group)
 {
     if (auto inputSource = makeAudioInputSource (url))
     {
@@ -53,7 +53,29 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                         formatManager,
                                                                         &thread));
         auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, url, inputSource.get(), formatManager, audioPlayer, thumbnailCache));
-        audioResources.push_back(audioResource);
+        
+        std::shared_ptr<AudioResourceGroup> audioResourceGroup = nullptr;
+        
+        if (group != nullptr)
+        {
+            audioResourceGroup = group;
+        }
+        else // no group provided
+        {
+            // create default group
+            if (audioResources.size() == 0)
+            {
+                audioResourceGroup = std::shared_ptr<AudioResourceGroup>(new AudioResourceGroup(url.getFileName().toStdString()));
+            }
+            else // add to first group
+            {
+                auto groups = getAudioResourceGroups();
+                jassert(groups.size() > 0);
+                audioResourceGroup = groups[0];
+            }
+        }
+        audioResources.insert({audioResourceGroup, audioResource});
+        
         inputSource.release();
         return audioResource;
     }
@@ -64,11 +86,15 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 
 bool AudioResourceContainer::removeAudioResource (int atIndex)
 {
-    if (atIndex < 0 || atIndex >= audioResources.size())
+    size_t idx = static_cast<size_t>(atIndex);
+    if (idx < 0 || idx >= audioResources.size())
         return false;
     
-    transportSourceProvider->removeTransportSource(audioResources[atIndex]->getAudioTransportSource());
-    audioResources.erase(audioResources.begin() + atIndex);
+    auto it = audioResources.begin();
+    std::advance(it, atIndex);
+    
+    transportSourceProvider->removeTransportSource(it->second->getAudioTransportSource());
+    audioResources.erase(it);
     
     return true;
 }
@@ -77,7 +103,9 @@ std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int inde
 {
     if (index < getNumAudioResources())
     {
-        return audioResources[(std::size_t)index];
+        auto it = audioResources.begin();
+        std::advance(it, index);
+        return it->second;
     }
     return nullptr;
 }
@@ -89,30 +117,71 @@ double AudioResourceContainer::getTotalLengthMax() const
     
     for (auto & element : audioResources)
     {
-        length = std::max(length, element->getThumbnail().getTotalLength());
+        length = std::max(length, element.second->getThumbnail().getTotalLength());
     }
     return length;
 }
 
 bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
 {
-    outputStream.writeInt((int)audioResources.size());
-    for (auto & resource : audioResources)
+    auto groups = getAudioResourceGroups();
+    outputStream.writeInt(static_cast<int>(groups.size()));
+    
+    for (auto & group : groups)
     {
-        resource->writeToStream(outputStream);
+        outputStream.writeString(juce::String(group->getName()));
+        auto resources = getAudioResourcesForGroup(group);
+        outputStream.writeInt(static_cast<int>(resources.size()));
+        
+        for (auto & resource : resources)
+        {
+            outputStream.writeString(resource->getUrlAsString());
+        }
     }
+    
     return true;
 }
 
 bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream)
 {
     audioResources.clear();
-    auto numResources = inputStream.readInt();
-    for (auto i = 0; i < numResources; i++)
+    
+    auto numGroups = inputStream.readInt();
+    for (auto g = 0; g < numGroups; g++)
     {
-        auto inString = inputStream.readString();
-        addAudioResource(juce::URL(inString));
+        auto groupName = inputStream.readString();
+        auto group = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(groupName.toStdString()));
+        
+        auto numResources = inputStream.readInt();
+        for (auto r = 0; r < numResources; r++)
+        {
+            auto inString = inputStream.readString();
+            addAudioResource(juce::URL(inString), group);
+        }
     }
     
     return true;
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroup(std::shared_ptr<AudioResourceGroup> group) const
+{
+    std::vector<std::shared_ptr<AudioResource>> result;
+    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
+    {
+        if (itr->first == group)
+        {
+            result.push_back(itr->second);
+        }
+    }
+    return result;
+}
+
+std::vector<std::shared_ptr<AudioResourceGroup>> AudioResourceContainer::getAudioResourceGroups() const
+{
+    std::vector<std::shared_ptr<AudioResourceGroup>> result;
+    for(  auto it = audioResources.begin(), end = audioResources.end(); it != end; it = audioResources.upper_bound(it->first))
+    {
+        result.push_back(it->first);
+    }
+    return result;
 }
