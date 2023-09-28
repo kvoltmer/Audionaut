@@ -63,7 +63,6 @@ const juce::String AudioResource::getFullPathName() const
 
 const juce::String AudioResource::getUrlAsString() const
 {
-    // Returns a string version of the URL.
     return url.toString(true);
 }
 

@@ -47,6 +47,7 @@ public:
     
     const juce::String getFullPathName() const;
     
+    // Returns a string version of the URL.
     const juce::String getUrlAsString() const;
     
     /// TODO: move this to WaveFormTableListBoxModel
