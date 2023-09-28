@@ -1,17 +1,9 @@
-/*
-  ==============================================================================
 
-    WaveFormListBoxModel.cpp
-    Created: 2 Feb 2023 5:15:07pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
 #include <iostream>
 
-#include "WaveFormTableListBoxModel.h"
+#include "AudioGroupListBoxModel.h"
 
-WaveFormTableListBoxModel::WaveFormTableListBoxModel(std::shared_ptr<WaveFormTableListBox> owner,
+AudioGroupListBoxModel::AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
                                                      std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                                                      std::shared_ptr<PlayListContainer> playListContainer,
                                                      std::shared_ptr<ZoomHandler> zoomHandler,
@@ -24,16 +16,16 @@ WaveFormTableListBoxModel::WaveFormTableListBoxModel(std::shared_ptr<WaveFormTab
 {
 }
 
-WaveFormTableListBoxModel::~WaveFormTableListBoxModel()
+AudioGroupListBoxModel::~AudioGroupListBoxModel()
 {
 }
 
-int WaveFormTableListBoxModel::getNumRows()
+int AudioGroupListBoxModel::getNumRows()
 {
     return audioResourceContainer->getNumAudioResources();
 }
 
-void WaveFormTableListBoxModel::paintListBoxItem ( int rowNumber,
+void AudioGroupListBoxModel::paintListBoxItem ( int rowNumber,
                         juce::Graphics& g,
                         int width, int height,
                         bool rowIsSelected)
@@ -46,7 +38,7 @@ void WaveFormTableListBoxModel::paintListBoxItem ( int rowNumber,
     }
 }
 
-juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumber, bool isRowSelected,
+juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, bool isRowSelected,
                                                                      juce::Component* existingComponentToUpdate)
 {
     if (existingComponentToUpdate == nullptr)
@@ -75,7 +67,7 @@ juce::Component* WaveFormTableListBoxModel::refreshComponentForRow (int rowNumbe
     return nullptr;
 }
 
-int WaveFormTableListBoxModel::getRowHeight (int rowNumber) const
+int AudioGroupListBoxModel::getRowHeight (int rowNumber) const
 {
     if (rowNumber < audioResourceContainer->getNumAudioResources())
     {
@@ -86,14 +78,14 @@ int WaveFormTableListBoxModel::getRowHeight (int rowNumber) const
     return 0;
 }
 
-void WaveFormTableListBoxModel::selectedRowsChanged (int lastRowSelected)
+void AudioGroupListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
     std::cout << "selectedRowsChanged: " << lastRowSelected << std::endl;
 }
 
-void WaveFormTableListBoxModel::deleteKeyPressed (int lastRowSelected)
+void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
-//    if (WaveFormTableListBox* list = this->findParentComponentOfClass<WaveFormTableListBox>())
+//    if (AudioGroupListBox* list = this->findParentComponentOfClass<AudioGroupListBox>())
 //    {
 //        list->updateContent();
 //    }
@@ -113,7 +105,7 @@ void WaveFormTableListBoxModel::deleteKeyPressed (int lastRowSelected)
     owner->updateContent();
 }
 
-void WaveFormTableListBoxModel::listWasScrolled()
+void AudioGroupListBoxModel::listWasScrolled()
 {
     jassert(regionSelector);
     regionSelector->updateFromEngine();

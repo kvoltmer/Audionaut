@@ -50,7 +50,7 @@ public:
     // Returns a string version of the URL.
     const juce::String getUrlAsString() const;
     
-    /// TODO: move this to WaveFormTableListBoxModel
+    /// TODO: move this to AudioGroupListBoxModel
     int getHeight() const { return height * getNumChannels(); }
     
     

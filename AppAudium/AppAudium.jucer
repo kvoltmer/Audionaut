@@ -141,10 +141,10 @@
                 file="Source/Interface/Models/RegionTableListBoxModel.cpp"/>
           <FILE id="XJwywE" name="RegionTableListBoxModel.h" compile="0" resource="0"
                 file="Source/Interface/Models/RegionTableListBoxModel.h"/>
-          <FILE id="BsvGs7" name="WaveFormTableListBoxModel.cpp" compile="1"
-                resource="0" file="Source/Interface/Models/WaveFormTableListBoxModel.cpp"/>
-          <FILE id="lIpNfO" name="WaveFormTableListBoxModel.h" compile="0" resource="0"
-                file="Source/Interface/Models/WaveFormTableListBoxModel.h"/>
+          <FILE id="BsvGs7" name="AudioGroupListBoxModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/AudioGroupListBoxModel.cpp"/>
+          <FILE id="lIpNfO" name="AudioGroupListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/AudioGroupListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
@@ -162,10 +162,10 @@
                 file="Source/Interface/Controls/RegionTableListBox.h"/>
           <FILE id="t9n5bB" name="TransportPositionControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/TransportPositionControl.h"/>
-          <FILE id="sKgt7C" name="WaveFormTableListBox.cpp" compile="1" resource="0"
-                file="Source/Interface/Controls/WaveFormTableListBox.cpp"/>
-          <FILE id="rUFHxk" name="WaveFormTableListBox.h" compile="0" resource="0"
-                file="Source/Interface/Controls/WaveFormTableListBox.h"/>
+          <FILE id="sKgt7C" name="AudioGroupListBox.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/AudioGroupListBox.cpp"/>
+          <FILE id="rUFHxk" name="AudioGroupListBox.h" compile="0" resource="0"
+                file="Source/Interface/Controls/AudioGroupListBox.h"/>
         </GROUP>
         <GROUP id="{251C6FB2-3F49-498C-8DDC-157FCCAC8565}" name="Views">
           <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"

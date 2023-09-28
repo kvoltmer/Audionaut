@@ -19,8 +19,8 @@
 class AudiumEngine;
 class ZoomHandler;
 class RegionSelector;
-class WaveFormTableListBox;
-class WaveFormTableListBoxModel;
+class AudioGroupListBox;
+class AudioGroupListBoxModel;
 class PlayPositionMarker;
 
 class MiddlePanelComponent  : public juce::Component
@@ -40,8 +40,8 @@ private:
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
-    std::shared_ptr<WaveFormTableListBox>       waveFormTableListBox;
-    std::shared_ptr<WaveFormTableListBoxModel>  waveFormTableListBoxModel;
+    std::shared_ptr<AudioGroupListBox>       audioGroupListBox;
+    std::shared_ptr<AudioGroupListBoxModel>  audioGroupListBoxModel;
     std::shared_ptr<PlayPositionMarker>         playPositionMarker;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MiddlePanelComponent)

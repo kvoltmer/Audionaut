@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "WaveFormComponent.h"
 #include "Util/EngineAccess.h"
-#include "Interface/Controls/WaveFormTableListBox.h"
+#include "Interface/Controls/AudioGroupListBox.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListContainer.h"
@@ -108,7 +108,7 @@ void WaveFormComponent::resized()
         /// TODO: change height
         // audioResource->getHeight() = getBounds().getHeight();
         
-        if (WaveFormTableListBox* list = this->findParentComponentOfClass<WaveFormTableListBox>())
+        if (AudioGroupListBox* list = this->findParentComponentOfClass<AudioGroupListBox>())
         {
             list->updateContent();
         }
