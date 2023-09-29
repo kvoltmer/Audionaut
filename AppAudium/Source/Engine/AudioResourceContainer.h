@@ -17,9 +17,8 @@
 
 class TransportSourceProvider;
 
-class AudioResourceContainer {
-    
-    
+class AudioResourceContainer
+{
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                            std::shared_ptr<TransportSourceProvider> transportSourceProvider);
@@ -28,11 +27,17 @@ public:
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL resource, std::shared_ptr<AudioResourceGroup> group = nullptr);
     
-    bool removeAudioResource (int atIndex);
+    bool removeAudioResourceGroup (int atIndex);
     
-    int getNumAudioResources() const { return static_cast<int>(audioResources.size()); }
+    // obsolete?
+    int getNumAudioResources() const;
     
+    int getNumAudioResourceGroups() const;
+    
+    // obsolete?
     std::shared_ptr<AudioResource> getAudioResource(int index) const;
+    
+    std::shared_ptr<AudioResourceGroup> getAudioResourceGroup(int index) const;
     
     /// returns the maximum length of all audio resources
     double getTotalLengthMax() const;

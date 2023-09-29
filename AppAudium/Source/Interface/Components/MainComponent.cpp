@@ -20,6 +20,7 @@
 //[Headers] You can add your own extra header files here...
 #include "MiddlePanelComponent.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/AudioResourceGroup.h"
 #include "RightPanelComponent.h"
 #include "Engine/ActionMessages.h"
 //[/Headers]
@@ -125,12 +126,20 @@ void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX
 {
     //[UserCode_filesDropped] -- Add your code here...
 
-    for (auto i = 0; i < filenames.size(); i++)
+    if ( !filenames.isEmpty())
     {
-        auto url = URL (File (filenames[i]));
-        audiumEngine->getAudioResourceContainer()->addAudioResource(url);
+        // create new group
+        jassert(File (filenames[0]).existsAsFile());
+        auto name = File (filenames[0]).getFileNameWithoutExtension().toStdString();
+        auto group = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(*audiumEngine->getAudioResourceContainer(), name));
+        
+        for (auto i = 0; i < filenames.size(); i++)
+        {
+            auto url = URL (File (filenames[i]));
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url, group);
+        }
+        audiumEngine->createDefaultRegionAndPlayList();
     }
-    audiumEngine->createDefaultRegionAndPlayList();
     updateUI();
 
     //[/UserCode_filesDropped]

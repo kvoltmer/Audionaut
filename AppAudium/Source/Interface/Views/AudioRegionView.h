@@ -17,7 +17,8 @@ class AudioResource;
 class ZoomHandler;
 class AudioRegion;
 
-class AudioRegionView  : public juce::Component
+class AudioRegionView : public juce::Component,
+                        public juce::ChangeListener
 {
 public:
     AudioRegionView(std::shared_ptr<AudioResource> audioResource,
@@ -26,7 +27,10 @@ public:
     ~AudioRegionView() override;
 
     void paint (juce::Graphics&) override;
+    
     void resized() override;
+    
+    void changeListenerCallback (juce::ChangeBroadcaster*) override;
     
     void setAudioResource (std::shared_ptr<AudioResource> audioResource);
 

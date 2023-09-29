@@ -22,7 +22,7 @@ AudioGroupListBoxModel::~AudioGroupListBoxModel()
 
 int AudioGroupListBoxModel::getNumRows()
 {
-    return audioResourceContainer->getNumAudioResources();
+    return audioResourceContainer->getNumAudioResourceGroups();
 }
 
 void AudioGroupListBoxModel::paintListBoxItem ( int rowNumber,
@@ -43,22 +43,22 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
 {
     if (existingComponentToUpdate == nullptr)
     {
-        auto audioResource = audioResourceContainer->getAudioResource(rowNumber);
-        if (audioResource != nullptr)
+        auto audioResourceGroup = audioResourceContainer->getAudioResourceGroup(rowNumber);
+        if (audioResourceGroup != nullptr)
         {
-            auto component = new WaveFormComponent(audioResource, playListContainer, zoomHandler);
+            auto component = new AudioGroupComponent(audioResourceGroup, playListContainer, zoomHandler);
             return component;
         }
     }
     else
     {
-        auto component = dynamic_cast<WaveFormComponent*>(existingComponentToUpdate);
+        auto component = dynamic_cast<AudioGroupComponent*>(existingComponentToUpdate);
         jassert(component);
-        auto audioResource = audioResourceContainer->getAudioResource(rowNumber);
-        if (audioResource != nullptr)
+        auto audioResourceGroup = audioResourceContainer->getAudioResourceGroup(rowNumber);
+        if (audioResourceGroup != nullptr)
         {
-            // update of audioResource since row might have changed after delete
-            component->setAudioResource(audioResource);
+            // update of audioResourceGroup since row might have changed after delete
+            component->setAudioResourceGroup(audioResourceGroup);
         }
         return component;
     }
@@ -69,10 +69,17 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
 
 int AudioGroupListBoxModel::getRowHeight (int rowNumber) const
 {
-    if (rowNumber < audioResourceContainer->getNumAudioResources())
+    if (rowNumber < audioResourceContainer->getNumAudioResourceGroups())
     {
-        auto audioResource = audioResourceContainer->getAudioResource(rowNumber);
-        return audioResource->getHeight();
+        auto group = audioResourceContainer->getAudioResourceGroup(rowNumber);
+        int height = 0;
+        auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group);
+        for (auto audioResource : audioResources)
+        {
+            height += audioResource->getHeight();
+        }
+        return height;
+        
     }
     jassertfalse;
     return 0;
@@ -95,9 +102,9 @@ void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
     
     for (int i = selected.size()-1; i >= 0; i--)
     {
-        std::cout << "selected = " << selected[i] << std::endl;
+        std::cout << "delete selected = " << selected[i] << std::endl;
         
-        audioResourceContainer->removeAudioResource(selected[i]);
+        audioResourceContainer->removeAudioResourceGroup(selected[i]);
         
     }
     std::cout << "---------" << std::endl;

@@ -71,6 +71,8 @@
         <FILE id="fjWrqk" name="AudioResource.cpp" compile="1" resource="0"
               file="Source/Engine/AudioResource.cpp"/>
         <FILE id="IvbeUH" name="AudioResource.h" compile="0" resource="0" file="Source/Engine/AudioResource.h"/>
+        <FILE id="yLDGCs" name="AudioResourceGroup.cpp" compile="1" resource="0"
+              file="Source/Engine/AudioResourceGroup.cpp"/>
         <FILE id="XDfgpU" name="AudioResourceGroup.h" compile="0" resource="0"
               file="Source/Engine/AudioResourceGroup.h"/>
         <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
@@ -108,6 +110,14 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
+          <FILE id="nADoLU" name="AudioGroupComponent.cpp" compile="1" resource="0"
+                file="Source/Interface/Components/AudioGroupComponent.cpp"/>
+          <FILE id="DcKSZR" name="AudioGroupComponent.h" compile="0" resource="0"
+                file="Source/Interface/Components/AudioGroupComponent.h"/>
+          <FILE id="uvqCyB" name="AudioGroupRegionComponent.cpp" compile="1"
+                resource="0" file="Source/Interface/Components/AudioGroupRegionComponent.cpp"/>
+          <FILE id="IU0rxb" name="AudioGroupRegionComponent.h" compile="0" resource="0"
+                file="Source/Interface/Components/AudioGroupRegionComponent.h"/>
           <FILE id="uZah0s" name="MainComponent.cpp" compile="1" resource="0"
                 file="Source/Interface/Components/MainComponent.cpp"/>
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
@@ -119,10 +129,6 @@
                 file="Source/Interface/Components/RightPanelComponent.cpp"/>
           <FILE id="Pzojdi" name="RightPanelComponent.h" compile="0" resource="0"
                 file="Source/Interface/Components/RightPanelComponent.h"/>
-          <FILE id="nADoLU" name="WaveFormComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/WaveFormComponent.cpp"/>
-          <FILE id="DcKSZR" name="WaveFormComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/WaveFormComponent.h"/>
           <FILE id="WNptEX" name="RegionComponent.h" compile="0" resource="0"
                 file="Source/Interface/Components/RegionComponent.h"/>
           <FILE id="u5f0RK" name="PlayListComponent.cpp" compile="1" resource="0"
