@@ -42,11 +42,11 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
         WHEN("adding 2 groups with numResources each")
         {
             
-            auto group1 = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup("Group 1"));
+            auto group1 = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(*container, "Group 1"));
             for (int i = 0; i < numResources; i++)
                 container->addAudioResource(juce::URL(inFile), group1);
             
-            auto group2 = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup("Group 2"));
+            auto group2 = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(*container, "Group 2"));
             for (int i = 0; i < numResources; i++)
                 container->addAudioResource(juce::URL(inFile), group2);
             

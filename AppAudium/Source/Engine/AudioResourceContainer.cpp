@@ -65,7 +65,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
             // create default group
             if (audioResources.size() == 0)
             {
-                audioResourceGroup = std::shared_ptr<AudioResourceGroup>(new AudioResourceGroup(url.getFileName().toStdString()));
+                audioResourceGroup = std::shared_ptr<AudioResourceGroup>(new AudioResourceGroup(*this, url.getFileName().toStdString()));
             }
             else // add to first group
             {
@@ -83,20 +83,37 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     return nullptr;
 }
 
-
-bool AudioResourceContainer::removeAudioResource (int atIndex)
+bool AudioResourceContainer::removeAudioResourceGroup (int atIndex)
 {
-    size_t idx = static_cast<size_t>(atIndex);
-    if (idx < 0 || idx >= audioResources.size())
-        return false;
+    auto group = getAudioResourceGroup(atIndex);
+    jassert(group != nullptr);
+    if (group != nullptr)
+    {
+        for (auto resource : group->getAudioResources())
+        {
+            transportSourceProvider->removeTransportSource(resource->getAudioTransportSource());
+        }
+        
+        audioResources.erase(group);
+        
+        if (audioResources.empty())
+        {
+            std::cout << "TODO: cleanup playlist and regions!" << std::endl;
+        }
+        return true;
+    }
     
-    auto it = audioResources.begin();
-    std::advance(it, atIndex);
-    
-    transportSourceProvider->removeTransportSource(it->second->getAudioTransportSource());
-    audioResources.erase(it);
-    
-    return true;
+    return false;
+}
+
+int AudioResourceContainer::getNumAudioResources() const
+{
+    return static_cast<int>(audioResources.size());
+}
+
+int AudioResourceContainer::getNumAudioResourceGroups() const
+{
+    return static_cast<int>(getAudioResourceGroups().size());
 }
 
 std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int index) const
@@ -108,6 +125,12 @@ std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int inde
         return it->second;
     }
     return nullptr;
+}
+
+std::shared_ptr<AudioResourceGroup> AudioResourceContainer::getAudioResourceGroup(int index) const
+{
+    jassert(index < getNumAudioResourceGroups());
+    return getAudioResourceGroups()[index];
 }
 
 
@@ -150,7 +173,7 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream)
     for (auto g = 0; g < numGroups; g++)
     {
         auto groupName = inputStream.readString();
-        auto group = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(groupName.toStdString()));
+        auto group = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(*this, groupName.toStdString()));
         
         auto numResources = inputStream.readInt();
         for (auto r = 0; r < numResources; r++)

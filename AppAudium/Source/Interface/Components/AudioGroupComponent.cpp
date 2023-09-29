@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    WaveFormComponent.cpp
+    AudioGroupComponent.cpp
     Created: 27 Nov 2022 3:25:58pm
     Author:  Klaus Voltmer
 
@@ -9,9 +9,10 @@
 */
 
 #include <JuceHeader.h>
-#include "WaveFormComponent.h"
+#include "AudioGroupComponent.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Controls/AudioGroupListBox.h"
+#include "Interface/Components/AudioGroupRegionComponent.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListContainer.h"
@@ -26,7 +27,7 @@ static const uint32 waveFormColourScheme[numWaveFormColours] = {
 };
 
 
-WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
+AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioResourceGroup> audioResourceGroup,
                                       std::shared_ptr<PlayListContainer> playListContainer,
                                       std::shared_ptr<ZoomHandler> zoomHandler) :
     playListContainer(playListContainer),
@@ -35,45 +36,32 @@ WaveFormComponent::WaveFormComponent (std::shared_ptr<AudioResource> audioResour
     jassert(this->playListContainer);
     jassert(this->zoomHandler);
     
-    setAudioResource(audioResource);
+    setAudioResourceGroup(audioResourceGroup);
     
-    jassert(this->audioResource);
+    jassert(this->audioResourceGroup);
     
     /// simply iteraterate our colour scheme and assign our current colour
-    assert(this->audioResource);
-    this->audioResource->currentColour = Colour(waveFormColourScheme[currentWaveFormColour++]);
+    assert(this->audioResourceGroup);
+    this->audioResourceGroup->setColour(Colour(waveFormColourScheme[currentWaveFormColour++]));
     if (currentWaveFormColour >= numWaveFormColours)
         currentWaveFormColour = 0;
     
-    
-
-    
 }
 
-WaveFormComponent::~WaveFormComponent()
+AudioGroupComponent::~AudioGroupComponent()
 {
-    if (audioResource != nullptr)
-    {
-        audioResource->getThumbnail().removeChangeListener(this);
-    }
 }
 
-void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> resource)
+void AudioGroupComponent::setAudioResourceGroup (std::shared_ptr<AudioResourceGroup> resourceGroup)
 {
-    //std::cout << "WaveFormComponent::setAudioResource" << std::endl;
+    //std::cout << "AudioGroupComponent::setAudioResource" << std::endl;
     zoomHandler->updateTotalLength();
-    if (audioResource != nullptr)
-    {
-        audioResource->getThumbnail().removeChangeListener(this);
-    }
     
-    audioResource = resource;
-    audioResource->getThumbnail().addChangeListener (this);
-    
+    audioResourceGroup = resourceGroup;
     
     /// TODO: improve this
     removeAllChildren();
-    audioRegionViews.clear();
+    audioGroupRegions.clear();
 //
 //    for (auto i = 0; i < playListContainer->getNumItems(); i++)
 //    {
@@ -86,90 +74,86 @@ void WaveFormComponent::setAudioResource (std::shared_ptr<AudioResource> resourc
     
     jassert(playListContainer->getPlayListItem(0));
     auto region = playListContainer->getPlayListItem(0)->getRegion();
-    std::shared_ptr<AudioRegionView> regionView = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource, zoomHandler, region));
-    addAndMakeVisible(regionView.get());
-    audioRegionViews.push_back(regionView);
+    //std::shared_ptr<AudioRegionView> regionView = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResourceGroup, zoomHandler, region));
+    
+    std::shared_ptr<AudioGroupRegionComponent> groupRegion = std::shared_ptr<AudioGroupRegionComponent>(new AudioGroupRegionComponent(audioResourceGroup, region, zoomHandler));
+    
+    addAndMakeVisible(groupRegion.get());
+    audioGroupRegions.push_back(groupRegion);
+   
+    // don't forget to update the region views
+    for (auto view : audioGroupRegions)
+    {
+        //setAudioResourceGroup(audioResourceGroup);
+    }
     
     resized();
     
 }
 
 
-void WaveFormComponent::scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart)
+void AudioGroupComponent::scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart)
 {
 }
 
 
-void WaveFormComponent::resized()
+void AudioGroupComponent::resized()
 {
-    if (audioResource != nullptr &&
-        audioResource->getHeight() != getBounds().getHeight())
-    {
-        /// TODO: change height
-        // audioResource->getHeight() = getBounds().getHeight();
-        
-        if (AudioGroupListBox* list = this->findParentComponentOfClass<AudioGroupListBox>())
-        {
-            list->updateContent();
-        }
-        
-    }
+    /// TODO: implement change of height
+//    if (audioResourceGroup != nullptr &&
+//        audioResourceGroup->getHeight() != getBounds().getHeight())
+//    {
+//        /// TODO: change height
+//        // audioResource->getHeight() = getBounds().getHeight();
+//
+//        if (AudioGroupListBox* list = this->findParentComponentOfClass<AudioGroupListBox>())
+//        {
+//            list->updateContent();
+//        }
+//
+//    }
     
-    for (auto regionView: audioRegionViews)
+    for (auto regionView: audioGroupRegions)
     {
 //        auto region = regionView->getAudioRegion();
 //        auto start = zoomHandler->timeToXWithOffset(region->position.getStart());
 //        auto end = zoomHandler->timeToXWithOffset(region->position.getEnd());
 //        auto width = end - start;
 //        regionView->setSize (width, getHeight());
-        regionView->setSize (getWidth(), getHeight());
+        // regionView->setSize (getWidth(), getHeight());
+        regionView->setBounds(getLocalBounds());
     }
     
 }
 
-void WaveFormComponent::changeListenerCallback (ChangeBroadcaster*)
-{
-    // this method is called by the thumbnail when it has changed, so we should repaint it..
-    repaint();
-    
-    for (auto views: audioRegionViews)
-    {
-        views->repaint();
-    }
-}
-
-bool WaveFormComponent::isInterestedInFileDrag (const StringArray& /*files*/)
+bool AudioGroupComponent::isInterestedInFileDrag (const StringArray& /*files*/)
 {
     return true;
 }
 
-void WaveFormComponent::filesDropped (const StringArray& files, int /*x*/, int /*y*/)
+void AudioGroupComponent::filesDropped (const StringArray& files, int /*x*/, int /*y*/)
 {
     /// TODO: replace current audio resource
     sendChangeMessage();
 }
 
-void WaveFormComponent::mouseDown (const MouseEvent& e)
+void AudioGroupComponent::mouseDown (const MouseEvent& e)
 {
     getParentComponent()->mouseDown(e);
     mouseDrag (e);
 }
 
-void WaveFormComponent::mouseDrag (const MouseEvent& e)
+void AudioGroupComponent::mouseDrag (const MouseEvent& e)
 {
     getParentComponent()->mouseDrag(e);
-    
-//    if (canMoveTransport())
-//        audioResource->getAudioTransportSource()->setPosition (jmax (0.0, zoomHandler->xToTime ((float) e.x)));
-//
 }
 
-void WaveFormComponent::mouseUp (const MouseEvent& e)
+void AudioGroupComponent::mouseUp (const MouseEvent& e)
 {
     getParentComponent()->mouseUp(e);
 }
 
-void WaveFormComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
+void AudioGroupComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
 {
     getParentComponent()->mouseWheelMove(e, wheel);
 }

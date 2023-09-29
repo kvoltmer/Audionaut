@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include "RegionSelector.h"
-#include "Interface/Components/WaveFormComponent.h"
+#include "Interface/Components/AudioGroupComponent.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/TransportSourceProvider.h"

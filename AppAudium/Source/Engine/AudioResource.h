@@ -54,13 +54,14 @@ public:
     int getHeight() const { return height * getNumChannels(); }
     
     
-    /// TODO: move this to a gui state
-    juce::Colour currentColour;
     
     AudioResourceContainer& getContainer() const { return owner; }
     
     double getSampleRate() const;
     unsigned int getNumChannels() const;
+    
+    /// TODO: move this
+    juce::Colour currentColour;
 
 private:
 

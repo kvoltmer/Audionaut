@@ -18,23 +18,27 @@
 using namespace juce;
 
 //==============================================================================
-AudioRegionView::AudioRegionView(std::shared_ptr<AudioResource> audioResource,
-                                 std::shared_ptr<ZoomHandler> zoomHandler,
-                                 std::shared_ptr<AudioRegion> audioRegion) :
-    audioResource(audioResource),
-    zoomHandler(zoomHandler),
-    audioRegion(audioRegion)
+AudioRegionView::AudioRegionView(std::shared_ptr<AudioResource> resource,
+                                 std::shared_ptr<ZoomHandler> zoom,
+                                 std::shared_ptr<AudioRegion> region) :
+    audioResource(resource),
+    zoomHandler(zoom),
+    audioRegion(region)
 {
     // this component doesn't handle mouse events
     setInterceptsMouseClicks(false, false);
+    
+    audioResource->getThumbnail().addChangeListener (this);
 }
 
 AudioRegionView::~AudioRegionView()
 {
+    audioResource->getThumbnail().removeChangeListener(this);
 }
 
 void AudioRegionView::paint (juce::Graphics& g)
 {
+    
     if (audioResource != nullptr &&
         audioResource->getThumbnail().getTotalLength() > 0.0)
     {
@@ -105,6 +109,12 @@ void AudioRegionView::resized()
     // This method is where you should set the bounds of any child
     // components that your component contains..
 
+}
+
+void AudioRegionView::changeListenerCallback (ChangeBroadcaster*)
+{
+    // this method is called by the thumbnail when it has changed, so we should repaint it..
+    repaint();
 }
 
 void AudioRegionView::setAudioResource (std::shared_ptr<AudioResource> audioResource)

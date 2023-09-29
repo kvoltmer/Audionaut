@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    WaveFormComponent.h
+    AudioGroupComponent.h
     Created: 27 Nov 2022 3:25:58pm
     Author:  Klaus Voltmer
 
@@ -18,35 +18,34 @@
 
 using namespace juce;
 
-
-class AudioResource;
-class AudioRegionView;
+class AudioResourceGroup;
 class PlayListContainer;
+class AudioGroupRegionComponent;
 
 //==============================================================================
-/// TODO: rename this class to something like TrackComponent
-class WaveFormComponent  : public Component,
-                           public ChangeListener,
+/// TODO: discuss class name: maybe TrackComponent suites better
+/*
+ Display a AudioResourceGroup as part of AudioGroupListBoxModel.
+ 
+ A AudioResourceGroup may contain multiple regions. The PlayListContainer holds the region information
+ */
+class AudioGroupComponent  : public Component,
                            public FileDragAndDropTarget,
                            public ChangeBroadcaster,
                            public ScrollBar::Listener
 {
 public:
-    WaveFormComponent (std::shared_ptr<AudioResource> audioResource,
+    AudioGroupComponent (std::shared_ptr<AudioResourceGroup> audioResourceGroup,
                        std::shared_ptr<PlayListContainer> playListContainer,
                        std::shared_ptr<ZoomHandler> zoomHandler);
 
-    ~WaveFormComponent() override;
+    ~AudioGroupComponent() override;
     
-    void setAudioResource (std::shared_ptr<AudioResource> audioResource);
+    void setAudioResourceGroup (std::shared_ptr<AudioResourceGroup> audioResourceGroup);
 
     void setFollowsTransport (bool shouldFollow);
 
-    //void paint (Graphics& g) override;
-
     void resized() override;
-
-    void changeListenerCallback (ChangeBroadcaster*) override;
 
     bool isInterestedInFileDrag (const StringArray& /*files*/) override;
 
@@ -62,14 +61,14 @@ public:
     
 private:
     
-    std::shared_ptr<AudioResource> audioResource;
+    std::shared_ptr<AudioResourceGroup> audioResourceGroup;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::vector<std::shared_ptr<AudioRegionView>> audioRegionViews;
+    std::vector<std::shared_ptr<AudioGroupRegionComponent>> audioGroupRegions;
 
     void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override;
     
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroupComponent)
     
 };
