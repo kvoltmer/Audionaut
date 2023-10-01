@@ -63,6 +63,17 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
                 
                 REQUIRE( container->getNumAudioResources() == (numResources * 2) );
             }
+            
+            
+            container->removeAudioResourceGroup(0);
+            
+            THEN("group2 10 left")
+            {
+                auto groups = container->getAudioResourceGroups();
+                REQUIRE(groups.size() == 1);
+                
+                REQUIRE( container->getNumAudioResources() == numResources );
+            }
         }
         
     }
