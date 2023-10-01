@@ -54,9 +54,11 @@ public:
     
     std::vector<std::shared_ptr<AudioResourceGroup>> getAudioResourceGroups() const;
     
-private:
+    typedef std::pair<std::shared_ptr<AudioResourceGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
     
-    std::multimap < std::shared_ptr<AudioResourceGroup>, std::shared_ptr<AudioResource> > audioResources;
+private:
+    /// list of pairs. this enables sorting etc.. by AudioResourceGroup
+    std::list<tAudioGroupPair> audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<TransportSourceProvider> transportSourceProvider;

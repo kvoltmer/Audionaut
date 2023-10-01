@@ -74,8 +74,10 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                 audioResourceGroup = groups[0];
             }
         }
-        audioResources.insert({audioResourceGroup, audioResource});
-        
+        //std::const_iterator it = audioResources.begin();
+        //auto insertPosition = audioResources.end();
+        //audioResources.insert(insertPosition, {audioResourceGroup, audioResource});
+        audioResources.push_back({audioResourceGroup, audioResource});
         inputSource.release();
         return audioResource;
     }
@@ -94,7 +96,17 @@ bool AudioResourceContainer::removeAudioResourceGroup (int atIndex)
             transportSourceProvider->removeTransportSource(resource->getAudioTransportSource());
         }
         
-        audioResources.erase(group);
+        for (auto it = audioResources.begin(); it != audioResources.end();)
+        {
+            if ((*it).first == group)
+            {
+                audioResources.erase(it++);
+            }
+            else
+            {
+                ++it;
+            }
+        }
         
         if (audioResources.empty())
         {
@@ -202,9 +214,13 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
 std::vector<std::shared_ptr<AudioResourceGroup>> AudioResourceContainer::getAudioResourceGroups() const
 {
     std::vector<std::shared_ptr<AudioResourceGroup>> result;
-    for(  auto it = audioResources.begin(), end = audioResources.end(); it != end; it = audioResources.upper_bound(it->first))
+    //for(  auto it = audioResources.begin(), end = audioResources.end(); it != end; it = audioResources.upper_bound(it->first))
+    for(auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
     {
-        result.push_back(it->first);
+        if (std::find(result.begin(), result.end(), it->first) == result.end())
+        {
+            result.push_back(it->first);
+        }
     }
     return result;
 }
