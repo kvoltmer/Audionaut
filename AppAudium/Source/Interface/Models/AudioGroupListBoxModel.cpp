@@ -92,12 +92,6 @@ void AudioGroupListBoxModel::selectedRowsChanged (int lastRowSelected)
 
 void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
-//    if (AudioGroupListBox* list = this->findParentComponentOfClass<AudioGroupListBox>())
-//    {
-//        list->updateContent();
-//    }
-    
-    //std::cout << "deleteKeyPressed: " << lastRowSelected << std::endl;
     auto selected = owner->getSelectedRows();
     
     for (int i = selected.size()-1; i >= 0; i--)
@@ -105,9 +99,7 @@ void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
         std::cout << "delete selected = " << selected[i] << std::endl;
         
         audioResourceContainer->removeAudioResourceGroup(selected[i]);
-        
     }
-    std::cout << "---------" << std::endl;
     
     owner->updateContent();
 }
