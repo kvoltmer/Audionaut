@@ -39,8 +39,8 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     this->audiumEngine = audiumEngine;
     middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
     rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
-    stretchableLayoutManager.reset(new StretchableLayoutManager());
-    stretchableLayoutResizerBar.reset(new StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, true));
+    stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
+    stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, true));
 
     //[/Constructor_pre]
 
@@ -72,6 +72,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     audiumEngine->getAudioRegionContainer()->addActionListener(this);
     audiumEngine->getPlayListContainer()->addActionListener(this);
+    audiumEngine->getAudioResourceContainer()->addActionListener(this);
 
     //[/Constructor]
 }
@@ -81,6 +82,7 @@ MainComponent::~MainComponent()
     //[Destructor_pre]. You can add your own custom destruction code here..
     audiumEngine->getAudioRegionContainer()->removeActionListener(this);
     audiumEngine->getPlayListContainer()->removeActionListener(this);
+    audiumEngine->getAudioResourceContainer()->removeActionListener(this);
     //[/Destructor_pre]
 
 
@@ -122,34 +124,11 @@ void MainComponent::resized()
     //[/UserResized]
 }
 
-void MainComponent::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
-{
-    //[UserCode_filesDropped] -- Add your code here...
-
-    if ( !filenames.isEmpty())
-    {
-        // create new group
-        jassert(File (filenames[0]).existsAsFile());
-        auto name = File (filenames[0]).getFileNameWithoutExtension().toStdString();
-        auto group = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(*audiumEngine->getAudioResourceContainer(), name));
-        
-        for (auto i = 0; i < filenames.size(); i++)
-        {
-            auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, group);
-        }
-        audiumEngine->createDefaultRegionAndPlayList();
-    }
-    updateUI();
-
-    //[/UserCode_filesDropped]
-}
-
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
-void MainComponent::actionListenerCallback (const String& message)
+void MainComponent::actionListenerCallback (const juce::String& message)
 {
     std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
 
@@ -169,19 +148,22 @@ void MainComponent::actionListenerCallback (const String& message)
     {
         middlePanelComponent->updateUI();
     }
+    else if (message == playListItemCreatedAction)
+    {
+        rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
+    }
     else if (message == playListItemTriggered)
     {
         rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
+    }
+    else if (message == audioResourceCreatedAction)
+    {
+        middlePanelComponent->updateUI();
     }
     else // update everything (eg. region deleted)
     {
         updateUI();
     }
-}
-
-bool MainComponent::isInterestedInFileDrag (const StringArray& /*files*/)
-{
-    return true;
 }
 
 void MainComponent::updateUI()
@@ -213,13 +195,10 @@ void MainComponent::zoomOut()
 BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="MainComponent" componentName=""
-                 parentClasses="public juce::Component, private juce::ActionListener, public FileDragAndDropTarget"
+                 parentClasses="public juce::Component, private juce::ActionListener"
                  constructorParams="std::shared_ptr&lt;AudiumEngine&gt; audiumEngine"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="400">
-  <METHODS>
-    <METHOD name="filesDropped (const juce::StringArray&amp; filenames, int mouseX, int mouseY)"/>
-  </METHODS>
   <BACKGROUND backgroundColour="ff282829"/>
 </JUCER_COMPONENT>
 

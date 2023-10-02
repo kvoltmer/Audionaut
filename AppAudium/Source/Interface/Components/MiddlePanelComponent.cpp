@@ -26,9 +26,10 @@ MiddlePanelComponent::MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumE
     
     zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer(),
                                       audiumEngine->getTransportSourceProvider()));
-    audioGroupListBox.reset(new AudioGroupListBox("waveform listbox", nullptr));
+    audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, "Audio Group Listbox", nullptr));
     regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
     audioGroupListBoxModel.reset(new AudioGroupListBoxModel(audioGroupListBox,
+                                                            audiumEngine,
                                                                   audiumEngine->getAudioResourceContainer(),
                                                                   audiumEngine->getPlayListContainer(),
                                                                   zoomHandler,
@@ -74,10 +75,6 @@ MiddlePanelComponent::~MiddlePanelComponent()
     playPositionMarker = nullptr;
 }
 
-void MiddlePanelComponent::paint (juce::Graphics&)
-{
-}
-
 void MiddlePanelComponent::resized()
 {
     audioGroupListBox->setBounds(getLocalBounds());
@@ -87,7 +84,7 @@ void MiddlePanelComponent::resized()
 void MiddlePanelComponent::updateUI()
 {
     audioGroupListBox->updateContent();
-    regionSelector->updateFromEngine();
+    //regionSelector->updateFromEngine();
 }
 
 void MiddlePanelComponent::zoomIn()

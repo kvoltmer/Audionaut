@@ -33,10 +33,10 @@ public:
     std::vector<std::shared_ptr<AudioResource>> getAudioResources();
     
     void setColour(juce::Colour colour);
+    void updateColour();
     
 private:
     const AudioResourceContainer &owner;
     std::string name;
-    //juce::Colour currentColour;
     
 };

@@ -18,46 +18,30 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 
-// iterating 2 palettes where the frist one has less colours to gain more variaty
-static int currentWaveFormColour = 0;
-static const int numWaveFormColours = 15;
-static const uint32 waveFormColourScheme[numWaveFormColours] = {
-    0xff70d6ff,0xffff70a6,0xffff9770,0xffffd670,0xffe9ff70, // first palette
-    0xfffbf8cc,0xfffde4cf,0xffffcfd2,0xfff1c0e8,0xffcfbaf0,0xffa3c4f3,0xff90dbf4,0xff8eecf5,0xff98f5e1,0xffb9fbc0 // second palette
-};
+
+using namespace audium;
 
 
-AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioResourceGroup> audioResourceGroup,
-                                      std::shared_ptr<PlayListContainer> playListContainer,
-                                      std::shared_ptr<ZoomHandler> zoomHandler) :
-    playListContainer(playListContainer),
+AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioResourceGroup> group,
+                                          std::shared_ptr<AudiumEngine> audiumEngine,
+                                          std::shared_ptr<ZoomHandler> zoomHandler) :
+    audiumEngine(audiumEngine),
     zoomHandler(zoomHandler)
 {
-    jassert(this->playListContainer);
-    jassert(this->zoomHandler);
-    
-    setAudioResourceGroup(audioResourceGroup);
-    
-    jassert(this->audioResourceGroup);
-    
-    /// simply iteraterate our colour scheme and assign our current colour
-    assert(this->audioResourceGroup);
-    this->audioResourceGroup->setColour(Colour(waveFormColourScheme[currentWaveFormColour++]));
-    if (currentWaveFormColour >= numWaveFormColours)
-        currentWaveFormColour = 0;
-    
+    group->setColour(audium::getNewWaveFormColour());
+    setAudioResourceGroup(group);
 }
 
 AudioGroupComponent::~AudioGroupComponent()
 {
 }
 
-void AudioGroupComponent::setAudioResourceGroup (std::shared_ptr<AudioResourceGroup> resourceGroup)
+void AudioGroupComponent::setAudioResourceGroup (std::shared_ptr<AudioResourceGroup> group)
 {
-    //std::cout << "AudioGroupComponent::setAudioResource" << std::endl;
-    zoomHandler->updateTotalLength();
+    audioResourceGroup = group;
+    audioResourceGroup->updateColour();
     
-    audioResourceGroup = resourceGroup;
+    zoomHandler->updateTotalLength();
     
     /// TODO: improve this
     removeAllChildren();
@@ -72,6 +56,7 @@ void AudioGroupComponent::setAudioResourceGroup (std::shared_ptr<AudioResourceGr
 //        audioRegionViews.push_back(regionView);
 //    }
     
+    auto playListContainer = audiumEngine->getPlayListContainer();
     jassert(playListContainer->getPlayListItem(0));
     auto region = playListContainer->getPlayListItem(0)->getRegion();
     //std::shared_ptr<AudioRegionView> regionView = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResourceGroup, zoomHandler, region));
@@ -91,28 +76,17 @@ void AudioGroupComponent::setAudioResourceGroup (std::shared_ptr<AudioResourceGr
     
 }
 
-
-void AudioGroupComponent::scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart)
+void AudioGroupComponent::paint (juce::Graphics& g)
 {
+    if (externalDragAndDrop)
+    {
+        g.fillAll (findColour(audium::secondaryBackgroundColourId).brighter());
+    }
 }
 
 
 void AudioGroupComponent::resized()
 {
-    /// TODO: implement change of height
-//    if (audioResourceGroup != nullptr &&
-//        audioResourceGroup->getHeight() != getBounds().getHeight())
-//    {
-//        /// TODO: change height
-//        // audioResource->getHeight() = getBounds().getHeight();
-//
-//        if (AudioGroupListBox* list = this->findParentComponentOfClass<AudioGroupListBox>())
-//        {
-//            list->updateContent();
-//        }
-//
-//    }
-    
     for (auto regionView: audioGroupRegions)
     {
 //        auto region = regionView->getAudioRegion();
@@ -126,15 +100,34 @@ void AudioGroupComponent::resized()
     
 }
 
-bool AudioGroupComponent::isInterestedInFileDrag (const StringArray& /*files*/)
+void AudioGroupComponent::filesDropped (const StringArray& filenames, int /*x*/, int /*y*/)
 {
-    return true;
+    if ( !filenames.isEmpty())
+    {
+        for (auto i = 0; i < filenames.size(); i++)
+        {
+            auto url = URL (File (filenames[i]));
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url, audioResourceGroup);
+        }
+        audiumEngine->createDefaultRegionAndPlayList();
+        
+        // will update content
+        setAudioResourceGroup(audioResourceGroup);
+    }
+    
+    externalDragAndDrop = false;
+    repaint();
 }
 
-void AudioGroupComponent::filesDropped (const StringArray& files, int /*x*/, int /*y*/)
+void AudioGroupComponent::fileDragEnter (const juce::StringArray& files, int x, int y)
 {
-    /// TODO: replace current audio resource
-    sendChangeMessage();
+    externalDragAndDrop = true;
+    repaint();
+}
+void AudioGroupComponent::fileDragExit (const juce::StringArray& files)
+{
+    externalDragAndDrop = false;
+    repaint();
 }
 
 void AudioGroupComponent::mouseDown (const MouseEvent& e)

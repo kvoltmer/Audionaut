@@ -4,15 +4,17 @@
 #include "AudioGroupListBoxModel.h"
 
 AudioGroupListBoxModel::AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
-                                                     std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                                                     std::shared_ptr<PlayListContainer> playListContainer,
-                                                     std::shared_ptr<ZoomHandler> zoomHandler,
-                                                     std::shared_ptr<RegionSelector> regionSelector) :
+                                               std::shared_ptr<AudiumEngine> audiumEngine,
+                                               std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                                               std::shared_ptr<PlayListContainer> playListContainer,
+                                               std::shared_ptr<ZoomHandler> zoomHandler,
+                                               std::shared_ptr<RegionSelector> regionSelector) :
+    owner(owner),
+    audiumEngine(audiumEngine),
     audioResourceContainer(audioResourceContainer),
     playListContainer(playListContainer),
     zoomHandler(zoomHandler),
-    regionSelector(regionSelector),
-    owner(owner)
+    regionSelector(regionSelector)
 {
 }
 
@@ -46,7 +48,7 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
         auto audioResourceGroup = audioResourceContainer->getAudioResourceGroup(rowNumber);
         if (audioResourceGroup != nullptr)
         {
-            auto component = new AudioGroupComponent(audioResourceGroup, playListContainer, zoomHandler);
+            auto component = new AudioGroupComponent(audioResourceGroup, audiumEngine, zoomHandler);
             return component;
         }
     }

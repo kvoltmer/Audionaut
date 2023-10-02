@@ -42,8 +42,7 @@ class RightPanelComponent;
                                                                     //[/Comments]
 */
 class MainComponent  : public juce::Component,
-                       private juce::ActionListener,
-                       public FileDragAndDropTarget
+                       private juce::ActionListener
 {
 public:
     //==============================================================================
@@ -53,7 +52,6 @@ public:
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
     void actionListenerCallback (const String& message) override;
-    bool isInterestedInFileDrag (const StringArray& /*files*/) override;
     void updateUI();
 
     void zoomIn();
@@ -62,7 +60,6 @@ public:
 
     void paint (juce::Graphics& g) override;
     void resized() override;
-    void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
 
 
 

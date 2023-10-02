@@ -11,6 +11,7 @@
 #include "AudioResourceContainer.h"
 #include "AudioPlayer.h"
 #include "TransportSourceProvider.h"
+#include "Engine/ActionMessages.h"
 
 static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
 {
@@ -79,6 +80,9 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
         //audioResources.insert(insertPosition, {audioResourceGroup, audioResource});
         audioResources.push_back({audioResourceGroup, audioResource});
         inputSource.release();
+        
+        sendActionMessage(audioResourceCreatedAction);
+        
         return audioResource;
     }
     

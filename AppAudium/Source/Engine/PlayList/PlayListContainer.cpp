@@ -19,7 +19,7 @@ void PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioReg
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(audioRegion));
     playListItems.push_back(playListItem);
     
-    //sendActionMessage(regionCreatedAction);
+    sendActionMessage(playListItemCreatedAction);
 }
 
 void PlayListContainer::createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore)
@@ -33,7 +33,7 @@ void PlayListContainer::createPlayListItem(int regionIndex, int indexOfItemToPla
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(region));
     playListItems.insert(playListItems.begin() + indexOfItemToPlaceBefore, playListItem);
     
-    //sendActionMessage(regionCreatedAction);
+    sendActionMessage(playListItemCreatedAction);
 }
 
 void PlayListContainer::deletePlayListItem(int atIndex, bool sendNotification)

@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "ColourIds.h"
 
 class AudiumLookAndFeel : public juce::LookAndFeel_V4
 {
