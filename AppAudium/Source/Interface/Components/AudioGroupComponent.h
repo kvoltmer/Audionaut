@@ -25,32 +25,35 @@ class AudioGroupRegionComponent;
 //==============================================================================
 /// TODO: discuss class name: maybe TrackComponent suites better
 /*
+ 
+ Display Regions in Timeline
+ 
  Display a AudioResourceGroup as part of AudioGroupListBoxModel.
  
- A AudioResourceGroup may contain multiple regions. The PlayListContainer holds the region information
+ A AudioResourceGroup may contain multiple regions in the Timeline. The PlayListContainer holds the region information
  */
 class AudioGroupComponent  : public Component,
-                           public FileDragAndDropTarget,
-                           public ChangeBroadcaster,
-                           public ScrollBar::Listener
+                           public FileDragAndDropTarget
 {
 public:
     AudioGroupComponent (std::shared_ptr<AudioResourceGroup> audioResourceGroup,
-                       std::shared_ptr<PlayListContainer> playListContainer,
-                       std::shared_ptr<ZoomHandler> zoomHandler);
+                         std::shared_ptr<AudiumEngine> audiumEngine,
+                         std::shared_ptr<ZoomHandler> zoomHandler);
 
     ~AudioGroupComponent() override;
     
     void setAudioResourceGroup (std::shared_ptr<AudioResourceGroup> audioResourceGroup);
 
-    void setFollowsTransport (bool shouldFollow);
-
+    void paint (juce::Graphics&) override;
+    
     void resized() override;
 
-    bool isInterestedInFileDrag (const StringArray& /*files*/) override;
-
-    void filesDropped (const StringArray& files, int /*x*/, int /*y*/) override;
-
+    // drag & drop:
+    void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
+    bool isInterestedInFileDrag (const juce::StringArray& /*files*/) override { return true; }
+    void fileDragEnter (const juce::StringArray& files, int x, int y) override;
+    void fileDragExit (const juce::StringArray& files) override;
+    
     void mouseDown (const MouseEvent& e) override;
 
     void mouseDrag (const MouseEvent& e) override;
@@ -62,13 +65,12 @@ public:
 private:
     
     std::shared_ptr<AudioResourceGroup> audioResourceGroup;
-    std::shared_ptr<PlayListContainer> playListContainer;
+    std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::vector<std::shared_ptr<AudioGroupRegionComponent>> audioGroupRegions;
-
-    void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override;
     
-private:
+    bool externalDragAndDrop = false;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroupComponent)
     
 };

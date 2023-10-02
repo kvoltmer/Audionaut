@@ -19,9 +19,22 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceGroup::getAudioResource
 
 void AudioResourceGroup::setColour(juce::Colour colour)
 {
-    auto resources = getAudioResources();
-    for (auto resource : resources)
+    for (auto resource : getAudioResources())
     {
         resource->currentColour = colour;
+    }
+}
+
+void AudioResourceGroup::updateColour()
+{
+    // same colour for all resources in group
+    auto resources = getAudioResources();
+    if (resources.size() > 0)
+    {
+        auto colour = resources[0]->currentColour;
+        for (auto resource : resources)
+        {
+            resource->currentColour = colour;
+        }
     }
 }

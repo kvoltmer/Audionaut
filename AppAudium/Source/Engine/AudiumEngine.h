@@ -21,7 +21,8 @@ class PlayListScheduler;
 struct AutoEditConfig;
 
 /// The Audium engine
-class AudiumEngine {
+class AudiumEngine
+{
     
 public:
     AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,

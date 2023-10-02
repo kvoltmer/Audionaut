@@ -41,7 +41,7 @@ void AudioRegionView::paint (juce::Graphics& g)
     
     if (audioResource != nullptr &&
         audioResource->getThumbnail().getTotalLength() > 0.0)
-    {
+    { 
         g.fillAll (audioResource->currentColour.withAlpha(0.25f));
         g.setColour (audioResource->currentColour);
         

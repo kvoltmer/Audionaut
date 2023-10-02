@@ -16,6 +16,7 @@ class AudioGroupListBoxModel : public audium::ListBoxModel {
 public:
     
     AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
+                           std::shared_ptr<AudiumEngine> audiumEngine,
                               std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                               std::shared_ptr<PlayListContainer> playListContainer,
                               std::shared_ptr<ZoomHandler> zoomHandler,
@@ -42,7 +43,8 @@ public:
     void listWasScrolled() override;
         
 private:
-    
+    std::shared_ptr<AudioGroupListBox> owner;
+    std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<ZoomHandler> zoomHandler;
@@ -50,6 +52,6 @@ private:
     /// remove this
     std::shared_ptr<RegionSelector> regionSelector;
     
-    std::shared_ptr<AudioGroupListBox> owner;
+    
 
 };

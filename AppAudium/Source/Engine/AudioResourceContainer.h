@@ -17,7 +17,7 @@
 
 class TransportSourceProvider;
 
-class AudioResourceContainer
+class AudioResourceContainer : public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
