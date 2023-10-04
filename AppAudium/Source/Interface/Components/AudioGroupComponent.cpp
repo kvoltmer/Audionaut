@@ -43,37 +43,27 @@ void AudioGroupComponent::setAudioResourceGroup (std::shared_ptr<AudioResourceGr
     
     zoomHandler->updateTotalLength();
     
-    /// TODO: improve this
-    removeAllChildren();
-    audioGroupRegions.clear();
-//
-//    for (auto i = 0; i < playListContainer->getNumItems(); i++)
-//    {
-//        auto playListItem = playListContainer->getPlayListItem(i);
-//        auto region = playListItem->getRegion();
-//        std::shared_ptr<AudioRegionView> regionView = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource, zoomHandler, region));
-//        addAndMakeVisible(regionView.get());
-//        audioRegionViews.push_back(regionView);
-//    }
-    
-    auto playListContainer = audiumEngine->getPlayListContainer();
-    jassert(playListContainer->getPlayListItem(0));
-    auto region = playListContainer->getPlayListItem(0)->getRegion();
-    //std::shared_ptr<AudioRegionView> regionView = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResourceGroup, zoomHandler, region));
-    
-    std::shared_ptr<AudioGroupRegionComponent> groupRegion = std::shared_ptr<AudioGroupRegionComponent>(new AudioGroupRegionComponent(audioResourceGroup, region, zoomHandler));
-    
-    addAndMakeVisible(groupRegion.get());
-    audioGroupRegions.push_back(groupRegion);
-   
-    // don't forget to update the region views
-    for (auto view : audioGroupRegions)
-    {
-        //setAudioResourceGroup(audioResourceGroup);
-    }
+    rebuildComponents();
     
     resized();
     
+}
+
+void AudioGroupComponent::rebuildComponents()
+{
+    removeAllChildren();
+    audioGroupRegions.clear();
+    
+    // get all play list items and create components
+    auto playListContainer = audiumEngine->getPlayListContainer();
+    for (auto i = 0; i < playListContainer->getNumItems(); i++)
+    {
+        auto playListItem = playListContainer->getPlayListItem(i);
+        auto groupRegion = std::shared_ptr<AudioGroupRegionComponent>(new AudioGroupRegionComponent(audioResourceGroup, playListItem, zoomHandler));
+        
+        addAndMakeVisible(groupRegion.get());
+        audioGroupRegions.push_back(groupRegion);
+    }
 }
 
 void AudioGroupComponent::paint (juce::Graphics& g)
@@ -87,17 +77,13 @@ void AudioGroupComponent::paint (juce::Graphics& g)
 
 void AudioGroupComponent::resized()
 {
-    for (auto regionView: audioGroupRegions)
+    for (auto regionView : audioGroupRegions)
     {
-//        auto region = regionView->getAudioRegion();
-//        auto start = zoomHandler->timeToXWithOffset(region->position.getStart());
-//        auto end = zoomHandler->timeToXWithOffset(region->position.getEnd());
-//        auto width = end - start;
-//        regionView->setSize (width, getHeight());
-        // regionView->setSize (getWidth(), getHeight());
-        regionView->setBounds(getLocalBounds());
+        auto playListItem = regionView->getPlayListItem();
+        auto start = zoomHandler->timeToXWithOffset(playListItem->getStartTime());
+        auto width = zoomHandler->timeToXWithOffset(playListItem->getDurationTime());
+        regionView->setBounds(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
     }
-    
 }
 
 void AudioGroupComponent::filesDropped (const StringArray& filenames, int /*x*/, int /*y*/)

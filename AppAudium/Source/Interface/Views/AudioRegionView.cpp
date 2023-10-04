@@ -36,6 +36,26 @@ AudioRegionView::~AudioRegionView()
     audioResource->getThumbnail().removeChangeListener(this);
 }
 
+void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
+{
+    /// draw filename label
+    /// offset is x = 5, y = 5
+    /// background is expanded by 2 pixels
+    
+    g.setFont (12.0f);
+    
+    Rectangle<int> bonds(zoomHandler->getVisibleRange().getStart() + 5,
+                         5,
+                         g.getCurrentFont().getStringWidth(audioResource->getFileNameWithoutExtension()),
+                         g.getCurrentFont().getHeight());
+    
+    g.setColour(Colours::black.withAlpha(0.25f));
+    g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
+    
+    g.setColour (findColour(audium::defaultTextColourId));
+    g.drawFittedText (audioResource->getFileNameWithoutExtension(), bonds, Justification::topLeft, 1);
+}
+
 void AudioRegionView::paint (juce::Graphics& g)
 {
     
@@ -49,18 +69,27 @@ void AudioRegionView::paint (juce::Graphics& g)
     
 #if 1 /// draw visible range
         
-        // the visible range is the scrollbar's range
-        auto visibleRange = zoomHandler->getVisibleRange();
+
         
-        // adjust the drawing area
-        thumbArea.setX(static_cast<int>(visibleRange.getStart()));
-        thumbArea.setWidth(static_cast<int>(visibleRange.getLength()));
-                       
         
-        auto rangeInSeconds = zoomHandler->getVisibleRangeInSeconds();
+//        // the visible range is the scrollbar's range
+//        auto visibleRange = zoomHandler->getVisibleRange();
+//
+//        // adjust the drawing area
+//        thumbArea.setX(static_cast<int>(visibleRange.getStart()));
+//        thumbArea.setWidth(static_cast<int>(visibleRange.getLength()));
+//
+//        auto rangeInSeconds = zoomHandler->getVisibleRangeInSeconds();
+//
+//        audioResource->getThumbnail().drawChannels (g, thumbArea,
+//                                                    rangeInSeconds.getStart(), rangeInSeconds.getEnd(), 1.0f);
         
-        audioResource->getThumbnail().drawChannels (g, thumbArea,
-                                                    rangeInSeconds.getStart(), rangeInSeconds.getEnd(), 1.0f);
+        
+        auto start = audioRegion->position.getStart();
+        auto end = audioRegion->position.getEnd();
+        audioResource->getThumbnail().drawChannels (g, thumbArea, start, end, 1.0f);
+
+        
         
 //        std::cout << "DRAW visible start " << visibleRange.getStart() << " length " << visibleRange.getLength() << std::endl;
 //        std::cout << "DRAW seconds start " << rangeInSeconds.getStart() << " length " << rangeInSeconds.getLength() << std::endl;
@@ -72,22 +101,8 @@ void AudioRegionView::paint (juce::Graphics& g)
                                                     totalRange.getStart(), totalRange.getEnd(), 1.0f);
 #endif
         
-        /// draw filename label
-        /// offset is x = 5, y = 5
-        /// background is expanded by 2 pixels
-        
-        g.setFont (12.0f);
-        
-        Rectangle<int> bonds(zoomHandler->getVisibleRange().getStart() + 5,
-                             5,
-                             g.getCurrentFont().getStringWidth(audioResource->getFileNameWithoutExtension()),
-                             g.getCurrentFont().getHeight());
-        
-        g.setColour(Colours::black.withAlpha(0.25f));
-        g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
-        
-        g.setColour (findColour(audium::defaultTextColourId));
-        g.drawFittedText (audioResource->getFileNameWithoutExtension(), bonds, Justification::topLeft, 1);
+
+        paintFileNameLabel(g);
     }
     else
     {

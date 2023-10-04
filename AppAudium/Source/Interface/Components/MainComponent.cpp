@@ -140,7 +140,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         rightPanelComponent->clearSelection();
     }
-    else if (message == regionModifiedAction) // do nothing
+    else if (message == regionModifiedAction)
     {
         rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
     }
@@ -150,6 +150,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     }
     else if (message == playListItemCreatedAction)
     {
+        middlePanelComponent->updateUI();
         rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
     }
     else if (message == playListItemTriggered)

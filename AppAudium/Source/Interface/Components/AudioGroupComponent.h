@@ -64,12 +64,16 @@ public:
     
 private:
     
+    void rebuildComponents();
+    
     std::shared_ptr<AudioResourceGroup> audioResourceGroup;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
+    
     std::vector<std::shared_ptr<AudioGroupRegionComponent>> audioGroupRegions;
     
     bool externalDragAndDrop = false;
+    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroupComponent)
     
