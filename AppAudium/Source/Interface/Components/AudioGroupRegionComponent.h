@@ -14,6 +14,7 @@
 
 class AudioResourceGroup;
 class AudioRegion;
+class PlayListItem;
 class ZoomHandler;
 class AudioRegionView;
 
@@ -25,15 +26,18 @@ class AudioGroupRegionComponent  : public juce::Component
 {
 public:
     AudioGroupRegionComponent(std::shared_ptr<AudioResourceGroup> audioResourceGroup,
-                              std::shared_ptr<AudioRegion> audioRegion,
+                              std::shared_ptr<PlayListItem> playListItem,
                               std::shared_ptr<ZoomHandler> zoomHandler);
     ~AudioGroupRegionComponent() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    std::shared_ptr<PlayListItem> getPlayListItem() const { return playListItem; }
+    
 private:
     std::shared_ptr<AudioResourceGroup> audioResourceGroup;
+    std::shared_ptr<PlayListItem>       playListItem;
     
     std::vector<std::shared_ptr<AudioRegionView>> children;
     

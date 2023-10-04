@@ -37,9 +37,10 @@ public:
     std::shared_ptr<AudioRegion> getAudioRegion() const { return audioRegion; }
     
 private:
+    void paintFileNameLabel (juce::Graphics& g);
+    
     std::shared_ptr<AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    /// TODO: change to playlistitem
     std::shared_ptr<AudioRegion> audioRegion;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionView)

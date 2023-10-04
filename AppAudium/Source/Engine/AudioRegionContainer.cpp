@@ -148,16 +148,45 @@ void AudioRegionContainer::setRegionName(int rowNumber, juce::String newName)
     }
 }
 
+void AudioRegionContainer::setRegionStart(int rowNumber, double newStart)
+{
+    if (AudioRegion* r = getRegion(rowNumber).get())
+    {
+        if (newStart <=  r->position.getEnd())
+        {
+            r->position.setStart(newStart);
+        }
+    }
+//    if (rowNumber == selectedRowNumber)
+//    {
+//        selectedRegion.position.setLength(newLength);
+//    }
+    
+    sendActionMessage (regionStartAction);
+}
+
+void AudioRegionContainer::setRegionEnd(int rowNumber, double newEnd)
+{
+    if (AudioRegion* r = getRegion(rowNumber).get())
+    {
+        if (newEnd >=  r->position.getStart())
+        {
+            r->position.setEnd(newEnd);
+        }
+    }
+    sendActionMessage (regionEndAction);
+}
+
 void AudioRegionContainer::setRegionLength(int rowNumber, double newLength)
 {
     if (AudioRegion* r = getRegion(rowNumber).get())
     {
         r->position.setLength(newLength);
     }
-    if (rowNumber == selectedRowNumber)
-    {
-        selectedRegion.position.setLength(newLength);
-    }
+//    if (rowNumber == selectedRowNumber)
+//    {
+//        selectedRegion.position.setLength(newLength);
+//    }
     
     sendActionMessage (regionLengthAction);
 }

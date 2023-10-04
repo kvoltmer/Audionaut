@@ -84,7 +84,7 @@ void MiddlePanelComponent::resized()
 void MiddlePanelComponent::updateUI()
 {
     audioGroupListBox->updateContent();
-    //regionSelector->updateFromEngine();
+    regionSelector->updateFromEngine();
 }
 
 void MiddlePanelComponent::zoomIn()
@@ -94,6 +94,8 @@ void MiddlePanelComponent::zoomIn()
     zoomHandler->setWidth(width);
     regionSelector->updateFromEngine();
     zoomHandler->focusViewOnPlayPosition();
+    
+    updateUI();
 }
 
 void MiddlePanelComponent::zoomOut()
@@ -103,4 +105,6 @@ void MiddlePanelComponent::zoomOut()
     zoomHandler->setWidth(width);
     regionSelector->updateFromEngine();
     zoomHandler->focusViewOnPlayPosition();
+    
+    updateUI();
 }

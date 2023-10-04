@@ -13,12 +13,15 @@
 #include "Engine/AudioResourceGroup.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Interface/Views/AudioRegionView.h"
+#include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/PlayListItem.h"
 
 //==============================================================================
 AudioGroupRegionComponent::AudioGroupRegionComponent(std::shared_ptr<AudioResourceGroup> audioResourceGroup,
-                                                     std::shared_ptr<AudioRegion> audioRegion,
+                                                     std::shared_ptr<PlayListItem> playListItem,
                                                      std::shared_ptr<ZoomHandler> zoomHandler) :
-    audioResourceGroup(audioResourceGroup)
+    audioResourceGroup(audioResourceGroup),
+    playListItem(playListItem)
 {
     // this component doesn't handle mouse events
     setInterceptsMouseClicks(false, false);
@@ -27,7 +30,7 @@ AudioGroupRegionComponent::AudioGroupRegionComponent(std::shared_ptr<AudioResour
     auto audioResources = audioResourceGroup->getAudioResources();
     for (auto audioResource : audioResources)
     {
-        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource, zoomHandler, audioRegion));
+        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource, zoomHandler, playListItem->getRegion()));
         addAndMakeVisible(view.get());
         children.push_back(view);
     }

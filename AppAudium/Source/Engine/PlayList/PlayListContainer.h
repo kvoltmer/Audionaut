@@ -69,6 +69,9 @@ public:
     
     AudioRegion::RegionData getPlayListDataAtIndex(int index) const;
     
+    double getItemStartTime(const PlayListItem* playListItem) const;
+    
+    /// TODO: make this private
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
     
 private:

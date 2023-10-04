@@ -14,6 +14,7 @@
 #include "Engine/AudioRegion.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Interface/Controls/RegionTableListBox.h"
+#include "Interface/Models/RegionTableListBoxModel.h"
 
 //==============================================================================
 /*
@@ -49,11 +50,19 @@ public:
         juce::String text = "n/a";
         if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
         {
-            if (columnId == 1)
+            if (columnId == regionName)
             {
                 text = r->name;
             }
-            else if (columnId == 2)
+            else if (columnId == regionStart)
+            {
+                text = juce::String(r->position.getStart(), 4);
+            }
+            else if (columnId == regionEnd)
+            {
+                text = juce::String(r->position.getEnd(), 4);
+            }
+            else if (columnId == regionLength)
             {
                 text = juce::String(r->position.getLength(), 4);
             }
@@ -85,11 +94,19 @@ public:
     /// override juce::Label::Listener
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
-        if (columnId == 1)
+        if (columnId == regionName)
         {
             audioRegionContainer->setRegionName(rowNumber, labelThatHasChanged->getText());
         }
-        else if  (columnId == 2)
+        else if  (columnId == regionStart)
+        {
+            audioRegionContainer->setRegionStart(rowNumber, labelThatHasChanged->getText().getDoubleValue());
+        }
+        else if  (columnId == regionEnd)
+        {
+            audioRegionContainer->setRegionEnd(rowNumber, labelThatHasChanged->getText().getDoubleValue());
+        }
+        else if  (columnId == regionLength)
         {
             audioRegionContainer->setRegionLength(rowNumber, labelThatHasChanged->getText().getDoubleValue());
         }
