@@ -16,10 +16,10 @@
 
 void PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioRegion)
 {
-    auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(audioRegion));
+    auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
     playListItems.push_back(playListItem);
     
-    //sendActionMessage(regionCreatedAction);
+    sendActionMessage(playListItemCreatedAction);
 }
 
 void PlayListContainer::createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore)
@@ -30,10 +30,10 @@ void PlayListContainer::createPlayListItem(int regionIndex, int indexOfItemToPla
     auto region = audioRegionContainer->getRegion(regionIndex);
     jassert(region != nullptr);
     
-    auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(region));
+    auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, region));
     playListItems.insert(playListItems.begin() + indexOfItemToPlaceBefore, playListItem);
     
-    //sendActionMessage(regionCreatedAction);
+    sendActionMessage(playListItemCreatedAction);
 }
 
 void PlayListContainer::deletePlayListItem(int atIndex, bool sendNotification)
@@ -101,10 +101,27 @@ bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
             auto regionName     = inputStream.readString();
             auto audioRegion    = audioRegionContainer->getRegion(regionIndex);
             jassert(regionName == audioRegion->name);
-            auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(audioRegion));
+            auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
             playListItems.push_back(playListItem);
         }
         return true;
     }
     return false;
+}
+
+double PlayListContainer::getItemStartTime(const PlayListItem* playListItem) const
+{
+    double startTime = 0.0;
+    for (auto & item : playListItems)
+    {
+        if (item.get() == playListItem)
+        {
+            return startTime;
+        }
+        startTime += item->getRegionData().getLength();
+    }
+    
+    // playListItem not found.
+    jassertfalse;
+    return startTime;
 }

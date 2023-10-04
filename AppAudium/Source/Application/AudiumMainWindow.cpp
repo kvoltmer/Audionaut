@@ -13,7 +13,7 @@
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
 #include "Engine/TransportSourceProvider.h"
-#include "Engine/PlayList/PlayListSchedulder.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
@@ -139,7 +139,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             newRegionDialog.createNewRegion(getEngine());
             break;
         case CommandIDs::autoEdit:
-            getEngine()->invokeAutoEdit();
+            autoEditDialog.invokeAutoEdit(getEngine(), mainComponent);
             break;
         case CommandIDs::zoomIn:
             mainComponent->zoomIn();

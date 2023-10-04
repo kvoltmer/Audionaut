@@ -10,7 +10,7 @@
 
 #include "AudiumFactory.h"
 #include "Engine/TransportSourceProvider.h"
-#include "Engine/PlayList/PlayListSchedulder.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {

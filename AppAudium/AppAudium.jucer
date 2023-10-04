@@ -29,8 +29,6 @@
         <FILE id="DdTX0t" name="EngineAccess.cpp" compile="1" resource="0"
               file="Source/Util/EngineAccess.cpp"/>
         <FILE id="ynCVR0" name="EngineAccess.h" compile="0" resource="0" file="Source/Util/EngineAccess.h"/>
-        <FILE id="Y6BYrp" name="NewRegionDialog.h" compile="0" resource="0"
-              file="Source/Util/NewRegionDialog.h"/>
         <FILE id="rysRho" name="Preferences.cpp" compile="1" resource="0" file="Source/Util/Preferences.cpp"/>
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
@@ -50,10 +48,10 @@
           <FILE id="y8wZY3" name="PlayListItem.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListItem.cpp"/>
           <FILE id="iSTHS0" name="PlayListItem.h" compile="0" resource="0" file="Source/Engine/PlayList/PlayListItem.h"/>
-          <FILE id="Y4jg8M" name="PlayListSchedulder.cpp" compile="1" resource="0"
-                file="Source/Engine/PlayList/PlayListSchedulder.cpp"/>
-          <FILE id="ge1APd" name="PlayListSchedulder.h" compile="0" resource="0"
-                file="Source/Engine/PlayList/PlayListSchedulder.h"/>
+          <FILE id="Y4jg8M" name="PlayListScheduler.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/PlayListScheduler.cpp"/>
+          <FILE id="ge1APd" name="PlayListScheduler.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/PlayListScheduler.h"/>
         </GROUP>
         <FILE id="MOhFAt" name="AudiumFactory.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumFactory.cpp"/>
@@ -73,6 +71,10 @@
         <FILE id="fjWrqk" name="AudioResource.cpp" compile="1" resource="0"
               file="Source/Engine/AudioResource.cpp"/>
         <FILE id="IvbeUH" name="AudioResource.h" compile="0" resource="0" file="Source/Engine/AudioResource.h"/>
+        <FILE id="yLDGCs" name="AudioResourceGroup.cpp" compile="1" resource="0"
+              file="Source/Engine/AudioResourceGroup.cpp"/>
+        <FILE id="XDfgpU" name="AudioResourceGroup.h" compile="0" resource="0"
+              file="Source/Engine/AudioResourceGroup.h"/>
         <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumEngine.cpp"/>
         <FILE id="Oik4J0" name="AudiumEngine.h" compile="0" resource="0" file="Source/Engine/AudiumEngine.h"/>
@@ -82,6 +84,16 @@
               file="Source/Engine/AudioResourceContainer.h"/>
       </GROUP>
       <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
+        <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
+          <FILE id="y2L75o" name="AutoEditComponent.cpp" compile="1" resource="0"
+                file="Source/Interface/Dialogs/AutoEditComponent.cpp"/>
+          <FILE id="rN8IxH" name="AutoEditComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AutoEditComponent.h"/>
+          <FILE id="HO4Dqt" name="AutoEditDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AutoEditDialog.h"/>
+          <FILE id="sr4hwK" name="NewRegionDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/NewRegionDialog.h"/>
+        </GROUP>
         <FILE id="CYohEV" name="AudiumLookAndFeel.cpp" compile="1" resource="0"
               file="Source/Interface/AudiumLookAndFeel.cpp"/>
         <FILE id="HYtvw9" name="AudiumLookAndFeel.h" compile="0" resource="0"
@@ -98,6 +110,14 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
+          <FILE id="nADoLU" name="AudioGroupComponent.cpp" compile="1" resource="0"
+                file="Source/Interface/Components/AudioGroupComponent.cpp"/>
+          <FILE id="DcKSZR" name="AudioGroupComponent.h" compile="0" resource="0"
+                file="Source/Interface/Components/AudioGroupComponent.h"/>
+          <FILE id="uvqCyB" name="AudioGroupRegionComponent.cpp" compile="1"
+                resource="0" file="Source/Interface/Components/AudioGroupRegionComponent.cpp"/>
+          <FILE id="IU0rxb" name="AudioGroupRegionComponent.h" compile="0" resource="0"
+                file="Source/Interface/Components/AudioGroupRegionComponent.h"/>
           <FILE id="uZah0s" name="MainComponent.cpp" compile="1" resource="0"
                 file="Source/Interface/Components/MainComponent.cpp"/>
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
@@ -109,10 +129,6 @@
                 file="Source/Interface/Components/RightPanelComponent.cpp"/>
           <FILE id="Pzojdi" name="RightPanelComponent.h" compile="0" resource="0"
                 file="Source/Interface/Components/RightPanelComponent.h"/>
-          <FILE id="nADoLU" name="WaveFormComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/WaveFormComponent.cpp"/>
-          <FILE id="DcKSZR" name="WaveFormComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/WaveFormComponent.h"/>
           <FILE id="WNptEX" name="RegionComponent.h" compile="0" resource="0"
                 file="Source/Interface/Components/RegionComponent.h"/>
           <FILE id="u5f0RK" name="PlayListComponent.cpp" compile="1" resource="0"
@@ -131,10 +147,10 @@
                 file="Source/Interface/Models/RegionTableListBoxModel.cpp"/>
           <FILE id="XJwywE" name="RegionTableListBoxModel.h" compile="0" resource="0"
                 file="Source/Interface/Models/RegionTableListBoxModel.h"/>
-          <FILE id="BsvGs7" name="WaveFormTableListBoxModel.cpp" compile="1"
-                resource="0" file="Source/Interface/Models/WaveFormTableListBoxModel.cpp"/>
-          <FILE id="lIpNfO" name="WaveFormTableListBoxModel.h" compile="0" resource="0"
-                file="Source/Interface/Models/WaveFormTableListBoxModel.h"/>
+          <FILE id="BsvGs7" name="AudioGroupListBoxModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/AudioGroupListBoxModel.cpp"/>
+          <FILE id="lIpNfO" name="AudioGroupListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/AudioGroupListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
@@ -152,12 +168,16 @@
                 file="Source/Interface/Controls/RegionTableListBox.h"/>
           <FILE id="t9n5bB" name="TransportPositionControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/TransportPositionControl.h"/>
-          <FILE id="sKgt7C" name="WaveFormTableListBox.cpp" compile="1" resource="0"
-                file="Source/Interface/Controls/WaveFormTableListBox.cpp"/>
-          <FILE id="rUFHxk" name="WaveFormTableListBox.h" compile="0" resource="0"
-                file="Source/Interface/Controls/WaveFormTableListBox.h"/>
+          <FILE id="sKgt7C" name="AudioGroupListBox.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/AudioGroupListBox.cpp"/>
+          <FILE id="rUFHxk" name="AudioGroupListBox.h" compile="0" resource="0"
+                file="Source/Interface/Controls/AudioGroupListBox.h"/>
         </GROUP>
         <GROUP id="{251C6FB2-3F49-498C-8DDC-157FCCAC8565}" name="Views">
+          <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AudioRegionView.cpp"/>
+          <FILE id="D4QJ9Q" name="AudioRegionView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AudioRegionView.h"/>
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
       </GROUP>

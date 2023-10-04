@@ -13,25 +13,31 @@
 #include <memory>
 #include <JuceHeader.h>
 #include "AudioResource.h"
+#include "AudioResourceGroup.h"
 
 class TransportSourceProvider;
 
-class AudioResourceContainer {
-    
-    
+class AudioResourceContainer : public juce::ActionBroadcaster
+{
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                            std::shared_ptr<TransportSourceProvider> transportSourceProvider);
     
     ~AudioResourceContainer();
     
-    std::shared_ptr<AudioResource> addAudioResource (juce::URL resource);
+    std::shared_ptr<AudioResource> addAudioResource (juce::URL resource, std::shared_ptr<AudioResourceGroup> group = nullptr);
     
-    bool removeAudioResource (int atIndex);
+    bool removeAudioResourceGroup (int atIndex);
     
-    int getAudioResourceSize() const { return static_cast<int>(audioResources.size()); }
+    // obsolete?
+    int getNumAudioResources() const;
     
+    int getNumAudioResourceGroups() const;
+    
+    // obsolete?
     std::shared_ptr<AudioResource> getAudioResource(int index) const;
+    
+    std::shared_ptr<AudioResourceGroup> getAudioResourceGroup(int index) const;
     
     /// returns the maximum length of all audio resources
     double getTotalLengthMax() const;
@@ -44,9 +50,15 @@ public:
     
     void cleanup() { audioResources.clear(); }
     
-private:
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(std::shared_ptr<AudioResourceGroup> group) const;
     
-    std::vector<std::shared_ptr<AudioResource>> audioResources;
+    std::vector<std::shared_ptr<AudioResourceGroup>> getAudioResourceGroups() const;
+    
+    typedef std::pair<std::shared_ptr<AudioResourceGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
+    
+private:
+    /// list of pairs. this enables sorting etc.. by AudioResourceGroup
+    std::list<tAudioGroupPair> audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<TransportSourceProvider> transportSourceProvider;
