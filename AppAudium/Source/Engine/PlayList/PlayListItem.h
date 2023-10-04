@@ -15,19 +15,24 @@
 #include <JuceHeader.h>
 
 class AudioRegion;
+class PlayListContainer;
 
-class PlayListItem {
+class PlayListItem
+{
     
 public:
     
-    PlayListItem(std::shared_ptr<AudioRegion> audioRegion);
+    PlayListItem(const PlayListContainer &owner, std::shared_ptr<AudioRegion> audioRegion);
     
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
     juce::Range<double> getRegionData() const;
     
-private:
+    double getStartTime() const;
+    double getDurationTime() const;
     
+private:
+    const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItem)

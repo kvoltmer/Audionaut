@@ -20,6 +20,7 @@
 /*
 */
 
+
 class RegionComponent  : public juce::Component
 {
 public:
@@ -35,8 +36,10 @@ public:
         regionTableListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(regionTableListBox.get());
         
-        regionTableListBox->getHeader().addColumn ("Regions", 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("Length", 2, 150, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("Name", regionName, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("Start", regionStart, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("End", regionEnd, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("Length", regionLength, 150, 80, 800, juce::TableHeaderComponent::notSortable);
         regionTableListBox->getHeader().setStretchToFitActive (true);
         regionTableListBox->setHeaderHeight(25);
         regionTableListBox->setOutlineThickness (0);

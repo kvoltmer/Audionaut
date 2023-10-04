@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    PlayListSchedulder.h
+    PlayListScheduler.h
     Created: 5 Jul 2023 3:22:44pm
     Author:  Klaus Voltmer
 

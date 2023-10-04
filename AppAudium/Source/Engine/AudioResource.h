@@ -47,19 +47,22 @@ public:
     
     const juce::String getFullPathName() const;
     
-    /// TODO: move this to WaveFormTableListBoxModel
-    int height = 200;
+    // Returns a string version of the URL.
+    const juce::String getUrlAsString() const;
     
-    /// TODO: move this to a gui state
-    juce::Colour currentColour;
+    /// TODO: move this to AudioGroupListBoxModel
+    int getHeight() const { return height * getNumChannels(); }
     
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
+    
     
     AudioResourceContainer& getContainer() const { return owner; }
     
     double getSampleRate() const;
+    unsigned int getNumChannels() const;
     
+    /// TODO: move this
+    juce::Colour currentColour = juce::Colours::pink;
+
 private:
 
     AudioResourceContainer& owner;
@@ -69,6 +72,8 @@ private:
     juce::AudioThumbnail thumbnail;
     
     std::shared_ptr<AudioPlayer> audioPlayer;
+    
+    int height = 100;
     
 private:
     //==============================================================================

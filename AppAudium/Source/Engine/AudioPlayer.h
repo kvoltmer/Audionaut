@@ -33,6 +33,7 @@ public:
     std::shared_ptr<juce::AudioTransportSource> getAudioTransportSource() { return audioTransportSource; }
     
     double sampleRate = 0.0;
+    unsigned int numChannels = 0;
     
 private:
     juce::AudioSourcePlayer audioSourcePlayer;

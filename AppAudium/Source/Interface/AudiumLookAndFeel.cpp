@@ -9,7 +9,6 @@
 */
 
 #include "AudiumLookAndFeel.h"
-#include "ColourIds.h"
 #include "Interface/Widgets/audium_ListBox.h"
 
 using namespace juce;

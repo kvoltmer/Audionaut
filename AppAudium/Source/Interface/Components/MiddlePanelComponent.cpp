@@ -10,8 +10,8 @@
 
 #include <JuceHeader.h>
 #include "MiddlePanelComponent.h"
-#include "Interface/Models/WaveFormTableListBoxModel.h"
-#include "Interface/Controls/WaveFormTableListBox.h"
+#include "Interface/Models/AudioGroupListBoxModel.h"
+#include "Interface/Controls/AudioGroupListBox.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/PlayPositionMarker.h"
@@ -26,27 +26,29 @@ MiddlePanelComponent::MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumE
     
     zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer(),
                                       audiumEngine->getTransportSourceProvider()));
-    waveFormTableListBox.reset(new WaveFormTableListBox("waveform listbox", nullptr));
-    regionSelector.reset(new RegionSelector(waveFormTableListBox, zoomHandler, audiumEngine));
-    waveFormTableListBoxModel.reset(new WaveFormTableListBoxModel(waveFormTableListBox,
+    audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, "Audio Group Listbox", nullptr));
+    regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
+    audioGroupListBoxModel.reset(new AudioGroupListBoxModel(audioGroupListBox,
+                                                            audiumEngine,
                                                                   audiumEngine->getAudioResourceContainer(),
+                                                                  audiumEngine->getPlayListContainer(),
                                                                   zoomHandler,
                                                                   regionSelector));
-    waveFormTableListBox->setModel(waveFormTableListBoxModel.get());
-    auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(waveFormTableListBox, zoomHandler, audiumEngine));
-    waveFormTableListBox->setHeaderComponent(std::move(headerComponent));
-    waveFormTableListBox->getHeaderComponent()->setSize(initialWidth, 25);
-    waveFormTableListBox->setMinimumContentWidth(initialWidth);
-    waveFormTableListBox->setOutlineThickness(0);
+    audioGroupListBox->setModel(audioGroupListBoxModel.get());
+    auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(audioGroupListBox, zoomHandler, audiumEngine));
+    audioGroupListBox->setHeaderComponent(std::move(headerComponent));
+    audioGroupListBox->getHeaderComponent()->setSize(initialWidth, 25);
+    audioGroupListBox->setMinimumContentWidth(initialWidth);
+    audioGroupListBox->setOutlineThickness(0);
     
     playPositionMarker.reset(new PlayPositionMarker(zoomHandler, audiumEngine));
     addAndMakeVisible(playPositionMarker.get());
 
-    zoomHandler->setHorizontalScrollBar(&waveFormTableListBox->getHorizontalScrollBar());
+    zoomHandler->setHorizontalScrollBar(&audioGroupListBox->getHorizontalScrollBar());
 
 
-    waveFormTableListBox->setMultipleSelectionEnabled(true);
-    addAndMakeVisible(waveFormTableListBox.get());
+    audioGroupListBox->setMultipleSelectionEnabled(true);
+    addAndMakeVisible(audioGroupListBox.get());
 
     // selection component
     addAndMakeVisible(regionSelector.get());
@@ -64,45 +66,45 @@ MiddlePanelComponent::MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumE
 
 MiddlePanelComponent::~MiddlePanelComponent()
 {
-    waveFormTableListBox->setHeaderComponent(nullptr);
-    waveFormTableListBox->setModel(nullptr);
+    audioGroupListBox->setHeaderComponent(nullptr);
+    audioGroupListBox->setModel(nullptr);
     regionSelector = nullptr;
-    waveFormTableListBox = nullptr;
-    waveFormTableListBoxModel = nullptr;
+    audioGroupListBox = nullptr;
+    audioGroupListBoxModel = nullptr;
     zoomHandler = nullptr;
     playPositionMarker = nullptr;
 }
 
-void MiddlePanelComponent::paint (juce::Graphics&)
-{
-}
-
 void MiddlePanelComponent::resized()
 {
-    waveFormTableListBox->setBounds(getLocalBounds());
+    audioGroupListBox->setBounds(getLocalBounds());
     playPositionMarker->setBounds(getLocalBounds());
 }
 
 void MiddlePanelComponent::updateUI()
 {
-    waveFormTableListBox->updateContent();
+    audioGroupListBox->updateContent();
     regionSelector->updateFromEngine();
 }
 
 void MiddlePanelComponent::zoomIn()
 {
     auto width = getWidth() * zoomHandler->zoomIn();
-    waveFormTableListBox->setMinimumContentWidth(width);
+    audioGroupListBox->setMinimumContentWidth(width);
     zoomHandler->setWidth(width);
     regionSelector->updateFromEngine();
     zoomHandler->focusViewOnPlayPosition();
+    
+    updateUI();
 }
 
 void MiddlePanelComponent::zoomOut()
 {
     auto width = getWidth() * zoomHandler->zoomOut();
-    waveFormTableListBox->setMinimumContentWidth(width);
+    audioGroupListBox->setMinimumContentWidth(width);
     zoomHandler->setWidth(width);
     regionSelector->updateFromEngine();
     zoomHandler->focusViewOnPlayPosition();
+    
+    updateUI();
 }

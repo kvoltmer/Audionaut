@@ -17,6 +17,13 @@ class RegionTableListBox;
 class PlayListContainer;
 class AudioRegionContainer;
 
+enum RegionColumns {
+    regionName      = 1,
+    regionStart     = 2,
+    regionEnd       = 3,
+    regionLength    = 4
+};
+
 //==============================================================================
 /*
 */
