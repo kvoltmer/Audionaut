@@ -33,6 +33,8 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <FILE id="k90e0E" name="AudiumTransportSource.h" compile="0" resource="0"
+              file="Source/Engine/AudiumTransportSource.h"/>
         <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
           <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
           <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>

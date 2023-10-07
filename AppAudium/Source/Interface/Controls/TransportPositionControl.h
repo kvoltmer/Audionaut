@@ -57,16 +57,16 @@ public:
     void timerCallback() override
     {
         auto pos = 0.0;
-        auto transportSourceProvider = audiumEngine->getTransportSourceProvider();
-        if (transportSourceProvider != nullptr)
+        auto playListScheduler = audiumEngine->getPlayListScheduler();
+        if (playListScheduler != nullptr)
         {
-            pos = transportSourceProvider->getCurrentPosition();
+            pos = playListScheduler->getAbsolutePosition();
         }
         
         currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX(pos) - 0.75f, 0,
                                                               1.5f, (float) getHeight()));
     
-        if (transportSourceProvider->isPlaying())
+        if (playListScheduler->isPlaying())
         {
             currentPositionMarker.setVisible(false);
         }
@@ -93,7 +93,7 @@ public:
         // set transport position
         auto relativePos = e.getEventRelativeTo(owner.get()).getPosition();
         auto pos = zoomHandler->xToTimeWithOffset(relativePos.getX());;
-        audiumEngine->getTransportSourceProvider()->setPosition (pos);
+        audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
     }
     
     void mouseMove (const MouseEvent& e) override

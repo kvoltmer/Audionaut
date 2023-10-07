@@ -11,6 +11,7 @@
 #include "PlayListScheduler.h"
 #include "Engine/TransportSourceProvider.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/PlayListItem.h"
 #include "Engine/ActionMessages.h"
 
 PlayListScheduler::PlayListScheduler(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
@@ -38,29 +39,7 @@ void PlayListScheduler::audioDeviceIOCallbackWithContext (const float* const* in
     // these should have been prepared by audioDeviceAboutToStart()...
     jassert (sampleRate > 0 && bufferSize > 0);
 
-    const juce::ScopedLock sl (readLock);
-
-    
-    auto sampleOffset = 0;
-    if (sampleTimer.process(numSamples, sampleOffset))
-    {
-        currentRegionData = playListContainer->getPlayListDataAtIndex(nextPlayListItemIndex);
-        if (currentRegionData.isEmpty())
-        {
-            stop();
-        }
-        else
-        {
-            transportSourceProvider->setPosition(currentRegionData.getStart() - samplesToSeconds(sampleOffset));
-            if (!transportSourceProvider->isPlaying())
-                transportSourceProvider->start();
-            
-            sampleTimer.schedule(secondsToSamples(currentRegionData.getLength()));
-            currentPlayListItemIndex = nextPlayListItemIndex.load();
-            nextPlayListItemIndex++;
-        }
-        playListContainer->sendActionMessage(playListItemTriggered);
-    }
+    tick(numSamples);
     
     // clear output
     for (int i = 0; i < totalNumOutputChannels; ++i)
@@ -69,38 +48,104 @@ void PlayListScheduler::audioDeviceIOCallbackWithContext (const float* const* in
     
 }
 
+void PlayListScheduler::tick(int numSamples)
+{
+    const juce::ScopedLock sl (readLock);
+
+    if (isPlaying())
+    {
+        applyAbsolutePosition(getAbsolutePosition(), false);
+        
+        // increment the position
+        transportPositionSamples += numSamples;
+        transportPositionSeconds = samplesToSeconds(transportPositionSamples);
+    }
+}
+
+double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, std::shared_ptr<PlayListItem> item) const
+{
+    auto offset = absolutePosition - item->getAbsolueStartTime();
+    return offset + item->getRegionData().getStart();
+}
+
+void PlayListScheduler::applyAbsolutePosition(double pos, bool forcePosition)
+{
+    // lookup current play list item
+    auto item = playListContainer->getPlayListItemAtPosition(pos);
+    
+    // assign current item and stop
+    if (item != currentPlayListItem)
+    {
+        currentPlayListItem = item;
+        transportSourceProvider->stop();
+    }
+    
+    // apply position and start if needed
+    if (currentPlayListItem != nullptr)
+    {
+        if (not transportSourceProvider->isPlaying() || forcePosition)
+        {
+            transportSourceProvider->setLocalPosition(absoluteToLocalPosition(pos, currentPlayListItem));
+            if (isPlaying())
+            {
+                transportSourceProvider->start();
+            }
+        }
+    }
+}
+
 void PlayListScheduler::start()
 {
-    sampleTimer.schedule();
+    playing = true;
 }
+
 void PlayListScheduler::stop()
 {
-    sampleTimer.invalidate();
+    playing = false;
+    transportSourceProvider->stop();
+}
+
+double PlayListScheduler::getAbsolutePosition() const
+{
+    return transportPositionSeconds;
+}
+
+void PlayListScheduler::setAbsolutePosition(double newPosition)
+{
+    transportPositionSeconds = newPosition;
+    transportPositionSamples = secondsToSamples(newPosition);
+    applyAbsolutePosition(newPosition, true);
+}
+
+int PlayListScheduler::getPlayListItemIndex() const
+{
+    return playListContainer->getPlayListItemIndex(currentPlayListItem);
 }
 
 void PlayListScheduler::setPlayListItemIndex(int playListItemIndex)
 {
-    nextPlayListItemIndex = playListItemIndex;
-    currentPlayListItemIndex = playListItemIndex;
-    start();
+    auto item = playListContainer->getPlayListItem(playListItemIndex);
+        
+    auto itemStartPosition = item->getAbsolueStartTime();
+
+    setAbsolutePosition(itemStartPosition);
+
+    if (not isPlaying())
+    {
+        start();
+    }
 }
 
 double PlayListScheduler::getPlayListItemProgress(int playListItemIndex) const
 {
     if (playListItemIndex == getPlayListItemIndex() &&
-        !currentRegionData.isEmpty())
+        currentPlayListItem != nullptr)
     {
-        
-        auto pos = transportSourceProvider->getCurrentPosition();
-        auto progress = ((pos - currentRegionData.getStart()) / currentRegionData.getLength());
+        auto localPosition = absoluteToLocalPosition(getAbsolutePosition(), currentPlayListItem);
+        auto progress = ((localPosition - currentPlayListItem->getRegionData().getStart()) / currentPlayListItem->getRegionData().getLength());
         return progress;
-        
     }
-//    auto region = playListModel->getPlayListContainer()->getPlayListItem(itemPlaying)->getRegion()->position;
-//    auto pos = playListModel->getTransportSourceProvider()->getCurrentPosition();
-//    auto progress = ((pos - region.getStart()) / region.getLength());;
-    //std::cout << region.getStart() << " " << region.getEnd() << " " << pos << " " << test << std::endl;
-    
+
     return 0.0;
 }
 

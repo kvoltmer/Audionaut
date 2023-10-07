@@ -11,6 +11,7 @@
 #include "AudioResourceContainer.h"
 #include "AudioPlayer.h"
 #include "TransportSourceProvider.h"
+#include "AudiumTransportSource.h"
 #include "Engine/ActionMessages.h"
 
 static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
@@ -75,9 +76,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                 audioResourceGroup = groups[0];
             }
         }
-        //std::const_iterator it = audioResources.begin();
-        //auto insertPosition = audioResources.end();
-        //audioResources.insert(insertPosition, {audioResourceGroup, audioResource});
+        transportSource->setAudioResourceGroup(audioResourceGroup);
         audioResources.push_back({audioResourceGroup, audioResource});
         inputSource.release();
         
@@ -94,12 +93,7 @@ bool AudioResourceContainer::removeAudioResourceGroup (int atIndex)
     auto group = getAudioResourceGroup(atIndex);
     jassert(group != nullptr);
     if (group != nullptr)
-    {
-        for (auto resource : group->getAudioResources())
-        {
-            transportSourceProvider->removeTransportSource(resource->getAudioTransportSource());
-        }
-        
+    {        
         for (auto it = audioResources.begin(); it != audioResources.end();)
         {
             if ((*it).first == group)

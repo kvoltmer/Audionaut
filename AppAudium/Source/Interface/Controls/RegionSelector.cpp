@@ -13,7 +13,7 @@
 #include "Interface/Components/AudioGroupComponent.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 void RegionSelector::paint (Graphics& g)
 {
@@ -135,7 +135,7 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
     // set transport position if not currently playing
     if (!avoidDragging &&
-        !audiumEngine->getTransportSourceProvider()->isPlaying() &&
+        !audiumEngine->getPlayListScheduler()->isPlaying() &&
         getBounds().getWidth() > 1)
     {
         auto pos = 0.0;
@@ -147,7 +147,7 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
         {
             pos = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
         }
-        audiumEngine->getTransportSourceProvider()->setPosition (pos);
+        audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
     }
     
 }

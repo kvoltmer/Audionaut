@@ -18,6 +18,7 @@
 
 class AudioResourceContainer;
 class AudioPlayer;
+class AudiumTransportSource;
 
 class AudioResource {
     
@@ -39,7 +40,7 @@ public:
     
     void stop();
 
-    std::shared_ptr<juce::AudioTransportSource> getAudioTransportSource();
+    std::shared_ptr<AudiumTransportSource> getAudioTransportSource();
     
     bool isThumbnailFullyLoaded() const { return thumbnail.isFullyLoaded(); }
 

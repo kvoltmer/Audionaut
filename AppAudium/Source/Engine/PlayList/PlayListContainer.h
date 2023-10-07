@@ -66,10 +66,13 @@ public:
     void cleanup() { playListItems.clear(); }
 
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
+    int getPlayListItemIndex(std::shared_ptr<PlayListItem> item) const;
     
     AudioRegion::RegionData getPlayListDataAtIndex(int index) const;
     
-    double getItemStartTime(const PlayListItem* playListItem) const;
+    std::shared_ptr<PlayListItem> getPlayListItemAtPosition(double position) const;
+    
+    double getAbsolueStartTime(const PlayListItem* playListItem) const;
     
     /// TODO: make this private
     std::vector<std::shared_ptr<PlayListItem>> playListItems;

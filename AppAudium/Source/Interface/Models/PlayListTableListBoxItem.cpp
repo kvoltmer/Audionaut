@@ -67,31 +67,7 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
     
     if (columnNumber == 1)
     {
-        if (playListModel->getPlayListScheduler()->isPlaying())
-        {
-            auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndex();
-            if (itemPlaying == rowNumber)
-            {
-                if (!isTimerRunning())
-                {
-                    startTimerHz(25);
-                }
-                
-                // progress
-                auto progress = playListModel->getPlayListScheduler()->getPlayListItemProgress(rowNumber);
-                drawLinearProgress(g, progress);
-            
-                
-            }
-            else if (isTimerRunning())
-            {
-                stopTimer();
-            }
-        }
-        else if (isTimerRunning())
-        {
-            stopTimer();
-        }
+        drawLinearProgress(g, progress);
     }
     
     
@@ -139,7 +115,23 @@ void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
 
 void PlayListTableListBoxItem::timerCallback()
 {
-    repaint();
+    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndex();
+    
+    auto theProgress = 0.0;
+    if (itemPlaying == rowNumber)
+    {
+        theProgress = playListModel->getPlayListScheduler()->getPlayListItemProgress(rowNumber);
+    }
+    else
+    {
+        theProgress = 0.0;
+    }
+    
+    if (progress != theProgress)
+    {
+        progress = theProgress;
+        repaint();
+    }
 }
 
 void PlayListTableListBoxItem::update(int columnId, int rowNumber, bool isSelected)
@@ -148,17 +140,6 @@ void PlayListTableListBoxItem::update(int columnId, int rowNumber, bool isSelect
     this->rowNumber = rowNumber;
     selected = isSelected;
     
-    
-//    if (playListModel->getTransportSourceProvider()->isPlaying())
-//    {
-//        auto playing = playListModel->getPlayListScheduler()->getPlayListItemIndex();
-//        if (playing == rowNumber &&
-//            !selected)
-//        {
-//            playListModel->
-//            selected = true;
-//        }
-//    }
     
     repaint();
 }

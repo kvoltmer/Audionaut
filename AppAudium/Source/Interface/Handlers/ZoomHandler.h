@@ -13,13 +13,13 @@
 #include <JuceHeader.h>
 
 class AudioResourceContainer;
-class TransportSourceProvider;
+class PlayListScheduler;
 
 class ZoomHandler : private juce::Timer {
     
 public:
     ZoomHandler(std::shared_ptr<AudioResourceContainer> container,
-                std::shared_ptr<TransportSourceProvider> transportSourceProvider);
+                std::shared_ptr<PlayListScheduler> playListScheduler);
     ~ZoomHandler();
     
     double zoomIn();
@@ -64,7 +64,7 @@ private:
     
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
-    std::shared_ptr<TransportSourceProvider> transportSourceProvider;
+    std::shared_ptr<PlayListScheduler> playListScheduler;
     
     // zoom factor
     double zoomFactor;
