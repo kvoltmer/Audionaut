@@ -12,7 +12,7 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     
     auto engine      = AudiumFactory::createAudiumEngine();
     auto zoomHandler = std::shared_ptr<ZoomHandler>(new ZoomHandler(engine->getAudioResourceContainer(),
-                                                                    engine->getTransportSourceProvider()));
+                                                                    engine->getPlayListScheduler()));
     REQUIRE( zoomHandler != nullptr );
     
     zoomHandler = nullptr;

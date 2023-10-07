@@ -28,7 +28,7 @@ public:
     
     juce::Range<double> getRegionData() const;
     
-    double getStartTime() const;
+    double getAbsolueStartTime() const;
     double getDurationTime() const;
     
 private:

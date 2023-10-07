@@ -10,34 +10,35 @@
 
 #include "TransportSourceProvider.h"
 #include "AudioResourceContainer.h"
+#include "AudiumTransportSource.h"
 
-std::shared_ptr<juce::AudioTransportSource> TransportSourceProvider::createNewTransportSource()
+std::shared_ptr<AudiumTransportSource> TransportSourceProvider::createNewTransportSource()
 {
-    auto transportSource = std::shared_ptr<juce::AudioTransportSource> (new juce::AudioTransportSource());
+    auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource());
     audioTransportSources.push_back(transportSource);
     return transportSource;
 }
 
-void TransportSourceProvider::removeTransportSource(std::shared_ptr<juce::AudioTransportSource> audioTransportSource)
+bool TransportSourceProvider::removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource)
 {
     auto it = std::find(audioTransportSources.begin(), audioTransportSources.end(), audioTransportSource);
     if (it != audioTransportSources.end())
     {
         audioTransportSources.erase(it);
+        return true;
     }
+    return false;
 }
 
-void TransportSourceProvider::setPosition (double newPosition)
+void TransportSourceProvider::setLocalPosition (double newPosition)
 {
     for (auto & transportSource : audioTransportSources)
     {
         transportSource->setPosition(newPosition);
     }
-
-    std::cout << "setPosition " << newPosition << std::endl;
 }
 
-double TransportSourceProvider::getCurrentPosition() const
+double TransportSourceProvider::getLocalPosition() const
 {
     if (audioTransportSources.size() > 0)
     {
@@ -55,12 +56,15 @@ void TransportSourceProvider::start()
     }
 }
 
-
 void TransportSourceProvider::stop()
 {
     for (auto & transportSource : audioTransportSources)
     {
-        transportSource->stop();
+        // stop must not be used in the audio thread
+        //transportSource->stop();
+        
+        // workaround: set the position to the very end
+        transportSource->setPosition(transportSource->getLengthInSeconds());
     }
 }
 
@@ -70,23 +74,5 @@ bool TransportSourceProvider::isPlaying() const
     {
         return audioTransportSources.front()->isPlaying();
     }
-    
     return false;
-}
-
-bool TransportSourceProvider::playStop()
-{
-    if (isPlaying())
-    {
-        stop();
-        return false;
-    }
-    else
-    {
-        // workaround
-        setPosition(getCurrentPosition());
-        
-        start();
-        return true;
-    }
 }

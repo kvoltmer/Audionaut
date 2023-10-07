@@ -66,6 +66,17 @@ std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) cons
     return nullptr;
 }
 
+int PlayListContainer::getPlayListItemIndex(std::shared_ptr<PlayListItem> item) const
+{
+    auto it = std::find(playListItems.begin(), playListItems.end(), item);
+    if (it != playListItems.end())
+    {
+        return static_cast<int>(std::distance(playListItems.begin(), it));
+    }
+    
+    return -1;
+}
+
 AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) const
 {
     const juce::ScopedLock sl (readLock);
@@ -109,7 +120,7 @@ bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
     return false;
 }
 
-double PlayListContainer::getItemStartTime(const PlayListItem* playListItem) const
+double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem) const
 {
     double startTime = 0.0;
     for (auto & item : playListItems)
@@ -124,4 +135,22 @@ double PlayListContainer::getItemStartTime(const PlayListItem* playListItem) con
     // playListItem not found.
     jassertfalse;
     return startTime;
+}
+
+std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItemAtPosition(double position) const
+{
+
+    for (auto item : playListItems)
+    {
+        /// TODO: optimize -> item->getStartTime() iterates list again
+        auto startTime = item->getAbsolueStartTime();
+        auto endTime = startTime + item->getDurationTime();
+        juce::Range<double> absoluteRange(startTime, endTime);
+        if (absoluteRange.contains(position))
+        {
+            return item;
+        }
+    }
+    
+    return nullptr;
 }

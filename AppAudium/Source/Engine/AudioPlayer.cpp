@@ -9,8 +9,9 @@
 */
 
 #include "AudioPlayer.h"
+#include "AudiumTransportSource.h"
 
-AudioPlayer::AudioPlayer(std::shared_ptr<juce::AudioTransportSource> audioTransportSource,
+AudioPlayer::AudioPlayer(std::shared_ptr<AudiumTransportSource> audioTransportSource,
                          std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                          juce::InputSource* inputSource,
                          juce::AudioFormatManager& formatManager,

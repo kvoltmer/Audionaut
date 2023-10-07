@@ -36,41 +36,50 @@ public:
 
     
     void audioDeviceAboutToStart (juce::AudioIODevice* device) override;
-
     void audioDeviceStopped() override;
-
     void prepareToPlay (double sampleRate, int blockSize);
     
     void start();
     void stop();
+    bool isPlaying() const noexcept { return playing; }
+    
     void setPlayListItemIndex(int playListItemIndex);
-    int getPlayListItemIndex() const noexcept { return currentPlayListItemIndex; }
+    int getPlayListItemIndex() const;
     double getPlayListItemProgress(int playListItemIndex) const;
-    bool isPlaying() const noexcept { return sampleTimer.isActive(); }
+    
+    double getAbsolutePosition() const;
+    void setAbsolutePosition(double newPosition);
     
 private:
+
+    void tick(int numSamples);
+
+    double absoluteToLocalPosition(double absolutePosition, std::shared_ptr<PlayListItem> item) const;
+    void applyAbsolutePosition(double pos, bool shouldStart);
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<TransportSourceProvider> transportSourceProvider;
     std::shared_ptr<PlayListContainer> playListContainer;
     
-    SampleTimer sampleTimer;
+    std::shared_ptr<PlayListItem> currentPlayListItem;
 
     double sampleRate = 0.0;
     int bufferSize = 0;
     
-    std::atomic<int> currentPlayListItemIndex = 0;
-    std::atomic<int> nextPlayListItemIndex = 0;
-    AudioRegion::RegionData currentRegionData;
+    std::atomic<uint64_t> transportPositionSamples = 0;
+    std::atomic<double> transportPositionSeconds = 0.0;
+    
+    std::atomic<bool> playing { false };
+    
     
     juce::CriticalSection readLock;
     
-    int secondsToSamples(double seconds)
+    uint64_t secondsToSamples(double seconds)
     {
-        return static_cast<int>(seconds * sampleRate);
+        return static_cast<uint64_t>(seconds * sampleRate);
     }
     
-    double samplesToSeconds(int samples)
+    double samplesToSeconds(uint64_t samples)
     {
         jassert(sampleRate > 0.0);
         return static_cast<double>(samples) / sampleRate;

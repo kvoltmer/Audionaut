@@ -21,6 +21,7 @@ struct PlayListTableListBoxItem : public juce::Component, public juce::DragAndDr
         columnNumber(columnNumber),
         rowNumber(rowNumber)
     {
+        startTimer(25);
     }
 
 //    PlayListTableListBoxItem(const PlayListTableListBoxItem& other)
@@ -110,4 +111,5 @@ struct PlayListTableListBoxItem : public juce::Component, public juce::DragAndDr
     int columnNumber;
     int rowNumber;
     bool selected = false;
+    double progress = 0.0;
 };

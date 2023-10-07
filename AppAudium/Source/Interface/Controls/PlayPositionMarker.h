@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 //==============================================================================
 /*
@@ -66,11 +66,11 @@ public:
     void updateCursorPosition()
     {
         auto pos = 0.0;
-        auto transportSource = audiumEngine->getTransportSourceProvider();
-        if (transportSource != nullptr)
+        auto playListScheduler = audiumEngine->getPlayListScheduler();
+        if (playListScheduler != nullptr)
         {
-            currentPositionMarker.setVisible(transportSource->isPlaying());
-            pos = transportSource->getCurrentPosition();
+            currentPositionMarker.setVisible(playListScheduler->isPlaying());
+            pos = playListScheduler->getAbsolutePosition();
         }
         
         currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToXWithOffset(pos) - 0.75f, 0,

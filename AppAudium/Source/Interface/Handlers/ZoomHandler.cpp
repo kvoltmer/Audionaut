@@ -10,12 +10,12 @@
 
 #include "ZoomHandler.h"
 #include "Engine/AudioResourceContainer.h"
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 ZoomHandler::ZoomHandler(std::shared_ptr<AudioResourceContainer> container,
-                         std::shared_ptr<TransportSourceProvider> transportSourceProvider) :
+                         std::shared_ptr<PlayListScheduler> playListScheduler) :
     audioResourceContainer(container),
-    transportSourceProvider(transportSourceProvider),
+    playListScheduler(playListScheduler),
     zoomFactor(1.0),
     scrollbar(nullptr),
     width(0)
@@ -157,7 +157,7 @@ int ZoomHandler::numSegmentsForWidth(const int width, int& seconds)
 void ZoomHandler::focusViewOnPlayPosition()
 {
     
-    auto posX = timeToX(transportSourceProvider->getCurrentPosition());
+    auto posX = timeToX(playListScheduler->getAbsolutePosition());
     auto range = getVisibleRange();
     //std::cout << pos << " " << posX << " range: " << range.getStart() << " " << range.getEnd() << std::endl;
     
@@ -173,9 +173,9 @@ void ZoomHandler::focusViewOnPlayPosition()
 
 void ZoomHandler::timerCallback()
 {
-    if (transportSourceProvider->isPlaying())
+    if (playListScheduler->isPlaying())
     {
-        auto posX = timeToX(transportSourceProvider->getCurrentPosition());
+        auto posX = timeToX(playListScheduler->getAbsolutePosition());
         if(!getVisibleRange().contains(posX))
         {
             auto newStart = posX - (getVisibleRange().getLength() / 2);
