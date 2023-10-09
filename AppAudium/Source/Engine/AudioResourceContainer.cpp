@@ -10,7 +10,7 @@
 
 #include "AudioResourceContainer.h"
 #include "AudioPlayer.h"
-#include "TransportSourceProvider.h"
+#include "TransportSourceContainer.h"
 #include "AudiumTransportSource.h"
 #include "Engine/ActionMessages.h"
 
@@ -30,9 +30,9 @@ static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL&
 }
 
 AudioResourceContainer::AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                                               std::shared_ptr<TransportSourceProvider> transportSourceProvider) :
+                                               std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
     audioDeviceManager(audioDeviceManager),
-    transportSourceProvider(transportSourceProvider)
+    transportSourceContainer(transportSourceContainer)
 {
     formatManager.registerBasicFormats();
     thread.startThread();
@@ -48,7 +48,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     if (auto inputSource = makeAudioInputSource (url))
     {
         /// TODO: create factory
-        auto transportSource = transportSourceProvider->createNewTransportSource();
+        auto transportSource = transportSourceContainer->createNewTransportSource();
         auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(transportSource,
                                                                         audioDeviceManager,
                                                                         inputSource.get(),

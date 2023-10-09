@@ -15,13 +15,13 @@
 #include "AudioResource.h"
 #include "AudioResourceGroup.h"
 
-class TransportSourceProvider;
+class TransportSourceContainer;
 
 class AudioResourceContainer : public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<TransportSourceProvider> transportSourceProvider);
+                           std::shared_ptr<TransportSourceContainer> transportSourceContainer);
     
     ~AudioResourceContainer();
     
@@ -46,7 +46,7 @@ public:
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
-    std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
+    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
     
     void cleanup() { audioResources.clear(); }
     
@@ -61,7 +61,7 @@ private:
     std::list<tAudioGroupPair> audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
-    std::shared_ptr<TransportSourceProvider> transportSourceProvider;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     
     /// TODO: find a proper home for this
     juce::AudioFormatManager formatManager;

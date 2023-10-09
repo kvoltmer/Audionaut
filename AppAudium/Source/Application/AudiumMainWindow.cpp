@@ -12,7 +12,7 @@
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 

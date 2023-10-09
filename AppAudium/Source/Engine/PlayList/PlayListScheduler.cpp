@@ -9,16 +9,16 @@
 */
 
 #include "PlayListScheduler.h"
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/ActionMessages.h"
 
 PlayListScheduler::PlayListScheduler(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                                     std::shared_ptr<TransportSourceProvider> transportSourceProvider,
+                                     std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                                      std::shared_ptr<PlayListContainer> playListContainer) :
     audioDeviceManager(audioDeviceManager),
-    transportSourceProvider(transportSourceProvider),
+    transportSourceContainer(transportSourceContainer),
     playListContainer(playListContainer)
 {
     audioDeviceManager->addAudioCallback(this);
@@ -77,18 +77,18 @@ void PlayListScheduler::applyAbsolutePosition(double pos, bool forcePosition)
     if (item != currentPlayListItem)
     {
         currentPlayListItem = item;
-        transportSourceProvider->stop();
+        transportSourceContainer->stop();
     }
     
     // apply position and start if needed
     if (currentPlayListItem != nullptr)
     {
-        if (not transportSourceProvider->isPlaying() || forcePosition)
+        if (not transportSourceContainer->isPlaying() || forcePosition)
         {
-            transportSourceProvider->setLocalPosition(absoluteToLocalPosition(pos, currentPlayListItem));
+            transportSourceContainer->setLocalPosition(absoluteToLocalPosition(pos, currentPlayListItem));
             if (isPlaying())
             {
-                transportSourceProvider->start();
+                transportSourceContainer->start();
             }
         }
     }
@@ -102,7 +102,7 @@ void PlayListScheduler::start()
 void PlayListScheduler::stop()
 {
     playing = false;
-    transportSourceProvider->stop();
+    transportSourceContainer->stop();
 }
 
 double PlayListScheduler::getAbsolutePosition() const
