@@ -13,7 +13,7 @@
 #include "Engine/AudioRegion.h"
 #include "Engine/PlayList/SampleTimer.h"
 
-class TransportSourceProvider;
+class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
 
@@ -23,7 +23,7 @@ class PlayListScheduler : public juce::AudioIODeviceCallback {
     
 public:
     PlayListScheduler(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                      std::shared_ptr<TransportSourceProvider> transportSourceProvider,
+                      std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                       std::shared_ptr<PlayListContainer> playListContainer);
     ~PlayListScheduler() override;
     
@@ -58,7 +58,7 @@ private:
     void applyAbsolutePosition(double pos, bool shouldStart);
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
-    std::shared_ptr<TransportSourceProvider> transportSourceProvider;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     
     std::shared_ptr<PlayListItem> currentPlayListItem;

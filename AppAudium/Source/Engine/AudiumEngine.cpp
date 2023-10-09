@@ -18,13 +18,13 @@ AudiumEngine::AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDevice
                            std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                            std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                            std::shared_ptr<PlayListContainer> playListContainer,
-                           std::shared_ptr<TransportSourceProvider> transportSourceProvider,
+                           std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                            std::shared_ptr<PlayListScheduler> playListScheduler) :
     audioDeviceManager(audioDeviceManager),
     audioResourceContainer(audioResourceContainer),
     audioRegionContainer(audioRegionContainer),
     playListContainer(playListContainer),
-    transportSourceProvider(transportSourceProvider),
+    transportSourceContainer(transportSourceContainer),
     playListScheduler(playListScheduler)
 {
 }

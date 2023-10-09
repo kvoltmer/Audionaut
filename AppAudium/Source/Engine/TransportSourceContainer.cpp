@@ -1,25 +1,25 @@
 /*
   ==============================================================================
 
-    TransportSourceProvider.cpp
+    TransportSourceContainer.cpp
     Created: 14 Jun 2023 6:12:34pm
     Author:  Klaus Voltmer
 
   ==============================================================================
 */
 
-#include "TransportSourceProvider.h"
+#include "TransportSourceContainer.h"
 #include "AudioResourceContainer.h"
 #include "AudiumTransportSource.h"
 
-std::shared_ptr<AudiumTransportSource> TransportSourceProvider::createNewTransportSource()
+std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createNewTransportSource()
 {
     auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource());
     audioTransportSources.push_back(transportSource);
     return transportSource;
 }
 
-bool TransportSourceProvider::removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource)
+bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource)
 {
     auto it = std::find(audioTransportSources.begin(), audioTransportSources.end(), audioTransportSource);
     if (it != audioTransportSources.end())
@@ -30,7 +30,7 @@ bool TransportSourceProvider::removeTransportSource(std::shared_ptr<AudiumTransp
     return false;
 }
 
-void TransportSourceProvider::setLocalPosition (double newPosition)
+void TransportSourceContainer::setLocalPosition (double newPosition)
 {
     for (auto & transportSource : audioTransportSources)
     {
@@ -38,7 +38,7 @@ void TransportSourceProvider::setLocalPosition (double newPosition)
     }
 }
 
-double TransportSourceProvider::getLocalPosition() const
+double TransportSourceContainer::getLocalPosition() const
 {
     if (audioTransportSources.size() > 0)
     {
@@ -48,7 +48,7 @@ double TransportSourceProvider::getLocalPosition() const
     return 0;
 }
 
-void TransportSourceProvider::start()
+void TransportSourceContainer::start()
 {
     for (auto & transportSource : audioTransportSources)
     {
@@ -56,7 +56,7 @@ void TransportSourceProvider::start()
     }
 }
 
-void TransportSourceProvider::stop()
+void TransportSourceContainer::stop()
 {
     for (auto & transportSource : audioTransportSources)
     {
@@ -68,7 +68,7 @@ void TransportSourceProvider::stop()
     }
 }
 
-bool TransportSourceProvider::isPlaying() const
+bool TransportSourceContainer::isPlaying() const
 {
     if (audioTransportSources.size() > 0)
     {

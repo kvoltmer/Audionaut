@@ -16,7 +16,7 @@
 #include "AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
-class TransportSourceProvider;
+class TransportSourceContainer;
 class PlayListScheduler;
 struct AutoEditConfig;
 
@@ -29,7 +29,7 @@ public:
                  std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                  std::shared_ptr<PlayListContainer> playListContainer,
-                 std::shared_ptr<TransportSourceProvider> transportSourceProvider,
+                 std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                  std::shared_ptr<PlayListScheduler> playListScheduler);
     ~AudiumEngine();
     
@@ -51,7 +51,7 @@ public:
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
-    std::shared_ptr<TransportSourceProvider> getTransportSourceProvider() const { return transportSourceProvider; }
+    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
     void invokeAutoEdit(const AutoEditConfig config);
@@ -61,7 +61,7 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
-    std::shared_ptr<TransportSourceProvider> transportSourceProvider;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<PlayListScheduler> playListScheduler;
     
     juce::File currentFile;

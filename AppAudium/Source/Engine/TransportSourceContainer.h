@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    TransportSourceProvider.h
+    TransportSourceContainer.h
     Created: 14 Jun 2023 6:12:34pm
     Author:  Klaus Voltmer
 
@@ -15,11 +15,11 @@ class AudioResourceContainer;
 class AudioResourceGroup;
 class AudiumTransportSource;
 
-class TransportSourceProvider
+class TransportSourceContainer
 {
 public:
-    TransportSourceProvider() = default;
-    ~TransportSourceProvider() = default;
+    TransportSourceContainer() = default;
+    ~TransportSourceContainer() = default;
     
     std::shared_ptr<AudiumTransportSource> createNewTransportSource();
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
@@ -35,5 +35,5 @@ private:
     
     std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceProvider)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)
 };

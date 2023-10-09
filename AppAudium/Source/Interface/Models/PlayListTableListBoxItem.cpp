@@ -13,7 +13,7 @@
 #include "Interface/Components/PlayListComponent.h"
 #include "Interface/Controls/RegionEditor.h"
 #include "Engine/AudioRegionContainer.h"
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/TransportSourceContainer.h"
 #include "Interface/AudiumLookAndFeel.h"
 
 void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetails)

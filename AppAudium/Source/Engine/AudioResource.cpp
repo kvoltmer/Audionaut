@@ -11,7 +11,7 @@
 #include "AudioResource.h"
 #include "AudioResourceContainer.h"
 #include "AudioPlayer.h"
-#include "TransportSourceProvider.h"
+#include "TransportSourceContainer.h"
 
 AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
                              juce::URL url,
@@ -29,7 +29,7 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
 
 AudioResource::~AudioResource()
 {
-    auto removed = owner.getTransportSourceProvider()->removeTransportSource(audioPlayer->getAudioTransportSource());
+    auto removed = owner.getTransportSourceContainer()->removeTransportSource(audioPlayer->getAudioTransportSource());
     jassert(removed);
 }
 
