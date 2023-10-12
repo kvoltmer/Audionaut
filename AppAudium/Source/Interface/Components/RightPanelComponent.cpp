@@ -13,6 +13,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Components/PlayListComponent.h"
+#include "Interface/Components/PlayListContainerComponent.h"
 #include "Interface/Components/RegionComponent.h"
 
 //==============================================================================
@@ -22,11 +23,11 @@ RightPanelComponent::RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEng
     regionComponent.reset(new RegionComponent(audiumEngine));
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
     stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, false));
-    playListComponent.reset(new PlayListComponent(audiumEngine));
+    playListContainerComponent.reset(new PlayListContainerComponent(audiumEngine));
     
     addAndMakeVisible(regionComponent.get());
     addAndMakeVisible(stretchableLayoutResizerBar.get());
-    addAndMakeVisible(playListComponent.get());
+    addAndMakeVisible(playListContainerComponent.get());
     
     stretchableLayoutManager->setItemLayout (0,          // for item 0
                                              25, -1.0,    // size must be between 0% and 100% of the available space
@@ -47,8 +48,9 @@ RightPanelComponent::~RightPanelComponent()
 
 }
 
-void RightPanelComponent::paint (juce::Graphics&)
+void RightPanelComponent::paint (juce::Graphics& g)
 {
+    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 }
 
 void RightPanelComponent::resized()
@@ -60,7 +62,7 @@ void RightPanelComponent::resized()
     // the list of components that we want to reposition
     Component* comps[] = {  regionComponent.get(),
                             stretchableLayoutResizerBar.get(),
-                            playListComponent.get() };
+                            playListContainerComponent.get() };
 
     // this will position the 3 components, one above the other, to fit
     // horizontically into the rectangle provided.
@@ -74,10 +76,10 @@ void RightPanelComponent::updateUI(UIContext context)
     switch (context) {
         case EntireContext:
             regionComponent->updateUI();
-            playListComponent->updateUI();
+            playListContainerComponent->updateUI();
             break;
         case PlayListContext:
-            playListComponent->updateUI();
+            playListContainerComponent->updateUI();
             break;
         case RegionListContext:
             regionComponent->updateUI();

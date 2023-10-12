@@ -11,15 +11,17 @@
 #pragma once
 #include <JuceHeader.h>
 
-class AudioResourceGroup;
+class AudioGroup;
 
 class AudiumTransportSource : public juce::AudioTransportSource
 {
 public:
     AudiumTransportSource() = default;
     
-    void setAudioResourceGroup(std::shared_ptr<AudioResourceGroup> group) { audioResourceGroup = group; }
+    void setAudioGroup(std::shared_ptr<AudioGroup> group) { audioGroup = group; }
+    
+    std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     
 private:
-    std::shared_ptr<AudioResourceGroup> audioResourceGroup;
+    std::shared_ptr<AudioGroup> audioGroup;
 };

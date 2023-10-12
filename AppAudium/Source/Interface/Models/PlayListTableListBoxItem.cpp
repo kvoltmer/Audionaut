@@ -70,8 +70,8 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
         drawLinearProgress(g, progress);
     }
     
-    
-    if (auto r = playListModel->getPlayListContainer()->getPlayListItem(rowNumber))
+    auto container = playListModel->getAudioGroup()->getPlayListContainer();
+    if (auto r = container->getPlayListItem(rowNumber))
     {
         juce::String text;
 
@@ -109,18 +109,20 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 
 void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
 {
+    auto group = playListModel->getAudioGroup();
     playListModel->getPlayListScheduler()->setPlayListItemIndex(rowNumber);
     //std::cout << "mouseDoubleClick" << rowNumber << std::endl;
 }
 
 void PlayListTableListBoxItem::timerCallback()
 {
-    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndex();
+    auto group = playListModel->getAudioGroup();
+    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndex(group);
     
     auto theProgress = 0.0;
     if (itemPlaying == rowNumber)
     {
-        theProgress = playListModel->getPlayListScheduler()->getPlayListItemProgress(rowNumber);
+        theProgress = playListModel->getPlayListScheduler()->getPlayListItemProgress(group, rowNumber);
     }
     else
     {

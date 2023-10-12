@@ -13,15 +13,19 @@
 #include "Engine/AudioRegion.h"
 
 class AudioResourceContainer;
+class AudioGroup;
 
 class AudioRegionContainer : public juce::ActionBroadcaster
 {
                                             
 public:
-    AudioRegionContainer() = default;
+    AudioRegionContainer(std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
+        audioResourceContainer(audioResourceContainer)
+    {}
     
-    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer);
-    std::shared_ptr<AudioRegion> createRegion(juce::String regionName, juce::Range<double> position);
+    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                                                     std::shared_ptr<AudioGroup> group);
+    std::shared_ptr<AudioRegion> createRegion(juce::String regionName, juce::Range<double> position, std::shared_ptr<AudioGroup> group = nullptr);
     void deleteRegion(int rowNumber);
     
     void setRegionPosition(juce::Range<double> pos);
@@ -30,7 +34,7 @@ public:
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
-    int getNumRegions() const { return static_cast<int>(audioRegions.size()); }
+    int getNumRegions(const AudioGroup* group = nullptr) const;
     std::shared_ptr<AudioRegion> getRegion(int index) const;
     int getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const;
     
@@ -45,8 +49,12 @@ public:
     
     void cleanup() { audioRegions.clear(); }
     
+    void removeAudioRegionsForGroup(std::shared_ptr<AudioGroup> group);
+    
 private:
-    AudioRegion selectedRegion;
+    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    
+    AudioRegion::RegionData selectedRegion;
     int selectedRowNumber = -1;
     
     std::vector<std::shared_ptr<AudioRegion>> audioRegions;

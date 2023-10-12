@@ -11,16 +11,18 @@
 #include "Interface/Controls/AudioGroupListBox.h"
 #include "Interface/Controls/RegionSelector.h"
 
+class AudioGroupContainer;
+
 class AudioGroupListBoxModel : public audium::ListBoxModel {
     
 public:
     
     AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
                            std::shared_ptr<AudiumEngine> audiumEngine,
-                              std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                              std::shared_ptr<PlayListContainer> playListContainer,
-                              std::shared_ptr<ZoomHandler> zoomHandler,
-                              std::shared_ptr<RegionSelector> RegionSelector);
+                           std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                           std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                           std::shared_ptr<ZoomHandler> zoomHandler,
+                           std::shared_ptr<RegionSelector> RegionSelector);
     ~AudioGroupListBoxModel();
     
     int getNumRows() override;
@@ -46,7 +48,7 @@ private:
     std::shared_ptr<AudioGroupListBox> owner;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
-    std::shared_ptr<PlayListContainer> playListContainer;
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<ZoomHandler> zoomHandler;
     
     /// remove this

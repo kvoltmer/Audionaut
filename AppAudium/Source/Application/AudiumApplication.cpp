@@ -44,7 +44,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
 
     if (Preferences::valueExists(Preferences::defaultFile))
     {
-        audiumEngine->openFile(juce::File(Preferences::getValue(Preferences::defaultFile)), nullptr);
+    //    audiumEngine->openFile(juce::File(Preferences::getValue(Preferences::defaultFile)), nullptr);
     }
     
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));

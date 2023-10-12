@@ -30,49 +30,55 @@ bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTrans
     return false;
 }
 
-void TransportSourceContainer::setLocalPosition (double newPosition)
+void TransportSourceContainer::setLocalPosition (std::shared_ptr<AudioGroup> group, double newPosition)
 {
     for (auto & transportSource : audioTransportSources)
     {
-        transportSource->setPosition(newPosition);
+        if (group == transportSource->getAudioGroup())
+            transportSource->setPosition(newPosition);
     }
 }
 
-double TransportSourceContainer::getLocalPosition() const
+double TransportSourceContainer::getLocalPosition(std::shared_ptr<AudioGroup> group) const
 {
-    if (audioTransportSources.size() > 0)
+    for (auto & transportSource : audioTransportSources)
     {
-        return audioTransportSources.front()->getCurrentPosition();
+        if (group == transportSource->getAudioGroup())
+            return transportSource->getCurrentPosition();
     }
-
     return 0;
 }
 
-void TransportSourceContainer::start()
+void TransportSourceContainer::start(std::shared_ptr<AudioGroup> group)
 {
     for (auto & transportSource : audioTransportSources)
     {
-        transportSource->start();
+        if (group == transportSource->getAudioGroup())
+            transportSource->start();
     }
 }
 
-void TransportSourceContainer::stop()
+void TransportSourceContainer::stop(std::shared_ptr<AudioGroup> group)
 {
     for (auto & transportSource : audioTransportSources)
     {
-        // stop must not be used in the audio thread
-        //transportSource->stop();
-        
-        // workaround: set the position to the very end
-        transportSource->setPosition(transportSource->getLengthInSeconds());
+        if (group == transportSource->getAudioGroup())
+        {
+            // stop must not be used in the audio thread
+            //transportSource->stop();
+            
+            // workaround: set the position to the very end
+            transportSource->setPosition(transportSource->getLengthInSeconds());
+        }
     }
 }
 
-bool TransportSourceContainer::isPlaying() const
+bool TransportSourceContainer::isPlaying(std::shared_ptr<AudioGroup> group) const
 {
-    if (audioTransportSources.size() > 0)
+    for (auto & transportSource : audioTransportSources)
     {
-        return audioTransportSources.front()->isPlaying();
+        if (group == transportSource->getAudioGroup())
+            return transportSource->isPlaying();
     }
     return false;
 }

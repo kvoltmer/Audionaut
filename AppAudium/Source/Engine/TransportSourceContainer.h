@@ -12,7 +12,7 @@
 #include <JuceHeader.h>
 
 class AudioResourceContainer;
-class AudioResourceGroup;
+class AudioGroup;
 class AudiumTransportSource;
 
 class TransportSourceContainer
@@ -24,12 +24,12 @@ public:
     std::shared_ptr<AudiumTransportSource> createNewTransportSource();
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
-    void setLocalPosition (double newPosition);
-    double getLocalPosition() const;
+    void setLocalPosition (std::shared_ptr<AudioGroup> group, double newPosition);
+    double getLocalPosition(std::shared_ptr<AudioGroup> group) const;
     
-    void start();
-    void stop();
-    bool isPlaying() const;
+    void start(std::shared_ptr<AudioGroup> group);
+    void stop(std::shared_ptr<AudioGroup> group);
+    bool isPlaying(std::shared_ptr<AudioGroup> group) const;
     
 private:
     

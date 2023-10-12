@@ -13,55 +13,60 @@
 #include <memory>
 #include <JuceHeader.h>
 #include "AudioResource.h"
-#include "AudioResourceGroup.h"
+#include "AudioGroup.h"
 
 class TransportSourceContainer;
+class AudioGroupContainer;
+class AudiumEngine;
 
 class AudioResourceContainer : public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<TransportSourceContainer> transportSourceContainer);
+                           std::shared_ptr<TransportSourceContainer> transportSourceContainer,
+                           std::shared_ptr<AudioGroupContainer> audioGroupContainer);
     
     ~AudioResourceContainer();
     
-    std::shared_ptr<AudioResource> addAudioResource (juce::URL resource, std::shared_ptr<AudioResourceGroup> group = nullptr);
+    std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
+                                                     const AudiumEngine &engine,
+                                                     std::shared_ptr<AudioGroup> group = nullptr);
     
-    bool removeAudioResourceGroup (int atIndex);
+    void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
     
-    // obsolete?
+    // still used by auto edit
     int getNumAudioResources() const;
-    
-    int getNumAudioResourceGroups() const;
-    
-    // obsolete?
     std::shared_ptr<AudioResource> getAudioResource(int index) const;
     
-    std::shared_ptr<AudioResourceGroup> getAudioResourceGroup(int index) const;
+    int getNumAudioGroups() const;
+    std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
     
     /// returns the maximum length of all audio resources
     double getTotalLengthMax() const;
     
     
     bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
+    bool readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine);
     
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
     
     void cleanup() { audioResources.clear(); }
     
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(std::shared_ptr<AudioResourceGroup> group) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
     
-    std::vector<std::shared_ptr<AudioResourceGroup>> getAudioResourceGroups() const;
+    std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
     
-    typedef std::pair<std::shared_ptr<AudioResourceGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
+    std::shared_ptr<AudioGroup> getDefaultGroup() const;
+    
+    typedef std::pair<std::shared_ptr<AudioGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
     
 private:
-    /// list of pairs. this enables sorting etc.. by AudioResourceGroup
+    /// list of pairs. this enables sorting etc.. by AudioGroup
     std::list<tAudioGroupPair> audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     
     /// TODO: find a proper home for this
     juce::AudioFormatManager formatManager;

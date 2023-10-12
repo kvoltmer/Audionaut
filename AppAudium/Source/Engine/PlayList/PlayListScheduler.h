@@ -16,7 +16,7 @@
 class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
-
+class AudioGroupContainer;
 
 class PlayListScheduler : public juce::AudioIODeviceCallback {
     
@@ -24,7 +24,7 @@ class PlayListScheduler : public juce::AudioIODeviceCallback {
 public:
     PlayListScheduler(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer,
-                      std::shared_ptr<PlayListContainer> playListContainer);
+                      std::shared_ptr<AudioGroupContainer> audioGroupContainer);
     ~PlayListScheduler() override;
     
     void audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
@@ -44,8 +44,8 @@ public:
     bool isPlaying() const noexcept { return playing; }
     
     void setPlayListItemIndex(int playListItemIndex);
-    int getPlayListItemIndex() const;
-    double getPlayListItemProgress(int playListItemIndex) const;
+    int getPlayListItemIndex(std::shared_ptr<AudioGroup> group) const;
+    double getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const;
     
     double getAbsolutePosition() const;
     void setAbsolutePosition(double newPosition);
@@ -59,9 +59,9 @@ private:
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
-    std::shared_ptr<PlayListContainer> playListContainer;
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     
-    std::shared_ptr<PlayListItem> currentPlayListItem;
+    //std::shared_ptr<PlayListItem> currentPlayListItem;
 
     double sampleRate = 0.0;
     int bufferSize = 0;
