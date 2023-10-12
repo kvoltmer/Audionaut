@@ -16,6 +16,7 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/PlayPositionMarker.h"
 #include "Interface/Controls/TransportPositionControl.h"
+#include "Engine/AudioGroupContainer.h"
 
 //==============================================================================
 MiddlePanelComponent::MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
@@ -31,7 +32,7 @@ MiddlePanelComponent::MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumE
     audioGroupListBoxModel.reset(new AudioGroupListBoxModel(audioGroupListBox,
                                                             audiumEngine,
                                                                   audiumEngine->getAudioResourceContainer(),
-                                                                  audiumEngine->getPlayListContainer(),
+                                                                  audiumEngine->getAudioGroupContainer(),
                                                                   zoomHandler,
                                                                   regionSelector));
     audioGroupListBox->setModel(audioGroupListBoxModel.get());

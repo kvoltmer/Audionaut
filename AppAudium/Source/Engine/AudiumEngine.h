@@ -26,31 +26,31 @@ class AudiumEngine
     
 public:
     AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
+                 std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                  std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                 std::shared_ptr<PlayListContainer> playListContainer,
                  std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                  std::shared_ptr<PlayListScheduler> playListScheduler);
     ~AudiumEngine();
     
     void initialise();
+    void cleanup();
     
     void openFile (const juce::File& file, std::function<void (bool)> callback);
     void saveFile (const juce::File& file, std::function<void (bool)> callback);
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
-    void createDefaultRegionAndPlayList();
+    void createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> group);
     
     static const char* projectFileExtension;
     
     const juce::File getCurrentFile() const { return currentFile; }
     
-    void cleanup();
-    
+    std::shared_ptr<AudioGroupContainer> getAudioGroupContainer() const { return audioGroupContainer; }
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
-    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
+    std::shared_ptr<PlayListContainer> getPlayListContainer(std::shared_ptr<AudioGroup> group) const;
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
@@ -58,9 +58,9 @@ public:
     
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
-    std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<PlayListScheduler> playListScheduler;
     

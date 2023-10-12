@@ -12,20 +12,27 @@
 #include "AudioRegionContainer.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/PlayList/PlayListContainer.h"
 
-std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer)
+std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                                                                       std::shared_ptr<AudioGroup> group)
 {
-    jassert(getNumRegions() == 0);
-    jassert(audioResourceContainer->getNumAudioResources() > 0);
-    
-    auto name = audioResourceContainer->getAudioResource(0)->getFileNameWithoutExtension();
+    jassert(getNumRegions(group.get()) == 0);
+    auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group.get());
+    jassert(audioResources.size() > 0);
+    auto name = audioResources[0]->getFileNameWithoutExtension();
     auto totalLength = audioResourceContainer->getTotalLengthMax();
-    return createRegion(name, juce::Range(0.0, totalLength));
+    return createRegion(name, juce::Range(0.0, totalLength), group);
 }
 
-std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String regionName, juce::Range<double> position)
+std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String regionName, juce::Range<double> position, std::shared_ptr<AudioGroup> group)
 {
-    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion());
+    if (group == nullptr)
+    {
+        group = audioResourceContainer->getDefaultGroup();
+    }
+    
+    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group));
     audioRegion->position = position;
     audioRegion->name = regionName;
     audioRegions.push_back(audioRegion);
@@ -37,6 +44,9 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
 
 void AudioRegionContainer::deleteRegion(int atIndex)
 {
+    auto region = getRegion(atIndex);
+    region->getAudioGroup()->getPlayListContainer()->deleteAssociatedItems(region);
+    
     clearSelection();
     if (atIndex >= 0 && atIndex < audioRegions.size())
     {
@@ -47,7 +57,7 @@ void AudioRegionContainer::deleteRegion(int atIndex)
 
 void AudioRegionContainer::setRegionPosition(juce::Range<double> pos)
 {
-    selectedRegion.position = pos;
+    selectedRegion = pos;
     if (selectedRowNumber >= 0)
     {
         getRegion(selectedRowNumber)->position = pos;
@@ -66,7 +76,7 @@ void AudioRegionContainer::clearSelection()
 
 juce::Range<double> AudioRegionContainer::getRegionPosition() const
 {
-    return selectedRegion.position;
+    return selectedRegion;
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) const
@@ -97,7 +107,7 @@ void AudioRegionContainer::setSelectedRegion(int rowNumber)
 {
     if (const AudioRegion* const r = getRegion(rowNumber).get())
     {
-        selectedRegion = *r;
+        selectedRegion = r->position;
         selectedRowNumber = rowNumber;
         sendActionMessage (regionSelectedAction);
         
@@ -124,9 +134,10 @@ bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
 
 bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
 {
+    jassert(audioRegions.empty());
+    
     if (!inputStream.isExhausted())
     {
-        audioRegions.clear();
         auto numRegions = inputStream.readInt();
         for (auto i = 0; i < numRegions; i++)
         {
@@ -138,6 +149,24 @@ bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
         }
     }
     return true;
+}
+
+int AudioRegionContainer::getNumRegions(const AudioGroup* group) const
+{
+    if (group == nullptr)
+    {
+        return static_cast<int>(audioRegions.size());
+    }
+    else
+    {
+        int count = 0;
+        for (auto region : audioRegions)
+        {
+            if (region->getAudioGroup().get() == group)
+                count++;
+        }
+        return count;
+    }
 }
 
 void AudioRegionContainer::setRegionName(int rowNumber, juce::String newName)
@@ -189,4 +218,21 @@ void AudioRegionContainer::setRegionLength(int rowNumber, double newLength)
 //    }
     
     sendActionMessage (regionLengthAction);
+}
+
+void AudioRegionContainer::removeAudioRegionsForGroup(std::shared_ptr<AudioGroup> group)
+{
+    std::vector< std::shared_ptr<AudioRegion> >::reverse_iterator i = audioRegions.rbegin();
+    
+    while ( i != audioRegions.rend() )
+    {
+        if ( (*i)->getAudioGroup() == group )
+        {
+            i = decltype(i)(audioRegions.erase( std::next(i).base() ));
+        }
+        else
+        {
+            ++i;
+        }
+    }
 }

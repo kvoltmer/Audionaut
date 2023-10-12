@@ -21,18 +21,20 @@
 class PlayListComponent  : public juce::Component, public juce::DragAndDropTarget, public juce::AsyncUpdater
 {
 public:
-    PlayListComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
-        audiumEngine(audiumEngine)
+    PlayListComponent(std::shared_ptr<AudiumEngine> audiumEngine, std::shared_ptr<AudioGroup> group) :
+        audiumEngine(audiumEngine),
+        audioGroup(group)
     {
         playListTableListBox.reset(new PlayListTableListBox(this));
-        playListTableListBoxModel.reset(new PlayListTableListBoxModel(playListTableListBox, audiumEngine));
+        playListTableListBoxModel.reset(new PlayListTableListBoxModel(playListTableListBox, audiumEngine, group));
 
         playListTableListBox->setModel(playListTableListBoxModel.get());
         playListTableListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(playListTableListBox.get());
         
-        playListTableListBox->getHeader().addColumn ("Playlist", 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        playListTableListBox->getHeader().addColumn ("Fade", 2, 150, 80, 800, juce::TableHeaderComponent::notSortable);
+        auto playListName = "Playlist - " + group->getName();
+        playListTableListBox->getHeader().addColumn (playListName, 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        //playListTableListBox->getHeader().addColumn ("Fade", 2, 150, 80, 800, juce::TableHeaderComponent::notSortable);
         playListTableListBox->getHeader().setStretchToFitActive (true);
         playListTableListBox->setHeaderHeight(25);
         playListTableListBox->setOutlineThickness (0);
@@ -114,10 +116,13 @@ public:
     {
         playListTableListBox->updateContent();
     }
+    
+    std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
 
 private:
     
     std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<AudioGroup> audioGroup;
     std::shared_ptr<PlayListTableListBox> playListTableListBox;
     std::unique_ptr<PlayListTableListBoxModel> playListTableListBoxModel;
     

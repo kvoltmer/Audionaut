@@ -10,24 +10,24 @@
 
 #include <JuceHeader.h>
 #include "AudioGroupRegionComponent.h"
-#include "Engine/AudioResourceGroup.h"
+#include "Engine/AudioGroup.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 
 //==============================================================================
-AudioGroupRegionComponent::AudioGroupRegionComponent(std::shared_ptr<AudioResourceGroup> audioResourceGroup,
+AudioGroupRegionComponent::AudioGroupRegionComponent(std::shared_ptr<AudioGroup> audioGroup,
                                                      std::shared_ptr<PlayListItem> playListItem,
                                                      std::shared_ptr<ZoomHandler> zoomHandler) :
-    audioResourceGroup(audioResourceGroup),
+    audioGroup(audioGroup),
     playListItem(playListItem)
 {
     // this component doesn't handle mouse events
     setInterceptsMouseClicks(false, false);
 
     // create views
-    auto audioResources = audioResourceGroup->getAudioResources();
+    auto audioResources = audioGroup->getAudioResources();
     for (auto audioResource : audioResources)
     {
         auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource, zoomHandler, playListItem->getRegion()));
@@ -49,7 +49,7 @@ void AudioGroupRegionComponent::resized()
 {
     int top = 0;
     int count = 0;
-    auto audioResources = audioResourceGroup->getAudioResources();
+    auto audioResources = audioGroup->getAudioResources();
     for (auto audioResource : audioResources)
     {
         auto height = audioResource->getHeight();

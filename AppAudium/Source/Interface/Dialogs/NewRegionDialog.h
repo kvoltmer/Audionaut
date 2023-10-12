@@ -77,7 +77,9 @@ private:
     
     void create(String name)
     {
-        audiumEngine->getAudioRegionContainer()->createRegion(name, audiumEngine->getAudioRegionContainer()->getRegionPosition());
+        audiumEngine->getAudioRegionContainer()->createRegion(name,
+                                                              audiumEngine->getAudioRegionContainer()->getRegionPosition(),
+                                                              audiumEngine->getAudioResourceContainer()->getDefaultGroup());
     }
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;

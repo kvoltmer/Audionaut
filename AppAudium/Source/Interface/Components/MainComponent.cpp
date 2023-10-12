@@ -20,9 +20,10 @@
 //[Headers] You can add your own extra header files here...
 #include "MiddlePanelComponent.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioResourceGroup.h"
+#include "Engine/AudioGroup.h"
 #include "RightPanelComponent.h"
 #include "Engine/ActionMessages.h"
+#include "Engine/AudioGroupContainer.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -71,7 +72,11 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     resized();
 
     audiumEngine->getAudioRegionContainer()->addActionListener(this);
-    audiumEngine->getPlayListContainer()->addActionListener(this);
+    audiumEngine->getAudioGroupContainer()->addActionListener(this);
+    for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
+    {
+        audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
+    }
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
 
     //[/Constructor]
@@ -81,7 +86,11 @@ MainComponent::~MainComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
     audiumEngine->getAudioRegionContainer()->removeActionListener(this);
-    audiumEngine->getPlayListContainer()->removeActionListener(this);
+    audiumEngine->getAudioGroupContainer()->removeActionListener(this);
+    for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
+    {
+        audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->removeActionListener(this);
+    }
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
     //[/Destructor_pre]
 
@@ -160,6 +169,21 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == audioResourceCreatedAction)
     {
         middlePanelComponent->updateUI();
+        for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
+        {
+            audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
+        }
+        rightPanelComponent->updateUI();
+    }
+    else if (message == audioGroupCreatedAction)
+    {
+        // TODO: update with context to rebuild everything
+        updateUI();
+    }
+    else if (message == audioGroupDeletedAction)
+    {
+        // TODO: update with context to rebuild everything
+        updateUI();
     }
     else // update everything (eg. region deleted)
     {

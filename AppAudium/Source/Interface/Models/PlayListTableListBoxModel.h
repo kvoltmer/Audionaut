@@ -24,15 +24,17 @@ class PlayListTableListBoxModel : public juce::TableListBoxModel {
     
 public:
     PlayListTableListBoxModel(std::shared_ptr<PlayListTableListBox> listBox,
-                              std::shared_ptr<AudiumEngine> engine) :
+                              std::shared_ptr<AudiumEngine> engine,
+                              std::shared_ptr<AudioGroup> group) :
         listBox(listBox),
-        audiumEngine(engine)
+        audiumEngine(engine),
+        audioGroup(group)
     {
     }
     
     int getNumRows() override
     {
-        return audiumEngine->getPlayListContainer()->getNumItems();
+        return audiumEngine->getPlayListContainer(audioGroup)->getNumItems();
     }
 
     void paintRowBackground (juce::Graphics& g,
@@ -57,7 +59,8 @@ public:
     {
         if (existingComponentToUpdate == nullptr)
         {
-            if (const PlayListItem* const p = audiumEngine->getPlayListContainer()->getPlayListItem(rowNumber).get())
+            auto items = audiumEngine->getPlayListContainer(audioGroup)->getPlayListItems();
+            const PlayListItem* const p = items[rowNumber].get();
             {
                 return new PlayListTableListBoxItem(this, columnId, rowNumber);
             }
@@ -81,7 +84,7 @@ public:
 
         for (int i = selected.size()-1; i >= 0; i--)
         {
-            audiumEngine->getPlayListContainer()->deletePlayListItem(selected[i]);
+            audiumEngine->getPlayListContainer(audioGroup)->deletePlayListItem(selected[i]);
         }
     }
     
@@ -93,13 +96,16 @@ public:
     void cellDoubleClicked (int rowNumber, int columnId, const juce::MouseEvent&) override
     {
         // this is not being called
+        // TODO: implement for all schedulers
+        jassertfalse;
+        
         audiumEngine->getPlayListScheduler()->setPlayListItemIndex(rowNumber);
     }
     
     void selectedRowsChanged (int lastRowSelected) override
     {
         // selecting a playListItem also selects the region
-        auto playListItem = audiumEngine->getPlayListContainer()->getPlayListItem(lastRowSelected);
+        auto playListItem = audiumEngine->getPlayListContainer(audioGroup)->getPlayListItem(lastRowSelected);
         if (playListItem != nullptr)
         {
             auto regionIndex = audiumEngine->getAudioRegionContainer()->getRegionIndex(playListItem->getRegion());
@@ -110,13 +116,16 @@ public:
     
     std::shared_ptr<PlayListTableListBox> listBox;
     
-    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(); }
+    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioGroup); }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return audiumEngine->getTransportSourceContainer(); }
+    
+    std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     
 private:
     
     std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<AudioGroup> audioGroup;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListTableListBoxModel)
 };

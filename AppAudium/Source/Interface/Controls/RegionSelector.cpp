@@ -134,21 +134,22 @@ void RegionSelector::createRectangleAndSetBonds()
 void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
     // set transport position if not currently playing
-    if (!avoidDragging &&
-        !audiumEngine->getPlayListScheduler()->isPlaying() &&
-        getBounds().getWidth() > 1)
-    {
-        auto pos = 0.0;
-        if (dragEndPos.getX() < dragStartPos.getX())
-        {
-            pos = zoomHandler->xToTimeWithOffset(dragEndPos.getX());
-        }
-        else
-        {
-            pos = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
-        }
-        audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
-    }
+// TODO: implement or ditch?
+//    if (!avoidDragging &&
+//        !audiumEngine->getPlayListScheduler()->isPlaying() &&
+//        getBounds().getWidth() > 1)
+//    {
+//        auto pos = 0.0;
+//        if (dragEndPos.getX() < dragStartPos.getX())
+//        {
+//            pos = zoomHandler->xToTimeWithOffset(dragEndPos.getX());
+//        }
+//        else
+//        {
+//            pos = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
+//        }
+//        audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
+//    }
     
 }
 

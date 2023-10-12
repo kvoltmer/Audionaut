@@ -27,7 +27,7 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
             
             THEN("the must be 1 group that contains all resources")
             {
-                auto groups = container->getAudioResourceGroups();
+                auto groups = container->getAudioGroups();
                 REQUIRE( groups.size() == 1 );
                 
                 auto resources = container->getAudioResourcesForGroup(groups[0]);
@@ -42,17 +42,17 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
         WHEN("adding 2 groups with numResources each")
         {
             
-            auto group1 = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(*container, "Group 1"));
+            auto group1 = std::shared_ptr<AudioGroup> (new AudioGroup(*container, "Group 1"));
             for (int i = 0; i < numResources; i++)
                 container->addAudioResource(juce::URL(inFile), group1);
             
-            auto group2 = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(*container, "Group 2"));
+            auto group2 = std::shared_ptr<AudioGroup> (new AudioGroup(*container, "Group 2"));
             for (int i = 0; i < numResources; i++)
                 container->addAudioResource(juce::URL(inFile), group2);
             
             THEN("we get 2 groups ")
             {
-                auto groups = container->getAudioResourceGroups();
+                auto groups = container->getAudioGroups();
                 REQUIRE(groups.size() == 2);
                 
                 for (auto group : groups)
@@ -65,11 +65,11 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
             }
             
             
-            container->removeAudioResourceGroup(0);
+            container->removeAudioGroup(0);
             
             THEN("group2 10 left")
             {
-                auto groups = container->getAudioResourceGroups();
+                auto groups = container->getAudioGroups();
                 REQUIRE(groups.size() == 1);
                 
                 REQUIRE( container->getNumAudioResources() == numResources );

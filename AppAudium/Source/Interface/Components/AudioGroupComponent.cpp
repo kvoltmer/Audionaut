@@ -22,24 +22,24 @@
 using namespace audium;
 
 
-AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioResourceGroup> group,
+AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioGroup> group,
                                           std::shared_ptr<AudiumEngine> audiumEngine,
                                           std::shared_ptr<ZoomHandler> zoomHandler) :
     audiumEngine(audiumEngine),
     zoomHandler(zoomHandler)
 {
     group->setColour(audium::getNewWaveFormColour());
-    setAudioResourceGroup(group);
+    setAudioGroup(group);
 }
 
 AudioGroupComponent::~AudioGroupComponent()
 {
 }
 
-void AudioGroupComponent::setAudioResourceGroup (std::shared_ptr<AudioResourceGroup> group)
+void AudioGroupComponent::setAudioGroup (std::shared_ptr<AudioGroup> group)
 {
-    audioResourceGroup = group;
-    audioResourceGroup->updateColour();
+    audioGroup = group;
+    audioGroup->updateColour();
     
     zoomHandler->updateTotalLength();
     
@@ -55,11 +55,13 @@ void AudioGroupComponent::rebuildComponents()
     audioGroupRegions.clear();
     
     // get all play list items and create components
-    auto playListContainer = audiumEngine->getPlayListContainer();
-    for (auto i = 0; i < playListContainer->getNumItems(); i++)
+    auto playListContainer = audiumEngine->getPlayListContainer(audioGroup);
+    jassert(playListContainer);
+    auto playListItems = playListContainer->getPlayListItems();
+    
+    for (auto playListItem : playListItems)
     {
-        auto playListItem = playListContainer->getPlayListItem(i);
-        auto groupRegion = std::shared_ptr<AudioGroupRegionComponent>(new AudioGroupRegionComponent(audioResourceGroup, playListItem, zoomHandler));
+        auto groupRegion = std::shared_ptr<AudioGroupRegionComponent>(new AudioGroupRegionComponent(audioGroup, playListItem, zoomHandler));
         
         addAndMakeVisible(groupRegion.get());
         audioGroupRegions.push_back(groupRegion);
@@ -93,12 +95,12 @@ void AudioGroupComponent::filesDropped (const StringArray& filenames, int /*x*/,
         for (auto i = 0; i < filenames.size(); i++)
         {
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, audioResourceGroup);
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup);
         }
-        audiumEngine->createDefaultRegionAndPlayList();
+        audiumEngine->createDefaultRegionAndPlayList(audioGroup);
         
         // will update content
-        setAudioResourceGroup(audioResourceGroup);
+        setAudioGroup(audioGroup);
     }
     
     externalDragAndDrop = false;

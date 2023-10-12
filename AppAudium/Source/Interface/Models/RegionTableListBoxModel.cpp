@@ -18,11 +18,9 @@
 
 //==============================================================================
 RegionTableListBoxModel::RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
-                                                 std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                                                 std::shared_ptr<PlayListContainer> playListContainer) :
+                                                 std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
     owner(owner),
-    audioRegionContainer(audioRegionContainer),
-    playListContainer(playListContainer)
+    audioRegionContainer(audioRegionContainer)
 {
 }
 
@@ -89,7 +87,6 @@ void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
     {
         auto region = audioRegionContainer->getRegion(selected[i]);
         jassert(region);
-        playListContainer->deleteAssociatedItems(region);
         audioRegionContainer->deleteRegion(selected[i]);
     }
 }

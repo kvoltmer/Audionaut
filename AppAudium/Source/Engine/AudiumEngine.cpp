@@ -11,19 +11,20 @@
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
 #include "Engine/AutoEdit/AutoEdit.h"
+#include "AudioGroupContainer.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 
 AudiumEngine::AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
+                           std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                            std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                            std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                           std::shared_ptr<PlayListContainer> playListContainer,
                            std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                            std::shared_ptr<PlayListScheduler> playListScheduler) :
     audioDeviceManager(audioDeviceManager),
+    audioGroupContainer(audioGroupContainer),
     audioResourceContainer(audioResourceContainer),
     audioRegionContainer(audioRegionContainer),
-    playListContainer(playListContainer),
     transportSourceContainer(transportSourceContainer),
     playListScheduler(playListScheduler)
 {
@@ -31,6 +32,7 @@ AudiumEngine::AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDevice
 
 AudiumEngine::~AudiumEngine()
 {
+    cleanup();
 }
 
 void AudiumEngine::initialise()
@@ -38,6 +40,15 @@ void AudiumEngine::initialise()
     /** Resets everything to a default device setup, clearing any stored settings. */
     auto result = audioDeviceManager->initialiseWithDefaultDevices (0, 2);
     std::cout << result.toStdString() << std::endl;
+}
+
+void AudiumEngine::cleanup()
+{
+    audioResourceContainer->cleanup();
+    audioRegionContainer->cleanup();
+    audioGroupContainer->cleanup();
+    
+    currentFile = File();
 }
 
 void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> callback)
@@ -111,7 +122,8 @@ bool AudiumEngine::writeToStream (juce::OutputStream& out)
     out.writeString ("AudiumEngineFormat");
     audioResourceContainer->writeToStream(out);
     audioRegionContainer->writeToStream(out);
-    playListContainer->writeToStream(out);
+    audioGroupContainer->writeToStream(out);
+    
     return true;
 }
 
@@ -119,14 +131,16 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
 {
     auto name = in.readString();
     jassert(name == "AudiumEngineFormat");
+    
+    cleanup();
 
-    if (audioResourceContainer->readFromStream(in))
+    if (audioResourceContainer->readFromStream(in, *this))
     {
         if (audioRegionContainer->readFromStream(in))
         {
-            if (playListContainer->readFromStream(in))
+            if (audioGroupContainer->readFromStream(in))
             {
-                createDefaultRegionAndPlayList();
+                // createDefaultRegionAndPlayList();
                 return true;
             }
         }
@@ -134,32 +148,27 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
     return false;
 }
 
-void AudiumEngine::createDefaultRegionAndPlayList()
+void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> group)
 {
-    if (audioRegionContainer->getNumRegions() == 0)
+    if (audioRegionContainer->getNumRegions(group.get()) == 0)
     {
-        auto region = audioRegionContainer->createDefaultRegion(audioResourceContainer);
-        jassert(playListContainer->getNumItems() == 0);
-        playListContainer->createPlayListItem(region);
+        auto region = audioRegionContainer->createDefaultRegion(audioResourceContainer, group);
+        group->getPlayListContainer()->createPlayListItem(region);
     }
-}
-
-void AudiumEngine::cleanup()
-{
-    playListContainer->cleanup();
-    audioRegionContainer->cleanup();
-    audioResourceContainer->cleanup();
-    
-    currentFile = File();
 }
 
 void AudiumEngine::invokeAutoEdit(const AutoEditConfig config)
 {
     std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioResourceContainer,
                                                     audioRegionContainer,
-                                                    playListContainer));
+                                                    audioGroupContainer->getSelectedGroup()->getPlayListContainer()));
     if (autoEdit->invokeAutoEdit(config))
     {
         autoEdit->applyAutoEditResult();
     }
+}
+
+std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioGroup> group) const
+{
+    return group->getPlayListContainer();
 }

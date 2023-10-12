@@ -45,20 +45,20 @@ void MoveItemBefore(C& container, size_t currentIndex, size_t indexOfItemToPlace
 class PlayListContainer : public juce::ActionBroadcaster {
     
 public:
-    PlayListContainer(std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
+    PlayListContainer(const AudioRegionContainer &audioRegionContainer) :
         audioRegionContainer(audioRegionContainer)
     {
     }
+    ~PlayListContainer();
+    
     
     void createPlayListItem(std::shared_ptr<AudioRegion> audioRegion);
     void createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
     void deletePlayListItem(int atIndex, bool sendNotification = true);
     void deleteAssociatedItems(std::shared_ptr<AudioRegion> audioRegion);
     
-    int getNumItems() const
-    {
-        return static_cast<int>(playListItems.size());
-    }
+    const std::vector<std::shared_ptr<PlayListItem>> getPlayListItems() const;
+    int getNumItems(std::shared_ptr<AudioGroup> group = nullptr) const;
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
@@ -74,14 +74,16 @@ public:
     
     double getAbsolueStartTime(const PlayListItem* playListItem) const;
     
-    /// TODO: make this private
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
+    
+    std::shared_ptr<PlayListItem> currentPlayListItem;
     
 private:
     
+    
     juce::CriticalSection readLock;
     
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
+    const AudioRegionContainer &audioRegionContainer;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListContainer)
 };

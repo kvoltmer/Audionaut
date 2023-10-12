@@ -18,7 +18,7 @@
 
 using namespace juce;
 
-class AudioResourceGroup;
+class AudioGroup;
 class PlayListContainer;
 class AudioGroupRegionComponent;
 
@@ -28,21 +28,21 @@ class AudioGroupRegionComponent;
  
  Display Regions in Timeline
  
- Display a AudioResourceGroup as part of AudioGroupListBoxModel.
+ Display a AudioGroup as part of AudioGroupListBoxModel.
  
- A AudioResourceGroup may contain multiple regions in the Timeline. The PlayListContainer holds the region information
+ A AudioGroup may contain multiple regions in the Timeline. The PlayListContainer holds the region information
  */
 class AudioGroupComponent  : public Component,
                            public FileDragAndDropTarget
 {
 public:
-    AudioGroupComponent (std::shared_ptr<AudioResourceGroup> audioResourceGroup,
+    AudioGroupComponent (std::shared_ptr<AudioGroup> audioGroup,
                          std::shared_ptr<AudiumEngine> audiumEngine,
                          std::shared_ptr<ZoomHandler> zoomHandler);
 
     ~AudioGroupComponent() override;
     
-    void setAudioResourceGroup (std::shared_ptr<AudioResourceGroup> audioResourceGroup);
+    void setAudioGroup (std::shared_ptr<AudioGroup> audioGroup);
 
     void paint (juce::Graphics&) override;
     
@@ -66,7 +66,7 @@ private:
     
     void rebuildComponents();
     
-    std::shared_ptr<AudioResourceGroup> audioResourceGroup;
+    std::shared_ptr<AudioGroup> audioGroup;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     

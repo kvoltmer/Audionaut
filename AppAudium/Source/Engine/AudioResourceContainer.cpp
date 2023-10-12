@@ -9,10 +9,12 @@
 */
 
 #include "AudioResourceContainer.h"
+#include "AudioGroupContainer.h"
 #include "AudioPlayer.h"
 #include "TransportSourceContainer.h"
 #include "AudiumTransportSource.h"
 #include "Engine/ActionMessages.h"
+#include "Engine/AudiumEngine.h"
 
 static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
 {
@@ -30,9 +32,11 @@ static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL&
 }
 
 AudioResourceContainer::AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                                               std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
+                                               std::shared_ptr<TransportSourceContainer> transportSourceContainer,
+                                               std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
     audioDeviceManager(audioDeviceManager),
-    transportSourceContainer(transportSourceContainer)
+    transportSourceContainer(transportSourceContainer),
+    audioGroupContainer(audioGroupContainer)
 {
     formatManager.registerBasicFormats();
     thread.startThread();
@@ -43,7 +47,9 @@ AudioResourceContainer::~AudioResourceContainer()
     audioResources.clear();
 }
 
-std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url, std::shared_ptr<AudioResourceGroup> group)
+std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,
+                                                                         const AudiumEngine& engine,
+                                                                         std::shared_ptr<AudioGroup> group)
 {
     if (auto inputSource = makeAudioInputSource (url))
     {
@@ -56,28 +62,28 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                         &thread));
         auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, url, inputSource.get(), formatManager, audioPlayer, thumbnailCache));
         
-        std::shared_ptr<AudioResourceGroup> audioResourceGroup = nullptr;
+        std::shared_ptr<AudioGroup> audioGroup = nullptr;
         
         if (group != nullptr)
         {
-            audioResourceGroup = group;
+            audioGroup = group;
         }
         else // no group provided
         {
             // create default group
             if (audioResources.size() == 0)
             {
-                audioResourceGroup = std::shared_ptr<AudioResourceGroup>(new AudioResourceGroup(*this, url.getFileName().toStdString()));
+                audioGroup = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer(), url.getFileName().toStdString());
             }
             else // add to first group
             {
-                auto groups = getAudioResourceGroups();
+                auto groups = getAudioGroups();
                 jassert(groups.size() > 0);
-                audioResourceGroup = groups[0];
+                audioGroup = groups[0];
             }
         }
-        transportSource->setAudioResourceGroup(audioResourceGroup);
-        audioResources.push_back({audioResourceGroup, audioResource});
+        transportSource->setAudioGroup(audioGroup);
+        audioResources.push_back({audioGroup, audioResource});
         inputSource.release();
         
         sendActionMessage(audioResourceCreatedAction);
@@ -88,9 +94,8 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     return nullptr;
 }
 
-bool AudioResourceContainer::removeAudioResourceGroup (int atIndex)
+void AudioResourceContainer::removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group)
 {
-    auto group = getAudioResourceGroup(atIndex);
     jassert(group != nullptr);
     if (group != nullptr)
     {        
@@ -105,15 +110,7 @@ bool AudioResourceContainer::removeAudioResourceGroup (int atIndex)
                 ++it;
             }
         }
-        
-        if (audioResources.empty())
-        {
-            std::cout << "TODO: cleanup playlist and regions!" << std::endl;
-        }
-        return true;
     }
-    
-    return false;
 }
 
 int AudioResourceContainer::getNumAudioResources() const
@@ -121,9 +118,9 @@ int AudioResourceContainer::getNumAudioResources() const
     return static_cast<int>(audioResources.size());
 }
 
-int AudioResourceContainer::getNumAudioResourceGroups() const
+int AudioResourceContainer::getNumAudioGroups() const
 {
-    return static_cast<int>(getAudioResourceGroups().size());
+    return static_cast<int>(getAudioGroups().size());
 }
 
 std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int index) const
@@ -137,10 +134,10 @@ std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int inde
     return nullptr;
 }
 
-std::shared_ptr<AudioResourceGroup> AudioResourceContainer::getAudioResourceGroup(int index) const
+std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroup(int index) const
 {
-    jassert(index < getNumAudioResourceGroups());
-    return getAudioResourceGroups()[index];
+    jassert(index < getNumAudioGroups());
+    return getAudioGroups()[index];
 }
 
 
@@ -157,13 +154,13 @@ double AudioResourceContainer::getTotalLengthMax() const
 
 bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
 {
-    auto groups = getAudioResourceGroups();
+    auto groups = getAudioGroups();
     outputStream.writeInt(static_cast<int>(groups.size()));
     
     for (auto & group : groups)
     {
         outputStream.writeString(juce::String(group->getName()));
-        auto resources = getAudioResourcesForGroup(group);
+        auto resources = getAudioResourcesForGroup(group.get());
         outputStream.writeInt(static_cast<int>(resources.size()));
         
         for (auto & resource : resources)
@@ -175,33 +172,33 @@ bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
     return true;
 }
 
-bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream)
+bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine)
 {
-    audioResources.clear();
+    jassert(audioResources.empty());
     
     auto numGroups = inputStream.readInt();
     for (auto g = 0; g < numGroups; g++)
     {
         auto groupName = inputStream.readString();
-        auto group = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(*this, groupName.toStdString()));
+        auto group = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer().get(), groupName.toStdString());
         
         auto numResources = inputStream.readInt();
         for (auto r = 0; r < numResources; r++)
         {
             auto inString = inputStream.readString();
-            addAudioResource(juce::URL(inString), group);
+            addAudioResource(juce::URL(inString), engine, group);
         }
     }
     
     return true;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroup(std::shared_ptr<AudioResourceGroup> group) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroup(AudioGroup *group) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
     {
-        if (itr->first == group)
+        if (itr->first.get() == group)
         {
             result.push_back(itr->second);
         }
@@ -209,10 +206,9 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
-std::vector<std::shared_ptr<AudioResourceGroup>> AudioResourceContainer::getAudioResourceGroups() const
+std::vector<std::shared_ptr<AudioGroup>> AudioResourceContainer::getAudioGroups() const
 {
-    std::vector<std::shared_ptr<AudioResourceGroup>> result;
-    //for(  auto it = audioResources.begin(), end = audioResources.end(); it != end; it = audioResources.upper_bound(it->first))
+    std::vector<std::shared_ptr<AudioGroup>> result;
     for(auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
     {
         if (std::find(result.begin(), result.end(), it->first) == result.end())
@@ -221,4 +217,14 @@ std::vector<std::shared_ptr<AudioResourceGroup>> AudioResourceContainer::getAudi
         }
     }
     return result;
+}
+
+std::shared_ptr<AudioGroup> AudioResourceContainer::getDefaultGroup() const
+{
+    auto groups = getAudioGroups();
+    if (groups.size() > 0)
+    {
+        return groups[0];
+    }
+    return nullptr;
 }
