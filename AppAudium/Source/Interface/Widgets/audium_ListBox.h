@@ -463,7 +463,7 @@ public:
     /** Returns the height of a row in the list.
         @see setRowHeight
     */
-    int getRowHeight() const noexcept                   { std::cout << "rowHeight: " << rowHeight << std::endl; return rowHeight; }
+    int getRowHeight() const noexcept                   { return rowHeight; }
 
     /** Returns the number of rows actually visible.
 

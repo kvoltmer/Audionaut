@@ -71,15 +71,13 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
         else // no group provided
         {
             // create default group
-            if (audioResources.size() == 0)
+            if (audioGroupContainer->getNumItems() == 0)
             {
                 audioGroup = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer(), url.getFileName().toStdString());
             }
             else // add to first group
             {
-                auto groups = getAudioGroups();
-                jassert(groups.size() > 0);
-                audioGroup = groups[0];
+                audioGroup = audioGroupContainer->getAudioGroup(0);
             }
         }
         transportSource->setAudioGroup(audioGroup);
@@ -159,7 +157,11 @@ bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
     
     for (auto & group : groups)
     {
+        // audio group stuff
         outputStream.writeString(juce::String(group->getName()));
+        outputStream.writeInt(group->getId());
+        
+        // audio resource stuff
         auto resources = getAudioResourcesForGroup(group.get());
         outputStream.writeInt(static_cast<int>(resources.size()));
         
@@ -179,9 +181,12 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, con
     auto numGroups = inputStream.readInt();
     for (auto g = 0; g < numGroups; g++)
     {
+        // audio group stuff
         auto groupName = inputStream.readString();
-        auto group = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer().get(), groupName.toStdString());
+        auto groupId = inputStream.readInt();
+        auto group = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer().get(), groupName.toStdString(), groupId);
         
+        // audio resource stuff
         auto numResources = inputStream.readInt();
         for (auto r = 0; r < numResources; r++)
         {

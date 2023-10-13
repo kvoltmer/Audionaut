@@ -25,9 +25,12 @@ public:
     AudioGroupContainer() = default;
     ~AudioGroupContainer();
     
+    bool groupIdExists(const int groupId) const;
+    
     std::shared_ptr<AudioGroup> createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
                                                     const AudioRegionContainer &audioRegionContainer,
-                                                    std::string nameString);
+                                                    std::string nameString,
+                                                    int groupId = -1);
     void cleanup();
     
     bool removeAudioGroup(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioGroup> group);
@@ -38,11 +41,17 @@ public:
     std::shared_ptr<AudioGroup> getSelectedGroup() const { return audioGroups[selectedGroup]; }
     
     int getNumItems() const { return static_cast<int>(audioGroups.size());}
-    std::shared_ptr<AudioGroup> getAudioGroup(int index) { return audioGroups[index]; }
+    std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
+    std::shared_ptr<AudioGroup> getAudioGroupById(int groupId) const;
+    
+    int getNextId() { return ++nextId; }
     
 private:
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;
     int selectedGroup = 0;
+    
+    int nextId = 0;
+    
 
 };

@@ -23,10 +23,12 @@ class AudioGroup
 public:
     AudioGroup(const AudioResourceContainer &audioResourceContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
-               std::string nameString) :
+               std::string nameString,
+               int groupId) :
         audioResourceContainer(audioResourceContainer),
         playListContainer(playListContainer),
-        name(nameString)
+        name(nameString),
+        groupId(groupId)
     {}
     
     ~AudioGroup();
@@ -35,6 +37,7 @@ public:
     
 
     const std::string getName() const { return name; }
+    const int getId() const noexcept { return groupId; }
     
     const AudioResourceContainer &getAudioResourceContainer() { return audioResourceContainer; }
     
@@ -49,5 +52,6 @@ private:
     const AudioResourceContainer &audioResourceContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::string name;
+    int groupId;
     
 };

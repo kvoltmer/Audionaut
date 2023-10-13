@@ -13,19 +13,22 @@
 #include "Engine/AudioRegion.h"
 
 class AudioResourceContainer;
+class AudioGroupContainer;
 class AudioGroup;
 
 class AudioRegionContainer : public juce::ActionBroadcaster
 {
                                             
 public:
-    AudioRegionContainer(std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
-        audioResourceContainer(audioResourceContainer)
+    AudioRegionContainer(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                         std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
+        audioResourceContainer(audioResourceContainer),
+        audioGroupContainer(audioGroupContainer)
     {}
     
     std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                                                      std::shared_ptr<AudioGroup> group);
-    std::shared_ptr<AudioRegion> createRegion(juce::String regionName, juce::Range<double> position, std::shared_ptr<AudioGroup> group = nullptr);
+    std::shared_ptr<AudioRegion> createRegion(juce::String regionName, juce::Range<double> position, std::shared_ptr<AudioGroup> group);
     void deleteRegion(int rowNumber);
     
     void setRegionPosition(juce::Range<double> pos);
@@ -49,11 +52,14 @@ public:
     
     void cleanup() { audioRegions.clear(); }
     
+    std::vector<std::shared_ptr<AudioRegion>> getRegionsForGroup(std::shared_ptr<AudioGroup> group) const;
+    void removeAudioRegion(std::shared_ptr<AudioRegion> region);
     void removeAudioRegionsForGroup(std::shared_ptr<AudioGroup> group);
     
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
-    
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+
     AudioRegion::RegionData selectedRegion;
     int selectedRowNumber = -1;
     

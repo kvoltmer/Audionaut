@@ -26,24 +26,60 @@ void AudioGroupContainer::cleanup()
         group->getPlayListContainer()->cleanup();
     }
     audioGroups.clear();
+    
+    nextId = 0;
+}
+
+bool AudioGroupContainer::groupIdExists(const int groupId) const
+{
+    for (auto group : audioGroups)
+    {
+        if (group->getId() == groupId)
+            return true;
+    }
+    return false;
+}
+
+std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroup(int index) const
+{
+    if (index >= 0 && index < audioGroups.size())
+    {
+        return audioGroups[index];
+    }
+    jassertfalse;
+    return nullptr;
+}
+
+std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroupById(int groupId) const
+{
+    for (auto group : audioGroups)
+    {
+        if (group->getId() == groupId)
+            return group;
+    }
+    jassertfalse;
+    return nullptr;
 }
 
 std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
                                                                      const AudioRegionContainer &audioRegionContainer,
-                                                                     std::string nameString)
+                                                                     std::string nameString,
+                                                                     int groupId)
 {
     auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(audioRegionContainer));
-    auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(audioResourceContainer, playListContainer, nameString));
+    groupId = (groupId < 0) ? getNextId() : groupId;
+    jassert( !groupIdExists(groupId) );
+    auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(audioResourceContainer, playListContainer, nameString, groupId));
     audioGroups.push_back(audioGroup);
+    std::cout << "audio group created with id = " << groupId << std::endl;
     sendActionMessage(audioGroupCreatedAction);
     return audioGroup;
 }
 
 bool AudioGroupContainer::removeAudioGroup(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioGroup> group)
 {
-    
-    engine->getAudioResourceContainer()->removeAudioResourcesForGroup(group);
     engine->getAudioRegionContainer()->removeAudioRegionsForGroup(group);
+    engine->getAudioResourceContainer()->removeAudioResourcesForGroup(group);
     
     auto it = std::find(audioGroups.begin(), audioGroups.end(), group);
     if (it != audioGroups.end())

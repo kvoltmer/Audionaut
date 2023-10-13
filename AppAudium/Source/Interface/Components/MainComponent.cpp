@@ -139,7 +139,7 @@ void MainComponent::resized()
 
 void MainComponent::actionListenerCallback (const juce::String& message)
 {
-    std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
+    //std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
 
     if (message == regionCreatedAction)
     {

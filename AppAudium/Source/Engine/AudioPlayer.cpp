@@ -24,7 +24,7 @@ AudioPlayer::AudioPlayer(std::shared_ptr<AudiumTransportSource> audioTransportSo
     
 
     auto stream = rawToUniquePtr (inputSource->createInputStream());
-    jassert(stream);
+    jassert(stream != nullptr);
     if (stream == nullptr)
         return;
 
