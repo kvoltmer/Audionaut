@@ -91,7 +91,7 @@ int AudioGroupListBoxModel::getRowHeight (int rowNumber) const
 
 void AudioGroupListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
-    std::cout << "selectedRowsChanged: " << lastRowSelected << std::endl;
+    // std::cout << "selectedRowsChanged: " << lastRowSelected << std::endl;
 }
 
 void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)

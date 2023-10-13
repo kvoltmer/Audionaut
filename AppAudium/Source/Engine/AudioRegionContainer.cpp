@@ -12,6 +12,7 @@
 #include "AudioRegionContainer.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/AudioGroupContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
@@ -125,6 +126,7 @@ bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
     outputStream.writeInt((int)audioRegions.size());
     for (auto & region : audioRegions)
     {
+        outputStream.writeInt(region->getAudioGroup()->getId());
         outputStream.writeString(region->name);
         outputStream.writeDouble(region->position.getStart());
         outputStream.writeDouble(region->position.getEnd());
@@ -141,11 +143,12 @@ bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
         auto numRegions = inputStream.readInt();
         for (auto i = 0; i < numRegions; i++)
         {
+            auto groupId = inputStream.readInt();
             auto regionName = inputStream.readString();
             auto start = inputStream.readDouble();
             auto end = inputStream.readDouble();
             juce::Range<double> position(start, end);
-            createRegion(regionName, position);
+            createRegion(regionName, position, audioGroupContainer->getAudioGroupById(groupId));
         }
     }
     return true;
@@ -220,19 +223,30 @@ void AudioRegionContainer::setRegionLength(int rowNumber, double newLength)
     sendActionMessage (regionLengthAction);
 }
 
+std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForGroup(std::shared_ptr<AudioGroup> group) const
+{
+    std::vector<std::shared_ptr<AudioRegion>> regions;
+    for (auto region : audioRegions)
+    {
+        if (region->getAudioGroup() == group)
+            regions.push_back(region);
+    }
+    return regions;
+}
+
 void AudioRegionContainer::removeAudioRegionsForGroup(std::shared_ptr<AudioGroup> group)
 {
-    std::vector< std::shared_ptr<AudioRegion> >::reverse_iterator i = audioRegions.rbegin();
+    auto regions = getRegionsForGroup(group);
     
-    while ( i != audioRegions.rend() )
+    for (auto region : regions)
     {
-        if ( (*i)->getAudioGroup() == group )
-        {
-            i = decltype(i)(audioRegions.erase( std::next(i).base() ));
-        }
-        else
-        {
-            ++i;
-        }
+        removeAudioRegion(region);
     }
+}
+
+void AudioRegionContainer::removeAudioRegion(std::shared_ptr<AudioRegion> region)
+{
+    auto atIndex = getRegionIndex(region);
+    jassert(atIndex >= 0 && atIndex < audioRegions.size());
+    audioRegions.erase(audioRegions.begin() + atIndex);
 }
