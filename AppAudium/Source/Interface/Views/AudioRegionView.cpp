@@ -44,7 +44,7 @@ void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
     
     g.setFont (12.0f);
     
-    Rectangle<int> bonds(zoomHandler->getVisibleRange().getStart() + 5,
+    Rectangle<int> bonds(5,
                          5,
                          g.getCurrentFont().getStringWidth(audioResource->getFileNameWithoutExtension()),
                          g.getCurrentFont().getHeight());
