@@ -109,7 +109,7 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 
 void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
 {
-    auto group = playListModel->getAudioGroup();
+    // auto group = playListModel->getAudioGroup();
     playListModel->getPlayListScheduler()->setPlayListItemIndex(rowNumber);
     //std::cout << "mouseDoubleClick" << rowNumber << std::endl;
 }

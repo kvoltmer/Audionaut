@@ -81,12 +81,12 @@ std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) cons
     return nullptr;
 }
 
-int PlayListContainer::getPlayListItemIndex(std::shared_ptr<PlayListItem> item) const
+int PlayListContainer::getPlayListItemIndex(const PlayListItem* item) const
 {
-    auto it = std::find(playListItems.begin(), playListItems.end(), item);
-    if (it != playListItems.end())
+    for (auto i = 0; i < playListItems.size(); i++)
     {
-        return static_cast<int>(std::distance(playListItems.begin(), it));
+        if (playListItems[i].get() == item)
+            return i;
     }
     
     return -1;
@@ -163,7 +163,7 @@ double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem) 
     return startTime;
 }
 
-std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItemAtPosition(double position) const
+const PlayListItem* PlayListContainer::getPlayListItemAtPosition(double position) const
 {
 
     for (auto item : playListItems)
@@ -174,7 +174,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItemAtPosition(doubl
         juce::Range<double> absoluteRange(startTime, endTime);
         if (absoluteRange.contains(position))
         {
-            return item;
+            return item.get();
         }
     }
     
