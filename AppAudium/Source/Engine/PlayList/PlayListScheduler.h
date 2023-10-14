@@ -54,15 +54,13 @@ private:
 
     void tick(int numSamples);
 
-    double absoluteToLocalPosition(double absolutePosition, std::shared_ptr<PlayListItem> item) const;
+    double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
     void applyAbsolutePosition(double pos, bool shouldStart);
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     
-    //std::shared_ptr<PlayListItem> currentPlayListItem;
-
     double sampleRate = 0.0;
     int bufferSize = 0;
     

@@ -118,7 +118,8 @@ int AudioResourceContainer::getNumAudioResources() const
 
 int AudioResourceContainer::getNumAudioGroups() const
 {
-    return static_cast<int>(getAudioGroups().size());
+    jassert(static_cast<int>(getAudioGroups().size()) == audioGroupContainer->getNumItems());
+    return audioGroupContainer->getNumItems();
 }
 
 std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int index) const

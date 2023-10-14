@@ -14,14 +14,21 @@
 
 class PlayListTableListBoxModel;
 
-struct PlayListTableListBoxItem : public juce::Component, public juce::DragAndDropTarget, private juce::Timer
+class PlayListTableListBoxItem : public juce::Component, public juce::DragAndDropTarget, private juce::Timer
 {
+public:
+    
     PlayListTableListBoxItem(PlayListTableListBoxModel* owner, int columnNumber, int rowNumber) :
         playListModel(owner),
         columnNumber(columnNumber),
         rowNumber(rowNumber)
     {
         startTimer(25);
+    }
+    
+    ~PlayListTableListBoxItem()
+    {
+        stopTimer();
     }
 
 //    PlayListTableListBoxItem(const PlayListTableListBoxItem& other)
@@ -104,12 +111,16 @@ struct PlayListTableListBoxItem : public juce::Component, public juce::DragAndDr
     
     void drawLinearProgress (juce::Graphics& g, double progress);
     
+    int rowNumber = 0;
+    
+private:
+    
     bool insertAfter = false;
     bool insertBefore = false;
     PlayListTableListBoxModel* playListModel;
     
-    int columnNumber;
-    int rowNumber;
+    int columnNumber = 0;
+    
     bool selected = false;
     double progress = 0.0;
 };

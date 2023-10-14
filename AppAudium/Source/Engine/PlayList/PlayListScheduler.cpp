@@ -64,7 +64,7 @@ void PlayListScheduler::tick(int numSamples)
     }
 }
 
-double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, std::shared_ptr<PlayListItem> item) const
+double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const
 {
     auto offset = absolutePosition - item->getAbsolueStartTime();
     return offset + item->getRegionData().getStart();
