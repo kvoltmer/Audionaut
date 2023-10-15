@@ -42,7 +42,7 @@ public:
 
     ~AudioGroupComponent() override;
     
-    void setAudioGroup (std::shared_ptr<AudioGroup> audioGroup);
+    void refreshComponent (std::shared_ptr<AudioGroup> audioGroup);
 
     void paint (juce::Graphics&) override;
     
@@ -64,6 +64,7 @@ public:
     
 private:
     
+    bool mustRebuildComponents() const;
     void rebuildComponents();
     
     std::shared_ptr<AudioGroup> audioGroup;

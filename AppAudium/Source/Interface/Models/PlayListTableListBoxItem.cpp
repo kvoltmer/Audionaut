@@ -15,6 +15,7 @@
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Interface/AudiumLookAndFeel.h"
+#include "Engine/ActionMessages.h"
 
 void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetails)
 {
@@ -34,8 +35,8 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
         playListModel->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
     }
     
-    // TODO: use your own update system
-    playListModel->listBox->owner->triggerAsyncUpdate();
+    
+    playListModel->getPlayListContainer()->sendActionMessage(playListOrderAction);
     
     hideInsertLines();
 }
