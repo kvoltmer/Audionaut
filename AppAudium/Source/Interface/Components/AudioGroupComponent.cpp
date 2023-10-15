@@ -29,28 +29,52 @@ AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioGroup> group,
     zoomHandler(zoomHandler)
 {
     group->setColour(audium::getNewWaveFormColour());
-    setAudioGroup(group);
+    refreshComponent(group);
 }
 
 AudioGroupComponent::~AudioGroupComponent()
 {
 }
 
-void AudioGroupComponent::setAudioGroup (std::shared_ptr<AudioGroup> group)
+void AudioGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group)
 {
     audioGroup = group;
     audioGroup->updateColour();
     
     zoomHandler->updateTotalLength();
     
-    rebuildComponents();
-    
+    if (mustRebuildComponents())
+    {
+        rebuildComponents();
+    }
     resized();
+}
+
+bool AudioGroupComponent::mustRebuildComponents() const
+{
+    // compare play list items
+    auto playListContainer = audiumEngine->getPlayListContainer(audioGroup);
+    auto playListItems = playListContainer->getPlayListItems();
     
+    if (playListItems.size() != audioGroupRegions.size())
+    {
+        return true;
+    }
+    
+    for (auto i = 0; i < playListItems.size(); i++)
+    {
+        if (playListItems[i] != audioGroupRegions[i]->getPlayListItem())
+        {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 void AudioGroupComponent::rebuildComponents()
 {
+    std::cout << "AudioGroupComponent::rebuildComponents " << audioGroup->getId() << std::endl;
     removeAllChildren();
     audioGroupRegions.clear();
     
@@ -100,7 +124,7 @@ void AudioGroupComponent::filesDropped (const StringArray& filenames, int /*x*/,
         audiumEngine->createDefaultRegionAndPlayList(audioGroup);
         
         // will update content
-        setAudioGroup(audioGroup);
+        refreshComponent(audioGroup);
     }
     
     externalDragAndDrop = false;

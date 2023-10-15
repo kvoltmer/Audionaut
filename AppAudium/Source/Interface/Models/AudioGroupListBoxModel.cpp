@@ -62,7 +62,7 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
         if (audioGroup != nullptr)
         {
             // update of audioGroup since row might have changed after delete
-            component->setAudioGroup(audioGroup);
+            component->refreshComponent(audioGroup);
         }
         return component;
     }
