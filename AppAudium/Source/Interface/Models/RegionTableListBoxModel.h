@@ -12,8 +12,8 @@
 
 #include <JuceHeader.h>
 
+#include "Interface/Controls/RegionTableListBox.h"
 
-class RegionTableListBox;
 class PlayListContainer;
 class AudioRegionContainer;
 
@@ -53,6 +53,11 @@ public:
     void selectedRowsChanged (int lastRowSelected) override;
     
     void deleteKeyPressed (int lastRowSelected) override;
+    
+    void backgroundClicked (const juce::MouseEvent&) override
+    {
+        owner->deselectAllRows();
+    }
     
     juce::var getDragSourceDescription (const juce::SparseSet<int>& currentlySelectedRows) override;
 

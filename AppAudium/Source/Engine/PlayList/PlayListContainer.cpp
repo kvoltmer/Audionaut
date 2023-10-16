@@ -180,3 +180,20 @@ const PlayListItem* PlayListContainer::getPlayListItemAtPosition(double position
     
     return nullptr;
 }
+
+void PlayListContainer::selectPlayListItem(std::shared_ptr<PlayListItem> item, bool bSelected)
+{
+    item->setSelected(bSelected);
+    
+    sendActionMessage(playListItemSelection);
+}
+
+void PlayListContainer::deselectAll()
+{
+    for (auto item : playListItems)
+    {
+        item->setSelected(false);
+    }
+    
+    sendActionMessage(playListItemSelection);
+}

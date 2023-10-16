@@ -105,12 +105,19 @@ public:
     void selectedRowsChanged (int lastRowSelected) override
     {
         // selecting a playListItem also selects the region
-        auto playListItem = audiumEngine->getPlayListContainer(audioGroup)->getPlayListItem(lastRowSelected);
+        auto playListItem = audioGroup->getPlayListContainer()->getPlayListItem(lastRowSelected);
         if (playListItem != nullptr)
         {
+            audioGroup->getPlayListContainer()->selectPlayListItem(playListItem, true);
             auto regionIndex = audiumEngine->getAudioRegionContainer()->getRegionIndex(playListItem->getRegion());
             audiumEngine->getAudioRegionContainer()->setSelectedRegion(regionIndex);
         }
+    }
+    
+    void backgroundClicked (const juce::MouseEvent&) override
+    {
+        listBox->deselectAllRows();
+        audioGroup->getPlayListContainer()->deselectAll();
     }
 
     
@@ -118,7 +125,6 @@ public:
     
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioGroup); }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
-    //std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return audioGroup->getTransportSourceContainer(); }
     
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     

@@ -11,7 +11,6 @@
 #include <JuceHeader.h>
 #include "RegionTableListBoxModel.h"
 #include "Interface/ColourIds.h"
-#include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Controls/RegionEditor.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"

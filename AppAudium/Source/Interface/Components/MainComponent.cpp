@@ -156,6 +156,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == regionSelectedAction)
     {
         middlePanelComponent->updateUI();
+        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
     }
     else if (message == playListItemCreatedAction)
     {
@@ -165,6 +166,10 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == playListItemTriggered)
     {
         rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
+    }
+    else if (message == playListItemSelection)
+    {
+        middlePanelComponent->updateUI();
     }
     else if (message == audioResourceCreatedAction)
     {
