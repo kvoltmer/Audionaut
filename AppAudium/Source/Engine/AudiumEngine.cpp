@@ -19,13 +19,11 @@ AudiumEngine::AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDevice
                            std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                            std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                            std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                           std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                            std::shared_ptr<PlayListScheduler> playListScheduler) :
     audioDeviceManager(audioDeviceManager),
     audioGroupContainer(audioGroupContainer),
     audioResourceContainer(audioResourceContainer),
     audioRegionContainer(audioRegionContainer),
-    transportSourceContainer(transportSourceContainer),
     playListScheduler(playListScheduler)
 {
 }
@@ -44,9 +42,9 @@ void AudiumEngine::initialise()
 
 void AudiumEngine::cleanup()
 {
+    audioGroupContainer->cleanup();
     audioResourceContainer->cleanup();
     audioRegionContainer->cleanup();
-    audioGroupContainer->cleanup();
     
     currentFile = File();
 }

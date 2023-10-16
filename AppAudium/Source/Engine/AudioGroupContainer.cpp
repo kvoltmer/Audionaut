@@ -13,6 +13,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
+#include "Engine/TransportSourceContainer.h"
 
 AudioGroupContainer::~AudioGroupContainer()
 {
@@ -23,7 +24,7 @@ void AudioGroupContainer::cleanup()
 {
     for (auto group : audioGroups)
     {
-        group->getPlayListContainer()->cleanup();
+        group->cleanup();
     }
     audioGroups.clear();
     
@@ -69,7 +70,8 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const Audio
     auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(audioRegionContainer));
     groupId = (groupId < 0) ? getNextId() : groupId;
     jassert( !groupIdExists(groupId) );
-    auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(audioResourceContainer, playListContainer, nameString, groupId));
+    auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
+    auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(audioResourceContainer, playListContainer, transportSourceContainer, nameString, groupId));
     audioGroups.push_back(audioGroup);
     std::cout << "audio group created with id = " << groupId << std::endl;
     sendActionMessage(audioGroupCreatedAction);

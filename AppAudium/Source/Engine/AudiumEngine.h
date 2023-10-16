@@ -29,7 +29,6 @@ public:
                  std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                  std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                 std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                  std::shared_ptr<PlayListScheduler> playListScheduler);
     ~AudiumEngine();
     
@@ -51,7 +50,6 @@ public:
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     std::shared_ptr<PlayListContainer> getPlayListContainer(std::shared_ptr<AudioGroup> group) const;
-    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
     void invokeAutoEdit(const AutoEditConfig config);
@@ -61,7 +59,6 @@ private:
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<PlayListScheduler> playListScheduler;
     
     juce::File currentFile;

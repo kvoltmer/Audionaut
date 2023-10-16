@@ -16,6 +16,7 @@ class AudioResourceContainer;
 class AudioResource;
 class PlayListContainer;
 class PlayListScheduler;
+class TransportSourceContainer;
 
 class AudioGroup
 {
@@ -23,10 +24,12 @@ class AudioGroup
 public:
     AudioGroup(const AudioResourceContainer &audioResourceContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
+               std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                std::string nameString,
                int groupId) :
         audioResourceContainer(audioResourceContainer),
         playListContainer(playListContainer),
+        transportSourceContainer(transportSourceContainer),
         name(nameString),
         groupId(groupId)
     {}
@@ -47,10 +50,11 @@ public:
     void updateColour();
     
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
-    
+    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
 private:
     const AudioResourceContainer &audioResourceContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::string name;
     int groupId;
     

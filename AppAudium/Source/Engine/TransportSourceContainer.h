@@ -21,15 +21,17 @@ public:
     TransportSourceContainer() = default;
     ~TransportSourceContainer() = default;
     
+    void cleanup() { audioTransportSources.clear(); }
+    
     std::shared_ptr<AudiumTransportSource> createNewTransportSource();
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
-    void setLocalPosition (std::shared_ptr<AudioGroup> group, double newPosition);
-    double getLocalPosition(std::shared_ptr<AudioGroup> group) const;
+    void setLocalPosition (double newPosition);
+    double getLocalPosition() const;
     
-    void start(std::shared_ptr<AudioGroup> group);
-    void stop(std::shared_ptr<AudioGroup> group);
-    bool isPlaying(std::shared_ptr<AudioGroup> group) const;
+    void start();
+    void stop();
+    bool isPlaying() const;
     
 private:
     
