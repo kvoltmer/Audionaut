@@ -31,9 +31,13 @@ public:
     double getAbsolueStartTime() const;
     double getDurationTime() const;
     
+    void setSelected(bool bSelected) { selected = bSelected; }
+    bool isSelected() const { return selected; }
+    
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
+    bool selected = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItem)
 };

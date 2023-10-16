@@ -40,8 +40,12 @@ AudioGroupRegionComponent::~AudioGroupRegionComponent()
 {
 }
 
-void AudioGroupRegionComponent::paint (juce::Graphics&)
+void AudioGroupRegionComponent::paint (juce::Graphics& g)
 {
+    if (playListItem->isSelected())
+    {
+        g.fillAll (juce::Colours::yellow);
+    }
     // children paint on top
 }
 

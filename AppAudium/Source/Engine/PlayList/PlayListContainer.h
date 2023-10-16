@@ -78,6 +78,10 @@ public:
     
     const PlayListItem* currentPlayListItem = nullptr;
     
+    void selectPlayListItem(std::shared_ptr<PlayListItem> item, bool bSelected);
+    
+    void deselectAll();
+    
 private:
     
     
