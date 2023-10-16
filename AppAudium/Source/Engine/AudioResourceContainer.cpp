@@ -78,7 +78,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                 audioGroup = audioGroupContainer->getAudioGroup(0);
             }
         }
-        transportSource->setAudioGroup(audioGroup);
+        
         audioResources.push_back({audioGroup, audioResource});
         inputSource.release();
         
