@@ -17,10 +17,8 @@
 #include "Engine/AudioGroup.h"
 
 PlayListScheduler::PlayListScheduler(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                                     std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                                      std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
     audioDeviceManager(audioDeviceManager),
-    transportSourceContainer(transportSourceContainer),
     audioGroupContainer(audioGroupContainer)
 {
     audioDeviceManager->addAudioCallback(this);
@@ -82,18 +80,18 @@ void PlayListScheduler::applyAbsolutePosition(double pos, bool forcePosition)
         if (item != group->getPlayListContainer()->currentPlayListItem)
         {
             group->getPlayListContainer()->currentPlayListItem = item;
-            transportSourceContainer->stop(group);
+            group->getTransportSourceContainer()->stop();
         }
 
         // apply position and start if needed
         if (group->getPlayListContainer()->currentPlayListItem != nullptr)
         {
-            if (not transportSourceContainer->isPlaying(group) || forcePosition)
+            if (not group->getTransportSourceContainer()->isPlaying() || forcePosition)
             {
-                transportSourceContainer->setLocalPosition(group, absoluteToLocalPosition(pos, group->getPlayListContainer()->currentPlayListItem));
+                group->getTransportSourceContainer()->setLocalPosition(absoluteToLocalPosition(pos, group->getPlayListContainer()->currentPlayListItem));
                 if (isPlaying())
                 {
-                    transportSourceContainer->start(group);
+                    group->getTransportSourceContainer()->start();
                 }
             }
         }
@@ -113,7 +111,7 @@ void PlayListScheduler::stop()
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
         auto group = audioGroupContainer->getAudioGroup(i);
-        transportSourceContainer->stop(group);
+        group->getTransportSourceContainer()->stop();
     }
     
 }

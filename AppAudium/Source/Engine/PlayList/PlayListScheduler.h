@@ -23,7 +23,6 @@ class PlayListScheduler : public juce::AudioIODeviceCallback {
     
 public:
     PlayListScheduler(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                      std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                       std::shared_ptr<AudioGroupContainer> audioGroupContainer);
     ~PlayListScheduler() override;
     
@@ -58,7 +57,6 @@ private:
     void applyAbsolutePosition(double pos, bool shouldStart);
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     
     double sampleRate = 0.0;

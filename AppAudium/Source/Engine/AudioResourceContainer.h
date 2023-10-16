@@ -23,7 +23,6 @@ class AudioResourceContainer : public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                            std::shared_ptr<AudioGroupContainer> audioGroupContainer);
     
     ~AudioResourceContainer();
@@ -48,8 +47,6 @@ public:
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine);
     
-    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
-    
     void cleanup() { audioResources.clear(); }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
@@ -65,7 +62,6 @@ private:
     std::list<tAudioGroupPair> audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     
     /// TODO: find a proper home for this

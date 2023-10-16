@@ -32,10 +32,8 @@ static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL&
 }
 
 AudioResourceContainer::AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                                               std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                                                std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
     audioDeviceManager(audioDeviceManager),
-    transportSourceContainer(transportSourceContainer),
     audioGroupContainer(audioGroupContainer)
 {
     formatManager.registerBasicFormats();
@@ -54,7 +52,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     if (auto inputSource = makeAudioInputSource (url))
     {
         /// TODO: create factory
-        auto transportSource = transportSourceContainer->createNewTransportSource();
+        auto transportSource = group->getTransportSourceContainer()->createNewTransportSource();
         auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(transportSource,
                                                                         audioDeviceManager,
                                                                         inputSource.get(),

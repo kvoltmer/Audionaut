@@ -8,10 +8,11 @@
   ==============================================================================
 */
 
-#include "AudioGroup.h"
-#include "AudioResourceContainer.h"
-#include "AudioResource.h"
+#include "Engine/AudioGroup.h"
+#include "Engine/AudioResourceContainer.h"
+#include "Engine/AudioResource.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/TransportSourceContainer.h"
 
 AudioGroup::~AudioGroup()
 {
@@ -21,6 +22,7 @@ AudioGroup::~AudioGroup()
 void AudioGroup::cleanup()
 {
     playListContainer->cleanup();
+    transportSourceContainer->cleanup();
 }
 
 

@@ -29,8 +29,8 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
 
 AudioResource::~AudioResource()
 {
-    auto removed = owner.getTransportSourceContainer()->removeTransportSource(audioPlayer->getAudioTransportSource());
-    jassert(removed);
+    //auto removed = owner.getTransportSourceContainer()->removeTransportSource(audioPlayer->getAudioTransportSource());
+    //jassert(removed);
 }
 
 
