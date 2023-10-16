@@ -18,10 +18,4 @@ class AudiumTransportSource : public juce::AudioTransportSource
 public:
     AudiumTransportSource() = default;
     
-    void setAudioGroup(std::shared_ptr<AudioGroup> group) { audioGroup = group; }
-    
-    std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
-    
-private:
-    std::shared_ptr<AudioGroup> audioGroup;
 };

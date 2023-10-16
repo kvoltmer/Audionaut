@@ -36,14 +36,15 @@ AudioGroupComponent::~AudioGroupComponent()
 {
 }
 
-void AudioGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group)
+void AudioGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
 {
     audioGroup = group;
     audioGroup->updateColour();
     
     zoomHandler->updateTotalLength();
     
-    if (mustRebuildComponents())
+    if (mustRebuildComponents() ||
+        forceRebuildComponents)
     {
         rebuildComponents();
     }
@@ -124,7 +125,7 @@ void AudioGroupComponent::filesDropped (const StringArray& filenames, int /*x*/,
         audiumEngine->createDefaultRegionAndPlayList(audioGroup);
         
         // will update content
-        refreshComponent(audioGroup);
+        refreshComponent(audioGroup, true);
     }
     
     externalDragAndDrop = false;
