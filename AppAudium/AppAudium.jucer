@@ -114,35 +114,39 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
-          <FILE id="yCGSxN" name="PlayListContainerComponent.cpp" compile="1"
-                resource="0" file="Source/Interface/Components/PlayListContainerComponent.cpp"/>
-          <FILE id="dWeSeY" name="PlayListContainerComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/PlayListContainerComponent.h"/>
-          <FILE id="nADoLU" name="AudioGroupComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/AudioGroupComponent.cpp"/>
-          <FILE id="DcKSZR" name="AudioGroupComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/AudioGroupComponent.h"/>
-          <FILE id="uvqCyB" name="AudioGroupRegionComponent.cpp" compile="1"
-                resource="0" file="Source/Interface/Components/AudioGroupRegionComponent.cpp"/>
-          <FILE id="IU0rxb" name="AudioGroupRegionComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/AudioGroupRegionComponent.h"/>
+          <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
+            <FILE id="EXPE1i" name="AudioGroupComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/AudioGroupComponent.cpp"/>
+            <FILE id="R9kAWR" name="AudioGroupComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/AudioGroupComponent.h"/>
+            <FILE id="XNFDZ6" name="AudioGroupRegionComponent.cpp" compile="1"
+                  resource="0" file="Source/Interface/Components/MiddlePanel/AudioGroupRegionComponent.cpp"/>
+            <FILE id="VzTGOV" name="AudioGroupRegionComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/AudioGroupRegionComponent.h"/>
+            <FILE id="raU1FP" name="MiddlePanelComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.cpp"/>
+            <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
+          </GROUP>
+          <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
+            <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/RightPanel/PlayListComponent.cpp"/>
+            <FILE id="VwCjGU" name="PlayListComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/PlayListComponent.h"/>
+            <FILE id="OOOPVx" name="PlayListContainerComponent.cpp" compile="1"
+                  resource="0" file="Source/Interface/Components/RightPanel/PlayListContainerComponent.cpp"/>
+            <FILE id="yvpmz1" name="PlayListContainerComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/PlayListContainerComponent.h"/>
+            <FILE id="MuXKoO" name="RegionComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionComponent.h"/>
+            <FILE id="pUtSng" name="RightPanelComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/RightPanel/RightPanelComponent.cpp"/>
+            <FILE id="BNndd2" name="RightPanelComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/RightPanelComponent.h"/>
+          </GROUP>
           <FILE id="uZah0s" name="MainComponent.cpp" compile="1" resource="0"
                 file="Source/Interface/Components/MainComponent.cpp"/>
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
-          <FILE id="YrE1eb" name="MiddlePanelComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/MiddlePanelComponent.cpp"/>
-          <FILE id="T5q4JY" name="MiddlePanelComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/MiddlePanelComponent.h"/>
-          <FILE id="QZqS4F" name="RightPanelComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/RightPanelComponent.cpp"/>
-          <FILE id="Pzojdi" name="RightPanelComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/RightPanelComponent.h"/>
-          <FILE id="WNptEX" name="RegionComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/RegionComponent.h"/>
-          <FILE id="u5f0RK" name="PlayListComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Components/PlayListComponent.cpp"/>
-          <FILE id="opvZsf" name="PlayListComponent.h" compile="0" resource="0"
-                file="Source/Interface/Components/PlayListComponent.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
           <FILE id="eE3Tt0" name="PlayListTableListBoxItem.cpp" compile="1" resource="0"

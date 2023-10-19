@@ -12,9 +12,9 @@
 #include "RightPanelComponent.h"
 #include "Engine/AudiumEngine.h"
 #include "Interface/ColourIds.h"
-#include "Interface/Components/PlayListComponent.h"
-#include "Interface/Components/PlayListContainerComponent.h"
-#include "Interface/Components/RegionComponent.h"
+#include "Interface/Components/RightPanel/PlayListComponent.h"
+#include "Interface/Components/RightPanel/PlayListContainerComponent.h"
+#include "Interface/Components/RightPanel/RegionComponent.h"
 
 //==============================================================================
 RightPanelComponent::RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :

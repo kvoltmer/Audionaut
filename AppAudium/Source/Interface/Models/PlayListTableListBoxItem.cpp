@@ -10,7 +10,7 @@
 
 #include "PlayListTableListBoxItem.h"
 #include "PlayListTableListBoxModel.h"
-#include "Interface/Components/PlayListComponent.h"
+#include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Controls/RegionEditor.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/TransportSourceContainer.h"

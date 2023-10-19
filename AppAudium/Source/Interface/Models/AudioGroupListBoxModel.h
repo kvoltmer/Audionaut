@@ -5,7 +5,7 @@
 #include <JuceHeader.h>
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
-#include "Interface/Components/AudioGroupComponent.h"
+#include "Interface/Components/MiddlePanel/AudioGroupComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Controls/AudioGroupListBox.h"

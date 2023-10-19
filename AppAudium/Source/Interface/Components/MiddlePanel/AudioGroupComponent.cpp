@@ -12,7 +12,7 @@
 #include "AudioGroupComponent.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Controls/AudioGroupListBox.h"
-#include "Interface/Components/AudioGroupRegionComponent.h"
+#include "Interface/Components/MiddlePanel/AudioGroupRegionComponent.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListContainer.h"

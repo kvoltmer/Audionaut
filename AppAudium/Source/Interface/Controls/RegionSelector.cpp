@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include "RegionSelector.h"
-#include "Interface/Components/AudioGroupComponent.h"
+#include "Interface/Components/MiddlePanel/AudioGroupComponent.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
