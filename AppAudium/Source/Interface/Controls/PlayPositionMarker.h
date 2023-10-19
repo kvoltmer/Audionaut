@@ -31,7 +31,7 @@ public:
     {
         currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
         addAndMakeVisible (currentPositionMarker);
-        startTimerHz (40);
+        startTimerHz (60);
         
         setInterceptsMouseClicks(false, true);
     }

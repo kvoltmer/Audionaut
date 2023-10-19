@@ -44,8 +44,7 @@ public:
     {
         if (rowIsSelected)
         {
-            //g.fillAll (listBox->findColour(audium::defaultHighlightColourId));
-            g.fillAll (listBox->findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.5f));
+            g.fillAll (listBox->findColour(audium::listBoxBackgroundColourId));
         }
     }
 
@@ -62,8 +61,8 @@ public:
     {
         if (existingComponentToUpdate == nullptr)
         {
-            auto items = audiumEngine->getPlayListContainer(audioGroup)->getPlayListItems();
-            const PlayListItem* const p = items[rowNumber].get();
+//            auto items = audiumEngine->getPlayListContainer(audioGroup)->getPlayListItems();
+//            const PlayListItem* const p = items[rowNumber].get();
             {
                 return new PlayListTableListBoxItem(this, columnId, rowNumber);
             }

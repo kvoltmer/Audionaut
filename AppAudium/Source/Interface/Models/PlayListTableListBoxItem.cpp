@@ -43,8 +43,8 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
 
 void PlayListTableListBoxItem::drawLinearProgress (juce::Graphics& g, double progress)
 {
-    auto background = playListModel->listBox->findColour(selected ? audium::defaultHighlightColourId :
-                                                               audium::secondaryBackgroundColourId);
+    auto background = playListModel->listBox->findColour(audium::listBoxBackgroundColourId);
+    background = selected ? background.brighter().brighter() : background;
     if (columnNumber == 1)
     {
         auto foreground = selected ? background.darker() : background.brighter();
@@ -82,7 +82,7 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
         }
 
         auto textColour = r->getRegion()->getAudioGroup()->currentColour;
-        g.setColour (selected ? textColour.brighter() : textColour);
+        g.setColour (selected ? textColour.brighter().brighter() : textColour);
         
 
         g.setFont (13.0f);
