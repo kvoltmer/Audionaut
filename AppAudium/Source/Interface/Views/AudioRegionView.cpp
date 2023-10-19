@@ -14,6 +14,7 @@
 #include "Engine/AudioResource.h"
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
+#include "Engine/AudioGroup.h"
 
 using namespace juce;
 
@@ -63,8 +64,8 @@ void AudioRegionView::paint (juce::Graphics& g)
     if (audioResource != nullptr &&
         audioResource->getThumbnail().getTotalLength() > 0.0)
     { 
-        g.fillAll (audioResource->currentColour.withAlpha(0.25f));
-        g.setColour (audioResource->currentColour);
+        g.fillAll (audioRegion->getAudioGroup()->currentColour.withAlpha(0.25f));
+        g.setColour (audioRegion->getAudioGroup()->currentColour);
         
         auto thumbArea = getLocalBounds();
     

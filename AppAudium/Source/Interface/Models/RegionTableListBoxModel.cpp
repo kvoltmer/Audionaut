@@ -38,7 +38,9 @@ void RegionTableListBoxModel::paintRowBackground (juce::Graphics& g,
                                  bool rowIsSelected)
 {
     if (rowIsSelected)
-        g.fillAll (owner->findColour(audium::defaultHighlightColourId));
+    {
+        g.fillAll (owner->findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.5f));
+    }
 }
 
 void RegionTableListBoxModel::paintCell (juce::Graphics& g,

@@ -43,7 +43,10 @@ public:
                                      bool rowIsSelected) override
     {
         if (rowIsSelected)
-            g.fillAll (listBox->findColour(audium::defaultHighlightColourId));
+        {
+            //g.fillAll (listBox->findColour(audium::defaultHighlightColourId));
+            g.fillAll (listBox->findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.5f));
+        }
     }
 
     void paintCell (juce::Graphics& g,

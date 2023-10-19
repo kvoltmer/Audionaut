@@ -39,8 +39,6 @@ AudioGroupComponent::~AudioGroupComponent()
 void AudioGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
 {
     audioGroup = group;
-    audioGroup->updateColour();
-    
     zoomHandler->updateTotalLength();
     
     if (mustRebuildComponents() ||
