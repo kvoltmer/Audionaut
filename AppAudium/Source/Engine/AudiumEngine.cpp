@@ -150,7 +150,7 @@ void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> gr
 {
     if (audioRegionContainer->getNumRegions(group.get()) == 0)
     {
-        auto region = audioRegionContainer->createDefaultRegion(audioResourceContainer, group);
+        auto region = audioRegionContainer->createDefaultRegion(group);
         group->getPlayListContainer()->createPlayListItem(region);
     }
 }

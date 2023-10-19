@@ -12,6 +12,7 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioResource.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/PlayListItem.h"
 #include "Engine/TransportSourceContainer.h"
 
 AudioGroup::~AudioGroup()
@@ -52,3 +53,4 @@ void AudioGroup::updateColour()
         }
     }
 }
+

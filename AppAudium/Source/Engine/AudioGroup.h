@@ -12,11 +12,14 @@
 
 #include <JuceHeader.h>
 
+#include "AudioRegion.h"
+
 class AudioResourceContainer;
 class AudioResource;
 class PlayListContainer;
 class PlayListScheduler;
 class TransportSourceContainer;
+
 
 class AudioGroup
 {
@@ -51,6 +54,7 @@ public:
     
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
+        
 private:
     const AudioResourceContainer &audioResourceContainer;
     std::shared_ptr<PlayListContainer> playListContainer;

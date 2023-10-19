@@ -78,7 +78,5 @@ private:
     
     void createRectangleAndSetBonds();
     
-    juce::Range<double> selectedRegion;
-    
     
 };

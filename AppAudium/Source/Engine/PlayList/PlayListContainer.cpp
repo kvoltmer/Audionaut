@@ -163,16 +163,30 @@ double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem) 
     return startTime;
 }
 
-const PlayListItem* PlayListContainer::getPlayListItemAtPosition(double position) const
+const PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position) const
 {
-
     for (auto item : playListItems)
     {
-        /// TODO: optimize -> item->getStartTime() iterates list again
         auto startTime = item->getAbsolueStartTime();
         auto endTime = startTime + item->getDurationTime();
         juce::Range<double> absoluteRange(startTime, endTime);
         if (absoluteRange.contains(position))
+        {
+            return item.get();
+        }
+    }
+    
+    return nullptr;
+}
+
+const PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> range) const
+{
+    for (auto item : playListItems)
+    {
+        auto startTime = item->getAbsolueStartTime();
+        auto endTime = startTime + item->getDurationTime();
+        juce::Range<double> absoluteRange(startTime, endTime);
+        if (absoluteRange.contains(range))
         {
             return item.get();
         }
