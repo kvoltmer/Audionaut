@@ -58,7 +58,9 @@ void AudiumLookAndFeel::setupColours()
     setColour (widgetBackgroundColourId,             Colour (0xff495358));
     setColour (secondaryWidgetBackgroundColourId,    Colour (0xff303b41));
     
+    //g.fillAll (owner->findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.3f));
 
+    setColour(listBoxBackgroundColourId, findColour(secondaryBackgroundColourId).brighter().withAlpha(0.3f));
     
     // Table
     setColour(TableListBox::backgroundColourId, findColour(secondaryBackgroundColourId));
