@@ -60,9 +60,6 @@ public:
     
     double getSampleRate() const;
     unsigned int getNumChannels() const;
-    
-    /// TODO: move this
-    juce::Colour currentColour = juce::Colours::pink;
 
 private:
 

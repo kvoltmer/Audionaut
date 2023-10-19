@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
+#include "Engine/AudioGroup.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
@@ -48,7 +49,7 @@ public:
         this->rowNumber = rowNumber;
         
         juce::String text = "n/a";
-        if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
+        if (AudioRegion* r = audioRegionContainer->getRegion(rowNumber).get())
         {
             if (columnId == regionName)
             {
@@ -66,13 +67,14 @@ public:
             {
                 text = juce::String(r->position.getLength(), 4);
             }
+            
+            auto textColour = r->getAudioGroup()->currentColour;
+            setColour (juce::Label::textColourId, isSelected ? textColour.brighter() : textColour);
+            
         }
         setText (text, juce::dontSendNotification);
         
-        if (isSelected)
-            setColour (juce::Label::textColourId, findColour (audium::defaultHighlightedTextColourId));
-        else
-            setColour (juce::Label::textColourId, findColour (audium::defaultTextColourId));
+
     }
     
     /// this is odd but a click on the label should also select the row

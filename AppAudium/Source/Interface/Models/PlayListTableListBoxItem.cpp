@@ -62,10 +62,6 @@ void PlayListTableListBoxItem::drawLinearProgress (juce::Graphics& g, double pro
 
 void PlayListTableListBoxItem::paint(juce::Graphics& g)
 {
-    auto background = playListModel->listBox->findColour(selected ? audium::defaultHighlightColourId :
-                                                               audium::secondaryBackgroundColourId);
-    g.fillAll (background);
-    
     if (columnNumber == 1)
     {
         drawLinearProgress(g, progress);
@@ -85,10 +81,9 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
             text = "n/a";
         }
 
-        if (selected)
-            g.setColour (playListModel->listBox->findColour (audium::defaultHighlightedTextColourId));
-        else
-            g.setColour (playListModel->listBox->findColour (audium::defaultTextColourId));
+        auto textColour = r->getRegion()->getAudioGroup()->currentColour;
+        g.setColour (selected ? textColour.brighter() : textColour);
+        
 
         g.setFont (13.0f);
         g.drawText (text, 4, 0, getWidth() - 6, getHeight(), juce::Justification::centredLeft, true);

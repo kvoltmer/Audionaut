@@ -50,11 +50,12 @@ public:
     std::vector<std::shared_ptr<AudioResource>> getAudioResources();
     
     void setColour(juce::Colour colour);
-    void updateColour();
     
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
         
+    juce::Colour currentColour = juce::Colours::pink;
+
 private:
     const AudioResourceContainer &audioResourceContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
