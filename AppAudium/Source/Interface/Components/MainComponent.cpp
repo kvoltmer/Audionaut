@@ -18,10 +18,11 @@
 */
 
 //[Headers] You can add your own extra header files here...
-#include "MiddlePanelComponent.h"
+#include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
+#include "Interface/Components/RightPanel/RightPanelComponent.h"
+
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioGroup.h"
-#include "RightPanelComponent.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudioGroupContainer.h"
 //[/Headers]

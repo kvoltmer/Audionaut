@@ -100,8 +100,7 @@ AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) con
         return playListItems[index]->getRegionData();
     }
     
-    // returns empty range
-    // returns empty range
+    // empty range
     return AudioRegion::RegionData();
 }
 
