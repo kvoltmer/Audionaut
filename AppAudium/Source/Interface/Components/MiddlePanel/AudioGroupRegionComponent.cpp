@@ -43,10 +43,14 @@ AudioGroupRegionComponent::~AudioGroupRegionComponent()
 void AudioGroupRegionComponent::paint (juce::Graphics& g)
 {
     if (playListItem->isSelected())
-    {
-        g.fillAll (juce::Colours::yellow);
+    {        
+        g.setColour (audioGroup->getAudioResources().front()->currentColour);
     }
-    // children paint on top
+    else
+    {
+        g.setColour (juce::Colours::black.withAlpha(0.50f));
+    }
+    g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
 }
 
 void AudioGroupRegionComponent::resized()

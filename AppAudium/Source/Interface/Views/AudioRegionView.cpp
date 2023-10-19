@@ -59,6 +59,7 @@ void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
 void AudioRegionView::paint (juce::Graphics& g)
 {
     
+    
     if (audioResource != nullptr &&
         audioResource->getThumbnail().getTotalLength() > 0.0)
     { 

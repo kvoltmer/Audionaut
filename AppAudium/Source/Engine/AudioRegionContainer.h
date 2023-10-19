@@ -45,6 +45,7 @@ public:
     void setSelectedRegion(int rowNumber);
     int getSelectedRegion() const;
     void clearSelection();
+    void deselectAll();
     
     void setRegionName(int rowNumber, juce::String newName);
     void setRegionStart(int rowNumber, double newStart);
