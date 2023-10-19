@@ -47,9 +47,7 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
         setSize (0, 0);
         dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
         currentDragMode = RegionSelector::outsideEdge;
-        //audiumEngine->getAudioRegionContainer()->clearSelection();
-        //juce::Range<double> r;
-        selectedRegion = juce::Range<double>();
+        audiumEngine->getAudioRegionContainer()->setSelectedPosition(juce::Range<double>());
     }
     else /// click inside -> modify current selection
     {
@@ -117,9 +115,10 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
         pos = Range<double>(end, start);
     }
     
+    // itemAtAbsoluteRangestd::cout << pos.getStart() << " " << pos.getEnd() << std::endl;
+    
     // set value in the engine
-    // audiumEngine->getAudioRegionContainer()->setRegionPosition(pos);
-    selectedRegion = pos;
+    audiumEngine->getAudioRegionContainer()->setSelectedPosition(pos);
 }
 
 void RegionSelector::createRectangleAndSetBonds()
@@ -163,8 +162,7 @@ void RegionSelector::mouseMove (const juce::MouseEvent& e)
 
 void RegionSelector::updateFromEngine()
 {
-    //auto pos = audiumEngine->getAudioRegionContainer()->getRegionPosition();
-    auto pos = selectedRegion;
+    auto pos = audiumEngine->getAudioRegionContainer()->getSelectedPosition();
     if (pos.isEmpty())
     {
         setSize(0, 0);

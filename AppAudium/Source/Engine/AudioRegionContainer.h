@@ -26,14 +26,15 @@ public:
         audioGroupContainer(audioGroupContainer)
     {}
     
-    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                                                     std::shared_ptr<AudioGroup> group);
+    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioGroup> group);
     std::shared_ptr<AudioRegion> createRegion(juce::String regionName, juce::Range<double> position, std::shared_ptr<AudioGroup> group);
     void deleteRegion(int rowNumber);
+    void createRegionsFromSelection(juce::String name);
     
-    void setRegionPosition(juce::Range<double> pos);
-    juce::Range<double> getRegionPosition() const;
-        
+    // Used by RegionSelector
+    void setSelectedPosition(juce::Range<double> pos);
+    juce::Range<double> getSelectedPosition() const;
+    
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
@@ -60,7 +61,7 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
 
-    AudioRegion::RegionData selectedRegion;
+    AudioRegion::RegionData selectedPosition;
     int selectedRowNumber = -1;
     
     std::vector<std::shared_ptr<AudioRegion>> audioRegions;

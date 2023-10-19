@@ -70,7 +70,8 @@ public:
     
     AudioRegion::RegionData getPlayListDataAtIndex(int index) const;
     
-    const PlayListItem* getPlayListItemAtPosition(double position) const;
+    const PlayListItem* itemAtAbsolutePosition(double position) const;
+    const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range) const;
     
     double getAbsolueStartTime(const PlayListItem* playListItem) const;
     

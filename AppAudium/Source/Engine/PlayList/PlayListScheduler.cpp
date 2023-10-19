@@ -74,7 +74,7 @@ void PlayListScheduler::applyAbsolutePosition(double pos, bool forcePosition)
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
         auto group = audioGroupContainer->getAudioGroup(i);
-        auto item = group->getPlayListContainer()->getPlayListItemAtPosition(pos);
+        auto item = group->getPlayListContainer()->itemAtAbsolutePosition(pos);
 
         // assign current item and stop
         if (item != group->getPlayListContainer()->currentPlayListItem)

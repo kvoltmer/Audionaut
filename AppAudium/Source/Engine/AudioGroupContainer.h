@@ -46,6 +46,7 @@ public:
     
     int getNextId() { return ++nextId; }
     
+    
 private:
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;
