@@ -49,9 +49,12 @@ public:
     double getAbsolutePosition() const;
     void setAbsolutePosition(double newPosition);
     
-private:
-
     void tick(int numSamples);
+    void setBypass(bool isByPass) { byPass = isByPass; }
+    
+    double getTotalLength() const;
+    
+private:
 
     double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
     void applyAbsolutePosition(double pos, bool shouldStart);
@@ -67,6 +70,7 @@ private:
     
     std::atomic<bool> playing { false };
     
+    std::atomic<bool> byPass;
     
     juce::CriticalSection readLock;
     

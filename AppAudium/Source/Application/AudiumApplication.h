@@ -60,7 +60,9 @@ public:
     void askUserToOpenFile();
     void saveProjectAs();
     void saveProject();
+    void bounceProject();
     void updateUI();
+    
     
     AudiumLookAndFeel lookAndFeel;
 
@@ -75,6 +77,9 @@ private:
     void initCommandManager();
     void handleAsyncUpdate() override;
     
+    File suggestDirectory();
+    String suggestFileName();
+
     
     //==============================================================================
    #if JUCE_MAC

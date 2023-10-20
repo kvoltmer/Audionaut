@@ -35,10 +35,6 @@ public:
     
     /// returns the maximum length of all audio resources
     double getTotalLengthMax() const;
-    
-    void start();
-    
-    void stop();
 
     std::shared_ptr<AudiumTransportSource> getAudioTransportSource();
     
@@ -57,6 +53,7 @@ public:
     
     
     AudioResourceContainer& getContainer() const { return owner; }
+    std::shared_ptr<AudioPlayer> getAudioPlayer() const { return audioPlayer; }
     
     double getSampleRate() const;
     unsigned int getNumChannels() const;

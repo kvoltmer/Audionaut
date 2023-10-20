@@ -83,6 +83,8 @@ public:
     
     void deselectAll();
     
+    double getTotalLength() const;
+    
 private:
     
     

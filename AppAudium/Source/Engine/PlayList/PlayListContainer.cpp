@@ -210,3 +210,9 @@ void PlayListContainer::deselectAll()
     
     sendActionMessage(playListItemSelection);
 }
+
+double PlayListContainer::getTotalLength() const
+{
+    auto lastItem = playListItems.back();
+    return getAbsolueStartTime(lastItem.get()) + lastItem->getDurationTime();
+}

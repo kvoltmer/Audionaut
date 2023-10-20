@@ -17,7 +17,7 @@
 
 class AudiumTransportSource;
 
-class AudioPlayer
+class AudioPlayer : public juce::AudioSourcePlayer
 {
 
 public:
@@ -28,21 +28,31 @@ public:
                 juce::TimeSliceThread* readAheadThread);
     ~AudioPlayer();
     
-    void start();
-    
-    void stop();
-    
     std::shared_ptr<AudiumTransportSource> getAudioTransportSource() { return audioTransportSource; }
     
+    // danger!
     double sampleRate = 0.0;
     unsigned int numChannels = 0;
     
+    void audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
+                                           int totalNumInputChannels,
+                                           float* const* outputChannelData,
+                                           int totalNumOutputChannels,
+                                           int numSamples,
+                                           const juce::AudioIODeviceCallbackContext& context) override;
+    
+//    void prepareToPlay (double newSampleRate, int newBufferSize);
+    void renderOffline(float* const* outputChannelData, int totalNumOutputChannels, int numSamples);
+    
+    void setBypass(bool isByPass) { byPass = isByPass; }
+    
 private:
-    juce::AudioSourcePlayer audioSourcePlayer;
     
     std::shared_ptr<AudiumTransportSource> audioTransportSource;
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
+    
+    std::atomic<bool> byPass;
 
     
 };
