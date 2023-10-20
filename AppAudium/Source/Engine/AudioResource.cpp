@@ -39,16 +39,6 @@ double AudioResource::getTotalLengthMax() const
     return owner.getTotalLengthMax();
 }
 
-void AudioResource::start()
-{
-    audioPlayer->start();
-}
-
-void AudioResource::stop()
-{
-    audioPlayer->stop();
-}
-
 std::shared_ptr<AudiumTransportSource> AudioResource::getAudioTransportSource()
 {
     return audioPlayer->getAudioTransportSource();

@@ -39,7 +39,8 @@ void PlayListScheduler::audioDeviceIOCallbackWithContext (const float* const* in
     // these should have been prepared by audioDeviceAboutToStart()...
     jassert (sampleRate > 0 && bufferSize > 0);
 
-    tick(numSamples);
+    if (not byPass)
+        tick(numSamples);
     
     // clear output
     for (int i = 0; i < totalNumOutputChannels; ++i)
@@ -96,8 +97,19 @@ void PlayListScheduler::applyAbsolutePosition(double pos, bool forcePosition)
             }
         }
     }
-    
+}
 
+double PlayListScheduler::getTotalLength() const
+{
+    double totalLength = 0.0;
+    
+    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    {
+        auto group = audioGroupContainer->getAudioGroup(i);
+        totalLength = juce::jmax(totalLength, group->getPlayListContainer()->getTotalLength());
+    }
+    
+    return totalLength;
 }
 
 void PlayListScheduler::start()

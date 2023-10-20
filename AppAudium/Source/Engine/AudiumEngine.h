@@ -37,6 +37,7 @@ public:
     
     void openFile (const juce::File& file, std::function<void (bool)> callback);
     void saveFile (const juce::File& file, std::function<void (bool)> callback);
+    void bounceToFile(const juce::File& f, std::function<void (bool)> callback);
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
@@ -62,6 +63,7 @@ private:
     std::shared_ptr<PlayListScheduler> playListScheduler;
     
     juce::File currentFile;
+
     
 
     /// TODO: thread save container
@@ -69,7 +71,8 @@ private:
     // std::array, has a static size set at compile time. It does not have internal pointers and can therefore be copied simply by using memcpy. It therefore is trivial to copy.
     std::atomic<std::array<int, 3>> test;
     
-    
+    void setBypass(bool bypass);
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumEngine)
 };

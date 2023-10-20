@@ -11,7 +11,9 @@
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
 #include "Engine/AutoEdit/AutoEdit.h"
-#include "AudioGroupContainer.h"
+#include "Engine/AudioGroupContainer.h"
+#include "Engine/AudioPlayer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 
@@ -113,6 +115,75 @@ void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> cal
 
     temp.overwriteTargetFileWithTemporary();
     currentFile = file;
+}
+
+void AudiumEngine::setBypass(bool bypass)
+{
+    playListScheduler->setBypass(bypass);
+    for (auto r = 0; r < audioResourceContainer->getNumAudioResources(); ++r)
+    {
+        audioResourceContainer->getAudioResource(r)->getAudioPlayer()->setBypass(bypass);
+    }
+}
+
+void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback)
+{
+    std::cout << "bounce -> " << f.getFullPathName().toStdString() << std::endl;
+    
+    double sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+    auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
+    auto numOutputChannels = 2;
+    
+    setBypass(true);
+
+    juce::TemporaryFile tempFile (f);
+    std::unique_ptr<OutputStream> outStream (tempFile.getFile().createOutputStream());
+
+    if (outStream != nullptr)
+    {
+        const StringPairArray metadata;
+        WavAudioFormat wav;
+        std::unique_ptr<AudioFormatWriter> writer (wav.createWriterFor (outStream.get(), sampleRate,
+                                                                        numOutputChannels, (int) 32,
+                                                                        metadata, 0));
+        if (writer != nullptr)
+        {
+            outStream.release();
+
+            auto lastPosition = playListScheduler->getAbsolutePosition();
+            playListScheduler->setAbsolutePosition(0.0);
+            playListScheduler->start();
+            
+            auto seconds = playListScheduler->getTotalLength();
+            auto iterations = static_cast<int>(seconds * sampleRate) / numSamples;
+            for (auto i = 0; i < iterations; ++i)
+            {
+                juce::AudioBuffer<float> buffer(numOutputChannels, numSamples);
+                
+                playListScheduler->tick(numSamples);
+                for (auto r = 0; r < audioResourceContainer->getNumAudioResources(); ++r)
+                {
+                    audioResourceContainer->getAudioResource(r)->getAudioPlayer()->renderOffline(buffer.getArrayOfWritePointers(),
+                                                                                                 numOutputChannels, numSamples);
+                }
+                
+                writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
+                /// TODO: without waiting the output is fucked
+                Time::waitForMillisecondCounter(Time::getMillisecondCounter() + 2);
+                
+            }
+            
+            playListScheduler->setAbsolutePosition(lastPosition);
+            playListScheduler->stop();
+            
+            
+            writer.reset();
+            tempFile.overwriteTargetFileWithTemporary();
+        }
+    }
+    
+    setBypass(false);
+    std::cout << "done" << std::endl;
 }
 
 bool AudiumEngine::writeToStream (juce::OutputStream& out)

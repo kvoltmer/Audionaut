@@ -19,8 +19,8 @@ AudioPlayer::AudioPlayer(std::shared_ptr<AudiumTransportSource> audioTransportSo
     audioTransportSource(audioTransportSource),
     audioDeviceManager(audioDeviceManager)
 {
-    audioDeviceManager->addAudioCallback(&audioSourcePlayer);
-    audioSourcePlayer.setSource (audioTransportSource.get());
+    audioDeviceManager->addAudioCallback(this);
+    setSource (audioTransportSource.get());
     
 
     auto stream = rawToUniquePtr (inputSource->createInputStream());
@@ -51,17 +51,33 @@ AudioPlayer::AudioPlayer(std::shared_ptr<AudiumTransportSource> audioTransportSo
 AudioPlayer::~AudioPlayer()
 {
     audioTransportSource->setSource (nullptr);
-    audioSourcePlayer.setSource (nullptr);
+    setSource (nullptr);
     
-    audioDeviceManager->removeAudioCallback(&audioSourcePlayer);
+    audioDeviceManager->removeAudioCallback(this);
 }
 
-void AudioPlayer::start()
+//void AudioPlayer::prepareToPlay (double newSampleRate, int newBufferSize)
+//{
+//    audioSourcePlayer.prepareToPlay(newSampleRate, newBufferSize);
+//}
+
+void AudioPlayer::audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
+                                       int totalNumInputChannels,
+                                       float* const* outputChannelData,
+                                       int totalNumOutputChannels,
+                                       int numSamples,
+                                       const juce::AudioIODeviceCallbackContext& context)
 {
-    audioTransportSource->start();
+    if (not byPass)
+    {
+        juce::AudioSourcePlayer::audioDeviceIOCallbackWithContext(inputChannelData, totalNumInputChannels, outputChannelData, totalNumOutputChannels, numSamples, context);
+    }
 }
 
-void AudioPlayer::stop()
+void AudioPlayer::renderOffline(float* const* outputChannelData, int totalNumOutputChannels, int numSamples)
 {
-    audioTransportSource->stop();
+    
+    juce::AudioIODeviceCallbackContext context;
+    juce::AudioSourcePlayer::audioDeviceIOCallbackWithContext(nullptr, 0, outputChannelData, totalNumOutputChannels, numSamples, context);
+    
 }
