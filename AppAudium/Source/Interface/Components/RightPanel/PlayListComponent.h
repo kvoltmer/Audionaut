@@ -34,8 +34,8 @@ public:
         
         auto playListName = "Playlist - " + group->getName();
         playListTableListBox->getHeader().addColumn (playListName, 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        //playListTableListBox->getHeader().addColumn ("Fade", 2, 150, 80, 800, juce::TableHeaderComponent::notSortable);
         playListTableListBox->getHeader().setStretchToFitActive (true);
+        playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, group->currentColour);
         playListTableListBox->setHeaderHeight(25);
         playListTableListBox->setOutlineThickness (0);
         playListTableListBox->updateContent();
