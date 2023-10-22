@@ -151,25 +151,17 @@ double AudioResourceContainer::getTotalLengthMax() const
 
 bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
 {
-    auto groups = getAudioGroups();
-    outputStream.writeInt(static_cast<int>(groups.size()));
-    
-    for (auto & group : groups)
+    outputStream.writeInt(static_cast<int>(audioResources.size()));
+        
+    for (auto resource : audioResources)
     {
-        // audio group stuff
-        outputStream.writeString(juce::String(group->getName()));
-        outputStream.writeInt(group->getId());
+        // group id and name
+        outputStream.writeInt(resource.first->getId());
+        outputStream.writeString(resource.first->getName());
         
-        // audio resource stuff
-        auto resources = getAudioResourcesForGroup(group.get());
-        outputStream.writeInt(static_cast<int>(resources.size()));
-        
-        for (auto & resource : resources)
-        {
-            outputStream.writeString(resource->getUrlAsString());
-        }
+        // url of the resource
+        outputStream.writeString(resource.second->getUrlAsString());
     }
-    
     return true;
 }
 
@@ -177,23 +169,19 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, con
 {
     jassert(audioResources.empty());
     
-    auto numGroups = inputStream.readInt();
-    for (auto g = 0; g < numGroups; g++)
+    auto numResources = inputStream.readInt();
+    for (auto i = 0; i < numResources; i++)
     {
-        // audio group stuff
-        auto groupName = inputStream.readString();
+        // group id and name
         auto groupId = inputStream.readInt();
-        auto group = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer().get(), groupName.toStdString(), groupId);
-        
-        // audio resource stuff
-        auto numResources = inputStream.readInt();
-        for (auto r = 0; r < numResources; r++)
-        {
-            auto inString = inputStream.readString();
-            addAudioResource(juce::URL(inString), engine, group);
-        }
-    }
+        auto groupName = inputStream.readString();
+        auto group = audioGroupContainer->getAudioGroupById(groupId);
+        jassert(group && group->getName() == groupName);
     
+        // url of the resource
+        auto inString = inputStream.readString();
+        addAudioResource(juce::URL(inString), engine, group);
+    }
     return true;
 }
 

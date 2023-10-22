@@ -44,7 +44,7 @@ void AudioGroupRegionComponent::paint (juce::Graphics& g)
 {
     if (playListItem->isSelected())
     {        
-        g.setColour (audioGroup->currentColour);
+        g.setColour (audioGroup->getColour());
     }
     else
     {

@@ -64,8 +64,8 @@ void AudioRegionView::paint (juce::Graphics& g)
     if (audioResource != nullptr &&
         audioResource->getThumbnail().getTotalLength() > 0.0)
     { 
-        g.fillAll (audioRegion->getAudioGroup()->currentColour.withAlpha(0.25f));
-        g.setColour (audioRegion->getAudioGroup()->currentColour);
+        g.fillAll (audioRegion->getAudioGroup()->getColour().withAlpha(0.25f));
+        g.setColour (audioRegion->getAudioGroup()->getColour());
         
         auto thumbArea = getLocalBounds();
     

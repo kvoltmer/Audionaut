@@ -27,6 +27,9 @@ public:
     
     bool groupIdExists(const int groupId) const;
     
+    static std::shared_ptr<AudioGroup> createAudioGroup(const AudioResourceContainer &audioResourceContainer,
+                                                        const AudioRegionContainer &audioRegionContainer);
+    
     std::shared_ptr<AudioGroup> createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
                                                     const AudioRegionContainer &audioRegionContainer,
                                                     std::string nameString,
@@ -36,7 +39,9 @@ public:
     bool removeAudioGroup(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioGroup> group);
     
     bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
+    bool readFromStream (juce::InputStream& inputStream,
+                         const AudioResourceContainer &audioResourceContainer,
+                         const AudioRegionContainer &audioRegionContainer);
     
     std::shared_ptr<AudioGroup> getSelectedGroup() const { return audioGroups[selectedGroup]; }
     
