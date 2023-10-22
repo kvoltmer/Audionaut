@@ -38,3 +38,18 @@ void AudioGroup::setColour(juce::Colour colour)
 }
 
 
+bool AudioGroup::writeToStream (juce::OutputStream& outputStream)
+{
+    outputStream.writeInt(groupId);
+    outputStream.writeString(getName());
+    outputStream.writeString(currentColour.toString());
+    return true;
+}
+
+bool AudioGroup::readFromStream (juce::InputStream& inputStream)
+{
+    groupId         = inputStream.readInt();
+    groupName       = inputStream.readString();
+    currentColour   = juce::Colour::fromString(inputStream.readString());
+    return true;
+}

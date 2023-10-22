@@ -189,9 +189,21 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
 bool AudiumEngine::writeToStream (juce::OutputStream& out)
 {
     out.writeString ("AudiumEngineFormat");
-    audioResourceContainer->writeToStream(out);
-    audioRegionContainer->writeToStream(out);
+    
+    // 1. Groups
     audioGroupContainer->writeToStream(out);
+    
+    // 2. Resources
+    audioResourceContainer->writeToStream(out);
+    
+    // 3. Regions
+    audioRegionContainer->writeToStream(out);
+    
+    // 4. Playlists
+    for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
+    {
+        audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->writeToStream(out);
+    }
     
     return true;
 }
@@ -202,14 +214,21 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
     jassert(name == "AudiumEngineFormat");
     
     cleanup();
-
-    if (audioResourceContainer->readFromStream(in, *this))
+    
+    // 1. Groups
+    if (audioGroupContainer->readFromStream(in, *audioResourceContainer.get(), *audioRegionContainer.get()))
     {
-        if (audioRegionContainer->readFromStream(in))
+        // 2. Resources
+        if (audioResourceContainer->readFromStream(in, *this))
         {
-            if (audioGroupContainer->readFromStream(in))
+            // 3. Regions
+            if (audioRegionContainer->readFromStream(in))
             {
-                // createDefaultRegionAndPlayList();
+                // 4. Playlists
+                for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
+                {
+                    audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->readFromStream(in);
+                }
                 return true;
             }
         }

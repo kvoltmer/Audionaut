@@ -62,16 +62,31 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroupById(int groupId) 
     return nullptr;
 }
 
+std::shared_ptr<AudioGroup> AudioGroupContainer::createAudioGroup(const AudioResourceContainer &audioResourceContainer,
+                                                                  const AudioRegionContainer &audioRegionContainer)
+{
+    auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
+    auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(audioRegionContainer));
+    auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(audioResourceContainer,
+                                                                 playListContainer,
+                                                                 transportSourceContainer,
+                                                                 std::string(), -1));
+    return audioGroup;
+}
+
 std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
                                                                      const AudioRegionContainer &audioRegionContainer,
                                                                      std::string nameString,
                                                                      int groupId)
 {
-    auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(audioRegionContainer));
     groupId = (groupId < 0) ? getNextId() : groupId;
     jassert( !groupIdExists(groupId) );
-    auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
-    auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(audioResourceContainer, playListContainer, transportSourceContainer, nameString, groupId));
+    
+    auto audioGroup = createAudioGroup(audioResourceContainer, audioRegionContainer);
+    
+    audioGroup->setName(nameString);
+    audioGroup->setId(groupId);
+    
     audioGroups.push_back(audioGroup);
     std::cout << "audio group created with id = " << groupId << std::endl;
     sendActionMessage(audioGroupCreatedAction);
@@ -101,25 +116,24 @@ bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
     
     for (auto & group : audioGroups)
     {
-        outputStream.writeString(juce::String(group->getName()));
-        group->getPlayListContainer()->writeToStream(outputStream);
+        group->writeToStream(outputStream);
     }
     
     return true;
 }
 
-bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream)
+bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream,
+                                          const AudioResourceContainer &audioResourceContainer,
+                                          const AudioRegionContainer &audioRegionContainer)
 {
     auto numGroups = inputStream.readInt();
-    jassert((int)audioGroups.size() == numGroups);
+        
     for (auto g = 0; g < numGroups; g++)
     {
-        auto groupName = inputStream.readString();
-        if (g < audioGroups.size())
-        {
-            jassert(audioGroups[g]);
-            audioGroups[g]->getPlayListContainer()->readFromStream(inputStream);
-        }
+        auto audioGroup = createAudioGroup(audioResourceContainer, audioRegionContainer);
+        audioGroup->readFromStream(inputStream);
+        audioGroups.push_back(audioGroup);
+        nextId = juce::jmax(nextId, audioGroup->getId());
     }
     
     return true;

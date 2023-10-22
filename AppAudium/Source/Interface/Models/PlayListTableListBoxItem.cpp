@@ -81,7 +81,7 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
             text = "n/a";
         }
 
-        auto textColour = r->getRegion()->getAudioGroup()->currentColour;
+        auto textColour = r->getRegion()->getAudioGroup()->getColour();
         g.setColour (selected ? textColour.brighter().brighter() : textColour);
         
 

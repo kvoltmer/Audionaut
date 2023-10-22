@@ -28,12 +28,12 @@ public:
     AudioGroup(const AudioResourceContainer &audioResourceContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
-               std::string nameString,
+               juce::String nameString,
                int groupId) :
         audioResourceContainer(audioResourceContainer),
         playListContainer(playListContainer),
         transportSourceContainer(transportSourceContainer),
-        name(nameString),
+        groupName(nameString),
         groupId(groupId)
     {}
     
@@ -42,25 +42,32 @@ public:
     void cleanup();
     
 
-    const std::string getName() const { return name; }
+    const juce::String getName() const { return groupName; }
     const int getId() const noexcept { return groupId; }
+    
+    void setName(const juce::String newName) { groupName = newName; }
+    void setId(const int newId) { groupId = newId; }
     
     const AudioResourceContainer &getAudioResourceContainer() { return audioResourceContainer; }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources();
     
     void setColour(juce::Colour colour);
+    juce::Colour getColour() const { return currentColour; }
     
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
-        
-    juce::Colour currentColour = juce::Colours::pink;
+    
+    bool writeToStream (juce::OutputStream& outputStream);
+    bool readFromStream (juce::InputStream& inputStream);
+    
+    
 
 private:
     const AudioResourceContainer &audioResourceContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
-    std::string name;
-    int groupId;
-    
+    juce::String groupName;
+    int groupId = -1;
+    juce::Colour currentColour = juce::Colours::pink;
 };

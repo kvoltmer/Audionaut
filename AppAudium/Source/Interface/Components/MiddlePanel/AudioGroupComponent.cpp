@@ -28,7 +28,10 @@ AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioGroup> group,
     audiumEngine(audiumEngine),
     zoomHandler(zoomHandler)
 {
-    group->setColour(audium::getNewWaveFormColour());
+    if (group->getColour() == juce::Colours::pink)
+    {
+        group->setColour(audium::getNewWaveFormColour());
+    }
     refreshComponent(group);
 }
 
