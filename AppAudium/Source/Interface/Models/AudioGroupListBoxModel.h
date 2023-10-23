@@ -19,11 +19,16 @@ public:
     
     AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
                            std::shared_ptr<AudiumEngine> audiumEngine,
-                           std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                           std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-                           std::shared_ptr<ZoomHandler> zoomHandler,
-                           std::shared_ptr<RegionSelector> RegionSelector);
-    ~AudioGroupListBoxModel();
+                           std::shared_ptr<ZoomHandler> zoomHandler) :
+        owner(owner),
+        audiumEngine(audiumEngine),
+        zoomHandler(zoomHandler)
+    {
+    }
+    
+    ~AudioGroupListBoxModel() override
+    {
+    }
     
     int getNumRows() override;
 
@@ -42,7 +47,9 @@ public:
     
     void deleteKeyPressed (int lastRowSelected) override;
     
-    void listWasScrolled() override;
+    void listWasScrolled() override
+    {
+    }
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
@@ -52,13 +59,6 @@ public:
 private:
     std::shared_ptr<AudioGroupListBox> owner;
     std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
-    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    
-    /// remove this
-    std::shared_ptr<RegionSelector> regionSelector;
-    
-    
 
 };

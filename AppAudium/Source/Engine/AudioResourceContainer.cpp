@@ -49,42 +49,45 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                          const AudiumEngine& engine,
                                                                          std::shared_ptr<AudioGroup> group)
 {
-    if (auto inputSource = makeAudioInputSource (url))
+    if (group != nullptr)
     {
-        /// TODO: create factory
-        auto transportSource = group->getTransportSourceContainer()->createNewTransportSource();
-        auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(transportSource,
-                                                                        audioDeviceManager,
-                                                                        inputSource.get(),
-                                                                        formatManager,
-                                                                        &thread));
-        auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, url, inputSource.get(), formatManager, audioPlayer, thumbnailCache));
-        
-        std::shared_ptr<AudioGroup> audioGroup = nullptr;
-        
-        if (group != nullptr)
+        if (auto inputSource = makeAudioInputSource (url))
         {
-            audioGroup = group;
-        }
-        else // no group provided
-        {
-            // create default group
-            if (audioGroupContainer->getNumItems() == 0)
+            /// TODO: create factory
+            auto transportSource = group->getTransportSourceContainer()->createNewTransportSource();
+            auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(transportSource,
+                                                                            audioDeviceManager,
+                                                                            inputSource.get(),
+                                                                            formatManager,
+                                                                            &thread));
+            auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, url, inputSource.get(), formatManager, audioPlayer, thumbnailCache));
+            
+            std::shared_ptr<AudioGroup> audioGroup = nullptr;
+            
+            if (group != nullptr)
             {
-                audioGroup = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer(), url.getFileName().toStdString());
+                audioGroup = group;
             }
-            else // add to first group
+            else // no group provided
             {
-                audioGroup = audioGroupContainer->getAudioGroup(0);
+                // create default group
+                if (audioGroupContainer->getNumItems() == 0)
+                {
+                    audioGroup = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer(), url.getFileName().toStdString());
+                }
+                else // add to first group
+                {
+                    audioGroup = audioGroupContainer->getAudioGroup(0);
+                }
             }
+            
+            audioResources.push_back({audioGroup, audioResource});
+            inputSource.release();
+            
+            sendActionMessage(audioResourceCreatedAction);
+            
+            return audioResource;
         }
-        
-        audioResources.push_back({audioGroup, audioResource});
-        inputSource.release();
-        
-        sendActionMessage(audioResourceCreatedAction);
-        
-        return audioResource;
     }
     
     return nullptr;
@@ -176,11 +179,18 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, con
         auto groupId = inputStream.readInt();
         auto groupName = inputStream.readString();
         auto group = audioGroupContainer->getAudioGroupById(groupId);
-        jassert(group && group->getName() == groupName);
-    
-        // url of the resource
-        auto inString = inputStream.readString();
-        addAudioResource(juce::URL(inString), engine, group);
+        if (group != nullptr && group->getName() == groupName)
+        {
+            jassert(group && group->getName() == groupName);
+            
+            // url of the resource
+            auto inString = inputStream.readString();
+            addAudioResource(juce::URL(inString), engine, group);
+        }
+        else
+        {
+            return false;
+        }
     }
     return true;
 }

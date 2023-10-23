@@ -40,63 +40,40 @@ public:
     {
     }
 
-    void paint (juce::Graphics& g) override
+    void paint (juce::Graphics&) override
     {
-        //g.fillAll (juce::Colours::red);
     }
 
     void resized() override
     {
-        auto bonds = getParentComponent()->getBounds();
-        setBounds(bonds);
     }
     
     void timerCallback() override
     {
-//        if (canMoveTransport())
-            updateCursorPosition();
-//        else
-//        {
-//            /// TODO: scrolling
-//            jassertfalse;
-//            // setRange (visibleRange.movedToStartAt (transportSource.getCurrentPosition() - (visibleRange.getLength() / 2.0)));
-//        }
+        updateCursorPosition();
     }
     
     void updateCursorPosition()
     {
-        auto pos = 0.0;
-        auto playListScheduler = audiumEngine->getPlayListScheduler();
-        if (playListScheduler != nullptr)
+        if (audiumEngine->getPlayListScheduler() != nullptr)
         {
-            currentPositionMarker.setVisible(playListScheduler->isPlaying());
-            pos = playListScheduler->getAbsolutePosition();
+            if (audiumEngine->getPlayListScheduler()->isPlaying())
+            {
+                currentPositionMarker.setVisible(true);
+                auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePosition();
+                auto xPos = zoomHandler->timeToXWithOffset(pos);
+                currentPositionMarker.setRectangle (Rectangle<float> (xPos - 0.75f, 0,
+                                                                      1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
+            }
+            else
+            {
+                currentPositionMarker.setVisible(false);
+            }
         }
-        
-        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToXWithOffset(pos) - 0.75f, 0,
-                                                              1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
     }
     
-    void setFollowsTransport (bool shouldFollow)
-    {
-        isFollowingTransport = shouldFollow;
-    }
-    
-//    void mouseDown (const MouseEvent& e) override
-//    {
-//        getParentComponent()->mouseDown(e);
-//        mouseDrag (e);
-//    }
-//    
-//    void mouseDrag (const MouseEvent& e) override
-//    {
-//        getParentComponent()->mouseDrag(e);
-//    }
-
 private:
-    
-    bool isFollowingTransport = false;
-    
+        
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<AudiumEngine> audiumEngine;
     

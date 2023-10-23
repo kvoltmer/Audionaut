@@ -12,36 +12,54 @@
 
 #include <JuceHeader.h>
 
-//==============================================================================
-/*
-*/
+#include "ChannelsComponent.h"
+#include "ArrangementComponent.h"
 
 class AudiumEngine;
-class ZoomHandler;
-class RegionSelector;
-class AudioGroupListBox;
-class AudioGroupListBoxModel;
-class PlayPositionMarker;
 
 class MiddlePanelComponent :    public juce::Component
 {
 public:
-    MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);
-    ~MiddlePanelComponent() override;
-
-    void resized() override;
+    MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine)
+    {
+        channelsComponent.reset(new ChannelsComponent());
+        addAndMakeVisible(channelsComponent.get());
+        
+        arrangementComponent.reset(new ArrangementComponent(audiumEngine));
+        addAndMakeVisible(arrangementComponent.get());
+    }
     
-    void updateUI();
-    void zoomIn();
-    void zoomOut();
+    ~MiddlePanelComponent() override
+    {
+    }
+    
+    void resized() override
+    {
+        auto channelsWidth = 100;
+        
+        channelsComponent->setBounds(getLocalBounds().removeFromLeft(channelsWidth));
+        arrangementComponent->setBounds(getLocalBounds().removeFromRight(getWidth() - channelsWidth));
+    }
+    
+    void updateUI()
+    {
+        arrangementComponent->updateUI();
+    }
+    
+    void zoomIn()
+    {
+        arrangementComponent->zoomIn();
+    }
+    
+    void zoomOut()
+    {
+        arrangementComponent->zoomOut();
+    }
     
 private:
-    std::shared_ptr<AudiumEngine>               audiumEngine;
-    std::shared_ptr<ZoomHandler>                zoomHandler;
-    std::shared_ptr<RegionSelector>             regionSelector;
-    std::shared_ptr<AudioGroupListBox>       audioGroupListBox;
-    std::shared_ptr<AudioGroupListBoxModel>  audioGroupListBoxModel;
-    std::shared_ptr<PlayPositionMarker>         playPositionMarker;
+    
+    std::unique_ptr<ChannelsComponent> channelsComponent;
+    std::unique_ptr<ArrangementComponent> arrangementComponent;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MiddlePanelComponent)
 };

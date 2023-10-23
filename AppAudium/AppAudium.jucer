@@ -115,6 +115,12 @@
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
+            <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
+            <FILE id="pCFZsc" name="ChannelsComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/ChannelsComponent.h"/>
+            <FILE id="qZ2Ulf" name="ArrangementComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/ArrangementComponent.h"/>
             <FILE id="EXPE1i" name="AudioGroupComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/MiddlePanel/AudioGroupComponent.cpp"/>
             <FILE id="R9kAWR" name="AudioGroupComponent.h" compile="0" resource="0"
@@ -123,10 +129,6 @@
                   resource="0" file="Source/Interface/Components/MiddlePanel/AudioGroupRegionComponent.cpp"/>
             <FILE id="VzTGOV" name="AudioGroupRegionComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/AudioGroupRegionComponent.h"/>
-            <FILE id="raU1FP" name="MiddlePanelComponent.cpp" compile="1" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.cpp"/>
-            <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
           </GROUP>
           <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
             <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
