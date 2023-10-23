@@ -91,8 +91,7 @@ public:
     void mouseDrag (const MouseEvent& e) override
     {
         // set transport position
-        auto relativePos = e.getEventRelativeTo(owner.get()).getPosition();
-        auto pos = zoomHandler->xToTimeWithOffset(relativePos.getX());;
+        auto pos = zoomHandler->xToTimeWithOffset(e.getPosition().getX());;
         audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
     }
     
