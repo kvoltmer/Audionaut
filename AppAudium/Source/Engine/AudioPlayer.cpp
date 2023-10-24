@@ -56,9 +56,30 @@ AudioPlayer::~AudioPlayer()
     audioDeviceManager->removeAudioCallback(this);
 }
 
-//void AudioPlayer::prepareToPlay (double newSampleRate, int newBufferSize)
+/** Creates a buffer using a pre-allocated block of memory.
+
+    Note that if the buffer is resized or its number of channels is changed, it
+    will re-allocate memory internally and copy the existing data to this new area,
+    so it will then stop directly addressing this memory.
+
+    @param dataToReferTo    a pre-allocated array containing pointers to the data
+                            for each channel that should be used by this buffer. The
+                            buffer will only refer to this memory, it won't try to delete
+                            it when the buffer is deleted or resized.
+    @param numChannelsToUse the number of channels to use - this must correspond to the
+                            number of elements in the array passed in
+    @param numSamples       the number of samples to use - this must correspond to the
+                            size of the arrays passed in
+*/
+//AudioBuffer (Type* const* dataToReferTo,
+//             int numChannelsToUse,
+//             int numSamples)
+//    : numChannels (numChannelsToUse),
+//      size (numSamples)
 //{
-//    audioSourcePlayer.prepareToPlay(newSampleRate, newBufferSize);
+//    jassert (dataToReferTo != nullptr);
+//    jassert (numChannelsToUse >= 0 && numSamples >= 0);
+//    allocateChannels (dataToReferTo, 0);
 //}
 
 void AudioPlayer::audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
@@ -72,6 +93,10 @@ void AudioPlayer::audioDeviceIOCallbackWithContext (const float* const* inputCha
     {
         juce::AudioSourcePlayer::audioDeviceIOCallbackWithContext(inputChannelData, totalNumInputChannels, outputChannelData, totalNumOutputChannels, numSamples, context);
     }
+    
+    // workaroud to get the output level...
+    juce::AudioBuffer<float> temp(outputChannelData, totalNumOutputChannels, numSamples);
+    outputLevel = temp.getMagnitude(0, 0, temp.getNumSamples());
 }
 
 void AudioPlayer::renderOffline(float* const* outputChannelData, int totalNumOutputChannels, int numSamples)
@@ -80,4 +105,9 @@ void AudioPlayer::renderOffline(float* const* outputChannelData, int totalNumOut
     juce::AudioIODeviceCallbackContext context;
     juce::AudioSourcePlayer::audioDeviceIOCallbackWithContext(nullptr, 0, outputChannelData, totalNumOutputChannels, numSamples, context);
     
+}
+
+float AudioPlayer::getOutputLevel() const
+{
+    return outputLevel.load();
 }

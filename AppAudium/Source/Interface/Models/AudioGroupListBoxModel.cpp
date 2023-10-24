@@ -72,9 +72,6 @@ int AudioGroupListBoxModel::getRowHeight (int rowNumber) const
     return 0;
 }
 
-void AudioGroupListBoxModel::selectedRowsChanged (int lastRowSelected)
-{
-}
 
 void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 {

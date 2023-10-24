@@ -93,6 +93,29 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     return nullptr;
 }
 
+void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioResource> resource)
+{
+    for (auto it = audioResources.begin(); it != audioResources.end();)
+    {
+        if ((*it).second == resource)
+        {
+            auto group = (*it).first;
+            audioResources.erase(it);
+            
+            // no resource left in group?
+            if (getAudioResourcesForGroup(group.get()).size() == 0)
+            {
+                audioGroupContainer->removeAudioGroup(engine, group);
+            }
+            
+            break;
+        }
+        ++it;
+    }
+    
+    sendActionMessage(audioResourceRemovedAction);
+}
+
 void AudioResourceContainer::removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group)
 {
     jassert(group != nullptr);
@@ -208,6 +231,19 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
+std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const
+{
+    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
+    {
+        if (itr->second == resource)
+        {
+            return itr->first;
+        }
+    }
+    return nullptr;
+    
+}
+
 std::vector<std::shared_ptr<AudioGroup>> AudioResourceContainer::getAudioGroups() const
 {
     std::vector<std::shared_ptr<AudioGroup>> result;
@@ -228,5 +264,46 @@ std::shared_ptr<AudioGroup> AudioResourceContainer::getDefaultGroup() const
     {
         return groups[0];
     }
+    return nullptr;
+}
+
+int AudioResourceContainer::getNumChannels() const
+{
+    auto count = 0;
+
+    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    {
+        auto group = audioGroupContainer->getAudioGroup(i);
+        auto audioResources = getAudioResourcesForGroup(group.get());
+        for (auto resource : audioResources)
+        {
+            count += resource->getNumChannels();
+        }
+        
+    }
+    return count;
+}
+
+std::shared_ptr<AudioResource> AudioResourceContainer::getChannel(int index) const
+{
+    auto count = 0;
+    
+    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    {
+        auto group = audioGroupContainer->getAudioGroup(i);
+        auto audioResources = getAudioResourcesForGroup(group.get());
+        for (auto resource : audioResources)
+        {
+            for (auto c = 0; c < resource->getNumChannels(); c++)
+            {
+                if (count == index)
+                {
+                    return resource;
+                }
+                count++;
+            }
+        }
+    }
+    jassertfalse;
     return nullptr;
 }
