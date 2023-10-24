@@ -119,6 +119,10 @@
                   file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
             <FILE id="pCFZsc" name="ChannelsComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/ChannelsComponent.h"/>
+            <FILE id="xmixFr" name="ChannelComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/ChannelComponent.cpp"/>
+            <FILE id="BPzRrA" name="ChannelComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/ChannelComponent.h"/>
             <FILE id="qZ2Ulf" name="ArrangementComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/ArrangementComponent.h"/>
             <FILE id="EXPE1i" name="AudioGroupComponent.cpp" compile="1" resource="0"
@@ -151,6 +155,8 @@
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
+          <FILE id="jFFXgb" name="AudioChannelsListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/AudioChannelsListBoxModel.h"/>
           <FILE id="eE3Tt0" name="PlayListTableListBoxItem.cpp" compile="1" resource="0"
                 file="Source/Interface/Models/PlayListTableListBoxItem.cpp"/>
           <FILE id="gXfKLs" name="PlayListTableListBoxItem.h" compile="0" resource="0"
@@ -167,6 +173,8 @@
                 file="Source/Interface/Models/AudioGroupListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="i5qX4Q" name="LevelMeter.h" compile="0" resource="0" file="Source/Interface/Controls/LevelMeter.h"/>
+          <FILE id="Fmpma7" name="LevelMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LevelMeter.cpp"/>
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
           <FILE id="keLPLt" name="PlayPositionMarker.h" compile="0" resource="0"

@@ -46,6 +46,8 @@ public:
     
     void setBypass(bool isByPass) { byPass = isByPass; }
     
+    float getOutputLevel() const;
+    
 private:
     
     std::shared_ptr<AudiumTransportSource> audioTransportSource;
@@ -54,5 +56,6 @@ private:
     
     std::atomic<bool> byPass;
 
+    std::atomic<float> outputLevel;
     
 };

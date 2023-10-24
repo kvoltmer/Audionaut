@@ -9,7 +9,6 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Controls/AudioGroupListBox.h"
-#include "Interface/Controls/RegionSelector.h"
 
 class AudioGroupContainer;
 
@@ -43,18 +42,16 @@ public:
     
     int getRowHeight (int rowNumber) const override;
     
-    void selectedRowsChanged (int lastRowSelected) override;
-    
     void deleteKeyPressed (int lastRowSelected) override;
-    
-    void listWasScrolled() override
-    {
-    }
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
         owner->deselectAllRows();
     }
+    
+    void listWasScrolled() override {}
+    
+    void selectedRowsChanged (int lastRowSelected) override {}
         
 private:
     std::shared_ptr<AudioGroupListBox> owner;

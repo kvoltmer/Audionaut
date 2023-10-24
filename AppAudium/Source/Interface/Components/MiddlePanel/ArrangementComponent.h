@@ -61,7 +61,6 @@ public:
         
         // make sure the play postition view is on top
         addAndMakeVisible(playPositionMarker.get());
-        //playPositionMarker->toFront(false);
 
         updateUI();
 

@@ -31,6 +31,7 @@ public:
                                                      const AudiumEngine &engine,
                                                      std::shared_ptr<AudioGroup> group = nullptr);
     
+    void removeAudioResource(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioResource> resource);
     void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
     
     // still used by auto edit
@@ -51,9 +52,14 @@ public:
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
     
+    std::shared_ptr<AudioGroup> getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const;
+    
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
     
     std::shared_ptr<AudioGroup> getDefaultGroup() const;
+    
+    int getNumChannels() const;
+    std::shared_ptr<AudioResource> getChannel(int index) const;
     
     typedef std::pair<std::shared_ptr<AudioGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
     

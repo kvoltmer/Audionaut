@@ -50,7 +50,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     //[UserPreSize]
     //[/UserPreSize]
 
-    setSize (1200, 400);
+    setSize (1200, 800);
 
 
     //[Constructor] You can add your own custom stuff here..
@@ -229,7 +229,7 @@ BEGIN_JUCER_METADATA
                  parentClasses="public juce::Component, private juce::ActionListener"
                  constructorParams="std::shared_ptr&lt;AudiumEngine&gt; audiumEngine"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
-                 overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="400">
+                 overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="800">
   <BACKGROUND backgroundColour="ff282829"/>
 </JUCER_COMPONENT>
 

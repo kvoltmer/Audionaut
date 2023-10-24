@@ -49,6 +49,7 @@ public:
     
     /// TODO: move this to AudioGroupListBoxModel
     int getHeight() const { return height * getNumChannels(); }
+    int getChannelHeight() const { return height; }
     
     
     

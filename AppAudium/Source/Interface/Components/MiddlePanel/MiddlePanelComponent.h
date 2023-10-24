@@ -22,7 +22,7 @@ class MiddlePanelComponent :    public juce::Component
 public:
     MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine)
     {
-        channelsComponent.reset(new ChannelsComponent());
+        channelsComponent.reset(new ChannelsComponent(audiumEngine));
         addAndMakeVisible(channelsComponent.get());
         
         arrangementComponent.reset(new ArrangementComponent(audiumEngine));
@@ -35,7 +35,7 @@ public:
     
     void resized() override
     {
-        auto channelsWidth = 100;
+        auto channelsWidth = 60;
         
         channelsComponent->setBounds(getLocalBounds().removeFromLeft(channelsWidth));
         arrangementComponent->setBounds(getLocalBounds().removeFromRight(getWidth() - channelsWidth));
@@ -44,6 +44,7 @@ public:
     void updateUI()
     {
         arrangementComponent->updateUI();
+        channelsComponent->updateUI();
     }
     
     void zoomIn()
