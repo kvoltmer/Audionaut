@@ -17,5 +17,9 @@ class AudiumTransportSource : public juce::AudioTransportSource
 {
 public:
     AudiumTransportSource() = default;
+    ~AudiumTransportSource()
+    {
+        std::cout << "~AudiumTransportSource" << std::endl;
+    }
     
 };

@@ -53,7 +53,7 @@ public:
     //[UserMethods]     -- You can add your own custom methods in this section.
     void refreshComponent(std::shared_ptr<AudioResource> resource, bool isRowSelected);
     void timerCallback() override;
-
+    void stopTheTimer() { stopTimer(); }
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;

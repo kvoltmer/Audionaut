@@ -28,6 +28,10 @@ public:
                 juce::TimeSliceThread* readAheadThread);
     ~AudioPlayer();
     
+    void stopAudio()
+    {
+        audioDeviceManager->removeAudioCallback(this);
+    }
     std::shared_ptr<AudiumTransportSource> getAudioTransportSource() { return audioTransportSource; }
     
     // danger!

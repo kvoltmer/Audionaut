@@ -42,7 +42,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioResource> resource, std
     volumeLeveldB.reset (new juce::Label ("new label",
                                           TRANS("dB")));
     addAndMakeVisible (volumeLeveldB.get());
-    volumeLeveldB->setFont (juce::Font (10.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    volumeLeveldB->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     volumeLeveldB->setJustificationType (juce::Justification::centredLeft);
     volumeLeveldB->setEditable (false, false, false);
     volumeLeveldB->setColour (juce::Label::backgroundColourId, juce::Colour (0x00000000));
@@ -71,7 +71,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioResource> resource, std
     volumeLevel.reset (new juce::Label ("new label",
                                         TRANS("-60")));
     addAndMakeVisible (volumeLevel.get());
-    volumeLevel->setFont (juce::Font (10.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    volumeLevel->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     volumeLevel->setJustificationType (juce::Justification::centredRight);
     volumeLevel->setEditable (true, true, false);
     volumeLevel->setColour (juce::Label::backgroundColourId, juce::Colour (0x00000000));
@@ -99,6 +99,7 @@ ChannelComponent::~ChannelComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
     stopTimer();
+    resource = nullptr;
     //[/Destructor_pre]
 
     volumeLeveldB = nullptr;
@@ -224,6 +225,11 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource,
 
     auto gain = resource->getAudioPlayer()->getGain();
     volumeLevel->setText(String(LevelMeter::gainToDecebel(gain)), dontSendNotification);
+    
+    if (not isTimerRunning())
+    {
+        startTimerHz(60);
+    }
 }
 
 void ChannelComponent::timerCallback()
@@ -261,7 +267,7 @@ BEGIN_JUCER_METADATA
          virtualName="" explicitFocusOrder="0" pos="20 50c 30 20" bkgCol="0"
          textCol="ffffffff" edTextCol="ff000000" edBkgCol="0" labelText="dB"
          editableSingleClick="0" editableDoubleClick="0" focusDiscardsChanges="0"
-         fontname="Default font" fontsize="10.0" kerning="0.0" bold="0"
+         fontname="Default font" fontsize="11.0" kerning="0.0" bold="0"
          italic="0" justification="33"/>
   <IMAGEBUTTON name="new button" id="dd5b48cd28d2c57d" memberName="juce__imageButton"
                virtualName="" explicitFocusOrder="0" pos="160 80 150 24" buttonText="new button"
@@ -279,7 +285,7 @@ BEGIN_JUCER_METADATA
          virtualName="" explicitFocusOrder="0" pos="0 50c 27 20" bkgCol="0"
          textCol="ffffffff" edTextCol="ff000000" edBkgCol="0" labelText="-60"
          editableSingleClick="1" editableDoubleClick="1" focusDiscardsChanges="0"
-         fontname="Default font" fontsize="10.0" kerning="0.0" bold="0"
+         fontname="Default font" fontsize="11.0" kerning="0.0" bold="0"
          italic="0" justification="34"/>
 </JUCER_COMPONENT>
 

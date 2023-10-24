@@ -54,7 +54,7 @@ public:
     
     
     AudioResourceContainer& getContainer() const { return owner; }
-    std::shared_ptr<AudioPlayer> getAudioPlayer() const { return audioPlayer; }
+    AudioPlayer* getAudioPlayer() const { return audioPlayer.get(); }
     
     double getSampleRate() const;
     unsigned int getNumChannels() const;

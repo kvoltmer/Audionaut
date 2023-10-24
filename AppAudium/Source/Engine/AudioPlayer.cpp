@@ -50,10 +50,10 @@ AudioPlayer::AudioPlayer(std::shared_ptr<AudiumTransportSource> audioTransportSo
 
 AudioPlayer::~AudioPlayer()
 {
+    audioDeviceManager->removeAudioCallback(this);
+
     audioTransportSource->setSource (nullptr);
     setSource (nullptr);
-    
-    audioDeviceManager->removeAudioCallback(this);
 }
 
 /** Creates a buffer using a pre-allocated block of memory.
