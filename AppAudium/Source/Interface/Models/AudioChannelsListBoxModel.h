@@ -88,6 +88,10 @@ public:
         auto audioResource = audiumEngine->getAudioResourceContainer()->getChannel(lastRowSelected);
         if (audioResource != nullptr)
         {
+            auto component = dynamic_cast<ChannelComponent*>(owner->getComponentForRowNumber(lastRowSelected));
+            if (component)
+                component->stopTheTimer();
+            
             audiumEngine->getAudioResourceContainer()->removeAudioResource(audiumEngine, audioResource);
         }
     }

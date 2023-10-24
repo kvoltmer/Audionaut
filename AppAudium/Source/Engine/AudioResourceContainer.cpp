@@ -99,15 +99,19 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudiumEngine> e
     {
         if ((*it).second == resource)
         {
-            auto group = (*it).first;
-            audioResources.erase(it);
+            auto region = (*it).second;
+            region->getAudioPlayer()->stopAudio();
             
-            // no resource left in group?
+            auto group = (*it).first;
+            group->getTransportSourceContainer()->removeTransportSource(region->getAudioTransportSource());
+            
+            // any resource left in group?
             if (getAudioResourcesForGroup(group.get()).size() == 0)
             {
                 audioGroupContainer->removeAudioGroup(engine, group);
             }
             
+            audioResources.erase(it);
             break;
         }
         ++it;

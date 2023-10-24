@@ -29,6 +29,7 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
 
 AudioResource::~AudioResource()
 {
+    std::cout << "~AudioResource" << std::endl;
     //auto removed = owner.getTransportSourceContainer()->removeTransportSource(audioPlayer->getAudioTransportSource());
     //jassert(removed);
 }
