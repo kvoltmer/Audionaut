@@ -129,13 +129,13 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     switch (info.commandID)
     {
         case CommandIDs::playStop:
-            if (getEngine()->getPlayListScheduler()->isPlaying())
+            if (getEngine()->isPlaying())
             {
-                getEngine()->getPlayListScheduler()->stop();
+                getEngine()->stopPlaying();
             }
             else
             {
-                getEngine()->getPlayListScheduler()->start();
+                getEngine()->startPlaying();
             }
             mainComponent->updateUI();
             break;

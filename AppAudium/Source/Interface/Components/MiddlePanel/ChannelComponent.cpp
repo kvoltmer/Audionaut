@@ -7,7 +7,7 @@
   the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
   and re-saved.
 
-  Created with Projucer version: 7.0.5
+  Created with Projucer version: 7.0.8
 
   ------------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioResource> resource, std
     //[/Constructor_pre]
 
     volumeLeveldB.reset (new juce::Label ("new label",
-                                          TRANS("dB")));
+                                          TRANS ("dB")));
     addAndMakeVisible (volumeLeveldB.get());
     volumeLeveldB->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     volumeLeveldB->setJustificationType (juce::Justification::centredLeft);
@@ -69,7 +69,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioResource> resource, std
                                    juce::Image(), 1.000f, juce::Colour (0x00000000),
                                    juce::Image(), 1.000f, juce::Colour (0x00000000));
     volumeLevel.reset (new juce::Label ("new label",
-                                        TRANS("-60")));
+                                        TRANS ("-60")));
     addAndMakeVisible (volumeLevel.get());
     volumeLevel->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     volumeLevel->setJustificationType (juce::Justification::centredRight);
@@ -225,7 +225,7 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource,
 
     auto gain = resource->getAudioPlayer()->getGain();
     volumeLevel->setText(String(LevelMeter::gainToDecebel(gain)), dontSendNotification);
-    
+
     if (not isTimerRunning())
     {
         startTimerHz(60);

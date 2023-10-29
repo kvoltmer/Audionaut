@@ -12,6 +12,7 @@
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudioGroupContainer.h"
+#include "Engine/Link/LinkAudioDevice.h"
 
 std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {
@@ -23,14 +24,15 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer(audioResourceContainer,
                                                                                                           audioGroupContainer));
         
-    auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioDeviceManager,
-                                                                                                       audioGroupContainer));
+    auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioGroupContainer));
     
+    auto linkAudioDevice            = std::shared_ptr<LinkAudioDevice>          (new LinkAudioDevice(playListScheduler));
     auto audiumEngine               = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioDeviceManager,
                                                                                                   audioGroupContainer,
                                                                                                   audioResourceContainer,
                                                                                                   audioRegionContainer,
-                                                                                                  playListScheduler));
+                                                                                                  playListScheduler,
+                                                                                                  linkAudioDevice));
     
 
     return audiumEngine;

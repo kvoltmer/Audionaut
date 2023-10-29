@@ -85,13 +85,19 @@ public:
     
     void mouseDown (const MouseEvent& e) override
     {
-        mouseDrag (e);
+        mouseDrag(e);
+
     }
     
     void mouseDrag (const MouseEvent& e) override
     {
+        // auto x1 = e.getPosition().getX();
+        auto relativeEvent = e.getEventRelativeTo(owner.get());
+        auto x = relativeEvent.getPosition().getX();
+        auto pos = zoomHandler->xToTimeWithOffset(x);
+        // std::cout << x1 << " " << x << " " << pos << std::endl;
+
         // set transport position
-        auto pos = zoomHandler->xToTimeWithOffset(e.getPosition().getX());;
         audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
     }
     

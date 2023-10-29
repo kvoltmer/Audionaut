@@ -19,6 +19,7 @@
 class TransportSourceContainer;
 class PlayListScheduler;
 struct AutoEditConfig;
+class LinkAudioDevice;
 
 /// The Audium engine
 class AudiumEngine
@@ -29,11 +30,17 @@ public:
                  std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                  std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                 std::shared_ptr<PlayListScheduler> playListScheduler);
+                 std::shared_ptr<PlayListScheduler> playListScheduler,
+                 std::shared_ptr<LinkAudioDevice> linkAudioDevice);
     ~AudiumEngine();
     
     void initialise();
+    void uninitialise();
     void cleanup();
+    
+    void startPlaying();
+    void stopPlaying();
+    bool isPlaying() const;
     
     void openFile (const juce::File& file, std::function<void (bool)> callback);
     void saveFile (const juce::File& file, std::function<void (bool)> callback);
@@ -61,10 +68,9 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<PlayListScheduler> playListScheduler;
+    std::shared_ptr<LinkAudioDevice> linkAudioDevice;
     
     juce::File currentFile;
-
-    
 
     /// TODO: thread save container
     // std::is_trivially_copyable
