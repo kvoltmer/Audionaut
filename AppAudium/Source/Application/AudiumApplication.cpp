@@ -77,6 +77,8 @@ void AudiumApplication::shutdown()
     commandManager.reset();
     
     mainWindow = nullptr; // (deletes our window)
+    
+    audiumEngine->uninitialise();
     audiumEngine = nullptr;
     
 }

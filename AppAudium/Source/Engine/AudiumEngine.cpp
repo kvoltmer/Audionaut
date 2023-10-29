@@ -14,6 +14,7 @@
 #include "Engine/AudioGroupContainer.h"
 #include "Engine/AudioPlayer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Link/LinkAudioDevice.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 
@@ -21,12 +22,14 @@ AudiumEngine::AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDevice
                            std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                            std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                            std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                           std::shared_ptr<PlayListScheduler> playListScheduler) :
+                           std::shared_ptr<PlayListScheduler> playListScheduler,
+                           std::shared_ptr<LinkAudioDevice> linkAudioDevice) :
     audioDeviceManager(audioDeviceManager),
     audioGroupContainer(audioGroupContainer),
     audioResourceContainer(audioResourceContainer),
     audioRegionContainer(audioRegionContainer),
-    playListScheduler(playListScheduler)
+    playListScheduler(playListScheduler),
+    linkAudioDevice(linkAudioDevice)
 {
 }
 
@@ -40,6 +43,14 @@ void AudiumEngine::initialise()
     /** Resets everything to a default device setup, clearing any stored settings. */
     auto result = audioDeviceManager->initialiseWithDefaultDevices (0, 2);
     std::cout << result.toStdString() << std::endl;
+    
+    audioDeviceManager->addAudioCallback(linkAudioDevice.get());
+}
+
+void AudiumEngine::uninitialise()
+{
+    audioDeviceManager->removeAudioCallback(linkAudioDevice.get());
+    
 }
 
 void AudiumEngine::cleanup()
@@ -49,6 +60,21 @@ void AudiumEngine::cleanup()
     audioRegionContainer->cleanup();
     
     currentFile = File();
+}
+
+void AudiumEngine::startPlaying()
+{
+    playListScheduler->startPlaying();
+}
+
+void AudiumEngine::stopPlaying()
+{
+    playListScheduler->stopPlaying();
+}
+
+bool AudiumEngine::isPlaying() const
+{
+    return playListScheduler->isPlaying();
 }
 
 void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> callback)
@@ -119,7 +145,7 @@ void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> cal
 
 void AudiumEngine::setBypass(bool bypass)
 {
-    playListScheduler->setBypass(bypass);
+    linkAudioDevice->setBypass(bypass);
     for (auto r = 0; r < audioResourceContainer->getNumAudioResources(); ++r)
     {
         audioResourceContainer->getAudioResource(r)->getAudioPlayer()->setBypass(bypass);
@@ -152,7 +178,7 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
 
             auto lastPosition = playListScheduler->getAbsolutePosition();
             playListScheduler->setAbsolutePosition(0.0);
-            playListScheduler->start();
+            playListScheduler->startPlaying();
             
             auto seconds = playListScheduler->getTotalLength();
             auto iterations = static_cast<int>(seconds * sampleRate) / numSamples;
@@ -160,7 +186,10 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
             {
                 juce::AudioBuffer<float> buffer(numOutputChannels, numSamples);
                 
-                playListScheduler->tick(numSamples);
+                jassertfalse;
+                /// TODO: implement
+                //playListScheduler->tick(numSamples);
+                
                 for (auto r = 0; r < audioResourceContainer->getNumAudioResources(); ++r)
                 {
                     audioResourceContainer->getAudioResource(r)->getAudioPlayer()->renderOffline(buffer.getArrayOfWritePointers(),
@@ -174,7 +203,7 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
             }
             
             playListScheduler->setAbsolutePosition(lastPosition);
-            playListScheduler->stop();
+            playListScheduler->stopPlaying();
             
             
             writer.reset();

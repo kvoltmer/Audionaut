@@ -12,35 +12,28 @@
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
 #include "Engine/PlayList/SampleTimer.h"
+#include "Engine/Link/LinkEngine.hpp"
 
 class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
 class AudioGroupContainer;
 
-class PlayListScheduler : public juce::AudioIODeviceCallback {
+
+class PlayListScheduler
+{
     
     
 public:
-    PlayListScheduler(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                      std::shared_ptr<AudioGroupContainer> audioGroupContainer);
-    ~PlayListScheduler() override;
-    
-    void audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
-                                           int totalNumInputChannels,
-                                           float* const* outputChannelData,
-                                           int totalNumOutputChannels,
-                                           int numSamples,
-                                           const juce::AudioIODeviceCallbackContext& context) override;
+    PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer);
+    ~PlayListScheduler();
 
-    
-    void audioDeviceAboutToStart (juce::AudioIODevice* device) override;
-    void audioDeviceStopped() override;
     void prepareToPlay (double sampleRate, int blockSize);
     
-    void start();
-    void stop();
-    bool isPlaying() const noexcept { return playing; }
+
+    void startPlaying();
+    void stopPlaying();
+    bool isPlaying() const;
     
     void setPlayListItemIndex(int playListItemIndex);
     int getPlayListItemIndex(std::shared_ptr<AudioGroup> group) const;
@@ -49,30 +42,39 @@ public:
     double getAbsolutePosition() const;
     void setAbsolutePosition(double newPosition);
     
-    void tick(int numSamples);
-    void setBypass(bool isByPass) { byPass = isByPass; }
+    void tick(ableton::Link::SessionState *sessionState,
+              const double quantum,
+              const std::chrono::microseconds beginHostTime,
+              int numSamples);
     
     double getTotalLength() const;
+    
+    void onTriggerBeat(const double beatTime, const std::chrono::microseconds hostTime, int sampleNumber);
+    
+    void setLinkEngine(audium::LinkEngine* engine) { linkEngine = engine; }
+    
+    double getTempo() const { return tempoBPM; }
     
 private:
 
     double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
-    void applyAbsolutePosition(double pos, bool shouldStart);
+    void applyAbsolutePosition(double pos);
     
-    std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     
     double sampleRate = 0.0;
     int bufferSize = 0;
     
-    std::atomic<uint64_t> transportPositionSamples = 0;
-    std::atomic<double> transportPositionSeconds = 0.0;
+    // transport position in 96th clocks
+    double transportPositionClocks = 0.0;
     
-    std::atomic<bool> playing { false };
-    
-    std::atomic<bool> byPass;
+    std::atomic<bool> forcePosition = false;
     
     juce::CriticalSection readLock;
+    
+    audium::LinkEngine *linkEngine;
+        
+    double tempoBPM = 120.0;
     
     uint64_t secondsToSamples(double seconds)
     {
@@ -84,6 +86,42 @@ private:
         jassert(sampleRate > 0.0);
         return static_cast<double>(samples) / sampleRate;
     }
+    
+    static double secondsToClocks(double tempo, double seconds)
+    {
+        return tempo * 0.4 * seconds;
+    }
+
+    static double clocksToSeconds(double tempo, double clocks)
+    {
+        jassert(tempo > 0.0);
+        return clocks / (tempo * 0.4);
+    }
+    
+    static double beatsToClocks(double beats)
+    {
+        // 4th * 24 = 96th
+        return beats * 24.0;
+    }
+    
+    static double clocksToBeats(double clocks)
+    {
+        // 96th / 24 = 4th
+        return clocks / 24.0;
+    }
+    
+    static double secondsToBeats(double tempo, double seconds)
+    {
+        return clocksToBeats(secondsToClocks(tempo, seconds));
+    }
+
+    static double beatsToSeconds(double tempo, double beats)
+    {
+        jassert(tempo > 0.0);
+        return clocksToSeconds(tempo, beatsToClocks(beats));
+    }
+    
+    
     
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)

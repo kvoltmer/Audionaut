@@ -47,7 +47,7 @@ double TransportSourceContainer::getLocalPosition() const
     return 0;
 }
 
-void TransportSourceContainer::start()
+void TransportSourceContainer::startPlaying()
 {
     for (auto & transportSource : audioTransportSources)
     {
@@ -55,7 +55,7 @@ void TransportSourceContainer::start()
     }
 }
 
-void TransportSourceContainer::stop()
+void TransportSourceContainer::stopPlaying()
 {
     for (auto & transportSource : audioTransportSources)
     {

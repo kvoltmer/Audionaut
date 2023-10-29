@@ -16,50 +16,40 @@
 #include "Engine/AudioGroupContainer.h"
 #include "Engine/AudioGroup.h"
 
-PlayListScheduler::PlayListScheduler(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                                     std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
-    audioDeviceManager(audioDeviceManager),
+using namespace::std::chrono;
+
+PlayListScheduler::PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
     audioGroupContainer(audioGroupContainer)
 {
-    audioDeviceManager->addAudioCallback(this);
 }
 
 PlayListScheduler::~PlayListScheduler()
 {
-    audioDeviceManager->removeAudioCallback(this);
 }
 
-void PlayListScheduler::audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
-                                                          int totalNumInputChannels,
-                                                          float* const* outputChannelData,
-                                                          int totalNumOutputChannels,
-                                                          int numSamples,
-                                                          [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context)
+void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
 {
-    // these should have been prepared by audioDeviceAboutToStart()...
-    jassert (sampleRate > 0 && bufferSize > 0);
-
-    if (not byPass)
-        tick(numSamples);
-    
-    // clear output
-    for (int i = 0; i < totalNumOutputChannels; ++i)
-        if (outputChannelData[i] != nullptr)
-            juce::zeromem (outputChannelData[i], (size_t) numSamples * sizeof (float));
-    
+    sampleRate = newSampleRate;
+    bufferSize = newBufferSize;
 }
 
-void PlayListScheduler::tick(int numSamples)
+void PlayListScheduler::tick(ableton::Link::SessionState *sessionState,
+                             const double quantum,
+                             const std::chrono::microseconds beginHostTime,
+                             int numSamples)
 {
-    const juce::ScopedLock sl (readLock);
-
     if (isPlaying())
     {
-        applyAbsolutePosition(getAbsolutePosition(), false);
-        
-        // increment the position
-        transportPositionSamples += numSamples;
-        transportPositionSeconds = samplesToSeconds(transportPositionSamples);
+        auto beats = sessionState->beatAtTime(beginHostTime, quantum);
+        if (beats >= 0.)
+        {
+            // assign absolute position
+            transportPositionClocks = beatsToClocks(beats);
+            
+            // for now we use a position in seconds
+            applyAbsolutePosition(clocksToSeconds(tempoBPM, transportPositionClocks));
+            
+        }
     }
 }
 
@@ -69,7 +59,7 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
     return offset + item->getRegionData().getStart();
 }
 
-void PlayListScheduler::applyAbsolutePosition(double pos, bool forcePosition)
+void PlayListScheduler::applyAbsolutePosition(double pos)
 {
     // lookup current play list item
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
@@ -81,18 +71,19 @@ void PlayListScheduler::applyAbsolutePosition(double pos, bool forcePosition)
         if (item != group->getPlayListContainer()->currentPlayListItem)
         {
             group->getPlayListContainer()->currentPlayListItem = item;
-            group->getTransportSourceContainer()->stop();
+            group->getTransportSourceContainer()->stopPlaying();
         }
 
         // apply position and start if needed
         if (group->getPlayListContainer()->currentPlayListItem != nullptr)
         {
-            if (not group->getTransportSourceContainer()->isPlaying() || forcePosition)
+            if (not group->getTransportSourceContainer()->isPlaying() || forcePosition.load())
             {
+                forcePosition.store(false);
                 group->getTransportSourceContainer()->setLocalPosition(absoluteToLocalPosition(pos, group->getPlayListContainer()->currentPlayListItem));
                 if (isPlaying())
                 {
-                    group->getTransportSourceContainer()->start();
+                    group->getTransportSourceContainer()->startPlaying();
                 }
             }
         }
@@ -112,32 +103,52 @@ double PlayListScheduler::getTotalLength() const
     return totalLength;
 }
 
-void PlayListScheduler::start()
+
+void PlayListScheduler::startPlaying()
 {
-    playing = true;
+    if (linkEngine != nullptr)
+    {
+        linkEngine->setStartPlayingTime(clocksToBeats(transportPositionClocks));
+        linkEngine->startPlaying();
+    }
 }
 
-void PlayListScheduler::stop()
+void PlayListScheduler::stopPlaying()
 {
-    playing = false;
+    if (linkEngine != nullptr)
+    {
+        linkEngine->stopPlaying();
+        transportPositionClocks = beatsToClocks(linkEngine->beatTime());
+    }
+    
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
         auto group = audioGroupContainer->getAudioGroup(i);
-        group->getTransportSourceContainer()->stop();
+        group->getTransportSourceContainer()->stopPlaying();
     }
-    
+}
+
+bool PlayListScheduler::isPlaying() const
+{
+    if (linkEngine != nullptr)
+    {
+        return linkEngine->isPlaying();
+    }
+    jassertfalse;
+    return false;
 }
 
 double PlayListScheduler::getAbsolutePosition() const
 {
-    return transportPositionSeconds;
+    return clocksToSeconds(tempoBPM, transportPositionClocks);
 }
 
 void PlayListScheduler::setAbsolutePosition(double newPosition)
 {
-    transportPositionSeconds = newPosition;
-    transportPositionSamples = secondsToSamples(newPosition);
-    applyAbsolutePosition(newPosition, true);
+    if (linkEngine != nullptr)
+    {
+        transportPositionClocks = secondsToClocks(tempoBPM, newPosition);
+    }
 }
 
 int PlayListScheduler::getPlayListItemIndex(std::shared_ptr<AudioGroup> group) const
@@ -193,20 +204,11 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> gr
     return 0.0;
 }
 
-void PlayListScheduler::audioDeviceAboutToStart (juce::AudioIODevice* device)
+void PlayListScheduler::onTriggerBeat(const double beatTime, const std::chrono::microseconds hostTime, int sampleNumber)
 {
-    prepareToPlay (device->getCurrentSampleRate(),
-                   device->getCurrentBufferSizeSamples());
-}
+    typedef std::chrono::seconds seconds;
 
-void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
-{
-    sampleRate = newSampleRate;
-    bufferSize = newBufferSize;
-}
-
-void PlayListScheduler::audioDeviceStopped()
-{
-    sampleRate = 0.0;
-    bufferSize = 0;
+    seconds s = std::chrono::duration_cast<seconds>(hostTime);
+    
+    std::cout << "onTriggerBeat " << beatTime << " " << s.count() << " " << sampleNumber << std::endl;
 }

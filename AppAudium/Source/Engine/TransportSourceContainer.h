@@ -29,8 +29,8 @@ public:
     void setLocalPosition (double newPosition);
     double getLocalPosition() const;
     
-    void start();
-    void stop();
+    void startPlaying();
+    void stopPlaying();
     bool isPlaying() const;
     
 private:
