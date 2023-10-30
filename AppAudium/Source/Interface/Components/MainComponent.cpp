@@ -125,7 +125,8 @@ void MainComponent::resized()
 
     //[UserResized] Add your own custom resize handling here..
     
-    headerComponent->setBounds(0, 0, getWidth(), headerComponent->getHeight());
+    const auto headerHeight = headerComponent->getHeight();
+    headerComponent->setBounds(0, 0, getWidth(), headerHeight);
 
     // the list of components that we want to reposition
     Component* comps[] = {  middlePanelComponent.get(),
@@ -135,7 +136,7 @@ void MainComponent::resized()
     // this will position the 3 components, one above the other, to fit
     // horizontically into the rectangle provided.
     stretchableLayoutManager->layOutComponents (comps, 3,
-                               0, headerComponent->getHeight(), getWidth(), getHeight(),
+                               0, headerHeight, getWidth(), getHeight() - headerHeight,
                                false, true);
 
     //[/UserResized]
