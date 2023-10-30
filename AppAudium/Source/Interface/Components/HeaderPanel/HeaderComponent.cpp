@@ -41,7 +41,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     link__textButton->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff7a7a7a));
     link__textButton->setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff12a4e2));
 
-    link__textButton->setBounds (5, 5, 70, 20);
+    link__textButton->setBounds (5, 10, 70, 20);
 
     tempo__label.reset (new juce::Label ("new label",
                                          TRANS ("120.0")));
@@ -54,7 +54,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     tempo__label->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
     tempo__label->addListener (this);
 
-    tempo__label->setBounds (496, 5, 70, 20);
+    tempo__label->setBounds (496, 10, 70, 20);
 
     bars__label.reset (new juce::Label ("new label",
                                         TRANS ("0")));
@@ -67,7 +67,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     bars__label->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
     bars__label->addListener (this);
 
-    bars__label->setBounds (235, 5, 70, 20);
+    bars__label->setBounds (235, 10, 70, 20);
 
     beats__label.reset (new juce::Label ("new label",
                                          TRANS ("0")));
@@ -80,7 +80,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     beats__label->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
     beats__label->addListener (this);
 
-    beats__label->setBounds (308, 5, 35, 20);
+    beats__label->setBounds (308, 10, 35, 20);
 
     rest__label.reset (new juce::Label ("new label",
                                         TRANS ("0")));
@@ -93,13 +93,13 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     rest__label->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
     rest__label->addListener (this);
 
-    rest__label->setBounds (346, 5, 35, 20);
+    rest__label->setBounds (346, 10, 35, 20);
 
 
     //[UserPreSize]
     //[/UserPreSize]
 
-    setSize (1200, 30);
+    setSize (1200, 40);
 
 
     //[Constructor] You can add your own custom stuff here..
@@ -255,29 +255,29 @@ BEGIN_JUCER_METADATA
 <JUCER_COMPONENT documentType="Component" className="HeaderComponent" componentName=""
                  parentClasses="public juce::Component, private juce::Timer" constructorParams="std::shared_ptr&lt;PlayListScheduler&gt; playListScheduler"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
-                 overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="30">
+                 overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="40">
   <BACKGROUND backgroundColour="ff2b2b2b"/>
   <TEXTBUTTON name="Link" id="4007ad9db8548718" memberName="link__textButton"
-              virtualName="" explicitFocusOrder="0" pos="5 5 70 20" bgColOff="ff7a7a7a"
+              virtualName="" explicitFocusOrder="0" pos="5 10 70 20" bgColOff="ff7a7a7a"
               bgColOn="ff12a4e2" buttonText="Link" connectedEdges="0" needsCallback="1"
               radioGroupId="0"/>
   <LABEL name="new label" id="8c4ed5ae2f97ba" memberName="tempo__label"
-         virtualName="" explicitFocusOrder="0" pos="496 5 70 20" bkgCol="ff808080"
+         virtualName="" explicitFocusOrder="0" pos="496 10 70 20" bkgCol="ff808080"
          edTextCol="ff000000" edBkgCol="0" labelText="120.0" editableSingleClick="1"
          editableDoubleClick="1" focusDiscardsChanges="0" fontname="Default font"
          fontsize="13.0" kerning="0.0" bold="0" italic="0" justification="36"/>
   <LABEL name="new label" id="7e154133c9506c7" memberName="bars__label"
-         virtualName="" explicitFocusOrder="0" pos="235 5 70 20" bkgCol="ff808080"
+         virtualName="" explicitFocusOrder="0" pos="235 10 70 20" bkgCol="ff808080"
          edTextCol="ff000000" edBkgCol="0" labelText="0" editableSingleClick="1"
          editableDoubleClick="1" focusDiscardsChanges="0" fontname="Default font"
          fontsize="13.0" kerning="0.0" bold="0" italic="0" justification="34"/>
   <LABEL name="new label" id="d5d8cb375330cb19" memberName="beats__label"
-         virtualName="" explicitFocusOrder="0" pos="308 5 35 20" bkgCol="ff808080"
+         virtualName="" explicitFocusOrder="0" pos="308 10 35 20" bkgCol="ff808080"
          edTextCol="ff000000" edBkgCol="0" labelText="0" editableSingleClick="1"
          editableDoubleClick="1" focusDiscardsChanges="0" fontname="Default font"
          fontsize="13.0" kerning="0.0" bold="0" italic="0" justification="34"/>
   <LABEL name="new label" id="95f57732373a9e8e" memberName="rest__label"
-         virtualName="" explicitFocusOrder="0" pos="346 5 35 20" bkgCol="ff808080"
+         virtualName="" explicitFocusOrder="0" pos="346 10 35 20" bkgCol="ff808080"
          edTextCol="ff000000" edBkgCol="0" labelText="0" editableSingleClick="1"
          editableDoubleClick="1" focusDiscardsChanges="0" fontname="Default font"
          fontsize="13.0" kerning="0.0" bold="0" italic="0" justification="34"/>
