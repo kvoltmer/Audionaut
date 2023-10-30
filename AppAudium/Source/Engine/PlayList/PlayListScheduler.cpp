@@ -108,7 +108,7 @@ void PlayListScheduler::startPlaying()
 {
     if (linkEngine != nullptr)
     {
-        linkEngine->setStartPlayingTime(clocksToBeats(transportPositionClocks));
+        linkEngine->setStartPlayingTime(clocksToBeats(startPositionClocks));
         linkEngine->startPlaying();
     }
 }
@@ -118,7 +118,6 @@ void PlayListScheduler::stopPlaying()
     if (linkEngine != nullptr)
     {
         linkEngine->stopPlaying();
-        transportPositionClocks = beatsToClocks(linkEngine->beatTime());
     }
     
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
@@ -138,16 +137,21 @@ bool PlayListScheduler::isPlaying() const
     return false;
 }
 
+double PlayListScheduler::getAbsolutePositionClocks() const
+{
+    return isPlaying() ? transportPositionClocks : startPositionClocks;
+}
+
 double PlayListScheduler::getAbsolutePosition() const
 {
-    return clocksToSeconds(tempoBPM, transportPositionClocks);
+    return clocksToSeconds(tempoBPM, isPlaying() ? transportPositionClocks : startPositionClocks);
 }
 
 void PlayListScheduler::setAbsolutePosition(double newPosition)
 {
     if (linkEngine != nullptr)
     {
-        transportPositionClocks = secondsToClocks(tempoBPM, newPosition);
+        startPositionClocks = secondsToClocks(tempoBPM, newPosition);
     }
 }
 
@@ -212,3 +216,27 @@ void PlayListScheduler::onTriggerBeat(const double beatTime, const std::chrono::
     
     std::cout << "onTriggerBeat " << beatTime << " " << s.count() << " " << sampleNumber << std::endl;
 }
+
+void PlayListScheduler::setLinkEngine(audium::LinkEngine* engine)
+{
+    linkEngine = engine;
+    linkEngine->mLink.setTempoCallback([this](const double p) { tempoBPM = p; });
+    linkEngine->mLink.enable(false);
+}
+
+double PlayListScheduler::getTempo() const
+{
+    return tempoBPM;
+}
+
+
+void PlayListScheduler::setTempo(double newTempo)
+{
+    tempoBPM = newTempo;
+    if (linkEngine != nullptr)
+    {
+        linkEngine->setTempo(newTempo);
+    }
+}
+
+

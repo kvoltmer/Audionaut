@@ -7,7 +7,7 @@
   the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
   and re-saved.
 
-  Created with Projucer version: 7.0.5
+  Created with Projucer version: 7.0.8
 
   ------------------------------------------------------------------------------
 
@@ -18,6 +18,7 @@
 */
 
 //[Headers] You can add your own extra header files here...
+#include "Interface/Components/HeaderPanel/HeaderComponent.h"
 #include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
 #include "Interface/Components/RightPanel/RightPanelComponent.h"
 
@@ -25,6 +26,7 @@
 #include "Engine/AudioGroup.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudioGroupContainer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -39,6 +41,8 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     //[Constructor_pre] You can add your own custom stuff here..
 
     this->audiumEngine = audiumEngine;
+
+    headerComponent.reset(new HeaderComponent(audiumEngine->getPlayListScheduler()));
     middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
     rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
@@ -55,6 +59,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     //[Constructor] You can add your own custom stuff here..
 
+    addAndMakeVisible(headerComponent.get());
     addAndMakeVisible(middlePanelComponent.get());
     addAndMakeVisible(stretchableLayoutResizerBar.get());
     addAndMakeVisible(rightPanelComponent.get());
@@ -119,6 +124,8 @@ void MainComponent::resized()
     //[/UserPreResize]
 
     //[UserResized] Add your own custom resize handling here..
+    
+    headerComponent->setBounds(0, 0, getWidth(), headerComponent->getHeight());
 
     // the list of components that we want to reposition
     Component* comps[] = {  middlePanelComponent.get(),
@@ -128,7 +135,7 @@ void MainComponent::resized()
     // this will position the 3 components, one above the other, to fit
     // horizontically into the rectangle provided.
     stretchableLayoutManager->layOutComponents (comps, 3,
-                               0, 0, getWidth(), getHeight(),
+                               0, headerComponent->getHeight(), getWidth(), getHeight(),
                                false, true);
 
     //[/UserResized]
