@@ -122,6 +122,12 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
+          <GROUP id="{03CC010F-0C39-7C47-7C64-039A8E0AD17F}" name="HeaderPanel">
+            <FILE id="DJ2fXt" name="HeaderComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/HeaderPanel/HeaderComponent.cpp"/>
+            <FILE id="QXxRcH" name="HeaderComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
+          </GROUP>
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
             <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>

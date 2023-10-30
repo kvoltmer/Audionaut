@@ -21,15 +21,7 @@
 
 //[Headers]     -- You can add your own extra header files here --
 #include <JuceHeader.h>
-
-
-using namespace juce;
-
-class AudiumEngine;
-class MiddlePanelComponent;
-class RightPanelComponent;
-class HeaderComponent;
-
+class PlayListScheduler;
 //[/Headers]
 
 
@@ -42,47 +34,43 @@ class HeaderComponent;
     Describe your class and how it works here!
                                                                     //[/Comments]
 */
-class MainComponent  : public juce::Component,
-                       private juce::ActionListener
+class HeaderComponent  : public juce::Component,
+                         private juce::Timer,
+                         public juce::Button::Listener,
+                         public juce::Label::Listener
 {
 public:
     //==============================================================================
-    MainComponent (std::shared_ptr<AudiumEngine> audiumEngine);
-    ~MainComponent() override;
+    HeaderComponent (std::shared_ptr<PlayListScheduler> playListScheduler);
+    ~HeaderComponent() override;
 
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
-    void actionListenerCallback (const String& message) override;
-    void updateUI();
-
-    void zoomIn();
-    void zoomOut();
+    void timerCallback() override;
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;
     void resized() override;
+    void buttonClicked (juce::Button* buttonThatWasClicked) override;
+    void labelTextChanged (juce::Label* labelThatHasChanged) override;
 
 
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
-
-    std::shared_ptr<AudiumEngine> audiumEngine;
-
-    std::unique_ptr<HeaderComponent> headerComponent;
-    std::unique_ptr<MiddlePanelComponent> middlePanelComponent;
-    std::unique_ptr<RightPanelComponent> rightPanelComponent;
-
-    std::unique_ptr<StretchableLayoutManager> stretchableLayoutManager;
-    std::unique_ptr<StretchableLayoutResizerBar> stretchableLayoutResizerBar;
-
+    std::shared_ptr<PlayListScheduler> playListScheduler;
     //[/UserVariables]
 
     //==============================================================================
+    std::unique_ptr<juce::TextButton> link__textButton;
+    std::unique_ptr<juce::Label> tempo__label;
+    std::unique_ptr<juce::Label> bars__label;
+    std::unique_ptr<juce::Label> beats__label;
+    std::unique_ptr<juce::Label> rest__label;
 
 
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)
 };
 
 //[EndFile] You can add extra defines here...

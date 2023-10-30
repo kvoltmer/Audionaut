@@ -39,6 +39,8 @@ public:
     int getPlayListItemIndex(std::shared_ptr<AudioGroup> group) const;
     double getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const;
     
+    double getAbsolutePositionClocks() const;
+    
     double getAbsolutePosition() const;
     void setAbsolutePosition(double newPosition);
     
@@ -51,30 +53,11 @@ public:
     
     void onTriggerBeat(const double beatTime, const std::chrono::microseconds hostTime, int sampleNumber);
     
-    void setLinkEngine(audium::LinkEngine* engine) { linkEngine = engine; }
+    void setLinkEngine(audium::LinkEngine* engine);
+    audium::LinkEngine* getLinkEngine() const { return linkEngine; }
     
-    double getTempo() const { return tempoBPM; }
-    
-private:
-
-    double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
-    void applyAbsolutePosition(double pos);
-    
-    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
-    
-    double sampleRate = 0.0;
-    int bufferSize = 0;
-    
-    // transport position in 96th clocks
-    double transportPositionClocks = 0.0;
-    
-    std::atomic<bool> forcePosition = false;
-    
-    juce::CriticalSection readLock;
-    
-    audium::LinkEngine *linkEngine;
-        
-    double tempoBPM = 120.0;
+    double getTempo() const;
+    void setTempo(double newTempo);
     
     uint64_t secondsToSamples(double seconds)
     {
@@ -121,8 +104,28 @@ private:
         return clocksToSeconds(tempo, beatsToClocks(beats));
     }
     
+private:
+
+    double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
+    void applyAbsolutePosition(double pos);
     
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     
+    double sampleRate = 0.0;
+    int bufferSize = 0;
+    
+    // transport position in 96th clocks
+    double transportPositionClocks = 0.0;
+    
+    double startPositionClocks = 0.0;
+    
+    std::atomic<bool> forcePosition = false;
+    
+    juce::CriticalSection readLock;
+    
+    audium::LinkEngine *linkEngine;
+        
+    double tempoBPM = 120.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

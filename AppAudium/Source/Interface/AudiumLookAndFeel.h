@@ -21,6 +21,11 @@ public:
     
     static LookAndFeel_V4::ColourScheme getDarkAudiumColourScheme();
     
+    void drawButtonBackground (juce::Graphics& g,
+                               juce::Button& button,
+                               const juce::Colour& backgroundColour,
+                               bool shouldDrawButtonAsHighlighted,
+                               bool shouldDrawButtonAsDown) override;
 private:
     void setupColours();
 };
