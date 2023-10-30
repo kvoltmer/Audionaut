@@ -95,6 +95,22 @@ double ZoomHandler::xToTime (const double x) const
     return (x / (double) getWidth()) * (totalRange.getLength()) + totalRange.getStart();
 }
 
+double ZoomHandler::barsToX (const double bars) const
+{
+    const auto beats = bars * 4.0;
+    const auto seconds = PlayListScheduler::beatsToSeconds(playListScheduler->getTempo(), beats);
+    return timeToX(seconds);
+}
+
+double ZoomHandler::xToBars (const double x) const
+{
+    const auto seconds = xToTime(x);
+    const auto beats = PlayListScheduler::secondsToBeats(playListScheduler->getTempo(), seconds);
+    const auto bars = beats * 0.25;
+    return bars;
+}
+
+
 int ZoomHandler::timeToXWithOffset (const double time) const
 {
     auto x = timeToX(time);
@@ -115,7 +131,7 @@ juce::String ZoomHandler::secondsToFormattedString(const int seconds)
     return juce::String::formatted("%d:%.2d\n", min, sec);
 }
 
-int round2grid(int x)
+int roundSecondsToGrid(int x)
 {
     if (x < 1)
     {
@@ -135,7 +151,7 @@ int round2grid(int x)
     }
 }
 
-int ZoomHandler::numSegmentsForWidth(const int width, int& seconds)
+int ZoomHandler::numSegmentsForWidthInSeconds(const int width, int& seconds)
 {
     jassert(width > 0);
     
@@ -146,8 +162,47 @@ int ZoomHandler::numSegmentsForWidth(const int width, int& seconds)
         // the duration for 100 pixels
         auto duration = int(100 / pixelsPerSec);
         // round to grid and assign the seconds parameter
-        seconds = round2grid(duration);
+        seconds = roundSecondsToGrid(duration);
         int itemWidth = timeToX(seconds);
+        return (width / itemWidth) + 1;
+    }
+    
+    return 0;
+}
+
+int roundBarsToGrid(int x)
+{
+    if (x < 1)
+    {
+        return 1;
+    }
+    else if (x < 4)
+    {
+        return 4;
+    }
+    else if (x < 16)
+    {
+        return 16;
+    }
+    else
+    {
+        return x + 32 - x % 32;
+    }
+}
+
+int ZoomHandler::numSegmentsForWidthInBars(const int width, int& bars)
+{
+    jassert(width > 0);
+    
+    if (width > 0)
+    {
+        auto pixelsPerBar = width / xToBars(width);
+        assert(pixelsPerBar > 0);
+        // the duration for 50 pixels
+        auto duration = int(50 / pixelsPerBar);
+        // round to grid and assign the seconds parameter
+        bars = roundBarsToGrid(duration);
+        int itemWidth = barsToX(bars);
         return (width / itemWidth) + 1;
     }
     

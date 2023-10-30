@@ -41,20 +41,26 @@ public:
     void setWidth(int newWidth) { width = newWidth; }
     
     int timeToXWithOffset (const double time) const;
-    
     double xToTimeWithOffset (const int x) const;
     
     int getScrollBarHeight() const { return scrollbar->getHeight(); }
 
-    double timeToX (const double time) const;
-
+    double timeToX (const double seconds) const;
     double xToTime (const double x) const;
+    
+    double barsToX (const double beats) const;
+    double xToBars (const double x) const;
+    
+
     
     // returns a String in the format Min:Sec
     static juce::String secondsToFormattedString(const int seconds);
     
     // returns the number of time segments for a given width. (1 second is the smallest possible grid)
-    int numSegmentsForWidth(const int width, int& seconds);
+    int numSegmentsForWidthInSeconds(const int width, int& seconds);
+    
+    // returns the number of time segments for a given width. (1 bar is the smallest possible grid)
+    int numSegmentsForWidthInBars(const int width, int& beats);
     
     void focusViewOnPlayPosition();
     
