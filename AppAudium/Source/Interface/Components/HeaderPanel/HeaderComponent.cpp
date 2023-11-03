@@ -19,6 +19,7 @@
 
 //[Headers] You can add your own extra header files here...
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Link/LinkEngine.hpp"
 
 //[/Headers]
 
@@ -104,7 +105,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
 
     //[Constructor] You can add your own custom stuff here..
 
-    link__textButton->onClick = [this] { this->playListScheduler->getLinkEngine()->mLink.enable(link__textButton->getToggleState()); };
+    link__textButton->onClick = [this] { this->playListScheduler->getLinkEngine()->enableLink(link__textButton->getToggleState()); };
 
     link__textButton->setClickingTogglesState(true);
 
@@ -203,7 +204,7 @@ void HeaderComponent::labelTextChanged (juce::Label* labelThatHasChanged)
 
 void HeaderComponent::timerCallback()
 {
-    const auto numPeers = playListScheduler->getLinkEngine()->mLink.numPeers();
+    const auto numPeers = playListScheduler->getLinkEngine()->numPeers();
     juce::String txt;
     if (numPeers > 0)
     {

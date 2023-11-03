@@ -23,6 +23,7 @@ public:
         zoomHandler(zoomHandler)
     {
         setInterceptsMouseClicks(false, true);
+        
     }
 
     ~TransportView() override
@@ -33,10 +34,12 @@ public:
     {
         // draw the timeline in Min::Sec
         auto duration = 0;
-        auto numSegments = zoomHandler->numSegmentsForWidthInSeconds(getWidth(), duration);
+        auto width = rectangle.getWidth();
+        
+        auto numSegments = zoomHandler->numSegmentsForWidthInSeconds(width, duration);
         if (numSegments > 0)
         {
-            auto itemWidth = zoomHandler->timeToX(duration);
+            auto itemWidth = zoomHandler->secondsToX(duration);
             auto x = rectangle.getX();
             auto seconds = 0;
             
@@ -67,7 +70,8 @@ public:
     {
         // draw the timeline in beats
         auto duration = 0;
-        auto numSegments = zoomHandler->numSegmentsForWidthInBars(getWidth(), duration);
+        auto width = rectangle.getWidth();
+        auto numSegments = zoomHandler->numSegmentsForWidthInBars(width, duration);
         if (numSegments > 0)
         {
             auto itemWidth = zoomHandler->barsToX(duration);
@@ -89,7 +93,6 @@ public:
                 Rectangle<int> bonds(x + 5, rectangle.getY(), itemWidth, rectangle.getHeight());
                 
                 // draw text
-                //g.drawFittedText (ZoomHandler::secondsToFormattedString(seconds), bonds, juce::Justification::centredLeft, true);
                 g.drawFittedText (String(bars), bonds, juce::Justification::centredLeft, true);
                 
                 x += itemWidth;

@@ -213,6 +213,10 @@ void PlayListContainer::deselectAll()
 
 double PlayListContainer::getTotalLength() const
 {
-    auto lastItem = playListItems.back();
-    return getAbsolueStartTime(lastItem.get()) + lastItem->getDurationTime();
+    if (playListItems.size() > 0)
+    {
+        auto lastItem = playListItems.back();
+        return getAbsolueStartTime(lastItem.get()) + lastItem->getDurationTime();
+    }
+    return 0.0;
 }

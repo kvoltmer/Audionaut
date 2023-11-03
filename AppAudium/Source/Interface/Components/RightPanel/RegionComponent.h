@@ -36,9 +36,9 @@ public:
         addAndMakeVisible(regionTableListBox.get());
         
         regionTableListBox->getHeader().addColumn ("Name", regionName, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("Start", regionStart, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("End", regionEnd, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("Length", regionLength, 150, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("Start Sec.", regionStart, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("End Sec.", regionEnd, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("Length Bars", regionLength, 150, 80, 800, juce::TableHeaderComponent::notSortable);
         regionTableListBox->getHeader().setStretchToFitActive (true);
         regionTableListBox->setHeaderHeight(25);
         regionTableListBox->setOutlineThickness (0);

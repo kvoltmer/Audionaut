@@ -15,6 +15,8 @@
 #include "Engine/ActionMessages.h"
 #include "Engine/AudioGroupContainer.h"
 #include "Engine/AudioGroup.h"
+#include "Engine/Link/LinkEngine.hpp"
+
 
 using namespace::std::chrono;
 
@@ -33,22 +35,21 @@ void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
     bufferSize = newBufferSize;
 }
 
-void PlayListScheduler::tick(ableton::Link::SessionState *sessionState,
-                             const double quantum,
-                             const std::chrono::microseconds beginHostTime,
+void PlayListScheduler::tick(double beats,
                              int numSamples)
 {
     if (isPlaying())
     {
-        auto beats = sessionState->beatAtTime(beginHostTime, quantum);
+        //auto beats = sessionState->beatAtTime(beginHostTime, quantum);
         if (beats >= 0.)
         {
             // assign absolute position
             transportPositionClocks = beatsToClocks(beats);
             
             // for now we use a position in seconds
-            applyAbsolutePosition(clocksToSeconds(tempoBPM, transportPositionClocks));
+            //applyAbsolutePosition(clocksToSeconds(tempoBPM, transportPositionClocks));
             
+            applyAbsolutePosition(transportPositionClocks);
         }
     }
 }
@@ -80,7 +81,8 @@ void PlayListScheduler::applyAbsolutePosition(double pos)
             if (not group->getTransportSourceContainer()->isPlaying() || forcePosition.load())
             {
                 forcePosition.store(false);
-                group->getTransportSourceContainer()->setLocalPosition(absoluteToLocalPosition(pos, group->getPlayListContainer()->currentPlayListItem));
+                const auto clocks = absoluteToLocalPosition(pos, group->getPlayListContainer()->currentPlayListItem);
+                group->getTransportSourceContainer()->setLocalPosition(clocksToSeconds(clocks));
                 if (isPlaying())
                 {
                     group->getTransportSourceContainer()->startPlaying();
@@ -90,17 +92,31 @@ void PlayListScheduler::applyAbsolutePosition(double pos)
     }
 }
 
-double PlayListScheduler::getTotalLength() const
+double PlayListScheduler::getTotalLengthClocks() const
 {
-    double totalLength = 0.0;
+    double totalLengthClocks = 0.0;
     
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
         auto group = audioGroupContainer->getAudioGroup(i);
-        totalLength = juce::jmax(totalLength, group->getPlayListContainer()->getTotalLength());
+        totalLengthClocks = juce::jmax(totalLengthClocks, group->getPlayListContainer()->getTotalLength());
     }
     
-    return totalLength;
+    return totalLengthClocks;
+}
+
+double PlayListScheduler::getTotalLengthSeconds() const
+{
+    
+    double totalLengthClocks = 0.0;
+    
+    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    {
+        auto group = audioGroupContainer->getAudioGroup(i);
+        totalLengthClocks = juce::jmax(totalLengthClocks, group->getPlayListContainer()->getTotalLength());
+    }
+    
+    return clocksToSeconds(getTotalLengthClocks());
 }
 
 
@@ -142,12 +158,12 @@ double PlayListScheduler::getAbsolutePositionClocks() const
     return isPlaying() ? transportPositionClocks : startPositionClocks;
 }
 
-double PlayListScheduler::getAbsolutePosition() const
+double PlayListScheduler::getAbsolutePositionSeconds() const
 {
     return clocksToSeconds(tempoBPM, isPlaying() ? transportPositionClocks : startPositionClocks);
 }
 
-void PlayListScheduler::setAbsolutePosition(double newPosition)
+void PlayListScheduler::setAbsolutePositionSeconds(double newPosition)
 {
     if (linkEngine != nullptr)
     {
@@ -200,7 +216,7 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> gr
     if (playListItemIndex == getPlayListItemIndex(group) &&
         currentPlayListItem != nullptr)
     {
-        auto localPosition = absoluteToLocalPosition(getAbsolutePosition(), group->getPlayListContainer()->currentPlayListItem);
+        auto localPosition = absoluteToLocalPosition(getAbsolutePositionClocks(), group->getPlayListContainer()->currentPlayListItem);
         auto progress = ((localPosition - currentPlayListItem->getRegionData().getStart()) / currentPlayListItem->getRegionData().getLength());
         return progress;
     }
@@ -220,8 +236,14 @@ void PlayListScheduler::onTriggerBeat(const double beatTime, const std::chrono::
 void PlayListScheduler::setLinkEngine(audium::LinkEngine* engine)
 {
     linkEngine = engine;
-    linkEngine->mLink.setTempoCallback([this](const double p) { tempoBPM = p; });
+    linkEngine->mLink.setTempoCallback([this](const double p) { onTempoChange(p); });
     linkEngine->mLink.enable(false);
+}
+
+void PlayListScheduler::onTempoChange(double newTempo)
+{
+    tempoBPM = newTempo;
+    sendActionMessage (tempoChanged);
 }
 
 double PlayListScheduler::getTempo() const
@@ -237,6 +259,8 @@ void PlayListScheduler::setTempo(double newTempo)
     {
         linkEngine->setTempo(newTempo);
     }
+    
+    sendActionMessage (tempoChanged);
 }
 
 

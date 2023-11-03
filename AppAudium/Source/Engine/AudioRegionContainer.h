@@ -14,6 +14,7 @@
 
 class AudioResourceContainer;
 class AudioGroupContainer;
+class PlayListScheduler;
 class AudioGroup;
 
 class AudioRegionContainer : public juce::ActionBroadcaster
@@ -21,9 +22,11 @@ class AudioRegionContainer : public juce::ActionBroadcaster
                                             
 public:
     AudioRegionContainer(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                         std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
+                         std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                         std::shared_ptr<PlayListScheduler> playListScheduler) :
         audioResourceContainer(audioResourceContainer),
-        audioGroupContainer(audioGroupContainer)
+        audioGroupContainer(audioGroupContainer),
+        playListScheduler(playListScheduler)
     {}
     
     std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioGroup> group);
@@ -32,8 +35,8 @@ public:
     void createRegionsFromSelection(juce::String name);
     
     // Used by RegionSelector
-    void setSelectedPosition(juce::Range<double> pos);
-    juce::Range<double> getSelectedPosition() const;
+    void setSelectedPositionInSeconds(juce::Range<double> pos);
+    juce::Range<double> getSelectedPositionInSeconds() const;
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
@@ -58,11 +61,14 @@ public:
     void removeAudioRegion(std::shared_ptr<AudioRegion> region);
     void removeAudioRegionsForGroup(std::shared_ptr<AudioGroup> group);
     
+    std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
+    
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+    std::shared_ptr<PlayListScheduler> playListScheduler;
 
-    AudioRegion::RegionData selectedPosition;
+    AudioRegion::RegionData selectedPositionClocks;
     int selectedRowNumber = -1;
     
     std::vector<std::shared_ptr<AudioRegion>> audioRegions;

@@ -26,8 +26,6 @@ public:
     ArrangementComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
-        /// TODO: handle this in a more elegant way
-        auto initialWidth = 1000;
         
         zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer(),
                                           audiumEngine->getPlayListScheduler()));
@@ -39,9 +37,9 @@ public:
         audioGroupListBox->setModel(audioGroupListBoxModel.get());
         auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(audioGroupListBox, zoomHandler, audiumEngine));
         audioGroupListBox->setHeaderComponent(std::move(headerComponent));
-        audioGroupListBox->getHeaderComponent()->setSize(initialWidth, 25);
-        audioGroupListBox->setMinimumContentWidth(initialWidth);
+        audioGroupListBox->getHeaderComponent()->setSize(getWidth(), 25);
         audioGroupListBox->setOutlineThickness(0);
+        
         
         playPositionMarker.reset(new PlayPositionMarker(zoomHandler, audiumEngine));
         
@@ -54,10 +52,6 @@ public:
 
         // selection component
         addAndMakeVisible(regionSelector.get());
-        
-        
-        
-        zoomHandler->setWidth(initialWidth);
         
         // make sure the play postition view is on top
         addAndMakeVisible(playPositionMarker.get());
@@ -89,15 +83,23 @@ public:
 
     void updateUI()
     {
+        setContentWidth(zoomHandler->getArrangementContentWidth());
+        
         audioGroupListBox->updateContent();
         regionSelector->updateFromEngine();
+    }
+    
+    void setContentWidth(int contentWidth)
+    {
+        audioGroupListBox->setMinimumContentWidth(contentWidth);
     }
 
     void zoomIn()
     {
-        auto width = getWidth() * zoomHandler->zoomIn();
-        audioGroupListBox->setMinimumContentWidth(width);
-        zoomHandler->setWidth(width);
+        zoomHandler->zoomIn();
+        auto width = zoomHandler->getArrangementContentWidth();
+        //std::cout << "ArrangementComponent width " << width << std::endl;
+        setContentWidth(width);
         regionSelector->updateFromEngine();
         zoomHandler->focusViewOnPlayPosition();
         
@@ -106,9 +108,10 @@ public:
 
     void zoomOut()
     {
-        auto width = getWidth() * zoomHandler->zoomOut();
-        audioGroupListBox->setMinimumContentWidth(width);
-        zoomHandler->setWidth(width);
+        zoomHandler->zoomOut();
+        auto width = zoomHandler->getArrangementContentWidth();
+        //std::cout << "ArrangementComponent width " << width << std::endl;
+        setContentWidth(width);
         regionSelector->updateFromEngine();
         zoomHandler->focusViewOnPlayPosition();
         
@@ -123,6 +126,7 @@ private:
     std::shared_ptr<AudioGroupListBox>       audioGroupListBox;
     std::shared_ptr<AudioGroupListBoxModel>  audioGroupListBoxModel;
     std::shared_ptr<PlayPositionMarker>         playPositionMarker;
+    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ArrangementComponent)
 };

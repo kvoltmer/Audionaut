@@ -41,10 +41,7 @@ public:
     int getNumAudioGroups() const;
     std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
     
-    /// returns the maximum length of all audio resources
-    double getTotalLengthMax() const;
-    
-    
+
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine);
     

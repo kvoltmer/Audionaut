@@ -16,15 +16,24 @@
 #include "Engine/AudioGroup.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/AudiumTransportSource.h"
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioGroup> group)
 {
     jassert(getNumRegions(group.get()) == 0);
     auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group.get());
-    jassert(audioResources.size() > 0);
-    auto name = audioResources[0]->getFileNameWithoutExtension();
-    auto totalLength = audioResourceContainer->getTotalLengthMax();
-    return createRegion(name, juce::Range(0.0, totalLength), group);
+    auto name = (audioResources.size() > 0) ? audioResources[0]->getFileNameWithoutExtension() : "n/a";
+    auto seconds = 0.0;
+    for (auto resource : audioResources)
+    {
+        seconds = juce::jmax(seconds, resource->getAudioTransportSource()->getLengthInSeconds());
+    }
+    jassert(seconds > 0.0);
+    
+    
+    const auto clocks = playListScheduler->secondsToClocks(seconds);
+    return createRegion(name, juce::Range(0.0, clocks), group);
 }
 
 void AudioRegionContainer::createRegionsFromSelection(juce::String name)
@@ -33,12 +42,12 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
     {
         if (auto group = audioGroupContainer->getAudioGroup(i))
         {
-            if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPosition))
+            if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks))
             {
                 // we need the start of the actual audio file
-                auto localStart = selectedPosition.getStart() - item->getAbsolueStartTime() + item->getRegionData().getStart();
+                auto localStart = selectedPositionClocks.getStart() - item->getAbsolueStartTime() + item->getRegionData().getStart();
                 
-                juce::Range<double> localRange(localStart, localStart + selectedPosition.getLength());
+                juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
                 createRegion(name, localRange, group);
             }
         }
@@ -75,11 +84,6 @@ void AudioRegionContainer::deleteRegion(int atIndex)
     }
 }
 
-void AudioRegionContainer::setSelectedPosition(juce::Range<double> pos)
-{
-    selectedPosition = pos;
-}
-
 void AudioRegionContainer::clearSelection()
 {
     selectedRowNumber = -1;
@@ -93,9 +97,14 @@ void AudioRegionContainer::deselectAll()
     }
 }
 
-juce::Range<double> AudioRegionContainer::getSelectedPosition() const
+void AudioRegionContainer::setSelectedPositionInSeconds(juce::Range<double> pos)
 {
-    return selectedPosition;
+    selectedPositionClocks = playListScheduler->secondsToClocks(pos);
+}
+
+juce::Range<double> AudioRegionContainer::getSelectedPositionInSeconds() const
+{
+    return playListScheduler->clocksToSeconds(selectedPositionClocks);
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) const

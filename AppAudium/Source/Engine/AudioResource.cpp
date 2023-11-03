@@ -34,12 +34,6 @@ AudioResource::~AudioResource()
     //jassert(removed);
 }
 
-
-double AudioResource::getTotalLengthMax() const
-{
-    return owner.getTotalLengthMax();
-}
-
 std::shared_ptr<AudiumTransportSource> AudioResource::getAudioTransportSource()
 {
     return audioPlayer->getAudioTransportSource();

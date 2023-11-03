@@ -30,27 +30,21 @@ public:
     
     juce::Range<double> getVisibleRangeInSeconds() const noexcept;
     
-    juce::Range<double> getTotalRange() const noexcept;
-    
     void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
     
-    void updateTotalLength();
-    
-    int getWidth() const noexcept { return width; }
-    
-    void setWidth(int newWidth) { width = newWidth; }
-    
-    int timeToXWithOffset (const double time) const;
-    double xToTimeWithOffset (const int x) const;
+    int secondsToXWithOffset (const double time) const;
+    double xToSecondsWithOffset (const int x) const;
     
     int getScrollBarHeight() const { return scrollbar->getHeight(); }
 
-    double timeToX (const double seconds) const;
-    double xToTime (const double x) const;
+    double secondsToX (const double seconds) const;
+    double xToSeconds (const double x) const;
     
-    double barsToX (const double beats) const;
+    double barsToX (const double bars) const;
     double xToBars (const double x) const;
-    
+ 
+    double clocksToX (const double clocks) const;
+    double xToClocks (const double x) const;
 
     
     // returns a String in the format Min:Sec
@@ -66,22 +60,39 @@ public:
     
     void timerCallback() override;
     
+    std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
+    
+    double getArrangementContentWidth() const;
+    
 private:
     
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
     std::shared_ptr<PlayListScheduler> playListScheduler;
     
-    // zoom factor
-    double zoomFactor;
-    
     // the scrollbar
-    juce::ScrollBar* scrollbar;
+    juce::ScrollBar* scrollbar = nullptr;
+    
+    // zoom factor
+    double zoomFactor = 0.0;
+    
+    // max zoom in factor
+    double maxZoomInFactor = 0.0;
+    
+    // max zoom out factor
+    double maxZoomOutFactor = 0.0;
+    
+    // arrangement content width in pixels
+    double arrangementContentWidth = 0.0;
+        
+    // define pixels per bar (4 beats or 96 clocks)
+    double pixelsPerBar = 0.0;
+    
+    // the minimum arrangement length in bars
+    double minimumArrangementBars = 30.0;
+    
+private:
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ZoomHandler)
 
-    // the total range in seconds
-    juce::Range<double> totalRange;
-    
-    // the width in pixels
-    int width;
-    
 };

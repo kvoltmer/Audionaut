@@ -120,6 +120,16 @@ void LinkEngine::setSampleRate(double sampleRate)
     mSampleRate = sampleRate;
 }
 
+void LinkEngine::enableLink(bool enabled)
+{
+    mLink.enable(enabled);
+}
+
+int LinkEngine::numPeers() const
+{
+    return static_cast<int>(mLink.numPeers());
+}
+
 LinkEngine::EngineData LinkEngine::pullEngineData()
 {
     auto engineData = EngineData{};
@@ -206,7 +216,8 @@ void LinkEngine::triggerScheduler(const double quantum,
                                   const std::chrono::microseconds beginHostTime,
                                   const std::size_t numSamples)
 {
-    playListScheduler->tick(sessionState.get(), quantum, beginHostTime, static_cast<int>(numSamples));
+    const auto beats = sessionState->beatAtTime(beginHostTime, quantum);
+    playListScheduler->tick(beats, static_cast<int>(numSamples));
     
     // The number of microseconds that elapse between samples
     const auto microsPerSample = 1e6 / mSampleRate;

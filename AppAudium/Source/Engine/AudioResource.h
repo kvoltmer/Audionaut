@@ -32,9 +32,6 @@ public:
     ~AudioResource();
     
     juce::AudioThumbnail& getThumbnail() { return thumbnail; }
-    
-    /// returns the maximum length of all audio resources
-    double getTotalLengthMax() const;
 
     std::shared_ptr<AudiumTransportSource> getAudioTransportSource();
     

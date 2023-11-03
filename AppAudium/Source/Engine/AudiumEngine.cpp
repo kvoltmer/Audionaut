@@ -176,11 +176,11 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
         {
             outStream.release();
 
-            auto lastPosition = playListScheduler->getAbsolutePosition();
-            playListScheduler->setAbsolutePosition(0.0);
+            auto lastPosition = playListScheduler->getAbsolutePositionSeconds();
+            playListScheduler->setAbsolutePositionSeconds(0.0);
             playListScheduler->startPlaying();
             
-            auto seconds = playListScheduler->getTotalLength();
+            auto seconds = playListScheduler->getTotalLengthSeconds();
             auto iterations = static_cast<int>(seconds * sampleRate) / numSamples;
             for (auto i = 0; i < iterations; ++i)
             {
@@ -202,7 +202,7 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
                 
             }
             
-            playListScheduler->setAbsolutePosition(lastPosition);
+            playListScheduler->setAbsolutePositionSeconds(lastPosition);
             playListScheduler->stopPlaying();
             
             
@@ -234,6 +234,9 @@ bool AudiumEngine::writeToStream (juce::OutputStream& out)
         audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->writeToStream(out);
     }
     
+    // 5. Other engine values
+    out.writeDouble(playListScheduler->getTempo());
+    
     return true;
 }
 
@@ -244,23 +247,29 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
     
     cleanup();
     
-    // 1. Groups
-    if (audioGroupContainer->readFromStream(in, *audioResourceContainer.get(), *audioRegionContainer.get()))
+    while (! in.isExhausted())
     {
-        // 2. Resources
-        if (audioResourceContainer->readFromStream(in, *this))
+        // 1. Groups
+        if (audioGroupContainer->readFromStream(in, *audioResourceContainer.get(), *audioRegionContainer.get()))
         {
-            // 3. Regions
-            if (audioRegionContainer->readFromStream(in))
+            // 2. Resources
+            if (audioResourceContainer->readFromStream(in, *this))
             {
-                // 4. Playlists
-                for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
+                // 3. Regions
+                if (audioRegionContainer->readFromStream(in))
                 {
-                    audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->readFromStream(in);
+                    // 4. Playlists
+                    for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
+                    {
+                        audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->readFromStream(in);
+                    }
                 }
-                return true;
             }
         }
+        
+        // 5. Other engine values
+        playListScheduler->setTempo(in.readDouble());
+        return true;
     }
     return false;
 }

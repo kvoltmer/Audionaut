@@ -60,8 +60,8 @@ public:
             if (audiumEngine->getPlayListScheduler()->isPlaying())
             {
                 currentPositionMarker.setVisible(true);
-                auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePosition();
-                auto xPos = zoomHandler->timeToXWithOffset(pos);
+                auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePositionSeconds();
+                auto xPos = zoomHandler->secondsToXWithOffset(pos);
                 currentPositionMarker.setRectangle (Rectangle<float> (xPos - 0.75f, 0,
                                                                       1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
             }
