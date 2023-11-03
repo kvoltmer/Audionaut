@@ -47,7 +47,7 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
         setSize (0, 0);
         dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
         currentDragMode = RegionSelector::outsideEdge;
-        audiumEngine->getAudioRegionContainer()->setSelectedPosition(juce::Range<double>());
+        audiumEngine->getAudioRegionContainer()->setSelectedPositionInSeconds(juce::Range<double>());
     }
     else /// click inside -> modify current selection
     {
@@ -105,8 +105,8 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
 
     createRectangleAndSetBonds();
     
-    auto start = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
-    auto end = zoomHandler->xToTimeWithOffset(dragEndPos.getX());
+    auto start = zoomHandler->xToSecondsWithOffset(dragStartPos.getX());
+    auto end = zoomHandler->xToSecondsWithOffset(dragEndPos.getX());
     
     // calc engine values
     Range<double> pos(start, end);
@@ -118,7 +118,7 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
     // itemAtAbsoluteRangestd::cout << pos.getStart() << " " << pos.getEnd() << std::endl;
     
     // set value in the engine
-    audiumEngine->getAudioRegionContainer()->setSelectedPosition(pos);
+    audiumEngine->getAudioRegionContainer()->setSelectedPositionInSeconds(pos);
 }
 
 void RegionSelector::createRectangleAndSetBonds()
@@ -144,11 +144,11 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
 //        auto pos = 0.0;
 //        if (dragEndPos.getX() < dragStartPos.getX())
 //        {
-//            pos = zoomHandler->xToTimeWithOffset(dragEndPos.getX());
+//            pos = zoomHandler->xToSecondsWithOffset(dragEndPos.getX());
 //        }
 //        else
 //        {
-//            pos = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
+//            pos = zoomHandler->xToSecondsWithOffset(dragStartPos.getX());
 //        }
 //        audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
 //    }
@@ -162,15 +162,15 @@ void RegionSelector::mouseMove (const juce::MouseEvent& e)
 
 void RegionSelector::updateFromEngine()
 {
-    auto pos = audiumEngine->getAudioRegionContainer()->getSelectedPosition();
+    auto pos = audiumEngine->getAudioRegionContainer()->getSelectedPositionInSeconds();
     if (pos.isEmpty())
     {
         setSize(0, 0);
     }
     else
     {
-        auto start = zoomHandler->timeToXWithOffset(pos.getStart());
-        auto end = zoomHandler->timeToXWithOffset(pos.getEnd());
+        auto start = zoomHandler->secondsToXWithOffset(pos.getStart());
+        auto end = zoomHandler->secondsToXWithOffset(pos.getEnd());
         dragStartPos.setX(start);
         dragEndPos.setX(end);
         createRectangleAndSetBonds();

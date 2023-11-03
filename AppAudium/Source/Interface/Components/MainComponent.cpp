@@ -84,6 +84,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
         audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
     }
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
+    audiumEngine->getPlayListScheduler()->addActionListener(this);
 
     //[/Constructor]
 }
@@ -98,6 +99,7 @@ MainComponent::~MainComponent()
         audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->removeActionListener(this);
     }
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
+    audiumEngine->getPlayListScheduler()->removeActionListener(this);
     //[/Destructor_pre]
 
 

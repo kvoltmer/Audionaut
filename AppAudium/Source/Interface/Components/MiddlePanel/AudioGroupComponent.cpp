@@ -42,7 +42,6 @@ AudioGroupComponent::~AudioGroupComponent()
 void AudioGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
 {
     audioGroup = group;
-    zoomHandler->updateTotalLength();
     
     if (mustRebuildComponents() ||
         forceRebuildComponents)
@@ -108,8 +107,8 @@ void AudioGroupComponent::resized()
     for (auto regionView : audioGroupRegions)
     {
         auto playListItem = regionView->getPlayListItem();
-        auto start = zoomHandler->timeToX(playListItem->getAbsolueStartTime());
-        auto width = zoomHandler->timeToX(playListItem->getDurationTime());
+        auto start = zoomHandler->clocksToX(playListItem->getAbsolueStartTime());
+        auto width = zoomHandler->clocksToX(playListItem->getDurationTime());
         regionView->setBounds(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
     }
 }

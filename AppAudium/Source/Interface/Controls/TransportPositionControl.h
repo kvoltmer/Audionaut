@@ -51,19 +51,19 @@ public:
 
     void resized() override
     {
-        transportView->setBounds(getBounds());
+        transportView->setBounds(getLocalBounds());
     }
     
     void timerCallback() override
     {
-        auto pos = 0.0;
+        auto clocks = 0.0;
         auto playListScheduler = audiumEngine->getPlayListScheduler();
         if (playListScheduler != nullptr)
         {
-            pos = playListScheduler->getAbsolutePosition();
+            clocks = playListScheduler->getAbsolutePositionClocks();
         }
         
-        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX(pos) - 0.75f, 0,
+        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->clocksToX(clocks) - 0.75f, 0,
                                                               1.5f, (float) getHeight()));
     
         if (playListScheduler->isPlaying())
@@ -94,11 +94,11 @@ public:
         // auto x1 = e.getPosition().getX();
         auto relativeEvent = e.getEventRelativeTo(owner.get());
         auto x = relativeEvent.getPosition().getX();
-        auto pos = zoomHandler->xToTimeWithOffset(x);
+        auto seconds = zoomHandler->xToSecondsWithOffset(x);
         // std::cout << x1 << " " << x << " " << pos << std::endl;
 
         // set transport position
-        audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
+        audiumEngine->getPlayListScheduler()->setAbsolutePositionSeconds (seconds);
     }
     
     void mouseMove (const MouseEvent& e) override

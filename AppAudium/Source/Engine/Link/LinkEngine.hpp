@@ -52,6 +52,8 @@ public:
 //    double getStartPlayingTime() const;
     void setStartPlayingTime(double beats);
 
+    void enableLink(bool enabled);
+    int numPeers() const;
 public:
     struct EngineData
     {

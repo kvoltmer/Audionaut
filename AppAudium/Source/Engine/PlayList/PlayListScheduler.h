@@ -12,7 +12,10 @@
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
 #include "Engine/PlayList/SampleTimer.h"
-#include "Engine/Link/LinkEngine.hpp"
+
+namespace audium {
+    class LinkEngine;
+}
 
 class TransportSourceContainer;
 class PlayListContainer;
@@ -20,7 +23,7 @@ class PlayListItem;
 class AudioGroupContainer;
 
 
-class PlayListScheduler
+class PlayListScheduler : public juce::ActionBroadcaster
 {
     
     
@@ -41,15 +44,14 @@ public:
     
     double getAbsolutePositionClocks() const;
     
-    double getAbsolutePosition() const;
-    void setAbsolutePosition(double newPosition);
+    double getAbsolutePositionSeconds() const;
+    void setAbsolutePositionSeconds(double newPosition);
     
-    void tick(ableton::Link::SessionState *sessionState,
-              const double quantum,
-              const std::chrono::microseconds beginHostTime,
+    void tick(double beats,
               int numSamples);
     
-    double getTotalLength() const;
+    double getTotalLengthClocks() const;
+    double getTotalLengthSeconds() const;
     
     void onTriggerBeat(const double beatTime, const std::chrono::microseconds hostTime, int sampleNumber);
     
@@ -81,6 +83,30 @@ public:
         return clocks / (tempo * 0.4);
     }
     
+    double secondsToClocks(double seconds) const
+    {
+        return secondsToClocks(tempoBPM, seconds);
+    }
+
+    double clocksToSeconds(double clocks) const
+    {
+        return clocksToSeconds(tempoBPM, clocks);
+    }
+    
+    juce::Range<double> secondsToClocks(juce::Range<double> rangeInSeconds)
+    {
+        const auto start = secondsToClocks(rangeInSeconds.getStart());
+        const auto end = secondsToClocks(rangeInSeconds.getEnd());
+        return juce::Range<double>(start, end);
+    }
+    
+    juce::Range<double> clocksToSeconds(juce::Range<double> rangeInClocks)
+    {
+        const auto start = clocksToSeconds(rangeInClocks.getStart());
+        const auto end = clocksToSeconds(rangeInClocks.getEnd());
+        return juce::Range<double>(start, end);
+    }
+    
     static double beatsToClocks(double beats)
     {
         // 4th * 24 = 96th
@@ -91,6 +117,16 @@ public:
     {
         // 96th / 24 = 4th
         return clocks / 24.0;
+    }
+    
+    static double barsToClocks(double bars)
+    {
+        return bars * 96.0;
+    }
+    
+    static double clocksToBars(double clocks)
+    {
+        return clocks / 96.0;
     }
     
     static double secondsToBeats(double tempo, double seconds)
@@ -104,7 +140,20 @@ public:
         return clocksToSeconds(tempo, beatsToClocks(beats));
     }
     
+    double secondsToBeats(double seconds)
+    {
+        return secondsToBeats(tempoBPM, seconds);
+    }
+
+    double beatsToSeconds(double beats)
+    {
+        return beatsToSeconds(tempoBPM, beats);
+    }
+
+    
 private:
+
+    void onTempoChange(double newTempo);
 
     double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
     void applyAbsolutePosition(double pos);

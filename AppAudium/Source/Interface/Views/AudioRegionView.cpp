@@ -15,6 +15,7 @@
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
 #include "Engine/AudioGroup.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace juce;
 
@@ -87,9 +88,9 @@ void AudioRegionView::paint (juce::Graphics& g)
 //                                                    rangeInSeconds.getStart(), rangeInSeconds.getEnd(), 1.0f);
         
         
-        auto start = audioRegion->position.getStart();
-        auto end = audioRegion->position.getEnd();
-        audioResource->getThumbnail().drawChannels (g, thumbArea, start, end, 1.0f);
+        auto startSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getStart());
+        auto endSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getEnd());
+        audioResource->getThumbnail().drawChannels (g, thumbArea, startSecond, endSecond, 1.0f);
 
         
         

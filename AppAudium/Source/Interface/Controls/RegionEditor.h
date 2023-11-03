@@ -16,6 +16,8 @@
 #include "Engine/AudioRegionContainer.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
+#include "Engine/PlayList/PlayListScheduler.h"
+
 
 //==============================================================================
 /*
@@ -57,15 +59,17 @@ public:
             }
             else if (columnId == regionStart)
             {
-                text = juce::String(r->position.getStart(), 4);
+                const auto seconds = audioRegionContainer->getPlayListScheduler()->clocksToSeconds(r->position.getStart());
+                text = juce::String(seconds, 4);
             }
             else if (columnId == regionEnd)
             {
-                text = juce::String(r->position.getEnd(), 4);
+                const auto seconds = audioRegionContainer->getPlayListScheduler()->clocksToSeconds(r->position.getEnd());
+                text = juce::String(seconds, 4);
             }
             else if (columnId == regionLength)
             {
-                text = juce::String(r->position.getLength(), 4);
+                text = juce::String(PlayListScheduler::clocksToBars(r->position.getLength()), 4);
             }
             
             auto textColour = r->getAudioGroup()->getColour();
@@ -96,21 +100,27 @@ public:
     /// override juce::Label::Listener
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
+        
         if (columnId == regionName)
         {
             audioRegionContainer->setRegionName(rowNumber, labelThatHasChanged->getText());
         }
         else if  (columnId == regionStart)
         {
-            audioRegionContainer->setRegionStart(rowNumber, labelThatHasChanged->getText().getDoubleValue());
+            const auto seconds = labelThatHasChanged->getText().getDoubleValue();
+            const auto clocks = audioRegionContainer->getPlayListScheduler()->secondsToClocks(seconds);
+            audioRegionContainer->setRegionStart(rowNumber, clocks);
         }
         else if  (columnId == regionEnd)
         {
-            audioRegionContainer->setRegionEnd(rowNumber, labelThatHasChanged->getText().getDoubleValue());
+            const auto seconds = labelThatHasChanged->getText().getDoubleValue();
+            const auto clocks = audioRegionContainer->getPlayListScheduler()->secondsToClocks(seconds);
+            audioRegionContainer->setRegionEnd(rowNumber, clocks);
         }
         else if  (columnId == regionLength)
         {
-            audioRegionContainer->setRegionLength(rowNumber, labelThatHasChanged->getText().getDoubleValue());
+            const auto bars = labelThatHasChanged->getText().getDoubleValue();
+            audioRegionContainer->setRegionLength(rowNumber, PlayListScheduler::barsToClocks(bars));
         }
     }
     

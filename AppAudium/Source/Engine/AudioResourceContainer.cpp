@@ -167,18 +167,6 @@ std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroup(int index) con
     return getAudioGroups()[index];
 }
 
-
-double AudioResourceContainer::getTotalLengthMax() const
-{
-    double length = 0;// 420;
-    
-    for (auto & element : audioResources)
-    {
-        length = std::max(length, element.second->getThumbnail().getTotalLength());
-    }
-    return length;
-}
-
 bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
 {
     outputStream.writeInt(static_cast<int>(audioResources.size()));
