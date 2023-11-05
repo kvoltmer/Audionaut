@@ -50,7 +50,7 @@ public:
     std::shared_ptr<AudioGroup> getAudioGroupById(int groupId) const;
     
     int getNextId() { return ++nextId; }
-    
+        
 private:
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;

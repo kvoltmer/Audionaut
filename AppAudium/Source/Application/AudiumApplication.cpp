@@ -12,7 +12,7 @@
 #include "Interface/Components/MainComponent.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudiumFactory.h"
+#include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"

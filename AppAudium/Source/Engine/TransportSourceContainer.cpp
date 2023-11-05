@@ -63,7 +63,10 @@ void TransportSourceContainer::stopPlaying()
         //transportSource->stop();
         
         // workaround: set the position to the very end
-        transportSource->setPosition(transportSource->getLengthInSeconds());
+        if (transportSource->isPlaying())
+        {
+            transportSource->setPosition(transportSource->getLengthInSeconds());
+        }
     }
 }
 

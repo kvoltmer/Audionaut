@@ -19,7 +19,23 @@ public:
     AudiumTransportSource() = default;
     ~AudiumTransportSource()
     {
-        std::cout << "~AudiumTransportSource" << std::endl;
+        setSource(nullptr);
     }
+    
+    void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
+    {
+        tBase::getNextAudioBlock(info);
+        
+        outputLevel = info.buffer->getMagnitude(0, info.startSample, info.numSamples);
+    }
+    
+    float getOutputLevel() const { return outputLevel.load(); }
+    
+private:
+    
+    typedef juce::AudioTransportSource tBase;
+    
+    std::atomic<float> outputLevel;
+    
     
 };

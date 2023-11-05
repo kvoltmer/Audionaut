@@ -12,7 +12,6 @@
 #include "Util/Preferences.h"
 #include "Engine/AutoEdit/AutoEdit.h"
 #include "Engine/AudioGroupContainer.h"
-#include "Engine/AudioPlayer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
 
@@ -148,9 +147,11 @@ void AudiumEngine::setBypass(bool bypass)
     linkAudioDevice->setBypass(bypass);
     for (auto r = 0; r < audioResourceContainer->getNumAudioResources(); ++r)
     {
-        audioResourceContainer->getAudioResource(r)->getAudioPlayer()->setBypass(bypass);
+        jassertfalse;
+        //audioResourceContainer->getAudioResource(r)->getAudioPlayer()->setBypass(bypass);
     }
 }
+#include "Engine/AudiumTransportSource.h"
 
 void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback)
 {
@@ -185,15 +186,16 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
             for (auto i = 0; i < iterations; ++i)
             {
                 juce::AudioBuffer<float> buffer(numOutputChannels, numSamples);
-                
+                juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
                 jassertfalse;
                 /// TODO: implement
                 //playListScheduler->tick(numSamples);
                 
                 for (auto r = 0; r < audioResourceContainer->getNumAudioResources(); ++r)
                 {
-                    audioResourceContainer->getAudioResource(r)->getAudioPlayer()->renderOffline(buffer.getArrayOfWritePointers(),
-                                                                                                 numOutputChannels, numSamples);
+                    audioResourceContainer->getAudioResource(r)->getAudioTransportSource()->getNextAudioBlock(info);
+                    //audioResourceContainer->getAudioResource(r)->getAudioPlayer()->renderOffline(buffer.getArrayOfWritePointers(),
+                     //                                                                            numOutputChannels, numSamples);
                 }
                 
                 writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());

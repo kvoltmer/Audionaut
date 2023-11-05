@@ -58,6 +58,8 @@ public:
     int getNumChannels() const;
     std::shared_ptr<AudioResource> getChannel(int index) const;
     
+    void prepareToPlay (double sampleRate, int blockSize);
+    
     typedef std::pair<std::shared_ptr<AudioGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
     
 private:

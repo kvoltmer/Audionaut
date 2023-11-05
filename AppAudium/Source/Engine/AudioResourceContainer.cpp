@@ -15,21 +15,9 @@
 #include "AudiumTransportSource.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Factory/AudioResourceFactory.h"
 
-static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
-{
-   #if JUCE_ANDROID
-    if (auto doc = AndroidDocument::fromDocument (url))
-        return std::make_unique<AndroidDocumentInputSource> (doc);
-   #endif
 
-   #if ! JUCE_IOS
-    if (url.isLocalFile())
-        return std::make_unique<juce::FileInputSource> (url.getLocalFile());
-   #endif
-
-    return std::make_unique<juce::URLInputSource> (url);
-}
 
 AudioResourceContainer::AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                                                std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
@@ -51,47 +39,51 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 {
     if (group != nullptr)
     {
-        if (auto inputSource = makeAudioInputSource (url))
+        auto audioResource = AudioResourceFactory::createAudioResource(url,
+                                                                       *engine.getAudioResourceContainer(),
+                                                                       group,
+                                                                       formatManager,
+                                                                       &thread,
+                                                                       thumbnailCache);
+        
+        double sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+        auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
+        audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
+        
+        std::shared_ptr<AudioGroup> audioGroup = nullptr;
+        if (group != nullptr)
         {
-            /// TODO: create factory
-            auto transportSource = group->getTransportSourceContainer()->createNewTransportSource();
-            auto audioPlayer = std::shared_ptr<AudioPlayer>(new AudioPlayer(transportSource,
-                                                                            audioDeviceManager,
-                                                                            inputSource.get(),
-                                                                            formatManager,
-                                                                            &thread));
-            auto audioResource = std::shared_ptr<AudioResource>(new AudioResource(*this, url, inputSource.get(), formatManager, audioPlayer, thumbnailCache));
-            
-            std::shared_ptr<AudioGroup> audioGroup = nullptr;
-            
-            if (group != nullptr)
-            {
-                audioGroup = group;
-            }
-            else // no group provided
-            {
-                // create default group
-                if (audioGroupContainer->getNumItems() == 0)
-                {
-                    audioGroup = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer(), url.getFileName().toStdString());
-                }
-                else // add to first group
-                {
-                    audioGroup = audioGroupContainer->getAudioGroup(0);
-                }
-            }
-            
-            audioResources.push_back({audioGroup, audioResource});
-            inputSource.release();
-            
-            sendActionMessage(audioResourceCreatedAction);
-            
-            return audioResource;
+            audioGroup = group;
         }
+        else // no group provided
+        {
+            // create default group
+            if (audioGroupContainer->getNumItems() == 0)
+            {
+                audioGroup = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer(), url.getFileName().toStdString());
+            }
+            else // add to first group
+            {
+                audioGroup = audioGroupContainer->getAudioGroup(0);
+            }
+        }
+        
+        audioResources.push_back({audioGroup, audioResource});
+        sendActionMessage(audioResourceCreatedAction);
+        return audioResource;
     }
     
     return nullptr;
 }
+
+void AudioResourceContainer::prepareToPlay (double sampleRate, int blockSize)
+{
+    for (auto resource : audioResources)
+    {
+        resource.second->getAudioTransportSource()->prepareToPlay(blockSize, sampleRate);
+    }
+}
+
 
 void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioResource> resource)
 {
@@ -100,7 +92,6 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudiumEngine> e
         if ((*it).second == resource)
         {
             auto region = (*it).second;
-            region->getAudioPlayer()->stopAudio();
             
             auto group = (*it).first;
             group->getTransportSourceContainer()->removeTransportSource(region->getAudioTransportSource());
@@ -179,7 +170,7 @@ bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
         
         // url of the resource
         outputStream.writeString(resource.second->getUrlAsString());
-        outputStream.writeFloat(resource.second->getAudioPlayer()->getGain());
+        outputStream.writeFloat(resource.second->getAudioTransportSource()->getGain());
     }
     return true;
 }
@@ -203,7 +194,7 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, con
             auto inString = inputStream.readString();
             auto resource = addAudioResource(juce::URL(inString), engine, group);
             auto gain = inputStream.readFloat();
-            resource->getAudioPlayer()->setGain(gain);
+            resource->getAudioTransportSource()->setGain(gain);
         }
         else
         {

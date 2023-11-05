@@ -33,6 +33,13 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <GROUP id="{38829D96-12DD-C636-0C91-D4606DFE0C72}" name="Factory">
+          <FILE id="VRfXqH" name="AudioResourceFactory.h" compile="0" resource="0"
+                file="Source/Engine/Factory/AudioResourceFactory.h"/>
+          <FILE id="M4fDCK" name="AudiumFactory.cpp" compile="1" resource="0"
+                file="Source/Engine/Factory/AudiumFactory.cpp"/>
+          <FILE id="ErnMCa" name="AudiumFactory.h" compile="0" resource="0" file="Source/Engine/Factory/AudiumFactory.h"/>
+        </GROUP>
         <GROUP id="{72F2B5A0-7A8C-3648-A73C-97D66220C0AE}" name="Link">
           <FILE id="el7wlW" name="LinkAudioDevice.cpp" compile="1" resource="0"
                 file="Source/Engine/Link/LinkAudioDevice.cpp"/>
@@ -64,9 +71,6 @@
           <FILE id="ge1APd" name="PlayListScheduler.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListScheduler.h"/>
         </GROUP>
-        <FILE id="MOhFAt" name="AudiumFactory.cpp" compile="1" resource="0"
-              file="Source/Engine/AudiumFactory.cpp"/>
-        <FILE id="GYoHLK" name="AudiumFactory.h" compile="0" resource="0" file="Source/Engine/AudiumFactory.h"/>
         <FILE id="k90e0E" name="AudiumTransportSource.h" compile="0" resource="0"
               file="Source/Engine/AudiumTransportSource.h"/>
         <FILE id="hC6yQM" name="TransportSourceContainer.cpp" compile="1" resource="0"
@@ -79,8 +83,6 @@
               file="Source/Engine/AudioRegionContainer.cpp"/>
         <FILE id="vB01Hj" name="AudioRegionContainer.h" compile="0" resource="0"
               file="Source/Engine/AudioRegionContainer.h"/>
-        <FILE id="xDqbFz" name="AudioPlayer.cpp" compile="1" resource="0" file="Source/Engine/AudioPlayer.cpp"/>
-        <FILE id="bN94Ur" name="AudioPlayer.h" compile="0" resource="0" file="Source/Engine/AudioPlayer.h"/>
         <FILE id="yLDGCs" name="AudioGroup.cpp" compile="1" resource="0" file="Source/Engine/AudioGroup.cpp"/>
         <FILE id="XDfgpU" name="AudioGroup.h" compile="0" resource="0" file="Source/Engine/AudioGroup.h"/>
         <FILE id="p1AUux" name="AudioGroupContainer.cpp" compile="1" resource="0"

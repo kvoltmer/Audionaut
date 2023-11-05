@@ -47,8 +47,11 @@ public:
     double getAbsolutePositionSeconds() const;
     void setAbsolutePositionSeconds(double newPosition);
     
-    void tick(double beats,
+    void tick(bool isPlaying,
+              double beats,
               int numSamples);
+    
+    void getNextAudioBlock (const juce::AudioSourceChannelInfo& info);
     
     double getTotalLengthClocks() const;
     double getTotalLengthSeconds() const;

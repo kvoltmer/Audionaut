@@ -12,9 +12,9 @@
 
 #include <memory>
 #include <JuceHeader.h>
-#include "AudiumEngine.h"
-#include "AudioResourceContainer.h"
-#include "AudioRegionContainer.h"
+#include "Engine/AudiumEngine.h"
+#include "Engine/AudioResourceContainer.h"
+#include "Engine/AudioRegionContainer.h"
 
 
 
