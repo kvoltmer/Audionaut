@@ -18,7 +18,7 @@
 */
 
 //[Headers] You can add your own extra header files here...
-#include "Engine/AudioPlayer.h"
+#include "Engine/AudiumTransportSource.h"
 //[/Headers]
 
 #include "ChannelComponent.h"
@@ -180,7 +180,7 @@ void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
         //[UserLabelCode_volumeLevel] -- add your label text handling code here..
         auto db = volumeLevel->getText().getFloatValue();
         auto gain = LevelMeter::decebelToGain(db);
-        resource->getAudioPlayer()->setGain(gain);
+        resource->getAudioTransportSource()->setGain(gain);
         //[/UserLabelCode_volumeLevel]
     }
 
@@ -223,7 +223,7 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource,
     volumeLevel->setColour (juce::Label::textColourId, group->getColour());
     volumeLeveldB->setColour (juce::Label::textColourId, group->getColour());
 
-    auto gain = resource->getAudioPlayer()->getGain();
+    auto gain = resource->getAudioTransportSource()->getGain();
     volumeLevel->setText(String(LevelMeter::gainToDecebel(gain)), dontSendNotification);
 
     if (not isTimerRunning())
@@ -234,11 +234,8 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource,
 
 void ChannelComponent::timerCallback()
 {
-
-    if (resource->getAudioPlayer() != nullptr)
-    {
-        levelMeter->setLevel(resource->getAudioPlayer()->getOutputLevel());
-    }
+    jassert(resource->getAudioTransportSource());
+    levelMeter->setLevel(resource->getAudioTransportSource()->getOutputLevel());
 }
 
 //[/MiscUserCode]

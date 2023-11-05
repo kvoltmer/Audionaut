@@ -8,35 +8,14 @@
   ==============================================================================
 */
 
-#include "AudioResource.h"
-#include "AudioResourceContainer.h"
-#include "AudioPlayer.h"
-#include "TransportSourceContainer.h"
-
-AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
-                             juce::URL url,
-                             juce::InputSource* inputSource,
-                             juce::AudioFormatManager& formatManager,
-                             std::shared_ptr<AudioPlayer> audioPlayer,
-                             juce::AudioThumbnailCache& thumbnailCache) :
-    owner(audioResourceContainer),
-    url(url),
-    thumbnail (4096, formatManager, thumbnailCache),
-    audioPlayer(audioPlayer)
-{
-    thumbnail.setSource(inputSource);
-}
+#include "Engine/AudioResource.h"
+#include "Engine/AudioResourceContainer.h"
+#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudiumTransportSource.h"
 
 AudioResource::~AudioResource()
 {
-    std::cout << "~AudioResource" << std::endl;
-    //auto removed = owner.getTransportSourceContainer()->removeTransportSource(audioPlayer->getAudioTransportSource());
-    //jassert(removed);
-}
-
-std::shared_ptr<AudiumTransportSource> AudioResource::getAudioTransportSource()
-{
-    return audioPlayer->getAudioTransportSource();
+    transportSource->setSource(nullptr);
 }
 
 const juce::String AudioResource::getFileNameWithoutExtension() const
@@ -56,10 +35,10 @@ const juce::String AudioResource::getUrlAsString() const
 
 double AudioResource::getSampleRate() const
 {
-    return audioPlayer->sampleRate;
+    return audioFormatReaderSource->getAudioFormatReader()->sampleRate;
 }
 
 unsigned int AudioResource::getNumChannels() const
 {
-    return audioPlayer->numChannels;
+    return audioFormatReaderSource->getAudioFormatReader()->numChannels;
 }

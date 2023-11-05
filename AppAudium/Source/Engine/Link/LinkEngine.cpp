@@ -217,7 +217,7 @@ void LinkEngine::triggerScheduler(const double quantum,
                                   const std::size_t numSamples)
 {
     const auto beats = sessionState->beatAtTime(beginHostTime, quantum);
-    playListScheduler->tick(beats, static_cast<int>(numSamples));
+    playListScheduler->tick(sessionState->isPlaying(), beats, static_cast<int>(numSamples));
     
     // The number of microseconds that elapse between samples
     const auto microsPerSample = 1e6 / mSampleRate;
@@ -291,7 +291,7 @@ void LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
     {
         // As long as the engine is playing, generate metronome clicks in
         // the buffer at the appropriate beats.
-        renderMetronomeIntoBuffer(engineData.quantum, hostTime, numSamples);
+        // renderMetronomeIntoBuffer(engineData.quantum, hostTime, numSamples);
         
         triggerScheduler(engineData.quantum, hostTime, numSamples);
     }

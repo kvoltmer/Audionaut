@@ -11,9 +11,12 @@
 #include "LinkAudioDevice.h"
 #include "LinkEngine.hpp"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/AudioResourceContainer.h"
 
-LinkAudioDevice::LinkAudioDevice(std::shared_ptr<PlayListScheduler> playListScheduler) :
-    playListScheduler(playListScheduler)
+LinkAudioDevice::LinkAudioDevice(std::shared_ptr<PlayListScheduler> playListScheduler,
+                                 std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
+    playListScheduler(playListScheduler),
+    audioResourceContainer(audioResourceContainer)
 {
     link.reset(new ableton::Link(playListScheduler->getTempo()));
     linkEngine.reset(new audium::LinkEngine(*link.get(), playListScheduler));
@@ -53,10 +56,14 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
             {
                 for (auto j = 0; j < numSamples; ++j)
                 {
-                    outputChannelData[i][j] = linkEngine->mBuffer[j];
+                    outputChannelData[i][j] += linkEngine->mBuffer[j];
                 }
             }
         }
+        
+        juce::AudioBuffer<float> buffer (outputChannelData, totalNumOutputChannels, numSamples);
+        juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
+        playListScheduler->getNextAudioBlock(info);
         
         sample_time += numSamples;
     }
@@ -73,6 +80,8 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
     {
         playListScheduler->prepareToPlay(sampleRate, bufferSize);
     }
+    
+    audioResourceContainer->prepareToPlay(sampleRate, bufferSize);
     
     auto deviceLatency = device->getOutputLatencyInSamples();
     

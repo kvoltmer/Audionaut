@@ -15,6 +15,9 @@
 #include "Engine/ActionMessages.h"
 #include "Engine/AudioGroupContainer.h"
 #include "Engine/AudioGroup.h"
+#include "Engine/AudioResource.h"
+#include "Engine/AudiumTransportSource.h"
+
 #include "Engine/Link/LinkEngine.hpp"
 
 
@@ -33,12 +36,14 @@ void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
 {
     sampleRate = newSampleRate;
     bufferSize = newBufferSize;
+
 }
 
-void PlayListScheduler::tick(double beats,
+void PlayListScheduler::tick(bool isPlaying,
+                             double beats,
                              int numSamples)
 {
-    if (isPlaying())
+    if (isPlaying)
     {
         //auto beats = sessionState->beatAtTime(beginHostTime, quantum);
         if (beats >= 0.)
@@ -46,10 +51,22 @@ void PlayListScheduler::tick(double beats,
             // assign absolute position
             transportPositionClocks = beatsToClocks(beats);
             
-            // for now we use a position in seconds
-            //applyAbsolutePosition(clocksToSeconds(tempoBPM, transportPositionClocks));
-            
+            // apply position in clocks
             applyAbsolutePosition(transportPositionClocks);
+        }
+    }
+}
+
+void PlayListScheduler::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
+{
+    /// TODO: this is NOT thread save
+    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    {
+        auto group = audioGroupContainer->getAudioGroup(i);
+        auto resources = group->getAudioResources();
+        for (auto resource : resources)
+        {
+            resource->getAudioTransportSource()->getNextAudioBlock(info);
         }
     }
 }
@@ -62,7 +79,7 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
 
 void PlayListScheduler::applyAbsolutePosition(double pos)
 {
-    // lookup current play list item
+    // iterate over group container
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
         auto group = audioGroupContainer->getAudioGroup(i);
