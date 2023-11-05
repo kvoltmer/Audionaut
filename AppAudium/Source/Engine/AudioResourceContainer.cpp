@@ -8,11 +8,10 @@
   ==============================================================================
 */
 
-#include "AudioResourceContainer.h"
-#include "AudioGroupContainer.h"
-#include "AudioPlayer.h"
-#include "TransportSourceContainer.h"
-#include "AudiumTransportSource.h"
+#include "Engine/AudioResourceContainer.h"
+#include "Engine/AudioGroupContainer.h"
+#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudiumTransportSource.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
