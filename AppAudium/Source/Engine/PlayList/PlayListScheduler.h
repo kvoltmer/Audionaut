@@ -39,7 +39,7 @@ public:
     bool isPlaying() const;
     
     void setPlayListItemIndex(int playListItemIndex);
-    int getPlayListItemIndex(std::shared_ptr<AudioGroup> group) const;
+    int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const;
     double getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const;
     
     double getAbsolutePositionClocks() const;
@@ -159,7 +159,7 @@ private:
     void onTempoChange(double newTempo);
 
     double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
-    void applyAbsolutePosition(double pos);
+    void applyAbsolutePosition(double pos, int numSamples);
     
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     

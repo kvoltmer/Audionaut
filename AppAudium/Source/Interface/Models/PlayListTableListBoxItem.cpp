@@ -113,7 +113,7 @@ void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
 void PlayListTableListBoxItem::timerCallback()
 {
     auto group = playListModel->getAudioGroup();
-    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndex(group);
+    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndexAtCurrentPosition(group);
     
     auto theProgress = 0.0;
     if (itemPlaying == rowNumber)

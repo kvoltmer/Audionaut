@@ -30,11 +30,11 @@ bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTrans
     return false;
 }
 
-void TransportSourceContainer::setLocalPosition (double newPosition)
+void TransportSourceContainer::setLocalPosition (double seconds, int startSample)
 {
     for (auto & transportSource : audioTransportSources)
     {
-        transportSource->setPosition(newPosition);
+        transportSource->schedulePosition(seconds, startSample);
     }
 }
 
@@ -53,6 +53,7 @@ void TransportSourceContainer::startPlaying()
     {
         transportSource->start();
     }
+    playing = true;
 }
 
 void TransportSourceContainer::stopPlaying()
@@ -68,13 +69,10 @@ void TransportSourceContainer::stopPlaying()
             transportSource->setPosition(transportSource->getLengthInSeconds());
         }
     }
+    playing = false;
 }
 
 bool TransportSourceContainer::isPlaying() const
 {
-    for (auto & transportSource : audioTransportSources)
-    {
-        return transportSource->isPlaying();
-    }
-    return false;
+    return playing;
 }

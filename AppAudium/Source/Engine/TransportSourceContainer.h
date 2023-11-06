@@ -26,7 +26,7 @@ public:
     std::shared_ptr<AudiumTransportSource> createNewTransportSource();
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
-    void setLocalPosition (double newPosition);
+    void setLocalPosition (double seconds, int startSample);
     double getLocalPosition() const;
     
     void startPlaying();
@@ -34,7 +34,7 @@ public:
     bool isPlaying() const;
     
 private:
-    
+    std::atomic<bool> playing;
     std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)
