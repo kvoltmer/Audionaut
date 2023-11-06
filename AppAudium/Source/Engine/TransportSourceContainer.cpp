@@ -49,11 +49,11 @@ double TransportSourceContainer::getLocalPosition() const
 
 void TransportSourceContainer::startPlaying()
 {
+    playing = true;
     for (auto & transportSource : audioTransportSources)
     {
         transportSource->start();
     }
-    playing = true;
 }
 
 void TransportSourceContainer::stopPlaying()

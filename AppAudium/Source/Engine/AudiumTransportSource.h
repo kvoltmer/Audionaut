@@ -43,23 +43,19 @@ public:
         }
         else
         {
-            auto start = scheduledSample.load();
+            auto startSample = scheduledSample.load();
             scheduledSample.store(0);
             
             // process 1st part
-            juce::AudioSourceChannelInfo infoPart1 (info.buffer, 0, start - 1);
+            juce::AudioSourceChannelInfo infoPart1 (info.buffer, 0, startSample);
             tBase::getNextAudioBlock(infoPart1);
             
             setPosition(scheduledPosition.load());
             //std::cout << "scheduledPosition " << scheduledPosition.load() << std::endl;
             
-            // process 1st part
-            juce::AudioSourceChannelInfo infoPart2 (info.buffer, start, info.numSamples - start);
+            // process 2nd part
+            juce::AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
             tBase::getNextAudioBlock(infoPart2);
-            
-            
-            
-            
         }
         
         outputLevel = info.buffer->getMagnitude(0, info.startSample, info.numSamples);

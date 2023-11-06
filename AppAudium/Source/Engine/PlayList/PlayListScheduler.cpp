@@ -102,7 +102,7 @@ void PlayListScheduler::applyAbsolutePosition(double absolutePosition, int numSa
                 const auto localPosition = absoluteToLocalPosition(startPosition, playlist->currentPlayListItem);
                 
                 const auto diff = startPosition - absolutePosition;
-                const auto startSamples = static_cast<int>(clocksToSeconds(diff) * sampleRate);
+                const auto startSamples = static_cast<int>((clocksToSeconds(diff) * sampleRate) + 0.5);
                 
                 if (diff < 0.0)
                 {
@@ -156,13 +156,6 @@ double PlayListScheduler::getTotalLengthSeconds() const
 
 void PlayListScheduler::startPlaying()
 {
-    // reset currentPlayListItem
-    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
-    {
-        auto group = audioGroupContainer->getAudioGroup(i);
-        group->getPlayListContainer()->currentPlayListItem = nullptr;
-    }
-    
     if (linkEngine != nullptr)
     {
         linkEngine->setStartPlayingTime(clocksToBeats(startPositionClocks));
@@ -172,12 +165,7 @@ void PlayListScheduler::startPlaying()
 
 void PlayListScheduler::stopPlaying()
 {
-    // reset currentPlayListItem
-    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
-    {
-        auto group = audioGroupContainer->getAudioGroup(i);
-        group->getPlayListContainer()->currentPlayListItem = nullptr;
-    }
+    resetCurrentPlayListItem();
     
     if (linkEngine != nullptr)
     {
@@ -199,6 +187,12 @@ bool PlayListScheduler::isPlaying() const
     }
     jassertfalse;
     return false;
+}
+
+void PlayListScheduler::resetCurrentPlayListItem()
+{
+    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+        audioGroupContainer->getAudioGroup(i)->getPlayListContainer()->currentPlayListItem = nullptr;
 }
 
 double PlayListScheduler::getAbsolutePositionClocks() const

@@ -38,6 +38,8 @@ public:
     void stopPlaying();
     bool isPlaying() const;
     
+    void resetCurrentPlayListItem();
+    
     void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioGroup> group, int playListItemIndex);
     int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const;
     double getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const;
