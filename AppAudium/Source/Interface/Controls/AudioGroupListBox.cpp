@@ -1,7 +1,8 @@
 
 #include <JuceHeader.h>
 #include "AudioGroupListBox.h"
-#include "Engine/AudioResourceGroup.h"
+#include "Engine/AudioGroup.h"
+#include "Engine/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Interface/AudiumLookAndFeel.h"
 
@@ -11,8 +12,8 @@ using namespace audium;
 AudioGroupListBox::AudioGroupListBox (std::shared_ptr<AudiumEngine> audiumEngine,
                                       const juce::String& componentName,
                                       audium::ListBoxModel* model) :
-    audiumEngine(audiumEngine),
-    audium::ListBox(componentName, model)
+    audium::ListBox(componentName, model),
+    audiumEngine(audiumEngine)
 {
 }
 
@@ -27,14 +28,16 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
         // create new group
         jassert(File (filenames[0]).existsAsFile());
         auto name = File (filenames[0]).getFileNameWithoutExtension().toStdString();
-        auto group = std::shared_ptr<AudioResourceGroup> (new AudioResourceGroup(*audiumEngine->getAudioResourceContainer(), name));
-        
+        auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
+                                                                                         *audiumEngine->getAudioRegionContainer(),
+                                                                                         name);
+
         for (auto i = 0; i < filenames.size(); i++)
         {
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, group);
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group);
         }
-        audiumEngine->createDefaultRegionAndPlayList();
+        audiumEngine->createDefaultRegionAndPlayList(group);
     }
     
     updateContent();

@@ -2,29 +2,12 @@
 #include <iostream>
 
 #include "AudioGroupListBoxModel.h"
-
-AudioGroupListBoxModel::AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
-                                               std::shared_ptr<AudiumEngine> audiumEngine,
-                                               std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                                               std::shared_ptr<PlayListContainer> playListContainer,
-                                               std::shared_ptr<ZoomHandler> zoomHandler,
-                                               std::shared_ptr<RegionSelector> regionSelector) :
-    owner(owner),
-    audiumEngine(audiumEngine),
-    audioResourceContainer(audioResourceContainer),
-    playListContainer(playListContainer),
-    zoomHandler(zoomHandler),
-    regionSelector(regionSelector)
-{
-}
-
-AudioGroupListBoxModel::~AudioGroupListBoxModel()
-{
-}
+#include "Engine/AudioGroupContainer.h"
+#include "Engine/AudiumEngine.h"
 
 int AudioGroupListBoxModel::getNumRows()
 {
-    return audioResourceContainer->getNumAudioResourceGroups();
+    return audiumEngine->getAudioGroupContainer()->getNumItems();
 }
 
 void AudioGroupListBoxModel::paintListBoxItem ( int rowNumber,
@@ -43,12 +26,12 @@ void AudioGroupListBoxModel::paintListBoxItem ( int rowNumber,
 juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, bool isRowSelected,
                                                                      juce::Component* existingComponentToUpdate)
 {
+    auto audioGroup = audiumEngine->getAudioGroupContainer()->getAudioGroup(rowNumber);
     if (existingComponentToUpdate == nullptr)
     {
-        auto audioResourceGroup = audioResourceContainer->getAudioResourceGroup(rowNumber);
-        if (audioResourceGroup != nullptr)
+        if (audioGroup != nullptr)
         {
-            auto component = new AudioGroupComponent(audioResourceGroup, audiumEngine, zoomHandler);
+            auto component = new AudioGroupComponent(audioGroup, audiumEngine, zoomHandler);
             return component;
         }
     }
@@ -56,11 +39,11 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
     {
         auto component = dynamic_cast<AudioGroupComponent*>(existingComponentToUpdate);
         jassert(component);
-        auto audioResourceGroup = audioResourceContainer->getAudioResourceGroup(rowNumber);
-        if (audioResourceGroup != nullptr)
+    
+        if (audioGroup != nullptr)
         {
-            // update of audioResourceGroup since row might have changed after delete
-            component->setAudioResourceGroup(audioResourceGroup);
+            // update of audioGroup since row might have changed after delete
+            component->refreshComponent(audioGroup);
         }
         return component;
     }
@@ -71,11 +54,13 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
 
 int AudioGroupListBoxModel::getRowHeight (int rowNumber) const
 {
-    if (rowNumber < audioResourceContainer->getNumAudioResourceGroups())
+    auto audioGroupContainer = audiumEngine->getAudioGroupContainer();
+    auto audioResourceContainer = audiumEngine->getAudioResourceContainer();
+    if (rowNumber < audioGroupContainer->getNumItems())
     {
-        auto group = audioResourceContainer->getAudioResourceGroup(rowNumber);
+        auto group = audioGroupContainer->getAudioGroup(rowNumber);
         int height = 0;
-        auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group);
+        auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group.get());
         for (auto audioResource : audioResources)
         {
             height += audioResource->getHeight();
@@ -87,28 +72,24 @@ int AudioGroupListBoxModel::getRowHeight (int rowNumber) const
     return 0;
 }
 
-void AudioGroupListBoxModel::selectedRowsChanged (int lastRowSelected)
-{
-    std::cout << "selectedRowsChanged: " << lastRowSelected << std::endl;
-}
 
 void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
     auto selected = owner->getSelectedRows();
-    
+    auto audioGroupContainer = audiumEngine->getAudioGroupContainer();
     for (int i = selected.size()-1; i >= 0; i--)
     {
         std::cout << "delete selected = " << selected[i] << std::endl;
-        
-        audioResourceContainer->removeAudioResourceGroup(selected[i]);
-    }
-    
-    owner->updateContent();
-}
-
-void AudioGroupListBoxModel::listWasScrolled()
-{
-    jassert(regionSelector);
-    regionSelector->updateFromEngine();
+        auto group = audioGroupContainer->getAudioGroup(selected[i]);
+        if (group != nullptr)
+        {
+            
+            audioGroupContainer->removeAudioGroup(audiumEngine, group);
+        }
+        else
+        {
+            jassertfalse;
+        }
+    }    
 }
 

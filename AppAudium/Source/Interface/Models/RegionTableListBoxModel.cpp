@@ -11,18 +11,15 @@
 #include <JuceHeader.h>
 #include "RegionTableListBoxModel.h"
 #include "Interface/ColourIds.h"
-#include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Controls/RegionEditor.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
 //==============================================================================
 RegionTableListBoxModel::RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
-                                                 std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                                                 std::shared_ptr<PlayListContainer> playListContainer) :
+                                                 std::shared_ptr<AudioRegionContainer> audioRegionContainer) :
     owner(owner),
-    audioRegionContainer(audioRegionContainer),
-    playListContainer(playListContainer)
+    audioRegionContainer(audioRegionContainer)
 {
 }
 
@@ -41,7 +38,9 @@ void RegionTableListBoxModel::paintRowBackground (juce::Graphics& g,
                                  bool rowIsSelected)
 {
     if (rowIsSelected)
-        g.fillAll (owner->findColour(audium::defaultHighlightColourId));
+    {
+        g.fillAll (owner->findColour(audium::listBoxBackgroundColourId));
+    }
 }
 
 void RegionTableListBoxModel::paintCell (juce::Graphics& g,
@@ -89,7 +88,6 @@ void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
     {
         auto region = audioRegionContainer->getRegion(selected[i]);
         jassert(region);
-        playListContainer->deleteAssociatedItems(region);
         audioRegionContainer->deleteRegion(selected[i]);
     }
 }

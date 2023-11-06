@@ -10,11 +10,12 @@
 
 #include "PlayListTableListBoxItem.h"
 #include "PlayListTableListBoxModel.h"
-#include "Interface/Components/PlayListComponent.h"
+#include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Controls/RegionEditor.h"
 #include "Engine/AudioRegionContainer.h"
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/TransportSourceContainer.h"
 #include "Interface/AudiumLookAndFeel.h"
+#include "Engine/ActionMessages.h"
 
 void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetails)
 {
@@ -34,16 +35,16 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
         playListModel->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
     }
     
-    // TODO: use your own update system
-    playListModel->listBox->owner->triggerAsyncUpdate();
+    
+    playListModel->getPlayListContainer()->sendActionMessage(playListOrderAction);
     
     hideInsertLines();
 }
 
 void PlayListTableListBoxItem::drawLinearProgress (juce::Graphics& g, double progress)
 {
-    auto background = playListModel->listBox->findColour(selected ? audium::defaultHighlightColourId :
-                                                               audium::secondaryBackgroundColourId);
+    auto background = playListModel->listBox->findColour(audium::listBoxBackgroundColourId);
+    background = selected ? background.brighter().brighter() : background;
     if (columnNumber == 1)
     {
         auto foreground = selected ? background.darker() : background.brighter();
@@ -61,41 +62,13 @@ void PlayListTableListBoxItem::drawLinearProgress (juce::Graphics& g, double pro
 
 void PlayListTableListBoxItem::paint(juce::Graphics& g)
 {
-    auto background = playListModel->listBox->findColour(selected ? audium::defaultHighlightColourId :
-                                                               audium::secondaryBackgroundColourId);
-    g.fillAll (background);
-    
     if (columnNumber == 1)
     {
-        if (playListModel->getPlayListScheduler()->isPlaying())
-        {
-            auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndex();
-            if (itemPlaying == rowNumber)
-            {
-                if (!isTimerRunning())
-                {
-                    startTimerHz(25);
-                }
-                
-                // progress
-                auto progress = playListModel->getPlayListScheduler()->getPlayListItemProgress(rowNumber);
-                drawLinearProgress(g, progress);
-            
-                
-            }
-            else if (isTimerRunning())
-            {
-                stopTimer();
-            }
-        }
-        else if (isTimerRunning())
-        {
-            stopTimer();
-        }
+        drawLinearProgress(g, progress);
     }
     
-    
-    if (auto r = playListModel->getPlayListContainer()->getPlayListItem(rowNumber))
+    auto container = playListModel->getAudioGroup()->getPlayListContainer();
+    if (auto r = container->getPlayListItem(rowNumber))
     {
         juce::String text;
 
@@ -108,10 +81,9 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
             text = "n/a";
         }
 
-        if (selected)
-            g.setColour (playListModel->listBox->findColour (audium::defaultHighlightedTextColourId));
-        else
-            g.setColour (playListModel->listBox->findColour (audium::defaultTextColourId));
+        auto textColour = r->getRegion()->getAudioGroup()->getColour();
+        g.setColour (selected ? textColour.brighter().brighter() : textColour);
+        
 
         g.setFont (13.0f);
         g.drawText (text, 4, 0, getWidth() - 6, getHeight(), juce::Justification::centredLeft, true);
@@ -133,13 +105,30 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 
 void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
 {
-    playListModel->getPlayListScheduler()->setPlayListItemIndex(rowNumber);
-    //std::cout << "mouseDoubleClick" << rowNumber << std::endl;
+    auto group = playListModel->getAudioGroup();
+    playListModel->getPlayListScheduler()->setCurrentPositionAtPlayListItemIndex(group, rowNumber);
 }
 
 void PlayListTableListBoxItem::timerCallback()
 {
-    repaint();
+    auto group = playListModel->getAudioGroup();
+    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndexAtCurrentPosition(group);
+    
+    auto theProgress = 0.0;
+    if (itemPlaying == rowNumber)
+    {
+        theProgress = playListModel->getPlayListScheduler()->getPlayListItemProgress(group, rowNumber);
+    }
+    else
+    {
+        theProgress = 0.0;
+    }
+    
+    if (progress != theProgress)
+    {
+        progress = theProgress;
+        repaint();
+    }
 }
 
 void PlayListTableListBoxItem::update(int columnId, int rowNumber, bool isSelected)
@@ -148,17 +137,6 @@ void PlayListTableListBoxItem::update(int columnId, int rowNumber, bool isSelect
     this->rowNumber = rowNumber;
     selected = isSelected;
     
-    
-//    if (playListModel->getTransportSourceProvider()->isPlaying())
-//    {
-//        auto playing = playListModel->getPlayListScheduler()->getPlayListItemIndex();
-//        if (playing == rowNumber &&
-//            !selected)
-//        {
-//            playListModel->
-//            selected = true;
-//        }
-//    }
     
     repaint();
 }

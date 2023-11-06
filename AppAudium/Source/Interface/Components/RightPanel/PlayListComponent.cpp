@@ -5,17 +5,17 @@
 
 void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
-    auto insertIndex = static_cast<int>(audiumEngine->getPlayListContainer()->playListItems.size());
+    auto insertIndex = static_cast<int>(audioGroup->getPlayListContainer()->playListItems.size());
     
     if ( PlayListTableListBoxItem* item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
-        MoveItemBefore(audiumEngine->getPlayListContainer()->playListItems,
+        MoveItemBefore(audioGroup->getPlayListContainer()->playListItems,
                        item->rowNumber,
                        insertIndex);
     }
     else if ( RegionEditor* item = dynamic_cast<RegionEditor*>(dragSourceDetails.sourceComponent.get()))
     {
-        audiumEngine->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
+        audioGroup->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
     }
     
     triggerAsyncUpdate();

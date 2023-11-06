@@ -10,16 +10,29 @@
 
 #include "ZoomHandler.h"
 #include "Engine/AudioResourceContainer.h"
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/PlayList/PlayListScheduler.h"
+
+
 
 ZoomHandler::ZoomHandler(std::shared_ptr<AudioResourceContainer> container,
-                         std::shared_ptr<TransportSourceProvider> transportSourceProvider) :
+                         std::shared_ptr<PlayListScheduler> playListScheduler) :
     audioResourceContainer(container),
-    transportSourceProvider(transportSourceProvider),
-    zoomFactor(1.0),
-    scrollbar(nullptr),
-    width(0)
+    playListScheduler(playListScheduler),
+    scrollbar(nullptr)
 {
+    // the default zoom factor
+    zoomFactor = 1.0;
+    
+    // 1 bar = 200 pixels
+    // 1 second = 100 pixels (@120BPM)
+    pixelsPerBar = 200.0;
+    
+    // zoom in max = 10 times -> 1024
+    maxZoomInFactor = std::pow(2.0, 10.0);
+    
+    // zoom out max = 10 times -> 0.0009765625
+    maxZoomOutFactor = std::pow(0.5, 10);
+        
     startTimerHz(40);
 }
 
@@ -31,13 +44,29 @@ ZoomHandler::~ZoomHandler()
 double ZoomHandler::zoomIn()
 {
     zoomFactor *= 2.0;
+    zoomFactor = std::min(zoomFactor, maxZoomInFactor);
     return zoomFactor;
 }
 
 double ZoomHandler::zoomOut()
 {
-    zoomFactor /= 2.0;
+    zoomFactor *= 0.5;
+    zoomFactor = std::max(zoomFactor, maxZoomOutFactor);
     return zoomFactor;
+}
+
+double ZoomHandler::getArrangementContentWidth() const
+{
+    // get arrangement length from the playlist
+    const auto clocks = playListScheduler->getTotalLengthClocks();
+    
+    // add one bar to fit the content into arrangement
+    const auto bars = PlayListScheduler::clocksToBars(clocks) + 1.0;
+    
+    // at least minimumArrangementBars
+    const auto arrangementBars = std::max(minimumArrangementBars, bars);
+    
+    return arrangementBars * pixelsPerBar * zoomFactor;
 }
 
 juce::Range<double> ZoomHandler::getVisibleRange() const noexcept
@@ -52,7 +81,7 @@ juce::Range<double> ZoomHandler::getVisibleRangeInSeconds() const noexcept
     auto visibleRange = getVisibleRange();
     
     // convert pixels to seconds (drawChannels expects start and end in seconds)
-    return juce::Range<double> (xToTime(visibleRange.getStart()), xToTime(visibleRange.getEnd()));
+    return juce::Range<double> (xToSeconds(visibleRange.getStart()), xToSeconds(visibleRange.getEnd()));
 }
 
 void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
@@ -60,52 +89,54 @@ void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
     scrollbar = thescrollbar;
 }
 
-
-
-void ZoomHandler::updateTotalLength()
+double ZoomHandler::secondsToX (const double seconds) const
 {
-    juce::Range<double> newRange (0.0, audioResourceContainer->getTotalLengthMax());
-    
-    totalRange = newRange;
+    const auto beats = playListScheduler->secondsToBeats(seconds);
+    const auto bars = beats * 0.25;
+    return barsToX(bars);
 }
 
-juce::Range<double> ZoomHandler::getTotalRange() const noexcept
+double ZoomHandler::xToSeconds (const double x) const
 {
-    return totalRange;
+    const auto bars = xToBars(x);
+    const auto beats = bars * 4.0;
+    const auto seconds = playListScheduler->beatsToSeconds(beats);
+    return seconds;
 }
 
-double ZoomHandler::timeToX (const double time) const
+double ZoomHandler::barsToX (const double bars) const
 {
-    /// TODO: this is ugly
-    if (getWidth() == 0)
-    {
-        return 0.0;
-    }
-    
-    if (totalRange.getLength() <= 0)
-        return 0;
-
-    //jassert(getWidth() > 0);
-    return (double) getWidth() * (double) ((time - totalRange.getStart()) / totalRange.getLength());
+    return (bars * pixelsPerBar) * zoomFactor;
 }
 
-double ZoomHandler::xToTime (const double x) const
+double ZoomHandler::xToBars (const double x) const
 {
-    jassert(getWidth() > 0);
-    return (x / (double) getWidth()) * (totalRange.getLength()) + totalRange.getStart();
+    return x * (1.0 / pixelsPerBar) / zoomFactor;
 }
 
-int ZoomHandler::timeToXWithOffset (const double time) const
+double ZoomHandler::clocksToX (const double clocks) const
 {
-    auto x = timeToX(time);
+    const auto seconds = playListScheduler->clocksToSeconds(clocks);
+    return secondsToX(seconds);
+}
+
+double ZoomHandler::xToClocks (const double x) const
+{
+    const auto seconds = xToSeconds(x);
+    return playListScheduler->secondsToClocks(seconds);
+}
+
+int ZoomHandler::secondsToXWithOffset (const double time) const
+{
+    auto x = secondsToX(time);
     auto offset = getVisibleRange().getStart();
     return juce::jmax (0.0, x - offset);
 }
 
-double ZoomHandler::xToTimeWithOffset (const int x) const
+double ZoomHandler::xToSecondsWithOffset (const int x) const
 {
     auto offset = getVisibleRange().getStart();
-    return juce::jmax (0.0, xToTime (static_cast<double>(x) + offset));
+    return juce::jmax (0.0, xToSeconds (static_cast<double>(x) + offset));
 }
 
 juce::String ZoomHandler::secondsToFormattedString(const int seconds)
@@ -115,7 +146,7 @@ juce::String ZoomHandler::secondsToFormattedString(const int seconds)
     return juce::String::formatted("%d:%.2d\n", min, sec);
 }
 
-int round2grid(int x)
+int roundSecondsToGrid(int x)
 {
     if (x < 1)
     {
@@ -135,19 +166,58 @@ int round2grid(int x)
     }
 }
 
-int ZoomHandler::numSegmentsForWidth(const int width, int& seconds)
+int ZoomHandler::numSegmentsForWidthInSeconds(const int width, int& seconds)
 {
     jassert(width > 0);
     
     if (width > 0)
     {
-        auto pixelsPerSec = width / xToTime(width);
+        auto pixelsPerSec = width / xToSeconds(width);
         assert(pixelsPerSec > 0);
         // the duration for 100 pixels
         auto duration = int(100 / pixelsPerSec);
         // round to grid and assign the seconds parameter
-        seconds = round2grid(duration);
-        int itemWidth = timeToX(seconds);
+        seconds = roundSecondsToGrid(duration);
+        int itemWidth = secondsToX(seconds);
+        return (width / itemWidth) + 1;
+    }
+    
+    return 0;
+}
+
+int roundBarsToGrid(int x)
+{
+    if (x < 1)
+    {
+        return 1;
+    }
+    else if (x < 4)
+    {
+        return 4;
+    }
+    else if (x < 16)
+    {
+        return 16;
+    }
+    else
+    {
+        return x + 32 - x % 32;
+    }
+}
+
+int ZoomHandler::numSegmentsForWidthInBars(const int width, int& bars)
+{
+    jassert(width > 0);
+    
+    if (width > 0)
+    {
+        auto pixelsPerBar = width / xToBars(width);
+        assert(pixelsPerBar > 0);
+        // the duration for 50 pixels
+        auto duration = int(50 / pixelsPerBar);
+        // round to grid and assign the seconds parameter
+        bars = roundBarsToGrid(duration);
+        int itemWidth = barsToX(bars);
         return (width / itemWidth) + 1;
     }
     
@@ -156,8 +226,8 @@ int ZoomHandler::numSegmentsForWidth(const int width, int& seconds)
 
 void ZoomHandler::focusViewOnPlayPosition()
 {
-    
-    auto posX = timeToX(transportSourceProvider->getCurrentPosition());
+    //auto posX = secondsToX(playListScheduler->getAbsolutePositionSeconds());
+    auto posX = clocksToX(playListScheduler->getAbsolutePositionClocks());
     auto range = getVisibleRange();
     //std::cout << pos << " " << posX << " range: " << range.getStart() << " " << range.getEnd() << std::endl;
     
@@ -166,21 +236,21 @@ void ZoomHandler::focusViewOnPlayPosition()
         auto newStart = posX - (range.getLength() / 2);
         auto newRange = range.movedToStartAt(newStart);
         scrollbar->setCurrentRange(newRange);
-        
+
     }
     
 }
 
 void ZoomHandler::timerCallback()
 {
-    if (transportSourceProvider->isPlaying())
-    {
-        auto posX = timeToX(transportSourceProvider->getCurrentPosition());
-        if(!getVisibleRange().contains(posX))
-        {
-            auto newStart = posX - (getVisibleRange().getLength() / 2);
-            auto newRange = getVisibleRange().movedToStartAt(newStart);
-            scrollbar->setCurrentRange(newRange);
-        }
-    }
+//    if (playListScheduler->isPlaying())
+//    {
+//        auto posX = secondsToX(playListScheduler->getAbsolutePosition());
+//        if(!getVisibleRange().contains(posX))
+//        {
+//            auto newStart = posX - (getVisibleRange().getLength() / 2);
+//            auto newRange = getVisibleRange().movedToStartAt(newStart);
+//            scrollbar->setCurrentRange(newRange);
+//        }
+//    }
 }

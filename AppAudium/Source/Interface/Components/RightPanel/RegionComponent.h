@@ -29,17 +29,16 @@ public:
     {
         regionTableListBox.reset(new RegionTableListBox());
         regionTableListBoxModel.reset(new RegionTableListBoxModel(regionTableListBox,
-                                                                  audiumEngine->getAudioRegionContainer(),
-                                                                  audiumEngine->getPlayListContainer()));
+                                                                  audiumEngine->getAudioRegionContainer()));
 
         regionTableListBox->setModel(regionTableListBoxModel.get());
         regionTableListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(regionTableListBox.get());
         
         regionTableListBox->getHeader().addColumn ("Name", regionName, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("Start", regionStart, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("End", regionEnd, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("Length", regionLength, 150, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("Start Sec.", regionStart, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("End Sec.", regionEnd, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("Length Bars", regionLength, 150, 80, 800, juce::TableHeaderComponent::notSortable);
         regionTableListBox->getHeader().setStretchToFitActive (true);
         regionTableListBox->setHeaderHeight(25);
         regionTableListBox->setOutlineThickness (0);
@@ -55,14 +54,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        /* This demo code just fills the component's background and
-           draws some placeholder text to get you started.
-
-           You should replace everything in this method with your own
-           drawing code..
-        */
-
-        g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
+        g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 
         g.setColour (juce::Colours::grey);
         g.drawRect (getLocalBounds(), 1);   // draw an outline around the component

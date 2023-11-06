@@ -12,7 +12,7 @@
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 
@@ -129,9 +129,13 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     switch (info.commandID)
     {
         case CommandIDs::playStop:
-            if (getEngine()->getTransportSourceProvider()->playStop() == false)
+            if (getEngine()->isPlaying())
             {
-                getEngine()->getPlayListScheduler()->stop();
+                getEngine()->stopPlaying();
+            }
+            else
+            {
+                getEngine()->startPlaying();
             }
             mainComponent->updateUI();
             break;

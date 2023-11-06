@@ -7,7 +7,7 @@
   the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
   and re-saved.
 
-  Created with Projucer version: 7.0.5
+  Created with Projucer version: 7.0.8
 
   ------------------------------------------------------------------------------
 
@@ -28,6 +28,7 @@ using namespace juce;
 class AudiumEngine;
 class MiddlePanelComponent;
 class RightPanelComponent;
+class HeaderComponent;
 
 //[/Headers]
 
@@ -68,6 +69,7 @@ private:
 
     std::shared_ptr<AudiumEngine> audiumEngine;
 
+    std::unique_ptr<HeaderComponent> headerComponent;
     std::unique_ptr<MiddlePanelComponent> middlePanelComponent;
     std::unique_ptr<RightPanelComponent> rightPanelComponent;
 

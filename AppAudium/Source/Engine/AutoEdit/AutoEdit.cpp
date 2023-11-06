@@ -131,7 +131,7 @@ void AutoEdit::applyAutoEditResult()
             position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
             juce::String regionName = "seg-" + juce::String(counter++);
             // CREATE REGION
-            audioRegionContainer->createRegion(regionName, position);
+            audioRegionContainer->createRegion(regionName, position, audioResourceContainer->getDefaultGroup());
         }
         segFile.close();
     }

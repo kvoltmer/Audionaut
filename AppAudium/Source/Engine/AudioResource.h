@@ -18,6 +18,7 @@
 
 class AudioResourceContainer;
 class AudioPlayer;
+class AudiumTransportSource;
 
 class AudioResource {
     
@@ -26,21 +27,24 @@ public:
                   juce::URL url,
                   juce::InputSource* inputSource,
                   juce::AudioFormatManager& formatManager,
-                  std::shared_ptr<AudioPlayer> audioPlayer,
-                  juce::AudioThumbnailCache& thumbnailCache);
+                  juce::AudioThumbnailCache& thumbnailCache,
+                  std::shared_ptr<AudiumTransportSource> transportSource,
+                  std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
+        owner(audioResourceContainer),
+        url(url),
+        thumbnail (4096, formatManager, thumbnailCache),
+        transportSource(transportSource)
+    {
+        this->audioFormatReaderSource = std::move(audioFormatReaderSource);
+        thumbnail.setSource(inputSource);
+    }
+    
     ~AudioResource();
     
     juce::AudioThumbnail& getThumbnail() { return thumbnail; }
-    
-    /// returns the maximum length of all audio resources
-    double getTotalLengthMax() const;
-    
-    void start();
-    
-    void stop();
 
-    std::shared_ptr<juce::AudioTransportSource> getAudioTransportSource();
-    
+    std::shared_ptr<AudiumTransportSource> getAudioTransportSource() const { return transportSource; }
+
     bool isThumbnailFullyLoaded() const { return thumbnail.isFullyLoaded(); }
 
     const juce::String getFileNameWithoutExtension() const;
@@ -52,16 +56,12 @@ public:
     
     /// TODO: move this to AudioGroupListBoxModel
     int getHeight() const { return height * getNumChannels(); }
-    
-    
+    int getChannelHeight() const { return height; }
     
     AudioResourceContainer& getContainer() const { return owner; }
     
     double getSampleRate() const;
     unsigned int getNumChannels() const;
-    
-    /// TODO: move this
-    juce::Colour currentColour = juce::Colours::pink;
 
 private:
 
@@ -71,7 +71,9 @@ private:
     
     juce::AudioThumbnail thumbnail;
     
-    std::shared_ptr<AudioPlayer> audioPlayer;
+    std::shared_ptr<AudiumTransportSource> transportSource;
+    
+    std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     
     int height = 100;
     
