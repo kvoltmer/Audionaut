@@ -95,15 +95,6 @@ public:
         return "PlayListTableListBoxModel";
     }
     
-    void cellDoubleClicked (int rowNumber, int columnId, const juce::MouseEvent&) override
-    {
-        // this is not being called
-        // TODO: implement for all schedulers
-        jassertfalse;
-        
-        audiumEngine->getPlayListScheduler()->setPlayListItemIndex(rowNumber);
-    }
-    
     void selectedRowsChanged (int lastRowSelected) override
     {
         audioGroup->getPlayListContainer()->deselectAll();

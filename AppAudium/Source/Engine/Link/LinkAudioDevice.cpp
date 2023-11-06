@@ -62,7 +62,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
         
         juce::AudioBuffer<float> buffer (outputChannelData, totalNumOutputChannels, numSamples);
         juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
-        playListScheduler->getNextAudioBlock(info);
+        playListScheduler->audioCallback(info);
         
         sample_time += numSamples;
     }
