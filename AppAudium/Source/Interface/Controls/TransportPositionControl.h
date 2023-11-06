@@ -51,22 +51,22 @@ public:
 
     void resized() override
     {
-        transportView->setBounds(getBounds());
+        transportView->setBounds(getLocalBounds());
     }
     
     void timerCallback() override
     {
-        auto pos = 0.0;
-        auto transportSourceProvider = audiumEngine->getTransportSourceProvider();
-        if (transportSourceProvider != nullptr)
+        auto clocks = 0.0;
+        auto playListScheduler = audiumEngine->getPlayListScheduler();
+        if (playListScheduler != nullptr)
         {
-            pos = transportSourceProvider->getCurrentPosition();
+            clocks = playListScheduler->getAbsolutePositionClocks();
         }
         
-        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->timeToX(pos) - 0.75f, 0,
+        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->clocksToX(clocks) - 0.75f, 0,
                                                               1.5f, (float) getHeight()));
     
-        if (transportSourceProvider->isPlaying())
+        if (playListScheduler->isPlaying())
         {
             currentPositionMarker.setVisible(false);
         }
@@ -85,15 +85,20 @@ public:
     
     void mouseDown (const MouseEvent& e) override
     {
-        mouseDrag (e);
+        mouseDrag(e);
+
     }
     
     void mouseDrag (const MouseEvent& e) override
     {
+        // auto x1 = e.getPosition().getX();
+        auto relativeEvent = e.getEventRelativeTo(owner.get());
+        auto x = relativeEvent.getPosition().getX();
+        auto seconds = zoomHandler->xToSecondsWithOffset(x);
+        // std::cout << x1 << " " << x << " " << pos << std::endl;
+
         // set transport position
-        auto relativePos = e.getEventRelativeTo(owner.get()).getPosition();
-        auto pos = zoomHandler->xToTimeWithOffset(relativePos.getX());;
-        audiumEngine->getTransportSourceProvider()->setPosition (pos);
+        audiumEngine->getPlayListScheduler()->setAbsolutePositionSeconds (seconds);
     }
     
     void mouseMove (const MouseEvent& e) override

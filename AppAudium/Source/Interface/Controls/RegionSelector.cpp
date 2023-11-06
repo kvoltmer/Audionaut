@@ -10,10 +10,10 @@
 #include <iostream>
 
 #include "RegionSelector.h"
-#include "Interface/Components/AudioGroupComponent.h"
+#include "Interface/Components/MiddlePanel/AudioGroupComponent.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/TransportSourceProvider.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 void RegionSelector::paint (Graphics& g)
 {
@@ -47,7 +47,7 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
         setSize (0, 0);
         dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
         currentDragMode = RegionSelector::outsideEdge;
-        audiumEngine->getAudioRegionContainer()->clearSelection();
+        audiumEngine->getAudioRegionContainer()->setSelectedPositionInSeconds(juce::Range<double>());
     }
     else /// click inside -> modify current selection
     {
@@ -105,8 +105,8 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
 
     createRectangleAndSetBonds();
     
-    auto start = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
-    auto end = zoomHandler->xToTimeWithOffset(dragEndPos.getX());
+    auto start = zoomHandler->xToSecondsWithOffset(dragStartPos.getX());
+    auto end = zoomHandler->xToSecondsWithOffset(dragEndPos.getX());
     
     // calc engine values
     Range<double> pos(start, end);
@@ -115,8 +115,10 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
         pos = Range<double>(end, start);
     }
     
+    // itemAtAbsoluteRangestd::cout << pos.getStart() << " " << pos.getEnd() << std::endl;
+    
     // set value in the engine
-    audiumEngine->getAudioRegionContainer()->setRegionPosition(pos);
+    audiumEngine->getAudioRegionContainer()->setSelectedPositionInSeconds(pos);
 }
 
 void RegionSelector::createRectangleAndSetBonds()
@@ -134,21 +136,22 @@ void RegionSelector::createRectangleAndSetBonds()
 void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
     // set transport position if not currently playing
-    if (!avoidDragging &&
-        !audiumEngine->getTransportSourceProvider()->isPlaying() &&
-        getBounds().getWidth() > 1)
-    {
-        auto pos = 0.0;
-        if (dragEndPos.getX() < dragStartPos.getX())
-        {
-            pos = zoomHandler->xToTimeWithOffset(dragEndPos.getX());
-        }
-        else
-        {
-            pos = zoomHandler->xToTimeWithOffset(dragStartPos.getX());
-        }
-        audiumEngine->getTransportSourceProvider()->setPosition (pos);
-    }
+// TODO: implement or ditch?
+//    if (!avoidDragging &&
+//        !audiumEngine->getPlayListScheduler()->isPlaying() &&
+//        getBounds().getWidth() > 1)
+//    {
+//        auto pos = 0.0;
+//        if (dragEndPos.getX() < dragStartPos.getX())
+//        {
+//            pos = zoomHandler->xToSecondsWithOffset(dragEndPos.getX());
+//        }
+//        else
+//        {
+//            pos = zoomHandler->xToSecondsWithOffset(dragStartPos.getX());
+//        }
+//        audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
+//    }
     
 }
 
@@ -159,15 +162,15 @@ void RegionSelector::mouseMove (const juce::MouseEvent& e)
 
 void RegionSelector::updateFromEngine()
 {
-    auto pos = audiumEngine->getAudioRegionContainer()->getRegionPosition();
+    auto pos = audiumEngine->getAudioRegionContainer()->getSelectedPositionInSeconds();
     if (pos.isEmpty())
     {
         setSize(0, 0);
     }
     else
     {
-        auto start = zoomHandler->timeToXWithOffset(pos.getStart());
-        auto end = zoomHandler->timeToXWithOffset(pos.getEnd());
+        auto start = zoomHandler->secondsToXWithOffset(pos.getStart());
+        auto end = zoomHandler->secondsToXWithOffset(pos.getEnd());
         dragStartPos.setX(start);
         dragEndPos.setX(end);
         createRectangleAndSetBonds();

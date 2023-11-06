@@ -14,6 +14,11 @@
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/ActionMessages.h"
 
+PlayListContainer::~PlayListContainer()
+{
+    playListItems.clear();
+}
+
 void PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioRegion)
 {
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
@@ -27,7 +32,7 @@ void PlayListContainer::createPlayListItem(int regionIndex, int indexOfItemToPla
     jassert( indexOfItemToPlaceBefore >= 0);
     jassert( indexOfItemToPlaceBefore <= playListItems.size());
     
-    auto region = audioRegionContainer->getRegion(regionIndex);
+    auto region = audioRegionContainer.getRegion(regionIndex);
     jassert(region != nullptr);
     
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, region));
@@ -50,11 +55,21 @@ void PlayListContainer::deleteAssociatedItems(std::shared_ptr<AudioRegion> audio
 {
     for (int i = static_cast<int>(playListItems.size() - 1); i >= 0; i--)
     {
-        if (getPlayListItem(i)->getRegion() == audioRegion)
+        if (playListItems[i]->getRegion() == audioRegion)
         {
             deletePlayListItem(i, false);
         }
     }
+}
+
+const std::vector<std::shared_ptr<PlayListItem>> PlayListContainer::getPlayListItems() const
+{
+    return playListItems;
+}
+
+int PlayListContainer::getNumItems(std::shared_ptr<AudioGroup> group) const
+{
+    return static_cast<int>(playListItems.size());
 }
 
 std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) const
@@ -66,6 +81,17 @@ std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) cons
     return nullptr;
 }
 
+int PlayListContainer::getPlayListItemIndex(const PlayListItem* item) const
+{
+    for (auto i = 0; i < playListItems.size(); i++)
+    {
+        if (playListItems[i].get() == item)
+            return i;
+    }
+    
+    return -1;
+}
+
 AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) const
 {
     const juce::ScopedLock sl (readLock);
@@ -74,7 +100,7 @@ AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) con
         return playListItems[index]->getRegionData();
     }
     
-    // returns empty range
+    // empty range
     return AudioRegion::RegionData();
 }
 
@@ -83,7 +109,7 @@ bool PlayListContainer::writeToStream (juce::OutputStream& outputStream)
     outputStream.writeInt(static_cast<int>(playListItems.size()));
     for (auto & item : playListItems)
     {
-        outputStream.writeInt(audioRegionContainer->getRegionIndex(item->getRegion()));
+        outputStream.writeInt(audioRegionContainer.getRegionIndex(item->getRegion()));
         outputStream.writeString(item->getRegion()->name);
     }
     return true;
@@ -99,20 +125,32 @@ bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
         {
             auto regionIndex    = inputStream.readInt();
             auto regionName     = inputStream.readString();
-            auto audioRegion    = audioRegionContainer->getRegion(regionIndex);
-            jassert(regionName == audioRegion->name);
-            auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
-            playListItems.push_back(playListItem);
+            auto audioRegion    = audioRegionContainer.getRegion(regionIndex);
+            if (audioRegion != nullptr)
+            {
+                jassert(regionName == audioRegion->name);
+                auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
+                playListItems.push_back(playListItem);
+            }
+            else
+            {
+                jassertfalse;
+                return false;
+            }
         }
         return true;
     }
     return false;
 }
 
-double PlayListContainer::getItemStartTime(const PlayListItem* playListItem) const
+double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem) const
 {
     double startTime = 0.0;
-    for (auto & item : playListItems)
+    auto group = playListItem->getRegion()->getAudioGroup();
+    
+    auto items = getPlayListItems();
+    
+    for (auto & item : items)
     {
         if (item.get() == playListItem)
         {
@@ -121,7 +159,64 @@ double PlayListContainer::getItemStartTime(const PlayListItem* playListItem) con
         startTime += item->getRegionData().getLength();
     }
     
-    // playListItem not found.
-    jassertfalse;
     return startTime;
+}
+
+const PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position) const
+{
+    for (auto item : playListItems)
+    {
+        auto startTime = item->getAbsolueStartTime();
+        auto endTime = startTime + item->getDurationTime();
+        juce::Range<double> absoluteRange(startTime, endTime);
+        if (absoluteRange.contains(position))
+        {
+            return item.get();
+        }
+    }
+    
+    return nullptr;
+}
+
+const PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> range) const
+{
+    for (auto item : playListItems)
+    {
+        auto startTime = item->getAbsolueStartTime();
+        auto endTime = startTime + item->getDurationTime();
+        juce::Range<double> absoluteRange(startTime, endTime);
+        if (absoluteRange.contains(range))
+        {
+            return item.get();
+        }
+    }
+    
+    return nullptr;
+}
+
+void PlayListContainer::selectPlayListItem(std::shared_ptr<PlayListItem> item, bool bSelected)
+{
+    item->setSelected(bSelected);
+    
+    sendActionMessage(playListItemSelection);
+}
+
+void PlayListContainer::deselectAll()
+{
+    for (auto item : playListItems)
+    {
+        item->setSelected(false);
+    }
+    
+    sendActionMessage(playListItemSelection);
+}
+
+double PlayListContainer::getTotalLength() const
+{
+    if (playListItems.size() > 0)
+    {
+        auto lastItem = playListItems.back();
+        return getAbsolueStartTime(lastItem.get()) + lastItem->getDurationTime();
+    }
+    return 0.0;
 }

@@ -12,7 +12,7 @@
 #include "Interface/Components/MainComponent.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudiumFactory.h"
+#include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
@@ -77,6 +77,8 @@ void AudiumApplication::shutdown()
     commandManager.reset();
     
     mainWindow = nullptr; // (deletes our window)
+    
+    audiumEngine->uninitialise();
     audiumEngine = nullptr;
     
 }
@@ -154,12 +156,15 @@ PopupMenu AudiumApplication::createFileMenu()
     menu.addCommandItem (commandManager.get(), CommandIDs::saveProjectAs);
     menu.addCommandItem (commandManager.get(), CommandIDs::defaultProject);
     menu.addSeparator();
+    
+    menu.addCommandItem (commandManager.get(), CommandIDs::bounceProject);
+    menu.addSeparator();
 
    #if ! JUCE_MAC
-    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
-    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
-    menu.addCommandItem (commandManager.get(), CommandIDs::enableNewVersionCheck);
-    menu.addCommandItem (commandManager.get(), CommandIDs::showGlobalPathsWindow);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::enableNewVersionCheck);
+//    menu.addCommandItem (commandManager.get(), CommandIDs::showGlobalPathsWindow);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::quit);
    #endif
@@ -227,6 +232,8 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::defaultProject,
                                 CommandIDs::saveProject,
                                 CommandIDs::saveProjectAs,
+                                CommandIDs::bounceProject,
+            
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -258,6 +265,11 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::saveProjectAs:
         result.setInfo ("Save as...", "Saves the current project to a new location", CommandCategories::general, 0);
         result.defaultKeypresses.add ({ 's', ModifierKeys::commandModifier | ModifierKeys::shiftModifier, 0 });
+        break;
+            
+    case CommandIDs::bounceProject:
+        result.setInfo ("Bounce Mix...", "Bounce current project as audio file", CommandCategories::general, 0);
+        result.defaultKeypresses.add ({ 'b', ModifierKeys::commandModifier | ModifierKeys::altModifier, 0 });
         break;
 
     case CommandIDs::showAboutWindow:
@@ -308,6 +320,9 @@ bool AudiumApplication::perform (const InvocationInfo& info)
         case CommandIDs::saveProjectAs:
             saveProjectAs();
             break;
+        case CommandIDs::bounceProject:
+            bounceProject();
+            break;
         case CommandIDs::showAboutWindow:
             notImplemented();
             //showAboutWindow();
@@ -336,7 +351,7 @@ bool AudiumApplication::perform (const InvocationInfo& info)
 
 void AudiumApplication::askUserToOpenFile()
 {
-    chooser = std::make_unique<juce::FileChooser> ("Open File", File(), "*" + String(AudiumEngine::projectFileExtension));
+    chooser = std::make_unique<juce::FileChooser> ("Open File", suggestDirectory(), "*" + String(AudiumEngine::projectFileExtension));
     auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles;
 
     chooser->launchAsync (flags, [this] (const FileChooser& fc)
@@ -352,10 +367,34 @@ void AudiumApplication::askUserToOpenFile()
     });
 }
 
+File AudiumApplication::suggestDirectory()
+{
+    File f = audiumEngine->getCurrentFile();
+    
+    if (not f.existsAsFile())
+    {
+        f = File::getSpecialLocation (File::userDocumentsDirectory);
+    }
+    else
+    {
+        f = f.getParentDirectory();
+    }
+    return f;
+}
+
+String AudiumApplication::suggestFileName()
+{
+    auto filename = audiumEngine->getCurrentFile().getFileNameWithoutExtension();
+    if (filename.isEmpty())
+        filename = "Untitled";
+    
+    return filename;
+}
+
 void AudiumApplication::saveProjectAs()
 {
-    //chooser = std::make_unique<FileChooser> (("Save As..."), File::SpecialLocationType::userDesktopDirectory, "*");
-    chooser = std::make_unique<FileChooser> (("Save As..."), File(), "*" + String(AudiumEngine::projectFileExtension));
+    File initialDir = suggestDirectory().getChildFile(suggestFileName());
+    chooser = std::make_unique<FileChooser> (("Save As..."), initialDir, "*" + String(AudiumEngine::projectFileExtension));
     auto flags = FileBrowserComponent::saveMode
                | FileBrowserComponent::canSelectFiles
                | FileBrowserComponent::warnAboutOverwriting;
@@ -376,6 +415,25 @@ void AudiumApplication::saveProject()
 {
     /// TODO: provide and handle callback
     audiumEngine->saveFile(audiumEngine->getCurrentFile(), nullptr);
+}
+
+void AudiumApplication::bounceProject()
+{
+    File initialDir = suggestDirectory().getChildFile(suggestFileName());
+    chooser = std::make_unique<FileChooser> (("Bounce Project As Wav File."), initialDir, "*.wav");
+    auto flags = FileBrowserComponent::saveMode
+               | FileBrowserComponent::canSelectFiles
+               | FileBrowserComponent::warnAboutOverwriting;
+
+    chooser->launchAsync (flags, [this] (const FileChooser& fc)
+    {
+        const auto result = fc.getResult();
+        
+        if (result != File{})
+        {
+            audiumEngine->bounceToFile(result, nullptr);
+        }
+    });
 }
 
 void AudiumApplication::updateUI()

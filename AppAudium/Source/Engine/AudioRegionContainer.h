@@ -13,30 +13,42 @@
 #include "Engine/AudioRegion.h"
 
 class AudioResourceContainer;
+class AudioGroupContainer;
+class PlayListScheduler;
+class AudioGroup;
 
 class AudioRegionContainer : public juce::ActionBroadcaster
 {
                                             
 public:
-    AudioRegionContainer() = default;
+    AudioRegionContainer(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                         std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                         std::shared_ptr<PlayListScheduler> playListScheduler) :
+        audioResourceContainer(audioResourceContainer),
+        audioGroupContainer(audioGroupContainer),
+        playListScheduler(playListScheduler)
+    {}
     
-    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioResourceContainer> audioResourceContainer);
-    std::shared_ptr<AudioRegion> createRegion(juce::String regionName, juce::Range<double> position);
+    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioGroup> group);
+    std::shared_ptr<AudioRegion> createRegion(juce::String regionName, juce::Range<double> position, std::shared_ptr<AudioGroup> group);
     void deleteRegion(int rowNumber);
+    void createRegionsFromSelection(juce::String name);
     
-    void setRegionPosition(juce::Range<double> pos);
-    juce::Range<double> getRegionPosition() const;
-        
+    // Used by RegionSelector
+    void setSelectedPositionInSeconds(juce::Range<double> pos);
+    juce::Range<double> getSelectedPositionInSeconds() const;
+    
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
-    int getNumRegions() const { return static_cast<int>(audioRegions.size()); }
+    int getNumRegions(const AudioGroup* group = nullptr) const;
     std::shared_ptr<AudioRegion> getRegion(int index) const;
     int getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const;
     
     void setSelectedRegion(int rowNumber);
     int getSelectedRegion() const;
     void clearSelection();
+    void deselectAll();
     
     void setRegionName(int rowNumber, juce::String newName);
     void setRegionStart(int rowNumber, double newStart);
@@ -45,8 +57,18 @@ public:
     
     void cleanup() { audioRegions.clear(); }
     
+    std::vector<std::shared_ptr<AudioRegion>> getRegionsForGroup(std::shared_ptr<AudioGroup> group) const;
+    void removeAudioRegion(std::shared_ptr<AudioRegion> region);
+    void removeAudioRegionsForGroup(std::shared_ptr<AudioGroup> group);
+    
+    std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
+    
 private:
-    AudioRegion selectedRegion;
+    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+    std::shared_ptr<PlayListScheduler> playListScheduler;
+
+    AudioRegion::RegionData selectedPositionClocks;
     int selectedRowNumber = -1;
     
     std::vector<std::shared_ptr<AudioRegion>> audioRegions;

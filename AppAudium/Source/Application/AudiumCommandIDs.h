@@ -12,6 +12,7 @@ namespace CommandIDs
         defaultProject          = 0x300004,
         saveProject             = 0x300005,
         saveProjectAs           = 0x300006,
+        bounceProject           = 0x300007,
 
         showAboutWindow         = 0x300024,
         checkForNewVersion      = 0x300025,

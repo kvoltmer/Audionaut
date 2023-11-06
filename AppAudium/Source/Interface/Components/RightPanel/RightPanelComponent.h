@@ -16,7 +16,7 @@
 /*
 */
 class AudiumEngine;
-class PlayListComponent;
+class PlayListContainerComponent;
 class RegionComponent;
 
 class RightPanelComponent  : public juce::Component, public juce::DragAndDropContainer
@@ -43,7 +43,7 @@ private:
     std::unique_ptr<RegionComponent> regionComponent;
     std::unique_ptr<juce::StretchableLayoutManager> stretchableLayoutManager;
     std::unique_ptr<juce::StretchableLayoutResizerBar> stretchableLayoutResizerBar;
-    std::unique_ptr<PlayListComponent> playListComponent;
+    std::unique_ptr<PlayListContainerComponent> playListContainerComponent;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RightPanelComponent)
 };

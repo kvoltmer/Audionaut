@@ -23,9 +23,9 @@ juce::Range<double> PlayListItem::getRegionData() const
     return audioRegion->position;
 }
 
-double PlayListItem::getStartTime() const
+double PlayListItem::getAbsolueStartTime() const
 {
-    return owner.getItemStartTime(this);
+    return owner.getAbsolueStartTime(this);
 }
 
 double PlayListItem::getDurationTime() const

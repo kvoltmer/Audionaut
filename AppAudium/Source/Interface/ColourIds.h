@@ -26,6 +26,7 @@ enum ColourIds
     defaultIconColourId               = 0x2340007,
     treeIconColourId                  = 0x2340008,
     defaultHighlightColourId          = 0x2340009, // used
+    listBoxBackgroundColourId         = 0x2340009, // used
     defaultHighlightedTextColourId    = 0x234000a, // used
     codeEditorLineNumberColourId      = 0x234000b,
     activeTabIconColourId             = 0x234000c,

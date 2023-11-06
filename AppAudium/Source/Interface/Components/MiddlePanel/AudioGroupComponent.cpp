@@ -12,7 +12,7 @@
 #include "AudioGroupComponent.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Controls/AudioGroupListBox.h"
-#include "Interface/Components/AudioGroupRegionComponent.h"
+#include "Interface/Components/MiddlePanel/AudioGroupRegionComponent.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListContainer.h"
@@ -22,44 +22,71 @@
 using namespace audium;
 
 
-AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioResourceGroup> group,
+AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioGroup> group,
                                           std::shared_ptr<AudiumEngine> audiumEngine,
                                           std::shared_ptr<ZoomHandler> zoomHandler) :
     audiumEngine(audiumEngine),
     zoomHandler(zoomHandler)
 {
-    group->setColour(audium::getNewWaveFormColour());
-    setAudioResourceGroup(group);
+    if (group->getColour() == juce::Colours::pink)
+    {
+        group->setColour(audium::getNewWaveFormColour());
+    }
+    refreshComponent(group);
 }
 
 AudioGroupComponent::~AudioGroupComponent()
 {
 }
 
-void AudioGroupComponent::setAudioResourceGroup (std::shared_ptr<AudioResourceGroup> group)
+void AudioGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
 {
-    audioResourceGroup = group;
-    audioResourceGroup->updateColour();
+    audioGroup = group;
     
-    zoomHandler->updateTotalLength();
-    
-    rebuildComponents();
-    
+    if (mustRebuildComponents() ||
+        forceRebuildComponents)
+    {
+        rebuildComponents();
+    }
     resized();
+}
+
+bool AudioGroupComponent::mustRebuildComponents() const
+{
+    // compare play list items
+    auto playListContainer = audiumEngine->getPlayListContainer(audioGroup);
+    auto playListItems = playListContainer->getPlayListItems();
     
+    if (playListItems.size() != audioGroupRegions.size())
+    {
+        return true;
+    }
+    
+    for (auto i = 0; i < playListItems.size(); i++)
+    {
+        if (playListItems[i] != audioGroupRegions[i]->getPlayListItem())
+        {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 void AudioGroupComponent::rebuildComponents()
 {
+    std::cout << "AudioGroupComponent::rebuildComponents " << audioGroup->getId() << std::endl;
     removeAllChildren();
     audioGroupRegions.clear();
     
     // get all play list items and create components
-    auto playListContainer = audiumEngine->getPlayListContainer();
-    for (auto i = 0; i < playListContainer->getNumItems(); i++)
+    auto playListContainer = audiumEngine->getPlayListContainer(audioGroup);
+    jassert(playListContainer);
+    auto playListItems = playListContainer->getPlayListItems();
+    
+    for (auto playListItem : playListItems)
     {
-        auto playListItem = playListContainer->getPlayListItem(i);
-        auto groupRegion = std::shared_ptr<AudioGroupRegionComponent>(new AudioGroupRegionComponent(audioResourceGroup, playListItem, zoomHandler));
+        auto groupRegion = std::shared_ptr<AudioGroupRegionComponent>(new AudioGroupRegionComponent(audioGroup, playListItem, zoomHandler));
         
         addAndMakeVisible(groupRegion.get());
         audioGroupRegions.push_back(groupRegion);
@@ -80,8 +107,8 @@ void AudioGroupComponent::resized()
     for (auto regionView : audioGroupRegions)
     {
         auto playListItem = regionView->getPlayListItem();
-        auto start = zoomHandler->timeToXWithOffset(playListItem->getStartTime());
-        auto width = zoomHandler->timeToXWithOffset(playListItem->getDurationTime());
+        auto start = zoomHandler->clocksToX(playListItem->getAbsolueStartTime());
+        auto width = zoomHandler->clocksToX(playListItem->getDurationTime());
         regionView->setBounds(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
     }
 }
@@ -93,12 +120,12 @@ void AudioGroupComponent::filesDropped (const StringArray& filenames, int /*x*/,
         for (auto i = 0; i < filenames.size(); i++)
         {
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, audioResourceGroup);
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup);
         }
-        audiumEngine->createDefaultRegionAndPlayList();
+        audiumEngine->createDefaultRegionAndPlayList(audioGroup);
         
         // will update content
-        setAudioResourceGroup(audioResourceGroup);
+        refreshComponent(audioGroup, true);
     }
     
     externalDragAndDrop = false;

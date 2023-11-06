@@ -14,6 +14,8 @@
 #include "Engine/AudioResource.h"
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
+#include "Engine/AudioGroup.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace juce;
 
@@ -44,7 +46,7 @@ void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
     
     g.setFont (12.0f);
     
-    Rectangle<int> bonds(zoomHandler->getVisibleRange().getStart() + 5,
+    Rectangle<int> bonds(5,
                          5,
                          g.getCurrentFont().getStringWidth(audioResource->getFileNameWithoutExtension()),
                          g.getCurrentFont().getHeight());
@@ -59,11 +61,12 @@ void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
 void AudioRegionView::paint (juce::Graphics& g)
 {
     
+    
     if (audioResource != nullptr &&
         audioResource->getThumbnail().getTotalLength() > 0.0)
     { 
-        g.fillAll (audioResource->currentColour.withAlpha(0.25f));
-        g.setColour (audioResource->currentColour);
+        g.fillAll (audioRegion->getAudioGroup()->getColour().withAlpha(0.25f));
+        g.setColour (audioRegion->getAudioGroup()->getColour());
         
         auto thumbArea = getLocalBounds();
     
@@ -85,9 +88,9 @@ void AudioRegionView::paint (juce::Graphics& g)
 //                                                    rangeInSeconds.getStart(), rangeInSeconds.getEnd(), 1.0f);
         
         
-        auto start = audioRegion->position.getStart();
-        auto end = audioRegion->position.getEnd();
-        audioResource->getThumbnail().drawChannels (g, thumbArea, start, end, 1.0f);
+        auto startSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getStart());
+        auto endSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getEnd());
+        audioResource->getThumbnail().drawChannels (g, thumbArea, startSecond, endSecond, 1.0f);
 
         
         

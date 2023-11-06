@@ -7,7 +7,7 @@
   the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
   and re-saved.
 
-  Created with Projucer version: 7.0.5
+  Created with Projucer version: 7.0.8
 
   ------------------------------------------------------------------------------
 
@@ -18,11 +18,15 @@
 */
 
 //[Headers] You can add your own extra header files here...
-#include "MiddlePanelComponent.h"
+#include "Interface/Components/HeaderPanel/HeaderComponent.h"
+#include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
+#include "Interface/Components/RightPanel/RightPanelComponent.h"
+
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioResourceGroup.h"
-#include "RightPanelComponent.h"
+#include "Engine/AudioGroup.h"
 #include "Engine/ActionMessages.h"
+#include "Engine/AudioGroupContainer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 //[/Headers]
 
 #include "MainComponent.h"
@@ -37,6 +41,8 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     //[Constructor_pre] You can add your own custom stuff here..
 
     this->audiumEngine = audiumEngine;
+
+    headerComponent.reset(new HeaderComponent(audiumEngine->getPlayListScheduler()));
     middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
     rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
@@ -48,11 +54,12 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     //[UserPreSize]
     //[/UserPreSize]
 
-    setSize (1200, 400);
+    setSize (1200, 800);
 
 
     //[Constructor] You can add your own custom stuff here..
 
+    addAndMakeVisible(headerComponent.get());
     addAndMakeVisible(middlePanelComponent.get());
     addAndMakeVisible(stretchableLayoutResizerBar.get());
     addAndMakeVisible(rightPanelComponent.get());
@@ -71,8 +78,13 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     resized();
 
     audiumEngine->getAudioRegionContainer()->addActionListener(this);
-    audiumEngine->getPlayListContainer()->addActionListener(this);
+    audiumEngine->getAudioGroupContainer()->addActionListener(this);
+    for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
+    {
+        audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
+    }
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
+    audiumEngine->getPlayListScheduler()->addActionListener(this);
 
     //[/Constructor]
 }
@@ -81,8 +93,13 @@ MainComponent::~MainComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
     audiumEngine->getAudioRegionContainer()->removeActionListener(this);
-    audiumEngine->getPlayListContainer()->removeActionListener(this);
+    audiumEngine->getAudioGroupContainer()->removeActionListener(this);
+    for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
+    {
+        audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->removeActionListener(this);
+    }
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
+    audiumEngine->getPlayListScheduler()->removeActionListener(this);
     //[/Destructor_pre]
 
 
@@ -109,6 +126,9 @@ void MainComponent::resized()
     //[/UserPreResize]
 
     //[UserResized] Add your own custom resize handling here..
+    
+    const auto headerHeight = headerComponent->getHeight();
+    headerComponent->setBounds(0, 0, getWidth(), headerHeight);
 
     // the list of components that we want to reposition
     Component* comps[] = {  middlePanelComponent.get(),
@@ -118,7 +138,7 @@ void MainComponent::resized()
     // this will position the 3 components, one above the other, to fit
     // horizontically into the rectangle provided.
     stretchableLayoutManager->layOutComponents (comps, 3,
-                               0, 0, getWidth(), getHeight(),
+                               0, headerHeight, getWidth(), getHeight() - headerHeight,
                                false, true);
 
     //[/UserResized]
@@ -130,7 +150,7 @@ void MainComponent::resized()
 
 void MainComponent::actionListenerCallback (const juce::String& message)
 {
-    std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
+    //std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
 
     if (message == regionCreatedAction)
     {
@@ -147,6 +167,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == regionSelectedAction)
     {
         middlePanelComponent->updateUI();
+        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
     }
     else if (message == playListItemCreatedAction)
     {
@@ -157,9 +178,28 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
     }
+    else if (message == playListItemSelection)
+    {
+        middlePanelComponent->updateUI();
+    }
     else if (message == audioResourceCreatedAction)
     {
         middlePanelComponent->updateUI();
+        for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
+        {
+            audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
+        }
+        rightPanelComponent->updateUI();
+    }
+    else if (message == audioGroupCreatedAction)
+    {
+        // TODO: update with context to rebuild everything
+        updateUI();
+    }
+    else if (message == audioGroupDeletedAction)
+    {
+        // TODO: update with context to rebuild everything
+        updateUI();
     }
     else // update everything (eg. region deleted)
     {
@@ -199,7 +239,7 @@ BEGIN_JUCER_METADATA
                  parentClasses="public juce::Component, private juce::ActionListener"
                  constructorParams="std::shared_ptr&lt;AudiumEngine&gt; audiumEngine"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
-                 overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="400">
+                 overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="800">
   <BACKGROUND backgroundColour="ff282829"/>
 </JUCER_COMPONENT>
 
