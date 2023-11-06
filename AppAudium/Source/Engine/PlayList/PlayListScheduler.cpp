@@ -57,16 +57,15 @@ void PlayListScheduler::tick(bool isPlaying,
     }
 }
 
-void PlayListScheduler::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
+void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
 {
     /// TODO: this is NOT thread save
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
         auto group = audioGroupContainer->getAudioGroup(i);
-        auto resources = group->getAudioResources();
-        for (auto resource : resources)
+        if (group != nullptr)
         {
-            resource->getAudioTransportSource()->getNextAudioBlock(info);
+            group->getTransportSourceContainer()->audioCallback(info);
         }
     }
 }
@@ -157,6 +156,7 @@ double PlayListScheduler::getTotalLengthSeconds() const
 
 void PlayListScheduler::startPlaying()
 {
+    // reset currentPlayListItem
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
         auto group = audioGroupContainer->getAudioGroup(i);
@@ -172,6 +172,13 @@ void PlayListScheduler::startPlaying()
 
 void PlayListScheduler::stopPlaying()
 {
+    // reset currentPlayListItem
+    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    {
+        auto group = audioGroupContainer->getAudioGroup(i);
+        group->getPlayListContainer()->currentPlayListItem = nullptr;
+    }
+    
     if (linkEngine != nullptr)
     {
         linkEngine->stopPlaying();
@@ -212,6 +219,7 @@ void PlayListScheduler::setAbsolutePositionSeconds(double newPosition)
     }
 }
 
+
 int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const
 {
     const auto item = group->getPlayListContainer()->itemAtAbsolutePosition(getAbsolutePositionClocks());
@@ -222,27 +230,13 @@ int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<Aud
     return -1;
 }
 
-void PlayListScheduler::setPlayListItemIndex(int playListItemIndex)
+void PlayListScheduler::setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioGroup> group, int playListItemIndex)
 {
-    // TODO: implement
-//    auto items = playListContainer->getPlayListItems();
-//    if (playListItemIndex < items.size())
-//    {
-//        auto item = items[playListItemIndex];
-//
-//        auto itemStartPosition = item->getAbsolueStartTime();
-//
-//        setAbsolutePosition(itemStartPosition);
-//
-//        if (not isPlaying())
-//        {
-//            start();
-//        }
-//    }
-//    else
-//    {
-//        jassertfalse;
-//    }
+    const auto item = group->getPlayListContainer()->getPlayListItem(playListItemIndex);
+    if (item != nullptr)
+    {
+        startPositionClocks = item->getAbsolueStartTime();
+    }
 }
 
 double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const

@@ -38,7 +38,7 @@ public:
     void stopPlaying();
     bool isPlaying() const;
     
-    void setPlayListItemIndex(int playListItemIndex);
+    void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioGroup> group, int playListItemIndex);
     int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const;
     double getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const;
     
@@ -51,7 +51,7 @@ public:
               double beats,
               int numSamples);
     
-    void getNextAudioBlock (const juce::AudioSourceChannelInfo& info);
+    void audioCallback (const juce::AudioSourceChannelInfo& info);
     
     double getTotalLengthClocks() const;
     double getTotalLengthSeconds() const;

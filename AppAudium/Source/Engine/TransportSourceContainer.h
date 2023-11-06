@@ -33,6 +33,8 @@ public:
     void stopPlaying();
     bool isPlaying() const;
     
+    void audioCallback(const juce::AudioSourceChannelInfo& info);
+    
 private:
     std::atomic<bool> playing;
     std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources;

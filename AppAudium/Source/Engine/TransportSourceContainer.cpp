@@ -76,3 +76,19 @@ bool TransportSourceContainer::isPlaying() const
 {
     return playing;
 }
+
+void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo& info)
+{
+    for (auto & transportSource : audioTransportSources)
+    {
+        const auto channels = info.buffer->getNumChannels();
+        juce::AudioBuffer<float> tempBuffer(channels, info.numSamples);
+        juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, info.startSample, info.numSamples);
+        transportSource->getNextAudioBlock(tempBufferInfo);
+        
+        for (auto c = 0; c < channels; c++)
+        {
+            info.buffer->addFrom(c, info.startSample, tempBuffer.getReadPointer(c), info.numSamples);
+        }
+    }
+}
