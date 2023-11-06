@@ -145,11 +145,6 @@ void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> cal
 void AudiumEngine::setBypass(bool bypass)
 {
     linkAudioDevice->setBypass(bypass);
-    for (auto r = 0; r < audioResourceContainer->getNumAudioResources(); ++r)
-    {
-        jassertfalse;
-        //audioResourceContainer->getAudioResource(r)->getAudioPlayer()->setBypass(bypass);
-    }
 }
 #include "Engine/AudiumTransportSource.h"
 
@@ -183,24 +178,27 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
             
             auto seconds = playListScheduler->getTotalLengthSeconds();
             auto iterations = static_cast<int>(seconds * sampleRate) / numSamples;
+            iterations += 1; // add one iteration to be on the save side
+            auto position = 0.0;
+            juce::AudioBuffer<float> buffer(numOutputChannels, numSamples);
+            juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
+            
             for (auto i = 0; i < iterations; ++i)
             {
-                juce::AudioBuffer<float> buffer(numOutputChannels, numSamples);
-                juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
-                jassertfalse;
-                /// TODO: implement
-                //playListScheduler->tick(numSamples);
+                const auto clocksThisBuffer = playListScheduler->secondsToClocks(static_cast<double>(numSamples) / sampleRate);
+                const auto beatsThisBuffer = PlayListScheduler::clocksToBeats(clocksThisBuffer);
                 
-                for (auto r = 0; r < audioResourceContainer->getNumAudioResources(); ++r)
-                {
-                    audioResourceContainer->getAudioResource(r)->getAudioTransportSource()->getNextAudioBlock(info);
-                    //audioResourceContainer->getAudioResource(r)->getAudioPlayer()->renderOffline(buffer.getArrayOfWritePointers(),
-                     //                                                                            numOutputChannels, numSamples);
-                }
+                playListScheduler->tick(true, position, numSamples);
+                position += beatsThisBuffer;
                 
+                
+                buffer.clear();
+                playListScheduler->audioCallback(info);
                 writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
+                
                 /// TODO: without waiting the output is fucked
-                Time::waitForMillisecondCounter(Time::getMillisecondCounter() + 2);
+                const auto waitMilliseconds = 2;
+                Time::waitForMillisecondCounter(Time::getMillisecondCounter() + waitMilliseconds);
                 
             }
             
