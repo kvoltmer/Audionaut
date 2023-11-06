@@ -44,9 +44,7 @@ public:
     void stopPlaying();
     
     void setBypass(bool isByPass) { byPass = isByPass; }
-    
-    //audium::LinkEngine &getLinkEngine() const { return *linkEngine.get(); }
-        
+            
 private:
     std::shared_ptr<PlayListScheduler> playListScheduler;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;

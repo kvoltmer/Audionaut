@@ -116,10 +116,9 @@ void PlayListScheduler::applyAbsolutePosition(double absolutePosition, int numSa
                 
                 std::cout << "pos " << absolutePosition << " start " <<  startPosition << " diff " << diff << " samples " << startSamples << std::endl;
                 
-                if (isPlaying())
+                if (not transport->isPlaying())
                 {
-                    if (not transport->isPlaying())
-                        transport->startPlaying();
+                    transport->startPlaying();
                 }
             }
         }
