@@ -22,9 +22,45 @@ public:
         setSource(nullptr);
     }
     
+    void schedulePosition (double newPosition, int startSample)
+    {
+        if (startSample == 0)
+        {
+            setPosition(newPosition);
+        }
+        else
+        {
+            scheduledSample.store(startSample);
+            scheduledPosition = newPosition;
+        }
+    }
+    
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
     {
-        tBase::getNextAudioBlock(info);
+        if (scheduledSample == 0)
+        {
+            tBase::getNextAudioBlock(info);
+        }
+        else
+        {
+            auto start = scheduledSample.load();
+            scheduledSample.store(0);
+            
+            // process 1st part
+            juce::AudioSourceChannelInfo infoPart1 (info.buffer, 0, start - 1);
+            tBase::getNextAudioBlock(infoPart1);
+            
+            setPosition(scheduledPosition.load());
+            //std::cout << "scheduledPosition " << scheduledPosition.load() << std::endl;
+            
+            // process 1st part
+            juce::AudioSourceChannelInfo infoPart2 (info.buffer, start, info.numSamples - start);
+            tBase::getNextAudioBlock(infoPart2);
+            
+            
+            
+            
+        }
         
         outputLevel = info.buffer->getMagnitude(0, info.startSample, info.numSamples);
     }
@@ -37,5 +73,9 @@ private:
     
     std::atomic<float> outputLevel;
     
+    // the sample position where the position change should happen
+    std::atomic<int> scheduledSample = 0;
+    // the scheduled position change
+    std::atomic<double> scheduledPosition = 0.0;
     
 };

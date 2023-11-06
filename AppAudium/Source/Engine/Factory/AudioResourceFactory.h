@@ -48,11 +48,9 @@ public:
         
         if (auto inputSource = makeAudioInputSource (url))
         {
-            auto stream = rawToUniquePtr (inputSource->createInputStream());
-            if (stream != nullptr)
+            if (auto stream = rawToUniquePtr (inputSource->createInputStream()))
             {
-                auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream)));
-                if (reader != nullptr)
+                if (auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream))))
                 {
                     auto audioFormatReaderSource = std::make_unique<juce::AudioFormatReaderSource> (reader.release(), true);
                     
@@ -65,14 +63,12 @@ public:
                                                 audioFormatReaderSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
 
                     audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
-                                                                                          url,
-                                                                                          inputSource.get(),
-                                                                                          formatManager,
-                                                                                          thumbnailCache,
-                                                                                          transportSource,
+                                                                                     url,
+                                                                                     inputSource.get(),
+                                                                                     formatManager,
+                                                                                     thumbnailCache,
+                                                                                     transportSource,
                                                                                      std::move(audioFormatReaderSource)));
-
-                    //audioResource->audioFormatReaderSource = std::move(audioFormatReaderSource);
                 }
             }
             

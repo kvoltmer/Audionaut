@@ -22,7 +22,6 @@ LinkAudioDevice::LinkAudioDevice(std::shared_ptr<PlayListScheduler> playListSche
     linkEngine.reset(new audium::LinkEngine(*link.get(), playListScheduler));
     
     playListScheduler->setLinkEngine(linkEngine.get());
-    //link->enable(true);
 }
 
 LinkAudioDevice::~LinkAudioDevice()

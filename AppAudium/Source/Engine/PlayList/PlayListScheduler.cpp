@@ -52,7 +52,7 @@ void PlayListScheduler::tick(bool isPlaying,
             transportPositionClocks = beatsToClocks(beats);
             
             // apply position in clocks
-            applyAbsolutePosition(transportPositionClocks);
+            applyAbsolutePosition(transportPositionClocks, numSamples);
         }
     }
 }
@@ -77,32 +77,50 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
     return offset + item->getRegionData().getStart();
 }
 
-void PlayListScheduler::applyAbsolutePosition(double pos)
+void PlayListScheduler::applyAbsolutePosition(double absolutePosition, int numSamples)
 {
     // iterate over group container
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
-        auto group = audioGroupContainer->getAudioGroup(i);
-        auto item = group->getPlayListContainer()->itemAtAbsolutePosition(pos);
-
-        // assign current item and stop
-        if (item != group->getPlayListContainer()->currentPlayListItem)
+        const auto group = audioGroupContainer->getAudioGroup(i);
+        const auto playlist = group->getPlayListContainer();
+        const auto transport = group->getTransportSourceContainer();
+        const auto clocksThisBuffer = secondsToClocks(static_cast<double>(numSamples) / sampleRate);
+        const auto item = playlist->itemAtAbsolutePosition(absolutePosition + clocksThisBuffer);
+        
+        if (item != playlist->currentPlayListItem)
         {
-            group->getPlayListContainer()->currentPlayListItem = item;
-            group->getTransportSourceContainer()->stopPlaying();
-        }
-
-        // apply position and start if needed
-        if (group->getPlayListContainer()->currentPlayListItem != nullptr)
-        {
-            if (not group->getTransportSourceContainer()->isPlaying() || forcePosition.load())
+            playlist->currentPlayListItem = item;
+            
+            if (item == nullptr)
             {
-                forcePosition.store(false);
-                const auto clocks = absoluteToLocalPosition(pos, group->getPlayListContainer()->currentPlayListItem);
-                group->getTransportSourceContainer()->setLocalPosition(clocksToSeconds(clocks));
+                transport->stopPlaying();
+            }
+            else
+            {
+                // set the position as accurate as possible
+                const auto startPosition = playlist->currentPlayListItem->getAbsolueStartTime();
+                const auto localPosition = absoluteToLocalPosition(startPosition, playlist->currentPlayListItem);
+                
+                const auto diff = startPosition - absolutePosition;
+                const auto startSamples = static_cast<int>(clocksToSeconds(diff) * sampleRate);
+                
+                if (diff < 0.0)
+                {
+                    transport->setLocalPosition(clocksToSeconds(localPosition - diff), 0);
+                }
+                else
+                {
+                    jassert(startSamples < numSamples);
+                    transport->setLocalPosition(clocksToSeconds(localPosition), startSamples);
+                }
+                
+                std::cout << "pos " << absolutePosition << " start " <<  startPosition << " diff " << diff << " samples " << startSamples << std::endl;
+                
                 if (isPlaying())
                 {
-                    group->getTransportSourceContainer()->startPlaying();
+                    if (not transport->isPlaying())
+                        transport->startPlaying();
                 }
             }
         }
@@ -139,6 +157,12 @@ double PlayListScheduler::getTotalLengthSeconds() const
 
 void PlayListScheduler::startPlaying()
 {
+    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    {
+        auto group = audioGroupContainer->getAudioGroup(i);
+        group->getPlayListContainer()->currentPlayListItem = nullptr;
+    }
+    
     if (linkEngine != nullptr)
     {
         linkEngine->setStartPlayingTime(clocksToBeats(startPositionClocks));
@@ -188,19 +212,14 @@ void PlayListScheduler::setAbsolutePositionSeconds(double newPosition)
     }
 }
 
-int PlayListScheduler::getPlayListItemIndex(std::shared_ptr<AudioGroup> group) const
+int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const
 {
-
-    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    const auto item = group->getPlayListContainer()->itemAtAbsolutePosition(getAbsolutePositionClocks());
+    if (item != nullptr)
     {
-        auto g = audioGroupContainer->getAudioGroup(i);
-        if (g == group)
-        {
-            return g->getPlayListContainer()->getPlayListItemIndex(g->getPlayListContainer()->currentPlayListItem);
-        }
-        
+        return group->getPlayListContainer()->getPlayListItemIndex(item);
     }
-    return 0;
+    return -1;
 }
 
 void PlayListScheduler::setPlayListItemIndex(int playListItemIndex)
@@ -228,16 +247,13 @@ void PlayListScheduler::setPlayListItemIndex(int playListItemIndex)
 
 double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const
 {
-    // TODO: implement
-    auto currentPlayListItem = group->getPlayListContainer()->currentPlayListItem;
-    if (playListItemIndex == getPlayListItemIndex(group) &&
-        currentPlayListItem != nullptr)
+    const auto item = group->getPlayListContainer()->getPlayListItem(playListItemIndex);
+    if (item != nullptr)
     {
-        auto localPosition = absoluteToLocalPosition(getAbsolutePositionClocks(), group->getPlayListContainer()->currentPlayListItem);
-        auto progress = ((localPosition - currentPlayListItem->getRegionData().getStart()) / currentPlayListItem->getRegionData().getLength());
+        auto localPosition = absoluteToLocalPosition(getAbsolutePositionClocks(), item.get());
+        auto progress = ((localPosition - item->getRegionData().getStart()) / item->getRegionData().getLength());
         return progress;
     }
-
     return 0.0;
 }
 
