@@ -243,14 +243,15 @@ void ZoomHandler::focusViewOnPlayPosition()
 
 void ZoomHandler::timerCallback()
 {
-//    if (playListScheduler->isPlaying())
-//    {
-//        auto posX = secondsToX(playListScheduler->getAbsolutePosition());
-//        if(!getVisibleRange().contains(posX))
-//        {
-//            auto newStart = posX - (getVisibleRange().getLength() / 2);
-//            auto newRange = getVisibleRange().movedToStartAt(newStart);
-//            scrollbar->setCurrentRange(newRange);
-//        }
-//    }
+    if (playListScheduler->isPlaying() &&
+        playListScheduler->getFollowTransport())
+    {
+        auto posX = secondsToX(playListScheduler->getAbsolutePositionSeconds());
+        if(!getVisibleRange().contains(posX))
+        {
+            auto newStart = posX;// - (getVisibleRange().getLength() / 2);
+            auto newRange = getVisibleRange().movedToStartAt(newStart);
+            scrollbar->setCurrentRange(newRange);
+        }
+    }
 }

@@ -37,6 +37,10 @@ public:
     void startPlaying();
     void stopPlaying();
     bool isPlaying() const;
+    void setFollowTransport(bool enable) { followTransport = enable; }
+    bool getFollowTransport() const { return followTransport; }
+    void setLoopPlayList(bool enable) { loopPlayList.store(enable); }
+    bool getLoopPlayList() const { return loopPlayList.load(); }
     
     void resetCurrentPlayListItem();
     
@@ -180,6 +184,10 @@ private:
     audium::LinkEngine *linkEngine;
         
     double tempoBPM = 120.0;
+    
+    bool followTransport = true;
+    
+    std::atomic<bool> loopPlayList = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

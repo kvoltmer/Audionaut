@@ -27,6 +27,7 @@ namespace CommandIDs
         clearRecentFiles        = 0x300049,
         
         playStop                = 0x300050,
+        loopPlayList            = 0x300051,
         
         createRegion            = 0x300060,
         autoEdit                = 0x300061,
@@ -36,6 +37,8 @@ namespace CommandIDs
         zoomOut                 = 0x300072,
         zoomNormal              = 0x300073,
         spaceBarDrag            = 0x300074,
+        followTransport         = 0x300075,
+        
 
         lastCommandIDEntry
     };
