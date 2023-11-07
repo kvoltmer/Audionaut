@@ -30,12 +30,19 @@ AudioRegionView::AudioRegionView(std::shared_ptr<AudioResource> resource,
     // this component doesn't handle mouse events
     setInterceptsMouseClicks(false, false);
     
-    audioResource->getThumbnail().addChangeListener (this);
+    // use buffered image
+    setBufferedToImage(true);
+        
+    auto thumb = audioRegion->getAudioThumbnailForResource(audioResource);
+    jassert(thumb != nullptr);
+    thumb->addChangeListener(this);
 }
 
 AudioRegionView::~AudioRegionView()
 {
-    audioResource->getThumbnail().removeChangeListener(this);
+    auto thumb = audioRegion->getAudioThumbnailForResource(audioResource);
+    jassert(thumb != nullptr);
+    thumb->removeChangeListener(this);
 }
 
 void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
@@ -60,10 +67,13 @@ void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
 
 void AudioRegionView::paint (juce::Graphics& g)
 {
+    // testing
+    auto thumb = audioRegion->getAudioThumbnailForResource(audioResource);
+    jassert(thumb != nullptr);
     
+    jassert(audioResource != nullptr);
     
-    if (audioResource != nullptr &&
-        audioResource->getThumbnail().getTotalLength() > 0.0)
+    if (thumb->getTotalLength() > 0.0)
     { 
         g.fillAll (audioRegion->getAudioGroup()->getColour().withAlpha(0.25f));
         g.setColour (audioRegion->getAudioGroup()->getColour());
@@ -90,8 +100,8 @@ void AudioRegionView::paint (juce::Graphics& g)
         
         auto startSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getStart());
         auto endSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getEnd());
-        audioResource->getThumbnail().drawChannels (g, thumbArea, startSecond, endSecond, 1.0f);
-
+        //audioResource->getThumbnail().drawChannels (g, thumbArea, startSecond, endSecond, 1.0f);
+        thumb->drawChannels (g, thumbArea, startSecond, endSecond, 1.0f);
         
         
 //        std::cout << "DRAW visible start " << visibleRange.getStart() << " length " << visibleRange.getLength() << std::endl;
@@ -112,6 +122,8 @@ void AudioRegionView::paint (juce::Graphics& g)
         g.setFont (14.0f);
         g.drawFittedText ("audio resource not available", getLocalBounds(), Justification::centred, 2);
     }
+    
+    
     
     
 //    auto thumbArea = getLocalBounds();

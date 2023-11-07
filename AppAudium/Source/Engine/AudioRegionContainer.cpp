@@ -61,7 +61,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
         group = audioResourceContainer->getDefaultGroup();
     }
     
-    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group));
+    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, audioThumbnailCache));
     audioRegion->position = position;
     audioRegion->name = regionName;
     audioRegions.push_back(audioRegion);
