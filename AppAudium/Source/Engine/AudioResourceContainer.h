@@ -23,7 +23,8 @@ class AudioResourceContainer : public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<AudioGroupContainer> audioGroupContainer);
+                           std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                           std::shared_ptr<juce::AudioFormatManager> formatManager);
     
     ~AudioResourceContainer();
     
@@ -60,6 +61,8 @@ public:
     
     void prepareToPlay (double sampleRate, int blockSize);
     
+    std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
+    
     typedef std::pair<std::shared_ptr<AudioGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
     
 private:
@@ -68,17 +71,10 @@ private:
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
-    
-    /// TODO: find a proper home for this
-    juce::AudioFormatManager formatManager;
+    std::shared_ptr<juce::AudioFormatManager> formatManager;
         
     /// TODO: find a proper home for this
     juce::TimeSliceThread thread  { "audio file read ahead" };
-    
-    juce::AudioThumbnailCache thumbnailCache  { 64 };
-    
-    /// TODO: find a proper home for this
-    bool isPlaying = false;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceContainer)

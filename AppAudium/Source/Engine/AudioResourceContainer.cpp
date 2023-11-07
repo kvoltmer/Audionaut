@@ -19,11 +19,13 @@
 
 
 AudioResourceContainer::AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                                               std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
+                                               std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                                               std::shared_ptr<juce::AudioFormatManager> formatManager) :
     audioDeviceManager(audioDeviceManager),
-    audioGroupContainer(audioGroupContainer)
+    audioGroupContainer(audioGroupContainer),
+    formatManager(formatManager)
 {
-    formatManager.registerBasicFormats();
+    formatManager->registerBasicFormats();
     thread.startThread();
 }
 
@@ -41,9 +43,8 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
         auto audioResource = AudioResourceFactory::createAudioResource(url,
                                                                        *engine.getAudioResourceContainer(),
                                                                        group,
-                                                                       formatManager,
-                                                                       &thread,
-                                                                       thumbnailCache);
+                                                                       *formatManager.get(),
+                                                                       &thread);
         
         double sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
         auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();

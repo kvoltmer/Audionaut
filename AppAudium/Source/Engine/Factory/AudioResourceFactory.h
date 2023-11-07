@@ -13,24 +13,10 @@
 #include <memory>
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
-//#include "AudioResourceContainer.h"
 #include "Engine/AudioResource.h"
 #include "Engine/AudioGroup.h"
-
-static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
-{
-   #if JUCE_ANDROID
-    if (auto doc = AndroidDocument::fromDocument (url))
-        return std::make_unique<AndroidDocumentInputSource> (doc);
-   #endif
-
-   #if ! JUCE_IOS
-    if (url.isLocalFile())
-        return std::make_unique<juce::FileInputSource> (url.getLocalFile());
-   #endif
-
-    return std::make_unique<juce::URLInputSource> (url);
-}
+#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudiumTransportSource.h"
 
 class AudioResourceFactory {
     
@@ -41,8 +27,7 @@ public:
                                                               AudioResourceContainer& audioResourceContainer,
                                                               std::shared_ptr<AudioGroup> group,
                                                               juce::AudioFormatManager& formatManager,
-                                                              juce::TimeSliceThread* readAheadThread,
-                                                              juce::AudioThumbnailCache& thumbnailCache)
+                                                              juce::TimeSliceThread* readAheadThread)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
         
@@ -64,18 +49,28 @@ public:
 
                     audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
                                                                                      url,
-                                                                                     inputSource.get(),
-                                                                                     formatManager,
-                                                                                     thumbnailCache,
                                                                                      transportSource,
                                                                                      std::move(audioFormatReaderSource)));
                 }
             }
-            
-            inputSource.release();
         }
         
         return audioResource;
+    }
+    
+    static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
+    {
+       #if JUCE_ANDROID
+        if (auto doc = AndroidDocument::fromDocument (url))
+            return std::make_unique<AndroidDocumentInputSource> (doc);
+       #endif
+
+       #if ! JUCE_IOS
+        if (url.isLocalFile())
+            return std::make_unique<juce::FileInputSource> (url.getLocalFile());
+       #endif
+
+        return std::make_unique<juce::URLInputSource> (url);
     }
     
 private:

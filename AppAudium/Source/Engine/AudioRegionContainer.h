@@ -23,10 +23,12 @@ class AudioRegionContainer : public juce::ActionBroadcaster
 public:
     AudioRegionContainer(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                          std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-                         std::shared_ptr<PlayListScheduler> playListScheduler) :
+                         std::shared_ptr<PlayListScheduler> playListScheduler,
+                         std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache) :
         audioResourceContainer(audioResourceContainer),
         audioGroupContainer(audioGroupContainer),
-        playListScheduler(playListScheduler)
+        playListScheduler(playListScheduler),
+        audioThumbnailCache(audioThumbnailCache)
     {}
     
     std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioGroup> group);
@@ -67,6 +69,7 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<PlayListScheduler> playListScheduler;
+    std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
 
     AudioRegion::RegionData selectedPositionClocks;
     int selectedRowNumber = -1;

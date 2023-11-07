@@ -25,31 +25,24 @@ class AudioResource {
 public:
     AudioResource(AudioResourceContainer& audioResourceContainer,
                   juce::URL url,
-                  juce::InputSource* inputSource,
-                  juce::AudioFormatManager& formatManager,
-                  juce::AudioThumbnailCache& thumbnailCache,
                   std::shared_ptr<AudiumTransportSource> transportSource,
                   std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
         owner(audioResourceContainer),
         url(url),
-        thumbnail (4096, formatManager, thumbnailCache),
         transportSource(transportSource)
     {
         this->audioFormatReaderSource = std::move(audioFormatReaderSource);
-        thumbnail.setSource(inputSource);
     }
     
     ~AudioResource();
-    
-    juce::AudioThumbnail& getThumbnail() { return thumbnail; }
 
     std::shared_ptr<AudiumTransportSource> getAudioTransportSource() const { return transportSource; }
-
-    bool isThumbnailFullyLoaded() const { return thumbnail.isFullyLoaded(); }
 
     const juce::String getFileNameWithoutExtension() const;
     
     const juce::String getFullPathName() const;
+    
+    const juce::URL getUrl() const { return url; }
     
     // Returns a string version of the URL.
     const juce::String getUrlAsString() const;
@@ -62,14 +55,12 @@ public:
     
     double getSampleRate() const;
     unsigned int getNumChannels() const;
-
+    
 private:
 
     AudioResourceContainer& owner;
     
     juce::URL url;
-    
-    juce::AudioThumbnail thumbnail;
     
     std::shared_ptr<AudiumTransportSource> transportSource;
     
