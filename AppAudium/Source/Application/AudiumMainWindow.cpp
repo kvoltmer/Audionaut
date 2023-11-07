@@ -86,10 +86,12 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
     const CommandID ids[] =
     {
         CommandIDs::playStop,
+        CommandIDs::loopPlayList,
         CommandIDs::createRegion,
         CommandIDs::autoEdit,
         CommandIDs::zoomIn,
-        CommandIDs::zoomOut
+        CommandIDs::zoomOut,
+        CommandIDs::followTransport
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -102,6 +104,10 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case CommandIDs::playStop:
             result.setInfo ("Play/Stop", "Play and stop", CommandCategories::transport, 0);
             result.defaultKeypresses.add (KeyPress (' ', ModifierKeys::noModifiers, 0));
+            break;
+        case CommandIDs::loopPlayList:
+            result.setInfo ("Loop Playlist", "Loop Playlist On/Off", CommandCategories::transport, 0);
+            result.defaultKeypresses.add (KeyPress ('l', ModifierKeys::ctrlModifier, 0));
             break;
         case CommandIDs::createRegion:
             result.setInfo ("Create Region", "Creates a new region", CommandCategories::editing, 0);
@@ -119,25 +125,27 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Zoom Out", "Zoom out", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::ctrlModifier, 0));
             break;
+        case CommandIDs::followTransport:
+            result.setInfo ("Follow Transport", "Follow Transport", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::ctrlModifier, 0));
+            break;
         default:
             break;
     }
 }
+
+#include "Engine/PlayList/PlayListScheduler.h"
 
 bool AudiumMainWindow::perform (const InvocationInfo& info)
 {
     switch (info.commandID)
     {
         case CommandIDs::playStop:
-            if (getEngine()->isPlaying())
-            {
-                getEngine()->stopPlaying();
-            }
-            else
-            {
-                getEngine()->startPlaying();
-            }
+            getEngine()->isPlaying() ? getEngine()->stopPlaying() : getEngine()->startPlaying();
             mainComponent->updateUI();
+            break;
+        case CommandIDs::loopPlayList:
+            getEngine()->getPlayListScheduler()->setLoopPlayList(!getEngine()->getPlayListScheduler()->getLoopPlayList());
             break;
         case CommandIDs::createRegion:
             newRegionDialog.createNewRegion(getEngine());
@@ -151,7 +159,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
         case CommandIDs::zoomOut:
             mainComponent->zoomOut();
             break;
-
+        case CommandIDs::followTransport:
+            getEngine()->getPlayListScheduler()->setFollowTransport(!getEngine()->getPlayListScheduler()->getFollowTransport());
+            break;
         default:
             return false;
     }
