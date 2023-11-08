@@ -38,6 +38,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                          const AudiumEngine& engine,
                                                                          std::shared_ptr<AudioGroup> group)
 {
+    jassert(group != nullptr);
     if (group != nullptr)
     {
         auto audioResource = AudioResourceFactory::createAudioResource(url,
@@ -46,8 +47,13 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                        *formatManager.get(),
                                                                        &thread);
         
-        double sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
-        auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
+        double sampleRate = 44100.0;
+        int numSamples = 512;
+        if (audioDeviceManager->getCurrentAudioDevice() != nullptr)
+        {
+            sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+            numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
+        }
         audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
         
         std::shared_ptr<AudioGroup> audioGroup = nullptr;

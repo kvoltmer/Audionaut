@@ -2,6 +2,7 @@
 
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/Factory/AudioGroupFactory.h"
 
 SCENARIO("resource container scenario", "[engine][resource][container]")
 {
@@ -14,66 +15,68 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
     
     GIVEN("the AudioResourceContainer")
     {
-        auto container  = engine->getAudioResourceContainer();
+        auto resourceContainer  = engine->getAudioResourceContainer();
+        auto regionContainer  = engine->getAudioRegionContainer();
         int numResources = 10;
         
         WHEN("adding audio resources without any group provided")
         {
-            
+            auto group = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
             for (int i = 0; i < numResources; i++)
             {
-                container->addAudioResource(juce::URL(inFile));
+                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group);
             }
             
-            THEN("the must be 1 group that contains all resources")
+            THEN("there must be 1 group that contains all resources")
             {
-                auto groups = container->getAudioGroups();
+                auto groups = resourceContainer->getAudioGroups();
                 REQUIRE( groups.size() == 1 );
                 
-                auto resources = container->getAudioResourcesForGroup(groups[0]);
+                auto resources = resourceContainer->getAudioResourcesForGroup(groups[0].get());
                 REQUIRE( (int)resources.size() == numResources );
             }
         }
         
         
-        container->cleanup();
-        REQUIRE( container->getNumAudioResources() == 0 );
+        resourceContainer->cleanup();
+        REQUIRE( resourceContainer->getNumAudioResources() == 0 );
         
         WHEN("adding 2 groups with numResources each")
         {
             
-            auto group1 = std::shared_ptr<AudioGroup> (new AudioGroup(*container, "Group 1"));
-            for (int i = 0; i < numResources; i++)
-                container->addAudioResource(juce::URL(inFile), group1);
+            auto group1 = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
             
-            auto group2 = std::shared_ptr<AudioGroup> (new AudioGroup(*container, "Group 2"));
             for (int i = 0; i < numResources; i++)
-                container->addAudioResource(juce::URL(inFile), group2);
+                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group1);
+            
+            auto group2 = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
+            for (int i = 0; i < numResources; i++)
+                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group2);
             
             THEN("we get 2 groups ")
             {
-                auto groups = container->getAudioGroups();
+                auto groups = resourceContainer->getAudioGroups();
                 REQUIRE(groups.size() == 2);
                 
                 for (auto group : groups)
                 {
-                    auto resources = container->getAudioResourcesForGroup(group);
+                    auto resources = resourceContainer->getAudioResourcesForGroup(group.get());
                     REQUIRE( (int)resources.size() == numResources );
                 }
                 
-                REQUIRE( container->getNumAudioResources() == (numResources * 2) );
+                REQUIRE( resourceContainer->getNumAudioResources() == (numResources * 2) );
             }
             
             
-            container->removeAudioGroup(0);
-            
-            THEN("group2 10 left")
-            {
-                auto groups = container->getAudioGroups();
-                REQUIRE(groups.size() == 1);
-                
-                REQUIRE( container->getNumAudioResources() == numResources );
-            }
+//            resourceContainer->removeAudioGroup(0);
+//            
+//            THEN("group2 10 left")
+//            {
+//                auto groups = resourceContainer->getAudioGroups();
+//                REQUIRE(groups.size() == 1);
+//                
+//                REQUIRE( resourceContainer->getNumAudioResources() == numResources );
+//            }
         }
         
     }

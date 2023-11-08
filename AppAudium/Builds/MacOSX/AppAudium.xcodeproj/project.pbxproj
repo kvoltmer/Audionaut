@@ -222,6 +222,7 @@
 		F0A4B905FCA6B20DBF3DD3C3 /* AudiumTransportSource.h */ /* AudiumTransportSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumTransportSource.h; path = ../../Source/Engine/AudiumTransportSource.h; sourceTree = SOURCE_ROOT; };
 		F0C4F5AE7B7A830FDF5AEC81 /* PlayListContainer.cpp */ /* PlayListContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListContainer.cpp; path = ../../Source/Engine/PlayList/PlayListContainer.cpp; sourceTree = SOURCE_ROOT; };
 		F1196F8D001317AABA13211C /* AudioResource.h */ /* AudioResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResource.h; path = ../../Source/Engine/AudioResource.h; sourceTree = SOURCE_ROOT; };
+		F2BC4A342092379072B2ECC0 /* AudioGroupFactory.h */ /* AudioGroupFactory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioGroupFactory.h; path = ../../Source/Engine/Factory/AudioGroupFactory.h; sourceTree = SOURCE_ROOT; };
 		F5F7DEF8952E76FA005897ED /* CMakeLists.txt */ /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = CMakeLists.txt; path = ../../Catch2Tests/CMakeLists.txt; sourceTree = SOURCE_ROOT; };
 		F606AA824C91677FAABA4C90 /* juce_audio_utils */ /* juce_audio_utils */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_utils; path = ../../../Submodules/juce/modules/juce_audio_utils; sourceTree = SOURCE_ROOT; };
 		F62ECD7362B186DC805B431E /* NewRegionDialog.h */ /* NewRegionDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NewRegionDialog.h; path = ../../Source/Interface/Dialogs/NewRegionDialog.h; sourceTree = SOURCE_ROOT; };
@@ -363,6 +364,7 @@
 		2CC0FD4EB70574A6B0DDF8F9 /* Factory */ = {
 			isa = PBXGroup;
 			children = (
+				F2BC4A342092379072B2ECC0,
 				068707BEEF91E3C5815141F9,
 				EF8DD043B0CEFFAC7AFE5227,
 				DB274175268873FA1BDECEB7,

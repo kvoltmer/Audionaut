@@ -14,6 +14,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/TransportSourceContainer.h"
+#include "Engine/Factory/AudioGroupFactory.h"
 
 AudioGroupContainer::~AudioGroupContainer()
 {
@@ -62,17 +63,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroupById(int groupId) 
     return nullptr;
 }
 
-std::shared_ptr<AudioGroup> AudioGroupContainer::createAudioGroup(const AudioResourceContainer &audioResourceContainer,
-                                                                  const AudioRegionContainer &audioRegionContainer)
-{
-    auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
-    auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(audioRegionContainer));
-    auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(audioResourceContainer,
-                                                                 playListContainer,
-                                                                 transportSourceContainer,
-                                                                 std::string(), -1));
-    return audioGroup;
-}
+
 
 std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
                                                                      const AudioRegionContainer &audioRegionContainer,
@@ -82,7 +73,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const Audio
     groupId = (groupId < 0) ? getNextId() : groupId;
     jassert( !groupIdExists(groupId) );
     
-    auto audioGroup = createAudioGroup(audioResourceContainer, audioRegionContainer);
+    auto audioGroup = AudioGroupFactory::createAudioGroup(audioResourceContainer, audioRegionContainer);
     
     audioGroup->setName(nameString);
     audioGroup->setId(groupId);
@@ -130,7 +121,7 @@ bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream,
         
     for (auto g = 0; g < numGroups; g++)
     {
-        auto audioGroup = createAudioGroup(audioResourceContainer, audioRegionContainer);
+        auto audioGroup = AudioGroupFactory::createAudioGroup(audioResourceContainer, audioRegionContainer);
         audioGroup->readFromStream(inputStream);
         audioGroups.push_back(audioGroup);
         nextId = juce::jmax(nextId, audioGroup->getId());
