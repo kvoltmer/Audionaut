@@ -47,12 +47,17 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
         ${SRC_PATH}/Engine/AutoEdit/*.cpp
         ${SRC_PATH}/Engine/PlayList/*.cpp
+        ${SRC_PATH}/Engine/Factory/*.cpp
+        ${SRC_PATH}/Engine/Link/*.cpp
         ${SRC_PATH}/Interface/*.cpp
-        ${SRC_PATH}/Interface/Handlers/*.cpp
         ${SRC_PATH}/Interface/Components/*.cpp
+        ${SRC_PATH}/Interface/Components/HeaderPanel/*.cpp
+        ${SRC_PATH}/Interface/Components/MiddlePanel/*.cpp
+        ${SRC_PATH}/Interface/Components/RightPanel/*.cpp
         ${SRC_PATH}/Interface/Controls/*.cpp
         ${SRC_PATH}/Interface/Dialogs/*.cpp
         ${SRC_PATH}/Interface/Models/*.cpp
+        ${SRC_PATH}/Interface/Handlers/*.cpp
         ${SRC_PATH}/Interface/Views/*.cpp
         ${SRC_PATH}/Interface/Widgets/*.cpp
         ${SRC_PATH}/Util/*.cpp
@@ -103,6 +108,10 @@ target_compile_definitions(${APP_NAME}
 # resolved automatically. If you'd generated a binary data target above, you would need to link to
 # it here too. This is a standard CMake command.
 
+# Ableton Link
+include(${SUBMODULES_PATH}/link/AbletonLinkConfig.cmake)
+#target_link_libraries(${APP_NAME} Ableton::Link)
+
 target_link_libraries(${APP_NAME}
     PRIVATE
         # ConsoleAppData            # If you'd created a binary data target, you'd link to it here
@@ -110,6 +119,7 @@ target_link_libraries(${APP_NAME}
         juce::juce_audio_formats
         juce::juce_audio_utils
         Catch2::Catch2WithMain
+        Ableton::Link
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)

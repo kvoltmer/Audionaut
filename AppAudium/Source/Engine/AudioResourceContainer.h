@@ -30,7 +30,7 @@ public:
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      const AudiumEngine &engine,
-                                                     std::shared_ptr<AudioGroup> group = nullptr);
+                                                     std::shared_ptr<AudioGroup> group);
     
     void removeAudioResource(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioResource> resource);
     void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
