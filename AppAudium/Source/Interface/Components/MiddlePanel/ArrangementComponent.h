@@ -27,8 +27,7 @@ public:
         audiumEngine(audiumEngine)
     {
         
-        zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer(),
-                                          audiumEngine->getPlayListScheduler()));
+        zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
         audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, "Audio Group Listbox", nullptr));
         regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
         audioGroupListBoxModel.reset(new AudioGroupListBoxModel(audioGroupListBox,

@@ -9,14 +9,10 @@
 */
 
 #include "ZoomHandler.h"
-#include "Engine/AudioResourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 
-
-ZoomHandler::ZoomHandler(std::shared_ptr<AudioResourceContainer> container,
-                         std::shared_ptr<PlayListScheduler> playListScheduler) :
-    audioResourceContainer(container),
+ZoomHandler::ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler) :
     playListScheduler(playListScheduler),
     scrollbar(nullptr)
 {
@@ -100,8 +96,7 @@ double ZoomHandler::xToSeconds (const double x) const
 {
     const auto bars = xToBars(x);
     const auto beats = bars * 4.0;
-    const auto seconds = playListScheduler->beatsToSeconds(beats);
-    return seconds;
+    return playListScheduler->beatsToSeconds(beats);
 }
 
 double ZoomHandler::barsToX (const double bars) const
@@ -126,17 +121,17 @@ double ZoomHandler::xToClocks (const double x) const
     return playListScheduler->secondsToClocks(seconds);
 }
 
-int ZoomHandler::secondsToXWithOffset (const double time) const
+double ZoomHandler::secondsToXWithOffset (const double time) const
 {
     auto x = secondsToX(time);
     auto offset = getVisibleRange().getStart();
-    return juce::jmax (0.0, x - offset);
+    return std::max (0.0, x - offset);
 }
 
-double ZoomHandler::xToSecondsWithOffset (const int x) const
+double ZoomHandler::xToSecondsWithOffset (const double x) const
 {
     auto offset = getVisibleRange().getStart();
-    return juce::jmax (0.0, xToSeconds (static_cast<double>(x) + offset));
+    return std::max (0.0, xToSeconds (x + offset));
 }
 
 juce::String ZoomHandler::secondsToFormattedString(const int seconds)
