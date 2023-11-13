@@ -31,7 +31,7 @@ AudioRegionView::AudioRegionView(std::shared_ptr<AudioResource> resource,
     setInterceptsMouseClicks(false, false);
     
     // use buffered image
-    setBufferedToImage(true);
+    // setBufferedToImage(true);
         
     auto thumb = audioRegion->getAudioThumbnailForResource(audioResource);
     jassert(thumb != nullptr);
@@ -67,7 +67,6 @@ void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
 
 void AudioRegionView::paint (juce::Graphics& g)
 {
-    // testing
     auto thumb = audioRegion->getAudioThumbnailForResource(audioResource);
     jassert(thumb != nullptr);
     
@@ -77,42 +76,38 @@ void AudioRegionView::paint (juce::Graphics& g)
     { 
         g.fillAll (audioRegion->getAudioGroup()->getColour().withAlpha(0.25f));
         g.setColour (audioRegion->getAudioGroup()->getColour());
+
+
+        // calc the absolute x offset. (our top level component is 2 levels up)
+        auto absoluteOffset = getLocalPoint (getParentComponent()->getParentComponent(), juce::Point<float> {0.f, 0.f}).getX();
         
+        // the visible range is the scrollbar's range.
+        auto visibleRange = zoomHandler->getVisibleRange();
+        
+        // adjust our visible range to local range
+        visibleRange = visibleRange.movedToStartAt(visibleRange.getStart() + absoluteOffset);
+        
+        
+        auto start = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getStart());
+        start += zoomHandler->xToSeconds(visibleRange.getStart());
+        
+        // our local bounds
         auto thumbArea = getLocalBounds();
-    
-#if 1 /// draw visible range
+        thumbArea = thumbArea.withX(visibleRange.getStart());
         
+        if (visibleRange.getLength() > thumbArea.getWidth())
+        {
+            thumbArea.setWidth(visibleRange.getLength());
+        }
+        
+        auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
+
+        thumb->drawChannels (g, thumbArea, start, end, 1.0f);
 
         
-        
-//        // the visible range is the scrollbar's range
-//        auto visibleRange = zoomHandler->getVisibleRange();
-//
-//        // adjust the drawing area
-//        thumbArea.setX(static_cast<int>(visibleRange.getStart()));
-//        thumbArea.setWidth(static_cast<int>(visibleRange.getLength()));
-//
-//        auto rangeInSeconds = zoomHandler->getVisibleRangeInSeconds();
-//
-//        audioResource->getThumbnail().drawChannels (g, thumbArea,
-//                                                    rangeInSeconds.getStart(), rangeInSeconds.getEnd(), 1.0f);
-        
-        
-        auto startSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getStart());
-        auto endSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getEnd());
-        //audioResource->getThumbnail().drawChannels (g, thumbArea, startSecond, endSecond, 1.0f);
-        thumb->drawChannels (g, thumbArea, startSecond, endSecond, 1.0f);
-        
-        
-//        std::cout << "DRAW visible start " << visibleRange.getStart() << " length " << visibleRange.getLength() << std::endl;
-//        std::cout << "DRAW seconds start " << rangeInSeconds.getStart() << " length " << rangeInSeconds.getLength() << std::endl;
-
-#else /// draw entire waveform at once
-        
-        auto totalRange = zoomHandler->getTotalRange();
-        audioResource->getThumbnail().drawChannels (g, thumbArea,
-                                                    totalRange.getStart(), totalRange.getEnd(), 1.0f);
-#endif
+//        std::cout << this << " DRAW x = " << thumbArea.getX() << " width = " << thumbArea.getWidth();
+//        std::cout << " start = " << start << " length = " << end - start;
+//        std::cout << std::endl;
         
 
         paintFileNameLabel(g);
@@ -122,13 +117,6 @@ void AudioRegionView::paint (juce::Graphics& g)
         g.setFont (14.0f);
         g.drawFittedText ("audio resource not available", getLocalBounds(), Justification::centred, 2);
     }
-    
-    
-    
-    
-//    auto thumbArea = getLocalBounds();
-//    g.setColour (Colours::yellow);
-//    g.fillRoundedRectangle (thumbArea.toFloat(), 3.0f);
 
 
     
