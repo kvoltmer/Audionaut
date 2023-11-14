@@ -28,3 +28,4 @@ const char* const audioResourceRemovedAction = "audio resource removed";
 const char* const audioGroupCreatedAction = "audio group created";
 const char* const audioGroupDeletedAction = "audio group deleted";
 const char* const tempoChanged            = "tempo changed";
+const char* const arrangementScrolled     = "arrangement scrolled";
