@@ -161,6 +161,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::followTransport:
             getEngine()->getPlayListScheduler()->setFollowTransport(!getEngine()->getPlayListScheduler()->getFollowTransport());
+            mainComponent->updateUI();
             break;
         default:
             return false;

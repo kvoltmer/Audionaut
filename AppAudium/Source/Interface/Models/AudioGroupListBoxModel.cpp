@@ -4,6 +4,7 @@
 #include "AudioGroupListBoxModel.h"
 #include "Engine/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/ActionMessages.h"
 
 int AudioGroupListBoxModel::getNumRows()
 {
@@ -93,3 +94,7 @@ void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
     }    
 }
 
+void AudioGroupListBoxModel::listWasScrolled()
+{
+    audiumEngine->getAudioGroupContainer()->sendActionMessage(arrangementScrolled);
+}

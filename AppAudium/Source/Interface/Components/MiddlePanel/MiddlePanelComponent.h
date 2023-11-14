@@ -17,7 +17,7 @@
 
 class AudiumEngine;
 
-class MiddlePanelComponent :    public juce::Component
+class MiddlePanelComponent : public juce::Component
 {
 public:
     MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine)
@@ -33,6 +33,11 @@ public:
     {
     }
     
+    enum UIContext {
+        EntireContext,
+        ArrangementScrollContext
+    };
+    
     void resized() override
     {
         auto channelsWidth = 60;
@@ -41,10 +46,17 @@ public:
         arrangementComponent->setBounds(getLocalBounds().removeFromRight(getWidth() - channelsWidth));
     }
     
-    void updateUI()
+    void updateUI(UIContext context = EntireContext)
     {
-        arrangementComponent->updateUI();
-        channelsComponent->updateUI();
+        if (context == EntireContext)
+        {
+            arrangementComponent->updateUI();
+            channelsComponent->updateUI();
+        }
+        else if(context == ArrangementScrollContext)
+        {
+            arrangementComponent->getRegionSelector()->updateFromEngine();
+        }
     }
     
     void zoomIn()

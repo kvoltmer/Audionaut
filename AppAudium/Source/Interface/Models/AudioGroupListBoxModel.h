@@ -49,7 +49,7 @@ public:
         owner->deselectAllRows();
     }
     
-    void listWasScrolled() override {}
+    void listWasScrolled() override;
     
     void selectedRowsChanged (int lastRowSelected) override {}
         

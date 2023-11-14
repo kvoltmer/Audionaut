@@ -201,6 +201,10 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         // TODO: update with context to rebuild everything
         updateUI();
     }
+    else if (message == arrangementScrolled)
+    {
+        middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementScrollContext);
+    }
     else // update everything (eg. region deleted)
     {
         updateUI();

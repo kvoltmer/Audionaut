@@ -116,6 +116,8 @@ public:
         
         updateUI();
     }
+    
+    RegionSelector* getRegionSelector() const { return regionSelector.get(); }
 
 private:
     
