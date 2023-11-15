@@ -33,6 +33,9 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <GROUP id="{56EAD069-5D2D-A940-D232-5DA7E979C834}" name="Provider">
+          <FILE id="mXYpiA" name="TempoProvider.h" compile="0" resource="0" file="Source/Engine/Provider/TempoProvider.h"/>
+        </GROUP>
         <GROUP id="{38829D96-12DD-C636-0C91-D4606DFE0C72}" name="Factory">
           <FILE id="jEBWMg" name="AudioGroupFactory.h" compile="0" resource="0"
                 file="Source/Engine/Factory/AudioGroupFactory.h"/>

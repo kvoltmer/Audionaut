@@ -13,6 +13,7 @@
 #include <atomic>
 #include <cassert>
 
+// This call not used anywhere.
 class SampleTimer {
     
     

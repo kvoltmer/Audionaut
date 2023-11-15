@@ -11,11 +11,8 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
-#include "Engine/PlayList/SampleTimer.h"
-
-namespace audium {
-    class LinkEngine;
-}
+#include "Engine/Provider/TempoProvider.h"
+#include "Engine/Link/LinkEngine.hpp"
 
 class TransportSourceContainer;
 class PlayListContainer;
@@ -23,13 +20,23 @@ class PlayListItem;
 class AudioGroupContainer;
 
 
-class PlayListScheduler : public juce::ActionBroadcaster
+class PlayListScheduler
 {
     
     
 public:
-    PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer);
-    ~PlayListScheduler();
+    PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                      std::shared_ptr<TempoProvider> tempoProvider,
+                      std::shared_ptr<audium::LinkEngine> linkEngine) :
+        audioGroupContainer(audioGroupContainer),
+        tempoProvider(tempoProvider),
+        linkEngine(linkEngine)
+    {
+        linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
+        
+    }
+    
+    ~PlayListScheduler() = default;
 
     void prepareToPlay (double sampleRate, int blockSize);
     
@@ -64,11 +71,8 @@ public:
     
     void onTriggerBeat(const double beatTime, const std::chrono::microseconds hostTime, int sampleNumber);
     
-    void setLinkEngine(audium::LinkEngine* engine);
-    audium::LinkEngine* getLinkEngine() const { return linkEngine; }
     
-    double getTempo() const;
-    void setTempo(double newTempo);
+    audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
     
     uint64_t secondsToSamples(double seconds)
     {
@@ -94,12 +98,12 @@ public:
     
     double secondsToClocks(double seconds) const
     {
-        return secondsToClocks(tempoBPM, seconds);
+        return secondsToClocks(tempoProvider->getTempo(), seconds);
     }
 
     double clocksToSeconds(double clocks) const
     {
-        return clocksToSeconds(tempoBPM, clocks);
+        return clocksToSeconds(tempoProvider->getTempo(), clocks);
     }
     
     juce::Range<double> secondsToClocks(juce::Range<double> rangeInSeconds)
@@ -151,14 +155,15 @@ public:
     
     double secondsToBeats(double seconds)
     {
-        return secondsToBeats(tempoBPM, seconds);
+        return secondsToBeats(tempoProvider->getTempo(), seconds);
     }
 
     double beatsToSeconds(double beats)
     {
-        return beatsToSeconds(tempoBPM, beats);
+        return beatsToSeconds(tempoProvider->getTempo(), beats);
     }
 
+    std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     
 private:
 
@@ -168,6 +173,10 @@ private:
     void applyAbsolutePosition(double pos, int numSamples);
     
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+    
+    std::shared_ptr<TempoProvider> tempoProvider;
+    
+    std::shared_ptr<audium::LinkEngine> linkEngine;
     
     double sampleRate = 0.0;
     int bufferSize = 0;
@@ -181,9 +190,6 @@ private:
     
     juce::CriticalSection readLock;
     
-    audium::LinkEngine *linkEngine;
-        
-    double tempoBPM = 120.0;
     
     bool followTransport = true;
     

@@ -25,7 +25,8 @@ class AudioResourceContainer;
 class LinkAudioDevice : public juce::AudioIODeviceCallback {
         
 public:
-    LinkAudioDevice(std::shared_ptr<PlayListScheduler> playListScheduler,
+    LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
+                    std::shared_ptr<PlayListScheduler> playListScheduler,
                     std::shared_ptr<AudioResourceContainer> audioResourceContainer);
     ~LinkAudioDevice();
     
@@ -45,11 +46,13 @@ public:
     
     void setBypass(bool isByPass) { byPass = isByPass; }
             
+    audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
+    
 private:
+    std::shared_ptr<audium::LinkEngine> linkEngine;
     std::shared_ptr<PlayListScheduler> playListScheduler;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
-    std::unique_ptr<ableton::Link> link;
-    std::unique_ptr<audium::LinkEngine> linkEngine;
+    
     ableton::link::HostTimeFilter<ableton::link::platform::Clock> host_time_filter;
     std::uint64_t sample_time = 0;
     double sampleRate = 0.0;

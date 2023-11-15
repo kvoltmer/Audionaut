@@ -17,20 +17,12 @@
 #include "Engine/AudioGroup.h"
 #include "Engine/AudioResource.h"
 #include "Engine/AudiumTransportSource.h"
-
+#include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
 
 
 using namespace::std::chrono;
 
-PlayListScheduler::PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer) :
-    audioGroupContainer(audioGroupContainer)
-{
-}
-
-PlayListScheduler::~PlayListScheduler()
-{
-}
 
 void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
 {
@@ -201,14 +193,14 @@ double PlayListScheduler::getAbsolutePositionClocks() const
 
 double PlayListScheduler::getAbsolutePositionSeconds() const
 {
-    return clocksToSeconds(tempoBPM, isPlaying() ? transportPositionClocks : startPositionClocks);
+    return clocksToSeconds(tempoProvider->getTempo(), isPlaying() ? transportPositionClocks : startPositionClocks);
 }
 
 void PlayListScheduler::setAbsolutePositionSeconds(double newPosition)
 {
     if (linkEngine != nullptr)
     {
-        startPositionClocks = secondsToClocks(tempoBPM, newPosition);
+        startPositionClocks = secondsToClocks(tempoProvider->getTempo(), newPosition);
     }
 }
 
@@ -253,34 +245,6 @@ void PlayListScheduler::onTriggerBeat(const double beatTime, const std::chrono::
     std::cout << "onTriggerBeat " << beatTime << " " << s.count() << " " << sampleNumber << std::endl;
 }
 
-void PlayListScheduler::setLinkEngine(audium::LinkEngine* engine)
-{
-    linkEngine = engine;
-    linkEngine->mLink.setTempoCallback([this](const double p) { onTempoChange(p); });
-    linkEngine->mLink.enable(false);
-}
 
-void PlayListScheduler::onTempoChange(double newTempo)
-{
-    tempoBPM = newTempo;
-    sendActionMessage (tempoChanged);
-}
-
-double PlayListScheduler::getTempo() const
-{
-    return tempoBPM;
-}
-
-
-void PlayListScheduler::setTempo(double newTempo)
-{
-    tempoBPM = newTempo;
-    if (linkEngine != nullptr)
-    {
-        linkEngine->setTempo(newTempo);
-    }
-    
-    sendActionMessage (tempoChanged);
-}
 
 

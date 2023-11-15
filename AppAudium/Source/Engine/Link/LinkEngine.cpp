@@ -1,24 +1,5 @@
-/* Copyright 2016, Ableton AG, Berlin. All rights reserved.
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- *  If you would like to incorporate Link into a proprietary software application,
- *  please contact <link-devs@ableton.com>.
- */
 
 #include "LinkEngine.hpp"
-#include "Engine/PlayList/PlayListScheduler.h"
 
 // Make sure to define this before <cmath> is included for Windows
 #ifdef LINK_PLATFORM_WINDOWS
@@ -33,16 +14,16 @@ using namespace::std::chrono;
 namespace audium
 {
 
-LinkEngine::LinkEngine(Link& link, std::shared_ptr<PlayListScheduler> playListScheduler) :
-    mLink(link),
+LinkEngine::LinkEngine() :
     mSampleRate(44100.),
     mOutputLatency(std::chrono::microseconds{0}),
     mSharedEngineData({0., false, false, 4., false}),
     mLockfreeEngineData(mSharedEngineData),
     mTimeAtLastClick{},
-    mIsPlaying(false),
-    playListScheduler(playListScheduler)
+    mIsPlaying(false)
 {
+    mLink.reset(new ableton::Link(100.f));
+        
     if (!mOutputLatency.is_lock_free())
     {
         std::cout << "WARNING: LinkEngine::mOutputLatency is not lock free!" << std::endl;
@@ -65,12 +46,12 @@ void LinkEngine::stopPlaying()
 
 bool LinkEngine::isPlaying() const
 {
-    return mLink.captureAppSessionState().isPlaying();
+    return mLink->captureAppSessionState().isPlaying();
 }
 
 double LinkEngine::beatTime() const
 {
-    return sessionState->beatAtTime(mLink.clock().micros(), mSharedEngineData.quantum);
+    return sessionState->beatAtTime(mLink->clock().micros(), mSharedEngineData.quantum);
 }
 
 void LinkEngine::setTempo(double tempo)
@@ -102,12 +83,12 @@ void LinkEngine::setStartPlayingTime(double beats)
 
 bool LinkEngine::isStartStopSyncEnabled() const
 {
-    return mLink.isStartStopSyncEnabled();
+    return mLink->isStartStopSyncEnabled();
 }
 
 void LinkEngine::setStartStopSyncEnabled(const bool enabled)
 {
-    mLink.enableStartStopSync(enabled);
+    mLink->enableStartStopSync(enabled);
 }
 
 void LinkEngine::setBufferSize(std::size_t size)
@@ -122,12 +103,17 @@ void LinkEngine::setSampleRate(double sampleRate)
 
 void LinkEngine::enableLink(bool enabled)
 {
-    mLink.enable(enabled);
+    mLink->enable(enabled);
+}
+
+bool LinkEngine::isEnabled() const
+{
+    return mLink->isEnabled();
 }
 
 int LinkEngine::numPeers() const
 {
-    return static_cast<int>(mLink.numPeers());
+    return static_cast<int>(mLink->numPeers());
 }
 
 LinkEngine::EngineData LinkEngine::pullEngineData()
@@ -217,7 +203,10 @@ void LinkEngine::triggerScheduler(const double quantum,
                                   const std::size_t numSamples)
 {
     const auto beats = sessionState->beatAtTime(beginHostTime, quantum);
-    playListScheduler->tick(sessionState->isPlaying(), beats, static_cast<int>(numSamples));
+    
+    // Call the PlayListScheduler
+    tickCallback(sessionState->isPlaying(), beats, static_cast<int>(numSamples));
+    
     
     // The number of microseconds that elapse between samples
     const auto microsPerSample = 1e6 / mSampleRate;
@@ -239,7 +228,8 @@ void LinkEngine::triggerScheduler(const double quantum,
             if (sessionState->phaseAtTime(hostTime, beat_length)
                 < sessionState->phaseAtTime(lastSampleHostTime, beat_length))
             {
-                playListScheduler->onTriggerBeat(beats, hostTime, static_cast<int>(i));
+                seconds s = std::chrono::duration_cast<seconds>(hostTime);
+                std::cout << "onTriggerBeat " << beats << " " << s.count() << " " << i << std::endl;
             }
         }
     }
@@ -252,7 +242,7 @@ void LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
 {
     const auto engineData = pullEngineData();
 
-    sessionState = std::make_unique<ableton::Link::SessionState>(mLink.captureAudioSessionState());
+    sessionState = std::make_unique<ableton::Link::SessionState>(mLink->captureAudioSessionState());
 
     // Clear the buffer
     std::fill(mBuffer.begin(), mBuffer.end(), 0);
@@ -285,7 +275,7 @@ void LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
     }
 
     // Timeline modifications are complete, commit the results
-    mLink.commitAudioSessionState(*sessionState);
+    mLink->commitAudioSessionState(*sessionState);
 
     if (mIsPlaying)
     {

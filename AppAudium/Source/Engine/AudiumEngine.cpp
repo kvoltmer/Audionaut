@@ -235,7 +235,7 @@ bool AudiumEngine::writeToStream (juce::OutputStream& out)
     }
     
     // 5. Other engine values
-    out.writeDouble(playListScheduler->getTempo());
+    out.writeDouble(playListScheduler->getTempoProvider()->getTempo());
     
     return true;
 }
@@ -268,7 +268,13 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
         }
         
         // 5. Other engine values
-        playListScheduler->setTempo(in.readDouble());
+        auto tempo = in.readDouble();
+        
+        // don't interfere with running sessions
+        if (!linkAudioDevice->getLinkEngine()->isEnabled())
+        {
+            playListScheduler->getTempoProvider()->setTempo(tempo);
+        }
         return true;
     }
     return false;
