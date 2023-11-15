@@ -175,7 +175,7 @@ void HeaderComponent::labelTextChanged (juce::Label* labelThatHasChanged)
     if (labelThatHasChanged == tempo__label.get())
     {
         //[UserLabelCode_tempo__label] -- add your label text handling code here..
-        playListScheduler->setTempo(tempo__label->getText().getDoubleValue());
+        playListScheduler->getTempoProvider()->setTempo(tempo__label->getText().getDoubleValue());
         //[/UserLabelCode_tempo__label]
     }
     else if (labelThatHasChanged == bars__label.get())
@@ -222,7 +222,7 @@ void HeaderComponent::timerCallback()
 
     if (not tempo__label->isBeingEdited())
     {
-        const auto tempo = playListScheduler->getTempo();
+        const auto tempo = playListScheduler->getTempoProvider()->getTempo();
         tempo__label->setText(juce::String(tempo, 2), juce::dontSendNotification);
     }
 
