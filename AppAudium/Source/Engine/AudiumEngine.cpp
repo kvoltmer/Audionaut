@@ -185,8 +185,8 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
             
             for (auto i = 0; i < iterations; ++i)
             {
-                const auto clocksThisBuffer = playListScheduler->secondsToClocks(static_cast<double>(numSamples) / sampleRate);
-                const auto beatsThisBuffer = PlayListScheduler::clocksToBeats(clocksThisBuffer);
+                const auto clocksThisBuffer = playListScheduler->getTempoProvider()->secondsToClocks(static_cast<double>(numSamples) / sampleRate);
+                const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
                 
                 playListScheduler->tick(true, position, numSamples);
                 position += beatsThisBuffer;

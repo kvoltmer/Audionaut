@@ -32,7 +32,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shar
     jassert(seconds > 0.0);
     
     
-    const auto clocks = playListScheduler->secondsToClocks(seconds);
+    const auto clocks = playListScheduler->getTempoProvider()->secondsToClocks(seconds);
     return createRegion(name, juce::Range(0.0, clocks), group);
 }
 
@@ -99,12 +99,12 @@ void AudioRegionContainer::deselectAll()
 
 void AudioRegionContainer::setSelectedPositionInSeconds(juce::Range<double> pos)
 {
-    selectedPositionClocks = playListScheduler->secondsToClocks(pos);
+    selectedPositionClocks = playListScheduler->getTempoProvider()->secondsToClocks(pos);
 }
 
 juce::Range<double> AudioRegionContainer::getSelectedPositionInSeconds() const
 {
-    return playListScheduler->clocksToSeconds(selectedPositionClocks);
+    return playListScheduler->getTempoProvider()->clocksToSeconds(selectedPositionClocks);
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) const

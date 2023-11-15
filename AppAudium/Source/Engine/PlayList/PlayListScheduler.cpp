@@ -28,7 +28,7 @@ void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
 {
     sampleRate = newSampleRate;
     bufferSize = newBufferSize;
-
+    tempoProvider->prepareToPlay(newSampleRate, newBufferSize);
 }
 
 void PlayListScheduler::tick(bool isPlaying,
@@ -41,7 +41,7 @@ void PlayListScheduler::tick(bool isPlaying,
         if (beats >= 0.)
         {
             // assign absolute position
-            transportPositionClocks = beatsToClocks(beats);
+            transportPositionClocks = TempoProvider::beatsToClocks(beats);
             
             // apply position in clocks
             applyAbsolutePosition(transportPositionClocks, numSamples);
@@ -76,7 +76,7 @@ void PlayListScheduler::applyAbsolutePosition(double absolutePosition, int numSa
         const auto group = audioGroupContainer->getAudioGroup(i);
         const auto playlist = group->getPlayListContainer();
         const auto transport = group->getTransportSourceContainer();
-        const auto clocksThisBuffer = secondsToClocks(static_cast<double>(numSamples) / sampleRate);
+        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(numSamples) / sampleRate);
         const auto item = playlist->itemAtAbsolutePosition(absolutePosition + clocksThisBuffer);
         
         if (item != playlist->currentPlayListItem)
@@ -94,16 +94,16 @@ void PlayListScheduler::applyAbsolutePosition(double absolutePosition, int numSa
                 const auto localPosition = absoluteToLocalPosition(startPosition, playlist->currentPlayListItem);
                 
                 const auto diff = startPosition - absolutePosition;
-                const auto startSamples = static_cast<int>((clocksToSeconds(diff) * sampleRate) + 0.5);
+                const auto startSamples = static_cast<int>((getTempoProvider()->clocksToSeconds(diff) * sampleRate) + 0.5);
                 
                 if (diff < 0.0)
                 {
-                    transport->setLocalPosition(clocksToSeconds(localPosition - diff), 0);
+                    transport->setLocalPosition(getTempoProvider()->clocksToSeconds(localPosition - diff), 0);
                 }
                 else
                 {
                     jassert(startSamples < numSamples);
-                    transport->setLocalPosition(clocksToSeconds(localPosition), startSamples);
+                    transport->setLocalPosition(getTempoProvider()->clocksToSeconds(localPosition), startSamples);
                 }
                 
                 std::cout << "pos " << absolutePosition << " start " <<  startPosition << " diff " << diff << " samples " << startSamples << std::endl;
@@ -141,7 +141,7 @@ double PlayListScheduler::getTotalLengthSeconds() const
         totalLengthClocks = juce::jmax(totalLengthClocks, group->getPlayListContainer()->getTotalLength());
     }
     
-    return clocksToSeconds(getTotalLengthClocks());
+    return getTempoProvider()->clocksToSeconds(getTotalLengthClocks());
 }
 
 
@@ -149,7 +149,7 @@ void PlayListScheduler::startPlaying()
 {
     if (linkEngine != nullptr)
     {
-        linkEngine->setStartPlayingTime(clocksToBeats(startPositionClocks));
+        linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(startPositionClocks));
         linkEngine->startPlaying();
     }
 }
@@ -193,14 +193,14 @@ double PlayListScheduler::getAbsolutePositionClocks() const
 
 double PlayListScheduler::getAbsolutePositionSeconds() const
 {
-    return clocksToSeconds(tempoProvider->getTempo(), isPlaying() ? transportPositionClocks : startPositionClocks);
+    return getTempoProvider()->clocksToSeconds(tempoProvider->getTempo(), isPlaying() ? transportPositionClocks : startPositionClocks);
 }
 
 void PlayListScheduler::setAbsolutePositionSeconds(double newPosition)
 {
     if (linkEngine != nullptr)
     {
-        startPositionClocks = secondsToClocks(tempoProvider->getTempo(), newPosition);
+        startPositionClocks = getTempoProvider()->secondsToClocks(tempoProvider->getTempo(), newPosition);
     }
 }
 

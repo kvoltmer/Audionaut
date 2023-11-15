@@ -57,7 +57,7 @@ double ZoomHandler::getArrangementContentWidth() const
     const auto clocks = playListScheduler->getTotalLengthClocks();
     
     // add one bar to fit the content into arrangement
-    const auto bars = PlayListScheduler::clocksToBars(clocks) + 1.0;
+    const auto bars = TempoProvider::clocksToBars(clocks) + 1.0;
     
     // at least minimumArrangementBars
     const auto arrangementBars = std::max(minimumArrangementBars, bars);
@@ -87,7 +87,7 @@ void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
 
 double ZoomHandler::secondsToX (const double seconds) const
 {
-    const auto beats = playListScheduler->secondsToBeats(seconds);
+    const auto beats = playListScheduler->getTempoProvider()->secondsToBeats(seconds);
     const auto bars = beats * 0.25;
     return barsToX(bars);
 }
@@ -96,7 +96,7 @@ double ZoomHandler::xToSeconds (const double x) const
 {
     const auto bars = xToBars(x);
     const auto beats = bars * 4.0;
-    return playListScheduler->beatsToSeconds(beats);
+    return playListScheduler->getTempoProvider()->beatsToSeconds(beats);
 }
 
 double ZoomHandler::barsToX (const double bars) const
@@ -111,14 +111,14 @@ double ZoomHandler::xToBars (const double x) const
 
 double ZoomHandler::clocksToX (const double clocks) const
 {
-    const auto seconds = playListScheduler->clocksToSeconds(clocks);
+    const auto seconds = playListScheduler->getTempoProvider()->clocksToSeconds(clocks);
     return secondsToX(seconds);
 }
 
 double ZoomHandler::xToClocks (const double x) const
 {
     const auto seconds = xToSeconds(x);
-    return playListScheduler->secondsToClocks(seconds);
+    return playListScheduler->getTempoProvider()->secondsToClocks(seconds);
 }
 
 double ZoomHandler::secondsToXWithOffset (const double time) const
