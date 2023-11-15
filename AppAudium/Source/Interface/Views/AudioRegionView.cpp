@@ -88,7 +88,7 @@ void AudioRegionView::paint (juce::Graphics& g)
         visibleRange = visibleRange.movedToStartAt(visibleRange.getStart() + absoluteOffset);
         
         
-        auto start = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getStart());
+        auto start = zoomHandler->getPlayListScheduler()->getTempoProvider()->clocksToSeconds(audioRegion->position.getStart());
         start += zoomHandler->xToSeconds(visibleRange.getStart());
         
         // our local bounds

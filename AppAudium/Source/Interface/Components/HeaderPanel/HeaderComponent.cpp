@@ -229,7 +229,7 @@ void HeaderComponent::timerCallback()
     //auto beats = playListScheduler->getLinkEngine()->beatTime();
     const auto clocks = playListScheduler->getAbsolutePositionClocks();
 
-    const auto beats = PlayListScheduler::clocksToBeats(clocks);
+    const auto beats = TempoProvider::clocksToBeats(clocks);
     const auto bars = static_cast<int>(beats / 4.0) + 1;
     bars__label->setText(juce::String(bars), juce::dontSendNotification);
 
