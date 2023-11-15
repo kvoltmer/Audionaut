@@ -60,18 +60,14 @@ public:
     double getAbsolutePositionSeconds() const;
     void setAbsolutePositionSeconds(double newPosition);
     
-    void tick(bool isPlaying,
-              double beats,
-              int numSamples);
+    void tick(bool isPlaying, double beats, int numSamples);
     
     void audioCallback (const juce::AudioSourceChannelInfo& info);
     
     double getTotalLengthClocks() const;
     double getTotalLengthSeconds() const;
     
-    void onTriggerBeat(const double beatTime, const std::chrono::microseconds hostTime, int sampleNumber);
-    
-    
+        
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
     
     uint64_t secondsToSamples(double seconds)

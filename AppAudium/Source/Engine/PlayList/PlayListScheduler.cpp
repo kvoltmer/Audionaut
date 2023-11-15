@@ -236,15 +236,6 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> gr
     return 0.0;
 }
 
-void PlayListScheduler::onTriggerBeat(const double beatTime, const std::chrono::microseconds hostTime, int sampleNumber)
-{
-    typedef std::chrono::seconds seconds;
-
-    seconds s = std::chrono::duration_cast<seconds>(hostTime);
-    
-    std::cout << "onTriggerBeat " << beatTime << " " << s.count() << " " << sampleNumber << std::endl;
-}
-
 
 
 
