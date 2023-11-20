@@ -52,6 +52,10 @@ public:
             
             setPosition(scheduledPosition.load());
             //std::cout << "scheduledPosition " << scheduledPosition.load() << std::endl;
+         
+            // workaround. TODO: implement juce transportsource
+            if (not isPlaying())
+                start();
             
             // process 2nd part
             juce::AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
