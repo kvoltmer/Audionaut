@@ -12,6 +12,7 @@
 #include "Engine/AudioGroup.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/Factory/AudioResourceFactory.h"
+#include "Engine/Provider/TempoProvider.h"
 
 AudioRegion::~AudioRegion()
 {
@@ -67,4 +68,46 @@ juce::AudioThumbnail* AudioRegion::getAudioThumbnailForResource(std::shared_ptr<
         }
     }
     return nullptr;
+}
+
+void AudioRegion::setRegionData(const RegionData newRegionData)
+{
+    regionData = tempoProvider->clocksToSeconds(newRegionData);
+}
+
+const AudioRegion::RegionData AudioRegion::getRegionData() const
+{
+    return tempoProvider->secondsToClocks(regionData);
+}
+
+void AudioRegion::setRegionDataInSeconds(const RegionData newRegionData)
+{
+    regionData = newRegionData;
+}
+
+const AudioRegion::RegionData AudioRegion::getRegionDataInSeconds() const
+{
+    return regionData;
+}
+
+void AudioRegion::setRegionStart(double newStart)
+{
+    if (newStart <=  getRegionData().getEnd())
+    {
+        setRegionData(AudioRegion::RegionData(newStart, getRegionData().getEnd()));
+    }
+}
+
+void AudioRegion::setRegionEnd(double newEnd)
+{
+    if (newEnd >=  getRegionData().getStart())
+    {
+        setRegionData(AudioRegion::RegionData(getRegionData().getStart(), newEnd));
+    }
+}
+
+
+void AudioRegion::setRegionLength(double newLength)
+{
+    setRegionData(getRegionData().withLength(newLength));
 }

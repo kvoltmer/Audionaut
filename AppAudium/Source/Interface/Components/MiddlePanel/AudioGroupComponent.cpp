@@ -108,7 +108,7 @@ void AudioGroupComponent::resized()
     {
         auto playListItem = regionView->getPlayListItem();
         auto start = zoomHandler->clocksToX(playListItem->getAbsolueStartTime());
-        auto width = zoomHandler->clocksToX(playListItem->getDurationTime());
+        auto width = zoomHandler->clocksToX(playListItem->getDurationTimeInClocks());
         regionView->setBounds(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
     }
 }

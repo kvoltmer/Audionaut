@@ -65,7 +65,7 @@ void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
 double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const
 {
     auto offset = absolutePosition - item->getAbsolueStartTime();
-    return offset + item->getRegionData().getStart();
+    return offset + item->getRegionDataInClocks().getStart();
 }
 
 void PlayListScheduler::applyAbsolutePosition(double absolutePosition, int numSamples)
@@ -230,7 +230,7 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> gr
     if (item != nullptr)
     {
         auto localPosition = absoluteToLocalPosition(getAbsolutePositionClocks(), item.get());
-        auto progress = ((localPosition - item->getRegionData().getStart()) / item->getRegionData().getLength());
+        auto progress = ((localPosition - item->getRegionDataInClocks().getStart()) / item->getRegionDataInClocks().getLength());
         return progress;
     }
     return 0.0;
