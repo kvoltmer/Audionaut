@@ -162,7 +162,7 @@ void AutoEdit::applyAutoEditResult()
             
             // is the duration consitant?
             double duration = elem["duration"];
-            double regionDuration = region->position.getLength();
+            double regionDuration = region->getRegionDataInSeconds().getLength();
             if (!juce::approximatelyEqual(duration, regionDuration))
             {
                 std::cout << "duration not equal" << duration << " " << regionDuration << std::endl;

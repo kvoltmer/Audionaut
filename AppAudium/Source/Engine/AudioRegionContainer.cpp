@@ -31,9 +31,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shar
     }
     jassert(seconds > 0.0);
     
-    
-    const auto clocks = playListScheduler->getTempoProvider()->secondsToClocks(seconds);
-    return createRegion(name, juce::Range(0.0, clocks), group);
+    return createRegion(name, juce::Range(0.0, seconds), group);
 }
 
 void AudioRegionContainer::createRegionsFromSelection(juce::String name)
@@ -45,10 +43,11 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
             if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks))
             {
                 // we need the start of the actual audio file
-                auto localStart = selectedPositionClocks.getStart() - item->getAbsolueStartTime() + item->getRegionData().getStart();
+                auto localStart = selectedPositionClocks.getStart() - item->getAbsolueStartTime() + item->getRegionDataInClocks().getStart();
                 
                 juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
-                createRegion(name, localRange, group);
+                auto localRangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(localRange);
+                createRegion(name, localRangeInSeconds, group);
             }
         }
     }
@@ -61,8 +60,8 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
         group = audioResourceContainer->getDefaultGroup();
     }
     
-    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, audioThumbnailCache));
-    audioRegion->position = position;
+    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, audioThumbnailCache, playListScheduler->getTempoProvider()));
+    audioRegion->setRegionDataInSeconds(position);
     audioRegion->name = regionName;
     audioRegions.push_back(audioRegion);
     // don't select by default
@@ -153,8 +152,8 @@ bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
     {
         outputStream.writeInt(region->getAudioGroup()->getId());
         outputStream.writeString(region->name);
-        outputStream.writeDouble(region->position.getStart());
-        outputStream.writeDouble(region->position.getEnd());
+        outputStream.writeDouble(region->getRegionDataInSeconds().getStart());
+        outputStream.writeDouble(region->getRegionDataInSeconds().getEnd());
     }
     return true;
 }
@@ -209,10 +208,7 @@ void AudioRegionContainer::setRegionStart(int rowNumber, double newStart)
 {
     if (AudioRegion* r = getRegion(rowNumber).get())
     {
-        if (newStart <=  r->position.getEnd())
-        {
-            r->position.setStart(newStart);
-        }
+        r->setRegionStart(newStart);
     }
     
     sendActionMessage (regionStartAction);
@@ -222,10 +218,7 @@ void AudioRegionContainer::setRegionEnd(int rowNumber, double newEnd)
 {
     if (AudioRegion* r = getRegion(rowNumber).get())
     {
-        if (newEnd >=  r->position.getStart())
-        {
-            r->position.setEnd(newEnd);
-        }
+        r->setRegionEnd(newEnd);
     }
     sendActionMessage (regionEndAction);
 }
@@ -234,7 +227,7 @@ void AudioRegionContainer::setRegionLength(int rowNumber, double newLength)
 {
     if (AudioRegion* r = getRegion(rowNumber).get())
     {
-        r->position.setLength(newLength);
+        r->setRegionLength(newLength);
     }
     
     sendActionMessage (regionLengthAction);

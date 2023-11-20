@@ -59,17 +59,17 @@ public:
             }
             else if (columnId == regionStart)
             {
-                const auto seconds = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->clocksToSeconds(r->position.getStart());
+                const auto seconds = r->getRegionDataInSeconds().getStart();
                 text = juce::String(seconds, 4);
             }
             else if (columnId == regionEnd)
             {
-                const auto seconds = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->clocksToSeconds(r->position.getEnd());
+                const auto seconds = r->getRegionDataInSeconds().getEnd();
                 text = juce::String(seconds, 4);
             }
             else if (columnId == regionLength)
             {
-                text = juce::String(TempoProvider::clocksToBars(r->position.getLength()), 4);
+                text = juce::String(TempoProvider::clocksToBars(r->getRegionData().getLength()), 4);
             }
             
             auto textColour = r->getAudioGroup()->getColour();

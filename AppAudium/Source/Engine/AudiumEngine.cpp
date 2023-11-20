@@ -219,24 +219,24 @@ bool AudiumEngine::writeToStream (juce::OutputStream& out)
 {
     out.writeString ("AudiumEngineFormat");
     
-    // 1. Groups
+    // 1. Tempo
+    out.writeDouble(playListScheduler->getTempoProvider()->getTempo());
+    
+    // 2. Groups
     audioGroupContainer->writeToStream(out);
     
-    // 2. Resources
+    // 3. Resources
     audioResourceContainer->writeToStream(out);
     
-    // 3. Regions
+    // 4. Regions
     audioRegionContainer->writeToStream(out);
     
-    // 4. Playlists
+    // 5. Playlists
     for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
     {
         audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->writeToStream(out);
     }
-    
-    // 5. Other engine values
-    out.writeDouble(playListScheduler->getTempoProvider()->getTempo());
-    
+        
     return true;
 }
 
@@ -249,31 +249,28 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
     
     while (! in.isExhausted())
     {
-        // 1. Groups
+        // 1. Tempo
+        auto tempo = in.readDouble();
+        
+        if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
+            playListScheduler->getTempoProvider()->setTempo(tempo);
+        
+        // 2. Groups
         if (audioGroupContainer->readFromStream(in, *audioResourceContainer.get(), *audioRegionContainer.get()))
         {
-            // 2. Resources
+            // 3. Resources
             if (audioResourceContainer->readFromStream(in, *this))
             {
-                // 3. Regions
+                // 4. Regions
                 if (audioRegionContainer->readFromStream(in))
                 {
-                    // 4. Playlists
+                    // 5. Playlists
                     for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
                     {
                         audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->readFromStream(in);
                     }
                 }
             }
-        }
-        
-        // 5. Other engine values
-        auto tempo = in.readDouble();
-        
-        // don't interfere with running sessions
-        if (!linkAudioDevice->getLinkEngine()->isEnabled())
-        {
-            playListScheduler->getTempoProvider()->setTempo(tempo);
         }
         return true;
     }
