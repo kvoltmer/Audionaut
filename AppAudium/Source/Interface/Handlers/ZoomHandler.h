@@ -56,6 +56,8 @@ public:
     
     void focusViewOnPlayPosition();
     
+    void focusView(double positionInSeconds);
+    
     void timerCallback() override;
     
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }

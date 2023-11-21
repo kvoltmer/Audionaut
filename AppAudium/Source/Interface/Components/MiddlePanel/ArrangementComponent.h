@@ -86,6 +86,7 @@ public:
         
         audioGroupListBox->updateContent();
         regionSelector->updateFromEngine();
+        
     }
     
     void setContentWidth(int contentWidth)
@@ -95,26 +96,26 @@ public:
 
     void zoomIn()
     {
+        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);
         zoomHandler->zoomIn();
-        auto width = zoomHandler->getArrangementContentWidth();
-        //std::cout << "ArrangementComponent width " << width << std::endl;
-        setContentWidth(width);
+        setContentWidth(zoomHandler->getArrangementContentWidth());
         regionSelector->updateFromEngine();
-        zoomHandler->focusViewOnPlayPosition();
         
-        updateUI();
+        auto regionSelectorPos = audiumEngine->getAudioRegionContainer()->getSelectedPositionInSeconds();
+        if (!regionSelectorPos.isEmpty())
+        {
+            centerInSeconds = regionSelectorPos.getStart() + (regionSelectorPos.getLength() * 0.5);
+        }
+        
+        zoomHandler->focusView(centerInSeconds);
     }
 
     void zoomOut()
     {
-        zoomHandler->zoomOut();
-        auto width = zoomHandler->getArrangementContentWidth();
-        //std::cout << "ArrangementComponent width " << width << std::endl;
-        setContentWidth(width);
+        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);        zoomHandler->zoomOut();
+        setContentWidth(zoomHandler->getArrangementContentWidth());
         regionSelector->updateFromEngine();
-        zoomHandler->focusViewOnPlayPosition();
-        
-        updateUI();
+        zoomHandler->focusView(centerInSeconds);
     }
     
     RegionSelector* getRegionSelector() const { return regionSelector.get(); }
