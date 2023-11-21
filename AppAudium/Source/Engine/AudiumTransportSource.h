@@ -53,7 +53,7 @@ public:
             setPosition(scheduledPosition.load());
             //std::cout << "scheduledPosition " << scheduledPosition.load() << std::endl;
          
-            // workaround. TODO: implement juce transportsource
+            // workaround. TODO: re-implement juce transportsource
             if (not isPlaying())
                 start();
             

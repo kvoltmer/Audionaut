@@ -231,9 +231,24 @@ void ZoomHandler::focusViewOnPlayPosition()
         auto newStart = posX - (range.getLength() / 2);
         auto newRange = range.movedToStartAt(newStart);
         scrollbar->setCurrentRange(newRange);
-
     }
+}
+
+void ZoomHandler::focusView(double positionInSeconds)
+{
     
+   if (positionInSeconds > playListScheduler->getTotalLengthSeconds())
+        positionInSeconds = playListScheduler->getAbsolutePositionSeconds();
+    
+    auto posX = secondsToX(positionInSeconds);
+    
+    if(!getVisibleRange().contains(posX))
+    {
+        //std::cout << "seconds " << positionInSeconds << " " << posX << std::endl;
+        auto newStart = posX - (getVisibleRange().getLength() / 2);
+        auto newRange = getVisibleRange().movedToStartAt(newStart);
+        scrollbar->setCurrentRange(newRange);
+    }
 }
 
 void ZoomHandler::timerCallback()
@@ -244,6 +259,7 @@ void ZoomHandler::timerCallback()
         auto posX = secondsToX(playListScheduler->getAbsolutePositionSeconds());
         if(!getVisibleRange().contains(posX))
         {
+            //std::cout << "seconds " << playListScheduler->getAbsolutePositionSeconds() << " " << posX << std::endl;
             auto newStart = posX;// - (getVisibleRange().getLength() / 2);
             auto newRange = getVisibleRange().movedToStartAt(newStart);
             scrollbar->setCurrentRange(newRange);
