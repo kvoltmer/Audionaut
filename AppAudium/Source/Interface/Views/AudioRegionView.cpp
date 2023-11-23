@@ -45,6 +45,22 @@ AudioRegionView::~AudioRegionView()
     thumb->removeChangeListener(this);
 }
 
+void AudioRegionView::paintBackground (juce::Graphics& g)
+{
+    // paint a vertical gradient as background:
+    
+    // bottom colour = transparent version of the group colour
+    const auto bottomColour = audioRegion->getAudioGroup()->getColour().withAlpha(0.375f);
+    
+    // top colour = complementary colour of bottom
+    const auto topColour = audium::getComplementaryColour(bottomColour);
+    
+    auto colourGradient = juce::ColourGradient::vertical(topColour, getLocalBounds().getTopLeft().getY(),
+                                                         bottomColour, getLocalBounds().getBottomLeft().getY());
+    g.setGradientFill(colourGradient);
+    g.fillAll();
+}
+
 void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
 {
     /// draw filename label
@@ -67,17 +83,18 @@ void AudioRegionView::paintFileNameLabel (juce::Graphics& g)
 
 void AudioRegionView::paint (juce::Graphics& g)
 {
+    paintBackground(g);
+    
     auto thumb = audioRegion->getAudioThumbnailForResource(audioResource);
     jassert(thumb != nullptr);
     
     jassert(audioResource != nullptr);
     
     if (thumb->getTotalLength() > 0.0)
-    { 
-        g.fillAll (audioRegion->getAudioGroup()->getColour().withAlpha(0.25f));
+    {
+        // the waveform colour
         g.setColour (audioRegion->getAudioGroup()->getColour());
-
-
+        
         // calc the absolute x offset. (our top level component is 2 levels up)
         auto absoluteOffset = getLocalPoint (getParentComponent()->getParentComponent(), juce::Point<float> {0.f, 0.f}).getX();
         
