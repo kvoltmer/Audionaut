@@ -148,12 +148,21 @@ void AudiumEngine::setBypass(bool bypass)
 }
 #include "Engine/AudiumTransportSource.h"
 
-void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback)
+void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback, double preferedSampleRate)
 {
     std::cout << "bounce -> " << f.getFullPathName().toStdString() << std::endl;
     
-    double sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
     auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
+    double sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+    
+    // different sample rate?
+    if (preferedSampleRate > 0.0)
+    {
+        sampleRate = preferedSampleRate;
+        playListScheduler->prepareToPlay(sampleRate, numSamples);
+        audioResourceContainer->prepareToPlay(sampleRate, numSamples);
+    }
+    
     auto numOutputChannels = 2;
     
     setBypass(true);
@@ -171,44 +180,20 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
         if (writer != nullptr)
         {
             outStream.release();
+            
+            playListScheduler->bounceToFile(writer.get(), sampleRate, numSamples, numOutputChannels);
 
-            auto lastPosition = playListScheduler->getAbsolutePositionSeconds();
-            playListScheduler->setAbsolutePositionSeconds(0.0);
-            playListScheduler->startPlaying();
-            
-            auto seconds = playListScheduler->getTotalLengthSeconds();
-            auto iterations = static_cast<int>(seconds * sampleRate) / numSamples;
-            iterations += 1; // add one iteration to be on the save side
-            auto position = 0.0;
-            juce::AudioBuffer<float> buffer(numOutputChannels, numSamples);
-            juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
-            
-            for (auto i = 0; i < iterations; ++i)
-            {
-                const auto clocksThisBuffer = playListScheduler->getTempoProvider()->secondsToClocks(static_cast<double>(numSamples) / sampleRate);
-                const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
-                
-                playListScheduler->tick(true, position, numSamples);
-                position += beatsThisBuffer;
-                
-                
-                buffer.clear();
-                playListScheduler->audioCallback(info);
-                writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
-                
-                /// TODO: without waiting the output is fucked
-                const auto waitMilliseconds = 2;
-                Time::waitForMillisecondCounter(Time::getMillisecondCounter() + waitMilliseconds);
-                
-            }
-            
-            playListScheduler->setAbsolutePositionSeconds(lastPosition);
-            playListScheduler->stopPlaying();
-            
-            
             writer.reset();
             tempFile.overwriteTargetFileWithTemporary();
         }
+    }
+    
+    // change back to old sample rate
+    if (preferedSampleRate > 0.0)
+    {
+        sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+        playListScheduler->prepareToPlay(sampleRate, numSamples);
+        audioResourceContainer->prepareToPlay(sampleRate, numSamples);
     }
     
     setBypass(false);

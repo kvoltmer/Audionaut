@@ -432,7 +432,8 @@ void AudiumApplication::bounceProject()
         
         if (result != File{})
         {
-            audiumEngine->bounceToFile(result, nullptr);
+            // testing
+            audiumEngine->bounceToFile(result, nullptr, 48000.0);
         }
     });
 }
