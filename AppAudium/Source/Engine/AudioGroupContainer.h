@@ -48,6 +48,8 @@ public:
     
     int getNextId() { return ++nextId; }
         
+    std::shared_ptr<AudioGroup> getDefaultGroup() const;
+
 private:
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;

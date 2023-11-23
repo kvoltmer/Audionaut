@@ -94,7 +94,7 @@ void PlayListScheduler::applyAbsolutePosition(double absolutePosition, int numSa
                 const auto localPosition = absoluteToLocalPosition(startPosition, playlist->currentPlayListItem);
                 
                 const auto diff = startPosition - absolutePosition;
-                const auto startSamples = static_cast<int>((getTempoProvider()->clocksToSeconds(diff) * sampleRate) + 0.5);
+                const auto startSamples = static_cast<int>(getTempoProvider()->clocksToSeconds(diff) * sampleRate);
                 
                 if (diff < 0.0)
                 {

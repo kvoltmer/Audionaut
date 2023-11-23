@@ -271,14 +271,31 @@ void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> gr
     }
 }
 
-void AudiumEngine::invokeAutoEdit(const AutoEditConfig config)
+
+void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
 {
-    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioResourceContainer,
+    double sampleRate = 48000.0;
+    
+    // first bounce the mix
+    const auto bounceFile = juce::File::createTempFile(".wav");
+     
+    bounceToFile(bounceFile, nullptr, sampleRate);
+    config.bounceFileName = bounceFile.getFullPathName().toStdString();
+    
+    // erase everything!
+    cleanup();
+    
+    // create a fresh resource
+    const auto bounceUrl = juce::URL(bounceFile);
+    auto audioGroup = audioGroupContainer->createNewAudioGroup(*getAudioResourceContainer(), *getAudioRegionContainer(), bounceUrl.getFileName().toStdString());
+    audioResourceContainer->addAudioResource(bounceUrl, *this, audioGroup);
+    
+    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,
                                                     audioRegionContainer,
-                                                    audioGroupContainer->getSelectedGroup()->getPlayListContainer()));
+                                                    audioResourceContainer));
     if (autoEdit->invokeAutoEdit(config))
     {
-        autoEdit->applyAutoEditResult();
+        autoEdit->applyAutoEditResult(sampleRate);
     }
 }
 

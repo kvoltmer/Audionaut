@@ -53,9 +53,7 @@ public:
     std::shared_ptr<AudioGroup> getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const;
     
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
-    
-    std::shared_ptr<AudioGroup> getDefaultGroup() const;
-    
+        
     int getNumChannels() const;
     std::shared_ptr<AudioResource> getChannel(int index) const;
     

@@ -50,7 +50,7 @@ public:
     
     const AudioResourceContainer &getAudioResourceContainer() { return audioResourceContainer; }
     
-    std::vector<std::shared_ptr<AudioResource>> getAudioResources();
+    std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     
     void setColour(juce::Colour colour);
     juce::Colour getColour() const { return currentColour; }
@@ -61,8 +61,6 @@ public:
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
-    
-
 private:
     const AudioResourceContainer &audioResourceContainer;
     std::shared_ptr<PlayListContainer> playListContainer;

@@ -72,7 +72,7 @@ juce::AudioThumbnail* AudioRegion::getAudioThumbnailForResource(std::shared_ptr<
 
 void AudioRegion::setRegionData(const RegionData newRegionData)
 {
-    regionData = tempoProvider->clocksToSeconds(newRegionData);
+    setRegionDataInSeconds(tempoProvider->clocksToSeconds(newRegionData));
 }
 
 const AudioRegion::RegionData AudioRegion::getRegionData() const
@@ -82,6 +82,12 @@ const AudioRegion::RegionData AudioRegion::getRegionData() const
 
 void AudioRegion::setRegionDataInSeconds(const RegionData newRegionData)
 {
+    const auto resources = audioGroup->getAudioResources();
+    for (auto resource : resources)
+    {
+        // region position must not exceed the total length of the audio file
+        jassert(newRegionData.getEnd() <= resource->getLengthInSeconds());
+    }
     regionData = newRegionData;
 }
 
