@@ -236,6 +236,42 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> gr
     return 0.0;
 }
 
+void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer, double sampleRate, int numSamples, int numOutputChannels)
+{
+    auto lastPosition = getAbsolutePositionSeconds();
+    setAbsolutePositionSeconds(0.0);
+    startPlaying();
+    
+    auto seconds = getTotalLengthSeconds();
+    auto iterations = static_cast<int>(seconds * sampleRate) / numSamples;
+    iterations += 1; // add one iteration to be on the save side
+    auto position = 0.0;
+    juce::AudioBuffer<float> buffer(numOutputChannels, numSamples);
+    juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
+    
+    for (auto i = 0; i < iterations; ++i)
+    {
+        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(numSamples) / sampleRate);
+        const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
+        
+        tick(true, position, numSamples);
+        position += beatsThisBuffer;
+        
+        
+        buffer.clear();
+        audioCallback(info);
+        writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
+        
+        /// TODO: without waiting the output is fucked
+        const auto waitMilliseconds = 2;
+        juce::Time::waitForMillisecondCounter(juce::Time::getMillisecondCounter() + waitMilliseconds);
+        
+    }
+    
+    setAbsolutePositionSeconds(lastPosition);
+    stopPlaying();
+    
+}
 
 
 

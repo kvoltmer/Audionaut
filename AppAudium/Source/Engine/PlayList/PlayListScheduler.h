@@ -67,11 +67,10 @@ public:
     double getTotalLengthClocks() const;
     double getTotalLengthSeconds() const;
     
-        
+    void bounceToFile(juce::AudioFormatWriter* writer, double sampleRate, int numSamples, int numOutputChannels);
+    
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
     
-
-
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     
 private:

@@ -44,7 +44,7 @@ public:
     
     void openFile (const juce::File& file, std::function<void (bool)> callback);
     void saveFile (const juce::File& file, std::function<void (bool)> callback);
-    void bounceToFile(const juce::File& f, std::function<void (bool)> callback);
+    void bounceToFile(const juce::File& f, std::function<void (bool)> callback, double preferedSampleRate = 0.0);
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
