@@ -40,5 +40,11 @@ double AudioResource::getSampleRate() const
 
 unsigned int AudioResource::getNumChannels() const
 {
+    
     return audioFormatReaderSource->getAudioFormatReader()->numChannels;
+}
+
+double AudioResource::getLengthInSeconds() const
+{
+    return getAudioTransportSource()->getLengthInSeconds();
 }

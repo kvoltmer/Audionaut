@@ -27,9 +27,9 @@ void AudioGroup::cleanup()
 }
 
 
-std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResources()
+std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResources() const
 {
-    return audioResourceContainer.getAudioResourcesForGroup(this);
+    return audioResourceContainer.getAudioResourcesForGroup(const_cast<AudioGroup*>(this));
 }
 
 void AudioGroup::setColour(juce::Colour colour)

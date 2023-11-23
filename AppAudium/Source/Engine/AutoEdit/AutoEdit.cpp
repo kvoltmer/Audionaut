@@ -17,23 +17,16 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/AudioGroup.h"
+#include "Engine/AudioGroupContainer.h"
 
-AutoEdit::AutoEdit(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                   std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                   std::shared_ptr<PlayListContainer> playListContainer) :
-    audioResourceContainer(audioResourceContainer),
-    audioRegionContainer(audioRegionContainer),
-    playListContainer(playListContainer)
-{
-}
-
-const std::string getTempDirectory()
+const juce::String AutoEdit::getTempDirectory()
 {
     // Temp directory on is ~Library/Caches/AppAudium
-    return juce::File::getSpecialLocation(juce::File::tempDirectory).getFullPathName().toStdString();
+    return juce::File::getSpecialLocation(juce::File::tempDirectory).getFullPathName();
 }
 
-bool AutoEdit::invokeAutoEdit(const AutoEditConfig config)
+bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
 {
     // NOTE: Make sure PATH and PYTHONPATH is set correctly.
     // With XCode you must edit the scheme and set the environment variables
@@ -43,22 +36,19 @@ bool AutoEdit::invokeAutoEdit(const AutoEditConfig config)
     // Path to python binary
     std::string python = "/opt/homebrew/bin/python3";
     
-    
-    // For now we simply use the first audio resource of the project
-    if (audioResourceContainer->getNumAudioResources() > 0)
+    if(juce::File(config.bounceFileName).existsAsFile())
     {
-        audioResourceFilePath = audioResourceContainer->getAudioResource(0)->getFullPathName().toStdString();
-        
+        audioResourceFilePath = config.bounceFileName;
         // Build the command line string
         std::string commandString;
-        commandString += "cd " + getTempDirectory() +";";
+        commandString += "cd " + getTempDirectory().toStdString() + ";";
         commandString += python + " $HOME/dev/smp_audio/scripts/automain.py --verbose autoedit";
 //      commandString += " --assemble_mode " + config.mode;
         commandString += " --duration " + std::to_string(config.duration);
         commandString += " --numsegs " + std::to_string(config.numSegments);
 //        commandString += " --seglen_min " + std::to_string(config.minSegLength);
 //        commandString += " --seglen_max " + std::to_string(config.maxSegLength);
-        commandString += " --filenames " + audioResourceFilePath;
+        commandString += " --filenames " + config.bounceFileName;
         
         // execute
         auto result = std::system(commandString.c_str());
@@ -69,7 +59,7 @@ bool AutoEdit::invokeAutoEdit(const AutoEditConfig config)
     }
     else
     {
-        juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "no audio data", "you must at least load one audio file to use auto edit");
+        juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "no audio data", "bounce audio failed.");
     }
     
     return false;
@@ -84,7 +74,7 @@ const std::string AutoEdit::getCountFromFile() const
 {
     // read count.txt
     std::fstream countFile;
-    std::string countFileName = getTempDirectory() + "/data/autoedit/count.txt";
+    std::string countFileName = getTempDirectory().toStdString() + "/data/autoedit/count.txt";
     countFile.open(countFileName, std::ios::in);
     std::string count;
     if (countFile.is_open())
@@ -102,21 +92,16 @@ const std::string AutoEdit::getCountFromFile() const
         return "";
     }
 }
-void AutoEdit::applyAutoEditResult()
+void AutoEdit::applyAutoEditResult(double sampleRate)
 {
     auto countString = getCountFromFile();
     jassert(countString.length());
     
-    // clear playlist and regions
-    playListContainer->cleanup();
-    audioRegionContainer->cleanup();
+
     
-    // get sample rate from audio resource
-    jassert(audioResourceContainer->getAudioResource(0));
-    auto sampleRate = audioResourceContainer->getAudioResource(0)->getSampleRate();
     
     //  read segments in json format
-    std::string segFileName = getTempDirectory() + "/data/segs/" + getBaseName() + "-seg-data.json";
+    std::string segFileName = getTempDirectory().toStdString() + "/data/segs/" + getBaseName() + "-seg-data.json";
     std::fstream segFile;
     segFile.open(segFileName, std::ios::in);
     if (segFile.is_open())
@@ -131,7 +116,13 @@ void AutoEdit::applyAutoEditResult()
             position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
             juce::String regionName = "seg-" + juce::String(counter++);
             // CREATE REGION
-            audioRegionContainer->createRegion(regionName, position, audioResourceContainer->getDefaultGroup());
+            for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+            {
+                if (auto group = audioGroupContainer->getAudioGroup(i))
+                {
+                    audioRegionContainer->createRegion(regionName, position, group);
+                }
+            }
         }
         segFile.close();
     }
@@ -139,6 +130,15 @@ void AutoEdit::applyAutoEditResult()
     {
         std::cout << "error seg file not found: " << segFileName << std::endl;
         return;
+    }
+    
+    // cleanup all playlists
+    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    {
+        if (auto group = audioGroupContainer->getAudioGroup(i))
+        {
+            group->getPlayListContainer()->cleanup();
+        }
     }
     
     // song in json format
@@ -156,9 +156,17 @@ void AutoEdit::applyAutoEditResult()
             std::string filename = elem["file"];
             jassert(juce::String(filename).contains(region->name));
             
-            auto insertIndex = static_cast<int>(playListContainer->playListItems.size());
-            // CREATE PLAYLIST ITEM
-            playListContainer->createPlayListItem(elem["index"], insertIndex);
+            for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+            {
+                if (auto group = audioGroupContainer->getAudioGroup(i))
+                {
+                    auto insertIndex = static_cast<int>(group->getPlayListContainer()->playListItems.size());
+                    // CREATE PLAYLIST ITEM
+                    group->getPlayListContainer()->createPlayListItem(elem["index"], insertIndex);
+                    
+                }
+            }
+            
             
             // is the duration consitant?
             double duration = elem["duration"];
@@ -177,5 +185,5 @@ void AutoEdit::applyAutoEditResult()
     }
     
     // updateUI
-    playListContainer->sendActionMessage("");
+    audioGroupContainer->sendActionMessage("");
 }

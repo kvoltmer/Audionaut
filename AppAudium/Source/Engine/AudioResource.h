@@ -55,6 +55,7 @@ public:
     
     double getSampleRate() const;
     unsigned int getNumChannels() const;
+    double getLengthInSeconds() const;
     
 private:
 

@@ -56,25 +56,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
         }
         audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
         
-        std::shared_ptr<AudioGroup> audioGroup = nullptr;
-        if (group != nullptr)
-        {
-            audioGroup = group;
-        }
-        else // no group provided
-        {
-            // create default group
-            if (audioGroupContainer->getNumItems() == 0)
-            {
-                audioGroup = audioGroupContainer->createNewAudioGroup(*this, *engine.getAudioRegionContainer(), url.getFileName().toStdString());
-            }
-            else // add to first group
-            {
-                audioGroup = audioGroupContainer->getAudioGroup(0);
-            }
-        }
-        
-        audioResources.push_back({audioGroup, audioResource});
+        audioResources.push_back({group, audioResource});
         sendActionMessage(audioResourceCreatedAction);
         return audioResource;
     }
@@ -249,15 +231,6 @@ std::vector<std::shared_ptr<AudioGroup>> AudioResourceContainer::getAudioGroups(
     return result;
 }
 
-std::shared_ptr<AudioGroup> AudioResourceContainer::getDefaultGroup() const
-{
-    auto groups = getAudioGroups();
-    if (groups.size() > 0)
-    {
-        return groups[0];
-    }
-    return nullptr;
-}
 
 int AudioResourceContainer::getNumChannels() const
 {

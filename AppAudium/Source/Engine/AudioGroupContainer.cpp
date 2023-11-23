@@ -130,7 +130,14 @@ bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream,
     return true;
 }
 
-
+std::shared_ptr<AudioGroup> AudioGroupContainer::getDefaultGroup() const
+{
+    if (audioGroups.size() > 0)
+    {
+        return audioGroups[0];
+    }
+    return nullptr;
+}
 
 
 

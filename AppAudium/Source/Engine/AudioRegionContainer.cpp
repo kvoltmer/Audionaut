@@ -57,15 +57,13 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
 {
     if (group == nullptr)
     {
-        group = audioResourceContainer->getDefaultGroup();
+        group = audioGroupContainer->getDefaultGroup();
     }
     
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, audioThumbnailCache, playListScheduler->getTempoProvider()));
     audioRegion->setRegionDataInSeconds(position);
     audioRegion->name = regionName;
     audioRegions.push_back(audioRegion);
-    // don't select by default
-    // selectedRowNumber = static_cast<int>(audioRegions.size() - 1);
     sendActionMessage(regionCreatedAction);
     return audioRegion;
 }
