@@ -37,6 +37,7 @@ public:
     std::shared_ptr<AudioRegion> getAudioRegion() const { return audioRegion; }
     
 private:
+    void paintBackground (juce::Graphics& g);
     void paintFileNameLabel (juce::Graphics& g);
     
     std::shared_ptr<AudioResource> audioResource;
