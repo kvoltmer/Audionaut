@@ -41,8 +41,14 @@ void PlayListScheduler::tick(bool isPlaying,
         if (beats >= 0.)
         {
             // assign absolute position
-            transportPositionClocks = TempoProvider::beatsToClocks(beats);
-            
+            if (loopPlayList.load())
+            {
+                transportPositionClocks = std::fmod(TempoProvider::beatsToClocks(beats), getTotalLengthClocks());
+            }
+            else
+            {
+                transportPositionClocks = TempoProvider::beatsToClocks(beats);
+            }
             // apply position in clocks
             applyAbsolutePosition(transportPositionClocks, numSamples);
         }
@@ -132,15 +138,6 @@ double PlayListScheduler::getTotalLengthClocks() const
 
 double PlayListScheduler::getTotalLengthSeconds() const
 {
-    
-    double totalLengthClocks = 0.0;
-    
-    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
-    {
-        auto group = audioGroupContainer->getAudioGroup(i);
-        totalLengthClocks = juce::jmax(totalLengthClocks, group->getPlayListContainer()->getTotalLength());
-    }
-    
     return getTempoProvider()->clocksToSeconds(getTotalLengthClocks());
 }
 
