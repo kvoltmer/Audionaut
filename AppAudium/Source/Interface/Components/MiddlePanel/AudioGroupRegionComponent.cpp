@@ -15,6 +15,7 @@
 #include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Interface/ColourIds.h"
 
 //==============================================================================
 AudioGroupRegionComponent::AudioGroupRegionComponent(std::shared_ptr<AudioGroup> audioGroup,
@@ -43,14 +44,16 @@ AudioGroupRegionComponent::~AudioGroupRegionComponent()
 void AudioGroupRegionComponent::paint (juce::Graphics& g)
 {
     if (playListItem->isSelected())
-    {        
-        g.setColour (audioGroup->getColour());
+    {
+        g.setColour (audium::getComplementaryColour(audioGroup->getColour()).darker());
+        g.fillAll();
     }
     else
     {
         g.setColour (juce::Colours::black.withAlpha(0.50f));
+        g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
     }
-    g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
+    
 }
 
 void AudioGroupRegionComponent::resized()
