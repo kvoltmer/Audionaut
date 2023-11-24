@@ -32,5 +32,7 @@ private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::vector<std::shared_ptr<PlayListComponent>> playListComponents;
     
+    std::unique_ptr<juce::Label> footerLabel;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListContainerComponent)
 };
