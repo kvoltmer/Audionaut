@@ -136,6 +136,7 @@
                   file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
           </GROUP>
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
+            <FILE id="P0XL88" name="EditComponent.h" compile="0" resource="0" file="Source/Interface/Components/MiddlePanel/EditComponent.h"/>
             <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
             <FILE id="pCFZsc" name="ChannelsComponent.h" compile="0" resource="0"

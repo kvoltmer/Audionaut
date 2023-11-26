@@ -125,8 +125,8 @@ private:
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
-    std::shared_ptr<AudioGroupListBox>       audioGroupListBox;
-    std::shared_ptr<AudioGroupListBoxModel>  audioGroupListBoxModel;
+    std::shared_ptr<AudioGroupListBox>          audioGroupListBox;
+    std::shared_ptr<AudioGroupListBoxModel>     audioGroupListBoxModel;
     std::shared_ptr<PlayPositionMarker>         playPositionMarker;
     
     

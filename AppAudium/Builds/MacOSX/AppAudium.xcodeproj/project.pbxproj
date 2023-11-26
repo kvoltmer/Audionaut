@@ -200,6 +200,7 @@
 		C7202C377D3DE8D18030C3B9 /* README.txt */ /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = README.txt; path = ../../Catch2Tests/README.txt; sourceTree = SOURCE_ROOT; };
 		CA39B6E9F9CE7E4D8C8168A4 /* TransportPositionControl.h */ /* TransportPositionControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TransportPositionControl.h; path = ../../Source/Interface/Controls/TransportPositionControl.h; sourceTree = SOURCE_ROOT; };
 		CD915B059555AF45DF4EB0A9 /* AutoEditDialog.h */ /* AutoEditDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoEditDialog.h; path = ../../Source/Interface/Dialogs/AutoEditDialog.h; sourceTree = SOURCE_ROOT; };
+		CEF598643145FF6054F72D38 /* EditComponent.h */ /* EditComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EditComponent.h; path = ../../Source/Interface/Components/MiddlePanel/EditComponent.h; sourceTree = SOURCE_ROOT; };
 		D0FD3C88C9809AA0C63BB2DB /* LinkEngine.hpp */ /* LinkEngine.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LinkEngine.hpp; path = ../../Source/Engine/Link/LinkEngine.hpp; sourceTree = SOURCE_ROOT; };
 		D2358E35E288116D96FC2C35 /* AudioGroup.h */ /* AudioGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioGroup.h; path = ../../Source/Engine/AudioGroup.h; sourceTree = SOURCE_ROOT; };
 		D4D5A4A65120A0024822645B /* AudioRegionContainer.cpp */ /* AudioRegionContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegionContainer.cpp; path = ../../Source/Engine/AudioRegionContainer.cpp; sourceTree = SOURCE_ROOT; };
@@ -428,6 +429,7 @@
 		74E6B86D2900C2BD6C34083A /* MiddlePanel */ = {
 			isa = PBXGroup;
 			children = (
+				CEF598643145FF6054F72D38,
 				492448CAB8596C414F7AF104,
 				1C148D860B25FD76F44C8D20,
 				FD539AEE84872645162E0663,

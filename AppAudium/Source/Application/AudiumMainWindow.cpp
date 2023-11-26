@@ -123,7 +123,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::commandModifier | ModifierKeys::ctrlModifier, 0));
             break;
         case CommandIDs::toggleEditArrangement:
-            result.setInfo ("Toggle Region-Edit/Arrangement View", "Toggle Region-Edit/Arrangement View", CommandCategories::view, 0);
+            result.setInfo ("Toggle Edit/Arrangement View", "Toggle Edit/Arrangement View", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress (KeyPress::tabKey, ModifierKeys::noModifiers, 0));
             break;
         case CommandIDs::zoomIn:
@@ -164,7 +164,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             setFullScreen (!isFullScreen());
             break;
         case CommandIDs::toggleEditArrangement:
-            notImplemented();
+            mainComponent->toggleEditArrangementComponent();
             break;
         case CommandIDs::zoomIn:
             mainComponent->zoomIn();
