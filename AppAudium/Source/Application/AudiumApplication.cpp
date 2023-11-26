@@ -199,8 +199,13 @@ PopupMenu AudiumApplication::createEditMenu()
 PopupMenu AudiumApplication::createViewMenu()
 {
     PopupMenu menu;
+    menu.addCommandItem (commandManager.get(), CommandIDs::toggleFullScreen);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::toggleEditArrangement);
+    menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomIn);
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomOut);
+    menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::followTransport);
 
     return menu;
