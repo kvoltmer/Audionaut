@@ -40,17 +40,22 @@ public:
                     auto audioFormatReaderSource = std::make_unique<juce::AudioFormatReaderSource> (reader.release(), true);
                     
                     auto transportSource = group->getTransportSourceContainer()->createNewTransportSource();
-                    
-                    // plug it into the transport source
                     transportSource->setSource (audioFormatReaderSource.get(),
                                                 32768,                   // tells it to buffer this many samples ahead
-                                                readAheadThread,                 // this is the background thread to use for reading-ahead
+                                                readAheadThread,         // this is the background thread to use for reading-ahead
                                                 audioFormatReaderSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
-
+                    
+                    
+                    auto audioThumbnail = std::shared_ptr<juce::AudioThumbnail>(new juce::AudioThumbnail(4096*4,
+                                                                                                             formatManager,
+                                                                                                             *audioResourceContainer.getAudioThumbnailCache().get()));
+                    audioThumbnail->setSource(inputSource.release());
+                    
                     audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
                                                                                      url,
                                                                                      transportSource,
-                                                                                     std::move(audioFormatReaderSource)));
+                                                                                     std::move(audioFormatReaderSource),
+                                                                                     audioThumbnail));
                 }
             }
         }

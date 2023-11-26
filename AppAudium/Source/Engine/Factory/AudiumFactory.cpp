@@ -35,16 +35,17 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto formatManager              = std::shared_ptr<juce::AudioFormatManager> (new juce::AudioFormatManager());
     
+    auto audioThumbnailCache        = std::shared_ptr<juce::AudioThumbnailCache>(new juce::AudioThumbnailCache(64));
+    
     auto audioResourceContainer     = std::shared_ptr<AudioResourceContainer>   (new AudioResourceContainer(audioDeviceManager,
                                                                                                             audioGroupContainer,
-                                                                                                            formatManager));
+                                                                                                            formatManager,
+                                                                                                            audioThumbnailCache));
     
     auto linkAudioDevice            = std::shared_ptr<LinkAudioDevice>          (new LinkAudioDevice(linkEngine,
                                                                                                      playListScheduler,
                                                                                                      audioResourceContainer));
-    
-    auto audioThumbnailCache        = std::shared_ptr<juce::AudioThumbnailCache>(new juce::AudioThumbnailCache(64));
-    
+        
     auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer(audioResourceContainer,
                                                                                                           audioGroupContainer,
                                                                                                           playListScheduler,
