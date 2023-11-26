@@ -126,7 +126,7 @@ void MainComponent::resized()
     //[/UserPreResize]
 
     //[UserResized] Add your own custom resize handling here..
-    
+
     const auto headerHeight = headerComponent->getHeight();
     headerComponent->setBounds(0, 0, getWidth(), headerHeight);
 
@@ -225,6 +225,20 @@ void MainComponent::zoomIn()
 void MainComponent::zoomOut()
 {
     middlePanelComponent->zoomOut();
+}
+
+void MainComponent::toggleEditArrangementComponent()
+{
+    if (middlePanelComponent->arrangementComponentVisible())
+    {
+        middlePanelComponent->showArrangementComponent(false);
+        middlePanelComponent->showEditComponent(true);
+    }
+    else
+    {
+        middlePanelComponent->showArrangementComponent(true);
+        middlePanelComponent->showEditComponent(false);
+    }
 }
 
 //[/MiscUserCode]
