@@ -15,7 +15,6 @@
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
-
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
     : DocumentWindow (name,
                       juce::Desktop::getInstance().getDefaultLookAndFeel()
@@ -91,7 +90,9 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::autoEdit,
         CommandIDs::zoomIn,
         CommandIDs::zoomOut,
-        CommandIDs::followTransport
+        CommandIDs::followTransport,
+        CommandIDs::toggleEditArrangement,
+        CommandIDs::toggleFullScreen,
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -117,6 +118,14 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
             result.defaultKeypresses.add (KeyPress ('e', ModifierKeys::commandModifier, 0));
             break;
+        case CommandIDs::toggleFullScreen:
+            result.setInfo ("Full Screen", "Enter full screen", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::commandModifier | ModifierKeys::ctrlModifier, 0));
+            break;
+        case CommandIDs::toggleEditArrangement:
+            result.setInfo ("Toggle Region-Edit/Arrangement View", "Toggle Region-Edit/Arrangement View", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress (KeyPress::tabKey, ModifierKeys::noModifiers, 0));
+            break;
         case CommandIDs::zoomIn:
             result.setInfo ("Zoom In", "Zoom in", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::ctrlModifier, 0));
@@ -134,8 +143,6 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
     }
 }
 
-#include "Engine/PlayList/PlayListScheduler.h"
-
 bool AudiumMainWindow::perform (const InvocationInfo& info)
 {
     switch (info.commandID)
@@ -152,6 +159,12 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::autoEdit:
             autoEditDialog.invokeAutoEdit(getEngine(), mainComponent);
+            break;
+        case CommandIDs::toggleFullScreen:
+            setFullScreen (!isFullScreen());
+            break;
+        case CommandIDs::toggleEditArrangement:
+            notImplemented();
             break;
         case CommandIDs::zoomIn:
             mainComponent->zoomIn();
