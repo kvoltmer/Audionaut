@@ -16,6 +16,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
+
 class AudioResourceContainer;
 class AudioPlayer;
 class AudiumTransportSource;
@@ -26,12 +27,34 @@ public:
     AudioResource(AudioResourceContainer& audioResourceContainer,
                   juce::URL url,
                   std::shared_ptr<AudiumTransportSource> transportSource,
-                  std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
+                  std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
+                  std::shared_ptr<juce::AudioThumbnail> audioThumbnail) :
         owner(audioResourceContainer),
         url(url),
-        transportSource(transportSource)
+        transportSource(transportSource),
+        audioThumbnail(audioThumbnail)
     {
         this->audioFormatReaderSource = std::move(audioFormatReaderSource);
+        
+        
+//        audioThumbnail = std::unique_ptr<juce::AudioThumbnail>(new juce::AudioThumbnail(4096*4,
+//                                                                                                 *formatManager.get(),
+//                                                                                                 *audioThumbnailCache.get()));
+//            //std::cout << "new thumbnail " << audioThumbnail.get() << " for resource " << resource.get() << std::endl;
+//            if (auto inputSource = std::unique_ptr<juce::URLInputSource> (new juce::URLInputSource(resource->getUrl())))
+//            {
+//                if (auto stream = rawToUniquePtr (inputSource->createInputStream()))
+//                {
+//                    if (auto reader = rawToUniquePtr (formatManager->createReaderFor (std::move (stream))))
+//                    {
+//        //                    auto hashsource = name + resource->getUrl().getLocalFile().getFullPathName();
+//        //                    audioThumbnail->setReader(reader.release(), hashsource.hash());
+//
+//                        audioThumbnail->setReader(reader.release(), inputSource->hashCode());
+//                    }
+//                }
+//            }
+        
     }
     
     ~AudioResource();
@@ -57,6 +80,8 @@ public:
     unsigned int getNumChannels() const;
     double getLengthInSeconds() const;
     
+    juce::AudioThumbnail* getAudioThumbnail() const { return audioThumbnail.get(); }
+    
 private:
 
     AudioResourceContainer& owner;
@@ -66,6 +91,9 @@ private:
     std::shared_ptr<AudiumTransportSource> transportSource;
     
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
+    
+    std::shared_ptr<juce::AudioThumbnail> audioThumbnail;
+    //std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
     
     int height = 100;
     

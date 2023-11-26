@@ -24,7 +24,16 @@ class AudioResourceContainer : public juce::ActionBroadcaster
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                            std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-                           std::shared_ptr<juce::AudioFormatManager> formatManager);
+                           std::shared_ptr<juce::AudioFormatManager> formatManager,
+                           std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache) :
+        audioDeviceManager(audioDeviceManager),
+        audioGroupContainer(audioGroupContainer),
+        formatManager(formatManager),
+        audioThumbnailCache(audioThumbnailCache)
+    {
+        formatManager->registerBasicFormats();
+        thread.startThread();
+    }
     
     ~AudioResourceContainer();
     
@@ -60,6 +69,7 @@ public:
     void prepareToPlay (double sampleRate, int blockSize);
     
     std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
+    std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }
     
     typedef std::pair<std::shared_ptr<AudioGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
     
@@ -70,6 +80,7 @@ private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<juce::AudioFormatManager> formatManager;
+    std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
         
     /// TODO: find a proper home for this
     juce::TimeSliceThread thread  { "audio file read ahead" };

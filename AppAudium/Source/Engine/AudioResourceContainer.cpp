@@ -18,16 +18,16 @@
 
 
 
-AudioResourceContainer::AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                                               std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-                                               std::shared_ptr<juce::AudioFormatManager> formatManager) :
-    audioDeviceManager(audioDeviceManager),
-    audioGroupContainer(audioGroupContainer),
-    formatManager(formatManager)
-{
-    formatManager->registerBasicFormats();
-    thread.startThread();
-}
+//AudioResourceContainer::AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
+//                                               std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+//                                               std::shared_ptr<juce::AudioFormatManager> formatManager) :
+//    audioDeviceManager(audioDeviceManager),
+//    audioGroupContainer(audioGroupContainer),
+//    formatManager(formatManager)
+//{
+//    formatManager->registerBasicFormats();
+//    thread.startThread();
+//}
 
 AudioResourceContainer::~AudioResourceContainer()
 {

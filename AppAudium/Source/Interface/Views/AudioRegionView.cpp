@@ -33,14 +33,14 @@ AudioRegionView::AudioRegionView(std::shared_ptr<AudioResource> resource,
     // use buffered image
     // setBufferedToImage(true);
         
-    auto thumb = audioRegion->getAudioThumbnailForResource(audioResource);
+    auto thumb = audioResource->getAudioThumbnail();
     jassert(thumb != nullptr);
     thumb->addChangeListener(this);
 }
 
 AudioRegionView::~AudioRegionView()
 {
-    auto thumb = audioRegion->getAudioThumbnailForResource(audioResource);
+    auto thumb = audioResource->getAudioThumbnail();
     jassert(thumb != nullptr);
     thumb->removeChangeListener(this);
 }
@@ -85,7 +85,7 @@ void AudioRegionView::paint (juce::Graphics& g)
 {
     paintBackground(g);
     
-    auto thumb = audioRegion->getAudioThumbnailForResource(audioResource);
+    auto thumb = audioResource->getAudioThumbnail();
     jassert(thumb != nullptr);
     
     jassert(audioResource != nullptr);
@@ -132,7 +132,8 @@ void AudioRegionView::paint (juce::Graphics& g)
     else
     {
         g.setFont (14.0f);
-        g.drawFittedText ("audio resource not available", getLocalBounds(), Justification::centred, 2);
+        g.setColour(juce::Colours::white);
+        g.drawFittedText ("audio data not available", getLocalBounds(), Justification::centred, 2);
     }
 
 

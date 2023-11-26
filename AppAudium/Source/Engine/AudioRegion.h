@@ -26,14 +26,9 @@ public:
         tempoProvider(tempoProvider)
     {
         jassert(audioGroup != nullptr);
-        createThumbnails(audioThumbnailCache);
     }
     
     ~AudioRegion();
-    
-    void createThumbnails(std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache);
-    
-    juce::AudioThumbnail* getAudioThumbnailForResource(std::shared_ptr<AudioResource> resource) const;
     
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     
@@ -57,14 +52,10 @@ public:
     void setRegionLength(double newLength);
     
 private:
-    // Start and end position of audio file in seconds.
+    // Start and end position of audio region in seconds.
     RegionData regionData;
     
     std::shared_ptr<AudioGroup> audioGroup;
-    
-    typedef std::pair<std::shared_ptr<AudioResource>, std::unique_ptr<juce::AudioThumbnail>> tResourceThumbnailPair;
-    
-    std::vector<tResourceThumbnailPair> audioThumbnails;
     
     std::shared_ptr<TempoProvider> tempoProvider;
         
