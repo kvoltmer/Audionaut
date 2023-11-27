@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    AudioGroupComponent.cpp
+    ArrangementGroupComponent.cpp
     Created: 27 Nov 2022 3:25:58pm
     Author:  Klaus Voltmer
 
@@ -9,10 +9,10 @@
 */
 
 #include <JuceHeader.h>
-#include "AudioGroupComponent.h"
+#include "ArrangementGroupComponent.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Controls/AudioGroupListBox.h"
-#include "Interface/Components/MiddlePanel/AudioGroupRegionComponent.h"
+#include "Interface/Components/MiddlePanel/PlayListItemComponent.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListContainer.h"
@@ -22,7 +22,7 @@
 using namespace audium;
 
 
-AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioGroup> group,
+ArrangementGroupComponent::ArrangementGroupComponent (std::shared_ptr<AudioGroup> group,
                                           std::shared_ptr<AudiumEngine> audiumEngine,
                                           std::shared_ptr<ZoomHandler> zoomHandler) :
     audiumEngine(audiumEngine),
@@ -35,11 +35,11 @@ AudioGroupComponent::AudioGroupComponent (std::shared_ptr<AudioGroup> group,
     refreshComponent(group);
 }
 
-AudioGroupComponent::~AudioGroupComponent()
+ArrangementGroupComponent::~ArrangementGroupComponent()
 {
 }
 
-void AudioGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
+void ArrangementGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
 {
     audioGroup = group;
     
@@ -51,20 +51,20 @@ void AudioGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, b
     resized();
 }
 
-bool AudioGroupComponent::mustRebuildComponents() const
+bool ArrangementGroupComponent::mustRebuildComponents() const
 {
     // compare play list items
     auto playListContainer = audiumEngine->getPlayListContainer(audioGroup);
     auto playListItems = playListContainer->getPlayListItems();
     
-    if (playListItems.size() != audioGroupRegions.size())
+    if (playListItems.size() != playListItemComponents.size())
     {
         return true;
     }
     
     for (auto i = 0; i < playListItems.size(); i++)
     {
-        if (playListItems[i] != audioGroupRegions[i]->getPlayListItem())
+        if (playListItems[i] != playListItemComponents[i]->getPlayListItem())
         {
             return true;
         }
@@ -73,11 +73,11 @@ bool AudioGroupComponent::mustRebuildComponents() const
     return false;
 }
 
-void AudioGroupComponent::rebuildComponents()
+void ArrangementGroupComponent::rebuildComponents()
 {
-    std::cout << "AudioGroupComponent::rebuildComponents " << audioGroup->getId() << std::endl;
+    std::cout << "ArrangementGroupComponent::rebuildComponents " << audioGroup->getId() << std::endl;
     removeAllChildren();
-    audioGroupRegions.clear();
+    playListItemComponents.clear();
     
     // get all play list items and create components
     auto playListContainer = audiumEngine->getPlayListContainer(audioGroup);
@@ -86,14 +86,14 @@ void AudioGroupComponent::rebuildComponents()
     
     for (auto playListItem : playListItems)
     {
-        auto groupRegion = std::shared_ptr<AudioGroupRegionComponent>(new AudioGroupRegionComponent(audioGroup, playListItem, zoomHandler));
+        auto groupRegion = std::shared_ptr<PlayListItemComponent>(new PlayListItemComponent(audioGroup, playListItem, zoomHandler));
         
         addAndMakeVisible(groupRegion.get());
-        audioGroupRegions.push_back(groupRegion);
+        playListItemComponents.push_back(groupRegion);
     }
 }
 
-void AudioGroupComponent::paint (juce::Graphics& g)
+void ArrangementGroupComponent::paint (juce::Graphics& g)
 {
     if (externalDragAndDrop)
     {
@@ -102,9 +102,9 @@ void AudioGroupComponent::paint (juce::Graphics& g)
 }
 
 
-void AudioGroupComponent::resized()
+void ArrangementGroupComponent::resized()
 {
-    for (auto regionView : audioGroupRegions)
+    for (auto regionView : playListItemComponents)
     {
         auto playListItem = regionView->getPlayListItem();
         auto start = zoomHandler->clocksToX(playListItem->getAbsolueStartTime());
@@ -113,7 +113,7 @@ void AudioGroupComponent::resized()
     }
 }
 
-void AudioGroupComponent::filesDropped (const StringArray& filenames, int /*x*/, int /*y*/)
+void ArrangementGroupComponent::filesDropped (const StringArray& filenames, int /*x*/, int /*y*/)
 {
     if ( !filenames.isEmpty())
     {
@@ -132,34 +132,34 @@ void AudioGroupComponent::filesDropped (const StringArray& filenames, int /*x*/,
     repaint();
 }
 
-void AudioGroupComponent::fileDragEnter (const juce::StringArray& files, int x, int y)
+void ArrangementGroupComponent::fileDragEnter (const juce::StringArray& files, int x, int y)
 {
     externalDragAndDrop = true;
     repaint();
 }
-void AudioGroupComponent::fileDragExit (const juce::StringArray& files)
+void ArrangementGroupComponent::fileDragExit (const juce::StringArray& files)
 {
     externalDragAndDrop = false;
     repaint();
 }
 
-void AudioGroupComponent::mouseDown (const MouseEvent& e)
+void ArrangementGroupComponent::mouseDown (const MouseEvent& e)
 {
     getParentComponent()->mouseDown(e);
     mouseDrag (e);
 }
 
-void AudioGroupComponent::mouseDrag (const MouseEvent& e)
+void ArrangementGroupComponent::mouseDrag (const MouseEvent& e)
 {
     getParentComponent()->mouseDrag(e);
 }
 
-void AudioGroupComponent::mouseUp (const MouseEvent& e)
+void ArrangementGroupComponent::mouseUp (const MouseEvent& e)
 {
     getParentComponent()->mouseUp(e);
 }
 
-void AudioGroupComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
+void ArrangementGroupComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
 {
     getParentComponent()->mouseWheelMove(e, wheel);
 }

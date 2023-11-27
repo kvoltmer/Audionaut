@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    AudioGroupRegionComponent.cpp
+    PlayListItemComponent.cpp
     Created: 28 Sep 2023 12:07:58pm
     Author:  Klaus Voltmer
 
@@ -9,7 +9,7 @@
 */
 
 #include <JuceHeader.h>
-#include "AudioGroupRegionComponent.h"
+#include "PlayListItemComponent.h"
 #include "Engine/AudioGroup.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Interface/Views/AudioRegionView.h"
@@ -18,7 +18,7 @@
 #include "Interface/ColourIds.h"
 
 //==============================================================================
-AudioGroupRegionComponent::AudioGroupRegionComponent(std::shared_ptr<AudioGroup> audioGroup,
+PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudioGroup> audioGroup,
                                                      std::shared_ptr<PlayListItem> playListItem,
                                                      std::shared_ptr<ZoomHandler> zoomHandler) :
     audioGroup(audioGroup),
@@ -37,11 +37,11 @@ AudioGroupRegionComponent::AudioGroupRegionComponent(std::shared_ptr<AudioGroup>
     }
 }
 
-AudioGroupRegionComponent::~AudioGroupRegionComponent()
+PlayListItemComponent::~PlayListItemComponent()
 {
 }
 
-void AudioGroupRegionComponent::paint (juce::Graphics& g)
+void PlayListItemComponent::paint (juce::Graphics& g)
 {
     if (playListItem->isSelected())
     {
@@ -56,7 +56,7 @@ void AudioGroupRegionComponent::paint (juce::Graphics& g)
     
 }
 
-void AudioGroupRegionComponent::resized()
+void PlayListItemComponent::resized()
 {
     int top = 0;
     int count = 0;

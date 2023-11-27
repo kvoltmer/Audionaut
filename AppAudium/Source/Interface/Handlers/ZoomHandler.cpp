@@ -51,7 +51,7 @@ double ZoomHandler::zoomOut()
     return zoomFactor;
 }
 
-double ZoomHandler::getArrangementContentWidth() const
+double ZoomHandler::getContentWidth() const
 {
     // get arrangement length from the playlist
     const auto clocks = playListScheduler->getTotalLengthClocks();

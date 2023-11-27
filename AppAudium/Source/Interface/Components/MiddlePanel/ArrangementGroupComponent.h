@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    AudioGroupComponent.h
+    ArrangementGroupComponent.h
     Created: 27 Nov 2022 3:25:58pm
     Author:  Klaus Voltmer
 
@@ -20,27 +20,26 @@ using namespace juce;
 
 class AudioGroup;
 class PlayListContainer;
-class AudioGroupRegionComponent;
+class PlayListItemComponent;
 
 //==============================================================================
-/// TODO: discuss class name: maybe TrackComponent suites better
 /*
  
- Display Regions in Timeline
+ Display Playlist items in Timeline
  
  Display a AudioGroup as part of AudioGroupListBoxModel.
  
  A AudioGroup may contain multiple regions in the Timeline. The PlayListContainer holds the region information
  */
-class AudioGroupComponent  : public Component,
+class ArrangementGroupComponent  : public Component,
                            public FileDragAndDropTarget
 {
 public:
-    AudioGroupComponent (std::shared_ptr<AudioGroup> audioGroup,
+    ArrangementGroupComponent (std::shared_ptr<AudioGroup> audioGroup,
                          std::shared_ptr<AudiumEngine> audiumEngine,
                          std::shared_ptr<ZoomHandler> zoomHandler);
 
-    ~AudioGroupComponent() override;
+    ~ArrangementGroupComponent() override;
     
     void refreshComponent (std::shared_ptr<AudioGroup> audioGroup, bool forceRebuildComponents = false);
 
@@ -71,11 +70,11 @@ private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     
-    std::vector<std::shared_ptr<AudioGroupRegionComponent>> audioGroupRegions;
+    std::vector<std::shared_ptr<PlayListItemComponent>> playListItemComponents;
     
     bool externalDragAndDrop = false;
     
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroupComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ArrangementGroupComponent)
     
 };
