@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    AudioGroupRegionComponent.h
+    PlayListItemComponent.h
     Created: 28 Sep 2023 12:07:58pm
     Author:  Klaus Voltmer
 
@@ -22,13 +22,13 @@ class AudioRegionView;
 /*
 Display all AudioRegionViews within a AudioGroup
 */
-class AudioGroupRegionComponent  : public juce::Component
+class PlayListItemComponent  : public juce::Component
 {
 public:
-    AudioGroupRegionComponent(std::shared_ptr<AudioGroup> audioGroup,
+    PlayListItemComponent(std::shared_ptr<AudioGroup> audioGroup,
                               std::shared_ptr<PlayListItem> playListItem,
                               std::shared_ptr<ZoomHandler> zoomHandler);
-    ~AudioGroupRegionComponent() override;
+    ~PlayListItemComponent() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -41,5 +41,5 @@ private:
     
     std::vector<std::shared_ptr<AudioRegionView>> children;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroupRegionComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)
 };

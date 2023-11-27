@@ -5,7 +5,7 @@
 #include <JuceHeader.h>
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
-#include "Interface/Components/MiddlePanel/AudioGroupComponent.h"
+#include "Interface/Components/MiddlePanel/ArrangementGroupComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Controls/AudioGroupListBox.h"
@@ -18,10 +18,12 @@ public:
     
     AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
                            std::shared_ptr<AudiumEngine> audiumEngine,
-                           std::shared_ptr<ZoomHandler> zoomHandler) :
+                           std::shared_ptr<ZoomHandler> zoomHandler,
+                           bool arrangementMode = true) :
         owner(owner),
         audiumEngine(audiumEngine),
-        zoomHandler(zoomHandler)
+        zoomHandler(zoomHandler),
+        arrangementMode(arrangementMode)
     {
     }
     
@@ -57,5 +59,7 @@ private:
     std::shared_ptr<AudioGroupListBox> owner;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
+    
+    bool arrangementMode = true;
 
 };

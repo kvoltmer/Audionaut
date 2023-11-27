@@ -32,13 +32,19 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
     {
         if (audioGroup != nullptr)
         {
-            auto component = new AudioGroupComponent(audioGroup, audiumEngine, zoomHandler);
-            return component;
+            if (arrangementMode)
+            {
+                return new ArrangementGroupComponent(audioGroup, audiumEngine, zoomHandler);
+            }
+            else
+            {
+                return nullptr;
+            }
         }
     }
     else
     {
-        auto component = dynamic_cast<AudioGroupComponent*>(existingComponentToUpdate);
+        auto component = dynamic_cast<ArrangementGroupComponent*>(existingComponentToUpdate);
         jassert(component);
     
         if (audioGroup != nullptr)

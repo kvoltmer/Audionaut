@@ -62,7 +62,7 @@ public:
     
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
-    double getArrangementContentWidth() const;
+    double getContentWidth() const;
     
     double getZoomFactor() const { return zoomFactor; }
     void setZoomFactor(double zoom) { zoomFactor = zoom; }

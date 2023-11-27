@@ -29,7 +29,7 @@ public:
         arrangementComponent.reset(new ArrangementComponent(audiumEngine));
         addAndMakeVisible(arrangementComponent.get());
         
-        editComponent.reset(new EditComponent());
+        editComponent.reset(new EditComponent(audiumEngine));
         addAndMakeVisible(editComponent.get());
         editComponent->setVisible(false);
     }
@@ -71,16 +71,20 @@ public:
     
     void zoomIn()
     {
-        arrangementComponent->zoomIn();
-        // TODO: implement
-        //editComponent->...
+        if (arrangementComponent->isVisible())
+            arrangementComponent->zoomIn();
+        
+        if (editComponent->isVisible())
+            editComponent->zoomIn();
     }
     
     void zoomOut()
     {
-        arrangementComponent->zoomOut();
-        // TODO: implement
-        //editComponent->...
+        if (arrangementComponent->isVisible())
+            arrangementComponent->zoomOut();
+        
+        if (editComponent->isVisible())
+            editComponent->zoomOut();
     }
     
     void showArrangementComponent(bool visible)

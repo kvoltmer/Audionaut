@@ -136,6 +136,8 @@
                   file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
           </GROUP>
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
+            <FILE id="nZ2YVn" name="ArrangementEditBaseComponent.h" compile="0"
+                  resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"/>
             <FILE id="P0XL88" name="EditComponent.h" compile="0" resource="0" file="Source/Interface/Components/MiddlePanel/EditComponent.h"/>
             <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
@@ -147,14 +149,14 @@
                   file="Source/Interface/Components/MiddlePanel/ChannelComponent.h"/>
             <FILE id="qZ2Ulf" name="ArrangementComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/ArrangementComponent.h"/>
-            <FILE id="EXPE1i" name="AudioGroupComponent.cpp" compile="1" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/AudioGroupComponent.cpp"/>
-            <FILE id="R9kAWR" name="AudioGroupComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/AudioGroupComponent.h"/>
-            <FILE id="XNFDZ6" name="AudioGroupRegionComponent.cpp" compile="1"
-                  resource="0" file="Source/Interface/Components/MiddlePanel/AudioGroupRegionComponent.cpp"/>
-            <FILE id="VzTGOV" name="AudioGroupRegionComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/AudioGroupRegionComponent.h"/>
+            <FILE id="EXPE1i" name="ArrangementGroupComponent.cpp" compile="1"
+                  resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementGroupComponent.cpp"/>
+            <FILE id="R9kAWR" name="ArrangementGroupComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/ArrangementGroupComponent.h"/>
+            <FILE id="XNFDZ6" name="PlayListItemComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/PlayListItemComponent.cpp"/>
+            <FILE id="VzTGOV" name="PlayListItemComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/PlayListItemComponent.h"/>
           </GROUP>
           <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
             <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
