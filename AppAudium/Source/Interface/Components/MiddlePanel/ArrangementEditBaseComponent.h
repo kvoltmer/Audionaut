@@ -20,6 +20,14 @@
 #include "Interface/Controls/TransportPositionControl.h"
 #include "Engine/AudioGroupContainer.h"
 
+//==============================================================================
+/*
+
+ Base class to display timeline stuff
+ 
+ This call contains the AudioGroupListBox!
+
+ */
 class ArrangementEditBaseComponent  : public juce::Component
 {
 public:

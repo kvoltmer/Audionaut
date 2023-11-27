@@ -1,26 +1,18 @@
 /*
   ==============================================================================
 
- AudioRegionView.cpp
-    Created: 19 Sep 2023 2:20:32pm
+    AudioResourceView.cpp
+    Created: 27 Nov 2023 3:58:42pm
     Author:  Klaus Voltmer
 
   ==============================================================================
 */
 
 #include <JuceHeader.h>
-#include "AudioRegionView.h"
-#include "Interface/Handlers/ZoomHandler.h"
-#include "Engine/AudioResource.h"
-#include "Interface/ColourIds.h"
-#include "Engine/AudioRegion.h"
-#include "Engine/AudioGroup.h"
-#include "Engine/PlayList/PlayListScheduler.h"
-
-using namespace juce;
+#include "AudioResourceView.h"
 
 //==============================================================================
-void AudioRegionView::paint (juce::Graphics& g)
+void AudioResourceView::paint (juce::Graphics& g)
 {
     paintBackground(g);
     
@@ -33,7 +25,7 @@ void AudioRegionView::paint (juce::Graphics& g)
     {
         // the waveform colour
         g.setColour (colour);
-        
+
         // calc the absolute x offset. (our top level component is 2 levels up)
         auto absoluteOffset = getLocalPoint (getParentComponent()->getParentComponent(), juce::Point<float> {0.f, 0.f}).getX();
         
@@ -44,7 +36,7 @@ void AudioRegionView::paint (juce::Graphics& g)
         visibleRange = visibleRange.movedToStartAt(visibleRange.getStart() + absoluteOffset);
         
         
-        auto start = audioRegion->getRegionDataInSeconds().getStart();
+        auto start = 0.0;//audioRegion->getRegionDataInSeconds().getStart();
         start += zoomHandler->xToSeconds(visibleRange.getStart());
         
         // our local bounds
@@ -64,16 +56,8 @@ void AudioRegionView::paint (juce::Graphics& g)
 //        std::cout << this << " DRAW x = " << thumbArea.getX() << " width = " << thumbArea.getWidth();
 //        std::cout << " start = " << start << " length = " << end - start;
 //        std::cout << std::endl;
-        
 
         paintFileNameLabel(g);
     }
-    else
-    {
-        g.setFont (14.0f);
-        g.setColour(juce::Colours::white);
-        g.drawFittedText ("audio data not available", getLocalBounds(), Justification::centred, 2);
-    }
 }
-
 
