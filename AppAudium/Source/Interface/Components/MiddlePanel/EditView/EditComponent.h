@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ArrangementEditBaseComponent.h"
+#include "Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"
 
 class EditComponent  : public ArrangementEditBaseComponent
 {

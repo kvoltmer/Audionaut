@@ -63,8 +63,7 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     auto visibleRangeSeconds = zoomHandler->getVisibleRangeInSeconds();
 
     auto regionPosition = juce::Range<double>(2.0, 3.0);
-    
-    auto regionRangeSeconds = zoomHandler->getPlayListScheduler()->clocksToSeconds(regionPosition);
+
     
     
     zoomHandler = nullptr;

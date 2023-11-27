@@ -14,7 +14,7 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Widgets/audium_ListBox.h"
-#include "Interface/Components/MiddlePanel/ChannelComponent.h"
+#include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Engine/AudiumEngine.h"
 
 class AudioChannelsListBoxModel  : public audium::ListBoxModel

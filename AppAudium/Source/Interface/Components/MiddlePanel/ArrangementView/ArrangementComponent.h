@@ -12,8 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "ArrangementEditBaseComponent.h"
-
+#include "Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"
 
 class ArrangementComponent  : public ArrangementEditBaseComponent
 {
