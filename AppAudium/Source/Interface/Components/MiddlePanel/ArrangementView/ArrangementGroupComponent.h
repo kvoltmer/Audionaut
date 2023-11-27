@@ -15,6 +15,7 @@
 
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/RegionSelector.h"
+#include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
 
 using namespace juce;
 
@@ -31,49 +32,24 @@ class PlayListItemComponent;
  
  A AudioGroup may contain multiple regions in the Timeline. The PlayListContainer holds the region information
  */
-class ArrangementGroupComponent  : public Component,
-                           public FileDragAndDropTarget
+class ArrangementGroupComponent : public GroupBaseComponent
 {
 public:
+        
     ArrangementGroupComponent (std::shared_ptr<AudioGroup> audioGroup,
                          std::shared_ptr<AudiumEngine> audiumEngine,
                          std::shared_ptr<ZoomHandler> zoomHandler);
-
-    ~ArrangementGroupComponent() override;
     
-    void refreshComponent (std::shared_ptr<AudioGroup> audioGroup, bool forceRebuildComponents = false);
-
-    void paint (juce::Graphics&) override;
+    void refreshComponent (std::shared_ptr<AudioGroup> audioGroup, bool forceRebuildComponents = false) override;
     
     void resized() override;
-
-    // drag & drop:
-    void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
-    bool isInterestedInFileDrag (const juce::StringArray& /*files*/) override { return true; }
-    void fileDragEnter (const juce::StringArray& files, int x, int y) override;
-    void fileDragExit (const juce::StringArray& files) override;
-    
-    void mouseDown (const MouseEvent& e) override;
-
-    void mouseDrag (const MouseEvent& e) override;
-
-    void mouseUp (const MouseEvent&) override;
-
-    void mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel) override;
     
 private:
     
     bool mustRebuildComponents() const;
     void rebuildComponents();
     
-    std::shared_ptr<AudioGroup> audioGroup;
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<ZoomHandler> zoomHandler;
-    
     std::vector<std::shared_ptr<PlayListItemComponent>> playListItemComponents;
-    
-    bool externalDragAndDrop = false;
-    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ArrangementGroupComponent)
     

@@ -136,6 +136,8 @@
                   file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
           </GROUP>
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
+            <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
             <GROUP id="{A0B6750B-2394-A03B-7D3F-87C4EFC39BE3}" name="ChannelView">
               <FILE id="CpLcdw" name="ChannelComponent.cpp" compile="1" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.cpp"/>
@@ -146,6 +148,8 @@
             </GROUP>
             <GROUP id="{B76B0D36-C9A9-6C1E-B42A-40EF5EABF872}" name="EditView">
               <FILE id="yEfxaX" name="EditComponent.h" compile="0" resource="0" file="Source/Interface/Components/MiddlePanel/EditView/EditComponent.h"/>
+              <FILE id="b3SGrh" name="EditGroupComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"/>
             </GROUP>
             <GROUP id="{E58A07C4-B58F-25CE-C91A-E093F52645A1}" name="ArrangementView">
               <FILE id="peKTnY" name="ArrangementComponent.h" compile="0" resource="0"
@@ -159,10 +163,12 @@
               <FILE id="MSH6BQ" name="PlayListItemComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"/>
             </GROUP>
-            <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
             <FILE id="nZ2YVn" name="ArrangementEditBaseComponent.h" compile="0"
                   resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"/>
+            <FILE id="TrmNCI" name="GroupBaseComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/GroupBaseComponent.cpp"/>
+            <FILE id="RMeAIj" name="GroupBaseComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/GroupBaseComponent.h"/>
           </GROUP>
           <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
             <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
