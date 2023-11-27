@@ -53,6 +53,9 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Interface/Components/*.cpp
         ${SRC_PATH}/Interface/Components/HeaderPanel/*.cpp
         ${SRC_PATH}/Interface/Components/MiddlePanel/*.cpp
+        ${SRC_PATH}/Interface/Components/MiddlePanel/ArrangementView/*.cpp
+        ${SRC_PATH}/Interface/Components/MiddlePanel/ChannelView/*.cpp
+        ${SRC_PATH}/Interface/Components/MiddlePanel/EditView/*.cpp
         ${SRC_PATH}/Interface/Components/RightPanel/*.cpp
         ${SRC_PATH}/Interface/Controls/*.cpp
         ${SRC_PATH}/Interface/Dialogs/*.cpp

@@ -12,9 +12,9 @@
 
 #include <JuceHeader.h>
 
-#include "ChannelsComponent.h"
-#include "ArrangementComponent.h"
-#include "EditComponent.h"
+#include "Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"
+#include "Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"
+#include "Interface/Components/MiddlePanel/EditView/EditComponent.h"
 
 class AudiumEngine;
 
