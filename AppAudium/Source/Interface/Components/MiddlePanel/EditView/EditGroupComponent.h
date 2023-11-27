@@ -13,8 +13,7 @@
 #include <JuceHeader.h>
 
 #include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
-#include "Interface/ColourIds.h"
-
+#include "Interface/Views/AudioResourceView.h"
 
 //==============================================================================
 /*
@@ -28,19 +27,68 @@ public:
                          std::shared_ptr<ZoomHandler> zoomHandler) :
         GroupBaseComponent(group, audiumEngine, zoomHandler)
     {
+        // this component doesn't handle mouse events
+        setInterceptsMouseClicks(false, false);
+        
         refreshComponent(group);
     }    
     
-    void refreshComponent (std::shared_ptr<AudioGroup> audioGroup, bool forceRebuildComponents = false) override
+    void refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents = false) override
     {
+        audioGroup = group;
         
+        if (mustRebuildComponents() ||
+            forceRebuildComponents)
+        {
+            rebuildComponents();
+        }
+        resized();
+    }
+    
+    bool mustRebuildComponents() const { return true; }
+    
+    void rebuildComponents()
+    {
+        removeAllChildren();
+        children.clear();
+        
+        // create views
+        auto audioResources = audioGroup->getAudioResources();
+        for (auto audioResource : audioResources)
+        {
+            auto view = std::shared_ptr<AudioResourceView>(new AudioResourceView(audioResource, zoomHandler, nullptr, audioGroup->getColour()));
+            
+            addAndMakeVisible(view.get());
+            children.push_back(view);
+        }
     }
 
     void resized() override
     {
-
+        int top = 0;
+        int count = 0;
+        auto audioResources = audioGroup->getAudioResources();
+        for (auto audioResource : audioResources)
+        {
+            auto height = audioResource->getHeight();
+            if (count < children.size())
+            {
+                auto child = children[count];
+                if (child != nullptr)
+                {
+                    auto width = zoomHandler->secondsToX(audioResource->getLengthInSeconds());
+                    child->setBounds(0, top, width, audioResource->getHeight());
+                }
+                count++;
+            }
+            top += height;
+        }
     }
 
 private:
+    
+    std::vector<std::shared_ptr<AudioResourceView>> children;
+
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EditGroupComponent)
 };

@@ -31,7 +31,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudioGroup> audioGr
     auto audioResources = audioGroup->getAudioResources();
     for (auto audioResource : audioResources)
     {
-        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource, zoomHandler, playListItem->getRegion()));
+        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource, zoomHandler, playListItem->getRegion(), audioGroup->getColour()));
         addAndMakeVisible(view.get());
         children.push_back(view);
     }

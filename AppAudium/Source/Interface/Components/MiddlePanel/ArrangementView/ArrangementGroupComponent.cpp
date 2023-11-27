@@ -66,7 +66,6 @@ bool ArrangementGroupComponent::mustRebuildComponents() const
 
 void ArrangementGroupComponent::rebuildComponents()
 {
-    std::cout << "ArrangementGroupComponent::rebuildComponents " << audioGroup->getId() << std::endl;
     removeAllChildren();
     playListItemComponents.clear();
     

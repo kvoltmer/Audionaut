@@ -21,7 +21,11 @@ class PlayListItemComponent;
 
 //==============================================================================
 /*
+ 
+ Base class to display a AudioGroup as part of AudioGroupListBoxModel.
+ 
 */
+
 class GroupBaseComponent  : public juce::Component, public juce::FileDragAndDropTarget
 {
 public:

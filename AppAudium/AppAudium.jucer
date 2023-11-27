@@ -236,6 +236,11 @@
                 file="Source/Interface/Views/AudioRegionView.cpp"/>
           <FILE id="D4QJ9Q" name="AudioRegionView.h" compile="0" resource="0"
                 file="Source/Interface/Views/AudioRegionView.h"/>
+          <FILE id="u3MBPo" name="AudioResourceView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AudioResourceView.cpp"/>
+          <FILE id="yWJ5P4" name="AudioResourceView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AudioResourceView.h"/>
+          <FILE id="MGQgwN" name="AudioViewBase.h" compile="0" resource="0" file="Source/Interface/Views/AudioViewBase.h"/>
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
       </GROUP>
