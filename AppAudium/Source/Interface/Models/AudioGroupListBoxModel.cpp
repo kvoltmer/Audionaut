@@ -5,6 +5,7 @@
 #include "Engine/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
+#include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
 
 int AudioGroupListBoxModel::getNumRows()
 {
@@ -38,13 +39,13 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
             }
             else
             {
-                return nullptr;
+                return new EditGroupComponent(audioGroup, audiumEngine, zoomHandler);
             }
         }
     }
     else
     {
-        auto component = dynamic_cast<ArrangementGroupComponent*>(existingComponentToUpdate);
+        auto component = dynamic_cast<GroupBaseComponent*>(existingComponentToUpdate);
         jassert(component);
     
         if (audioGroup != nullptr)

@@ -13,14 +13,12 @@
 #include <JuceHeader.h>
 #include "Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"
 
-class EditComponent  : public ArrangementEditBaseComponent
+class EditComponent : public ArrangementEditBaseComponent
 {
 public:
-    
-    typedef ArrangementEditBaseComponent tBase;
-    
+        
     EditComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
-        tBase(audiumEngine, false)
+        ArrangementEditBaseComponent(audiumEngine, false)
     {
     }
 

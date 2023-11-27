@@ -25,18 +25,9 @@ using namespace audium;
 ArrangementGroupComponent::ArrangementGroupComponent (std::shared_ptr<AudioGroup> group,
                                           std::shared_ptr<AudiumEngine> audiumEngine,
                                           std::shared_ptr<ZoomHandler> zoomHandler) :
-    audiumEngine(audiumEngine),
-    zoomHandler(zoomHandler)
+    GroupBaseComponent(group, audiumEngine, zoomHandler)
 {
-    if (group->getColour() == juce::Colours::pink)
-    {
-        group->setColour(audium::getNewWaveFormColour());
-    }
     refreshComponent(group);
-}
-
-ArrangementGroupComponent::~ArrangementGroupComponent()
-{
 }
 
 void ArrangementGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
@@ -93,14 +84,6 @@ void ArrangementGroupComponent::rebuildComponents()
     }
 }
 
-void ArrangementGroupComponent::paint (juce::Graphics& g)
-{
-    if (externalDragAndDrop)
-    {
-        g.fillAll (findColour(audium::secondaryBackgroundColourId).brighter());
-    }
-}
-
 
 void ArrangementGroupComponent::resized()
 {
@@ -113,56 +96,56 @@ void ArrangementGroupComponent::resized()
     }
 }
 
-void ArrangementGroupComponent::filesDropped (const StringArray& filenames, int /*x*/, int /*y*/)
-{
-    if ( !filenames.isEmpty())
-    {
-        for (auto i = 0; i < filenames.size(); i++)
-        {
-            auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup);
-        }
-        audiumEngine->createDefaultRegionAndPlayList(audioGroup);
-        
-        // will update content
-        refreshComponent(audioGroup, true);
-    }
-    
-    externalDragAndDrop = false;
-    repaint();
-}
-
-void ArrangementGroupComponent::fileDragEnter (const juce::StringArray& files, int x, int y)
-{
-    externalDragAndDrop = true;
-    repaint();
-}
-void ArrangementGroupComponent::fileDragExit (const juce::StringArray& files)
-{
-    externalDragAndDrop = false;
-    repaint();
-}
-
-void ArrangementGroupComponent::mouseDown (const MouseEvent& e)
-{
-    getParentComponent()->mouseDown(e);
-    mouseDrag (e);
-}
-
-void ArrangementGroupComponent::mouseDrag (const MouseEvent& e)
-{
-    getParentComponent()->mouseDrag(e);
-}
-
-void ArrangementGroupComponent::mouseUp (const MouseEvent& e)
-{
-    getParentComponent()->mouseUp(e);
-}
-
-void ArrangementGroupComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
-{
-    getParentComponent()->mouseWheelMove(e, wheel);
-}
+//void ArrangementGroupComponent::filesDropped (const StringArray& filenames, int /*x*/, int /*y*/)
+//{
+//    if ( !filenames.isEmpty())
+//    {
+//        for (auto i = 0; i < filenames.size(); i++)
+//        {
+//            auto url = URL (File (filenames[i]));
+//            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup);
+//        }
+//        audiumEngine->createDefaultRegionAndPlayList(audioGroup);
+//        
+//        // will update content
+//        refreshComponent(audioGroup, true);
+//    }
+//    
+//    externalDragAndDrop = false;
+//    repaint();
+//}
+//
+//void ArrangementGroupComponent::fileDragEnter (const juce::StringArray& files, int x, int y)
+//{
+//    externalDragAndDrop = true;
+//    repaint();
+//}
+//void ArrangementGroupComponent::fileDragExit (const juce::StringArray& files)
+//{
+//    externalDragAndDrop = false;
+//    repaint();
+//}
+//
+//void ArrangementGroupComponent::mouseDown (const MouseEvent& e)
+//{
+//    getParentComponent()->mouseDown(e);
+//    mouseDrag (e);
+//}
+//
+//void ArrangementGroupComponent::mouseDrag (const MouseEvent& e)
+//{
+//    getParentComponent()->mouseDrag(e);
+//}
+//
+//void ArrangementGroupComponent::mouseUp (const MouseEvent& e)
+//{
+//    getParentComponent()->mouseUp(e);
+//}
+//
+//void ArrangementGroupComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
+//{
+//    getParentComponent()->mouseWheelMove(e, wheel);
+//}
 
 
 
