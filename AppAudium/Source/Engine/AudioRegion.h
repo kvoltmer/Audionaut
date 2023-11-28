@@ -20,7 +20,6 @@ class AudioRegion
     
 public:
     AudioRegion(std::shared_ptr<AudioGroup> audioGroup,
-                std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache,
                 std::shared_ptr<TempoProvider> tempoProvider) :
         audioGroup(audioGroup),
         tempoProvider(tempoProvider)

@@ -48,8 +48,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
         
     auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer(audioResourceContainer,
                                                                                                           audioGroupContainer,
-                                                                                                          playListScheduler,
-                                                                                                          audioThumbnailCache));
+                                                                                                          playListScheduler));
         
     auto audiumEngine               = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioDeviceManager,
                                                                                                   audioGroupContainer,

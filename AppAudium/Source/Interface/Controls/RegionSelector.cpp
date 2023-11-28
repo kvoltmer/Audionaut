@@ -183,8 +183,9 @@ void RegionSelector::updateMouseZone (const juce::MouseEvent& e)
     
     switch (getDragMode(x)) {
         case RegionSelector::leftEdge:
+            setMouseCursor (MouseCursor::LeftEdgeResizeCursor);
         case RegionSelector::rightEdge:
-            setMouseCursor (MouseCursor::LeftRightResizeCursor);
+            setMouseCursor (MouseCursor::RightEdgeResizeCursor);
             break;
         case RegionSelector::middleEdge:
             setMouseCursor (MouseCursor::DraggingHandCursor);
