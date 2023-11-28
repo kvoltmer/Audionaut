@@ -60,7 +60,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
         group = audioGroupContainer->getDefaultGroup();
     }
     
-    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, audioThumbnailCache, playListScheduler->getTempoProvider()));
+    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, playListScheduler->getTempoProvider()));
     audioRegion->setRegionDataInSeconds(position);
     audioRegion->name = regionName;
     audioRegions.push_back(audioRegion);
