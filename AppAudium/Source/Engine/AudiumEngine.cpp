@@ -61,21 +61,6 @@ void AudiumEngine::cleanup()
     currentFile = File();
 }
 
-void AudiumEngine::startPlaying()
-{
-    playListScheduler->startPlaying();
-}
-
-void AudiumEngine::stopPlaying()
-{
-    playListScheduler->stopPlaying();
-}
-
-bool AudiumEngine::isPlaying() const
-{
-    return playListScheduler->isPlaying();
-}
-
 void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> callback)
 {
     if (! file.exists())

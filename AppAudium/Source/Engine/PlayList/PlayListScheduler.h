@@ -48,6 +48,9 @@ public:
     bool getFollowTransport() const { return followTransport; }
     void setLoopPlayList(bool enable) { loopPlayList.store(enable); }
     bool getLoopPlayList() const { return loopPlayList.load(); }
+    void setEditMode(bool bEditMode) { editMode = bEditMode; }
+    bool isEditMode() const { return editMode; }
+    bool isArrangementMode() const { return !editMode; }
     
     void resetCurrentPlayListItem();
     
@@ -97,10 +100,12 @@ private:
     
     juce::CriticalSection readLock;
     
-    
     bool followTransport = true;
     
     std::atomic<bool> loopPlayList = false;
+    
+    // Edit or Arrangement Mode
+    std::atomic<bool> editMode = true;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };
