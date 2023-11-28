@@ -55,20 +55,26 @@ void RightPanelComponent::paint (juce::Graphics& g)
 
 void RightPanelComponent::resized()
 {
-    // This method is where you should set the bounds of any child
-    // components that your component contains..
-    // regionTableListBox->setBounds (0, 0, proportionOfWidth (1.0000f), proportionOfHeight (1.0000f));
-    
-    // the list of components that we want to reposition
-    Component* comps[] = {  regionComponent.get(),
-                            stretchableLayoutResizerBar.get(),
-                            playListContainerComponent.get() };
-
-    // this will position the 3 components, one above the other, to fit
-    // horizontically into the rectangle provided.
-    stretchableLayoutManager->layOutComponents (comps, 3,
-                               0, 0, getWidth(), getHeight(),
-                               true, true);
+    if (audiumEngine->getPlayListScheduler()->isArrangementMode())
+    {
+        playListContainerComponent->setVisible(true);
+        
+        // the list of components that we want to reposition
+        Component* comps[] = {  regionComponent.get(),
+            stretchableLayoutResizerBar.get(),
+            playListContainerComponent.get() };
+        
+        // this will position the 3 components, one above the other, to fit
+        // horizontically into the rectangle provided.
+        stretchableLayoutManager->layOutComponents (comps, 3,
+                                                    0, 0, getWidth(), getHeight(),
+                                                    true, true);
+    }
+    else
+    {
+        playListContainerComponent->setVisible(false);
+        regionComponent->setBounds (getLocalBounds());
+    }
 }
 
 void RightPanelComponent::updateUI(UIContext context)
@@ -87,6 +93,9 @@ void RightPanelComponent::updateUI(UIContext context)
         default:
             break;
     }
+    
+    // obsolete?
+    resized();
     
 }
 

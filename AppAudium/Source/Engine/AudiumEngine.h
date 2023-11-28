@@ -38,10 +38,6 @@ public:
     void uninitialise();
     void cleanup();
     
-    void startPlaying();
-    void stopPlaying();
-    bool isPlaying() const;
-    
     void openFile (const juce::File& file, std::function<void (bool)> callback);
     void saveFile (const juce::File& file, std::function<void (bool)> callback);
     void bounceToFile(const juce::File& f, std::function<void (bool)> callback, double preferedSampleRate = 0.0);
@@ -62,6 +58,7 @@ public:
     
     void invokeAutoEdit(const AutoEditConfig config);
     
+    
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
@@ -72,6 +69,7 @@ private:
     
     juce::File currentFile;
 
+    
     /// TODO: thread save container
     // std::is_trivially_copyable
     // std::array, has a static size set at compile time. It does not have internal pointers and can therefore be copied simply by using memcpy. It therefore is trivial to copy.

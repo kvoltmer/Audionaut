@@ -86,6 +86,8 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->addActionListener(this);
 
+    updateUI();
+    
     //[/Constructor]
 }
 
@@ -209,10 +211,16 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         updateUI();
     }
+    
+
 }
 
 void MainComponent::updateUI()
 {
+    auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
+    middlePanelComponent->showArrangementComponent(!editMode);
+    middlePanelComponent->showEditComponent(editMode);
+    
     middlePanelComponent->updateUI();
     rightPanelComponent->updateUI();
 }
@@ -229,16 +237,10 @@ void MainComponent::zoomOut()
 
 void MainComponent::toggleEditArrangementComponent()
 {
-    if (middlePanelComponent->arrangementComponentVisible())
-    {
-        middlePanelComponent->showArrangementComponent(false);
-        middlePanelComponent->showEditComponent(true);
-    }
-    else
-    {
-        middlePanelComponent->showArrangementComponent(true);
-        middlePanelComponent->showEditComponent(false);
-    }
+    // toggle edit mode
+    auto editMode = !audiumEngine->getPlayListScheduler()->isEditMode();
+    audiumEngine->getPlayListScheduler()->setEditMode(editMode);
+    updateUI();
 }
 
 //[/MiscUserCode]
