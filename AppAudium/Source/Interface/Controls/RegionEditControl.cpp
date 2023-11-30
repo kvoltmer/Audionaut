@@ -81,6 +81,8 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
     audioRegion->setRegionDataInSeconds(rangeInSeconds);
     
     updateFromEngine();
+    
+    audiumEngine->getAudioRegionContainer()->sendActionMessage (regionModifiedAction);
 }
 
 void RegionEditControl::mouseMove (const juce::MouseEvent& e)
