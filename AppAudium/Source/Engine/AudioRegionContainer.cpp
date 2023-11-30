@@ -40,14 +40,23 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
     {
         if (auto group = audioGroupContainer->getAudioGroup(i))
         {
-            if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks))
+            if (playListScheduler->isArrangementMode())
             {
-                // we need the start of the actual audio file
-                auto localStart = selectedPositionClocks.getStart() - item->getAbsolueStartTime() + item->getRegionDataInClocks().getStart();
-                
-                juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
-                auto localRangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(localRange);
-                createRegion(name, localRangeInSeconds, group);
+                if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks))
+                {
+                    // we need the start of the actual audio file
+                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolueStartTime() + item->getRegionDataInClocks().getStart();
+                    
+                    juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
+                    auto localRangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(localRange);
+                    createRegion(name, localRangeInSeconds, group);
+                }
+            }
+            else
+            {
+                auto rangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(selectedPositionClocks);
+                createRegion(name, rangeInSeconds, group);
+                selectedPositionClocks = juce::Range<double>();
             }
         }
     }

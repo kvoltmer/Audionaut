@@ -156,6 +156,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
 
     if (message == regionCreatedAction)
     {
+        middlePanelComponent->updateUI();
         rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
     }
     else if (message == regionClearedAction)
