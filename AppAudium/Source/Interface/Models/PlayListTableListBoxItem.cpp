@@ -11,7 +11,7 @@
 #include "PlayListTableListBoxItem.h"
 #include "PlayListTableListBoxModel.h"
 #include "Interface/Components/RightPanel/PlayListComponent.h"
-#include "Interface/Controls/RegionEditor.h"
+#include "Interface/Controls/RegionLabel.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Interface/AudiumLookAndFeel.h"
@@ -30,7 +30,7 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
                        item->rowNumber,
                        insertIndex);
     }
-    else if ( RegionEditor* item = dynamic_cast<RegionEditor*>(dragSourceDetails.sourceComponent.get()))
+    else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         playListModel->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
     }

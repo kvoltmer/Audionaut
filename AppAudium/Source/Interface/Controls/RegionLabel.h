@@ -22,10 +22,10 @@
 //==============================================================================
 /*
 */
-class RegionEditor  : public juce::Label, juce::Label::Listener
+class RegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
-    RegionEditor(std::shared_ptr<RegionTableListBox> owner,
+    RegionLabel(std::shared_ptr<RegionTableListBox> owner,
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                  int columnId,
                  int rowNumber) :
@@ -40,7 +40,7 @@ public:
         addListener(this);
     }
 
-    ~RegionEditor() override
+    ~RegionLabel() override
     {
         removeListener(this);
     }
@@ -92,7 +92,7 @@ public:
     {
         if( juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(this))
         {
-            container->startDragging("RegionEditor", this);
+            container->startDragging("RegionLabel", this);
             //container->startDragging("PlayListTableListBoxItem", this);
         }
     }
@@ -144,5 +144,5 @@ private:
     std::shared_ptr<RegionTableListBox> owner;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionLabel)
 };

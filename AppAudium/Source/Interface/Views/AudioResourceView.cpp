@@ -14,6 +14,8 @@
 //==============================================================================
 void AudioResourceView::paint (juce::Graphics& g)
 {
+    // std::cout << "AudioResourceView::paint" << std::endl;
+    
     paintBackground(g);
     
     auto thumb = audioResource->getAudioThumbnail();

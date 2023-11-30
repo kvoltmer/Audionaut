@@ -30,13 +30,20 @@ const AudioRegion::RegionData AudioRegion::getRegionData() const
 
 void AudioRegion::setRegionDataInSeconds(const RegionData newRegionData)
 {
+    jassert(newRegionData.getStart() <= newRegionData.getEnd());
+    regionData = newRegionData;
+    
+    
+    auto maxLength = 0.0;
     const auto resources = audioGroup->getAudioResources();
     for (auto resource : resources)
-    {
-        // region position must not exceed the total length of the audio file
-        jassert(newRegionData.getEnd() <= resource->getLengthInSeconds());
-    }
-    regionData = newRegionData;
+        maxLength = std::max(maxLength, resource->getLengthInSeconds());
+
+    if (regionData.getStart() < 0.0)
+        regionData.setStart(0.0);
+    
+    if (regionData.getEnd() > maxLength)
+        regionData.setEnd(maxLength);
 }
 
 const AudioRegion::RegionData AudioRegion::getRegionDataInSeconds() const

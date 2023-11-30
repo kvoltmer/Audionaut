@@ -22,13 +22,7 @@
 using namespace audium;
 
 
-ArrangementGroupComponent::ArrangementGroupComponent (std::shared_ptr<AudioGroup> group,
-                                          std::shared_ptr<AudiumEngine> audiumEngine,
-                                          std::shared_ptr<ZoomHandler> zoomHandler) :
-    GroupBaseComponent(group, audiumEngine, zoomHandler)
-{
-    refreshComponent(group);
-}
+
 
 void ArrangementGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
 {

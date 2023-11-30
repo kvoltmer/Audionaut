@@ -20,10 +20,12 @@ public:
     AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
                            std::shared_ptr<AudiumEngine> audiumEngine,
                            std::shared_ptr<ZoomHandler> zoomHandler,
+                           std::shared_ptr<RegionSelector> regionSelector,
                            bool arrangementMode = true) :
         owner(owner),
         audiumEngine(audiumEngine),
         zoomHandler(zoomHandler),
+        regionSelector(regionSelector),
         arrangementMode(arrangementMode)
     {
     }
@@ -60,6 +62,7 @@ private:
     std::shared_ptr<AudioGroupListBox> owner;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
+    std::shared_ptr<RegionSelector> regionSelector;
     
     bool arrangementMode = true;
 

@@ -41,6 +41,7 @@ public:
         audioGroupListBoxModel.reset(new AudioGroupListBoxModel(audioGroupListBox,
                                                                 audiumEngine,
                                                                 zoomHandler,
+                                                                regionSelector,
                                                                 arrangementMode));
         audioGroupListBox->setModel(audioGroupListBoxModel.get());
         auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(audioGroupListBox, zoomHandler, audiumEngine));

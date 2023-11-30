@@ -1,7 +1,7 @@
 
 #include "PlayListComponent.h"
 #include "Engine/PlayList/PlayListContainer.h"
-#include "Interface/Controls/RegionEditor.h"
+#include "Interface/Controls/RegionLabel.h"
 
 void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
@@ -13,7 +13,7 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
                        item->rowNumber,
                        insertIndex);
     }
-    else if ( RegionEditor* item = dynamic_cast<RegionEditor*>(dragSourceDetails.sourceComponent.get()))
+    else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         audioGroup->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
     }

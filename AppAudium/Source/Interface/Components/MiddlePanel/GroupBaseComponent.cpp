@@ -23,11 +23,13 @@ using namespace audium;
 
 
 GroupBaseComponent::GroupBaseComponent (std::shared_ptr<AudioGroup> group,
-                                          std::shared_ptr<AudiumEngine> audiumEngine,
-                                          std::shared_ptr<ZoomHandler> zoomHandler) :
+                                        std::shared_ptr<AudiumEngine> audiumEngine,
+                                        std::shared_ptr<ZoomHandler> zoomHandler,
+                                        std::shared_ptr<RegionSelector> regionSelector) :
     audioGroup(group),
     audiumEngine(audiumEngine),
-    zoomHandler(zoomHandler)
+    zoomHandler(zoomHandler),
+    regionSelector(regionSelector)
 {
     if (group->getColour() == juce::Colours::pink)
     {

@@ -87,7 +87,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     audiumEngine->getPlayListScheduler()->getTempoProvider()->addActionListener(this);
 
     updateUI();
-    
+
     //[/Constructor]
 }
 
@@ -211,7 +211,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         updateUI();
     }
-    
+
 
 }
 
@@ -220,7 +220,7 @@ void MainComponent::updateUI()
     auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
     middlePanelComponent->showArrangementComponent(!editMode);
     middlePanelComponent->showEditComponent(editMode);
-    
+
     middlePanelComponent->updateUI();
     rightPanelComponent->updateUI();
 }

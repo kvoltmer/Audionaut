@@ -84,6 +84,15 @@ void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
 {
     scrollbar = thescrollbar;
 }
+juce::Range<double> ZoomHandler::secondsToX(juce::Range<double> seconds) const
+{
+    return juce::Range<double>(secondsToX(seconds.getStart()), secondsToX(seconds.getEnd()));
+}
+
+juce::Range<double> ZoomHandler::xToSeconds(juce::Range<double> x) const
+{
+    return juce::Range<double>(xToSeconds(x.getStart()), xToSeconds(x.getEnd()));
+}
 
 double ZoomHandler::secondsToX (const double seconds) const
 {

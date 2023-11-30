@@ -35,11 +35,11 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
         {
             if (arrangementMode)
             {
-                return new ArrangementGroupComponent(audioGroup, audiumEngine, zoomHandler);
+                return new ArrangementGroupComponent(audioGroup, audiumEngine, zoomHandler, regionSelector);
             }
             else
             {
-                return new EditGroupComponent(audioGroup, audiumEngine, zoomHandler);
+                return new EditGroupComponent(audioGroup, audiumEngine, zoomHandler, regionSelector);
             }
         }
     }
