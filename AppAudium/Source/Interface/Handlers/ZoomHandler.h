@@ -35,6 +35,9 @@ public:
     
     int getScrollBarHeight() const { return scrollbar->getHeight(); }
 
+    juce::Range<double> secondsToX(juce::Range<double> seconds) const;
+    juce::Range<double> xToSeconds(juce::Range<double> x) const;
+    
     double secondsToX (const double seconds) const;
     double xToSeconds (const double x) const;
     

@@ -12,8 +12,13 @@
 
 #include <JuceHeader.h>
 
+#include "Engine/AudiumEngine.h"
+#include "Engine/AudioRegionContainer.h"
+
 #include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
 #include "Interface/Views/AudioResourceView.h"
+#include "Interface/Controls/RegionEditControl.h"
+#include "Interface/Handlers/ZoomHandler.h"
 
 //==============================================================================
 /*
@@ -23,12 +28,13 @@ class EditGroupComponent  : public GroupBaseComponent
 public:
         
     EditGroupComponent (std::shared_ptr<AudioGroup> group,
-                         std::shared_ptr<AudiumEngine> audiumEngine,
-                         std::shared_ptr<ZoomHandler> zoomHandler) :
-        GroupBaseComponent(group, audiumEngine, zoomHandler)
+                        std::shared_ptr<AudiumEngine> audiumEngine,
+                        std::shared_ptr<ZoomHandler> zoomHandler,
+                        std::shared_ptr<RegionSelector> regionSelector) :
+        GroupBaseComponent(group, audiumEngine, zoomHandler, regionSelector)
     {
         // this component doesn't handle mouse events
-        setInterceptsMouseClicks(false, false);
+        //setInterceptsMouseClicks(false, false);
         
         refreshComponent(group);
     }    
@@ -45,22 +51,37 @@ public:
         resized();
     }
     
-    bool mustRebuildComponents() const { return true; }
+    bool mustRebuildComponents() const
+    {
+        // TODO: implement
+        return true;
+    }
     
     void rebuildComponents()
     {
+        std::cout << "EditGroupComponent::rebuildComponents" << std::endl;
         removeAllChildren();
-        children.clear();
+        audioResourceViews.clear();
+        regionEditControls.clear();
         
         // create views
         auto audioResources = audioGroup->getAudioResources();
         for (auto audioResource : audioResources)
         {
             auto view = std::shared_ptr<AudioResourceView>(new AudioResourceView(audioResource, zoomHandler, nullptr, audioGroup->getColour()));
-            
             addAndMakeVisible(view.get());
-            children.push_back(view);
+            audioResourceViews.push_back(view);
         }
+        
+        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
+        for (auto region : regions)
+        {
+            auto view = std::shared_ptr<RegionEditControl>(new RegionEditControl(region, zoomHandler, audiumEngine, regionSelector));
+            addAndMakeVisible(view.get());
+            regionEditControls.push_back(view);
+        }
+        
+        
     }
 
     void resized() override
@@ -71,9 +92,9 @@ public:
         for (auto audioResource : audioResources)
         {
             auto height = audioResource->getHeight();
-            if (count < children.size())
+            if (count < audioResourceViews.size())
             {
-                auto child = children[count];
+                auto child = audioResourceViews[count];
                 if (child != nullptr)
                 {
                     auto width = zoomHandler->secondsToX(audioResource->getLengthInSeconds());
@@ -83,11 +104,31 @@ public:
             }
             top += height;
         }
+        
+        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
+        count = 0;
+        for (auto region : regions)
+        {
+            if (count < regionEditControls.size())
+            {
+                auto control = regionEditControls[count];
+                jassert(control != nullptr);
+                auto start = region->getRegionDataInSeconds().getStart();
+                auto length = region->getRegionDataInSeconds().getLength();
+                
+                auto startX = zoomHandler->secondsToX(start);
+                auto width = zoomHandler->secondsToX(length);
+                control->setBounds(startX, 0, width, getHeight());
+            }
+            count++;
+        }
     }
 
 private:
     
-    std::vector<std::shared_ptr<AudioResourceView>> children;
+    std::vector<std::shared_ptr<AudioResourceView>> audioResourceViews;
+    
+    std::vector<std::shared_ptr<RegionEditControl>> regionEditControls;
 
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EditGroupComponent)

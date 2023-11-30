@@ -209,13 +209,17 @@
                 file="Source/Interface/Models/AudioGroupListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="CIIORu" name="RegionEditControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/RegionEditControl.cpp"/>
+          <FILE id="przUwD" name="RegionEditControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/RegionEditControl.h"/>
           <FILE id="i5qX4Q" name="LevelMeter.h" compile="0" resource="0" file="Source/Interface/Controls/LevelMeter.h"/>
           <FILE id="Fmpma7" name="LevelMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LevelMeter.cpp"/>
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
           <FILE id="keLPLt" name="PlayPositionMarker.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayPositionMarker.h"/>
-          <FILE id="M14ssi" name="RegionEditor.h" compile="0" resource="0" file="Source/Interface/Controls/RegionEditor.h"/>
+          <FILE id="M14ssi" name="RegionLabel.h" compile="0" resource="0" file="Source/Interface/Controls/RegionLabel.h"/>
           <FILE id="kQnaR9" name="RegionSelector.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/RegionSelector.cpp"/>
           <FILE id="RfQeV6" name="RegionSelector.h" compile="0" resource="0"

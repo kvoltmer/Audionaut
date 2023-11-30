@@ -36,9 +36,14 @@ class ArrangementGroupComponent : public GroupBaseComponent
 {
 public:
         
-    ArrangementGroupComponent (std::shared_ptr<AudioGroup> audioGroup,
-                         std::shared_ptr<AudiumEngine> audiumEngine,
-                         std::shared_ptr<ZoomHandler> zoomHandler);
+    ArrangementGroupComponent (std::shared_ptr<AudioGroup> group,
+                               std::shared_ptr<AudiumEngine> audiumEngine,
+                               std::shared_ptr<ZoomHandler> zoomHandler,
+                               std::shared_ptr<RegionSelector> regionSelector) :
+        GroupBaseComponent(group, audiumEngine, zoomHandler, regionSelector)
+    {
+        refreshComponent(group);
+    }
     
     void refreshComponent (std::shared_ptr<AudioGroup> audioGroup, bool forceRebuildComponents = false) override;
     
@@ -48,6 +53,7 @@ private:
     
     bool mustRebuildComponents() const;
     void rebuildComponents();
+    
     
     std::vector<std::shared_ptr<PlayListItemComponent>> playListItemComponents;
     

@@ -30,8 +30,9 @@ class GroupBaseComponent  : public juce::Component, public juce::FileDragAndDrop
 {
 public:
     GroupBaseComponent (std::shared_ptr<AudioGroup> audioGroup,
-                         std::shared_ptr<AudiumEngine> audiumEngine,
-                         std::shared_ptr<ZoomHandler> zoomHandler);
+                        std::shared_ptr<AudiumEngine> audiumEngine,
+                        std::shared_ptr<ZoomHandler> zoomHandler,
+                        std::shared_ptr<RegionSelector> regionSelector);
     
     virtual ~GroupBaseComponent() {};
     
@@ -59,6 +60,7 @@ protected:
     std::shared_ptr<AudioGroup> audioGroup;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
+    std::shared_ptr<RegionSelector> regionSelector;
     
     bool externalDragAndDrop = false;
 
