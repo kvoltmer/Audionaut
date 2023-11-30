@@ -53,8 +53,19 @@ public:
     
     bool mustRebuildComponents() const
     {
-        // TODO: implement
-        return true;
+        auto audioResources = audioGroup->getAudioResources();
+        if (audioResources.size() != audioResourceViews.size())
+        {
+            return true;
+        }
+        
+        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
+        if (regions.size() != regionEditControls.size())
+        {
+            return true;
+        }
+        
+        return false;
     }
     
     void rebuildComponents()
