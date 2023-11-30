@@ -69,11 +69,9 @@ private:
     std::shared_ptr<RegionSelector> regionSelector;
     
     const int borderSize = 10;
-    //const int expandedWidth = 2;
     const int minimumWidth = 2;
     
     Edge currentDragMode = outsideEdge;
-    
     
     juce::Rectangle<int> originalBounds;
     
