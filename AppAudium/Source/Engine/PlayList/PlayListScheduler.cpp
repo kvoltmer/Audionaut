@@ -154,20 +154,41 @@ void PlayListScheduler::processEditMode(double absolutePosition, int numSamples)
 
 double PlayListScheduler::getTotalLengthClocks() const
 {
-    double totalLengthClocks = 0.0;
-    
-    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    if (isArrangementMode())
     {
-        auto group = audioGroupContainer->getAudioGroup(i);
-        totalLengthClocks = juce::jmax(totalLengthClocks, group->getPlayListContainer()->getTotalLength());
+        // in arrangement mode we calculate in clocks
+        double totalLengthClocks = 0.0;
+        
+        for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+        {
+            auto group = audioGroupContainer->getAudioGroup(i);
+            totalLengthClocks = juce::jmax(totalLengthClocks, group->getPlayListContainer()->getTotalLength());
+        }
+        return totalLengthClocks;
     }
-    
-    return totalLengthClocks;
+    else
+    {
+        return getTempoProvider()->secondsToClocks(getTotalLengthSeconds());
+    }
 }
 
 double PlayListScheduler::getTotalLengthSeconds() const
 {
-    return getTempoProvider()->clocksToSeconds(getTotalLengthClocks());
+    if (isArrangementMode())
+    {
+        return getTempoProvider()->clocksToSeconds(getTotalLengthClocks());
+    }
+    else
+    {
+        // in edit mode we calculate in seconds
+        double totalLengthSeconds = 0.0;
+        for (auto i = 0; i < audioResourceContainer->getNumAudioResources(); i++)
+        {
+            auto resource = audioResourceContainer->getAudioResource(i);
+            totalLengthSeconds = std::max(totalLengthSeconds, resource->getAbsolueStartTime() + resource->getDurationTimeInSeconds());
+        }
+        return totalLengthSeconds;
+    }
 }
 
 
