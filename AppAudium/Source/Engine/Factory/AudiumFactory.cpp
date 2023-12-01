@@ -28,11 +28,6 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto tempoProvider              = std::shared_ptr<TempoProvider>            (new TempoProvider(linkEngine));
     
-    auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioGroupContainer,
-                                                                                                       tempoProvider,
-                                                                                                       linkEngine));
-
-    
     auto formatManager              = std::shared_ptr<juce::AudioFormatManager> (new juce::AudioFormatManager());
     
     auto audioThumbnailCache        = std::shared_ptr<juce::AudioThumbnailCache>(new juce::AudioThumbnailCache(64));
@@ -41,6 +36,11 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                                                             audioGroupContainer,
                                                                                                             formatManager,
                                                                                                             audioThumbnailCache));
+    
+    auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioGroupContainer,
+                                                                                                       audioResourceContainer,
+                                                                                                       tempoProvider,
+                                                                                                       linkEngine));
     
     auto linkAudioDevice            = std::shared_ptr<LinkAudioDevice>          (new LinkAudioDevice(linkEngine,
                                                                                                      playListScheduler,

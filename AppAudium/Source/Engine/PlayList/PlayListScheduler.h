@@ -18,7 +18,7 @@ class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
 class AudioGroupContainer;
-
+class AudioResourceContainer;
 
 class PlayListScheduler
 {
@@ -26,9 +26,11 @@ class PlayListScheduler
     
 public:
     PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                      std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                       std::shared_ptr<TempoProvider> tempoProvider,
                       std::shared_ptr<audium::LinkEngine> linkEngine) :
         audioGroupContainer(audioGroupContainer),
+        audioResourceContainer(audioResourceContainer),
         tempoProvider(tempoProvider),
         linkEngine(linkEngine)
     {
@@ -78,17 +80,23 @@ public:
     
 private:
 
-
     double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
-    void applyAbsolutePosition(double pos, int numSamples);
+    
+    // Arrangement mode sequencing
+    void processArrangement(double pos, int numSamples);
+    
+    // Edit mode sequencing
+    void processEditMode(double absolutePosition, int numSamples);
+    
+private:
     
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
-    
+    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
-    
     std::shared_ptr<audium::LinkEngine> linkEngine;
     
     double sampleRate = 0.0;
+    
     int bufferSize = 0;
     
     // transport position in 96th clocks

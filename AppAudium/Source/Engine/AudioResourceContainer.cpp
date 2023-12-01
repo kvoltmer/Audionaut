@@ -16,19 +16,6 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 
-
-
-//AudioResourceContainer::AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-//                                               std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-//                                               std::shared_ptr<juce::AudioFormatManager> formatManager) :
-//    audioDeviceManager(audioDeviceManager),
-//    audioGroupContainer(audioGroupContainer),
-//    formatManager(formatManager)
-//{
-//    formatManager->registerBasicFormats();
-//    thread.startThread();
-//}
-
 AudioResourceContainer::~AudioResourceContainer()
 {
     audioResources.clear();
@@ -138,6 +125,24 @@ std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int inde
         return it->second;
     }
     return nullptr;
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtAbsolutePosition(double positionInSeconds) const
+{
+    std::vector<std::shared_ptr<AudioResource>> resources;
+    
+    for (auto resource : audioResources)
+    {
+        auto startTime = resource.second->getAbsolueStartTime();
+        auto endTime = startTime + resource.second->getDurationTimeInSeconds();
+        juce::Range<double> absoluteRange(startTime, endTime);
+        if (absoluteRange.contains(positionInSeconds))
+        {
+            resources.push_back(resource.second);
+        }
+    }
+    
+    return resources;
 }
 
 std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroup(int index) const

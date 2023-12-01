@@ -14,6 +14,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudioGroupContainer.h"
+#include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioGroup.h"
 #include "Engine/AudioResource.h"
 #include "Engine/AudiumTransportSource.h"
@@ -49,8 +50,15 @@ void PlayListScheduler::tick(bool isPlaying,
             {
                 transportPositionClocks = TempoProvider::beatsToClocks(beats);
             }
-            // apply position in clocks
-            applyAbsolutePosition(transportPositionClocks, numSamples);
+            
+            if (editMode)
+            {
+                processEditMode(transportPositionClocks, numSamples);
+            }
+            else
+            {
+                processArrangement(transportPositionClocks, numSamples);
+            }
         }
     }
 }
@@ -74,7 +82,7 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
     return offset + item->getRegionDataInClocks().getStart();
 }
 
-void PlayListScheduler::applyAbsolutePosition(double absolutePosition, int numSamples)
+void PlayListScheduler::processArrangement(double absolutePosition, int numSamples)
 {
     // iterate over group container
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
@@ -122,6 +130,27 @@ void PlayListScheduler::applyAbsolutePosition(double absolutePosition, int numSa
         }
     }
 }
+
+void PlayListScheduler::processEditMode(double absolutePosition, int numSamples)
+{
+    // convert to seconds
+    const auto positionInSeconds = tempoProvider->clocksToSeconds(absolutePosition);
+    const auto secondsThisBuffer = static_cast<double>(numSamples) / sampleRate;
+
+    const auto resources = audioResourceContainer->resourcesAtAbsolutePosition(positionInSeconds + secondsThisBuffer);
+    for (auto resource : resources)
+    {
+        if (not resource->getAudioTransportSource()->isPlaying())
+        {
+            const auto localPosition = positionInSeconds + resource->getAbsolueStartTime();
+            
+            /// TODO: calculate sample accurate position
+            resource->getAudioTransportSource()->schedulePosition(localPosition, 0);
+            resource->getAudioTransportSource()->start();
+        }
+    }
+}
+
 
 double PlayListScheduler::getTotalLengthClocks() const
 {
