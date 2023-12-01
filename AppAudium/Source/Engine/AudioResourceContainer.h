@@ -47,6 +47,7 @@ public:
     // still used by auto edit
     int getNumAudioResources() const;
     std::shared_ptr<AudioResource> getAudioResource(int index) const;
+    std::vector<std::shared_ptr<AudioResource>> resourcesAtAbsolutePosition(double positionInSeconds) const;
     
     int getNumAudioGroups() const;
     std::shared_ptr<AudioGroup> getAudioGroup(int index) const;

@@ -80,6 +80,11 @@ public:
     unsigned int getNumChannels() const;
     double getLengthInSeconds() const;
     
+    // TODO: implement start time
+    double getAbsolueStartTime() const { return 0.0; }
+    // TODO: implement duration time
+    double getDurationTimeInSeconds() const { return getLengthInSeconds(); }
+    
     juce::AudioThumbnail* getAudioThumbnail() const { return audioThumbnail.get(); }
     
 private:
