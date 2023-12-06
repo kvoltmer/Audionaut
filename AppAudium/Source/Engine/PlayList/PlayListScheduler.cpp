@@ -142,7 +142,16 @@ void PlayListScheduler::processEditMode(double absolutePosition, int numSamples)
     {
         if (not resource->getAudioTransportSource()->isPlaying())
         {
-            const auto localPosition = positionInSeconds + resource->getAbsolueStartTime();
+            const auto startPosition = resource->getTransportPosition();
+            const auto diff = startPosition - positionInSeconds;
+            
+            auto offset = startPosition - resource->getRegionDataInSeconds().getStart();
+            //auto local = offset + item->getRegionDataInClocks().getStart();
+            
+            //const auto localPosition = absoluteToLocalPosition(startPosition, playlist->currentPlayListItem);
+            
+            //const auto localPosition = positionInSeconds + resource->getAbsolueStartTime();
+            const auto localPosition = resource->getRegionDataInSeconds().getStart();
             
             /// TODO: calculate sample accurate position
             resource->getAudioTransportSource()->schedulePosition(localPosition, 0);

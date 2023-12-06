@@ -171,9 +171,9 @@ void RegionSelector::updateFromEngine()
 
 void RegionSelector::updateMouseZone (const juce::MouseEvent& e)
 {
-    auto x = e.getPosition().getX();
+    //std::cout << "RegionSelector::updateMouseZone" << std::endl;
     
-    switch (getDragMode(x)) {
+    switch (getDragMode(e.getPosition().getX())) {
         case RegionSelector::leftEdge:
             setMouseCursor (MouseCursor::LeftEdgeResizeCursor);
             break;

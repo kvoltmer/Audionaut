@@ -39,7 +39,9 @@ public:
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      const AudiumEngine &engine,
-                                                     std::shared_ptr<AudioGroup> group);
+                                                     std::shared_ptr<AudioGroup> group,
+                                                     int channelPosition = 0,
+                                                     double transportPosition = 0.0);
     
     void removeAudioResource(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioResource> resource);
     void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
@@ -59,6 +61,7 @@ public:
     void cleanup() { audioResources.clear(); }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtChannelPosition(AudioGroup *group, int channelPosition) const;
     
     std::shared_ptr<AudioGroup> getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const;
     

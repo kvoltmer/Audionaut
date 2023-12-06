@@ -82,17 +82,11 @@ void AudioRegionContainer::deleteRegion(int atIndex)
     auto region = getRegion(atIndex);
     region->getAudioGroup()->getPlayListContainer()->deleteAssociatedItems(region);
     
-    clearSelection();
     if (atIndex >= 0 && atIndex < audioRegions.size())
     {
         audioRegions.erase(audioRegions.begin() + atIndex);
         sendActionMessage(regionDeletedAction);
     }
-}
-
-void AudioRegionContainer::clearSelection()
-{
-    selectedRowNumber = -1;
 }
 
 void AudioRegionContainer::deselectAll()
@@ -101,6 +95,7 @@ void AudioRegionContainer::deselectAll()
     {
         region->setSelected(false);
     }
+    sendActionMessage("todo");
 }
 
 void AudioRegionContainer::setSelectedPositionInSeconds(juce::Range<double> pos)

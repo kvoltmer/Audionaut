@@ -25,17 +25,19 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
 {
     if ( !filenames.isEmpty())
     {
-        // create new group
+        
         jassert(File (filenames[0]).existsAsFile());
         auto name = File (filenames[0]).getFileNameWithoutExtension().toStdString();
+        
+        // create NEW GROUP
         auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
-                                                                                         *audiumEngine->getAudioRegionContainer(),
-                                                                                         name);
+                                                                                 *audiumEngine->getAudioRegionContainer(),
+                                                                                 name);
 
         for (auto i = 0; i < filenames.size(); i++)
         {
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group);
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group, 0);
         }
         audiumEngine->createDefaultRegionAndPlayList(group);
     }

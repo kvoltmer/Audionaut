@@ -12,14 +12,12 @@
 
 #include <JuceHeader.h>
 
-//#include "AudioRegionView.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Controls/RegionSelector.h"
 #include "Engine/AudioResource.h"
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
 #include "Engine/AudioGroup.h"
-//#include "Engine/PlayList/PlayListScheduler.h"
-
 
 //==============================================================================
 /*
@@ -30,11 +28,13 @@ public:
     AudioViewBase(std::shared_ptr<AudioResource> audioResource,
                   std::shared_ptr<ZoomHandler> zoomHandler,
                   std::shared_ptr<AudioRegion> audioRegion,
-                  juce::Colour colour) :
+                  juce::Colour colour,
+                  std::shared_ptr<RegionSelector> regionSelector) :
         audioResource(audioResource),
         zoomHandler(zoomHandler),
         audioRegion(audioRegion),
-        colour(colour)
+        colour(colour),
+        regionSelector(regionSelector)
     {
         // this component doesn't handle mouse events
         setInterceptsMouseClicks(false, false);
@@ -96,14 +96,15 @@ public:
         g.drawFittedText (audioResource->getFileNameWithoutExtension(), bonds, juce::Justification::topLeft, 1);
     }
     
+    virtual void updateFromEngine() = 0;
+
 protected:
     
     std::shared_ptr<AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<AudioRegion> audioRegion;
     juce::Colour colour;
-    
-private:
+    std::shared_ptr<RegionSelector> regionSelector;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioViewBase)
 };

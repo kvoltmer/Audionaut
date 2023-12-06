@@ -24,12 +24,27 @@ public:
     AudioRegionView(std::shared_ptr<AudioResource> audioResource,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     std::shared_ptr<AudioRegion> audioRegion,
-                    juce::Colour colour) :
-        AudioViewBase(audioResource, zoomHandler, audioRegion, colour)
+                    juce::Colour colour,
+                    std::shared_ptr<RegionSelector> regionSelector) :
+        AudioViewBase(audioResource, zoomHandler, audioRegion, colour, regionSelector)
     {
     }
 
     void paint (juce::Graphics&) override;
+    
+    void updateFromEngine() override
+    {
+        /// TODO:
+//        double posX = zoomHandler->secondsToX(audioResource->getTransportPosition());
+//        double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
+//
+//        juce::Rectangle<double> rect_tmp(posX, 0, length, audioResource->getHeight());
+//        setBounds(rect_tmp.toNearestInt());
+    }
+//    void setRegionDataInSeconds(const juce::Range<double> newRegionData) override
+//    {
+//        
+//    }
     
 private:
     

@@ -27,7 +27,9 @@ public:
                                                               AudioResourceContainer& audioResourceContainer,
                                                               std::shared_ptr<AudioGroup> group,
                                                               juce::AudioFormatManager& formatManager,
-                                                              juce::TimeSliceThread* readAheadThread)
+                                                              juce::TimeSliceThread* readAheadThread,
+                                                              int channelPosition,
+                                                              double transportPosition)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
         
@@ -55,11 +57,13 @@ public:
                                                                                      url,
                                                                                      transportSource,
                                                                                      std::move(audioFormatReaderSource),
-                                                                                     audioThumbnail));
+                                                                                     audioThumbnail,
+                                                                                     channelPosition));
+                    audioResource->setTransportPosition(transportPosition);
                 }
             }
         }
-        
+        jassert(audioResource != nullptr);
         return audioResource;
     }
     

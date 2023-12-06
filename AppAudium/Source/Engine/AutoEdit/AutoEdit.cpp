@@ -34,7 +34,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
     // system("env");
         
     // Path to python binary
-    std::string python = "/opt/homebrew/bin/python3";
+    std::string python = "python3";
     
     if(juce::File(config.bounceFileName).existsAsFile())
     {
