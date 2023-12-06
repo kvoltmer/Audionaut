@@ -22,11 +22,22 @@
 
 void RegionEditControl::paint (Graphics& g)
 {
-    //auto thumbArea = getLocalBounds().reduced(expandedWidth, 0);
     auto thumbArea = getLocalBounds();
-    g.setColour (Colours::white);
+    auto colour = Colours::white;
+    
+    // rectangle
+    if (audioRegion->isSelected())
+    {
+        g.setColour (colour.withAlpha(1.f));
+    }
+    else
+    {
+        g.setColour (colour.withAlpha(0.5f));
+    }
     g.drawRoundedRectangle (thumbArea.toFloat(), 3.0f, 1.5f);
-    g.setColour (Colour(Colours::white).withAlpha(0.125f));
+    
+    // fill
+    g.setColour (colour.withAlpha(0.125f));
     g.fillRoundedRectangle (thumbArea.toFloat(), 3.0f);
 }
 
@@ -34,7 +45,13 @@ void RegionEditControl::mouseDown (const juce::MouseEvent& e)
 {
     // std::cout << "RegionEditControl::mouseDown" << std::endl;
     regionSelector->setEnabled(false);
-
+    
+    if (not audioRegion->isSelected())
+    {
+        audiumEngine->getAudioRegionContainer()->deselectAll();
+        audioRegion->setSelected(true);
+        audiumEngine->getAudioRegionContainer()->sendActionMessage(regionSelectedAction);
+    }
     currentDragMode = getDragMode(e.getPosition().getX());
     
     originalBounds = getBounds();
@@ -92,15 +109,28 @@ void RegionEditControl::mouseMove (const juce::MouseEvent& e)
 
 void RegionEditControl::updateFromEngine()
 {
-    auto position = zoomHandler->secondsToX(audioRegion->getRegionDataInSeconds());
-    setBounds(position.getStart(), 0, position.getLength(), getHeight());
+    auto bounds = getBounds().toFloat();
+    
+    auto audioResources = audioRegion->getAudioGroup()->getAudioResources();
+    if (audioResources.size() > 0)
+    {
+        auto audioResource = audioResources[0];
+        double posX = zoomHandler->secondsToX(audioResource->getTransportPosition());
+        //double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
+        
+        auto regionData = zoomHandler->secondsToX(audioRegion->getRegionDataInSeconds());
+        bounds.setX(posX + regionData.getStart());
+        bounds.setWidth(regionData.getLength());
+        
+        setBounds(bounds.toNearestInt());
+    }
 }
 
 void RegionEditControl::updateMouseZone (const juce::MouseEvent& e)
 {
-    auto x = e.getPosition().getX();
+    //std::cout << "RegionEditControl::updateMouseZone" << std::endl;
     
-    switch (getDragMode(x)) {
+    switch (getDragMode(e.getPosition().getX())) {
         case RegionEditControl::leftEdge:
             setMouseCursor (MouseCursor::LeftEdgeResizeCursor);
             break;

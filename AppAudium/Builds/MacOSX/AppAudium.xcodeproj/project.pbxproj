@@ -152,6 +152,7 @@
 		6635C70632EE050E628A48F0 /* Main.cpp */ /* Main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Main.cpp; path = ../../Source/Application/Main.cpp; sourceTree = SOURCE_ROOT; };
 		685048203793CB093B04D748 /* juce_graphics */ /* juce_graphics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_graphics; path = ../../../Submodules/juce/modules/juce_graphics; sourceTree = SOURCE_ROOT; };
 		6AF4E56914CFCE4164489808 /* AudioGroupListBox.cpp */ /* AudioGroupListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioGroupListBox.cpp; path = ../../Source/Interface/Controls/AudioGroupListBox.cpp; sourceTree = SOURCE_ROOT; };
+		6BBAA6DFE177CD89EB2B263E /* DraggerControl.h */ /* DraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DraggerControl.h; path = ../../Source/Interface/Controls/DraggerControl.h; sourceTree = SOURCE_ROOT; };
 		6D18E70CE8E175A3D78ABF5F /* ArrangementGroupComponent.cpp */ /* ArrangementGroupComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ArrangementGroupComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementGroupComponent.cpp; sourceTree = SOURCE_ROOT; };
 		6D6B56D06D09D45BD923C476 /* GroupBaseComponent.h */ /* GroupBaseComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GroupBaseComponent.h; path = ../../Source/Interface/Components/MiddlePanel/GroupBaseComponent.h; sourceTree = SOURCE_ROOT; };
 		6DA263F7CDEFFDFAC0EB223E /* RegionSelector.h */ /* RegionSelector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionSelector.h; path = ../../Source/Interface/Controls/RegionSelector.h; sourceTree = SOURCE_ROOT; };
@@ -551,6 +552,7 @@
 		A60DF503B2F410F6DDB29C77 /* Controls */ = {
 			isa = PBXGroup;
 			children = (
+				6BBAA6DFE177CD89EB2B263E,
 				D086E09B1C51205513609A0B,
 				580F0546329F53D3275E4369,
 				21E8218C5578FAF32AEE977E,

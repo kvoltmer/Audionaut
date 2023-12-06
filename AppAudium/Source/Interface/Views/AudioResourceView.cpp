@@ -38,7 +38,7 @@ void AudioResourceView::paint (juce::Graphics& g)
         visibleRange = visibleRange.movedToStartAt(visibleRange.getStart() + absoluteOffset);
         
         
-        auto start = 0.0;//audioRegion->getRegionDataInSeconds().getStart();
+        auto start = audioResource->getRegionDataInSeconds().getStart();
         start += zoomHandler->xToSeconds(visibleRange.getStart());
         
         // our local bounds
@@ -59,7 +59,7 @@ void AudioResourceView::paint (juce::Graphics& g)
 //        std::cout << " start = " << start << " length = " << end - start;
 //        std::cout << std::endl;
 
-        paintFileNameLabel(g);
+        //paintFileNameLabel(g);
     }
 }
 

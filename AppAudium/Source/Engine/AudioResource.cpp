@@ -48,3 +48,39 @@ double AudioResource::getLengthInSeconds() const
 {
     return getAudioTransportSource()->getLengthInSeconds();
 }
+
+double AudioResource::getAbsolueStartTime() const
+{    
+    return getTransportPosition();
+}
+
+double AudioResource::getDurationTimeInSeconds() const
+{
+    if (!regionData.isEmpty())
+        return regionData.getLength();
+    
+    return getLengthInSeconds();
+}
+
+const juce::Range<double> AudioResource::getRegionDataInSeconds() const
+{
+    return regionData;
+}
+void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionData)
+{
+    jassert(newRegionData.getStart() <= newRegionData.getEnd());
+    regionData = newRegionData;
+
+    if (regionData.getStart() < 0.0)
+        regionData.setStart(0.0);
+    
+    if (regionData.getLength() + regionData.getStart() > getLengthInSeconds())
+        regionData.setLength(getLengthInSeconds() - regionData.getStart());
+}
+
+void AudioResource::setTransportPosition(const double newPosition)
+{
+    transportPosition = newPosition;
+    if (transportPosition < 0.0)
+        transportPosition = 0.0;
+}

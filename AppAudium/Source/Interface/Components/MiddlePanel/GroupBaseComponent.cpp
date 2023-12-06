@@ -16,6 +16,7 @@
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Views/AudioRegionView.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 
@@ -46,15 +47,25 @@ void GroupBaseComponent::paint (juce::Graphics& g)
 }
 
 
-void GroupBaseComponent::filesDropped (const StringArray& filenames, int /*x*/, int /*y*/)
+void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
     if ( !filenames.isEmpty())
     {
+        /// TODO: use total length of group (channel)
+        auto totalLengthX = zoomHandler->secondsToX(audiumEngine->getPlayListScheduler()->getTotalLengthSeconds());
+        auto transportPosition = zoomHandler->xToSeconds(x);
         for (auto i = 0; i < filenames.size(); i++)
         {
+            auto channelPosition = 0;
+            if (x < totalLengthX)
+            {
+                channelPosition = audioGroup->getNumChannels();
+            }
+            
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup);
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup, channelPosition, transportPosition);
         }
+        // TODO: discuss if default region/playlist is needed
         audiumEngine->createDefaultRegionAndPlayList(audioGroup);
         
         // will update content

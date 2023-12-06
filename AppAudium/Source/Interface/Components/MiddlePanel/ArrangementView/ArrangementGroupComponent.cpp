@@ -70,7 +70,7 @@ void ArrangementGroupComponent::rebuildComponents()
     
     for (auto playListItem : playListItems)
     {
-        auto groupRegion = std::shared_ptr<PlayListItemComponent>(new PlayListItemComponent(audioGroup, playListItem, zoomHandler));
+        auto groupRegion = std::shared_ptr<PlayListItemComponent>(new PlayListItemComponent(audioGroup, playListItem, zoomHandler, regionSelector));
         
         addAndMakeVisible(groupRegion.get());
         playListItemComponents.push_back(groupRegion);
@@ -88,57 +88,6 @@ void ArrangementGroupComponent::resized()
         regionView->setBounds(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
     }
 }
-
-//void ArrangementGroupComponent::filesDropped (const StringArray& filenames, int /*x*/, int /*y*/)
-//{
-//    if ( !filenames.isEmpty())
-//    {
-//        for (auto i = 0; i < filenames.size(); i++)
-//        {
-//            auto url = URL (File (filenames[i]));
-//            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup);
-//        }
-//        audiumEngine->createDefaultRegionAndPlayList(audioGroup);
-//        
-//        // will update content
-//        refreshComponent(audioGroup, true);
-//    }
-//    
-//    externalDragAndDrop = false;
-//    repaint();
-//}
-//
-//void ArrangementGroupComponent::fileDragEnter (const juce::StringArray& files, int x, int y)
-//{
-//    externalDragAndDrop = true;
-//    repaint();
-//}
-//void ArrangementGroupComponent::fileDragExit (const juce::StringArray& files)
-//{
-//    externalDragAndDrop = false;
-//    repaint();
-//}
-//
-//void ArrangementGroupComponent::mouseDown (const MouseEvent& e)
-//{
-//    getParentComponent()->mouseDown(e);
-//    mouseDrag (e);
-//}
-//
-//void ArrangementGroupComponent::mouseDrag (const MouseEvent& e)
-//{
-//    getParentComponent()->mouseDrag(e);
-//}
-//
-//void ArrangementGroupComponent::mouseUp (const MouseEvent& e)
-//{
-//    getParentComponent()->mouseUp(e);
-//}
-//
-//void ArrangementGroupComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
-//{
-//    getParentComponent()->mouseWheelMove(e, wheel);
-//}
 
 
 

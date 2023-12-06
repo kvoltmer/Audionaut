@@ -55,6 +55,11 @@ public:
 
     void mouseUp (const juce::MouseEvent&) override;
     
+    void resized() override
+    {
+        updateFromEngine();
+    }
+    
     void updateMouseZone (const juce::MouseEvent& e);
 
     const Edge getDragMode(int x) const;
