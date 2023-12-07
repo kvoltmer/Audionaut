@@ -26,14 +26,12 @@ public:
                   std::shared_ptr<ZoomHandler> zoomHandler,
                   std::shared_ptr<AudioRegion> audioRegion,
                   juce::Colour colour,
-                  std::shared_ptr<RegionSelector> regionSelector,
-                  AudioViewBase* componentSync) :
+                  std::shared_ptr<RegionSelector> regionSelector) :
         audioResource(audioResource),
         zoomHandler(zoomHandler),
         audioRegion(audioRegion),
         colour(colour),
-        regionSelector(regionSelector),
-        componentToSync(componentSync)
+        regionSelector(regionSelector)
     {
     }
 
@@ -107,17 +105,6 @@ public:
         }
         
         setBounds (bounds);
-        
-        auto syncBounds = componentToSync->getBounds();
-        syncBounds.setX(bounds.getX());
-        syncBounds.setWidth(bounds.getWidth());
-        componentToSync->setBounds(syncBounds);
-        
-//        if (currentDragMode == leftEdge)
-//        {
-//
-//            componentToSync->repaint();
-//        }
         
         commitBoundsToEngine();
     }
@@ -251,9 +238,6 @@ private:
     const int minimumWidth = 2;
 
     juce::Rectangle<int> originalBounds;
-
-    AudioViewBase* componentToSync;
-    
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DraggerControl)
 };

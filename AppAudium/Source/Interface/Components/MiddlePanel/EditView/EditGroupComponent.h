@@ -34,9 +34,6 @@ public:
                         std::shared_ptr<RegionSelector> regionSelector) :
         GroupBaseComponent(group, audiumEngine, zoomHandler, regionSelector)
     {
-        // this component doesn't handle mouse events
-        //setInterceptsMouseClicks(false, false);
-        
         refreshComponent(group);
     }    
     
@@ -55,7 +52,6 @@ public:
             resized();
             updateFromEngine();
         }
-        
     }
     
     bool mustRebuildComponents() const
@@ -99,8 +95,7 @@ public:
                                                                               zoomHandler,
                                                                               nullptr,
                                                                               audioGroup->getColour(),
-                                                                              regionSelector,
-                                                                              view.get()));
+                                                                              regionSelector));
             dragger->addChangeListener(this);
             addAndMakeVisible(dragger.get());
             draggerControls.push_back(dragger);
@@ -113,8 +108,6 @@ public:
             addAndMakeVisible(view.get());
             regionEditControls.push_back(view);
         }
-        
-        
     }
     
     void changeListenerCallback (ChangeBroadcaster* source) override
@@ -142,18 +135,15 @@ public:
 
     void resized() override
     {
-        //int top = 0;
         int count = 0;
         auto audioResources = audioGroup->getAudioResources();
         for (auto audioResource : audioResources)
         {
             auto pos = zoomHandler->secondsToX(audioResource->getTransportPosition());
-            //auto height = audioResource->getHeight();
             auto top = audioResource->getTop();
             if (count < audioResourceViews.size())
             {
                 auto resourceView = audioResourceViews[count];
-                
                 
                 resourceView->setTopLeftPosition(pos, top);
                 resourceView->updateFromEngine();
@@ -165,7 +155,6 @@ public:
                 
                 count++;
             }
-            //top += height;
         }
         
         auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
@@ -177,23 +166,18 @@ public:
                 auto regionEditControl = regionEditControls[count];
                 regionEditControl->setBounds(0, 0, 100, getHeight());
                 regionEditControl->updateFromEngine();
-                
-                //regionEditControl->setBounds(0, draggerHeight, 100, getHeight() - draggerHeight);
             }
             count++;
         }
     }
 
-    
     static constexpr int draggerHeight = 19;
     
 private:
     
     std::vector<std::shared_ptr<AudioResourceView>> audioResourceViews;
     std::vector<std::shared_ptr<DraggerControl>> draggerControls;
-    
     std::vector<std::shared_ptr<RegionEditControl>> regionEditControls;
-
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EditGroupComponent)
 };
