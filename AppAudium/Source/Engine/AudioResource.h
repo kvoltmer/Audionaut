@@ -70,6 +70,7 @@ public:
     void setRegionDataInSeconds(const juce::Range<double> newRegionData);
     void setTransportPosition(const double newPosition);
     double getTransportPosition() const { return transportPosition; }
+    bool containsAbsolutePosition(double position) const;
     
     juce::AudioThumbnail* getAudioThumbnail() const { return audioThumbnail.get(); }
     

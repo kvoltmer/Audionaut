@@ -5,6 +5,7 @@
 #include "Interface/Widgets/audium_ListBox.h"
 
 class AudiumEngine;
+class ZoomHandler;
 
 //==============================================================================
 /*
@@ -13,8 +14,7 @@ class AudioGroupListBox  : public audium::ListBox, public juce::FileDragAndDropT
 {
 public:
     AudioGroupListBox (std::shared_ptr<AudiumEngine> audiumEngine,
-                       const juce::String& componentName = juce::String(),
-                       audium::ListBoxModel* model = nullptr);
+                       std::shared_ptr<ZoomHandler> zoomHandler);
     ~AudioGroupListBox() override;
     
     // drag & drop
@@ -26,6 +26,7 @@ public:
     
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<ZoomHandler> zoomHandler;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroupListBox)
 };
