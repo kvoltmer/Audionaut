@@ -156,6 +156,7 @@ void PlayListScheduler::processEditMode(double absolutePosition, int numSamples)
             /// TODO: calculate sample accurate position
             resource->getAudioTransportSource()->schedulePosition(localPosition, 0);
             resource->getAudioTransportSource()->start();
+            resource->getAudioTransportSource()->startWithDuration(resource->getRegionDataInSeconds().getLength(), sampleRate);
         }
     }
 }
