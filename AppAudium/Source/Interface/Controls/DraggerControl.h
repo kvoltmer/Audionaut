@@ -114,7 +114,10 @@ public:
         if (regionSelector != nullptr)
             regionSelector->setEnabled(true);
         
-        commitBoundsToEngine();
+        if (audioResource->validateData())
+        {
+            sendChangeMessage();
+        }
     }
 
     void mouseMove (const juce::MouseEvent& e) override

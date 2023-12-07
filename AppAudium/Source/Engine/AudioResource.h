@@ -72,6 +72,8 @@ public:
     double getTransportPosition() const;
     bool containsAbsolutePosition(double position) const;
     
+    bool validateData();
+    
     juce::AudioThumbnail* getAudioThumbnail() const { return audioThumbnail.get(); }
     
     int getChannelPosition() const { return channelPosition; }

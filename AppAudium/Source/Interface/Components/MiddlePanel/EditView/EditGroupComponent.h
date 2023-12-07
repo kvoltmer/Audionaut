@@ -96,9 +96,9 @@ public:
                                                                               nullptr,
                                                                               audioGroup->getColour(),
                                                                               regionSelector));
-            dragger->addChangeListener(this);
             addAndMakeVisible(dragger.get());
             draggerControls.push_back(dragger);
+            dragger->addChangeListener(this);
         }
         
         auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
