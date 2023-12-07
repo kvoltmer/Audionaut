@@ -72,17 +72,33 @@ void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionDa
     regionData = newRegionData;
 
     if (regionData.getStart() < 0.0)
+    {
         regionData.setStart(0.0);
-    
-    if (regionData.getLength() + regionData.getStart() > getLengthInSeconds())
-        regionData.setLength(getLengthInSeconds() - regionData.getStart());
+    }
 }
 
 void AudioResource::setTransportPosition(const double newPositionSeconds)
 {
     transportPositionClocks = owner.getTempoProvider()->secondsToClocks(newPositionSeconds);
+
+}
+
+bool AudioResource::validateData()
+{
+    bool result = false;
     if (transportPositionClocks < 0.0)
+    {
         transportPositionClocks = 0.0;
+        result |= true;
+    }
+    
+    if (regionData.getLength() + regionData.getStart() > getLengthInSeconds())
+    {
+        regionData.setLength(getLengthInSeconds() - regionData.getStart());
+        result |= true;
+    }
+    
+    return result;
 }
 
 double AudioResource::getTransportPosition() const
