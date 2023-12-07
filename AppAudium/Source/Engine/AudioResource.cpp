@@ -102,3 +102,33 @@ bool AudioResource::containsAbsolutePosition(double positionInSeconds) const
     }
     return false;
 }
+
+bool AudioResource::writeToStream (juce::OutputStream& outputStream)
+{
+    outputStream.writeString(getUrlAsString());
+    outputStream.writeFloat(getAudioTransportSource()->getGain());
+    outputStream.writeDouble(regionData.getStart());
+    outputStream.writeDouble(regionData.getEnd());
+    outputStream.writeDouble(transportPositionClocks);
+    outputStream.writeInt(channelPosition);
+    outputStream.writeInt(height);
+
+    return true;
+}
+
+bool AudioResource::readFromStream (juce::InputStream& inputStream)
+{
+    const auto inUrl =          inputStream.readString();
+    const auto gain =           inputStream.readFloat();
+    const auto start =          inputStream.readDouble();
+    const auto end =            inputStream.readDouble();
+    transportPositionClocks =   inputStream.readDouble();
+    channelPosition =           inputStream.readInt();
+    height =                    inputStream.readInt();
+    
+    regionData = juce::Range<double>(start, end);
+    jassert(this->url == inUrl);
+    getAudioTransportSource()->setGain(gain);
+    
+    return true;
+}
