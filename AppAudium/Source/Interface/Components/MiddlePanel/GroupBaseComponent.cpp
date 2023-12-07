@@ -51,22 +51,35 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
 {
     if ( !filenames.isEmpty())
     {
-        /// TODO: use total length of group (channel)
-        auto totalLengthX = zoomHandler->secondsToX(audiumEngine->getPlayListScheduler()->getTotalLengthSeconds());
         auto transportPosition = zoomHandler->xToSeconds(x);
+        
         for (auto i = 0; i < filenames.size(); i++)
         {
             auto channelPosition = 0;
+            /// TODO: use total length of group (channel)
+            auto totalLengthX = zoomHandler->secondsToX(audiumEngine->getPlayListScheduler()->getTotalLengthSeconds());
             if (x < totalLengthX)
             {
+                // position is below
                 channelPosition = audioGroup->getNumChannels();
+                
+                // snap position to next resource
+                const auto resources = audioGroup->getAudioResources();
+                for (auto resource : resources)
+                {
+                    if (resource->containsAbsolutePosition(transportPosition))
+                    {
+                        transportPosition = resource->getTransportPosition();
+                    }
+                }
             }
             
             auto url = URL (File (filenames[i]));
             audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup, channelPosition, transportPosition);
         }
-        // TODO: discuss if default region/playlist is needed
-        audiumEngine->createDefaultRegionAndPlayList(audioGroup);
+        // TODO: discuss
+        // disable for now
+        //audiumEngine->createDefaultRegionAndPlayList(audioGroup);
         
         // will update content
         refreshComponent(audioGroup, true);

@@ -84,3 +84,15 @@ void AudioResource::setTransportPosition(const double newPosition)
     if (transportPosition < 0.0)
         transportPosition = 0.0;
 }
+
+bool AudioResource::containsAbsolutePosition(double positionInSeconds) const
+{
+    auto startTime = getAbsolueStartTime();
+    auto endTime = startTime + getDurationTimeInSeconds();
+    juce::Range<double> absoluteRange(startTime, endTime);
+    if (absoluteRange.contains(positionInSeconds))
+    {
+        return true;
+    }
+    return false;
+}

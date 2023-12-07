@@ -5,15 +5,16 @@
 #include "Engine/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Interface/AudiumLookAndFeel.h"
+#include "Interface/Handlers/ZoomHandler.h"
 
 using namespace audium;
 
 //==============================================================================
 AudioGroupListBox::AudioGroupListBox (std::shared_ptr<AudiumEngine> audiumEngine,
-                                      const juce::String& componentName,
-                                      audium::ListBoxModel* model) :
-    audium::ListBox(componentName, model),
-    audiumEngine(audiumEngine)
+                                      std::shared_ptr<ZoomHandler> zoomHandler) :
+    audium::ListBox("AudioGroupListBox", nullptr),
+    audiumEngine(audiumEngine),
+    zoomHandler(zoomHandler)
 {
 }
 
@@ -34,10 +35,12 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
                                                                                  *audiumEngine->getAudioRegionContainer(),
                                                                                  name);
 
+        auto transportPosition = zoomHandler->xToSeconds(mouseX);
+        auto channelPosition = 0;
         for (auto i = 0; i < filenames.size(); i++)
         {
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group, 0);
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group, channelPosition, transportPosition);
         }
         
         // disabled for now

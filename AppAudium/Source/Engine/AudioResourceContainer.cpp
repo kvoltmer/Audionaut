@@ -141,10 +141,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtA
     
     for (auto resource : audioResources)
     {
-        auto startTime = resource.second->getAbsolueStartTime();
-        auto endTime = startTime + resource.second->getDurationTimeInSeconds();
-        juce::Range<double> absoluteRange(startTime, endTime);
-        if (absoluteRange.contains(positionInSeconds))
+        if (resource.second->containsAbsolutePosition(positionInSeconds))
         {
             resources.push_back(resource.second);
         }
