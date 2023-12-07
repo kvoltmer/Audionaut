@@ -39,7 +39,9 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
             auto url = URL (File (filenames[i]));
             audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group, 0);
         }
-        audiumEngine->createDefaultRegionAndPlayList(group);
+        
+        // disabled for now
+        //audiumEngine->createDefaultRegionAndPlayList(group);
     }
     
     updateContent();
