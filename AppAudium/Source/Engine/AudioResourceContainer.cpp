@@ -166,9 +166,8 @@ bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
         outputStream.writeInt(resource.first->getId());
         outputStream.writeString(resource.first->getName());
         
-        // url of the resource
-        outputStream.writeString(resource.second->getUrlAsString());
-        outputStream.writeFloat(resource.second->getAudioTransportSource()->getGain());
+        // write audio resource data
+        resource.second->writeToStream(outputStream);
     }
     return true;
 }
@@ -189,10 +188,13 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, con
             jassert(group && group->getName() == groupName);
             
             // url of the resource
-            auto inString = inputStream.readString();
-            auto resource = addAudioResource(juce::URL(inString), engine, group);
-            auto gain = inputStream.readFloat();
-            resource->getAudioTransportSource()->setGain(gain);
+            auto streamPos = inputStream.getPosition();
+            auto url = inputStream.readString();
+            auto resource = addAudioResource(juce::URL(url), engine, group);
+            inputStream.setPosition(streamPos);
+            resource->readFromStream(inputStream);
+//            auto gain = inputStream.readFloat();
+//            resource->getAudioTransportSource()->setGain(gain);
         }
         else
         {

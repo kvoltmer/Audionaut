@@ -76,6 +76,9 @@ public:
     
     int getChannelPosition() const { return channelPosition; }
     
+    bool writeToStream (juce::OutputStream& outputStream);
+    bool readFromStream (juce::InputStream& inputStream);
+    
 private:
 
     AudioResourceContainer& owner;
@@ -88,12 +91,10 @@ private:
     
     std::shared_ptr<juce::AudioThumbnail> audioThumbnail;
     
+    /// TODO: capsulate the data below
     juce::Range<double> regionData;
-    
     double transportPositionClocks = 0.0;
-    
     int channelPosition = 0;
-    
     int height = 100;
     
 private:
