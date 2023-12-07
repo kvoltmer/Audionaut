@@ -78,11 +78,17 @@ void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionDa
         regionData.setLength(getLengthInSeconds() - regionData.getStart());
 }
 
-void AudioResource::setTransportPosition(const double newPosition)
+void AudioResource::setTransportPosition(const double newPositionSeconds)
 {
-    transportPosition = newPosition;
-    if (transportPosition < 0.0)
-        transportPosition = 0.0;
+    transportPositionClocks = owner.getTempoProvider()->secondsToClocks(newPositionSeconds);
+    if (transportPositionClocks < 0.0)
+        transportPositionClocks = 0.0;
+}
+
+double AudioResource::getTransportPosition() const
+{
+    return owner.getTempoProvider()->clocksToSeconds(transportPositionClocks);
+    
 }
 
 bool AudioResource::containsAbsolutePosition(double positionInSeconds) const

@@ -36,9 +36,9 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
                                                                                  name);
 
         auto transportPosition = zoomHandler->xToSeconds(mouseX);
-        auto channelPosition = 0;
         for (auto i = 0; i < filenames.size(); i++)
         {
+            auto channelPosition = group->getNumChannels();
             auto url = URL (File (filenames[i]));
             audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group, channelPosition, transportPosition);
         }

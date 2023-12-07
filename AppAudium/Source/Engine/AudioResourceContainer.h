@@ -12,8 +12,10 @@
 #include <vector>
 #include <memory>
 #include <JuceHeader.h>
-#include "AudioResource.h"
-#include "AudioGroup.h"
+
+#include "Engine/AudioResource.h"
+#include "Engine/AudioGroup.h"
+#include "Engine/Provider/TempoProvider.h"
 
 class TransportSourceContainer;
 class AudioGroupContainer;
@@ -25,11 +27,13 @@ public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                            std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                            std::shared_ptr<juce::AudioFormatManager> formatManager,
-                           std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache) :
+                           std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache,
+                           std::shared_ptr<TempoProvider> tempoProvider) :
         audioDeviceManager(audioDeviceManager),
         audioGroupContainer(audioGroupContainer),
         formatManager(formatManager),
-        audioThumbnailCache(audioThumbnailCache)
+        audioThumbnailCache(audioThumbnailCache),
+        tempoProvider(tempoProvider)
     {
         formatManager->registerBasicFormats();
         thread.startThread();
@@ -74,6 +78,7 @@ public:
     
     std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
     std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }
+    std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     
     typedef std::pair<std::shared_ptr<AudioGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
     
@@ -85,6 +90,7 @@ private:
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<juce::AudioFormatManager> formatManager;
     std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
+    std::shared_ptr<TempoProvider> tempoProvider;
         
     /// TODO: find a proper home for this
     juce::TimeSliceThread thread  { "audio file read ahead" };

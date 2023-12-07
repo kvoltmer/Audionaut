@@ -69,7 +69,7 @@ public:
     const juce::Range<double> getRegionDataInSeconds() const;
     void setRegionDataInSeconds(const juce::Range<double> newRegionData);
     void setTransportPosition(const double newPosition);
-    double getTransportPosition() const { return transportPosition; }
+    double getTransportPosition() const;
     bool containsAbsolutePosition(double position) const;
     
     juce::AudioThumbnail* getAudioThumbnail() const { return audioThumbnail.get(); }
@@ -89,7 +89,8 @@ private:
     std::shared_ptr<juce::AudioThumbnail> audioThumbnail;
     
     juce::Range<double> regionData;
-    double transportPosition = 0.0;
+    
+    double transportPositionClocks = 0.0;
     
     int channelPosition = 0;
     

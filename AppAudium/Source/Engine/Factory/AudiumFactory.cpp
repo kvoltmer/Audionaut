@@ -35,7 +35,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto audioResourceContainer     = std::shared_ptr<AudioResourceContainer>   (new AudioResourceContainer(audioDeviceManager,
                                                                                                             audioGroupContainer,
                                                                                                             formatManager,
-                                                                                                            audioThumbnailCache));
+                                                                                                            audioThumbnailCache,
+                                                                                                            tempoProvider));
     
     auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioGroupContainer,
                                                                                                        audioResourceContainer,

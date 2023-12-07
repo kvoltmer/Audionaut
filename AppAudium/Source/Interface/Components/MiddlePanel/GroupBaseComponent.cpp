@@ -77,7 +77,7 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             auto url = URL (File (filenames[i]));
             audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup, channelPosition, transportPosition);
         }
-        // TODO: discuss
+        // TODO: discuss default region
         // disable for now
         //audiumEngine->createDefaultRegionAndPlayList(audioGroup);
         
