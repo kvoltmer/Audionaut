@@ -66,9 +66,40 @@ const juce::Range<double> AudioResource::getRegionDataInSeconds() const
 {
     return regionData;
 }
-void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionData)
+
+bool approximatelyEqual(double a, double b, double epsilon)
+{
+    return std::abs(a - b) <= ( (std::abs(a) < std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioResource::getEqualAudioResources() const
+{
+    std::vector<std::shared_ptr<AudioResource>> result;
+    auto resources = owner.getAudioResourcesForGroup(audioGroup.get());
+ 
+    for (auto resource : resources)
+    {
+        if (resource.get() == this)
+            continue;
+        
+        if (approximatelyEqual(resource->getTransportPositionClocks(), getTransportPositionClocks(), 0.00001))
+        {
+            result.push_back(resource);
+        }
+    }
+    return result;
+}
+
+void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionData, bool syncEqualResources)
 {
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
+    
+    if (syncEqualResources)
+    {
+        for (auto resource : getEqualAudioResources())
+            resource->setRegionDataInSeconds(newRegionData, false);
+    }
+    
     regionData = newRegionData;
 
     if (regionData.getStart() < 0.0)
@@ -77,15 +108,29 @@ void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionDa
     }
 }
 
-void AudioResource::setTransportPosition(const double newPositionSeconds)
+void AudioResource::setTransportPosition(const double newPositionSeconds, bool syncEqualResources)
 {
+    if (syncEqualResources)
+    {
+        for (auto resource : getEqualAudioResources())
+            resource->setTransportPosition(newPositionSeconds, false);
+    }
+    
     transportPositionClocks = owner.getTempoProvider()->secondsToClocks(newPositionSeconds);
-
 }
 
-bool AudioResource::validateData()
+
+
+bool AudioResource::validateData(bool syncEqualResources)
 {
     bool result = false;
+    
+    if (syncEqualResources)
+    {
+        for (auto resource : getEqualAudioResources())
+            result |= resource->validateData(false);
+    }
+    
     if (transportPositionClocks < 0.0)
     {
         transportPositionClocks = 0.0;
@@ -95,6 +140,12 @@ bool AudioResource::validateData()
     if (regionData.getLength() + regionData.getStart() > getLengthInSeconds())
     {
         regionData.setLength(getLengthInSeconds() - regionData.getStart());
+        result |= true;
+    }
+    
+    if (regionData.getLength() <= 0.0)
+    {
+        regionData.setLength(0.1);
         result |= true;
     }
     

@@ -54,6 +54,7 @@ public:
                     audioThumbnail->setSource(inputSource.release());
                     
                     audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
+                                                                                     group,
                                                                                      url,
                                                                                      transportSource,
                                                                                      std::move(audioFormatReaderSource),
