@@ -40,7 +40,7 @@ public:
         channelPosition(channelPosition)
     {
         this->audioFormatReaderSource = std::move(audioFormatReaderSource);
-        setRegionDataInSeconds(juce::Range<double>(0.0, getLengthInSeconds()));
+        setRegionDataInSeconds(juce::Range<double>(0.0, getLengthInSeconds()), false);
     }
     
     ~AudioResource();
@@ -71,9 +71,9 @@ public:
     double getDurationTimeInSeconds() const;
     const juce::Range<double> getRegionDataInSeconds() const;
     
-    void setRegionDataInSeconds(const juce::Range<double> newRegionData, bool syncResources = true);
-    void setTransportPosition(const double newPosition, bool syncResources = true);
-    bool validateData(bool syncResources = true);
+    void setRegionDataInSeconds(const juce::Range<double> newRegionData, bool syncEqualResources);
+    void setTransportPosition(const double newPosition, bool syncEqualResources);
+    bool validateData(bool syncResources);
     std::vector<std::shared_ptr<AudioResource>> getEqualAudioResources() const;
     
     double getTransportPosition() const;
@@ -86,6 +86,8 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
+    
+    std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     
 private:
 

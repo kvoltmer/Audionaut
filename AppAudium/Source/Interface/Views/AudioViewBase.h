@@ -37,7 +37,7 @@ public:
         regionSelector(regionSelector)
     {
         // this component doesn't handle mouse events
-        setInterceptsMouseClicks(false, false);
+        //setInterceptsMouseClicks(false, false);
         
         // use buffered image
         // setBufferedToImage(true);

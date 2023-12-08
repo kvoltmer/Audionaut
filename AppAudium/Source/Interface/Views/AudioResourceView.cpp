@@ -11,7 +11,12 @@
 #include <JuceHeader.h>
 #include "AudioResourceView.h"
 
-//==============================================================================
+#include "Engine/AudiumEngine.h"
+#include "Engine/AudioRegionContainer.h"
+
+#include "Interface/Controls/RegionEditControl.h"
+#include "Interface/Controls/DraggerControl.h"
+
 void AudioResourceView::paint (juce::Graphics& g)
 {
     // std::cout << "AudioResourceView::paint" << std::endl;
@@ -63,3 +68,72 @@ void AudioResourceView::paint (juce::Graphics& g)
     }
 }
 
+void AudioResourceView::updateFromEngine()
+{
+    double posX = zoomHandler->secondsToX(audioResource->getTransportPosition());
+    double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
+    
+    // don't change Y position
+    double posY = getBounds().getY();
+    juce::Rectangle<double> rect_tmp(posX, posY, length, audioResource->getHeight());
+    
+    setBounds(rect_tmp.toNearestInt());
+    
+    
+    if (mustRebuildComponents())
+    {
+        rebuildComponents();
+        resized();
+    }
+    else
+    {
+        for (auto regionEdit : regionEditControls)
+        {
+            regionEdit->updateFromEngine();
+        }
+    }
+    
+
+}
+
+void AudioResourceView::resized()
+{
+    auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioResource->getAudioGroup());
+    auto count = 0;
+    for (auto region : regions)
+    {
+        if (count < regionEditControls.size())
+        {
+            auto regionEditControl = regionEditControls[count];
+            regionEditControl->setBounds(0, DraggerControl::draggerHeight, 100, getHeight() - DraggerControl::draggerHeight);
+            regionEditControl->updateFromEngine();
+        }
+        count++;
+    }
+}
+
+bool AudioResourceView::mustRebuildComponents() const
+{    
+    auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioResource->getAudioGroup());
+    if (regions.size() != regionEditControls.size())
+    {
+        return true;
+    }
+    
+    return false;
+}
+
+void AudioResourceView::rebuildComponents()
+{
+    std::cout << "AudioResourceView::rebuildComponents" << std::endl;
+    
+    regionEditControls.clear();
+    
+    auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioResource->getAudioGroup());
+    for (auto region : regions)
+    {
+        auto view = std::shared_ptr<RegionEditControl>(new RegionEditControl(region, zoomHandler, audiumEngine, regionSelector));
+        addAndMakeVisible(view.get());
+        regionEditControls.push_back(view);
+    }
+}

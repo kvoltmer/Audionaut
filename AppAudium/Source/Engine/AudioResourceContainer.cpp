@@ -27,7 +27,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                          int channelPosition,
                                                                          double transportPosition)
 {
-    std::cout << "AudioResourceContainer::addAudioResource channelPosition = " << channelPosition << " transportPosition = " << transportPosition << std::endl;
+    std::cout << "AudioResourceContainer::addAudioResource channelPosition = " << channelPosition << " transportPosition (seconds) = " << transportPosition << std::endl;
     jassert(group != nullptr);
     if (group != nullptr)
     {

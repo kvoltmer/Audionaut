@@ -114,7 +114,7 @@ public:
         if (regionSelector != nullptr)
             regionSelector->setEnabled(true);
         
-        if (audioResource->validateData())
+        if (audioResource->validateData(true))
         {
             sendChangeMessage();
         }
@@ -184,8 +184,8 @@ public:
                     auto newLength = regionData.getLength() - diff;
                     auto newStart = regionData.getStart() + diff;
                 
-                    audioResource->setRegionDataInSeconds(juce::Range<double>(newStart, newStart + newLength));
-                    audioResource->setTransportPosition(newRegionData.getStart());
+                    audioResource->setRegionDataInSeconds(juce::Range<double>(newStart, newStart + newLength), true);
+                    audioResource->setTransportPosition(newRegionData.getStart(), true);
                     repaint();
                 }
                 break;
@@ -194,12 +194,12 @@ public:
                     // duration
                     auto regionData = audioResource->getRegionDataInSeconds();
                     regionData.setLength(newRegionData.getLength());
-                    audioResource->setRegionDataInSeconds(regionData);
+                    audioResource->setRegionDataInSeconds(regionData, true);
                 }
                 break;
             case middleEdge:
                 // position in transport
-                audioResource->setTransportPosition(newRegionData.getStart());
+                audioResource->setTransportPosition(newRegionData.getStart(), true);
                 break;
             default:
                 break;
@@ -222,6 +222,7 @@ public:
         setBounds(rect_tmp.toNearestInt());
     }
 
+    static constexpr int draggerHeight = 19;
     
 private:
     
