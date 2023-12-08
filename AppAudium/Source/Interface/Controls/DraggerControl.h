@@ -205,10 +205,6 @@ public:
                 break;
         }
         
-        
-        
-        //updateFromEngine();
-        
         sendChangeMessage();
     }
     

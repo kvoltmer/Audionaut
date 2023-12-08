@@ -20,17 +20,20 @@
 class AudioResourceContainer;
 class AudioPlayer;
 class AudiumTransportSource;
+class AudioGroup;
 
 class AudioResource {
     
 public:
     AudioResource(AudioResourceContainer& audioResourceContainer,
+                  std::shared_ptr<AudioGroup> audioGroup,
                   juce::URL url,
                   std::shared_ptr<AudiumTransportSource> transportSource,
                   std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
                   std::shared_ptr<juce::AudioThumbnail> audioThumbnail,
                   int channelPosition) :
         owner(audioResourceContainer),
+        audioGroup(audioGroup),
         url(url),
         transportSource(transportSource),
         audioThumbnail(audioThumbnail),
@@ -67,12 +70,15 @@ public:
     double getAbsolueStartTime() const;
     double getDurationTimeInSeconds() const;
     const juce::Range<double> getRegionDataInSeconds() const;
-    void setRegionDataInSeconds(const juce::Range<double> newRegionData);
-    void setTransportPosition(const double newPosition);
-    double getTransportPosition() const;
-    bool containsAbsolutePosition(double position) const;
     
-    bool validateData();
+    void setRegionDataInSeconds(const juce::Range<double> newRegionData, bool syncResources = true);
+    void setTransportPosition(const double newPosition, bool syncResources = true);
+    bool validateData(bool syncResources = true);
+    std::vector<std::shared_ptr<AudioResource>> getEqualAudioResources() const;
+    
+    double getTransportPosition() const;
+    double getTransportPositionClocks() const { return transportPositionClocks; }
+    bool containsAbsolutePosition(double position) const;
     
     juce::AudioThumbnail* getAudioThumbnail() const { return audioThumbnail.get(); }
     
@@ -84,6 +90,8 @@ public:
 private:
 
     AudioResourceContainer& owner;
+    
+    std::shared_ptr<AudioGroup> audioGroup;
     
     juce::URL url;
     
