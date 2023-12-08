@@ -28,7 +28,7 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
 {
     if (isEnabled())
     {
-        std::cout << "RegionSelector::mouseDown" << std::endl;
+        //std::cout << "RegionSelector::mouseDown" << std::endl;
         
         /// click outside -> reset current selection
         auto parentPosition = e.getEventRelativeTo(owner.get()).getPosition();

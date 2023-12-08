@@ -149,13 +149,18 @@ bool AudioResource::validateData(bool syncEqualResources)
         result |= true;
     }
     
+    
+    /// TODO: check on the regions
+    //    auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioResource->getAudioGroup());
+    //    for (auto region : regions)
+    
+    
     return result;
 }
 
 double AudioResource::getTransportPosition() const
 {
     return owner.getTempoProvider()->clocksToSeconds(transportPositionClocks);
-    
 }
 
 bool AudioResource::containsAbsolutePosition(double positionInSeconds) const

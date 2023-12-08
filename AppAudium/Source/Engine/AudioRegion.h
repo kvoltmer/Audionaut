@@ -44,6 +44,11 @@ public:
     const RegionData getRegionDataInSeconds() const;
     void setRegionDataInSeconds(const RegionData newRegionData);
     
+    bool validateData(RegionData& data);
+    
+    double getAudioResourceStartInSeconds() const;
+    double getAudioResourceEndInSeconds() const;
+
     void setRegionStart(double newStart);
 
     void setRegionEnd(double newEnd);

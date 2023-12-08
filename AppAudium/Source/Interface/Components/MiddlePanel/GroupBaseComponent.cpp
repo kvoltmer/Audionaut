@@ -56,20 +56,22 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
         for (auto i = 0; i < filenames.size(); i++)
         {
             auto channelPosition = 0;
-            /// TODO: use total length of group (channel)
-            auto totalLengthX = zoomHandler->secondsToX(audiumEngine->getPlayListScheduler()->getTotalLengthSeconds());
-            if (x < totalLengthX)
+            
+            //auto totalLengthX = zoomHandler->secondsToX(audiumEngine->getPlayListScheduler()->getTotalLengthSeconds());
+            //if (x < totalLengthX)
             {
-                // position is below
-                channelPosition = audioGroup->getNumChannels();
                 
-                // snap position to next resource
+                
+                // check if we overlap with an existing resource (snap position to nearest resource)
                 const auto resources = audioGroup->getAudioResources();
                 for (auto resource : resources)
                 {
                     if (resource->containsAbsolutePosition(transportPosition))
                     {
                         transportPosition = resource->getTransportPosition();
+                        // position is below
+                        channelPosition = audioGroup->getNumChannels();
+                        break;
                     }
                 }
             }
@@ -86,17 +88,20 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
     }
     
     externalDragAndDrop = false;
+    regionSelector->setEnabled(true);
     repaint();
 }
 
 void GroupBaseComponent::fileDragEnter (const juce::StringArray& files, int x, int y)
 {
     externalDragAndDrop = true;
+    regionSelector->setEnabled(false);
     repaint();
 }
 void GroupBaseComponent::fileDragExit (const juce::StringArray& files)
 {
     externalDragAndDrop = false;
+    regionSelector->setEnabled(true);
     repaint();
 }
 

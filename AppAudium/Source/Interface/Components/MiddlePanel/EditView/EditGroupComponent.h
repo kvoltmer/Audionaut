@@ -17,13 +17,9 @@
 
 #include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
 #include "Interface/Views/AudioResourceView.h"
-#include "Interface/Controls/RegionEditControl.h"
 #include "Interface/Controls/DraggerControl.h"
 #include "Interface/Handlers/ZoomHandler.h"
 
-//==============================================================================
-/*
-*/
 class EditGroupComponent  : public GroupBaseComponent, public juce::ChangeListener
 {
 public:
@@ -62,12 +58,6 @@ public:
             return true;
         }
         
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
-        if (regions.size() != regionEditControls.size())
-        {
-            return true;
-        }
-        
         return false;
     }
     
@@ -77,13 +67,13 @@ public:
         removeAllChildren();
         audioResourceViews.clear();
         draggerControls.clear();
-        regionEditControls.clear();
         
         // create views
         auto audioResources = audioGroup->getAudioResources();
         for (auto audioResource : audioResources)
         {
-            auto view = std::shared_ptr<AudioResourceView>(new AudioResourceView(audioResource,
+            auto view = std::shared_ptr<AudioResourceView>(new AudioResourceView(audiumEngine,
+                                                                                 audioResource,
                                                                                  zoomHandler,
                                                                                  nullptr,
                                                                                  audioGroup->getColour(),
@@ -99,14 +89,6 @@ public:
             addAndMakeVisible(dragger.get());
             draggerControls.push_back(dragger);
             dragger->addChangeListener(this);
-        }
-        
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
-        for (auto region : regions)
-        {
-            auto view = std::shared_ptr<RegionEditControl>(new RegionEditControl(region, zoomHandler, audiumEngine, regionSelector));
-            addAndMakeVisible(view.get());
-            regionEditControls.push_back(view);
         }
     }
     
@@ -126,11 +108,6 @@ public:
         {
             draggerControl->updateFromEngine();
         }
-        
-        for (auto regionEdit : regionEditControls)
-        {
-            regionEdit->updateFromEngine();
-        }
     }
 
     void resized() override
@@ -149,35 +126,21 @@ public:
                 resourceView->updateFromEngine();
                 
                 auto dragger = draggerControls[count];
-                dragger->setSize(resourceView->getWidth(), draggerHeight);
+                dragger->setSize(resourceView->getWidth(), DraggerControl::draggerHeight);
                 dragger->setTopLeftPosition(pos, top);
                 dragger->updateFromEngine();
                 
                 count++;
             }
         }
-        
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
-        count = 0;
-        for (auto region : regions)
-        {
-            if (count < regionEditControls.size())
-            {
-                auto regionEditControl = regionEditControls[count];
-                regionEditControl->setBounds(0, 0, 100, getHeight());
-                regionEditControl->updateFromEngine();
-            }
-            count++;
-        }
     }
 
-    static constexpr int draggerHeight = 19;
+    
     
 private:
     
     std::vector<std::shared_ptr<AudioResourceView>> audioResourceViews;
     std::vector<std::shared_ptr<DraggerControl>> draggerControls;
-    std::vector<std::shared_ptr<RegionEditControl>> regionEditControls;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EditGroupComponent)
 };

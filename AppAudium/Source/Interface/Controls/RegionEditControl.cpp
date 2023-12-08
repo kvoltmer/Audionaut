@@ -67,7 +67,8 @@ void RegionEditControl::mouseDrag (const juce::MouseEvent& e)
     
     switch (currentDragMode) {
         case RegionEditControl::leftEdge:
-            bounds.setLeft(juce::jmin(originalBounds.getRight() - minimumWidth, originalBounds.getX() + distance.getX()));
+            //bounds.setLeft(juce::jmin(originalBounds.getRight() - minimumWidth, originalBounds.getX() + distance.getX()));
+            bounds.setLeft(originalBounds.getX() + distance.getX());
             break;
         case RegionEditControl::rightEdge:
             bounds.setRight(juce::jmax(originalBounds.getX() + minimumWidth, originalBounds.getRight() + distance.getX()));
@@ -81,20 +82,22 @@ void RegionEditControl::mouseDrag (const juce::MouseEvent& e)
     }
     
     setBounds (bounds);
+    repaint();
+    
 }
 
 void RegionEditControl::mouseUp (const juce::MouseEvent& e)
 {
     regionSelector->setEnabled(true);
     
-    // commit values to engine
-    Range<double> range(getBounds().getX(), getBounds().getRight());
-    std::cout << range.getStart() << " " << range.getEnd() << std::endl;
     
-    auto rangeInSeconds = zoomHandler->xToSeconds(range);
-    std::cout << rangeInSeconds.getStart() << " " << rangeInSeconds.getEnd() << std::endl;
+    Range<double> range(getBounds().getX(), getBounds().getRight());
+    
+    // note: add audio resource start
+    auto rangeInSeconds = zoomHandler->xToSeconds(range) + audioRegion->getAudioResourceStartInSeconds();
     
     // set value in the engine
+    audioRegion->validateData(rangeInSeconds);
     audioRegion->setRegionDataInSeconds(rangeInSeconds);
     
     updateFromEngine();
@@ -111,19 +114,14 @@ void RegionEditControl::updateFromEngine()
 {
     auto bounds = getBounds().toFloat();
     
-    auto audioResources = audioRegion->getAudioGroup()->getAudioResources();
-    if (audioResources.size() > 0)
-    {
-        auto audioResource = audioResources[0];
-        double posX = zoomHandler->secondsToX(audioResource->getTransportPosition());
-        //double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
-        
-        auto regionData = zoomHandler->secondsToX(audioRegion->getRegionDataInSeconds());
-        bounds.setX(posX + regionData.getStart());
-        bounds.setWidth(regionData.getLength());
-        
-        setBounds(bounds.toNearestInt());
-    }
+    // note: subtract audio resource start
+    auto rangeSeconds = audioRegion->getRegionDataInSeconds() - audioRegion->getAudioResourceStartInSeconds();
+    auto rangeX = zoomHandler->secondsToX(rangeSeconds);
+    bounds.setX(rangeX.getStart());
+    bounds.setWidth(rangeX.getLength());
+    
+    setBounds(bounds.toNearestInt());
+    
 }
 
 void RegionEditControl::updateMouseZone (const juce::MouseEvent& e)

@@ -60,7 +60,7 @@ public:
                                                                                      std::move(audioFormatReaderSource),
                                                                                      audioThumbnail,
                                                                                      channelPosition));
-                    audioResource->setTransportPosition(transportPosition);
+                    audioResource->setTransportPosition(transportPosition, false);
                 }
             }
         }
