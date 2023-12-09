@@ -106,5 +106,7 @@ protected:
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
     
+    static constexpr float verticalZoomFactor = 0.62f;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioViewBase)
 };
