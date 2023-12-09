@@ -11,7 +11,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "AudioViewBase.h"
+#include "Interface/Views/AudioViewBase.h"
+#include "Interface/Components/MiddlePanel/EditView/RegionEditComponent.h"
 
 class AudioResource;
 class ZoomHandler;
@@ -19,6 +20,7 @@ class AudioRegion;
 class RegionSelector;
 class RegionEditControl;
 class AudiumEngine;
+
 
 class AudioResourceView  : public AudioViewBase
 {
@@ -29,10 +31,13 @@ public:
                       std::shared_ptr<AudioRegion> audioRegion,
                       juce::Colour colour,
                       std::shared_ptr<RegionSelector> regionSelector) :
-        AudioViewBase(audioResource, zoomHandler, audioRegion, colour, regionSelector),
-        audiumEngine(audiumEngine)
+        AudioViewBase(audioResource, zoomHandler, audioRegion, colour, regionSelector)
     {
-        rebuildComponents();
+        regionEditComponent = std::shared_ptr<RegionEditComponent> (new RegionEditComponent(audiumEngine,
+                                                                                            audioResource,
+                                                                                            zoomHandler,
+                                                                                            regionSelector));
+        addAndMakeVisible(regionEditComponent.get());
     }
 
     void paint (juce::Graphics&) override;
@@ -40,14 +45,12 @@ public:
     void resized() override;
     
     void updateFromEngine() override;
-    bool mustRebuildComponents() const;
-    void rebuildComponents();
     
 private:
     
     std::vector<std::shared_ptr<RegionEditControl>> regionEditControls;
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<RegionEditComponent> regionEditComponent;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceView)
 };
