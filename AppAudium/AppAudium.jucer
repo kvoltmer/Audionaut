@@ -150,6 +150,8 @@
               <FILE id="yEfxaX" name="EditComponent.h" compile="0" resource="0" file="Source/Interface/Components/MiddlePanel/EditView/EditComponent.h"/>
               <FILE id="b3SGrh" name="EditGroupComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"/>
+              <FILE id="CYmTQU" name="RegionEditComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/EditView/RegionEditComponent.h"/>
             </GROUP>
             <GROUP id="{E58A07C4-B58F-25CE-C91A-E093F52645A1}" name="ArrangementView">
               <FILE id="peKTnY" name="ArrangementComponent.h" compile="0" resource="0"

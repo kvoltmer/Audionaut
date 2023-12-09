@@ -17,8 +17,23 @@
 
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/RegionSelector.h"
+#include "Interface/ColourIds.h"
 
-
+void RegionEditControl::paintFileNameLabel (juce::Graphics& g)
+{
+    g.setFont (12.0f);
+    const auto name = audioRegion->name;
+    juce::Rectangle<int> bonds(5,
+                         5,
+                         g.getCurrentFont().getStringWidth(name),
+                         g.getCurrentFont().getHeight());
+    
+    g.setColour(juce::Colours::black.withAlpha(0.25f));
+    g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
+    
+    g.setColour (findColour(audium::defaultTextColourId));
+    g.drawFittedText (name, bonds, juce::Justification::topLeft, 1);
+}
 
 void RegionEditControl::paint (Graphics& g)
 {
@@ -39,6 +54,8 @@ void RegionEditControl::paint (Graphics& g)
     // fill
     g.setColour (colour.withAlpha(0.125f));
     g.fillRoundedRectangle (thumbArea.toFloat(), 3.0f);
+    
+    paintFileNameLabel(g);
 }
 
 void RegionEditControl::mouseDown (const juce::MouseEvent& e)
