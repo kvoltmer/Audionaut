@@ -142,7 +142,7 @@ void PlayListScheduler::processEditMode(double absolutePosition, int numSamples)
     {
         if (not resource->getAudioTransportSource()->isPlaying())
         {
-            const auto startPosition = resource->getTransportPosition();
+            const auto startPosition = resource->getTransportPositionSeconds();
             const auto diff = startPosition - positionInSeconds;
             
             auto offset = startPosition - resource->getRegionDataInSeconds().getStart();

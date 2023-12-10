@@ -21,6 +21,7 @@ class AudioResourceContainer;
 class AudioPlayer;
 class AudiumTransportSource;
 class AudioGroup;
+class AudioRegion;
 
 class AudioResource {
     
@@ -31,13 +32,15 @@ public:
                   std::shared_ptr<AudiumTransportSource> transportSource,
                   std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
                   std::shared_ptr<juce::AudioThumbnail> audioThumbnail,
-                  int channelPosition) :
+                  int channelPosition,
+                  int resourceId) :
         owner(audioResourceContainer),
         audioGroup(audioGroup),
         url(url),
         transportSource(transportSource),
         audioThumbnail(audioThumbnail),
-        channelPosition(channelPosition)
+        channelPosition(channelPosition),
+        resourceId(resourceId)
     {
         this->audioFormatReaderSource = std::move(audioFormatReaderSource);
         setRegionDataInSeconds(juce::Range<double>(0.0, getLengthInSeconds()), false);
@@ -76,7 +79,7 @@ public:
     bool validateData(bool syncResources);
     std::vector<std::shared_ptr<AudioResource>> getEqualAudioResources() const;
     
-    double getTransportPosition() const;
+    double getTransportPositionSeconds() const;
     double getTransportPositionClocks() const { return transportPositionClocks; }
     bool containsAbsolutePosition(double position) const;
     
@@ -88,6 +91,12 @@ public:
     bool readFromStream (juce::InputStream& inputStream);
     
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
+    
+    void setSelected(bool bSelected, bool deselectOthers);
+    bool isSelected() const { return selected; }
+        
+    const int getId() const noexcept { return resourceId; }
+    void setId(const int newId) { resourceId = newId; }
     
 private:
 
@@ -108,7 +117,8 @@ private:
     double transportPositionClocks = 0.0;
     int channelPosition = 0;
     int height = 100;
-    
+    bool selected = false;
+    int resourceId = -1;
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResource)

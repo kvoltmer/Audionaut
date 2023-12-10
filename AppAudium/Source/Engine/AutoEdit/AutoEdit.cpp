@@ -120,7 +120,13 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
             {
                 if (auto group = audioGroupContainer->getAudioGroup(i))
                 {
-                    audioRegionContainer->createRegion(regionName, position, group);
+                    auto resources = group->getAudioResources();
+                    jassert(resources.size() > 0);
+                    if (resources.size() > 0)
+                    {
+                        auto resource = resources[0];
+                        audioRegionContainer->createRegion(regionName, position, group, resource);
+                    }
                 }
             }
         }
