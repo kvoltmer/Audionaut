@@ -68,7 +68,7 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
                 {
                     if (resource->containsAbsolutePosition(transportPosition))
                     {
-                        transportPosition = resource->getTransportPosition();
+                        transportPosition = resource->getTransportPositionSeconds();
                         // position is below
                         channelPosition = audioGroup->getNumChannels();
                         break;
@@ -77,7 +77,12 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             }
             
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup, channelPosition, transportPosition);
+            auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup, channelPosition, transportPosition);
+            if (audioResource != nullptr)
+            {
+                audiumEngine->getAudioRegionContainer()->copyRegionsForResource(audioResource);
+                //audiumEngine->getAudioResourceContainer()->copyRegionsForResource(audioResource);
+            }
         }
         // TODO: discuss default region
         // disable for now

@@ -35,7 +35,7 @@ public:
     void updateFromEngine() override
     {
         /// TODO:
-//        double posX = zoomHandler->secondsToX(audioResource->getTransportPosition());
+//        double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
 //        double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
 //
 //        juce::Rectangle<double> rect_tmp(posX, 0, length, audioResource->getHeight());

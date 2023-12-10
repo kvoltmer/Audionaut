@@ -9,6 +9,7 @@
 */
 
 #include "Engine/AudioResource.h"
+#include "Engine/AudiumEngine.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/AudiumTransportSource.h"
@@ -51,7 +52,7 @@ double AudioResource::getLengthInSeconds() const
 
 double AudioResource::getAbsolueStartTime() const
 {    
-    return getTransportPosition();
+    return getTransportPositionSeconds();
 }
 
 double AudioResource::getDurationTimeInSeconds() const
@@ -151,14 +152,14 @@ bool AudioResource::validateData(bool syncEqualResources)
     
     
     /// TODO: check on the regions
-    //    auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioResource->getAudioGroup());
+    //auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
     //    for (auto region : regions)
     
     
     return result;
 }
 
-double AudioResource::getTransportPosition() const
+double AudioResource::getTransportPositionSeconds() const
 {
     return owner.getTempoProvider()->clocksToSeconds(transportPositionClocks);
 }
@@ -203,4 +204,12 @@ bool AudioResource::readFromStream (juce::InputStream& inputStream)
     getAudioTransportSource()->setGain(gain);
     
     return true;
+}
+
+void AudioResource::setSelected(bool bSelected, bool deselectOthers)
+{
+    if (deselectOthers)
+        owner.deselectAllResources();
+
+    selected = bSelected;
 }

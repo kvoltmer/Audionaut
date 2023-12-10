@@ -37,6 +37,11 @@ std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtChann
     return audioResourceContainer.getAudioResourcesForGroupAtChannelPosition(const_cast<AudioGroup*>(this), channelPosition);
 }
 
+std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const
+{
+    return audioResourceContainer.getAudioResourcesForGroupAtAbsoluteRange(const_cast<AudioGroup*>(this), rangeInSeconds);
+}
+
 void AudioGroup::setColour(juce::Colour colour)
 {
     currentColour = colour;

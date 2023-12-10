@@ -70,7 +70,7 @@ void AudioResourceView::paint (juce::Graphics& g)
 
 void AudioResourceView::updateFromEngine()
 {
-    double posX = zoomHandler->secondsToX(audioResource->getTransportPosition());
+    double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
     double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
     
     // don't change Y position

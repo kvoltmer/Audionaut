@@ -56,8 +56,16 @@ public:
 
     void paint (juce::Graphics& g) override
     {
+        auto colour = Colours::white;;
+        if (audioResource->isSelected())
+        {
+            g.setColour (colour.withAlpha(0.8f));
+        }
+        else
+        {
+            g.setColour (colour.withAlpha(0.3f));
+        }
 
-        g.setColour (juce::Colour(juce::Colours::grey).withAlpha(0.5f));
         g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
         paintFileNameLabel(g);
@@ -80,6 +88,10 @@ public:
         currentDragMode = getDragMode(e.getPosition().getX());
         
         originalBounds = getBounds();
+            
+        audioResource->setSelected(true, !e.mods.isCommandDown());
+        
+        repaint();
     }
 
     void mouseDrag (const juce::MouseEvent& e) override
@@ -178,7 +190,7 @@ public:
             case leftEdge:
                 // offset in file
                 {
-                    auto diff = newRegionData.getStart() - audioResource->getTransportPosition();
+                    auto diff = newRegionData.getStart() - audioResource->getTransportPositionSeconds();
                     
                     auto regionData = audioResource->getRegionDataInSeconds();
                     auto newLength = regionData.getLength() - diff;
@@ -211,7 +223,7 @@ public:
     void updateFromEngine()
     {
         
-        double posX = zoomHandler->secondsToX(audioResource->getTransportPosition());
+        double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
         double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
         
         // don't change Y position and height

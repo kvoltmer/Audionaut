@@ -116,7 +116,7 @@ public:
         auto audioResources = audioGroup->getAudioResources();
         for (auto audioResource : audioResources)
         {
-            auto pos = zoomHandler->secondsToX(audioResource->getTransportPosition());
+            auto pos = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
             auto top = audioResource->getTop();
             if (count < audioResourceViews.size())
             {

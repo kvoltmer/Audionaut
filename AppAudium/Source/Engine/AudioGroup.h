@@ -43,15 +43,16 @@ public:
     
 
     const juce::String getName() const { return groupName; }
-    const int getId() const noexcept { return groupId; }
-    
     void setName(const juce::String newName) { groupName = newName; }
+    
+    const int getId() const noexcept { return groupId; }
     void setId(const int newId) { groupId = newId; }
     
     const AudioResourceContainer &getAudioResourceContainer() { return audioResourceContainer; }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannelPosition(int channelPosition) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const;
     
     void setColour(juce::Colour colour);
     juce::Colour getColour() const { return currentColour; }
