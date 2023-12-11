@@ -60,22 +60,12 @@ const AudioRegion::RegionData AudioRegion::getRegionDataInSeconds() const
 
 double AudioRegion::getAudioResourceStartInSeconds() const
 {
-    const auto resources = audioGroup->getAudioResources();
-    if(resources.size() > 0)
-        return resources[0]->getRegionDataInSeconds().getStart();
-    
-    jassertfalse;
-    return 0.0;
+    return audioResource->getRegionDataInSeconds().getStart();
 }
 
 double AudioRegion::getAudioResourceEndInSeconds() const
 {
-    const auto resources = audioGroup->getAudioResources();
-    if(resources.size() > 0)
-        return resources[0]->getRegionDataInSeconds().getEnd();
-    
-    jassertfalse;
-    return 0.0;
+    return audioResource->getRegionDataInSeconds().getStart();
 }
 
 void AudioRegion::setRegionStart(double newStart)
