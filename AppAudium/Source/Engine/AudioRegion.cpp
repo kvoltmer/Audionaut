@@ -65,7 +65,7 @@ double AudioRegion::getAudioResourceStartInSeconds() const
 
 double AudioRegion::getAudioResourceEndInSeconds() const
 {
-    return audioResource->getRegionDataInSeconds().getStart();
+    return audioResource->getRegionDataInSeconds().getEnd();
 }
 
 void AudioRegion::setRegionStart(double newStart)
