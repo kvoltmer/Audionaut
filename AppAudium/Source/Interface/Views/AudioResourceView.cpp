@@ -11,7 +11,12 @@
 #include <JuceHeader.h>
 #include "AudioResourceView.h"
 
-//==============================================================================
+#include "Engine/AudiumEngine.h"
+#include "Engine/AudioRegionContainer.h"
+
+#include "Interface/Controls/RegionEditControl.h"
+#include "Interface/Controls/DraggerControl.h"
+
 void AudioResourceView::paint (juce::Graphics& g)
 {
     // std::cout << "AudioResourceView::paint" << std::endl;
@@ -38,7 +43,7 @@ void AudioResourceView::paint (juce::Graphics& g)
         visibleRange = visibleRange.movedToStartAt(visibleRange.getStart() + absoluteOffset);
         
         
-        auto start = 0.0;//audioRegion->getRegionDataInSeconds().getStart();
+        auto start = audioResource->getRegionDataInSeconds().getStart();
         start += zoomHandler->xToSeconds(visibleRange.getStart());
         
         // our local bounds
@@ -52,14 +57,32 @@ void AudioResourceView::paint (juce::Graphics& g)
         
         auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
 
-        thumb->drawChannels (g, thumbArea, start, end, 1.0f);
+        thumb->drawChannels (g, thumbArea, start, end, verticalZoomFactor);
 
         
 //        std::cout << this << " DRAW x = " << thumbArea.getX() << " width = " << thumbArea.getWidth();
 //        std::cout << " start = " << start << " length = " << end - start;
 //        std::cout << std::endl;
 
-        paintFileNameLabel(g);
+        //paintFileNameLabel(g);
     }
 }
 
+void AudioResourceView::updateFromEngine()
+{
+    double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
+    double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
+    
+    // don't change Y position
+    double posY = getBounds().getY();
+    juce::Rectangle<double> rect_tmp(posX, posY, length, audioResource->getHeight());
+    
+    setBounds(rect_tmp.toNearestInt());
+    
+    regionEditComponent->updateFromEngine();
+}
+
+void AudioResourceView::resized()
+{
+    regionEditComponent->setBounds(getLocalBounds());
+}

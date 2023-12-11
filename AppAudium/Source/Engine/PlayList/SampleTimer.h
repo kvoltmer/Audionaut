@@ -20,6 +20,7 @@ class SampleTimer {
 public:
     SampleTimer() = default;
     
+    // returns true once timer is due
     bool process(int numSamples, int& offset)
     {
         if (active)

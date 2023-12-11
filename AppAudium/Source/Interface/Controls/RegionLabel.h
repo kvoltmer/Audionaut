@@ -69,7 +69,8 @@ public:
             }
             else if (columnId == regionLength)
             {
-                text = juce::String(TempoProvider::clocksToBars(r->getRegionData().getLength()), 4);
+                const auto seconds = r->getRegionDataInSeconds().getLength();
+                text = juce::String(seconds, 4);
             }
             
             auto textColour = r->getAudioGroup()->getColour();
@@ -119,8 +120,9 @@ public:
         }
         else if  (columnId == regionLength)
         {
-            const auto bars = labelThatHasChanged->getText().getDoubleValue();
-            audioRegionContainer->setRegionLength(rowNumber, TempoProvider::barsToClocks(bars));
+            const auto seconds = labelThatHasChanged->getText().getDoubleValue();
+            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
+            audioRegionContainer->setRegionLength(rowNumber, clocks);
         }
     }
     

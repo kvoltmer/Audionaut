@@ -31,24 +31,41 @@ const AudioRegion::RegionData AudioRegion::getRegionData() const
 void AudioRegion::setRegionDataInSeconds(const RegionData newRegionData)
 {
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
+    
     regionData = newRegionData;
-    
-    
-    auto maxLength = 0.0;
-    const auto resources = audioGroup->getAudioResources();
-    for (auto resource : resources)
-        maxLength = std::max(maxLength, resource->getLengthInSeconds());
+}
 
-    if (regionData.getStart() < 0.0)
-        regionData.setStart(0.0);
+bool AudioRegion::validateData(RegionData& data)
+{
+    bool result = false;
     
-    if (regionData.getEnd() > maxLength)
-        regionData.setEnd(maxLength);
+    if (data.getStart() < getAudioResourceStartInSeconds())
+    {
+        data = data.movedToStartAt(getAudioResourceStartInSeconds());
+        result |= true;
+    }
+    
+    if (data.getEnd() > getAudioResourceEndInSeconds())
+    {
+        data = data.movedToEndAt(getAudioResourceEndInSeconds());
+        result |= true;
+    }
+    return result;
 }
 
 const AudioRegion::RegionData AudioRegion::getRegionDataInSeconds() const
 {
     return regionData;
+}
+
+double AudioRegion::getAudioResourceStartInSeconds() const
+{
+    return audioResource->getRegionDataInSeconds().getStart();
+}
+
+double AudioRegion::getAudioResourceEndInSeconds() const
+{
+    return audioResource->getRegionDataInSeconds().getStart();
 }
 
 void AudioRegion::setRegionStart(double newStart)
@@ -66,7 +83,6 @@ void AudioRegion::setRegionEnd(double newEnd)
         setRegionData(AudioRegion::RegionData(getRegionData().getStart(), newEnd));
     }
 }
-
 
 void AudioRegion::setRegionLength(double newLength)
 {

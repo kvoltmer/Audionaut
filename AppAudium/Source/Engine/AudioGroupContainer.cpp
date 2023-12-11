@@ -117,6 +117,9 @@ bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream,
                                           const AudioResourceContainer &audioResourceContainer,
                                           const AudioRegionContainer &audioRegionContainer)
 {
+    jassert(audioGroups.size() == 0);
+    jassert(nextId == 0);
+    
     auto numGroups = inputStream.readInt();
         
     for (auto g = 0; g < numGroups; g++)

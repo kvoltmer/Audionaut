@@ -36,7 +36,7 @@ public:
     {
         
         zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
-        audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, "Audio Group Listbox", nullptr));
+        audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, zoomHandler));
         regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
         audioGroupListBoxModel.reset(new AudioGroupListBoxModel(audioGroupListBox,
                                                                 audiumEngine,

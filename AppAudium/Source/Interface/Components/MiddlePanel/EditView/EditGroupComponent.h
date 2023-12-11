@@ -17,13 +17,10 @@
 
 #include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
 #include "Interface/Views/AudioResourceView.h"
-#include "Interface/Controls/RegionEditControl.h"
+#include "Interface/Controls/DraggerControl.h"
 #include "Interface/Handlers/ZoomHandler.h"
 
-//==============================================================================
-/*
-*/
-class EditGroupComponent  : public GroupBaseComponent
+class EditGroupComponent  : public GroupBaseComponent, public juce::ChangeListener
 {
 public:
         
@@ -33,9 +30,6 @@ public:
                         std::shared_ptr<RegionSelector> regionSelector) :
         GroupBaseComponent(group, audiumEngine, zoomHandler, regionSelector)
     {
-        // this component doesn't handle mouse events
-        //setInterceptsMouseClicks(false, false);
-        
         refreshComponent(group);
     }    
     
@@ -47,20 +41,19 @@ public:
             forceRebuildComponents)
         {
             rebuildComponents();
+            resized();
         }
-        resized();
+        else
+        {
+            resized();
+            updateFromEngine();
+        }
     }
     
     bool mustRebuildComponents() const
     {
         auto audioResources = audioGroup->getAudioResources();
         if (audioResources.size() != audioResourceViews.size())
-        {
-            return true;
-        }
-        
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
-        if (regions.size() != regionEditControls.size())
         {
             return true;
         }
@@ -73,74 +66,81 @@ public:
         std::cout << "EditGroupComponent::rebuildComponents" << std::endl;
         removeAllChildren();
         audioResourceViews.clear();
-        regionEditControls.clear();
+        draggerControls.clear();
         
         // create views
         auto audioResources = audioGroup->getAudioResources();
         for (auto audioResource : audioResources)
         {
-            auto view = std::shared_ptr<AudioResourceView>(new AudioResourceView(audioResource, zoomHandler, nullptr, audioGroup->getColour()));
+            auto view = std::shared_ptr<AudioResourceView>(new AudioResourceView(audiumEngine,
+                                                                                 audioResource,
+                                                                                 zoomHandler,
+                                                                                 nullptr,
+                                                                                 audioGroup->getColour(),
+                                                                                 regionSelector));
             addAndMakeVisible(view.get());
             audioResourceViews.push_back(view);
+            
+            auto dragger = std::shared_ptr<DraggerControl>(new DraggerControl(audioResource,
+                                                                              zoomHandler,
+                                                                              nullptr,
+                                                                              audioGroup->getColour(),
+                                                                              regionSelector));
+            addAndMakeVisible(dragger.get());
+            draggerControls.push_back(dragger);
+            dragger->addChangeListener(this);
         }
-        
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
-        for (auto region : regions)
+    }
+    
+    void changeListenerCallback (ChangeBroadcaster* source) override
+    {
+        updateFromEngine();
+    }
+    
+    void updateFromEngine()
+    {
+        for (auto resourceView : audioResourceViews)
         {
-            auto view = std::shared_ptr<RegionEditControl>(new RegionEditControl(region, zoomHandler, audiumEngine, regionSelector));
-            addAndMakeVisible(view.get());
-            regionEditControls.push_back(view);
+            resourceView->updateFromEngine();
         }
         
-        
+        for (auto draggerControl : draggerControls)
+        {
+            draggerControl->updateFromEngine();
+        }
     }
 
     void resized() override
     {
-        int top = 0;
         int count = 0;
         auto audioResources = audioGroup->getAudioResources();
         for (auto audioResource : audioResources)
         {
-            auto height = audioResource->getHeight();
+            auto pos = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
+            auto top = audioResource->getTop();
             if (count < audioResourceViews.size())
             {
-                auto child = audioResourceViews[count];
-                if (child != nullptr)
-                {
-                    auto width = zoomHandler->secondsToX(audioResource->getLengthInSeconds());
-                    child->setBounds(0, top, width, audioResource->getHeight());
-                }
+                auto resourceView = audioResourceViews[count];
+                
+                resourceView->setTopLeftPosition(pos, top);
+                resourceView->updateFromEngine();
+                
+                auto dragger = draggerControls[count];
+                dragger->setSize(resourceView->getWidth(), DraggerControl::draggerHeight);
+                dragger->setTopLeftPosition(pos, top);
+                dragger->updateFromEngine();
+                
                 count++;
             }
-            top += height;
-        }
-        
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForGroup(audioGroup);
-        count = 0;
-        for (auto region : regions)
-        {
-            if (count < regionEditControls.size())
-            {
-                auto control = regionEditControls[count];
-                jassert(control != nullptr);
-                auto start = region->getRegionDataInSeconds().getStart();
-                auto length = region->getRegionDataInSeconds().getLength();
-                
-                auto startX = zoomHandler->secondsToX(start);
-                auto width = zoomHandler->secondsToX(length);
-                control->setBounds(startX, 0, width, getHeight());
-            }
-            count++;
         }
     }
 
+    
+    
 private:
     
     std::vector<std::shared_ptr<AudioResourceView>> audioResourceViews;
-    
-    std::vector<std::shared_ptr<RegionEditControl>> regionEditControls;
-
+    std::vector<std::shared_ptr<DraggerControl>> draggerControls;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EditGroupComponent)
 };
