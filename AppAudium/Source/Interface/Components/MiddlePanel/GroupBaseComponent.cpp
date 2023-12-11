@@ -19,6 +19,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/AudioGroupContainer.h"
 
 using namespace audium;
 
@@ -34,7 +35,18 @@ GroupBaseComponent::GroupBaseComponent (std::shared_ptr<AudioGroup> group,
 {
     if (group->getColour() == juce::Colours::pink)
     {
-        group->setColour(audium::getNewWaveFormColour());
+        auto newColour = audium::getNewWaveFormColour();
+        
+        auto numGroups = audiumEngine->getAudioGroupContainer()->getNumItems();
+        for (auto i = 0; i < numGroups; i++)
+        {
+            if(newColour == audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getColour())
+            {
+                newColour = audium::getNewWaveFormColour();
+            }
+        }
+        
+        group->setColour(newColour);
     }
 }
 
@@ -46,33 +58,25 @@ void GroupBaseComponent::paint (juce::Graphics& g)
     }
 }
 
-
 void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
     if ( !filenames.isEmpty())
     {
         auto transportPosition = zoomHandler->xToSeconds(x);
+        auto channelPosition = 0;
         
         for (auto i = 0; i < filenames.size(); i++)
         {
-            auto channelPosition = 0;
-            
-            //auto totalLengthX = zoomHandler->secondsToX(audiumEngine->getPlayListScheduler()->getTotalLengthSeconds());
-            //if (x < totalLengthX)
+            // check if we overlap with an existing resource (snap position to nearest resource)
+            const auto resources = audioGroup->getAudioResources();
+            for (auto resource : resources)
             {
-                
-                
-                // check if we overlap with an existing resource (snap position to nearest resource)
-                const auto resources = audioGroup->getAudioResources();
-                for (auto resource : resources)
+                if (resource->containsAbsolutePosition(transportPosition))
                 {
-                    if (resource->containsAbsolutePosition(transportPosition))
-                    {
-                        transportPosition = resource->getTransportPositionSeconds();
-                        // position is below
-                        channelPosition = audioGroup->getNumChannels();
-                        break;
-                    }
+                    transportPosition = resource->getTransportPositionSeconds();
+                    // position is below
+                    channelPosition = audioGroup->getNumChannels();
+                    break;
                 }
             }
             
@@ -81,12 +85,8 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             if (audioResource != nullptr)
             {
                 audiumEngine->getAudioRegionContainer()->copyRegionsForResource(audioResource);
-                //audiumEngine->getAudioResourceContainer()->copyRegionsForResource(audioResource);
             }
         }
-        // TODO: discuss default region
-        // disable for now
-        //audiumEngine->createDefaultRegionAndPlayList(audioGroup);
         
         // will update content
         refreshComponent(audioGroup, true);
