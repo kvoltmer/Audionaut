@@ -28,7 +28,7 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
 {
     if (isEnabled())
     {
-        std::cout << "RegionSelector::mouseDown" << std::endl;
+        //std::cout << "RegionSelector::mouseDown" << std::endl;
         
         /// click outside -> reset current selection
         auto parentPosition = e.getEventRelativeTo(owner.get()).getPosition();
@@ -171,9 +171,9 @@ void RegionSelector::updateFromEngine()
 
 void RegionSelector::updateMouseZone (const juce::MouseEvent& e)
 {
-    auto x = e.getPosition().getX();
+    //std::cout << "RegionSelector::updateMouseZone" << std::endl;
     
-    switch (getDragMode(x)) {
+    switch (getDragMode(e.getPosition().getX())) {
         case RegionSelector::leftEdge:
             setMouseCursor (MouseCursor::LeftEdgeResizeCursor);
             break;

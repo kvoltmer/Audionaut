@@ -11,25 +11,46 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "AudioViewBase.h"
+#include "Interface/Views/AudioViewBase.h"
+#include "Interface/Components/MiddlePanel/EditView/RegionEditComponent.h"
 
 class AudioResource;
 class ZoomHandler;
 class AudioRegion;
+class RegionSelector;
+class RegionEditControl;
+class AudiumEngine;
+
 
 class AudioResourceView  : public AudioViewBase
 {
 public:
-    AudioResourceView(std::shared_ptr<AudioResource> audioResource,
+    AudioResourceView(std::shared_ptr<AudiumEngine> audiumEngine,
+                      std::shared_ptr<AudioResource> audioResource,
                       std::shared_ptr<ZoomHandler> zoomHandler,
                       std::shared_ptr<AudioRegion> audioRegion,
-                      juce::Colour colour) :
-        AudioViewBase(audioResource, zoomHandler, audioRegion, colour)
+                      juce::Colour colour,
+                      std::shared_ptr<RegionSelector> regionSelector) :
+        AudioViewBase(audioResource, zoomHandler, audioRegion, colour, regionSelector)
     {
+        regionEditComponent = std::shared_ptr<RegionEditComponent> (new RegionEditComponent(audiumEngine,
+                                                                                            audioResource,
+                                                                                            zoomHandler,
+                                                                                            regionSelector));
+        addAndMakeVisible(regionEditComponent.get());
     }
 
     void paint (juce::Graphics&) override;
 
+    void resized() override;
+    
+    void updateFromEngine() override;
+    
 private:
+    
+    std::vector<std::shared_ptr<RegionEditControl>> regionEditControls;
+    
+    std::shared_ptr<RegionEditComponent> regionEditComponent;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceView)
 };

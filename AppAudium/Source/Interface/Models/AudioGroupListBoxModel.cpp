@@ -71,7 +71,7 @@ int AudioGroupListBoxModel::getRowHeight (int rowNumber) const
         auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group.get());
         for (auto audioResource : audioResources)
         {
-            height += audioResource->getHeight();
+            height = std::max(height, audioResource->getTop() + audioResource->getHeight());
         }
         return height;
         

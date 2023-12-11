@@ -16,8 +16,10 @@
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Views/AudioRegionView.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/AudioGroupContainer.h"
 
 using namespace audium;
 
@@ -33,7 +35,18 @@ GroupBaseComponent::GroupBaseComponent (std::shared_ptr<AudioGroup> group,
 {
     if (group->getColour() == juce::Colours::pink)
     {
-        group->setColour(audium::getNewWaveFormColour());
+        auto newColour = audium::getNewWaveFormColour();
+        
+        auto numGroups = audiumEngine->getAudioGroupContainer()->getNumItems();
+        for (auto i = 0; i < numGroups; i++)
+        {
+            if(newColour == audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getColour())
+            {
+                newColour = audium::getNewWaveFormColour();
+            }
+        }
+        
+        group->setColour(newColour);
     }
 }
 
@@ -45,34 +58,55 @@ void GroupBaseComponent::paint (juce::Graphics& g)
     }
 }
 
-
-void GroupBaseComponent::filesDropped (const StringArray& filenames, int /*x*/, int /*y*/)
+void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
     if ( !filenames.isEmpty())
     {
+        auto transportPosition = zoomHandler->xToSeconds(x);
+        auto channelPosition = 0;
+        
         for (auto i = 0; i < filenames.size(); i++)
         {
+            // check if we overlap with an existing resource (snap position to nearest resource)
+            const auto resources = audioGroup->getAudioResources();
+            for (auto resource : resources)
+            {
+                if (resource->containsAbsolutePosition(transportPosition))
+                {
+                    transportPosition = resource->getTransportPositionSeconds();
+                    // position is below
+                    channelPosition = audioGroup->getNumChannels();
+                    break;
+                }
+            }
+            
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup);
+            auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup, channelPosition, transportPosition);
+            if (audioResource != nullptr)
+            {
+                audiumEngine->getAudioRegionContainer()->copyRegionsForResource(audioResource);
+            }
         }
-        audiumEngine->createDefaultRegionAndPlayList(audioGroup);
         
         // will update content
         refreshComponent(audioGroup, true);
     }
     
     externalDragAndDrop = false;
+    regionSelector->setEnabled(true);
     repaint();
 }
 
 void GroupBaseComponent::fileDragEnter (const juce::StringArray& files, int x, int y)
 {
     externalDragAndDrop = true;
+    regionSelector->setEnabled(false);
     repaint();
 }
 void GroupBaseComponent::fileDragExit (const juce::StringArray& files)
 {
     externalDragAndDrop = false;
+    regionSelector->setEnabled(true);
     repaint();
 }
 

@@ -47,6 +47,8 @@ public:
     
     void paint (Graphics& g) override;
     
+    void paintFileNameLabel (juce::Graphics& g);
+    
     void mouseMove (const juce::MouseEvent& e) override;
     
     void mouseDown (const juce::MouseEvent& e) override;

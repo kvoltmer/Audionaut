@@ -27,7 +27,10 @@ public:
                                                               AudioResourceContainer& audioResourceContainer,
                                                               std::shared_ptr<AudioGroup> group,
                                                               juce::AudioFormatManager& formatManager,
-                                                              juce::TimeSliceThread* readAheadThread)
+                                                              juce::TimeSliceThread* readAheadThread,
+                                                              int channelPosition,
+                                                              double transportPosition,
+                                                              int resourceId)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
         
@@ -52,14 +55,18 @@ public:
                     audioThumbnail->setSource(inputSource.release());
                     
                     audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
+                                                                                     group,
                                                                                      url,
                                                                                      transportSource,
                                                                                      std::move(audioFormatReaderSource),
-                                                                                     audioThumbnail));
+                                                                                     audioThumbnail,
+                                                                                     channelPosition,
+                                                                                     resourceId));
+                    audioResource->setTransportPosition(transportPosition, false);
                 }
             }
         }
-        
+        jassert(audioResource != nullptr);
         return audioResource;
     }
     

@@ -19,10 +19,12 @@
 
 //==============================================================================
 PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudioGroup> audioGroup,
-                                                     std::shared_ptr<PlayListItem> playListItem,
-                                                     std::shared_ptr<ZoomHandler> zoomHandler) :
+                                             std::shared_ptr<PlayListItem> playListItem,
+                                             std::shared_ptr<ZoomHandler> zoomHandler,
+                                             std::shared_ptr<RegionSelector> regionSelector) :
     audioGroup(audioGroup),
-    playListItem(playListItem)
+    playListItem(playListItem),
+    regionSelector(regionSelector)
 {
     // this component doesn't handle mouse events
     setInterceptsMouseClicks(false, false);
@@ -31,7 +33,11 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudioGroup> audioGr
     auto audioResources = audioGroup->getAudioResources();
     for (auto audioResource : audioResources)
     {
-        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource, zoomHandler, playListItem->getRegion(), audioGroup->getColour()));
+        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource,
+                                                                         zoomHandler,
+                                                                         playListItem->getRegion(),
+                                                                         audioGroup->getColour(),
+                                                                         regionSelector));
         addAndMakeVisible(view.get());
         children.push_back(view);
     }

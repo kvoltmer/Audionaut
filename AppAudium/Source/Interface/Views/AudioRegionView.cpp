@@ -58,7 +58,7 @@ void AudioRegionView::paint (juce::Graphics& g)
         
         auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
 
-        thumb->drawChannels (g, thumbArea, start, end, 1.0f);
+        thumb->drawChannels (g, thumbArea, start, end, verticalZoomFactor);
 
         
 //        std::cout << this << " DRAW x = " << thumbArea.getX() << " width = " << thumbArea.getWidth();

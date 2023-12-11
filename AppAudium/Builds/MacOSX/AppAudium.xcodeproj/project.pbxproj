@@ -152,6 +152,7 @@
 		6635C70632EE050E628A48F0 /* Main.cpp */ /* Main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Main.cpp; path = ../../Source/Application/Main.cpp; sourceTree = SOURCE_ROOT; };
 		685048203793CB093B04D748 /* juce_graphics */ /* juce_graphics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_graphics; path = ../../../Submodules/juce/modules/juce_graphics; sourceTree = SOURCE_ROOT; };
 		6AF4E56914CFCE4164489808 /* AudioGroupListBox.cpp */ /* AudioGroupListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioGroupListBox.cpp; path = ../../Source/Interface/Controls/AudioGroupListBox.cpp; sourceTree = SOURCE_ROOT; };
+		6BBAA6DFE177CD89EB2B263E /* DraggerControl.h */ /* DraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DraggerControl.h; path = ../../Source/Interface/Controls/DraggerControl.h; sourceTree = SOURCE_ROOT; };
 		6D18E70CE8E175A3D78ABF5F /* ArrangementGroupComponent.cpp */ /* ArrangementGroupComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ArrangementGroupComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementGroupComponent.cpp; sourceTree = SOURCE_ROOT; };
 		6D6B56D06D09D45BD923C476 /* GroupBaseComponent.h */ /* GroupBaseComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GroupBaseComponent.h; path = ../../Source/Interface/Components/MiddlePanel/GroupBaseComponent.h; sourceTree = SOURCE_ROOT; };
 		6DA263F7CDEFFDFAC0EB223E /* RegionSelector.h */ /* RegionSelector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionSelector.h; path = ../../Source/Interface/Controls/RegionSelector.h; sourceTree = SOURCE_ROOT; };
@@ -168,6 +169,7 @@
 		80A7607D4A9CE5B5D5107580 /* AudioRegionView.cpp */ /* AudioRegionView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegionView.cpp; path = ../../Source/Interface/Views/AudioRegionView.cpp; sourceTree = SOURCE_ROOT; };
 		817FA0302FB2D6FBC495236D /* LinkAudioDevice.cpp */ /* LinkAudioDevice.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LinkAudioDevice.cpp; path = ../../Source/Engine/Link/LinkAudioDevice.cpp; sourceTree = SOURCE_ROOT; };
 		84484F21C03C97F770F1A3FE /* EngineAccess.h */ /* EngineAccess.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EngineAccess.h; path = ../../Source/Util/EngineAccess.h; sourceTree = SOURCE_ROOT; };
+		847C247E929C2F4C90830269 /* RegionEditComponent.h */ /* RegionEditComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionEditComponent.h; path = ../../Source/Interface/Components/MiddlePanel/EditView/RegionEditComponent.h; sourceTree = SOURCE_ROOT; };
 		87121392AC06CCE30AB209C5 /* AudiumApplication.h */ /* AudiumApplication.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumApplication.h; path = ../../Source/Application/AudiumApplication.h; sourceTree = SOURCE_ROOT; };
 		8715E10D92C11AA88EAF3D05 /* AudiumLookAndFeel.cpp */ /* AudiumLookAndFeel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumLookAndFeel.cpp; path = ../../Source/Interface/AudiumLookAndFeel.cpp; sourceTree = SOURCE_ROOT; };
 		87FDC755ECAF2D008E8E2FF1 /* juce_audio_devices */ /* juce_audio_devices */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_devices; path = ../../../Submodules/juce/modules/juce_audio_devices; sourceTree = SOURCE_ROOT; };
@@ -331,6 +333,7 @@
 			children = (
 				49279BC62AD9FD1375CFBDD2,
 				BB9745C2630C9F9EE08622EA,
+				847C247E929C2F4C90830269,
 			);
 			name = EditView;
 			sourceTree = "<group>";
@@ -551,6 +554,7 @@
 		A60DF503B2F410F6DDB29C77 /* Controls */ = {
 			isa = PBXGroup;
 			children = (
+				6BBAA6DFE177CD89EB2B263E,
 				D086E09B1C51205513609A0B,
 				580F0546329F53D3275E4369,
 				21E8218C5578FAF32AEE977E,

@@ -23,16 +23,24 @@ AudioResourceContainer::~AudioResourceContainer()
 
 std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,
                                                                          const AudiumEngine& engine,
-                                                                         std::shared_ptr<AudioGroup> group)
+                                                                         std::shared_ptr<AudioGroup> group,
+                                                                         int channelPosition,
+                                                                         double transportPosition,
+                                                                         int resourceId)
 {
+    std::cout << "AudioResourceContainer::addAudioResource channelPosition = " << channelPosition << " transportPosition (seconds) = " << transportPosition << std::endl;
     jassert(group != nullptr);
     if (group != nullptr)
     {
+        resourceId = (resourceId < 0) ? getNextId() : resourceId;
         auto audioResource = AudioResourceFactory::createAudioResource(url,
                                                                        *engine.getAudioResourceContainer(),
                                                                        group,
                                                                        *formatManager.get(),
-                                                                       &thread);
+                                                                       &thread,
+                                                                       channelPosition,
+                                                                       transportPosition,
+                                                                       resourceId);
         
         double sampleRate = 44100.0;
         int numSamples = 512;
@@ -41,11 +49,14 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
             sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
             numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
         }
-        audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
-        
-        audioResources.push_back({group, audioResource});
-        sendActionMessage(audioResourceCreatedAction);
-        return audioResource;
+        if (audioResource &&
+            audioResource->getAudioTransportSource())
+        {
+            audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
+            audioResources.push_back({group, audioResource});
+            sendActionMessage(audioResourceCreatedAction);
+            return audioResource;
+        }
     }
     
     return nullptr;
@@ -133,10 +144,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtA
     
     for (auto resource : audioResources)
     {
-        auto startTime = resource.second->getAbsolueStartTime();
-        auto endTime = startTime + resource.second->getDurationTimeInSeconds();
-        juce::Range<double> absoluteRange(startTime, endTime);
-        if (absoluteRange.contains(positionInSeconds))
+        if (resource.second->containsAbsolutePosition(positionInSeconds))
         {
             resources.push_back(resource.second);
         }
@@ -144,6 +152,20 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtA
     
     return resources;
 }
+
+std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResourceById(int resourceId) const
+{
+    for (auto resource : audioResources)
+    {
+        if (resource.second->getId() == resourceId)
+        {
+            return resource.second;
+        }
+    }
+    jassertfalse;
+    return nullptr;
+}
+
 
 std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroup(int index) const
 {
@@ -161,9 +183,8 @@ bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
         outputStream.writeInt(resource.first->getId());
         outputStream.writeString(resource.first->getName());
         
-        // url of the resource
-        outputStream.writeString(resource.second->getUrlAsString());
-        outputStream.writeFloat(resource.second->getAudioTransportSource()->getGain());
+        // write audio resource data
+        resource.second->writeToStream(outputStream);
     }
     return true;
 }
@@ -171,6 +192,7 @@ bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
 bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine)
 {
     jassert(audioResources.empty());
+    jassert(nextId == 0);
     
     auto numResources = inputStream.readInt();
     for (auto i = 0; i < numResources; i++)
@@ -184,10 +206,11 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, con
             jassert(group && group->getName() == groupName);
             
             // url of the resource
-            auto inString = inputStream.readString();
-            auto resource = addAudioResource(juce::URL(inString), engine, group);
-            auto gain = inputStream.readFloat();
-            resource->getAudioTransportSource()->setGain(gain);
+            auto streamPos = inputStream.getPosition();
+            auto url = inputStream.readString();
+            auto resource = addAudioResource(juce::URL(url), engine, group);
+            inputStream.setPosition(streamPos);
+            resource->readFromStream(inputStream);
         }
         else
         {
@@ -197,12 +220,48 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, con
     return true;
 }
 
+void AudioResourceContainer::cleanup()
+{
+    audioResources.clear();
+    nextId = 0;
+}
+
 std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroup(AudioGroup *group) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
     {
         if (itr->first.get() == group)
+        {
+            result.push_back(itr->second);
+        }
+    }
+    return result;
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAtChannelPosition(AudioGroup *group, int channelPosition) const
+{
+    std::vector<std::shared_ptr<AudioResource>> result;
+    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
+    {
+        if (itr->first.get() == group &&
+            itr->second->getChannelPosition() == channelPosition)
+        {
+            result.push_back(itr->second);
+        }
+    }
+    return result;
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const
+{
+    
+    std::vector<std::shared_ptr<AudioResource>> result;
+    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
+    {
+        /// TODO: also check on end
+        if (itr->first.get() == group &&
+            itr->second->containsAbsolutePosition(rangeInSeconds.getStart()))
         {
             result.push_back(itr->second);
         }
@@ -239,16 +298,12 @@ std::vector<std::shared_ptr<AudioGroup>> AudioResourceContainer::getAudioGroups(
 
 int AudioResourceContainer::getNumChannels() const
 {
+    // TODO: create channel class with container
     auto count = 0;
 
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
-        auto group = audioGroupContainer->getAudioGroup(i);
-        auto audioResources = getAudioResourcesForGroup(group.get());
-        for (auto resource : audioResources)
-        {
-            count += resource->getNumChannels();
-        }
+        count += audioGroupContainer->getAudioGroup(i)->getNumChannels();
         
     }
     return count;
@@ -256,24 +311,44 @@ int AudioResourceContainer::getNumChannels() const
 
 std::shared_ptr<AudioResource> AudioResourceContainer::getChannel(int index) const
 {
-    auto count = 0;
+    // TODO: create channel class with container
+    auto channel = 0;
     
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
+        
         auto group = audioGroupContainer->getAudioGroup(i);
-        auto audioResources = getAudioResourcesForGroup(group.get());
-        for (auto resource : audioResources)
+        
+        for (auto c = 0; c < group->getNumChannels(); c++)
         {
-            for (auto c = 0; c < resource->getNumChannels(); c++)
+            auto audioResources = group->getAudioResourcesAtChannelPosition(c);
+            for (auto resource : audioResources)
             {
-                if (count == index)
+                for (auto r = 0; r < resource->getNumChannels(); r++)
                 {
-                    return resource;
+                    if ((channel + c + r) == index)
+                    {
+                        return resource;
+                    }
                 }
-                count++;
             }
         }
+            
+        channel += group->getNumChannels();
     }
     jassertfalse;
     return nullptr;
 }
+
+
+void AudioResourceContainer::deselectAllResources()
+{
+    for(auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
+    {
+        it->second->setSelected(false, false);
+    }
+    
+    sendActionMessage(audioResourceSelectedAction);
+}
+
+
