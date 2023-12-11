@@ -55,6 +55,11 @@ static juce::Colour getNewWaveFormColour()
     return result;
 }
 
+static juce::Colour getCurrentWaveFormColour()
+{
+    return juce::Colour(waveFormColours[currentWaveFormColour]);
+}
+
 static juce::Colour getComplementaryColour(juce::Colour c)
 {
     float c_r = c.getFloatRed();

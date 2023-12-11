@@ -89,9 +89,7 @@ public:
     std::shared_ptr<AudioResource> getAudioResourceById(int resourceId) const;
     
     int getNextId() { return ++nextId; }
-    
-    //void copyRegionsForResource(std::shared_ptr<AudioResource> audioResource);
-    
+        
 private:
     /// list of pairs. this enables sorting etc.. by AudioGroup
     std::list<tAudioGroupPair> audioResources;

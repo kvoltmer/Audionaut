@@ -61,6 +61,7 @@ bool AudioGroup::readFromStream (juce::InputStream& inputStream)
     groupId         = inputStream.readInt();
     groupName       = inputStream.readString();
     currentColour   = juce::Colour::fromString(inputStream.readString());
+    
     return true;
 }
 
