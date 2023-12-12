@@ -53,11 +53,11 @@ void PlayListScheduler::tick(bool isPlaying,
             
             if (editMode)
             {
-                processEditMode(transportPositionClocks, numSamples);
+                processInEditMode(transportPositionClocks, numSamples);
             }
             else
             {
-                processArrangement(transportPositionClocks, numSamples);
+                processInArrangementMode(transportPositionClocks, numSamples);
             }
         }
     }
@@ -82,7 +82,7 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
     return offset + item->getRegionDataInClocks().getStart();
 }
 
-void PlayListScheduler::processArrangement(double absolutePosition, int numSamples)
+void PlayListScheduler::processInArrangementMode(double absolutePosition, int numSamples)
 {
     // iterate over group container
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
@@ -131,32 +131,35 @@ void PlayListScheduler::processArrangement(double absolutePosition, int numSampl
     }
 }
 
-void PlayListScheduler::processEditMode(double absolutePosition, int numSamples)
+void PlayListScheduler::processInEditMode(double absolutePosition, int numSamples)
 {
     // convert to seconds
-    const auto positionInSeconds = tempoProvider->clocksToSeconds(absolutePosition);
+    const auto absolutePositionInSeconds = tempoProvider->clocksToSeconds(absolutePosition);
     const auto secondsThisBuffer = static_cast<double>(numSamples) / sampleRate;
 
-    const auto resources = audioResourceContainer->resourcesAtAbsolutePosition(positionInSeconds + secondsThisBuffer);
+    const auto resources = audioResourceContainer->resourcesAtAbsolutePosition(absolutePositionInSeconds + secondsThisBuffer);
     for (auto resource : resources)
     {
         if (not resource->getAudioTransportSource()->isPlaying())
         {
             const auto startPosition = resource->getTransportPositionSeconds();
-            const auto diff = startPosition - positionInSeconds;
-            
-            auto offset = startPosition - resource->getRegionDataInSeconds().getStart();
-            //auto local = offset + item->getRegionDataInClocks().getStart();
-            
-            //const auto localPosition = absoluteToLocalPosition(startPosition, playlist->currentPlayListItem);
-            
-            //const auto localPosition = positionInSeconds + resource->getAbsolueStartTime();
             const auto localPosition = resource->getRegionDataInSeconds().getStart();
+            const auto diff = startPosition - absolutePositionInSeconds;
+
+            if (diff < 0.0)
+            {
+                resource->getAudioTransportSource()->schedulePosition(localPosition - diff, 0);
+            }
+            else
+            {
+                const auto startSamples = static_cast<int>(diff * sampleRate);
+                jassert(startSamples < numSamples);
+                resource->getAudioTransportSource()->schedulePosition(localPosition, startSamples);
+            }
             
-            /// TODO: calculate sample accurate position
-            resource->getAudioTransportSource()->schedulePosition(localPosition, 0);
-            resource->getAudioTransportSource()->start();
-            resource->getAudioTransportSource()->startWithDuration(resource->getRegionDataInSeconds().getLength(), sampleRate);
+            std::cout << "absolute pos: " << absolutePositionInSeconds << " start " <<  startPosition << " diff " << diff << std::endl;
+
+            resource->getAudioTransportSource()->scheduleDuration(resource->getRegionDataInSeconds().getLength(), sampleRate);
         }
     }
 }

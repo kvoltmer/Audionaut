@@ -28,7 +28,7 @@
  This call contains the AudioGroupListBox!
 
  */
-class ArrangementEditBaseComponent  : public juce::Component
+class ArrangementEditBaseComponent  : public juce::Component//, public juce::KeyListener
 {
 public:
     ArrangementEditBaseComponent(std::shared_ptr<AudiumEngine> audiumEngine, bool arrangementMode) :

@@ -262,7 +262,6 @@ void AudioRegionContainer::setRegionLength(int rowNumber, double newLength)
 
 std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForGroup(std::shared_ptr<AudioGroup> group) const
 {
-    jassertfalse;
     std::vector<std::shared_ptr<AudioRegion>> regions;
     for (auto region : audioRegions)
     {
