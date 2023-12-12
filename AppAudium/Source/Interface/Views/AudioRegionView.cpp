@@ -50,11 +50,12 @@ void AudioRegionView::paint (juce::Graphics& g)
         // our local bounds
         auto thumbArea = getLocalBounds();
         thumbArea = thumbArea.withX(visibleRange.getStart());
+        thumbArea.setWidth(visibleRange.getLength());
         
-        if (visibleRange.getLength() > thumbArea.getWidth())
-        {
-            thumbArea.setWidth(visibleRange.getLength());
-        }
+//        if (visibleRange.getLength() > thumbArea.getWidth())
+//        {
+//            thumbArea.setWidth(visibleRange.getLength());
+//        }
         
         auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
 
