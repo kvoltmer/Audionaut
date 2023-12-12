@@ -29,6 +29,8 @@ public:
         if (startSample == 0)
         {
             setPosition(newPosition);
+            if (!isPlaying())
+                start();
         }
         else
         {
@@ -37,7 +39,7 @@ public:
         }
     }
     
-    void startWithDuration(double duration, double sr)
+    void scheduleDuration(double duration, double sr)
     {
         durationTimer.schedule(static_cast<int>(duration * sr));
     }

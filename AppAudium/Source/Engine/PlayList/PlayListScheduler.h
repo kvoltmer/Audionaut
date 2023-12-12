@@ -83,10 +83,10 @@ private:
     double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
     
     // Arrangement mode sequencing
-    void processArrangement(double pos, int numSamples);
+    void processInArrangementMode(double pos, int numSamples);
     
     // Edit mode sequencing
-    void processEditMode(double absolutePosition, int numSamples);
+    void processInEditMode(double absolutePosition, int numSamples);
     
 private:
     

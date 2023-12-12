@@ -89,7 +89,7 @@ public:
         
         originalBounds = getBounds();
             
-        audioResource->setSelected(true, !e.mods.isCommandDown());
+        audioResource->setSelected(e.mods.isCommandDown() ? !audioResource->isSelected() : true, !e.mods.isCommandDown());
         
         repaint();
     }
