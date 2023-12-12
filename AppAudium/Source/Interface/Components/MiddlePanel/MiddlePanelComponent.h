@@ -40,7 +40,7 @@ public:
     
     enum UIContext {
         EntireContext,
-        ArrangementScrollContext
+        VerticalScrollContext
     };
     
     void resized() override
@@ -63,9 +63,10 @@ public:
             channelsComponent->updateUI();
             editComponent->updateUI();
         }
-        else if(context == ArrangementScrollContext)
+        else if(context == VerticalScrollContext)
         {
             arrangementComponent->getRegionSelector()->updateFromEngine();
+            editComponent->getRegionSelector()->updateFromEngine();
         }
     }
     

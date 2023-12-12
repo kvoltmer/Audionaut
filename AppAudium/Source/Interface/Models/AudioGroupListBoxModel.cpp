@@ -103,5 +103,5 @@ void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 
 void AudioGroupListBoxModel::listWasScrolled()
 {
-    audiumEngine->getAudioGroupContainer()->sendActionMessage(arrangementScrolled);
+    audiumEngine->getAudioGroupContainer()->sendActionMessage(scrolledVertically);
 }
