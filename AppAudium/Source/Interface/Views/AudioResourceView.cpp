@@ -49,19 +49,14 @@ void AudioResourceView::paint (juce::Graphics& g)
         // our local bounds
         auto thumbArea = getLocalBounds();
         thumbArea = thumbArea.withX(visibleRange.getStart());
-        
-        if (visibleRange.getLength() > thumbArea.getWidth())
-        {
-            thumbArea.setWidth(visibleRange.getLength());
-        }
+        thumbArea.setWidth(visibleRange.getLength());
         
         auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
 
         thumb->drawChannels (g, thumbArea, start, end, verticalZoomFactor);
-
         
 //        std::cout << this << " DRAW x = " << thumbArea.getX() << " width = " << thumbArea.getWidth();
-//        std::cout << " start = " << start << " length = " << end - start;
+//        std::cout << "draw start = " << start << " end = " << end << std::endl;
 //        std::cout << std::endl;
 
         //paintFileNameLabel(g);
