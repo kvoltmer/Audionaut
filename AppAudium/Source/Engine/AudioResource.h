@@ -31,14 +31,12 @@ public:
                   juce::URL url,
                   std::shared_ptr<AudiumTransportSource> transportSource,
                   std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
-                  std::shared_ptr<juce::AudioThumbnail> audioThumbnail,
                   int channelPosition,
                   int resourceId) :
         owner(audioResourceContainer),
         audioGroup(audioGroup),
         url(url),
         transportSource(transportSource),
-        audioThumbnail(audioThumbnail),
         channelPosition(channelPosition),
         resourceId(resourceId)
     {
@@ -82,9 +80,7 @@ public:
     double getTransportPositionSeconds() const;
     double getTransportPositionClocks() const { return transportPositionClocks; }
     bool containsAbsolutePosition(double position) const;
-    
-    juce::AudioThumbnail* getAudioThumbnail() const { return audioThumbnail.get(); }
-    
+        
     int getChannelPosition() const { return channelPosition; }
     
     bool writeToStream (juce::OutputStream& outputStream);
@@ -110,7 +106,6 @@ private:
     
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     
-    std::shared_ptr<juce::AudioThumbnail> audioThumbnail;
     
     /// TODO: capsulate the data below
     juce::Range<double> regionData;

@@ -48,18 +48,11 @@ public:
                                                 readAheadThread,         // this is the background thread to use for reading-ahead
                                                 audioFormatReaderSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
                     
-                    
-                    auto audioThumbnail = std::shared_ptr<juce::AudioThumbnail>(new juce::AudioThumbnail(4096*4,
-                                                                                                             formatManager,
-                                                                                                             *audioResourceContainer.getAudioThumbnailCache().get()));
-                    audioThumbnail->setSource(inputSource.release());
-                    
                     audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
                                                                                      group,
                                                                                      url,
                                                                                      transportSource,
                                                                                      std::move(audioFormatReaderSource),
-                                                                                     audioThumbnail,
                                                                                      channelPosition,
                                                                                      resourceId));
                     audioResource->setTransportPosition(transportPosition, false);

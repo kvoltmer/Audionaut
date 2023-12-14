@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    AudioViewBase.h
+    WaveFormViewBase.h
     Created: 27 Nov 2023 4:15:50pm
     Author:  Klaus Voltmer
 
@@ -15,21 +15,26 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/RegionSelector.h"
 #include "Engine/AudioResource.h"
+#include "Engine/AudioResourceContainer.h"
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
 #include "Engine/AudioGroup.h"
+#include "Engine/AudiumEngine.h"
+#include "Engine/Factory/AudioResourceFactory.h"
 
 //==============================================================================
 /*
 */
-class AudioViewBase : public juce::Component, public juce::ChangeListener
+class WaveFormViewBase : public juce::Component, public juce::ChangeListener
 {
 public:
-    AudioViewBase(std::shared_ptr<AudioResource> audioResource,
-                  std::shared_ptr<ZoomHandler> zoomHandler,
-                  std::shared_ptr<AudioRegion> audioRegion,
-                  juce::Colour colour,
-                  std::shared_ptr<RegionSelector> regionSelector) :
+    WaveFormViewBase(std::shared_ptr<AudiumEngine> audiumEngine,
+                     std::shared_ptr<AudioResource> audioResource,
+                     std::shared_ptr<ZoomHandler> zoomHandler,
+                     std::shared_ptr<AudioRegion> audioRegion,
+                     juce::Colour colour,
+                     std::shared_ptr<RegionSelector> regionSelector) :
+        audiumEngine(audiumEngine),
         audioResource(audioResource),
         zoomHandler(zoomHandler),
         audioRegion(audioRegion),
@@ -41,17 +46,22 @@ public:
         
         // use buffered image
         // setBufferedToImage(true);
-            
-        auto thumb = audioResource->getAudioThumbnail();
-        jassert(thumb != nullptr);
-        thumb->addChangeListener(this);
+        
+        // create thumbnail
+        auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
+        auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
+        audioThumbnail.reset(new juce::AudioThumbnail(4096*4, *formatManager, *thumbnailCache));
+        
+        if (auto inputSource = AudioResourceFactory::makeAudioInputSource(audioResource->getUrl()))
+        {
+            audioThumbnail->setSource(inputSource.release());
+        }
+        audioThumbnail->addChangeListener(this);
     }
 
-    ~AudioViewBase() override
+    ~WaveFormViewBase() override
     {
-        auto thumb = audioResource->getAudioThumbnail();
-        jassert(thumb != nullptr);
-        thumb->removeChangeListener(this);
+        audioThumbnail->removeChangeListener(this);
     }
     
     void changeListenerCallback (juce::ChangeBroadcaster*) override
@@ -100,13 +110,16 @@ public:
 
 protected:
     
+    std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<AudioRegion> audioRegion;
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
     
+    std::unique_ptr<juce::AudioThumbnail> audioThumbnail;
+    
     static constexpr float verticalZoomFactor = 0.62f;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioViewBase)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormViewBase)
 };

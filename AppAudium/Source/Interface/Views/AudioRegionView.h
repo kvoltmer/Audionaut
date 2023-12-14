@@ -12,21 +12,22 @@
 
 #include <JuceHeader.h>
 #include <memory>
-#include "AudioViewBase.h"
+#include "WaveFormViewBase.h"
 
 class AudioResource;
 class ZoomHandler;
 class AudioRegion;
 
-class AudioRegionView : public AudioViewBase
+class AudioRegionView : public WaveFormViewBase
 {
 public:
-    AudioRegionView(std::shared_ptr<AudioResource> audioResource,
+    AudioRegionView(std::shared_ptr<AudiumEngine> audiumEngine,
+                    std::shared_ptr<AudioResource> audioResource,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     std::shared_ptr<AudioRegion> audioRegion,
                     juce::Colour colour,
                     std::shared_ptr<RegionSelector> regionSelector) :
-        AudioViewBase(audioResource, zoomHandler, audioRegion, colour, regionSelector)
+        WaveFormViewBase(audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector)
     {
     }
 
