@@ -18,10 +18,12 @@
 #include "Interface/ColourIds.h"
 
 //==============================================================================
-PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudioGroup> audioGroup,
+PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
+                                             std::shared_ptr<AudioGroup> audioGroup,
                                              std::shared_ptr<PlayListItem> playListItem,
                                              std::shared_ptr<ZoomHandler> zoomHandler,
                                              std::shared_ptr<RegionSelector> regionSelector) :
+    audiumEngine(audiumEngine),
     audioGroup(audioGroup),
     playListItem(playListItem),
     regionSelector(regionSelector)
@@ -33,7 +35,8 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudioGroup> audioGr
     auto audioResources = audioGroup->getAudioResources();
     for (auto audioResource : audioResources)
     {
-        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audioResource,
+        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audiumEngine,
+                                                                         audioResource,
                                                                          zoomHandler,
                                                                          playListItem->getRegion(),
                                                                          audioGroup->getColour(),
