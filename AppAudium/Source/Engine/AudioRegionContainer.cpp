@@ -64,8 +64,10 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
                 auto resources = group->getAudioResourcesAtAbsoluteRange(rangeInSeconds);
                 for (auto resource : resources)
                 {
-                    const auto startPosition = resource->getTransportPositionSeconds();
-                    rangeInSeconds -= startPosition;
+                    const auto transportPosition = resource->getTransportPositionSeconds();
+                    rangeInSeconds -= transportPosition;
+                    const auto startPosition = resource->getRegionDataInSeconds().getStart();
+                    rangeInSeconds += startPosition;
                     createRegion(name, rangeInSeconds, group, resource);
                 }
             }
