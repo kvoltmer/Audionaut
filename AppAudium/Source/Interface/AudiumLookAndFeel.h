@@ -26,6 +26,18 @@ public:
                                const juce::Colour& backgroundColour,
                                bool shouldDrawButtonAsHighlighted,
                                bool shouldDrawButtonAsDown) override;
+    
+    
+    juce::Font getComboBoxFont (juce::ComboBox&) override;
+    
+    void drawComboBox (juce::Graphics& g, int width, int height, bool,
+                                          int, int, int, int, juce::ComboBox& box) override;
+    
+    void positionComboBoxText (juce::ComboBox& box, juce::Label& label) override;
+    
+
+    static const int channelsWidth = 65;
+    
 private:
     void setupColours();
 };

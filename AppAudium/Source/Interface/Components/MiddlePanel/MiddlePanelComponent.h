@@ -15,6 +15,7 @@
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"
 #include "Interface/Components/MiddlePanel/EditView/EditComponent.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 class AudiumEngine;
 
@@ -45,7 +46,7 @@ public:
     
     void resized() override
     {
-        auto channelsWidth = 60;
+        auto channelsWidth = AudiumLookAndFeel::channelsWidth;
         
         channelsComponent->setBounds(getLocalBounds().removeFromLeft(channelsWidth));
         

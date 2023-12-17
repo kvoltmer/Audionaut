@@ -75,6 +75,7 @@ public:
         
     int getNumChannels() const;
     std::shared_ptr<AudioResource> getChannel(int index) const;
+    void setChannelHeight(int height);
     
     void prepareToPlay (double sampleRate, int blockSize);
     

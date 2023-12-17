@@ -119,6 +119,10 @@
               file="Source/Interface/AudiumLookAndFeel.h"/>
         <FILE id="WxdqR9" name="ColourIds.h" compile="0" resource="0" file="Source/Interface/ColourIds.h"/>
         <GROUP id="{5B27ED8A-CA94-0C20-47D2-019C8929A810}" name="Widgets">
+          <FILE id="WylrD8" name="audium_AudioThumbnail.cpp" compile="1" resource="0"
+                file="Source/Interface/Widgets/audium_AudioThumbnail.cpp"/>
+          <FILE id="iIxYr4" name="audium_AudioThumbnail.h" compile="0" resource="0"
+                file="Source/Interface/Widgets/audium_AudioThumbnail.h"/>
           <FILE id="SSghHx" name="audium_ListBox.cpp" compile="1" resource="0"
                 file="Source/Interface/Widgets/audium_ListBox.cpp"/>
           <FILE id="zmkbt8" name="audium_ListBox.h" compile="0" resource="0"
@@ -145,6 +149,8 @@
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"/>
               <FILE id="ip9GrQ" name="ChannelsComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"/>
+              <FILE id="kb3Lop" name="ChannelsHeaderComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelsHeaderComponent.h"/>
             </GROUP>
             <GROUP id="{B76B0D36-C9A9-6C1E-B42A-40EF5EABF872}" name="EditView">
               <FILE id="yEfxaX" name="EditComponent.h" compile="0" resource="0" file="Source/Interface/Components/MiddlePanel/EditView/EditComponent.h"/>
