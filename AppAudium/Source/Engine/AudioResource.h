@@ -61,6 +61,7 @@ public:
     int getTop() const { return channelPosition * height; }
     int getHeight() const { return height * getNumChannels(); }
     int getChannelHeight() const { return height; }
+    void setChannelHeight(int newHeight) { height = newHeight; }
     
     AudioResourceContainer& getContainer() const { return owner; }
     

@@ -21,6 +21,7 @@
 #include "Engine/AudioGroup.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
+#include "Interface/Widgets/audium_AudioThumbnail.h"
 
 //==============================================================================
 /*
@@ -50,8 +51,8 @@ public:
         // create thumbnail
         auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
         auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
-        audioThumbnail.reset(new juce::AudioThumbnail(4096*4, *formatManager, *thumbnailCache));
-        
+        audioThumbnail.reset(new audium::AudioThumbnail(4096*4, *formatManager, *thumbnailCache));
+        audioThumbnail->setColour(colour);
         if (auto inputSource = AudioResourceFactory::makeAudioInputSource(audioResource->getUrl()))
         {
             audioThumbnail->setSource(inputSource.release());
@@ -117,7 +118,7 @@ protected:
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
     
-    std::unique_ptr<juce::AudioThumbnail> audioThumbnail;
+    std::unique_ptr<audium::AudioThumbnail> audioThumbnail;
     
     static constexpr float verticalZoomFactor = 0.62f;
     
