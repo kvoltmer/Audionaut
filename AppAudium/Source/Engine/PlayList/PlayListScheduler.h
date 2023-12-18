@@ -11,25 +11,34 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
-#include "Engine/PlayList/SampleTimer.h"
-
-namespace audium {
-    class LinkEngine;
-}
+#include "Engine/Provider/TempoProvider.h"
+#include "Engine/Link/LinkEngine.hpp"
 
 class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
 class AudioGroupContainer;
+class AudioResourceContainer;
 
-
-class PlayListScheduler : public juce::ActionBroadcaster
+class PlayListScheduler
 {
     
     
 public:
-    PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer);
-    ~PlayListScheduler();
+    PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                      std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                      std::shared_ptr<TempoProvider> tempoProvider,
+                      std::shared_ptr<audium::LinkEngine> linkEngine) :
+        audioGroupContainer(audioGroupContainer),
+        audioResourceContainer(audioResourceContainer),
+        tempoProvider(tempoProvider),
+        linkEngine(linkEngine)
+    {
+        linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
+        
+    }
+    
+    ~PlayListScheduler() = default;
 
     void prepareToPlay (double sampleRate, int blockSize);
     
@@ -37,6 +46,13 @@ public:
     void startPlaying();
     void stopPlaying();
     bool isPlaying() const;
+    void setFollowTransport(bool enable) { followTransport = enable; }
+    bool getFollowTransport() const { return followTransport; }
+    void setLoopPlayList(bool enable) { loopPlayList.store(enable); }
+    bool getLoopPlayList() const { return loopPlayList.load(); }
+    void setEditMode(bool bEditMode) { editMode = bEditMode; }
+    bool isEditMode() const { return editMode; }
+    bool isArrangementMode() const { return !editMode; }
     
     void resetCurrentPlayListItem();
     
@@ -49,123 +65,38 @@ public:
     double getAbsolutePositionSeconds() const;
     void setAbsolutePositionSeconds(double newPosition);
     
-    void tick(bool isPlaying,
-              double beats,
-              int numSamples);
+    void tick(bool isPlaying, double beats, int numSamples);
     
     void audioCallback (const juce::AudioSourceChannelInfo& info);
     
     double getTotalLengthClocks() const;
     double getTotalLengthSeconds() const;
     
-    void onTriggerBeat(const double beatTime, const std::chrono::microseconds hostTime, int sampleNumber);
+    void bounceToFile(juce::AudioFormatWriter* writer, double sampleRate, int numSamples, int numOutputChannels);
     
-    void setLinkEngine(audium::LinkEngine* engine);
-    audium::LinkEngine* getLinkEngine() const { return linkEngine; }
+    audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
     
-    double getTempo() const;
-    void setTempo(double newTempo);
-    
-    uint64_t secondsToSamples(double seconds)
-    {
-        return static_cast<uint64_t>(seconds * sampleRate);
-    }
-    
-    double samplesToSeconds(uint64_t samples)
-    {
-        jassert(sampleRate > 0.0);
-        return static_cast<double>(samples) / sampleRate;
-    }
-    
-    static double secondsToClocks(double tempo, double seconds)
-    {
-        return tempo * 0.4 * seconds;
-    }
-
-    static double clocksToSeconds(double tempo, double clocks)
-    {
-        jassert(tempo > 0.0);
-        return clocks / (tempo * 0.4);
-    }
-    
-    double secondsToClocks(double seconds) const
-    {
-        return secondsToClocks(tempoBPM, seconds);
-    }
-
-    double clocksToSeconds(double clocks) const
-    {
-        return clocksToSeconds(tempoBPM, clocks);
-    }
-    
-    juce::Range<double> secondsToClocks(juce::Range<double> rangeInSeconds)
-    {
-        const auto start = secondsToClocks(rangeInSeconds.getStart());
-        const auto end = secondsToClocks(rangeInSeconds.getEnd());
-        return juce::Range<double>(start, end);
-    }
-    
-    juce::Range<double> clocksToSeconds(juce::Range<double> rangeInClocks)
-    {
-        const auto start = clocksToSeconds(rangeInClocks.getStart());
-        const auto end = clocksToSeconds(rangeInClocks.getEnd());
-        return juce::Range<double>(start, end);
-    }
-    
-    static double beatsToClocks(double beats)
-    {
-        // 4th * 24 = 96th
-        return beats * 24.0;
-    }
-    
-    static double clocksToBeats(double clocks)
-    {
-        // 96th / 24 = 4th
-        return clocks / 24.0;
-    }
-    
-    static double barsToClocks(double bars)
-    {
-        return bars * 96.0;
-    }
-    
-    static double clocksToBars(double clocks)
-    {
-        return clocks / 96.0;
-    }
-    
-    static double secondsToBeats(double tempo, double seconds)
-    {
-        return clocksToBeats(secondsToClocks(tempo, seconds));
-    }
-
-    static double beatsToSeconds(double tempo, double beats)
-    {
-        jassert(tempo > 0.0);
-        return clocksToSeconds(tempo, beatsToClocks(beats));
-    }
-    
-    double secondsToBeats(double seconds)
-    {
-        return secondsToBeats(tempoBPM, seconds);
-    }
-
-    double beatsToSeconds(double beats)
-    {
-        return beatsToSeconds(tempoBPM, beats);
-    }
-
+    std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     
 private:
 
-    void onTempoChange(double newTempo);
-
     double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
-    void applyAbsolutePosition(double pos, int numSamples);
+    
+    // Arrangement mode sequencing
+    void processInArrangementMode(double pos, int numSamples);
+    
+    // Edit mode sequencing
+    void processInEditMode(double absolutePosition, int numSamples);
+    
+private:
     
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<TempoProvider> tempoProvider;
+    std::shared_ptr<audium::LinkEngine> linkEngine;
     
     double sampleRate = 0.0;
+    
     int bufferSize = 0;
     
     // transport position in 96th clocks
@@ -177,9 +108,12 @@ private:
     
     juce::CriticalSection readLock;
     
-    audium::LinkEngine *linkEngine;
-        
-    double tempoBPM = 120.0;
+    bool followTransport = true;
+    
+    std::atomic<bool> loopPlayList = false;
+    
+    // Edit or Arrangement Mode
+    std::atomic<bool> editMode = true;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

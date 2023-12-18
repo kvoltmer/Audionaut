@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include "RegionSelector.h"
-#include "Interface/Components/MiddlePanel/AudioGroupComponent.h"
+#include "Interface/Handlers/ZoomHandler.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -26,99 +26,106 @@ void RegionSelector::paint (Graphics& g)
 
 void RegionSelector::mouseDown (const juce::MouseEvent& e)
 {
-    
-    /// click outside -> reset current selection
-    auto parentPosition = e.getEventRelativeTo(owner.get()).getPosition();
-    
-    /// filter mouse postion to avoid scrollbar conflict
-    /// TODO: get rid of this workaround: maybe attach mouse listener to the viewport
-    if (owner->getHeight() - parentPosition.getY() < 10 ||
-        parentPosition.getY() < owner->getHeaderComponent()->getHeight())
+    if (isEnabled())
     {
-        avoidDragging = true;
-        return;
-    }
-    
-    avoidDragging = false;
-    
-    /// click outside the selection?
-    if (!getBoundsInParent().contains(parentPosition))
-    {
-        setSize (0, 0);
-        dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
-        currentDragMode = RegionSelector::outsideEdge;
-        audiumEngine->getAudioRegionContainer()->setSelectedPositionInSeconds(juce::Range<double>());
-    }
-    else /// click inside -> modify current selection
-    {
-        moveStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
-        currentDragMode = getDragMode(e.getPosition().getX());
+        //std::cout << "RegionSelector::mouseDown" << std::endl;
+        
+        /// click outside -> reset current selection
+        auto parentPosition = e.getEventRelativeTo(owner.get()).getPosition();
+        
+        /// filter mouse postion to avoid scrollbar conflict
+        /// TODO: get rid of this workaround: maybe attach mouse listener to the viewport
+        if (owner->getHeight() - parentPosition.getY() < 10 ||
+            parentPosition.getY() < owner->getHeaderComponent()->getHeight())
+        {
+            avoidDragging = true;
+            return;
+        }
+        
+        avoidDragging = false;
+        
+        /// click outside the selection?
+        if (!getBoundsInParent().contains(parentPosition))
+        {
+            setSize (0, 0);
+            dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
+            currentDragMode = RegionSelector::outsideEdge;
+            audiumEngine->getAudioRegionContainer()->setSelectedPositionInSeconds(juce::Range<double>());
+        }
+        else /// click inside -> modify current selection
+        {
+            moveStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
+            currentDragMode = getDragMode(e.getPosition().getX());
+        }
     }
 }
 
 void RegionSelector::mouseDrag (const juce::MouseEvent& e)
 {
-    // filter mouse postion to avoid scrollbar conflict
-    /// TODO: maybe attach mouse listener to the viewport
-    auto parentPosition = e.getEventRelativeTo(owner.get()).getPosition();
-    if (avoidDragging ||
-        owner->getHeight() - parentPosition.getY() < 10)
+    if (isEnabled())
     {
-        return;
-    }
-    
-    auto delta =  e.getEventRelativeTo(owner.get()).getPosition().getX() - moveStartPos.getX();
-    moveStartPos = e.getEventRelativeTo(owner.get()).getPosition();
-    
-    switch (currentDragMode) {
-        case RegionSelector::leftEdge:
-            if (dragStartPos.getX() < dragEndPos.getX())
-            {
+        // filter mouse postion to avoid scrollbar conflict
+        /// TODO: maybe attach mouse listener to the viewport
+        auto parentPosition = e.getEventRelativeTo(owner.get()).getPosition();
+        if (avoidDragging ||
+            owner->getHeight() - parentPosition.getY() < 10)
+        {
+            return;
+        }
+        
+        auto delta =  e.getEventRelativeTo(owner.get()).getPosition().getX() - moveStartPos.getX();
+        moveStartPos = e.getEventRelativeTo(owner.get()).getPosition();
+        
+        switch (currentDragMode) {
+            case RegionSelector::leftEdge:
+                if (dragStartPos.getX() < dragEndPos.getX())
+                {
+                    dragStartPos.setX(dragStartPos.getX() + delta);
+                }
+                else
+                {
+                    dragEndPos.setX(dragEndPos.getX() + delta);
+                }
+                break;
+            case RegionSelector::rightEdge:
+                if (dragStartPos.getX() < dragEndPos.getX())
+                {
+                    dragEndPos.setX(dragEndPos.getX() + delta);
+                }
+                else
+                {
+                    dragStartPos.setX(dragStartPos.getX() + delta);
+                }
+                break;
+            case RegionSelector::middleEdge:
                 dragStartPos.setX(dragStartPos.getX() + delta);
-            }
-            else
-            {
                 dragEndPos.setX(dragEndPos.getX() + delta);
-            }
-            break;
-        case RegionSelector::rightEdge:
-            if (dragStartPos.getX() < dragEndPos.getX())
-            {
-                dragEndPos.setX(dragEndPos.getX() + delta);
-            }
-            else
-            {
-                dragStartPos.setX(dragStartPos.getX() + delta);
-            }
-            break;
-        case RegionSelector::middleEdge:
-            dragStartPos.setX(dragStartPos.getX() + delta);
-            dragEndPos.setX(dragEndPos.getX() + delta);
-            break;
-        case RegionSelector::outsideEdge:
-            dragEndPos = e.getEventRelativeTo(owner.get()).getPosition();
-            break;
-    
-        default:
-            break;
+                break;
+            case RegionSelector::outsideEdge:
+                dragEndPos = e.getEventRelativeTo(owner.get()).getPosition();
+                break;
+                
+            default:
+                break;
+        }
+        
+        createRectangleAndSetBonds();
+        
+        auto start = zoomHandler->xToSecondsWithOffset(dragStartPos.getX());
+        auto end = zoomHandler->xToSecondsWithOffset(dragEndPos.getX());
+        
+        // calc engine values
+        Range<double> pos(start, end);
+        if (end < start)
+        {
+            pos = Range<double>(end, start);
+        }
+        
+        // itemAtAbsoluteRangestd::cout << pos.getStart() << " " << pos.getEnd() << std::endl;
+        
+        // set value in the engine
+        audiumEngine->getAudioRegionContainer()->setSelectedPositionInSeconds(pos);
     }
-
-    createRectangleAndSetBonds();
-    
-    auto start = zoomHandler->xToSecondsWithOffset(dragStartPos.getX());
-    auto end = zoomHandler->xToSecondsWithOffset(dragEndPos.getX());
-    
-    // calc engine values
-    Range<double> pos(start, end);
-    if (end < start)
-    {
-        pos = Range<double>(end, start);
-    }
-    
-    // itemAtAbsoluteRangestd::cout << pos.getStart() << " " << pos.getEnd() << std::endl;
-    
-    // set value in the engine
-    audiumEngine->getAudioRegionContainer()->setSelectedPositionInSeconds(pos);
 }
 
 void RegionSelector::createRectangleAndSetBonds()
@@ -135,29 +142,14 @@ void RegionSelector::createRectangleAndSetBonds()
 
 void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
-    // set transport position if not currently playing
-// TODO: implement or ditch?
-//    if (!avoidDragging &&
-//        !audiumEngine->getPlayListScheduler()->isPlaying() &&
-//        getBounds().getWidth() > 1)
-//    {
-//        auto pos = 0.0;
-//        if (dragEndPos.getX() < dragStartPos.getX())
-//        {
-//            pos = zoomHandler->xToSecondsWithOffset(dragEndPos.getX());
-//        }
-//        else
-//        {
-//            pos = zoomHandler->xToSecondsWithOffset(dragStartPos.getX());
-//        }
-//        audiumEngine->getPlayListScheduler()->setAbsolutePosition (pos);
-//    }
-    
 }
 
 void RegionSelector::mouseMove (const juce::MouseEvent& e)
 {
-    updateMouseZone (e);
+    if (isEnabled())
+    {
+        updateMouseZone (e);
+    }
 }
 
 void RegionSelector::updateFromEngine()
@@ -179,12 +171,14 @@ void RegionSelector::updateFromEngine()
 
 void RegionSelector::updateMouseZone (const juce::MouseEvent& e)
 {
-    auto x = e.getPosition().getX();
+    //std::cout << "RegionSelector::updateMouseZone" << std::endl;
     
-    switch (getDragMode(x)) {
+    switch (getDragMode(e.getPosition().getX())) {
         case RegionSelector::leftEdge:
+            setMouseCursor (MouseCursor::LeftEdgeResizeCursor);
+            break;
         case RegionSelector::rightEdge:
-            setMouseCursor (MouseCursor::LeftRightResizeCursor);
+            setMouseCursor (MouseCursor::RightEdgeResizeCursor);
             break;
         case RegionSelector::middleEdge:
             setMouseCursor (MouseCursor::DraggingHandCursor);

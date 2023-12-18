@@ -54,10 +54,7 @@ public:
     
     void deleteKeyPressed (int lastRowSelected) override;
     
-    void backgroundClicked (const juce::MouseEvent&) override
-    {
-        owner->deselectAllRows();
-    }
+    void backgroundClicked (const juce::MouseEvent&) override;
     
     juce::var getDragSourceDescription (const juce::SparseSet<int>& currentlySelectedRows) override;
 

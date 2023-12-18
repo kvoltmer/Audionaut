@@ -13,24 +13,10 @@
 #include <memory>
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
-//#include "AudioResourceContainer.h"
 #include "Engine/AudioResource.h"
 #include "Engine/AudioGroup.h"
-
-static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
-{
-   #if JUCE_ANDROID
-    if (auto doc = AndroidDocument::fromDocument (url))
-        return std::make_unique<AndroidDocumentInputSource> (doc);
-   #endif
-
-   #if ! JUCE_IOS
-    if (url.isLocalFile())
-        return std::make_unique<juce::FileInputSource> (url.getLocalFile());
-   #endif
-
-    return std::make_unique<juce::URLInputSource> (url);
-}
+#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudiumTransportSource.h"
 
 class AudioResourceFactory {
     
@@ -42,7 +28,9 @@ public:
                                                               std::shared_ptr<AudioGroup> group,
                                                               juce::AudioFormatManager& formatManager,
                                                               juce::TimeSliceThread* readAheadThread,
-                                                              juce::AudioThumbnailCache& thumbnailCache)
+                                                              int channelPosition,
+                                                              double transportPosition,
+                                                              int resourceId)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
         
@@ -55,27 +43,39 @@ public:
                     auto audioFormatReaderSource = std::make_unique<juce::AudioFormatReaderSource> (reader.release(), true);
                     
                     auto transportSource = group->getTransportSourceContainer()->createNewTransportSource();
-                    
-                    // plug it into the transport source
                     transportSource->setSource (audioFormatReaderSource.get(),
                                                 32768,                   // tells it to buffer this many samples ahead
-                                                readAheadThread,                 // this is the background thread to use for reading-ahead
+                                                readAheadThread,         // this is the background thread to use for reading-ahead
                                                 audioFormatReaderSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
-
+                    
                     audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
+                                                                                     group,
                                                                                      url,
-                                                                                     inputSource.get(),
-                                                                                     formatManager,
-                                                                                     thumbnailCache,
                                                                                      transportSource,
-                                                                                     std::move(audioFormatReaderSource)));
+                                                                                     std::move(audioFormatReaderSource),
+                                                                                     channelPosition,
+                                                                                     resourceId));
+                    audioResource->setTransportPosition(transportPosition, false);
                 }
             }
-            
-            inputSource.release();
         }
-        
+        jassert(audioResource != nullptr);
         return audioResource;
+    }
+    
+    static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
+    {
+       #if JUCE_ANDROID
+        if (auto doc = AndroidDocument::fromDocument (url))
+            return std::make_unique<AndroidDocumentInputSource> (doc);
+       #endif
+
+       #if ! JUCE_IOS
+        if (url.isLocalFile())
+            return std::make_unique<juce::FileInputSource> (url.getLocalFile());
+       #endif
+
+        return std::make_unique<juce::URLInputSource> (url);
     }
     
 private:

@@ -28,6 +28,8 @@ public:
         zoomHandler(zoomHandler),
         audiumEngine(audiumEngine)
     {
+        setOpaque(true);
+        
         transportView.reset(new TransportView(zoomHandler));
         addAndMakeVisible(transportView.get());
         transportView->toBack();

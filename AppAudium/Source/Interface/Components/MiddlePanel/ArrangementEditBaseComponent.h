@@ -1,8 +1,8 @@
 /*
   ==============================================================================
 
-    ArrangementComponent.h
-    Created: 23 Oct 2023 12:01:31pm
+    ArrangementEditBaseComponent.h
+    Created: 27 Nov 2023 9:49:52am
     Author:  Klaus Voltmer
 
   ==============================================================================
@@ -20,20 +20,29 @@
 #include "Interface/Controls/TransportPositionControl.h"
 #include "Engine/AudioGroupContainer.h"
 
-class ArrangementComponent  : public juce::Component
+//==============================================================================
+/*
+
+ Base class to display timeline stuff
+ 
+ This call contains the AudioGroupListBox!
+
+ */
+class ArrangementEditBaseComponent  : public juce::Component//, public juce::KeyListener
 {
 public:
-    ArrangementComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+    ArrangementEditBaseComponent(std::shared_ptr<AudiumEngine> audiumEngine, bool arrangementMode) :
         audiumEngine(audiumEngine)
     {
         
-        zoomHandler.reset(new ZoomHandler(audiumEngine->getAudioResourceContainer(),
-                                          audiumEngine->getPlayListScheduler()));
-        audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, "Audio Group Listbox", nullptr));
+        zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
+        audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, zoomHandler));
         regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
         audioGroupListBoxModel.reset(new AudioGroupListBoxModel(audioGroupListBox,
                                                                 audiumEngine,
-                                                                zoomHandler));
+                                                                zoomHandler,
+                                                                regionSelector,
+                                                                arrangementMode));
         audioGroupListBox->setModel(audioGroupListBoxModel.get());
         auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(audioGroupListBox, zoomHandler, audiumEngine));
         audioGroupListBox->setHeaderComponent(std::move(headerComponent));
@@ -60,7 +69,7 @@ public:
 
     }
 
-    ~ArrangementComponent() override
+    virtual ~ArrangementEditBaseComponent() override
     {
         audioGroupListBox->setHeaderComponent(nullptr);
         audioGroupListBox->setModel(nullptr);
@@ -83,10 +92,11 @@ public:
 
     void updateUI()
     {
-        setContentWidth(zoomHandler->getArrangementContentWidth());
+        setContentWidth(zoomHandler->getContentWidth());
         
         audioGroupListBox->updateContent();
         regionSelector->updateFromEngine();
+        
     }
     
     void setContentWidth(int contentWidth)
@@ -96,37 +106,40 @@ public:
 
     void zoomIn()
     {
+        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);
         zoomHandler->zoomIn();
-        auto width = zoomHandler->getArrangementContentWidth();
-        //std::cout << "ArrangementComponent width " << width << std::endl;
-        setContentWidth(width);
+        setContentWidth(zoomHandler->getContentWidth());
         regionSelector->updateFromEngine();
-        zoomHandler->focusViewOnPlayPosition();
         
-        updateUI();
+        auto regionSelectorPos = audiumEngine->getAudioRegionContainer()->getSelectedPositionInSeconds();
+        if (!regionSelectorPos.isEmpty())
+        {
+            centerInSeconds = regionSelectorPos.getStart() + (regionSelectorPos.getLength() * 0.5);
+        }
+        
+        zoomHandler->focusView(centerInSeconds);
     }
 
     void zoomOut()
     {
-        zoomHandler->zoomOut();
-        auto width = zoomHandler->getArrangementContentWidth();
-        //std::cout << "ArrangementComponent width " << width << std::endl;
-        setContentWidth(width);
+        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);        zoomHandler->zoomOut();
+        setContentWidth(zoomHandler->getContentWidth());
         regionSelector->updateFromEngine();
-        zoomHandler->focusViewOnPlayPosition();
-        
-        updateUI();
+        zoomHandler->focusView(centerInSeconds);
     }
+    
+    RegionSelector* getRegionSelector() const { return regionSelector.get(); }
 
-private:
+protected:
     
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
-    std::shared_ptr<AudioGroupListBox>       audioGroupListBox;
-    std::shared_ptr<AudioGroupListBoxModel>  audioGroupListBoxModel;
+    std::shared_ptr<AudioGroupListBox>          audioGroupListBox;
+    std::shared_ptr<AudioGroupListBoxModel>     audioGroupListBoxModel;
     std::shared_ptr<PlayPositionMarker>         playPositionMarker;
     
+private:
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ArrangementComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ArrangementEditBaseComponent)
 };

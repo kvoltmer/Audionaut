@@ -191,16 +191,22 @@ PopupMenu AudiumApplication::createEditMenu()
 //    menu.addCommandItem (commandManager.get(), CommandIDs::findPrevious);
     menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
+    menu.addSeparator();
+    menu.addCommandItem(commandManager.get(), CommandIDs::loopPlayList);
     return menu;
 }
 
 PopupMenu AudiumApplication::createViewMenu()
 {
     PopupMenu menu;
+    menu.addCommandItem (commandManager.get(), CommandIDs::toggleFullScreen);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::toggleEditArrangement);
+    menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomIn);
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomOut);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::showExportersPanel);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::showExporterSettings);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::followTransport);
 
     return menu;
 }
@@ -431,7 +437,8 @@ void AudiumApplication::bounceProject()
         
         if (result != File{})
         {
-            audiumEngine->bounceToFile(result, nullptr);
+            // testing
+            audiumEngine->bounceToFile(result, nullptr, 48000.0);
         }
     });
 }

@@ -12,8 +12,10 @@
 #include <vector>
 #include <memory>
 #include <JuceHeader.h>
-#include "AudioResource.h"
-#include "AudioGroup.h"
+
+#include "Engine/AudioResource.h"
+#include "Engine/AudioGroup.h"
+#include "Engine/Provider/TempoProvider.h"
 
 class TransportSourceContainer;
 class AudioGroupContainer;
@@ -23,13 +25,28 @@ class AudioResourceContainer : public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<AudioGroupContainer> audioGroupContainer);
+                           std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                           std::shared_ptr<juce::AudioFormatManager> formatManager,
+                           std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache,
+                           std::shared_ptr<TempoProvider> tempoProvider) :
+        audioDeviceManager(audioDeviceManager),
+        audioGroupContainer(audioGroupContainer),
+        formatManager(formatManager),
+        audioThumbnailCache(audioThumbnailCache),
+        tempoProvider(tempoProvider)
+    {
+        formatManager->registerBasicFormats();
+        thread.startThread();
+    }
     
     ~AudioResourceContainer();
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      const AudiumEngine &engine,
-                                                     std::shared_ptr<AudioGroup> group = nullptr);
+                                                     std::shared_ptr<AudioGroup> group,
+                                                     int channelPosition = 0,
+                                                     double transportPosition = 0.0,
+                                                     int resourceId = -1);
     
     void removeAudioResource(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioResource> resource);
     void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
@@ -37,6 +54,7 @@ public:
     // still used by auto edit
     int getNumAudioResources() const;
     std::shared_ptr<AudioResource> getAudioResource(int index) const;
+    std::vector<std::shared_ptr<AudioResource>> resourcesAtAbsolutePosition(double positionInSeconds) const;
     
     int getNumAudioGroups() const;
     std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
@@ -45,40 +63,48 @@ public:
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine);
     
-    void cleanup() { audioResources.clear(); }
+    void cleanup();
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
-    
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtChannelPosition(AudioGroup *group, int channelPosition) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const;
+
     std::shared_ptr<AudioGroup> getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const;
     
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
-    
-    std::shared_ptr<AudioGroup> getDefaultGroup() const;
-    
+        
     int getNumChannels() const;
     std::shared_ptr<AudioResource> getChannel(int index) const;
+    void setChannelHeight(int height);
     
     void prepareToPlay (double sampleRate, int blockSize);
     
+    std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
+    std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }
+    std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
+    
     typedef std::pair<std::shared_ptr<AudioGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
     
+    void deselectAllResources();
+    
+    std::shared_ptr<AudioResource> getAudioResourceById(int resourceId) const;
+    
+    int getNextId() { return ++nextId; }
+        
 private:
     /// list of pairs. this enables sorting etc.. by AudioGroup
     std::list<tAudioGroupPair> audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
-    
-    /// TODO: find a proper home for this
-    juce::AudioFormatManager formatManager;
+    std::shared_ptr<juce::AudioFormatManager> formatManager;
+    std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
+    std::shared_ptr<TempoProvider> tempoProvider;
         
+    int nextId = 0;
+    
     /// TODO: find a proper home for this
     juce::TimeSliceThread thread  { "audio file read ahead" };
-    
-    juce::AudioThumbnailCache thumbnailCache  { 64 };
-    
-    /// TODO: find a proper home for this
-    bool isPlaying = false;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceContainer)

@@ -60,13 +60,14 @@ void TransportSourceContainer::stopPlaying()
 {
     for (auto & transportSource : audioTransportSources)
     {
-        // stop must not be used in the audio thread
-        //transportSource->stop();
+        
+        
         
         // workaround: set the position to the very end
         if (transportSource->isPlaying())
         {
-            transportSource->setPosition(transportSource->getLengthInSeconds());
+            transportSource->stopIt();
+            
         }
     }
     playing = false;

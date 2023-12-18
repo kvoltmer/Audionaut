@@ -57,6 +57,8 @@ public:
 
     void zoomIn();
     void zoomOut();
+
+    void toggleEditArrangementComponent();
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;

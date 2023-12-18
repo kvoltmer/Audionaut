@@ -15,7 +15,6 @@
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
-
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
     : DocumentWindow (name,
                       juce::Desktop::getInstance().getDefaultLookAndFeel()
@@ -86,10 +85,14 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
     const CommandID ids[] =
     {
         CommandIDs::playStop,
+        CommandIDs::loopPlayList,
         CommandIDs::createRegion,
         CommandIDs::autoEdit,
         CommandIDs::zoomIn,
-        CommandIDs::zoomOut
+        CommandIDs::zoomOut,
+        CommandIDs::followTransport,
+        CommandIDs::toggleEditArrangement,
+        CommandIDs::toggleFullScreen,
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -103,6 +106,10 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Play/Stop", "Play and stop", CommandCategories::transport, 0);
             result.defaultKeypresses.add (KeyPress (' ', ModifierKeys::noModifiers, 0));
             break;
+        case CommandIDs::loopPlayList:
+            result.setInfo ("Loop Playlist", "Loop Playlist On/Off", CommandCategories::transport, 0);
+            result.defaultKeypresses.add (KeyPress ('l', ModifierKeys::ctrlModifier, 0));
+            break;
         case CommandIDs::createRegion:
             result.setInfo ("Create Region", "Creates a new region", CommandCategories::editing, 0);
             result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::commandModifier, 0));
@@ -111,13 +118,25 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
             result.defaultKeypresses.add (KeyPress ('e', ModifierKeys::commandModifier, 0));
             break;
+        case CommandIDs::toggleFullScreen:
+            result.setInfo ("Full Screen", "Enter full screen", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::commandModifier | ModifierKeys::ctrlModifier, 0));
+            break;
+        case CommandIDs::toggleEditArrangement:
+            result.setInfo ("Toggle Edit/Arrangement View", "Toggle Edit/Arrangement View", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress (KeyPress::tabKey, ModifierKeys::noModifiers, 0));
+            break;
         case CommandIDs::zoomIn:
             result.setInfo ("Zoom In", "Zoom in", CommandCategories::view, 0);
-            result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::ctrlModifier, 0));
+            result.defaultKeypresses.add (KeyPress ('+', ModifierKeys::ctrlModifier, 0));
             break;
         case CommandIDs::zoomOut:
             result.setInfo ("Zoom Out", "Zoom out", CommandCategories::view, 0);
-            result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::ctrlModifier, 0));
+            result.defaultKeypresses.add (KeyPress ('-', ModifierKeys::ctrlModifier, 0));
+            break;
+        case CommandIDs::followTransport:
+            result.setInfo ("Follow Transport", "Follow Transport", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::ctrlModifier, 0));
             break;
         default:
             break;
@@ -129,15 +148,13 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     switch (info.commandID)
     {
         case CommandIDs::playStop:
-            if (getEngine()->isPlaying())
-            {
-                getEngine()->stopPlaying();
-            }
-            else
-            {
-                getEngine()->startPlaying();
-            }
+            getEngine()->getPlayListScheduler()->isPlaying() ?
+                getEngine()->getPlayListScheduler()->stopPlaying() :
+                getEngine()->getPlayListScheduler()->startPlaying();
             mainComponent->updateUI();
+            break;
+        case CommandIDs::loopPlayList:
+            getEngine()->getPlayListScheduler()->setLoopPlayList(!getEngine()->getPlayListScheduler()->getLoopPlayList());
             break;
         case CommandIDs::createRegion:
             newRegionDialog.createNewRegion(getEngine());
@@ -145,13 +162,22 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
         case CommandIDs::autoEdit:
             autoEditDialog.invokeAutoEdit(getEngine(), mainComponent);
             break;
+        case CommandIDs::toggleFullScreen:
+            setFullScreen (!isFullScreen());
+            break;
+        case CommandIDs::toggleEditArrangement:
+            mainComponent->toggleEditArrangementComponent();
+            break;
         case CommandIDs::zoomIn:
             mainComponent->zoomIn();
             break;
         case CommandIDs::zoomOut:
             mainComponent->zoomOut();
             break;
-
+        case CommandIDs::followTransport:
+            getEngine()->getPlayListScheduler()->setFollowTransport(!getEngine()->getPlayListScheduler()->getFollowTransport());
+            mainComponent->updateUI();
+            break;
         default:
             return false;
     }

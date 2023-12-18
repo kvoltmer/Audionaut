@@ -11,6 +11,8 @@
 #pragma once
 #include <JuceHeader.h>
 
+#include "Engine/PlayList/SampleTimer.h"
+
 class AudioGroup;
 
 class AudiumTransportSource : public juce::AudioTransportSource
@@ -27,6 +29,8 @@ public:
         if (startSample == 0)
         {
             setPosition(newPosition);
+            if (!isPlaying())
+                start();
         }
         else
         {
@@ -35,11 +39,28 @@ public:
         }
     }
     
+    void scheduleDuration(double duration, double sr)
+    {
+        durationTimer.schedule(static_cast<int>(duration * sr));
+    }
+    
+    void stopIt()
+    {
+        // work around not calling stop of base class!
+        setPosition(getLengthInSeconds());
+    }
+    
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
     {
         if (scheduledSample == 0)
         {
             tBase::getNextAudioBlock(info);
+            
+            auto offset = 0;
+            if (durationTimer.process(info.numSamples, offset))
+            {
+                stopIt();
+            }
         }
         else
         {
@@ -52,6 +73,10 @@ public:
             
             setPosition(scheduledPosition.load());
             //std::cout << "scheduledPosition " << scheduledPosition.load() << std::endl;
+         
+            // workaround. TODO: re-implement juce transportsource
+            if (not isPlaying())
+                start();
             
             // process 2nd part
             juce::AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
@@ -73,5 +98,7 @@ private:
     std::atomic<int> scheduledSample = 0;
     // the scheduled position change
     std::atomic<double> scheduledPosition = 0.0;
+    
+    SampleTimer durationTimer;
     
 };

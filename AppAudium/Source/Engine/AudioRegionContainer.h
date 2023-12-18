@@ -30,7 +30,10 @@ public:
     {}
     
     std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioGroup> group);
-    std::shared_ptr<AudioRegion> createRegion(juce::String regionName, juce::Range<double> position, std::shared_ptr<AudioGroup> group);
+    std::shared_ptr<AudioRegion> createRegion(juce::String regionName,
+                                              juce::Range<double> position,
+                                              std::shared_ptr<AudioGroup> group,
+                                              std::shared_ptr<AudioResource> audioResource);
     void deleteRegion(int rowNumber);
     void createRegionsFromSelection(juce::String name);
     
@@ -47,7 +50,6 @@ public:
     
     void setSelectedRegion(int rowNumber);
     int getSelectedRegion() const;
-    void clearSelection();
     void deselectAll();
     
     void setRegionName(int rowNumber, juce::String newName);
@@ -61,7 +63,12 @@ public:
     void removeAudioRegion(std::shared_ptr<AudioRegion> region);
     void removeAudioRegionsForGroup(std::shared_ptr<AudioGroup> group);
     
+    std::vector<std::shared_ptr<AudioRegion>> getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const;
+    
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
+    
+    void copyRegionsForResource(std::shared_ptr<AudioResource> audioResource);
+    
     
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;

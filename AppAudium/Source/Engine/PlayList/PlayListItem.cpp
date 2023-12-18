@@ -18,9 +18,10 @@ PlayListItem::PlayListItem(const PlayListContainer &owner, std::shared_ptr<Audio
 {
 }
 
-juce::Range<double> PlayListItem::getRegionData() const
+juce::Range<double> PlayListItem::getRegionDataInClocks() const
 {
-    return audioRegion->position;
+    // convert to clocks
+    return audioRegion->getRegionData();
 }
 
 double PlayListItem::getAbsolueStartTime() const
@@ -28,7 +29,7 @@ double PlayListItem::getAbsolueStartTime() const
     return owner.getAbsolueStartTime(this);
 }
 
-double PlayListItem::getDurationTime() const
+double PlayListItem::getDurationTimeInClocks() const
 {
-    return getRegionData().getLength();
+    return getRegionDataInClocks().getLength();
 }

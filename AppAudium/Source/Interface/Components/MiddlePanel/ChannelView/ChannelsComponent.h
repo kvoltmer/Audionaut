@@ -14,6 +14,7 @@
 
 #include "Interface/ColourIds.h"
 #include "Interface/Models/AudioChannelsListBoxModel.h"
+#include "Interface/Components/MiddlePanel/ChannelView/ChannelsHeaderComponent.h"
 #include "Util/EngineAccess.h"
 #include "Engine/AudioGroupContainer.h"
 
@@ -29,7 +30,7 @@ public:
         
         audioChannelsListBox->setModel(audioChannelsListBoxModel.get());
         
-        auto headerComponent = std::unique_ptr<juce::Component> (new juce::Component());
+        auto headerComponent = std::unique_ptr<ChannelsHeaderComponent> (new ChannelsHeaderComponent(audiumEngine));
         audioChannelsListBox->setHeaderComponent(std::move(headerComponent));
         audioChannelsListBox->getHeaderComponent()->setSize(getWidth(), 25);
         audioChannelsListBox->setOutlineThickness(0);

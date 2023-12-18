@@ -97,7 +97,7 @@ AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) con
     const juce::ScopedLock sl (readLock);
     if (index >= 0 && index < playListItems.size())
     {
-        return playListItems[index]->getRegionData();
+        return playListItems[index]->getRegionDataInClocks();
     }
     
     // empty range
@@ -156,7 +156,7 @@ double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem) 
         {
             return startTime;
         }
-        startTime += item->getRegionData().getLength();
+        startTime += item->getRegionDataInClocks().getLength();
     }
     
     return startTime;
@@ -167,7 +167,7 @@ const PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position) c
     for (auto item : playListItems)
     {
         auto startTime = item->getAbsolueStartTime();
-        auto endTime = startTime + item->getDurationTime();
+        auto endTime = startTime + item->getDurationTimeInClocks();
         juce::Range<double> absoluteRange(startTime, endTime);
         if (absoluteRange.contains(position))
         {
@@ -183,7 +183,7 @@ const PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> r
     for (auto item : playListItems)
     {
         auto startTime = item->getAbsolueStartTime();
-        auto endTime = startTime + item->getDurationTime();
+        auto endTime = startTime + item->getDurationTimeInClocks();
         juce::Range<double> absoluteRange(startTime, endTime);
         if (absoluteRange.contains(range))
         {
@@ -216,7 +216,7 @@ double PlayListContainer::getTotalLength() const
     if (playListItems.size() > 0)
     {
         auto lastItem = playListItems.back();
-        return getAbsolueStartTime(lastItem.get()) + lastItem->getDurationTime();
+        return getAbsolueStartTime(lastItem.get()) + lastItem->getDurationTimeInClocks();
     }
     return 0.0;
 }

@@ -5,15 +5,16 @@
 #include "Engine/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Interface/AudiumLookAndFeel.h"
+#include "Interface/Handlers/ZoomHandler.h"
 
 using namespace audium;
 
 //==============================================================================
 AudioGroupListBox::AudioGroupListBox (std::shared_ptr<AudiumEngine> audiumEngine,
-                                      const juce::String& componentName,
-                                      audium::ListBoxModel* model) :
-    audium::ListBox(componentName, model),
-    audiumEngine(audiumEngine)
+                                      std::shared_ptr<ZoomHandler> zoomHandler) :
+    audium::ListBox("AudioGroupListBox", nullptr),
+    audiumEngine(audiumEngine),
+    zoomHandler(zoomHandler)
 {
 }
 
@@ -25,19 +26,25 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
 {
     if ( !filenames.isEmpty())
     {
-        // create new group
+        
         jassert(File (filenames[0]).existsAsFile());
         auto name = File (filenames[0]).getFileNameWithoutExtension().toStdString();
+        
+        // create NEW GROUP
         auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
-                                                                                         *audiumEngine->getAudioRegionContainer(),
-                                                                                         name);
+                                                                                 *audiumEngine->getAudioRegionContainer(),
+                                                                                 name);
 
+        auto transportPosition = zoomHandler->xToSeconds(mouseX);
         for (auto i = 0; i < filenames.size(); i++)
         {
+            auto channelPosition = group->getNumChannels();
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group);
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group, channelPosition, transportPosition);
         }
-        audiumEngine->createDefaultRegionAndPlayList(group);
+        
+        // disabled for now
+        //audiumEngine->createDefaultRegionAndPlayList(group);
     }
     
     updateContent();

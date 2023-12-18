@@ -51,8 +51,10 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     tempo__label->setJustificationType (juce::Justification::centred);
     tempo__label->setEditable (true, true, false);
     tempo__label->setColour (juce::Label::backgroundColourId, juce::Colours::grey);
+    tempo__label->setColour (juce::Label::outlineColourId, juce::Colour (0xff404040));
     tempo__label->setColour (juce::TextEditor::textColourId, juce::Colours::black);
     tempo__label->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
+    tempo__label->setColour (juce::TextEditor::highlightColourId, juce::Colour (0xbff4ff80));
     tempo__label->addListener (this);
 
     tempo__label->setBounds (496, 10, 70, 20);
@@ -66,6 +68,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     bars__label->setColour (juce::Label::backgroundColourId, juce::Colours::grey);
     bars__label->setColour (juce::TextEditor::textColourId, juce::Colours::black);
     bars__label->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
+    bars__label->setColour (juce::TextEditor::highlightColourId, juce::Colour (0xfffafa93));
     bars__label->addListener (this);
 
     bars__label->setBounds (235, 10, 70, 20);
@@ -79,6 +82,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     beats__label->setColour (juce::Label::backgroundColourId, juce::Colours::grey);
     beats__label->setColour (juce::TextEditor::textColourId, juce::Colours::black);
     beats__label->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
+    beats__label->setColour (juce::TextEditor::highlightColourId, juce::Colour (0xbfe9f37e));
     beats__label->addListener (this);
 
     beats__label->setBounds (308, 10, 35, 20);
@@ -92,6 +96,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     rest__label->setColour (juce::Label::backgroundColourId, juce::Colours::grey);
     rest__label->setColour (juce::TextEditor::textColourId, juce::Colours::black);
     rest__label->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
+    rest__label->setColour (juce::TextEditor::highlightColourId, juce::Colour (0xbfe9f574));
     rest__label->addListener (this);
 
     rest__label->setBounds (346, 10, 35, 20);
@@ -175,7 +180,7 @@ void HeaderComponent::labelTextChanged (juce::Label* labelThatHasChanged)
     if (labelThatHasChanged == tempo__label.get())
     {
         //[UserLabelCode_tempo__label] -- add your label text handling code here..
-        playListScheduler->setTempo(tempo__label->getText().getDoubleValue());
+        playListScheduler->getTempoProvider()->setTempo(tempo__label->getText().getDoubleValue());
         //[/UserLabelCode_tempo__label]
     }
     else if (labelThatHasChanged == bars__label.get())
@@ -222,14 +227,14 @@ void HeaderComponent::timerCallback()
 
     if (not tempo__label->isBeingEdited())
     {
-        const auto tempo = playListScheduler->getTempo();
+        const auto tempo = playListScheduler->getTempoProvider()->getTempo();
         tempo__label->setText(juce::String(tempo, 2), juce::dontSendNotification);
     }
 
     //auto beats = playListScheduler->getLinkEngine()->beatTime();
     const auto clocks = playListScheduler->getAbsolutePositionClocks();
 
-    const auto beats = PlayListScheduler::clocksToBeats(clocks);
+    const auto beats = TempoProvider::clocksToBeats(clocks);
     const auto bars = static_cast<int>(beats / 4.0) + 1;
     bars__label->setText(juce::String(bars), juce::dontSendNotification);
 
@@ -264,24 +269,28 @@ BEGIN_JUCER_METADATA
               radioGroupId="0"/>
   <LABEL name="new label" id="8c4ed5ae2f97ba" memberName="tempo__label"
          virtualName="" explicitFocusOrder="0" pos="496 10 70 20" bkgCol="ff808080"
-         edTextCol="ff000000" edBkgCol="0" labelText="120.0" editableSingleClick="1"
-         editableDoubleClick="1" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="13.0" kerning="0.0" bold="0" italic="0" justification="36"/>
+         outlineCol="ff404040" edTextCol="ff000000" edBkgCol="0" hiliteCol="bff4ff80"
+         labelText="120.0" editableSingleClick="1" editableDoubleClick="1"
+         focusDiscardsChanges="0" fontname="Default font" fontsize="13.0"
+         kerning="0.0" bold="0" italic="0" justification="36"/>
   <LABEL name="new label" id="7e154133c9506c7" memberName="bars__label"
          virtualName="" explicitFocusOrder="0" pos="235 10 70 20" bkgCol="ff808080"
-         edTextCol="ff000000" edBkgCol="0" labelText="0" editableSingleClick="1"
-         editableDoubleClick="1" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="13.0" kerning="0.0" bold="0" italic="0" justification="34"/>
+         edTextCol="ff000000" edBkgCol="0" hiliteCol="fffafa93" labelText="0"
+         editableSingleClick="1" editableDoubleClick="1" focusDiscardsChanges="0"
+         fontname="Default font" fontsize="13.0" kerning="0.0" bold="0"
+         italic="0" justification="34"/>
   <LABEL name="new label" id="d5d8cb375330cb19" memberName="beats__label"
          virtualName="" explicitFocusOrder="0" pos="308 10 35 20" bkgCol="ff808080"
-         edTextCol="ff000000" edBkgCol="0" labelText="0" editableSingleClick="1"
-         editableDoubleClick="1" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="13.0" kerning="0.0" bold="0" italic="0" justification="34"/>
+         edTextCol="ff000000" edBkgCol="0" hiliteCol="bfe9f37e" labelText="0"
+         editableSingleClick="1" editableDoubleClick="1" focusDiscardsChanges="0"
+         fontname="Default font" fontsize="13.0" kerning="0.0" bold="0"
+         italic="0" justification="34"/>
   <LABEL name="new label" id="95f57732373a9e8e" memberName="rest__label"
          virtualName="" explicitFocusOrder="0" pos="346 10 35 20" bkgCol="ff808080"
-         edTextCol="ff000000" edBkgCol="0" labelText="0" editableSingleClick="1"
-         editableDoubleClick="1" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="13.0" kerning="0.0" bold="0" italic="0" justification="34"/>
+         edTextCol="ff000000" edBkgCol="0" hiliteCol="bfe9f574" labelText="0"
+         editableSingleClick="1" editableDoubleClick="1" focusDiscardsChanges="0"
+         fontname="Default font" fontsize="13.0" kerning="0.0" bold="0"
+         italic="0" justification="34"/>
 </JUCER_COMPONENT>
 
 END_JUCER_METADATA

@@ -26,10 +26,10 @@ public:
     
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
-    juce::Range<double> getRegionData() const;
+    juce::Range<double> getRegionDataInClocks() const;
     
     double getAbsolueStartTime() const;
-    double getDurationTime() const;
+    double getDurationTimeInClocks() const;
     
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
