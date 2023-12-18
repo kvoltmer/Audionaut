@@ -35,7 +35,8 @@ public:
     
     void positionComboBoxText (juce::ComboBox& box, juce::Label& label) override;
     
-
+    juce::Label* createComboBoxTextBox (juce::ComboBox&) override;
+    
     static const int channelsWidth = 65;
     
 private:

@@ -46,7 +46,9 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        auto audioResource = audiumEngine->getAudioResourceContainer()->getChannel(rowNumber);
+        auto audioResources = audiumEngine->getAudioResourceContainer()->getChannel(rowNumber);
+        jassert(audioResources.size() > 0);
+        auto audioResource = audioResources[0];
         if (existingComponentToUpdate == nullptr)
         {
             if (audioResource != nullptr)
@@ -63,7 +65,7 @@ public:
             if (audioResource != nullptr)
             {
                 // update of audioGroup since row might have changed after delete
-                component->refreshComponent(audioResource, isRowSelected);
+                component->refreshComponent(audioResource, rowNumber, isRowSelected);
             }
             return component;
         }
@@ -75,17 +77,22 @@ public:
     
     int getRowHeight (int rowNumber) const override
     {
-        auto audioResource = audiumEngine->getAudioResourceContainer()->getChannel(rowNumber);
-        if (audioResource != nullptr)
+        auto audioResources = audiumEngine->getAudioResourceContainer()->getChannel(rowNumber);
+        if (audioResources.size() > 0)
+        {
+            auto audioResource = audioResources[0];
             return audioResource->getChannelHeight();
-
+        }
         jassertfalse;
         return 0;
     }
     
     void deleteKeyPressed (int lastRowSelected) override
     {
-        auto audioResource = audiumEngine->getAudioResourceContainer()->getChannel(lastRowSelected);
+        //auto audioResource = audiumEngine->getAudioResourceContainer()->getChannel(lastRowSelected);
+        auto audioResources = audiumEngine->getAudioResourceContainer()->getChannel(lastRowSelected);
+        jassert(audioResources.size() > 0);
+        auto audioResource = audioResources[0];
         if (audioResource != nullptr)
         {
             auto component = dynamic_cast<ChannelComponent*>(owner->getComponentForRowNumber(lastRowSelected));

@@ -89,6 +89,18 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioResource> resource, std
 
     //[Constructor] You can add your own custom stuff here..
 
+    channelSizeComboBox.reset (new juce::ComboBox ("channel size combo box"));
+    addAndMakeVisible (channelSizeComboBox.get());
+    channelSizeComboBox->setEditableText (false);
+    channelSizeComboBox->setJustificationType (juce::Justification::centred);
+    channelSizeComboBox->addItem (TRANS ("small"), 1);
+    channelSizeComboBox->addItem (TRANS ("medium"), 2);
+    channelSizeComboBox->addItem (TRANS ("large"), 3);
+    channelSizeComboBox->addItem (TRANS ("huge"), 4);
+    channelSizeComboBox->addListener (this);
+    channelSizeComboBox->setBounds (5, 5, 55, 15);
+
+
     // disable mouse clicks. we need them for the list control
     //setInterceptsMouseClicks(false, false);
     startTimerHz(60);
@@ -215,10 +227,11 @@ bool ChannelComponent::keyPressed (const juce::KeyPress& key)
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
-void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource, bool isRowSelected)
+void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource, int rowNumber, bool isRowSelected)
 {
     selected = isRowSelected;
     this->resource = resource;
+    this->rowNumber = rowNumber;
 
     auto group = engine->getAudioResourceContainer()->getAudioGroupForResource(resource);
     volumeLevel->setColour (juce::Label::textColourId, group->getColour());
@@ -239,6 +252,37 @@ void ChannelComponent::timerCallback()
     levelMeter->setLevel(resource->getAudioTransportSource()->getOutputLevel());
 }
 
+void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
+{
+    if (comboBoxThatHasChanged == channelSizeComboBox.get())
+    {
+        auto height = 0;
+        switch (channelSizeComboBox->getSelectedId()) {
+            case 1:
+                height = 50;
+                break;
+            case 2:
+                height = 100;
+                break;
+            case 3:
+                height = 200;
+                break;
+            case 4:
+                height = 400;
+                break;
+            default:
+                break;
+        }
+
+        channelSizeComboBox->setText("", dontSendNotification);
+        
+        auto resources = engine->getAudioResourceContainer()->getChannel(rowNumber);
+        for (auto resource : resources)
+            resource->setChannelHeight(height);
+        engine->getAudioResourceContainer()->sendActionMessage("");
+    }
+}
+
 //[/MiscUserCode]
 
 
@@ -252,7 +296,8 @@ void ChannelComponent::timerCallback()
 BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="ChannelComponent" componentName=""
-                 parentClasses="public juce::Component, private juce::Timer" constructorParams="std::shared_ptr&lt;AudioResource&gt; resource, std::shared_ptr&lt;AudiumEngine&gt; engine"
+                 parentClasses="public juce::Component, private juce::Timer, public juce::ComboBox::Listener"
+                 constructorParams="std::shared_ptr&lt;AudioResource&gt; resource, std::shared_ptr&lt;AudiumEngine&gt; engine"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="1" initialWidth="60" initialHeight="100">
   <METHODS>
