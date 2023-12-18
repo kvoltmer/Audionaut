@@ -22,10 +22,10 @@
 //==============================================================================
 /*
 */
-class RegionEditor  : public juce::Label, juce::Label::Listener
+class RegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
-    RegionEditor(std::shared_ptr<RegionTableListBox> owner,
+    RegionLabel(std::shared_ptr<RegionTableListBox> owner,
                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                  int columnId,
                  int rowNumber) :
@@ -40,7 +40,7 @@ public:
         addListener(this);
     }
 
-    ~RegionEditor() override
+    ~RegionLabel() override
     {
         removeListener(this);
     }
@@ -59,17 +59,18 @@ public:
             }
             else if (columnId == regionStart)
             {
-                const auto seconds = audioRegionContainer->getPlayListScheduler()->clocksToSeconds(r->position.getStart());
+                const auto seconds = r->getRegionDataInSeconds().getStart();
                 text = juce::String(seconds, 4);
             }
             else if (columnId == regionEnd)
             {
-                const auto seconds = audioRegionContainer->getPlayListScheduler()->clocksToSeconds(r->position.getEnd());
+                const auto seconds = r->getRegionDataInSeconds().getEnd();
                 text = juce::String(seconds, 4);
             }
             else if (columnId == regionLength)
             {
-                text = juce::String(PlayListScheduler::clocksToBars(r->position.getLength()), 4);
+                const auto seconds = r->getRegionDataInSeconds().getLength();
+                text = juce::String(seconds, 4);
             }
             
             auto textColour = r->getAudioGroup()->getColour();
@@ -92,7 +93,7 @@ public:
     {
         if( juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(this))
         {
-            container->startDragging("RegionEditor", this);
+            container->startDragging("RegionLabel", this);
             //container->startDragging("PlayListTableListBoxItem", this);
         }
     }
@@ -108,19 +109,20 @@ public:
         else if  (columnId == regionStart)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            const auto clocks = audioRegionContainer->getPlayListScheduler()->secondsToClocks(seconds);
+            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
             audioRegionContainer->setRegionStart(rowNumber, clocks);
         }
         else if  (columnId == regionEnd)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            const auto clocks = audioRegionContainer->getPlayListScheduler()->secondsToClocks(seconds);
+            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
             audioRegionContainer->setRegionEnd(rowNumber, clocks);
         }
         else if  (columnId == regionLength)
         {
-            const auto bars = labelThatHasChanged->getText().getDoubleValue();
-            audioRegionContainer->setRegionLength(rowNumber, PlayListScheduler::barsToClocks(bars));
+            const auto seconds = labelThatHasChanged->getText().getDoubleValue();
+            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
+            audioRegionContainer->setRegionLength(rowNumber, clocks);
         }
     }
     
@@ -144,5 +146,5 @@ private:
     std::shared_ptr<RegionTableListBox> owner;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionLabel)
 };

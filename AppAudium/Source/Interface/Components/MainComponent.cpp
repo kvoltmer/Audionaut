@@ -84,7 +84,9 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
         audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
     }
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
-    audiumEngine->getPlayListScheduler()->addActionListener(this);
+    audiumEngine->getPlayListScheduler()->getTempoProvider()->addActionListener(this);
+
+    updateUI();
 
     //[/Constructor]
 }
@@ -99,7 +101,7 @@ MainComponent::~MainComponent()
         audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->removeActionListener(this);
     }
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
-    audiumEngine->getPlayListScheduler()->removeActionListener(this);
+    audiumEngine->getPlayListScheduler()->getTempoProvider()->removeActionListener(this);
     //[/Destructor_pre]
 
 
@@ -126,7 +128,7 @@ void MainComponent::resized()
     //[/UserPreResize]
 
     //[UserResized] Add your own custom resize handling here..
-    
+
     const auto headerHeight = headerComponent->getHeight();
     headerComponent->setBounds(0, 0, getWidth(), headerHeight);
 
@@ -154,6 +156,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
 
     if (message == regionCreatedAction)
     {
+        middlePanelComponent->updateUI();
         rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
     }
     else if (message == regionClearedAction)
@@ -201,14 +204,24 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         // TODO: update with context to rebuild everything
         updateUI();
     }
+    else if (message == scrolledVertically)
+    {
+        middlePanelComponent->updateUI(MiddlePanelComponent::VerticalScrollContext);
+    }
     else // update everything (eg. region deleted)
     {
         updateUI();
     }
+
+
 }
 
 void MainComponent::updateUI()
 {
+    auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
+    middlePanelComponent->showArrangementComponent(!editMode);
+    middlePanelComponent->showEditComponent(editMode);
+
     middlePanelComponent->updateUI();
     rightPanelComponent->updateUI();
 }
@@ -221,6 +234,14 @@ void MainComponent::zoomIn()
 void MainComponent::zoomOut()
 {
     middlePanelComponent->zoomOut();
+}
+
+void MainComponent::toggleEditArrangementComponent()
+{
+    // toggle edit mode
+    auto editMode = !audiumEngine->getPlayListScheduler()->isEditMode();
+    audiumEngine->getPlayListScheduler()->setEditMode(editMode);
+    updateUI();
 }
 
 //[/MiscUserCode]

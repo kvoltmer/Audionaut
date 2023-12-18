@@ -12,15 +12,13 @@
 #include <memory>
 #include <JuceHeader.h>
 
-class AudioResourceContainer;
 class PlayListScheduler;
 
 class ZoomHandler : private juce::Timer {
     
 public:
-    ZoomHandler(std::shared_ptr<AudioResourceContainer> container,
-                std::shared_ptr<PlayListScheduler> playListScheduler);
-    ~ZoomHandler();
+    ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler);
+    ~ZoomHandler() override;
     
     double zoomIn();
     
@@ -32,11 +30,14 @@ public:
     
     void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
     
-    int secondsToXWithOffset (const double time) const;
-    double xToSecondsWithOffset (const int x) const;
+    double secondsToXWithOffset (const double time) const;
+    double xToSecondsWithOffset (const double x) const;
     
     int getScrollBarHeight() const { return scrollbar->getHeight(); }
 
+    juce::Range<double> secondsToX(juce::Range<double> seconds) const;
+    juce::Range<double> xToSeconds(juce::Range<double> x) const;
+    
     double secondsToX (const double seconds) const;
     double xToSeconds (const double x) const;
     
@@ -58,16 +59,25 @@ public:
     
     void focusViewOnPlayPosition();
     
+    void focusView(double positionInSeconds);
+    
     void timerCallback() override;
     
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
-    double getArrangementContentWidth() const;
+    double getContentWidth() const;
+    
+    double getZoomFactor() const { return zoomFactor; }
+    void setZoomFactor(double zoom) { zoomFactor = zoom; }
+ 
+    // max zoom in factor
+    double maxZoomInFactor = 0.0;
+    
+    // max zoom out factor
+    double maxZoomOutFactor = 0.0;
     
 private:
-    
-    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
-    
+        
     std::shared_ptr<PlayListScheduler> playListScheduler;
     
     // the scrollbar
@@ -76,11 +86,7 @@ private:
     // zoom factor
     double zoomFactor = 0.0;
     
-    // max zoom in factor
-    double maxZoomInFactor = 0.0;
-    
-    // max zoom out factor
-    double maxZoomOutFactor = 0.0;
+
     
     // arrangement content width in pixels
     double arrangementContentWidth = 0.0;

@@ -15,6 +15,7 @@
 class AudioResourceContainer;
 class AudioRegionContainer;
 class PlayListContainer;
+class AudioGroupContainer;
 
 struct AutoEditConfig {
     std::string mode = "random";
@@ -22,22 +23,30 @@ struct AutoEditConfig {
     int numSegments = 20;
     double minSegLength = 2.0;
     double maxSegLength = 60.0;
+    std::string bounceFileName = "";
 };
 
 class AutoEdit {
     
 public:
-    AutoEdit(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+    AutoEdit(std::shared_ptr<AudioGroupContainer> audioGroupContainer,
              std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-             std::shared_ptr<PlayListContainer> playListContainer);
+             std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
+        audioGroupContainer(audioGroupContainer),
+        audioRegionContainer(audioRegionContainer),
+        audioResourceContainer(audioResourceContainer)
+    {}
     
     bool invokeAutoEdit(const AutoEditConfig config);
-    void applyAutoEditResult();
+    void applyAutoEditResult(double sampleRate);
+    
+    static const juce::String getTempDirectory();
     
 private:
-    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
-    std::shared_ptr<PlayListContainer> playListContainer;
+    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    
     std::string audioResourceFilePath;
     
     const std::string getBaseName() const;

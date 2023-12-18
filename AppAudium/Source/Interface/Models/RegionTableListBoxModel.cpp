@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "RegionTableListBoxModel.h"
 #include "Interface/ColourIds.h"
-#include "Interface/Controls/RegionEditor.h"
+#include "Interface/Controls/RegionLabel.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
@@ -58,12 +58,12 @@ juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber
     {
         if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
         {
-            return new RegionEditor(owner, audioRegionContainer, columnId, rowNumber);
+            return new RegionLabel(owner, audioRegionContainer, columnId, rowNumber);
         }
     }
     else
     {
-        auto component = dynamic_cast<RegionEditor*>(existingComponentToUpdate);
+        auto component = dynamic_cast<RegionLabel*>(existingComponentToUpdate);
         if (component != nullptr)
         {
             // update since row might have changed after delete
@@ -77,7 +77,21 @@ juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber
 
 void RegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
-    audioRegionContainer->setSelectedRegion(lastRowSelected);
+    audioRegionContainer->deselectAll();
+
+    auto selection = owner->getSelectedRows();
+    for (auto i = 0; i < selection.size(); i++)
+    {
+        if (auto region = audioRegionContainer->getRegion(selection[i]))
+        {
+            region->setSelected(true);
+        }
+    }
+}
+
+void RegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)
+{
+    owner->deselectAllRows();
 }
 
 void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)

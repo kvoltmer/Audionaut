@@ -12,16 +12,15 @@
 #include "LinkEngine.hpp"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/Provider/TempoProvider.h"
 
-LinkAudioDevice::LinkAudioDevice(std::shared_ptr<PlayListScheduler> playListScheduler,
+LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
+                                 std::shared_ptr<PlayListScheduler> playListScheduler,
                                  std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
+    linkEngine(linkEngine),
     playListScheduler(playListScheduler),
     audioResourceContainer(audioResourceContainer)
 {
-    link.reset(new ableton::Link(playListScheduler->getTempo()));
-    linkEngine.reset(new audium::LinkEngine(*link.get(), playListScheduler));
-    
-    playListScheduler->setLinkEngine(linkEngine.get());
 }
 
 LinkAudioDevice::~LinkAudioDevice()

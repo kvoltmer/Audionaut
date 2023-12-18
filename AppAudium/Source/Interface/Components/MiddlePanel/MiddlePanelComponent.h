@@ -12,12 +12,14 @@
 
 #include <JuceHeader.h>
 
-#include "ChannelsComponent.h"
-#include "ArrangementComponent.h"
+#include "Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"
+#include "Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"
+#include "Interface/Components/MiddlePanel/EditView/EditComponent.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 class AudiumEngine;
 
-class MiddlePanelComponent :    public juce::Component
+class MiddlePanelComponent : public juce::Component
 {
 public:
     MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine)
@@ -27,40 +29,104 @@ public:
         
         arrangementComponent.reset(new ArrangementComponent(audiumEngine));
         addAndMakeVisible(arrangementComponent.get());
+        
+        editComponent.reset(new EditComponent(audiumEngine));
+        addAndMakeVisible(editComponent.get());
+        editComponent->setVisible(false);
     }
     
     ~MiddlePanelComponent() override
     {
     }
     
+    enum UIContext {
+        EntireContext,
+        VerticalScrollContext
+    };
+    
     void resized() override
     {
-        auto channelsWidth = 60;
+        auto channelsWidth = AudiumLookAndFeel::channelsWidth;
         
         channelsComponent->setBounds(getLocalBounds().removeFromLeft(channelsWidth));
-        arrangementComponent->setBounds(getLocalBounds().removeFromRight(getWidth() - channelsWidth));
+        
+        auto bounds = getLocalBounds().removeFromRight(getWidth() - channelsWidth);
+        
+        arrangementComponent->setBounds(bounds);
+        editComponent->setBounds(bounds);
     }
     
-    void updateUI()
+    void updateUI(UIContext context = EntireContext)
     {
-        arrangementComponent->updateUI();
-        channelsComponent->updateUI();
+        if (context == EntireContext)
+        {
+            arrangementComponent->updateUI();
+            channelsComponent->updateUI();
+            editComponent->updateUI();
+        }
+        else if(context == VerticalScrollContext)
+        {
+            arrangementComponent->getRegionSelector()->updateFromEngine();
+            editComponent->getRegionSelector()->updateFromEngine();
+        }
     }
     
     void zoomIn()
     {
-        arrangementComponent->zoomIn();
+        if (arrangementComponent->isVisible())
+            arrangementComponent->zoomIn();
+        
+        if (editComponent->isVisible())
+            editComponent->zoomIn();
     }
     
     void zoomOut()
     {
-        arrangementComponent->zoomOut();
+        if (arrangementComponent->isVisible())
+            arrangementComponent->zoomOut();
+        
+        if (editComponent->isVisible())
+            editComponent->zoomOut();
+    }
+    
+    void showArrangementComponent(bool visible)
+    {
+        arrangementComponent->setVisible(visible);
+        if (visible)
+        {
+            arrangementComponent->resized();
+            arrangementComponent->updateUI();
+        }
+    }
+    
+    bool arrangementComponentVisible() const
+    {
+        return arrangementComponent->isVisible();
+    }
+    
+    
+    void showEditComponent(bool visible)
+    {
+        editComponent->setVisible(visible);
+        if (visible)
+        {
+            editComponent->resized();
+            editComponent->updateUI();
+        }
+    }
+    
+    bool editComponentVisible() const
+    {
+        return editComponent->isVisible();
     }
     
 private:
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;
+    std::unique_ptr<EditComponent> editComponent;
+    
+    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MiddlePanelComponent)
 };

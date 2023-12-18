@@ -55,5 +55,19 @@ static juce::Colour getNewWaveFormColour()
     return result;
 }
 
+static juce::Colour getCurrentWaveFormColour()
+{
+    return juce::Colour(waveFormColours[currentWaveFormColour]);
+}
+
+static juce::Colour getComplementaryColour(juce::Colour c)
+{
+    float c_r = c.getFloatRed();
+    float c_g = c.getFloatGreen();
+    float c_b = c.getFloatBlue();
+    float c_a = c.getFloatAlpha();
+    return juce::Colour::fromFloatRGBA(1.f - c_r, 1.f - c_g, 1.f - c_b, c_a);
+}
+
 
 } // namespace audium

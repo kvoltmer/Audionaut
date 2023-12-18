@@ -5,7 +5,8 @@
 #include <JuceHeader.h>
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
-#include "Interface/Components/MiddlePanel/AudioGroupComponent.h"
+#include "Interface/Components/MiddlePanel/ArrangementView/ArrangementGroupComponent.h"
+#include "Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Controls/AudioGroupListBox.h"
@@ -18,10 +19,14 @@ public:
     
     AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
                            std::shared_ptr<AudiumEngine> audiumEngine,
-                           std::shared_ptr<ZoomHandler> zoomHandler) :
+                           std::shared_ptr<ZoomHandler> zoomHandler,
+                           std::shared_ptr<RegionSelector> regionSelector,
+                           bool arrangementMode = true) :
         owner(owner),
         audiumEngine(audiumEngine),
-        zoomHandler(zoomHandler)
+        zoomHandler(zoomHandler),
+        regionSelector(regionSelector),
+        arrangementMode(arrangementMode)
     {
     }
     
@@ -49,7 +54,7 @@ public:
         owner->deselectAllRows();
     }
     
-    void listWasScrolled() override {}
+    void listWasScrolled() override;
     
     void selectedRowsChanged (int lastRowSelected) override {}
         
@@ -57,5 +62,8 @@ private:
     std::shared_ptr<AudioGroupListBox> owner;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
+    std::shared_ptr<RegionSelector> regionSelector;
+    
+    bool arrangementMode = true;
 
 };

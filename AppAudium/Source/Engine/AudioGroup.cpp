@@ -27,9 +27,19 @@ void AudioGroup::cleanup()
 }
 
 
-std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResources()
+std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResources() const
 {
-    return audioResourceContainer.getAudioResourcesForGroup(this);
+    return audioResourceContainer.getAudioResourcesForGroup(const_cast<AudioGroup*>(this));
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtChannelPosition(int channelPosition) const
+{
+    return audioResourceContainer.getAudioResourcesForGroupAtChannelPosition(const_cast<AudioGroup*>(this), channelPosition);
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const
+{
+    return audioResourceContainer.getAudioResourcesForGroupAtAbsoluteRange(const_cast<AudioGroup*>(this), rangeInSeconds);
 }
 
 void AudioGroup::setColour(juce::Colour colour)
@@ -51,5 +61,19 @@ bool AudioGroup::readFromStream (juce::InputStream& inputStream)
     groupId         = inputStream.readInt();
     groupName       = inputStream.readString();
     currentColour   = juce::Colour::fromString(inputStream.readString());
+    
     return true;
+}
+
+int AudioGroup::getNumChannels() const
+{
+    int numChannels = 0;
+    
+    auto resources = getAudioResources();
+    for (auto resource : resources)
+    {
+        numChannels = std::max(numChannels, static_cast<int>(resource->getChannelPosition() + resource->getNumChannels()));
+    }
+    
+    return numChannels;
 }

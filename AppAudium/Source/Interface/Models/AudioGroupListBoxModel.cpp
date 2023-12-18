@@ -4,6 +4,8 @@
 #include "AudioGroupListBoxModel.h"
 #include "Engine/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/ActionMessages.h"
+#include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
 
 int AudioGroupListBoxModel::getNumRows()
 {
@@ -31,13 +33,19 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
     {
         if (audioGroup != nullptr)
         {
-            auto component = new AudioGroupComponent(audioGroup, audiumEngine, zoomHandler);
-            return component;
+            if (arrangementMode)
+            {
+                return new ArrangementGroupComponent(audioGroup, audiumEngine, zoomHandler, regionSelector);
+            }
+            else
+            {
+                return new EditGroupComponent(audioGroup, audiumEngine, zoomHandler, regionSelector);
+            }
         }
     }
     else
     {
-        auto component = dynamic_cast<AudioGroupComponent*>(existingComponentToUpdate);
+        auto component = dynamic_cast<GroupBaseComponent*>(existingComponentToUpdate);
         jassert(component);
     
         if (audioGroup != nullptr)
@@ -63,7 +71,7 @@ int AudioGroupListBoxModel::getRowHeight (int rowNumber) const
         auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group.get());
         for (auto audioResource : audioResources)
         {
-            height += audioResource->getHeight();
+            height = std::max(height, audioResource->getTop() + audioResource->getHeight());
         }
         return height;
         
@@ -93,3 +101,7 @@ void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
     }    
 }
 
+void AudioGroupListBoxModel::listWasScrolled()
+{
+    audiumEngine->getAudioGroupContainer()->sendActionMessage(scrolledVertically);
+}

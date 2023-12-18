@@ -33,7 +33,12 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <GROUP id="{56EAD069-5D2D-A940-D232-5DA7E979C834}" name="Provider">
+          <FILE id="mXYpiA" name="TempoProvider.h" compile="0" resource="0" file="Source/Engine/Provider/TempoProvider.h"/>
+        </GROUP>
         <GROUP id="{38829D96-12DD-C636-0C91-D4606DFE0C72}" name="Factory">
+          <FILE id="jEBWMg" name="AudioGroupFactory.h" compile="0" resource="0"
+                file="Source/Engine/Factory/AudioGroupFactory.h"/>
           <FILE id="VRfXqH" name="AudioResourceFactory.h" compile="0" resource="0"
                 file="Source/Engine/Factory/AudioResourceFactory.h"/>
           <FILE id="M4fDCK" name="AudiumFactory.cpp" compile="1" resource="0"
@@ -114,6 +119,10 @@
               file="Source/Interface/AudiumLookAndFeel.h"/>
         <FILE id="WxdqR9" name="ColourIds.h" compile="0" resource="0" file="Source/Interface/ColourIds.h"/>
         <GROUP id="{5B27ED8A-CA94-0C20-47D2-019C8929A810}" name="Widgets">
+          <FILE id="WylrD8" name="audium_AudioThumbnail.cpp" compile="1" resource="0"
+                file="Source/Interface/Widgets/audium_AudioThumbnail.cpp"/>
+          <FILE id="iIxYr4" name="audium_AudioThumbnail.h" compile="0" resource="0"
+                file="Source/Interface/Widgets/audium_AudioThumbnail.h"/>
           <FILE id="SSghHx" name="audium_ListBox.cpp" compile="1" resource="0"
                 file="Source/Interface/Widgets/audium_ListBox.cpp"/>
           <FILE id="zmkbt8" name="audium_ListBox.h" compile="0" resource="0"
@@ -133,22 +142,41 @@
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
             <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
-            <FILE id="pCFZsc" name="ChannelsComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/ChannelsComponent.h"/>
-            <FILE id="xmixFr" name="ChannelComponent.cpp" compile="1" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/ChannelComponent.cpp"/>
-            <FILE id="BPzRrA" name="ChannelComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/ChannelComponent.h"/>
-            <FILE id="qZ2Ulf" name="ArrangementComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/ArrangementComponent.h"/>
-            <FILE id="EXPE1i" name="AudioGroupComponent.cpp" compile="1" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/AudioGroupComponent.cpp"/>
-            <FILE id="R9kAWR" name="AudioGroupComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/AudioGroupComponent.h"/>
-            <FILE id="XNFDZ6" name="AudioGroupRegionComponent.cpp" compile="1"
-                  resource="0" file="Source/Interface/Components/MiddlePanel/AudioGroupRegionComponent.cpp"/>
-            <FILE id="VzTGOV" name="AudioGroupRegionComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/AudioGroupRegionComponent.h"/>
+            <GROUP id="{A0B6750B-2394-A03B-7D3F-87C4EFC39BE3}" name="ChannelView">
+              <FILE id="CpLcdw" name="ChannelComponent.cpp" compile="1" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.cpp"/>
+              <FILE id="RU4eS4" name="ChannelComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"/>
+              <FILE id="ip9GrQ" name="ChannelsComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"/>
+              <FILE id="kb3Lop" name="ChannelsHeaderComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelsHeaderComponent.h"/>
+            </GROUP>
+            <GROUP id="{B76B0D36-C9A9-6C1E-B42A-40EF5EABF872}" name="EditView">
+              <FILE id="yEfxaX" name="EditComponent.h" compile="0" resource="0" file="Source/Interface/Components/MiddlePanel/EditView/EditComponent.h"/>
+              <FILE id="b3SGrh" name="EditGroupComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"/>
+              <FILE id="CYmTQU" name="RegionEditComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/EditView/RegionEditComponent.h"/>
+            </GROUP>
+            <GROUP id="{E58A07C4-B58F-25CE-C91A-E093F52645A1}" name="ArrangementView">
+              <FILE id="peKTnY" name="ArrangementComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"/>
+              <FILE id="Ws25ey" name="ArrangementGroupComponent.cpp" compile="1"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementGroupComponent.cpp"/>
+              <FILE id="AZJ9Ow" name="ArrangementGroupComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementGroupComponent.h"/>
+              <FILE id="k5fw3k" name="PlayListItemComponent.cpp" compile="1" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.cpp"/>
+              <FILE id="MSH6BQ" name="PlayListItemComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"/>
+            </GROUP>
+            <FILE id="nZ2YVn" name="ArrangementEditBaseComponent.h" compile="0"
+                  resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"/>
+            <FILE id="TrmNCI" name="GroupBaseComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/GroupBaseComponent.cpp"/>
+            <FILE id="RMeAIj" name="GroupBaseComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/GroupBaseComponent.h"/>
           </GROUP>
           <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
             <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
@@ -189,13 +217,19 @@
                 file="Source/Interface/Models/AudioGroupListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="s7vYjW" name="DraggerControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/DraggerControl.h"/>
+          <FILE id="CIIORu" name="RegionEditControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/RegionEditControl.cpp"/>
+          <FILE id="przUwD" name="RegionEditControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/RegionEditControl.h"/>
           <FILE id="i5qX4Q" name="LevelMeter.h" compile="0" resource="0" file="Source/Interface/Controls/LevelMeter.h"/>
           <FILE id="Fmpma7" name="LevelMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LevelMeter.cpp"/>
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
           <FILE id="keLPLt" name="PlayPositionMarker.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayPositionMarker.h"/>
-          <FILE id="M14ssi" name="RegionEditor.h" compile="0" resource="0" file="Source/Interface/Controls/RegionEditor.h"/>
+          <FILE id="M14ssi" name="RegionLabel.h" compile="0" resource="0" file="Source/Interface/Controls/RegionLabel.h"/>
           <FILE id="kQnaR9" name="RegionSelector.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/RegionSelector.cpp"/>
           <FILE id="RfQeV6" name="RegionSelector.h" compile="0" resource="0"
@@ -212,10 +246,16 @@
                 file="Source/Interface/Controls/AudioGroupListBox.h"/>
         </GROUP>
         <GROUP id="{251C6FB2-3F49-498C-8DDC-157FCCAC8565}" name="Views">
+          <FILE id="nZmqga" name="WaveFormViewBase.h" compile="0" resource="0"
+                file="Source/Interface/Views/WaveFormViewBase.h"/>
           <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"
                 file="Source/Interface/Views/AudioRegionView.cpp"/>
           <FILE id="D4QJ9Q" name="AudioRegionView.h" compile="0" resource="0"
                 file="Source/Interface/Views/AudioRegionView.h"/>
+          <FILE id="u3MBPo" name="AudioResourceView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AudioResourceView.cpp"/>
+          <FILE id="yWJ5P4" name="AudioResourceView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AudioResourceView.h"/>
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
       </GROUP>

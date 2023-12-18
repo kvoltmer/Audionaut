@@ -26,10 +26,7 @@ public:
     ~AudioGroupContainer();
     
     bool groupIdExists(const int groupId) const;
-    
-    static std::shared_ptr<AudioGroup> createAudioGroup(const AudioResourceContainer &audioResourceContainer,
-                                                        const AudioRegionContainer &audioRegionContainer);
-    
+        
     std::shared_ptr<AudioGroup> createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
                                                     const AudioRegionContainer &audioRegionContainer,
                                                     std::string nameString,
@@ -51,6 +48,8 @@ public:
     
     int getNextId() { return ++nextId; }
         
+    std::shared_ptr<AudioGroup> getDefaultGroup() const;
+
 private:
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;
