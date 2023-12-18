@@ -309,11 +309,11 @@ int AudioResourceContainer::getNumChannels() const
     return count;
 }
 
-std::shared_ptr<AudioResource> AudioResourceContainer::getChannel(int index) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getChannel(int index) const
 {
     // TODO: create channel class with container
     auto channel = 0;
-    
+    std::vector<std::shared_ptr<AudioResource>> result;
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
         
@@ -328,7 +328,8 @@ std::shared_ptr<AudioResource> AudioResourceContainer::getChannel(int index) con
                 {
                     if ((channel + c + r) == index)
                     {
-                        return resource;
+                        result.push_back(resource);
+                        //return resource;
                     }
                 }
             }
@@ -336,8 +337,8 @@ std::shared_ptr<AudioResource> AudioResourceContainer::getChannel(int index) con
             
         channel += group->getNumChannels();
     }
-    jassertfalse;
-    return nullptr;
+    
+    return result;
 }
 
 void AudioResourceContainer::setChannelHeight(int height)
