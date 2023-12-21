@@ -19,7 +19,9 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroup.h"
+
 
 using namespace audium;
 
@@ -69,6 +71,7 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
         {
             // check if we overlap with an existing resource (snap position to nearest resource)
             const auto resources = audioGroup->getAudioResources();
+            std::shared_ptr<AudioSubGroup> subGroup = nullptr;
             for (auto resource : resources)
             {
                 if (resource->containsAbsolutePosition(transportPosition))
@@ -76,16 +79,23 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
                     transportPosition = resource->getTransportPositionSeconds();
                     // position is below
                     channelPosition = audioGroup->getNumChannels();
+                    subGroup = resource->getAudioSubGroup();
                     break;
                 }
             }
+            if (subGroup == nullptr)
+            {
+                subGroup = audioGroup->createNewAudioSubGroup(*audiumEngine->getAudioResourceContainer(),
+                                                              *audiumEngine->getAudioRegionContainer());
+            }
             
             auto url = URL (File (filenames[i]));
-            auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup, channelPosition, transportPosition);
-            if (audioResource != nullptr)
-            {
-                audiumEngine->getAudioRegionContainer()->copyRegionsForResource(audioResource);
-            }
+            auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url,
+                                                                                             *audiumEngine,
+                                                                                             audioGroup,
+                                                                                             subGroup,
+                                                                                             channelPosition,
+                                                                                             transportPosition);
         }
         
         // will update content

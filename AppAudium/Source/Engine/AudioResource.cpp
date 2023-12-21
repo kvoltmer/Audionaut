@@ -68,25 +68,17 @@ const juce::Range<double> AudioResource::getRegionDataInSeconds() const
     return regionData;
 }
 
-bool approximatelyEqual(double a, double b, double epsilon)
-{
-    return std::abs(a - b) <= ( (std::abs(a) < std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
-}
-
-std::vector<std::shared_ptr<AudioResource>> AudioResource::getEqualAudioResources() const
+std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWithinSubGroup() const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
-    auto resources = owner.getAudioResourcesForGroup(audioGroup.get());
+    auto resources = owner.getAudioResourcesForGroupAndSubGroup(audioGroup.get(), audioSubGroup.get());
  
     for (auto resource : resources)
     {
         if (resource.get() == this)
             continue;
-        
-        if (approximatelyEqual(resource->getTransportPositionClocks(), getTransportPositionClocks(), 0.00001))
-        {
-            result.push_back(resource);
-        }
+    
+        result.push_back(resource);
     }
     return result;
 }
@@ -97,7 +89,7 @@ void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionDa
     
     if (syncEqualResources)
     {
-        for (auto resource : getEqualAudioResources())
+        for (auto resource : getAudioResourcesWithinSubGroup())
             resource->setRegionDataInSeconds(newRegionData, false);
     }
     
@@ -113,7 +105,7 @@ void AudioResource::setTransportPosition(const double newPositionSeconds, bool s
 {
     if (syncEqualResources)
     {
-        for (auto resource : getEqualAudioResources())
+        for (auto resource : getAudioResourcesWithinSubGroup())
             resource->setTransportPosition(newPositionSeconds, false);
     }
     
@@ -128,7 +120,7 @@ bool AudioResource::validateData(bool syncEqualResources)
     
     if (syncEqualResources)
     {
-        for (auto resource : getEqualAudioResources())
+        for (auto resource : getAudioResourcesWithinSubGroup())
             result |= resource->validateData(false);
     }
     

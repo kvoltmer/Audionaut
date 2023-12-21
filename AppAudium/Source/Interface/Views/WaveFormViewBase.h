@@ -18,7 +18,7 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Interface/Widgets/audium_AudioThumbnail.h"

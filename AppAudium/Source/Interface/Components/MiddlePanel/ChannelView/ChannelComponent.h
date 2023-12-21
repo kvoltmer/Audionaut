@@ -82,9 +82,8 @@ private:
     //[/UserVariables]
 
     //==============================================================================
-    std::unique_ptr<juce::Label> volumeLeveldB;
-    std::unique_ptr<juce::ImageButton> juce__imageButton;
-    std::unique_ptr<juce::ImageButton> juce__imageButton2;
+    std::unique_ptr<juce::Label> volumeLabeldB;
+    std::unique_ptr<juce::ImageButton> volumeScaleButton;
     std::unique_ptr<juce::Label> volumeLevel;
 
 

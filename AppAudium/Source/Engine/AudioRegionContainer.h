@@ -16,6 +16,7 @@ class AudioResourceContainer;
 class AudioGroupContainer;
 class PlayListScheduler;
 class AudioGroup;
+class AudioSubGroup;
 
 class AudioRegionContainer : public juce::ActionBroadcaster
 {
@@ -33,7 +34,7 @@ public:
     std::shared_ptr<AudioRegion> createRegion(juce::String regionName,
                                               juce::Range<double> position,
                                               std::shared_ptr<AudioGroup> group,
-                                              std::shared_ptr<AudioResource> audioResource);
+                                              std::shared_ptr<AudioSubGroup> subGroup = nullptr);
     void deleteRegion(int rowNumber);
     void createRegionsFromSelection(juce::String name);
     
@@ -66,9 +67,7 @@ public:
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const;
     
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
-    
-    void copyRegionsForResource(std::shared_ptr<AudioResource> audioResource);
-    
+        
     
 private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;

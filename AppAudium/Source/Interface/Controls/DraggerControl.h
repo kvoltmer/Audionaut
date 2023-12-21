@@ -17,7 +17,7 @@
 #include "Engine/AudioResource.h"
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 
 class DraggerControl  : public juce::Component, public juce::ChangeBroadcaster
 {

@@ -14,7 +14,7 @@
 #include "Engine/AudioResource.h"
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace juce;
@@ -46,5 +46,3 @@ void AudioRegionView::paint (juce::Graphics& g)
         g.drawFittedText ("audio data not available", getLocalBounds(), Justification::centred, 2);
     }
 }
-
-

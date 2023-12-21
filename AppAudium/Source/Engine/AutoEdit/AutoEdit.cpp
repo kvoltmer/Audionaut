@@ -17,8 +17,8 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
-#include "Engine/AudioGroup.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
 
 const juce::String AutoEdit::getTempDirectory()
 {
@@ -125,7 +125,7 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
                     if (resources.size() > 0)
                     {
                         auto resource = resources[0];
-                        audioRegionContainer->createRegion(regionName, position, group, resource);
+                        audioRegionContainer->createRegion(regionName, position, group);
                     }
                 }
             }

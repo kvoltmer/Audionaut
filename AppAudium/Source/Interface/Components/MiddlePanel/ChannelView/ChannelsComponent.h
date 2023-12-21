@@ -16,7 +16,7 @@
 #include "Interface/Models/AudioChannelsListBoxModel.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsHeaderComponent.h"
 #include "Util/EngineAccess.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 
 class ChannelsComponent  : public juce::Component
 {

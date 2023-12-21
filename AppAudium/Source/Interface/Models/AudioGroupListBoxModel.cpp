@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "AudioGroupListBoxModel.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
 #include "Interface/Components/MiddlePanel/GroupBaseComponent.h"

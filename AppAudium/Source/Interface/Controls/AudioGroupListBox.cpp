@@ -1,11 +1,12 @@
 
 #include <JuceHeader.h>
 #include "AudioGroupListBox.h"
-#include "Engine/AudioGroup.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Engine/Factory/AudioGroupFactory.h"
 
 using namespace audium;
 
@@ -34,13 +35,21 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
         auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
                                                                                  *audiumEngine->getAudioRegionContainer(),
                                                                                  name);
+        auto subGroup = group->createNewAudioSubGroup(*audiumEngine->getAudioResourceContainer(),
+                                                      *audiumEngine->getAudioRegionContainer());
+
 
         auto transportPosition = zoomHandler->xToSeconds(mouseX);
         for (auto i = 0; i < filenames.size(); i++)
         {
             auto channelPosition = group->getNumChannels();
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group, channelPosition, transportPosition);
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url,
+                                                                        *audiumEngine,
+                                                                        group,
+                                                                        subGroup,
+                                                                        channelPosition,
+                                                                        transportPosition);
         }
         
         // disabled for now

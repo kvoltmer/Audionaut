@@ -9,7 +9,7 @@
 */
 
 #include "AudioGroupContainer.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
@@ -74,10 +74,8 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const Audio
     jassert( !groupIdExists(groupId) );
     
     auto audioGroup = AudioGroupFactory::createAudioGroup(audioResourceContainer, audioRegionContainer);
-    
     audioGroup->setName(nameString);
     audioGroup->setId(groupId);
-    
     audioGroups.push_back(audioGroup);
     std::cout << "audio group created with id = " << groupId << std::endl;
     sendActionMessage(audioGroupCreatedAction);
@@ -102,7 +100,6 @@ bool AudioGroupContainer::removeAudioGroup(std::shared_ptr<AudiumEngine> engine,
 
 bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
 {
-    
     outputStream.writeInt(static_cast<int>(audioGroups.size()));
     
     for (auto & group : audioGroups)

@@ -11,9 +11,10 @@
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
 #include "Engine/AutoEdit/AutoEdit.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
+#include "Engine/Factory/AudioGroupFactory.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 
@@ -273,7 +274,9 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     // create a fresh resource
     const auto bounceUrl = juce::URL(bounceFile);
     auto audioGroup = audioGroupContainer->createNewAudioGroup(*getAudioResourceContainer(), *getAudioRegionContainer(), bounceUrl.getFileName().toStdString());
-    audioResourceContainer->addAudioResource(bounceUrl, *this, audioGroup);
+    auto subGroup = audioGroup->createNewAudioSubGroup(*getAudioResourceContainer(),
+                                                       *getAudioRegionContainer());
+    audioResourceContainer->addAudioResource(bounceUrl, *this, audioGroup, subGroup);
     
     std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,
                                                     audioRegionContainer,

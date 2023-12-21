@@ -11,7 +11,7 @@
 #include "AudiumFactory.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Provider/TempoProvider.h"
