@@ -14,16 +14,17 @@
 class AudioGroup;
 class AudioResource;
 class TempoProvider;
+class AudioSubGroup;
 
 class AudioRegion
 {    
     
 public:
     AudioRegion(std::shared_ptr<AudioGroup> audioGroup,
-                std::shared_ptr<AudioResource> audioResource,
+                std::shared_ptr<AudioSubGroup> audioSubGroup,
                 std::shared_ptr<TempoProvider> tempoProvider) :
         audioGroup(audioGroup),
-        audioResource(audioResource),
+        audioSubGroup(audioSubGroup),
         tempoProvider(tempoProvider)
     {
         jassert(audioGroup != nullptr);
@@ -32,8 +33,8 @@ public:
     ~AudioRegion();
     
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
-    
-    std::shared_ptr<AudioResource> getAudioResource() const { return audioResource; }
+    std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
+    std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     
     typedef class juce::Range<double> RegionData;
     
@@ -65,7 +66,7 @@ private:
     
     std::shared_ptr<AudioGroup> audioGroup;
     
-    std::shared_ptr<AudioResource> audioResource;
+    std::shared_ptr<AudioSubGroup> audioSubGroup;
     
     std::shared_ptr<TempoProvider> tempoProvider;
         

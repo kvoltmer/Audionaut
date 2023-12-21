@@ -18,7 +18,7 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/PlayPositionMarker.h"
 #include "Interface/Controls/TransportPositionControl.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 
 //==============================================================================
 /*

@@ -220,6 +220,7 @@ LevelMeter::LevelMeter(bool bVertical, bool bInverted) :
 {
     m_pLevelComponent.reset (new LevelComponent());
     addAndMakeVisible(m_pLevelComponent.get());
+    setInterceptsMouseClicks(false, false);
 }
 
 //==============================================================================

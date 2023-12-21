@@ -14,7 +14,8 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudioResource.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Provider/TempoProvider.h"
 
 class TransportSourceContainer;
@@ -44,6 +45,7 @@ public:
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      const AudiumEngine &engine,
                                                      std::shared_ptr<AudioGroup> group,
+                                                     std::shared_ptr<AudioSubGroup> subGroup,
                                                      int channelPosition = 0,
                                                      double transportPosition = 0.0,
                                                      int resourceId = -1);
@@ -66,6 +68,7 @@ public:
     void cleanup();
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAndSubGroup(AudioGroup *group, AudioSubGroup *subGroup) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtChannelPosition(AudioGroup *group, int channelPosition) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const;
 

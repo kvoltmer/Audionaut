@@ -10,7 +10,7 @@
 
 #include <JuceHeader.h>
 #include "PlayListItemComponent.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListContainer.h"

@@ -12,25 +12,26 @@
 
 #include <JuceHeader.h>
 
-#include "AudioRegion.h"
-
 class AudioResourceContainer;
 class AudioResource;
 class PlayListContainer;
 class PlayListScheduler;
 class TransportSourceContainer;
-
+class AudioSubGroup;
+class AudioRegionContainer;
 
 class AudioGroup
 {
     
 public:
     AudioGroup(const AudioResourceContainer &audioResourceContainer,
+               const AudioRegionContainer &audioRegionContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                juce::String nameString,
                int groupId) :
         audioResourceContainer(audioResourceContainer),
+        audioRegionContainer(audioRegionContainer),
         playListContainer(playListContainer),
         transportSourceContainer(transportSourceContainer),
         groupName(nameString),
@@ -65,11 +66,25 @@ public:
     
     int getNumChannels() const;
     
+    int getNextSubGroupId() { return ++nextSubGroupId; }
+    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(const AudioResourceContainer &esourceContainer,
+                                                          const AudioRegionContainer &regionContainer,
+                                                          int subGroupId = -1);
+    std::shared_ptr<AudioSubGroup> getAudioSubGroupById(int groupId) const;
+    
+    std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;
+    
 private:
     const AudioResourceContainer &audioResourceContainer;
+    const AudioRegionContainer &audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     juce::String groupName;
     int groupId = -1;
     juce::Colour currentColour = juce::Colours::pink;
+    
+    std::vector<std::shared_ptr<AudioSubGroup>> audioSubGroups;
+    int nextSubGroupId = 0;
+    
+    bool subGroupIdExists(const int groupId) const;
 };

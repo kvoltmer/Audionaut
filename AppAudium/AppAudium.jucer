@@ -33,8 +33,9 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
-        <GROUP id="{56EAD069-5D2D-A940-D232-5DA7E979C834}" name="Provider">
-          <FILE id="mXYpiA" name="TempoProvider.h" compile="0" resource="0" file="Source/Engine/Provider/TempoProvider.h"/>
+        <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
+          <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
+          <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
         </GROUP>
         <GROUP id="{38829D96-12DD-C636-0C91-D4606DFE0C72}" name="Factory">
           <FILE id="jEBWMg" name="AudioGroupFactory.h" compile="0" resource="0"
@@ -45,6 +46,17 @@
                 file="Source/Engine/Factory/AudiumFactory.cpp"/>
           <FILE id="ErnMCa" name="AudiumFactory.h" compile="0" resource="0" file="Source/Engine/Factory/AudiumFactory.h"/>
         </GROUP>
+        <GROUP id="{AE3695CD-F0F3-4924-68C1-084658B86D39}" name="Group">
+          <FILE id="S6GFZG" name="AudioGroup.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioGroup.cpp"/>
+          <FILE id="q95WEA" name="AudioGroup.h" compile="0" resource="0" file="Source/Engine/Group/AudioGroup.h"/>
+          <FILE id="G5bPkP" name="AudioGroupContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioGroupContainer.cpp"/>
+          <FILE id="uY1Ao1" name="AudioGroupContainer.h" compile="0" resource="0"
+                file="Source/Engine/Group/AudioGroupContainer.h"/>
+          <FILE id="zWymx0" name="AudioSubGroup.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioSubGroup.cpp"/>
+          <FILE id="xDIL18" name="AudioSubGroup.h" compile="0" resource="0" file="Source/Engine/Group/AudioSubGroup.h"/>
+        </GROUP>
         <GROUP id="{72F2B5A0-7A8C-3648-A73C-97D66220C0AE}" name="Link">
           <FILE id="el7wlW" name="LinkAudioDevice.cpp" compile="1" resource="0"
                 file="Source/Engine/Link/LinkAudioDevice.cpp"/>
@@ -53,15 +65,6 @@
           <FILE id="CplGKz" name="LinkEngine.cpp" compile="1" resource="0" file="Source/Engine/Link/LinkEngine.cpp"/>
           <FILE id="Rf1W4c" name="LinkEngine.hpp" compile="0" resource="0" file="Source/Engine/Link/LinkEngine.hpp"/>
         </GROUP>
-        <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
-              file="Source/Engine/AudiumEngine.cpp"/>
-        <FILE id="Oik4J0" name="AudiumEngine.h" compile="0" resource="0" file="Source/Engine/AudiumEngine.h"/>
-        <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
-          <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
-          <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
-        </GROUP>
-        <FILE id="ELbTXp" name="ActionMessages.h" compile="0" resource="0"
-              file="Source/Engine/ActionMessages.h"/>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
           <FILE id="UTFjED" name="SampleTimer.h" compile="0" resource="0" file="Source/Engine/PlayList/SampleTimer.h"/>
           <FILE id="kNVT0n" name="PlayListContainer.cpp" compile="1" resource="0"
@@ -76,6 +79,14 @@
           <FILE id="ge1APd" name="PlayListScheduler.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListScheduler.h"/>
         </GROUP>
+        <GROUP id="{56EAD069-5D2D-A940-D232-5DA7E979C834}" name="Provider">
+          <FILE id="mXYpiA" name="TempoProvider.h" compile="0" resource="0" file="Source/Engine/Provider/TempoProvider.h"/>
+        </GROUP>
+        <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
+              file="Source/Engine/AudiumEngine.cpp"/>
+        <FILE id="Oik4J0" name="AudiumEngine.h" compile="0" resource="0" file="Source/Engine/AudiumEngine.h"/>
+        <FILE id="ELbTXp" name="ActionMessages.h" compile="0" resource="0"
+              file="Source/Engine/ActionMessages.h"/>
         <FILE id="k90e0E" name="AudiumTransportSource.h" compile="0" resource="0"
               file="Source/Engine/AudiumTransportSource.h"/>
         <FILE id="hC6yQM" name="TransportSourceContainer.cpp" compile="1" resource="0"
@@ -88,12 +99,6 @@
               file="Source/Engine/AudioRegionContainer.cpp"/>
         <FILE id="vB01Hj" name="AudioRegionContainer.h" compile="0" resource="0"
               file="Source/Engine/AudioRegionContainer.h"/>
-        <FILE id="yLDGCs" name="AudioGroup.cpp" compile="1" resource="0" file="Source/Engine/AudioGroup.cpp"/>
-        <FILE id="XDfgpU" name="AudioGroup.h" compile="0" resource="0" file="Source/Engine/AudioGroup.h"/>
-        <FILE id="p1AUux" name="AudioGroupContainer.cpp" compile="1" resource="0"
-              file="Source/Engine/AudioGroupContainer.cpp"/>
-        <FILE id="H3pwOF" name="AudioGroupContainer.h" compile="0" resource="0"
-              file="Source/Engine/AudioGroupContainer.h"/>
         <FILE id="fjWrqk" name="AudioResource.cpp" compile="1" resource="0"
               file="Source/Engine/AudioResource.cpp"/>
         <FILE id="IvbeUH" name="AudioResource.h" compile="0" resource="0" file="Source/Engine/AudioResource.h"/>

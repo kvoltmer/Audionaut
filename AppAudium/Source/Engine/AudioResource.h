@@ -21,6 +21,7 @@ class AudioResourceContainer;
 class AudioPlayer;
 class AudiumTransportSource;
 class AudioGroup;
+class AudioSubGroup;
 class AudioRegion;
 
 class AudioResource {
@@ -28,6 +29,7 @@ class AudioResource {
 public:
     AudioResource(AudioResourceContainer& audioResourceContainer,
                   std::shared_ptr<AudioGroup> audioGroup,
+                  std::shared_ptr<AudioSubGroup> audioSubGroup,
                   juce::URL url,
                   std::shared_ptr<AudiumTransportSource> transportSource,
                   std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
@@ -35,6 +37,7 @@ public:
                   int resourceId) :
         owner(audioResourceContainer),
         audioGroup(audioGroup),
+        audioSubGroup(audioSubGroup),
         url(url),
         transportSource(transportSource),
         channelPosition(channelPosition),
@@ -76,7 +79,7 @@ public:
     void setRegionDataInSeconds(const juce::Range<double> newRegionData, bool syncEqualResources);
     void setTransportPosition(const double newPosition, bool syncEqualResources);
     bool validateData(bool syncResources);
-    std::vector<std::shared_ptr<AudioResource>> getEqualAudioResources() const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinSubGroup() const;
     
     double getTransportPositionSeconds() const;
     double getTransportPositionClocks() const { return transportPositionClocks; }
@@ -88,6 +91,7 @@ public:
     bool readFromStream (juce::InputStream& inputStream);
     
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
+    std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
     
     void setSelected(bool bSelected, bool deselectOthers);
     bool isSelected() const { return selected; }
@@ -100,6 +104,7 @@ private:
     AudioResourceContainer& owner;
     
     std::shared_ptr<AudioGroup> audioGroup;
+    std::shared_ptr<AudioSubGroup> audioSubGroup;
     
     juce::URL url;
     

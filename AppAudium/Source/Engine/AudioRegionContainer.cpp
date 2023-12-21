@@ -12,8 +12,8 @@
 #include "AudioRegionContainer.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudioResourceContainer.h"
-#include "Engine/AudioGroupContainer.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -30,12 +30,8 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shar
         seconds = juce::jmax(seconds, resource->getAudioTransportSource()->getLengthInSeconds());
     }
     jassert(seconds > 0.0);
-    
-    // TODO: provide a audio resource pointer
-    std::shared_ptr<AudioResource> audioResource = nullptr;
-    jassertfalse;
-    
-    return createRegion(name, juce::Range(0.0, seconds), group, audioResource);
+        
+    return createRegion(name, juce::Range(0.0, seconds), group);
 }
 
 void AudioRegionContainer::createRegionsFromSelection(juce::String name)
@@ -53,7 +49,7 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
                     
                     juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
                     auto localRangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(localRange);
-                    createRegion(name, localRangeInSeconds, group, item->getRegion()->getAudioResource());
+                    createRegion(name, localRangeInSeconds, group, item->getRegion()->getAudioSubGroup());
                 }
             }
             else
@@ -62,13 +58,17 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
                 
                 auto rangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(selectedPositionClocks);
                 auto resources = group->getAudioResourcesAtAbsoluteRange(rangeInSeconds);
-                for (auto resource : resources)
+                if (resources.size() > 0)
                 {
+                    // grab the first valid resource
+                    auto resource  = resources[0];
+                
                     const auto transportPosition = resource->getTransportPositionSeconds();
                     rangeInSeconds -= transportPosition;
                     const auto startPosition = resource->getRegionDataInSeconds().getStart();
                     rangeInSeconds += startPosition;
-                    createRegion(name, rangeInSeconds, group, resource);
+                    createRegion(name, rangeInSeconds, group, resource->getAudioSubGroup());
+                    break;
                 }
             }
         }
@@ -80,16 +80,22 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
 std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String regionName,
                                                                 juce::Range<double> position,
                                                                 std::shared_ptr<AudioGroup> group,
-                                                                std::shared_ptr<AudioResource> audioResource)
+                                                                std::shared_ptr<AudioSubGroup> subGroup)
 {
     if (group == nullptr)
     {
         group = audioGroupContainer->getDefaultGroup();
     }
+    
+    if (subGroup == nullptr)
+    {
+        subGroup = group->getDefaultSubGroup();
+    }
+    
     // TODO: validate position data
     //jassert(audioResource->getRegionDataInSeconds().contains(position));
     
-    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, audioResource, playListScheduler->getTempoProvider()));
+    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
     audioRegion->setRegionDataInSeconds(position);
     audioRegion->name = regionName;
     audioRegions.push_back(audioRegion);
@@ -176,7 +182,7 @@ bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
         outputStream.writeString(region->name);
         outputStream.writeDouble(region->getRegionDataInSeconds().getStart());
         outputStream.writeDouble(region->getRegionDataInSeconds().getEnd());
-        outputStream.writeInt(region->getAudioResource()->getId());
+        outputStream.writeInt(region->getAudioSubGroup()->getId());
     }
     return true;
 }
@@ -197,10 +203,17 @@ bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
             
             juce::Range<double> position(start, end);
             auto id = inputStream.readInt();
-            auto audioResource = audioResourceContainer->getAudioResourceById(id);
-            if (audioResource != nullptr)
+            auto group = audioGroupContainer->getAudioGroupById(groupId);
+            jassert(group);
+            if (group != nullptr)
             {
-                createRegion(regionName, position, audioGroupContainer->getAudioGroupById(groupId), audioResource);
+                auto subGroup = group->getAudioSubGroupById(id);
+                jassert(subGroup);
+                
+                if (subGroup != nullptr)
+                {
+                    createRegion(regionName, position, group, subGroup);
+                }
             }
         }
     }
@@ -295,21 +308,14 @@ std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForRes
     std::vector<std::shared_ptr<AudioRegion>> result;
     for (auto region : audioRegions)
     {
-        if (region->getAudioResource() == audioResource)
-            result.push_back(region);
-    }
-    return result;
-}
-
-void AudioRegionContainer::copyRegionsForResource(std::shared_ptr<AudioResource> audioResource)
-{
-    auto resources = audioResource->getEqualAudioResources();
-    if (resources.size() > 0)
-    {
-        auto regions = getRegionsForResource(resources[0]);
-        for (auto region : regions)
+        auto audioResources = region->getAudioResources();
+        for (auto resource : audioResources)
         {
-            createRegion(region->name, region->getRegionDataInSeconds(), region->getAudioGroup(), audioResource);
+            if (resource == audioResource)
+            {
+                result.push_back(region);
+            }
         }
     }
+    return result;
 }

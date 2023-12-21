@@ -23,9 +23,9 @@
 #include "Interface/Components/RightPanel/RightPanelComponent.h"
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 //[/Headers]
 

@@ -9,7 +9,7 @@
 */
 
 #include "AudioRegion.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -60,12 +60,22 @@ const AudioRegion::RegionData AudioRegion::getRegionDataInSeconds() const
 
 double AudioRegion::getAudioResourceStartInSeconds() const
 {
-    return audioResource->getRegionDataInSeconds().getStart();
+    double start = 0;
+    for (auto resource : getAudioResources())
+    {
+        start = std::min(start, resource->getRegionDataInSeconds().getStart());
+    }
+    return start;
 }
 
 double AudioRegion::getAudioResourceEndInSeconds() const
 {
-    return audioResource->getRegionDataInSeconds().getEnd();
+    double end = 0;
+    for (auto resource : getAudioResources())
+    {
+        end = std::max(end, resource->getRegionDataInSeconds().getEnd());
+    }
+    return end;
 }
 
 void AudioRegion::setRegionStart(double newStart)
@@ -87,4 +97,10 @@ void AudioRegion::setRegionEnd(double newEnd)
 void AudioRegion::setRegionLength(double newLength)
 {
     setRegionData(getRegionData().withLength(newLength));
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioRegion::getAudioResources() const
+{
+    return audioGroup->getAudioResourceContainer().getAudioResourcesForGroupAndSubGroup(audioGroup.get(),
+                                                                                        audioSubGroup.get());
 }
