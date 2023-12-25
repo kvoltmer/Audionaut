@@ -176,7 +176,7 @@ bool AudioResource::writeToStream (juce::OutputStream& outputStream)
     outputStream.writeDouble(regionData.getEnd());
     outputStream.writeDouble(transportPositionClocks);
     outputStream.writeInt(channelPosition);
-    outputStream.writeInt(height);
+    outputStream.writeInt(0);
 
     return true;
 }
@@ -189,7 +189,7 @@ bool AudioResource::readFromStream (juce::InputStream& inputStream)
     const auto end =            inputStream.readDouble();
     transportPositionClocks =   inputStream.readDouble();
     channelPosition =           inputStream.readInt();
-    height =                    inputStream.readInt();
+    auto unused =               inputStream.readInt();
     
     regionData = juce::Range<double>(start, end);
     jassert(this->url == inUrl);
@@ -204,4 +204,17 @@ void AudioResource::setSelected(bool bSelected, bool deselectOthers)
         owner.deselectAllResources();
 
     selected = bSelected;
+}
+
+
+bool AudioResource::containsChannelNumber(int channelNumber) const
+{
+    juce::Range<int> channelRange(getChannelPosition(),
+                                  getChannelPosition() + getNumChannels());
+    
+    if (channelRange.contains(channelNumber))
+    {
+        return true;
+    }
+    return false;
 }

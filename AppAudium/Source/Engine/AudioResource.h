@@ -60,12 +60,6 @@ public:
     // Returns a string version of the URL.
     const juce::String getUrlAsString() const;
     
-    /// TODO: discuss moving this to GroupListBoxModel
-    int getTop() const { return channelPosition * height; }
-    int getHeight() const { return height * getNumChannels(); }
-    int getChannelHeight() const { return height; }
-    void setChannelHeight(int newHeight) { height = newHeight; }
-    
     AudioResourceContainer& getContainer() const { return owner; }
     
     double getSampleRate() const;
@@ -99,6 +93,8 @@ public:
     const int getId() const noexcept { return resourceId; }
     void setId(const int newId) { resourceId = newId; }
     
+    bool containsChannelNumber(int channelNumber) const;
+    
 private:
 
     AudioResourceContainer& owner;
@@ -117,7 +113,7 @@ private:
     juce::Range<double> regionData;
     double transportPositionClocks = 0.0;
     int channelPosition = 0;
-    int height = 100;
+    
     bool selected = false;
     int resourceId = -1;
 private:

@@ -18,6 +18,20 @@ class AudioChannel {
     
 public:
     int getChannelHeight() const { return channelHeight; }
+    void setChannelHeight(int height) { channelHeight = height; }
+    
+    bool writeToStream (juce::OutputStream& outputStream)
+    {
+        outputStream.writeInt(channelHeight);
+        return true;
+    }
+    
+    bool readFromStream (juce::InputStream& inputStream)
+    {
+        auto height = inputStream.readInt();
+        channelHeight = height;
+        return true;
+    }
     
 private:
     //std::shared_ptr<AudioResource> audioResource;

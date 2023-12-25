@@ -38,13 +38,8 @@ std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const
 {
     for (auto resource : getAudioResources())
     {
-        juce::Range<int> channelRange(resource->getChannelPosition(),
-                                      resource->getChannelPosition() + resource->getNumChannels());
-        
-        if (channelRange.contains(rowNumber))
-        {
+        if (resource->containsChannelNumber(rowNumber))
             return resource;
-        }
     }
     return nullptr;
 }
