@@ -29,7 +29,7 @@ public:
         
     std::shared_ptr<AudioGroup> createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
                                                     const AudioRegionContainer &audioRegionContainer,
-                                                    std::string nameString,
+                                                    const juce::String nameString,
                                                     int groupId = -1);
     void cleanup();
     

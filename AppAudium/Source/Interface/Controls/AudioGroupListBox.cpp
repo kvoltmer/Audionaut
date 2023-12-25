@@ -1,12 +1,16 @@
 
 #include <JuceHeader.h>
 #include "AudioGroupListBox.h"
+
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/AudioResourceContainer.h"
+
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
-#include "Engine/Factory/AudioGroupFactory.h"
+
 
 using namespace audium;
 
@@ -28,9 +32,9 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
     if ( !filenames.isEmpty())
     {
         
-        jassert(File (filenames[0]).existsAsFile());
-        auto name = File (filenames[0]).getFileNameWithoutExtension().toStdString();
+        //jassert(File (filenames[0]).existsAsFile());
         
+        juce::String name;
         // create NEW GROUP
         auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
                                                                                  *audiumEngine->getAudioRegionContainer(),

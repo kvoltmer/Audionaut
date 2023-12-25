@@ -16,6 +16,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegion.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Interface/Controls/PlayListTableListBox.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Models/PlayListTableListBoxItem.h"

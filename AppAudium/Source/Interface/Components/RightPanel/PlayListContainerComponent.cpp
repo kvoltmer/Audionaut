@@ -14,6 +14,7 @@
 #include "PlayListComponent.h"
 #include "Interface/ColourIds.h"
 #include "Engine/Provider/TempoProvider.h"
+#include "Engine/AudioResourceContainer.h"
 
 //==============================================================================
 PlayListContainerComponent::PlayListContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine) :

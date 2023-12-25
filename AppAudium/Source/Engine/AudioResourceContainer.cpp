@@ -54,6 +54,9 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
         if (audioResource &&
             audioResource->getAudioTransportSource())
         {
+            auto channelsNeeded = channelPosition + audioResource->getNumChannels();
+            group->ensureNumChannels(channelsNeeded);
+            
             audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
             audioResources.push_back({group, audioResource});
             sendActionMessage(audioResourceCreatedAction);
@@ -220,7 +223,11 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, con
             auto url = inputStream.readString();
             auto resource = addAudioResource(juce::URL(url), engine, group, subGroup);
             inputStream.setPosition(streamPos);
+            
+            // audio resource
             resource->readFromStream(inputStream);
+            auto channelsNeeded = resource->getChannelPosition() + resource->getNumChannels();
+            group->ensureNumChannels(channelsNeeded);
         }
         else
         {
@@ -250,7 +257,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAndSubGroup(AudioGroup *group, AudioSubGroup *subGroup) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAndSubGroup(const AudioGroup *group, const AudioSubGroup *subGroup) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
@@ -364,16 +371,6 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getChannel(i
     }
     
     return result;
-}
-
-void AudioResourceContainer::setChannelHeight(int height)
-{
-    for(auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
-    {
-        it->second->setChannelHeight(height);
-    }
-    
-    sendActionMessage("");
 }
 
 void AudioResourceContainer::deselectAllResources()
