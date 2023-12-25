@@ -12,10 +12,10 @@
 
 #include <memory>
 #include <JuceHeader.h>
-#include "AudioResourceContainer.h"
 #include "AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
+class AudioResourceContainer;
 class TransportSourceContainer;
 class PlayListScheduler;
 struct AutoEditConfig;

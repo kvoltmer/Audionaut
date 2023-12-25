@@ -16,20 +16,19 @@
 #include "Interface/Controls/RegionSelector.h"
 #include "Engine/AudioResource.h"
 #include "Interface/ColourIds.h"
-#include "Engine/AudioRegion.h"
 #include "Engine/Group/AudioGroup.h"
 
 class DraggerControl  : public juce::Component, public juce::ChangeBroadcaster
 {
 public:
-    DraggerControl(std::shared_ptr<AudioResource> audioResource,
-                  std::shared_ptr<ZoomHandler> zoomHandler,
-                  std::shared_ptr<AudioRegion> audioRegion,
-                  juce::Colour colour,
-                  std::shared_ptr<RegionSelector> regionSelector) :
+    DraggerControl(juce::Component* componentToDrag,
+                   std::shared_ptr<AudioResource> audioResource,
+                   std::shared_ptr<ZoomHandler> zoomHandler,
+                   juce::Colour colour,
+                   std::shared_ptr<RegionSelector> regionSelector) :
+        componentToDrag(componentToDrag),
         audioResource(audioResource),
         zoomHandler(zoomHandler),
-        audioRegion(audioRegion),
         colour(colour),
         regionSelector(regionSelector)
     {
@@ -87,8 +86,9 @@ public:
 
         currentDragMode = getDragMode(e.getPosition().getX());
         
-        originalBounds = getBounds();
-            
+        originalBounds = componentToDrag->getBounds();
+        
+        // TODO: change to subgroup selection
         audioResource->setSelected(e.mods.isCommandDown() ? !audioResource->isSelected() : true, !e.mods.isCommandDown());
         
         repaint();
@@ -116,7 +116,7 @@ public:
                 break;
         }
         
-        setBounds (bounds);
+        componentToDrag->setBounds (bounds);
         
         commitBoundsToEngine();
     }
@@ -173,7 +173,7 @@ public:
     void commitBoundsToEngine()
     {
         // commit values to engine
-        juce::Range<double> range(getBounds().getX(), getBounds().getRight());
+        juce::Range<double> range(componentToDrag->getBounds().getX(), componentToDrag->getBounds().getRight());
         //std::cout << range.getStart() << " " << range.getEnd() << std::endl;
         
         auto rangeInSeconds = zoomHandler->xToSeconds(range);
@@ -216,31 +216,29 @@ public:
             default:
                 break;
         }
-        
-        sendChangeMessage();
     }
     
     void updateFromEngine()
     {
-        
         double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
         double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
-        
+
         // don't change Y position and height
         double posY = getBounds().getY();
         double height = getHeight();
-        
+
         juce::Rectangle<double> rect_tmp(posX, posY, length, height);
-        setBounds(rect_tmp.toNearestInt());
+        componentToDrag->setBounds(rect_tmp.toNearestInt());
     }
 
     static constexpr int draggerHeight = 19;
     
 private:
     
+    juce::Component* componentToDrag;
+    
     std::shared_ptr<AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::shared_ptr<AudioRegion> audioRegion;
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
 

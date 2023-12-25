@@ -15,6 +15,7 @@
 #include "Engine/ActionMessages.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/AudioResourceContainer.h"
 
 AudioGroupContainer::~AudioGroupContainer()
 {

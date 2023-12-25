@@ -33,6 +33,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
 
     // create views
     auto audioResources = audioGroup->getAudioResources();
+    auto rowNumber = 0;
     for (auto audioResource : audioResources)
     {
         auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audiumEngine,
@@ -40,7 +41,8 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
                                                                          zoomHandler,
                                                                          playListItem->getRegion(),
                                                                          audioGroup->getColour(),
-                                                                         regionSelector));
+                                                                         regionSelector,
+                                                                         rowNumber));
         addAndMakeVisible(view.get());
         children.push_back(view);
     }

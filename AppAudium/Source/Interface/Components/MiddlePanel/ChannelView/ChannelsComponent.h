@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 
 #include "Interface/ColourIds.h"
-#include "Interface/Models/AudioChannelsListBoxModel.h"
+#include "Interface/Models/ChannelGroupListBoxModel.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsHeaderComponent.h"
 #include "Util/EngineAccess.h"
 #include "Engine/Group/AudioGroupContainer.h"
@@ -25,7 +25,7 @@ public:
         audiumEngine(audiumEngine)
     {
         audioChannelsListBox.reset(new audium::ListBox("Audio Group Listbox", nullptr));
-        audioChannelsListBoxModel.reset(new AudioChannelsListBoxModel(audioChannelsListBox,
+        audioChannelsListBoxModel.reset(new ChannelGroupListBoxModel(audioChannelsListBox,
                                                                       audiumEngine));
         
         audioChannelsListBox->setModel(audioChannelsListBoxModel.get());
@@ -35,6 +35,8 @@ public:
         audioChannelsListBox->getHeaderComponent()->setSize(getWidth(), 25);
         audioChannelsListBox->setOutlineThickness(0);
         audioChannelsListBox->setMultipleSelectionEnabled(true);
+        // hide scrollbars
+        audioChannelsListBox->getViewport()->setScrollBarsShown(false, false);
         addAndMakeVisible(audioChannelsListBox.get());
     }
 
@@ -62,7 +64,7 @@ public:
 private:
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<audium::ListBox>            audioChannelsListBox;
-    std::shared_ptr<AudioChannelsListBoxModel>  audioChannelsListBoxModel;
+    std::shared_ptr<ChannelGroupListBoxModel>  audioChannelsListBoxModel;
     
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelsComponent)

@@ -60,7 +60,7 @@ public:
     // Returns a string version of the URL.
     const juce::String getUrlAsString() const;
     
-    /// TODO: discuss moving this to AudioGroupListBoxModel
+    /// TODO: discuss moving this to GroupListBoxModel
     int getTop() const { return channelPosition * height; }
     int getHeight() const { return height * getNumChannels(); }
     int getChannelHeight() const { return height; }

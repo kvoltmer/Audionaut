@@ -15,6 +15,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/Channel/AudioChannel.h"
 
 AudioGroup::~AudioGroup()
 {
@@ -89,17 +90,28 @@ bool AudioGroup::readFromStream (juce::InputStream& inputStream)
 
 int AudioGroup::getNumChannels() const
 {
-    int numChannels = 0;
-    
-    auto resources = getAudioResources();
-    for (auto resource : resources)
-    {
-        numChannels = std::max(numChannels, static_cast<int>(resource->getChannelPosition() + resource->getNumChannels()));
-    }
-    
-    return numChannels;
+    return static_cast<int>(audioChannels.size());
 }
 
+void AudioGroup::ensureNumChannels(int channelsNeeded)
+{
+    while (getNumChannels() < channelsNeeded)
+    {
+        auto channel = std::shared_ptr<AudioChannel>(new AudioChannel());
+        audioChannels.push_back(channel);
+    }
+}
+
+int AudioGroup::getTotalHeight() const
+{
+    int height = 0;
+    auto channels = getNumChannels();
+    for (auto c = 0; c < channels; c++)
+    {
+        height += getChannel(c)->getChannelHeight();
+    }
+    return height;
+}
 
 std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(const AudioResourceContainer &resourceContainer,
                                                                   const AudioRegionContainer &regionContainer,

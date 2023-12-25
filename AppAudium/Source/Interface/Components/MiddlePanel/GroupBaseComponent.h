@@ -22,7 +22,9 @@ class PlayListItemComponent;
 //==============================================================================
 /*
  
- Base class to display a AudioGroup as part of AudioGroupListBoxModel.
+ Base class to display an AudioGroup.
+ 
+ This class is created here: GroupListBoxModel::refreshComponentForRow
  
 */
 

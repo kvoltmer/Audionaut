@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "Interface/Models/AudioGroupListBoxModel.h"
+#include "Interface/Models/GroupListBoxModel.h"
 #include "Interface/Controls/AudioGroupListBox.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Handlers/ZoomHandler.h"
@@ -38,7 +38,7 @@ public:
         zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
         audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, zoomHandler));
         regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
-        audioGroupListBoxModel.reset(new AudioGroupListBoxModel(audioGroupListBox,
+        audioGroupListBoxModel.reset(new GroupListBoxModel(audioGroupListBox,
                                                                 audiumEngine,
                                                                 zoomHandler,
                                                                 regionSelector,
@@ -136,7 +136,7 @@ protected:
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
     std::shared_ptr<AudioGroupListBox>          audioGroupListBox;
-    std::shared_ptr<AudioGroupListBoxModel>     audioGroupListBoxModel;
+    std::shared_ptr<GroupListBoxModel>     audioGroupListBoxModel;
     std::shared_ptr<PlayPositionMarker>         playPositionMarker;
     
 private:

@@ -9,6 +9,8 @@
 */
 
 #include "AudioSubGroup.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/AudioResourceContainer.h"
 
 bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
 {
@@ -20,4 +22,29 @@ bool AudioSubGroup::readFromStream (juce::InputStream& inputStream)
 {
     subGroupId = inputStream.readInt();
     return true;
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioSubGroup::getAudioResources() const
+{
+    return audioGroup.getAudioResourceContainer().getAudioResourcesForGroupAndSubGroup(&audioGroup, this);
+}
+
+int AudioSubGroup::getNumChannels() const
+{
+    return audioGroup.getNumChannels();
+}
+
+std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const
+{
+    for (auto resource : getAudioResources())
+    {
+        juce::Range<int> channelRange(resource->getChannelPosition(),
+                                      resource->getChannelPosition() + resource->getNumChannels());
+        
+        if (channelRange.contains(rowNumber))
+        {
+            return resource;
+        }
+    }
+    return nullptr;
 }

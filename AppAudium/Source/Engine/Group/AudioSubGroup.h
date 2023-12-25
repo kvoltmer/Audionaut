@@ -13,10 +13,8 @@
 #include <JuceHeader.h>
 
 class AudioGroup;
-//class AudioResourceContainer;
-//class AudioRegionContainer;
-//class AudiumEngine;
-//class AudioGroupContainer;
+class AudioResource;
+
 
 class AudioSubGroup {
         
@@ -31,6 +29,13 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
+    
+    std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
+    
+    int getNumChannels() const;
+    std::shared_ptr<AudioResource> getChannel(int rowNumber) const;
+
+    const AudioGroup& getAudioGroup() const { return audioGroup; }
     
 private:
     const AudioGroup& audioGroup;
