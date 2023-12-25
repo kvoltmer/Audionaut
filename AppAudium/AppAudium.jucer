@@ -151,6 +151,8 @@
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"/>
               <FILE id="pJGRxg" name="ChannelGroupComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupComponent.h"/>
+              <FILE id="Kr5S34" name="ChannelGroupHeaderComponent.h" compile="0"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h"/>
               <FILE id="ip9GrQ" name="ChannelsComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"/>
               <FILE id="kb3Lop" name="ChannelsHeaderComponent.h" compile="0" resource="0"

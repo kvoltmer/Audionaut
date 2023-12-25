@@ -68,14 +68,21 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroupById(int groupId) 
 
 std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
                                                                      const AudioRegionContainer &audioRegionContainer,
-                                                                     std::string nameString,
+                                                                     const juce::String nameString,
                                                                      int groupId)
 {
     groupId = (groupId < 0) ? getNextId() : groupId;
     jassert( !groupIdExists(groupId) );
     
     auto audioGroup = AudioGroupFactory::createAudioGroup(audioResourceContainer, audioRegionContainer);
-    audioGroup->setName(nameString);
+    if (nameString.isEmpty())
+    {
+        audioGroup->setName(juce::String("Group ") + juce::String(groupId));
+    }
+    else
+    {
+        audioGroup->setName(nameString);
+    }
     audioGroup->setId(groupId);
     audioGroups.push_back(audioGroup);
     std::cout << "audio group created with id = " << groupId << std::endl;

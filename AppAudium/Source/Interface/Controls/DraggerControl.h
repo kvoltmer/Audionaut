@@ -55,7 +55,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        auto colour = Colours::white;;
+        auto colour = Colours::white;
         if (audioResource->isSelected())
         {
             g.setColour (colour.withAlpha(0.8f));

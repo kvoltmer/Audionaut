@@ -132,14 +132,14 @@ int AudioGroup::getTotalHeight() const
     return height;
 }
 
-float AudioGroup::getOutputLevel(int rowNumber) const
+float AudioGroup::getOutputLevel(int channelNumber) const
 {
     auto level = 0.f;
     // TODO: move this to channel class
-    auto channel = getChannel(rowNumber);
+    auto channel = getChannel(channelNumber);
     if (channel != nullptr)
     {
-        auto resources = getAudioResourcesAtChannel(rowNumber);
+        auto resources = getAudioResourcesAtChannel(channelNumber);
         for (auto resource : resources)
         {
             if (resource->getAudioTransportSource()->isPlaying())
