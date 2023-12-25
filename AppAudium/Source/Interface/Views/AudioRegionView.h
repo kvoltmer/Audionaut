@@ -26,8 +26,9 @@ public:
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     std::shared_ptr<AudioRegion> audioRegion,
                     juce::Colour colour,
-                    std::shared_ptr<RegionSelector> regionSelector) :
-        WaveFormViewBase(audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector)
+                    std::shared_ptr<RegionSelector> regionSelector,
+                    int rowNumber) :
+        WaveFormViewBase(audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber)
     {
     }
 

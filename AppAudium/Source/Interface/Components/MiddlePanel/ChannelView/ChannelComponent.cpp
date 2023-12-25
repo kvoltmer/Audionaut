@@ -19,6 +19,8 @@
 
 //[Headers] You can add your own extra header files here...
 #include "Engine/AudiumTransportSource.h"
+#include "Engine/AudioResourceContainer.h"
+#include "Engine/Channel/AudioChannel.h"
 //[/Headers]
 
 #include "ChannelComponent.h"
@@ -28,11 +30,11 @@
 //[/MiscUserDefs]
 
 //==============================================================================
-ChannelComponent::ChannelComponent (std::shared_ptr<AudioResource> resource, std::shared_ptr<AudiumEngine> engine)
+ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std::shared_ptr<AudiumEngine> engine)
 {
     //[Constructor_pre] You can add your own custom stuff here..
 
-    this->resource = resource;
+    this->audioGroup = audioGroup;
     this->engine = engine;
     levelMeter.reset (new LevelMeter (true, false));
     addAndMakeVisible(levelMeter.get());
@@ -104,7 +106,7 @@ ChannelComponent::~ChannelComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
     stopTimer();
-    resource = nullptr;
+    audioGroup = nullptr;
     //[/Destructor_pre]
 
     volumeLabeldB = nullptr;
@@ -180,7 +182,7 @@ void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
         //[UserLabelCode_volumeLevel] -- add your label text handling code here..
         auto db = volumeLevel->getText().getFloatValue();
         auto gain = LevelMeter::decebelToGain(db);
-        resource->getAudioTransportSource()->setGain(gain);
+        audioGroup->setGain(gain, rowNumber);
         //[/UserLabelCode_volumeLevel]
     }
 
@@ -214,17 +216,17 @@ bool ChannelComponent::keyPressed (const juce::KeyPress& key)
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
-void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource, int rowNumber, bool isRowSelected)
+void ChannelComponent::refreshComponent(std::shared_ptr<AudioGroup> audioGroup, int rowNumber, bool isRowSelected)
 {
     selected = isRowSelected;
-    this->resource = resource;
+    this->audioGroup = audioGroup;
     this->rowNumber = rowNumber;
 
-    auto group = engine->getAudioResourceContainer()->getAudioGroupForResource(resource);
-    volumeLevel->setColour (juce::Label::textColourId, group->getColour());
-    volumeLabeldB->setColour (juce::Label::textColourId, group->getColour());
 
-    auto gain = resource->getAudioTransportSource()->getGain();
+    volumeLevel->setColour (juce::Label::textColourId, audioGroup->getColour());
+    volumeLabeldB->setColour (juce::Label::textColourId, audioGroup->getColour());
+
+    auto gain = audioGroup->getGain(rowNumber);
     volumeLevel->setText(String(LevelMeter::gainToDecebel(gain)), dontSendNotification);
 
     if (not isTimerRunning())
@@ -235,8 +237,7 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource,
 
 void ChannelComponent::timerCallback()
 {
-    jassert(resource->getAudioTransportSource());
-    levelMeter->setLevel(resource->getAudioTransportSource()->getOutputLevel());
+    levelMeter->setLevel(audioGroup->getOutputLevel(rowNumber));
 }
 
 void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
@@ -263,9 +264,7 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
 
         channelSizeComboBox->setText("", dontSendNotification);
 
-        auto resources = engine->getAudioResourceContainer()->getChannel(rowNumber);
-        for (auto resource : resources)
-            resource->setChannelHeight(height);
+        audioGroup->getChannel(rowNumber)->setChannelHeight(height);
         engine->getAudioResourceContainer()->sendActionMessage("");
     }
 }
@@ -284,7 +283,7 @@ BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="ChannelComponent" componentName=""
                  parentClasses="public juce::Component, private juce::Timer, public juce::ComboBox::Listener"
-                 constructorParams="std::shared_ptr&lt;AudioResource&gt; resource, std::shared_ptr&lt;AudiumEngine&gt; engine"
+                 constructorParams="std::shared_ptr&lt;AudioGroup&gt; audioGroup, std::shared_ptr&lt;AudiumEngine&gt; engine"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="1" initialWidth="60" initialHeight="100">
   <METHODS>

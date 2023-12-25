@@ -33,6 +33,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
 
     // create views
     auto audioResources = audioGroup->getAudioResources();
+    auto rowNumber = 0;
     for (auto audioResource : audioResources)
     {
         auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audiumEngine,
@@ -40,7 +41,8 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
                                                                          zoomHandler,
                                                                          playListItem->getRegion(),
                                                                          audioGroup->getColour(),
-                                                                         regionSelector));
+                                                                         regionSelector,
+                                                                         rowNumber));
         addAndMakeVisible(view.get());
         children.push_back(view);
     }
@@ -72,13 +74,13 @@ void PlayListItemComponent::resized()
     auto audioResources = audioGroup->getAudioResources();
     for (auto audioResource : audioResources)
     {
-        auto height = audioResource->getHeight();
+        auto height = 100;//audioResource->getHeight();
         if (count < children.size())
         {
             auto child = children[count];
             if (child != nullptr)
             {
-                child->setBounds(0, top, getWidth(), audioResource->getHeight());
+                child->setBounds(0, top, getWidth(), height);
             }
             count++;
         }

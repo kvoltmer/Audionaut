@@ -34,13 +34,15 @@ public:
                      std::shared_ptr<ZoomHandler> zoomHandler,
                      std::shared_ptr<AudioRegion> audioRegion,
                      juce::Colour colour,
-                     std::shared_ptr<RegionSelector> regionSelector) :
+                     std::shared_ptr<RegionSelector> regionSelector,
+                     int rowNumber) :
         audiumEngine(audiumEngine),
         audioResource(audioResource),
         zoomHandler(zoomHandler),
         audioRegion(audioRegion),
         colour(colour),
-        regionSelector(regionSelector)
+        regionSelector(regionSelector),
+        rowNumber(rowNumber)
     {
         // this component doesn't handle mouse events
         //setInterceptsMouseClicks(false, false);
@@ -121,6 +123,8 @@ protected:
     std::unique_ptr<audium::AudioThumbnail> audioThumbnail;
     
     static constexpr float verticalZoomFactor = 0.62f;
+    
+    int rowNumber;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormViewBase)
 };

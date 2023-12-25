@@ -1,18 +1,18 @@
 
 #include <iostream>
 
-#include "AudioGroupListBoxModel.h"
+#include "GroupListBoxModel.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
 #include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
 
-int AudioGroupListBoxModel::getNumRows()
+int GroupListBoxModel::getNumRows()
 {
     return audiumEngine->getAudioGroupContainer()->getNumItems();
 }
 
-void AudioGroupListBoxModel::paintListBoxItem ( int rowNumber,
+void GroupListBoxModel::paintListBoxItem ( int rowNumber,
                         juce::Graphics& g,
                         int width, int height,
                         bool rowIsSelected)
@@ -25,7 +25,7 @@ void AudioGroupListBoxModel::paintListBoxItem ( int rowNumber,
     }
 }
 
-juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, bool isRowSelected,
+juce::Component* GroupListBoxModel::refreshComponentForRow (int rowNumber, bool isRowSelected,
                                                                      juce::Component* existingComponentToUpdate)
 {
     auto audioGroup = audiumEngine->getAudioGroupContainer()->getAudioGroup(rowNumber);
@@ -60,28 +60,18 @@ juce::Component* AudioGroupListBoxModel::refreshComponentForRow (int rowNumber, 
     return nullptr;
 }
 
-int AudioGroupListBoxModel::getRowHeight (int rowNumber) const
+int GroupListBoxModel::getRowHeight (int rowNumber) const
 {
-    auto audioGroupContainer = audiumEngine->getAudioGroupContainer();
-    auto audioResourceContainer = audiumEngine->getAudioResourceContainer();
-    if (rowNumber < audioGroupContainer->getNumItems())
-    {
-        auto group = audioGroupContainer->getAudioGroup(rowNumber);
-        int height = 0;
-        auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group.get());
-        for (auto audioResource : audioResources)
-        {
-            height = std::max(height, audioResource->getTop() + audioResource->getHeight());
-        }
-        return height;
-        
-    }
+    auto group = audiumEngine->getAudioGroupContainer()->getAudioGroup(rowNumber);
+    if (group != nullptr)
+        return group->getTotalHeight() + DraggerControl::draggerHeight;
+    
     jassertfalse;
     return 0;
 }
 
 
-void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
+void GroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
     auto selected = owner->getSelectedRows();
     auto audioGroupContainer = audiumEngine->getAudioGroupContainer();
@@ -101,7 +91,7 @@ void AudioGroupListBoxModel::deleteKeyPressed (int lastRowSelected)
     }    
 }
 
-void AudioGroupListBoxModel::listWasScrolled()
+void GroupListBoxModel::listWasScrolled()
 {
     audiumEngine->getAudioGroupContainer()->sendActionMessage(scrolledVertically);
 }
