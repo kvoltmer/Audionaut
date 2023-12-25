@@ -12,7 +12,6 @@
 
 #include <JuceHeader.h>
 #include "Interface/Views/WaveFormViewBase.h"
-#include "Interface/Components/MiddlePanel/EditView/RegionEditComponent.h"
 
 class AudioResource;
 class ZoomHandler;
@@ -20,7 +19,6 @@ class AudioRegion;
 class RegionSelector;
 class RegionEditControl;
 class AudiumEngine;
-
 
 class AudioResourceView  : public WaveFormViewBase
 {
@@ -30,14 +28,10 @@ public:
                       std::shared_ptr<ZoomHandler> zoomHandler,
                       std::shared_ptr<AudioRegion> audioRegion,
                       juce::Colour colour,
-                      std::shared_ptr<RegionSelector> regionSelector) :
-        WaveFormViewBase(audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector)
+                      std::shared_ptr<RegionSelector> regionSelector,
+                      int rowNumber) :
+        WaveFormViewBase(audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber)
     {
-        regionEditComponent = std::shared_ptr<RegionEditComponent> (new RegionEditComponent(audiumEngine,
-                                                                                            audioResource,
-                                                                                            zoomHandler,
-                                                                                            regionSelector));
-        addAndMakeVisible(regionEditComponent.get());
     }
 
     void paint (juce::Graphics&) override;
@@ -47,10 +41,6 @@ public:
     void updateFromEngine() override;
     
 private:
-    
-    std::vector<std::shared_ptr<RegionEditControl>> regionEditControls;
-    
-    std::shared_ptr<RegionEditComponent> regionEditComponent;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceView)
 };

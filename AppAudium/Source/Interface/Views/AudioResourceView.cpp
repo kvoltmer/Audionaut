@@ -14,9 +14,6 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegionContainer.h"
 
-#include "Interface/Controls/RegionEditControl.h"
-#include "Interface/Controls/DraggerControl.h"
-
 void AudioResourceView::paint (juce::Graphics& g)
 {
     // std::cout << "AudioResourceView::paint" << std::endl;
@@ -33,13 +30,16 @@ void AudioResourceView::paint (juce::Graphics& g)
         const auto thumbArea = getLocalBounds();
         const auto start = audioResource->getRegionDataInSeconds().getStart();
         const auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
-        audioThumbnail->drawChannels (g, thumbArea, start, end, verticalZoomFactor);
+        
+        //rowNumber
+        audioThumbnail->drawChannel(g, thumbArea, start, end, 0, verticalZoomFactor);
+        //audioThumbnail->drawChannels (g, thumbArea, start, end, verticalZoomFactor);
     }
 }
 
 void AudioResourceView::updateFromEngine()
 {
-    double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
+    double posX = 0.0;// zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
     double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
     
     // don't change Y position
@@ -47,11 +47,8 @@ void AudioResourceView::updateFromEngine()
     juce::Rectangle<double> rect_tmp(posX, posY, length, audioResource->getHeight());
     
     setBounds(rect_tmp.toNearestInt());
-    
-    regionEditComponent->updateFromEngine();
 }
 
 void AudioResourceView::resized()
 {
-    regionEditComponent->setBounds(getLocalBounds());
 }

@@ -15,6 +15,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/AudioResourceContainer.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 

@@ -41,11 +41,6 @@ public:
     {
     }
     
-    void paint (juce::Graphics&) override
-    {
-        
-    }
-    
     void resized() override
     {
         auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
