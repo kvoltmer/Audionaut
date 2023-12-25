@@ -47,6 +47,7 @@ public:
 
     ~ChannelGroupComponent() override
     {
+        channelsListBox->setModel(nullptr);
     }
 
     void paint (juce::Graphics& g) override

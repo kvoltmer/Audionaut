@@ -16,6 +16,7 @@
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/Factory/AudioGroupFactory.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/AudiumTransportSource.h"
 
 AudioGroup::~AudioGroup()
 {
@@ -63,6 +64,12 @@ bool AudioGroup::writeToStream (juce::OutputStream& outputStream)
         subGroup->writeToStream(outputStream);
     }
     
+    outputStream.writeInt(static_cast<int>(audioChannels.size()));
+    for (auto channel : audioChannels)
+    {
+        channel->writeToStream(outputStream);
+    }
+    
     return true;
 }
 
@@ -83,6 +90,18 @@ bool AudioGroup::readFromStream (juce::InputStream& inputStream)
         subGroup->readFromStream(inputStream);
         audioSubGroups.push_back(subGroup);
         nextSubGroupId = juce::jmax(nextSubGroupId, subGroup->getId());
+    }
+    
+    
+    auto numChannels = inputStream.readInt();
+    ensureNumChannels(numChannels);
+    for (auto c = 0; c < numChannels; c++)
+    {
+        auto channel = getChannel(c);
+        if (channel != nullptr)
+        {
+            channel->readFromStream(inputStream);
+        }
     }
     
     return true;
@@ -112,6 +131,66 @@ int AudioGroup::getTotalHeight() const
     }
     return height;
 }
+
+float AudioGroup::getOutputLevel(int rowNumber) const
+{
+    auto level = 0.f;
+    // TODO: move this to channel class
+    auto channel = getChannel(rowNumber);
+    if (channel != nullptr)
+    {
+        auto resources = getAudioResourcesAtChannel(rowNumber);
+        for (auto resource : resources)
+        {
+            if (resource->getAudioTransportSource()->isPlaying())
+            {
+                level += resource->getAudioTransportSource()->getOutputLevel();
+            }
+        }
+    }
+    
+    return level;
+}
+
+std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtChannel(int channelNumber) const
+{
+    // TODO: channel should hold a std:vector with audio resource
+    //auto channel = audioGroup->getChannel(rowNumber);
+    
+    std::vector<std::shared_ptr<AudioResource>> result;
+    auto resources = getAudioResources();
+    for (auto resource : resources)
+    {
+        if (resource->containsChannelNumber(channelNumber))
+        {
+            result.push_back(resource);
+        }
+    }
+    return result;
+}
+
+void AudioGroup::setGain(float gain, int channelNumber)
+{
+    // TODO: move this to channel class
+    auto resources = getAudioResourcesAtChannel(channelNumber);
+    for (auto resource : resources)
+    {
+        resource->getAudioTransportSource()->setGain(gain);
+    }
+}
+
+float AudioGroup::getGain(int channelNumber) const
+{
+    // TODO: move this to channel class
+    auto resources = getAudioResourcesAtChannel(channelNumber);
+    if (resources.size() > 0)
+    {
+        return resources[0]->getAudioTransportSource()->getGain();
+    }
+    jassertfalse;
+    return 0.0;
+}
+
 
 std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(const AudioResourceContainer &resourceContainer,
                                                                   const AudioRegionContainer &regionContainer,

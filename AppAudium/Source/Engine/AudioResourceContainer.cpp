@@ -373,16 +373,6 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getChannel(i
     return result;
 }
 
-void AudioResourceContainer::setChannelHeight(int height)
-{
-    for(auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
-    {
-        it->second->setChannelHeight(height);
-    }
-    
-    sendActionMessage("");
-}
-
 void AudioResourceContainer::deselectAllResources()
 {
     for(auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)

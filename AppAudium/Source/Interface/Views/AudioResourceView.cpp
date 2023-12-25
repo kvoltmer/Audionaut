@@ -39,14 +39,14 @@ void AudioResourceView::paint (juce::Graphics& g)
 
 void AudioResourceView::updateFromEngine()
 {
-    double posX = 0.0;// zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
-    double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
-    
-    // don't change Y position
-    double posY = getBounds().getY();
-    juce::Rectangle<double> rect_tmp(posX, posY, length, audioResource->getHeight());
-    
-    setBounds(rect_tmp.toNearestInt());
+//    double posX = 0.0;// zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
+//    double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
+//    
+//    // don't change Y position
+//    double posY = getBounds().getY();
+//    juce::Rectangle<double> rect_tmp(posX, posY, length, audioResource->getHeight());
+//    
+//    setBounds(rect_tmp.toNearestInt());
 }
 
 void AudioResourceView::resized()

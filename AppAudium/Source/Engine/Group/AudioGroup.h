@@ -69,7 +69,11 @@ public:
     void ensureNumChannels(int channelsNeeded);
     std::shared_ptr<AudioChannel> getChannel(int channelNumber) const { return audioChannels[channelNumber]; }
     int getTotalHeight() const;
+    float getOutputLevel(int rowNumber) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannel(int channelNumber) const;
     
+    void setGain(float gain, int channelNumber);
+    float getGain(int channelNumber) const;
     
     int getNextSubGroupId() { return ++nextSubGroupId; }
     std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(const AudioResourceContainer &esourceContainer,

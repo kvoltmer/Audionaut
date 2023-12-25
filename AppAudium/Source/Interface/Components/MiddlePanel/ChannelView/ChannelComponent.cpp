@@ -20,6 +20,7 @@
 //[Headers] You can add your own extra header files here...
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/Channel/AudioChannel.h"
 //[/Headers]
 
 #include "ChannelComponent.h"
@@ -181,10 +182,7 @@ void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
         //[UserLabelCode_volumeLevel] -- add your label text handling code here..
         auto db = volumeLevel->getText().getFloatValue();
         auto gain = LevelMeter::decebelToGain(db);
-        // TODO: move this to channel class
-        auto resources = audioGroup->getAudioResources();
-        for (auto resource : resources)
-            resource->getAudioTransportSource()->setGain(gain);
+        audioGroup->setGain(gain, rowNumber);
         //[/UserLabelCode_volumeLevel]
     }
 
@@ -227,12 +225,8 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioGroup> audioGroup, 
     
     volumeLevel->setColour (juce::Label::textColourId, audioGroup->getColour());
     volumeLabeldB->setColour (juce::Label::textColourId, audioGroup->getColour());
-
-    // TODO: move this to channel class
-    auto resources = audioGroup->getAudioResources();
-    jassert(resources.size() > 0);
     
-    auto gain = resources[0]->getAudioTransportSource()->getGain();
+    auto gain = audioGroup->getGain(rowNumber);
     volumeLevel->setText(String(LevelMeter::gainToDecebel(gain)), dontSendNotification);
 
     if (not isTimerRunning())
@@ -242,15 +236,8 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioGroup> audioGroup, 
 }
 
 void ChannelComponent::timerCallback()
-{
-    // TODO: move this to channel class
-    auto resources = audioGroup->getAudioResources();
-    
-    auto level = 0.f;
-    for (auto resource : resources)
-        level += resource->getAudioTransportSource()->getOutputLevel();
-    
-    levelMeter->setLevel(level);
+{    
+    levelMeter->setLevel(audioGroup->getOutputLevel(rowNumber));
 }
 
 void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
@@ -277,9 +264,7 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
 
         channelSizeComboBox->setText("", dontSendNotification);
 
-        auto resources = engine->getAudioResourceContainer()->getChannel(rowNumber);
-        for (auto resource : resources)
-            resource->setChannelHeight(height);
+        audioGroup->getChannel(rowNumber)->setChannelHeight(height);
         engine->getAudioResourceContainer()->sendActionMessage("");
     }
 }
