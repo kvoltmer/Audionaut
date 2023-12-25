@@ -69,7 +69,7 @@ public:
     void ensureNumChannels(int channelsNeeded);
     std::shared_ptr<AudioChannel> getChannel(int channelNumber) const { return audioChannels[channelNumber]; }
     int getTotalHeight() const;
-    float getOutputLevel(int rowNumber) const;
+    float getOutputLevel(int channelNumber) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannel(int channelNumber) const;
     
     void setGain(float gain, int channelNumber);
@@ -85,6 +85,9 @@ public:
     
     std::vector<std::shared_ptr<AudioSubGroup>> getAudioSubGroups() const { return audioSubGroups; }
     
+    void setSelected(bool bSelected) { selected = bSelected; }
+    bool isSelected() const { return selected; }
+    
 private:
     const AudioResourceContainer &audioResourceContainer;
     const AudioRegionContainer &audioRegionContainer;
@@ -98,6 +101,8 @@ private:
     int nextSubGroupId = 0;
     
     std::vector<std::shared_ptr<AudioChannel>> audioChannels;
+    
+    bool selected = false;
     
     bool subGroupIdExists(const int groupId) const;
 };

@@ -32,9 +32,9 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
     if ( !filenames.isEmpty())
     {
         
-        jassert(File (filenames[0]).existsAsFile());
-        auto name = File (filenames[0]).getFileNameWithoutExtension().toStdString();
+        //jassert(File (filenames[0]).existsAsFile());
         
+        juce::String name;
         // create NEW GROUP
         auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
                                                                                  *audiumEngine->getAudioRegionContainer(),

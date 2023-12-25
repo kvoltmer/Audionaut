@@ -222,10 +222,10 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioGroup> audioGroup, 
     this->audioGroup = audioGroup;
     this->rowNumber = rowNumber;
 
-    
+
     volumeLevel->setColour (juce::Label::textColourId, audioGroup->getColour());
     volumeLabeldB->setColour (juce::Label::textColourId, audioGroup->getColour());
-    
+
     auto gain = audioGroup->getGain(rowNumber);
     volumeLevel->setText(String(LevelMeter::gainToDecebel(gain)), dontSendNotification);
 
@@ -236,7 +236,7 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioGroup> audioGroup, 
 }
 
 void ChannelComponent::timerCallback()
-{    
+{
     levelMeter->setLevel(audioGroup->getOutputLevel(rowNumber));
 }
 

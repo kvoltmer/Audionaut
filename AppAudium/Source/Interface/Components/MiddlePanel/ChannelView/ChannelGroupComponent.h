@@ -14,6 +14,7 @@
 
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Models/ChannelSubGroupListBoxModel.h"
+#include "Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h"
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioGroup.h"
@@ -36,7 +37,7 @@ public:
         channelsListBox->setModel(channelsListBoxModel.get());
         
         
-        auto header = std::unique_ptr<juce::Component>(new juce::Component());
+        auto header = std::unique_ptr<ChannelGroupHeaderComponent>(new ChannelGroupHeaderComponent(audioGroup));
         channelsListBox->setHeaderComponent(std::move(header));
         channelsListBox->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
         channelsListBox->setOutlineThickness(0);
