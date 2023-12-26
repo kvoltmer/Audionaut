@@ -59,7 +59,13 @@ public:
     {
         audioChannelsListBox->updateContent();
     }
-
+    
+    void setVerticalScrollOffset(double offset)
+    {
+        //std::cout << offset << std::endl;
+        auto range = audioChannelsListBox->getViewport()->getVerticalScrollBar().getCurrentRange().withStart(offset);
+        audioChannelsListBox->getViewport()->getVerticalScrollBar().setCurrentRange(range, sendNotificationSync);
+    }
 
 private:
     std::shared_ptr<AudiumEngine>               audiumEngine;

@@ -129,6 +129,11 @@ public:
     }
     
     RegionSelector* getRegionSelector() const { return regionSelector.get(); }
+    
+    double getVerticalScrollOffset() const
+    {
+        return audioGroupListBox->getViewport()->getVerticalScrollBar().getCurrentRange().getStart();
+    }
 
 protected:
     

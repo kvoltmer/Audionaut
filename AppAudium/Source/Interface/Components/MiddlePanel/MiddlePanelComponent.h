@@ -68,6 +68,14 @@ public:
         {
             arrangementComponent->getRegionSelector()->updateFromEngine();
             editComponent->getRegionSelector()->updateFromEngine();
+            if (editComponent->isVisible())
+            {
+                channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
+            }
+            else if (arrangementComponent->isVisible())
+            {
+                channelsComponent->setVerticalScrollOffset(arrangementComponent->getVerticalScrollOffset());
+            }
         }
     }
     
@@ -96,6 +104,7 @@ public:
         {
             arrangementComponent->resized();
             arrangementComponent->updateUI();
+            channelsComponent->setVerticalScrollOffset(arrangementComponent->getVerticalScrollOffset());
         }
     }
     
@@ -112,6 +121,7 @@ public:
         {
             editComponent->resized();
             editComponent->updateUI();
+            channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
         }
     }
     

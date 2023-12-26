@@ -157,7 +157,8 @@ public:
             
             juce::Rectangle<double> rect_tmp(pos, 0.0, width, height);
             
-            subGroupListViews[counter]->setBounds(rect_tmp.toNearestInt());
+            if (counter < subGroupListViews.size())
+                subGroupListViews[counter]->setBounds(rect_tmp.toNearestInt());
             counter++;
         }
     }

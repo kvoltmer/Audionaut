@@ -41,6 +41,12 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
             avoidDragging = true;
             return;
         }
+
+        if (owner->getWidth() - parentPosition.getX() < 10)
+        {
+            avoidDragging = true;
+            return;
+        }
         
         avoidDragging = false;
         
