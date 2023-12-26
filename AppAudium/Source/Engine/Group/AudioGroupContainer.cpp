@@ -49,7 +49,6 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroup(int index) const
     {
         return audioGroups[index];
     }
-    jassertfalse;
     return nullptr;
 }
 

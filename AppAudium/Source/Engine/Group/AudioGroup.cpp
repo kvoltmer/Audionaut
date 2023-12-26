@@ -187,7 +187,6 @@ float AudioGroup::getGain(int channelNumber) const
     {
         return resources[0]->getAudioTransportSource()->getGain();
     }
-    jassertfalse;
     return 0.0;
 }
 
