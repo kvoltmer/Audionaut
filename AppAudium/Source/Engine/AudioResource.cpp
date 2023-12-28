@@ -83,15 +83,9 @@ std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWith
     return result;
 }
 
-void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionData, bool syncEqualResources)
+void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionData)
 {
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
-    
-    if (syncEqualResources)
-    {
-        for (auto resource : getAudioResourcesWithinSubGroup())
-            resource->setRegionDataInSeconds(newRegionData, false);
-    }
     
     regionData = newRegionData;
 
@@ -101,28 +95,18 @@ void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionDa
     }
 }
 
-void AudioResource::setTransportPosition(const double newPositionSeconds, bool syncEqualResources)
+void AudioResource::setTransportPosition(const double newPositionSeconds)
 {
-    if (syncEqualResources)
-    {
-        for (auto resource : getAudioResourcesWithinSubGroup())
-            resource->setTransportPosition(newPositionSeconds, false);
-    }
+
     
     transportPositionClocks = owner.getTempoProvider()->secondsToClocks(newPositionSeconds);
 }
 
 
 
-bool AudioResource::validateData(bool syncEqualResources)
+bool AudioResource::validateData()
 {
     bool result = false;
-    
-    if (syncEqualResources)
-    {
-        for (auto resource : getAudioResourcesWithinSubGroup())
-            result |= resource->validateData(false);
-    }
     
     if (transportPositionClocks < 0.0)
     {

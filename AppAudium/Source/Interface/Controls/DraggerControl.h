@@ -22,41 +22,39 @@ class DraggerControl  : public juce::Component, public juce::ChangeBroadcaster
 {
 public:
     DraggerControl(juce::Component* componentToDrag,
-                   std::shared_ptr<AudioResource> audioResource,
                    std::shared_ptr<ZoomHandler> zoomHandler,
                    juce::Colour colour,
                    std::shared_ptr<RegionSelector> regionSelector) :
         componentToDrag(componentToDrag),
-        audioResource(audioResource),
         zoomHandler(zoomHandler),
         colour(colour),
         regionSelector(regionSelector)
     {
     }
 
-    ~DraggerControl() override
+    virtual ~DraggerControl() override
     {
     }
     
-    void paintFileNameLabel (juce::Graphics& g)
+    void paintLabel (juce::Graphics& g, const juce::String label)
     {
         
         g.setFont (12.0f);
         
         juce::Rectangle<int> bonds(5,
                              4,
-                             g.getCurrentFont().getStringWidth(audioResource->getFileNameWithoutExtension()),
+                             g.getCurrentFont().getStringWidth(label),
                              g.getCurrentFont().getHeight());
         
         
         g.setColour (findColour(audium::defaultTextColourId));
-        g.drawFittedText (audioResource->getFileNameWithoutExtension(), bonds, juce::Justification::topLeft, 1);
+        g.drawFittedText (label, bonds, juce::Justification::topLeft, 1);
     }
 
     void paint (juce::Graphics& g) override
     {
         auto colour = Colours::white;
-        if (audioResource->isSelected())
+        if (isSelected())
         {
             g.setColour (colour.withAlpha(0.8f));
         }
@@ -67,7 +65,7 @@ public:
 
         g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
-        paintFileNameLabel(g);
+        paintLabel(g, getLabelString());
 
     }
 
@@ -89,7 +87,7 @@ public:
         originalBounds = componentToDrag->getBounds();
         
         // TODO: change to subgroup selection
-        audioResource->setSelected(e.mods.isCommandDown() ? !audioResource->isSelected() : true, !e.mods.isCommandDown());
+        setSelected(e.mods.isCommandDown() ? !isSelected() : true, !e.mods.isCommandDown());
         
         repaint();
     }
@@ -126,7 +124,7 @@ public:
         if (regionSelector != nullptr)
             regionSelector->setEnabled(true);
         
-        if (audioResource->validateData(true))
+        if (validateData())
         {
             sendChangeMessage();
         }
@@ -182,62 +180,35 @@ public:
         setRegionDataInSeconds(rangeInSeconds);
     }
     
-    void setRegionDataInSeconds(const juce::Range<double> newRegionData)
-    {
-        // set value in the engine
-
-        switch (currentDragMode) {
-            case leftEdge:
-                // offset in file
-                {
-                    auto diff = newRegionData.getStart() - audioResource->getTransportPositionSeconds();
-                    
-                    auto regionData = audioResource->getRegionDataInSeconds();
-                    auto newLength = regionData.getLength() - diff;
-                    auto newStart = regionData.getStart() + diff;
-                
-                    audioResource->setRegionDataInSeconds(juce::Range<double>(newStart, newStart + newLength), true);
-                    audioResource->setTransportPosition(newRegionData.getStart(), true);
-                    repaint();
-                }
-                break;
-            case rightEdge:
-                {
-                    // duration
-                    auto regionData = audioResource->getRegionDataInSeconds();
-                    regionData.setLength(newRegionData.getLength());
-                    audioResource->setRegionDataInSeconds(regionData, true);
-                }
-                break;
-            case middleEdge:
-                // position in transport
-                audioResource->setTransportPosition(newRegionData.getStart(), true);
-                break;
-            default:
-                break;
-        }
-    }
+    virtual void setRegionDataInSeconds(const juce::Range<double> newRegionData) = 0;
+    
+    virtual bool isSelected() const = 0;
+    
+    virtual void setSelected(bool bSelected, bool deselectOthers) = 0;
+    
+    virtual const juce::String getLabelString() const = 0;
+    
+    virtual bool validateData() = 0;
     
     void updateFromEngine()
     {
-        double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
-        double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
-
-        // don't change Y position and height
-        double posY = getBounds().getY();
-        double height = getHeight();
-
-        juce::Rectangle<double> rect_tmp(posX, posY, length, height);
-        componentToDrag->setBounds(rect_tmp.toNearestInt());
+//        double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
+//        double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
+//
+//        // don't change Y position and height
+//        double posY = getBounds().getY();
+//        double height = getHeight();
+//
+//        juce::Rectangle<double> rect_tmp(posX, posY, length, height);
+//        componentToDrag->setBounds(rect_tmp.toNearestInt());
     }
 
     static constexpr int draggerHeight = 19;
     
-private:
+protected:
     
     juce::Component* componentToDrag;
     
-    std::shared_ptr<AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;

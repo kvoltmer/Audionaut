@@ -17,7 +17,7 @@
 
 #include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
 #include "Interface/Views/AudioResourceView.h"
-#include "Interface/Controls/DraggerControl.h"
+#include "Interface/Controls/SubGroupDraggerControl.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Models/SubGroupListBoxModel.h"
@@ -100,8 +100,8 @@ public:
                 subGroupListView->setModel(subGroupListBoxModel.get());
                 
                 // create dragger as header of ListBox
-                auto dragger = std::unique_ptr<DraggerControl>(new DraggerControl(subGroupListView.get(),
-                                                                                  resources[0],
+                auto dragger = std::unique_ptr<SubGroupDraggerControl>(new SubGroupDraggerControl(subGroupListView.get(),
+                                                                                  subGroup,
                                                                                   zoomHandler,
                                                                                   audioGroup->getColour(),
                                                                                   regionSelector));

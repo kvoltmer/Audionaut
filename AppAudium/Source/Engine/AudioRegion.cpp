@@ -63,7 +63,7 @@ double AudioRegion::getAudioResourceStartInSeconds() const
     double start = 0;
     for (auto resource : getAudioResources())
     {
-        start = std::min(start, resource->getRegionDataInSeconds().getStart());
+        start = std::max(start, resource->getRegionDataInSeconds().getStart());
     }
     return start;
 }

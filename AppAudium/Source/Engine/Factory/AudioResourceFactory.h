@@ -57,7 +57,7 @@ public:
                                                                                      std::move(audioFormatReaderSource),
                                                                                      channelPosition,
                                                                                      resourceId));
-                    audioResource->setTransportPosition(transportPosition, false);
+                    audioResource->setTransportPosition(transportPosition);
                 }
             }
         }

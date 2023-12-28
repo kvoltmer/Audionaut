@@ -29,23 +29,51 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     regionSelector(regionSelector)
 {
     // this component doesn't handle mouse events
-    setInterceptsMouseClicks(false, false);
+    //setInterceptsMouseClicks(false, false);
+    
+    subGroupListBox.reset(new audium::ListBox());
+    
+    playListItemArrangementModel.reset(new PlayListItemArrangementModel(*subGroupListBox.get(),
+                                                                        audioGroup,
+                                                                        playListItem,
+                                                                        audiumEngine,
+                                                                        zoomHandler,
+                                                                        regionSelector));
 
-    // create views
-    auto audioResources = audioGroup->getAudioResources();
-    auto rowNumber = 0;
-    for (auto audioResource : audioResources)
-    {
-        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audiumEngine,
-                                                                         audioResource,
-                                                                         zoomHandler,
-                                                                         playListItem->getRegion(),
-                                                                         audioGroup->getColour(),
-                                                                         regionSelector,
-                                                                         rowNumber));
-        addAndMakeVisible(view.get());
-        children.push_back(view);
-    }
+    subGroupListBox->setModel(playListItemArrangementModel.get());
+//    
+//    // create dragger as header of ListBox
+//    auto dragger = std::unique_ptr<DraggerControl>(new DraggerControl(subGroupListView.get(),
+//                                                                      resources[0],
+//                                                                      zoomHandler,
+//                                                                      audioGroup->getColour(),
+//                                                                      regionSelector));
+//    dragger->addChangeListener(this);
+//    subGroupListView->setHeaderComponent(std::move(dragger));
+//
+//    
+//    subGroupListView->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
+
+    subGroupListBox->setOutlineThickness(0);
+    addAndMakeVisible(subGroupListBox.get());
+    
+    
+
+//    // create views
+//    auto audioResources = audioGroup->getAudioResources();
+//    auto rowNumber = 0;
+//    for (auto audioResource : audioResources)
+//    {
+//        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audiumEngine,
+//                                                                         audioResource,
+//                                                                         zoomHandler,
+//                                                                         playListItem->getRegion(),
+//                                                                         audioGroup->getColour(),
+//                                                                         regionSelector,
+//                                                                         rowNumber));
+//        addAndMakeVisible(view.get());
+//        children.push_back(view);
+//    }
 }
 
 PlayListItemComponent::~PlayListItemComponent()
@@ -69,21 +97,23 @@ void PlayListItemComponent::paint (juce::Graphics& g)
 
 void PlayListItemComponent::resized()
 {
-    int top = 0;
-    int count = 0;
-    auto audioResources = audioGroup->getAudioResources();
-    for (auto audioResource : audioResources)
-    {
-        auto height = 100;//audioResource->getHeight();
-        if (count < children.size())
-        {
-            auto child = children[count];
-            if (child != nullptr)
-            {
-                child->setBounds(0, top, getWidth(), height);
-            }
-            count++;
-        }
-        top += height;
-    }
+    subGroupListBox->setBounds(getLocalBounds());
+    
+//    int top = 0;
+//    int count = 0;
+//    auto audioResources = audioGroup->getAudioResources();
+//    for (auto audioResource : audioResources)
+//    {
+//        auto height = 100;//audioResource->getHeight();
+//        if (count < children.size())
+//        {
+//            auto child = children[count];
+//            if (child != nullptr)
+//            {
+//                child->setBounds(0, top, getWidth(), height);
+//            }
+//            count++;
+//        }
+//        top += height;
+//    }
 }
