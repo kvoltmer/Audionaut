@@ -11,6 +11,9 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Interface/Widgets/audium_ListBox.h"
+#include "Interface/Models/PlayListItemArrangementModel.h"
+
 
 class AudioGroup;
 class AudioRegion;
@@ -46,6 +49,9 @@ private:
     std::shared_ptr<RegionSelector> regionSelector;
     
     std::vector<std::shared_ptr<AudioRegionView>> children;
+    
+    std::unique_ptr<audium::ListBox> subGroupListBox;
+    std::unique_ptr<PlayListItemArrangementModel> playListItemArrangementModel;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)
 };

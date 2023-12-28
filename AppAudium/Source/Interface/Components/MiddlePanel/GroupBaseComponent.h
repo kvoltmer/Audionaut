@@ -49,13 +49,8 @@ public:
     void fileDragEnter (const juce::StringArray& files, int x, int y) override;
     void fileDragExit (const juce::StringArray& files) override;
     
-    void mouseDown (const juce::MouseEvent& e) override;
-
-    void mouseDrag (const juce::MouseEvent& e) override;
-
-    void mouseUp (const juce::MouseEvent&) override;
-
-    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails& wheel) override;
+    
+    void setNewGroupColour();
     
 protected:
     

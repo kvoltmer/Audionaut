@@ -37,8 +37,12 @@ public:
 
     const AudioGroup& getAudioGroup() const { return audioGroup; }
     
+    void setSelected(bool bSelected) { selected = bSelected; }
+    bool isSelected() const { return selected; }
+
 private:
     const AudioGroup& audioGroup;
 
     int subGroupId = -1;
+    bool selected = false;
 };

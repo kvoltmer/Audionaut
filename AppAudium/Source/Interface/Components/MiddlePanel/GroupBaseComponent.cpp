@@ -35,7 +35,13 @@ GroupBaseComponent::GroupBaseComponent (std::shared_ptr<AudioGroup> group,
     zoomHandler(zoomHandler),
     regionSelector(regionSelector)
 {
-    if (group->getColour() == juce::Colours::pink)
+    setNewGroupColour();
+    setInterceptsMouseClicks(false, true);
+}
+
+void GroupBaseComponent::setNewGroupColour()
+{
+    if (audioGroup->getColour() == juce::Colours::pink)
     {
         auto newColour = audium::getNewWaveFormColour();
         
@@ -48,7 +54,7 @@ GroupBaseComponent::GroupBaseComponent (std::shared_ptr<AudioGroup> group,
             }
         }
         
-        group->setColour(newColour);
+        audioGroup->setColour(newColour);
     }
 }
 
@@ -113,30 +119,10 @@ void GroupBaseComponent::fileDragEnter (const juce::StringArray& files, int x, i
     regionSelector->setEnabled(false);
     repaint();
 }
+
 void GroupBaseComponent::fileDragExit (const juce::StringArray& files)
 {
     externalDragAndDrop = false;
     regionSelector->setEnabled(true);
     repaint();
-}
-
-void GroupBaseComponent::mouseDown (const MouseEvent& e)
-{
-    getParentComponent()->mouseDown(e);
-    mouseDrag (e);
-}
-
-void GroupBaseComponent::mouseDrag (const MouseEvent& e)
-{
-    getParentComponent()->mouseDrag(e);
-}
-
-void GroupBaseComponent::mouseUp (const MouseEvent& e)
-{
-    getParentComponent()->mouseUp(e);
-}
-
-void GroupBaseComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
-{
-    getParentComponent()->mouseWheelMove(e, wheel);
 }
