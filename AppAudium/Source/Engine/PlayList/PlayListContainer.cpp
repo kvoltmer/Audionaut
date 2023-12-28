@@ -110,7 +110,7 @@ bool PlayListContainer::writeToStream (juce::OutputStream& outputStream)
     for (auto & item : playListItems)
     {
         outputStream.writeInt(audioRegionContainer.getRegionIndex(item->getRegion()));
-        outputStream.writeString(item->getRegion()->name);
+        outputStream.writeString(item->getRegion()->getName());
     }
     return true;
 }
@@ -128,7 +128,7 @@ bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
             auto audioRegion    = audioRegionContainer.getRegion(regionIndex);
             if (audioRegion != nullptr)
             {
-                jassert(regionName == audioRegion->name);
+                jassert(regionName == audioRegion->getName());
                 auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
                 playListItems.push_back(playListItem);
             }

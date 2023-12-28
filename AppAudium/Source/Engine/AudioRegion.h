@@ -39,9 +39,7 @@ public:
     typedef class juce::Range<double> RegionData;
     
     juce::String getName() const { return name; }
-    
-    // TODO: make private
-    juce::String name;
+    void setName(const juce::String newName) { name = newName; }
     
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
@@ -58,21 +56,20 @@ public:
     double getAudioResourceEndInSeconds() const;
 
     void setRegionStart(double newStart);
-
     void setRegionEnd(double newEnd);
-
     void setRegionLength(double newLength);
     
 private:
-    // Start and end position of audio region in seconds.
-    RegionData regionData;
     
     std::shared_ptr<AudioGroup> audioGroup;
-    
     std::shared_ptr<AudioSubGroup> audioSubGroup;
-    
     std::shared_ptr<TempoProvider> tempoProvider;
-        
+    
+    // Start and end position of audio region in seconds.
+    RegionData regionData;
+
+    juce::String name;
+    
     bool selected = false;
     
     JUCE_LEAK_DETECTOR (AudioRegion)

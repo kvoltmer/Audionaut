@@ -74,7 +74,7 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 
         if (columnNumber == 1)
         {
-            text = r->getRegion()->name;
+            text = r->getRegion()->getName();
         }
         else if (columnNumber == 2)
         {

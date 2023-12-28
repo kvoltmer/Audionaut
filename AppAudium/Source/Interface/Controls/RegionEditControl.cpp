@@ -22,7 +22,7 @@
 void RegionEditControl::paintFileNameLabel (juce::Graphics& g)
 {
     g.setFont (12.0f);
-    const auto name = audioRegion->name;
+    const auto name = audioRegion->getName();
     juce::Rectangle<int> bonds(5,
                          5,
                          g.getCurrentFont().getStringWidth(name),

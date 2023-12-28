@@ -10,12 +10,9 @@
 
 #include <JuceHeader.h>
 #include "PlayListItemComponent.h"
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/AudioResourceContainer.h"
-#include "Engine/PlayList/PlayListContainer.h"
+
 #include "Engine/PlayList/PlayListItem.h"
 
-#include "Interface/Views/AudioRegionView.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Controls/PlayListItemDraggerControl.h"
 
@@ -30,19 +27,16 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     playListItem(playListItem),
     regionSelector(regionSelector)
 {
-    // this component doesn't handle mouse events
-    //setInterceptsMouseClicks(false, false);
     
-    subGroupListBox.reset(new audium::ListBox());
-    
-    playListItemArrangementModel.reset(new PlayListItemArrangementModel(*subGroupListBox.get(),
+    playListItemListBox.reset(new audium::ListBox());
+    playListItemArrangementModel.reset(new PlayListItemArrangementModel(*playListItemListBox.get(),
                                                                         audioGroup,
                                                                         playListItem,
                                                                         audiumEngine,
                                                                         zoomHandler,
                                                                         regionSelector));
 
-    subGroupListBox->setModel(playListItemArrangementModel.get());
+    playListItemListBox->setModel(playListItemArrangementModel.get());
     
     // create dragger as header of ListBox
     auto dragger = std::unique_ptr<PlayListItemDraggerControl>(new PlayListItemDraggerControl(this,
@@ -51,17 +45,20 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
                                                                       audioGroup->getColour(),
                                                                       regionSelector));
     dragger->addChangeListener(this);
-    subGroupListBox->setHeaderComponent(std::move(dragger));
+    playListItemListBox->setHeaderComponent(std::move(dragger));
 
     
-    subGroupListBox->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
-
-    subGroupListBox->setOutlineThickness(0);
-    addAndMakeVisible(subGroupListBox.get());
+    playListItemListBox->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
+    playListItemListBox->setOutlineThickness(0);
+    // transparent backgroud:
+    playListItemListBox->setColour(audium::ListBox::backgroundColourId, juce::Colours::transparentBlack);
+    
+    addAndMakeVisible(playListItemListBox.get());
 }
 
 PlayListItemComponent::~PlayListItemComponent()
 {
+    playListItemListBox->setModel(nullptr);
 }
 
 void PlayListItemComponent::paint (juce::Graphics& g)
@@ -71,20 +68,20 @@ void PlayListItemComponent::paint (juce::Graphics& g)
         g.setColour (audium::getComplementaryColour(audioGroup->getColour()).darker());
         g.fillAll();
     }
-    else
-    {
-        g.setColour (juce::Colours::black.withAlpha(0.50f));
-        g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
-    }
+    
+    
+    g.setColour (audioGroup->getColour().withAlpha(0.50f));
+    g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 1.0f);
+    
     
 }
 
 void PlayListItemComponent::resized()
 {
-    subGroupListBox->setBounds(getLocalBounds());
+    playListItemListBox->setBounds(getLocalBounds());
 }
 
 void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)
 {
-    subGroupListBox->updateContent();
+    playListItemListBox->updateContent();
 }

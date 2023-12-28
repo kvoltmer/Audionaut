@@ -14,18 +14,15 @@
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Models/PlayListItemArrangementModel.h"
 
-
 class AudioGroup;
-class AudioRegion;
 class PlayListItem;
 class ZoomHandler;
-class AudioRegionView;
 class RegionSelector;
 class AudiumEngine;
 
 //==============================================================================
 /*
-Display all AudioRegionViews within a AudioGroup
+Display a PlayListItem within a AudioGroup
 */
 class PlayListItemComponent  : public juce::Component, public juce::ChangeListener
 {
@@ -49,10 +46,8 @@ private:
     std::shared_ptr<AudioGroup>     audioGroup;
     std::shared_ptr<PlayListItem>   playListItem;
     std::shared_ptr<RegionSelector> regionSelector;
-    
-    //std::vector<std::shared_ptr<AudioRegionView>> children;
-    
-    std::unique_ptr<audium::ListBox> subGroupListBox;
+        
+    std::unique_ptr<audium::ListBox> playListItemListBox;
     std::unique_ptr<PlayListItemArrangementModel> playListItemArrangementModel;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)

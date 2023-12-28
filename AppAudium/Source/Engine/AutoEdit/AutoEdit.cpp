@@ -160,7 +160,7 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
             auto region = audioRegionContainer->getRegion(elem["index"]);
             jassert(region != nullptr);
             std::string filename = elem["file"];
-            jassert(juce::String(filename).contains(region->name));
+            jassert(juce::String(filename).contains(region->getName()));
             
             for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
             {
