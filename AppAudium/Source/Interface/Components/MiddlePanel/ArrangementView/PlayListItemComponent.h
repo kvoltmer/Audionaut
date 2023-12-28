@@ -27,7 +27,7 @@ class AudiumEngine;
 /*
 Display all AudioRegionViews within a AudioGroup
 */
-class PlayListItemComponent  : public juce::Component
+class PlayListItemComponent  : public juce::Component, public juce::ChangeListener
 {
 public:
     PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
@@ -40,6 +40,8 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    void changeListenerCallback (ChangeBroadcaster* source) override;
+    
     std::shared_ptr<PlayListItem> getPlayListItem() const { return playListItem; }
     
 private:
@@ -48,7 +50,7 @@ private:
     std::shared_ptr<PlayListItem>   playListItem;
     std::shared_ptr<RegionSelector> regionSelector;
     
-    std::vector<std::shared_ptr<AudioRegionView>> children;
+    //std::vector<std::shared_ptr<AudioRegionView>> children;
     
     std::unique_ptr<audium::ListBox> subGroupListBox;
     std::unique_ptr<PlayListItemArrangementModel> playListItemArrangementModel;

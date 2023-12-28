@@ -12,10 +12,12 @@
 #include "PlayListItemComponent.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/AudioResourceContainer.h"
-#include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
+
+#include "Interface/Views/AudioRegionView.h"
 #include "Interface/ColourIds.h"
+#include "Interface/Controls/PlayListItemDraggerControl.h"
 
 //==============================================================================
 PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
@@ -41,39 +43,21 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
                                                                         regionSelector));
 
     subGroupListBox->setModel(playListItemArrangementModel.get());
-//    
-//    // create dragger as header of ListBox
-//    auto dragger = std::unique_ptr<DraggerControl>(new DraggerControl(subGroupListView.get(),
-//                                                                      resources[0],
-//                                                                      zoomHandler,
-//                                                                      audioGroup->getColour(),
-//                                                                      regionSelector));
-//    dragger->addChangeListener(this);
-//    subGroupListView->setHeaderComponent(std::move(dragger));
-//
-//    
-//    subGroupListView->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
+    
+    // create dragger as header of ListBox
+    auto dragger = std::unique_ptr<PlayListItemDraggerControl>(new PlayListItemDraggerControl(this,
+                                                                      playListItem,
+                                                                      zoomHandler,
+                                                                      audioGroup->getColour(),
+                                                                      regionSelector));
+    dragger->addChangeListener(this);
+    subGroupListBox->setHeaderComponent(std::move(dragger));
+
+    
+    subGroupListBox->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
 
     subGroupListBox->setOutlineThickness(0);
     addAndMakeVisible(subGroupListBox.get());
-    
-    
-
-//    // create views
-//    auto audioResources = audioGroup->getAudioResources();
-//    auto rowNumber = 0;
-//    for (auto audioResource : audioResources)
-//    {
-//        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audiumEngine,
-//                                                                         audioResource,
-//                                                                         zoomHandler,
-//                                                                         playListItem->getRegion(),
-//                                                                         audioGroup->getColour(),
-//                                                                         regionSelector,
-//                                                                         rowNumber));
-//        addAndMakeVisible(view.get());
-//        children.push_back(view);
-//    }
 }
 
 PlayListItemComponent::~PlayListItemComponent()
@@ -98,22 +82,9 @@ void PlayListItemComponent::paint (juce::Graphics& g)
 void PlayListItemComponent::resized()
 {
     subGroupListBox->setBounds(getLocalBounds());
-    
-//    int top = 0;
-//    int count = 0;
-//    auto audioResources = audioGroup->getAudioResources();
-//    for (auto audioResource : audioResources)
-//    {
-//        auto height = 100;//audioResource->getHeight();
-//        if (count < children.size())
-//        {
-//            auto child = children[count];
-//            if (child != nullptr)
-//            {
-//                child->setBounds(0, top, getWidth(), height);
-//            }
-//            count++;
-//        }
-//        top += height;
-//    }
+}
+
+void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)
+{
+    subGroupListBox->updateContent();
 }

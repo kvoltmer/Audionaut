@@ -237,6 +237,8 @@
                 resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="tIrkcV" name="PlayListItemDraggerControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PlayListItemDraggerControl.h"/>
           <FILE id="N579q1" name="SubGroupDraggerControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/SubGroupDraggerControl.h"/>
           <FILE id="s7vYjW" name="DraggerControl.h" compile="0" resource="0"

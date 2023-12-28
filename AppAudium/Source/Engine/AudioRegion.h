@@ -38,6 +38,9 @@ public:
     
     typedef class juce::Range<double> RegionData;
     
+    juce::String getName() const { return name; }
+    
+    // TODO: make private
     juce::String name;
     
     void setSelected(bool bSelected) { selected = bSelected; }
