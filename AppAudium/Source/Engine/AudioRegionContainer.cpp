@@ -97,7 +97,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
     
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
     audioRegion->setRegionDataInSeconds(position);
-    audioRegion->name = regionName;
+    audioRegion->setName(regionName);
     audioRegions.push_back(audioRegion);
     sendActionMessage(regionCreatedAction);
     return audioRegion;
@@ -179,7 +179,7 @@ bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
     for (auto & region : audioRegions)
     {
         outputStream.writeInt(region->getAudioGroup()->getId());
-        outputStream.writeString(region->name);
+        outputStream.writeString(region->getName());
         outputStream.writeDouble(region->getRegionDataInSeconds().getStart());
         outputStream.writeDouble(region->getRegionDataInSeconds().getEnd());
         outputStream.writeInt(region->getAudioSubGroup()->getId());
@@ -242,7 +242,7 @@ void AudioRegionContainer::setRegionName(int rowNumber, juce::String newName)
 {
     if (AudioRegion* r = getRegion(rowNumber).get())
     {
-        r->name = newName;
+        r->setName(newName);
     }
 }
 

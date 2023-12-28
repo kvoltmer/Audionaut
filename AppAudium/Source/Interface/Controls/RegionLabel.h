@@ -55,7 +55,7 @@ public:
         {
             if (columnId == regionName)
             {
-                text = r->name;
+                text = r->getName();
             }
             else if (columnId == regionStart)
             {
@@ -130,7 +130,7 @@ public:
     {
         if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
         {
-            return r->name;
+            return r->getName();
         }
         return "n/a";
     }
