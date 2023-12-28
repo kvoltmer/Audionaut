@@ -22,9 +22,10 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
         WHEN("adding audio resources without any group provided")
         {
             auto group = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
+            auto subGroup = group->createNewAudioSubGroup(*resourceContainer, *regionContainer);
             for (int i = 0; i < numResources; i++)
             {
-                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group);
+                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group, subGroup);
             }
             
             THEN("there must be 1 group that contains all resources")
@@ -45,13 +46,14 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
         {
             
             auto group1 = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
-            
+            auto subGroup1 = group1->createNewAudioSubGroup(*resourceContainer, *regionContainer);
             for (int i = 0; i < numResources; i++)
-                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group1);
+                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group1, subGroup1);
             
             auto group2 = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
+            auto subGroup2 = group2->createNewAudioSubGroup(*resourceContainer, *regionContainer);
             for (int i = 0; i < numResources; i++)
-                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group2);
+                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group2, subGroup2);
             
             THEN("we get 2 groups ")
             {
