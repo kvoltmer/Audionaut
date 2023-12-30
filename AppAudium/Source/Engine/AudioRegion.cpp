@@ -18,21 +18,33 @@ AudioRegion::~AudioRegion()
 {
 }
 
-void AudioRegion::setRegionData(const RegionData newRegionData)
+const AudioRegion::RegionData AudioRegion::getRegionData(audium::TimeContextType context) const
 {
-    setRegionDataInSeconds(tempoProvider->clocksToSeconds(newRegionData));
+    if (context == audium::seconds)
+    {
+        return regionData;
+    }
+    else if (context == audium::clocks)
+    {
+        return tempoProvider->secondsToClocks(regionData);
+    }
+    
+    jassertfalse;
+    return AudioRegion::RegionData();
 }
 
-const AudioRegion::RegionData AudioRegion::getRegionData() const
-{
-    return tempoProvider->secondsToClocks(regionData);
-}
-
-void AudioRegion::setRegionDataInSeconds(const RegionData newRegionData)
+void AudioRegion::setRegionData(const AudioRegion::RegionData newRegionData, audium::TimeContextType context)
 {
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
-    
-    regionData = newRegionData;
+
+    if (context == audium::seconds)
+    {
+        regionData = newRegionData;
+    }
+    else if (context == audium::clocks)
+    {
+        regionData = tempoProvider->clocksToSeconds(newRegionData);
+    }
 }
 
 bool AudioRegion::validateData(RegionData& data)
@@ -53,17 +65,12 @@ bool AudioRegion::validateData(RegionData& data)
     return result;
 }
 
-const AudioRegion::RegionData AudioRegion::getRegionDataInSeconds() const
-{
-    return regionData;
-}
-
 double AudioRegion::getAudioResourceStartInSeconds() const
 {
     double start = 0;
     for (auto resource : getAudioResources())
     {
-        start = std::max(start, resource->getRegionDataInSeconds().getStart());
+        start = std::max(start, resource->getRegionData(audium::seconds).getStart());
     }
     return start;
 }
@@ -73,30 +80,30 @@ double AudioRegion::getAudioResourceEndInSeconds() const
     double end = 0;
     for (auto resource : getAudioResources())
     {
-        end = std::max(end, resource->getRegionDataInSeconds().getEnd());
+        end = std::max(end, resource->getRegionData(audium::seconds).getEnd());
     }
     return end;
 }
 
-void AudioRegion::setRegionStart(double newStart)
+void AudioRegion::setRegionStart(double newStart, audium::TimeContextType context)
 {
-    if (newStart <=  getRegionData().getEnd())
+    if (newStart <=  getRegionData(context).getEnd())
     {
-        setRegionData(AudioRegion::RegionData(newStart, getRegionData().getEnd()));
+        setRegionData(AudioRegion::RegionData(newStart, getRegionData(context).getEnd()), context);
     }
 }
 
-void AudioRegion::setRegionEnd(double newEnd)
+void AudioRegion::setRegionEnd(double newEnd, audium::TimeContextType context)
 {
-    if (newEnd >=  getRegionData().getStart())
+    if (newEnd >=  getRegionData(context).getStart())
     {
-        setRegionData(AudioRegion::RegionData(getRegionData().getStart(), newEnd));
+        setRegionData(AudioRegion::RegionData(getRegionData(context).getStart(), newEnd), context);
     }
 }
 
-void AudioRegion::setRegionLength(double newLength)
+void AudioRegion::setRegionLength(double newLength, audium::TimeContextType context)
 {
-    setRegionData(getRegionData().withLength(newLength));
+    setRegionData(getRegionData(context).withLength(newLength), context);
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioRegion::getAudioResources() const

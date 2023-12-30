@@ -59,17 +59,17 @@ public:
             }
             else if (columnId == regionStart)
             {
-                const auto seconds = r->getRegionDataInSeconds().getStart();
+                const auto seconds = r->getRegionData(audium::seconds).getStart();
                 text = juce::String(seconds, 4);
             }
             else if (columnId == regionEnd)
             {
-                const auto seconds = r->getRegionDataInSeconds().getEnd();
+                const auto seconds = r->getRegionData(audium::seconds).getEnd();
                 text = juce::String(seconds, 4);
             }
             else if (columnId == regionLength)
             {
-                const auto seconds = r->getRegionDataInSeconds().getLength();
+                const auto seconds = r->getRegionData(audium::seconds).getLength();
                 text = juce::String(seconds, 4);
             }
             
@@ -109,20 +109,17 @@ public:
         else if  (columnId == regionStart)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
-            audioRegionContainer->setRegionStart(rowNumber, clocks);
+            audioRegionContainer->setRegionStart(rowNumber, seconds);
         }
         else if  (columnId == regionEnd)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
-            audioRegionContainer->setRegionEnd(rowNumber, clocks);
+            audioRegionContainer->setRegionEnd(rowNumber, seconds);
         }
         else if  (columnId == regionLength)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
-            audioRegionContainer->setRegionLength(rowNumber, clocks);
+            audioRegionContainer->setRegionLength(rowNumber, seconds);
         }
     }
     

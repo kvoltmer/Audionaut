@@ -13,6 +13,7 @@
 #include <iostream>
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Engine/AudioRegionContainer.h"
 #include "Interface/Components/MainComponent.h"
 
 using namespace juce;

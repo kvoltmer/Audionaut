@@ -115,7 +115,7 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
     
     // set value in the engine
     audioRegion->validateData(rangeInSeconds);
-    audioRegion->setRegionDataInSeconds(rangeInSeconds);
+    audioRegion->setRegionData(rangeInSeconds, audium::seconds);
     
     updateFromEngine();
     
@@ -132,7 +132,7 @@ void RegionEditControl::updateFromEngine()
     auto bounds = getBounds().toFloat();
     
     // note: subtract audio resource start
-    auto rangeSeconds = audioRegion->getRegionDataInSeconds() - audioRegion->getAudioResourceStartInSeconds();
+    auto rangeSeconds = audioRegion->getRegionData(audium::seconds) - audioRegion->getAudioResourceStartInSeconds();
     auto rangeX = zoomHandler->secondsToX(rangeSeconds);
     bounds.setX(rangeX.getStart());
     bounds.setWidth(rangeX.getLength());

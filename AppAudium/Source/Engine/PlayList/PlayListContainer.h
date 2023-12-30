@@ -70,10 +70,10 @@ public:
     
     AudioRegion::RegionData getPlayListDataAtIndex(int index) const;
     
-    const PlayListItem* itemAtAbsolutePosition(double position) const;
-    const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range) const;
+    const PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
+    const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
-    double getAbsolueStartTime(const PlayListItem* playListItem) const;
+    double getAbsolueStartTime(const PlayListItem* playListItem, audium::TimeContextType context) const;
     
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
     
@@ -83,7 +83,7 @@ public:
     
     void deselectAll();
     
-    double getTotalLength() const;
+    double getTotalLength(audium::TimeContextType context) const;
     
 private:
     

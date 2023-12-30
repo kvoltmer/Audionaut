@@ -149,8 +149,8 @@ public:
             auto resources = subGroup->getAudioResources();
             for (auto resource : resources)
             {
-                pos = zoomHandler->secondsToX(resource->getTransportPositionSeconds());
-                width = std::max(width, zoomHandler->secondsToX(resource->getRegionDataInSeconds().getLength()));
+                pos = zoomHandler->secondsToX(resource->getTransportPosition(audium::seconds));
+                width = std::max(width, zoomHandler->secondsToX(resource->getRegionData(audium::seconds).getLength()));
             }
             
             auto height = audioGroup->getTotalHeight() + DraggerControl::draggerHeight;

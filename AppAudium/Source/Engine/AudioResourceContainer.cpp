@@ -149,7 +149,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtA
     
     for (auto resource : audioResources)
     {
-        if (resource.second->containsAbsolutePosition(positionInSeconds))
+        if (resource.second->containsAbsolutePosition(positionInSeconds, audium::seconds))
         {
             resources.push_back(resource.second);
         }
@@ -293,7 +293,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     {
         /// TODO: also check on end
         if (itr->first.get() == group &&
-            itr->second->containsAbsolutePosition(rangeInSeconds.getStart()))
+            itr->second->containsAbsolutePosition(rangeInSeconds.getStart(), audium::seconds))
         {
             result.push_back(itr->second);
         }

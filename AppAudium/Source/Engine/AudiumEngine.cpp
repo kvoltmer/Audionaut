@@ -16,6 +16,9 @@
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Factory/AudioGroupFactory.h"
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/AudioRegionContainer.h"
+#include "Engine/AudioRegionContainer.h"
+
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 

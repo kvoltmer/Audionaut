@@ -41,31 +41,20 @@ double AudioResource::getSampleRate() const
 
 unsigned int AudioResource::getNumChannels() const
 {
-    
     return audioFormatReaderSource->getAudioFormatReader()->numChannels;
 }
 
-double AudioResource::getLengthInSeconds() const
+double AudioResource::getFileLength(audium::TimeContextType context) const
 {
-    return getAudioTransportSource()->getLengthInSeconds();
-}
-
-double AudioResource::getAbsolueStartTime() const
-{    
-    return getTransportPositionSeconds();
-}
-
-double AudioResource::getDurationTimeInSeconds() const
-{
-    if (!regionData.isEmpty())
-        return regionData.getLength();
-    
-    return getLengthInSeconds();
-}
-
-const juce::Range<double> AudioResource::getRegionDataInSeconds() const
-{
-    return regionData;
+    if (context == audium::seconds)
+    {
+        return getAudioTransportSource()->getLengthInSeconds();
+    }
+    else if (context == audium::clocks)
+    {
+        return owner.getTempoProvider()->secondsToClocks(getAudioTransportSource()->getLengthInSeconds());
+    }
+    return 0.0;
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWithinSubGroup() const
@@ -83,26 +72,37 @@ std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWith
     return result;
 }
 
-void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionData)
+const juce::Range<double> AudioResource::getRegionData(audium::TimeContextType context) const
+{
+    if (context == audium::seconds)
+    {
+        return regionData;
+    }
+    else if (context == audium::clocks)
+    {
+        return owner.getTempoProvider()->secondsToClocks(regionData);
+    }
+    jassertfalse;
+    return juce::Range<double>(0.0, 0.0);
+}
+
+void AudioResource::setRegionData(const juce::Range<double> newRegionData, audium::TimeContextType context)
 {
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
-    
-    regionData = newRegionData;
+    if (context == audium::seconds)
+    {
+        regionData = newRegionData;
+    }
+    else if (context == audium::clocks)
+    {
+        regionData = owner.getTempoProvider()->clocksToSeconds(newRegionData);
+    }
 
     if (regionData.getStart() < 0.0)
     {
         regionData.setStart(0.0);
     }
 }
-
-void AudioResource::setTransportPosition(const double newPositionSeconds)
-{
-
-    
-    transportPositionClocks = owner.getTempoProvider()->secondsToClocks(newPositionSeconds);
-}
-
-
 
 bool AudioResource::validateData()
 {
@@ -114,9 +114,9 @@ bool AudioResource::validateData()
         result |= true;
     }
     
-    if (regionData.getLength() + regionData.getStart() > getLengthInSeconds())
+    if (regionData.getLength() + regionData.getStart() > getFileLength(audium::seconds))
     {
-        regionData.setLength(getLengthInSeconds() - regionData.getStart());
+        regionData.setLength(getFileLength(audium::seconds) - regionData.getStart());
         result |= true;
     }
     
@@ -135,20 +135,41 @@ bool AudioResource::validateData()
     return result;
 }
 
-double AudioResource::getTransportPositionSeconds() const
+double AudioResource::getTransportPosition(audium::TimeContextType context) const
 {
-    return owner.getTempoProvider()->clocksToSeconds(transportPositionClocks);
+    if (context == audium::seconds)
+    {
+        return owner.getTempoProvider()->clocksToSeconds(transportPositionClocks);
+    }
+    return transportPositionClocks;
 }
 
-bool AudioResource::containsAbsolutePosition(double positionInSeconds) const
+void AudioResource::setTransportPosition(const double newPosition, audium::TimeContextType context)
 {
-    auto startTime = getAbsolueStartTime();
-    auto endTime = startTime + getDurationTimeInSeconds();
+    if (context == audium::seconds)
+    {
+        transportPositionClocks = owner.getTempoProvider()->secondsToClocks(newPosition);
+    }
+    else if (context == audium::clocks)
+    {
+        transportPositionClocks = newPosition;
+    }
+    else
+    {
+        jassertfalse;
+    }
+}
+
+bool AudioResource::containsAbsolutePosition(double position, audium::TimeContextType context) const
+{
+    auto startTime = getTransportPosition(context);
+    auto endTime = startTime + getRegionData(context).getLength();
     juce::Range<double> absoluteRange(startTime, endTime);
-    if (absoluteRange.contains(positionInSeconds))
+    if (absoluteRange.contains(position))
     {
         return true;
     }
+
     return false;
 }
 

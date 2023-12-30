@@ -97,7 +97,7 @@ AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) con
     const juce::ScopedLock sl (readLock);
     if (index >= 0 && index < playListItems.size())
     {
-        return playListItems[index]->getRegionDataInClocks();
+        return playListItems[index]->getRegionData(audium::clocks);
     }
     
     // empty range
@@ -143,7 +143,7 @@ bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
     return false;
 }
 
-double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem) const
+double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem, audium::TimeContextType context) const
 {
     double startTime = 0.0;
     auto group = playListItem->getRegion()->getAudioGroup();
@@ -156,18 +156,18 @@ double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem) 
         {
             return startTime;
         }
-        startTime += item->getRegionDataInClocks().getLength();
+        startTime += item->getRegionData(context).getLength();
     }
     
     return startTime;
 }
 
-const PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position) const
+const PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position, audium::TimeContextType context) const
 {
     for (auto item : playListItems)
     {
-        auto startTime = item->getAbsolueStartTime();
-        auto endTime = startTime + item->getDurationTimeInClocks();
+        auto startTime = item->getAbsolueStartTime(context);
+        auto endTime = startTime + item->getDurationTime(context);
         juce::Range<double> absoluteRange(startTime, endTime);
         if (absoluteRange.contains(position))
         {
@@ -178,12 +178,12 @@ const PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position) c
     return nullptr;
 }
 
-const PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> range) const
+const PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const
 {
     for (auto item : playListItems)
     {
-        auto startTime = item->getAbsolueStartTime();
-        auto endTime = startTime + item->getDurationTimeInClocks();
+        auto startTime = item->getAbsolueStartTime(context);
+        auto endTime = startTime + item->getDurationTime(context);
         juce::Range<double> absoluteRange(startTime, endTime);
         if (absoluteRange.contains(range))
         {
@@ -211,12 +211,12 @@ void PlayListContainer::deselectAll()
     sendActionMessage(playListItemSelection);
 }
 
-double PlayListContainer::getTotalLength() const
+double PlayListContainer::getTotalLength(audium::TimeContextType context) const
 {
     if (playListItems.size() > 0)
     {
         auto lastItem = playListItems.back();
-        return getAbsolueStartTime(lastItem.get()) + lastItem->getDurationTimeInClocks();
+        return getAbsolueStartTime(lastItem.get(), context) + lastItem->getDurationTime(context);
     }
     return 0.0;
 }

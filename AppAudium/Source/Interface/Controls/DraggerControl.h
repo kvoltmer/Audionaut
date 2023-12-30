@@ -190,19 +190,6 @@ public:
     
     virtual bool validateData() = 0;
     
-    void updateFromEngine()
-    {
-//        double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
-//        double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
-//
-//        // don't change Y position and height
-//        double posY = getBounds().getY();
-//        double height = getHeight();
-//
-//        juce::Rectangle<double> rect_tmp(posX, posY, length, height);
-//        componentToDrag->setBounds(rect_tmp.toNearestInt());
-    }
-
     static constexpr int draggerHeight = 19;
     
 protected:

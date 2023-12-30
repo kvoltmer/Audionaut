@@ -33,51 +33,7 @@ public:
     
     void setRegionDataInSeconds(const juce::Range<double> newRegionData) override
     {
-    
-//        const auto audioResources = audioSubGroup->getAudioResources();
-//        if (audioResources.size() > 0)
-//        {
-//            const auto transportPositionInSeconds = audioResources[0]->getTransportPositionSeconds();
-//            auto regionData = audioResources[0]->getRegionDataInSeconds();
-//
-//            switch (currentDragMode)
-//            {
-//                case leftEdge:
-//                    {
-//                        // offset in file
-//                        auto diff = newRegionData.getStart() - transportPositionInSeconds;
-//                        auto newLength = regionData.getLength() - diff;
-//                        auto newStart = regionData.getStart() + diff;
-//
-//                        for (auto res : audioResources)
-//                        {
-//                            res->setRegionDataInSeconds(juce::Range<double>(newStart, newStart + newLength));
-//                            res->setTransportPosition(newRegionData.getStart());
-//                        }
-//                        repaint();
-//                    }
-//                    break;
-//                case rightEdge:
-//                    {
-//                        // duration
-//                        regionData.setLength(newRegionData.getLength());
-//                        for (auto res : audioResources)
-//                        {
-//                            res->setRegionDataInSeconds(regionData);
-//                        }
-//                    }
-//                    break;
-//                case middleEdge:
-//                    // position in transport
-//                    for (auto res : audioResources)
-//                    {
-//                        res->setTransportPosition(newRegionData.getStart());
-//                    }
-//                    break;
-//                default:
-//                    break;
-//            }
-//        }
+        // TODO: implement
     }
     
     
