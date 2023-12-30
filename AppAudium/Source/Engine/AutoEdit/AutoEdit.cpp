@@ -176,7 +176,7 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
             
             // is the duration consitant?
             double duration = elem["duration"];
-            double regionDuration = region->getRegionDataInSeconds().getLength();
+            double regionDuration = region->getRegionData(audium::seconds).getLength();
             if (!juce::approximatelyEqual(duration, regionDuration))
             {
                 std::cout << "duration not equal" << duration << " " << regionDuration << std::endl;

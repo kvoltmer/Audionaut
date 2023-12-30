@@ -34,20 +34,6 @@ public:
 
     void paint (juce::Graphics&) override;
     
-    void updateFromEngine() override
-    {
-        /// TODO:
-//        double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
-//        double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
-//
-//        juce::Rectangle<double> rect_tmp(posX, 0, length, audioResource->getHeight());
-//        setBounds(rect_tmp.toNearestInt());
-    }
-//    void setRegionDataInSeconds(const juce::Range<double> newRegionData) override
-//    {
-//        
-//    }
-    
 private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionView)

@@ -109,7 +109,8 @@ public:
         g.drawFittedText (audioResource->getFileNameWithoutExtension(), bonds, juce::Justification::topLeft, 1);
     }
     
-    virtual void updateFromEngine() = 0;
+    /// TODO: row number might have changed after delete
+    void setRowNumber(int rowNumber) {}
 
 protected:
     

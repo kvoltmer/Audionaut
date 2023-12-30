@@ -14,6 +14,8 @@
 #include <memory>
 #include <JuceHeader.h>
 
+#include "Engine/TimeContext.h"
+
 class AudioRegion;
 class PlayListContainer;
 
@@ -26,10 +28,10 @@ public:
     
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
-    juce::Range<double> getRegionDataInClocks() const;
+    juce::Range<double> getRegionData(audium::TimeContextType context) const;
     
-    double getAbsolueStartTime() const;
-    double getDurationTimeInClocks() const;
+    double getAbsolueStartTime(audium::TimeContextType context) const;
+    double getDurationTime(audium::TimeContextType context) const;
     
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }

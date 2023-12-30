@@ -16,6 +16,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
+#include "Engine/TimeContext.h"
 
 class AudioResourceContainer;
 class AudioPlayer;
@@ -44,7 +45,7 @@ public:
         resourceId(resourceId)
     {
         this->audioFormatReaderSource = std::move(audioFormatReaderSource);
-        setRegionDataInSeconds(juce::Range<double>(0.0, getLengthInSeconds()));
+        setRegionData(juce::Range<double>(0.0, getFileLength(audium::seconds)), audium::seconds);
     }
     
     ~AudioResource();
@@ -64,20 +65,19 @@ public:
     
     double getSampleRate() const;
     unsigned int getNumChannels() const;
-    double getLengthInSeconds() const;
     
-    double getAbsolueStartTime() const;
-    double getDurationTimeInSeconds() const;
-    const juce::Range<double> getRegionDataInSeconds() const;
+    double getFileLength(audium::TimeContextType context) const;
     
-    void setRegionDataInSeconds(const juce::Range<double> newRegionData);
-    void setTransportPosition(const double newPosition);
+    const juce::Range<double> getRegionData(audium::TimeContextType context) const;
+    void setRegionData(const juce::Range<double> newRegionData, audium::TimeContextType context);
+    
+    double getTransportPosition(audium::TimeContextType context) const;
+    void setTransportPosition(const double newPosition, audium::TimeContextType context);
+    
     bool validateData();
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinSubGroup() const;
     
-    double getTransportPositionSeconds() const;
-    double getTransportPositionClocks() const { return transportPositionClocks; }
-    bool containsAbsolutePosition(double position) const;
+    bool containsAbsolutePosition(double position, audium::TimeContextType context) const;
         
     int getChannelPosition() const { return channelPosition; }
     

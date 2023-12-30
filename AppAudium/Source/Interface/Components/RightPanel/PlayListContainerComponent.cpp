@@ -34,7 +34,7 @@ void PlayListContainerComponent::updateUI()
     createComponents();
     resized();
     
-    auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLengthSeconds();
+    auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
     footerLabel->setText(TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
 }
 

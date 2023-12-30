@@ -11,6 +11,8 @@
 #pragma once
 #include <JuceHeader.h>
 
+#include "Engine/TimeContext.h"
+
 class AudioGroup;
 class AudioResource;
 class TempoProvider;
@@ -44,20 +46,17 @@ public:
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
     
-    const RegionData getRegionData() const;
-    void setRegionData(const RegionData newRegionData);
-    
-    const RegionData getRegionDataInSeconds() const;
-    void setRegionDataInSeconds(const RegionData newRegionData);
+    const RegionData getRegionData(audium::TimeContextType context) const;
+    void setRegionData(const RegionData newRegionData, audium::TimeContextType context);
     
     bool validateData(RegionData& data);
     
     double getAudioResourceStartInSeconds() const;
     double getAudioResourceEndInSeconds() const;
 
-    void setRegionStart(double newStart);
-    void setRegionEnd(double newEnd);
-    void setRegionLength(double newLength);
+    void setRegionStart(double newStart, audium::TimeContextType context);
+    void setRegionEnd(double newEnd, audium::TimeContextType context);
+    void setRegionLength(double newLength, audium::TimeContextType context);
     
 private:
     

@@ -80,9 +80,9 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             std::shared_ptr<AudioSubGroup> subGroup = nullptr;
             for (auto resource : resources)
             {
-                if (resource->containsAbsolutePosition(transportPosition))
+                if (resource->containsAbsolutePosition(transportPosition, audium::seconds))
                 {
-                    transportPosition = resource->getTransportPositionSeconds();
+                    transportPosition = resource->getTransportPosition(audium::seconds);
                     // position is below
                     channelPosition = audioGroup->getNumChannels();
                     subGroup = resource->getAudioSubGroup();

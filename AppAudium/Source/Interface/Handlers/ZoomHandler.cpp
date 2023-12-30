@@ -54,7 +54,7 @@ double ZoomHandler::zoomOut()
 double ZoomHandler::getContentWidth() const
 {
     // get arrangement length from the playlist
-    const auto clocks = playListScheduler->getTotalLengthClocks();
+    const auto clocks = playListScheduler->getTotalLength(audium::clocks);
     
     // add one bar to fit the content into arrangement
     const auto bars = TempoProvider::clocksToBars(clocks) + 1.0;
@@ -230,8 +230,7 @@ int ZoomHandler::numSegmentsForWidthInBars(const int width, int& bars)
 
 void ZoomHandler::focusViewOnPlayPosition()
 {
-    //auto posX = secondsToX(playListScheduler->getAbsolutePositionSeconds());
-    auto posX = clocksToX(playListScheduler->getAbsolutePositionClocks());
+    auto posX = clocksToX(playListScheduler->getAbsolutePosition(audium::clocks));
     auto range = getVisibleRange();
     //std::cout << pos << " " << posX << " range: " << range.getStart() << " " << range.getEnd() << std::endl;
     
@@ -246,8 +245,8 @@ void ZoomHandler::focusViewOnPlayPosition()
 void ZoomHandler::focusView(double positionInSeconds)
 {
     
-   if (positionInSeconds > playListScheduler->getTotalLengthSeconds())
-        positionInSeconds = playListScheduler->getAbsolutePositionSeconds();
+   if (positionInSeconds > playListScheduler->getTotalLength(audium::seconds))
+        positionInSeconds = playListScheduler->getAbsolutePosition(audium::seconds);
     
     auto posX = secondsToX(positionInSeconds);
     
@@ -265,7 +264,7 @@ void ZoomHandler::timerCallback()
     if (playListScheduler->isPlaying() &&
         playListScheduler->getFollowTransport())
     {
-        auto posX = secondsToX(playListScheduler->getAbsolutePositionSeconds());
+        auto posX = secondsToX(playListScheduler->getAbsolutePosition(audium::seconds));
         if(!getVisibleRange().contains(posX))
         {
             //std::cout << "seconds " << playListScheduler->getAbsolutePositionSeconds() << " " << posX << std::endl;

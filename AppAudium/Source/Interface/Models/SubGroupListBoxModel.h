@@ -79,8 +79,7 @@ public:
             auto component = dynamic_cast<AudioResourceView*>(existingComponentToUpdate);
             if (component != nullptr)
             {
-                // TODO: row might have changed after delete
-                component->updateFromEngine();
+                component->setRowNumber(rowNumber);
                 return component;
             }
             else

@@ -33,13 +33,11 @@ void AudioRegionView::paint (juce::Graphics& g)
         
 
         const auto thumbArea = getLocalBounds();
-        const auto start = audioRegion->getRegionDataInSeconds().getStart();
+        const auto start = audioRegion->getRegionData(audium::seconds).getStart();
         const auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
         
         audioThumbnail->drawChannel(g, thumbArea, start, end, 0, verticalZoomFactor);
-        //audioThumbnail->drawChannels (g, thumbArea, start, end, verticalZoomFactor);
 
-        //paintFileNameLabel(g);
     }
     else
     {

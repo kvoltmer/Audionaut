@@ -42,10 +42,10 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
         {
             if (playListScheduler->isArrangementMode())
             {
-                if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks))
+                if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks, audium::clocks))
                 {
                     // we need the start of the actual audio file
-                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolueStartTime() + item->getRegionDataInClocks().getStart();
+                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolueStartTime(audium::clocks) + item->getRegionData(audium::clocks).getStart();
                     
                     juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
                     auto localRangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(localRange);
@@ -63,9 +63,9 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
                     // grab the first valid resource
                     auto resource  = resources[0];
                 
-                    const auto transportPosition = resource->getTransportPositionSeconds();
+                    const auto transportPosition = resource->getTransportPosition(audium::seconds);
                     rangeInSeconds -= transportPosition;
-                    const auto startPosition = resource->getRegionDataInSeconds().getStart();
+                    const auto startPosition = resource->getRegionData(audium::seconds).getStart();
                     rangeInSeconds += startPosition;
                     createRegion(name, rangeInSeconds, group, resource->getAudioSubGroup());
                     break;
@@ -96,7 +96,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
     //jassert(audioResource->getRegionDataInSeconds().contains(position));
     
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
-    audioRegion->setRegionDataInSeconds(position);
+    audioRegion->setRegionData(position, audium::seconds);
     audioRegion->setName(regionName);
     audioRegions.push_back(audioRegion);
     sendActionMessage(regionCreatedAction);
@@ -180,8 +180,8 @@ bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
     {
         outputStream.writeInt(region->getAudioGroup()->getId());
         outputStream.writeString(region->getName());
-        outputStream.writeDouble(region->getRegionDataInSeconds().getStart());
-        outputStream.writeDouble(region->getRegionDataInSeconds().getEnd());
+        outputStream.writeDouble(region->getRegionData(audium::seconds).getStart());
+        outputStream.writeDouble(region->getRegionData(audium::seconds).getEnd());
         outputStream.writeInt(region->getAudioSubGroup()->getId());
     }
     return true;
@@ -250,7 +250,7 @@ void AudioRegionContainer::setRegionStart(int rowNumber, double newStart)
 {
     if (AudioRegion* r = getRegion(rowNumber).get())
     {
-        r->setRegionStart(newStart);
+        r->setRegionStart(newStart, audium::seconds);
     }
     
     sendActionMessage (regionStartAction);
@@ -260,7 +260,7 @@ void AudioRegionContainer::setRegionEnd(int rowNumber, double newEnd)
 {
     if (AudioRegion* r = getRegion(rowNumber).get())
     {
-        r->setRegionEnd(newEnd);
+        r->setRegionEnd(newEnd, audium::seconds);
     }
     sendActionMessage (regionEndAction);
 }
@@ -269,7 +269,7 @@ void AudioRegionContainer::setRegionLength(int rowNumber, double newLength)
 {
     if (AudioRegion* r = getRegion(rowNumber).get())
     {
-        r->setRegionLength(newLength);
+        r->setRegionLength(newLength, audium::seconds);
     }
     
     sendActionMessage (regionLengthAction);

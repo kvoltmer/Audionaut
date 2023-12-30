@@ -12,9 +12,12 @@
 
 #include <memory>
 #include <JuceHeader.h>
-#include "AudioRegionContainer.h"
-#include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/TimeContext.h"
 
+class AudioGroupContainer;
+class AudioGroup;
+class PlayListContainer;
+class AudioRegionContainer;
 class AudioResourceContainer;
 class TransportSourceContainer;
 class PlayListScheduler;

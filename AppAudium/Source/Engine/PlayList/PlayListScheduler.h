@@ -10,6 +10,7 @@
 
 #pragma once
 #include <JuceHeader.h>
+#include "Engine/TimeContext.h"
 #include "Engine/AudioRegion.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
@@ -60,17 +61,15 @@ public:
     int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const;
     double getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const;
     
-    double getAbsolutePositionClocks() const;
     
-    double getAbsolutePositionSeconds() const;
-    void setAbsolutePositionSeconds(double newPosition);
+    double getAbsolutePosition(audium::TimeContextType context) const;
+    void setAbsolutePosition(double newPosition, audium::TimeContextType context);
     
     void tick(bool isPlaying, double beats, int numSamples);
     
     void audioCallback (const juce::AudioSourceChannelInfo& info);
     
-    double getTotalLengthClocks() const;
-    double getTotalLengthSeconds() const;
+    double getTotalLength(audium::TimeContextType context) const;
     
     void bounceToFile(juce::AudioFormatWriter* writer, double sampleRate, int numSamples, int numOutputChannels);
     
@@ -80,7 +79,7 @@ public:
     
 private:
 
-    double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item) const;
+    double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const;
     
     // Arrangement mode sequencing
     void processInArrangementMode(double pos, int numSamples);

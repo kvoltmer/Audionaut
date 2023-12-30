@@ -35,8 +35,8 @@ public:
         const auto audioResources = audioSubGroup->getAudioResources();
         if (audioResources.size() > 0)
         {
-            const auto transportPositionInSeconds = audioResources[0]->getTransportPositionSeconds();
-            auto regionData = audioResources[0]->getRegionDataInSeconds();
+            const auto transportPositionInSeconds = audioResources[0]->getTransportPosition(audium::seconds);
+            auto regionData = audioResources[0]->getRegionData(audium::seconds);
             
             switch (currentDragMode)
             {
@@ -49,8 +49,8 @@ public:
                         
                         for (auto res : audioResources)
                         {
-                            res->setRegionDataInSeconds(juce::Range<double>(newStart, newStart + newLength));
-                            res->setTransportPosition(newRegionData.getStart());
+                            res->setRegionData(juce::Range<double>(newStart, newStart + newLength), audium::seconds);
+                            res->setTransportPosition(newRegionData.getStart(), audium::seconds);
                         }
                         repaint();
                     }
@@ -61,7 +61,7 @@ public:
                         regionData.setLength(newRegionData.getLength());
                         for (auto res : audioResources)
                         {
-                            res->setRegionDataInSeconds(regionData);
+                            res->setRegionData(regionData, audium::seconds);
                         }
                     }
                     break;
@@ -69,7 +69,7 @@ public:
                     // position in transport
                     for (auto res : audioResources)
                     {
-                        res->setTransportPosition(newRegionData.getStart());
+                        res->setTransportPosition(newRegionData.getStart(), audium::seconds);
                     }
                     break;
                 default:
