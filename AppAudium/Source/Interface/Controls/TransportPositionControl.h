@@ -62,7 +62,7 @@ public:
         auto playListScheduler = audiumEngine->getPlayListScheduler();
         if (playListScheduler != nullptr)
         {
-            clocks = playListScheduler->getAbsolutePosition(audium::seconds);
+            clocks = playListScheduler->getAbsolutePosition(audium::clocks);
         }
         
         currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->clocksToX(clocks) - 0.75f, 0,
