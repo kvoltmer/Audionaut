@@ -123,7 +123,7 @@ protected:
     
     std::unique_ptr<audium::AudioThumbnail> audioThumbnail;
     
-    static constexpr float verticalZoomFactor = 0.62f;
+    static constexpr float verticalZoomFactor = 1.f;
     
     int rowNumber;
     

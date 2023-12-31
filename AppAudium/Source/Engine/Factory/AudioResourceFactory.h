@@ -34,6 +34,7 @@ public:
                                                               int resourceId)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
+        auto readAheadBufferSize = 48000*10;
         
         if (auto inputSource = makeAudioInputSource (url))
         {
@@ -45,7 +46,7 @@ public:
                     
                     auto transportSource = group->getTransportSourceContainer()->createNewTransportSource();
                     transportSource->setSource (audioFormatReaderSource.get(),
-                                                32768,                   // tells it to buffer this many samples ahead
+                                                readAheadBufferSize,                   // tells it to buffer this many samples ahead
                                                 readAheadThread,         // this is the background thread to use for reading-ahead
                                                 audioFormatReaderSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
                     
