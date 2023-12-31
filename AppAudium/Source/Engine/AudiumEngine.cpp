@@ -143,15 +143,11 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
     std::cout << "bounce -> " << f.getFullPathName().toStdString() << std::endl;
     
     auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
-    double sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+    double sampleRate = preferedSampleRate;
+        
+    playListScheduler->prepareToPlay(sampleRate, numSamples);
+    audioResourceContainer->prepareToPlay(sampleRate, numSamples);
     
-    // different sample rate?
-    if (preferedSampleRate > 0.0)
-    {
-        sampleRate = preferedSampleRate;
-        playListScheduler->prepareToPlay(sampleRate, numSamples);
-        audioResourceContainer->prepareToPlay(sampleRate, numSamples);
-    }
     
     auto numOutputChannels = 2;
     
@@ -178,13 +174,12 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
         }
     }
     
-    // change back to old sample rate
-    if (preferedSampleRate > 0.0)
-    {
-        sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
-        playListScheduler->prepareToPlay(sampleRate, numSamples);
-        audioResourceContainer->prepareToPlay(sampleRate, numSamples);
-    }
+    // change back to device settings
+    numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
+    sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+    playListScheduler->prepareToPlay(sampleRate, numSamples);
+    audioResourceContainer->prepareToPlay(sampleRate, numSamples);
+    
     
     setBypass(false);
     std::cout << "done" << std::endl;

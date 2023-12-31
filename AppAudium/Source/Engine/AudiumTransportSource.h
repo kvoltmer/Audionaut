@@ -12,10 +12,11 @@
 #include <JuceHeader.h>
 
 #include "Engine/PlayList/SampleTimer.h"
+#include "Engine/Playback/audium_AudioTransportSource.h"
 
 class AudioGroup;
 
-class AudiumTransportSource : public juce::AudioTransportSource
+class AudiumTransportSource : public audium::AudioTransportSource
 {
 public:
     AudiumTransportSource() = default;
@@ -52,6 +53,11 @@ public:
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
     {
+        if (getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false)
+        {
+            std::cout << "waitForNextAudioBlockReady" << std::endl;
+        }
+        
         if (scheduledSample == 0)
         {
             tBase::getNextAudioBlock(info);
@@ -90,7 +96,7 @@ public:
     
 private:
     
-    typedef juce::AudioTransportSource tBase;
+    typedef audium::AudioTransportSource tBase;
     
     std::atomic<float> outputLevel;
     

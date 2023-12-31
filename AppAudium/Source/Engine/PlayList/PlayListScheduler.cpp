@@ -320,11 +320,6 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer, double sam
         buffer.clear();
         audioCallback(info);
         writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
-        
-        /// TODO: without waiting the output is fucked
-        const auto waitMilliseconds = 2;
-        juce::Time::waitForMillisecondCounter(juce::Time::getMillisecondCounter() + waitMilliseconds);
-        
     }
     
     setAbsolutePosition(lastPosition, audium::seconds);
