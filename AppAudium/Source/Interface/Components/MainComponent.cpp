@@ -208,6 +208,11 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::VerticalScrollContext);
     }
+    else if (message == rebuildAll)
+    {
+        middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
+        rightPanelComponent->updateUI();
+    }
     else // update everything (eg. region deleted)
     {
         updateUI();

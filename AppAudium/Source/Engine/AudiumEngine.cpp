@@ -267,7 +267,8 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     bounceToFile(bounceFile, nullptr, sampleRate);
     config.bounceFileName = bounceFile.getFullPathName().toStdString();
     
-    // erase everything!
+#if 0
+    // erase everything
     cleanup();
     
     // create a fresh resource
@@ -276,6 +277,7 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     auto subGroup = audioGroup->createNewAudioSubGroup(*getAudioResourceContainer(),
                                                        *getAudioRegionContainer());
     audioResourceContainer->addAudioResource(bounceUrl, *this, audioGroup, subGroup);
+#endif
     
     std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,
                                                     audioRegionContainer,
