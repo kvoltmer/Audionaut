@@ -522,7 +522,7 @@ private:
         {
             return ! cacheNeedsRefilling;
         }
-        std::cout << "refillCache" << std::endl;
+        
         numSamplesCached = numSamples;
         numChannelsCached = numChans;
         cachedStart = startTime;
@@ -530,7 +530,8 @@ private:
         cacheNeedsRefilling = false;
 
         ensureSize (numSamples);
-
+        // std::cout << "refillCache: timePerPixel * rate = " << (timePerPixel * rate) << std::endl;
+        
         if (timePerPixel * rate <= sampsPerThumbSample && levelData != nullptr)
         {
             auto sample = roundToInt (startTime * rate);

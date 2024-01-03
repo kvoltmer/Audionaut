@@ -53,7 +53,10 @@ public:
         // create thumbnail
         auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
         auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
-        audioThumbnail.reset(new audium::AudioThumbnail(4096*4, *formatManager, *thumbnailCache));
+        auto sourceSamplesPerThumbnailSample = 64;
+        //auto sourceSamplesPerThumbnailSample = 256;
+        //auto sourceSamplesPerThumbnailSample = 4096*4;
+        audioThumbnail.reset(new audium::AudioThumbnail(sourceSamplesPerThumbnailSample, *formatManager, *thumbnailCache));
         audioThumbnail->setColour(colour);
         if (auto inputSource = AudioResourceFactory::makeAudioInputSource(audioResource->getUrl()))
         {

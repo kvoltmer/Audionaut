@@ -25,6 +25,7 @@ void AudioTransportSource::setSource (PositionableAudioSource* const newSource,
 
         setSource (nullptr, 0, nullptr); // deselect and reselect to avoid releasing resources wrongly
     }
+    
 
     ResamplingAudioSource* newResamplerSource = nullptr;
     BufferingAudioSource* newBufferingSource = nullptr;
@@ -68,7 +69,7 @@ void AudioTransportSource::setSource (PositionableAudioSource* const newSource,
     }
 
     {
-        //const ScopedLock sl (callbackLock);
+        const ScopedLock sl (callbackLock);
 
         source = newSource;
         resamplerSource = newResamplerSource;
@@ -152,7 +153,7 @@ void AudioTransportSource::setNextReadPosition (int64 newPosition)
 
 int64 AudioTransportSource::getNextReadPosition() const
 {
-    //const ScopedLock sl (callbackLock);
+    const ScopedLock sl (callbackLock);
 
     if (positionableSource != nullptr)
     {
@@ -165,7 +166,7 @@ int64 AudioTransportSource::getNextReadPosition() const
 
 int64 AudioTransportSource::getTotalLength() const
 {
-    //const ScopedLock sl (callbackLock);
+    const ScopedLock sl (callbackLock);
 
     if (positionableSource != nullptr)
     {
@@ -178,7 +179,7 @@ int64 AudioTransportSource::getTotalLength() const
 
 bool AudioTransportSource::isLooping() const
 {
-    //const ScopedLock sl (callbackLock);
+    const ScopedLock sl (callbackLock);
     return positionableSource != nullptr && positionableSource->isLooping();
 }
 
@@ -189,7 +190,7 @@ void AudioTransportSource::setGain (const float newGain) noexcept
 
 void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double newSampleRate)
 {
-    //const ScopedLock sl (callbackLock);
+    const ScopedLock sl (callbackLock);
 
     sampleRate = newSampleRate;
     blockSize = samplesPerBlockExpected;
@@ -205,7 +206,7 @@ void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double ne
 
 void AudioTransportSource::releaseMasterResources()
 {
-    //const ScopedLock sl (callbackLock);
+    const ScopedLock sl (callbackLock);
 
     if (masterSource != nullptr)
         masterSource->releaseResources();
@@ -220,7 +221,7 @@ void AudioTransportSource::releaseResources()
 
 void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info)
 {
-    //const ScopedLock sl (callbackLock);
+    const ScopedLock sl (callbackLock);
 
     if (masterSource != nullptr && ! stopped)
     {
