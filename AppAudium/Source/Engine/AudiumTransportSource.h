@@ -53,7 +53,8 @@ public:
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
     {
-        if (getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false)
+        if (getBufferingSource() != nullptr &&
+            getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false)
         {
             std::cout << "waitForNextAudioBlockReady" << std::endl;
         }

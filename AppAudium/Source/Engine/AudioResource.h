@@ -33,7 +33,7 @@ public:
                   std::shared_ptr<AudioSubGroup> audioSubGroup,
                   juce::URL url,
                   std::shared_ptr<AudiumTransportSource> transportSource,
-                  std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
+                  std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
                   int channelPosition,
                   int resourceId) :
         owner(audioResourceContainer),
@@ -41,10 +41,10 @@ public:
         audioSubGroup(audioSubGroup),
         url(url),
         transportSource(transportSource),
+        audioFormatReaderSource(audioFormatReaderSource),
         channelPosition(channelPosition),
         resourceId(resourceId)
     {
-        this->audioFormatReaderSource = std::move(audioFormatReaderSource);
         setRegionData(juce::Range<double>(0.0, getFileLength(audium::seconds)), audium::seconds);
     }
     
@@ -106,7 +106,7 @@ private:
     
     std::shared_ptr<AudiumTransportSource> transportSource;
     
-    std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
+    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     
     
     /// TODO: capsulate the data below
