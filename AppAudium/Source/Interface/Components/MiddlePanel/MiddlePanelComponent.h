@@ -22,8 +22,20 @@ class AudiumEngine;
 class MiddlePanelComponent : public juce::Component
 {
 public:
-    MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine)
+    MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+        audiumEngine(audiumEngine)
     {
+        createComponents();
+    }
+    
+    ~MiddlePanelComponent() override
+    {
+    }
+    
+    void createComponents()
+    {
+        removeAllChildren();
+        
         channelsComponent.reset(new ChannelsComponent(audiumEngine));
         addAndMakeVisible(channelsComponent.get());
         
@@ -35,13 +47,10 @@ public:
         editComponent->setVisible(false);
     }
     
-    ~MiddlePanelComponent() override
-    {
-    }
-    
     enum UIContext {
         EntireContext,
-        VerticalScrollContext
+        VerticalScrollContext,
+        ForceRebuildContext,
     };
     
     void resized() override
@@ -76,6 +85,18 @@ public:
             {
                 channelsComponent->setVerticalScrollOffset(arrangementComponent->getVerticalScrollOffset());
             }
+        }
+        if (context == ForceRebuildContext)
+        {
+            bool editMode = editComponentVisible();
+            createComponents();
+            
+            arrangementComponent->updateUI();
+            channelsComponent->updateUI();
+            editComponent->updateUI();
+            
+            showEditComponent(editMode);
+            resized();
         }
     }
     
@@ -131,6 +152,7 @@ public:
     }
     
 private:
+    std::shared_ptr<AudiumEngine> audiumEngine;
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;

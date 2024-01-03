@@ -36,7 +36,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
     // Path to python binary
     std::string python = "python3";
     
-    if(juce::File(config.bounceFileName).existsAsFile())
+    if (juce::File(config.bounceFileName).existsAsFile())
     {
         audioResourceFilePath = config.bounceFileName;
         // Build the command line string
@@ -95,10 +95,7 @@ const std::string AutoEdit::getCountFromFile() const
 void AutoEdit::applyAutoEditResult(double sampleRate)
 {
     auto countString = getCountFromFile();
-    jassert(countString.length());
-    
-
-    
+    jassert(countString.length() > 0);
     
     //  read segments in json format
     std::string segFileName = getTempDirectory().toStdString() + "/data/segs/" + getBaseName() + "-seg-data.json";
@@ -106,6 +103,8 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
     segFile.open(segFileName, std::ios::in);
     if (segFile.is_open())
     {
+        audioRegionContainer->cleanup();
+        
         int counter = 1;
         auto segdata = nlohmann::json::parse(segFile);
         // create regions from parsed result
@@ -191,5 +190,5 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
     }
     
     // updateUI
-    audioGroupContainer->sendActionMessage("");
+    audioGroupContainer->sendActionMessage(rebuildAll);
 }

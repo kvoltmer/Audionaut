@@ -27,7 +27,9 @@ const char* const audioResourceCreatedAction = "audio resource created";
 const char* const audioResourceRemovedAction = "audio resource removed";
 const char* const audioResourceSelectedAction = "audio resource selected";
 
-const char* const audioGroupCreatedAction = "audio group created";
-const char* const audioGroupDeletedAction = "audio group deleted";
-const char* const tempoChanged            = "tempo changed";
-const char* const scrolledVertically     = "arrangement scrolled";
+const char* const audioGroupCreatedAction   = "audio group created";
+const char* const audioGroupDeletedAction   = "audio group deleted";
+const char* const tempoChanged              = "tempo changed";
+const char* const scrolledVertically        = "arrangement scrolled";
+
+const char* const rebuildAll                = "rebuild all";
