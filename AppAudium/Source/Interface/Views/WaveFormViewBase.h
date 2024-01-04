@@ -60,6 +60,7 @@ public:
         audioThumbnail->setColour(colour);
         if (auto inputSource = AudioResourceFactory::makeAudioInputSource(audioResource->getUrl()))
         {
+            //audioThumbnail->setReader(audioResource->getAudioFormatReader().get(), inputSource->hashCode());
             audioThumbnail->setSource(inputSource.release());
         }
         audioThumbnail->addChangeListener(this);

@@ -51,6 +51,8 @@ public:
     ~AudioResource();
 
     std::shared_ptr<AudiumTransportSource> getAudioTransportSource() const { return transportSource; }
+    
+    juce::AudioFormatReader* getAudioFormatReader() const { return audioFormatReaderSource->getAudioFormatReader(); }
 
     const juce::String getFileNameWithoutExtension() const;
     
@@ -95,6 +97,7 @@ public:
     
     bool containsChannelNumber(int channelNumber) const;
     
+    
 private:
 
     AudioResourceContainer& owner;
@@ -105,7 +108,7 @@ private:
     juce::URL url;
     
     std::shared_ptr<AudiumTransportSource> transportSource;
-    
+            
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     
     
