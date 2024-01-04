@@ -51,6 +51,19 @@ double ZoomHandler::zoomOut()
     return zoomFactor;
 }
 
+void ZoomHandler::setZoomFactor(double factor)
+{
+    zoomFactor = factor;
+    zoomFactor = std::min(zoomFactor, maxZoomInFactor);
+    zoomFactor = std::max(zoomFactor, maxZoomOutFactor);
+}
+
+double ZoomHandler::getZoomFactor() const noexcept
+{
+    return zoomFactor;
+}
+
+
 double ZoomHandler::getContentWidth() const
 {
     // get arrangement length from the playlist
@@ -120,14 +133,12 @@ double ZoomHandler::xToBars (const double x) const
 
 double ZoomHandler::clocksToX (const double clocks) const
 {
-    const auto seconds = playListScheduler->getTempoProvider()->clocksToSeconds(clocks);
-    return secondsToX(seconds);
+    return barsToX(clocks * 96.0);
 }
 
 double ZoomHandler::xToClocks (const double x) const
 {
-    const auto seconds = xToSeconds(x);
-    return playListScheduler->getTempoProvider()->secondsToClocks(seconds);
+    return xToBars(x) / 96.0;
 }
 
 double ZoomHandler::secondsToXWithOffset (const double time) const
@@ -142,6 +153,20 @@ double ZoomHandler::xToSecondsWithOffset (const double x) const
     auto offset = getVisibleRange().getStart();
     return std::max (0.0, xToSeconds (x + offset));
 }
+
+double ZoomHandler::clocksToXWithOffset (const double clocks) const
+{
+    auto x = clocksToX(clocks);
+    auto offset = getVisibleRange().getStart();
+    return std::max (0.0, x - offset);
+}
+
+double ZoomHandler::xToClocksWithOffset (const double x) const
+{
+    auto offset = getVisibleRange().getStart();
+    return std::max (0.0, xToClocks (x + offset));
+}
+
 
 juce::String ZoomHandler::secondsToFormattedString(const int seconds)
 {
@@ -244,19 +269,26 @@ void ZoomHandler::focusViewOnPlayPosition()
 
 void ZoomHandler::focusView(double positionInSeconds)
 {
-    
-   if (positionInSeconds > playListScheduler->getTotalLength(audium::seconds))
-        positionInSeconds = playListScheduler->getAbsolutePosition(audium::seconds);
-    
-    auto posX = secondsToX(positionInSeconds);
+    const auto posX = secondsToX(positionInSeconds);
     
     if(!getVisibleRange().contains(posX))
     {
         //std::cout << "seconds " << positionInSeconds << " " << posX << std::endl;
-        auto newStart = posX - (getVisibleRange().getLength() / 2);
-        auto newRange = getVisibleRange().movedToStartAt(newStart);
+        const auto newStart = posX - (getVisibleRange().getLength() * 0.5);
+        const auto newRange = getVisibleRange().movedToStartAt(newStart);
         scrollbar->setCurrentRange(newRange);
     }
+}
+
+void ZoomHandler::centerView(double positionInClocks, double center)
+{
+    const auto posX = clocksToX(positionInClocks);
+    
+    //std::cout << "seconds " << positionInSeconds << " " << posX << std::endl;
+    const auto newStart = posX - (getVisibleRange().getLength() * center);
+    const auto newRange = getVisibleRange().movedToStartAt(newStart);
+    scrollbar->setCurrentRange(newRange);
+    
 }
 
 void ZoomHandler::timerCallback()
