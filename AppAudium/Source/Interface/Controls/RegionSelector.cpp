@@ -158,6 +158,11 @@ void RegionSelector::mouseMove (const juce::MouseEvent& e)
     }
 }
 
+void RegionSelector::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& details)
+{
+    owner->mouseWheelMove(e, details);
+}
+
 void RegionSelector::updateFromEngine()
 {
     auto pos = audiumEngine->getAudioRegionContainer()->getSelectedPositionInSeconds();

@@ -52,6 +52,8 @@ public:
 
     void mouseUp (const juce::MouseEvent&) override;
     
+    void mouseWheelMove (const MouseEvent&, const MouseWheelDetails&) override;
+    
     void updateMouseZone (const juce::MouseEvent& e);
 
     const Edge getDragMode(int x) const;
