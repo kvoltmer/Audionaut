@@ -460,6 +460,10 @@ public:
 
                         thePath.lineTo(x, top);
                     }
+                    else
+                    {
+                        thePath.lineTo(x, midY);
+                    }
 
                     x += 1.0f;
                     ++cacheData;
@@ -479,6 +483,10 @@ public:
                         bottom = jmax(bottom, midY);
                         
                         thePath.lineTo(x, bottom);
+                    }
+                    else
+                    {
+                        thePath.lineTo(x, midY);
                     }
 
                     x -= 1.0f;
