@@ -34,52 +34,49 @@ public:
                                                               int resourceId)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
-        auto readAheadBufferSize = 48000;
      
         if (auto inputSource = makeAudioInputSource (url))
         {
             if (auto stream = rawToUniquePtr (inputSource->createInputStream()))
             {
-                std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource = nullptr;
-                
                 auto audioFormat = formatManager.findFormatForFileExtension(url.getLocalFile().getFileExtension());
                 if (audioFormat != nullptr)
                 {
-                    if (auto memMappedReader = rawToUniquePtr(audioFormat->createMemoryMappedReader(url.getLocalFile())))
+                    AudioFormatReader* reader = audioFormat->createMemoryMappedReader(url.getLocalFile());
+                    auto readAheadBufferSize = 48000;
+                    if (reader == nullptr)
                     {
-                        if (memMappedReader->mapEntireFile())
+                        reader = audioFormat->createReaderFor(stream.release(), false);
+                    }
+                    else
+                    {
+                        auto memReader = dynamic_cast<MemoryMappedAudioFormatReader*>(reader);
+                        if (memReader->mapEntireFile())
                         {
                             readAheadThread = nullptr;
                             readAheadBufferSize = 0;
                         }
-                        audioFormatReaderSource = std::shared_ptr<juce::AudioFormatReaderSource> (new juce::AudioFormatReaderSource(memMappedReader.release(), true));
                     }
-                    else if (auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream))))
-                    {
-                        audioFormatReaderSource = std::shared_ptr<juce::AudioFormatReaderSource> (new juce::AudioFormatReaderSource(reader.release(), true));
-                        
-                    }
-                    jassert(audioFormatReaderSource);
                     
-                    if (audioFormatReaderSource)
+                    if (reader != nullptr)
                     {
-                        auto transportSource = group->getTransportSourceContainer()->createNewTransportSource();
+                        auto audioFormatReaderSource    = std::shared_ptr<juce::AudioFormatReaderSource> (new juce::AudioFormatReaderSource(reader, true));
+                        auto transportSource            = group->getTransportSourceContainer()->createNewTransportSource();
                         transportSource->setSource (audioFormatReaderSource.get(),
                                                     readAheadBufferSize,
                                                     readAheadThread,
-                                                    audioFormatReaderSource->getAudioFormatReader()->sampleRate);
+                                                    reader->sampleRate);
                         
                         audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
                                                                                          group,
                                                                                          subGroup,
                                                                                          url,
                                                                                          transportSource,
-                                                                                         std::move(audioFormatReaderSource),
+                                                                                         audioFormatReaderSource,
                                                                                          channelPosition,
                                                                                          resourceId));
                         audioResource->setTransportPosition(transportPosition, audium::seconds);
                     }
-                    
                 }
             }
         }

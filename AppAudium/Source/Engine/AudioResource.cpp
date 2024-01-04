@@ -36,12 +36,12 @@ const juce::String AudioResource::getUrlAsString() const
 
 double AudioResource::getSampleRate() const
 {
-    return audioFormatReaderSource->getAudioFormatReader()->sampleRate;
+    return getAudioFormatReader()->sampleRate;
 }
 
 unsigned int AudioResource::getNumChannels() const
 {
-    return audioFormatReaderSource->getAudioFormatReader()->numChannels;
+    return getAudioFormatReader()->numChannels;
 }
 
 double AudioResource::getFileLength(audium::TimeContextType context) const
