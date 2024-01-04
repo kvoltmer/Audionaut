@@ -234,3 +234,11 @@ std::shared_ptr<AudioSubGroup> AudioGroup::getDefaultSubGroup() const
     jassertfalse;
     return  nullptr;
 }
+
+void AudioGroup::setChannelHeight(int height)
+{
+    for (auto i = 0; i < getNumChannels(); i++)
+    {
+        getChannel(i)->setChannelHeight(height);
+    }
+}

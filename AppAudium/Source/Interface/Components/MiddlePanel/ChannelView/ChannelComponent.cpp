@@ -146,13 +146,13 @@ void ChannelComponent::resized()
     //[UserPreResize] Add your own custom resize code here..
     //[/UserPreResize]
 
-    volumeLabeldB->setBounds (20, proportionOfHeight (0.5000f) - (20 / 2), 30, 20);
-    volumeScaleButton->setBounds (60 - 10, 0, 10, proportionOfHeight (1.0000f));
-    volumeLevel->setBounds (0, proportionOfHeight (0.5000f) - (20 / 2), 27, 20);
+    volumeLabeldB->setBounds ((getWidth() / 2) + -10, proportionOfHeight (0.5000f) - (20 / 2), 30, 20);
+    volumeScaleButton->setBounds (getWidth() - 10, 0, 10, proportionOfHeight (1.0000f));
+    volumeLevel->setBounds ((getWidth() / 2) + -30, proportionOfHeight (0.5000f) - (20 / 2), 27, 20);
     //[UserResized] Add your own custom resize handling here..
 
     //levelMeter->setBounds(40, 3, 7, 94);
-    levelMeter->setBounds(40, 3, 7, getHeight() - 6);
+    levelMeter->setBounds(getWidth() - 20, 3, 7, getHeight() - 6);
 
     //[/UserResized]
 }
@@ -293,19 +293,19 @@ BEGIN_JUCER_METADATA
   </METHODS>
   <BACKGROUND backgroundColour="ff323232"/>
   <LABEL name="new label" id="2134eb9441d110f8" memberName="volumeLabeldB"
-         virtualName="" explicitFocusOrder="0" pos="20 50%c 30 20" bkgCol="0"
+         virtualName="" explicitFocusOrder="0" pos="-10C 50%c 30 20" bkgCol="0"
          textCol="ffffffff" edTextCol="ff000000" edBkgCol="0" labelText="dB"
          editableSingleClick="0" editableDoubleClick="0" focusDiscardsChanges="0"
          fontname="Default font" fontsize="11.0" kerning="0.0" bold="0"
          italic="0" justification="33"/>
   <IMAGEBUTTON name="volume scale" id="5be2ef2162e0d2d0" memberName="volumeScaleButton"
-               virtualName="" explicitFocusOrder="0" pos="60r 0 10 100%" buttonText="new button"
+               virtualName="" explicitFocusOrder="0" pos="0Rr 0 10 100%" buttonText="new button"
                connectedEdges="0" needsCallback="1" radioGroupId="0" keepProportions="0"
                resourceNormal="channelScale_png" opacityNormal="1.0" colourNormal="0"
                resourceOver="" opacityOver="1.0" colourOver="0" resourceDown=""
                opacityDown="1.0" colourDown="0"/>
   <LABEL name="new label" id="53bdf774398f1561" memberName="volumeLevel"
-         virtualName="" explicitFocusOrder="0" pos="0 50%c 27 20" bkgCol="0"
+         virtualName="" explicitFocusOrder="0" pos="-30C 50%c 27 20" bkgCol="0"
          textCol="ffffffff" edTextCol="ff000000" edBkgCol="0" labelText="-60"
          editableSingleClick="1" editableDoubleClick="1" focusDiscardsChanges="0"
          fontname="Default font" fontsize="11.0" kerning="0.0" bold="0"

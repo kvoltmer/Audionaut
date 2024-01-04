@@ -37,7 +37,7 @@ public:
     
     juce::Label* createComboBoxTextBox (juce::ComboBox&) override;
     
-    static const int channelsWidth = 65;
+    static const int channelsWidth = 85;
     
 private:
     void setupColours();

@@ -88,6 +88,8 @@ public:
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
     
+    void setChannelHeight(int height);
+    
 private:
     const AudioResourceContainer &audioResourceContainer;
     const AudioRegionContainer &audioRegionContainer;
