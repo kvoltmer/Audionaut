@@ -122,10 +122,29 @@ public:
 
     void zoomOut()
     {
-        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);        zoomHandler->zoomOut();
+        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);
+        zoomHandler->zoomOut();
         setContentWidth(zoomHandler->getContentWidth());
         regionSelector->updateFromEngine();
         zoomHandler->focusView(centerInSeconds);
+    }
+    
+    void mouseMagnify (const MouseEvent& event, float scaleFactor) override
+    {
+        auto relativeEvent = event.getEventRelativeTo(audioGroupListBox.get());
+        auto x = relativeEvent.getPosition().getX();
+        
+        // percentage to center of visible range
+        auto center = x / zoomHandler->getVisibleRange().getLength();
+        
+        // absolute position in clocks
+        auto clocks = zoomHandler->xToClocksWithOffset(x);
+        
+        zoomHandler->setZoomFactor(zoomHandler->getZoomFactor() * static_cast<double>(scaleFactor));
+        setContentWidth(zoomHandler->getContentWidth());
+        regionSelector->updateFromEngine();
+        
+        zoomHandler->centerView(clocks, center);
     }
     
     RegionSelector* getRegionSelector() const { return regionSelector.get(); }
