@@ -241,6 +241,16 @@ void MainComponent::zoomOut()
     middlePanelComponent->zoomOut();
 }
 
+void MainComponent::pageLeft()
+{
+    middlePanelComponent->pageLeft();
+}
+
+void MainComponent::pageRight()
+{
+    middlePanelComponent->pageRight();
+}
+
 void MainComponent::toggleEditArrangementComponent()
 {
     // toggle edit mode

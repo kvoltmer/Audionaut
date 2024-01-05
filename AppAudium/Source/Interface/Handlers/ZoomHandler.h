@@ -21,9 +21,8 @@ public:
     ~ZoomHandler() override;
     
     double zoomIn();
-    
     double zoomOut();
-    
+        
     void setZoomFactor(double factor);
     double getZoomFactor() const noexcept;
     
@@ -75,6 +74,10 @@ public:
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
     double getContentWidth() const;
+    
+    void pageLeft();
+    void pageRight();
+    
  
     // max zoom in factor
     double maxZoomInFactor = 0.0;

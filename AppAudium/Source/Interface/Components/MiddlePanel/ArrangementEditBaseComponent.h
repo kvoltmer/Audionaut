@@ -120,6 +120,16 @@ public:
         zoomHandler->focusViewOnPlayPosition();
     }
     
+    void pageLeft()
+    {
+        zoomHandler->pageLeft();
+    }
+    
+    void pageRight()
+    {
+        zoomHandler->pageRight();
+    }
+    
     void mouseMagnify (const MouseEvent& event, float scaleFactor) override
     {
         auto relativeEvent = event.getEventRelativeTo(audioGroupListBox.get());

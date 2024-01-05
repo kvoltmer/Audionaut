@@ -205,6 +205,8 @@ PopupMenu AudiumApplication::createViewMenu()
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomIn);
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomOut);
+    menu.addCommandItem (commandManager.get(), CommandIDs::pageLeft);
+    menu.addCommandItem (commandManager.get(), CommandIDs::pageRight);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::followTransport);
 

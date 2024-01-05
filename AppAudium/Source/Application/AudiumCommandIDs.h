@@ -40,6 +40,8 @@ namespace CommandIDs
         followTransport         = 0x300075,
         toggleEditArrangement   = 0x300076,
         toggleFullScreen        = 0x300077,
+        pageLeft                = 0x300078,
+        pageRight               = 0x300079,
         
 
         lastCommandIDEntry
