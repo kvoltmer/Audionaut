@@ -90,6 +90,8 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::autoEdit,
         CommandIDs::zoomIn,
         CommandIDs::zoomOut,
+        CommandIDs::pageLeft,
+        CommandIDs::pageRight,
         CommandIDs::followTransport,
         CommandIDs::toggleEditArrangement,
         CommandIDs::toggleFullScreen,
@@ -134,6 +136,14 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Zoom Out", "Zoom out", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('-', ModifierKeys::ctrlModifier, 0));
             break;
+        case CommandIDs::pageLeft:
+            result.setInfo ("Page Left", "Scroll one page feft", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress (KeyPress::leftKey, ModifierKeys::noModifiers, 0));
+            break;
+        case CommandIDs::pageRight:
+            result.setInfo ("Page Right", "Scrool one page right", CommandCategories::view, 0);
+            result.defaultKeypresses.add (KeyPress (KeyPress::rightKey, ModifierKeys::noModifiers, 0));
+            break;
         case CommandIDs::followTransport:
             result.setInfo ("Follow Transport", "Follow Transport", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::ctrlModifier, 0));
@@ -173,6 +183,12 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::zoomOut:
             mainComponent->zoomOut();
+            break;
+        case CommandIDs::pageLeft:
+            mainComponent->pageLeft();
+            break;
+        case CommandIDs::pageRight:
+            mainComponent->pageRight();
             break;
         case CommandIDs::followTransport:
             getEngine()->getPlayListScheduler()->setFollowTransport(!getEngine()->getPlayListScheduler()->getFollowTransport());

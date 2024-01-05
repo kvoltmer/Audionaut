@@ -287,8 +287,10 @@ void ZoomHandler::centerView(double positionInClocks, double center)
     //std::cout << "seconds " << positionInSeconds << " " << posX << std::endl;
     const auto newStart = posX - (getVisibleRange().getLength() * center);
     const auto newRange = getVisibleRange().movedToStartAt(newStart);
-    scrollbar->setCurrentRange(newRange);
     
+    const auto oldRange = scrollbar->getCurrentRange();
+    scrollbar->setCurrentRange(newRange);
+
 }
 
 void ZoomHandler::timerCallback()
@@ -305,4 +307,15 @@ void ZoomHandler::timerCallback()
             scrollbar->setCurrentRange(newRange);
         }
     }
+}
+
+void ZoomHandler::pageLeft()
+{
+    const auto newRange = getVisibleRange().movedToStartAt(getVisibleRange().getStart() - getVisibleRange().getLength());
+    scrollbar->setCurrentRange(newRange);
+}
+void ZoomHandler::pageRight()
+{
+    const auto newRange = getVisibleRange().movedToStartAt(getVisibleRange().getEnd());
+    scrollbar->setCurrentRange(newRange);
 }

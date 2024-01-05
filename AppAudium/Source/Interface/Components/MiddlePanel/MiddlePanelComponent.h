@@ -102,20 +102,22 @@ public:
     
     void zoomIn()
     {
-        if (arrangementComponent->isVisible())
-            arrangementComponent->zoomIn();
-        
-        if (editComponent->isVisible())
-            editComponent->zoomIn();
+        getVisibleComponent()->zoomIn();
     }
     
     void zoomOut()
     {
-        if (arrangementComponent->isVisible())
-            arrangementComponent->zoomOut();
-        
-        if (editComponent->isVisible())
-            editComponent->zoomOut();
+        getVisibleComponent()->zoomOut();
+    }
+    
+    void pageLeft()
+    {
+        getVisibleComponent()->pageLeft();
+    }
+    
+    void pageRight()
+    {
+        getVisibleComponent()->pageRight();
     }
     
     void showArrangementComponent(bool visible)
@@ -149,6 +151,14 @@ public:
     bool editComponentVisible() const
     {
         return editComponent->isVisible();
+    }
+    
+    ArrangementEditBaseComponent* getVisibleComponent() const
+    {
+        if (arrangementComponent->isVisible())
+            return arrangementComponent.get();
+        else
+            return editComponent.get();
     }
     
 private:

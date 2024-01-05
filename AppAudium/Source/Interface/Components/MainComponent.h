@@ -57,6 +57,9 @@ public:
 
     void zoomIn();
     void zoomOut();
+    
+    void pageLeft();
+    void pageRight();
 
     void toggleEditArrangementComponent();
     //[/UserMethods]
