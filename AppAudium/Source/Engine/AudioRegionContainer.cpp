@@ -124,14 +124,35 @@ void AudioRegionContainer::deselectAll()
     sendActionMessage("todo");
 }
 
-void AudioRegionContainer::setSelectedPositionInSeconds(juce::Range<double> pos)
+void AudioRegionContainer::setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context)
 {
-    selectedPositionClocks = playListScheduler->getTempoProvider()->secondsToClocks(pos);
+    if (context == audium::seconds)
+    {
+        selectedPositionClocks = playListScheduler->getTempoProvider()->secondsToClocks(pos);
+    }
+    else if (context == audium::clocks)
+    {
+        selectedPositionClocks = pos;
+    }
+    else
+    {
+        jassertfalse;
+    }
 }
 
-juce::Range<double> AudioRegionContainer::getSelectedPositionInSeconds() const
+juce::Range<double> AudioRegionContainer::getSelectedPosition(audium::TimeContextType context) const
 {
-    return playListScheduler->getTempoProvider()->clocksToSeconds(selectedPositionClocks);
+    if (context == audium::seconds)
+    {
+        return playListScheduler->getTempoProvider()->clocksToSeconds(selectedPositionClocks);
+    }
+    else if (context == audium::clocks)
+    {
+        return selectedPositionClocks;
+    }
+
+    jassertfalse;
+    return juce::Range<double>();
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) const

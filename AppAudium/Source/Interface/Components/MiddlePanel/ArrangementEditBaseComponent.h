@@ -106,27 +106,18 @@ public:
 
     void zoomIn()
     {
-        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);
         zoomHandler->zoomIn();
         setContentWidth(zoomHandler->getContentWidth());
         regionSelector->updateFromEngine();
-        
-        auto regionSelectorPos = audiumEngine->getAudioRegionContainer()->getSelectedPositionInSeconds();
-        if (!regionSelectorPos.isEmpty())
-        {
-            centerInSeconds = regionSelectorPos.getStart() + (regionSelectorPos.getLength() * 0.5);
-        }
-        
-        zoomHandler->focusView(centerInSeconds);
+        zoomHandler->focusViewOnPlayPosition();
     }
 
     void zoomOut()
     {
-        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);
         zoomHandler->zoomOut();
         setContentWidth(zoomHandler->getContentWidth());
         regionSelector->updateFromEngine();
-        zoomHandler->focusView(centerInSeconds);
+        zoomHandler->focusViewOnPlayPosition();
     }
     
     void mouseMagnify (const MouseEvent& event, float scaleFactor) override

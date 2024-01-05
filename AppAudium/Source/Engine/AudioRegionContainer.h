@@ -39,8 +39,8 @@ public:
     void createRegionsFromSelection(juce::String name);
     
     // Used by RegionSelector
-    void setSelectedPositionInSeconds(juce::Range<double> pos);
-    juce::Range<double> getSelectedPositionInSeconds() const;
+    void setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context);
+    juce::Range<double> getSelectedPosition(audium::TimeContextType context) const;
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
