@@ -172,7 +172,6 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
     const auto pos = audiumEngine->getAudioRegionContainer()->getSelectedPosition(audium::clocks);
     if (!pos.isEmpty())
     {
-        
         if (key.isKeyCode (KeyPress::leftKey))
         {
             zoomHandler->centerView(pos.getStart(), 0.5);
@@ -181,6 +180,32 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
         else if (key.isKeyCode (KeyPress::rightKey))
         {
             zoomHandler->centerView(pos.getEnd(), 0.5);
+            return true;
+        }
+        if (key.isKeyCode (KeyPress::upKey))
+        {
+            // visible center position in clocks
+            auto clocks = zoomHandler->xToClocksWithOffset(zoomHandler->getVisibleRange().getLength() * 0.5);
+            zoomHandler->zoomIn();
+            owner->setMinimumContentWidth(zoomHandler->getContentWidth());
+            updateFromEngine();
+            zoomHandler->centerView(clocks, 0.5);
+            return true;
+        }
+        else if (key.isKeyCode (KeyPress::downKey))
+        {
+            // visible center position in clocks
+            auto clocks = zoomHandler->xToClocksWithOffset(zoomHandler->getVisibleRange().getLength() * 0.5);
+            zoomHandler->zoomOut();
+            owner->setMinimumContentWidth(zoomHandler->getContentWidth());
+            updateFromEngine();
+            zoomHandler->centerView(clocks, 0.5);
+            return true;
+        }
+        else if (key.isKeyCode (KeyPress::escapeKey))
+        {
+            audiumEngine->getAudioRegionContainer()->setSelectedPosition(juce::Range<double>(), audium::seconds);
+            updateFromEngine();
             return true;
         }
     }
