@@ -133,12 +133,12 @@ double ZoomHandler::xToBars (const double x) const
 
 double ZoomHandler::clocksToX (const double clocks) const
 {
-    return barsToX(clocks * 96.0);
+    return barsToX(clocks / 96.0);
 }
 
 double ZoomHandler::xToClocks (const double x) const
 {
-    return xToBars(x) / 96.0;
+    return xToBars(x) * 96.0;
 }
 
 double ZoomHandler::secondsToXWithOffset (const double time) const
