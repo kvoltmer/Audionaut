@@ -36,7 +36,6 @@ GroupBaseComponent::GroupBaseComponent (std::shared_ptr<AudioGroup> group,
     regionSelector(regionSelector)
 {
     setNewGroupColour();
-    setInterceptsMouseClicks(false, true);
 }
 
 void GroupBaseComponent::setNewGroupColour()

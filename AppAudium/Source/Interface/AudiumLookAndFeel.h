@@ -38,6 +38,8 @@ public:
     juce::Label* createComboBoxTextBox (juce::ComboBox&) override;
     
     static const int channelsWidth = 85;
+    static const int dragZoomControlHeight = 25;
+    static const int transportPositionControlHeight = 25;
     
 private:
     void setupColours();

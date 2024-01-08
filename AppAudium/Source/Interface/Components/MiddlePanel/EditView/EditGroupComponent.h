@@ -121,8 +121,7 @@ public:
     
     void changeListenerCallback (ChangeBroadcaster* source) override
     {
-        updateFromEngine();
-        resized();
+        audiumEngine->getAudioResourceContainer()->sendActionMessage("");
     }
     
     void updateFromEngine()

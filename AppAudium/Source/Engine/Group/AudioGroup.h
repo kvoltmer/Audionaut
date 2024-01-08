@@ -20,6 +20,7 @@ class TransportSourceContainer;
 class AudioSubGroup;
 class AudioRegionContainer;
 class AudioChannel;
+class PositionableBase;
 
 class AudioGroup
 {
@@ -89,6 +90,8 @@ public:
     bool isSelected() const { return selected; }
     
     void setChannelHeight(int height);
+    
+    std::vector<std::shared_ptr<PositionableBase>> getPositionableItems(bool arrangementMode) const;
     
 private:
     const AudioResourceContainer &audioResourceContainer;

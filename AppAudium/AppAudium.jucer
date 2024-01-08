@@ -76,6 +76,8 @@
                 resource="0" file="Source/Engine/Playback/audium_AudioTransportSource.h"/>
         </GROUP>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
+          <FILE id="iREjhA" name="PositionableBase.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/PositionableBase.h"/>
           <FILE id="UTFjED" name="SampleTimer.h" compile="0" resource="0" file="Source/Engine/PlayList/SampleTimer.h"/>
           <FILE id="kNVT0n" name="PlayListContainer.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListContainer.cpp"/>
@@ -244,6 +246,8 @@
                 resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="pX9JqX" name="DragZoomControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/DragZoomControl.h"/>
           <FILE id="tIrkcV" name="PlayListItemDraggerControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayListItemDraggerControl.h"/>
           <FILE id="N579q1" name="SubGroupDraggerControl.h" compile="0" resource="0"
@@ -277,6 +281,8 @@
                 file="Source/Interface/Controls/AudioGroupListBox.h"/>
         </GROUP>
         <GROUP id="{251C6FB2-3F49-498C-8DDC-157FCCAC8565}" name="Views">
+          <FILE id="Fx8wUZ" name="ArrangementOverview.h" compile="0" resource="0"
+                file="Source/Interface/Views/ArrangementOverview.h"/>
           <FILE id="nZmqga" name="WaveFormViewBase.h" compile="0" resource="0"
                 file="Source/Interface/Views/WaveFormViewBase.h"/>
           <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"

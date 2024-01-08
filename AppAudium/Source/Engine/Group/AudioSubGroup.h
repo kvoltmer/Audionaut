@@ -11,12 +11,15 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/TimeContext.h"
+#include "Engine/PlayList/PositionableBase.h"
 
 class AudioGroup;
 class AudioResource;
 
 
-class AudioSubGroup {
+class AudioSubGroup : public PositionableBase
+{
         
 public:
     AudioSubGroup(const AudioGroup& audioGroup, int subGroupId) :
@@ -39,6 +42,8 @@ public:
     
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
+    
+    juce::Range<double> getAbsolutePosition(audium::TimeContextType context) const override;
 
 private:
     const AudioGroup& audioGroup;

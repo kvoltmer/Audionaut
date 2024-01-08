@@ -165,7 +165,7 @@ void PlayListScheduler::processInEditMode(double absolutePosition, int numSample
 }
 
 
-double PlayListScheduler::getTotalLength(audium::TimeContextType context) const
+double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool addOverhead) const
 {
     double totalLength = 0.0;
     
@@ -188,6 +188,22 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context) const
                                    resource->getRegionData(context).getLength());
         }
     }
+    
+    if (addOverhead)
+    {
+        // add overhead to fit entire arrangement arrangement
+        auto overhead = 4 * 96.0;
+        if (context == audium::seconds)
+        {
+            overhead = tempoProvider->clocksToSeconds(overhead);
+        }
+        
+        overhead = std::max(overhead, totalLength * 0.01);
+        
+        
+        totalLength += overhead;
+    }
+    
     return totalLength;
 }
 
