@@ -18,7 +18,10 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/PlayPositionMarker.h"
 #include "Interface/Controls/TransportPositionControl.h"
+#include "Interface/Controls/DragZoomControl.h"
 #include "Engine/Group/AudioGroupContainer.h"
+#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/Views/ArrangementOverview.h"
 
 //==============================================================================
 /*
@@ -36,6 +39,13 @@ public:
     {
         
         zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
+
+        arrangementOverview.reset(new ArrangementOverview(audiumEngine, arrangementMode));
+        addAndMakeVisible(arrangementOverview.get());
+        
+        dragZoomControl.reset(new DragZoomControl(audiumEngine, zoomHandler, arrangementMode));
+        addAndMakeVisible(dragZoomControl.get());
+        
         audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, zoomHandler));
         regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
         audioGroupListBoxModel.reset(new GroupListBoxModel(audioGroupListBox,
@@ -46,7 +56,7 @@ public:
         audioGroupListBox->setModel(audioGroupListBoxModel.get());
         auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(audioGroupListBox, zoomHandler, audiumEngine));
         audioGroupListBox->setHeaderComponent(std::move(headerComponent));
-        audioGroupListBox->getHeaderComponent()->setSize(getWidth(), 25);
+        audioGroupListBox->getHeaderComponent()->setSize(getWidth(), AudiumLookAndFeel::transportPositionControlHeight);
         audioGroupListBox->setOutlineThickness(0);
         
         
@@ -86,8 +96,12 @@ public:
 
     void resized() override
     {
-        audioGroupListBox->setBounds(getLocalBounds());
-        playPositionMarker->setBounds(getLocalBounds());
+        auto bounds = getLocalBounds();
+        auto top = bounds.removeFromTop(AudiumLookAndFeel::dragZoomControlHeight);
+        arrangementOverview->setBounds(top);
+        dragZoomControl->setBounds(top);
+        audioGroupListBox->setBounds(bounds);
+        playPositionMarker->setBounds(bounds);
     }
 
     void updateUI()
@@ -96,7 +110,8 @@ public:
         
         audioGroupListBox->updateContent();
         regionSelector->updateFromEngine();
-        
+        arrangementOverview->updateFromEngine();
+        dragZoomControl->updateFromEngine();
     }
     
     void setContentWidth(int contentWidth)
@@ -109,6 +124,7 @@ public:
         zoomHandler->zoomIn();
         setContentWidth(zoomHandler->getContentWidth());
         regionSelector->updateFromEngine();
+        dragZoomControl->updateFromEngine();
         zoomHandler->focusViewOnPlayPosition();
     }
 
@@ -117,6 +133,7 @@ public:
         zoomHandler->zoomOut();
         setContentWidth(zoomHandler->getContentWidth());
         regionSelector->updateFromEngine();
+        dragZoomControl->updateFromEngine();
         zoomHandler->focusViewOnPlayPosition();
     }
     
@@ -154,15 +171,24 @@ public:
     {
         return audioGroupListBox->getViewport()->getVerticalScrollBar().getCurrentRange().getStart();
     }
+    
+    void onScrollContext()
+    {
+        regionSelector->updateFromEngine();
+        dragZoomControl->updateFromEngine();
+    }
 
 protected:
     
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
+    
     std::shared_ptr<AudioGroupListBox>          audioGroupListBox;
-    std::shared_ptr<GroupListBoxModel>     audioGroupListBoxModel;
-    std::shared_ptr<PlayPositionMarker>         playPositionMarker;
+    std::unique_ptr<GroupListBoxModel>          audioGroupListBoxModel;
+    std::unique_ptr<PlayPositionMarker>         playPositionMarker;
+    std::unique_ptr<DragZoomControl>            dragZoomControl;
+    std::unique_ptr<ArrangementOverview>        arrangementOverview;
     
 private:
     

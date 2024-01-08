@@ -67,21 +67,22 @@ double ZoomHandler::getZoomFactor() const noexcept
 double ZoomHandler::getContentWidth() const
 {
     // get arrangement length from the playlist
-    const auto clocks = playListScheduler->getTotalLength(audium::clocks);
-    
-    // add one bar to fit the content into arrangement
-    const auto bars = TempoProvider::clocksToBars(clocks) + 1.0;
-    
-    // at least minimumArrangementBars
-    const auto arrangementBars = std::max(minimumArrangementBars, bars);
+    const auto clocks = playListScheduler->getTotalLength(audium::clocks, true);
+    const auto arrangementBars = TempoProvider::clocksToBars(clocks);
     
     return arrangementBars * pixelsPerBar * zoomFactor;
 }
 
 juce::Range<double> ZoomHandler::getVisibleRange() const noexcept
 {
-    jassert(scrollbar);
-    return scrollbar->getCurrentRange();
+    if (scrollbar != nullptr)
+    {
+        return scrollbar->getCurrentRange();
+    }
+    else
+    {
+        return juce::Range<double>();
+    }
 }
 
 juce::Range<double> ZoomHandler::getVisibleRangeInSeconds() const noexcept

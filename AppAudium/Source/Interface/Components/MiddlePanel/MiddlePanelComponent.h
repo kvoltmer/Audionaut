@@ -55,14 +55,13 @@ public:
     
     void resized() override
     {
-        auto channelsWidth = AudiumLookAndFeel::channelsWidth;
+        auto localBounds = getLocalBounds();
+        auto channelBounds = localBounds.removeFromLeft(AudiumLookAndFeel::channelsWidth);
+        channelBounds.removeFromTop(AudiumLookAndFeel::dragZoomControlHeight);
+        channelsComponent->setBounds(channelBounds);
         
-        channelsComponent->setBounds(getLocalBounds().removeFromLeft(channelsWidth));
-        
-        auto bounds = getLocalBounds().removeFromRight(getWidth() - channelsWidth);
-        
-        arrangementComponent->setBounds(bounds);
-        editComponent->setBounds(bounds);
+        arrangementComponent->setBounds(localBounds);
+        editComponent->setBounds(localBounds);
     }
     
     void updateUI(UIContext context = EntireContext)
@@ -75,8 +74,10 @@ public:
         }
         else if(context == VerticalScrollContext)
         {
-            arrangementComponent->getRegionSelector()->updateFromEngine();
-            editComponent->getRegionSelector()->updateFromEngine();
+            getVisibleComponent()->onScrollContext();
+            
+            
+            
             if (editComponent->isVisible())
             {
                 channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());

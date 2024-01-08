@@ -124,10 +124,8 @@ public:
         if (regionSelector != nullptr)
             regionSelector->setEnabled(true);
         
-        if (validateData())
-        {
-            sendChangeMessage();
-        }
+        validateData();
+        sendChangeMessage();
     }
 
     void mouseMove (const juce::MouseEvent& e) override

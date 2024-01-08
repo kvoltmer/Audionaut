@@ -242,3 +242,23 @@ void AudioGroup::setChannelHeight(int height)
         getChannel(i)->setChannelHeight(height);
     }
 }
+
+std::vector<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(bool arrangementMode) const
+{
+    // returns all items in the timeline
+    // note: depending on the arrangement or edit mode
+    
+    std::vector<std::shared_ptr<PositionableBase>> result;
+    if (arrangementMode)
+    {
+        auto playListItems = getPlayListContainer()->getPlayListItems();
+        for (auto playListItem : playListItems)
+            result.push_back(playListItem);
+    }
+    else
+    {
+        for (auto subGroup : getAudioSubGroups())
+            result.push_back(subGroup);
+    }
+    return result;
+}

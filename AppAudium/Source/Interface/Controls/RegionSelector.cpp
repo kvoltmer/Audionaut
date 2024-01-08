@@ -204,6 +204,7 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
         }
         else if (key.isKeyCode (KeyPress::escapeKey))
         {
+            // clear selection
             audiumEngine->getAudioRegionContainer()->setSelectedPosition(juce::Range<double>(), audium::seconds);
             updateFromEngine();
             return true;

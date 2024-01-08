@@ -43,3 +43,17 @@ std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const
     }
     return nullptr;
 }
+
+juce::Range<double> AudioSubGroup::getAbsolutePosition(audium::TimeContextType context) const
+{
+    // note: a sub group my contain several resources...
+    auto pos = 0.0;
+    auto length = 0.0;
+    for (auto resource : getAudioResources())
+    {
+        pos = resource->getTransportPosition(context);
+        length = std::max(length, resource->getRegionData(context).getEnd());
+    }
+    
+    return juce::Range(pos, pos + length);
+}

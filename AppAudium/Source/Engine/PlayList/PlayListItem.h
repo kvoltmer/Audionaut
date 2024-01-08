@@ -15,17 +15,18 @@
 #include <JuceHeader.h>
 
 #include "Engine/TimeContext.h"
+#include "Engine/PlayList/PositionableBase.h"
 
 class AudioRegion;
 class PlayListContainer;
 
-class PlayListItem
+class PlayListItem : public PositionableBase
 {
     
 public:
     
     PlayListItem(const PlayListContainer &owner, std::shared_ptr<AudioRegion> audioRegion);
-    
+        
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
     juce::Range<double> getRegionData(audium::TimeContextType context) const;
@@ -36,6 +37,8 @@ public:
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
     
+    juce::Range<double> getAbsolutePosition(audium::TimeContextType context) const override;
+
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;

@@ -69,7 +69,7 @@ public:
     
     void audioCallback (const juce::AudioSourceChannelInfo& info);
     
-    double getTotalLength(audium::TimeContextType context) const;
+    double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
     void bounceToFile(juce::AudioFormatWriter* writer, double sampleRate, int numSamples, int numOutputChannels);
     
