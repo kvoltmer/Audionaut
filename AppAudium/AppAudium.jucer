@@ -295,6 +295,9 @@
                 file="Source/Interface/Views/AudioResourceView.h"/>
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
+        <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">
+          <FILE id="zKjXO3" name="zoomin.svg" compile="0" resource="1" file="Resources/zoomin.svg"/>
+        </GROUP>
       </GROUP>
     </GROUP>
   </MAINGROUP>

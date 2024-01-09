@@ -13,15 +13,18 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Controls/AudioGroupListBox.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 
 class DragZoomControl  : public juce::Component
 {
 public:
-    DragZoomControl(std::shared_ptr<AudiumEngine> audiumEngine,
+    DragZoomControl(std::shared_ptr<AudioGroupListBox> audioGroupListBox,
+                    std::shared_ptr<AudiumEngine> audiumEngine,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     bool arrangementMode) :
+        audioGroupListBox(audioGroupListBox),
         audiumEngine(audiumEngine),
         zoomHandler(zoomHandler),
         arrangementMode(arrangementMode)
@@ -32,6 +35,16 @@ public:
         visibileRectangle->setStrokeFill (juce::Colours::white);
         visibileRectangle->setStrokeThickness(1.f);
         updateFromEngine();
+        
+
+        // load svg and apply zoom cursor
+        drawable = juce::Drawable::createFromImageData (BinaryData::zoomin_svg, BinaryData::zoomin_svgSize);
+        juce::Rectangle<int> rect(0, 0, 20, 20);
+        cursorImage = juce::Image(Image::PixelFormat::RGB, rect.getWidth(), rect.getHeight(), true);
+        auto g = juce::Graphics(cursorImage);
+        drawable->drawWithin(g, rect.toFloat(), RectanglePlacement::centred | RectanglePlacement::onlyReduceInSize, 1.f);
+        zoomCursor = juce::MouseCursor(cursorImage, rect.getWidth()/2, rect.getHeight()/2);
+        
     }
 
     ~DragZoomControl() override
@@ -40,6 +53,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
+
     }
     
 
@@ -59,20 +73,88 @@ public:
         auto x = (visibleRange.getStart() / contentWidth) * bounds.getWidth();
         auto y = bounds.getY();
         auto w = (visibleRange.getLength() / contentWidth) * bounds.getWidth();
-        if (w > bounds.getWidth())
-            w = bounds.getWidth();
+        
+        w = std::min((float)w, bounds.getWidth());
+        w = std::max((float)w, 10.f);
         
         auto h = bounds.getHeight();
         
         visibileRectangle->setRectangle(Rectangle<float>(x, y, w, h).reduced(1.f, 2.f));
+    }
+    
+    
+    
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        mouseDownFactor = zoomHandler->getZoomFactor();
+        mouseDrag(e);
+    }
+
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        // zoom in - zoom out
+        auto newFactor = mouseDownFactor;
+        auto f = 0.0;
+        auto y = static_cast<double>(e.getOffsetFromDragStart().getY());
+        if (std::abs(y) >= 2.0)
+        {
+            if (y > 0.0)
+            {
+                // eg: with 50 pixel distance the zoom will double
+                f = std::pow(2.0, y * 0.02);
+            }
+            else
+            {
+                f = std::pow(0.5, std::abs(y) * 0.02);
+            }
+            
+            newFactor = mouseDownFactor * f;
+            //std::cout << "y:" << y << " f: " << f << " " << newFactor << std::endl;
+        }
         
+        zoomHandler->setZoomFactor(newFactor);
+        audioGroupListBox->setMinimumContentWidth(zoomHandler->getContentWidth());
+        
+        // left - right
+        auto x = e.position.getX();
+        auto contentWidth = zoomHandler->getContentWidth();
+        auto w = getLocalBounds().toFloat().getWidth();
+        
+        auto relativePosition = x / w;
+        
+        auto contentPosition = contentWidth * relativePosition;
+        auto visibleRange = zoomHandler->getVisibleRange();
+        zoomHandler->setVisibleRange(visibleRange.movedToStartAt(contentPosition - visibleRange.getLength() * 0.5),
+                                     sendNotificationAsync);
+        
+        
+        updateFromEngine();
+    }
+
+    void mouseUp (const juce::MouseEvent& e) override
+    {
+        updateFromEngine();
+    }
+
+    void mouseMove (const juce::MouseEvent& e) override
+    {
+        //setMouseCursor (juce::MouseCursor::UpDownLeftRightResizeCursor);
+        setMouseCursor (zoomCursor);
     }
 
 private:
     std::unique_ptr<juce::DrawableRectangle>    visibileRectangle;
+    std::shared_ptr<AudioGroupListBox>          audioGroupListBox;
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     bool                                        arrangementMode;
+    
+    double mouseDownFactor = 1.0;
+    
+    // cursor stuff:
+    juce::MouseCursor zoomCursor;
+    std::unique_ptr<juce::Drawable> drawable;
+    juce::Image cursorImage;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DragZoomControl)
 };

@@ -27,6 +27,7 @@ public:
     double getZoomFactor() const noexcept;
     
     juce::Range<double> getVisibleRange() const noexcept;
+    void setVisibleRange(juce::Range<double> newRange, juce::NotificationType notification);
     
     juce::Range<double> getVisibleRangeInSeconds() const noexcept;
     
