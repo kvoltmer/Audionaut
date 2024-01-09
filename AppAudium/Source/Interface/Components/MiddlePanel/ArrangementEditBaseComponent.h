@@ -43,9 +43,6 @@ public:
         arrangementOverview.reset(new ArrangementOverview(audiumEngine, arrangementMode));
         addAndMakeVisible(arrangementOverview.get());
         
-        dragZoomControl.reset(new DragZoomControl(audiumEngine, zoomHandler, arrangementMode));
-        addAndMakeVisible(dragZoomControl.get());
-        
         audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, zoomHandler));
         regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
         audioGroupListBoxModel.reset(new GroupListBoxModel(audioGroupListBox,
@@ -59,6 +56,8 @@ public:
         audioGroupListBox->getHeaderComponent()->setSize(getWidth(), AudiumLookAndFeel::transportPositionControlHeight);
         audioGroupListBox->setOutlineThickness(0);
         
+        dragZoomControl.reset(new DragZoomControl(audioGroupListBox, audiumEngine, zoomHandler, arrangementMode));
+        addAndMakeVisible(dragZoomControl.get());
         
         playPositionMarker.reset(new PlayPositionMarker(zoomHandler, audiumEngine));
         

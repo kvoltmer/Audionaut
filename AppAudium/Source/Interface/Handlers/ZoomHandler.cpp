@@ -27,7 +27,7 @@ ZoomHandler::ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler) :
     maxZoomInFactor = std::pow(2.0, 10.0);
     
     // zoom out max = 10 times -> 0.0009765625
-    maxZoomOutFactor = std::pow(0.5, 10);
+    maxZoomOutFactor = std::pow(0.5, 10.0);
         
     startTimerHz(40);
 }
@@ -39,23 +39,21 @@ ZoomHandler::~ZoomHandler()
 
 double ZoomHandler::zoomIn()
 {
-    zoomFactor *= 2.0;
-    zoomFactor = std::min(zoomFactor, maxZoomInFactor);
+    setZoomFactor(zoomFactor *= 2.0);
     return zoomFactor;
 }
 
 double ZoomHandler::zoomOut()
 {
-    zoomFactor *= 0.5;
-    zoomFactor = std::max(zoomFactor, maxZoomOutFactor);
+    setZoomFactor(zoomFactor *= 0.5);
     return zoomFactor;
 }
 
 void ZoomHandler::setZoomFactor(double factor)
 {
-    zoomFactor = factor;
-    zoomFactor = std::min(zoomFactor, maxZoomInFactor);
-    zoomFactor = std::max(zoomFactor, maxZoomOutFactor);
+    zoomFactor = std::min(factor, maxZoomInFactor);
+    
+    zoomFactor = std::max(factor, maxZoomOutFactor);
 }
 
 double ZoomHandler::getZoomFactor() const noexcept
@@ -83,6 +81,11 @@ juce::Range<double> ZoomHandler::getVisibleRange() const noexcept
     {
         return juce::Range<double>();
     }
+}
+
+void ZoomHandler::setVisibleRange(juce::Range<double> newRange, juce::NotificationType notification)
+{
+    scrollbar->setCurrentRange(newRange, notification);
 }
 
 juce::Range<double> ZoomHandler::getVisibleRangeInSeconds() const noexcept
