@@ -39,7 +39,7 @@ public:
 
         // load svg and apply zoom cursor
         drawable = juce::Drawable::createFromImageData (BinaryData::zoomin_svg, BinaryData::zoomin_svgSize);
-        juce::Rectangle<int> rect(0, 0, 20, 20);
+        juce::Rectangle<int> rect(0, 0, 17, 17);
         cursorImage = juce::Image(Image::PixelFormat::RGB, rect.getWidth(), rect.getHeight(), true);
         auto g = juce::Graphics(cursorImage);
         drawable->drawWithin(g, rect.toFloat(), RectanglePlacement::centred | RectanglePlacement::onlyReduceInSize, 1.f);
@@ -86,6 +86,10 @@ public:
     
     void mouseDown (const juce::MouseEvent& e) override
     {
+        // set follow transport off
+        followTransportWasActive = audiumEngine->getPlayListScheduler()->getFollowTransport();
+        audiumEngine->getPlayListScheduler()->setFollowTransport(false);
+        
         mouseDownFactor = zoomHandler->getZoomFactor();
         mouseDrag(e);
     }
@@ -134,11 +138,13 @@ public:
     void mouseUp (const juce::MouseEvent& e) override
     {
         updateFromEngine();
+        
+        // reactivate
+        audiumEngine->getPlayListScheduler()->setFollowTransport(followTransportWasActive);
     }
 
     void mouseMove (const juce::MouseEvent& e) override
     {
-        //setMouseCursor (juce::MouseCursor::UpDownLeftRightResizeCursor);
         setMouseCursor (zoomCursor);
     }
 
@@ -155,6 +161,9 @@ private:
     juce::MouseCursor zoomCursor;
     std::unique_ptr<juce::Drawable> drawable;
     juce::Image cursorImage;
+    
+    // follow transport conflics with the drag zoom control
+    bool followTransportWasActive;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DragZoomControl)
 };
