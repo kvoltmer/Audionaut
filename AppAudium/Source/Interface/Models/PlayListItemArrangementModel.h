@@ -70,7 +70,8 @@ public:
             if (audioResource != nullptr)
             {
                 
-                auto component = new AudioRegionView(audiumEngine,
+                auto component = new AudioRegionView(*owner.getParentComponent(),
+                                                     audiumEngine,
                                                      audioResource,
                                                      zoomHandler,
                                                      playListItem->getRegion(),

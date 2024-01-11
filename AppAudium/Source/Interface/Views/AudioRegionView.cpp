@@ -31,13 +31,13 @@ void AudioRegionView::paint (juce::Graphics& g)
         // the waveform colour
         g.setColour (colour);
         
-
-        const auto thumbArea = getLocalBounds();
-        const auto start = audioRegion->getRegionData(audium::seconds).getStart();
-        const auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
+        const auto start        = audioRegion->getRegionData(audium::seconds).getStart();
+        const auto thumbArea    = getClippedDrawingArea();
+        const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
+        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
         
-        audioThumbnail->drawChannel(g, thumbArea, start, end, 0, verticalZoomFactor);
-
+        audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, 0, verticalZoomFactor);
+        
     }
     else
     {

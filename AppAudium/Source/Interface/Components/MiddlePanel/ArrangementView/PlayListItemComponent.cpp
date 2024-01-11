@@ -29,6 +29,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
 {
     
     playListItemListBox.reset(new audium::ListBox());
+    addAndMakeVisible(playListItemListBox.get());
     playListItemArrangementModel.reset(new PlayListItemArrangementModel(*playListItemListBox.get(),
                                                                         audioGroup,
                                                                         playListItem,
@@ -53,7 +54,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     // transparent backgroud:
     playListItemListBox->setColour(audium::ListBox::backgroundColourId, juce::Colours::transparentBlack);
     
-    addAndMakeVisible(playListItemListBox.get());
+    
 }
 
 PlayListItemComponent::~PlayListItemComponent()

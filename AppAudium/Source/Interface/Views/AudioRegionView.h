@@ -21,14 +21,15 @@ class AudioRegion;
 class AudioRegionView : public WaveFormViewBase
 {
 public:
-    AudioRegionView(std::shared_ptr<AudiumEngine> audiumEngine,
+    AudioRegionView(const juce::Component &parentComponent,
+                    std::shared_ptr<AudiumEngine> audiumEngine,
                     std::shared_ptr<AudioResource> audioResource,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     std::shared_ptr<AudioRegion> audioRegion,
                     juce::Colour colour,
                     std::shared_ptr<RegionSelector> regionSelector,
                     int rowNumber) :
-        WaveFormViewBase(audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber)
+        WaveFormViewBase(parentComponent, audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber)
     {
     }
 

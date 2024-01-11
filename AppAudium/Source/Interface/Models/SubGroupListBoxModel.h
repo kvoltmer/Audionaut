@@ -60,7 +60,8 @@ public:
         {
             if (audioResource != nullptr)
             {
-                auto component = new AudioResourceView(audiumEngine,
+                auto component = new AudioResourceView(*owner.get(),
+                                                       audiumEngine,
                                                        audioResource,
                                                        zoomHandler,
                                                        nullptr,
