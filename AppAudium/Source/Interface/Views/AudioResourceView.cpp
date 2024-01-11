@@ -14,9 +14,9 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegionContainer.h"
 
+
 void AudioResourceView::paint (juce::Graphics& g)
 {
-    // std::cout << "AudioResourceView::paint" << std::endl;
     
     paintBackground(g);
     
@@ -26,13 +26,14 @@ void AudioResourceView::paint (juce::Graphics& g)
     {
         // the waveform colour
         g.setColour (colour);
-
-        const auto thumbArea = getLocalBounds();
-        const auto start = audioResource->getRegionData(audium::seconds).getStart();
-        const auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
+                
+        const auto start        = audioResource->getRegionData(audium::seconds).getStart();
+        const auto thumbArea    = getClippedDrawingArea();
+        const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
+        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
         
-        //rowNumber
-        audioThumbnail->drawChannel(g, thumbArea, start, end, 0, verticalZoomFactor);
+        audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, 0, verticalZoomFactor);
+        
     }
 }
 

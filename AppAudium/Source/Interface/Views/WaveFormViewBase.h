@@ -29,13 +29,15 @@
 class WaveFormViewBase : public juce::Component, public juce::ChangeListener
 {
 public:
-    WaveFormViewBase(std::shared_ptr<AudiumEngine> audiumEngine,
+    WaveFormViewBase(const juce::Component &parentComponent,
+                     std::shared_ptr<AudiumEngine> audiumEngine,
                      std::shared_ptr<AudioResource> audioResource,
                      std::shared_ptr<ZoomHandler> zoomHandler,
                      std::shared_ptr<AudioRegion> audioRegion,
                      juce::Colour colour,
                      std::shared_ptr<RegionSelector> regionSelector,
                      int rowNumber) :
+        parentComponent(parentComponent),
         audiumEngine(audiumEngine),
         audioResource(audioResource),
         zoomHandler(zoomHandler),
@@ -113,11 +115,34 @@ public:
         g.drawFittedText (audioResource->getFileNameWithoutExtension(), bonds, juce::Justification::topLeft, 1);
     }
     
+    // returns the drawing area clipped with the visible area of the viewport
+    // note: this is much faster than drawing the entire waveform
+    juce::Rectangle<double> getClippedDrawingArea() const
+    {
+        // the local bounds
+        auto thumbArea = getLocalBounds().toDouble();
+    
+        // the visible range of the viewport
+        const auto visibleRange = zoomHandler->getVisibleRange();
+        
+        // clip to the area of its parent (owner)
+        const auto parentOffset = static_cast<double>(parentComponent.getBounds().getX());
+        std::cout << "parent offset: " << parentOffset << std::endl;
+        const auto scrollOffset = zoomHandler->getVisibleRange().getStart();
+        const auto startX = std::max(scrollOffset - parentOffset, 0.0);
+        const auto lengthX = std::min(visibleRange.getLength(), static_cast<double>(thumbArea.getWidth()) - startX);
+    
+        thumbArea.setX(startX);
+        thumbArea.setWidth(lengthX);
+        return thumbArea;
+    }
+    
+    
     /// TODO: row number might have changed after delete
     void setRowNumber(int rowNumber) {}
 
 protected:
-    
+    const juce::Component &parentComponent;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
