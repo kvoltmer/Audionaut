@@ -82,6 +82,9 @@ public:
     void selectPlayListItem(std::shared_ptr<PlayListItem> item, bool bSelected);
     
     void deselectAll();
+    void deleteSelectedItems();
+    juce::SparseSet<int> getSelectedRows() const;
+    void setSelectedRows(juce::SparseSet<int>& selectedRows);
     
     double getTotalLength(audium::TimeContextType context) const;
     

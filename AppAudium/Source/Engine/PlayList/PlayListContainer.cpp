@@ -201,16 +201,6 @@ void PlayListContainer::selectPlayListItem(std::shared_ptr<PlayListItem> item, b
     sendActionMessage(playListItemSelection);
 }
 
-void PlayListContainer::deselectAll()
-{
-    for (auto item : playListItems)
-    {
-        item->setSelected(false);
-    }
-    
-    sendActionMessage(playListItemSelection);
-}
-
 double PlayListContainer::getTotalLength(audium::TimeContextType context) const
 {
     if (playListItems.size() > 0)
@@ -219,4 +209,51 @@ double PlayListContainer::getTotalLength(audium::TimeContextType context) const
         return getAbsolueStartTime(lastItem.get(), context) + lastItem->getDurationTime(context);
     }
     return 0.0;
+}
+
+void PlayListContainer::deleteSelectedItems()
+{
+    auto selected = getSelectedRows();
+    for (int i = selected.size()-1; i >= 0; i--)
+    {
+        auto item = getPlayListItem(selected[i]);
+        jassert(item);
+        deletePlayListItem(selected[i]);
+    }
+    
+}
+
+void PlayListContainer::deselectAll()
+{
+    for (auto item : playListItems)
+    {
+        item->setSelected(false);
+    }
+    //sendActionMessage(playListItemSelection);
+}
+
+juce::SparseSet<int> PlayListContainer::getSelectedRows() const
+{
+    juce::SparseSet<int> result;
+    for (auto i = 0; i < getNumItems(); i++)
+    {
+        if (getPlayListItem(i) != nullptr &&
+            getPlayListItem(i)->isSelected())
+        {
+            result.addRange ({i, i + 1});
+        }
+    }
+    return result;
+}
+
+void PlayListContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
+{
+    deselectAll();
+    for (auto i = 0; i < selectedRows.size(); i++)
+    {
+        if (auto item = getPlayListItem(selectedRows[i]))
+        {
+            item->setSelected(true);
+        }
+    }
 }

@@ -36,6 +36,7 @@ public:
                                               std::shared_ptr<AudioGroup> group,
                                               std::shared_ptr<AudioSubGroup> subGroup = nullptr);
     void deleteRegion(int rowNumber);
+    void deleteSelectedRegions();
     void createRegionsFromSelection(juce::String name);
     
     // Used by RegionSelector
@@ -49,10 +50,10 @@ public:
     std::shared_ptr<AudioRegion> getRegion(int index) const;
     int getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const;
     
-    void setSelectedRegion(int rowNumber);
-    int getSelectedRegion() const;
     void deselectAll();
-    
+    juce::SparseSet<int> getSelectedRows() const;
+    void setSelectedRows(juce::SparseSet<int>& selectedRows);
+
     void setRegionName(int rowNumber, juce::String newName);
     void setRegionStart(int rowNumber, double newStart);
     void setRegionEnd(int rowNumber, double newEnd);

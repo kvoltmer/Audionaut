@@ -63,12 +63,12 @@ void RegionEditControl::mouseDown (const juce::MouseEvent& e)
     // std::cout << "RegionEditControl::mouseDown" << std::endl;
     regionSelector->setEnabled(false);
     
-    if (not audioRegion->isSelected())
-    {
+    if(!e.mods.isCommandDown())
         audiumEngine->getAudioRegionContainer()->deselectAll();
-        audioRegion->setSelected(true);
-        audiumEngine->getAudioRegionContainer()->sendActionMessage(regionSelectedAction);
-    }
+    
+    audioRegion->setSelected(e.mods.isCommandDown() ? !audioRegion->isSelected() : true);
+    audiumEngine->getAudioRegionContainer()->sendActionMessage(regionSelectedAction);
+
     currentDragMode = getDragMode(e.getPosition().getX());
     
     originalBounds = getBounds();
@@ -174,4 +174,15 @@ const RegionEditControl::Edge RegionEditControl::getDragMode(int x) const
     {
         return RegionEditControl::middleEdge;
     }
+}
+
+bool RegionEditControl::keyPressed (const KeyPress& key, Component* originatingComponent)
+{
+    if (key.isKeyCode (KeyPress::deleteKey))
+    {
+        audiumEngine->getAudioRegionContainer()->deleteSelectedRegions();
+        return true;
+    }
+    
+    return false;
 }

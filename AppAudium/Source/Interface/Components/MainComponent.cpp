@@ -153,7 +153,7 @@ void MainComponent::resized()
 void MainComponent::actionListenerCallback (const juce::String& message)
 {
     //std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
-
+    
     if (message == regionCreatedAction)
     {
         middlePanelComponent->updateUI();
@@ -184,6 +184,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == playListItemSelection)
     {
         middlePanelComponent->updateUI();
+        rightPanelComponent->updateUI();
     }
     else if (message == audioResourceCreatedAction)
     {
@@ -211,6 +212,14 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == rebuildAll)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
+        rightPanelComponent->updateUI();
+    }
+    else if (message == updateMiddlePanelAction)
+    {
+        middlePanelComponent->updateUI();
+    }
+    else if (message == updateRightPanelAction)
+    {
         rightPanelComponent->updateUI();
     }
     else // update everything (eg. region deleted)

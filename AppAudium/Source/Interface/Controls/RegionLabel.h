@@ -34,7 +34,7 @@ public:
         owner(owner),
         audioRegionContainer(audioRegionContainer)
     {
-        setEditable (false, true, false);
+        setEditable (false, true, true);
         update (columnId, rowNumber, false);
         setFont(13.0f);
         addListener(this);
@@ -82,11 +82,10 @@ public:
 
     }
     
-    /// this is odd but a click on the label should also select the row
+    /// pass on mouse events. unless row is not selected
     void mouseDown (const juce::MouseEvent& e) override
     {
-        owner->selectRow(rowNumber);
-        juce::Label::mouseDown(e);
+        getParentComponent()->mouseDown(e);
     }
     
     void mouseDrag(const juce::MouseEvent& e) override

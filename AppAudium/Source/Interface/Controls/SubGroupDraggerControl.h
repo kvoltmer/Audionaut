@@ -110,6 +110,18 @@ public:
         return result;
     }
     
+    bool keyPressed (const KeyPress& key, Component* originatingComponent) override
+    {
+        if (key.isKeyCode (KeyPress::deleteKey))
+        {
+            // TODO: implement
+            //audioSubGroup->....deleteSelectedItems();
+            return true;
+        }
+        
+        return false;
+    }
+    
     
 private:
     std::shared_ptr<AudioSubGroup> audioSubGroup;

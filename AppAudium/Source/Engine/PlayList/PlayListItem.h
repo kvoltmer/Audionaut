@@ -39,6 +39,8 @@ public:
     
     juce::Range<double> getAbsolutePosition(audium::TimeContextType context) const override;
 
+    const PlayListContainer &getPlayListContainer() const { return owner; }
+
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;

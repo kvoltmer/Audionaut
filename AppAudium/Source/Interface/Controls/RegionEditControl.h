@@ -17,7 +17,8 @@ class AudiumEngine;
 class AudioRegion;
 class RegionSelector;
 
-class RegionEditControl : public juce::Component
+class RegionEditControl :   public juce::Component,
+                            public juce::KeyListener
 {
         
 public:
@@ -39,10 +40,13 @@ public:
         regionSelector(regionSelector)
     {
         updateFromEngine();
+        addKeyListener(this);
+        setWantsKeyboardFocus(true);
     }
     
     ~RegionEditControl() override
     {
+        removeKeyListener(this);
     }
     
     void paint (Graphics& g) override;
@@ -62,6 +66,9 @@ public:
     const Edge getDragMode(int x) const;
     
     void updateFromEngine();
+    
+    bool keyPressed (const KeyPress& key, Component* originatingComponent) override;
+
         
 private:
     
