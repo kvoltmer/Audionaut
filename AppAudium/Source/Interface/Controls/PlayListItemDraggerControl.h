@@ -44,7 +44,10 @@ public:
     
     void setSelected(bool bSelected, bool deselectOthers) override
     {
+        if (deselectOthers)
+            playListItem->getRegion()->getAudioGroup()->getPlayListContainer()->deselectAll();
         playListItem->setSelected(bSelected);
+        playListItem->getPlayListContainer().sendActionMessage(playListItemSelection);
     }
     
     const juce::String getLabelString() const override
@@ -63,6 +66,18 @@ public:
 //        }
 //        return result;
     }
+    
+    bool keyPressed (const KeyPress& key, Component* originatingComponent) override
+    {
+        if (key.isKeyCode (KeyPress::deleteKey))
+        {
+            playListItem->getRegion()->getAudioGroup()->getPlayListContainer()->deleteSelectedItems();
+            return true;
+        }
+        
+        return false;
+    }
+    
     
     
 private:

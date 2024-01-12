@@ -127,7 +127,7 @@ public:
         
         // clip to the area of its parent (owner)
         const auto parentOffset = static_cast<double>(parentComponent.getBounds().getX());
-        std::cout << "parent offset: " << parentOffset << std::endl;
+        //std::cout << "parent offset: " << parentOffset << std::endl;
         const auto scrollOffset = zoomHandler->getVisibleRange().getStart();
         const auto startX = std::max(scrollOffset - parentOffset, 0.0);
         const auto lengthX = std::min(visibleRange.getLength(), static_cast<double>(thumbArea.getWidth()) - startX);

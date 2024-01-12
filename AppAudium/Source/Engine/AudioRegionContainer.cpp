@@ -115,13 +115,49 @@ void AudioRegionContainer::deleteRegion(int atIndex)
     }
 }
 
+void AudioRegionContainer::deleteSelectedRegions()
+{
+    auto selected = getSelectedRows();
+    for (int i = selected.size()-1; i >= 0; i--)
+    {
+        auto region = getRegion(selected[i]);
+        jassert(region);
+        deleteRegion(selected[i]);
+    }
+}
+
 void AudioRegionContainer::deselectAll()
 {
     for (auto & region : audioRegions)
     {
         region->setSelected(false);
     }
-    sendActionMessage("todo");
+}
+
+juce::SparseSet<int> AudioRegionContainer::getSelectedRows() const
+{
+    juce::SparseSet<int> result;
+    for (auto i = 0; i < getNumRegions(); i++)
+    {
+        if (getRegion(i) != nullptr &&
+            getRegion(i)->isSelected())
+        {
+            result.addRange ({i, i + 1});
+        }
+    }
+    return result;
+}
+
+void AudioRegionContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
+{
+    deselectAll();
+    for (auto i = 0; i < selectedRows.size(); i++)
+    {
+        if (auto region = getRegion(selectedRows[i]))
+        {
+            region->setSelected(true);
+        }
+    }
 }
 
 void AudioRegionContainer::setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context)
@@ -177,21 +213,6 @@ int AudioRegionContainer::getRegionIndex(std::shared_ptr<AudioRegion> searchRegi
         return static_cast<int>(index);
     }
     
-}
-
-void AudioRegionContainer::setSelectedRegion(int rowNumber)
-{
-    if (AudioRegion* r = getRegion(rowNumber).get())
-    {
-        r->setSelected(true);
-        selectedRowNumber = rowNumber;
-        sendActionMessage (regionSelectedAction);
-    }
-}
-
-int AudioRegionContainer::getSelectedRegion() const
-{
-    return selectedRowNumber;
 }
 
 bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)

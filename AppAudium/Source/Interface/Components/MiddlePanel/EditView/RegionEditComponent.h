@@ -99,6 +99,12 @@ public:
         }
     }
     
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        audiumEngine->getAudioRegionContainer()->deselectAll();
+        audiumEngine->getAudioRegionContainer()->sendActionMessage(regionSelectedAction);
+    }
+    
 private:
     
     std::shared_ptr<AudiumEngine> audiumEngine;

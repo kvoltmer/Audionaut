@@ -116,6 +116,9 @@ public:
     
     void updateUI()
     {
+        auto selectedRows = audioGroup->getPlayListContainer()->getSelectedRows();
+        playListTableListBox->setSelectedRows(selectedRows, juce::dontSendNotification);
+        
         playListTableListBox->updateContent();
     }
     

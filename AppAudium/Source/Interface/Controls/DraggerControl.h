@@ -18,7 +18,9 @@
 #include "Interface/ColourIds.h"
 #include "Engine/Group/AudioGroup.h"
 
-class DraggerControl  : public juce::Component, public juce::ChangeBroadcaster
+class DraggerControl  : public juce::Component,
+                        public juce::ChangeBroadcaster,
+                        public juce::KeyListener
 {
 public:
     DraggerControl(juce::Component* componentToDrag,
@@ -30,10 +32,13 @@ public:
         colour(colour),
         regionSelector(regionSelector)
     {
+        addKeyListener(this);
+        setWantsKeyboardFocus(true);
     }
 
     virtual ~DraggerControl() override
     {
+        removeKeyListener(this);
     }
     
     void paintLabel (juce::Graphics& g, const juce::String label)
