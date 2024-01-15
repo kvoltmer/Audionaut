@@ -38,6 +38,7 @@ public:
     void deleteRegion(int rowNumber);
     void deleteSelectedRegions();
     void createRegionsFromSelection(juce::String name);
+
     
     // Used by RegionSelector
     void setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context);
@@ -62,8 +63,11 @@ public:
     void cleanup() { audioRegions.clear(); }
     
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForGroup(std::shared_ptr<AudioGroup> group) const;
-    void removeAudioRegion(std::shared_ptr<AudioRegion> region);
-    void removeAudioRegionsForGroup(std::shared_ptr<AudioGroup> group);
+    std::vector<std::shared_ptr<AudioRegion>> getRegionsForSubGroup(std::shared_ptr<AudioSubGroup> subGroup) const;
+    void deleteAudioRegion(std::shared_ptr<AudioRegion> region);
+    void deleteAudioRegionsForGroup(std::shared_ptr<AudioGroup> group);
+    void deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup);
+
     
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const;
     

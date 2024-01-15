@@ -27,7 +27,7 @@ class AudioGroup
     
 public:
     AudioGroup(const AudioResourceContainer &audioResourceContainer,
-               const AudioRegionContainer &audioRegionContainer,
+               AudioRegionContainer &audioRegionContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                juce::String nameString,
@@ -93,9 +93,13 @@ public:
     
     std::vector<std::shared_ptr<PositionableBase>> getPositionableItems(bool arrangementMode) const;
     
+    void deleteSelectedSubGroups();
+    void deleteSubGroup(int atIndex);
+    void deselectAllSubGroups();
+    
 private:
     const AudioResourceContainer &audioResourceContainer;
-    const AudioRegionContainer &audioRegionContainer;
+    AudioRegionContainer &audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     juce::String groupName;

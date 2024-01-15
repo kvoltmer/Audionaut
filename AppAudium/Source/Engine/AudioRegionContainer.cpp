@@ -328,17 +328,38 @@ std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForGro
     return regions;
 }
 
-void AudioRegionContainer::removeAudioRegionsForGroup(std::shared_ptr<AudioGroup> group)
+std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSubGroup(std::shared_ptr<AudioSubGroup> subGroup) const
+{
+    std::vector<std::shared_ptr<AudioRegion>> regions;
+    for (auto region : audioRegions)
+    {
+        if (region->getAudioSubGroup() == subGroup)
+            regions.push_back(region);
+    }
+    return regions;
+}
+
+void AudioRegionContainer::deleteAudioRegionsForGroup(std::shared_ptr<AudioGroup> group)
 {
     auto regions = getRegionsForGroup(group);
     
     for (auto region : regions)
     {
-        removeAudioRegion(region);
+        deleteAudioRegion(region);
     }
 }
 
-void AudioRegionContainer::removeAudioRegion(std::shared_ptr<AudioRegion> region)
+void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup)
+{
+    auto regions = getRegionsForSubGroup(audioSubGroup);
+    
+    for (auto region : regions)
+    {
+        deleteAudioRegion(region);
+    }
+}
+
+void AudioRegionContainer::deleteAudioRegion(std::shared_ptr<AudioRegion> region)
 {
     auto atIndex = getRegionIndex(region);
     jassert(atIndex >= 0 && atIndex < audioRegions.size());

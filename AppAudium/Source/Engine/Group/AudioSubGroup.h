@@ -22,7 +22,7 @@ class AudioSubGroup : public PositionableBase
 {
         
 public:
-    AudioSubGroup(const AudioGroup& audioGroup, int subGroupId) :
+    AudioSubGroup(AudioGroup& audioGroup, int subGroupId) :
         audioGroup(audioGroup),
         subGroupId(subGroupId)
     {}
@@ -38,7 +38,7 @@ public:
     int getNumChannels() const;
     std::shared_ptr<AudioResource> getChannel(int rowNumber) const;
 
-    const AudioGroup& getAudioGroup() const { return audioGroup; }
+    AudioGroup& getAudioGroup() const { return audioGroup; }
     
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
@@ -46,7 +46,7 @@ public:
     juce::Range<double> getAbsolutePosition(audium::TimeContextType context) const override;
 
 private:
-    const AudioGroup& audioGroup;
+    AudioGroup& audioGroup;
 
     int subGroupId = -1;
     bool selected = false;

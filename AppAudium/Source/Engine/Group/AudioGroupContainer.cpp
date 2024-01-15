@@ -67,7 +67,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroupById(int groupId) 
 
 
 std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
-                                                                     const AudioRegionContainer &audioRegionContainer,
+                                                                     AudioRegionContainer &audioRegionContainer,
                                                                      const juce::String nameString,
                                                                      int groupId)
 {
@@ -92,7 +92,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const Audio
 
 bool AudioGroupContainer::removeAudioGroup(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioGroup> group)
 {
-    engine->getAudioRegionContainer()->removeAudioRegionsForGroup(group);
+    engine->getAudioRegionContainer()->deleteAudioRegionsForGroup(group);
     engine->getAudioResourceContainer()->removeAudioResourcesForGroup(group);
     
     auto it = std::find(audioGroups.begin(), audioGroups.end(), group);
@@ -120,7 +120,7 @@ bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
 
 bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream,
                                           const AudioResourceContainer &audioResourceContainer,
-                                          const AudioRegionContainer &audioRegionContainer)
+                                          AudioRegionContainer &audioRegionContainer)
 {
     jassert(audioGroups.size() == 0);
     jassert(nextId == 0);
