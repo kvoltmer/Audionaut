@@ -21,7 +21,7 @@ public:
     AudioGroupFactory() = default;
     
     static std::shared_ptr<AudioGroup> createAudioGroup(const AudioResourceContainer &audioResourceContainer,
-                                                        const AudioRegionContainer &audioRegionContainer)
+                                                        AudioRegionContainer &audioRegionContainer)
     {
         auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
         auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(audioRegionContainer));
@@ -35,7 +35,7 @@ public:
     
     static std::shared_ptr<AudioSubGroup> createAudioSubGroup(const AudioResourceContainer &audioResourceContainer,
                                                               const AudioRegionContainer &audioRegionContainer,
-                                                              const AudioGroup &audioGroup)
+                                                              AudioGroup &audioGroup)
     {
         return std::shared_ptr<AudioSubGroup>(new AudioSubGroup(audioGroup, -1));
     }

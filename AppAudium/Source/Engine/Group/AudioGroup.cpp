@@ -10,6 +10,7 @@
 
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/AudioRegionContainer.h"
 #include "Engine/AudioResource.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
@@ -261,4 +262,31 @@ std::vector<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(
             result.push_back(subGroup);
     }
     return result;
+}
+
+void AudioGroup::deleteSelectedSubGroups()
+{
+    for (int i = static_cast<int>(audioSubGroups.size())-1; i >= 0; i--)
+    {
+        if (audioSubGroups[i]->isSelected())
+        {
+            deleteSubGroup(i);
+        }
+    }
+    getAudioResourceContainer().sendActionMessage(rebuildAll);
+}
+
+void AudioGroup::deleteSubGroup(int atIndex)
+{
+    if (atIndex >= 0 && atIndex < audioSubGroups.size())
+    {
+        audioRegionContainer.deleteAudioRegionsForSubGroup(audioSubGroups[atIndex]);
+        audioSubGroups.erase(audioSubGroups.begin() + atIndex);
+    }
+}
+
+void AudioGroup::deselectAllSubGroups()
+{
+    for (auto subGroup : audioSubGroups)
+        subGroup->setSelected(false);
 }

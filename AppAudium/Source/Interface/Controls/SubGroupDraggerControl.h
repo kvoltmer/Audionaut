@@ -11,6 +11,7 @@
 #pragma once
 
 #include "DraggerControl.h"
+#include "Engine/Group/AudioGroup.h"
 
 class SubGroupDraggerControl : public DraggerControl
 {
@@ -86,6 +87,8 @@ public:
     
     void setSelected(bool bSelected, bool deselectOthers) override
     {
+        if (deselectOthers)
+            audioSubGroup->getAudioGroup().deselectAllSubGroups();
         audioSubGroup->setSelected(bSelected);
     }
     
@@ -114,8 +117,7 @@ public:
     {
         if (key.isKeyCode (KeyPress::deleteKey))
         {
-            // TODO: implement
-            //audioSubGroup->....deleteSelectedItems();
+            audioSubGroup->getAudioGroup().deleteSelectedSubGroups();
             return true;
         }
         

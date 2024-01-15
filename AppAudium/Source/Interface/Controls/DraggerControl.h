@@ -91,7 +91,6 @@ public:
         
         originalBounds = componentToDrag->getBounds();
         
-        // TODO: change to subgroup selection
         setSelected(e.mods.isCommandDown() ? !isSelected() : true, !e.mods.isCommandDown());
         
         repaint();
