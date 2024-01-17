@@ -17,12 +17,6 @@ void GroupListBoxModel::paintListBoxItem ( int rowNumber,
                         int width, int height,
                         bool rowIsSelected)
 {
-    if (rowIsSelected)
-    {
-        auto thumbArea = Rectangle<int>(0, 0, width, height);
-        g.setColour (Colours::lightgrey);
-        g.drawRoundedRectangle (thumbArea.toFloat(), 3.0f, 2.0f);
-    }
 }
 
 juce::Component* GroupListBoxModel::refreshComponentForRow (int rowNumber, bool isRowSelected,
@@ -73,25 +67,24 @@ int GroupListBoxModel::getRowHeight (int rowNumber) const
 
 void GroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
-    auto selected = owner->getSelectedRows();
-    auto audioGroupContainer = audiumEngine->getAudioGroupContainer();
-    for (int i = selected.size()-1; i >= 0; i--)
-    {
-        std::cout << "delete selected = " << selected[i] << std::endl;
-        auto group = audioGroupContainer->getAudioGroup(selected[i]);
-        if (group != nullptr)
-        {
-            
-            audioGroupContainer->removeAudioGroup(audiumEngine, group);
-        }
-        else
-        {
-            jassertfalse;
-        }
-    }    
+    audiumEngine->getAudioGroupContainer()->deleteSelectedGroups();
+}
+
+void GroupListBoxModel::backgroundClicked (const juce::MouseEvent&)
+{
+    owner->deselectAllRows();
+    audiumEngine->getAudioGroupContainer()->deselectAll();
+    audiumEngine->getAudioGroupContainer()->sendActionMessage(updateMiddlePanelAction);
 }
 
 void GroupListBoxModel::listWasScrolled()
 {
     audiumEngine->getAudioGroupContainer()->sendActionMessage(scrolledVertically);
+}
+
+void GroupListBoxModel::selectedRowsChanged (int lastRowSelected)
+{
+    auto selectedRows = owner->getSelectedRows();
+    audiumEngine->getAudioGroupContainer()->setSelectedRows(selectedRows);
+    audiumEngine->getAudioGroupContainer()->sendActionMessage(updateMiddlePanelAction);
 }

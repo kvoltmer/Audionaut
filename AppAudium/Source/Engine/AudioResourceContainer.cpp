@@ -90,7 +90,7 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudiumEngine> e
             // any resource left in group?
             if (getAudioResourcesForGroup(group.get()).size() == 0)
             {
-                audioGroupContainer->removeAudioGroup(engine, group);
+                audioGroupContainer->deleteAudioGroup(group);
             }
             
             audioResources.erase(it);

@@ -50,4 +50,7 @@ private:
 
     int subGroupId = -1;
     bool selected = false;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioSubGroup)
+
 };

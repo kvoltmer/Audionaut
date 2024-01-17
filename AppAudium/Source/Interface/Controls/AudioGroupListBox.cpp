@@ -39,8 +39,7 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
         auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
                                                                                  *audiumEngine->getAudioRegionContainer(),
                                                                                  name);
-        auto subGroup = group->createNewAudioSubGroup(*audiumEngine->getAudioResourceContainer(),
-                                                      *audiumEngine->getAudioRegionContainer());
+        auto subGroup = group->createNewAudioSubGroup();
 
 
         auto transportPosition = zoomHandler->xToSeconds(mouseX);
