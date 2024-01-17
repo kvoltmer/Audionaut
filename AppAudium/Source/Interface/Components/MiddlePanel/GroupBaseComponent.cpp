@@ -59,10 +59,17 @@ void GroupBaseComponent::setNewGroupColour()
 
 void GroupBaseComponent::paint (juce::Graphics& g)
 {
+    auto colour = findColour(audium::secondaryBackgroundColourId).brighter();
     if (externalDragAndDrop)
     {
-        g.fillAll (findColour(audium::secondaryBackgroundColourId).brighter());
+        g.fillAll (colour);
     }
+    
+    if (audioGroup->isSelected())
+    {
+        g.fillAll (colour.withAlpha(0.3f));
+    }
+    
 }
 
 void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
@@ -90,8 +97,7 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             }
             if (subGroup == nullptr)
             {
-                subGroup = audioGroup->createNewAudioSubGroup(*audiumEngine->getAudioResourceContainer(),
-                                                              *audiumEngine->getAudioRegionContainer());
+                subGroup = audioGroup->createNewAudioSubGroup();
             }
             
             auto url = URL (File (filenames[i]));

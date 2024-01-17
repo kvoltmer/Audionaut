@@ -97,7 +97,7 @@ public:
             if (group != nullptr)
             {
                 
-                audioGroupContainer->removeAudioGroup(audiumEngine, group);
+                audioGroupContainer->deleteAudioGroup(group);
             }
             else
             {
@@ -115,7 +115,10 @@ public:
     {
     }
     
-    void selectedRowsChanged (int lastRowSelected) override {}
+    void selectedRowsChanged (int lastRowSelected) override
+    {
+        std::cout << "selectedRowsChanged" << lastRowSelected << std::endl;
+    }
         
 private:
     std::shared_ptr<audium::ListBox> owner;

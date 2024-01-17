@@ -55,6 +55,7 @@ public:
         audioGroupListBox->setHeaderComponent(std::move(headerComponent));
         audioGroupListBox->getHeaderComponent()->setSize(getWidth(), AudiumLookAndFeel::transportPositionControlHeight);
         audioGroupListBox->setOutlineThickness(0);
+        audioGroupListBox->setMultipleSelectionEnabled(true);
         
         dragZoomControl.reset(new DragZoomControl(audioGroupListBox, audiumEngine, zoomHandler, arrangementMode));
         addAndMakeVisible(dragZoomControl.get());
@@ -89,7 +90,7 @@ public:
         playPositionMarker = nullptr;
     }
 
-    void paint (juce::Graphics&) override
+    void paint (juce::Graphics& g) override
     {
     }
 

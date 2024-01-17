@@ -49,14 +49,13 @@ public:
     
     void deleteKeyPressed (int lastRowSelected) override;
     
-    void backgroundClicked (const juce::MouseEvent&) override
-    {
-        owner->deselectAllRows();
-    }
+    void backgroundClicked (const juce::MouseEvent&) override;
     
     void listWasScrolled() override;
     
-    void selectedRowsChanged (int lastRowSelected) override {}
+    void selectedRowsChanged (int lastRowSelected) override;
+    
+
         
 private:
     std::shared_ptr<AudioGroupListBox> owner;

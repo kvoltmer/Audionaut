@@ -66,7 +66,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroupById(int groupId) 
 
 
 
-std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
+std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(AudioResourceContainer &audioResourceContainer,
                                                                      AudioRegionContainer &audioRegionContainer,
                                                                      const juce::String nameString,
                                                                      int groupId)
@@ -74,7 +74,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const Audio
     groupId = (groupId < 0) ? getNextId() : groupId;
     jassert( !groupIdExists(groupId) );
     
-    auto audioGroup = AudioGroupFactory::createAudioGroup(audioResourceContainer, audioRegionContainer);
+    auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer, audioRegionContainer);
     if (nameString.isEmpty())
     {
         audioGroup->setName(juce::String("Group ") + juce::String(groupId));
@@ -90,10 +90,11 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const Audio
     return audioGroup;
 }
 
-bool AudioGroupContainer::removeAudioGroup(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioGroup> group)
+bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
 {
-    engine->getAudioRegionContainer()->deleteAudioRegionsForGroup(group);
-    engine->getAudioResourceContainer()->removeAudioResourcesForGroup(group);
+    
+    group->getAudioRegionContainer().deleteAudioRegionsForGroup(group);
+    group->getAudioResourceContainer().removeAudioResourcesForGroup(group);
     
     auto it = std::find(audioGroups.begin(), audioGroups.end(), group);
     if (it != audioGroups.end())
@@ -104,6 +105,18 @@ bool AudioGroupContainer::removeAudioGroup(std::shared_ptr<AudiumEngine> engine,
         return true;
     }
     return false;
+}
+
+void AudioGroupContainer::deleteSelectedGroups()
+{
+    for (int i = static_cast<int>(audioGroups.size())-1; i >= 0; i--)
+    {
+        if (audioGroups[i]->isSelected())
+        {
+            deleteAudioGroup(audioGroups[i]);
+        }
+    }
+    sendActionMessage(rebuildAll);
 }
 
 bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
@@ -119,7 +132,7 @@ bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
 }
 
 bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream,
-                                          const AudioResourceContainer &audioResourceContainer,
+                                          AudioResourceContainer &audioResourceContainer,
                                           AudioRegionContainer &audioRegionContainer)
 {
     jassert(audioGroups.size() == 0);
@@ -129,7 +142,7 @@ bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream,
         
     for (auto g = 0; g < numGroups; g++)
     {
-        auto audioGroup = AudioGroupFactory::createAudioGroup(audioResourceContainer, audioRegionContainer);
+        auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer, audioRegionContainer);
         audioGroup->readFromStream(inputStream);
         audioGroups.push_back(audioGroup);
         nextId = juce::jmax(nextId, audioGroup->getId());
@@ -147,5 +160,38 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getDefaultGroup() const
     return nullptr;
 }
 
+void AudioGroupContainer::deselectAll()
+{
+    for (auto & group : audioGroups)
+    {
+        group->setSelected(false);
+    }
+}
+
+juce::SparseSet<int> AudioGroupContainer::getSelectedRows() const
+{
+    juce::SparseSet<int> result;
+    for (auto i = 0; i < getNumItems(); i++)
+    {
+        if (getAudioGroup(i) != nullptr &&
+            getAudioGroup(i)->isSelected())
+        {
+            result.addRange ({i, i + 1});
+        }
+    }
+    return result;
+}
+
+void AudioGroupContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
+{
+    deselectAll();
+    for (auto i = 0; i < selectedRows.size(); i++)
+    {
+        if (auto group = getAudioGroup(selectedRows[i]))
+        {
+            group->setSelected(true);
+        }
+    }
+}
 
 

@@ -102,30 +102,10 @@ public:
         auto selectedRows = listBox->getSelectedRows();
         audioGroup->getPlayListContainer()->setSelectedRows(selectedRows);
         audioGroup->getPlayListContainer()->sendActionMessage(updateMiddlePanelAction);
-//        audioGroup->getPlayListContainer()->deselectAll();
-//        audiumEngine->getAudioRegionContainer()->deselectAll();
-//
-//        auto selection = listBox->getSelectedRows();
-//        for (auto i = 0; i < selection.size(); i++)
-//        {
-//            if (auto playListItem = audioGroup->getPlayListContainer()->getPlayListItem(selection[i]))
-//            {
-//                audioGroup->getPlayListContainer()->selectPlayListItem(playListItem, true);
-//
-//                // selecting a playListItem also selects the region
-////                auto regionIndex = audiumEngine->getAudioRegionContainer()->getRegionIndex(playListItem->getRegion());
-////                audiumEngine->getAudioRegionContainer()->setSelectedRegion(regionIndex);
-//            }
-//
-//        }
-        
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
-        
-        //audiumEngine->getAudioRegionContainer()->deselectAll();
-        
         listBox->deselectAllRows();
         audioGroup->getPlayListContainer()->deselectAll();
     }

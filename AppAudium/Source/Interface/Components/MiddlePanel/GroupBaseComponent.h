@@ -52,6 +52,12 @@ public:
     
     void setNewGroupColour();
     
+    /// pass on mouse events. unless row is not selected
+    void mouseDown (const MouseEvent& event) override
+    {
+        getParentComponent()->mouseDown(event);
+    }
+    
 protected:
     
     std::shared_ptr<AudioGroup> audioGroup;

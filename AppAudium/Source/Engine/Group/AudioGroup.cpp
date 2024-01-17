@@ -87,7 +87,7 @@ bool AudioGroup::readFromStream (juce::InputStream& inputStream)
         
     for (auto g = 0; g < numSubGroups; g++)
     {
-        auto subGroup = AudioGroupFactory::createAudioSubGroup(audioResourceContainer, audioRegionContainer, *this);
+        auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
         subGroup->readFromStream(inputStream);
         audioSubGroups.push_back(subGroup);
         nextSubGroupId = juce::jmax(nextSubGroupId, subGroup->getId());
@@ -192,14 +192,12 @@ float AudioGroup::getGain(int channelNumber) const
 }
 
 
-std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(const AudioResourceContainer &resourceContainer,
-                                                                  const AudioRegionContainer &regionContainer,
-                                                                  int subGroupId)
+std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(int subGroupId)
 {
     subGroupId = (subGroupId < 0) ? getNextSubGroupId() : subGroupId;
     jassert( !subGroupIdExists(subGroupId) );
     
-    auto subGroup = AudioGroupFactory::createAudioSubGroup(resourceContainer, regionContainer, *this);
+    auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
     subGroup->setId(subGroupId);
     audioSubGroups.push_back(subGroup);
     std::cout << "sub group created with id = " << subGroupId << std::endl;

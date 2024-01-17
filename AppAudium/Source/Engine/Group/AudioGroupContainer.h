@@ -27,18 +27,20 @@ public:
     
     bool groupIdExists(const int groupId) const;
         
-    std::shared_ptr<AudioGroup> createNewAudioGroup(const AudioResourceContainer &audioResourceContainer,
+    std::shared_ptr<AudioGroup> createNewAudioGroup(AudioResourceContainer &audioResourceContainer,
                                                     AudioRegionContainer &audioRegionContainer,
                                                     const juce::String nameString,
                                                     int groupId = -1);
     void cleanup();
     
-    bool removeAudioGroup(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioGroup> group);
+    bool deleteAudioGroup(std::shared_ptr<AudioGroup> group);
+    void deleteSelectedGroups();
+
     
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream,
-                         const AudioResourceContainer &audioResourceContainer,
-                        AudioRegionContainer &audioRegionContainer);
+                         AudioResourceContainer &audioResourceContainer,
+                         AudioRegionContainer &audioRegionContainer);
     
     std::shared_ptr<AudioGroup> getSelectedGroup() const { return audioGroups[selectedGroup]; }
     
@@ -51,6 +53,10 @@ public:
     std::shared_ptr<AudioGroup> getDefaultGroup() const;
     
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const { return audioGroups; }
+    
+    void deselectAll();
+    juce::SparseSet<int> getSelectedRows() const;
+    void setSelectedRows(juce::SparseSet<int>& selectedRows);
 
 private:
     
@@ -59,5 +65,6 @@ private:
     
     int nextId = 0;
     
-
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroupContainer)
 };

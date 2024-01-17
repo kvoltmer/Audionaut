@@ -274,8 +274,7 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     // create a fresh resource
     const auto bounceUrl = juce::URL(bounceFile);
     auto audioGroup = audioGroupContainer->createNewAudioGroup(*getAudioResourceContainer(), *getAudioRegionContainer(), bounceUrl.getFileName().toStdString());
-    auto subGroup = audioGroup->createNewAudioSubGroup(*getAudioResourceContainer(),
-                                                       *getAudioRegionContainer());
+    auto subGroup = audioGroup->createNewAudioSubGroup();
     audioResourceContainer->addAudioResource(bounceUrl, *this, audioGroup, subGroup);
 #endif
     

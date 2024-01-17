@@ -21,17 +21,20 @@ class AudioSubGroup;
 class AudioRegionContainer;
 class AudioChannel;
 class PositionableBase;
+class AudioGroupContainer;
 
 class AudioGroup
 {
     
 public:
-    AudioGroup(const AudioResourceContainer &audioResourceContainer,
+    AudioGroup(AudioGroupContainer &owner,
+               AudioResourceContainer &audioResourceContainer,
                AudioRegionContainer &audioRegionContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                juce::String nameString,
                int groupId) :
+        owner(owner),
         audioResourceContainer(audioResourceContainer),
         audioRegionContainer(audioRegionContainer),
         playListContainer(playListContainer),
@@ -51,7 +54,9 @@ public:
     const int getId() const noexcept { return groupId; }
     void setId(const int newId) { groupId = newId; }
     
-    const AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
+    AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
+    AudioGroupContainer &getAudioGroupContainer() const { return owner; }
+    AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannelPosition(int channelPosition) const;
@@ -77,9 +82,7 @@ public:
     float getGain(int channelNumber) const;
     
     int getNextSubGroupId() { return ++nextSubGroupId; }
-    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(const AudioResourceContainer &esourceContainer,
-                                                          const AudioRegionContainer &regionContainer,
-                                                          int subGroupId = -1);
+    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(int subGroupId = -1);
     std::shared_ptr<AudioSubGroup> getAudioSubGroupById(int groupId) const;
     
     std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;
@@ -98,7 +101,8 @@ public:
     void deselectAllSubGroups();
     
 private:
-    const AudioResourceContainer &audioResourceContainer;
+    AudioGroupContainer &owner;
+    AudioResourceContainer &audioResourceContainer;
     AudioRegionContainer &audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
@@ -114,4 +118,7 @@ private:
     bool selected = false;
     
     bool subGroupIdExists(const int groupId) const;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroup)
+
 };

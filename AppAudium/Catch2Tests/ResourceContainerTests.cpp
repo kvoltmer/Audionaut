@@ -46,12 +46,12 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
         {
             
             auto group1 = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
-            auto subGroup1 = group1->createNewAudioSubGroup(*resourceContainer, *regionContainer);
+            auto subGroup1 = group1->createNewAudioSubGroup();
             for (int i = 0; i < numResources; i++)
                 resourceContainer->addAudioResource(juce::URL(inFile), *engine, group1, subGroup1);
             
             auto group2 = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
-            auto subGroup2 = group2->createNewAudioSubGroup(*resourceContainer, *regionContainer);
+            auto subGroup2 = group2->createNewAudioSubGroup();
             for (int i = 0; i < numResources; i++)
                 resourceContainer->addAudioResource(juce::URL(inFile), *engine, group2, subGroup2);
             
@@ -70,7 +70,7 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
             }
             
             
-//            resourceContainer->removeAudioGroup(0);
+//            resourceContainer->deleteAudioGroup(0);
 //            
 //            THEN("group2 10 left")
 //            {

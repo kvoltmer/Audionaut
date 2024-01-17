@@ -13,6 +13,9 @@
 #include <JuceHeader.h>
 
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
+#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/Controls/AudiumLabel.h"
 
 class ChannelGroupHeaderComponent : public juce::Component,
                                     public juce::Label::Listener,
@@ -22,7 +25,7 @@ public:
     ChannelGroupHeaderComponent(std::shared_ptr<AudioGroup> audioGroup) :
         audioGroup(audioGroup)
     {
-        groupNameLabel.reset (new juce::Label ("group name",
+        groupNameLabel.reset (new AudiumLabel ("group name",
                                              TRANS ("n/a")));
         addAndMakeVisible (groupNameLabel.get());
         groupNameLabel->setFont (juce::Font (12.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
@@ -32,9 +35,9 @@ public:
 
         groupNameLabel->setColour (juce::Label::textColourId, audioGroup->getColour());
         groupNameLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
-        groupNameLabel->setColour (juce::Label::outlineColourId, Colours::black);
+        //groupNameLabel->setColour (juce::Label::outlineColourId, Colours::black);
         groupNameLabel->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-        groupNameLabel->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
+        groupNameLabel->setColour (juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack);
         groupNameLabel->setColour (juce::TextEditor::highlightColourId, juce::Colour (0xbff4ff80));
         
         // avoid scaling of text
@@ -63,7 +66,7 @@ public:
 
     void resized() override
     {
-        auto bounds = getLocalBounds();
+        auto bounds = getLocalBounds().reduced(1, 1);
         bounds.removeFromLeft(25);
         groupNameLabel->setBounds(bounds);
     }
@@ -81,13 +84,6 @@ public:
         groupNameLabel->setText(audioGroup->getName(), dontSendNotification);
     }
     
-    void mouseDown (const MouseEvent& event) override
-    {
-        juce::Component::mouseDown(event);
-        
-        audioGroup->setSelected(true);
-    }
-
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override
     {
         if (comboBoxThatHasChanged == channelSizeComboBox.get())
@@ -116,10 +112,44 @@ public:
             audioGroup->getAudioResourceContainer().sendActionMessage("");
         }
     }
+    
+    
+    void paint (juce::Graphics& g) override
+    {
+        if (audioGroup->isSelected())
+        {
+            auto colour = findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.3f);
+            g.fillAll (colour);
+        }
+        
+        g.setColour (Colours::black);
+        g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
+    }
+    
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        setSelected(e.mods.isCommandDown() ? !isSelected() : true, !e.mods.isCommandDown());
+    }
+    
+    bool isSelected() const
+    {
+        return audioGroup->isSelected();
+    }
+    
+    void setSelected(bool bSelected, bool deselectOthers)
+    {
+        if (deselectOthers)
+            audioGroup->getAudioGroupContainer().deselectAll();
+        audioGroup->setSelected(bSelected);
+        
+        audioGroup->getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
+    }
+
+    
 private:
     std::shared_ptr<AudioGroup> audioGroup;
     
-    std::unique_ptr<juce::Label> groupNameLabel;
+    std::unique_ptr<AudiumLabel> groupNameLabel;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelGroupHeaderComponent)
