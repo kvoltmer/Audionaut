@@ -222,6 +222,10 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         rightPanelComponent->updateUI();
     }
+    else if (message == updateArrangementAction)
+    {
+        middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
+    }
     else // update everything (eg. region deleted)
     {
         updateUI();

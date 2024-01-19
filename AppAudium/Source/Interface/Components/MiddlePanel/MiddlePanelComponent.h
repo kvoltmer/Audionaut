@@ -51,6 +51,7 @@ public:
         EntireContext,
         VerticalScrollContext,
         ForceRebuildContext,
+        ArrangementContext
     };
     
     void resized() override
@@ -75,9 +76,6 @@ public:
         else if(context == VerticalScrollContext)
         {
             getVisibleComponent()->onScrollContext();
-            
-            
-            
             if (editComponent->isVisible())
             {
                 channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
@@ -87,7 +85,7 @@ public:
                 channelsComponent->setVerticalScrollOffset(arrangementComponent->getVerticalScrollOffset());
             }
         }
-        if (context == ForceRebuildContext)
+        else if (context == ForceRebuildContext)
         {
             bool editMode = editComponentVisible();
             createComponents();
@@ -98,6 +96,11 @@ public:
             
             showEditComponent(editMode);
             resized();
+        }
+        else if (context == ArrangementContext)
+        {
+            arrangementComponent->updateUI();
+            editComponent->updateUI();
         }
     }
     

@@ -11,12 +11,17 @@
 #pragma once
 
 #include "Engine/AudioResource.h"
+#include "Engine/Group/AudioGroup.h"
 
-class AudioChannel {
-    
-    //AudioChannel(std::shared_ptr<AudioResource> audioResource)
+class AudioChannel
+{
     
 public:
+    AudioChannel(AudioGroup &audioGroup) :
+        audioGroup(audioGroup)
+    {
+    }
+    
     int getChannelHeight() const { return channelHeight; }
     void setChannelHeight(int height) { channelHeight = height; }
     
@@ -33,8 +38,20 @@ public:
         return true;
     }
     
+    void setSelected(bool bSelected) { selected = bSelected; }
+    bool isSelected() const { return selected; }
+
+    int getChannelNumber()
+    {
+        return audioGroup.getChannelNumberFor(this);
+    }
+    
 private:
+    AudioGroup &audioGroup;
     //std::shared_ptr<AudioResource> audioResource;
     int channelHeight = 100;
+    bool selected = false;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioChannel)
     
 };

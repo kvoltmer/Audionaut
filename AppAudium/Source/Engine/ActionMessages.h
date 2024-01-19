@@ -36,3 +36,4 @@ const char* const rebuildAll                = "rebuild all";
 
 const char* const updateMiddlePanelAction   = "update middle panel";
 const char* const updateRightPanelAction    = "update right panel";
+const char* const updateArrangementAction   = "update arrangement";

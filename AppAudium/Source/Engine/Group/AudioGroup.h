@@ -74,6 +74,8 @@ public:
     int getNumChannels() const;
     void ensureNumChannels(int channelsNeeded);
     std::shared_ptr<AudioChannel> getChannel(int channelNumber) const { return audioChannels[channelNumber]; }
+    int getChannelNumberFor(AudioChannel* channel);
+    
     int getTotalHeight() const;
     float getOutputLevel(int channelNumber) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannel(int channelNumber) const;
@@ -99,6 +101,13 @@ public:
     void deleteSelectedSubGroups();
     void deleteSubGroup(int atIndex);
     void deselectAllSubGroups();
+    
+    void deselectAllChannels();
+    void deleteSelectedChannels();
+    void deleteChannel(std::shared_ptr<AudioChannel> channel);
+    
+    juce::SparseSet<int> getSelectedRows() const;
+    void setSelectedRows(juce::SparseSet<int>& selectedRows);
     
 private:
     AudioGroupContainer &owner;

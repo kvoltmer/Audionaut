@@ -41,13 +41,14 @@ public:
         channelsListBox->setHeaderComponent(std::move(header));
         channelsListBox->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
         channelsListBox->setOutlineThickness(0);
-        
+        channelsListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(channelsListBox.get());
         
     }
 
     ~ChannelGroupComponent() override
     {
+        audioGroup = nullptr;
         channelsListBox->setModel(nullptr);
     }
 
@@ -64,11 +65,11 @@ public:
     {
         if (this->audioGroup != audioGroup)
         {
-            // TODO: propagate pointer
-            jassertfalse;
+            channelsListBoxModel->setAudioGroup(audioGroup);
+            this->audioGroup = audioGroup;
         }
         channelsListBox->updateContent();
-        
+        channelsListBox->setSelectedRows(audioGroup->getSelectedRows());
     }
 
 private:

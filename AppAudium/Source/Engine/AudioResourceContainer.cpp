@@ -54,8 +54,8 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
         if (audioResource &&
             audioResource->getAudioTransportSource())
         {
-            auto channelsNeeded = channelPosition + audioResource->getNumChannels();
-            group->ensureNumChannels(channelsNeeded);
+//            auto channelsNeeded = channelPosition + audioResource->getNumChannels();
+//            group->ensureNumChannels(channelsNeeded);
             
             audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
             audioResources.push_back({group, audioResource});
@@ -76,16 +76,18 @@ void AudioResourceContainer::prepareToPlay (double sampleRate, int blockSize)
 }
 
 
-void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioResource> resource)
+void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> resource)
 {
     for (auto it = audioResources.begin(); it != audioResources.end();)
     {
         if ((*it).second == resource)
         {
-            auto region = (*it).second;
-            
             auto group = (*it).first;
-            group->getTransportSourceContainer()->removeTransportSource(region->getAudioTransportSource());
+            auto resource = (*it).second;
+            
+            group->getTransportSourceContainer()->removeTransportSource(resource->getAudioTransportSource());
+            
+            audioResources.erase(it);
             
             // any resource left in group?
             if (getAudioResourcesForGroup(group.get()).size() == 0)
@@ -93,13 +95,13 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudiumEngine> e
                 audioGroupContainer->deleteAudioGroup(group);
             }
             
-            audioResources.erase(it);
+            
             break;
         }
         ++it;
     }
     
-    sendActionMessage(audioResourceRemovedAction);
+    //sendActionMessage(audioResourceRemovedAction);
 }
 
 void AudioResourceContainer::removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group)
@@ -271,20 +273,6 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAtChannelPosition(AudioGroup *group, int channelPosition) const
-{
-    std::vector<std::shared_ptr<AudioResource>> result;
-    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
-    {
-        if (itr->first.get() == group &&
-            itr->second->getChannelPosition() == channelPosition)
-        {
-            result.push_back(itr->second);
-        }
-    }
-    return result;
-}
-
 std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const
 {
     
@@ -327,55 +315,28 @@ std::vector<std::shared_ptr<AudioGroup>> AudioResourceContainer::getAudioGroups(
     return result;
 }
 
-
-int AudioResourceContainer::getNumChannels() const
+void AudioResourceContainer::onDeleteChannel(std::shared_ptr<AudioChannel> channel)
 {
-    // TODO: create channel class with container
-    auto count = 0;
-
-    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+    std::vector<std::shared_ptr<AudioResource>> resourcesToRemove;
+    
+    for (auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
     {
-        count += audioGroupContainer->getAudioGroup(i)->getNumChannels();
-        
-    }
-    return count;
-}
-
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getChannel(int index) const
-{
-    // TODO: create channel class with container
-    auto channel = 0;
-    std::vector<std::shared_ptr<AudioResource>> result;
-    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
-    {
-        
-        auto group = audioGroupContainer->getAudioGroup(i);
-        
-        for (auto c = 0; c < group->getNumChannels(); c++)
+        if (it->second->deleteChannel(channel))
         {
-            auto audioResources = group->getAudioResourcesAtChannelPosition(c);
-            for (auto resource : audioResources)
-            {
-                for (auto r = 0; r < resource->getNumChannels(); r++)
-                {
-                    if ((channel + c + r) == index)
-                    {
-                        result.push_back(resource);
-                        //return resource;
-                    }
-                }
-            }
+            // no more channel mapping -> remove
+            resourcesToRemove.push_back(it->second);
         }
-            
-        channel += group->getNumChannels();
     }
     
-    return result;
+    for (auto resource : resourcesToRemove)
+    {
+        removeAudioResource(resource);
+    }
 }
 
 void AudioResourceContainer::deselectAllResources()
 {
-    for(auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
+    for (auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
     {
         it->second->setSelected(false, false);
     }

@@ -49,6 +49,15 @@ public:
                             int width, int height,
                             bool rowIsSelected) override
     {
+        auto channel = audioSubGroup->getAudioGroup().getChannel(rowNumber);
+        
+        if (channel != nullptr &&
+            channel->isSelected())
+        {
+            g.setColour (owner->findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.9f));
+            g.fillRect(Rectangle<int>(0, 0, width, height));
+        }
+        
     }
     
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
@@ -96,24 +105,18 @@ public:
     int getRowHeight (int rowNumber) const override
     {
         auto channel = audioSubGroup->getAudioGroup().getChannel(rowNumber);
-        return channel->getChannelHeight();
+        if (channel != nullptr)
+        {
+            return channel->getChannelHeight();
+        }
+        else
+        {
+            return 100;
+        }
     }
     
     void deleteKeyPressed (int lastRowSelected) override
     {
-        //auto audioResource = audiumEngine->getAudioResourceContainer()->getChannel(lastRowSelected);
-        auto audioResources = audiumEngine->getAudioResourceContainer()->getChannel(lastRowSelected);
-        jassert(audioResources.size() > 0);
-        auto audioResource = audioResources[0];
-        if (audioResource != nullptr)
-        {
-            /// TODO:
-//            auto component = dynamic_cast<ChannelComponent*>(owner->getComponentForRowNumber(lastRowSelected));
-//            if (component)
-//                component->stopTheTimer();
-//
-//            audiumEngine->getAudioResourceContainer()->removeAudioResource(audiumEngine, audioResource);
-        }
     }
     
     void backgroundClicked (const juce::MouseEvent&) override

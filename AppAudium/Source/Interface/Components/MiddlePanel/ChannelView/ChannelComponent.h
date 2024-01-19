@@ -47,7 +47,7 @@ class ChannelComponent  : public juce::Component,
 {
 public:
     //==============================================================================
-    ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std::shared_ptr<AudiumEngine> engine);
+    ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std::shared_ptr<AudiumEngine> engine, int rowNumber);
     ~ChannelComponent() override;
 
     //==============================================================================
@@ -75,7 +75,6 @@ private:
     //[UserVariables]   -- You can add your own custom variables in this section.
     std::shared_ptr<AudioGroup> audioGroup;
     std::shared_ptr<AudiumEngine> engine;
-    bool selected = false;
     std::unique_ptr<LevelMeter> levelMeter;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;
     int rowNumber = 0;

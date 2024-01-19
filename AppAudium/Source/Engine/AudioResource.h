@@ -24,6 +24,7 @@ class AudiumTransportSource;
 class AudioGroup;
 class AudioSubGroup;
 class AudioRegion;
+class AudioChannel;
 
 class AudioResource {
     
@@ -42,10 +43,10 @@ public:
         url(url),
         transportSource(transportSource),
         audioFormatReaderSource(audioFormatReaderSource),
-        channelPosition(channelPosition),
         resourceId(resourceId)
     {
         setRegionData(juce::Range<double>(0.0, getFileLength(audium::seconds)), audium::seconds);
+        setChannelPosition(channelPosition);
     }
     
     ~AudioResource();
@@ -80,9 +81,7 @@ public:
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinSubGroup() const;
     
     bool containsAbsolutePosition(double position, audium::TimeContextType context) const;
-        
-    int getChannelPosition() const { return channelPosition; }
-    
+            
     bool writeToStream (juce::OutputStream& outputStream);
     bool readFromStream (juce::InputStream& inputStream);
     
@@ -96,7 +95,9 @@ public:
     void setId(const int newId) { resourceId = newId; }
     
     bool containsChannelNumber(int channelNumber) const;
-    
+    int getChannelPosition() const;
+    void setChannelPosition(int startChannel);
+    bool deleteChannel(std::shared_ptr<AudioChannel> channel);
     
 private:
 
@@ -104,6 +105,7 @@ private:
     
     std::shared_ptr<AudioGroup> audioGroup;
     std::shared_ptr<AudioSubGroup> audioSubGroup;
+    std::vector<std::shared_ptr<AudioChannel>> audioChannels;
     
     juce::URL url;
     
@@ -115,7 +117,6 @@ private:
     /// TODO: capsulate the data below
     juce::Range<double> regionData;
     double transportPositionClocks = 0.0;
-    int channelPosition = 0;
     
     bool selected = false;
     int resourceId = -1;

@@ -30,12 +30,10 @@
 //[/MiscUserDefs]
 
 //==============================================================================
-ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std::shared_ptr<AudiumEngine> engine)
+ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std::shared_ptr<AudiumEngine> engine, int rowNumber)
 {
     //[Constructor_pre] You can add your own custom stuff here..
 
-    this->audioGroup = audioGroup;
-    this->engine = engine;
     levelMeter.reset (new LevelMeter (true, false));
     addAndMakeVisible(levelMeter.get());
 
@@ -99,6 +97,9 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std:
     volumeScaleButton->setInterceptsMouseClicks(false, false);
 
     startTimerHz(60);
+    
+    refreshComponent(audioGroup, rowNumber, false);
+    
     //[/Constructor]
 }
 
@@ -127,7 +128,8 @@ void ChannelComponent::paint (juce::Graphics& g)
     g.fillAll (juce::Colour (0xff323232));
 
     //[UserPaint] Add your own custom painting code here..
-    if (selected)
+    if (audioGroup->getChannel(rowNumber) != nullptr &&
+        audioGroup->getChannel(rowNumber)->isSelected())
     {
         g.setColour (juce::Colours::white.withAlpha(0.25f));
     }
@@ -218,7 +220,6 @@ bool ChannelComponent::keyPressed (const juce::KeyPress& key)
 
 void ChannelComponent::refreshComponent(std::shared_ptr<AudioGroup> audioGroup, int rowNumber, bool isRowSelected)
 {
-    selected = isRowSelected;
     this->audioGroup = audioGroup;
     this->rowNumber = rowNumber;
 
@@ -283,7 +284,7 @@ BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="ChannelComponent" componentName=""
                  parentClasses="public juce::Component, private juce::Timer, public juce::ComboBox::Listener"
-                 constructorParams="std::shared_ptr&lt;AudioGroup&gt; audioGroup, std::shared_ptr&lt;AudiumEngine&gt; engine"
+                 constructorParams="std::shared_ptr&lt;AudioGroup&gt; audioGroup, std::shared_ptr&lt;AudiumEngine&gt; engine, int rowNumber"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="1" initialWidth="60" initialHeight="100">
   <METHODS>
