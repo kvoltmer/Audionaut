@@ -238,7 +238,7 @@ const float LevelMeter::getDecibelScaled(const float db)
 //==============================================================================
 void LevelMeter::resized()
 {
-    mRect.setBounds(m_iSpace, m_iSpace, getWidth() - (2 * m_iSpace), getHeight() - (2 * m_iSpace));
+    mRect.setBounds(m_iSpace, m_iSpace, getWidth() - (2 * m_iSpace), std::max(getHeight() - (2 * m_iSpace), 1));
     m_pLevelComponent->setBounds(mRect);
 }
 

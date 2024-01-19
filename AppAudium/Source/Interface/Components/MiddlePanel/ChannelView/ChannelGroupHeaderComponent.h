@@ -19,7 +19,8 @@
 
 class ChannelGroupHeaderComponent : public juce::Component,
                                     public juce::Label::Listener,
-                                    public juce::ComboBox::Listener
+                                    public juce::ComboBox::Listener,
+                                    public juce::KeyListener
 {
 public:
     ChannelGroupHeaderComponent(std::shared_ptr<AudioGroup> audioGroup) :
@@ -58,10 +59,14 @@ public:
         channelSizeComboBox->setBounds (5, 2, 15, 15);
         
         updateFromEngine();
+        
+        addKeyListener(this);
     }
 
     ~ChannelGroupHeaderComponent() override
     {
+        audioGroup = nullptr;
+        removeKeyListener(this);
     }
 
     void resized() override
@@ -145,6 +150,16 @@ public:
         audioGroup->getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
     }
 
+    bool keyPressed (const KeyPress& key, Component* originatingComponent) override
+    {
+        if (key.isKeyCode (KeyPress::deleteKey))
+        {
+            audioGroup->getAudioGroupContainer().deleteSelectedGroups();
+            return true;
+        }
+        
+        return false;
+    }
     
 private:
     std::shared_ptr<AudioGroup> audioGroup;

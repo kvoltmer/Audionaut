@@ -13,9 +13,11 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/AudiumTransportSource.h"
+#include "Engine/Channel/AudioChannel.h"
 
 AudioResource::~AudioResource()
 {
+    audioChannels.clear();
     transportSource->setSource(nullptr);
 }
 
@@ -180,7 +182,7 @@ bool AudioResource::writeToStream (juce::OutputStream& outputStream)
     outputStream.writeDouble(regionData.getStart());
     outputStream.writeDouble(regionData.getEnd());
     outputStream.writeDouble(transportPositionClocks);
-    outputStream.writeInt(channelPosition);
+    outputStream.writeInt(getChannelPosition());
     outputStream.writeInt(0);
 
     return true;
@@ -193,9 +195,9 @@ bool AudioResource::readFromStream (juce::InputStream& inputStream)
     const auto start =          inputStream.readDouble();
     const auto end =            inputStream.readDouble();
     transportPositionClocks =   inputStream.readDouble();
-    channelPosition =           inputStream.readInt();
+    const auto channelPosition =    inputStream.readInt();
     auto unused =               inputStream.readInt();
-    
+    setChannelPosition(channelPosition);
     regionData = juce::Range<double>(start, end);
     jassert(this->url == inUrl);
     getAudioTransportSource()->setGain(gain);
@@ -222,4 +224,42 @@ bool AudioResource::containsChannelNumber(int channelNumber) const
         return true;
     }
     return false;
+}
+
+int AudioResource::getChannelPosition() const
+{
+    jassert(audioChannels.size() > 0);
+    int channelPosition = 512;
+    
+    for (auto channel : audioChannels)
+    {
+        channelPosition = std::min(channelPosition, channel->getChannelNumber());
+    }
+    
+    return channelPosition;
+}
+
+void AudioResource::setChannelPosition(int startChannel)
+{
+    std::cout << "AudioResource::setChannelPosition " << startChannel << std::endl;
+    auto numChannels = getNumChannels();
+    audioChannels.clear();
+    audioGroup->ensureNumChannels(startChannel + numChannels);
+    
+    for (auto i = startChannel; i < audioGroup->getNumChannels(); i++)
+    {
+        auto channel = audioGroup->getChannel(i);
+        audioChannels.push_back(channel);
+    }
+}
+
+bool AudioResource::deleteChannel(std::shared_ptr<AudioChannel> channel)
+{
+    auto it = std::find(audioChannels.begin(), audioChannels.end(), channel);
+    if (it != audioChannels.end())
+    {
+        audioChannels.erase(it);
+    }
+    
+    return audioChannels.size() == 0;
 }

@@ -50,7 +50,7 @@ public:
                                                      double transportPosition = 0.0,
                                                      int resourceId = -1);
     
-    void removeAudioResource(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioResource> resource);
+    void removeAudioResource(std::shared_ptr<AudioResource> resource);
     void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
     
     // still used by auto edit
@@ -69,15 +69,13 @@ public:
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAndSubGroup(const AudioGroup *group, const AudioSubGroup *subGroup) const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtChannelPosition(AudioGroup *group, int channelPosition) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const;
 
     std::shared_ptr<AudioGroup> getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const;
     
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
         
-    int getNumChannels() const;
-    std::vector<std::shared_ptr<AudioResource>> getChannel(int index) const;
+    void onDeleteChannel(std::shared_ptr<AudioChannel> channel);
     
     void prepareToPlay (double sampleRate, int blockSize);
     

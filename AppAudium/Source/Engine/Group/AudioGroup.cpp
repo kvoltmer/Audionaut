@@ -26,6 +26,8 @@ AudioGroup::~AudioGroup()
 
 void AudioGroup::cleanup()
 {
+    audioSubGroups.clear();
+    audioChannels.clear();
     playListContainer->cleanup();
     transportSourceContainer->cleanup();
 }
@@ -34,11 +36,6 @@ void AudioGroup::cleanup()
 std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResources() const
 {
     return audioResourceContainer.getAudioResourcesForGroup(const_cast<AudioGroup*>(this));
-}
-
-std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtChannelPosition(int channelPosition) const
-{
-    return audioResourceContainer.getAudioResourcesForGroupAtChannelPosition(const_cast<AudioGroup*>(this), channelPosition);
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const
@@ -117,9 +114,25 @@ void AudioGroup::ensureNumChannels(int channelsNeeded)
 {
     while (getNumChannels() < channelsNeeded)
     {
-        auto channel = std::shared_ptr<AudioChannel>(new AudioChannel());
+        auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this));
         audioChannels.push_back(channel);
     }
+}
+
+int AudioGroup::getChannelNumberFor(AudioChannel* audioChannel)
+{
+    int number = 0;
+    for (auto channel : audioChannels)
+    {
+        if (channel.get() == audioChannel)
+        {
+            return number;
+        }
+        number++;
+    }
+    
+    jassertfalse;
+    return 0;
 }
 
 int AudioGroup::getTotalHeight() const
@@ -288,3 +301,81 @@ void AudioGroup::deselectAllSubGroups()
     for (auto subGroup : audioSubGroups)
         subGroup->setSelected(false);
 }
+
+void AudioGroup::deselectAllChannels()
+{
+    for (auto channel : audioChannels)
+        channel->setSelected(false);
+}
+
+juce::SparseSet<int> AudioGroup::getSelectedRows() const
+{
+    juce::SparseSet<int> result;
+    for (auto i = 0; i < getNumChannels(); i++)
+    {
+        if (getChannel(i) != nullptr &&
+            getChannel(i)->isSelected())
+        {
+            result.addRange ({i, i + 1});
+        }
+    }
+    return result;
+}
+
+void AudioGroup::setSelectedRows(juce::SparseSet<int>& selectedRows)
+{
+    deselectAllChannels();
+    for (auto i = 0; i < selectedRows.size(); i++)
+    {
+        if (auto channel = getChannel(selectedRows[i]))
+        {
+            channel->setSelected(true);
+        }
+    }
+}
+
+void AudioGroup::deleteSelectedChannels()
+{
+    auto selected = getSelectedRows();
+    for (int i = selected.size()-1; i >= 0; i--)
+    {
+        auto channel = getChannel(selected[i]);
+        
+        deleteChannel(channel);
+    }
+    getAudioResourceContainer().sendActionMessage(rebuildAll);
+}
+
+void AudioGroup::deleteChannel(std::shared_ptr<AudioChannel> channel)
+{
+    auto it = std::find(audioChannels.begin(), audioChannels.end(), channel);
+    if (it != audioChannels.end())
+    {
+        audioResourceContainer.onDeleteChannel(channel);
+        audioChannels.erase(it);
+    }
+    
+    // cleanup subgroups
+    std::vector<std::shared_ptr<AudioSubGroup>> subGroupsToDelete;
+    for (auto subGroup : audioSubGroups)
+    {
+        if (subGroup->getAudioResources().size() == 0)
+        {
+            subGroupsToDelete.push_back(subGroup);
+        }
+    }
+    
+    for (auto item : subGroupsToDelete)
+    {
+        auto it = std::find(audioSubGroups.begin(), audioSubGroups.end(), item);
+        if (it != audioSubGroups.end())
+        {
+            deleteSubGroup(static_cast<int>(std::distance(audioSubGroups.begin(), it)));
+        }
+    }
+}
+
+    
+
+
+

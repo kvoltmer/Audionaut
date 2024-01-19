@@ -88,27 +88,14 @@ public:
     
     void deleteKeyPressed (int lastRowSelected) override
     {
-        auto selected = owner->getSelectedRows();
-        auto audioGroupContainer = audiumEngine->getAudioGroupContainer();
-        for (int i = selected.size()-1; i >= 0; i--)
-        {
-            std::cout << "delete selected = " << selected[i] << std::endl;
-            auto group = audioGroupContainer->getAudioGroup(selected[i]);
-            if (group != nullptr)
-            {
-                
-                audioGroupContainer->deleteAudioGroup(group);
-            }
-            else
-            {
-                jassertfalse;
-            }
-        }
+        audiumEngine->getAudioGroupContainer()->deleteSelectedGroups();
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
+        audiumEngine->getAudioGroupContainer()->deselectAll();
         owner->deselectAllRows();
+        audiumEngine->getAudioGroupContainer()->sendActionMessage(updateMiddlePanelAction);
     }
     
     void listWasScrolled() override
@@ -117,7 +104,6 @@ public:
     
     void selectedRowsChanged (int lastRowSelected) override
     {
-        std::cout << "selectedRowsChanged" << lastRowSelected << std::endl;
     }
         
 private:

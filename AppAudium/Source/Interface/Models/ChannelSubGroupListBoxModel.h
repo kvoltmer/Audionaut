@@ -16,6 +16,7 @@
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Group/AudioGroupContainer.h"
 
 class ChannelSubGroupListBoxModel  : public audium::ListBoxModel
 {
@@ -53,7 +54,7 @@ public:
         {
             if (existingComponentToUpdate == nullptr)
             {
-                return new ChannelComponent(audioGroup, audiumEngine);
+                return new ChannelComponent(audioGroup, audiumEngine, rowNumber);
                 
             }
             else
@@ -81,24 +82,12 @@ public:
         if (channel != nullptr)
             return audioGroup->getChannel(rowNumber)->getChannelHeight();
         
-        jassertfalse;
-        return 0;
+        return 50;
     }
     
     void deleteKeyPressed (int lastRowSelected) override
     {
-// TODO: implement
-//        auto audioResources = audiumEngine->getAudioResourceContainer()->getChannel(lastRowSelected);
-//        jassert(audioResources.size() > 0);
-//        auto audioResource = audioResources[0];
-//        if (audioResource != nullptr)
-//        {
-//            auto component = dynamic_cast<ChannelComponent*>(owner.getComponentForRowNumber(lastRowSelected));
-//            if (component)
-//                component->stopTheTimer();
-//
-//            audiumEngine->getAudioResourceContainer()->removeAudioResource(audiumEngine, audioResource);
-//        }
+        audioGroup->deleteSelectedChannels();
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
@@ -110,7 +99,12 @@ public:
     
     void selectedRowsChanged (int lastRowSelected) override
     {
+        auto selectedRows = owner.getSelectedRows();
+        audioGroup->setSelectedRows(selectedRows);
+        audiumEngine->getAudioGroupContainer()->sendActionMessage(updateArrangementAction);
     }
+    
+    void setAudioGroup(std::shared_ptr<AudioGroup> group) { audioGroup = group; }
         
 private:
     audium::ListBox& owner;
