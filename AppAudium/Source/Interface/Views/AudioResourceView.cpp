@@ -32,8 +32,15 @@ void AudioResourceView::paint (juce::Graphics& g)
         const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
         const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
         
-        audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, 0, verticalZoomFactor);
-        
+        const auto channel = rowNumber - audioResource->getChannelPosition();
+        if (channel >= 0 && channel < audioResource->getNumChannels())
+        {
+            audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, channel, verticalZoomFactor);
+        }
+        else
+        {
+            jassertfalse;
+        }
     }
 }
 

@@ -137,9 +137,7 @@ public:
         return thumbArea;
     }
     
-    
-    /// TODO: row number might have changed after delete
-    void setRowNumber(int rowNumber) {}
+    void setRowNumber(int theRowNumber) { rowNumber = theRowNumber; }
 
 protected:
     const juce::Component &parentComponent;
@@ -154,7 +152,7 @@ protected:
     
     static constexpr float verticalZoomFactor = 1.f;
     
-    int rowNumber;
+    int rowNumber = 0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormViewBase)
 };

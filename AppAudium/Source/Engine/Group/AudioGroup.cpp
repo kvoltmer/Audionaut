@@ -158,7 +158,7 @@ float AudioGroup::getOutputLevel(int channelNumber) const
         {
             if (resource->getAudioTransportSource()->isPlaying())
             {
-                level += resource->getAudioTransportSource()->getOutputLevel();
+                level += resource->getAudioTransportSource()->getOutputLevel(channelNumber);
             }
         }
     }
