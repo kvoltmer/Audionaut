@@ -62,13 +62,20 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
                 {
                     // grab the first valid resource
                     auto resource  = resources[0];
-                
+                    
+                    auto maxLength = 0.0;
+                    for (auto res : resources)
+                        maxLength = std::max(maxLength, res->getFileLength(audium::seconds));
+                    
                     const auto transportPosition = resource->getTransportPosition(audium::seconds);
                     rangeInSeconds -= transportPosition;
                     const auto startPosition = resource->getRegionData(audium::seconds).getStart();
                     rangeInSeconds += startPosition;
+                    
+                    if (rangeInSeconds.getEnd() > maxLength)
+                        rangeInSeconds.setEnd(maxLength);
+                    
                     createRegion(name, rangeInSeconds, group, resource->getAudioSubGroup());
-                    break;
                 }
             }
         }
