@@ -22,20 +22,6 @@
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 
-AudiumEngine::AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-                           std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                           std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                           std::shared_ptr<PlayListScheduler> playListScheduler,
-                           std::shared_ptr<LinkAudioDevice> linkAudioDevice) :
-    audioDeviceManager(audioDeviceManager),
-    audioGroupContainer(audioGroupContainer),
-    audioResourceContainer(audioResourceContainer),
-    audioRegionContainer(audioRegionContainer),
-    playListScheduler(playListScheduler),
-    linkAudioDevice(linkAudioDevice)
-{
-}
 
 AudiumEngine::~AudiumEngine()
 {

@@ -153,7 +153,7 @@ void MainComponent::resized()
 void MainComponent::actionListenerCallback (const juce::String& message)
 {
     //std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
-    
+
     if (message == regionCreatedAction)
     {
         middlePanelComponent->updateUI();
@@ -200,11 +200,6 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         // TODO: update with context to rebuild everything
         updateUI();
     }
-    else if (message == audioGroupDeletedAction)
-    {
-        // TODO: update with context to rebuild everything
-        updateUI();
-    }
     else if (message == scrolledVertically)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::VerticalScrollContext);
@@ -213,6 +208,10 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
         rightPanelComponent->updateUI();
+    }
+    else if (message == updateAll)
+    {
+        updateUI();
     }
     else if (message == updateMiddlePanelAction)
     {

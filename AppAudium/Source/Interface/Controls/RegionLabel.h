@@ -17,7 +17,7 @@
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-
+#include "Engine/Undo/UndoableContainerAction.h"
 
 //==============================================================================
 /*
@@ -100,6 +100,10 @@ public:
     /// override juce::Label::Listener
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audioRegionContainer);
+        action->storeOldState();
+        
         
         if (columnId == regionName)
         {
@@ -120,6 +124,11 @@ public:
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
             audioRegionContainer->setRegionLength(rowNumber, seconds);
         }
+        
+        // Undo: store new state
+        action->storeNewState();
+        audioRegionContainer->getUndoManager()->perform(action.release(), "Modify Region");
+        audioRegionContainer->getUndoManager()->beginNewTransaction();
     }
     
     juce::String getRegionName() const

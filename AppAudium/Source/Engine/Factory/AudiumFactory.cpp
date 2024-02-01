@@ -32,6 +32,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto audioThumbnailCache        = std::shared_ptr<juce::AudioThumbnailCache>(new juce::AudioThumbnailCache(64));
     
+    auto undoManager                = std::shared_ptr<juce::UndoManager>        (new juce::UndoManager());
+    
     auto audioResourceContainer     = std::shared_ptr<AudioResourceContainer>   (new AudioResourceContainer(audioDeviceManager,
                                                                                                             audioGroupContainer,
                                                                                                             formatManager,
@@ -49,14 +51,16 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
         
     auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer(audioResourceContainer,
                                                                                                           audioGroupContainer,
-                                                                                                          playListScheduler));
+                                                                                                          playListScheduler,
+                                                                                                          undoManager));
         
     auto audiumEngine               = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioDeviceManager,
                                                                                                   audioGroupContainer,
                                                                                                   audioResourceContainer,
                                                                                                   audioRegionContainer,
                                                                                                   playListScheduler,
-                                                                                                  linkAudioDevice));
+                                                                                                  linkAudioDevice,
+                                                                                                  undoManager));
     
     return audiumEngine;
 }

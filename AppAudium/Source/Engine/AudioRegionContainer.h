@@ -11,6 +11,8 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
+#include "Engine/ActionMessages.h"
+#include "Engine/Streamable.h"
 
 class AudioResourceContainer;
 class AudioGroupContainer;
@@ -18,16 +20,19 @@ class PlayListScheduler;
 class AudioGroup;
 class AudioSubGroup;
 
-class AudioRegionContainer : public juce::ActionBroadcaster
+class AudioRegionContainer :    public juce::ActionBroadcaster,
+                                public audium::Streamable
 {
                                             
 public:
     AudioRegionContainer(std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                          std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-                         std::shared_ptr<PlayListScheduler> playListScheduler) :
+                         std::shared_ptr<PlayListScheduler> playListScheduler,
+                         std::shared_ptr<juce::UndoManager> undoManager) :
         audioResourceContainer(audioResourceContainer),
         audioGroupContainer(audioGroupContainer),
-        playListScheduler(playListScheduler)
+        playListScheduler(playListScheduler),
+        undoManager(undoManager)
     {}
     
     std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioGroup> group);
@@ -44,9 +49,10 @@ public:
     void setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context);
     juce::Range<double> getSelectedPosition(audium::TimeContextType context) const;
     
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
-    
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream) override;
+    int getSizeInUnits() override;
+
     int getNumRegions(const AudioGroup* group = nullptr) const;
     std::shared_ptr<AudioRegion> getRegion(int index) const;
     int getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const;
@@ -72,12 +78,15 @@ public:
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const;
     
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
-        
+    std::shared_ptr<juce::UndoManager> getUndoManager() const { return undoManager; }
     
 private:
+    
+    
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<PlayListScheduler> playListScheduler;
+    std::shared_ptr<juce::UndoManager> undoManager;
 
     AudioRegion::RegionData selectedPositionClocks;
     int selectedRowNumber = -1;
