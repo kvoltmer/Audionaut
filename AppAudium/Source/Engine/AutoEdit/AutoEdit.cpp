@@ -42,7 +42,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
         // Build the command line string
         std::string commandString;
         commandString += "cd " + getTempDirectory().toStdString() + ";";
-        commandString += python + " $HOME/dev/smp_audio/scripts/automain.py --verbose autoedit";
+        commandString += python + " $HOME/dev/gaborgandalf/gaborgandalf/automain.py --verbose autoedit";
 //      commandString += " --assemble_mode " + config.mode;
         commandString += " --duration " + std::to_string(config.duration);
         commandString += " --numsegs " + std::to_string(config.numSegments);

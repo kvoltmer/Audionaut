@@ -101,7 +101,7 @@ bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
     {
         group->cleanup();
         audioGroups.erase(it);
-        sendActionMessage(audioGroupDeletedAction);
+        sendActionMessage(rebuildAll);
         return true;
     }
     return false;

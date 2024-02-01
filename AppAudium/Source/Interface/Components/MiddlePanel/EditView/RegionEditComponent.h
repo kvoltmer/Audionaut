@@ -66,9 +66,12 @@ public:
         }
         else
         {
+            auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
+            auto count = 0;
             for (auto regionEdit : regionEditControls)
             {
-                regionEdit->updateFromEngine();
+                regionEdit->updateFromEngine(regions[count]);
+                count++;
             }
         }
     }
@@ -88,6 +91,7 @@ public:
     {
         std::cout << "RegionEditComponent::rebuildComponents" << std::endl;
         
+        removeAllChildren();
         regionEditControls.clear();
         
         auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);

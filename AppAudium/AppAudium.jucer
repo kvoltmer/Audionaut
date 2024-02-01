@@ -33,6 +33,7 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <FILE id="f3Gy4c" name="Streamable.h" compile="0" resource="0" file="Source/Engine/Streamable.h"/>
         <FILE id="E21RCr" name="TimeContext.h" compile="0" resource="0" file="Source/Engine/TimeContext.h"/>
         <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
           <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
@@ -93,6 +94,10 @@
         </GROUP>
         <GROUP id="{56EAD069-5D2D-A940-D232-5DA7E979C834}" name="Provider">
           <FILE id="mXYpiA" name="TempoProvider.h" compile="0" resource="0" file="Source/Engine/Provider/TempoProvider.h"/>
+        </GROUP>
+        <GROUP id="{71D24ABD-A319-5DE9-E24C-2AE51F6F1A35}" name="Undo">
+          <FILE id="S8P8ar" name="UndoableContainerAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableContainerAction.h"/>
         </GROUP>
         <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumEngine.cpp"/>

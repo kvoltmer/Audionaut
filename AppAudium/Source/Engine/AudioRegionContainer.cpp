@@ -10,7 +10,6 @@
 #include <iostream>
 
 #include "AudioRegionContainer.h"
-#include "Engine/ActionMessages.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioGroup.h"
@@ -18,6 +17,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudiumTransportSource.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioGroup> group)
 {
@@ -36,6 +36,10 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shar
 
 void AudioRegionContainer::createRegionsFromSelection(juce::String name)
 {
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(*this);
+    action->storeOldState();
+    
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
         if (auto group = audioGroupContainer->getAudioGroup(i))
@@ -82,6 +86,12 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
     }
     // clear selection
     selectedPositionClocks = juce::Range<double>();
+    
+    
+    // Undo: store new state
+    action->storeNewState();
+    getUndoManager()->perform(action.release(), "Create Region(s)");
+    getUndoManager()->beginNewTransaction();
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String regionName,
@@ -238,9 +248,11 @@ bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
 
 bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
 {
+    cleanup();
+    
     jassert(audioRegions.empty());
     
-    if (!inputStream.isExhausted())
+    while (!inputStream.isExhausted())
     {
         auto numRegions = inputStream.readInt();
         for (auto i = 0; i < numRegions; i++)
@@ -265,8 +277,16 @@ bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
                 }
             }
         }
+        sendActionMessage(updateAll);
+        return true;
     }
-    return true;
+    return false;
+    
+}
+
+int AudioRegionContainer::getSizeInUnits()
+{
+    return getNumRegions() * 8;
 }
 
 int AudioRegionContainer::getNumRegions(const AudioGroup* group) const

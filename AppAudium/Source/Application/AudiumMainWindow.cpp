@@ -95,6 +95,14 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::followTransport,
         CommandIDs::toggleEditArrangement,
         CommandIDs::toggleFullScreen,
+        StandardApplicationCommandIDs::undo,
+        StandardApplicationCommandIDs::redo,
+        StandardApplicationCommandIDs::cut,
+        StandardApplicationCommandIDs::copy,
+        StandardApplicationCommandIDs::paste,
+        StandardApplicationCommandIDs::del,
+        StandardApplicationCommandIDs::selectAll,
+        StandardApplicationCommandIDs::deselectAll
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -102,6 +110,9 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
 
 void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCommandInfo& result)
 {
+    const int cmd = ModifierKeys::commandModifier;
+    const int shift = ModifierKeys::shiftModifier;
+    
     switch (commandID)
     {
         case CommandIDs::playStop:
@@ -148,6 +159,69 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Follow Transport", "Follow Transport", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::ctrlModifier, 0));
             break;
+        
+        case StandardApplicationCommandIDs::undo:
+            result.setInfo (TRANS ("Undo"), TRANS ("Undo"), "Editing", 0);
+            result.setActive (getEngine()->getUndoManager()->canUndo());
+            result.defaultKeypresses.add (KeyPress ('z', cmd, 0));
+            break;
+
+        case StandardApplicationCommandIDs::redo:
+            result.setInfo (TRANS ("Redo"), TRANS ("Redo"), "Editing", 0);
+            result.setActive (getEngine()->getUndoManager()->canRedo());
+            result.defaultKeypresses.add (KeyPress ('z', cmd | shift, 0));
+            break;
+
+        case StandardApplicationCommandIDs::cut:
+            result.setInfo (TRANS ("Cut"), String(), "Editing", 0);
+            // TODO: result.setActive (isSomethingSelected());
+            result.defaultKeypresses.add (KeyPress ('x', cmd, 0));
+            break;
+
+        case StandardApplicationCommandIDs::copy:
+            result.setInfo (TRANS ("Copy"), String(), "Editing", 0);
+            // TODO: result.setActive (isSomethingSelected());
+            result.defaultKeypresses.add (KeyPress ('c', cmd, 0));
+            break;
+
+        case StandardApplicationCommandIDs::paste:
+            {
+                result.setInfo (TRANS ("Paste"), String(), "Editing", 0);
+                result.defaultKeypresses.add (KeyPress ('v', cmd, 0));
+
+                bool canPaste = false;
+
+                // TODO:
+//                if (auto doc = parseXML (SystemClipboard::getTextFromClipboard()))
+//                {
+//                    if (doc->hasTagName (ComponentLayout::clipboardXmlTag))
+//                        canPaste = (currentLayout != nullptr);
+//                    else if (doc->hasTagName (PaintRoutine::clipboardXmlTag))
+//                        canPaste = (currentPaintRoutine != nullptr);
+//                }
+
+                result.setActive (canPaste);
+            }
+
+            break;
+
+        case StandardApplicationCommandIDs::del:
+            result.setInfo (TRANS ("Delete"), String(), "Editing", 0);
+            // TODO: result.setActive (isSomethingSelected());
+            break;
+
+        case StandardApplicationCommandIDs::selectAll:
+            result.setInfo (TRANS ("Select All"), String(), "Editing", 0);
+            // TODO: result.setActive (currentPaintRoutine != nullptr || currentLayout != nullptr);
+            result.defaultKeypresses.add (KeyPress ('a', cmd, 0));
+            break;
+
+        case StandardApplicationCommandIDs::deselectAll:
+            result.setInfo (TRANS ("Deselect All"), String(), "Editing", 0);
+            // TODO: result.setActive (currentPaintRoutine != nullptr || currentLayout != nullptr);
+            result.defaultKeypresses.add (KeyPress ('d', cmd, 0));
+            break;
+            
         default:
             break;
     }
@@ -194,6 +268,88 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             getEngine()->getPlayListScheduler()->setFollowTransport(!getEngine()->getPlayListScheduler()->getFollowTransport());
             mainComponent->updateUI();
             break;
+        case StandardApplicationCommandIDs::undo:
+            getEngine()->getUndoManager()->undo();
+//            document->dispatchPendingMessages();
+            break;
+
+        case StandardApplicationCommandIDs::redo:
+            getEngine()->getUndoManager()->redo();
+//            document->dispatchPendingMessages();
+            break;
+        case StandardApplicationCommandIDs::cut:
+            notImplemented();
+//            if (currentLayout != nullptr)
+//            {
+//                currentLayout->copySelectedToClipboard();
+//                currentLayout->deleteSelected();
+//            }
+//            else if (currentPaintRoutine != nullptr)
+//            {
+//                currentPaintRoutine->copySelectedToClipboard();
+//                currentPaintRoutine->deleteSelected();
+//            }
+
+            break;
+
+        case StandardApplicationCommandIDs::copy:
+            notImplemented();
+//            if (currentLayout != nullptr)
+//                currentLayout->copySelectedToClipboard();
+//            else if (currentPaintRoutine != nullptr)
+//                currentPaintRoutine->copySelectedToClipboard();
+
+            break;
+
+        case StandardApplicationCommandIDs::paste:
+            notImplemented();
+//            {
+//                if (auto doc = parseXML (SystemClipboard::getTextFromClipboard()))
+//                {
+//                    if (doc->hasTagName (ComponentLayout::clipboardXmlTag))
+//                    {
+//                        if (currentLayout != nullptr)
+//                            currentLayout->paste();
+//                    }
+//                    else if (doc->hasTagName (PaintRoutine::clipboardXmlTag))
+//                    {
+//                        if (currentPaintRoutine != nullptr)
+//                            currentPaintRoutine->paste();
+//                    }
+//                }
+//            }
+            break;
+
+        case StandardApplicationCommandIDs::del:
+            notImplemented();
+//            if (currentLayout != nullptr)
+//                currentLayout->deleteSelected();
+//            else if (currentPaintRoutine != nullptr)
+//                currentPaintRoutine->deleteSelected();
+            break;
+
+        case StandardApplicationCommandIDs::selectAll:
+            notImplemented();
+//            if (currentLayout != nullptr)
+//                currentLayout->selectAll();
+//            else if (currentPaintRoutine != nullptr)
+//                currentPaintRoutine->selectAll();
+            break;
+
+        case StandardApplicationCommandIDs::deselectAll:
+            notImplemented();
+//            if (currentLayout != nullptr)
+//            {
+//                currentLayout->getSelectedSet().deselectAll();
+//            }
+//            else if (currentPaintRoutine != nullptr)
+//            {
+//                currentPaintRoutine->getSelectedElements().deselectAll();
+//                currentPaintRoutine->getSelectedPoints().deselectAll();
+//            }
+
+            break;
+            
         default:
             return false;
     }
