@@ -192,17 +192,7 @@ bool RegionEditControl::keyPressed (const KeyPress& key, Component* originatingC
 {
     if (key.isKeyCode (KeyPress::deleteKey))
     {
-        // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioRegionContainer());
-        action->storeOldState();
-        
-        // Delete
         audiumEngine->getAudioRegionContainer()->deleteSelectedRegions();
-        
-        // Undo: store new state
-        action->storeNewState();
-        audiumEngine->getUndoManager()->perform(action.release(), "Delete Region(s)");
-        audiumEngine->getUndoManager()->beginNewTransaction();
         return true;
     }
     

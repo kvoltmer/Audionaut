@@ -180,18 +180,6 @@ bool AudiumEngine::writeToStream (juce::OutputStream& out)
     
     // 2. Groups
     audioGroupContainer->writeToStream(out);
-    
-    // 3. Resources
-    audioResourceContainer->writeToStream(out);
-    
-    // 4. Regions
-    audioRegionContainer->writeToStream(out);
-    
-    // 5. Playlists
-    for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
-    {
-        audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->writeToStream(out);
-    }
         
     return true;
 }
@@ -212,21 +200,9 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
             playListScheduler->getTempoProvider()->setTempo(tempo);
         
         // 2. Groups
-        if (audioGroupContainer->readFromStream(in, *audioResourceContainer.get(), *audioRegionContainer.get()))
+        if (audioGroupContainer->readFromStream(in))
         {
-            // 3. Resources
-            if (audioResourceContainer->readFromStream(in, *this))
-            {
-                // 4. Regions
-                if (audioRegionContainer->readFromStream(in))
-                {
-                    // 5. Playlists
-                    for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
-                    {
-                        audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->readFromStream(in);
-                    }
-                }
-            }
+            return true;
         }
         return true;
     }
@@ -261,7 +237,7 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     const auto bounceUrl = juce::URL(bounceFile);
     auto audioGroup = audioGroupContainer->createNewAudioGroup(*getAudioResourceContainer(), *getAudioRegionContainer(), bounceUrl.getFileName().toStdString());
     auto subGroup = audioGroup->createNewAudioSubGroup();
-    audioResourceContainer->addAudioResource(bounceUrl, *this, audioGroup, subGroup);
+    audioResourceContainer->addAudioResource(bounceUrl, audioGroup, subGroup);
 #endif
     
     std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,

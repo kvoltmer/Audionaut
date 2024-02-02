@@ -22,7 +22,6 @@ AudioResourceContainer::~AudioResourceContainer()
 }
 
 std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,
-                                                                         const AudiumEngine& engine,
                                                                          std::shared_ptr<AudioGroup> group,
                                                                          std::shared_ptr<AudioSubGroup> subGroup,
                                                                          int channelPosition,
@@ -35,7 +34,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     {
         resourceId = (resourceId < 0) ? getNextId() : resourceId;
         auto audioResource = AudioResourceFactory::createAudioResource(url,
-                                                                       *engine.getAudioResourceContainer(),
+                                                                       *this,
                                                                        group,
                                                                        subGroup,
                                                                        *formatManager.get(),
@@ -199,8 +198,10 @@ bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
     return true;
 }
 
-bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine)
+bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream)
 {
+    cleanup();
+    
     jassert(audioResources.empty());
     jassert(nextId == 0);
     
@@ -223,7 +224,7 @@ bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream, con
             // url of the resource
             auto streamPos = inputStream.getPosition();
             auto url = inputStream.readString();
-            auto resource = addAudioResource(juce::URL(url), engine, group, subGroup);
+            auto resource = addAudioResource(juce::URL(url), group, subGroup);
             inputStream.setPosition(streamPos);
             
             // audio resource
