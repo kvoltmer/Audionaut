@@ -102,7 +102,6 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             
             auto url = URL (File (filenames[i]));
             auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url,
-                                                                                             *audiumEngine,
                                                                                              audioGroup,
                                                                                              subGroup,
                                                                                              channelPosition,

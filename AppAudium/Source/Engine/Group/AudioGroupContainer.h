@@ -11,19 +11,28 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/Streamable.h"
 
 class AudioGroup;
 class AudioResourceContainer;
 class AudioRegionContainer;
 class AudiumEngine;
 
-class AudioGroupContainer : public juce::ActionBroadcaster
+class AudioGroupContainer : public juce::ActionBroadcaster,
+                            public audium::Streamable
 {
         
 public:
     
-    AudioGroupContainer() = default;
+    AudioGroupContainer(std::shared_ptr<juce::UndoManager> undoManager) :
+        undoManager(undoManager)
+    {
+    }
+    
     ~AudioGroupContainer();
+    
+    void init(AudioResourceContainer *audioResourceContainer,
+              AudioRegionContainer *audioRegionContainer);
     
     bool groupIdExists(const int groupId) const;
         
@@ -37,10 +46,9 @@ public:
     void deleteSelectedGroups();
 
     
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream,
-                         AudioResourceContainer &audioResourceContainer,
-                         AudioRegionContainer &audioRegionContainer);
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream) override;
+    int getSizeInUnits() override;
     
     std::shared_ptr<AudioGroup> getSelectedGroup() const { return audioGroups[selectedGroup]; }
     
@@ -59,6 +67,11 @@ public:
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
 
 private:
+    std::shared_ptr<juce::UndoManager> undoManager;
+    
+    // i don't like these pointers :(
+    AudioResourceContainer *audioResourceContainer = nullptr;
+    AudioRegionContainer *audioRegionContainer = nullptr;
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;
     int selectedGroup = 0;

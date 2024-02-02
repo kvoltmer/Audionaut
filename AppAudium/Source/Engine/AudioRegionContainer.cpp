@@ -134,6 +134,10 @@ void AudioRegionContainer::deleteRegion(int atIndex)
 
 void AudioRegionContainer::deleteSelectedRegions()
 {
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(*this);
+    action->storeOldState();
+        
     auto selected = getSelectedRows();
     for (int i = selected.size()-1; i >= 0; i--)
     {
@@ -141,6 +145,11 @@ void AudioRegionContainer::deleteSelectedRegions()
         jassert(region);
         deleteRegion(selected[i]);
     }
+    
+    // Undo: store new state
+    action->storeNewState();
+    getUndoManager()->perform(action.release(), "Delete Region(s)");
+    getUndoManager()->beginNewTransaction();
 }
 
 void AudioRegionContainer::deselectAll()
@@ -243,6 +252,14 @@ bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
         outputStream.writeDouble(region->getRegionData(audium::seconds).getEnd());
         outputStream.writeInt(region->getAudioSubGroup()->getId());
     }
+    
+    // - Playlist items depend on regions
+    for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
+    {
+        audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->writeToStream(outputStream);
+    }
+    
+    
     return true;
 }
 
@@ -277,6 +294,13 @@ bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
                 }
             }
         }
+        
+        // - Playlists
+        for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
+        {
+            audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->readFromStream(inputStream);
+        }
+        
         sendActionMessage(updateAll);
         return true;
     }

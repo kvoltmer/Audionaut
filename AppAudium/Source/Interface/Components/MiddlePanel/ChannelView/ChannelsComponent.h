@@ -42,8 +42,8 @@ public:
 
     ~ChannelsComponent() override
     {
-        audioChannelsListBox->setHeaderComponent(nullptr);
         audioChannelsListBox->setModel(nullptr);
+        audioChannelsListBox->setHeaderComponent(nullptr);
     }
 
     void paint (juce::Graphics& ) override

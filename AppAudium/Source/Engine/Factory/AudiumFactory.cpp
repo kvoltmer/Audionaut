@@ -20,9 +20,11 @@ using namespace audium;
 
 std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {
+    auto undoManager                = std::shared_ptr<juce::UndoManager>        (new juce::UndoManager());
+    
     auto audioDeviceManager         = std::shared_ptr<juce::AudioDeviceManager> (new juce::AudioDeviceManager());
     
-    auto audioGroupContainer        = std::shared_ptr<AudioGroupContainer>      (new AudioGroupContainer());
+    auto audioGroupContainer        = std::shared_ptr<AudioGroupContainer>      (new AudioGroupContainer(undoManager));
     
     auto linkEngine                 = std::shared_ptr<LinkEngine>               (new LinkEngine());
     
@@ -31,8 +33,6 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto formatManager              = std::shared_ptr<juce::AudioFormatManager> (new juce::AudioFormatManager());
     
     auto audioThumbnailCache        = std::shared_ptr<juce::AudioThumbnailCache>(new juce::AudioThumbnailCache(64));
-    
-    auto undoManager                = std::shared_ptr<juce::UndoManager>        (new juce::UndoManager());
     
     auto audioResourceContainer     = std::shared_ptr<AudioResourceContainer>   (new AudioResourceContainer(audioDeviceManager,
                                                                                                             audioGroupContainer,
@@ -53,6 +53,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                                                           audioGroupContainer,
                                                                                                           playListScheduler,
                                                                                                           undoManager));
+    
+    // not sure how to avoid this:
+    audioGroupContainer->init(audioResourceContainer.get(), audioRegionContainer.get());
         
     auto audiumEngine               = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioDeviceManager,
                                                                                                   audioGroupContainer,

@@ -48,7 +48,6 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
             auto channelPosition = group->getNumChannels();
             auto url = URL (File (filenames[i]));
             audiumEngine->getAudioResourceContainer()->addAudioResource(url,
-                                                                        *audiumEngine,
                                                                         group,
                                                                         subGroup,
                                                                         channelPosition,

@@ -43,7 +43,6 @@ public:
     ~AudioResourceContainer();
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
-                                                     const AudiumEngine &engine,
                                                      std::shared_ptr<AudioGroup> group,
                                                      std::shared_ptr<AudioSubGroup> subGroup,
                                                      int channelPosition = 0,
@@ -63,7 +62,7 @@ public:
     
 
     bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine);
+    bool readFromStream (juce::InputStream& inputStream);
     
     void cleanup();
     
