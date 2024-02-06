@@ -14,6 +14,7 @@
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegionContainer.h"
+#include "Engine/Group/AudioSubGroup.h"
 
 #include "Interface/Controls/RegionEditControl.h"
 #include "Interface/Controls/DraggerControl.h"
@@ -26,11 +27,11 @@ class RegionEditComponent  : public juce::Component
 {
 public:
     RegionEditComponent(std::shared_ptr<AudiumEngine> audiumEngine,
-                        std::shared_ptr<AudioResource> audioResource,
+                        std::shared_ptr<AudioSubGroup> audioSubGroup,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector) :
         audiumEngine(audiumEngine),
-        audioResource(audioResource),
+        audioSubGroup(audioSubGroup),
         zoomHandler(zoomHandler),
         regionSelector(regionSelector)
     {
@@ -43,7 +44,7 @@ public:
     
     void resized() override
     {
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
+        const auto regions = audioSubGroup->getAudioRegions();
         auto count = 0;
         for (auto region : regions)
         {
@@ -66,7 +67,7 @@ public:
         }
         else
         {
-            auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
+            const auto regions = audioSubGroup->getAudioRegions();
             auto count = 0;
             for (auto regionEdit : regionEditControls)
             {
@@ -78,7 +79,7 @@ public:
 
     bool mustRebuildComponents() const
     {
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
+        const auto regions = audioSubGroup->getAudioRegions();
         if (regions.size() != regionEditControls.size())
         {
             return true;
@@ -94,7 +95,7 @@ public:
         removeAllChildren();
         regionEditControls.clear();
         
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
+        const auto regions = audioSubGroup->getAudioRegions();
         for (auto region : regions)
         {
             auto view = std::shared_ptr<RegionEditControl>(new RegionEditControl(region, zoomHandler, audiumEngine, regionSelector));
@@ -112,7 +113,7 @@ public:
 private:
     
     std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioResource> audioResource;
+    std::shared_ptr<AudioSubGroup> audioSubGroup;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
     juce::Colour colour;

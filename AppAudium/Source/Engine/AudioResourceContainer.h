@@ -22,7 +22,7 @@ class TransportSourceContainer;
 class AudioGroupContainer;
 class AudiumEngine;
 
-class AudioResourceContainer : public juce::ActionBroadcaster
+class AudioResourceContainer :  public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
@@ -46,7 +46,6 @@ public:
                                                      std::shared_ptr<AudioGroup> group,
                                                      std::shared_ptr<AudioSubGroup> subGroup,
                                                      int channelPosition = 0,
-                                                     double transportPosition = 0.0,
                                                      int resourceId = -1);
     
     void removeAudioResource(std::shared_ptr<AudioResource> resource);
@@ -59,10 +58,6 @@ public:
     
     int getNumAudioGroups() const;
     std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
-    
-
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
     
     void cleanup();
     

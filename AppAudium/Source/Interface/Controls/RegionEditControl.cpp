@@ -111,7 +111,7 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
     {
         
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioRegionContainer());
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audioRegion);
         action->storeOldState();
         
         // note: add audio resource start
@@ -190,7 +190,7 @@ const RegionEditControl::Edge RegionEditControl::getDragMode(int x) const
 
 bool RegionEditControl::keyPressed (const KeyPress& key, Component* originatingComponent)
 {
-    if (key.isKeyCode (KeyPress::deleteKey))
+    if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
     {
         audiumEngine->getAudioRegionContainer()->deleteSelectedRegions();
         return true;

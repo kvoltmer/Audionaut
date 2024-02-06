@@ -175,10 +175,10 @@ bool AudiumEngine::writeToStream (juce::OutputStream& out)
 {
     out.writeString ("AudiumEngineFormat");
     
-    // 1. Tempo
+    // Tempo
     out.writeDouble(playListScheduler->getTempoProvider()->getTempo());
     
-    // 2. Groups
+    // Groups
     audioGroupContainer->writeToStream(out);
         
     return true;
@@ -193,13 +193,13 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
     
     while (! in.isExhausted())
     {
-        // 1. Tempo
+        // Tempo
         auto tempo = in.readDouble();
         
         if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
             playListScheduler->getTempoProvider()->setTempo(tempo);
         
-        // 2. Groups
+        // Groups
         if (audioGroupContainer->readFromStream(in))
         {
             return true;

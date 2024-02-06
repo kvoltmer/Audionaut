@@ -30,7 +30,6 @@ public:
                                                               juce::AudioFormatManager& formatManager,
                                                               juce::TimeSliceThread* readAheadThread,
                                                               int channelPosition,
-                                                              double transportPosition,
                                                               int resourceId)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
@@ -75,7 +74,6 @@ public:
                                                                                          audioFormatReaderSource,
                                                                                          channelPosition,
                                                                                          resourceId));
-                        audioResource->setTransportPosition(transportPosition, audium::seconds);
                     }
                 }
             }

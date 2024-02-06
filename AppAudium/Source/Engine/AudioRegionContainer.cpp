@@ -21,23 +21,25 @@
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioGroup> group)
 {
-    jassert(getNumRegions(group.get()) == 0);
-    auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group.get());
-    auto name = (audioResources.size() > 0) ? audioResources[0]->getFileNameWithoutExtension() : "n/a";
-    auto seconds = 0.0;
-    for (auto resource : audioResources)
-    {
-        seconds = juce::jmax(seconds, resource->getAudioTransportSource()->getLengthInSeconds());
-    }
-    jassert(seconds > 0.0);
-        
-    return createRegion(name, juce::Range(0.0, seconds), group);
+//    jassert(getNumRegions(group.get()) == 0);
+//    auto audioResources = audioResourceContainer->getAudioResourcesForGroup(group.get());
+//    auto name = (audioResources.size() > 0) ? audioResources[0]->getFileNameWithoutExtension() : "n/a";
+//    auto seconds = 0.0;
+//    for (auto resource : audioResources)
+//    {
+//        seconds = juce::jmax(seconds, resource->getAudioTransportSource()->getLengthInSeconds());
+//    }
+//    jassert(seconds > 0.0);
+//
+//    return createRegion(name, juce::Range(0.0, seconds), group);
+    jassertfalse;
+    return nullptr;
 }
 
 void AudioRegionContainer::createRegionsFromSelection(juce::String name)
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(*this);
+    auto action = std::make_unique<audium::UndoableContainerAction>(*audioGroupContainer);
     action->storeOldState();
     
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
@@ -59,7 +61,6 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
             else
             {
                 // get resources at this range
-                
                 auto rangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(selectedPositionClocks);
                 auto resources = group->getAudioResourcesAtAbsoluteRange(rangeInSeconds);
                 if (resources.size() > 0)
@@ -71,7 +72,7 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
                     for (auto res : resources)
                         maxLength = std::max(maxLength, res->getFileLength(audium::seconds));
                     
-                    const auto transportPosition = resource->getTransportPosition(audium::seconds);
+                    const auto transportPosition = resource->getAudioSubGroup()->getAbsolutePosition(audium::seconds);
                     rangeInSeconds -= transportPosition;
                     const auto startPosition = resource->getRegionData(audium::seconds).getStart();
                     rangeInSeconds += startPosition;
@@ -92,6 +93,14 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
     action->storeNewState();
     getUndoManager()->perform(action.release(), "Create Region(s)");
     getUndoManager()->beginNewTransaction();
+}
+
+std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<AudioGroup> group,
+                                                                std::shared_ptr<AudioSubGroup> subGroup)
+{
+    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
+    audioRegions.push_back(audioRegion);
+    return audioRegion;
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String regionName,
@@ -135,7 +144,7 @@ void AudioRegionContainer::deleteRegion(int atIndex)
 void AudioRegionContainer::deleteSelectedRegions()
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(*this);
+    auto action = std::make_unique<audium::UndoableContainerAction>(*audioGroupContainer);
     action->storeOldState();
         
     auto selected = getSelectedRows();
@@ -238,79 +247,6 @@ int AudioRegionContainer::getRegionIndex(std::shared_ptr<AudioRegion> searchRegi
         auto index = std::distance(audioRegions.begin(), it);
         return static_cast<int>(index);
     }
-    
-}
-
-bool AudioRegionContainer::writeToStream (juce::OutputStream& outputStream)
-{
-    outputStream.writeInt((int)audioRegions.size());
-    for (auto & region : audioRegions)
-    {
-        outputStream.writeInt(region->getAudioGroup()->getId());
-        outputStream.writeString(region->getName());
-        outputStream.writeDouble(region->getRegionData(audium::seconds).getStart());
-        outputStream.writeDouble(region->getRegionData(audium::seconds).getEnd());
-        outputStream.writeInt(region->getAudioSubGroup()->getId());
-    }
-    
-    // - Playlist items depend on regions
-    for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
-    {
-        audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->writeToStream(outputStream);
-    }
-    
-    
-    return true;
-}
-
-bool AudioRegionContainer::readFromStream (juce::InputStream& inputStream)
-{
-    cleanup();
-    
-    jassert(audioRegions.empty());
-    
-    while (!inputStream.isExhausted())
-    {
-        auto numRegions = inputStream.readInt();
-        for (auto i = 0; i < numRegions; i++)
-        {
-            auto groupId = inputStream.readInt();
-            auto regionName = inputStream.readString();
-            auto start = inputStream.readDouble();
-            auto end = inputStream.readDouble();
-            
-            juce::Range<double> position(start, end);
-            auto id = inputStream.readInt();
-            auto group = audioGroupContainer->getAudioGroupById(groupId);
-            jassert(group);
-            if (group != nullptr)
-            {
-                auto subGroup = group->getAudioSubGroupById(id);
-                jassert(subGroup);
-                
-                if (subGroup != nullptr)
-                {
-                    createRegion(regionName, position, group, subGroup);
-                }
-            }
-        }
-        
-        // - Playlists
-        for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
-        {
-            audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->readFromStream(inputStream);
-        }
-        
-        sendActionMessage(updateAll);
-        return true;
-    }
-    return false;
-    
-}
-
-int AudioRegionContainer::getSizeInUnits()
-{
-    return getNumRegions() * 8;
 }
 
 int AudioRegionContainer::getNumRegions(const AudioGroup* group) const
@@ -379,12 +315,12 @@ std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForGro
     return regions;
 }
 
-std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSubGroup(std::shared_ptr<AudioSubGroup> subGroup) const
+std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSubGroup(const AudioSubGroup* subGroup) const
 {
     std::vector<std::shared_ptr<AudioRegion>> regions;
     for (auto region : audioRegions)
     {
-        if (region->getAudioSubGroup() == subGroup)
+        if (region->getAudioSubGroup().get() == subGroup)
             regions.push_back(region);
     }
     return regions;
@@ -402,7 +338,7 @@ void AudioRegionContainer::deleteAudioRegionsForGroup(std::shared_ptr<AudioGroup
 
 void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup)
 {
-    auto regions = getRegionsForSubGroup(audioSubGroup);
+    auto regions = getRegionsForSubGroup(audioSubGroup.get());
     
     for (auto region : regions)
     {

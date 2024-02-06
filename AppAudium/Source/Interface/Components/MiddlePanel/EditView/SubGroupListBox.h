@@ -20,15 +20,17 @@ class AudiumEngine;
 class AudioResource;
 class ZoomHandler;
 class RegionSelector;
+class AudioSubGroup;
 
 class SubGroupListBox  : public audium::ListBox
 {
 public:
     SubGroupListBox(std::shared_ptr<AudiumEngine> audiumEngine,
-                    std::shared_ptr<AudioResource> audioResource,
+                    std::shared_ptr<AudioSubGroup> audioSubGroup,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     std::shared_ptr<RegionSelector> regionSelector) :
-        audium::ListBox("SubGroupListBox", nullptr)
+        audium::ListBox("SubGroupListBox", nullptr),
+        audioSubGroup(audioSubGroup)
     {
         // transparent backgroud:
         setColour(audium::ListBox::backgroundColourId, juce::Colours::transparentBlack);
@@ -36,7 +38,7 @@ public:
         
         // region edit component
         regionEditComponent.reset(new RegionEditComponent(audiumEngine,
-                                                          audioResource,
+                                                          audioSubGroup,
                                                           zoomHandler,
                                                           regionSelector));
         addAndMakeVisible(regionEditComponent.get());
@@ -58,6 +60,7 @@ public:
     }
 
 private:
+    std::shared_ptr<AudioSubGroup> audioSubGroup;
     
     std::unique_ptr<RegionEditComponent> regionEditComponent;
     

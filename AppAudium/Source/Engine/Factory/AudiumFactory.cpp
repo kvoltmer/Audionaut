@@ -24,11 +24,11 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto audioDeviceManager         = std::shared_ptr<juce::AudioDeviceManager> (new juce::AudioDeviceManager());
     
-    auto audioGroupContainer        = std::shared_ptr<AudioGroupContainer>      (new AudioGroupContainer(undoManager));
-    
     auto linkEngine                 = std::shared_ptr<LinkEngine>               (new LinkEngine());
     
     auto tempoProvider              = std::shared_ptr<TempoProvider>            (new TempoProvider(linkEngine));
+    
+    auto audioGroupContainer        = std::shared_ptr<AudioGroupContainer>      (new AudioGroupContainer(undoManager, tempoProvider));
     
     auto formatManager              = std::shared_ptr<juce::AudioFormatManager> (new juce::AudioFormatManager());
     

@@ -142,7 +142,7 @@ void PlayListScheduler::processInEditMode(double absolutePosition, int numSample
     {
         if (not resource->getAudioTransportSource()->isPlaying())
         {
-            const auto startPosition = resource->getTransportPosition(audium::seconds);
+            const auto startPosition = resource->getAudioSubGroup()->getAbsolutePosition(audium::seconds);
             const auto localPosition = resource->getRegionData(audium::seconds).getStart();
             const auto diff = startPosition - absolutePositionInSeconds;
 
@@ -184,7 +184,7 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
         {
             auto resource = audioResourceContainer->getAudioResource(i);
             totalLength = std::max(totalLength,
-                                   resource->getTransportPosition(context) +
+                                   resource->getAudioSubGroup()->getAbsolutePosition(context) +
                                    resource->getRegionData(context).getLength());
         }
     }

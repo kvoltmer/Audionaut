@@ -114,17 +114,22 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
             position.setStart(static_cast<double>(elem["start"]) / sampleRate);
             position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
             juce::String regionName = "seg-" + juce::String(counter++);
-            // CREATE REGION
-            for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+            
+            
+            // CREATE REGIONs:
+            
+            //for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
             {
-                if (auto group = audioGroupContainer->getAudioGroup(i))
+                // use the first group
+                if (auto group = audioGroupContainer->getAudioGroup(0))
                 {
-                    auto resources = group->getAudioResources();
-                    jassert(resources.size() > 0);
-                    if (resources.size() > 0)
+                    // use the first sub group
+                    auto subGroups = group->getAudioSubGroups();
+                    
+                    jassert(subGroups.size() > 0);
+                    if (subGroups.size() > 0)
                     {
-                        auto resource = resources[0];
-                        audioRegionContainer->createRegion(regionName, position, group);
+                        audioRegionContainer->createRegion(regionName, position, group, subGroups[0]);
                     }
                 }
             }

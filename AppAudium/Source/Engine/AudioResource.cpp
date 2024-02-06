@@ -110,9 +110,9 @@ bool AudioResource::validateData()
 {
     bool result = false;
     
-    if (transportPositionClocks < 0.0)
+    if (audioSubGroup->getAbsolutePosition(audium::clocks) < 0.0)
     {
-        transportPositionClocks = 0.0;
+        audioSubGroup->setAbsolutePosition(0.0, audium::clocks);
         result |= true;
     }
     
@@ -137,34 +137,9 @@ bool AudioResource::validateData()
     return result;
 }
 
-double AudioResource::getTransportPosition(audium::TimeContextType context) const
-{
-    if (context == audium::seconds)
-    {
-        return owner.getTempoProvider()->clocksToSeconds(transportPositionClocks);
-    }
-    return transportPositionClocks;
-}
-
-void AudioResource::setTransportPosition(const double newPosition, audium::TimeContextType context)
-{
-    if (context == audium::seconds)
-    {
-        transportPositionClocks = owner.getTempoProvider()->secondsToClocks(newPosition);
-    }
-    else if (context == audium::clocks)
-    {
-        transportPositionClocks = newPosition;
-    }
-    else
-    {
-        jassertfalse;
-    }
-}
-
 bool AudioResource::containsAbsolutePosition(double position, audium::TimeContextType context) const
 {
-    auto startTime = getTransportPosition(context);
+    auto startTime = getAudioSubGroup()->getAbsolutePosition(context);
     auto endTime = startTime + getRegionData(context).getLength();
     juce::Range<double> absoluteRange(startTime, endTime);
     if (absoluteRange.contains(position))
@@ -181,23 +156,19 @@ bool AudioResource::writeToStream (juce::OutputStream& outputStream)
     outputStream.writeFloat(getAudioTransportSource()->getGain());
     outputStream.writeDouble(regionData.getStart());
     outputStream.writeDouble(regionData.getEnd());
-    outputStream.writeDouble(transportPositionClocks);
     outputStream.writeInt(getChannelPosition());
-    outputStream.writeInt(0);
 
     return true;
 }
 
 bool AudioResource::readFromStream (juce::InputStream& inputStream)
 {
-    const auto inUrl =          inputStream.readString();
-    const auto gain =           inputStream.readFloat();
-    const auto start =          inputStream.readDouble();
-    const auto end =            inputStream.readDouble();
-    transportPositionClocks =   inputStream.readDouble();
-    const auto channelPosition =    inputStream.readInt();
-    auto unused =               inputStream.readInt();
-    setChannelPosition(channelPosition);
+    const auto inUrl        = inputStream.readString();
+    const auto gain         = inputStream.readFloat();
+    const auto start        = inputStream.readDouble();
+    const auto end          = inputStream.readDouble();
+    const auto channelPos   = inputStream.readInt();
+    setChannelPosition(channelPos);
     regionData = juce::Range<double>(start, end);
     jassert(this->url == inUrl);
     getAudioTransportSource()->setGain(gain);
@@ -228,15 +199,12 @@ bool AudioResource::containsChannelNumber(int channelNumber) const
 
 int AudioResource::getChannelPosition() const
 {
-    jassert(audioChannels.size() > 0);
-    int channelPosition = 512;
-    
-    for (auto channel : audioChannels)
+    if (audioChannels.size() > 0)
     {
-        channelPosition = std::min(channelPosition, channel->getChannelNumber());
+        return audioChannels[0]->getChannelNumber();
     }
     
-    return channelPosition;
+    return 0;
 }
 
 void AudioResource::setChannelPosition(int startChannel)

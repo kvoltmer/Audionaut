@@ -17,6 +17,7 @@ class AudioGroup;
 class AudioResourceContainer;
 class AudioRegionContainer;
 class AudiumEngine;
+class TempoProvider;
 
 class AudioGroupContainer : public juce::ActionBroadcaster,
                             public audium::Streamable
@@ -24,8 +25,10 @@ class AudioGroupContainer : public juce::ActionBroadcaster,
         
 public:
     
-    AudioGroupContainer(std::shared_ptr<juce::UndoManager> undoManager) :
-        undoManager(undoManager)
+    AudioGroupContainer(std::shared_ptr<juce::UndoManager> undoManager,
+                        std::shared_ptr<TempoProvider> tempoProvider) :
+        undoManager(undoManager),
+        tempoProvider(tempoProvider)
     {
     }
     
@@ -44,7 +47,6 @@ public:
     
     bool deleteAudioGroup(std::shared_ptr<AudioGroup> group);
     void deleteSelectedGroups();
-
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream) override;
@@ -65,9 +67,12 @@ public:
     void deselectAll();
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
-
+    
+    AudioRegionContainer *getAudioRegionContainer() const noexcept { return audioRegionContainer; }
+    std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
 private:
     std::shared_ptr<juce::UndoManager> undoManager;
+    std::shared_ptr<TempoProvider> tempoProvider;
     
     // i don't like these pointers :(
     AudioResourceContainer *audioResourceContainer = nullptr;

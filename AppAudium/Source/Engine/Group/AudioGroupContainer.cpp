@@ -145,13 +145,6 @@ bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
         group->writeToStream(outputStream);
     }
     
-    // 3. Resources
-    audioResourceContainer->writeToStream(outputStream);
-    
-    // 4. Regions
-    audioRegionContainer->writeToStream(outputStream);
-    
-
     return true;
 }
 
@@ -168,20 +161,10 @@ bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream)
     for (auto g = 0; g < numGroups; g++)
     {
         auto audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer, *audioRegionContainer);
-        audioGroup->readFromStream(inputStream);
         audioGroups.push_back(audioGroup);
+        
+        audioGroup->readFromStream(inputStream);
         nextId = juce::jmax(nextId, audioGroup->getId());
-    }
-    
-    
-    // - Resources
-    if (audioResourceContainer->readFromStream(inputStream))
-    {
-        // - Regions
-        if (audioRegionContainer->readFromStream(inputStream))
-        {
-            result = true;
-        }
     }
     
     sendActionMessage(rebuildAll);

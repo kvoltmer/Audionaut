@@ -22,7 +22,9 @@ protected:
     
 public:
     
-    virtual juce::Range<double> getAbsolutePosition(audium::TimeContextType context) const = 0;
+    virtual juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const = 0;
+    virtual double getAbsolutePosition(audium::TimeContextType context) const = 0;
+    virtual void setAbsolutePosition(double position, audium::TimeContextType context) = 0;
 
 private:
     

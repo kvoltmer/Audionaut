@@ -84,7 +84,7 @@ public:
     float getGain(int channelNumber) const;
     
     int getNextSubGroupId() { return ++nextSubGroupId; }
-    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(int subGroupId = -1);
+    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition = 0.0, int subGroupId = -1);
     std::shared_ptr<AudioSubGroup> getAudioSubGroupById(int groupId) const;
     
     std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;

@@ -40,11 +40,12 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     playListItemListBox->setModel(playListItemArrangementModel.get());
     
     // create dragger as header of ListBox
-    auto dragger = std::unique_ptr<PlayListItemDraggerControl>(new PlayListItemDraggerControl(this,
-                                                                      playListItem,
-                                                                      zoomHandler,
-                                                                      audioGroup->getColour(),
-                                                                      regionSelector));
+    auto dragger = std::unique_ptr<PlayListItemDraggerControl>(new PlayListItemDraggerControl(  this,
+                                                                                                audiumEngine,
+                                                                                                playListItem,
+                                                                                                zoomHandler,
+                                                                                                audioGroup->getColour(),
+                                                                                                regionSelector));
     dragger->addChangeListener(this);
     playListItemListBox->setHeaderComponent(std::move(dragger));
 

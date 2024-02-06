@@ -88,7 +88,7 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             {
                 if (resource->containsAbsolutePosition(transportPosition, audium::seconds))
                 {
-                    transportPosition = resource->getTransportPosition(audium::seconds);
+                    transportPosition = resource->getAudioSubGroup()->getAbsolutePosition(audium::seconds);
                     // position is below
                     channelPosition = audioGroup->getNumChannels();
                     subGroup = resource->getAudioSubGroup();
@@ -97,15 +97,14 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             }
             if (subGroup == nullptr)
             {
-                subGroup = audioGroup->createNewAudioSubGroup();
+                subGroup = audioGroup->createNewAudioSubGroup(transportPosition);
             }
             
             auto url = URL (File (filenames[i]));
             auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url,
                                                                                              audioGroup,
                                                                                              subGroup,
-                                                                                             channelPosition,
-                                                                                             transportPosition);
+                                                                                             channelPosition);
         }
         
         // will update content
