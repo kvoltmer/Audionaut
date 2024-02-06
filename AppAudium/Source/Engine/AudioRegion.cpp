@@ -10,6 +10,7 @@
 
 #include "AudioRegion.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -17,6 +18,42 @@
 AudioRegion::~AudioRegion()
 {
 }
+
+bool AudioRegion::writeToStream (juce::OutputStream& outputStream)
+{
+    outputStream.writeString(getName());
+    outputStream.writeInt(getAudioGroup()->getId());
+    outputStream.writeInt(getAudioSubGroup()->getId());
+    outputStream.writeDouble(getRegionData(audium::seconds).getStart());
+    outputStream.writeDouble(getRegionData(audium::seconds).getEnd());
+    return true;
+}
+
+bool AudioRegion::readFromStream (juce::InputStream& inputStream)
+{
+    name = inputStream.readString();
+    auto groupId    = inputStream.readInt();
+    auto subGroupId = inputStream.readInt();
+    auto start      = inputStream.readDouble();
+    auto end        = inputStream.readDouble();
+        
+    regionData = juce::Range<double>(start, end);
+    
+    auto group = audioGroup->getAudioGroupContainer().getAudioGroupById(groupId);
+    jassert(group == audioGroup);
+    
+    auto subGroup = audioGroup->getAudioSubGroupById(subGroupId);
+    jassert(subGroup == audioSubGroup);
+
+    audioGroup->getAudioGroupContainer().sendActionMessage(updateAll);
+    return true;
+}
+
+int AudioRegion::getSizeInUnits()
+{
+    return 1;
+}
+
 
 const AudioRegion::RegionData AudioRegion::getRegionData(audium::TimeContextType context) const
 {

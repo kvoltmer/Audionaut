@@ -11,22 +11,130 @@
 #include "AudioSubGroup.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/AudioRegionContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
+
+
+AudioSubGroup::~AudioSubGroup()
+{
+}
+
+void AudioSubGroup::cleanup()
+{
+    const auto audioRegions = getAudioRegions();
+    for (auto region : audioRegions)
+    {
+        getAudioGroup().getAudioRegionContainer().deleteAudioRegion(region);
+    }
+    jassert(getAudioRegions().size() == 0);
+    
+    const auto audioResources = getAudioResources();
+    for (auto resource : audioResources)
+    {
+        getAudioGroup().getAudioResourceContainer().removeAudioResource(resource);
+    }
+    jassert(getAudioResources().size() == 0);
+
+}
 
 bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
 {
     outputStream.writeInt(subGroupId);
+    outputStream.writeDouble(absolutePositionClocks);
+    
+
+    // Resources
+    const auto audioResources = getAudioResources();
+    outputStream.writeInt(static_cast<int>(audioResources.size()));
+        
+    for (auto resource : audioResources)
+    {
+        // group id and name
+        outputStream.writeInt(getAudioGroup().getId());
+        outputStream.writeString(getAudioGroup().getName());
+        
+        // write audio resource data
+        resource->writeToStream(outputStream);
+        
+        jassert(resource->getAudioSubGroup()->getId() == subGroupId);
+    }
+    
+    // Regions
+    const auto audioRegions = getAudioRegions();
+    outputStream.writeInt(static_cast<int>(audioRegions.size()));
+    for (auto region : audioRegions)
+        region->writeToStream(outputStream);
+    
     return true;
 }
 
 bool AudioSubGroup::readFromStream (juce::InputStream& inputStream)
 {
-    subGroupId = inputStream.readInt();
+    cleanup();
+    
+    // we use the shared_ptr
+    const auto group = getAudioGroup().getAudioGroupContainer().getAudioGroupById(getAudioGroup().getId());
+    const auto subGroup = getAudioGroup().getAudioSubGroupById(getId());
+    if (group == nullptr || subGroup == nullptr)
+    {
+        jassertfalse;
+        return false;
+    }
+    
+    subGroupId              = inputStream.readInt();
+    absolutePositionClocks  = inputStream.readDouble();
+    
+    // Resources
+    auto numResources = inputStream.readInt();
+    for (auto i = 0; i < numResources; i++)
+    {
+        // group id and name
+        auto groupId =      inputStream.readInt();
+        auto groupName =    inputStream.readString();
+        jassert(groupId == getAudioGroup().getId());
+        jassert(groupName == getAudioGroup().getName());
+        
+        // url of the resource
+        auto streamPos = inputStream.getPosition();
+        auto url = inputStream.readString();
+        auto resource = getAudioGroup().getAudioResourceContainer().addAudioResource(juce::URL(url), group, subGroup);
+        if (resource == nullptr)
+            return false;
+            
+        inputStream.setPosition(streamPos);
+        
+        // audio resource
+        resource->readFromStream(inputStream);
+        auto channelsNeeded = resource->getChannelPosition() + resource->getNumChannels();
+        getAudioGroup().ensureNumChannels(channelsNeeded);
+    }
+    
+
+    // Regions
+    auto numRegions = inputStream.readInt();
+    for (auto i = 0; i < numRegions; i++)
+    {
+        auto region = getAudioGroup().getAudioRegionContainer().createRegion(group, subGroup);
+        region->readFromStream(inputStream);
+    }
+    
+    getAudioGroup().getAudioGroupContainer().sendActionMessage(rebuildAll);
     return true;
+}
+
+int AudioSubGroup::getSizeInUnits()
+{
+    return (int)getAudioResources().size() * 4;
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioSubGroup::getAudioResources() const
 {
     return audioGroup.getAudioResourceContainer().getAudioResourcesForGroupAndSubGroup(&audioGroup, this);
+}
+
+std::vector<std::shared_ptr<AudioRegion>> AudioSubGroup::getAudioRegions() const
+{
+    return audioGroup.getAudioRegionContainer().getRegionsForSubGroup(this);
 }
 
 int AudioSubGroup::getNumChannels() const
@@ -44,16 +152,59 @@ std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const
     return nullptr;
 }
 
-juce::Range<double> AudioSubGroup::getAbsolutePosition(audium::TimeContextType context) const
+juce::Range<double> AudioSubGroup::getAbsolutePositionRange(audium::TimeContextType context) const
 {
     // note: a sub group my contain several resources...
-    auto pos = 0.0;
     auto length = 0.0;
     for (auto resource : getAudioResources())
     {
-        pos = resource->getTransportPosition(context);
-        length = std::max(length, resource->getRegionData(context).getEnd());
+        length = std::max(length, resource->getRegionData(context).getLength());
     }
     
-    return juce::Range(pos, pos + length);
+    if (context == audium::seconds)
+    {
+        auto tp = audioGroup.getAudioGroupContainer().getTempoProvider();
+        auto pos = tp->clocksToSeconds(absolutePositionClocks);
+        return juce::Range(pos, pos + length);
+    }
+    else if (context == audium::clocks)
+    {
+        return juce::Range(absolutePositionClocks, absolutePositionClocks + length);
+    }
+    
+    jassertfalse;
+    return juce::Range(0.0, 0.0);
+}
+
+double AudioSubGroup::getAbsolutePosition(audium::TimeContextType context) const
+{
+    if (context == audium::seconds)
+    {
+        auto tp = audioGroup.getAudioGroupContainer().getTempoProvider();
+        return tp->clocksToSeconds(absolutePositionClocks);
+    }
+    else if (context == audium::clocks)
+    {
+        return absolutePositionClocks;
+    }
+    jassertfalse;
+    return 0.0;
+}
+
+
+void AudioSubGroup::setAbsolutePosition(double newPosition, audium::TimeContextType context)
+{
+    if (context == audium::seconds)
+    {
+        auto tp = audioGroup.getAudioGroupContainer().getTempoProvider();
+        absolutePositionClocks = tp->secondsToClocks(newPosition);
+    }
+    else if (context == audium::clocks)
+    {
+        absolutePositionClocks = newPosition;
+    }
+    else
+    {
+        jassertfalse;
+    }
 }

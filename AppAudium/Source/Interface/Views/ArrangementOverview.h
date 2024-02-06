@@ -64,7 +64,7 @@ public:
                 addAndMakeVisible(groupRectangles[i].get());
                 groupRectangles[i]->setFill (group->getColour().withAlpha (0.375f));
                 
-                auto position = item->getAbsolutePosition(audium::seconds);
+                auto position = item->getAbsolutePositionRange(audium::seconds);
                 auto relativePos = position.getStart() / totalLength;
                 auto relativeLength = position.getLength() / totalLength;
                 

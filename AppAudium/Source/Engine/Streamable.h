@@ -19,6 +19,8 @@ class Streamable
 {
 
 public:
+    virtual ~Streamable() = default;
+    
     // TODO: documentation
     virtual bool writeToStream (juce::OutputStream& outputStream) = 0;
     // TODO: documentation

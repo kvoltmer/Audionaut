@@ -17,6 +17,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 
 #include "Engine/TimeContext.h"
+#include "Engine/Streamable.h"
 
 class AudioResourceContainer;
 class AudioPlayer;
@@ -26,7 +27,8 @@ class AudioSubGroup;
 class AudioRegion;
 class AudioChannel;
 
-class AudioResource {
+class AudioResource : public audium::Streamable
+{
     
 public:
     AudioResource(AudioResourceContainer& audioResourceContainer,
@@ -49,7 +51,7 @@ public:
         setChannelPosition(channelPosition);
     }
     
-    ~AudioResource();
+    virtual ~AudioResource();
 
     std::shared_ptr<AudiumTransportSource> getAudioTransportSource() const { return transportSource; }
     
@@ -74,17 +76,15 @@ public:
     const juce::Range<double> getRegionData(audium::TimeContextType context) const;
     void setRegionData(const juce::Range<double> newRegionData, audium::TimeContextType context);
     
-    double getTransportPosition(audium::TimeContextType context) const;
-    void setTransportPosition(const double newPosition, audium::TimeContextType context);
-    
     bool validateData();
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinSubGroup() const;
     
     bool containsAbsolutePosition(double position, audium::TimeContextType context) const;
             
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
-    
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream) override;
+    int getSizeInUnits() override { return 1; };
+
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
     
@@ -116,7 +116,6 @@ private:
     
     /// TODO: capsulate the data below
     juce::Range<double> regionData;
-    double transportPositionClocks = 0.0;
     
     bool selected = false;
     int resourceId = -1;

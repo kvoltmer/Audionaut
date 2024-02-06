@@ -12,7 +12,6 @@
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/Streamable.h"
 
 class AudioResourceContainer;
 class AudioGroupContainer;
@@ -20,8 +19,7 @@ class PlayListScheduler;
 class AudioGroup;
 class AudioSubGroup;
 
-class AudioRegionContainer :    public juce::ActionBroadcaster,
-                                public audium::Streamable
+class AudioRegionContainer :    public juce::ActionBroadcaster
 {
                                             
 public:
@@ -36,10 +34,13 @@ public:
     {}
     
     std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioGroup> group);
+    std::shared_ptr<AudioRegion> createRegion(std::shared_ptr<AudioGroup> group,
+                                              std::shared_ptr<AudioSubGroup> subGroup);
+    
     std::shared_ptr<AudioRegion> createRegion(juce::String regionName,
                                               juce::Range<double> position,
                                               std::shared_ptr<AudioGroup> group,
-                                              std::shared_ptr<AudioSubGroup> subGroup = nullptr);
+                                              std::shared_ptr<AudioSubGroup> subGroup);
     void deleteRegion(int rowNumber);
     void deleteSelectedRegions();
     void createRegionsFromSelection(juce::String name);
@@ -48,10 +49,6 @@ public:
     // Used by RegionSelector
     void setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context);
     juce::Range<double> getSelectedPosition(audium::TimeContextType context) const;
-    
-    bool writeToStream (juce::OutputStream& outputStream) override;
-    bool readFromStream (juce::InputStream& inputStream) override;
-    int getSizeInUnits() override;
 
     int getNumRegions(const AudioGroup* group = nullptr) const;
     std::shared_ptr<AudioRegion> getRegion(int index) const;
@@ -69,7 +66,7 @@ public:
     void cleanup() { audioRegions.clear(); }
     
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForGroup(std::shared_ptr<AudioGroup> group) const;
-    std::vector<std::shared_ptr<AudioRegion>> getRegionsForSubGroup(std::shared_ptr<AudioSubGroup> subGroup) const;
+    std::vector<std::shared_ptr<AudioRegion>> getRegionsForSubGroup(const AudioSubGroup* subGroup) const;
     void deleteAudioRegion(std::shared_ptr<AudioRegion> region);
     void deleteAudioRegionsForGroup(std::shared_ptr<AudioGroup> group);
     void deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup);

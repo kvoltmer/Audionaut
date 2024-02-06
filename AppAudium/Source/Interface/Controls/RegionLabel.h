@@ -101,7 +101,8 @@ public:
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audioRegionContainer);
+        auto audioRegion = audioRegionContainer->getRegion(rowNumber);
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audioRegion);
         action->storeOldState();
         
         

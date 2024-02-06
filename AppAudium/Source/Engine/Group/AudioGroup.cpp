@@ -26,7 +26,12 @@ AudioGroup::~AudioGroup()
 
 void AudioGroup::cleanup()
 {
+    for (auto subGroup : audioSubGroups)
+    {
+        subGroup->cleanup();
+    }
     audioSubGroups.clear();
+    
     audioChannels.clear();
     playListContainer->cleanup();
     transportSourceContainer->cleanup();
@@ -51,46 +56,41 @@ void AudioGroup::setColour(juce::Colour colour)
 
 bool AudioGroup::writeToStream (juce::OutputStream& outputStream)
 {
+    // Group
     outputStream.writeInt(groupId);
     outputStream.writeString(getName());
     outputStream.writeString(currentColour.toString());
     
-
-    outputStream.writeInt(static_cast<int>(audioSubGroups.size()));
-    for (auto subGroup : audioSubGroups)
-    {
-        subGroup->writeToStream(outputStream);
-    }
-    
+    // Channels
     outputStream.writeInt(static_cast<int>(audioChannels.size()));
     for (auto channel : audioChannels)
     {
         channel->writeToStream(outputStream);
     }
     
+    // SubGroups
+    outputStream.writeInt(static_cast<int>(audioSubGroups.size()));
+    for (auto subGroup : audioSubGroups)
+    {
+        subGroup->writeToStream(outputStream);
+    }
+    
+    // PlayList
+    getPlayListContainer()->writeToStream(outputStream);
+    
     return true;
 }
 
 bool AudioGroup::readFromStream (juce::InputStream& inputStream)
 {
+    cleanup();
+    
+    // Group
     groupId         = inputStream.readInt();
     groupName       = inputStream.readString();
     currentColour   = juce::Colour::fromString(inputStream.readString());
-
-    jassert(audioSubGroups.size() == 0);
-    jassert(nextSubGroupId == 0);
     
-    auto numSubGroups = inputStream.readInt();
-        
-    for (auto g = 0; g < numSubGroups; g++)
-    {
-        auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
-        subGroup->readFromStream(inputStream);
-        audioSubGroups.push_back(subGroup);
-        nextSubGroupId = juce::jmax(nextSubGroupId, subGroup->getId());
-    }
-    
-    
+    // Channels
     auto numChannels = inputStream.readInt();
     ensureNumChannels(numChannels);
     for (auto c = 0; c < numChannels; c++)
@@ -101,6 +101,24 @@ bool AudioGroup::readFromStream (juce::InputStream& inputStream)
             channel->readFromStream(inputStream);
         }
     }
+
+    jassert(audioSubGroups.size() == 0);
+    jassert(nextSubGroupId == 0);
+    
+    // SubGroups
+    auto numSubGroups = inputStream.readInt();
+        
+    for (auto g = 0; g < numSubGroups; g++)
+    {
+        auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
+        audioSubGroups.push_back(subGroup);
+        if (!subGroup->readFromStream(inputStream))
+            return false;
+        nextSubGroupId = juce::jmax(nextSubGroupId, subGroup->getId());
+    }
+    
+    // PlayList
+    getPlayListContainer()->readFromStream(inputStream);
     
     return true;
 }
@@ -205,13 +223,14 @@ float AudioGroup::getGain(int channelNumber) const
 }
 
 
-std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(int subGroupId)
+std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(double transportPosition, int subGroupId)
 {
     subGroupId = (subGroupId < 0) ? getNextSubGroupId() : subGroupId;
     jassert( !subGroupIdExists(subGroupId) );
     
     auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
     subGroup->setId(subGroupId);
+    subGroup->setAbsolutePosition(transportPosition, audium::seconds);
     audioSubGroups.push_back(subGroup);
     std::cout << "sub group created with id = " << subGroupId << std::endl;
     return subGroup;

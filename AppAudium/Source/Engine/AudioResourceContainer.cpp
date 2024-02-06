@@ -15,6 +15,7 @@
 #include "Engine/ActionMessages.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
+#include "Engine/AudioRegionContainer.h"
 
 AudioResourceContainer::~AudioResourceContainer()
 {
@@ -25,10 +26,9 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                          std::shared_ptr<AudioGroup> group,
                                                                          std::shared_ptr<AudioSubGroup> subGroup,
                                                                          int channelPosition,
-                                                                         double transportPosition,
                                                                          int resourceId)
 {
-    std::cout << "AudioResourceContainer::addAudioResource channelPosition = " << channelPosition << " transportPosition (seconds) = " << transportPosition << std::endl;
+    std::cout << "AudioResourceContainer::addAudioResource channelPosition = " << channelPosition << std::endl;
     jassert(group != nullptr);
     if (group != nullptr)
     {
@@ -40,7 +40,6 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                        *formatManager.get(),
                                                                        &thread,
                                                                        channelPosition,
-                                                                       transportPosition,
                                                                        resourceId);
         
         double sampleRate = 44100.0;
@@ -74,7 +73,6 @@ void AudioResourceContainer::prepareToPlay (double sampleRate, int blockSize)
     }
 }
 
-
 void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> resource)
 {
     for (auto it = audioResources.begin(); it != audioResources.end();)
@@ -85,16 +83,7 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> 
             auto resource = (*it).second;
             
             group->getTransportSourceContainer()->removeTransportSource(resource->getAudioTransportSource());
-            
             audioResources.erase(it);
-            
-            // any resource left in group?
-            if (getAudioResourcesForGroup(group.get()).size() == 0)
-            {
-                audioGroupContainer->deleteAudioGroup(group);
-            }
-            
-            
             break;
         }
         ++it;
@@ -177,68 +166,6 @@ std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroup(int index) con
 {
     jassert(index < getNumAudioGroups());
     return getAudioGroups()[index];
-}
-
-bool AudioResourceContainer::writeToStream (juce::OutputStream& outputStream)
-{
-    outputStream.writeInt(static_cast<int>(audioResources.size()));
-        
-    for (auto resource : audioResources)
-    {
-        // group id and name
-        outputStream.writeInt(resource.first->getId());
-        outputStream.writeString(resource.first->getName());
-        
-        // sub group id
-        outputStream.writeInt(resource.second->getAudioSubGroup()->getId());
-        
-        // write audio resource data
-        resource.second->writeToStream(outputStream);
-    }
-    return true;
-}
-
-bool AudioResourceContainer::readFromStream (juce::InputStream& inputStream)
-{
-    cleanup();
-    
-    jassert(audioResources.empty());
-    jassert(nextId == 0);
-    
-    auto numResources = inputStream.readInt();
-    for (auto i = 0; i < numResources; i++)
-    {
-        // group id and name
-        auto groupId =      inputStream.readInt();
-        auto groupName =    inputStream.readString();
-        
-        // sub group id
-        auto subGroupId =   inputStream.readInt();
-        
-        auto group = audioGroupContainer->getAudioGroupById(groupId);
-        auto subGroup = group->getAudioSubGroupById(subGroupId);
-        if (group != nullptr &&
-            group->getName() == groupName &&
-            subGroup != nullptr)
-        {
-            // url of the resource
-            auto streamPos = inputStream.getPosition();
-            auto url = inputStream.readString();
-            auto resource = addAudioResource(juce::URL(url), group, subGroup);
-            inputStream.setPosition(streamPos);
-            
-            // audio resource
-            resource->readFromStream(inputStream);
-            auto channelsNeeded = resource->getChannelPosition() + resource->getNumChannels();
-            group->ensureNumChannels(channelsNeeded);
-        }
-        else
-        {
-            jassertfalse;
-            return false;
-        }
-    }
-    return true;
 }
 
 void AudioResourceContainer::cleanup()
