@@ -52,6 +52,8 @@
           <FILE id="ErnMCa" name="AudiumFactory.h" compile="0" resource="0" file="Source/Engine/Factory/AudiumFactory.h"/>
         </GROUP>
         <GROUP id="{AE3695CD-F0F3-4924-68C1-084658B86D39}" name="Group">
+          <FILE id="yXlj3o" name="AudioClip.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioClip.cpp"/>
+          <FILE id="YWQQTo" name="AudioClip.h" compile="0" resource="0" file="Source/Engine/Group/AudioClip.h"/>
           <FILE id="S6GFZG" name="AudioGroup.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioGroup.cpp"/>
           <FILE id="q95WEA" name="AudioGroup.h" compile="0" resource="0" file="Source/Engine/Group/AudioGroup.h"/>
           <FILE id="G5bPkP" name="AudioGroupContainer.cpp" compile="1" resource="0"

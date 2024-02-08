@@ -54,9 +54,10 @@ public:
         regionEditComponent->setBounds(getLocalBounds());
     }
     
-    void updateFromEngine()
+    void updateFromEngine(std::shared_ptr<AudioSubGroup> audioSubGroup)
     {
-        regionEditComponent->updateFromEngine();
+        regionEditComponent->updateFromEngine(audioSubGroup);
+        updateContent();
     }
 
 private:

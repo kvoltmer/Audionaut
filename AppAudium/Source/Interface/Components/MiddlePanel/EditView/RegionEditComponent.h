@@ -58,9 +58,17 @@ public:
         }
     }
     
-    void updateFromEngine()
+    void updateFromEngine(std::shared_ptr<AudioSubGroup> subGroup)
     {
-        if (mustRebuildComponents())
+        bool rebuild = false;
+        if (audioSubGroup != subGroup)
+        {
+            rebuild = true;
+            audioSubGroup = subGroup;
+        }
+        
+        if (rebuild ||
+            mustRebuildComponents())
         {
             rebuildComponents();
             resized();
@@ -68,6 +76,7 @@ public:
         else
         {
             const auto regions = audioSubGroup->getAudioRegions();
+            jassert(regions.size() == regionEditControls.size());
             auto count = 0;
             for (auto regionEdit : regionEditControls)
             {

@@ -14,6 +14,7 @@
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/Group/AudioClip.h"
 
 AudioResource::~AudioResource()
 {
@@ -74,73 +75,10 @@ std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWith
     return result;
 }
 
-const juce::Range<double> AudioResource::getRegionData(audium::TimeContextType context) const
-{
-    if (context == audium::seconds)
-    {
-        return regionData;
-    }
-    else if (context == audium::clocks)
-    {
-        return owner.getTempoProvider()->secondsToClocks(regionData);
-    }
-    jassertfalse;
-    return juce::Range<double>(0.0, 0.0);
-}
-
-void AudioResource::setRegionData(const juce::Range<double> newRegionData, audium::TimeContextType context)
-{
-    jassert(newRegionData.getStart() <= newRegionData.getEnd());
-    if (context == audium::seconds)
-    {
-        regionData = newRegionData;
-    }
-    else if (context == audium::clocks)
-    {
-        regionData = owner.getTempoProvider()->clocksToSeconds(newRegionData);
-    }
-
-    if (regionData.getStart() < 0.0)
-    {
-        regionData.setStart(0.0);
-    }
-}
-
-bool AudioResource::validateData()
-{
-    bool result = false;
-    
-    if (audioSubGroup->getAbsolutePosition(audium::clocks) < 0.0)
-    {
-        audioSubGroup->setAbsolutePosition(0.0, audium::clocks);
-        result |= true;
-    }
-    
-    if (regionData.getLength() + regionData.getStart() > getFileLength(audium::seconds))
-    {
-        regionData.setLength(getFileLength(audium::seconds) - regionData.getStart());
-        result |= true;
-    }
-    
-    if (regionData.getLength() <= 0.0)
-    {
-        regionData.setLength(0.1);
-        result |= true;
-    }
-    
-    
-    /// TODO: check on the regions
-    //auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
-    //    for (auto region : regions)
-    
-    
-    return result;
-}
-
 bool AudioResource::containsAbsolutePosition(double position, audium::TimeContextType context) const
 {
-    auto startTime = getAudioSubGroup()->getAbsolutePosition(context);
-    auto endTime = startTime + getRegionData(context).getLength();
+    auto startTime = getAudioSubGroup()->getAudioClip()->getAbsolutePosition(context);
+    auto endTime = startTime + getAudioSubGroup()->getAudioClip()->getRegionData(context).getLength();
     juce::Range<double> absoluteRange(startTime, endTime);
     if (absoluteRange.contains(position))
     {
@@ -154,8 +92,6 @@ bool AudioResource::writeToStream (juce::OutputStream& outputStream)
 {
     outputStream.writeString(getUrlAsString());
     outputStream.writeFloat(getAudioTransportSource()->getGain());
-    outputStream.writeDouble(regionData.getStart());
-    outputStream.writeDouble(regionData.getEnd());
     outputStream.writeInt(getChannelPosition());
 
     return true;
@@ -165,11 +101,8 @@ bool AudioResource::readFromStream (juce::InputStream& inputStream)
 {
     const auto inUrl        = inputStream.readString();
     const auto gain         = inputStream.readFloat();
-    const auto start        = inputStream.readDouble();
-    const auto end          = inputStream.readDouble();
     const auto channelPos   = inputStream.readInt();
     setChannelPosition(channelPos);
-    regionData = juce::Range<double>(start, end);
     jassert(this->url == inUrl);
     getAudioTransportSource()->setGain(gain);
     

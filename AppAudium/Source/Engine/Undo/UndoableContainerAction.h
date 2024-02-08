@@ -18,42 +18,48 @@ namespace audium
 
 struct UndoableContainerAction final : public juce::UndoableAction
 {
-    UndoableContainerAction (Streamable& container) noexcept
-    : container (container)
+    UndoableContainerAction (std::shared_ptr<Streamable> container) noexcept
+        : container (container)
     {
+    }
+    
+    ~UndoableContainerAction()
+    {
+        container = nullptr;
+        std::cout << "~UndoableContainerAction" << std::endl;
     }
     
     void storeOldState()
     {
         juce::MemoryOutputStream outStream;
-        container.writeToStream(outStream);
+        container->writeToStream(outStream);
         oldMemoryBlock = outStream.getMemoryBlock();
     }
     
     void storeNewState()
     {
         juce::MemoryOutputStream outStream;
-        container.writeToStream(outStream);
+        container->writeToStream(outStream);
         newMemoryBlock = outStream.getMemoryBlock();
     }
     
     bool perform() override
     {
         juce::MemoryInputStream inputStream(newMemoryBlock, false);
-        container.readFromStream(inputStream);
+        container->readFromStream(inputStream);
         return true;
     }
     
     bool undo() override
     {
         juce::MemoryInputStream inputStream(oldMemoryBlock, false);
-        container.readFromStream(inputStream);
+        container->readFromStream(inputStream);
         return true;
     }
     
-    int getSizeInUnits() override    { return container.getSizeInUnits(); }
+    int getSizeInUnits() override    { return container->getSizeInUnits(); }
     
-    Streamable& container;
+    std::shared_ptr<Streamable> container;
     juce::MemoryBlock oldMemoryBlock;
     juce::MemoryBlock newMemoryBlock;
     

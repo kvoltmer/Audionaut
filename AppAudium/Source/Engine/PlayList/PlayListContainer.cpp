@@ -107,7 +107,7 @@ AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) con
 bool PlayListContainer::writeToStream (juce::OutputStream& outputStream)
 {
     outputStream.writeInt(static_cast<int>(playListItems.size()));
-    for (auto & item : playListItems)
+    for (auto item : playListItems)
     {
         outputStream.writeInt(audioRegionContainer.getRegionIndex(item->getRegion()));
         outputStream.writeString(item->getRegion()->getName());

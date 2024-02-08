@@ -13,7 +13,7 @@
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegionContainer.h"
-
+#include "Engine/Group/AudioClip.h"
 
 void AudioResourceView::paint (juce::Graphics& g)
 {
@@ -27,7 +27,7 @@ void AudioResourceView::paint (juce::Graphics& g)
         // the waveform colour
         g.setColour (colour);
                 
-        const auto start        = audioResource->getRegionData(audium::seconds).getStart();
+        const auto start        = audioResource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
         const auto thumbArea    = getClippedDrawingArea();
         const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
         const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());

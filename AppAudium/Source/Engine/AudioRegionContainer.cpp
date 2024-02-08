@@ -13,6 +13,7 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioClip.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -39,7 +40,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shar
 void AudioRegionContainer::createRegionsFromSelection(juce::String name)
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(*audioGroupContainer);
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioGroupContainer);
     action->storeOldState();
     
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
@@ -62,6 +63,7 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
             {
                 // get resources at this range
                 auto rangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(selectedPositionClocks);
+                // TODO: change this to subgroups
                 auto resources = group->getAudioResourcesAtAbsoluteRange(rangeInSeconds);
                 if (resources.size() > 0)
                 {
@@ -72,9 +74,9 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
                     for (auto res : resources)
                         maxLength = std::max(maxLength, res->getFileLength(audium::seconds));
                     
-                    const auto transportPosition = resource->getAudioSubGroup()->getAbsolutePosition(audium::seconds);
+                    const auto transportPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
                     rangeInSeconds -= transportPosition;
-                    const auto startPosition = resource->getRegionData(audium::seconds).getStart();
+                    const auto startPosition = resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
                     rangeInSeconds += startPosition;
                     
                     if (rangeInSeconds.getEnd() > maxLength)
@@ -100,6 +102,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
 {
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
     audioRegions.push_back(audioRegion);
+    std::cout << "createRegion " << audioRegion << " index " << getRegionIndex(audioRegion) << std::endl;
     return audioRegion;
 }
 
@@ -118,13 +121,9 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
         subGroup = group->getDefaultSubGroup();
     }
     
-    // TODO: validate position data
-    //jassert(audioResource->getRegionDataInSeconds().contains(position));
-    
-    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
+    auto audioRegion = createRegion(group, subGroup);
     audioRegion->setRegionData(position, audium::seconds);
     audioRegion->setName(regionName);
-    audioRegions.push_back(audioRegion);
     sendActionMessage(regionCreatedAction);
     return audioRegion;
 }
@@ -144,7 +143,7 @@ void AudioRegionContainer::deleteRegion(int atIndex)
 void AudioRegionContainer::deleteSelectedRegions()
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(*audioGroupContainer);
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioGroupContainer);
     action->storeOldState();
         
     auto selected = getSelectedRows();
@@ -240,6 +239,7 @@ int AudioRegionContainer::getRegionIndex(std::shared_ptr<AudioRegion> searchRegi
     auto it = std::find(audioRegions.begin(), audioRegions.end(), searchRegion);
     if (it == audioRegions.end())
     {
+        jassertfalse;
         return -1; // not found
     }
     else
@@ -348,6 +348,8 @@ void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSu
 
 void AudioRegionContainer::deleteAudioRegion(std::shared_ptr<AudioRegion> region)
 {
+    region->getAudioGroup()->getPlayListContainer()->deleteAssociatedItems(region);
+
     auto atIndex = getRegionIndex(region);
     jassert(atIndex >= 0 && atIndex < audioRegions.size());
     audioRegions.erase(audioRegions.begin() + atIndex);

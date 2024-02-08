@@ -9,6 +9,7 @@
 */
 
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioClip.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/AudioResource.h"
@@ -230,7 +231,7 @@ std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(double transpo
     
     auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
     subGroup->setId(subGroupId);
-    subGroup->setAbsolutePosition(transportPosition, audium::seconds);
+    subGroup->getAudioClip()->setAbsolutePosition(transportPosition, audium::seconds);
     audioSubGroups.push_back(subGroup);
     std::cout << "sub group created with id = " << subGroupId << std::endl;
     return subGroup;
@@ -289,7 +290,7 @@ std::vector<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(
     else
     {
         for (auto subGroup : getAudioSubGroups())
-            result.push_back(subGroup);
+            result.push_back(subGroup->getAudioClip());
     }
     return result;
 }

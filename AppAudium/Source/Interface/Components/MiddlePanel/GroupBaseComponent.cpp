@@ -21,6 +21,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioClip.h"
 
 
 using namespace audium;
@@ -88,7 +89,7 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             {
                 if (resource->containsAbsolutePosition(transportPosition, audium::seconds))
                 {
-                    transportPosition = resource->getAudioSubGroup()->getAbsolutePosition(audium::seconds);
+                    transportPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
                     // position is below
                     channelPosition = audioGroup->getNumChannels();
                     subGroup = resource->getAudioSubGroup();

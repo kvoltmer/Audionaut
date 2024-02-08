@@ -29,38 +29,35 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                          int resourceId)
 {
     std::cout << "AudioResourceContainer::addAudioResource channelPosition = " << channelPosition << std::endl;
-    jassert(group != nullptr);
-    if (group != nullptr)
+    jassert(group != nullptr && subGroup != nullptr);
+
+    resourceId = (resourceId < 0) ? getNextId() : resourceId;
+    auto audioResource = AudioResourceFactory::createAudioResource(url,
+                                                                   *this,
+                                                                   group,
+                                                                   subGroup,
+                                                                   *formatManager.get(),
+                                                                   &thread,
+                                                                   channelPosition,
+                                                                   resourceId);
+    
+    double sampleRate = 44100.0;
+    int numSamples = 512;
+    if (audioDeviceManager->getCurrentAudioDevice() != nullptr)
     {
-        resourceId = (resourceId < 0) ? getNextId() : resourceId;
-        auto audioResource = AudioResourceFactory::createAudioResource(url,
-                                                                       *this,
-                                                                       group,
-                                                                       subGroup,
-                                                                       *formatManager.get(),
-                                                                       &thread,
-                                                                       channelPosition,
-                                                                       resourceId);
-        
-        double sampleRate = 44100.0;
-        int numSamples = 512;
-        if (audioDeviceManager->getCurrentAudioDevice() != nullptr)
-        {
-            sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
-            numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
-        }
-        if (audioResource &&
-            audioResource->getAudioTransportSource())
-        {
-//            auto channelsNeeded = channelPosition + audioResource->getNumChannels();
-//            group->ensureNumChannels(channelsNeeded);
-            
-            audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
-            audioResources.push_back({group, audioResource});
-            sendActionMessage(audioResourceCreatedAction);
-            return audioResource;
-        }
+        sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+        numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
     }
+    
+    if (audioResource &&
+        audioResource->getAudioTransportSource())
+    {
+        audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
+        audioResources.push_back({group, audioResource});
+        sendActionMessage(audioResourceCreatedAction);
+        return audioResource;
+    }
+    
     
     return nullptr;
 }
