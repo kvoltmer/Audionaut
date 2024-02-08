@@ -12,23 +12,18 @@
 
 #include <JuceHeader.h>
 #include "Engine/TimeContext.h"
-#include "Engine/PlayList/PositionableBase.h"
 #include "Engine/Streamable.h"
 
 class AudioGroup;
 class AudioResource;
 class AudioRegion;
+class AudioClip;
 
-class AudioSubGroup :   public PositionableBase,
-                        public audium::Streamable
+class AudioSubGroup : public audium::Streamable
 {
         
 public:
-    AudioSubGroup(AudioGroup& audioGroup, int subGroupId = -1) :
-        audioGroup(audioGroup),
-        subGroupId(subGroupId)
-    {}
-    
+    AudioSubGroup(AudioGroup& audioGroup, int subGroupId = -1);
     ~AudioSubGroup() override;
     void cleanup();
     
@@ -50,18 +45,18 @@ public:
     
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
-    
-    juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const override;
-    double getAbsolutePosition(audium::TimeContextType context) const override;
-    void setAbsolutePosition(double position, audium::TimeContextType context) override;
 
+
+    std::shared_ptr<AudioClip> getAudioClip() const { return audioClip; }
+    
 private:
+    std::shared_ptr<AudioClip> audioClip;
+    
     AudioGroup& audioGroup;
 
     int subGroupId = -1;
     bool selected = false;
     
-    double absolutePositionClocks = 0.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioSubGroup)
 

@@ -135,6 +135,7 @@ public:
         if (regionSelector != nullptr)
             regionSelector->setEnabled(true);
         
+        commitBoundsToEngine();
         validateData();
         
         sendChangeMessage();

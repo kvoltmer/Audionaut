@@ -47,7 +47,6 @@ public:
         audioFormatReaderSource(audioFormatReaderSource),
         resourceId(resourceId)
     {
-        setRegionData(juce::Range<double>(0.0, getFileLength(audium::seconds)), audium::seconds);
         setChannelPosition(channelPosition);
     }
     
@@ -73,10 +72,10 @@ public:
     
     double getFileLength(audium::TimeContextType context) const;
     
-    const juce::Range<double> getRegionData(audium::TimeContextType context) const;
-    void setRegionData(const juce::Range<double> newRegionData, audium::TimeContextType context);
-    
-    bool validateData();
+//    const juce::Range<double> getRegionData(audium::TimeContextType context) const;
+//    void setRegionData(const juce::Range<double> newRegionData, audium::TimeContextType context);
+//    
+//    bool validateData();
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinSubGroup() const;
     
     bool containsAbsolutePosition(double position, audium::TimeContextType context) const;
@@ -112,10 +111,6 @@ private:
     std::shared_ptr<AudiumTransportSource> transportSource;
             
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
-    
-    
-    /// TODO: capsulate the data below
-    juce::Range<double> regionData;
     
     bool selected = false;
     int resourceId = -1;

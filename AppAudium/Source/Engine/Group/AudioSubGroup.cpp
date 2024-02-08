@@ -13,7 +13,14 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioClip.h"
 
+AudioSubGroup::AudioSubGroup(AudioGroup& audioGroup, int subGroupId) :
+    audioGroup(audioGroup),
+    subGroupId(subGroupId)
+{
+    audioClip = std::shared_ptr<AudioClip> (new AudioClip(*this));
+}
 
 AudioSubGroup::~AudioSubGroup()
 {
@@ -40,8 +47,8 @@ void AudioSubGroup::cleanup()
 bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
 {
     outputStream.writeInt(subGroupId);
-    outputStream.writeDouble(absolutePositionClocks);
-    
+
+    audioClip->writeToStream(outputStream);
 
     // Resources
     const auto audioResources = getAudioResources();
@@ -63,8 +70,10 @@ bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
     const auto audioRegions = getAudioRegions();
     outputStream.writeInt(static_cast<int>(audioRegions.size()));
     for (auto region : audioRegions)
+    {
         region->writeToStream(outputStream);
-    
+    }
+        
     return true;
 }
 
@@ -82,7 +91,8 @@ bool AudioSubGroup::readFromStream (juce::InputStream& inputStream)
     }
     
     subGroupId              = inputStream.readInt();
-    absolutePositionClocks  = inputStream.readDouble();
+
+    audioClip->readFromStream(inputStream);
     
     // Resources
     auto numResources = inputStream.readInt();
@@ -118,7 +128,9 @@ bool AudioSubGroup::readFromStream (juce::InputStream& inputStream)
         region->readFromStream(inputStream);
     }
     
-    getAudioGroup().getAudioGroupContainer().sendActionMessage(rebuildAll);
+    audioClip->validateData();
+    
+    getAudioGroup().getAudioGroupContainer().sendActionMessage(updateAll);
     return true;
 }
 
@@ -152,59 +164,4 @@ std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const
     return nullptr;
 }
 
-juce::Range<double> AudioSubGroup::getAbsolutePositionRange(audium::TimeContextType context) const
-{
-    // note: a sub group my contain several resources...
-    auto length = 0.0;
-    for (auto resource : getAudioResources())
-    {
-        length = std::max(length, resource->getRegionData(context).getLength());
-    }
-    
-    if (context == audium::seconds)
-    {
-        auto tp = audioGroup.getAudioGroupContainer().getTempoProvider();
-        auto pos = tp->clocksToSeconds(absolutePositionClocks);
-        return juce::Range(pos, pos + length);
-    }
-    else if (context == audium::clocks)
-    {
-        return juce::Range(absolutePositionClocks, absolutePositionClocks + length);
-    }
-    
-    jassertfalse;
-    return juce::Range(0.0, 0.0);
-}
 
-double AudioSubGroup::getAbsolutePosition(audium::TimeContextType context) const
-{
-    if (context == audium::seconds)
-    {
-        auto tp = audioGroup.getAudioGroupContainer().getTempoProvider();
-        return tp->clocksToSeconds(absolutePositionClocks);
-    }
-    else if (context == audium::clocks)
-    {
-        return absolutePositionClocks;
-    }
-    jassertfalse;
-    return 0.0;
-}
-
-
-void AudioSubGroup::setAbsolutePosition(double newPosition, audium::TimeContextType context)
-{
-    if (context == audium::seconds)
-    {
-        auto tp = audioGroup.getAudioGroupContainer().getTempoProvider();
-        absolutePositionClocks = tp->secondsToClocks(newPosition);
-    }
-    else if (context == audium::clocks)
-    {
-        absolutePositionClocks = newPosition;
-    }
-    else
-    {
-        jassertfalse;
-    }
-}

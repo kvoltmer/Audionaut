@@ -12,6 +12,7 @@
 
 #include "DraggerControl.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioClip.h"
 
 class SubGroupDraggerControl : public DraggerControl
 {
@@ -39,8 +40,7 @@ public:
         {
             std::cout << "new audium::UndoableContainerAction" << std::endl;
             
-            undoableContainerAction = new audium::UndoableContainerAction(*audioSubGroup);
-            //undoableContainerAction = new audium::UndoableContainerAction(*audiumEngine->getAudioGroupContainer());
+            undoableContainerAction = new audium::UndoableContainerAction(audioSubGroup->getAudioClip());
             undoableContainerAction->storeOldState();
         }
         
@@ -48,8 +48,8 @@ public:
         const auto audioResources = audioSubGroup->getAudioResources();
         if (audioResources.size() > 0)
         {
-            const auto transportPositionInSeconds = audioSubGroup->getAbsolutePosition(audium::seconds);
-            auto regionData = audioResources[0]->getRegionData(audium::seconds);
+            const auto transportPositionInSeconds = audioSubGroup->getAudioClip()->getAbsolutePosition(audium::seconds);
+            auto regionData = audioSubGroup->getAudioClip()->getRegionData(audium::seconds);
             
             switch (currentDragMode)
             {
@@ -60,11 +60,8 @@ public:
                         auto newLength = regionData.getLength() - diff;
                         auto newStart = regionData.getStart() + diff;
                         
-                        for (auto res : audioResources)
-                        {
-                            res->setRegionData(juce::Range<double>(newStart, newStart + newLength), audium::seconds);
-                        }
-                        audioSubGroup->setAbsolutePosition(newRegionData.getStart(), audium::seconds);
+                        audioSubGroup->getAudioClip()->setRegionData(juce::Range<double>(newStart, newStart + newLength), audium::seconds);
+                        audioSubGroup->getAudioClip()->setAbsolutePosition(newRegionData.getStart(), audium::seconds);
                         repaint();
                     }
                     break;
@@ -72,15 +69,12 @@ public:
                     {
                         // duration
                         regionData.setLength(newRegionData.getLength());
-                        for (auto res : audioResources)
-                        {
-                            res->setRegionData(regionData, audium::seconds);
-                        }
+                        audioSubGroup->getAudioClip()->setRegionData(regionData, audium::seconds);
                     }
                     break;
                 case middleEdge:
                     // position in transport
-                    audioSubGroup->setAbsolutePosition(newRegionData.getStart(), audium::seconds);
+                    audioSubGroup->getAudioClip()->setAbsolutePosition(newRegionData.getStart(), audium::seconds);
                     break;
                 default:
                     break;
@@ -113,12 +107,7 @@ public:
     
     bool validateData() override
     {
-        const auto audioResources = audioSubGroup->getAudioResources();
-        bool result = false;
-        for (auto res : audioResources)
-        {
-            result |= res->validateData();
-        }
+        bool result = audioSubGroup->getAudioClip()->validateData();
         
         if (undoableContainerAction != nullptr)
         {

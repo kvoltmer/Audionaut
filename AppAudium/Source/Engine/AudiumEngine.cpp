@@ -39,6 +39,7 @@ void AudiumEngine::initialise()
 
 void AudiumEngine::uninitialise()
 {
+    undoManager->clearUndoHistory();
     audioDeviceManager->removeAudioCallback(linkAudioDevice.get());
     
 }
@@ -48,7 +49,7 @@ void AudiumEngine::cleanup()
     audioGroupContainer->cleanup();
     audioResourceContainer->cleanup();
     audioRegionContainer->cleanup();
-    
+    undoManager->clearUndoHistory();
     currentFile = File();
 }
 
@@ -67,6 +68,7 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> 
         juce::FileInputStream inputStream(file);
         if (inputStream.openedOk())
         {
+            undoManager->clearUndoHistory();
             /// TODO: std::move (callback)
             readFromStream(inputStream);
             currentFile = file;
@@ -112,6 +114,7 @@ void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> cal
         
         //callback(writeToStream(fo));
         writeToStream(out);
+        undoManager->clearUndoHistory();
     }
 
     temp.overwriteTargetFileWithTemporary();

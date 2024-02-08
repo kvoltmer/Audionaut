@@ -21,6 +21,7 @@
 
 AudioGroupContainer::~AudioGroupContainer()
 {
+    undoManager = nullptr;
     jassert(audioGroups.empty());
 }
 
@@ -118,7 +119,7 @@ bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
 void AudioGroupContainer::deleteSelectedGroups()
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(*this);
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioRegionContainer->getAudioGroupContainer());
     action->storeOldState();
     
     for (int i = static_cast<int>(audioGroups.size())-1; i >= 0; i--)

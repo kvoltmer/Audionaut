@@ -124,10 +124,13 @@ public:
     
     void updateFromEngine()
     {
-        for (auto subGroupListView : subGroupListViews)
+        const auto subGroups = audioGroup->getAudioSubGroups();
+        jassert(subGroups.size() == subGroupListViews.size());
+        int counter = 0;
+        for (auto subGroup : subGroups)
         {
-            subGroupListView->updateFromEngine();
-            subGroupListView->updateContent();
+            subGroupListViews[counter]->updateFromEngine(subGroup);
+            counter++;
         }
     }
 
@@ -140,7 +143,7 @@ public:
         int counter = 0;
         for (auto subGroup : subGroups)
         {
-            auto posRange = subGroup->getAbsolutePositionRange(audium::clocks);
+            auto posRange = subGroup->getAudioClip()->getAbsolutePositionRange(audium::clocks);
             auto pos = zoomHandler->clocksToX(posRange.getStart());
             auto width = zoomHandler->clocksToX(posRange.getLength());
             

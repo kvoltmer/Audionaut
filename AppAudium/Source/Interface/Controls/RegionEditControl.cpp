@@ -111,7 +111,7 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
     {
         
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audioRegion);
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
         action->storeOldState();
         
         // note: add audio resource start
