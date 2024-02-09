@@ -135,10 +135,12 @@ public:
         if (regionSelector != nullptr)
             regionSelector->setEnabled(true);
         
-        commitBoundsToEngine();
-        validateData();
-        
-        sendChangeMessage();
+        if (e.getOffsetFromDragStart().getX() > 0)
+        {
+            commitBoundsToEngine();
+            validateData();
+            sendChangeMessage();
+        }
     }
 
     void mouseMove (const juce::MouseEvent& e) override

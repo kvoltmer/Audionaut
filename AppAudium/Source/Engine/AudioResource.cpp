@@ -63,7 +63,7 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
 std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWithinSubGroup() const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
-    auto resources = owner.getAudioResourcesForGroupAndSubGroup(audioGroup.get(), audioSubGroup.get());
+    auto resources = owner.getAudioResourcesForSubGroup(audioSubGroup.get());
  
     for (auto resource : resources)
     {

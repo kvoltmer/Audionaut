@@ -184,14 +184,14 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAndSubGroup(const AudioGroup *group, const AudioSubGroup *subGroup) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForSubGroup(const AudioSubGroup *subGroup) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
     {
-        if (itr->first.get() == group &&
-            itr->second->getAudioSubGroup().get() == subGroup)
+        if (itr->second->getAudioSubGroup().get() == subGroup)
         {
+            jassert(itr->first->getId() == subGroup->getAudioGroup().getId());
             result.push_back(itr->second);
         }
     }

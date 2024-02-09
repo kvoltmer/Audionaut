@@ -24,6 +24,8 @@ AudioSubGroup::AudioSubGroup(AudioGroup& audioGroup, int subGroupId) :
 
 AudioSubGroup::~AudioSubGroup()
 {
+    jassert(audioGroup.getAudioResourceContainer().getAudioResourcesForSubGroup(this).size() == 0);
+    jassert(audioGroup.getAudioRegionContainer().getRegionsForSubGroup(this).size() == 0);
 }
 
 void AudioSubGroup::cleanup()
@@ -141,7 +143,7 @@ int AudioSubGroup::getSizeInUnits()
 
 std::vector<std::shared_ptr<AudioResource>> AudioSubGroup::getAudioResources() const
 {
-    return audioGroup.getAudioResourceContainer().getAudioResourcesForGroupAndSubGroup(&audioGroup, this);
+    return audioGroup.getAudioResourceContainer().getAudioResourcesForSubGroup(this);
 }
 
 std::vector<std::shared_ptr<AudioRegion>> AudioSubGroup::getAudioRegions() const

@@ -22,7 +22,7 @@
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioClip.h"
-
+#include "Engine/Undo/UndoableContainerAction.h"
 
 using namespace audium;
 
@@ -77,6 +77,9 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
 {
     if ( !filenames.isEmpty())
     {
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup);
+                
         auto transportPosition = zoomHandler->xToSeconds(x);
         auto channelPosition = 0;
         
@@ -108,8 +111,11 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
                                                                                              channelPosition);
         }
         
-        // will update content
-        refreshComponent(audioGroup, true);
+        // Undo: store new state
+        action->storeNewState();
+        audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
+        audiumEngine->getUndoManager()->beginNewTransaction();
+        
     }
     
     externalDragAndDrop = false;

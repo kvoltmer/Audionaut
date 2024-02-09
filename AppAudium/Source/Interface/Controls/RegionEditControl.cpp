@@ -112,7 +112,6 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
         
         // Undo: store old state
         auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
-        action->storeOldState();
         
         // note: add audio resource start
         auto rangeInSeconds =   zoomHandler->xToSeconds(getBounds().toDouble().getHorizontalRange()) +

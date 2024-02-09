@@ -21,6 +21,7 @@ struct UndoableContainerAction final : public juce::UndoableAction
     UndoableContainerAction (std::shared_ptr<Streamable> container) noexcept
         : container (container)
     {
+        storeOldState();
     }
     
     ~UndoableContainerAction()
