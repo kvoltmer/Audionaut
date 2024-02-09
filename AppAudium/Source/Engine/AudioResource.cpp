@@ -143,14 +143,22 @@ int AudioResource::getChannelPosition() const
 void AudioResource::setChannelPosition(int startChannel)
 {
     std::cout << "AudioResource::setChannelPosition " << startChannel << std::endl;
-    auto numChannels = getNumChannels();
+    
+    //auto numChannels = getNumChannels();
     audioChannels.clear();
-    audioGroup->ensureNumChannels(startChannel + numChannels);
+    //audioGroup->ensureNumChannels(startChannel + numChannels);
     
     for (auto i = startChannel; i < audioGroup->getNumChannels(); i++)
     {
         auto channel = audioGroup->getChannel(i);
-        audioChannels.push_back(channel);
+        if (channel != nullptr)
+        {
+            audioChannels.push_back(channel);
+        }
+        else
+        {
+            jassertfalse;
+        }
     }
 }
 

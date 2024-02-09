@@ -233,6 +233,12 @@ void MainComponent::actionListenerCallback (const juce::String& message)
 
 }
 
+void MainComponent::rebuildUI()
+{
+    middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
+    rightPanelComponent->updateUI();
+}
+
 void MainComponent::updateUI()
 {
     auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
