@@ -34,6 +34,9 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std:
 {
     //[Constructor_pre] You can add your own custom stuff here..
 
+    this->audioGroup = audioGroup;
+    this->engine = engine;
+    
     levelMeter.reset (new LevelMeter (true, false));
     addAndMakeVisible(levelMeter.get());
 
