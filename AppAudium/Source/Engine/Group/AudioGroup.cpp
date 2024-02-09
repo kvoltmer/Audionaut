@@ -328,7 +328,6 @@ void AudioGroup::deleteSelectedSubGroups()
     getAudioGroupContainer().getUndoManager()->perform(action.release(), "Delete Selected Group(s)");
     getAudioGroupContainer().getUndoManager()->beginNewTransaction();
     
-    //getAudioResourceContainer().sendActionMessage(rebuildAll);
 }
 
 void AudioGroup::deleteSubGroup(int atIndex)
@@ -380,6 +379,13 @@ void AudioGroup::setSelectedRows(juce::SparseSet<int>& selectedRows)
 
 void AudioGroup::deleteSelectedChannels()
 {
+    // we need a shared_ptr for this
+    auto group = getAudioGroupContainer().getAudioGroupById(getId());
+    jassert(group);
+    
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(group);
+
     auto selected = getSelectedRows();
     for (int i = selected.size()-1; i >= 0; i--)
     {
@@ -387,7 +393,12 @@ void AudioGroup::deleteSelectedChannels()
         
         deleteChannel(channel);
     }
-    getAudioResourceContainer().sendActionMessage(rebuildAll);
+    
+    // Undo: store new state and perform
+    action->storeNewState();
+    getAudioGroupContainer().getUndoManager()->perform(action.release(), "Delete Selected Channel(s)");
+    getAudioGroupContainer().getUndoManager()->beginNewTransaction();
+    
 }
 
 void AudioGroup::deleteChannel(std::shared_ptr<AudioChannel> channel)
