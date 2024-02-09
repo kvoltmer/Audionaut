@@ -138,10 +138,17 @@ bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
                 return false;
             }
         }
+        sendActionMessage(playListOrderAction);
         return true;
     }
     return false;
 }
+
+int PlayListContainer::getSizeInUnits()
+{
+    return getNumItems() * 2;
+}
+
 
 double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem, audium::TimeContextType context) const
 {
