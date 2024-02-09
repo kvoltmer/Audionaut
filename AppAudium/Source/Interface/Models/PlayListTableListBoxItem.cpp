@@ -16,9 +16,13 @@
 #include "Engine/TransportSourceContainer.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Engine/ActionMessages.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetails)
 {
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getPlayListContainer());
+    
     auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
     auto insertIndex = rowNumber + (before ? 0 : 1);
     
@@ -35,8 +39,14 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
         playListModel->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
     }
     
+
+    // Undo: store new state
+    action->storeNewState();
+    // oh dear
+    auto undoManager = playListModel->getPlayListContainer()->getAudioRegionContainer().getUndoManager();
+    undoManager->perform(action.release(), "Playlist changed");
+    undoManager->beginNewTransaction();
     
-    playListModel->getPlayListContainer()->sendActionMessage(playListOrderAction);
     
     hideInsertLines();
 }

@@ -37,6 +37,6 @@ public:
     
     static std::shared_ptr<AudioSubGroup> createAudioSubGroup(AudioGroup &audioGroup)
     {
-        return std::shared_ptr<AudioSubGroup>(new AudioSubGroup(audioGroup, -1));
+        return std::shared_ptr<AudioSubGroup>(new AudioSubGroup(audioGroup));
     }
 };

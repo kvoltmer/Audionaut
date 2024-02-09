@@ -16,6 +16,7 @@
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioClip.h"
 #include "Engine/AudioResource.h"
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -142,8 +143,8 @@ void PlayListScheduler::processInEditMode(double absolutePosition, int numSample
     {
         if (not resource->getAudioTransportSource()->isPlaying())
         {
-            const auto startPosition = resource->getTransportPosition(audium::seconds);
-            const auto localPosition = resource->getRegionData(audium::seconds).getStart();
+            const auto startPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
+            const auto localPosition = resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
             const auto diff = startPosition - absolutePositionInSeconds;
 
             if (diff < 0.0)
@@ -159,7 +160,7 @@ void PlayListScheduler::processInEditMode(double absolutePosition, int numSample
             
             std::cout << "absolute pos: " << absolutePositionInSeconds << " start " <<  startPosition << " diff " << diff << std::endl;
 
-            resource->getAudioTransportSource()->scheduleDuration(resource->getRegionData(audium::seconds).getLength(), sampleRate);
+            resource->getAudioTransportSource()->scheduleDuration(resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getLength(), sampleRate);
         }
     }
 }
@@ -184,8 +185,8 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
         {
             auto resource = audioResourceContainer->getAudioResource(i);
             totalLength = std::max(totalLength,
-                                   resource->getTransportPosition(context) +
-                                   resource->getRegionData(context).getLength());
+                                   resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(context) +
+                                   resource->getAudioSubGroup()->getAudioClip()->getRegionData(context).getLength());
         }
     }
     

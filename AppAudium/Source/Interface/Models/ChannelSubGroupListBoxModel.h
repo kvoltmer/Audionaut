@@ -104,7 +104,10 @@ public:
         audiumEngine->getAudioGroupContainer()->sendActionMessage(updateArrangementAction);
     }
     
-    void setAudioGroup(std::shared_ptr<AudioGroup> group) { audioGroup = group; }
+    void setAudioGroup(std::shared_ptr<AudioGroup> group)
+    {
+        audioGroup = group;
+    }
         
 private:
     audium::ListBox& owner;

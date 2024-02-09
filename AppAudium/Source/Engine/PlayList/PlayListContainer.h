@@ -15,6 +15,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudioRegion.h"
+#include "Engine/Streamable.h"
 
 class PlayListItem;
 class AudioRegionContainer;
@@ -42,7 +43,9 @@ void MoveItemBefore(C& container, size_t currentIndex, size_t indexOfItemToPlace
     }
 }
 
-class PlayListContainer : public juce::ActionBroadcaster {
+class PlayListContainer :   public audium::Streamable,
+                            public juce::ActionBroadcaster
+{
     
 public:
     PlayListContainer(const AudioRegionContainer &audioRegionContainer) :
@@ -60,8 +63,9 @@ public:
     const std::vector<std::shared_ptr<PlayListItem>> getPlayListItems() const;
     int getNumItems(std::shared_ptr<AudioGroup> group = nullptr) const;
     
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream) override;
+    int getSizeInUnits() override;
     
     void cleanup() { playListItems.clear(); }
 
@@ -87,6 +91,8 @@ public:
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
     
     double getTotalLength(audium::TimeContextType context) const;
+    
+    const AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
     
 private:
     

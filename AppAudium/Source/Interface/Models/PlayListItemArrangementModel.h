@@ -107,7 +107,11 @@ public:
     {
         // auto channel = audioSubGroup->getAudioGroup().getChannel(rowNumber);
         auto channel = audioGroup->getChannel(rowNumber);
-        return channel->getChannelHeight();
+        if (channel != nullptr)
+        {
+            return channel->getChannelHeight();
+        }
+        return 0;
     }
     
     void deleteKeyPressed (int lastRowSelected) override

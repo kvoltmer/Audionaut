@@ -50,8 +50,6 @@ public:
     void fileDragExit (const juce::StringArray& files) override;
     
     
-    void setNewGroupColour();
-    
     /// pass on mouse events. unless row is not selected
     void mouseDown (const MouseEvent& event) override
     {

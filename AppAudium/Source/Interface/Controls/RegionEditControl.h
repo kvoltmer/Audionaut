@@ -65,7 +65,7 @@ public:
 
     const Edge getDragMode(int x) const;
     
-    void updateFromEngine();
+    void updateFromEngine(std::shared_ptr<AudioRegion> audioRegion = nullptr);
     
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override;
 

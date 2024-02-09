@@ -83,39 +83,37 @@ public:
         auto subGroups = audioGroup->getAudioSubGroups();
         for (auto subGroup : subGroups)
         {
-            auto resources = subGroup->getAudioResources();
-            if (resources.size() > 0)
-            {
-                auto subGroupListView = std::shared_ptr<SubGroupListBox>(new SubGroupListBox(audiumEngine,
-                                                                                             resources[0],
-                                                                                             zoomHandler,
-                                                                                             regionSelector));
-                
-                auto subGroupListBoxModel = std::shared_ptr<SubGroupListBoxModel>(new SubGroupListBoxModel(subGroupListView,
-                                                                                                           subGroup,
-                                                                                                           audiumEngine,
-                                                                                                           zoomHandler,
-                                                                                                           regionSelector));
-                subGroupListModels.push_back(subGroupListBoxModel);
-                subGroupListView->setModel(subGroupListBoxModel.get());
-                
-                // create dragger as header of ListBox
-                auto dragger = std::unique_ptr<SubGroupDraggerControl>(new SubGroupDraggerControl(subGroupListView.get(),
-                                                                                  subGroup,
-                                                                                  zoomHandler,
-                                                                                  audioGroup->getColour(),
-                                                                                  regionSelector));
-                dragger->addChangeListener(this);
-                subGroupListView->setHeaderComponent(std::move(dragger));
+            auto subGroupListView = std::shared_ptr<SubGroupListBox>(new SubGroupListBox(audiumEngine,
+                                                                                         subGroup,
+                                                                                         zoomHandler,
+                                                                                         regionSelector));
+            
+            auto subGroupListBoxModel = std::shared_ptr<SubGroupListBoxModel>(new SubGroupListBoxModel(subGroupListView,
+                                                                                                       subGroup,
+                                                                                                       audiumEngine,
+                                                                                                       zoomHandler,
+                                                                                                       regionSelector));
+            subGroupListModels.push_back(subGroupListBoxModel);
+            subGroupListView->setModel(subGroupListBoxModel.get());
+            
+            // create dragger as header of ListBox
+            auto dragger = std::unique_ptr<SubGroupDraggerControl>(new SubGroupDraggerControl(subGroupListView.get(),
+                                                                                              audiumEngine,
+                                                                                              subGroup,
+                                                                                              zoomHandler,
+                                                                                              audioGroup->getColour(),
+                                                                                              regionSelector));
+            dragger->addChangeListener(this);
+            subGroupListView->setHeaderComponent(std::move(dragger));
 
-                
-                subGroupListView->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
-                subGroupListView->setOutlineThickness(0);
-                
-                addAndMakeVisible(subGroupListView.get());
-                
-                subGroupListViews.push_back(subGroupListView);
-            }
+            
+            subGroupListView->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
+            subGroupListView->setOutlineThickness(0);
+            
+            addAndMakeVisible(subGroupListView.get());
+            
+            subGroupListViews.push_back(subGroupListView);
+            
         }
     }
     
@@ -126,10 +124,14 @@ public:
     
     void updateFromEngine()
     {
-        for (auto subGroupListView : subGroupListViews)
+        const auto subGroups = audioGroup->getAudioSubGroups();
+        jassert(subGroups.size() == subGroupListViews.size());
+        int counter = 0;
+        for (auto subGroup : subGroups)
         {
-            subGroupListView->updateFromEngine();
-            subGroupListView->updateContent();
+            subGroupListModels[counter]->setAudioSubGroup(subGroup);
+            subGroupListViews[counter]->updateFromEngine(subGroup);
+            counter++;
         }
     }
 
@@ -138,19 +140,13 @@ public:
         
         // set size and position of subgroups on timeline
         auto subGroups = audioGroup->getAudioSubGroups();
-        jassert(subGroups.size() == subGroupListViews.size());
+        //jassert(subGroups.size() == subGroupListViews.size());
         int counter = 0;
         for (auto subGroup : subGroups)
         {
-            
-            auto pos = 0.0;
-            auto width = 0.0;
-            auto resources = subGroup->getAudioResources();
-            for (auto resource : resources)
-            {
-                pos = zoomHandler->secondsToX(resource->getTransportPosition(audium::seconds));
-                width = std::max(width, zoomHandler->secondsToX(resource->getRegionData(audium::seconds).getLength()));
-            }
+            auto posRange = subGroup->getAudioClip()->getAbsolutePositionRange(audium::clocks);
+            auto pos = zoomHandler->clocksToX(posRange.getStart());
+            auto width = zoomHandler->clocksToX(posRange.getLength());
             
             auto height = audioGroup->getTotalHeight() + DraggerControl::draggerHeight;
             

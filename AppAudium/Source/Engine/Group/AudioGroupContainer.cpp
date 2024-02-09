@@ -17,10 +17,19 @@
 #include "Engine/Factory/AudioGroupFactory.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioRegionContainer.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 AudioGroupContainer::~AudioGroupContainer()
 {
+    undoManager = nullptr;
     jassert(audioGroups.empty());
+}
+
+void AudioGroupContainer::init(AudioResourceContainer *resourceContainer,
+          AudioRegionContainer *regionContainer)
+{
+    audioResourceContainer = resourceContainer;
+    audioRegionContainer = regionContainer;
 }
 
 void AudioGroupContainer::cleanup()
@@ -101,7 +110,7 @@ bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
     {
         group->cleanup();
         audioGroups.erase(it);
-        sendActionMessage(audioGroupDeletedAction);
+        sendActionMessage(rebuildAll);
         return true;
     }
     return false;
@@ -109,6 +118,9 @@ bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
 
 void AudioGroupContainer::deleteSelectedGroups()
 {
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioRegionContainer->getAudioGroupContainer());
+    
     for (int i = static_cast<int>(audioGroups.size())-1; i >= 0; i--)
     {
         if (audioGroups[i]->isSelected())
@@ -116,7 +128,12 @@ void AudioGroupContainer::deleteSelectedGroups()
             deleteAudioGroup(audioGroups[i]);
         }
     }
-    sendActionMessage(rebuildAll);
+    
+    // Undo: store new state
+    action->storeNewState();
+    undoManager->perform(action.release(), "Delete Group(s)");
+    undoManager->beginNewTransaction();
+    
 }
 
 bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
@@ -131,24 +148,33 @@ bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
     return true;
 }
 
-bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream,
-                                          AudioResourceContainer &audioResourceContainer,
-                                          AudioRegionContainer &audioRegionContainer)
+bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream)
 {
+    bool result = false;
+    cleanup();
     jassert(audioGroups.size() == 0);
     jassert(nextId == 0);
+    jassert(audioResourceContainer != nullptr && audioRegionContainer != nullptr);
     
     auto numGroups = inputStream.readInt();
         
     for (auto g = 0; g < numGroups; g++)
     {
-        auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer, audioRegionContainer);
-        audioGroup->readFromStream(inputStream);
+        auto audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer, *audioRegionContainer);
         audioGroups.push_back(audioGroup);
+        
+        audioGroup->readFromStream(inputStream);
         nextId = juce::jmax(nextId, audioGroup->getId());
     }
     
-    return true;
+    sendActionMessage(rebuildAll);
+    
+    return result;
+}
+
+int AudioGroupContainer::getSizeInUnits()
+{
+    return getNumItems() * 8;
 }
 
 std::shared_ptr<AudioGroup> AudioGroupContainer::getDefaultGroup() const

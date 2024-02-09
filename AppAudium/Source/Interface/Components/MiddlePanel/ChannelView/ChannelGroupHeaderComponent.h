@@ -152,7 +152,7 @@ public:
 
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override
     {
-        if (key.isKeyCode (KeyPress::deleteKey))
+        if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
         {
             audioGroup->getAudioGroupContainer().deleteSelectedGroups();
             return true;
