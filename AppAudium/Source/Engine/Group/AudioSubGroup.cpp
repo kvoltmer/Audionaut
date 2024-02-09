@@ -117,8 +117,8 @@ bool AudioSubGroup::readFromStream (juce::InputStream& inputStream)
         
         // audio resource
         resource->readFromStream(inputStream);
-        auto channelsNeeded = resource->getChannelPosition() + resource->getNumChannels();
-        getAudioGroup().ensureNumChannels(channelsNeeded);
+//        auto channelsNeeded = resource->getChannelPosition() + resource->getNumChannels();
+//        getAudioGroup().ensureNumChannels(channelsNeeded);
     }
     
 

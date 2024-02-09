@@ -45,7 +45,7 @@ public:
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      std::shared_ptr<AudioGroup> group,
                                                      std::shared_ptr<AudioSubGroup> subGroup,
-                                                     int channelPosition = 0,
+                                                     int channelPosition = -1,
                                                      int resourceId = -1);
     
     void removeAudioResource(std::shared_ptr<AudioResource> resource);

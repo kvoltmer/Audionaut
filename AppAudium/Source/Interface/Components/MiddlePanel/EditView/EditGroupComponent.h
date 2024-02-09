@@ -129,6 +129,7 @@ public:
         int counter = 0;
         for (auto subGroup : subGroups)
         {
+            subGroupListModels[counter]->setAudioSubGroup(subGroup);
             subGroupListViews[counter]->updateFromEngine(subGroup);
             counter++;
         }

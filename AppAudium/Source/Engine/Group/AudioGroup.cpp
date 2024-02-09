@@ -379,7 +379,7 @@ void AudioGroup::setSelectedRows(juce::SparseSet<int>& selectedRows)
 
 void AudioGroup::deleteSelectedChannels()
 {
-    // we need a shared_ptr for this
+    // we need a shared_ptr
     auto group = getAudioGroupContainer().getAudioGroupById(getId());
     jassert(group);
     
@@ -410,6 +410,7 @@ void AudioGroup::deleteChannel(std::shared_ptr<AudioChannel> channel)
         audioChannels.erase(it);
     }
     
+
     // cleanup subgroups
     std::vector<std::shared_ptr<AudioSubGroup>> subGroupsToDelete;
     for (auto subGroup : audioSubGroups)
@@ -428,6 +429,7 @@ void AudioGroup::deleteChannel(std::shared_ptr<AudioChannel> channel)
             deleteSubGroup(static_cast<int>(std::distance(audioSubGroups.begin(), it)));
         }
     }
+
 }
 
     

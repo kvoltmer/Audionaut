@@ -18,11 +18,11 @@
 
 #include "Engine/TimeContext.h"
 #include "Engine/Streamable.h"
+#include "Engine/Group/AudioGroup.h"
 
 class AudioResourceContainer;
 class AudioPlayer;
 class AudiumTransportSource;
-class AudioGroup;
 class AudioSubGroup;
 class AudioRegion;
 class AudioChannel;
@@ -47,7 +47,12 @@ public:
         audioFormatReaderSource(audioFormatReaderSource),
         resourceId(resourceId)
     {
-        setChannelPosition(channelPosition);
+        if (channelPosition >= 0)
+        {
+            auto numChannels = getNumChannels();
+            this->audioGroup->ensureNumChannels(channelPosition + numChannels);
+            setChannelPosition(channelPosition);
+        }
     }
     
     virtual ~AudioResource();
