@@ -7,10 +7,10 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioGroupFactory.h"
 #include "Engine/AudioResourceContainer.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
-
 
 using namespace audium;
 
@@ -27,18 +27,38 @@ AudioGroupListBox::~AudioGroupListBox()
 {
 }
 
+void AudioGroupListBox::setNewGroupColour(std::shared_ptr<AudioGroup> audioGroup)
+{
+    if (audioGroup->getColour() == juce::Colours::pink)
+    {
+        auto newColour = audium::getNewWaveFormColour();
+        
+        auto numGroups = audiumEngine->getAudioGroupContainer()->getNumItems();
+        for (auto i = 0; i < numGroups; i++)
+        {
+            if(newColour == audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getColour())
+            {
+                newColour = audium::getNewWaveFormColour();
+            }
+        }
+        
+        audioGroup->setColour(newColour);
+    }
+}
+
 void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
 {
     if ( !filenames.isEmpty())
     {
-        
-        //jassert(File (filenames[0]).existsAsFile());
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(audiumEngine->getAudioGroupContainer());
         
         juce::String name;
         // create NEW GROUP
         auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
                                                                                  *audiumEngine->getAudioRegionContainer(),
                                                                                  name);
+        setNewGroupColour(group);
         auto subGroup = group->createNewAudioSubGroup();
 
 
@@ -48,7 +68,6 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
             auto channelPosition = group->getNumChannels();
             auto url = URL (File (filenames[i]));
             audiumEngine->getAudioResourceContainer()->addAudioResource(url,
-                                                                        *audiumEngine,
                                                                         group,
                                                                         subGroup,
                                                                         channelPosition,
@@ -57,9 +76,14 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
         
         // disabled for now
         //audiumEngine->createDefaultRegionAndPlayList(group);
+        
+        // Undo: store new state
+        action->storeNewState();
+        audiumEngine->getUndoManager()->perform(action.release(), "Create Region(s)");
+        audiumEngine->getUndoManager()->beginNewTransaction();
     }
     
-    updateContent();
+    //updateContent();
     
     setColour(TableListBox::backgroundColourId, findColour(audium::secondaryBackgroundColourId));
     repaint();

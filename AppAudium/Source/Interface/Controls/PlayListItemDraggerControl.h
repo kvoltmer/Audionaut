@@ -18,11 +18,12 @@ class PlayListItemDraggerControl : public DraggerControl
 public:
     
     PlayListItemDraggerControl(juce::Component* componentToDrag,
+                               std::shared_ptr<AudiumEngine> audiumEngine,
                                std::shared_ptr<PlayListItem> playListItem,
                                std::shared_ptr<ZoomHandler> zoomHandler,
                                juce::Colour colour,
                                std::shared_ptr<RegionSelector> regionSelector) :
-        DraggerControl(componentToDrag, zoomHandler, colour, regionSelector),
+        DraggerControl(componentToDrag, audiumEngine, zoomHandler, colour, regionSelector),
         playListItem(playListItem)
     {
     }
@@ -69,7 +70,7 @@ public:
     
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override
     {
-        if (key.isKeyCode (KeyPress::deleteKey))
+        if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
         {
             playListItem->getRegion()->getAudioGroup()->getPlayListContainer()->deleteSelectedItems();
             return true;

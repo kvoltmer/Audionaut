@@ -107,7 +107,7 @@ AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) con
 bool PlayListContainer::writeToStream (juce::OutputStream& outputStream)
 {
     outputStream.writeInt(static_cast<int>(playListItems.size()));
-    for (auto & item : playListItems)
+    for (auto item : playListItems)
     {
         outputStream.writeInt(audioRegionContainer.getRegionIndex(item->getRegion()));
         outputStream.writeString(item->getRegion()->getName());
@@ -138,10 +138,17 @@ bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
                 return false;
             }
         }
+        sendActionMessage(playListOrderAction);
         return true;
     }
     return false;
 }
+
+int PlayListContainer::getSizeInUnits()
+{
+    return getNumItems() * 2;
+}
+
 
 double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem, audium::TimeContextType context) const
 {

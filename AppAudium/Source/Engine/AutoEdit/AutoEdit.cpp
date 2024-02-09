@@ -42,7 +42,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
         // Build the command line string
         std::string commandString;
         commandString += "cd " + getTempDirectory().toStdString() + ";";
-        commandString += python + " $HOME/dev/smp_audio/scripts/automain.py --verbose autoedit";
+        commandString += python + " $HOME/dev/gaborgandalf/gaborgandalf/automain.py --verbose autoedit";
 //      commandString += " --assemble_mode " + config.mode;
         commandString += " --duration " + std::to_string(config.duration);
         commandString += " --numsegs " + std::to_string(config.numSegments);
@@ -114,17 +114,22 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
             position.setStart(static_cast<double>(elem["start"]) / sampleRate);
             position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
             juce::String regionName = "seg-" + juce::String(counter++);
-            // CREATE REGION
-            for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+            
+            
+            // CREATE REGIONs:
+            
+            //for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
             {
-                if (auto group = audioGroupContainer->getAudioGroup(i))
+                // use the first group
+                if (auto group = audioGroupContainer->getAudioGroup(0))
                 {
-                    auto resources = group->getAudioResources();
-                    jassert(resources.size() > 0);
-                    if (resources.size() > 0)
+                    // use the first sub group
+                    auto subGroups = group->getAudioSubGroups();
+                    
+                    jassert(subGroups.size() > 0);
+                    if (subGroups.size() > 0)
                     {
-                        auto resource = resources[0];
-                        audioRegionContainer->createRegion(regionName, position, group);
+                        audioRegionContainer->createRegion(regionName, position, group, subGroups[0]);
                     }
                 }
             }

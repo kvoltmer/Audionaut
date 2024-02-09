@@ -41,6 +41,7 @@ public:
     
     int getNumRows() override
     {
+        // std::cout << audioSubGroup->getNumChannels() << std::endl;
         return audioSubGroup->getNumChannels();
     }
 
@@ -129,6 +130,12 @@ public:
     void selectedRowsChanged (int lastRowSelected) override
     {
     }
+    
+    void setAudioSubGroup(std::shared_ptr<AudioSubGroup> subGroup)
+    {
+        audioSubGroup = subGroup;
+    }
+    
         
 private:
     

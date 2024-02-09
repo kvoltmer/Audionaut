@@ -12,13 +12,14 @@
 #include <JuceHeader.h>
 
 #include "Engine/TimeContext.h"
+#include "Engine/Streamable.h"
 
 class AudioGroup;
 class AudioResource;
 class TempoProvider;
 class AudioSubGroup;
 
-class AudioRegion
+class AudioRegion : public audium::Streamable
 {    
     
 public:
@@ -33,6 +34,10 @@ public:
     }
     
     ~AudioRegion();
+    
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream) override;
+    int getSizeInUnits() override;
     
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }

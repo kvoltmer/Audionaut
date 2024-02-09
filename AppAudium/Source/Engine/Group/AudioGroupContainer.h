@@ -11,19 +11,31 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/Streamable.h"
 
 class AudioGroup;
 class AudioResourceContainer;
 class AudioRegionContainer;
 class AudiumEngine;
+class TempoProvider;
 
-class AudioGroupContainer : public juce::ActionBroadcaster
+class AudioGroupContainer : public juce::ActionBroadcaster,
+                            public audium::Streamable
 {
         
 public:
     
-    AudioGroupContainer() = default;
+    AudioGroupContainer(std::shared_ptr<juce::UndoManager> undoManager,
+                        std::shared_ptr<TempoProvider> tempoProvider) :
+        undoManager(undoManager),
+        tempoProvider(tempoProvider)
+    {
+    }
+    
     ~AudioGroupContainer();
+    
+    void init(AudioResourceContainer *audioResourceContainer,
+              AudioRegionContainer *audioRegionContainer);
     
     bool groupIdExists(const int groupId) const;
         
@@ -35,12 +47,10 @@ public:
     
     bool deleteAudioGroup(std::shared_ptr<AudioGroup> group);
     void deleteSelectedGroups();
-
     
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream,
-                         AudioResourceContainer &audioResourceContainer,
-                         AudioRegionContainer &audioRegionContainer);
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream) override;
+    int getSizeInUnits() override;
     
     std::shared_ptr<AudioGroup> getSelectedGroup() const { return audioGroups[selectedGroup]; }
     
@@ -57,8 +67,18 @@ public:
     void deselectAll();
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
-
+    
+    AudioRegionContainer *getAudioRegionContainer() const noexcept { return audioRegionContainer; }
+    std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
+    std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
+    
 private:
+    std::shared_ptr<juce::UndoManager> undoManager;
+    std::shared_ptr<TempoProvider> tempoProvider;
+    
+    // i don't like these pointers :(
+    AudioResourceContainer *audioResourceContainer = nullptr;
+    AudioRegionContainer *audioRegionContainer = nullptr;
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;
     int selectedGroup = 0;

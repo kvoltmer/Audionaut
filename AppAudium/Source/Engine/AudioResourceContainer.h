@@ -22,7 +22,7 @@ class TransportSourceContainer;
 class AudioGroupContainer;
 class AudiumEngine;
 
-class AudioResourceContainer : public juce::ActionBroadcaster
+class AudioResourceContainer :  public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
@@ -43,11 +43,9 @@ public:
     ~AudioResourceContainer();
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
-                                                     const AudiumEngine &engine,
                                                      std::shared_ptr<AudioGroup> group,
                                                      std::shared_ptr<AudioSubGroup> subGroup,
-                                                     int channelPosition = 0,
-                                                     double transportPosition = 0.0,
+                                                     int channelPosition = -1,
                                                      int resourceId = -1);
     
     void removeAudioResource(std::shared_ptr<AudioResource> resource);
@@ -61,14 +59,10 @@ public:
     int getNumAudioGroups() const;
     std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
     
-
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine);
-    
     void cleanup();
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAndSubGroup(const AudioGroup *group, const AudioSubGroup *subGroup) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForSubGroup(const AudioSubGroup *subGroup) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const;
 
     std::shared_ptr<AudioGroup> getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const;

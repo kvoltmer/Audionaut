@@ -81,8 +81,8 @@ public:
 
     virtual ~ArrangementEditBaseComponent() override
     {
-        audioGroupListBox->setHeaderComponent(nullptr);
         audioGroupListBox->setModel(nullptr);
+        audioGroupListBox->setHeaderComponent(nullptr);
         regionSelector = nullptr;
         audioGroupListBox = nullptr;
         audioGroupListBoxModel = nullptr;

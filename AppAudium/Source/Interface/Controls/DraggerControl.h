@@ -17,6 +17,9 @@
 #include "Engine/AudioResource.h"
 #include "Interface/ColourIds.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Undo/UndoableContainerAction.h"
+
 
 class DraggerControl  : public juce::Component,
                         public juce::ChangeBroadcaster,
@@ -24,10 +27,12 @@ class DraggerControl  : public juce::Component,
 {
 public:
     DraggerControl(juce::Component* componentToDrag,
+                   std::shared_ptr<AudiumEngine> audiumEngine,
                    std::shared_ptr<ZoomHandler> zoomHandler,
                    juce::Colour colour,
                    std::shared_ptr<RegionSelector> regionSelector) :
         componentToDrag(componentToDrag),
+        audiumEngine(audiumEngine),
         zoomHandler(zoomHandler),
         colour(colour),
         regionSelector(regionSelector)
@@ -100,27 +105,29 @@ public:
     {
         auto distance = e.getOffsetFromDragStart();
         distance.setY(0); // drag vertically only
-        
-        auto bounds = originalBounds;
-        
-        switch (currentDragMode) {
-            case leftEdge:
-                bounds.setLeft(juce::jmin(originalBounds.getRight() - minimumWidth, originalBounds.getX() + distance.getX()));
-                break;
-            case rightEdge:
-                bounds.setRight(juce::jmax(originalBounds.getX() + minimumWidth, originalBounds.getRight() + distance.getX()));
-                break;
-            case middleEdge:
-                bounds += distance;
-                break;
-            default:
-                jassertfalse;
-                break;
+        if (std::abs(distance.getX()) > 0)
+        {
+            auto bounds = originalBounds;
+            
+            switch (currentDragMode) {
+                case leftEdge:
+                    bounds.setLeft(juce::jmin(originalBounds.getRight() - minimumWidth, originalBounds.getX() + distance.getX()));
+                    break;
+                case rightEdge:
+                    bounds.setRight(juce::jmax(originalBounds.getX() + minimumWidth, originalBounds.getRight() + distance.getX()));
+                    break;
+                case middleEdge:
+                    bounds += distance;
+                    break;
+                default:
+                    jassertfalse;
+                    break;
+            }
+            
+            componentToDrag->setBounds (bounds);
+            
+            commitBoundsToEngine();
         }
-        
-        componentToDrag->setBounds (bounds);
-        
-        commitBoundsToEngine();
     }
 
     void mouseUp (const juce::MouseEvent& e) override
@@ -128,8 +135,12 @@ public:
         if (regionSelector != nullptr)
             regionSelector->setEnabled(true);
         
-        validateData();
-        sendChangeMessage();
+        if (e.getOffsetFromDragStart().getX() > 0)
+        {
+            commitBoundsToEngine();
+            validateData();
+            sendChangeMessage();
+        }
     }
 
     void mouseMove (const juce::MouseEvent& e) override
@@ -198,6 +209,7 @@ protected:
     
     juce::Component* componentToDrag;
     
+    std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
@@ -209,5 +221,7 @@ protected:
 
     juce::Rectangle<int> originalBounds;
 
+    audium::UndoableContainerAction *undoableContainerAction = nullptr;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DraggerControl)
 };

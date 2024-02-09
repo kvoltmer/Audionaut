@@ -52,7 +52,7 @@
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "PYTHONPATH"
-            value = "/usr/local/lib/python3.11/site-packages:/Users/klausvoltmer/dev/smp_base:/Users/klausvoltmer/dev/smp_audio/usr/local/lib/python3.11/site-packages:/Users/klausvoltmer/dev/smp_base:/Users/klausvoltmer/dev/smp_audio/usr/local/lib/python3.11/site-packages:/Users/klausvoltmer/dev/smp_base:/Users/klausvoltmer/dev/smp_audio"
+            value = "/usr/local/lib/python3.11/site-packages:/Users/klausvoltmer/dev/smp_base:/Users/klausvoltmer/dev/smp_audio:/Users/klausvoltmer/dev/gaborgandalf"
             isEnabled = "YES">
          </EnvironmentVariable>
          <EnvironmentVariable

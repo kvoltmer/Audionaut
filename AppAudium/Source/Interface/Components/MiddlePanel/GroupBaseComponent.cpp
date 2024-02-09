@@ -21,7 +21,8 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioGroup.h"
-
+#include "Engine/Group/AudioClip.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 using namespace audium;
 
@@ -35,26 +36,6 @@ GroupBaseComponent::GroupBaseComponent (std::shared_ptr<AudioGroup> group,
     zoomHandler(zoomHandler),
     regionSelector(regionSelector)
 {
-    setNewGroupColour();
-}
-
-void GroupBaseComponent::setNewGroupColour()
-{
-    if (audioGroup->getColour() == juce::Colours::pink)
-    {
-        auto newColour = audium::getNewWaveFormColour();
-        
-        auto numGroups = audiumEngine->getAudioGroupContainer()->getNumItems();
-        for (auto i = 0; i < numGroups; i++)
-        {
-            if(newColour == audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getColour())
-            {
-                newColour = audium::getNewWaveFormColour();
-            }
-        }
-        
-        audioGroup->setColour(newColour);
-    }
 }
 
 void GroupBaseComponent::paint (juce::Graphics& g)
@@ -76,6 +57,9 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
 {
     if ( !filenames.isEmpty())
     {
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup);
+                
         auto transportPosition = zoomHandler->xToSeconds(x);
         auto channelPosition = 0;
         
@@ -88,7 +72,7 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             {
                 if (resource->containsAbsolutePosition(transportPosition, audium::seconds))
                 {
-                    transportPosition = resource->getTransportPosition(audium::seconds);
+                    transportPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
                     // position is below
                     channelPosition = audioGroup->getNumChannels();
                     subGroup = resource->getAudioSubGroup();
@@ -97,20 +81,21 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
             }
             if (subGroup == nullptr)
             {
-                subGroup = audioGroup->createNewAudioSubGroup();
+                subGroup = audioGroup->createNewAudioSubGroup(transportPosition);
             }
             
             auto url = URL (File (filenames[i]));
             auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url,
-                                                                                             *audiumEngine,
                                                                                              audioGroup,
                                                                                              subGroup,
-                                                                                             channelPosition,
-                                                                                             transportPosition);
+                                                                                             channelPosition);
         }
         
-        // will update content
-        refreshComponent(audioGroup, true);
+        // Undo: store new state
+        action->storeNewState();
+        audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
+        audiumEngine->getUndoManager()->beginNewTransaction();
+        
     }
     
     externalDragAndDrop = false;

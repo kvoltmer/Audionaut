@@ -82,7 +82,6 @@ public:
         if (group != nullptr)
             return group->getTotalHeight() + DraggerControl::draggerHeight;
         
-        jassertfalse;
         return 0;
     }
     
