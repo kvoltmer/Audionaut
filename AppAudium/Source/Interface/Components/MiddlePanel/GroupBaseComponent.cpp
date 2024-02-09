@@ -36,26 +36,6 @@ GroupBaseComponent::GroupBaseComponent (std::shared_ptr<AudioGroup> group,
     zoomHandler(zoomHandler),
     regionSelector(regionSelector)
 {
-    setNewGroupColour();
-}
-
-void GroupBaseComponent::setNewGroupColour()
-{
-    if (audioGroup->getColour() == juce::Colours::pink)
-    {
-        auto newColour = audium::getNewWaveFormColour();
-        
-        auto numGroups = audiumEngine->getAudioGroupContainer()->getNumItems();
-        for (auto i = 0; i < numGroups; i++)
-        {
-            if(newColour == audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getColour())
-            {
-                newColour = audium::getNewWaveFormColour();
-            }
-        }
-        
-        audioGroup->setColour(newColour);
-    }
 }
 
 void GroupBaseComponent::paint (juce::Graphics& g)

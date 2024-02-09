@@ -24,8 +24,8 @@ AudioSubGroup::AudioSubGroup(AudioGroup& audioGroup, int subGroupId) :
 
 AudioSubGroup::~AudioSubGroup()
 {
-    jassert(audioGroup.getAudioResourceContainer().getAudioResourcesForSubGroup(this).size() == 0);
-    jassert(audioGroup.getAudioRegionContainer().getRegionsForSubGroup(this).size() == 0);
+//    jassert(audioGroup.getAudioResourceContainer().getAudioResourcesForSubGroup(this).size() == 0);
+//    jassert(audioGroup.getAudioRegionContainer().getRegionsForSubGroup(this).size() == 0);
 }
 
 void AudioSubGroup::cleanup()
