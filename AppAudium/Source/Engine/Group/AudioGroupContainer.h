@@ -70,6 +70,8 @@ public:
     
     AudioRegionContainer *getAudioRegionContainer() const noexcept { return audioRegionContainer; }
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
+    std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
+    
 private:
     std::shared_ptr<juce::UndoManager> undoManager;
     std::shared_ptr<TempoProvider> tempoProvider;

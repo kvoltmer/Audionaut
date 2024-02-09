@@ -9,6 +9,7 @@
 */
 
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioRegionContainer.h"
@@ -19,6 +20,7 @@
 #include "Engine/Factory/AudioGroupFactory.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/AudiumTransportSource.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 AudioGroup::~AudioGroup()
 {
@@ -36,6 +38,8 @@ void AudioGroup::cleanup()
     audioChannels.clear();
     playListContainer->cleanup();
     transportSourceContainer->cleanup();
+    
+    nextSubGroupId = 0;
 }
 
 
@@ -121,7 +125,14 @@ bool AudioGroup::readFromStream (juce::InputStream& inputStream)
     // PlayList
     getPlayListContainer()->readFromStream(inputStream);
     
+    getAudioGroupContainer().sendActionMessage(updateAll);
+
     return true;
+}
+
+int AudioGroup::getSizeInUnits()
+{
+    return (int)audioSubGroups.size() * 16;
 }
 
 int AudioGroup::getNumChannels() const
@@ -150,7 +161,7 @@ int AudioGroup::getChannelNumberFor(AudioChannel* audioChannel)
         number++;
     }
     
-    jassertfalse;
+    //jassertfalse;
     return 0;
 }
 
@@ -297,6 +308,13 @@ std::vector<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(
 
 void AudioGroup::deleteSelectedSubGroups()
 {
+    // we need a shared_ptr for this
+    auto group = getAudioGroupContainer().getAudioGroupById(getId());
+    jassert(group);
+    
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(group);
+
     for (int i = static_cast<int>(audioSubGroups.size())-1; i >= 0; i--)
     {
         if (audioSubGroups[i]->isSelected())
@@ -304,14 +322,20 @@ void AudioGroup::deleteSelectedSubGroups()
             deleteSubGroup(i);
         }
     }
-    getAudioResourceContainer().sendActionMessage(rebuildAll);
+    
+    // Undo: store new state and perform
+    action->storeNewState();
+    getAudioGroupContainer().getUndoManager()->perform(action.release(), "Delete Selected Group(s)");
+    getAudioGroupContainer().getUndoManager()->beginNewTransaction();
+    
+    //getAudioResourceContainer().sendActionMessage(rebuildAll);
 }
 
 void AudioGroup::deleteSubGroup(int atIndex)
 {
     if (atIndex >= 0 && atIndex < audioSubGroups.size())
     {
-        audioRegionContainer.deleteAudioRegionsForSubGroup(audioSubGroups[atIndex]);
+        audioSubGroups[atIndex]->cleanup();
         audioSubGroups.erase(audioSubGroups.begin() + atIndex);
     }
 }

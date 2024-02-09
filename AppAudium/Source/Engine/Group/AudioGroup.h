@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/Streamable.h"
 
 class AudioResourceContainer;
 class AudioResource;
@@ -23,7 +24,7 @@ class AudioChannel;
 class PositionableBase;
 class AudioGroupContainer;
 
-class AudioGroup
+class AudioGroup : public audium::Streamable
 {
     
 public:
@@ -68,8 +69,9 @@ public:
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
     
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream) override;
+    int getSizeInUnits() override;
     
     int getNumChannels() const;
     void ensureNumChannels(int channelsNeeded);

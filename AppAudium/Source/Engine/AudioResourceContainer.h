@@ -62,7 +62,7 @@ public:
     void cleanup();
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAndSubGroup(const AudioGroup *group, const AudioSubGroup *subGroup) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForSubGroup(const AudioSubGroup *subGroup) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const;
 
     std::shared_ptr<AudioGroup> getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const;

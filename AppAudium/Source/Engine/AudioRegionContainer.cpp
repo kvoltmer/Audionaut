@@ -41,7 +41,6 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
 {
     // Undo: store old state
     auto action = std::make_unique<audium::UndoableContainerAction>(audioGroupContainer);
-    action->storeOldState();
     
     for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
     {
@@ -144,7 +143,6 @@ void AudioRegionContainer::deleteSelectedRegions()
 {
     // Undo: store old state
     auto action = std::make_unique<audium::UndoableContainerAction>(audioGroupContainer);
-    action->storeOldState();
         
     auto selected = getSelectedRows();
     for (int i = selected.size()-1; i >= 0; i--)

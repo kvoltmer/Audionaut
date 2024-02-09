@@ -126,6 +126,5 @@ void AudioRegion::setRegionLength(double newLength, audium::TimeContextType cont
 
 std::vector<std::shared_ptr<AudioResource>> AudioRegion::getAudioResources() const
 {
-    return audioGroup->getAudioResourceContainer().getAudioResourcesForGroupAndSubGroup(audioGroup.get(),
-                                                                                        audioSubGroup.get());
+    return audioGroup->getAudioResourceContainer().getAudioResourcesForSubGroup(audioSubGroup.get());
 }
