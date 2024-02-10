@@ -31,15 +31,15 @@
  This call contains the AudioGroupListBox!
 
  */
-class ArrangementEditBaseComponent  : public juce::Component//, public juce::KeyListener
+class ArrangementEditBaseComponent  : public juce::Component
 {
 public:
-    ArrangementEditBaseComponent(std::shared_ptr<AudiumEngine> audiumEngine, bool arrangementMode) :
-        audiumEngine(audiumEngine)
+    ArrangementEditBaseComponent(std::shared_ptr<AudiumEngine> audiumEngine,
+                                 std::shared_ptr<ZoomHandler> zoomHandler,
+                                 bool arrangementMode) :
+        audiumEngine(audiumEngine),
+        zoomHandler(zoomHandler)
     {
-        
-        zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
-
         arrangementOverview.reset(new ArrangementOverview(audiumEngine, arrangementMode));
         addAndMakeVisible(arrangementOverview.get());
         
