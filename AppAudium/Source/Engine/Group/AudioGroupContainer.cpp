@@ -179,16 +179,26 @@ int AudioGroupContainer::getSizeInUnits()
 
 std::shared_ptr<AudioGroup> AudioGroupContainer::getDefaultGroup() const
 {
+    // returns the first selected group
+    for (auto group : audioGroups)
+    {
+        if (group->isSelected())
+            return group;
+    }
+    
+    // in case nothing is selected the first group is returned
     if (audioGroups.size() > 0)
     {
         return audioGroups[0];
     }
+    
+    jassertfalse;
     return nullptr;
 }
 
 void AudioGroupContainer::deselectAll()
 {
-    for (auto & group : audioGroups)
+    for (auto group : audioGroups)
     {
         group->deselectAllChannels();
         group->setSelected(false);

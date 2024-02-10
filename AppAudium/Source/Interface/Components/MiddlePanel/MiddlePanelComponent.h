@@ -12,10 +12,13 @@
 
 #include <JuceHeader.h>
 
+#include "Engine/AudiumEngine.h"
+
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"
 #include "Interface/Components/MiddlePanel/EditView/EditComponent.h"
 #include "Interface/AudiumLookAndFeel.h"
+#include "Interface/Handlers/ZoomHandler.h"
 
 class AudiumEngine;
 
@@ -25,6 +28,8 @@ public:
     MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
+        zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
+
         createComponents();
     }
     
@@ -34,17 +39,21 @@ public:
     
     void createComponents()
     {
+        const auto visibleRange = zoomHandler->getVisibleRange();
+        
         removeAllChildren();
         
         channelsComponent.reset(new ChannelsComponent(audiumEngine));
         addAndMakeVisible(channelsComponent.get());
         
-        arrangementComponent.reset(new ArrangementComponent(audiumEngine));
+        arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler));
         addAndMakeVisible(arrangementComponent.get());
         
-        editComponent.reset(new EditComponent(audiumEngine));
+        editComponent.reset(new EditComponent(audiumEngine, zoomHandler));
         addAndMakeVisible(editComponent.get());
         editComponent->setVisible(false);
+        
+        zoomHandler->setVisibleRange(visibleRange, sendNotificationSync);
     }
     
     enum UIContext {
@@ -167,6 +176,7 @@ public:
     
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<ZoomHandler> zoomHandler;
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;

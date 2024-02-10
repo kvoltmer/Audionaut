@@ -18,10 +18,9 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/AudioRegionContainer.h"
-
+#include "Engine/AudiumTransportSource.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
-
 
 AudiumEngine::~AudiumEngine()
 {
@@ -125,9 +124,10 @@ void AudiumEngine::setBypass(bool bypass)
 {
     linkAudioDevice->setBypass(bypass);
 }
-#include "Engine/AudiumTransportSource.h"
 
-void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback, double preferedSampleRate)
+void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback,
+                                double preferedSampleRate,
+                                bool defaultGroupOnly)
 {
     std::cout << "bounce -> " << f.getFullPathName().toStdString() << std::endl;
     
