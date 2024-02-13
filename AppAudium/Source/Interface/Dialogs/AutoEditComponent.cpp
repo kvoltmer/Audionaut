@@ -7,7 +7,7 @@
   the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
   and re-saved.
 
-  Created with Projucer version: 7.0.5
+  Created with Projucer version: 7.0.8
 
   ------------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ AutoEditComponent::AutoEditComponent ()
     //[/Constructor_pre]
 
     juce__label.reset (new juce::Label ("new label",
-                                        TRANS("Assemble Duration")));
+                                        TRANS ("Assemble Duration")));
     addAndMakeVisible (juce__label.get());
     juce__label->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     juce__label->setJustificationType (juce::Justification::centredLeft);
@@ -44,7 +44,7 @@ AutoEditComponent::AutoEditComponent ()
     juce__label->setBounds (0, 39, 150, 24);
 
     juce__label2.reset (new juce::Label ("new label",
-                                         TRANS("Number of Segments")));
+                                         TRANS ("Number of Segments")));
     addAndMakeVisible (juce__label2.get());
     juce__label2->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     juce__label2->setJustificationType (juce::Justification::centredLeft);
@@ -55,7 +55,7 @@ AutoEditComponent::AutoEditComponent ()
     juce__label2->setBounds (0, 73, 150, 24);
 
     juce__label3.reset (new juce::Label ("new label",
-                                         TRANS("Min. Segment Length")));
+                                         TRANS ("Min. Segment Length")));
     addAndMakeVisible (juce__label3.get());
     juce__label3->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     juce__label3->setJustificationType (juce::Justification::centredLeft);
@@ -66,7 +66,7 @@ AutoEditComponent::AutoEditComponent ()
     juce__label3->setBounds (0, 107, 150, 24);
 
     juce__label4.reset (new juce::Label ("new label",
-                                         TRANS("Max. Segment Length")));
+                                         TRANS ("Max. Segment Length")));
     addAndMakeVisible (juce__label4.get());
     juce__label4->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     juce__label4->setJustificationType (juce::Justification::centredLeft);
@@ -84,7 +84,7 @@ AutoEditComponent::AutoEditComponent ()
     duration->setScrollbarsShown (true);
     duration->setCaretVisible (true);
     duration->setPopupMenuEnabled (true);
-    duration->setText (TRANS("60.0"));
+    duration->setText (TRANS ("60.0"));
 
     duration->setBounds (149, 39, 150, 24);
 
@@ -96,7 +96,7 @@ AutoEditComponent::AutoEditComponent ()
     numSegments->setScrollbarsShown (true);
     numSegments->setCaretVisible (true);
     numSegments->setPopupMenuEnabled (true);
-    numSegments->setText (TRANS("20"));
+    numSegments->setText (TRANS ("20"));
 
     numSegments->setBounds (149, 73, 150, 24);
 
@@ -104,11 +104,11 @@ AutoEditComponent::AutoEditComponent ()
     addAndMakeVisible (segmentMin.get());
     segmentMin->setMultiLine (false);
     segmentMin->setReturnKeyStartsNewLine (false);
-    segmentMin->setReadOnly (false);
+    segmentMin->setReadOnly (true);
     segmentMin->setScrollbarsShown (true);
-    segmentMin->setCaretVisible (true);
+    segmentMin->setCaretVisible (false);
     segmentMin->setPopupMenuEnabled (true);
-    segmentMin->setText (TRANS("60.0"));
+    segmentMin->setText (TRANS ("2.0"));
 
     segmentMin->setBounds (149, 107, 150, 24);
 
@@ -116,11 +116,11 @@ AutoEditComponent::AutoEditComponent ()
     addAndMakeVisible (segmentMax.get());
     segmentMax->setMultiLine (false);
     segmentMax->setReturnKeyStartsNewLine (false);
-    segmentMax->setReadOnly (false);
+    segmentMax->setReadOnly (true);
     segmentMax->setScrollbarsShown (true);
-    segmentMax->setCaretVisible (true);
+    segmentMax->setCaretVisible (false);
     segmentMax->setPopupMenuEnabled (true);
-    segmentMax->setText (TRANS("2.0"));
+    segmentMax->setText (TRANS ("60.0"));
 
     segmentMax->setBounds (149, 141, 150, 24);
 
@@ -128,17 +128,17 @@ AutoEditComponent::AutoEditComponent ()
     addAndMakeVisible (mode.get());
     mode->setEditableText (false);
     mode->setJustificationType (juce::Justification::centredLeft);
-    mode->setTextWhenNothingSelected (TRANS("Random"));
-    mode->setTextWhenNoChoicesAvailable (TRANS("(no choices)"));
-    mode->addItem (TRANS("Random"), 1);
-    mode->addItem (TRANS("Sequential"), 2);
+    mode->setTextWhenNothingSelected (TRANS ("Random"));
+    mode->setTextWhenNoChoicesAvailable (TRANS ("(no choices)"));
+    mode->addItem (TRANS ("Random"), 1);
+    mode->addItem (TRANS ("Sequential"), 2);
     mode->addSeparator();
     mode->addListener (this);
 
     mode->setBounds (150, 5, 150, 24);
 
     juce__label5.reset (new juce::Label ("new label",
-                                         TRANS("Assemble Mode")));
+                                         TRANS ("Assemble Mode")));
     addAndMakeVisible (juce__label5.get());
     juce__label5->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
     juce__label5->setJustificationType (juce::Justification::centredLeft);
@@ -265,13 +265,13 @@ BEGIN_JUCER_METADATA
               multiline="0" retKeyStartsLine="0" readonly="0" scrollbars="1"
               caret="1" popupmenu="1"/>
   <TEXTEDITOR name="new text editor" id="da24932cb30eca0a" memberName="segmentMin"
-              virtualName="" explicitFocusOrder="0" pos="149 107 150 24" initialText="60.0"
-              multiline="0" retKeyStartsLine="0" readonly="0" scrollbars="1"
-              caret="1" popupmenu="1"/>
+              virtualName="" explicitFocusOrder="0" pos="149 107 150 24" initialText="2.0"
+              multiline="0" retKeyStartsLine="0" readonly="1" scrollbars="1"
+              caret="0" popupmenu="1"/>
   <TEXTEDITOR name="new text editor" id="875d6e05d72f63e1" memberName="segmentMax"
-              virtualName="" explicitFocusOrder="0" pos="149 141 150 24" initialText="2.0"
-              multiline="0" retKeyStartsLine="0" readonly="0" scrollbars="1"
-              caret="1" popupmenu="1"/>
+              virtualName="" explicitFocusOrder="0" pos="149 141 150 24" initialText="60.0"
+              multiline="0" retKeyStartsLine="0" readonly="1" scrollbars="1"
+              caret="0" popupmenu="1"/>
   <COMBOBOX name="new combo box" id="fd2cbbc090aecc0" memberName="mode" virtualName=""
             explicitFocusOrder="0" pos="150 5 150 24" editable="0" layout="33"
             items="Random&#10;Sequential&#10;" textWhenNonSelected="Random"

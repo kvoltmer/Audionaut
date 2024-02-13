@@ -14,14 +14,15 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudioResource.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Provider/TempoProvider.h"
 
 class TransportSourceContainer;
 class AudioGroupContainer;
 class AudiumEngine;
 
-class AudioResourceContainer : public juce::ActionBroadcaster
+class AudioResourceContainer :  public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
@@ -42,13 +43,12 @@ public:
     ~AudioResourceContainer();
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
-                                                     const AudiumEngine &engine,
                                                      std::shared_ptr<AudioGroup> group,
-                                                     int channelPosition = 0,
-                                                     double transportPosition = 0.0,
+                                                     std::shared_ptr<AudioSubGroup> subGroup,
+                                                     int channelPosition = -1,
                                                      int resourceId = -1);
     
-    void removeAudioResource(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<AudioResource> resource);
+    void removeAudioResource(std::shared_ptr<AudioResource> resource);
     void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
     
     // still used by auto edit
@@ -59,23 +59,17 @@ public:
     int getNumAudioGroups() const;
     std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
     
-
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream, const AudiumEngine& engine);
-    
     void cleanup();
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtChannelPosition(AudioGroup *group, int channelPosition) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForSubGroup(const AudioSubGroup *subGroup) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const;
 
     std::shared_ptr<AudioGroup> getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const;
     
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
         
-    int getNumChannels() const;
-    std::shared_ptr<AudioResource> getChannel(int index) const;
-    void setChannelHeight(int height);
+    void onDeleteChannel(std::shared_ptr<AudioChannel> channel);
     
     void prepareToPlay (double sampleRate, int blockSize);
     

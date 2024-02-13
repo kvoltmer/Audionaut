@@ -13,13 +13,10 @@
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegionContainer.h"
-
-#include "Interface/Controls/RegionEditControl.h"
-#include "Interface/Controls/DraggerControl.h"
+#include "Engine/Group/AudioClip.h"
 
 void AudioResourceView::paint (juce::Graphics& g)
 {
-    // std::cout << "AudioResourceView::paint" << std::endl;
     
     paintBackground(g);
     
@@ -29,29 +26,24 @@ void AudioResourceView::paint (juce::Graphics& g)
     {
         // the waveform colour
         g.setColour (colour);
-
-        const auto thumbArea = getLocalBounds();
-        const auto start = audioResource->getRegionDataInSeconds().getStart();
-        const auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
-        audioThumbnail->drawChannels (g, thumbArea, start, end, verticalZoomFactor);
+                
+        const auto start        = audioResource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
+        const auto thumbArea    = getClippedDrawingArea();
+        const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
+        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
+        
+        const auto channel = rowNumber - audioResource->getChannelPosition();
+        if (channel >= 0 && channel < audioResource->getNumChannels())
+        {
+            audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, channel, verticalZoomFactor);
+        }
+        else
+        {
+            jassertfalse;
+        }
     }
-}
-
-void AudioResourceView::updateFromEngine()
-{
-    double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
-    double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
-    
-    // don't change Y position
-    double posY = getBounds().getY();
-    juce::Rectangle<double> rect_tmp(posX, posY, length, audioResource->getHeight());
-    
-    setBounds(rect_tmp.toNearestInt());
-    
-    regionEditComponent->updateFromEngine();
 }
 
 void AudioResourceView::resized()
 {
-    regionEditComponent->setBounds(getLocalBounds());
 }

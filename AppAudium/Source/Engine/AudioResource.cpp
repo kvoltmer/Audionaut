@@ -13,9 +13,12 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/AudiumTransportSource.h"
+#include "Engine/Channel/AudioChannel.h"
+#include "Engine/Group/AudioClip.h"
 
 AudioResource::~AudioResource()
 {
+    audioChannels.clear();
     transportSource->setSource(nullptr);
 }
 
@@ -36,143 +39,52 @@ const juce::String AudioResource::getUrlAsString() const
 
 double AudioResource::getSampleRate() const
 {
-    return audioFormatReaderSource->getAudioFormatReader()->sampleRate;
+    return getAudioFormatReader()->sampleRate;
 }
 
 unsigned int AudioResource::getNumChannels() const
 {
-    
-    return audioFormatReaderSource->getAudioFormatReader()->numChannels;
+    return getAudioFormatReader()->numChannels;
 }
 
-double AudioResource::getLengthInSeconds() const
+double AudioResource::getFileLength(audium::TimeContextType context) const
 {
-    return getAudioTransportSource()->getLengthInSeconds();
+    if (context == audium::seconds)
+    {
+        return getAudioTransportSource()->getLengthInSeconds();
+    }
+    else if (context == audium::clocks)
+    {
+        return owner.getTempoProvider()->secondsToClocks(getAudioTransportSource()->getLengthInSeconds());
+    }
+    return 0.0;
 }
 
-double AudioResource::getAbsolueStartTime() const
-{    
-    return getTransportPositionSeconds();
-}
-
-double AudioResource::getDurationTimeInSeconds() const
-{
-    if (!regionData.isEmpty())
-        return regionData.getLength();
-    
-    return getLengthInSeconds();
-}
-
-const juce::Range<double> AudioResource::getRegionDataInSeconds() const
-{
-    return regionData;
-}
-
-bool approximatelyEqual(double a, double b, double epsilon)
-{
-    return std::abs(a - b) <= ( (std::abs(a) < std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
-}
-
-std::vector<std::shared_ptr<AudioResource>> AudioResource::getEqualAudioResources() const
+std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWithinSubGroup() const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
-    auto resources = owner.getAudioResourcesForGroup(audioGroup.get());
+    auto resources = owner.getAudioResourcesForSubGroup(audioSubGroup.get());
  
     for (auto resource : resources)
     {
         if (resource.get() == this)
             continue;
-        
-        if (approximatelyEqual(resource->getTransportPositionClocks(), getTransportPositionClocks(), 0.00001))
-        {
-            result.push_back(resource);
-        }
+    
+        result.push_back(resource);
     }
     return result;
 }
 
-void AudioResource::setRegionDataInSeconds(const juce::Range<double> newRegionData, bool syncEqualResources)
+bool AudioResource::containsAbsolutePosition(double position, audium::TimeContextType context) const
 {
-    jassert(newRegionData.getStart() <= newRegionData.getEnd());
-    
-    if (syncEqualResources)
-    {
-        for (auto resource : getEqualAudioResources())
-            resource->setRegionDataInSeconds(newRegionData, false);
-    }
-    
-    regionData = newRegionData;
-
-    if (regionData.getStart() < 0.0)
-    {
-        regionData.setStart(0.0);
-    }
-}
-
-void AudioResource::setTransportPosition(const double newPositionSeconds, bool syncEqualResources)
-{
-    if (syncEqualResources)
-    {
-        for (auto resource : getEqualAudioResources())
-            resource->setTransportPosition(newPositionSeconds, false);
-    }
-    
-    transportPositionClocks = owner.getTempoProvider()->secondsToClocks(newPositionSeconds);
-}
-
-
-
-bool AudioResource::validateData(bool syncEqualResources)
-{
-    bool result = false;
-    
-    if (syncEqualResources)
-    {
-        for (auto resource : getEqualAudioResources())
-            result |= resource->validateData(false);
-    }
-    
-    if (transportPositionClocks < 0.0)
-    {
-        transportPositionClocks = 0.0;
-        result |= true;
-    }
-    
-    if (regionData.getLength() + regionData.getStart() > getLengthInSeconds())
-    {
-        regionData.setLength(getLengthInSeconds() - regionData.getStart());
-        result |= true;
-    }
-    
-    if (regionData.getLength() <= 0.0)
-    {
-        regionData.setLength(0.1);
-        result |= true;
-    }
-    
-    
-    /// TODO: check on the regions
-    //auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
-    //    for (auto region : regions)
-    
-    
-    return result;
-}
-
-double AudioResource::getTransportPositionSeconds() const
-{
-    return owner.getTempoProvider()->clocksToSeconds(transportPositionClocks);
-}
-
-bool AudioResource::containsAbsolutePosition(double positionInSeconds) const
-{
-    auto startTime = getAbsolueStartTime();
-    auto endTime = startTime + getDurationTimeInSeconds();
+    auto startTime = getAudioSubGroup()->getAudioClip()->getAbsolutePosition(context);
+    auto endTime = startTime + getAudioSubGroup()->getAudioClip()->getRegionData(context).getLength();
     juce::Range<double> absoluteRange(startTime, endTime);
-    if (absoluteRange.contains(positionInSeconds))
+    if (absoluteRange.contains(position))
     {
         return true;
     }
+
     return false;
 }
 
@@ -180,26 +92,17 @@ bool AudioResource::writeToStream (juce::OutputStream& outputStream)
 {
     outputStream.writeString(getUrlAsString());
     outputStream.writeFloat(getAudioTransportSource()->getGain());
-    outputStream.writeDouble(regionData.getStart());
-    outputStream.writeDouble(regionData.getEnd());
-    outputStream.writeDouble(transportPositionClocks);
-    outputStream.writeInt(channelPosition);
-    outputStream.writeInt(height);
+    outputStream.writeInt(getChannelPosition());
 
     return true;
 }
 
 bool AudioResource::readFromStream (juce::InputStream& inputStream)
 {
-    const auto inUrl =          inputStream.readString();
-    const auto gain =           inputStream.readFloat();
-    const auto start =          inputStream.readDouble();
-    const auto end =            inputStream.readDouble();
-    transportPositionClocks =   inputStream.readDouble();
-    channelPosition =           inputStream.readInt();
-    height =                    inputStream.readInt();
-    
-    regionData = juce::Range<double>(start, end);
+    const auto inUrl        = inputStream.readString();
+    const auto gain         = inputStream.readFloat();
+    const auto channelPos   = inputStream.readInt();
+    setChannelPosition(channelPos);
     jassert(this->url == inUrl);
     getAudioTransportSource()->setGain(gain);
     
@@ -212,4 +115,60 @@ void AudioResource::setSelected(bool bSelected, bool deselectOthers)
         owner.deselectAllResources();
 
     selected = bSelected;
+}
+
+
+bool AudioResource::containsChannelNumber(int channelNumber) const
+{
+    juce::Range<int> channelRange(getChannelPosition(),
+                                  getChannelPosition() + getNumChannels());
+    
+    if (channelRange.contains(channelNumber))
+    {
+        return true;
+    }
+    return false;
+}
+
+int AudioResource::getChannelPosition() const
+{
+    if (audioChannels.size() > 0)
+    {
+        return audioChannels[0]->getChannelNumber();
+    }
+    
+    return 0;
+}
+
+void AudioResource::setChannelPosition(int startChannel)
+{
+    std::cout << "AudioResource::setChannelPosition " << startChannel << std::endl;
+    
+    //auto numChannels = getNumChannels();
+    audioChannels.clear();
+    //audioGroup->ensureNumChannels(startChannel + numChannels);
+    
+    for (auto i = startChannel; i < audioGroup->getNumChannels(); i++)
+    {
+        auto channel = audioGroup->getChannel(i);
+        if (channel != nullptr)
+        {
+            audioChannels.push_back(channel);
+        }
+        else
+        {
+            jassertfalse;
+        }
+    }
+}
+
+bool AudioResource::deleteChannel(std::shared_ptr<AudioChannel> channel)
+{
+    auto it = std::find(audioChannels.begin(), audioChannels.end(), channel);
+    if (it != audioChannels.end())
+    {
+        audioChannels.erase(it);
+    }
+    
+    return audioChannels.size() == 0;
 }

@@ -12,13 +12,16 @@
 
 #include <JuceHeader.h>
 
-#include "Interface/Models/AudioGroupListBoxModel.h"
+#include "Interface/Models/GroupListBoxModel.h"
 #include "Interface/Controls/AudioGroupListBox.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/PlayPositionMarker.h"
 #include "Interface/Controls/TransportPositionControl.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Interface/Controls/DragZoomControl.h"
+#include "Engine/Group/AudioGroupContainer.h"
+#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/Views/ArrangementOverview.h"
 
 //==============================================================================
 /*
@@ -28,17 +31,21 @@
  This call contains the AudioGroupListBox!
 
  */
-class ArrangementEditBaseComponent  : public juce::Component//, public juce::KeyListener
+class ArrangementEditBaseComponent  : public juce::Component
 {
 public:
-    ArrangementEditBaseComponent(std::shared_ptr<AudiumEngine> audiumEngine, bool arrangementMode) :
-        audiumEngine(audiumEngine)
+    ArrangementEditBaseComponent(std::shared_ptr<AudiumEngine> audiumEngine,
+                                 std::shared_ptr<ZoomHandler> zoomHandler,
+                                 bool arrangementMode) :
+        audiumEngine(audiumEngine),
+        zoomHandler(zoomHandler)
     {
+        arrangementOverview.reset(new ArrangementOverview(audiumEngine, arrangementMode));
+        addAndMakeVisible(arrangementOverview.get());
         
-        zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
         audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, zoomHandler));
         regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
-        audioGroupListBoxModel.reset(new AudioGroupListBoxModel(audioGroupListBox,
+        audioGroupListBoxModel.reset(new GroupListBoxModel(audioGroupListBox,
                                                                 audiumEngine,
                                                                 zoomHandler,
                                                                 regionSelector,
@@ -46,9 +53,12 @@ public:
         audioGroupListBox->setModel(audioGroupListBoxModel.get());
         auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(audioGroupListBox, zoomHandler, audiumEngine));
         audioGroupListBox->setHeaderComponent(std::move(headerComponent));
-        audioGroupListBox->getHeaderComponent()->setSize(getWidth(), 25);
+        audioGroupListBox->getHeaderComponent()->setSize(getWidth(), AudiumLookAndFeel::transportPositionControlHeight);
         audioGroupListBox->setOutlineThickness(0);
+        audioGroupListBox->setMultipleSelectionEnabled(true);
         
+        dragZoomControl.reset(new DragZoomControl(audioGroupListBox, audiumEngine, zoomHandler, arrangementMode));
+        addAndMakeVisible(dragZoomControl.get());
         
         playPositionMarker.reset(new PlayPositionMarker(zoomHandler, audiumEngine));
         
@@ -71,8 +81,8 @@ public:
 
     virtual ~ArrangementEditBaseComponent() override
     {
-        audioGroupListBox->setHeaderComponent(nullptr);
         audioGroupListBox->setModel(nullptr);
+        audioGroupListBox->setHeaderComponent(nullptr);
         regionSelector = nullptr;
         audioGroupListBox = nullptr;
         audioGroupListBoxModel = nullptr;
@@ -80,14 +90,18 @@ public:
         playPositionMarker = nullptr;
     }
 
-    void paint (juce::Graphics&) override
+    void paint (juce::Graphics& g) override
     {
     }
 
     void resized() override
     {
-        audioGroupListBox->setBounds(getLocalBounds());
-        playPositionMarker->setBounds(getLocalBounds());
+        auto bounds = getLocalBounds();
+        auto top = bounds.removeFromTop(AudiumLookAndFeel::dragZoomControlHeight);
+        arrangementOverview->setBounds(top);
+        dragZoomControl->setBounds(top);
+        audioGroupListBox->setBounds(bounds);
+        playPositionMarker->setBounds(bounds);
     }
 
     void updateUI()
@@ -96,7 +110,8 @@ public:
         
         audioGroupListBox->updateContent();
         regionSelector->updateFromEngine();
-        
+        arrangementOverview->updateFromEngine();
+        dragZoomControl->updateFromEngine();
     }
     
     void setContentWidth(int contentWidth)
@@ -106,38 +121,74 @@ public:
 
     void zoomIn()
     {
-        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);
         zoomHandler->zoomIn();
         setContentWidth(zoomHandler->getContentWidth());
         regionSelector->updateFromEngine();
-        
-        auto regionSelectorPos = audiumEngine->getAudioRegionContainer()->getSelectedPositionInSeconds();
-        if (!regionSelectorPos.isEmpty())
-        {
-            centerInSeconds = regionSelectorPos.getStart() + (regionSelectorPos.getLength() * 0.5);
-        }
-        
-        zoomHandler->focusView(centerInSeconds);
+        dragZoomControl->updateFromEngine();
+        zoomHandler->focusViewOnPlayPosition();
     }
 
     void zoomOut()
     {
-        auto centerInSeconds = zoomHandler->getVisibleRangeInSeconds().getStart() + (zoomHandler->getVisibleRangeInSeconds().getLength() * 0.5);        zoomHandler->zoomOut();
+        zoomHandler->zoomOut();
         setContentWidth(zoomHandler->getContentWidth());
         regionSelector->updateFromEngine();
-        zoomHandler->focusView(centerInSeconds);
+        dragZoomControl->updateFromEngine();
+        zoomHandler->focusViewOnPlayPosition();
+    }
+    
+    void pageLeft()
+    {
+        zoomHandler->pageLeft();
+    }
+    
+    void pageRight()
+    {
+        zoomHandler->pageRight();
+    }
+    
+    void mouseMagnify (const MouseEvent& event, float scaleFactor) override
+    {
+        auto relativeEvent = event.getEventRelativeTo(audioGroupListBox.get());
+        auto x = relativeEvent.getPosition().getX();
+        
+        // percentage to center of visible range
+        auto center = x / zoomHandler->getVisibleRange().getLength();
+        
+        // absolute position in clocks
+        auto clocks = zoomHandler->xToClocksWithOffset(x);
+        
+        zoomHandler->setZoomFactor(zoomHandler->getZoomFactor() * static_cast<double>(scaleFactor));
+        setContentWidth(zoomHandler->getContentWidth());
+        regionSelector->updateFromEngine();
+        
+        zoomHandler->centerView(clocks, center);
     }
     
     RegionSelector* getRegionSelector() const { return regionSelector.get(); }
+    
+    double getVerticalScrollOffset() const
+    {
+        return audioGroupListBox->getViewport()->getVerticalScrollBar().getCurrentRange().getStart();
+    }
+    
+    void onScrollContext()
+    {
+        regionSelector->updateFromEngine();
+        dragZoomControl->updateFromEngine();
+    }
 
 protected:
     
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
+    
     std::shared_ptr<AudioGroupListBox>          audioGroupListBox;
-    std::shared_ptr<AudioGroupListBoxModel>     audioGroupListBoxModel;
-    std::shared_ptr<PlayPositionMarker>         playPositionMarker;
+    std::unique_ptr<GroupListBoxModel>          audioGroupListBoxModel;
+    std::unique_ptr<PlayPositionMarker>         playPositionMarker;
+    std::unique_ptr<DragZoomControl>            dragZoomControl;
+    std::unique_ptr<ArrangementOverview>        arrangementOverview;
     
 private:
     

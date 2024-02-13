@@ -5,6 +5,6 @@
       location = "group:../AppAudium/Catch2Tests/_build/AUDIUM_TESTS.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:../AppAudium/Builds/MacOSX/AppAudium.xcodeproj">
+      location = "group:../AppAudium/Builds/MacOSX/Audionatomist.xcodeproj">
    </FileRef>
 </Workspace>

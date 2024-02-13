@@ -62,7 +62,7 @@ public:
         auto playListScheduler = audiumEngine->getPlayListScheduler();
         if (playListScheduler != nullptr)
         {
-            clocks = playListScheduler->getAbsolutePositionClocks();
+            clocks = playListScheduler->getAbsolutePosition(audium::clocks);
         }
         
         currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->clocksToX(clocks) - 0.75f, 0,
@@ -100,7 +100,7 @@ public:
         // std::cout << x1 << " " << x << " " << pos << std::endl;
 
         // set transport position
-        audiumEngine->getPlayListScheduler()->setAbsolutePositionSeconds (seconds);
+        audiumEngine->getPlayListScheduler()->setAbsolutePosition(seconds, audium::seconds);
     }
     
     void mouseMove (const MouseEvent& e) override

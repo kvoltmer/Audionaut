@@ -17,8 +17,9 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
-#include "Engine/AudioGroup.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 const juce::String AutoEdit::getTempDirectory()
 {
@@ -36,13 +37,13 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
     // Path to python binary
     std::string python = "python3";
     
-    if(juce::File(config.bounceFileName).existsAsFile())
+    if (juce::File(config.bounceFileName).existsAsFile())
     {
         audioResourceFilePath = config.bounceFileName;
         // Build the command line string
         std::string commandString;
         commandString += "cd " + getTempDirectory().toStdString() + ";";
-        commandString += python + " $HOME/dev/smp_audio/scripts/automain.py --verbose autoedit";
+        commandString += python + " $HOME/dev/gaborgandalf/gaborgandalf/automain.py --verbose autoedit";
 //      commandString += " --assemble_mode " + config.mode;
         commandString += " --duration " + std::to_string(config.duration);
         commandString += " --numsegs " + std::to_string(config.numSegments);
@@ -94,102 +95,120 @@ const std::string AutoEdit::getCountFromFile() const
 }
 void AutoEdit::applyAutoEditResult(double sampleRate)
 {
-    auto countString = getCountFromFile();
-    jassert(countString.length());
-    
+    auto group = audioGroupContainer->getDefaultGroup();
+    if (group != nullptr)
+    {
+        auto action = std::make_unique<audium::UndoableContainerAction>(group);
+        
+        auto countString = getCountFromFile();
+        jassert(countString.length() > 0);
+        
+        //  read segments in json format
+        std::string segFileName = getTempDirectory().toStdString() + "/data/segs/" + getBaseName() + "-seg-data.json";
+        createRegionsFromSegFile(segFileName, sampleRate);
+        
+        
+        // song in json format
+        auto dir = juce::File(audioResourceFilePath).getParentDirectory().getFullPathName().toStdString();
+        std::string songFileName = dir + "/" + getBaseName() + "-autoedit-" + countString + ".json";
+        createPlayListFromSongFile(songFileName);
+        
+        // Undo: store new state
+        action->storeNewState();
+        audioGroupContainer->getUndoManager()->perform(action.release(), "Auto Edit");
+        audioGroupContainer->getUndoManager()->beginNewTransaction();
+    }
+}
 
-    
-    
-    //  read segments in json format
-    std::string segFileName = getTempDirectory().toStdString() + "/data/segs/" + getBaseName() + "-seg-data.json";
+
+bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRate)
+{
     std::fstream segFile;
     segFile.open(segFileName, std::ios::in);
     if (segFile.is_open())
     {
-        int counter = 1;
-        auto segdata = nlohmann::json::parse(segFile);
-        // create regions from parsed result
-        for (auto& elem : segdata)
+        if (auto group = audioGroupContainer->getDefaultGroup())
         {
-            juce::Range<double> position;
-            position.setStart(static_cast<double>(elem["start"]) / sampleRate);
-            position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
-            juce::String regionName = "seg-" + juce::String(counter++);
-            // CREATE REGION
-            for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+            audioRegionContainer->deleteAudioRegionsForGroup(group);
+            
+            int counter = 1;
+            auto segdata = nlohmann::json::parse(segFile);
+            // create regions from parsed result
+            for (auto& elem : segdata)
             {
-                if (auto group = audioGroupContainer->getAudioGroup(i))
+                juce::Range<double> position;
+                position.setStart(static_cast<double>(elem["start"]) / sampleRate);
+                position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
+                juce::String regionName = "seg-" + juce::String(counter++);
+                
+                
+                // CREATE REGIONs:
+                    
+                // use the first sub group
+                auto subGroups = group->getAudioSubGroups();
+                
+                jassert(subGroups.size() > 0);
+                if (subGroups.size() > 0)
                 {
-                    auto resources = group->getAudioResources();
-                    jassert(resources.size() > 0);
-                    if (resources.size() > 0)
-                    {
-                        auto resource = resources[0];
-                        audioRegionContainer->createRegion(regionName, position, group, resource);
-                    }
+                    audioRegionContainer->createRegion(regionName, position, group, subGroups[0]);
                 }
             }
         }
         segFile.close();
+        return true;
     }
     else
     {
         std::cout << "error seg file not found: " << segFileName << std::endl;
-        return;
+        return false;
     }
-    
-    // cleanup all playlists
-    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
-    {
-        if (auto group = audioGroupContainer->getAudioGroup(i))
-        {
-            group->getPlayListContainer()->cleanup();
-        }
-    }
-    
-    // song in json format
-    auto dir = juce::File(audioResourceFilePath).getParentDirectory().getFullPathName().toStdString();
-    std::string songFileName = dir + "/" + getBaseName() + "-autoedit-" + countString + ".json";
+}
+
+
+bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
+{
     std::fstream songFile;
     songFile.open(songFileName, std::ios::in);
     if (songFile.is_open())
     {
+        // cleanup playlist
+        if (auto group = audioGroupContainer->getDefaultGroup())
+        {
+            group->getPlayListContainer()->cleanup();
+        }
+        
         auto songData = nlohmann::json::parse(songFile);
         for (auto& elem : songData)
         {
             auto region = audioRegionContainer->getRegion(elem["index"]);
             jassert(region != nullptr);
             std::string filename = elem["file"];
-            jassert(juce::String(filename).contains(region->name));
+            jassert(juce::String(filename).contains(region->getName()));
             
-            for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+            if (auto group = audioGroupContainer->getDefaultGroup())
             {
-                if (auto group = audioGroupContainer->getAudioGroup(i))
-                {
-                    auto insertIndex = static_cast<int>(group->getPlayListContainer()->playListItems.size());
-                    // CREATE PLAYLIST ITEM
-                    group->getPlayListContainer()->createPlayListItem(elem["index"], insertIndex);
-                    
-                }
+                auto insertIndex = static_cast<int>(group->getPlayListContainer()->playListItems.size());
+                // CREATE PLAYLIST ITEM
+                group->getPlayListContainer()->createPlayListItem(elem["index"], insertIndex);
             }
+            
             
             
             // is the duration consitant?
             double duration = elem["duration"];
-            double regionDuration = region->getRegionDataInSeconds().getLength();
+            double regionDuration = region->getRegionData(audium::seconds).getLength();
             if (!juce::approximatelyEqual(duration, regionDuration))
             {
                 std::cout << "duration not equal" << duration << " " << regionDuration << std::endl;
             }
         }
+    
         songFile.close();
+        return true;
     }
     else
     {
         std::cout << "error file not found: " << songFileName << std::endl;
-        return;
+        return false;
     }
-    
-    // updateUI
-    audioGroupContainer->sendActionMessage("");
 }

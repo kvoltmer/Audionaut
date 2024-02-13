@@ -14,7 +14,7 @@
 #include "Engine/AudioResource.h"
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace juce;
@@ -31,13 +31,13 @@ void AudioRegionView::paint (juce::Graphics& g)
         // the waveform colour
         g.setColour (colour);
         
-
-        const auto thumbArea = getLocalBounds();
-        const auto start = audioRegion->getRegionDataInSeconds().getStart();
-        const auto end = start + zoomHandler->xToSeconds(thumbArea.getWidth());
-        audioThumbnail->drawChannels (g, thumbArea, start, end, verticalZoomFactor);
-
-        paintFileNameLabel(g);
+        const auto start        = audioRegion->getRegionData(audium::seconds).getStart();
+        const auto thumbArea    = getClippedDrawingArea();
+        const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
+        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
+        
+        audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, 0, verticalZoomFactor);
+        
     }
     else
     {
@@ -46,5 +46,3 @@ void AudioRegionView::paint (juce::Graphics& g)
         g.drawFittedText ("audio data not available", getLocalBounds(), Justification::centred, 2);
     }
 }
-
-

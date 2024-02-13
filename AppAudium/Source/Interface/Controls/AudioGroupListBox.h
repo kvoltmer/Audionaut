@@ -6,6 +6,7 @@
 
 class AudiumEngine;
 class ZoomHandler;
+class AudioGroup;
 
 //==============================================================================
 /*
@@ -23,6 +24,7 @@ public:
     void fileDragEnter (const juce::StringArray& files, int x, int y) override;
     void fileDragExit (const juce::StringArray& files) override;
     
+    void setNewGroupColour(std::shared_ptr<AudioGroup> group);
     
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;

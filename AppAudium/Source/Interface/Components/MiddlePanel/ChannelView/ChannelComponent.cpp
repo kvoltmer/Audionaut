@@ -19,6 +19,8 @@
 
 //[Headers] You can add your own extra header files here...
 #include "Engine/AudiumTransportSource.h"
+#include "Engine/AudioResourceContainer.h"
+#include "Engine/Channel/AudioChannel.h"
 //[/Headers]
 
 #include "ChannelComponent.h"
@@ -28,46 +30,38 @@
 //[/MiscUserDefs]
 
 //==============================================================================
-ChannelComponent::ChannelComponent (std::shared_ptr<AudioResource> resource, std::shared_ptr<AudiumEngine> engine)
+ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std::shared_ptr<AudiumEngine> engine, int rowNumber)
 {
     //[Constructor_pre] You can add your own custom stuff here..
 
-    this->resource = resource;
+    this->audioGroup = audioGroup;
     this->engine = engine;
+    
     levelMeter.reset (new LevelMeter (true, false));
     addAndMakeVisible(levelMeter.get());
 
     //[/Constructor_pre]
 
-    volumeLeveldB.reset (new juce::Label ("new label",
+    volumeLabeldB.reset (new juce::Label ("new label",
                                           TRANS ("dB")));
-    addAndMakeVisible (volumeLeveldB.get());
-    volumeLeveldB->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
-    volumeLeveldB->setJustificationType (juce::Justification::centredLeft);
-    volumeLeveldB->setEditable (false, false, false);
-    volumeLeveldB->setColour (juce::Label::backgroundColourId, juce::Colour (0x00000000));
-    volumeLeveldB->setColour (juce::Label::textColourId, juce::Colours::white);
-    volumeLeveldB->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-    volumeLeveldB->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
+    addAndMakeVisible (volumeLabeldB.get());
+    volumeLabeldB->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    volumeLabeldB->setJustificationType (juce::Justification::centredLeft);
+    volumeLabeldB->setEditable (false, false, false);
+    volumeLabeldB->setColour (juce::Label::backgroundColourId, juce::Colour (0x00000000));
+    volumeLabeldB->setColour (juce::Label::textColourId, juce::Colours::white);
+    volumeLabeldB->setColour (juce::TextEditor::textColourId, juce::Colours::black);
+    volumeLabeldB->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
 
-    juce__imageButton.reset (new juce::ImageButton ("new button"));
-    addAndMakeVisible (juce__imageButton.get());
-    juce__imageButton->addListener (this);
+    volumeScaleButton.reset (new juce::ImageButton ("volume scale"));
+    addAndMakeVisible (volumeScaleButton.get());
+    volumeScaleButton->setButtonText (TRANS ("new button"));
+    volumeScaleButton->addListener (this);
 
-    juce__imageButton->setImages (false, true, true,
-                                  juce::Image(), 1.000f, juce::Colour (0x00000000),
+    volumeScaleButton->setImages (false, true, false,
+                                  juce::ImageCache::getFromMemory (channelScale_png, channelScale_pngSize), 1.000f, juce::Colour (0x00000000),
                                   juce::Image(), 1.000f, juce::Colour (0x00000000),
                                   juce::Image(), 1.000f, juce::Colour (0x00000000));
-    juce__imageButton->setBounds (160, 80, 150, 24);
-
-    juce__imageButton2.reset (new juce::ImageButton ("new button"));
-    addAndMakeVisible (juce__imageButton2.get());
-    juce__imageButton2->addListener (this);
-
-    juce__imageButton2->setImages (false, true, false,
-                                   juce::ImageCache::getFromMemory (channelScale_png, channelScale_pngSize), 1.000f, juce::Colour (0x00000000),
-                                   juce::Image(), 1.000f, juce::Colour (0x00000000),
-                                   juce::Image(), 1.000f, juce::Colour (0x00000000));
     volumeLevel.reset (new juce::Label ("new label",
                                         TRANS ("-60")));
     addAndMakeVisible (volumeLevel.get());
@@ -89,9 +83,26 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioResource> resource, std
 
     //[Constructor] You can add your own custom stuff here..
 
+    channelSizeComboBox.reset (new juce::ComboBox ("channel size combo box"));
+    addAndMakeVisible (channelSizeComboBox.get());
+    channelSizeComboBox->setEditableText (false);
+    channelSizeComboBox->setJustificationType (juce::Justification::centred);
+    channelSizeComboBox->addItem (TRANS ("small"), 1);
+    channelSizeComboBox->addItem (TRANS ("medium"), 2);
+    channelSizeComboBox->addItem (TRANS ("large"), 3);
+    channelSizeComboBox->addItem (TRANS ("huge"), 4);
+    channelSizeComboBox->addListener (this);
+    channelSizeComboBox->setBounds (5, 5, 15, 15);
+
+
     // disable mouse clicks. we need them for the list control
-    //setInterceptsMouseClicks(false, false);
+    volumeLabeldB->setInterceptsMouseClicks(false, false);
+    volumeScaleButton->setInterceptsMouseClicks(false, false);
+
     startTimerHz(60);
+    
+    refreshComponent(audioGroup, rowNumber, false);
+    
     //[/Constructor]
 }
 
@@ -99,12 +110,11 @@ ChannelComponent::~ChannelComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
     stopTimer();
-    resource = nullptr;
+    audioGroup = nullptr;
     //[/Destructor_pre]
 
-    volumeLeveldB = nullptr;
-    juce__imageButton = nullptr;
-    juce__imageButton2 = nullptr;
+    volumeLabeldB = nullptr;
+    volumeScaleButton = nullptr;
     volumeLevel = nullptr;
 
 
@@ -121,7 +131,8 @@ void ChannelComponent::paint (juce::Graphics& g)
     g.fillAll (juce::Colour (0xff323232));
 
     //[UserPaint] Add your own custom painting code here..
-    if (selected)
+    if (audioGroup->getChannel(rowNumber) != nullptr &&
+        audioGroup->getChannel(rowNumber)->isSelected())
     {
         g.setColour (juce::Colours::white.withAlpha(0.25f));
     }
@@ -140,13 +151,13 @@ void ChannelComponent::resized()
     //[UserPreResize] Add your own custom resize code here..
     //[/UserPreResize]
 
-    volumeLeveldB->setBounds (20, proportionOfHeight (0.5000f) - (20 / 2), 30, 20);
-    juce__imageButton2->setBounds (60 - 10, 0, 10, proportionOfHeight (1.0000f));
-    volumeLevel->setBounds (0, proportionOfHeight (0.5000f) - (20 / 2), 27, 20);
+    volumeLabeldB->setBounds ((getWidth() / 2) + -10, proportionOfHeight (0.5000f) - (20 / 2), 30, 20);
+    volumeScaleButton->setBounds (getWidth() - 10, 0, 10, proportionOfHeight (1.0000f));
+    volumeLevel->setBounds ((getWidth() / 2) + -30, proportionOfHeight (0.5000f) - (20 / 2), 27, 20);
     //[UserResized] Add your own custom resize handling here..
 
     //levelMeter->setBounds(40, 3, 7, 94);
-    levelMeter->setBounds(40, 3, 7, getHeight() - 6);
+    levelMeter->setBounds(getWidth() - 20, 3, 7, getHeight() - 6);
 
     //[/UserResized]
 }
@@ -156,15 +167,10 @@ void ChannelComponent::buttonClicked (juce::Button* buttonThatWasClicked)
     //[UserbuttonClicked_Pre]
     //[/UserbuttonClicked_Pre]
 
-    if (buttonThatWasClicked == juce__imageButton.get())
+    if (buttonThatWasClicked == volumeScaleButton.get())
     {
-        //[UserButtonCode_juce__imageButton] -- add your button handler code here..
-        //[/UserButtonCode_juce__imageButton]
-    }
-    else if (buttonThatWasClicked == juce__imageButton2.get())
-    {
-        //[UserButtonCode_juce__imageButton2] -- add your button handler code here..
-        //[/UserButtonCode_juce__imageButton2]
+        //[UserButtonCode_volumeScaleButton] -- add your button handler code here..
+        //[/UserButtonCode_volumeScaleButton]
     }
 
     //[UserbuttonClicked_Post]
@@ -181,7 +187,7 @@ void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
         //[UserLabelCode_volumeLevel] -- add your label text handling code here..
         auto db = volumeLevel->getText().getFloatValue();
         auto gain = LevelMeter::decebelToGain(db);
-        resource->getAudioTransportSource()->setGain(gain);
+        audioGroup->setGain(gain, rowNumber);
         //[/UserLabelCode_volumeLevel]
     }
 
@@ -215,16 +221,16 @@ bool ChannelComponent::keyPressed (const juce::KeyPress& key)
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
-void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource, bool isRowSelected)
+void ChannelComponent::refreshComponent(std::shared_ptr<AudioGroup> audioGroup, int rowNumber, bool isRowSelected)
 {
-    selected = isRowSelected;
-    this->resource = resource;
+    this->audioGroup = audioGroup;
+    this->rowNumber = rowNumber;
 
-    auto group = engine->getAudioResourceContainer()->getAudioGroupForResource(resource);
-    volumeLevel->setColour (juce::Label::textColourId, group->getColour());
-    volumeLeveldB->setColour (juce::Label::textColourId, group->getColour());
 
-    auto gain = resource->getAudioTransportSource()->getGain();
+    volumeLevel->setColour (juce::Label::textColourId, audioGroup->getColour());
+    volumeLabeldB->setColour (juce::Label::textColourId, audioGroup->getColour());
+
+    auto gain = audioGroup->getGain(rowNumber);
     volumeLevel->setText(String(LevelMeter::gainToDecebel(gain)), dontSendNotification);
 
     if (not isTimerRunning())
@@ -235,8 +241,36 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioResource> resource,
 
 void ChannelComponent::timerCallback()
 {
-    jassert(resource->getAudioTransportSource());
-    levelMeter->setLevel(resource->getAudioTransportSource()->getOutputLevel());
+    levelMeter->setLevel(audioGroup->getOutputLevel(rowNumber));
+}
+
+void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
+{
+    if (comboBoxThatHasChanged == channelSizeComboBox.get())
+    {
+        auto height = 0;
+        switch (channelSizeComboBox->getSelectedId()) {
+            case 1:
+                height = 50;
+                break;
+            case 2:
+                height = 100;
+                break;
+            case 3:
+                height = 200;
+                break;
+            case 4:
+                height = 400;
+                break;
+            default:
+                break;
+        }
+
+        channelSizeComboBox->setText("", dontSendNotification);
+
+        audioGroup->getChannel(rowNumber)->setChannelHeight(height);
+        engine->getAudioResourceContainer()->sendActionMessage("");
+    }
 }
 
 //[/MiscUserCode]
@@ -252,7 +286,8 @@ void ChannelComponent::timerCallback()
 BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="ChannelComponent" componentName=""
-                 parentClasses="public juce::Component, private juce::Timer" constructorParams="std::shared_ptr&lt;AudioResource&gt; resource, std::shared_ptr&lt;AudiumEngine&gt; engine"
+                 parentClasses="public juce::Component, private juce::Timer, public juce::ComboBox::Listener"
+                 constructorParams="std::shared_ptr&lt;AudioGroup&gt; audioGroup, std::shared_ptr&lt;AudiumEngine&gt; engine, int rowNumber"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="1" initialWidth="60" initialHeight="100">
   <METHODS>
@@ -261,26 +296,20 @@ BEGIN_JUCER_METADATA
     <METHOD name="mouseUp (const juce::MouseEvent&amp; e)"/>
   </METHODS>
   <BACKGROUND backgroundColour="ff323232"/>
-  <LABEL name="new label" id="2134eb9441d110f8" memberName="volumeLeveldB"
-         virtualName="" explicitFocusOrder="0" pos="20 50%c 30 20" bkgCol="0"
+  <LABEL name="new label" id="2134eb9441d110f8" memberName="volumeLabeldB"
+         virtualName="" explicitFocusOrder="0" pos="-10C 50%c 30 20" bkgCol="0"
          textCol="ffffffff" edTextCol="ff000000" edBkgCol="0" labelText="dB"
          editableSingleClick="0" editableDoubleClick="0" focusDiscardsChanges="0"
          fontname="Default font" fontsize="11.0" kerning="0.0" bold="0"
          italic="0" justification="33"/>
-  <IMAGEBUTTON name="new button" id="dd5b48cd28d2c57d" memberName="juce__imageButton"
-               virtualName="" explicitFocusOrder="0" pos="160 80 150 24" buttonText="new button"
-               connectedEdges="0" needsCallback="1" radioGroupId="0" keepProportions="1"
-               resourceNormal="" opacityNormal="1.0" colourNormal="0" resourceOver=""
-               opacityOver="1.0" colourOver="0" resourceDown="" opacityDown="1.0"
-               colourDown="0"/>
-  <IMAGEBUTTON name="new button" id="5be2ef2162e0d2d0" memberName="juce__imageButton2"
-               virtualName="" explicitFocusOrder="0" pos="60r 0 10 100%" buttonText="new button"
+  <IMAGEBUTTON name="volume scale" id="5be2ef2162e0d2d0" memberName="volumeScaleButton"
+               virtualName="" explicitFocusOrder="0" pos="0Rr 0 10 100%" buttonText="new button"
                connectedEdges="0" needsCallback="1" radioGroupId="0" keepProportions="0"
                resourceNormal="channelScale_png" opacityNormal="1.0" colourNormal="0"
                resourceOver="" opacityOver="1.0" colourOver="0" resourceDown=""
                opacityDown="1.0" colourDown="0"/>
   <LABEL name="new label" id="53bdf774398f1561" memberName="volumeLevel"
-         virtualName="" explicitFocusOrder="0" pos="0 50%c 27 20" bkgCol="0"
+         virtualName="" explicitFocusOrder="0" pos="-30C 50%c 27 20" bkgCol="0"
          textCol="ffffffff" edTextCol="ff000000" edBkgCol="0" labelText="-60"
          editableSingleClick="1" editableDoubleClick="1" focusDiscardsChanges="0"
          fontname="Default font" fontsize="11.0" kerning="0.0" bold="0"

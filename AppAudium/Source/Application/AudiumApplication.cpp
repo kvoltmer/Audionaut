@@ -185,10 +185,6 @@ PopupMenu AudiumApplication::createEditMenu()
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::selectAll);
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::deselectAll);
     menu.addSeparator();
-//    menu.addCommandItem (commandManager.get(), CommandIDs::showFindPanel);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::findSelection);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::findNext);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::findPrevious);
     menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
     menu.addSeparator();
@@ -205,6 +201,8 @@ PopupMenu AudiumApplication::createViewMenu()
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomIn);
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomOut);
+    menu.addCommandItem (commandManager.get(), CommandIDs::pageLeft);
+    menu.addCommandItem (commandManager.get(), CommandIDs::pageRight);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::followTransport);
 

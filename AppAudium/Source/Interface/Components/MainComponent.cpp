@@ -23,9 +23,9 @@
 #include "Interface/Components/RightPanel/RightPanelComponent.h"
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 //[/Headers]
 
@@ -184,6 +184,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == playListItemSelection)
     {
         middlePanelComponent->updateUI();
+        rightPanelComponent->updateUI();
     }
     else if (message == audioResourceCreatedAction)
     {
@@ -199,14 +200,30 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         // TODO: update with context to rebuild everything
         updateUI();
     }
-    else if (message == audioGroupDeletedAction)
-    {
-        // TODO: update with context to rebuild everything
-        updateUI();
-    }
     else if (message == scrolledVertically)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::VerticalScrollContext);
+    }
+    else if (message == rebuildAll)
+    {
+        middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
+        rightPanelComponent->updateUI();
+    }
+    else if (message == updateAll)
+    {
+        updateUI();
+    }
+    else if (message == updateMiddlePanelAction)
+    {
+        middlePanelComponent->updateUI();
+    }
+    else if (message == updateRightPanelAction)
+    {
+        rightPanelComponent->updateUI();
+    }
+    else if (message == updateArrangementAction)
+    {
+        middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
     }
     else // update everything (eg. region deleted)
     {
@@ -214,6 +231,12 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     }
 
 
+}
+
+void MainComponent::rebuildUI()
+{
+    middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
+    rightPanelComponent->updateUI();
 }
 
 void MainComponent::updateUI()
@@ -234,6 +257,16 @@ void MainComponent::zoomIn()
 void MainComponent::zoomOut()
 {
     middlePanelComponent->zoomOut();
+}
+
+void MainComponent::pageLeft()
+{
+    middlePanelComponent->pageLeft();
+}
+
+void MainComponent::pageRight()
+{
+    middlePanelComponent->pageRight();
 }
 
 void MainComponent::toggleEditArrangementComponent()

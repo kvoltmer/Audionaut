@@ -77,16 +77,9 @@ juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber
 
 void RegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
-    audioRegionContainer->deselectAll();
-
-    auto selection = owner->getSelectedRows();
-    for (auto i = 0; i < selection.size(); i++)
-    {
-        if (auto region = audioRegionContainer->getRegion(selection[i]))
-        {
-            region->setSelected(true);
-        }
-    }
+    auto selectedRows = owner->getSelectedRows();
+    audioRegionContainer->setSelectedRows(selectedRows);
+    audioRegionContainer->sendActionMessage(updateMiddlePanelAction);
 }
 
 void RegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)
@@ -96,14 +89,7 @@ void RegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)
 
 void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
-    auto selected = owner->getSelectedRows();
-    
-    for (int i = selected.size()-1; i >= 0; i--)
-    {
-        auto region = audioRegionContainer->getRegion(selected[i]);
-        jassert(region);
-        audioRegionContainer->deleteRegion(selected[i]);
-    }
+    audioRegionContainer->deleteSelectedRegions();
 }
 
 juce::var RegionTableListBoxModel::getDragSourceDescription (const juce::SparseSet<int>& currentlySelectedRows)

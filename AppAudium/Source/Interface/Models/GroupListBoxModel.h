@@ -13,11 +13,11 @@
 
 class AudioGroupContainer;
 
-class AudioGroupListBoxModel : public audium::ListBoxModel {
+class GroupListBoxModel : public audium::ListBoxModel {
     
 public:
     
-    AudioGroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
+    GroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
                            std::shared_ptr<AudiumEngine> audiumEngine,
                            std::shared_ptr<ZoomHandler> zoomHandler,
                            std::shared_ptr<RegionSelector> regionSelector,
@@ -30,7 +30,7 @@ public:
     {
     }
     
-    ~AudioGroupListBoxModel() override
+    ~GroupListBoxModel() override
     {
     }
     
@@ -49,14 +49,13 @@ public:
     
     void deleteKeyPressed (int lastRowSelected) override;
     
-    void backgroundClicked (const juce::MouseEvent&) override
-    {
-        owner->deselectAllRows();
-    }
+    void backgroundClicked (const juce::MouseEvent&) override;
     
     void listWasScrolled() override;
     
-    void selectedRowsChanged (int lastRowSelected) override {}
+    void selectedRowsChanged (int lastRowSelected) override;
+    
+
         
 private:
     std::shared_ptr<AudioGroupListBox> owner;

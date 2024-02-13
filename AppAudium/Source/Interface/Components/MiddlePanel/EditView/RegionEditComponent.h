@@ -14,6 +14,7 @@
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegionContainer.h"
+#include "Engine/Group/AudioSubGroup.h"
 
 #include "Interface/Controls/RegionEditControl.h"
 #include "Interface/Controls/DraggerControl.h"
@@ -26,11 +27,11 @@ class RegionEditComponent  : public juce::Component
 {
 public:
     RegionEditComponent(std::shared_ptr<AudiumEngine> audiumEngine,
-                        std::shared_ptr<AudioResource> audioResource,
+                        std::shared_ptr<AudioSubGroup> audioSubGroup,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector) :
         audiumEngine(audiumEngine),
-        audioResource(audioResource),
+        audioSubGroup(audioSubGroup),
         zoomHandler(zoomHandler),
         regionSelector(regionSelector)
     {
@@ -41,14 +42,9 @@ public:
     {
     }
     
-    void paint (juce::Graphics&) override
-    {
-        
-    }
-    
     void resized() override
     {
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
+        const auto regions = audioSubGroup->getAudioRegions();
         auto count = 0;
         for (auto region : regions)
         {
@@ -62,25 +58,37 @@ public:
         }
     }
     
-    void updateFromEngine()
+    void updateFromEngine(std::shared_ptr<AudioSubGroup> subGroup)
     {
-        if (mustRebuildComponents())
+        bool rebuild = false;
+        if (audioSubGroup != subGroup)
+        {
+            rebuild = true;
+            audioSubGroup = subGroup;
+        }
+        
+        if (rebuild ||
+            mustRebuildComponents())
         {
             rebuildComponents();
             resized();
         }
         else
         {
+            const auto regions = audioSubGroup->getAudioRegions();
+            jassert(regions.size() == regionEditControls.size());
+            auto count = 0;
             for (auto regionEdit : regionEditControls)
             {
-                regionEdit->updateFromEngine();
+                regionEdit->updateFromEngine(regions[count]);
+                count++;
             }
         }
     }
 
     bool mustRebuildComponents() const
     {
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
+        const auto regions = audioSubGroup->getAudioRegions();
         if (regions.size() != regionEditControls.size())
         {
             return true;
@@ -93,9 +101,10 @@ public:
     {
         std::cout << "RegionEditComponent::rebuildComponents" << std::endl;
         
+        removeAllChildren();
         regionEditControls.clear();
         
-        auto regions = audiumEngine->getAudioRegionContainer()->getRegionsForResource(audioResource);
+        const auto regions = audioSubGroup->getAudioRegions();
         for (auto region : regions)
         {
             auto view = std::shared_ptr<RegionEditControl>(new RegionEditControl(region, zoomHandler, audiumEngine, regionSelector));
@@ -104,10 +113,16 @@ public:
         }
     }
     
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        audiumEngine->getAudioRegionContainer()->deselectAll();
+        audiumEngine->getAudioRegionContainer()->sendActionMessage(regionSelectedAction);
+    }
+    
 private:
     
     std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioResource> audioResource;
+    std::shared_ptr<AudioSubGroup> audioSubGroup;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
     juce::Colour colour;

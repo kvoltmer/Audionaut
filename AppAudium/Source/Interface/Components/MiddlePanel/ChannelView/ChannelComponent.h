@@ -41,19 +41,21 @@
 */
 class ChannelComponent  : public juce::Component,
                           private juce::Timer,
+                          public juce::ComboBox::Listener,
                           public juce::Button::Listener,
                           public juce::Label::Listener
 {
 public:
     //==============================================================================
-    ChannelComponent (std::shared_ptr<AudioResource> resource, std::shared_ptr<AudiumEngine> engine);
+    ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std::shared_ptr<AudiumEngine> engine, int rowNumber);
     ~ChannelComponent() override;
 
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
-    void refreshComponent(std::shared_ptr<AudioResource> resource, bool isRowSelected);
+    void refreshComponent(std::shared_ptr<AudioGroup> audioGroup, int rowNumber, bool isRowSelected);
     void timerCallback() override;
     void stopTheTimer() { stopTimer(); }
+    void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override;
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;
@@ -71,16 +73,16 @@ public:
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
-    std::shared_ptr<AudioResource> resource;
+    std::shared_ptr<AudioGroup> audioGroup;
     std::shared_ptr<AudiumEngine> engine;
-    bool selected = false;
     std::unique_ptr<LevelMeter> levelMeter;
+    std::unique_ptr<juce::ComboBox> channelSizeComboBox;
+    int rowNumber = 0;
     //[/UserVariables]
 
     //==============================================================================
-    std::unique_ptr<juce::Label> volumeLeveldB;
-    std::unique_ptr<juce::ImageButton> juce__imageButton;
-    std::unique_ptr<juce::ImageButton> juce__imageButton2;
+    std::unique_ptr<juce::Label> volumeLabeldB;
+    std::unique_ptr<juce::ImageButton> volumeScaleButton;
     std::unique_ptr<juce::Label> volumeLevel;
 
 

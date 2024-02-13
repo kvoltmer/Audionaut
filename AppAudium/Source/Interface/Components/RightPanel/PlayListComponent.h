@@ -12,6 +12,8 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Engine/Group/AudioGroup.h"
+
 #include "Interface/Models/PlayListTableListBoxModel.h"
 #include "Interface/Controls/PlayListTableListBox.h"
 
@@ -114,6 +116,9 @@ public:
     
     void updateUI()
     {
+        auto selectedRows = audioGroup->getPlayListContainer()->getSelectedRows();
+        playListTableListBox->setSelectedRows(selectedRows, juce::dontSendNotification);
+        
         playListTableListBox->updateContent();
     }
     

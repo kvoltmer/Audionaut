@@ -18,7 +18,7 @@
 #include "Engine/AudioResourceContainer.h"
 #include "Interface/ColourIds.h"
 #include "Engine/AudioRegion.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Interface/Widgets/audium_AudioThumbnail.h"
@@ -29,18 +29,22 @@
 class WaveFormViewBase : public juce::Component, public juce::ChangeListener
 {
 public:
-    WaveFormViewBase(std::shared_ptr<AudiumEngine> audiumEngine,
+    WaveFormViewBase(const juce::Component &parentComponent,
+                     std::shared_ptr<AudiumEngine> audiumEngine,
                      std::shared_ptr<AudioResource> audioResource,
                      std::shared_ptr<ZoomHandler> zoomHandler,
                      std::shared_ptr<AudioRegion> audioRegion,
                      juce::Colour colour,
-                     std::shared_ptr<RegionSelector> regionSelector) :
+                     std::shared_ptr<RegionSelector> regionSelector,
+                     int rowNumber) :
+        parentComponent(parentComponent),
         audiumEngine(audiumEngine),
         audioResource(audioResource),
         zoomHandler(zoomHandler),
         audioRegion(audioRegion),
         colour(colour),
-        regionSelector(regionSelector)
+        regionSelector(regionSelector),
+        rowNumber(rowNumber)
     {
         // this component doesn't handle mouse events
         //setInterceptsMouseClicks(false, false);
@@ -51,10 +55,14 @@ public:
         // create thumbnail
         auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
         auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
-        audioThumbnail.reset(new audium::AudioThumbnail(4096*4, *formatManager, *thumbnailCache));
+        auto sourceSamplesPerThumbnailSample = 64;
+        //auto sourceSamplesPerThumbnailSample = 256;
+        //auto sourceSamplesPerThumbnailSample = 4096*4;
+        audioThumbnail.reset(new audium::AudioThumbnail(sourceSamplesPerThumbnailSample, *formatManager, *thumbnailCache));
         audioThumbnail->setColour(colour);
         if (auto inputSource = AudioResourceFactory::makeAudioInputSource(audioResource->getUrl()))
         {
+            //audioThumbnail->setReader(audioResource->getAudioFormatReader().get(), inputSource->hashCode());
             audioThumbnail->setSource(inputSource.release());
         }
         audioThumbnail->addChangeListener(this);
@@ -107,10 +115,32 @@ public:
         g.drawFittedText (audioResource->getFileNameWithoutExtension(), bonds, juce::Justification::topLeft, 1);
     }
     
-    virtual void updateFromEngine() = 0;
+    // returns the drawing area clipped with the visible area of the viewport
+    // note: this is much faster than drawing the entire waveform
+    juce::Rectangle<double> getClippedDrawingArea() const
+    {
+        // the local bounds
+        auto thumbArea = getLocalBounds().toDouble();
+    
+        // the visible range of the viewport
+        const auto visibleRange = zoomHandler->getVisibleRange();
+        
+        // clip to the area of its parent (owner)
+        const auto parentOffset = static_cast<double>(parentComponent.getBounds().getX());
+        //std::cout << "parent offset: " << parentOffset << std::endl;
+        const auto scrollOffset = zoomHandler->getVisibleRange().getStart();
+        const auto startX = std::max(scrollOffset - parentOffset, 0.0);
+        const auto lengthX = std::min(visibleRange.getLength(), static_cast<double>(thumbArea.getWidth()) - startX);
+    
+        thumbArea.setX(startX);
+        thumbArea.setWidth(lengthX);
+        return thumbArea;
+    }
+    
+    void setRowNumber(int theRowNumber) { rowNumber = theRowNumber; }
 
 protected:
-    
+    const juce::Component &parentComponent;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
@@ -120,7 +150,9 @@ protected:
     
     std::unique_ptr<audium::AudioThumbnail> audioThumbnail;
     
-    static constexpr float verticalZoomFactor = 0.62f;
+    static constexpr float verticalZoomFactor = 1.f;
+    
+    int rowNumber = 0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormViewBase)
 };

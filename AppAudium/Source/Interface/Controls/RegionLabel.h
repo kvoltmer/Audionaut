@@ -12,12 +12,12 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudioRegion.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/AudioRegionContainer.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-
+#include "Engine/Undo/UndoableContainerAction.h"
 
 //==============================================================================
 /*
@@ -34,7 +34,7 @@ public:
         owner(owner),
         audioRegionContainer(audioRegionContainer)
     {
-        setEditable (false, true, false);
+        setEditable (false, true, true);
         update (columnId, rowNumber, false);
         setFont(13.0f);
         addListener(this);
@@ -55,21 +55,21 @@ public:
         {
             if (columnId == regionName)
             {
-                text = r->name;
+                text = r->getName();
             }
             else if (columnId == regionStart)
             {
-                const auto seconds = r->getRegionDataInSeconds().getStart();
+                const auto seconds = r->getRegionData(audium::seconds).getStart();
                 text = juce::String(seconds, 4);
             }
             else if (columnId == regionEnd)
             {
-                const auto seconds = r->getRegionDataInSeconds().getEnd();
+                const auto seconds = r->getRegionData(audium::seconds).getEnd();
                 text = juce::String(seconds, 4);
             }
             else if (columnId == regionLength)
             {
-                const auto seconds = r->getRegionDataInSeconds().getLength();
+                const auto seconds = r->getRegionData(audium::seconds).getLength();
                 text = juce::String(seconds, 4);
             }
             
@@ -82,11 +82,10 @@ public:
 
     }
     
-    /// this is odd but a click on the label should also select the row
+    /// pass on mouse events. unless row is not selected
     void mouseDown (const juce::MouseEvent& e) override
     {
-        owner->selectRow(rowNumber);
-        juce::Label::mouseDown(e);
+        getParentComponent()->mouseDown(e);
     }
     
     void mouseDrag(const juce::MouseEvent& e) override
@@ -101,6 +100,11 @@ public:
     /// override juce::Label::Listener
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
+        // Undo: store old state
+        auto audioRegion = audioRegionContainer->getRegion(rowNumber);
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
+        action->storeOldState();
+        
         
         if (columnId == regionName)
         {
@@ -109,28 +113,30 @@ public:
         else if  (columnId == regionStart)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
-            audioRegionContainer->setRegionStart(rowNumber, clocks);
+            audioRegionContainer->setRegionStart(rowNumber, seconds);
         }
         else if  (columnId == regionEnd)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
-            audioRegionContainer->setRegionEnd(rowNumber, clocks);
+            audioRegionContainer->setRegionEnd(rowNumber, seconds);
         }
         else if  (columnId == regionLength)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            const auto clocks = audioRegionContainer->getPlayListScheduler()->getTempoProvider()->secondsToClocks(seconds);
-            audioRegionContainer->setRegionLength(rowNumber, clocks);
+            audioRegionContainer->setRegionLength(rowNumber, seconds);
         }
+        
+        // Undo: store new state
+        action->storeNewState();
+        audioRegionContainer->getUndoManager()->perform(action.release(), "Modify Region");
+        audioRegionContainer->getUndoManager()->beginNewTransaction();
     }
     
     juce::String getRegionName() const
     {
         if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
         {
-            return r->name;
+            return r->getName();
         }
         return "n/a";
     }

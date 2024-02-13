@@ -16,48 +16,55 @@
 #include "Interface/Controls/RegionSelector.h"
 #include "Engine/AudioResource.h"
 #include "Interface/ColourIds.h"
-#include "Engine/AudioRegion.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
-class DraggerControl  : public juce::Component, public juce::ChangeBroadcaster
+
+class DraggerControl  : public juce::Component,
+                        public juce::ChangeBroadcaster,
+                        public juce::KeyListener
 {
 public:
-    DraggerControl(std::shared_ptr<AudioResource> audioResource,
-                  std::shared_ptr<ZoomHandler> zoomHandler,
-                  std::shared_ptr<AudioRegion> audioRegion,
-                  juce::Colour colour,
-                  std::shared_ptr<RegionSelector> regionSelector) :
-        audioResource(audioResource),
+    DraggerControl(juce::Component* componentToDrag,
+                   std::shared_ptr<AudiumEngine> audiumEngine,
+                   std::shared_ptr<ZoomHandler> zoomHandler,
+                   juce::Colour colour,
+                   std::shared_ptr<RegionSelector> regionSelector) :
+        componentToDrag(componentToDrag),
+        audiumEngine(audiumEngine),
         zoomHandler(zoomHandler),
-        audioRegion(audioRegion),
         colour(colour),
         regionSelector(regionSelector)
     {
+        addKeyListener(this);
+        setWantsKeyboardFocus(true);
     }
 
-    ~DraggerControl() override
+    virtual ~DraggerControl() override
     {
+        removeKeyListener(this);
     }
     
-    void paintFileNameLabel (juce::Graphics& g)
+    void paintLabel (juce::Graphics& g, const juce::String label)
     {
         
         g.setFont (12.0f);
         
         juce::Rectangle<int> bonds(5,
                              4,
-                             g.getCurrentFont().getStringWidth(audioResource->getFileNameWithoutExtension()),
+                             g.getCurrentFont().getStringWidth(label),
                              g.getCurrentFont().getHeight());
         
         
         g.setColour (findColour(audium::defaultTextColourId));
-        g.drawFittedText (audioResource->getFileNameWithoutExtension(), bonds, juce::Justification::topLeft, 1);
+        g.drawFittedText (label, bonds, juce::Justification::topLeft, 1);
     }
 
     void paint (juce::Graphics& g) override
     {
-        auto colour = Colours::white;;
-        if (audioResource->isSelected())
+        auto colour = Colours::white;
+        if (isSelected())
         {
             g.setColour (colour.withAlpha(0.8f));
         }
@@ -68,7 +75,7 @@ public:
 
         g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
-        paintFileNameLabel(g);
+        paintLabel(g, getLabelString());
 
     }
 
@@ -87,9 +94,9 @@ public:
 
         currentDragMode = getDragMode(e.getPosition().getX());
         
-        originalBounds = getBounds();
-            
-        audioResource->setSelected(e.mods.isCommandDown() ? !audioResource->isSelected() : true, !e.mods.isCommandDown());
+        originalBounds = componentToDrag->getBounds();
+        
+        setSelected(e.mods.isCommandDown() ? !isSelected() : true, !e.mods.isCommandDown());
         
         repaint();
     }
@@ -98,27 +105,29 @@ public:
     {
         auto distance = e.getOffsetFromDragStart();
         distance.setY(0); // drag vertically only
-        
-        auto bounds = originalBounds;
-        
-        switch (currentDragMode) {
-            case leftEdge:
-                bounds.setLeft(juce::jmin(originalBounds.getRight() - minimumWidth, originalBounds.getX() + distance.getX()));
-                break;
-            case rightEdge:
-                bounds.setRight(juce::jmax(originalBounds.getX() + minimumWidth, originalBounds.getRight() + distance.getX()));
-                break;
-            case middleEdge:
-                bounds += distance;
-                break;
-            default:
-                jassertfalse;
-                break;
+        if (std::abs(distance.getX()) > 0)
+        {
+            auto bounds = originalBounds;
+            
+            switch (currentDragMode) {
+                case leftEdge:
+                    bounds.setLeft(juce::jmin(originalBounds.getRight() - minimumWidth, originalBounds.getX() + distance.getX()));
+                    break;
+                case rightEdge:
+                    bounds.setRight(juce::jmax(originalBounds.getX() + minimumWidth, originalBounds.getRight() + distance.getX()));
+                    break;
+                case middleEdge:
+                    bounds += distance;
+                    break;
+                default:
+                    jassertfalse;
+                    break;
+            }
+            
+            componentToDrag->setBounds (bounds);
+            
+            commitBoundsToEngine();
         }
-        
-        setBounds (bounds);
-        
-        commitBoundsToEngine();
     }
 
     void mouseUp (const juce::MouseEvent& e) override
@@ -126,8 +135,10 @@ public:
         if (regionSelector != nullptr)
             regionSelector->setEnabled(true);
         
-        if (audioResource->validateData(true))
+        if (e.getOffsetFromDragStart().getX() > 0)
         {
+            commitBoundsToEngine();
+            validateData();
             sendChangeMessage();
         }
     }
@@ -173,7 +184,7 @@ public:
     void commitBoundsToEngine()
     {
         // commit values to engine
-        juce::Range<double> range(getBounds().getX(), getBounds().getRight());
+        juce::Range<double> range(componentToDrag->getBounds().getX(), componentToDrag->getBounds().getRight());
         //std::cout << range.getStart() << " " << range.getEnd() << std::endl;
         
         auto rangeInSeconds = zoomHandler->xToSeconds(range);
@@ -182,65 +193,24 @@ public:
         setRegionDataInSeconds(rangeInSeconds);
     }
     
-    void setRegionDataInSeconds(const juce::Range<double> newRegionData)
-    {
-        // set value in the engine
-
-        switch (currentDragMode) {
-            case leftEdge:
-                // offset in file
-                {
-                    auto diff = newRegionData.getStart() - audioResource->getTransportPositionSeconds();
-                    
-                    auto regionData = audioResource->getRegionDataInSeconds();
-                    auto newLength = regionData.getLength() - diff;
-                    auto newStart = regionData.getStart() + diff;
-                
-                    audioResource->setRegionDataInSeconds(juce::Range<double>(newStart, newStart + newLength), true);
-                    audioResource->setTransportPosition(newRegionData.getStart(), true);
-                    repaint();
-                }
-                break;
-            case rightEdge:
-                {
-                    // duration
-                    auto regionData = audioResource->getRegionDataInSeconds();
-                    regionData.setLength(newRegionData.getLength());
-                    audioResource->setRegionDataInSeconds(regionData, true);
-                }
-                break;
-            case middleEdge:
-                // position in transport
-                audioResource->setTransportPosition(newRegionData.getStart(), true);
-                break;
-            default:
-                break;
-        }
-        
-        sendChangeMessage();
-    }
+    virtual void setRegionDataInSeconds(const juce::Range<double> newRegionData) = 0;
     
-    void updateFromEngine()
-    {
-        
-        double posX = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
-        double length = zoomHandler->secondsToX(audioResource->getRegionDataInSeconds().getLength());
-        
-        // don't change Y position and height
-        double posY = getBounds().getY();
-        double height = getHeight();
-        
-        juce::Rectangle<double> rect_tmp(posX, posY, length, height);
-        setBounds(rect_tmp.toNearestInt());
-    }
-
+    virtual bool isSelected() const = 0;
+    
+    virtual void setSelected(bool bSelected, bool deselectOthers) = 0;
+    
+    virtual const juce::String getLabelString() const = 0;
+    
+    virtual bool validateData() = 0;
+    
     static constexpr int draggerHeight = 19;
     
-private:
+protected:
     
-    std::shared_ptr<AudioResource> audioResource;
+    juce::Component* componentToDrag;
+    
+    std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::shared_ptr<AudioRegion> audioRegion;
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
 
@@ -251,5 +221,7 @@ private:
 
     juce::Rectangle<int> originalBounds;
 
+    audium::UndoableContainerAction *undoableContainerAction = nullptr;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DraggerControl)
 };

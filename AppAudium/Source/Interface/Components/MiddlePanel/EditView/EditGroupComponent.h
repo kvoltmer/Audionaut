@@ -17,8 +17,18 @@
 
 #include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
 #include "Interface/Views/AudioResourceView.h"
-#include "Interface/Controls/DraggerControl.h"
+#include "Interface/Controls/SubGroupDraggerControl.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Widgets/audium_ListBox.h"
+#include "Interface/Models/SubGroupListBoxModel.h"
+#include "SubGroupListBox.h"
+
+//==============================================================================
+/*
+ 
+Display AudioSubGroups -> Timeline
+ 
+ */
 
 class EditGroupComponent  : public GroupBaseComponent, public juce::ChangeListener
 {
@@ -52,8 +62,7 @@ public:
     
     bool mustRebuildComponents() const
     {
-        auto audioResources = audioGroup->getAudioResources();
-        if (audioResources.size() != audioResourceViews.size())
+        if (audioGroup->getAudioSubGroups().size() != subGroupListViews.size())
         {
             return true;
         }
@@ -64,83 +73,95 @@ public:
     void rebuildComponents()
     {
         std::cout << "EditGroupComponent::rebuildComponents" << std::endl;
-        removeAllChildren();
-        audioResourceViews.clear();
-        draggerControls.clear();
         
-        // create views
-        auto audioResources = audioGroup->getAudioResources();
-        for (auto audioResource : audioResources)
+        // cleanup
+        removeAllChildren();
+        subGroupListViews.clear();
+        subGroupListModels.clear();
+        
+        // create a ListBox and ListBoxModel for each sub group
+        auto subGroups = audioGroup->getAudioSubGroups();
+        for (auto subGroup : subGroups)
         {
-            auto view = std::shared_ptr<AudioResourceView>(new AudioResourceView(audiumEngine,
-                                                                                 audioResource,
-                                                                                 zoomHandler,
-                                                                                 nullptr,
-                                                                                 audioGroup->getColour(),
-                                                                                 regionSelector));
-            addAndMakeVisible(view.get());
-            audioResourceViews.push_back(view);
+            auto subGroupListView = std::shared_ptr<SubGroupListBox>(new SubGroupListBox(audiumEngine,
+                                                                                         subGroup,
+                                                                                         zoomHandler,
+                                                                                         regionSelector));
             
-            auto dragger = std::shared_ptr<DraggerControl>(new DraggerControl(audioResource,
-                                                                              zoomHandler,
-                                                                              nullptr,
-                                                                              audioGroup->getColour(),
-                                                                              regionSelector));
-            addAndMakeVisible(dragger.get());
-            draggerControls.push_back(dragger);
+            auto subGroupListBoxModel = std::shared_ptr<SubGroupListBoxModel>(new SubGroupListBoxModel(subGroupListView,
+                                                                                                       subGroup,
+                                                                                                       audiumEngine,
+                                                                                                       zoomHandler,
+                                                                                                       regionSelector));
+            subGroupListModels.push_back(subGroupListBoxModel);
+            subGroupListView->setModel(subGroupListBoxModel.get());
+            
+            // create dragger as header of ListBox
+            auto dragger = std::unique_ptr<SubGroupDraggerControl>(new SubGroupDraggerControl(subGroupListView.get(),
+                                                                                              audiumEngine,
+                                                                                              subGroup,
+                                                                                              zoomHandler,
+                                                                                              audioGroup->getColour(),
+                                                                                              regionSelector));
             dragger->addChangeListener(this);
+            subGroupListView->setHeaderComponent(std::move(dragger));
+
+            
+            subGroupListView->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
+            subGroupListView->setOutlineThickness(0);
+            
+            addAndMakeVisible(subGroupListView.get());
+            
+            subGroupListViews.push_back(subGroupListView);
+            
         }
     }
     
     void changeListenerCallback (ChangeBroadcaster* source) override
     {
-        updateFromEngine();
+        audiumEngine->getAudioResourceContainer()->sendActionMessage("");
     }
     
     void updateFromEngine()
     {
-        for (auto resourceView : audioResourceViews)
+        const auto subGroups = audioGroup->getAudioSubGroups();
+        jassert(subGroups.size() == subGroupListViews.size());
+        int counter = 0;
+        for (auto subGroup : subGroups)
         {
-            resourceView->updateFromEngine();
-        }
-        
-        for (auto draggerControl : draggerControls)
-        {
-            draggerControl->updateFromEngine();
+            subGroupListModels[counter]->setAudioSubGroup(subGroup);
+            subGroupListViews[counter]->updateFromEngine(subGroup);
+            counter++;
         }
     }
 
     void resized() override
     {
-        int count = 0;
-        auto audioResources = audioGroup->getAudioResources();
-        for (auto audioResource : audioResources)
+        
+        // set size and position of subgroups on timeline
+        auto subGroups = audioGroup->getAudioSubGroups();
+        //jassert(subGroups.size() == subGroupListViews.size());
+        int counter = 0;
+        for (auto subGroup : subGroups)
         {
-            auto pos = zoomHandler->secondsToX(audioResource->getTransportPositionSeconds());
-            auto top = audioResource->getTop();
-            if (count < audioResourceViews.size())
-            {
-                auto resourceView = audioResourceViews[count];
-                
-                resourceView->setTopLeftPosition(pos, top);
-                resourceView->updateFromEngine();
-                
-                auto dragger = draggerControls[count];
-                dragger->setSize(resourceView->getWidth(), DraggerControl::draggerHeight);
-                dragger->setTopLeftPosition(pos, top);
-                dragger->updateFromEngine();
-                
-                count++;
-            }
+            auto posRange = subGroup->getAudioClip()->getAbsolutePositionRange(audium::clocks);
+            auto pos = zoomHandler->clocksToX(posRange.getStart());
+            auto width = zoomHandler->clocksToX(posRange.getLength());
+            
+            auto height = audioGroup->getTotalHeight() + DraggerControl::draggerHeight;
+            
+            juce::Rectangle<double> rect_tmp(pos, 0.0, width, height);
+            
+            if (counter < subGroupListViews.size())
+                subGroupListViews[counter]->setBounds(rect_tmp.toNearestInt());
+            counter++;
         }
     }
 
-    
-    
 private:
-    
-    std::vector<std::shared_ptr<AudioResourceView>> audioResourceViews;
-    std::vector<std::shared_ptr<DraggerControl>> draggerControls;
+        
+    std::vector<std::shared_ptr<SubGroupListBox>> subGroupListViews;
+    std::vector<std::shared_ptr<SubGroupListBoxModel>> subGroupListModels;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EditGroupComponent)
 };

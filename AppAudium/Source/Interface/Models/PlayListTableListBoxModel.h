@@ -16,6 +16,10 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioRegion.h"
+#include "Engine/AudioRegionContainer.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Undo/UndoableContainerAction.h"
+
 #include "Interface/Controls/PlayListTableListBox.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Models/PlayListTableListBoxItem.h"
@@ -82,12 +86,20 @@ public:
 
     void deleteKeyPressed (int lastRowSelected) override
     {
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(audiumEngine->getPlayListContainer(audioGroup));
+        
         auto selected = listBox->getSelectedRows();
 
         for (int i = selected.size()-1; i >= 0; i--)
         {
             audiumEngine->getPlayListContainer(audioGroup)->deletePlayListItem(selected[i]);
         }
+        
+        // Undo: store new state
+        action->storeNewState();
+        audiumEngine->getUndoManager()->perform(action.release(), "Delete PlayList Item(s)");
+        audiumEngine->getUndoManager()->beginNewTransaction();
     }
     
     juce::var getDragSourceDescription (const juce::SparseSet< int > &rowsToDescribe) override
@@ -97,30 +109,13 @@ public:
     
     void selectedRowsChanged (int lastRowSelected) override
     {
-        audioGroup->getPlayListContainer()->deselectAll();
-        audiumEngine->getAudioRegionContainer()->deselectAll();
-
-        auto selection = listBox->getSelectedRows();
-        for (auto i = 0; i < selection.size(); i++)
-        {
-            if (auto playListItem = audioGroup->getPlayListContainer()->getPlayListItem(selection[i]))
-            {
-                audioGroup->getPlayListContainer()->selectPlayListItem(playListItem, true);
-                
-                // selecting a playListItem also selects the region
-//                auto regionIndex = audiumEngine->getAudioRegionContainer()->getRegionIndex(playListItem->getRegion());
-//                audiumEngine->getAudioRegionContainer()->setSelectedRegion(regionIndex);
-            }
-
-        }
-        
+        auto selectedRows = listBox->getSelectedRows();
+        audioGroup->getPlayListContainer()->setSelectedRows(selectedRows);
+        audioGroup->getPlayListContainer()->sendActionMessage(updateMiddlePanelAction);
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
-        
-        //audiumEngine->getAudioRegionContainer()->deselectAll();
-        
         listBox->deselectAllRows();
         audioGroup->getPlayListContainer()->deselectAll();
     }
