@@ -11,26 +11,16 @@
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
 #include "Engine/AutoEdit/AutoEdit.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
+#include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/AudioResourceContainer.h"
+#include "Engine/AudioRegionContainer.h"
+#include "Engine/AudioRegionContainer.h"
+#include "Engine/AudiumTransportSource.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
-
-AudiumEngine::AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-                           std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                           std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-                           std::shared_ptr<PlayListScheduler> playListScheduler,
-                           std::shared_ptr<LinkAudioDevice> linkAudioDevice) :
-    audioDeviceManager(audioDeviceManager),
-    audioGroupContainer(audioGroupContainer),
-    audioResourceContainer(audioResourceContainer),
-    audioRegionContainer(audioRegionContainer),
-    playListScheduler(playListScheduler),
-    linkAudioDevice(linkAudioDevice)
-{
-}
 
 AudiumEngine::~AudiumEngine()
 {
@@ -48,6 +38,7 @@ void AudiumEngine::initialise()
 
 void AudiumEngine::uninitialise()
 {
+    undoManager->clearUndoHistory();
     audioDeviceManager->removeAudioCallback(linkAudioDevice.get());
     
 }
@@ -57,7 +48,7 @@ void AudiumEngine::cleanup()
     audioGroupContainer->cleanup();
     audioResourceContainer->cleanup();
     audioRegionContainer->cleanup();
-    
+    undoManager->clearUndoHistory();
     currentFile = File();
 }
 
@@ -76,6 +67,7 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> 
         juce::FileInputStream inputStream(file);
         if (inputStream.openedOk())
         {
+            undoManager->clearUndoHistory();
             /// TODO: std::move (callback)
             readFromStream(inputStream);
             currentFile = file;
@@ -121,6 +113,7 @@ void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> cal
         
         //callback(writeToStream(fo));
         writeToStream(out);
+        undoManager->clearUndoHistory();
     }
 
     temp.overwriteTargetFileWithTemporary();
@@ -131,22 +124,19 @@ void AudiumEngine::setBypass(bool bypass)
 {
     linkAudioDevice->setBypass(bypass);
 }
-#include "Engine/AudiumTransportSource.h"
 
-void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback, double preferedSampleRate)
+void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback,
+                                double preferedSampleRate,
+                                bool defaultGroupOnly)
 {
     std::cout << "bounce -> " << f.getFullPathName().toStdString() << std::endl;
     
     auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
-    double sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+    double sampleRate = preferedSampleRate;
+        
+    playListScheduler->prepareToPlay(sampleRate, numSamples);
+    audioResourceContainer->prepareToPlay(sampleRate, numSamples);
     
-    // different sample rate?
-    if (preferedSampleRate > 0.0)
-    {
-        sampleRate = preferedSampleRate;
-        playListScheduler->prepareToPlay(sampleRate, numSamples);
-        audioResourceContainer->prepareToPlay(sampleRate, numSamples);
-    }
     
     auto numOutputChannels = 2;
     
@@ -173,13 +163,12 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
         }
     }
     
-    // change back to old sample rate
-    if (preferedSampleRate > 0.0)
-    {
-        sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
-        playListScheduler->prepareToPlay(sampleRate, numSamples);
-        audioResourceContainer->prepareToPlay(sampleRate, numSamples);
-    }
+    // change back to device settings
+    numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
+    sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
+    playListScheduler->prepareToPlay(sampleRate, numSamples);
+    audioResourceContainer->prepareToPlay(sampleRate, numSamples);
+    
     
     setBypass(false);
     std::cout << "done" << std::endl;
@@ -189,23 +178,11 @@ bool AudiumEngine::writeToStream (juce::OutputStream& out)
 {
     out.writeString ("AudiumEngineFormat");
     
-    // 1. Tempo
+    // Tempo
     out.writeDouble(playListScheduler->getTempoProvider()->getTempo());
     
-    // 2. Groups
+    // Groups
     audioGroupContainer->writeToStream(out);
-    
-    // 3. Resources
-    audioResourceContainer->writeToStream(out);
-    
-    // 4. Regions
-    audioRegionContainer->writeToStream(out);
-    
-    // 5. Playlists
-    for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
-    {
-        audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->writeToStream(out);
-    }
         
     return true;
 }
@@ -219,28 +196,16 @@ bool AudiumEngine::readFromStream (juce::InputStream& in)
     
     while (! in.isExhausted())
     {
-        // 1. Tempo
+        // Tempo
         auto tempo = in.readDouble();
         
         if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
             playListScheduler->getTempoProvider()->setTempo(tempo);
         
-        // 2. Groups
-        if (audioGroupContainer->readFromStream(in, *audioResourceContainer.get(), *audioRegionContainer.get()))
+        // Groups
+        if (audioGroupContainer->readFromStream(in))
         {
-            // 3. Resources
-            if (audioResourceContainer->readFromStream(in, *this))
-            {
-                // 4. Regions
-                if (audioRegionContainer->readFromStream(in))
-                {
-                    // 5. Playlists
-                    for (auto g = 0; g < audioGroupContainer->getNumItems(); g++)
-                    {
-                        audioGroupContainer->getAudioGroup(g)->getPlayListContainer()->readFromStream(in);
-                    }
-                }
-            }
+            return true;
         }
         return true;
     }
@@ -267,13 +232,16 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     bounceToFile(bounceFile, nullptr, sampleRate);
     config.bounceFileName = bounceFile.getFullPathName().toStdString();
     
-    // erase everything!
+#if 0
+    // erase everything
     cleanup();
     
     // create a fresh resource
     const auto bounceUrl = juce::URL(bounceFile);
     auto audioGroup = audioGroupContainer->createNewAudioGroup(*getAudioResourceContainer(), *getAudioRegionContainer(), bounceUrl.getFileName().toStdString());
-    audioResourceContainer->addAudioResource(bounceUrl, *this, audioGroup);
+    auto subGroup = audioGroup->createNewAudioSubGroup();
+    audioResourceContainer->addAudioResource(bounceUrl, audioGroup, subGroup);
+#endif
     
     std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,
                                                     audioRegionContainer,

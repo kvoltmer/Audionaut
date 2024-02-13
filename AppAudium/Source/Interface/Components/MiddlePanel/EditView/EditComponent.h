@@ -17,8 +17,8 @@ class EditComponent : public ArrangementEditBaseComponent
 {
 public:
         
-    EditComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
-        ArrangementEditBaseComponent(audiumEngine, false)
+    EditComponent(std::shared_ptr<AudiumEngine> audiumEngine, std::shared_ptr<ZoomHandler> zoomHandler) :
+        ArrangementEditBaseComponent(audiumEngine, zoomHandler, false)
     {
     }
 

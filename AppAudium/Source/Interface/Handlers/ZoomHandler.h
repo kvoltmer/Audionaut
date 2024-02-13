@@ -21,10 +21,13 @@ public:
     ~ZoomHandler() override;
     
     double zoomIn();
-    
     double zoomOut();
+        
+    void setZoomFactor(double factor);
+    double getZoomFactor() const noexcept;
     
     juce::Range<double> getVisibleRange() const noexcept;
+    void setVisibleRange(juce::Range<double> newRange, juce::NotificationType notification);
     
     juce::Range<double> getVisibleRangeInSeconds() const noexcept;
     
@@ -32,6 +35,9 @@ public:
     
     double secondsToXWithOffset (const double time) const;
     double xToSecondsWithOffset (const double x) const;
+ 
+    double clocksToXWithOffset (const double clocks) const;
+    double xToClocksWithOffset (const double x) const;
     
     int getScrollBarHeight() const { return scrollbar->getHeight(); }
 
@@ -47,6 +53,7 @@ public:
     double clocksToX (const double clocks) const;
     double xToClocks (const double x) const;
 
+
     
     // returns a String in the format Min:Sec
     static juce::String secondsToFormattedString(const int seconds);
@@ -61,14 +68,17 @@ public:
     
     void focusView(double positionInSeconds);
     
+    void centerView(double positionInClocks, double center);
+    
     void timerCallback() override;
     
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
     double getContentWidth() const;
     
-    double getZoomFactor() const { return zoomFactor; }
-    void setZoomFactor(double zoom) { zoomFactor = zoom; }
+    void pageLeft();
+    void pageRight();
+    
  
     // max zoom in factor
     double maxZoomInFactor = 0.0;

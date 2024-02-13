@@ -19,7 +19,10 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
-#include "Engine/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioClip.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 using namespace audium;
 
@@ -33,35 +36,30 @@ GroupBaseComponent::GroupBaseComponent (std::shared_ptr<AudioGroup> group,
     zoomHandler(zoomHandler),
     regionSelector(regionSelector)
 {
-    if (group->getColour() == juce::Colours::pink)
-    {
-        auto newColour = audium::getNewWaveFormColour();
-        
-        auto numGroups = audiumEngine->getAudioGroupContainer()->getNumItems();
-        for (auto i = 0; i < numGroups; i++)
-        {
-            if(newColour == audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getColour())
-            {
-                newColour = audium::getNewWaveFormColour();
-            }
-        }
-        
-        group->setColour(newColour);
-    }
 }
 
 void GroupBaseComponent::paint (juce::Graphics& g)
 {
+    auto colour = findColour(audium::secondaryBackgroundColourId).brighter();
     if (externalDragAndDrop)
     {
-        g.fillAll (findColour(audium::secondaryBackgroundColourId).brighter());
+        g.fillAll (colour);
     }
+    
+    if (audioGroup->isSelected())
+    {
+        g.fillAll (colour.withAlpha(0.3f));
+    }
+    
 }
 
 void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
     if ( !filenames.isEmpty())
     {
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup);
+                
         auto transportPosition = zoomHandler->xToSeconds(x);
         auto channelPosition = 0;
         
@@ -69,27 +67,35 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
         {
             // check if we overlap with an existing resource (snap position to nearest resource)
             const auto resources = audioGroup->getAudioResources();
+            std::shared_ptr<AudioSubGroup> subGroup = nullptr;
             for (auto resource : resources)
             {
-                if (resource->containsAbsolutePosition(transportPosition))
+                if (resource->containsAbsolutePosition(transportPosition, audium::seconds))
                 {
-                    transportPosition = resource->getTransportPositionSeconds();
+                    transportPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
                     // position is below
                     channelPosition = audioGroup->getNumChannels();
+                    subGroup = resource->getAudioSubGroup();
                     break;
                 }
             }
+            if (subGroup == nullptr)
+            {
+                subGroup = audioGroup->createNewAudioSubGroup(transportPosition);
+            }
             
             auto url = URL (File (filenames[i]));
-            auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, audioGroup, channelPosition, transportPosition);
-            if (audioResource != nullptr)
-            {
-                audiumEngine->getAudioRegionContainer()->copyRegionsForResource(audioResource);
-            }
+            auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url,
+                                                                                             audioGroup,
+                                                                                             subGroup,
+                                                                                             channelPosition);
         }
         
-        // will update content
-        refreshComponent(audioGroup, true);
+        // Undo: store new state
+        action->storeNewState();
+        audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
+        audiumEngine->getUndoManager()->beginNewTransaction();
+        
     }
     
     externalDragAndDrop = false;
@@ -103,30 +109,10 @@ void GroupBaseComponent::fileDragEnter (const juce::StringArray& files, int x, i
     regionSelector->setEnabled(false);
     repaint();
 }
+
 void GroupBaseComponent::fileDragExit (const juce::StringArray& files)
 {
     externalDragAndDrop = false;
     regionSelector->setEnabled(true);
     repaint();
-}
-
-void GroupBaseComponent::mouseDown (const MouseEvent& e)
-{
-    getParentComponent()->mouseDown(e);
-    mouseDrag (e);
-}
-
-void GroupBaseComponent::mouseDrag (const MouseEvent& e)
-{
-    getParentComponent()->mouseDrag(e);
-}
-
-void GroupBaseComponent::mouseUp (const MouseEvent& e)
-{
-    getParentComponent()->mouseUp(e);
-}
-
-void GroupBaseComponent::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
-{
-    getParentComponent()->mouseWheelMove(e, wheel);
 }

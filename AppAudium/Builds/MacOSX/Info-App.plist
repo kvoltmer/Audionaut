@@ -6,21 +6,21 @@
     <key>CFBundleExecutable</key>
     <string>${EXECUTABLE_NAME}</string>
     <key>CFBundleIconFile</key>
-    <string></string>
+    <string>Icon.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>com.yourcompany.AppAudium</string>
+    <string>com.voltmer-systems.audionatomist</string>
     <key>CFBundleName</key>
-    <string>AppAudium</string>
+    <string>Audionatomist</string>
     <key>CFBundleDisplayName</key>
-    <string>AppAudium</string>
+    <string>Audionatomist</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>0.9.1</string>
     <key>CFBundleVersion</key>
-    <string>1.0.0</string>
+    <string>0.9.1</string>
     <key>NSHumanReadableCopyright</key>
     <string></string>
     <key>NSHighResolutionCapable</key>

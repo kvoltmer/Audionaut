@@ -40,6 +40,9 @@ public:
     bool invokeAutoEdit(const AutoEditConfig config);
     void applyAutoEditResult(double sampleRate);
     
+    bool createRegionsFromSegFile(std::string segFileName, double sampleRate);
+    bool createPlayListFromSongFile(std::string songFileName);
+    
     static const juce::String getTempDirectory();
     
 private:

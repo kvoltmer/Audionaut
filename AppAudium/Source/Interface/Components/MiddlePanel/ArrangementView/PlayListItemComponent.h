@@ -11,20 +11,20 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Interface/Widgets/audium_ListBox.h"
+#include "Interface/Models/PlayListItemArrangementModel.h"
 
 class AudioGroup;
-class AudioRegion;
 class PlayListItem;
 class ZoomHandler;
-class AudioRegionView;
 class RegionSelector;
 class AudiumEngine;
 
 //==============================================================================
 /*
-Display all AudioRegionViews within a AudioGroup
+Display a PlayListItem within a AudioGroup
 */
-class PlayListItemComponent  : public juce::Component
+class PlayListItemComponent  : public juce::Component, public juce::ChangeListener
 {
 public:
     PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
@@ -37,6 +37,8 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    void changeListenerCallback (ChangeBroadcaster* source) override;
+    
     std::shared_ptr<PlayListItem> getPlayListItem() const { return playListItem; }
     
 private:
@@ -44,8 +46,9 @@ private:
     std::shared_ptr<AudioGroup>     audioGroup;
     std::shared_ptr<PlayListItem>   playListItem;
     std::shared_ptr<RegionSelector> regionSelector;
-    
-    std::vector<std::shared_ptr<AudioRegionView>> children;
+        
+    std::unique_ptr<audium::ListBox> playListItemListBox;
+    std::unique_ptr<PlayListItemArrangementModel> playListItemArrangementModel;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)
 };

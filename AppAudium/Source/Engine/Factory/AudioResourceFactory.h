@@ -14,7 +14,7 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Engine/AudioResource.h"
-#include "Engine/AudioGroup.h"
+#include "Engine/Group/AudioGroup.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/AudiumTransportSource.h"
 
@@ -26,39 +26,59 @@ public:
     static std::shared_ptr<AudioResource> createAudioResource(juce::URL url,
                                                               AudioResourceContainer& audioResourceContainer,
                                                               std::shared_ptr<AudioGroup> group,
+                                                              std::shared_ptr<AudioSubGroup> subGroup,
                                                               juce::AudioFormatManager& formatManager,
                                                               juce::TimeSliceThread* readAheadThread,
                                                               int channelPosition,
-                                                              double transportPosition,
                                                               int resourceId)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
-        
+     
         if (auto inputSource = makeAudioInputSource (url))
         {
             if (auto stream = rawToUniquePtr (inputSource->createInputStream()))
             {
-                if (auto reader = rawToUniquePtr (formatManager.createReaderFor (std::move (stream))))
+                auto audioFormat = formatManager.findFormatForFileExtension(url.getLocalFile().getFileExtension());
+                if (audioFormat != nullptr)
                 {
-                    auto audioFormatReaderSource = std::make_unique<juce::AudioFormatReaderSource> (reader.release(), true);
+                    AudioFormatReader* reader = audioFormat->createMemoryMappedReader(url.getLocalFile());
+                    auto readAheadBufferSize = 48000;
+                    if (reader == nullptr)
+                    {
+                        reader = audioFormat->createReaderFor(stream.release(), false);
+                    }
+                    else
+                    {
+                        auto memReader = dynamic_cast<MemoryMappedAudioFormatReader*>(reader);
+                        if (memReader->mapEntireFile())
+                        {
+                            readAheadThread = nullptr;
+                            readAheadBufferSize = 0;
+                        }
+                    }
                     
-                    auto transportSource = group->getTransportSourceContainer()->createNewTransportSource();
-                    transportSource->setSource (audioFormatReaderSource.get(),
-                                                32768,                   // tells it to buffer this many samples ahead
-                                                readAheadThread,         // this is the background thread to use for reading-ahead
-                                                audioFormatReaderSource->getAudioFormatReader()->sampleRate);     // allows for sample rate correction
-                    
-                    audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
-                                                                                     group,
-                                                                                     url,
-                                                                                     transportSource,
-                                                                                     std::move(audioFormatReaderSource),
-                                                                                     channelPosition,
-                                                                                     resourceId));
-                    audioResource->setTransportPosition(transportPosition, false);
+                    if (reader != nullptr)
+                    {
+                        auto audioFormatReaderSource    = std::shared_ptr<juce::AudioFormatReaderSource> (new juce::AudioFormatReaderSource(reader, true));
+                        auto transportSource            = group->getTransportSourceContainer()->createNewTransportSource();
+                        transportSource->setSource (audioFormatReaderSource.get(),
+                                                    readAheadBufferSize,
+                                                    readAheadThread,
+                                                    reader->sampleRate);
+                        
+                        audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
+                                                                                         group,
+                                                                                         subGroup,
+                                                                                         url,
+                                                                                         transportSource,
+                                                                                         audioFormatReaderSource,
+                                                                                         channelPosition,
+                                                                                         resourceId));
+                    }
                 }
             }
         }
+        
         jassert(audioResource != nullptr);
         return audioResource;
     }

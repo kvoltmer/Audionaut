@@ -1,9 +1,14 @@
 
 #include <JuceHeader.h>
 #include "AudioGroupListBox.h"
-#include "Engine/AudioGroup.h"
-#include "Engine/AudioGroupContainer.h"
+
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/AudioResourceContainer.h"
+#include "Engine/Undo/UndoableContainerAction.h"
+
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
 
@@ -22,32 +27,63 @@ AudioGroupListBox::~AudioGroupListBox()
 {
 }
 
+void AudioGroupListBox::setNewGroupColour(std::shared_ptr<AudioGroup> audioGroup)
+{
+    if (audioGroup->getColour() == juce::Colours::pink)
+    {
+        auto newColour = audium::getNewWaveFormColour();
+        
+        auto numGroups = audiumEngine->getAudioGroupContainer()->getNumItems();
+        for (auto i = 0; i < numGroups; i++)
+        {
+            if(newColour == audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getColour())
+            {
+                newColour = audium::getNewWaveFormColour();
+            }
+        }
+        
+        audioGroup->setColour(newColour);
+    }
+}
+
 void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
 {
     if ( !filenames.isEmpty())
     {
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(audiumEngine->getAudioGroupContainer());
         
-        jassert(File (filenames[0]).existsAsFile());
-        auto name = File (filenames[0]).getFileNameWithoutExtension().toStdString();
-        
+        juce::String name;
         // create NEW GROUP
         auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
                                                                                  *audiumEngine->getAudioRegionContainer(),
                                                                                  name);
+        setNewGroupColour(group);
+        auto subGroup = group->createNewAudioSubGroup();
+
 
         auto transportPosition = zoomHandler->xToSeconds(mouseX);
         for (auto i = 0; i < filenames.size(); i++)
         {
             auto channelPosition = group->getNumChannels();
             auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url, *audiumEngine, group, channelPosition, transportPosition);
+            audiumEngine->getAudioResourceContainer()->addAudioResource(url,
+                                                                        group,
+                                                                        subGroup,
+                                                                        channelPosition,
+                                                                        transportPosition);
         }
         
         // disabled for now
         //audiumEngine->createDefaultRegionAndPlayList(group);
+        
+        // Undo: store new state
+        action->storeNewState();
+        audiumEngine->getUndoManager()->perform(action.release(), "Create Region(s)");
+        audiumEngine->getUndoManager()->beginNewTransaction();
     }
     
-    updateContent();
+    //updateContent();
     
     setColour(TableListBox::backgroundColourId, findColour(audium::secondaryBackgroundColourId));
     repaint();

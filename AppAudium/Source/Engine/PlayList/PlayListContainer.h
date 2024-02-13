@@ -15,6 +15,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudioRegion.h"
+#include "Engine/Streamable.h"
 
 class PlayListItem;
 class AudioRegionContainer;
@@ -42,7 +43,9 @@ void MoveItemBefore(C& container, size_t currentIndex, size_t indexOfItemToPlace
     }
 }
 
-class PlayListContainer : public juce::ActionBroadcaster {
+class PlayListContainer :   public audium::Streamable,
+                            public juce::ActionBroadcaster
+{
     
 public:
     PlayListContainer(const AudioRegionContainer &audioRegionContainer) :
@@ -60,8 +63,9 @@ public:
     const std::vector<std::shared_ptr<PlayListItem>> getPlayListItems() const;
     int getNumItems(std::shared_ptr<AudioGroup> group = nullptr) const;
     
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream) override;
+    int getSizeInUnits() override;
     
     void cleanup() { playListItems.clear(); }
 
@@ -70,10 +74,10 @@ public:
     
     AudioRegion::RegionData getPlayListDataAtIndex(int index) const;
     
-    const PlayListItem* itemAtAbsolutePosition(double position) const;
-    const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range) const;
+    const PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
+    const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
-    double getAbsolueStartTime(const PlayListItem* playListItem) const;
+    double getAbsolueStartTime(const PlayListItem* playListItem, audium::TimeContextType context) const;
     
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
     
@@ -82,8 +86,13 @@ public:
     void selectPlayListItem(std::shared_ptr<PlayListItem> item, bool bSelected);
     
     void deselectAll();
+    void deleteSelectedItems();
+    juce::SparseSet<int> getSelectedRows() const;
+    void setSelectedRows(juce::SparseSet<int>& selectedRows);
     
-    double getTotalLength() const;
+    double getTotalLength(audium::TimeContextType context) const;
+    
+    const AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
     
 private:
     

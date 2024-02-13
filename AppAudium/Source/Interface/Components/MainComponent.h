@@ -54,9 +54,13 @@ public:
     //[UserMethods]     -- You can add your own custom methods in this section.
     void actionListenerCallback (const String& message) override;
     void updateUI();
+    void rebuildUI();
 
     void zoomIn();
     void zoomOut();
+
+    void pageLeft();
+    void pageRight();
 
     void toggleEditArrangementComponent();
     //[/UserMethods]

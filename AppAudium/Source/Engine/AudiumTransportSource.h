@@ -12,10 +12,13 @@
 #include <JuceHeader.h>
 
 #include "Engine/PlayList/SampleTimer.h"
+#include "Engine/Playback/audium_AudioTransportSource.h"
+
+#define MAX_AUDIO_FILE_CHANNELS 64
 
 class AudioGroup;
 
-class AudiumTransportSource : public juce::AudioTransportSource
+class AudiumTransportSource : public audium::AudioTransportSource
 {
 public:
     AudiumTransportSource() = default;
@@ -52,6 +55,12 @@ public:
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
     {
+        if (getBufferingSource() != nullptr &&
+            getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false)
+        {
+            std::cout << "waitForNextAudioBlockReady" << std::endl;
+        }
+        
         if (scheduledSample == 0)
         {
             tBase::getNextAudioBlock(info);
@@ -83,16 +92,25 @@ public:
             tBase::getNextAudioBlock(infoPart2);
         }
         
-        outputLevel = info.buffer->getMagnitude(0, info.startSample, info.numSamples);
+        for (auto i = 0; i < info.buffer->getNumChannels(); i++)
+        {
+            outputLevel[i] = info.buffer->getMagnitude(i, info.startSample, info.numSamples);
+        }
     }
     
-    float getOutputLevel() const { return outputLevel.load(); }
+    float getOutputLevel(int channel) const
+    {
+        if (channel < MAX_AUDIO_FILE_CHANNELS)
+            return outputLevel[channel].load();
+        
+        return 0.f;
+    }
     
 private:
     
-    typedef juce::AudioTransportSource tBase;
+    typedef audium::AudioTransportSource tBase;
     
-    std::atomic<float> outputLevel;
+    std::atomic<float> outputLevel[MAX_AUDIO_FILE_CHANNELS];
     
     // the sample position where the position change should happen
     std::atomic<int> scheduledSample = 0;

@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="gxtGxr" name="AppAudium" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include">
-  <MAINGROUP id="HQG80L" name="AppAudium">
+<JUCERPROJECT id="gxtGxr" name="Audionatomist" projectType="guiapp" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include"
+              bundleIdentifier="com.voltmer-systems.audionatomist" version="0.9.1"
+              companyName="Voltmer Praezlich GbR">
+  <MAINGROUP id="HQG80L" name="Audionatomist">
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
       <FILE id="pY6hrq" name="README.txt" compile="0" resource="0" file="Catch2Tests/README.txt"/>
       <FILE id="A4Cl9P" name="CMakeLists.txt" compile="0" resource="0" file="Catch2Tests/CMakeLists.txt"/>
@@ -33,8 +35,14 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
-        <GROUP id="{56EAD069-5D2D-A940-D232-5DA7E979C834}" name="Provider">
-          <FILE id="mXYpiA" name="TempoProvider.h" compile="0" resource="0" file="Source/Engine/Provider/TempoProvider.h"/>
+        <FILE id="f3Gy4c" name="Streamable.h" compile="0" resource="0" file="Source/Engine/Streamable.h"/>
+        <FILE id="E21RCr" name="TimeContext.h" compile="0" resource="0" file="Source/Engine/TimeContext.h"/>
+        <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
+          <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
+          <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
+        </GROUP>
+        <GROUP id="{44EAE852-D94A-E010-D086-40CC86FE8C48}" name="Channel">
+          <FILE id="DQADtm" name="AudioChannel.h" compile="0" resource="0" file="Source/Engine/Channel/AudioChannel.h"/>
         </GROUP>
         <GROUP id="{38829D96-12DD-C636-0C91-D4606DFE0C72}" name="Factory">
           <FILE id="jEBWMg" name="AudioGroupFactory.h" compile="0" resource="0"
@@ -45,6 +53,19 @@
                 file="Source/Engine/Factory/AudiumFactory.cpp"/>
           <FILE id="ErnMCa" name="AudiumFactory.h" compile="0" resource="0" file="Source/Engine/Factory/AudiumFactory.h"/>
         </GROUP>
+        <GROUP id="{AE3695CD-F0F3-4924-68C1-084658B86D39}" name="Group">
+          <FILE id="yXlj3o" name="AudioClip.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioClip.cpp"/>
+          <FILE id="YWQQTo" name="AudioClip.h" compile="0" resource="0" file="Source/Engine/Group/AudioClip.h"/>
+          <FILE id="S6GFZG" name="AudioGroup.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioGroup.cpp"/>
+          <FILE id="q95WEA" name="AudioGroup.h" compile="0" resource="0" file="Source/Engine/Group/AudioGroup.h"/>
+          <FILE id="G5bPkP" name="AudioGroupContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioGroupContainer.cpp"/>
+          <FILE id="uY1Ao1" name="AudioGroupContainer.h" compile="0" resource="0"
+                file="Source/Engine/Group/AudioGroupContainer.h"/>
+          <FILE id="zWymx0" name="AudioSubGroup.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioSubGroup.cpp"/>
+          <FILE id="xDIL18" name="AudioSubGroup.h" compile="0" resource="0" file="Source/Engine/Group/AudioSubGroup.h"/>
+        </GROUP>
         <GROUP id="{72F2B5A0-7A8C-3648-A73C-97D66220C0AE}" name="Link">
           <FILE id="el7wlW" name="LinkAudioDevice.cpp" compile="1" resource="0"
                 file="Source/Engine/Link/LinkAudioDevice.cpp"/>
@@ -53,16 +74,15 @@
           <FILE id="CplGKz" name="LinkEngine.cpp" compile="1" resource="0" file="Source/Engine/Link/LinkEngine.cpp"/>
           <FILE id="Rf1W4c" name="LinkEngine.hpp" compile="0" resource="0" file="Source/Engine/Link/LinkEngine.hpp"/>
         </GROUP>
-        <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
-              file="Source/Engine/AudiumEngine.cpp"/>
-        <FILE id="Oik4J0" name="AudiumEngine.h" compile="0" resource="0" file="Source/Engine/AudiumEngine.h"/>
-        <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
-          <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
-          <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
+        <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback">
+          <FILE id="jZotN2" name="audium_AudioTransportSource.cpp" compile="1"
+                resource="0" file="Source/Engine/Playback/audium_AudioTransportSource.cpp"/>
+          <FILE id="NLF0xK" name="audium_AudioTransportSource.h" compile="0"
+                resource="0" file="Source/Engine/Playback/audium_AudioTransportSource.h"/>
         </GROUP>
-        <FILE id="ELbTXp" name="ActionMessages.h" compile="0" resource="0"
-              file="Source/Engine/ActionMessages.h"/>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
+          <FILE id="iREjhA" name="PositionableBase.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/PositionableBase.h"/>
           <FILE id="UTFjED" name="SampleTimer.h" compile="0" resource="0" file="Source/Engine/PlayList/SampleTimer.h"/>
           <FILE id="kNVT0n" name="PlayListContainer.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListContainer.cpp"/>
@@ -76,6 +96,18 @@
           <FILE id="ge1APd" name="PlayListScheduler.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListScheduler.h"/>
         </GROUP>
+        <GROUP id="{56EAD069-5D2D-A940-D232-5DA7E979C834}" name="Provider">
+          <FILE id="mXYpiA" name="TempoProvider.h" compile="0" resource="0" file="Source/Engine/Provider/TempoProvider.h"/>
+        </GROUP>
+        <GROUP id="{71D24ABD-A319-5DE9-E24C-2AE51F6F1A35}" name="Undo">
+          <FILE id="S8P8ar" name="UndoableContainerAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableContainerAction.h"/>
+        </GROUP>
+        <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
+              file="Source/Engine/AudiumEngine.cpp"/>
+        <FILE id="Oik4J0" name="AudiumEngine.h" compile="0" resource="0" file="Source/Engine/AudiumEngine.h"/>
+        <FILE id="ELbTXp" name="ActionMessages.h" compile="0" resource="0"
+              file="Source/Engine/ActionMessages.h"/>
         <FILE id="k90e0E" name="AudiumTransportSource.h" compile="0" resource="0"
               file="Source/Engine/AudiumTransportSource.h"/>
         <FILE id="hC6yQM" name="TransportSourceContainer.cpp" compile="1" resource="0"
@@ -88,12 +120,6 @@
               file="Source/Engine/AudioRegionContainer.cpp"/>
         <FILE id="vB01Hj" name="AudioRegionContainer.h" compile="0" resource="0"
               file="Source/Engine/AudioRegionContainer.h"/>
-        <FILE id="yLDGCs" name="AudioGroup.cpp" compile="1" resource="0" file="Source/Engine/AudioGroup.cpp"/>
-        <FILE id="XDfgpU" name="AudioGroup.h" compile="0" resource="0" file="Source/Engine/AudioGroup.h"/>
-        <FILE id="p1AUux" name="AudioGroupContainer.cpp" compile="1" resource="0"
-              file="Source/Engine/AudioGroupContainer.cpp"/>
-        <FILE id="H3pwOF" name="AudioGroupContainer.h" compile="0" resource="0"
-              file="Source/Engine/AudioGroupContainer.h"/>
         <FILE id="fjWrqk" name="AudioResource.cpp" compile="1" resource="0"
               file="Source/Engine/AudioResource.cpp"/>
         <FILE id="IvbeUH" name="AudioResource.h" compile="0" resource="0" file="Source/Engine/AudioResource.h"/>
@@ -133,12 +159,6 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
-          <GROUP id="{03CC010F-0C39-7C47-7C64-039A8E0AD17F}" name="HeaderPanel">
-            <FILE id="DJ2fXt" name="HeaderComponent.cpp" compile="1" resource="0"
-                  file="Source/Interface/Components/HeaderPanel/HeaderComponent.cpp"/>
-            <FILE id="QXxRcH" name="HeaderComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
-          </GROUP>
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
             <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
@@ -147,6 +167,10 @@
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.cpp"/>
               <FILE id="RU4eS4" name="ChannelComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"/>
+              <FILE id="pJGRxg" name="ChannelGroupComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupComponent.h"/>
+              <FILE id="Kr5S34" name="ChannelGroupHeaderComponent.h" compile="0"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h"/>
               <FILE id="ip9GrQ" name="ChannelsComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"/>
               <FILE id="kb3Lop" name="ChannelsHeaderComponent.h" compile="0" resource="0"
@@ -158,6 +182,8 @@
                     file="Source/Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"/>
               <FILE id="CYmTQU" name="RegionEditComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/EditView/RegionEditComponent.h"/>
+              <FILE id="s1QcPt" name="SubGroupListBox.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/EditView/SubGroupListBox.h"/>
             </GROUP>
             <GROUP id="{E58A07C4-B58F-25CE-C91A-E093F52645A1}" name="ArrangementView">
               <FILE id="peKTnY" name="ArrangementComponent.h" compile="0" resource="0"
@@ -177,6 +203,12 @@
                   file="Source/Interface/Components/MiddlePanel/GroupBaseComponent.cpp"/>
             <FILE id="RMeAIj" name="GroupBaseComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/GroupBaseComponent.h"/>
+          </GROUP>
+          <GROUP id="{03CC010F-0C39-7C47-7C64-039A8E0AD17F}" name="HeaderPanel">
+            <FILE id="DJ2fXt" name="HeaderComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/HeaderPanel/HeaderComponent.cpp"/>
+            <FILE id="QXxRcH" name="HeaderComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
           </GROUP>
           <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
             <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
@@ -199,8 +231,16 @@
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
-          <FILE id="jFFXgb" name="AudioChannelsListBoxModel.h" compile="0" resource="0"
-                file="Source/Interface/Models/AudioChannelsListBoxModel.h"/>
+          <FILE id="oZwTNT" name="ChannelGroupListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/ChannelGroupListBoxModel.h"/>
+          <FILE id="zizRO1" name="ChannelSubGroupListBoxModel.h" compile="0"
+                resource="0" file="Source/Interface/Models/ChannelSubGroupListBoxModel.h"/>
+          <FILE id="cpmXGN" name="GroupListBoxModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/GroupListBoxModel.cpp"/>
+          <FILE id="eYSeuv" name="GroupListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/GroupListBoxModel.h"/>
+          <FILE id="JhbMbX" name="SubGroupListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/SubGroupListBoxModel.h"/>
           <FILE id="eE3Tt0" name="PlayListTableListBoxItem.cpp" compile="1" resource="0"
                 file="Source/Interface/Models/PlayListTableListBoxItem.cpp"/>
           <FILE id="gXfKLs" name="PlayListTableListBoxItem.h" compile="0" resource="0"
@@ -211,12 +251,17 @@
                 file="Source/Interface/Models/RegionTableListBoxModel.cpp"/>
           <FILE id="XJwywE" name="RegionTableListBoxModel.h" compile="0" resource="0"
                 file="Source/Interface/Models/RegionTableListBoxModel.h"/>
-          <FILE id="BsvGs7" name="AudioGroupListBoxModel.cpp" compile="1" resource="0"
-                file="Source/Interface/Models/AudioGroupListBoxModel.cpp"/>
-          <FILE id="lIpNfO" name="AudioGroupListBoxModel.h" compile="0" resource="0"
-                file="Source/Interface/Models/AudioGroupListBoxModel.h"/>
+          <FILE id="dd0598" name="PlayListItemArrangementModel.h" compile="0"
+                resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="c3NpvE" name="AudiumLabel.h" compile="0" resource="0" file="Source/Interface/Controls/AudiumLabel.h"/>
+          <FILE id="pX9JqX" name="DragZoomControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/DragZoomControl.h"/>
+          <FILE id="tIrkcV" name="PlayListItemDraggerControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PlayListItemDraggerControl.h"/>
+          <FILE id="N579q1" name="SubGroupDraggerControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/SubGroupDraggerControl.h"/>
           <FILE id="s7vYjW" name="DraggerControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/DraggerControl.h"/>
           <FILE id="CIIORu" name="RegionEditControl.cpp" compile="1" resource="0"
@@ -246,6 +291,8 @@
                 file="Source/Interface/Controls/AudioGroupListBox.h"/>
         </GROUP>
         <GROUP id="{251C6FB2-3F49-498C-8DDC-157FCCAC8565}" name="Views">
+          <FILE id="Fx8wUZ" name="ArrangementOverview.h" compile="0" resource="0"
+                file="Source/Interface/Views/ArrangementOverview.h"/>
           <FILE id="nZmqga" name="WaveFormViewBase.h" compile="0" resource="0"
                 file="Source/Interface/Views/WaveFormViewBase.h"/>
           <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"
@@ -258,16 +305,22 @@
                 file="Source/Interface/Views/AudioResourceView.h"/>
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
+        <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">
+          <FILE id="dicuzh" name="music-512.png" compile="0" resource="1" file="Resources/music-512.png"/>
+          <FILE id="Ezvz9P" name="music-1024.png" compile="0" resource="1" file="Resources/music-1024.png"/>
+          <FILE id="zKjXO3" name="zoomin.svg" compile="0" resource="1" file="Resources/zoomin.svg"/>
+        </GROUP>
       </GROUP>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
-               extraDefs="LINK_PLATFORM_MACOSX=1">
+               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
+               smallIcon="dicuzh" bigIcon="Ezvz9P">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="AppAudium" headerPath="$(SRCROOT)/../../Source"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="AppAudium" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionatomist" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Audionatomist" headerPath="$(SRCROOT)/../../Source"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>

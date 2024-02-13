@@ -15,7 +15,8 @@
 class ZoomHandler;
 class AudiumEngine;
 
-class RegionSelector : public juce::Component
+class RegionSelector :  public juce::Component,
+                        public juce::KeyListener
 {
         
 public:
@@ -35,11 +36,14 @@ public:
         audiumEngine(audiumEngine)
     {
         owner->addMouseListener (this, true);
+        addKeyListener(this);
+        setWantsKeyboardFocus(true);
     }
     
     ~RegionSelector() override
     {
         owner->removeMouseListener (this);
+        removeKeyListener(this);
     }
     
     void paint (Graphics& g) override;
@@ -51,6 +55,11 @@ public:
     void mouseDrag (const juce::MouseEvent& e) override;
 
     void mouseUp (const juce::MouseEvent&) override;
+    
+    void mouseWheelMove (const MouseEvent&, const MouseWheelDetails&) override;
+    
+    bool keyPressed (const KeyPress& key,
+                     Component* originatingComponent) override;
     
     void updateMouseZone (const juce::MouseEvent& e);
 

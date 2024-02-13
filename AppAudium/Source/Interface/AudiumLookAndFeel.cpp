@@ -67,6 +67,9 @@ void AudiumLookAndFeel::setupColours()
     setColour(TableHeaderComponent::backgroundColourId, findColour(backgroundColourId));
     setColour(TableHeaderComponent::textColourId, findColour(audium::defaultTextColourId));
     
+    // Combo Box
+    setColour(ComboBox::backgroundColourId, Colour(Colours::grey).withAlpha(0.5f));
+    
 }
 
 void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
@@ -125,23 +128,23 @@ juce::Font AudiumLookAndFeel::getComboBoxFont (juce::ComboBox& box)
 void AudiumLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height, bool,
                                    int, int, int, int, juce::ComboBox& box)
 {
-    auto cornerSize = box.findParentComponentOfClass<ChoicePropertyComponent>() != nullptr ? 0.0f : 3.0f;
     Rectangle<int> boxBounds (0, 0, width, height);
+    
+    if (box.isMouseOver(true))
+    {
+        g.setColour (box.findColour (ComboBox::backgroundColourId));
+        g.fillEllipse(0, 0, height, height);
+    }
+    
+    // arrow zone on the left
+    Rectangle<int> arrowZone (0, 0, height, height);
+    Path path;
+    path.startNewSubPath ((float) arrowZone.getX() + 3.0f, (float) arrowZone.getCentreY() - 2.0f);
+    path.lineTo ((float) arrowZone.getCentreX(), (float) arrowZone.getCentreY() + 3.0f);
+    path.lineTo ((float) arrowZone.getRight() - 3.0f, (float) arrowZone.getCentreY() - 2.0f);
 
-    g.setColour (box.findColour (ComboBox::backgroundColourId));
-    g.fillRoundedRectangle (boxBounds.toFloat(), cornerSize);
-
-    g.setColour (box.findColour (ComboBox::outlineColourId));
-    g.drawRoundedRectangle (boxBounds.toFloat().reduced (0.5f, 0.5f), cornerSize, 1.0f);
-
-//    Rectangle<int> arrowZone (width - 30, 0, 20, height);
-//    Path path;
-//    path.startNewSubPath ((float) arrowZone.getX() + 3.0f, (float) arrowZone.getCentreY() - 2.0f);
-//    path.lineTo ((float) arrowZone.getCentreX(), (float) arrowZone.getCentreY() + 3.0f);
-//    path.lineTo ((float) arrowZone.getRight() - 3.0f, (float) arrowZone.getCentreY() - 2.0f);
-//
-//    g.setColour (box.findColour (ComboBox::arrowColourId).withAlpha ((box.isEnabled() ? 0.9f : 0.2f)));
-//    g.strokePath (path, PathStrokeType (2.0f));
+    g.setColour (box.findColour (ComboBox::arrowColourId).withAlpha ((box.isEnabled() ? 0.9f : 0.2f)));
+    g.strokePath (path, PathStrokeType (1.0f));
 }
 
 
@@ -154,3 +157,9 @@ void AudiumLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& 
     label.setFont (getComboBoxFont (box));
 }
 
+Label * AudiumLookAndFeel::createComboBoxTextBox (ComboBox & combo)
+{
+    Label * label = new Label (String(), String());
+    label->setInterceptsMouseClicks (false, false);
+    return label;
+}

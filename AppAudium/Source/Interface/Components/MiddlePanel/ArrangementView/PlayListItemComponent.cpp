@@ -10,12 +10,11 @@
 
 #include <JuceHeader.h>
 #include "PlayListItemComponent.h"
-#include "Engine/AudioGroup.h"
-#include "Engine/AudioResourceContainer.h"
-#include "Interface/Views/AudioRegionView.h"
-#include "Engine/PlayList/PlayListContainer.h"
+
 #include "Engine/PlayList/PlayListItem.h"
+
 #include "Interface/ColourIds.h"
+#include "Interface/Controls/PlayListItemDraggerControl.h"
 
 //==============================================================================
 PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
@@ -28,26 +27,40 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     playListItem(playListItem),
     regionSelector(regionSelector)
 {
-    // this component doesn't handle mouse events
-    setInterceptsMouseClicks(false, false);
+    
+    playListItemListBox.reset(new audium::ListBox());
+    addAndMakeVisible(playListItemListBox.get());
+    playListItemArrangementModel.reset(new PlayListItemArrangementModel(*playListItemListBox.get(),
+                                                                        audioGroup,
+                                                                        playListItem,
+                                                                        audiumEngine,
+                                                                        zoomHandler,
+                                                                        regionSelector));
 
-    // create views
-    auto audioResources = audioGroup->getAudioResources();
-    for (auto audioResource : audioResources)
-    {
-        auto view = std::shared_ptr<AudioRegionView>(new AudioRegionView(audiumEngine,
-                                                                         audioResource,
-                                                                         zoomHandler,
-                                                                         playListItem->getRegion(),
-                                                                         audioGroup->getColour(),
-                                                                         regionSelector));
-        addAndMakeVisible(view.get());
-        children.push_back(view);
-    }
+    playListItemListBox->setModel(playListItemArrangementModel.get());
+    
+    // create dragger as header of ListBox
+    auto dragger = std::unique_ptr<PlayListItemDraggerControl>(new PlayListItemDraggerControl(  this,
+                                                                                                audiumEngine,
+                                                                                                playListItem,
+                                                                                                zoomHandler,
+                                                                                                audioGroup->getColour(),
+                                                                                                regionSelector));
+    dragger->addChangeListener(this);
+    playListItemListBox->setHeaderComponent(std::move(dragger));
+
+    
+    playListItemListBox->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
+    playListItemListBox->setOutlineThickness(0);
+    // transparent backgroud:
+    playListItemListBox->setColour(audium::ListBox::backgroundColourId, juce::Colours::transparentBlack);
+    
+    
 }
 
 PlayListItemComponent::~PlayListItemComponent()
 {
+    playListItemListBox->setModel(nullptr);
 }
 
 void PlayListItemComponent::paint (juce::Graphics& g)
@@ -57,31 +70,20 @@ void PlayListItemComponent::paint (juce::Graphics& g)
         g.setColour (audium::getComplementaryColour(audioGroup->getColour()).darker());
         g.fillAll();
     }
-    else
-    {
-        g.setColour (juce::Colours::black.withAlpha(0.50f));
-        g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
-    }
+    
+    
+    g.setColour (audioGroup->getColour().withAlpha(0.50f));
+    g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 1.0f);
+    
     
 }
 
 void PlayListItemComponent::resized()
 {
-    int top = 0;
-    int count = 0;
-    auto audioResources = audioGroup->getAudioResources();
-    for (auto audioResource : audioResources)
-    {
-        auto height = audioResource->getHeight();
-        if (count < children.size())
-        {
-            auto child = children[count];
-            if (child != nullptr)
-            {
-                child->setBounds(0, top, getWidth(), audioResource->getHeight());
-            }
-            count++;
-        }
-        top += height;
-    }
+    playListItemListBox->setBounds(getLocalBounds());
+}
+
+void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)
+{
+    playListItemListBox->updateContent();
 }

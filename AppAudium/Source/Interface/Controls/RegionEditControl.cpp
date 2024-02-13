@@ -14,6 +14,7 @@
 #include "Engine/AudioRegionContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/RegionSelector.h"
@@ -22,7 +23,7 @@
 void RegionEditControl::paintFileNameLabel (juce::Graphics& g)
 {
     g.setFont (12.0f);
-    const auto name = audioRegion->name;
+    const auto name = audioRegion->getName();
     juce::Rectangle<int> bonds(5,
                          5,
                          g.getCurrentFont().getStringWidth(name),
@@ -63,12 +64,12 @@ void RegionEditControl::mouseDown (const juce::MouseEvent& e)
     // std::cout << "RegionEditControl::mouseDown" << std::endl;
     regionSelector->setEnabled(false);
     
-    if (not audioRegion->isSelected())
-    {
+    if(!e.mods.isCommandDown())
         audiumEngine->getAudioRegionContainer()->deselectAll();
-        audioRegion->setSelected(true);
-        audiumEngine->getAudioRegionContainer()->sendActionMessage(regionSelectedAction);
-    }
+    
+    audioRegion->setSelected(e.mods.isCommandDown() ? !audioRegion->isSelected() : true);
+    audiumEngine->getAudioRegionContainer()->sendActionMessage(regionSelectedAction);
+
     currentDragMode = getDragMode(e.getPosition().getX());
     
     originalBounds = getBounds();
@@ -106,20 +107,24 @@ void RegionEditControl::mouseDrag (const juce::MouseEvent& e)
 void RegionEditControl::mouseUp (const juce::MouseEvent& e)
 {
     regionSelector->setEnabled(true);
-    
-    
-    Range<double> range(getBounds().getX(), getBounds().getRight());
-    
-    // note: add audio resource start
-    auto rangeInSeconds = zoomHandler->xToSeconds(range) + audioRegion->getAudioResourceStartInSeconds();
-    
-    // set value in the engine
-    audioRegion->validateData(rangeInSeconds);
-    audioRegion->setRegionDataInSeconds(rangeInSeconds);
-    
-    updateFromEngine();
-    
-    audiumEngine->getAudioRegionContainer()->sendActionMessage (regionModifiedAction);
+    if (e.getPosition() != e.getMouseDownPosition())
+    {
+        
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
+        
+        // note: add audio resource start
+        auto rangeInSeconds =   zoomHandler->xToSeconds(getBounds().toDouble().getHorizontalRange()) +
+                                audioRegion->getAudioResourceStartInSeconds();
+        audioRegion->validateData(rangeInSeconds);
+        audioRegion->setRegionData(rangeInSeconds, audium::seconds);
+        
+        // Undo: store new state
+        action->storeNewState();
+        audiumEngine->getUndoManager()->perform(action.release(), "Move Region");
+        audiumEngine->getUndoManager()->beginNewTransaction();
+        
+    }
 }
 
 void RegionEditControl::mouseMove (const juce::MouseEvent& e)
@@ -127,12 +132,18 @@ void RegionEditControl::mouseMove (const juce::MouseEvent& e)
     updateMouseZone (e);
 }
 
-void RegionEditControl::updateFromEngine()
+void RegionEditControl::updateFromEngine(std::shared_ptr<AudioRegion> newRegion)
 {
+    if (newRegion != nullptr &&
+        newRegion != audioRegion)
+    {
+        audioRegion = newRegion;
+        std::cout << "RegionEditControl::updateFromEngine" << std::endl;
+    }
     auto bounds = getBounds().toFloat();
     
     // note: subtract audio resource start
-    auto rangeSeconds = audioRegion->getRegionDataInSeconds() - audioRegion->getAudioResourceStartInSeconds();
+    auto rangeSeconds = audioRegion->getRegionData(audium::seconds) - audioRegion->getAudioResourceStartInSeconds();
     auto rangeX = zoomHandler->secondsToX(rangeSeconds);
     bounds.setX(rangeX.getStart());
     bounds.setWidth(rangeX.getLength());
@@ -174,4 +185,15 @@ const RegionEditControl::Edge RegionEditControl::getDragMode(int x) const
     {
         return RegionEditControl::middleEdge;
     }
+}
+
+bool RegionEditControl::keyPressed (const KeyPress& key, Component* originatingComponent)
+{
+    if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
+    {
+        audiumEngine->getAudioRegionContainer()->deleteSelectedRegions();
+        return true;
+    }
+    
+    return false;
 }

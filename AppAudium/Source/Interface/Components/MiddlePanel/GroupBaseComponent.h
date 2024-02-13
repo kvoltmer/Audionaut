@@ -22,7 +22,9 @@ class PlayListItemComponent;
 //==============================================================================
 /*
  
- Base class to display a AudioGroup as part of AudioGroupListBoxModel.
+ Base class to display an AudioGroup.
+ 
+ This class is created here: GroupListBoxModel::refreshComponentForRow
  
 */
 
@@ -47,13 +49,12 @@ public:
     void fileDragEnter (const juce::StringArray& files, int x, int y) override;
     void fileDragExit (const juce::StringArray& files) override;
     
-    void mouseDown (const juce::MouseEvent& e) override;
-
-    void mouseDrag (const juce::MouseEvent& e) override;
-
-    void mouseUp (const juce::MouseEvent&) override;
-
-    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails& wheel) override;
+    
+    /// pass on mouse events. unless row is not selected
+    void mouseDown (const MouseEvent& event) override
+    {
+        getParentComponent()->mouseDown(event);
+    }
     
 protected:
     

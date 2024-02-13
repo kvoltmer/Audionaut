@@ -70,17 +70,16 @@ public:
         regionTableListBox->setBounds(getLocalBounds());
     }
     
+    void updateSelection()
+    {
+        auto selectedRows = audiumEngine->getAudioRegionContainer()->getSelectedRows();
+        regionTableListBox->setSelectedRows(selectedRows, juce::dontSendNotification);
+    }
+    
     void updateUI()
     {
-        /// If your ListBox doesn’t use custom components,
-        /// then updateContents() will only update the contents if the number of rows changed, otherwise it does nothing.
+        updateSelection();
         regionTableListBox->updateContent();
-        
-        auto selectedRow = audiumEngine->getAudioRegionContainer()->getSelectedRegion();
-        regionTableListBox->selectRangeOfRows(selectedRow, selectedRow);
-        
-        /// repaint does the trick
-        regionTableListBox->repaint();
     }
     
     void clearSelection()

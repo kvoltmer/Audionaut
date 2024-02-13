@@ -28,9 +28,9 @@ class PlayListItemComponent;
  
  Display Playlist items in Timeline
  
- Display a AudioGroup as part of AudioGroupListBoxModel.
+ Display a AudioGroup as part of GroupListBoxModel.
  
- An AudioGroup may contain multiple playlist items (regions) in the Timeline. The PlayListContainer holds the playlist items (regions) information
+ The ArrangementGroupComponent contains multiple playlist items (regions) in the Timeline.
  */
 class ArrangementGroupComponent : public GroupBaseComponent
 {
