@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="gxtGxr" name="AppAudium" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include">
-  <MAINGROUP id="HQG80L" name="AppAudium">
+<JUCERPROJECT id="gxtGxr" name="Audionatomist" projectType="guiapp" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include"
+              bundleIdentifier="com.voltmer-systems.audionatomist" version="0.9.1"
+              companyName="Voltmer Praezlich GbR">
+  <MAINGROUP id="HQG80L" name="Audionatomist">
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
       <FILE id="pY6hrq" name="README.txt" compile="0" resource="0" file="Catch2Tests/README.txt"/>
       <FILE id="A4Cl9P" name="CMakeLists.txt" compile="0" resource="0" file="Catch2Tests/CMakeLists.txt"/>
@@ -304,6 +306,8 @@
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
         <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">
+          <FILE id="dicuzh" name="music-512.png" compile="0" resource="1" file="Resources/music-512.png"/>
+          <FILE id="Ezvz9P" name="music-1024.png" compile="0" resource="1" file="Resources/music-1024.png"/>
           <FILE id="zKjXO3" name="zoomin.svg" compile="0" resource="1" file="Resources/zoomin.svg"/>
         </GROUP>
       </GROUP>
@@ -312,10 +316,11 @@
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
-               extraDefs="LINK_PLATFORM_MACOSX=1">
+               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
+               smallIcon="dicuzh" bigIcon="Ezvz9P">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="AppAudium" headerPath="$(SRCROOT)/../../Source"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="AppAudium" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionatomist" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Audionatomist" headerPath="$(SRCROOT)/../../Source"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
