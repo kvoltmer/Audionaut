@@ -317,7 +317,7 @@
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
                extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
-               smallIcon="dicuzh" bigIcon="Ezvz9P">
+               smallIcon="dicuzh" bigIcon="Ezvz9P" postbuildCommand="/bin/sh ../../../Python/embed-python.sh || exit">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Audionatomist" headerPath="$(SRCROOT)/../../Source"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="Audionatomist" headerPath="$(SRCROOT)/../../Source"/>

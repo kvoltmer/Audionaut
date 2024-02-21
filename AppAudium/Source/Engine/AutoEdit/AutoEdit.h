@@ -24,6 +24,7 @@ struct AutoEditConfig {
     double minSegLength = 2.0;
     double maxSegLength = 60.0;
     std::string bounceFileName = "";
+    std::string jsonFileName = "";
 };
 
 class AutoEdit {
@@ -37,6 +38,7 @@ public:
         audioResourceContainer(audioResourceContainer)
     {}
     
+    bool invokePythonTest(AutoEditConfig config);
     bool invokeAutoEdit(const AutoEditConfig config);
     void applyAutoEditResult(double sampleRate);
     

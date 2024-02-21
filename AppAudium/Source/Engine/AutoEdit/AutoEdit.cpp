@@ -27,6 +27,45 @@ const juce::String AutoEdit::getTempDirectory()
     return juce::File::getSpecialLocation(juce::File::tempDirectory).getFullPathName();
 }
 
+bool AutoEdit::invokePythonTest(AutoEditConfig config)
+{
+    if (juce::File(config.jsonFileName).existsAsFile())
+    {
+        auto success = juce::File(config.jsonFileName).deleteFile();
+        jassert(success);
+    }
+    
+    auto contentsDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory().getParentDirectory().getFullPathName().toStdString();
+    auto executable = contentsDir + "/hello/hello";
+    std::string commandString;
+    commandString += executable;
+    commandString += " " + config.jsonFileName;
+    
+    // execute
+    auto result = std::system(commandString.c_str());
+    if (result == 0)
+    {
+        jassert(juce::File(config.jsonFileName).existsAsFile());
+        
+        std::fstream jsonFile;
+        jsonFile.open(config.jsonFileName, std::ios::in);
+        if (jsonFile.is_open())
+        {
+            
+            auto jsonData = nlohmann::json::parse(jsonFile);
+            auto jsonString = jsonData.dump(2);
+            juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::InfoIcon, "json data", jsonString);
+        
+            return true;
+        }
+
+        
+    }
+    return false;
+    
+}
+
+
 bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
 {
     // NOTE: Make sure PATH and PYTHONPATH is set correctly.

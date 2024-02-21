@@ -802,6 +802,7 @@
 				BAD9F2807B923BA12193D790,
 				F4C629C95E6F6F0DAC309099,
 				6BF77541D33AEE2397192046,
+				CAA86F22AFF9443C9A57E500,
 			);
 			buildRules = (
 			);
@@ -873,6 +874,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		CAA86F22AFF9443C9A57E500 /* Post-build script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Post-build script";
+			alwaysOutOfDate = 1;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh ../../../Python/embed-python.sh || exit";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F4C629C95E6F6F0DAC309099 = {

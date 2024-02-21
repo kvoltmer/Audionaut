@@ -232,6 +232,8 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     bounceToFile(bounceFile, nullptr, sampleRate);
     config.bounceFileName = bounceFile.getFullPathName().toStdString();
     
+    config.jsonFileName = bounceFile.getParentDirectory().getFullPathName().toStdString() + "/data.json";
+    
 #if 0
     // erase everything
     cleanup();
@@ -246,10 +248,14 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,
                                                     audioRegionContainer,
                                                     audioResourceContainer));
-    if (autoEdit->invokeAutoEdit(config))
-    {
-        autoEdit->applyAutoEditResult(sampleRate);
-    }
+    
+    autoEdit->invokePythonTest(config);
+    return;
+    
+//    if (autoEdit->invokeAutoEdit(config))
+//    {
+//        autoEdit->applyAutoEditResult(sampleRate);
+//    }
 }
 
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioGroup> group) const
