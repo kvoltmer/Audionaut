@@ -11,7 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Engine/TimeContext.h"
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
 

@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"

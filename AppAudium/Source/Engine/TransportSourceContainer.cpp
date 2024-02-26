@@ -9,7 +9,7 @@
 */
 
 #include "TransportSourceContainer.h"
-#include "AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "AudiumTransportSource.h"
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createNewTransportSource()

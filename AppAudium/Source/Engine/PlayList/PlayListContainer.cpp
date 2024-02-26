@@ -10,8 +10,8 @@
 
 #include "PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
-#include "Engine/AudioRegion.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegion.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/ActionMessages.h"
 
 PlayListContainer::~PlayListContainer()
@@ -92,7 +92,7 @@ int PlayListContainer::getPlayListItemIndex(const PlayListItem* item) const
     return -1;
 }
 
-AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) const
+AudioRegionData::tRange PlayListContainer::getPlayListDataAtIndex(int index) const
 {
     const juce::ScopedLock sl (readLock);
     if (index >= 0 && index < playListItems.size())
@@ -101,47 +101,55 @@ AudioRegion::RegionData PlayListContainer::getPlayListDataAtIndex(int index) con
     }
     
     // empty range
-    return AudioRegion::RegionData();
+    return AudioRegionData::tRange();
 }
 
 bool PlayListContainer::writeToStream (juce::OutputStream& outputStream)
 {
-    outputStream.writeInt(static_cast<int>(playListItems.size()));
-    for (auto item : playListItems)
-    {
-        outputStream.writeInt(audioRegionContainer.getRegionIndex(item->getRegion()));
-        outputStream.writeString(item->getRegion()->getName());
-    }
-    return true;
+    return audium::Streamable::writeToStream(outputStream);
 }
 
 bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
 {
-    if (!inputStream.isExhausted())
+    if (audium::Streamable::readFromStream(inputStream))
     {
-        playListItems.clear();
-        auto numItems = inputStream.readInt();
-        for (auto i = 0; i < numItems; i++)
-        {
-            auto regionIndex    = inputStream.readInt();
-            auto regionName     = inputStream.readString();
-            auto audioRegion    = audioRegionContainer.getRegion(regionIndex);
-            if (audioRegion != nullptr)
-            {
-                jassert(regionName == audioRegion->getName());
-                auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
-                playListItems.push_back(playListItem);
-            }
-            else
-            {
-                jassertfalse;
-                return false;
-            }
-        }
         sendActionMessage(playListOrderAction);
         return true;
     }
     return false;
+}
+
+bool PlayListContainer::writeToJson (json& output)
+{
+    for (auto item : playListItems)
+    {
+        json j;
+        if (item->writeToJson(j))
+            output["playListItems"] += j;
+    }
+    return true;
+}
+
+bool PlayListContainer::readFromJson (json& input)
+{
+    auto jsonPlayList = input["playListItems"];
+    for (auto& jsonElement : jsonPlayList)
+    {
+        auto regionIndex = jsonElement["regionId"].template get<int>();
+        auto audioRegion    = audioRegionContainer.getRegion(regionIndex);
+        if (audioRegion != nullptr)
+        {
+            auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
+            playListItems.push_back(playListItem);
+            playListItem->readFromJson(jsonElement);
+        }
+        else
+        {
+            jassertfalse;
+            return false;
+        }
+    }
+    return true;
 }
 
 int PlayListContainer::getSizeInUnits()

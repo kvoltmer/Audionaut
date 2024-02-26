@@ -14,7 +14,7 @@
 
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/RegionSelector.h"
-#include "Engine/AudioResource.h"
+#include "Engine/Resource/AudioResource.h"
 #include "Interface/ColourIds.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioGroupContainer.h"
@@ -135,7 +135,7 @@ public:
         if (regionSelector != nullptr)
             regionSelector->setEnabled(true);
         
-        if (e.getOffsetFromDragStart().getX() > 0)
+        if (std::abs(e.getOffsetFromDragStart().getX()) > 0)
         {
             commitBoundsToEngine();
             validateData();

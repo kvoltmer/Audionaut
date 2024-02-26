@@ -12,7 +12,7 @@
 #include "AudioResourceView.h"
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioClip.h"
 
 void AudioResourceView::paint (juce::Graphics& g)

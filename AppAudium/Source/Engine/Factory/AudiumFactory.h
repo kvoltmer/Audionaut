@@ -13,8 +13,8 @@
 #include <memory>
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioResourceContainer.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 
 
 

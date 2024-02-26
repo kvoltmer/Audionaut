@@ -77,16 +77,12 @@ public:
     
     double getFileLength(audium::TimeContextType context) const;
     
-//    const juce::Range<double> getRegionData(audium::TimeContextType context) const;
-//    void setRegionData(const juce::Range<double> newRegionData, audium::TimeContextType context);
-//    
-//    bool validateData();
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinSubGroup() const;
     
     bool containsAbsolutePosition(double position, audium::TimeContextType context) const;
-            
-    bool writeToStream (juce::OutputStream& outputStream) override;
-    bool readFromStream (juce::InputStream& inputStream) override;
+    
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input) override;
     int getSizeInUnits() override { return 1; };
 
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }

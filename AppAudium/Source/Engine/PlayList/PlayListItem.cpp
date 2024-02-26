@@ -9,8 +9,9 @@
 */
 
 #include "PlayListItem.h"
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 
 PlayListItem::PlayListItem(const PlayListContainer &owner, std::shared_ptr<AudioRegion> audioRegion) :
     owner(owner),
@@ -48,4 +49,23 @@ double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 void PlayListItem::setAbsolutePosition(double position, audium::TimeContextType context)
 {
     /// TODO: implement...
+}
+
+bool PlayListItem::writeToJson (json& output)
+{
+    output["regionId"] = owner.getAudioRegionContainer().getRegionIndex(getRegion());
+    output["regionName"] = getRegion()->getName().toStdString();
+    return true;
+}
+
+bool PlayListItem::readFromJson (json& input)
+{
+    auto regionName = input["regionName"].template get<std::string>();
+    jassert(regionName == getRegion()->getName().toStdString());
+
+    auto regionId = input["regionId"].template get<int>();
+    auto id = owner.getAudioRegionContainer().getRegionIndex(getRegion());
+    jassert(id == regionId);
+
+    return true;
 }

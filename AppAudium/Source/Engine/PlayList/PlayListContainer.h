@@ -14,7 +14,7 @@
 #include <memory>
 #include <JuceHeader.h>
 
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/Streamable.h"
 
 class PlayListItem;
@@ -65,6 +65,8 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream) override;
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input) override;
     int getSizeInUnits() override;
     
     void cleanup() { playListItems.clear(); }
@@ -72,7 +74,7 @@ public:
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
     int getPlayListItemIndex(const PlayListItem* item) const;
     
-    AudioRegion::RegionData getPlayListDataAtIndex(int index) const;
+    AudioRegionData::tRange getPlayListDataAtIndex(int index) const;
     
     const PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
     const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;

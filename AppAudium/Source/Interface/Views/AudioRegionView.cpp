@@ -11,9 +11,9 @@
 #include <JuceHeader.h>
 #include "AudioRegionView.h"
 #include "Interface/Handlers/ZoomHandler.h"
-#include "Engine/AudioResource.h"
+#include "Engine/Resource/AudioResource.h"
 #include "Interface/ColourIds.h"
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
