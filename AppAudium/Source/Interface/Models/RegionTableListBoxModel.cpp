@@ -12,7 +12,7 @@
 #include "RegionTableListBoxModel.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Controls/RegionLabel.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
 //==============================================================================

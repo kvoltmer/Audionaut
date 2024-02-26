@@ -40,7 +40,7 @@ public:
         audioRegionContainer(audioRegionContainer),
         playListContainer(playListContainer),
         transportSourceContainer(transportSourceContainer),
-        groupName(nameString),
+        groupName(nameString.toStdString()),
         groupId(groupId)
     {}
     
@@ -50,7 +50,7 @@ public:
     
 
     const juce::String getName() const { return groupName; }
-    void setName(const juce::String newName) { groupName = newName; }
+    void setName(const juce::String newName) { groupName = newName.toStdString(); }
     
     const int getId() const noexcept { return groupId; }
     void setId(const int newId) { groupId = newId; }
@@ -64,17 +64,20 @@ public:
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const;
     
     void setColour(juce::Colour colour);
-    juce::Colour getColour() const { return currentColour; }
+    juce::Colour getColour() const { return groupColour; }
     
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream) override;
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input) override;
     int getSizeInUnits() override;
     
     int getNumChannels() const;
     void ensureNumChannels(int channelsNeeded);
+    std::shared_ptr<AudioChannel> addChannel();
     std::shared_ptr<AudioChannel> getChannel(int channelNumber) const { return audioChannels[channelNumber]; }
     int getChannelNumberFor(AudioChannel* channel);
     
@@ -117,9 +120,9 @@ private:
     AudioRegionContainer &audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
-    juce::String groupName;
+    std::string groupName;
     int groupId = -1;
-    juce::Colour currentColour = juce::Colours::pink;
+    juce::Colour groupColour = juce::Colours::pink;
     
     std::vector<std::shared_ptr<AudioSubGroup>> audioSubGroups;
     int nextSubGroupId = 0;

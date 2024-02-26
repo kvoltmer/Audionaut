@@ -15,9 +15,9 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Factory/AudioGroupFactory.h"
-#include "Engine/AudioResourceContainer.h"
-#include "Engine/AudioRegionContainer.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudiumTransportSource.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
@@ -68,9 +68,15 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> 
         if (inputStream.openedOk())
         {
             undoManager->clearUndoHistory();
-            /// TODO: std::move (callback)
-            readFromStream(inputStream);
-            currentFile = file;
+
+            if (readFromStream(inputStream))
+            {
+                currentFile = file;
+            }
+            else
+            {
+                callback (false);
+            }
         }
     }
     else
@@ -80,7 +86,7 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> 
     
 }
 
-void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> callback)
+bool AudiumEngine::saveFile (const juce::File& f)
 {
     juce::File file = f;
     
@@ -94,30 +100,30 @@ void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> cal
         auto result = file.create();
         if (result != juce::Result::ok())
         {
-            if (callback != nullptr)
-                callback (false);
-        
-            return;
+            return false;
         }
     }
     
     juce::TemporaryFile temp (file);
-    
-    {
-        juce::FileOutputStream out (temp.getFile());
-
-        if (! (out.openedOk()))
-        {
-            return;
-        }
         
-        //callback(writeToStream(fo));
-        writeToStream(out);
-        undoManager->clearUndoHistory();
-    }
+    juce::FileOutputStream out (temp.getFile());
 
-    temp.overwriteTargetFileWithTemporary();
-    currentFile = file;
+    if (! (out.openedOk()))
+    {
+        std::cout << out.getStatus().getErrorMessage().toStdString() << std::endl;
+        return false;
+    }
+    
+    writeToStream(out);
+    undoManager->clearUndoHistory();
+    
+
+    if (temp.overwriteTargetFileWithTemporary())
+    {
+        currentFile = file;
+        return true;
+    }
+    return false;
 }
 
 void AudiumEngine::setBypass(bool bypass)

@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioSubGroup.h"
 
 #include "Interface/Controls/RegionEditControl.h"

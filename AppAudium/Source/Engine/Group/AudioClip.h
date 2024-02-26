@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "Engine/Group/AudioClipData.h"
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Streamable.h"
 #include "Engine/PlayList/PositionableBase.h"
@@ -30,6 +31,10 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream) override;
+    
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input) override;
+    
     int getSizeInUnits() override { return 1; }
     
     const juce::Range<double> getRegionData(audium::TimeContextType context) const;
@@ -42,13 +47,10 @@ public:
     
     double getFileLength(audium::TimeContextType context) const;
 
+    AudioClipData data;
+    
 private:
     AudioSubGroup &audioSubGroup;
-    
-    // The absolute transport position
-    double absolutePositionClocks = 0.0;
-    // The start and end in seconds
-    juce::Range<double> regionData;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioClip)
     
