@@ -73,13 +73,11 @@ bool AudioGroup::writeToJson (json& output)
     {
         json j;
         subGroup->writeToJson(j);
-        output["subGroups"] += j;
+        output["sub_groups"] += j;
     }
     
-    json playList;
-    playListContainer->writeToJson(playList);
-    output["playList"] = playList;
     
+    playListContainer->writeToJson(output);    
     return true;
 }
 
@@ -105,7 +103,7 @@ bool AudioGroup::readFromJson (json& input)
     }
     
     // SubGroups
-    auto jsonSubGroups = input["subGroups"];
+    auto jsonSubGroups = input["sub_groups"];
     for (auto& jsonElement : jsonSubGroups)
     {
         auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
@@ -118,9 +116,7 @@ bool AudioGroup::readFromJson (json& input)
     }
     
     // PlayList
-    auto jsonPlayList = input["playList"];
-    playListContainer->readFromJson(jsonPlayList);
-    
+    playListContainer->readFromJson(input);
     return true;
 }
 

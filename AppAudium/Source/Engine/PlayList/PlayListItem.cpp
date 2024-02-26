@@ -53,17 +53,17 @@ void PlayListItem::setAbsolutePosition(double position, audium::TimeContextType 
 
 bool PlayListItem::writeToJson (json& output)
 {
-    output["regionId"] = owner.getAudioRegionContainer().getRegionIndex(getRegion());
-    output["regionName"] = getRegion()->getName().toStdString();
+    output["region_id"] = owner.getAudioRegionContainer().getRegionIndex(getRegion());
+    output["region_name"] = getRegion()->getName().toStdString();
     return true;
 }
 
 bool PlayListItem::readFromJson (json& input)
 {
-    auto regionName = input["regionName"].template get<std::string>();
+    auto regionName = input["region_name"].template get<std::string>();
     jassert(regionName == getRegion()->getName().toStdString());
 
-    auto regionId = input["regionId"].template get<int>();
+    auto regionId = input["region_id"].template get<int>();
     auto id = owner.getAudioRegionContainer().getRegionIndex(getRegion());
     jassert(id == regionId);
 
