@@ -92,7 +92,7 @@ bool AudioResource::writeToJson (json& output)
 {
     output["filename"]          = getUrlAsString().toStdString();
     output["gain"]              = getAudioTransportSource()->getGain();
-    output["channelPosition"]   = getChannelPosition();
+    output["channel_position"]   = getChannelPosition();
     return true;
 }
 
@@ -100,7 +100,7 @@ bool AudioResource::readFromJson (json& input)
 {
     const auto inUrl        = input["filename"].template get<std::string>();
     const auto gain         = input["gain"].template get<float>();
-    const auto channelPos   = input["channelPosition"].template get<int>();;
+    const auto channelPos   = input["channel_position"].template get<int>();;
     setChannelPosition(channelPos);
     jassert(this->url == juce::URL(inUrl));
     getAudioTransportSource()->setGain(gain);

@@ -121,21 +121,26 @@ bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
 
 bool PlayListContainer::writeToJson (json& output)
 {
+    json playList;
+    
     for (auto item : playListItems)
     {
         json j;
         if (item->writeToJson(j))
-            output["playListItems"] += j;
+            playList["play_list_items"] += j;
     }
+    
+    output["play_list"] = playList;
     return true;
 }
 
 bool PlayListContainer::readFromJson (json& input)
 {
-    auto jsonPlayList = input["playListItems"];
-    for (auto& jsonElement : jsonPlayList)
+    auto jsonPlayList = input["play_list"];
+    auto jsonPlayListItems = input["play_list_items"];
+    for (auto& jsonElement : jsonPlayListItems)
     {
-        auto regionIndex = jsonElement["regionId"].template get<int>();
+        auto regionIndex = jsonElement["region_id"].template get<int>();
         auto audioRegion    = audioRegionContainer.getRegion(regionIndex);
         if (audioRegion != nullptr)
         {
