@@ -159,9 +159,6 @@ bool AudioGroupContainer::writeToJson (json& output)
         group->writeToJson(j);
         output["groups"] += j;
     }
-
-    std::cout << std::setw(2) << output << std::endl;
-
     return true;
 }
 

@@ -180,42 +180,51 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
     std::cout << "done" << std::endl;
 }
 
-bool AudiumEngine::writeToStream (juce::OutputStream& out)
+bool AudiumEngine::writeToStream (juce::OutputStream& outputStream)
 {
-    out.writeString ("AudiumEngineFormat");
-    
-    // Tempo
-    out.writeDouble(playListScheduler->getTempoProvider()->getTempo());
-    
-    // Groups
-    audioGroupContainer->writeToStream(out);
-        
-    return true;
+    return audium::Streamable::writeToStream(outputStream);
 }
 
-bool AudiumEngine::readFromStream (juce::InputStream& in)
+bool AudiumEngine::readFromStream (juce::InputStream& inputStream)
 {
-    auto name = in.readString();
-    jassert(name == "AudiumEngineFormat");
-    
-    cleanup();
-    
-    while (! in.isExhausted())
+    if (audium::Streamable::readFromStream(inputStream))
     {
-        // Tempo
-        auto tempo = in.readDouble();
-        
-        if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
-            playListScheduler->getTempoProvider()->setTempo(tempo);
-        
-        // Groups
-        if (audioGroupContainer->readFromStream(in))
-        {
-            return true;
-        }
         return true;
     }
     return false;
+}
+
+bool AudiumEngine::writeToJson (json& output)
+{
+    json jsonAudium;
+
+    audioGroupContainer->writeToJson(jsonAudium);
+    
+    jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
+    
+    output["audium"] = jsonAudium;
+
+    std::cout << std::setw(2) << output << std::endl;
+    return true;
+}
+
+bool AudiumEngine::readFromJson (json& input)
+{
+    cleanup();
+    
+    auto jsonAudium = input["audium"];
+    
+    const auto tempo = jsonAudium["tempo"].template get<double>();
+    
+    if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
+        playListScheduler->getTempoProvider()->setTempo(tempo);
+    
+    return audioGroupContainer->readFromJson(jsonAudium);
+}
+
+int AudiumEngine::getSizeInUnits()
+{
+    return audioGroupContainer->getSizeInUnits() + 1;
 }
 
 void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> group)
