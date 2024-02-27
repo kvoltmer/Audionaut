@@ -29,7 +29,7 @@ public:
     {
         json jout;
         writeToJson(jout);
-        outputStream.writeString(jout.dump());
+        outputStream.writeString(jout.dump(2));
         return true;
     }
     
