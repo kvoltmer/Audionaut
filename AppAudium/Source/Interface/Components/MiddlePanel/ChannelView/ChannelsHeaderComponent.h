@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 
 class ChannelsHeaderComponent  : public juce::Component
 {

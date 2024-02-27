@@ -19,7 +19,7 @@
 
 //[Headers] You can add your own extra header files here...
 #include "Engine/AudiumTransportSource.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Channel/AudioChannel.h"
 //[/Headers]
 

@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include "AudioRegionContainer.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioClip.h"
@@ -101,7 +101,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
 {
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
     audioRegions.push_back(audioRegion);
-    std::cout << "createRegion " << audioRegion << " index " << getRegionIndex(audioRegion) << std::endl;
+    // std::cout << "createRegion " << audioRegion << " index " << getRegionIndex(audioRegion) << std::endl;
     return audioRegion;
 }
 

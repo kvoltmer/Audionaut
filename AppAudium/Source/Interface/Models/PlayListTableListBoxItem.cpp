@@ -12,7 +12,7 @@
 #include "PlayListTableListBoxModel.h"
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Controls/RegionLabel.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Engine/ActionMessages.h"

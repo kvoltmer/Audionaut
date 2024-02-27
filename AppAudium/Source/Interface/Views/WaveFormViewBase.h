@@ -14,10 +14,10 @@
 
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/RegionSelector.h"
-#include "Engine/AudioResource.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResource.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Interface/ColourIds.h"
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"

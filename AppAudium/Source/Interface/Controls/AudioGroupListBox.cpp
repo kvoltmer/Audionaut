@@ -6,7 +6,7 @@
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioGroupFactory.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 #include "Interface/AudiumLookAndFeel.h"

@@ -8,14 +8,14 @@
   ==============================================================================
 */
 
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 
 AudioResourceContainer::~AudioResourceContainer()
 {

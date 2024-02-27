@@ -27,7 +27,7 @@ struct UndoableContainerAction final : public juce::UndoableAction
     ~UndoableContainerAction()
     {
         container = nullptr;
-        std::cout << "~UndoableContainerAction" << std::endl;
+        //std::cout << "~UndoableContainerAction" << std::endl;
     }
     
     void storeOldState()

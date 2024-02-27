@@ -10,7 +10,7 @@
 
 #pragma once
 #include <JuceHeader.h>
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/ActionMessages.h"
 
 class AudioResourceContainer;
@@ -86,7 +86,7 @@ private:
     std::shared_ptr<PlayListScheduler> playListScheduler;
     std::shared_ptr<juce::UndoManager> undoManager;
 
-    AudioRegion::RegionData selectedPositionClocks;
+    AudioRegionData::tRange selectedPositionClocks;
     int selectedRowNumber = -1;
     
     std::vector<std::shared_ptr<AudioRegion>> audioRegions;

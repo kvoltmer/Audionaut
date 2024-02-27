@@ -14,8 +14,8 @@
 #include <JuceHeader.h>
 
 #include "AutoEdit.h"
-#include "Engine/AudioResourceContainer.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioGroupContainer.h"

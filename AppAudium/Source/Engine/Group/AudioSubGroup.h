@@ -11,8 +11,12 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <nlohmann/json.hpp>
+
 #include "Engine/TimeContext.h"
 #include "Engine/Streamable.h"
+
+using json = nlohmann::json;
 
 class AudioGroup;
 class AudioResource;
@@ -32,6 +36,10 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream) override;
+    
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input) override;
+    
     int getSizeInUnits() override;
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;

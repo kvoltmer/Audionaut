@@ -3,7 +3,7 @@
 #include <vector>
 
 #include <JuceHeader.h>
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/ArrangementGroupComponent.h"
 #include "Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"
