@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "Engine/AudioResource.h"
+#include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Channel/AudioChannelData.h"
 
 class AudioChannel
 {
@@ -22,35 +23,21 @@ public:
     {
     }
     
-    int getChannelHeight() const { return channelHeight; }
-    void setChannelHeight(int height) { channelHeight = height; }
-    
-    bool writeToStream (juce::OutputStream& outputStream)
-    {
-        outputStream.writeInt(channelHeight);
-        return true;
-    }
-    
-    bool readFromStream (juce::InputStream& inputStream)
-    {
-        auto height = inputStream.readInt();
-        channelHeight = height;
-        return true;
-    }
-    
-    void setSelected(bool bSelected) { selected = bSelected; }
-    bool isSelected() const { return selected; }
+    int getChannelHeight() const { return data.height; }
+    void setChannelHeight(int height) { data.height = height; }
+        
+    void setSelected(bool bSelected) { data.selected = bSelected; }
+    bool isSelected() const { return data.selected; }
 
     int getChannelNumber()
     {
         return audioGroup.getChannelNumberFor(this);
     }
     
+    AudioChannelData data;
+    
 private:
     AudioGroup &audioGroup;
-    //std::shared_ptr<AudioResource> audioResource;
-    int channelHeight = 100;
-    bool selected = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioChannel)
     

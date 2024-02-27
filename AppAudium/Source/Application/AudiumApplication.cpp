@@ -10,7 +10,7 @@
 
 #include "AudiumApplication.h"
 #include "Interface/Components/MainComponent.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
@@ -42,10 +42,10 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     audiumEngine = AudiumFactory::createAudiumEngine();
     audiumEngine->initialise();
 
-    if (Preferences::valueExists(Preferences::defaultFile))
-    {
-        audiumEngine->openFile(juce::File(Preferences::getValue(Preferences::defaultFile)), nullptr);
-    }
+//    if (Preferences::valueExists(Preferences::defaultFile))
+//    {
+//        audiumEngine->openFile(juce::File(Preferences::getValue(Preferences::defaultFile)), nullptr);
+//    }
     
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
     
@@ -409,16 +409,21 @@ void AudiumApplication::saveProjectAs()
         
         if (result != File{})
         {
-            /// TODO: provide and handle callback
-            audiumEngine->saveFile(result, nullptr);
+            if (!audiumEngine->saveFile(result))
+            {
+                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Failed to save Project.");
+
+            }
         }
     });
 }
 
 void AudiumApplication::saveProject()
 {
-    /// TODO: provide and handle callback
-    audiumEngine->saveFile(audiumEngine->getCurrentFile(), nullptr);
+    if (!audiumEngine->saveFile(audiumEngine->getCurrentFile()))
+    {
+        juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Failed to save Project.");
+    }
 }
 
 void AudiumApplication::bounceProject()

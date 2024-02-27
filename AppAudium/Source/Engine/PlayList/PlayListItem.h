@@ -13,6 +13,9 @@
 #include <vector>
 #include <memory>
 #include <JuceHeader.h>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 #include "Engine/TimeContext.h"
 #include "Engine/PlayList/PositionableBase.h"
@@ -43,6 +46,9 @@ public:
 
     const PlayListContainer &getPlayListContainer() const { return owner; }
 
+    bool writeToJson (json& output);
+    bool readFromJson (json& input);
+    
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;

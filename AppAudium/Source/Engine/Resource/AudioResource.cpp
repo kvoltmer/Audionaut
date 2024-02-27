@@ -8,9 +8,9 @@
   ==============================================================================
 */
 
-#include "Engine/AudioResource.h"
+#include "Engine/Resource/AudioResource.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/Channel/AudioChannel.h"
@@ -88,26 +88,25 @@ bool AudioResource::containsAbsolutePosition(double position, audium::TimeContex
     return false;
 }
 
-bool AudioResource::writeToStream (juce::OutputStream& outputStream)
+bool AudioResource::writeToJson (json& output)
 {
-    outputStream.writeString(getUrlAsString());
-    outputStream.writeFloat(getAudioTransportSource()->getGain());
-    outputStream.writeInt(getChannelPosition());
-
+    output["filename"]          = getUrlAsString().toStdString();
+    output["gain"]              = getAudioTransportSource()->getGain();
+    output["channel_position"]   = getChannelPosition();
     return true;
 }
 
-bool AudioResource::readFromStream (juce::InputStream& inputStream)
+bool AudioResource::readFromJson (json& input)
 {
-    const auto inUrl        = inputStream.readString();
-    const auto gain         = inputStream.readFloat();
-    const auto channelPos   = inputStream.readInt();
+    const auto inUrl        = input["filename"].template get<std::string>();
+    const auto gain         = input["gain"].template get<float>();
+    const auto channelPos   = input["channel_position"].template get<int>();;
     setChannelPosition(channelPos);
-    jassert(this->url == inUrl);
+    jassert(this->url == juce::URL(inUrl));
     getAudioTransportSource()->setGain(gain);
-    
     return true;
 }
+
 
 void AudioResource::setSelected(bool bSelected, bool deselectOthers)
 {

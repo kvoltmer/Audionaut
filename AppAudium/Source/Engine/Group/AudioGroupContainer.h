@@ -50,6 +50,8 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream) override;
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input) override;
     int getSizeInUnits() override;
     
     std::shared_ptr<AudioGroup> getSelectedGroup() const { return audioGroups[selectedGroup]; }
