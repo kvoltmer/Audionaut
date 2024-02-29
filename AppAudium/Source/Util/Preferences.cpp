@@ -14,7 +14,7 @@
 
 String Preferences::s_RegistryName = "";
 
-const char* Preferences::defaultFile = "DefaultProjectFile";
+//const char* Preferences::defaultFile = "DefaultProjectFile";
 
 
 String Preferences::getRegPath()

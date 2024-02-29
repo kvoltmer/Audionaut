@@ -28,27 +28,18 @@ public:
     virtual bool writeToStream (juce::OutputStream& outputStream)
     {
         json jout;
-        writeToJson(jout);
+        auto result = writeToJson(jout);
         outputStream.writeString(jout.dump(2));
-        return true;
+        return result;
     }
     
     // json used as default implementation
     virtual bool readFromStream (juce::InputStream& inputStream)
     {
         auto inputString = inputStream.readString().toStdString();
-        try
-        {
-            json data = json::parse(inputString);
-            readFromJson(data);
-        }
-        catch (json::exception &e)
-        {
-            std::cout << e.what() << std::endl;
-            return false;
-        }
 
-        return true;
+        json data = json::parse(inputString);
+        return readFromJson(data);
     }
 
     virtual bool writeToJson (json& output) { return false; }
@@ -56,6 +47,8 @@ public:
 
     
     virtual int getSizeInUnits() = 0;
+    
+    const int fileVersion = 1;
 };
 
 } // namespace audium
