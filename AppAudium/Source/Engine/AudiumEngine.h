@@ -54,7 +54,7 @@ public:
     void uninitialise();
     void cleanup();
     
-    void openFile (const juce::File& file, std::function<void (bool)> callback);
+    void openFile (const juce::File& file, std::function<void (bool,std::string)> callback);
     bool saveFile (const juce::File& file);
     void bounceToFile(const juce::File& f, std::function<void (bool)> callback,
                       double preferedSampleRate,

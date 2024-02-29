@@ -52,36 +52,28 @@ void AudiumEngine::cleanup()
     currentFile = File();
 }
 
-void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> callback)
+void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,std::string)> callback)
 {
-    if (! file.exists())
+    try
     {
-        if (callback != nullptr)
-            callback (false);
 
-        return;
-    }
-    
-    if (file.hasFileExtension (projectFileExtension))
-    {
-        juce::FileInputStream inputStream(file);
-        if (inputStream.openedOk())
+        if (file.exists() &&
+            file.hasFileExtension (projectFileExtension))
         {
-            undoManager->clearUndoHistory();
-
-            if (readFromStream(inputStream))
+            juce::FileInputStream inputStream(file);
+            if (inputStream.openedOk() &&
+                readFromStream(inputStream))
             {
                 currentFile = file;
-            }
-            else
-            {
-                callback (false);
+                undoManager->clearUndoHistory();
+                NullCheckedInvocation::invoke (callback, true, "");
             }
         }
     }
-    else
+    catch (std::exception &e)
     {
-        std::cout << "error: missing project file extension" << std::endl;
+        std::cout << e.what() << std::endl;
+        NullCheckedInvocation::invoke (callback, false, e.what());
     }
     
 }
@@ -201,6 +193,7 @@ bool AudiumEngine::writeToJson (json& output)
     audioGroupContainer->writeToJson(jsonAudium);
     
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
+    jsonAudium["file_version"] = audium::Streamable::fileVersion;
     
     output["audium"] = jsonAudium;
 
@@ -215,6 +208,11 @@ bool AudiumEngine::readFromJson (json& input)
     auto jsonAudium = input["audium"];
     
     const auto tempo = jsonAudium["tempo"].template get<double>();
+    if (jsonAudium.contains("file_version"))
+    {
+        const auto version = jsonAudium["file_version"].template get<int>();
+        jassert(version == audium::Streamable::fileVersion);
+    }
     
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
         playListScheduler->getTempoProvider()->setTempo(tempo);
