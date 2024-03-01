@@ -86,7 +86,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->addActionListener(this);
 
-    updateUI();
+    audiumEngine->getUndoManager()->addChangeListener(this);
 
     //[/Constructor]
 }
@@ -229,8 +229,11 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         updateUI();
     }
+}
 
-
+void MainComponent::changeListenerCallback (ChangeBroadcaster* source)
+{
+    updateWindowTitle();
 }
 
 void MainComponent::rebuildUI()
@@ -247,6 +250,23 @@ void MainComponent::updateUI()
 
     middlePanelComponent->updateUI();
     rightPanelComponent->updateUI();
+
+    updateWindowTitle();
+}
+
+void MainComponent::updateWindowTitle()
+{
+    if (getParentComponent() != nullptr)
+    {
+        auto fileName = audiumEngine->getCurrentFile().getFileNameWithoutExtension();
+        if (fileName.isEmpty())
+            fileName = "Untitled";
+
+        if (audiumEngine->getUndoManager()->canUndo())
+            fileName += " *";
+
+        getParentComponent()->setName(fileName);
+    }
 }
 
 void MainComponent::zoomIn()
@@ -290,7 +310,7 @@ void MainComponent::toggleEditArrangementComponent()
 BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="MainComponent" componentName=""
-                 parentClasses="public juce::Component, private juce::ActionListener"
+                 parentClasses="public juce::Component, private juce::ActionListener, private juce::ChangeListener"
                  constructorParams="std::shared_ptr&lt;AudiumEngine&gt; audiumEngine"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="800">
