@@ -51,6 +51,8 @@ public:
         
         editComponent.reset(new EditComponent(audiumEngine, zoomHandler));
         addAndMakeVisible(editComponent.get());
+        
+        // TODO: restore state
         editComponent->setVisible(false);
         
         zoomHandler->setVisibleRange(visibleRange, sendNotificationSync);
@@ -62,6 +64,12 @@ public:
         ForceRebuildContext,
         ArrangementContext
     };
+    
+        void paint (juce::Graphics& g) override
+        {
+            // fill background
+            g.fillAll (findColour(audium::listBoxBackgroundColourId));
+        }
     
     void resized() override
     {
