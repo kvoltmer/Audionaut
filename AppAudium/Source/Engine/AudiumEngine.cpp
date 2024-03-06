@@ -56,7 +56,6 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
 {
     try
     {
-
         if (file.exists() &&
             file.hasFileExtension (projectFileExtension))
         {
@@ -194,7 +193,7 @@ bool AudiumEngine::writeToJson (json& output)
     
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
     jsonAudium["file_version"] = audium::Streamable::fileVersion;
-    
+    jsonAudium["ui_state"] = uiState;
     output["audium"] = jsonAudium;
 
     std::cout << std::setw(2) << output << std::endl;
@@ -212,6 +211,18 @@ bool AudiumEngine::readFromJson (json& input)
     {
         const auto version = jsonAudium["file_version"].template get<int>();
         jassert(version == audium::Streamable::fileVersion);
+    }
+    
+    if (jsonAudium.contains("ui_state"))
+    {
+        uiState = jsonAudium["ui_state"];
+        
+        if (uiState.contains("editMode"))
+        {
+            const auto editMode = uiState["editMode"].template get<bool>();
+            getPlayListScheduler()->setEditMode(editMode);
+        }
+        
     }
     
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions

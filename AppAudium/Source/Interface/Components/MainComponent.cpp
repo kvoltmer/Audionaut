@@ -294,6 +294,7 @@ void MainComponent::toggleEditArrangementComponent()
     // toggle edit mode
     auto editMode = !audiumEngine->getPlayListScheduler()->isEditMode();
     audiumEngine->getPlayListScheduler()->setEditMode(editMode);
+    audiumEngine->getUiState()["editMode"] = editMode;
     updateUI();
 }
 
