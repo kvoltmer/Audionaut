@@ -137,7 +137,7 @@ bool PlayListContainer::writeToJson (json& output)
 bool PlayListContainer::readFromJson (json& input)
 {
     auto jsonPlayList = input["play_list"];
-    auto jsonPlayListItems = input["play_list_items"];
+    auto jsonPlayListItems = jsonPlayList["play_list_items"];
     for (auto& jsonElement : jsonPlayListItems)
     {
         auto regionIndex = jsonElement["region_id"].template get<int>();
