@@ -81,6 +81,7 @@ public:
 
     void invokeAutoEdit(const AutoEditConfig config);
     
+    json& getUiState() { return uiState; }
     
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
@@ -93,6 +94,7 @@ private:
     
     juce::File currentFile;
 
+    json uiState;
     
     /// TODO: thread save container
     // std::is_trivially_copyable
