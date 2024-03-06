@@ -84,6 +84,8 @@
                 resource="0" file="Source/Engine/Playback/audium_AudioTransportSource.h"/>
         </GROUP>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
+          <FILE id="sr2twv" name="PlayListSchedulerData.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/PlayListSchedulerData.h"/>
           <FILE id="iREjhA" name="PositionableBase.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PositionableBase.h"/>
           <FILE id="UTFjED" name="SampleTimer.h" compile="0" resource="0" file="Source/Engine/PlayList/SampleTimer.h"/>

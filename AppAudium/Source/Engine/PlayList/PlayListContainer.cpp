@@ -16,7 +16,7 @@
 
 PlayListContainer::~PlayListContainer()
 {
-    playListItems.clear();
+    cleanup();
 }
 
 void PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioRegion)
@@ -136,6 +136,8 @@ bool PlayListContainer::writeToJson (json& output)
 
 bool PlayListContainer::readFromJson (json& input)
 {
+    cleanup();
+    
     auto jsonPlayList = input["play_list"];
     auto jsonPlayListItems = jsonPlayList["play_list_items"];
     for (auto& jsonElement : jsonPlayListItems)

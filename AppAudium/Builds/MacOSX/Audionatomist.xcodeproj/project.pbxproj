@@ -187,6 +187,7 @@
 		7E44DB630C41B875C940DDCD /* PlayListTableListBoxItem.cpp */ /* PlayListTableListBoxItem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListTableListBoxItem.cpp; path = ../../Source/Interface/Models/PlayListTableListBoxItem.cpp; sourceTree = SOURCE_ROOT; };
 		7F26B1EEC3E92CB4A2D3D156 /* include_juce_analytics.cpp */ /* include_juce_analytics.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_analytics.cpp; path = ../../JuceLibraryCode/include_juce_analytics.cpp; sourceTree = SOURCE_ROOT; };
 		7F7F04C3CC4241B6B9A9ADC7 /* AudioGroupContainer.cpp */ /* AudioGroupContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioGroupContainer.cpp; path = ../../Source/Engine/Group/AudioGroupContainer.cpp; sourceTree = SOURCE_ROOT; };
+		7F9CC3D78FEEF3B3AD118953 /* PlayListSchedulerData.h */ /* PlayListSchedulerData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListSchedulerData.h; path = ../../Source/Engine/PlayList/PlayListSchedulerData.h; sourceTree = SOURCE_ROOT; };
 		7FAA26BEABC56901D3400DCB /* RightPanelComponent.h */ /* RightPanelComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RightPanelComponent.h; path = ../../Source/Interface/Components/RightPanel/RightPanelComponent.h; sourceTree = SOURCE_ROOT; };
 		801A42D7A775E098C36B83EF /* juce_core */ /* juce_core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_core; path = ../../../Submodules/juce/modules/juce_core; sourceTree = SOURCE_ROOT; };
 		80A7607D4A9CE5B5D5107580 /* AudioRegionView.cpp */ /* AudioRegionView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegionView.cpp; path = ../../Source/Interface/Views/AudioRegionView.cpp; sourceTree = SOURCE_ROOT; };
@@ -398,6 +399,7 @@
 		1553603921B6F3477E1E9060 /* PlayList */ = {
 			isa = PBXGroup;
 			children = (
+				7F9CC3D78FEEF3B3AD118953,
 				BDC989EF8839976F75651BC9,
 				DD3D293D5BE7C2DD00072E80,
 				F0C4F5AE7B7A830FDF5AEC81,

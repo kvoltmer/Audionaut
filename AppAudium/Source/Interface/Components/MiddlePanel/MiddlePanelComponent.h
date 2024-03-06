@@ -104,7 +104,7 @@ public:
         }
         else if (context == ForceRebuildContext)
         {
-            bool editMode = editComponentVisible();
+            bool editMode = audiumEngine->getPlayListScheduler()->isEditMode();
             createComponents();
             
             arrangementComponent->updateUI();
@@ -112,6 +112,7 @@ public:
             editComponent->updateUI();
             
             showEditComponent(editMode);
+            showArrangementComponent(!editMode);
             resized();
         }
         else if (context == ArrangementContext)

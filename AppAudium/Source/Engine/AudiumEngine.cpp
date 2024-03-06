@@ -194,6 +194,7 @@ bool AudiumEngine::writeToJson (json& output)
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
     jsonAudium["file_version"] = audium::Streamable::fileVersion;
     jsonAudium["ui_state"] = uiState;
+    jsonAudium["scheduler"] = getPlayListScheduler()->data;
     output["audium"] = jsonAudium;
 
     std::cout << std::setw(2) << output << std::endl;
@@ -214,16 +215,11 @@ bool AudiumEngine::readFromJson (json& input)
     }
     
     if (jsonAudium.contains("ui_state"))
-    {
         uiState = jsonAudium["ui_state"];
-        
-        if (uiState.contains("editMode"))
-        {
-            const auto editMode = uiState["editMode"].template get<bool>();
-            getPlayListScheduler()->setEditMode(editMode);
-        }
-        
-    }
+    
+    if (jsonAudium.contains("scheduler"))
+        getPlayListScheduler()->data = jsonAudium["scheduler"];
+    
     
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
         playListScheduler->getTempoProvider()->setTempo(tempo);

@@ -103,8 +103,6 @@ public:
         // Undo: store old state
         auto audioRegion = audioRegionContainer->getRegion(rowNumber);
         auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
-        action->storeOldState();
-        
         
         if (columnId == regionName)
         {
