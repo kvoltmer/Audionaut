@@ -21,24 +21,56 @@ PlayListContainer::~PlayListContainer()
 
 void PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioRegion)
 {
+    // update implementation
+    jassertfalse;
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
     playListItems.push_back(playListItem);
     
     sendActionMessage(playListItemCreatedAction);
 }
 
-void PlayListContainer::createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore)
+
+void PlayListContainer::createPlayListItemUI(int regionIndex, int insertIndex)
 {
-    jassert( indexOfItemToPlaceBefore >= 0);
-    jassert( indexOfItemToPlaceBefore <= playListItems.size());
+    createPlayListItem(regionIndex, insertIndex);
+    
+    // move to the left
+    auto length = getPlayListItem(insertIndex)->getRegionData(audium::clocks).getLength();
+    movePlayListItemsPosition(insertIndex + 1, length, audium::clocks);
+}
+
+void PlayListContainer::createPlayListItem(int regionIndex, int insertIndex)
+{
+    jassert( insertIndex >= 0);
+    jassert( insertIndex <= playListItems.size());
     
     auto region = audioRegionContainer.getRegion(regionIndex);
     jassert(region != nullptr);
     
+    auto itemBefore = getPlayListItem(insertIndex - 1);
+    
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, region));
-    playListItems.insert(playListItems.begin() + indexOfItemToPlaceBefore, playListItem);
+    playListItems.insert(playListItems.begin() + insertIndex, playListItem);
+    
+    auto pos = itemBefore ? itemBefore->getAbsolutePositionRange(audium::clocks).getEnd() : 0.0;
+    playListItem->setAbsolutePosition(pos, audium::clocks);    
     
     sendActionMessage(playListItemCreatedAction);
+}
+
+void PlayListContainer::movePlayListItemsPosition(int startIndex, double amount, audium::TimeContextType context)
+{
+    for (auto iter = playListItems.begin() + startIndex; iter != playListItems.end(); iter++)
+    {
+        (*iter)->moveAbsolutePosition(amount, context);
+    }
+}
+
+void PlayListContainer::movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore)
+{
+    MoveItemBefore(playListItems,
+                   currentIndex,
+                   indexOfItemToPlaceBefore);
 }
 
 void PlayListContainer::deletePlayListItem(int atIndex, bool sendNotification)
@@ -165,14 +197,11 @@ int PlayListContainer::getSizeInUnits()
 }
 
 
-double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem, audium::TimeContextType context) const
+double PlayListContainer::getAbsolueStartTimeByOrder(const PlayListItem* playListItem, audium::TimeContextType context) const
 {
     double startTime = 0.0;
-    auto group = playListItem->getRegion()->getAudioGroup();
-    
-    auto items = getPlayListItems();
-    
-    for (auto & item : items)
+        
+    for (auto item : playListItems)
     {
         if (item.get() == playListItem)
         {
@@ -184,11 +213,19 @@ double PlayListContainer::getAbsolueStartTime(const PlayListItem* playListItem, 
     return startTime;
 }
 
+void PlayListContainer::forcePositionByOrder()
+{
+    for (auto item : playListItems)
+    {
+        item->setAbsolutePosition(getAbsolueStartTimeByOrder(item.get(), audium::clocks), audium::clocks);
+    }
+}
+
 const PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position, audium::TimeContextType context) const
 {
     for (auto item : playListItems)
     {
-        auto startTime = item->getAbsolueStartTime(context);
+        auto startTime = item->getAbsolutePosition(context);
         auto endTime = startTime + item->getDurationTime(context);
         juce::Range<double> absoluteRange(startTime, endTime);
         if (absoluteRange.contains(position))
@@ -204,7 +241,7 @@ const PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> r
 {
     for (auto item : playListItems)
     {
-        auto startTime = item->getAbsolueStartTime(context);
+        auto startTime = item->getAbsolutePosition(context);
         auto endTime = startTime + item->getDurationTime(context);
         juce::Range<double> absoluteRange(startTime, endTime);
         if (absoluteRange.contains(range))
@@ -227,8 +264,7 @@ double PlayListContainer::getTotalLength(audium::TimeContextType context) const
 {
     if (playListItems.size() > 0)
     {
-        auto lastItem = playListItems.back();
-        return getAbsolueStartTime(lastItem.get(), context) + lastItem->getDurationTime(context);
+        return playListItems.back()->getAbsolutePositionRange(context).getEnd();
     }
     return 0.0;
 }
