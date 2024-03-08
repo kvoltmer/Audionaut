@@ -20,23 +20,23 @@
 
 void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetails)
 {
+    auto playListContainer = playListModel->getPlayListContainer();
+    
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getPlayListContainer());
+    auto action = std::make_unique<audium::UndoableContainerAction>(playListContainer);
     
     auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
     auto insertIndex = rowNumber + (before ? 0 : 1);
     
-    std::cout << "row number: " << rowNumber + (before ? 0 : 1) << std::endl;
+    //std::cout << "row number: " << rowNumber + (before ? 0 : 1) << std::endl;
     
     if ( PlayListTableListBoxItem* item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
-        MoveItemBefore(playListModel->getPlayListContainer()->playListItems,
-                       item->rowNumber,
-                       insertIndex);
+        playListContainer->movePlayListItemBefore(item->rowNumber, insertIndex);
     }
     else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        playListModel->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
+        playListContainer->createPlayListItemUI(item->getRowNumber(), insertIndex);
     }
     
 

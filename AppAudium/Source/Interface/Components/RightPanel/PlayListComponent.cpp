@@ -12,13 +12,13 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
     
     if ( PlayListTableListBoxItem* item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
-        MoveItemBefore(audioGroup->getPlayListContainer()->playListItems,
-                       item->rowNumber,
-                       insertIndex);
+        audioGroup->getPlayListContainer()->movePlayListItemBefore(item->rowNumber,
+                                                                   insertIndex);
     }
     else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        audioGroup->getPlayListContainer()->createPlayListItem(item->getRowNumber(), insertIndex);
+        audioGroup->getPlayListContainer()->createPlayListItemUI(item->getRowNumber(), insertIndex);
+
     }
     
     action->storeNewState();

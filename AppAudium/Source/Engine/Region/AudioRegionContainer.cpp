@@ -51,7 +51,7 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
                 if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks, audium::clocks))
                 {
                     // we need the start of the actual audio file
-                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolueStartTime(audium::clocks) + item->getRegionData(audium::clocks).getStart();
+                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolutePosition(audium::clocks) + item->getRegionData(audium::clocks).getStart();
                     
                     juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
                     auto localRangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(localRange);

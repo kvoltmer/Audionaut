@@ -48,15 +48,21 @@ class PlayListContainer :   public audium::Streamable,
 {
     
 public:
-    PlayListContainer(const AudioRegionContainer &audioRegionContainer) :
-        audioRegionContainer(audioRegionContainer)
+    PlayListContainer(const AudioRegionContainer &audioRegionContainer,
+                      std::shared_ptr<TempoProvider> tempoProvider) :
+        audioRegionContainer(audioRegionContainer),
+        tempoProvider(tempoProvider)
     {
     }
     ~PlayListContainer();
     
     
     void createPlayListItem(std::shared_ptr<AudioRegion> audioRegion);
+    // called from UI
+    void createPlayListItemUI(int regionIndex, int indexOfItemToPlaceBefore);
+    // called internally
     void createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
+    void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     void deletePlayListItem(int atIndex, bool sendNotification = true);
     void deleteAssociatedItems(std::shared_ptr<AudioRegion> audioRegion);
     
@@ -79,7 +85,13 @@ public:
     const PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
     const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
-    double getAbsolueStartTime(const PlayListItem* playListItem, audium::TimeContextType context) const;
+    double getAbsolueStartTimeByOrder(const PlayListItem* playListItem, audium::TimeContextType context) const;
+    
+    // sets the absolute position based on the order
+    void forcePositionByOrder();
+    
+    // move the absolute position of all playlist items by an amount
+    void movePlayListItemsPosition(int startIndex, double amount, audium::TimeContextType context);
     
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
     
@@ -95,13 +107,15 @@ public:
     double getTotalLength(audium::TimeContextType context) const;
     
     const AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
-    
+    std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
+
 private:
     
     
     juce::CriticalSection readLock;
     
     const AudioRegionContainer &audioRegionContainer;
+    std::shared_ptr<TempoProvider> tempoProvider;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListContainer)
 };

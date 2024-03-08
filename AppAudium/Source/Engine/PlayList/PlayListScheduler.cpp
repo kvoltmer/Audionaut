@@ -79,7 +79,7 @@ void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
 
 double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const
 {
-    auto offset = absolutePosition - item->getAbsolueStartTime(context);
+    auto offset = absolutePosition - item->getAbsolutePosition(context);
     return offset + item->getRegionData(audium::clocks).getStart();
 }
 
@@ -105,7 +105,7 @@ void PlayListScheduler::processInArrangementMode(double absolutePosition, int nu
             else
             {
                 // set the position as accurate as possible
-                const auto startPosition = playlist->currentPlayListItem->getAbsolueStartTime(audium::clocks);
+                const auto startPosition = playlist->currentPlayListItem->getAbsolutePosition(audium::clocks);
                 const auto localPosition = absoluteToLocalPosition(startPosition, playlist->currentPlayListItem, audium::clocks);
                 
                 const auto diff = startPosition - absolutePosition;
@@ -296,7 +296,7 @@ void PlayListScheduler::setCurrentPositionAtPlayListItemIndex(std::shared_ptr<Au
     const auto item = group->getPlayListContainer()->getPlayListItem(playListItemIndex);
     if (item != nullptr)
     {
-        data.startPositionClocks = item->getAbsolueStartTime(audium::clocks);
+        data.startPositionClocks = item->getAbsolutePosition(audium::clocks);
     }
 }
 
