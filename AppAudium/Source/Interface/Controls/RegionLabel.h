@@ -11,9 +11,9 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/Group/AudioGroup.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -103,8 +103,6 @@ public:
         // Undo: store old state
         auto audioRegion = audioRegionContainer->getRegion(rowNumber);
         auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
-        action->storeOldState();
-        
         
         if (columnId == regionName)
         {

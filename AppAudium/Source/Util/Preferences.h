@@ -33,10 +33,15 @@ public:
     static void removeKey(const String& key);
 
     static String s_RegistryName;
-    
-    static const char* defaultFile;
 
 private:
     
     
 };
+
+namespace PreferenceKeys
+{
+    static const char* const defaultFile = "DefaultProjectFile";
+    static const char* const initialOpenDirectory = "InitialOpenDirectory";
+    static const char* const initialSaveDirectory = "initialSaveDirectory";
+}

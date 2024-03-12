@@ -83,7 +83,7 @@ void ArrangementGroupComponent::resized()
     for (auto regionView : playListItemComponents)
     {
         auto playListItem = regionView->getPlayListItem();
-        auto start = zoomHandler->clocksToX(playListItem->getAbsolueStartTime(audium::clocks));
+        auto start = zoomHandler->clocksToX(playListItem->getAbsolutePosition(audium::clocks));
         auto width = zoomHandler->clocksToX(playListItem->getDurationTime(audium::clocks));
         juce::Rectangle<double> rect_tmp(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
         

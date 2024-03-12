@@ -22,6 +22,7 @@
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Views/ArrangementOverview.h"
+#include "Interface/Views/GridView.h"
 
 //==============================================================================
 /*
@@ -31,7 +32,7 @@
  This call contains the AudioGroupListBox!
 
  */
-class ArrangementEditBaseComponent  : public juce::Component
+class ArrangementEditBaseComponent  : public juce::Component, public juce::ChangeListener
 {
 public:
     ArrangementEditBaseComponent(std::shared_ptr<AudiumEngine> audiumEngine,
@@ -40,11 +41,18 @@ public:
         audiumEngine(audiumEngine),
         zoomHandler(zoomHandler)
     {
+        // overview
         arrangementOverview.reset(new ArrangementOverview(audiumEngine, arrangementMode));
         addAndMakeVisible(arrangementOverview.get());
         
+        // audio group list
         audioGroupListBox.reset(new AudioGroupListBox(audiumEngine, zoomHandler));
+        
+        // region selector
         regionSelector.reset(new RegionSelector(audioGroupListBox, zoomHandler, audiumEngine));
+        
+        
+        // audio group list model
         audioGroupListBoxModel.reset(new GroupListBoxModel(audioGroupListBox,
                                                                 audiumEngine,
                                                                 zoomHandler,
@@ -56,31 +64,37 @@ public:
         audioGroupListBox->getHeaderComponent()->setSize(getWidth(), AudiumLookAndFeel::transportPositionControlHeight);
         audioGroupListBox->setOutlineThickness(0);
         audioGroupListBox->setMultipleSelectionEnabled(true);
-        
-        dragZoomControl.reset(new DragZoomControl(audioGroupListBox, audiumEngine, zoomHandler, arrangementMode));
-        addAndMakeVisible(dragZoomControl.get());
-        
-        playPositionMarker.reset(new PlayPositionMarker(zoomHandler, audiumEngine));
-        
-
-        zoomHandler->setHorizontalScrollBar(&audioGroupListBox->getHorizontalScrollBar());
-
-
         audioGroupListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(audioGroupListBox.get());
-
-        // selection component
+        
+        // drag zoom control
+        dragZoomControl.reset(new DragZoomControl(audioGroupListBox, audiumEngine, zoomHandler, arrangementMode));
+        addAndMakeVisible(dragZoomControl.get());
+        dragZoomControl->addChangeListener(this);
+        
+        // region selector component
         addAndMakeVisible(regionSelector.get());
         
-        // make sure the play postition view is on top
+        // play postition view (on top)
+        playPositionMarker.reset(new PlayPositionMarker(zoomHandler, audiumEngine));
         addAndMakeVisible(playPositionMarker.get());
 
+        // scroll bar -> zoom handler
+        zoomHandler->setHorizontalScrollBar(&audioGroupListBox->getHorizontalScrollBar());
+        
+        // grid view
+        gridView.reset(new GridView(zoomHandler));
+        audioGroupListBox->getViewport()->getViewedComponent()->addAndMakeVisible(gridView.get());
+        gridView->toBack();
+        
         updateUI();
 
     }
 
     virtual ~ArrangementEditBaseComponent() override
     {
+        dragZoomControl->removeChangeListener(this);
+        
         audioGroupListBox->setModel(nullptr);
         audioGroupListBox->setHeaderComponent(nullptr);
         regionSelector = nullptr;
@@ -103,6 +117,11 @@ public:
         audioGroupListBox->setBounds(bounds);
         playPositionMarker->setBounds(bounds);
     }
+    
+    void changeListenerCallback (ChangeBroadcaster* source) override
+    {
+        setContentWidth(zoomHandler->getContentWidth());
+    }
 
     void updateUI()
     {
@@ -117,6 +136,12 @@ public:
     void setContentWidth(int contentWidth)
     {
         audioGroupListBox->setMinimumContentWidth(contentWidth);
+        
+        // sync our grid view with the Viewport bounds
+        jassert(audioGroupListBox->getViewport()->getViewedComponent());
+        auto viewPortBounds = audioGroupListBox->getViewport()->getViewedComponent()->getLocalBounds();
+        viewPortBounds.setWidth(std::max(contentWidth, viewPortBounds.getWidth()));
+        gridView->setBounds(viewPortBounds);
     }
 
     void zoomIn()
@@ -183,6 +208,7 @@ protected:
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
+    std::shared_ptr<GridView>                   gridView;
     
     std::shared_ptr<AudioGroupListBox>          audioGroupListBox;
     std::unique_ptr<GroupListBoxModel>          audioGroupListBoxModel;

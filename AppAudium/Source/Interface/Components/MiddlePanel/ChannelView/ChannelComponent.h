@@ -22,7 +22,7 @@
 //[Headers]     -- You can add your own extra header files here --
 #include <JuceHeader.h>
 
-#include "Engine/AudioResource.h"
+#include "Engine/Resource/AudioResource.h"
 #include "Engine/AudiumEngine.h"
 
 #include "Interface/Controls/LevelMeter.h"

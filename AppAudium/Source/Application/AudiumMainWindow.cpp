@@ -56,6 +56,7 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEng
     centreWithSize (getWidth(), getHeight());
    #endif
 
+    mainComponent->updateUI();
     setVisible (true);
 }
 

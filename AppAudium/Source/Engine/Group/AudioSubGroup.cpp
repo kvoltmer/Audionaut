@@ -10,8 +10,8 @@
 
 #include "AudioSubGroup.h"
 #include "Engine/Group/AudioGroup.h"
-#include "Engine/AudioResourceContainer.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioClip.h"
 
@@ -46,43 +46,32 @@ void AudioSubGroup::cleanup()
 
 }
 
-bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
-{
-    outputStream.writeInt(subGroupId);
-
-    audioClip->writeToStream(outputStream);
-
-    // Resources
-    const auto audioResources = getAudioResources();
-    outputStream.writeInt(static_cast<int>(audioResources.size()));
-        
-    for (auto resource : audioResources)
+bool AudioSubGroup::writeToJson (json& output)
+{    
+    output["clip"] = audioClip->data;
+    
+    for (auto resource : getAudioResources())
     {
-        // group id and name
-        outputStream.writeInt(getAudioGroup().getId());
-        outputStream.writeString(getAudioGroup().getName());
-        
-        // write audio resource data
-        resource->writeToStream(outputStream);
-        
-        jassert(resource->getAudioSubGroup()->getId() == subGroupId);
+        json j;
+        resource->writeToJson(j);
+        output["resources"] += j;
     }
     
-    // Regions
-    const auto audioRegions = getAudioRegions();
-    outputStream.writeInt(static_cast<int>(audioRegions.size()));
-    for (auto region : audioRegions)
+    for (auto region : getAudioRegions())
     {
-        region->writeToStream(outputStream);
+        output["regions"] += region->data;
     }
         
     return true;
 }
 
-bool AudioSubGroup::readFromStream (juce::InputStream& inputStream)
+bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
 {
-    cleanup();
-    
+    return audium::Streamable::writeToStream(outputStream);
+}
+
+bool AudioSubGroup::readFromJson (json& input)
+{
     // we use the shared_ptr
     const auto group = getAudioGroup().getAudioGroupContainer().getAudioGroupById(getAudioGroup().getId());
     const auto subGroup = getAudioGroup().getAudioSubGroupById(getId());
@@ -92,48 +81,42 @@ bool AudioSubGroup::readFromStream (juce::InputStream& inputStream)
         return false;
     }
     
-    subGroupId              = inputStream.readInt();
-
-    audioClip->readFromStream(inputStream);
+    cleanup();
     
-    // Resources
-    auto numResources = inputStream.readInt();
-    for (auto i = 0; i < numResources; i++)
+    audioClip->data = input["clip"];
+    
+    auto jsonResources = input["resources"];
+    for (auto& jsonElement : jsonResources)
     {
-        // group id and name
-        auto groupId =      inputStream.readInt();
-        auto groupName =    inputStream.readString();
-        jassert(groupId == getAudioGroup().getId());
-        jassert(groupName == getAudioGroup().getName());
-        
-        // url of the resource
-        auto streamPos = inputStream.getPosition();
-        auto url = inputStream.readString();
+        auto url = jsonElement["filename"].template get<std::string>();
+
         auto resource = getAudioGroup().getAudioResourceContainer().addAudioResource(juce::URL(url), group, subGroup);
         if (resource == nullptr)
             return false;
-            
-        inputStream.setPosition(streamPos);
         
-        // audio resource
-        resource->readFromStream(inputStream);
-//        auto channelsNeeded = resource->getChannelPosition() + resource->getNumChannels();
-//        getAudioGroup().ensureNumChannels(channelsNeeded);
+        resource->readFromJson(jsonElement);
     }
     
-
-    // Regions
-    auto numRegions = inputStream.readInt();
-    for (auto i = 0; i < numRegions; i++)
+    
+    auto jsonRegions = input["regions"];
+    for (auto& jsonElement : jsonRegions)
     {
         auto region = getAudioGroup().getAudioRegionContainer().createRegion(group, subGroup);
-        region->readFromStream(inputStream);
+        region->data = jsonElement;
     }
     
     audioClip->validateData();
-    
-    getAudioGroup().getAudioGroupContainer().sendActionMessage(updateAll);
     return true;
+}
+
+bool AudioSubGroup::readFromStream (juce::InputStream& inputStream)
+{
+    if (audium::Streamable::readFromStream(inputStream))
+    {
+        getAudioGroup().getAudioGroupContainer().sendActionMessage(updateAll);
+        return true;
+    }
+    return false;
 }
 
 int AudioSubGroup::getSizeInUnits()

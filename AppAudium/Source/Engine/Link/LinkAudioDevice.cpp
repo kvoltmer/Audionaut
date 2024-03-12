@@ -11,7 +11,7 @@
 #include "LinkAudioDevice.h"
 #include "LinkEngine.hpp"
 #include "Engine/PlayList/PlayListScheduler.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Provider/TempoProvider.h"
 
 LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,

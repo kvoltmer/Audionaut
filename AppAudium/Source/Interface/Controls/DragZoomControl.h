@@ -17,7 +17,7 @@
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 
-class DragZoomControl  : public juce::Component
+class DragZoomControl  : public juce::Component, public juce::ChangeBroadcaster
 {
 public:
     DragZoomControl(std::shared_ptr<AudioGroupListBox> audioGroupListBox,
@@ -117,7 +117,9 @@ public:
         }
         
         zoomHandler->setZoomFactor(newFactor);
-        audioGroupListBox->setMinimumContentWidth(zoomHandler->getContentWidth());
+        
+        // the change message will trigger ArrangementEditBaseComponent::setContentWidth
+        sendSynchronousChangeMessage();
         
         // left - right
         auto x = e.position.getX();
@@ -133,6 +135,7 @@ public:
         
         
         updateFromEngine();
+        
     }
 
     void mouseUp (const juce::MouseEvent& e) override

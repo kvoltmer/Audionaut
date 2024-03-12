@@ -51,6 +51,8 @@ public:
         
         editComponent.reset(new EditComponent(audiumEngine, zoomHandler));
         addAndMakeVisible(editComponent.get());
+        
+        // TODO: restore state
         editComponent->setVisible(false);
         
         zoomHandler->setVisibleRange(visibleRange, sendNotificationSync);
@@ -62,6 +64,12 @@ public:
         ForceRebuildContext,
         ArrangementContext
     };
+    
+        void paint (juce::Graphics& g) override
+        {
+            // fill background
+            g.fillAll (findColour(audium::listBoxBackgroundColourId));
+        }
     
     void resized() override
     {
@@ -96,7 +104,7 @@ public:
         }
         else if (context == ForceRebuildContext)
         {
-            bool editMode = editComponentVisible();
+            bool editMode = audiumEngine->getPlayListScheduler()->isEditMode();
             createComponents();
             
             arrangementComponent->updateUI();
@@ -104,6 +112,7 @@ public:
             editComponent->updateUI();
             
             showEditComponent(editMode);
+            showArrangementComponent(!editMode);
             resized();
         }
         else if (context == ArrangementContext)

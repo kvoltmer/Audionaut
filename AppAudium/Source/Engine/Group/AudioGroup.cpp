@@ -11,9 +11,9 @@
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioClip.h"
-#include "Engine/AudioResourceContainer.h"
-#include "Engine/AudioRegionContainer.h"
-#include "Engine/AudioResource.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Resource/AudioResource.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/TransportSourceContainer.h"
@@ -55,79 +55,79 @@ std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtAbsol
 
 void AudioGroup::setColour(juce::Colour colour)
 {
-    currentColour = colour;
+    groupColour = colour;
 }
 
+bool AudioGroup::writeToJson (json& output)
+{
+    output["id"] = groupId;
+    output["name"] = groupName;
+    output["colour"] = groupColour.toString().toStdString();
+    
+    for (auto channel : audioChannels)
+    {
+        output["channels"] += channel->data;
+    }
+    
+    for (auto subGroup : audioSubGroups)
+    {
+        json j;
+        subGroup->writeToJson(j);
+        output["sub_groups"] += j;
+    }
+    
+    
+    playListContainer->writeToJson(output);    
+    return true;
+}
 
 bool AudioGroup::writeToStream (juce::OutputStream& outputStream)
 {
-    // Group
-    outputStream.writeInt(groupId);
-    outputStream.writeString(getName());
-    outputStream.writeString(currentColour.toString());
+    return audium::Streamable::writeToStream(outputStream);
+}
+
+bool AudioGroup::readFromJson (json& input)
+{
+    cleanup();
+    
+    groupId = input["id"].template get<int>();;
+    groupName = input["name"].template get<std::string>();
+    groupColour = juce::Colour::fromString(input["colour"].template get<std::string>());
     
     // Channels
-    outputStream.writeInt(static_cast<int>(audioChannels.size()));
-    for (auto channel : audioChannels)
+    auto jsonChannels = input["channels"];
+    for (auto& jsonElement : jsonChannels)
     {
-        channel->writeToStream(outputStream);
+        auto channel = addChannel();
+        channel->data = jsonElement;
     }
     
     // SubGroups
-    outputStream.writeInt(static_cast<int>(audioSubGroups.size()));
-    for (auto subGroup : audioSubGroups)
+    auto jsonSubGroups = input["sub_groups"];
+    for (auto& jsonElement : jsonSubGroups)
     {
-        subGroup->writeToStream(outputStream);
+        auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
+        audioSubGroups.push_back(subGroup);
+        
+        if (!subGroup->readFromJson(jsonElement))
+            return false;
+        nextSubGroupId = juce::jmax(nextSubGroupId, subGroup->getId());
+        
     }
     
     // PlayList
-    getPlayListContainer()->writeToStream(outputStream);
-    
+    playListContainer->readFromJson(input);
     return true;
 }
 
 bool AudioGroup::readFromStream (juce::InputStream& inputStream)
 {
-    cleanup();
-    
-    // Group
-    groupId         = inputStream.readInt();
-    groupName       = inputStream.readString();
-    currentColour   = juce::Colour::fromString(inputStream.readString());
-    
-    // Channels
-    auto numChannels = inputStream.readInt();
-    ensureNumChannels(numChannels);
-    for (auto c = 0; c < numChannels; c++)
+    if (audium::Streamable::readFromStream(inputStream))
     {
-        auto channel = getChannel(c);
-        if (channel != nullptr)
-        {
-            channel->readFromStream(inputStream);
-        }
+        getAudioGroupContainer().sendActionMessage(updateAll);
+        return true;
     }
-
-    jassert(audioSubGroups.size() == 0);
-    jassert(nextSubGroupId == 0);
-    
-    // SubGroups
-    auto numSubGroups = inputStream.readInt();
-        
-    for (auto g = 0; g < numSubGroups; g++)
-    {
-        auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
-        audioSubGroups.push_back(subGroup);
-        if (!subGroup->readFromStream(inputStream))
-            return false;
-        nextSubGroupId = juce::jmax(nextSubGroupId, subGroup->getId());
-    }
-    
-    // PlayList
-    getPlayListContainer()->readFromStream(inputStream);
-    
-    getAudioGroupContainer().sendActionMessage(updateAll);
-
-    return true;
+    return false;
 }
 
 int AudioGroup::getSizeInUnits()
@@ -144,9 +144,15 @@ void AudioGroup::ensureNumChannels(int channelsNeeded)
 {
     while (getNumChannels() < channelsNeeded)
     {
-        auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this));
-        audioChannels.push_back(channel);
+        addChannel();
     }
+}
+
+std::shared_ptr<AudioChannel> AudioGroup::addChannel()
+{
+    auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this));
+    audioChannels.push_back(channel);
+    return channel;
 }
 
 int AudioGroup::getChannelNumberFor(AudioChannel* audioChannel)

@@ -43,7 +43,8 @@ class HeaderComponent;
                                                                     //[/Comments]
 */
 class MainComponent  : public juce::Component,
-                       private juce::ActionListener
+                       private juce::ActionListener,
+                       private juce::ChangeListener
 {
 public:
     //==============================================================================
@@ -53,8 +54,10 @@ public:
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
     void actionListenerCallback (const String& message) override;
+    void changeListenerCallback (ChangeBroadcaster* source) override;
     void updateUI();
     void rebuildUI();
+    void updateWindowTitle();
 
     void zoomIn();
     void zoomOut();

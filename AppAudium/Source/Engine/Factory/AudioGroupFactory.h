@@ -25,7 +25,8 @@ public:
                                                         AudioRegionContainer &audioRegionContainer)
     {
         auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
-        auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(audioRegionContainer));
+        auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(audioRegionContainer,
+                                                                                           owner.getTempoProvider()));
         auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(owner,
                                                                      audioResourceContainer,
                                                                      audioRegionContainer,
