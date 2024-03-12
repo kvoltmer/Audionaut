@@ -29,6 +29,7 @@ class PlayListItemComponent  : public juce::Component, public juce::ChangeListen
 public:
     PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
                           std::shared_ptr<AudioGroup> audioGroup,
+                          std::shared_ptr<PlayListContainer> playListContainer,
                           std::shared_ptr<PlayListItem> playListItem,
                           std::shared_ptr<ZoomHandler> zoomHandler,
                           std::shared_ptr<RegionSelector> regionSelector);

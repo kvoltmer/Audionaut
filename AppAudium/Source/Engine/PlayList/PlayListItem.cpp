@@ -106,3 +106,16 @@ bool PlayListItem::readFromJson (json& input)
 
     return true;
 }
+
+bool PlayListItem::validateData()
+{
+    bool result = false;
+    
+    if (getAbsolutePosition(audium::clocks) < 0.0)
+    {
+        setAbsolutePosition(0.0, audium::clocks);
+        result |= true;
+    }
+    
+    return result;
+}

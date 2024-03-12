@@ -19,6 +19,7 @@
 //==============================================================================
 PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
                                              std::shared_ptr<AudioGroup> audioGroup,
+                                             std::shared_ptr<PlayListContainer> playListContainer,
                                              std::shared_ptr<PlayListItem> playListItem,
                                              std::shared_ptr<ZoomHandler> zoomHandler,
                                              std::shared_ptr<RegionSelector> regionSelector) :
@@ -42,6 +43,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     // create dragger as header of ListBox
     auto dragger = std::unique_ptr<PlayListItemDraggerControl>(new PlayListItemDraggerControl(  this,
                                                                                                 audiumEngine,
+                                                                                                playListContainer,
                                                                                                 playListItem,
                                                                                                 zoomHandler,
                                                                                                 audioGroup->getColour(),

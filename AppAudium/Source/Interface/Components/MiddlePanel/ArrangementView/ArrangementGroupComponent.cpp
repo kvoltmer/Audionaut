@@ -70,7 +70,12 @@ void ArrangementGroupComponent::rebuildComponents()
     
     for (auto playListItem : playListItems)
     {
-        auto groupRegion = std::shared_ptr<PlayListItemComponent>(new PlayListItemComponent(audiumEngine, audioGroup, playListItem, zoomHandler, regionSelector));
+        auto groupRegion = std::shared_ptr<PlayListItemComponent>(new PlayListItemComponent(audiumEngine,
+                                                                                            audioGroup,
+                                                                                            playListContainer,
+                                                                                            playListItem,
+                                                                                            zoomHandler,
+                                                                                            regionSelector));
         
         addAndMakeVisible(groupRegion.get());
         playListItemComponents.push_back(groupRegion);
