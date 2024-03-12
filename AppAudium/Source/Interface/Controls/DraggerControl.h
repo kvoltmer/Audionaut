@@ -190,10 +190,10 @@ public:
         auto rangeInSeconds = zoomHandler->xToSeconds(range);
         //std::cout << rangeInSeconds.getStart() << " " << rangeInSeconds.getEnd() << std::endl;
     
-        setRegionDataInSeconds(rangeInSeconds);
+        commitData(rangeInSeconds, audium::seconds);
     }
     
-    virtual void setRegionDataInSeconds(const juce::Range<double> newRegionData) = 0;
+    virtual void commitData(const juce::Range<double> newData, audium::TimeContextType context) = 0;
     
     virtual bool isSelected() const = 0;
     

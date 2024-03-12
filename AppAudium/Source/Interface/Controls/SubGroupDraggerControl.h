@@ -33,7 +33,7 @@ public:
     {
     }
     
-    void setRegionDataInSeconds(const juce::Range<double> newRegionData) override
+    void commitData(const juce::Range<double> newData, audium::TimeContextType context) override
     {
         // undo        
         if (undoableContainerAction == nullptr)
@@ -47,33 +47,33 @@ public:
         const auto audioResources = audioSubGroup->getAudioResources();
         if (audioResources.size() > 0)
         {
-            const auto transportPositionInSeconds = audioSubGroup->getAudioClip()->getAbsolutePosition(audium::seconds);
-            auto regionData = audioSubGroup->getAudioClip()->getRegionData(audium::seconds);
+            const auto transportPositionInSeconds = audioSubGroup->getAudioClip()->getAbsolutePosition(context);
+            auto regionData = audioSubGroup->getAudioClip()->getRegionData(context);
             
             switch (currentDragMode)
             {
                 case leftEdge:
                     {
                         // offset in file
-                        auto diff = newRegionData.getStart() - transportPositionInSeconds;
+                        auto diff = newData.getStart() - transportPositionInSeconds;
                         auto newLength = regionData.getLength() - diff;
                         auto newStart = regionData.getStart() + diff;
                         
                         audioSubGroup->getAudioClip()->setRegionData(juce::Range<double>(newStart, newStart + newLength), audium::seconds);
-                        audioSubGroup->getAudioClip()->setAbsolutePosition(newRegionData.getStart(), audium::seconds);
+                        audioSubGroup->getAudioClip()->setAbsolutePosition(newData.getStart(), audium::seconds);
                         repaint();
                     }
                     break;
                 case rightEdge:
                     {
                         // duration
-                        regionData.setLength(newRegionData.getLength());
+                        regionData.setLength(newData.getLength());
                         audioSubGroup->getAudioClip()->setRegionData(regionData, audium::seconds);
                     }
                     break;
                 case middleEdge:
                     // position in transport
-                    audioSubGroup->getAudioClip()->setAbsolutePosition(newRegionData.getStart(), audium::seconds);
+                    audioSubGroup->getAudioClip()->setAbsolutePosition(newData.getStart(), audium::seconds);
                     break;
                 default:
                     break;

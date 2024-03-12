@@ -19,11 +19,13 @@ public:
     
     PlayListItemDraggerControl(juce::Component* componentToDrag,
                                std::shared_ptr<AudiumEngine> audiumEngine,
+                               std::shared_ptr<PlayListContainer> playListContainer,
                                std::shared_ptr<PlayListItem> playListItem,
                                std::shared_ptr<ZoomHandler> zoomHandler,
                                juce::Colour colour,
                                std::shared_ptr<RegionSelector> regionSelector) :
         DraggerControl(componentToDrag, audiumEngine, zoomHandler, colour, regionSelector),
+        playListContainer(playListContainer),
         playListItem(playListItem)
     {
     }
@@ -32,9 +34,29 @@ public:
     {
     }
     
-    void setRegionDataInSeconds(const juce::Range<double> newRegionData) override
+    void commitData(const juce::Range<double> newData, audium::TimeContextType context) override
     {
-        // TODO: implement
+        // undo
+        if (undoableContainerAction == nullptr)
+        {
+            std::cout << "new audium::UndoableContainerAction" << std::endl;
+            undoableContainerAction = new audium::UndoableContainerAction(playListContainer);
+        }
+        
+        switch (currentDragMode)
+        {
+            case leftEdge:
+                break;
+            case rightEdge:
+                break;
+            case middleEdge:
+                // position in transport
+                playListItem->setAbsolutePosition(newData.getStart(), context);
+                break;
+            default:
+                break;
+        }
+        
     }
     
     
@@ -58,14 +80,19 @@ public:
     
     bool validateData() override
     {
-        return true;
-//        const auto audioResources = audioSubGroup->getAudioResources();
-//        bool result = false;
-//        for (auto res : audioResources)
-//        {
-//            result |= res->validateData();
-//        }
-//        return result;
+        bool result = playListItem->validateData();
+        
+        if (undoableContainerAction != nullptr)
+        {
+            // Undo: store new state
+            undoableContainerAction->storeNewState();
+            audiumEngine->getUndoManager()->perform(undoableContainerAction, "Modify Item");
+            audiumEngine->getUndoManager()->beginNewTransaction();
+            undoableContainerAction = nullptr;
+            std::cout << "undoableContainerAction = nullptr" << std::endl;
+        }
+        
+        return result;
     }
     
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override
@@ -82,5 +109,7 @@ public:
     
     
 private:
+    std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<PlayListItem> playListItem;
+    
 };

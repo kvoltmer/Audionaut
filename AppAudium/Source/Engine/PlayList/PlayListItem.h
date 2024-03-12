@@ -51,6 +51,8 @@ public:
     bool writeToJson (json& output);
     bool readFromJson (json& input);
     
+    bool validateData();
+
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
