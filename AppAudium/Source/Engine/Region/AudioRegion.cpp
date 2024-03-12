@@ -12,7 +12,7 @@
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioClip.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Provider/TempoProvider.h"
 
@@ -22,23 +22,31 @@ AudioRegion::~AudioRegion()
 
 bool AudioRegion::writeToStream (juce::OutputStream& outputStream)
 {
-    outputStream.writeString(getName());
-    outputStream.writeDouble(getRegionData(audium::seconds).getStart());
-    outputStream.writeDouble(getRegionData(audium::seconds).getEnd());
-    return true;
+    return audium::Streamable::writeToStream(outputStream);
 }
 
 bool AudioRegion::readFromStream (juce::InputStream& inputStream)
 {
-    name = inputStream.readString();
-    auto start      = inputStream.readDouble();
-    auto end        = inputStream.readDouble();
-        
-    regionData = juce::Range<double>(start, end);
+    if (audium::Streamable::readFromStream(inputStream))
+    {
+        audioGroup->getAudioGroupContainer().sendActionMessage(updateAll);
+        return true;
+    }
+    return false;
+}
 
-    audioGroup->getAudioGroupContainer().sendActionMessage(updateAll);
+bool AudioRegion::writeToJson (json& output)
+{
+    output = data;
     return true;
 }
+
+bool AudioRegion::readFromJson (json& input)
+{
+    data = input;
+    return true;
+}
+
 
 int AudioRegion::getSizeInUnits()
 {
@@ -46,48 +54,48 @@ int AudioRegion::getSizeInUnits()
 }
 
 
-const AudioRegion::RegionData AudioRegion::getRegionData(audium::TimeContextType context) const
+const AudioRegionData::tRange AudioRegion::getRegionData(audium::TimeContextType context) const
 {
     if (context == audium::seconds)
     {
-        return regionData;
+        return data.regionData;
     }
     else if (context == audium::clocks)
     {
-        return tempoProvider->secondsToClocks(regionData);
+        return tempoProvider->secondsToClocks(data.regionData);
     }
     
     jassertfalse;
-    return AudioRegion::RegionData();
+    return AudioRegionData::tRange();
 }
 
-void AudioRegion::setRegionData(const AudioRegion::RegionData newRegionData, audium::TimeContextType context)
+void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, audium::TimeContextType context)
 {
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
 
     if (context == audium::seconds)
     {
-        regionData = newRegionData;
+        data.regionData = newRegionData;
     }
     else if (context == audium::clocks)
     {
-        regionData = tempoProvider->clocksToSeconds(newRegionData);
+        data.regionData = tempoProvider->clocksToSeconds(newRegionData);
     }
 }
 
-bool AudioRegion::validateData(RegionData& data)
+bool AudioRegion::validateData(AudioRegionData::tRange& newData)
 {
     bool result = false;
     
-    if (data.getStart() < getAudioResourceStartInSeconds())
+    if (newData.getStart() < getAudioResourceStartInSeconds())
     {
-        data = data.movedToStartAt(getAudioResourceStartInSeconds());
+        newData = newData.movedToStartAt(getAudioResourceStartInSeconds());
         result |= true;
     }
     
-    if (data.getEnd() > getAudioResourceEndInSeconds())
+    if (newData.getEnd() > getAudioResourceEndInSeconds())
     {
-        data = data.movedToEndAt(getAudioResourceEndInSeconds());
+        newData = newData.movedToEndAt(getAudioResourceEndInSeconds());
         result |= true;
     }
     return result;
@@ -107,7 +115,7 @@ void AudioRegion::setRegionStart(double newStart, audium::TimeContextType contex
 {
     if (newStart <=  getRegionData(context).getEnd())
     {
-        setRegionData(AudioRegion::RegionData(newStart, getRegionData(context).getEnd()), context);
+        setRegionData(AudioRegionData::tRange(newStart, getRegionData(context).getEnd()), context);
     }
 }
 
@@ -115,7 +123,7 @@ void AudioRegion::setRegionEnd(double newEnd, audium::TimeContextType context)
 {
     if (newEnd >=  getRegionData(context).getStart())
     {
-        setRegionData(AudioRegion::RegionData(getRegionData(context).getStart(), newEnd), context);
+        setRegionData(AudioRegionData::tRange(getRegionData(context).getStart(), newEnd), context);
     }
 }
 

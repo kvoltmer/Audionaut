@@ -15,8 +15,8 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/AudioRegion.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegion.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 

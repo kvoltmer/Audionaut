@@ -135,6 +135,17 @@ double ZoomHandler::xToBars (const double x) const
     return x * (1.0 / pixelsPerBar) / zoomFactor;
 }
 
+double ZoomHandler::beatsToX (const double beats) const
+{
+    return barsToX(beats * 0.25);
+}
+
+double ZoomHandler::xToBeats (const double x) const
+{
+    return xToBars(x) * 4.0;
+}
+
+
 double ZoomHandler::clocksToX (const double clocks) const
 {
     return barsToX(clocks / 96.0);
@@ -199,13 +210,13 @@ int roundSecondsToGrid(int x)
     }
 }
 
-int ZoomHandler::numSegmentsForWidthInSeconds(const int width, int& seconds)
+int ZoomHandler::numSegmentsForWidthInSeconds(const float width, int& seconds)
 {
     jassert(width > 0);
     
     if (width > 0)
     {
-        auto pixelsPerSec = width / xToSeconds(width);
+        auto pixelsPerSec = width / static_cast<float>(xToSeconds(width));
         assert(pixelsPerSec > 0);
         // the duration for 100 pixels
         auto duration = int(100 / pixelsPerSec);
@@ -238,7 +249,7 @@ int roundBarsToGrid(int x)
     }
 }
 
-int ZoomHandler::numSegmentsForWidthInBars(const int width, int& bars)
+int ZoomHandler::numSegmentsForWidthInBars(const float width, int& bars)
 {
     jassert(width > 0);
     
@@ -256,6 +267,81 @@ int ZoomHandler::numSegmentsForWidthInBars(const int width, int& bars)
     
     return 0;
 }
+
+int roundBeatsToGrid(int x)
+{
+    if (x < 1)
+    {
+        return 1;
+    }
+    else if (x < 4)
+    {
+        return 4;
+    }
+    else if (x < 16)
+    {
+        return 16;
+    }
+    else
+    {
+        return x + 32 - x % 32;
+    }
+}
+
+int ZoomHandler::numSegmentsForWidthInBeats(const float width, int& beats)
+{
+    jassert(width > 0);
+    
+    if (width > 0)
+    {
+        auto pixelsPerBeat = width / (xToBeats(width));
+        assert(pixelsPerBeat > 0);
+        // the duration in pixels
+        auto duration = int(25.0 / pixelsPerBeat);
+        // round to grid 
+        beats = roundBeatsToGrid(duration);
+        int itemWidth = beatsToX(beats);
+        return (width / itemWidth) + 1;
+    }
+    
+    return 0;
+}
+
+const ZoomHandler::SegmentResult ZoomHandler::segmentsForWidth(const float totalWidth, ZoomHandler::SegmentType type)
+{
+    jassert(totalWidth > 0);
+    SegmentResult result;
+   
+    double pixelsPerSegment = 0.0;
+    int duration = 0;
+    
+    switch (type) {
+        case seconds:
+            pixelsPerSegment = totalWidth / static_cast<float>(xToSeconds(totalWidth));
+            duration = int(100.0 / pixelsPerSegment);
+            result.grid = roundSecondsToGrid(duration);
+            result.itemWidth = secondsToX(result.grid);
+            break;
+        case beats:
+            pixelsPerSegment = totalWidth / static_cast<float>(xToBeats(totalWidth));
+            duration = int(25.0 / pixelsPerSegment);
+            result.grid = roundBeatsToGrid(duration);
+            result.itemWidth = beatsToX(result.grid);
+            break;
+        case bars:
+            pixelsPerSegment = totalWidth / static_cast<float>(xToBars(totalWidth));
+            duration = int(50.0 / pixelsPerSegment);
+            result.grid = roundBarsToGrid(duration);
+            result.itemWidth = barsToX(result.grid);
+            break;
+        default:
+            break;
+    }
+    
+    result.numSegments = (totalWidth / result.itemWidth) + 1;
+    return result;
+}
+
 
 void ZoomHandler::focusViewOnPlayPosition()
 {

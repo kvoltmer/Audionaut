@@ -58,8 +58,8 @@ public:
     PopupMenu createExtraAppleMenuItems();
     
     void askUserToOpenFile();
-    void saveProjectAs();
-    void saveProject();
+    void saveProjectAs(std::function<void (bool)> callback);
+    void saveProject(std::function<void (bool)> callback);
     void bounceProject();
     void updateUI();
     
@@ -77,9 +77,8 @@ private:
     void initCommandManager();
     void handleAsyncUpdate() override;
     
-    File suggestDirectory();
-    String suggestFileName();
-
+    File initialSaveDirectory;
+    File initialOpenDirectory;
     
     //==============================================================================
    #if JUCE_MAC

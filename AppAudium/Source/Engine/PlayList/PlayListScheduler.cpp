@@ -14,10 +14,10 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioGroupContainer.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioClip.h"
-#include "Engine/AudioResource.h"
+#include "Engine/Resource/AudioResource.h"
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
@@ -43,22 +43,22 @@ void PlayListScheduler::tick(bool isPlaying,
         if (beats >= 0.)
         {
             // assign absolute position
-            if (loopPlayList.load())
+            if (data.loopPlayList)
             {
-                transportPositionClocks = std::fmod(TempoProvider::beatsToClocks(beats), getTotalLength(audium::clocks));
+                data.transportPositionClocks = std::fmod(TempoProvider::beatsToClocks(beats), getTotalLength(audium::clocks));
             }
             else
             {
-                transportPositionClocks = TempoProvider::beatsToClocks(beats);
+                data.transportPositionClocks = TempoProvider::beatsToClocks(beats);
             }
             
-            if (editMode)
+            if (data.editMode)
             {
-                processInEditMode(transportPositionClocks, numSamples);
+                processInEditMode(data.transportPositionClocks, numSamples);
             }
             else
             {
-                processInArrangementMode(transportPositionClocks, numSamples);
+                processInArrangementMode(data.transportPositionClocks, numSamples);
             }
         }
     }
@@ -79,7 +79,7 @@ void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
 
 double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const
 {
-    auto offset = absolutePosition - item->getAbsolueStartTime(context);
+    auto offset = absolutePosition - item->getAbsolutePosition(context);
     return offset + item->getRegionData(audium::clocks).getStart();
 }
 
@@ -105,7 +105,7 @@ void PlayListScheduler::processInArrangementMode(double absolutePosition, int nu
             else
             {
                 // set the position as accurate as possible
-                const auto startPosition = playlist->currentPlayListItem->getAbsolueStartTime(audium::clocks);
+                const auto startPosition = playlist->currentPlayListItem->getAbsolutePosition(audium::clocks);
                 const auto localPosition = absoluteToLocalPosition(startPosition, playlist->currentPlayListItem, audium::clocks);
                 
                 const auto diff = startPosition - absolutePosition;
@@ -212,7 +212,7 @@ void PlayListScheduler::startPlaying()
 {
     if (linkEngine != nullptr)
     {
-        linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(startPositionClocks));
+        linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
     }
 }
@@ -251,7 +251,7 @@ void PlayListScheduler::resetCurrentPlayListItem()
 
 double PlayListScheduler::getAbsolutePosition(audium::TimeContextType context) const
 {
-    const auto clocks = isPlaying() ? transportPositionClocks : startPositionClocks;
+    const auto clocks = isPlaying() ? data.transportPositionClocks : data.startPositionClocks;
     if (context == audium::clocks)
     {
         return clocks;
@@ -271,11 +271,11 @@ void PlayListScheduler::setAbsolutePosition(double newPosition, audium::TimeCont
     {
         if (context == audium::clocks)
         {
-            startPositionClocks = newPosition;
+            data.startPositionClocks = newPosition;
         }
         else if (context == audium::seconds)
         {
-            startPositionClocks = getTempoProvider()->secondsToClocks(newPosition);
+            data.startPositionClocks = getTempoProvider()->secondsToClocks(newPosition);
         }
     }
 }
@@ -296,7 +296,7 @@ void PlayListScheduler::setCurrentPositionAtPlayListItemIndex(std::shared_ptr<Au
     const auto item = group->getPlayListContainer()->getPlayListItem(playListItemIndex);
     if (item != nullptr)
     {
-        startPositionClocks = item->getAbsolueStartTime(audium::clocks);
+        data.startPositionClocks = item->getAbsolutePosition(audium::clocks);
     }
 }
 

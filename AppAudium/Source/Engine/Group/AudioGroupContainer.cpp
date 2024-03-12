@@ -15,8 +15,8 @@
 #include "Engine/ActionMessages.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/Factory/AudioGroupFactory.h"
-#include "Engine/AudioResourceContainer.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 AudioGroupContainer::~AudioGroupContainer()
@@ -138,38 +138,47 @@ void AudioGroupContainer::deleteSelectedGroups()
 
 bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
 {
-    outputStream.writeInt(static_cast<int>(audioGroups.size()));
-    
-    for (auto & group : audioGroups)
-    {
-        group->writeToStream(outputStream);
-    }
-    
-    return true;
+    return audium::Streamable::writeToStream(outputStream);
 }
 
 bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream)
 {
-    bool result = false;
+    if (audium::Streamable::readFromStream(inputStream))
+    {
+        sendActionMessage(rebuildAll);
+        return true;
+    }
+    return false;
+}
+
+bool AudioGroupContainer::writeToJson (json& output)
+{
+    for (auto& group : audioGroups)
+    {
+        json j;
+        group->writeToJson(j);
+        output["groups"] += j;
+    }
+    return true;
+}
+
+bool AudioGroupContainer::readFromJson (json& input)
+{
     cleanup();
     jassert(audioGroups.size() == 0);
     jassert(nextId == 0);
     jassert(audioResourceContainer != nullptr && audioRegionContainer != nullptr);
     
-    auto numGroups = inputStream.readInt();
-        
-    for (auto g = 0; g < numGroups; g++)
+    auto jsonSubGroups = input["groups"];
+    for (auto& jsonElement : jsonSubGroups)
     {
         auto audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer, *audioRegionContainer);
         audioGroups.push_back(audioGroup);
         
-        audioGroup->readFromStream(inputStream);
+        audioGroup->readFromJson(jsonElement);
         nextId = juce::jmax(nextId, audioGroup->getId());
     }
-    
-    sendActionMessage(rebuildAll);
-    
-    return result;
+    return true;
 }
 
 int AudioGroupContainer::getSizeInUnits()

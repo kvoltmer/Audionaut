@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include "AudioRegionContainer.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioClip.h"
@@ -51,7 +51,7 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
                 if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks, audium::clocks))
                 {
                     // we need the start of the actual audio file
-                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolueStartTime(audium::clocks) + item->getRegionData(audium::clocks).getStart();
+                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolutePosition(audium::clocks) + item->getRegionData(audium::clocks).getStart();
                     
                     juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
                     auto localRangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(localRange);
@@ -101,7 +101,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
 {
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
     audioRegions.push_back(audioRegion);
-    std::cout << "createRegion " << audioRegion << " index " << getRegionIndex(audioRegion) << std::endl;
+    // std::cout << "createRegion " << audioRegion << " index " << getRegionIndex(audioRegion) << std::endl;
     return audioRegion;
 }
 

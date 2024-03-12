@@ -11,9 +11,10 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Engine/TimeContext.h"
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
+#include "Engine/PlayList/PlayListSchedulerData.h"
 
 class TransportSourceContainer;
 class PlayListContainer;
@@ -47,13 +48,13 @@ public:
     void startPlaying();
     void stopPlaying();
     bool isPlaying() const;
-    void setFollowTransport(bool enable) { followTransport = enable; }
-    bool getFollowTransport() const { return followTransport; }
-    void setLoopPlayList(bool enable) { loopPlayList.store(enable); }
-    bool getLoopPlayList() const { return loopPlayList.load(); }
-    void setEditMode(bool bEditMode) { editMode = bEditMode; }
-    bool isEditMode() const { return editMode; }
-    bool isArrangementMode() const { return !editMode; }
+    void setFollowTransport(bool enable) { data.followTransport = enable; }
+    bool getFollowTransport() const { return data.followTransport; }
+    void setLoopPlayList(bool enable) { data.loopPlayList = enable; }
+    bool getLoopPlayList() const { return data.loopPlayList; }
+    void setEditMode(bool bEditMode) { data.editMode = bEditMode; }
+    bool isEditMode() const { return data.editMode; }
+    bool isArrangementMode() const { return !data.editMode; }
     
     void resetCurrentPlayListItem();
     
@@ -77,6 +78,8 @@ public:
     
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     
+    PlayListSchedulerData data;
+    
 private:
 
     double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const;
@@ -98,21 +101,10 @@ private:
     
     int bufferSize = 0;
     
-    // transport position in 96th clocks
-    double transportPositionClocks = 0.0;
-    
-    double startPositionClocks = 0.0;
-    
     std::atomic<bool> forcePosition = false;
     
     juce::CriticalSection readLock;
-    
-    bool followTransport = true;
-    
-    std::atomic<bool> loopPlayList = false;
-    
-    // Edit or Arrangement Mode
-    std::atomic<bool> editMode = true;
+
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

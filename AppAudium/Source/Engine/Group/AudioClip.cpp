@@ -12,7 +12,7 @@
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Provider/TempoProvider.h"
-#include "Engine/AudioResource.h"
+#include "Engine/Resource/AudioResource.h"
 
 juce::Range<double> AudioClip::getAbsolutePositionRange(audium::TimeContextType context) const
 {
@@ -21,12 +21,12 @@ juce::Range<double> AudioClip::getAbsolutePositionRange(audium::TimeContextType 
     if (context == audium::seconds)
     {
         auto tp = getAudioGroup().getAudioGroupContainer().getTempoProvider();
-        auto pos = tp->clocksToSeconds(absolutePositionClocks);
+        auto pos = tp->clocksToSeconds(data.absolutePositionClocks);
         return juce::Range(pos, pos + length);
     }
     else if (context == audium::clocks)
     {
-        return juce::Range(absolutePositionClocks, absolutePositionClocks + length);
+        return juce::Range(data.absolutePositionClocks, data.absolutePositionClocks + length);
     }
     
     jassertfalse;
@@ -38,11 +38,11 @@ double AudioClip::getAbsolutePosition(audium::TimeContextType context) const
     if (context == audium::seconds)
     {
         auto tp = getAudioGroup().getAudioGroupContainer().getTempoProvider();
-        return tp->clocksToSeconds(absolutePositionClocks);
+        return tp->clocksToSeconds(data.absolutePositionClocks);
     }
     else if (context == audium::clocks)
     {
-        return absolutePositionClocks;
+        return data.absolutePositionClocks;
     }
     jassertfalse;
     return 0.0;
@@ -54,11 +54,11 @@ void AudioClip::setAbsolutePosition(double newPosition, audium::TimeContextType 
     if (context == audium::seconds)
     {
         auto tp = getAudioGroup().getAudioGroupContainer().getTempoProvider();
-        absolutePositionClocks = tp->secondsToClocks(newPosition);
+        data.absolutePositionClocks = tp->secondsToClocks(newPosition);
     }
     else if (context == audium::clocks)
     {
-        absolutePositionClocks = newPosition;
+        data.absolutePositionClocks = newPosition;
     }
     else
     {
@@ -68,18 +68,18 @@ void AudioClip::setAbsolutePosition(double newPosition, audium::TimeContextType 
 
 const juce::Range<double> AudioClip::getRegionData(audium::TimeContextType context) const
 {
-    if (regionData.isEmpty())
+    if (data.regionData.isEmpty())
     {
         return juce::Range<double>(0.0, getFileLength(context));
     }
     
     if (context == audium::seconds)
     {
-        return regionData;
+        return data.regionData;
     }
     else if (context == audium::clocks)
     {
-        return getAudioGroup().getAudioGroupContainer().getTempoProvider()->secondsToClocks(regionData);
+        return getAudioGroup().getAudioGroupContainer().getTempoProvider()->secondsToClocks(data.regionData);
     }
     jassertfalse;
     return juce::Range<double>(0.0, 0.0);
@@ -91,16 +91,16 @@ void AudioClip::setRegionData(const juce::Range<double> newRegionData, audium::T
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
     if (context == audium::seconds)
     {
-        regionData = newRegionData;
+        data.regionData = newRegionData;
     }
     else if (context == audium::clocks)
     {
-        regionData = getAudioGroup().getAudioGroupContainer().getTempoProvider()->clocksToSeconds(newRegionData);
+        data.regionData = getAudioGroup().getAudioGroupContainer().getTempoProvider()->clocksToSeconds(newRegionData);
     }
 
-    if (regionData.getStart() < 0.0)
+    if (data.regionData.getStart() < 0.0)
     {
-        regionData.setStart(0.0);
+        data.regionData.setStart(0.0);
     }
 }
 
@@ -108,7 +108,7 @@ bool AudioClip::validateData()
 {
     bool result = false;
  
-    if (regionData.isEmpty())
+    if (data.regionData.isEmpty())
     {
         setRegionData(juce::Range<double>(0.0, getFileLength(audium::seconds)), audium::seconds);
     }
@@ -119,15 +119,15 @@ bool AudioClip::validateData()
         result |= true;
     }
     
-    if (regionData.getLength() + regionData.getStart() > getFileLength(audium::seconds))
+    if (data.regionData.getLength() + data.regionData.getStart() > getFileLength(audium::seconds))
     {
-        regionData.setLength(getFileLength(audium::seconds) - regionData.getStart());
+        data.regionData.setLength(getFileLength(audium::seconds) - data.regionData.getStart());
         result |= true;
     }
     
-    if (regionData.getLength() <= 0.0)
+    if (data.regionData.getLength() <= 0.0)
     {
-        regionData.setLength(0.1);
+        data.regionData.setLength(0.1);
         result |= true;
     }
     
@@ -136,22 +136,28 @@ bool AudioClip::validateData()
 
 bool AudioClip::writeToStream (juce::OutputStream& outputStream)
 {
-    outputStream.writeDouble(absolutePositionClocks);
-    outputStream.writeDouble(regionData.getStart());
-    outputStream.writeDouble(regionData.getEnd());
-    return true;
+    return audium::Streamable::writeToStream(outputStream);
 }
 
 bool AudioClip::readFromStream (juce::InputStream& inputStream)
 {
-    absolutePositionClocks  = inputStream.readDouble();
-    const auto start        = inputStream.readDouble();
-    const auto end          = inputStream.readDouble();
-    
-    regionData = juce::Range<double>(start, end);
-    
-    getAudioGroup().getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
-    
+    if (audium::Streamable::readFromStream(inputStream))
+    {
+        getAudioGroup().getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
+        return true;
+    }
+    return false;
+}
+
+bool AudioClip::writeToJson (json& output)
+{
+    output = data;
+    return true;
+}
+
+bool AudioClip::readFromJson (json& input)
+{
+    data = input;
     return true;
 }
 

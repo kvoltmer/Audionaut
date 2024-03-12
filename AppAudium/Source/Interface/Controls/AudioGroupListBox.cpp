@@ -6,7 +6,7 @@
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioGroupFactory.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 #include "Interface/AudiumLookAndFeel.h"
@@ -21,6 +21,8 @@ AudioGroupListBox::AudioGroupListBox (std::shared_ptr<AudiumEngine> audiumEngine
     audiumEngine(audiumEngine),
     zoomHandler(zoomHandler)
 {
+    // background is transparent
+    setColour(ListBox::backgroundColourId, juce::Colours::transparentBlack);
 }
 
 AudioGroupListBox::~AudioGroupListBox()
@@ -83,19 +85,18 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
         audiumEngine->getUndoManager()->beginNewTransaction();
     }
     
-    //updateContent();
     
-    setColour(TableListBox::backgroundColourId, findColour(audium::secondaryBackgroundColourId));
+    setColour(ListBox::backgroundColourId, juce::Colours::transparentBlack);
     repaint();
 }
 
 void AudioGroupListBox::fileDragEnter (const juce::StringArray& files, int x, int y)
 {
-    setColour(TableListBox::backgroundColourId, findColour(audium::secondaryBackgroundColourId).brighter());
+    setColour(ListBox::backgroundColourId, findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.5f));
     repaint();
 }
 void AudioGroupListBox::fileDragExit (const juce::StringArray& files)
 {
-    setColour(TableListBox::backgroundColourId, findColour(audium::secondaryBackgroundColourId));
+    setColour(ListBox::backgroundColourId, juce::Colours::transparentBlack);
     repaint();
 }

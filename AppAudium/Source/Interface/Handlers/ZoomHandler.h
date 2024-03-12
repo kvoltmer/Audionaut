@@ -49,6 +49,9 @@ public:
     
     double barsToX (const double bars) const;
     double xToBars (const double x) const;
+    
+    double beatsToX (const double beats) const;
+    double xToBeats (const double x) const;
  
     double clocksToX (const double clocks) const;
     double xToClocks (const double x) const;
@@ -59,10 +62,27 @@ public:
     static juce::String secondsToFormattedString(const int seconds);
     
     // returns the number of time segments for a given width. (1 second is the smallest possible grid)
-    int numSegmentsForWidthInSeconds(const int width, int& seconds);
+    int numSegmentsForWidthInSeconds(const float width, int& seconds);
     
     // returns the number of time segments for a given width. (1 bar is the smallest possible grid)
-    int numSegmentsForWidthInBars(const int width, int& beats);
+    int numSegmentsForWidthInBars(const float width, int& bars);
+    
+    // returns the number of time segments for a given width. (1 beat is the smallest possible grid)
+    int numSegmentsForWidthInBeats(const float width, int& beats);
+    
+    struct SegmentResult {
+        int numSegments = 0;
+        double itemWidth = 0.0;
+        int grid = 0;
+    };
+
+    enum SegmentType {
+        seconds = 0,
+        bars = 1,
+        beats = 2
+    };
+    
+    const SegmentResult segmentsForWidth(const float totalWidth, SegmentType type);
     
     void focusViewOnPlayPosition();
     

@@ -15,9 +15,9 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Factory/AudioGroupFactory.h"
-#include "Engine/AudioResourceContainer.h"
-#include "Engine/AudioRegionContainer.h"
-#include "Engine/AudioRegionContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudiumTransportSource.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
@@ -52,35 +52,32 @@ void AudiumEngine::cleanup()
     currentFile = File();
 }
 
-void AudiumEngine::openFile (const juce::File& file, std::function<void (bool)> callback)
+void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,std::string)> callback)
 {
-    if (! file.exists())
+    try
     {
-        if (callback != nullptr)
-            callback (false);
-
-        return;
-    }
-    
-    if (file.hasFileExtension (projectFileExtension))
-    {
-        juce::FileInputStream inputStream(file);
-        if (inputStream.openedOk())
+        if (file.exists() &&
+            file.hasFileExtension (projectFileExtension))
         {
-            undoManager->clearUndoHistory();
-            /// TODO: std::move (callback)
-            readFromStream(inputStream);
-            currentFile = file;
+            juce::FileInputStream inputStream(file);
+            if (inputStream.openedOk() &&
+                readFromStream(inputStream))
+            {
+                currentFile = file;
+                undoManager->clearUndoHistory();
+                NullCheckedInvocation::invoke (callback, true, "");
+            }
         }
     }
-    else
+    catch (std::exception &e)
     {
-        std::cout << "error: missing project file extension" << std::endl;
+        std::cout << e.what() << std::endl;
+        NullCheckedInvocation::invoke (callback, false, e.what());
     }
     
 }
 
-void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> callback)
+bool AudiumEngine::saveFile (const juce::File& f)
 {
     juce::File file = f;
     
@@ -94,30 +91,30 @@ void AudiumEngine::saveFile (const juce::File& f, std::function<void (bool)> cal
         auto result = file.create();
         if (result != juce::Result::ok())
         {
-            if (callback != nullptr)
-                callback (false);
-        
-            return;
+            return false;
         }
     }
     
     juce::TemporaryFile temp (file);
-    
-    {
-        juce::FileOutputStream out (temp.getFile());
-
-        if (! (out.openedOk()))
-        {
-            return;
-        }
         
-        //callback(writeToStream(fo));
-        writeToStream(out);
-        undoManager->clearUndoHistory();
-    }
+    juce::FileOutputStream out (temp.getFile());
 
-    temp.overwriteTargetFileWithTemporary();
-    currentFile = file;
+    if (! (out.openedOk()))
+    {
+        std::cout << out.getStatus().getErrorMessage().toStdString() << std::endl;
+        return false;
+    }
+    
+    writeToStream(out);
+    undoManager->clearUndoHistory();
+    
+
+    if (temp.overwriteTargetFileWithTemporary())
+    {
+        currentFile = file;
+        return true;
+    }
+    return false;
 }
 
 void AudiumEngine::setBypass(bool bypass)
@@ -174,42 +171,65 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
     std::cout << "done" << std::endl;
 }
 
-bool AudiumEngine::writeToStream (juce::OutputStream& out)
+bool AudiumEngine::writeToStream (juce::OutputStream& outputStream)
 {
-    out.writeString ("AudiumEngineFormat");
-    
-    // Tempo
-    out.writeDouble(playListScheduler->getTempoProvider()->getTempo());
-    
-    // Groups
-    audioGroupContainer->writeToStream(out);
-        
-    return true;
+    return audium::Streamable::writeToStream(outputStream);
 }
 
-bool AudiumEngine::readFromStream (juce::InputStream& in)
+bool AudiumEngine::readFromStream (juce::InputStream& inputStream)
 {
-    auto name = in.readString();
-    jassert(name == "AudiumEngineFormat");
-    
-    cleanup();
-    
-    while (! in.isExhausted())
+    if (audium::Streamable::readFromStream(inputStream))
     {
-        // Tempo
-        auto tempo = in.readDouble();
-        
-        if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
-            playListScheduler->getTempoProvider()->setTempo(tempo);
-        
-        // Groups
-        if (audioGroupContainer->readFromStream(in))
-        {
-            return true;
-        }
         return true;
     }
     return false;
+}
+
+bool AudiumEngine::writeToJson (json& output)
+{
+    json jsonAudium;
+
+    audioGroupContainer->writeToJson(jsonAudium);
+    
+    jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
+    jsonAudium["file_version"] = audium::Streamable::fileVersion;
+    jsonAudium["ui_state"] = uiState;
+    jsonAudium["scheduler"] = getPlayListScheduler()->data;
+    output["audium"] = jsonAudium;
+
+    std::cout << std::setw(2) << output << std::endl;
+    return true;
+}
+
+bool AudiumEngine::readFromJson (json& input)
+{
+    cleanup();
+    
+    auto jsonAudium = input["audium"];
+    
+    const auto tempo = jsonAudium["tempo"].template get<double>();
+    if (jsonAudium.contains("file_version"))
+    {
+        const auto version = jsonAudium["file_version"].template get<int>();
+        jassert(version == audium::Streamable::fileVersion);
+    }
+    
+    if (jsonAudium.contains("ui_state"))
+        uiState = jsonAudium["ui_state"];
+    
+    if (jsonAudium.contains("scheduler"))
+        getPlayListScheduler()->data = jsonAudium["scheduler"];
+    
+    
+    if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
+        playListScheduler->getTempoProvider()->setTempo(tempo);
+    
+    return audioGroupContainer->readFromJson(jsonAudium);
+}
+
+int AudiumEngine::getSizeInUnits()
+{
+    return audioGroupContainer->getSizeInUnits() + 1;
 }
 
 void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> group)

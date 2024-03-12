@@ -12,6 +12,8 @@
 
 #include <memory>
 #include <JuceHeader.h>
+
+#include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
 
 class AudioGroupContainer;
@@ -25,7 +27,7 @@ struct AutoEditConfig;
 class LinkAudioDevice;
 
 /// The Audium engine
-class AudiumEngine
+class AudiumEngine : public audium::Streamable
 {
     
 public:
@@ -52,14 +54,18 @@ public:
     void uninitialise();
     void cleanup();
     
-    void openFile (const juce::File& file, std::function<void (bool)> callback);
-    void saveFile (const juce::File& file, std::function<void (bool)> callback);
+    void openFile (const juce::File& file, std::function<void (bool,std::string)> callback);
+    bool saveFile (const juce::File& file);
     void bounceToFile(const juce::File& f, std::function<void (bool)> callback,
                       double preferedSampleRate,
                       bool defaultGroupOnly = false);
     
-    bool writeToStream (juce::OutputStream& outputStream);
-    bool readFromStream (juce::InputStream& inputStream);
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream) override;
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input) override;
+    int getSizeInUnits() override;
+    
     void createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> group);
     
     static const char* projectFileExtension;
@@ -75,6 +81,7 @@ public:
 
     void invokeAutoEdit(const AutoEditConfig config);
     
+    json& getUiState() { return uiState; }
     
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
@@ -87,6 +94,7 @@ private:
     
     juce::File currentFile;
 
+    json uiState;
     
     /// TODO: thread save container
     // std::is_trivially_copyable

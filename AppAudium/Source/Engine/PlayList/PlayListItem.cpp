@@ -9,8 +9,10 @@
 */
 
 #include "PlayListItem.h"
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Provider/TempoProvider.h"
 
 PlayListItem::PlayListItem(const PlayListContainer &owner, std::shared_ptr<AudioRegion> audioRegion) :
     owner(owner),
@@ -23,10 +25,10 @@ juce::Range<double> PlayListItem::getRegionData(audium::TimeContextType context)
     return audioRegion->getRegionData(context);
 }
 
-double PlayListItem::getAbsolueStartTime(audium::TimeContextType context) const
-{
-    return owner.getAbsolueStartTime(this, context);
-}
+//double PlayListItem::getAbsolueStartTime(audium::TimeContextType context) const
+//{
+//    return owner.getAbsolueStartTime(this, context);
+//}
 
 double PlayListItem::getDurationTime(audium::TimeContextType context) const
 {
@@ -35,17 +37,72 @@ double PlayListItem::getDurationTime(audium::TimeContextType context) const
 
 juce::Range<double> PlayListItem::getAbsolutePositionRange(audium::TimeContextType context) const
 {
-    const auto start = getAbsolueStartTime(context);
+    const auto start = getAbsolutePosition(context);
     const auto length = getRegionData(context).getLength();
     return juce::Range<double>(start, start + length);
 }
 
 double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 {
-    return getAbsolueStartTime(context);
+    
+    if (context == audium::seconds)
+    {
+        auto tp = owner.getTempoProvider();
+        return tp->clocksToSeconds(absolutePositionClocks);
+    }
+    else if (context == audium::clocks)
+    {
+        return absolutePositionClocks;
+    }
+    jassertfalse;
+    return 0.0;
 }
 
-void PlayListItem::setAbsolutePosition(double position, audium::TimeContextType context)
+void PlayListItem::setAbsolutePosition(double newPosition, audium::TimeContextType context)
 {
-    /// TODO: implement...
+    if (context == audium::seconds)
+    {
+        auto tp = owner.getTempoProvider();
+        absolutePositionClocks = tp->secondsToClocks(newPosition);
+    }
+    else if (context == audium::clocks)
+    {
+        absolutePositionClocks = newPosition;
+    }
+    else
+    {
+        jassertfalse;
+    }
+}
+
+void PlayListItem::moveAbsolutePosition(double amount, audium::TimeContextType context)
+{
+    setAbsolutePosition(getAbsolutePosition(context) + amount, context);
+}
+
+bool PlayListItem::writeToJson (json& output)
+{
+    output["region_id"] = owner.getAudioRegionContainer().getRegionIndex(getRegion());
+    output["region_name"] = getRegion()->getName().toStdString();
+    output["position_clocks"] = absolutePositionClocks;
+    output["selected"] = selected;
+    return true;
+}
+
+bool PlayListItem::readFromJson (json& input)
+{
+    auto regionName = input["region_name"].template get<std::string>();
+    jassert(regionName == getRegion()->getName().toStdString());
+
+    auto regionId = input["region_id"].template get<int>();
+    auto id = owner.getAudioRegionContainer().getRegionIndex(getRegion());
+    jassert(id == regionId);
+    
+    if (input.contains("position_clocks"))
+        absolutePositionClocks = input.at("position_clocks").get<double>();
+    
+    if (input.contains("selected"))
+        selected = input.at("selected").get<bool>();
+
+    return true;
 }

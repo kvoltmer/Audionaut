@@ -13,6 +13,9 @@
 #include <vector>
 #include <memory>
 #include <JuceHeader.h>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 #include "Engine/TimeContext.h"
 #include "Engine/PlayList/PositionableBase.h"
@@ -31,7 +34,7 @@ public:
     
     juce::Range<double> getRegionData(audium::TimeContextType context) const;
     
-    double getAbsolueStartTime(audium::TimeContextType context) const;
+    //double getAbsolueStartTime(audium::TimeContextType context) const;
     double getDurationTime(audium::TimeContextType context) const;
     
     void setSelected(bool bSelected) { selected = bSelected; }
@@ -40,13 +43,21 @@ public:
     juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const override;
     double getAbsolutePosition(audium::TimeContextType context) const override;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
-
+    
+    void moveAbsolutePosition(double amount, audium::TimeContextType context);
+    
     const PlayListContainer &getPlayListContainer() const { return owner; }
 
+    bool writeToJson (json& output);
+    bool readFromJson (json& input);
+    
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
     bool selected = false;
+    
+    // The absolute transport position
+    double absolutePositionClocks = 0.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItem)
 };

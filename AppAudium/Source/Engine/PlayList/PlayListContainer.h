@@ -14,7 +14,7 @@
 #include <memory>
 #include <JuceHeader.h>
 
-#include "Engine/AudioRegion.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/Streamable.h"
 
 class PlayListItem;
@@ -48,15 +48,21 @@ class PlayListContainer :   public audium::Streamable,
 {
     
 public:
-    PlayListContainer(const AudioRegionContainer &audioRegionContainer) :
-        audioRegionContainer(audioRegionContainer)
+    PlayListContainer(const AudioRegionContainer &audioRegionContainer,
+                      std::shared_ptr<TempoProvider> tempoProvider) :
+        audioRegionContainer(audioRegionContainer),
+        tempoProvider(tempoProvider)
     {
     }
     ~PlayListContainer();
     
     
     void createPlayListItem(std::shared_ptr<AudioRegion> audioRegion);
+    // called from UI
+    void createPlayListItemUI(int regionIndex, int indexOfItemToPlaceBefore);
+    // called internally
     void createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
+    void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     void deletePlayListItem(int atIndex, bool sendNotification = true);
     void deleteAssociatedItems(std::shared_ptr<AudioRegion> audioRegion);
     
@@ -65,6 +71,8 @@ public:
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream) override;
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input) override;
     int getSizeInUnits() override;
     
     void cleanup() { playListItems.clear(); }
@@ -72,12 +80,18 @@ public:
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
     int getPlayListItemIndex(const PlayListItem* item) const;
     
-    AudioRegion::RegionData getPlayListDataAtIndex(int index) const;
+    AudioRegionData::tRange getPlayListDataAtIndex(int index) const;
     
     const PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
     const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
-    double getAbsolueStartTime(const PlayListItem* playListItem, audium::TimeContextType context) const;
+    double getAbsolueStartTimeByOrder(const PlayListItem* playListItem, audium::TimeContextType context) const;
+    
+    // sets the absolute position based on the order
+    void forcePositionByOrder();
+    
+    // move the absolute position of all playlist items by an amount
+    void movePlayListItemsPosition(int startIndex, double amount, audium::TimeContextType context);
     
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
     
@@ -93,13 +107,15 @@ public:
     double getTotalLength(audium::TimeContextType context) const;
     
     const AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
-    
+    std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
+
 private:
     
     
     juce::CriticalSection readLock;
     
     const AudioRegionContainer &audioRegionContainer;
+    std::shared_ptr<TempoProvider> tempoProvider;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListContainer)
 };

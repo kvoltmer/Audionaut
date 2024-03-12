@@ -13,7 +13,7 @@
 #include <memory>
 #include <JuceHeader.h>
 
-#include "Engine/AudioResource.h"
+#include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Provider/TempoProvider.h"
