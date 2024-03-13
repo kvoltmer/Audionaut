@@ -15,7 +15,6 @@
 #include "Interface/Controls/AudioGroupListBox.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
 #include "Interface/ColourIds.h"
-#include "Interface/Views/AudioRegionView.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"

@@ -15,35 +15,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioClip.h"
 
-void AudioResourceView::paint (juce::Graphics& g)
+double AudioResourceView::getRegionStart(audium::TimeContextType context) const
 {
-    
-    paintBackground(g);
-    
-    jassert(audioResource != nullptr);
-    
-    if (audioThumbnail->getTotalLength() > 0.0)
-    {
-        // the waveform colour
-        g.setColour (colour);
-                
-        const auto start        = audioResource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
-        const auto thumbArea    = getClippedDrawingArea();
-        const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
-        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
-        
-        const auto channel = rowNumber - audioResource->getChannelPosition();
-        if (channel >= 0 && channel < audioResource->getNumChannels())
-        {
-            audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, channel, verticalZoomFactor);
-        }
-        else
-        {
-            jassertfalse;
-        }
-    }
-}
-
-void AudioResourceView::resized()
-{
+    return audioResource->getAudioSubGroup()->getAudioClip()->getRegionData(context).getStart();
 }

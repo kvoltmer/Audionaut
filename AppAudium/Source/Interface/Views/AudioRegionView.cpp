@@ -19,30 +19,7 @@
 
 using namespace juce;
 
-//==============================================================================
-void AudioRegionView::paint (juce::Graphics& g)
+double AudioRegionView::getRegionStart(audium::TimeContextType context) const
 {
-    paintBackground(g);
-    
-    jassert(audioRegion != nullptr);
-    
-    if (audioThumbnail->getTotalLength() > 0.0)
-    {
-        // the waveform colour
-        g.setColour (colour);
-        
-        const auto start        = audioRegion->getRegionData(audium::seconds).getStart();
-        const auto thumbArea    = getClippedDrawingArea();
-        const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
-        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
-        
-        audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, 0, verticalZoomFactor);
-        
-    }
-    else
-    {
-        g.setFont (14.0f);
-        g.setColour(juce::Colours::white);
-        g.drawFittedText ("audio data not available", getLocalBounds(), Justification::centred, 2);
-    }
+    return audioRegion->getRegionData(audium::seconds).getStart();
 }

@@ -73,11 +73,43 @@ public:
         audioThumbnail->removeChangeListener(this);
     }
     
+    void paint (juce::Graphics& g) override
+    {
+        
+        paintBackground(g);
+        
+        jassert(audioResource != nullptr);
+        
+        if (audioThumbnail->getTotalLength() > 0.0)
+        {
+            // the waveform colour
+            g.setColour (colour);
+                    
+            const auto start        = getRegionStart(audium::seconds);
+            const auto thumbArea    = getClippedDrawingArea();
+            const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
+            const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
+            
+            const auto channel = rowNumber - audioResource->getChannelPosition();
+            if (channel >= 0 && channel < audioResource->getNumChannels())
+            {
+                audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, channel, verticalZoomFactor);
+            }
+            else
+            {
+                jassertfalse;
+            }
+        }
+    }
+    
     void changeListenerCallback (juce::ChangeBroadcaster*) override
     {
         // this method is called by the thumbnail when it has changed, so we should repaint it..
         repaint();
     }
+    
+    //
+    virtual double getRegionStart(audium::TimeContextType context) const = 0;
     
     void paintBackground (juce::Graphics& g)
     {
@@ -127,13 +159,14 @@ public:
         
         // clip to the area of its parent (owner)
         const auto parentOffset = static_cast<double>(parentComponent.getBounds().getX());
-        //std::cout << "parent offset: " << parentOffset << std::endl;
+        //std::cout << parentComponent.getName().toStdString() << " offset: " << parentOffset << std::endl;
         const auto scrollOffset = zoomHandler->getVisibleRange().getStart();
         const auto startX = std::max(scrollOffset - parentOffset, 0.0);
         const auto lengthX = std::min(visibleRange.getLength(), static_cast<double>(thumbArea.getWidth()) - startX);
     
         thumbArea.setX(startX);
         thumbArea.setWidth(lengthX);
+        //std::cout << thumbArea.getX() << " " << thumbArea.getWidth() << std::endl;
         return thumbArea;
     }
     

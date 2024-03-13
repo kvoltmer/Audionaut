@@ -28,7 +28,8 @@ public:
     MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
-        zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
+        zoomHandler[arrangementType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
+        zoomHandler[editType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
 
         createComponents();
     }
@@ -39,23 +40,25 @@ public:
     
     void createComponents()
     {
-        const auto visibleRange = zoomHandler->getVisibleRange();
+        auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
+        auto zoom = editMode ? zoomHandler[editType] : zoomHandler[arrangementType];
+        const auto visibleRange = zoom->getVisibleRange();
         
         removeAllChildren();
         
         channelsComponent.reset(new ChannelsComponent(audiumEngine));
         addAndMakeVisible(channelsComponent.get());
         
-        arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler));
+        arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler[arrangementType]));
         addAndMakeVisible(arrangementComponent.get());
         
-        editComponent.reset(new EditComponent(audiumEngine, zoomHandler));
+        editComponent.reset(new EditComponent(audiumEngine, zoomHandler[editType]));
         addAndMakeVisible(editComponent.get());
         
-        // TODO: restore state
-        editComponent->setVisible(false);
+        editComponent->setVisible(editMode);
+        arrangementComponent->setVisible(!editMode);
         
-        zoomHandler->setVisibleRange(visibleRange, sendNotificationSync);
+        zoom->setVisibleRange(visibleRange, sendNotificationSync);
     }
     
     enum UIContext {
@@ -185,7 +188,10 @@ public:
     
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<ZoomHandler> zoomHandler;
+    
+    enum { arrangementType = 0, editType = 1, numTypes = 2 };
+    
+    std::shared_ptr<ZoomHandler> zoomHandler[numTypes];
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;
