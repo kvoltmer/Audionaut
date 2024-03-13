@@ -32,8 +32,8 @@ public:
         WaveFormViewBase(parentComponent, audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber)
     {
     }
-
-    void paint (juce::Graphics&) override;
+    
+    double getRegionStart(audium::TimeContextType context) const override;
     
 private:
     
