@@ -37,15 +37,13 @@ public:
                   juce::URL url,
                   std::shared_ptr<AudiumTransportSource> transportSource,
                   std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
-                  int channelPosition,
-                  int resourceId) :
+                  int channelPosition) :
         owner(audioResourceContainer),
         audioGroup(audioGroup),
         audioSubGroup(audioSubGroup),
         url(url),
         transportSource(transportSource),
-        audioFormatReaderSource(audioFormatReaderSource),
-        resourceId(resourceId)
+        audioFormatReaderSource(audioFormatReaderSource)
     {
         if (channelPosition >= 0)
         {
@@ -91,9 +89,6 @@ public:
     void setSelected(bool bSelected, bool deselectOthers);
     bool isSelected() const { return selected; }
         
-    const int getId() const noexcept { return resourceId; }
-    void setId(const int newId) { resourceId = newId; }
-    
     bool containsChannelNumber(int channelNumber) const;
     int getChannelPosition() const;
     void setChannelPosition(int startChannel);
@@ -114,7 +109,7 @@ private:
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     
     bool selected = false;
-    int resourceId = -1;
+
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResource)

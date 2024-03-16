@@ -45,8 +45,7 @@ public:
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      std::shared_ptr<AudioGroup> group,
                                                      std::shared_ptr<AudioSubGroup> subGroup,
-                                                     int channelPosition = -1,
-                                                     int resourceId = -1);
+                                                     int channelPosition = -1);
     
     void removeAudioResource(std::shared_ptr<AudioResource> resource);
     void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
@@ -80,10 +79,6 @@ public:
     typedef std::pair<std::shared_ptr<AudioGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
     
     void deselectAllResources();
-    
-    std::shared_ptr<AudioResource> getAudioResourceById(int resourceId) const;
-    
-    int getNextId() { return ++nextId; }
         
 private:
     /// list of pairs. this enables sorting etc.. by AudioGroup
@@ -94,8 +89,7 @@ private:
     std::shared_ptr<juce::AudioFormatManager> formatManager;
     std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
     std::shared_ptr<TempoProvider> tempoProvider;
-        
-    int nextId = 0;
+    
     
     /// TODO: find a proper home for this
     juce::TimeSliceThread thread  { "audio file read ahead" };

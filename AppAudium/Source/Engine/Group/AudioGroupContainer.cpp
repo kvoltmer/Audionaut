@@ -39,18 +39,6 @@ void AudioGroupContainer::cleanup()
         group->cleanup();
     }
     audioGroups.clear();
-    
-    nextId = 0;
-}
-
-bool AudioGroupContainer::groupIdExists(const int groupId) const
-{
-    for (auto group : audioGroups)
-    {
-        if (group->getId() == groupId)
-            return true;
-    }
-    return false;
 }
 
 std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroup(int index) const
@@ -62,39 +50,30 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroup(int index) const
     return nullptr;
 }
 
-std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroupById(int groupId) const
+std::shared_ptr<AudioGroup> AudioGroupContainer::getSharedPtr(const AudioGroup* g) const
 {
     for (auto group : audioGroups)
     {
-        if (group->getId() == groupId)
+        if (group.get() == g)
             return group;
     }
-    jassertfalse;
     return nullptr;
 }
 
-
-
 std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(AudioResourceContainer &audioResourceContainer,
                                                                      AudioRegionContainer &audioRegionContainer,
-                                                                     const juce::String nameString,
-                                                                     int groupId)
+                                                                     const juce::String nameString)
 {
-    groupId = (groupId < 0) ? getNextId() : groupId;
-    jassert( !groupIdExists(groupId) );
-    
     auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer, audioRegionContainer);
     if (nameString.isEmpty())
     {
-        audioGroup->setName(juce::String("Group ") + juce::String(groupId));
+        audioGroup->setName(juce::String("Group ") + juce::String(audioGroups.size() + 1));
     }
     else
     {
         audioGroup->setName(nameString);
     }
-    audioGroup->setId(groupId);
     audioGroups.push_back(audioGroup);
-    std::cout << "audio group created with id = " << groupId << std::endl;
     sendActionMessage(audioGroupCreatedAction);
     return audioGroup;
 }
@@ -166,7 +145,6 @@ bool AudioGroupContainer::readFromJson (json& input)
 {
     cleanup();
     jassert(audioGroups.size() == 0);
-    jassert(nextId == 0);
     jassert(audioResourceContainer != nullptr && audioRegionContainer != nullptr);
     
     auto jsonSubGroups = input["groups"];
@@ -174,9 +152,7 @@ bool AudioGroupContainer::readFromJson (json& input)
     {
         auto audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer, *audioRegionContainer);
         audioGroups.push_back(audioGroup);
-        
         audioGroup->readFromJson(jsonElement);
-        nextId = juce::jmax(nextId, audioGroup->getId());
     }
     return true;
 }

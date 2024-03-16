@@ -99,6 +99,8 @@ void AudioRegionContainer::createRegionsFromSelection(juce::String name)
 std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<AudioGroup> group,
                                                                 std::shared_ptr<AudioSubGroup> subGroup)
 {
+    jassert(group != nullptr);
+    jassert(subGroup != nullptr);
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
     audioRegions.push_back(audioRegion);
     // std::cout << "createRegion " << audioRegion << " index " << getRegionIndex(audioRegion) << std::endl;

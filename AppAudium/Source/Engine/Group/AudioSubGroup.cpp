@@ -15,17 +15,14 @@
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioClip.h"
 
-AudioSubGroup::AudioSubGroup(AudioGroup& audioGroup, int subGroupId) :
-    audioGroup(audioGroup),
-    subGroupId(subGroupId)
+AudioSubGroup::AudioSubGroup(AudioGroup& audioGroup) :
+    audioGroup(audioGroup)
 {
     audioClip = std::shared_ptr<AudioClip> (new AudioClip(*this));
 }
 
 AudioSubGroup::~AudioSubGroup()
 {
-//    jassert(audioGroup.getAudioResourceContainer().getAudioResourcesForSubGroup(this).size() == 0);
-//    jassert(audioGroup.getAudioRegionContainer().getRegionsForSubGroup(this).size() == 0);
 }
 
 void AudioSubGroup::cleanup()
@@ -47,9 +44,9 @@ void AudioSubGroup::cleanup()
 }
 
 bool AudioSubGroup::writeToJson (json& output)
-{    
+{
     output["clip"] = audioClip->data;
-    
+
     for (auto resource : getAudioResources())
     {
         json j;
@@ -73,17 +70,10 @@ bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
 bool AudioSubGroup::readFromJson (json& input)
 {
     // we use the shared_ptr
-    const auto group = getAudioGroup().getAudioGroupContainer().getAudioGroupById(getAudioGroup().getId());
-    const auto subGroup = getAudioGroup().getAudioSubGroupById(getId());
-    if (group == nullptr || subGroup == nullptr)
-    {
-        jassertfalse;
-        return false;
-    }
+    const auto group = getAudioGroup().getAudioGroupContainer().getSharedPtr(&getAudioGroup());
+    const auto subGroup = getAudioGroup().getSharedPtr(this);
     
     cleanup();
-    
-    audioClip->data = input["clip"];
     
     auto jsonResources = input["resources"];
     for (auto& jsonElement : jsonResources)
@@ -97,7 +87,8 @@ bool AudioSubGroup::readFromJson (json& input)
         resource->readFromJson(jsonElement);
     }
     
-    
+    audioClip->data = input["clip"];
+
     auto jsonRegions = input["regions"];
     for (auto& jsonElement : jsonRegions)
     {
@@ -105,7 +96,7 @@ bool AudioSubGroup::readFromJson (json& input)
         region->data = jsonElement;
     }
     
-    audioClip->validateData();
+    
     return true;
 }
 

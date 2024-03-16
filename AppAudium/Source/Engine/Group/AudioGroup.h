@@ -33,16 +33,15 @@ public:
                AudioRegionContainer &audioRegionContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
-               juce::String nameString,
-               int groupId) :
+               juce::String nameString) :
         owner(owner),
         audioResourceContainer(audioResourceContainer),
         audioRegionContainer(audioRegionContainer),
         playListContainer(playListContainer),
         transportSourceContainer(transportSourceContainer),
-        groupName(nameString.toStdString()),
-        groupId(groupId)
-    {}
+        groupName(nameString.toStdString())
+    {
+    }
     
     ~AudioGroup();
     
@@ -51,9 +50,6 @@ public:
 
     const juce::String getName() const { return groupName; }
     void setName(const juce::String newName) { groupName = newName.toStdString(); }
-    
-    const int getId() const noexcept { return groupId; }
-    void setId(const int newId) { groupId = newId; }
     
     AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
     AudioGroupContainer &getAudioGroupContainer() const { return owner; }
@@ -88,9 +84,8 @@ public:
     void setGain(float gain, int channelNumber);
     float getGain(int channelNumber) const;
     
-    int getNextSubGroupId() { return ++nextSubGroupId; }
-    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition = 0.0, int subGroupId = -1);
-    std::shared_ptr<AudioSubGroup> getAudioSubGroupById(int groupId) const;
+    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition = 0.0);
+    std::shared_ptr<AudioSubGroup> getSharedPtr(const AudioSubGroup* subGroup) const;
     
     std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;
     
@@ -121,18 +116,14 @@ private:
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::string groupName;
-    int groupId = -1;
     juce::Colour groupColour = juce::Colours::pink;
     
     std::vector<std::shared_ptr<AudioSubGroup>> audioSubGroups;
-    int nextSubGroupId = 0;
     
     std::vector<std::shared_ptr<AudioChannel>> audioChannels;
     
     bool selected = false;
-    
-    bool subGroupIdExists(const int groupId) const;
-    
+        
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroup)
 
 };
