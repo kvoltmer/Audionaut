@@ -119,10 +119,13 @@ bool AudioClip::validateData()
         result |= true;
     }
     
-    if (data.regionData.getLength() + data.regionData.getStart() > getFileLength(audium::seconds))
+    if (getFileLength(audium::seconds) > 0.0)
     {
-        data.regionData.setLength(getFileLength(audium::seconds) - data.regionData.getStart());
-        result |= true;
+        if (data.regionData.getLength() + data.regionData.getStart() > getFileLength(audium::seconds))
+        {
+            data.regionData.setLength(getFileLength(audium::seconds) - data.regionData.getStart());
+            result |= true;
+        }
     }
     
     if (data.regionData.getLength() <= 0.0)
@@ -163,10 +166,12 @@ bool AudioClip::readFromJson (json& input)
 
 double AudioClip::getFileLength(audium::TimeContextType context) const
 {
+    jassert(audioSubGroup.getAudioResources().size() > 0);
     auto maxLength = 0.0;
     for (auto res : audioSubGroup.getAudioResources())
     {
         maxLength = std::max(maxLength, res->getFileLength(context));
     }
+    jassert(maxLength > 0.0);
     return maxLength;
 }

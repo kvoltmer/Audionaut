@@ -41,8 +41,7 @@ public:
         
     std::shared_ptr<AudioGroup> createNewAudioGroup(AudioResourceContainer &audioResourceContainer,
                                                     AudioRegionContainer &audioRegionContainer,
-                                                    const juce::String nameString,
-                                                    int groupId = -1);
+                                                    const juce::String nameString);
     void cleanup();
     
     bool deleteAudioGroup(std::shared_ptr<AudioGroup> group);
@@ -58,9 +57,7 @@ public:
     
     int getNumItems() const { return static_cast<int>(audioGroups.size());}
     std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
-    std::shared_ptr<AudioGroup> getAudioGroupById(int groupId) const;
-    
-    int getNextId() { return ++nextId; }
+    std::shared_ptr<AudioGroup> getSharedPtr(const AudioGroup* g) const;
         
     std::shared_ptr<AudioGroup> getDefaultGroup() const;
     
@@ -84,9 +81,6 @@ private:
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;
     int selectedGroup = 0;
-    
-    int nextId = 0;
-    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroupContainer)
 };

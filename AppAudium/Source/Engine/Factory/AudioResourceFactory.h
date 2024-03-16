@@ -29,8 +29,7 @@ public:
                                                               std::shared_ptr<AudioSubGroup> subGroup,
                                                               juce::AudioFormatManager& formatManager,
                                                               juce::TimeSliceThread* readAheadThread,
-                                                              int channelPosition,
-                                                              int resourceId)
+                                                              int channelPosition)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
      
@@ -72,8 +71,7 @@ public:
                                                                                          url,
                                                                                          transportSource,
                                                                                          audioFormatReaderSource,
-                                                                                         channelPosition,
-                                                                                         resourceId));
+                                                                                         channelPosition));
                     }
                 }
             }

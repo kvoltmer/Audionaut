@@ -27,12 +27,9 @@ class AudioSubGroup : public audium::Streamable
 {
         
 public:
-    AudioSubGroup(AudioGroup& audioGroup, int subGroupId = -1);
+    AudioSubGroup(AudioGroup& audioGroup);
     ~AudioSubGroup() override;
     void cleanup();
-    
-    const int getId() const noexcept { return subGroupId; }
-    void setId(const int newId) { subGroupId = newId; }
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream) override;
@@ -62,9 +59,7 @@ private:
     
     AudioGroup& audioGroup;
 
-    int subGroupId = -1;
     bool selected = false;
-    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioSubGroup)
 

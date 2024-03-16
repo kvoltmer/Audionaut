@@ -37,9 +37,7 @@ void AudioGroup::cleanup()
     
     audioChannels.clear();
     playListContainer->cleanup();
-    transportSourceContainer->cleanup();
-    
-    nextSubGroupId = 0;
+    transportSourceContainer->cleanup();    
 }
 
 
@@ -60,7 +58,6 @@ void AudioGroup::setColour(juce::Colour colour)
 
 bool AudioGroup::writeToJson (json& output)
 {
-    output["id"] = groupId;
     output["name"] = groupName;
     output["colour"] = groupColour.toString().toStdString();
     
@@ -90,7 +87,6 @@ bool AudioGroup::readFromJson (json& input)
 {
     cleanup();
     
-    groupId = input["id"].template get<int>();;
     groupName = input["name"].template get<std::string>();
     groupColour = juce::Colour::fromString(input["colour"].template get<std::string>());
     
@@ -111,8 +107,6 @@ bool AudioGroup::readFromJson (json& input)
         
         if (!subGroup->readFromJson(jsonElement))
             return false;
-        nextSubGroupId = juce::jmax(nextSubGroupId, subGroup->getId());
-        
     }
     
     // PlayList
@@ -241,38 +235,24 @@ float AudioGroup::getGain(int channelNumber) const
 }
 
 
-std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(double transportPosition, int subGroupId)
+std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(double transportPosition)
 {
-    subGroupId = (subGroupId < 0) ? getNextSubGroupId() : subGroupId;
-    jassert( !subGroupIdExists(subGroupId) );
-    
     auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
-    subGroup->setId(subGroupId);
     subGroup->getAudioClip()->setAbsolutePosition(transportPosition, audium::seconds);
     audioSubGroups.push_back(subGroup);
-    std::cout << "sub group created with id = " << subGroupId << std::endl;
     return subGroup;
 }
 
-bool AudioGroup::subGroupIdExists(const int groupId) const
+std::shared_ptr<AudioSubGroup> AudioGroup::getSharedPtr(const AudioSubGroup* sub) const
 {
     for (auto subGroup : audioSubGroups)
     {
-        if (subGroup->getId() == groupId)
-            return true;
-    }
-    return false;
-}
-
-std::shared_ptr<AudioSubGroup> AudioGroup::getAudioSubGroupById(int groupId) const
-{
-    for (auto subGroup : audioSubGroups)
-    {
-        if (subGroup->getId() == groupId)
+        if (subGroup.get() == sub)
             return subGroup;
     }
     return nullptr;
 }
+
 
 std::shared_ptr<AudioSubGroup> AudioGroup::getDefaultSubGroup() const
 {
@@ -315,7 +295,7 @@ std::vector<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(
 void AudioGroup::deleteSelectedSubGroups()
 {
     // we need a shared_ptr for this
-    auto group = getAudioGroupContainer().getAudioGroupById(getId());
+    auto group = getAudioGroupContainer().getSharedPtr(this);
     jassert(group);
     
     // Undo: store old state
@@ -386,7 +366,7 @@ void AudioGroup::setSelectedRows(juce::SparseSet<int>& selectedRows)
 void AudioGroup::deleteSelectedChannels()
 {
     // we need a shared_ptr
-    auto group = getAudioGroupContainer().getAudioGroupById(getId());
+    auto group = getAudioGroupContainer().getSharedPtr(this);
     jassert(group);
     
     // Undo: store old state

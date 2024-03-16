@@ -16,6 +16,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Group/AudioClip.h"
 
 AudioResourceContainer::~AudioResourceContainer()
 {
@@ -25,21 +26,18 @@ AudioResourceContainer::~AudioResourceContainer()
 std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,
                                                                          std::shared_ptr<AudioGroup> group,
                                                                          std::shared_ptr<AudioSubGroup> subGroup,
-                                                                         int channelPosition,
-                                                                         int resourceId)
+                                                                         int channelPosition)
 {
-    std::cout << "AudioResourceContainer::addAudioResource channelPosition = " << channelPosition << std::endl;
-    jassert(group != nullptr && subGroup != nullptr);
+    jassert(group != nullptr);
+    jassert(subGroup != nullptr);
 
-    resourceId = (resourceId < 0) ? getNextId() : resourceId;
     auto audioResource = AudioResourceFactory::createAudioResource(url,
                                                                    *this,
                                                                    group,
                                                                    subGroup,
                                                                    *formatManager.get(),
                                                                    &thread,
-                                                                   channelPosition,
-                                                                   resourceId);
+                                                                   channelPosition);
     
     double sampleRate = 44100.0;
     int numSamples = 512;
@@ -54,6 +52,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     {
         audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
         audioResources.push_back({group, audioResource});
+        
         sendActionMessage(audioResourceCreatedAction);
         return audioResource;
     }
@@ -145,20 +144,6 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtA
     return resources;
 }
 
-std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResourceById(int resourceId) const
-{
-    for (auto resource : audioResources)
-    {
-        if (resource.second->getId() == resourceId)
-        {
-            return resource.second;
-        }
-    }
-    jassertfalse;
-    return nullptr;
-}
-
-
 std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroup(int index) const
 {
     jassert(index < getNumAudioGroups());
@@ -168,7 +153,6 @@ std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroup(int index) con
 void AudioResourceContainer::cleanup()
 {
     audioResources.clear();
-    nextId = 0;
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroup(AudioGroup *group) const
@@ -191,7 +175,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     {
         if (itr->second->getAudioSubGroup().get() == subGroup)
         {
-            jassert(itr->first->getId() == subGroup->getAudioGroup().getId());
+            jassert(itr->first.get() == &subGroup->getAudioGroup());
             result.push_back(itr->second);
         }
     }

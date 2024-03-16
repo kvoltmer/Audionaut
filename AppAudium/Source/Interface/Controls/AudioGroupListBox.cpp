@@ -72,8 +72,7 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
             audiumEngine->getAudioResourceContainer()->addAudioResource(url,
                                                                         group,
                                                                         subGroup,
-                                                                        channelPosition,
-                                                                        transportPosition);
+                                                                        channelPosition);
         }
         
         // disabled for now

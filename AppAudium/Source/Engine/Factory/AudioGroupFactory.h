@@ -32,7 +32,7 @@ public:
                                                                      audioRegionContainer,
                                                                      playListContainer,
                                                                      transportSourceContainer,
-                                                                     std::string(), -1));
+                                                                     std::string()));
         return audioGroup;
     }
     
