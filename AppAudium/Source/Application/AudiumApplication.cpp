@@ -107,15 +107,13 @@ void AudiumApplication::shutdown()
     
 }
 
-
-void AudiumApplication::systemRequestedQuit()
+void AudiumApplication::askToSaveIfDirtyAndInvoke(std::function<void ()> callback)
 {
-    // This is called when the app is being asked to quit: you can ignore this
-    // request and let the app carry on running, or call quit() to allow the app to close.
+    jassert(callback != nullptr);
     
     if (!audiumEngine->getUndoManager()->canUndo())
     {
-        quit();
+        callback();
     }
     else
     {
@@ -133,25 +131,37 @@ void AudiumApplication::systemRequestedQuit()
                                                                   TRANS ("Cancel"));
         
         // -> std::function<void (int)> callback
-        juce::NativeMessageBox::showAsync(options, [this] (int result)
+        juce::NativeMessageBox::showAsync(options, [this, callback] (int result)
         {
             if (result == 0)
             {
                 if (audiumEngine->getCurrentFile().existsAsFile())
                 {
-                    saveProject([](bool success){ if (success) quit();});
+                    // pass on the callback [capture]
+                    saveProject([callback](bool success){ if (success) callback();});
                 }
                 else
                 {
-                    saveProjectAs([](bool success){ if (success) quit();});
+                    // pass on the callback [capture]
+                    saveProjectAs([callback](bool success){ if (success) callback();});
                 }
             }
             else if (result == 1)
             {
-                quit();
+                callback();
             }
         });
     }
+}
+
+void AudiumApplication::systemRequestedQuit()
+{
+    // This is called when the app is being asked to quit: you can ignore this
+    // request and let the app carry on running, or call quit() to allow the app to close.
+    
+    askToSaveIfDirtyAndInvoke([](void) {
+        quit();
+    });
 }
 
 void AudiumApplication::anotherInstanceStarted (const juce::String& commandLine)
@@ -358,8 +368,7 @@ bool AudiumApplication::perform (const InvocationInfo& info)
     switch (info.commandID)
     {
         case CommandIDs::newProject:
-            audiumEngine->cleanup();
-            updateUI();
+            createNewProject();
             break;
         case CommandIDs::openProject:
             askUserToOpenFile();
@@ -415,6 +424,13 @@ bool AudiumApplication::perform (const InvocationInfo& info)
 #endif
 
 
+void AudiumApplication::createNewProject()
+{
+    askToSaveIfDirtyAndInvoke([this](void){
+        audiumEngine->cleanup();
+        updateUI();
+    });
+}
 
 void AudiumApplication::askUserToOpenFile()
 {
