@@ -57,6 +57,8 @@ public:
     void handleMainMenuCommand (int menuItemID);
     PopupMenu createExtraAppleMenuItems();
     
+    void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
+    void createNewProject();
     void askUserToOpenFile();
     void saveProjectAs(std::function<void (bool)> callback);
     void saveProject(std::function<void (bool)> callback);
