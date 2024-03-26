@@ -59,10 +59,10 @@ public:
     const AudioRegionData::tRange getRegionData(audium::TimeContextType context) const;
     void setRegionData(const AudioRegionData::tRange newRegionData, audium::TimeContextType context);
     
-    bool validateData(AudioRegionData::tRange& data);
+    bool validateData(AudioRegionData::tRange& data, audium::TimeContextType context);
     
-    double getAudioResourceStartInSeconds() const;
-    double getAudioResourceEndInSeconds() const;
+    double getAudioResourceStart(audium::TimeContextType context) const;
+    double getAudioResourceEnd(audium::TimeContextType context) const;
     
     void setRegionStart(double newStart, audium::TimeContextType context);
     void setRegionEnd(double newEnd, audium::TimeContextType context);

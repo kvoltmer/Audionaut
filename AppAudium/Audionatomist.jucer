@@ -168,6 +168,10 @@
                 file="Source/Interface/Widgets/audium_ListBox.h"/>
         </GROUP>
         <GROUP id="{4C550296-51BB-D3A6-E49C-7CC8B0E75CC8}" name="Handlers">
+          <FILE id="sgxIk3" name="SnapToGridHandler.cpp" compile="1" resource="0"
+                file="Source/Interface/Handlers/SnapToGridHandler.cpp"/>
+          <FILE id="NvsbFd" name="SnapToGridHandler.h" compile="0" resource="0"
+                file="Source/Interface/Handlers/SnapToGridHandler.h"/>
           <FILE id="R9tlys" name="ZoomHandler.cpp" compile="1" resource="0" file="Source/Interface/Handlers/ZoomHandler.cpp"/>
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>

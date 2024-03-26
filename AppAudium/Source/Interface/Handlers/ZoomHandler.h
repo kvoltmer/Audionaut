@@ -13,11 +13,13 @@
 #include <JuceHeader.h>
 
 class PlayListScheduler;
+class SnapToGridHandler;
 
 class ZoomHandler : private juce::Timer {
     
 public:
-    ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler);
+    ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler,
+                std::shared_ptr<SnapToGridHandler> snapToGridHandler);
     ~ZoomHandler() override;
     
     double zoomIn();
@@ -43,7 +45,6 @@ public:
 
     juce::Range<double> secondsToX(juce::Range<double> seconds) const;
     juce::Range<double> xToSeconds(juce::Range<double> x) const;
-    
     double secondsToX (const double seconds) const;
     double xToSeconds (const double x) const;
     
@@ -53,10 +54,11 @@ public:
     double beatsToX (const double beats) const;
     double xToBeats (const double x) const;
  
+    // clocks = 96th (96 clocks = 1 bar)
+    juce::Range<double> clocksToX(juce::Range<double> clocks) const;
+    juce::Range<double> xToClocks(juce::Range<double> x) const;
     double clocksToX (const double clocks) const;
     double xToClocks (const double x) const;
-
-
     
     // returns a String in the format Min:Sec
     static juce::String secondsToFormattedString(const int seconds);
@@ -84,6 +86,8 @@ public:
     
     const SegmentResult segmentsForWidth(const float totalWidth, SegmentType type);
     
+    bool snapToGrid(juce::Range<double> &clocks);
+    
     void focusViewOnPlayPosition();
     
     void focusView(double positionInSeconds);
@@ -93,6 +97,8 @@ public:
     void timerCallback() override;
     
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
+    
+    std::shared_ptr<SnapToGridHandler> getSnapToGridHandler() const { return snapToGridHandler; }
     
     double getContentWidth() const;
     
@@ -109,6 +115,8 @@ public:
 private:
         
     std::shared_ptr<PlayListScheduler> playListScheduler;
+    
+    std::shared_ptr<SnapToGridHandler> snapToGridHandler;
     
     // the scrollbar
     juce::ScrollBar* scrollbar = nullptr;

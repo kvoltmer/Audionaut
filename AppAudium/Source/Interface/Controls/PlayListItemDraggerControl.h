@@ -39,7 +39,7 @@ public:
         // undo
         if (undoableContainerAction == nullptr)
         {
-            std::cout << "new audium::UndoableContainerAction" << std::endl;
+            //std::cout << "new audium::UndoableContainerAction" << std::endl;
             undoableContainerAction = new audium::UndoableContainerAction(playListContainer);
         }
         
@@ -89,7 +89,7 @@ public:
             audiumEngine->getUndoManager()->perform(undoableContainerAction, "Modify Item");
             audiumEngine->getUndoManager()->beginNewTransaction();
             undoableContainerAction = nullptr;
-            std::cout << "undoableContainerAction = nullptr" << std::endl;
+            //std::cout << "undoableContainerAction = nullptr" << std::endl;
         }
         
         return result;

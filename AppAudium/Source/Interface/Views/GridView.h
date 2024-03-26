@@ -12,10 +12,13 @@
 
 #include <JuceHeader.h>
 
+#include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Handlers/SnapToGridHandler.h"
+
 //==============================================================================
 /*
 */
-class GridView  : public juce::Component
+class GridView  : public juce::Component, public juce::ChangeListener
 {
 public:
     GridView(std::shared_ptr<ZoomHandler> zoomHandler) :
@@ -36,27 +39,52 @@ public:
     
     void paintTimeLineInBeats(juce::Graphics& g, Rectangle<float> rectangle)
     {
-        g.setColour (juce::Colours::black.withAlpha(0.5f));
+        auto range = zoomHandler->clocksToX(currentRangeClocks);
+        
         auto segmentResult = zoomHandler->segmentsForWidth(rectangle.getWidth(), ZoomHandler::beats);
+        
         auto x = rectangle.getX();
         for (auto i = 0; i < segmentResult.numSegments; i++)
         {
-            g.fillRect(Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
+            Rectangle<float> rect(x, rectangle.getY(), 1.f, rectangle.getHeight());
+            
+            if (!range.isEmpty() &&
+                (std::abs(static_cast<double>(x) - std::max(range.getStart(), 0.0)) < 10.0 ||
+                 std::abs(static_cast<double>(x) - range.getEnd()) < 10.0))
+            {
+                // draw dashed line
+                g.setColour (juce::Colours::yellow.withAlpha(0.75f));
+                juce::Line<float> line(rect.getTopLeft(), rect.getBottomLeft());
+                const float myDashLength[] = { 6, 6 };
+                g.drawDashedLine(line, &myDashLength[0], 2);
+            }
+            else
+            {
+                // draw regular grid line
+                g.setColour (juce::Colours::black.withAlpha(0.5f));
+                g.fillRect(rect);
+            }
+            
             x += segmentResult.itemWidth;
         }
     }
-
-    void resized() override
+    
+    void changeListenerCallback (ChangeBroadcaster* source) override
     {
-        // This method is where you should set the bounds of any child
-        // components that your component contains..
-
-
+        auto snapToGridHandler = dynamic_cast<SnapToGridHandler*>(source);
+        if (snapToGridHandler != nullptr)
+        {
+            currentRangeClocks = snapToGridHandler->getRange();
+            repaint();
+            //std::cout << "GridView " << range.getStart() << " " << range.getEnd() << std::endl;
+        }
     }
 
 private:
     
     std::shared_ptr<ZoomHandler> zoomHandler;
+    
+    juce::Range<double> currentRangeClocks;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GridView)
 };

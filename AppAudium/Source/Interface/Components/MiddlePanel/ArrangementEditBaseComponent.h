@@ -16,6 +16,7 @@
 #include "Interface/Controls/AudioGroupListBox.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Handlers/SnapToGridHandler.h"
 #include "Interface/Controls/PlayPositionMarker.h"
 #include "Interface/Controls/TransportPositionControl.h"
 #include "Interface/Controls/DragZoomControl.h"
@@ -84,6 +85,7 @@ public:
         
         // grid view
         gridView.reset(new GridView(zoomHandler));
+        zoomHandler->getSnapToGridHandler()->addChangeListener(gridView.get());
         audioGroupListBox->getViewport()->getViewedComponent()->addAndMakeVisible(gridView.get());
         gridView->toBack();
         
@@ -94,6 +96,7 @@ public:
     virtual ~ArrangementEditBaseComponent() override
     {
         dragZoomControl->removeChangeListener(this);
+        zoomHandler->getSnapToGridHandler()->removeChangeListener(gridView.get());
         
         audioGroupListBox->setModel(nullptr);
         audioGroupListBox->setHeaderComponent(nullptr);
