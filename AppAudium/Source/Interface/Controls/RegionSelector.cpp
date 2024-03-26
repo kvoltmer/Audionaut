@@ -11,6 +11,7 @@
 
 #include "RegionSelector.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Handlers/SnapToGridHandler.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -117,20 +118,19 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
         
         createRectangleAndSetBonds();
         
-        auto start = zoomHandler->xToSecondsWithOffset(dragStartPos.getX());
-        auto end = zoomHandler->xToSecondsWithOffset(dragEndPos.getX());
+        auto start = zoomHandler->xToClocksWithOffset(dragStartPos.getX());
+        auto end = zoomHandler->xToClocksWithOffset(dragEndPos.getX());
         
         // calc engine values
-        Range<double> pos(start, end);
+        Range<double> rangeInClocks(start, end);
         if (end < start)
         {
-            pos = Range<double>(end, start);
+            rangeInClocks = Range<double>(end, start);
         }
-        
-        // itemAtAbsoluteRangestd::cout << pos.getStart() << " " << pos.getEnd() << std::endl;
+        zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
         
         // set value in the engine
-        audiumEngine->getAudioRegionContainer()->setSelectedPosition(pos, audium::seconds);
+        audiumEngine->getAudioRegionContainer()->setSelectedPosition(rangeInClocks, audium::clocks);
     }
 }
 
@@ -152,6 +152,18 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
     {
         grabKeyboardFocus();
     }
+    
+    auto rangeInClocks = audiumEngine->getAudioRegionContainer()->getSelectedPosition(audium::clocks);
+    if (!rangeInClocks.isEmpty())
+    {
+        if (zoomHandler->snapToGrid(rangeInClocks))
+        {
+            audiumEngine->getAudioRegionContainer()->setSelectedPosition(rangeInClocks, audium::clocks);
+            updateFromEngine();
+        }
+    }
+    
+    zoomHandler->getSnapToGridHandler()->clearRange();
 }
 
 void RegionSelector::mouseMove (const juce::MouseEvent& e)

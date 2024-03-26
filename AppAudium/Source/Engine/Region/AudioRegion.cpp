@@ -83,32 +83,32 @@ void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, aud
     }
 }
 
-bool AudioRegion::validateData(AudioRegionData::tRange& newData)
+bool AudioRegion::validateData(AudioRegionData::tRange& newData, audium::TimeContextType context)
 {
     bool result = false;
     
-    if (newData.getStart() < getAudioResourceStartInSeconds())
+    if (newData.getStart() < getAudioResourceStart(context))
     {
-        newData = newData.movedToStartAt(getAudioResourceStartInSeconds());
+        newData = newData.movedToStartAt(getAudioResourceStart(context));
         result |= true;
     }
     
-    if (newData.getEnd() > getAudioResourceEndInSeconds())
+    if (newData.getEnd() > getAudioResourceEnd(context))
     {
-        newData = newData.movedToEndAt(getAudioResourceEndInSeconds());
+        newData = newData.movedToEndAt(getAudioResourceEnd(context));
         result |= true;
     }
     return result;
 }
 
-double AudioRegion::getAudioResourceStartInSeconds() const
+double AudioRegion::getAudioResourceStart(audium::TimeContextType context) const
 {
-    return audioSubGroup->getAudioClip()->getRegionData(audium::seconds).getStart();
+    return audioSubGroup->getAudioClip()->getRegionData(context).getStart();
 }
 
-double AudioRegion::getAudioResourceEndInSeconds() const
+double AudioRegion::getAudioResourceEnd(audium::TimeContextType context) const
 {
-    return audioSubGroup->getAudioClip()->getRegionData(audium::seconds).getEnd();
+    return audioSubGroup->getAudioClip()->getRegionData(context).getEnd();
 }
 
 void AudioRegion::setRegionStart(double newStart, audium::TimeContextType context)

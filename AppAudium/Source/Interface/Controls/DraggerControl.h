@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Handlers/SnapToGridHandler.h"
 #include "Interface/Controls/RegionSelector.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Interface/ColourIds.h"
@@ -98,6 +99,9 @@ public:
         
         setSelected(e.mods.isCommandDown() ? !isSelected() : true, !e.mods.isCommandDown());
         
+        auto rangeInClocks = zoomHandler->xToClocks(componentToDrag->getBounds().toDouble().getHorizontalRange());
+        zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
+        
         repaint();
     }
 
@@ -126,7 +130,9 @@ public:
             
             componentToDrag->setBounds (bounds);
             
-            commitBoundsToEngine();
+            auto rangeInClocks = zoomHandler->xToClocks(componentToDrag->getBounds().toDouble().getHorizontalRange());
+            zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
+            commitRangeToEngine(rangeInClocks);
         }
     }
 
@@ -137,10 +143,14 @@ public:
         
         if (std::abs(e.getOffsetFromDragStart().getX()) > 0)
         {
-            commitBoundsToEngine();
+            auto rangeInClocks = zoomHandler->xToClocks(componentToDrag->getBounds().toDouble().getHorizontalRange());
+            zoomHandler->snapToGrid(rangeInClocks);
+            commitRangeToEngine(rangeInClocks);
             validateData();
             sendChangeMessage();
         }
+        
+        zoomHandler->getSnapToGridHandler()->clearRange();
     }
 
     void mouseMove (const juce::MouseEvent& e) override
@@ -181,16 +191,11 @@ public:
         }
     }
     
-    void commitBoundsToEngine()
+    void commitRangeToEngine(juce::Range<double> rangeInClocks)
     {
         // commit values to engine
-        juce::Range<double> range(componentToDrag->getBounds().getX(), componentToDrag->getBounds().getRight());
-        //std::cout << range.getStart() << " " << range.getEnd() << std::endl;
-        
-        auto rangeInSeconds = zoomHandler->xToSeconds(range);
-        //std::cout << rangeInSeconds.getStart() << " " << rangeInSeconds.getEnd() << std::endl;
     
-        commitData(rangeInSeconds, audium::seconds);
+        commitData(rangeInClocks, audium::clocks);
     }
     
     virtual void commitData(const juce::Range<double> newData, audium::TimeContextType context) = 0;

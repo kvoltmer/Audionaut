@@ -19,6 +19,7 @@
 #include "Interface/Components/MiddlePanel/EditView/EditComponent.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Handlers/SnapToGridHandler.h"
 
 class AudiumEngine;
 
@@ -28,8 +29,11 @@ public:
     MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
-        zoomHandler[arrangementType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
-        zoomHandler[editType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler()));
+        snapToGridHandlers[arrangementType].reset(new SnapToGridHandler());
+        zoomHandler[arrangementType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler(), snapToGridHandlers[arrangementType]));
+        
+        snapToGridHandlers[editType].reset(new SnapToGridHandler());
+        zoomHandler[editType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler(), snapToGridHandlers[editType]));
 
         createComponents();
     }
@@ -192,6 +196,7 @@ private:
     enum { arrangementType = 0, editType = 1, numTypes = 2 };
     
     std::shared_ptr<ZoomHandler> zoomHandler[numTypes];
+    std::shared_ptr<SnapToGridHandler> snapToGridHandlers[numTypes];
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;

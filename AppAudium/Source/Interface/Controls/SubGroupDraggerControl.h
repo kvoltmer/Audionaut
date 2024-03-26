@@ -38,7 +38,7 @@ public:
         // undo        
         if (undoableContainerAction == nullptr)
         {
-            std::cout << "new audium::UndoableContainerAction" << std::endl;
+            //std::cout << "new audium::UndoableContainerAction" << std::endl;
             
             undoableContainerAction = new audium::UndoableContainerAction(audioSubGroup->getAudioClip());
         }
@@ -47,7 +47,7 @@ public:
         const auto audioResources = audioSubGroup->getAudioResources();
         if (audioResources.size() > 0)
         {
-            const auto transportPositionInSeconds = audioSubGroup->getAudioClip()->getAbsolutePosition(context);
+            const auto transportPosition = audioSubGroup->getAudioClip()->getAbsolutePosition(context);
             auto regionData = audioSubGroup->getAudioClip()->getRegionData(context);
             
             switch (currentDragMode)
@@ -55,12 +55,12 @@ public:
                 case leftEdge:
                     {
                         // offset in file
-                        auto diff = newData.getStart() - transportPositionInSeconds;
+                        auto diff = newData.getStart() - transportPosition;
                         auto newLength = regionData.getLength() - diff;
                         auto newStart = regionData.getStart() + diff;
                         
-                        audioSubGroup->getAudioClip()->setRegionData(juce::Range<double>(newStart, newStart + newLength), audium::seconds);
-                        audioSubGroup->getAudioClip()->setAbsolutePosition(newData.getStart(), audium::seconds);
+                        audioSubGroup->getAudioClip()->setRegionData(juce::Range<double>(newStart, newStart + newLength), context);
+                        audioSubGroup->getAudioClip()->setAbsolutePosition(newData.getStart(), context);
                         repaint();
                     }
                     break;
@@ -68,12 +68,12 @@ public:
                     {
                         // duration
                         regionData.setLength(newData.getLength());
-                        audioSubGroup->getAudioClip()->setRegionData(regionData, audium::seconds);
+                        audioSubGroup->getAudioClip()->setRegionData(regionData, context);
                     }
                     break;
                 case middleEdge:
                     // position in transport
-                    audioSubGroup->getAudioClip()->setAbsolutePosition(newData.getStart(), audium::seconds);
+                    audioSubGroup->getAudioClip()->setAbsolutePosition(newData.getStart(), context);
                     break;
                 default:
                     break;
@@ -115,7 +115,7 @@ public:
             audiumEngine->getUndoManager()->perform(undoableContainerAction, "Modify Item");
             audiumEngine->getUndoManager()->beginNewTransaction();
             undoableContainerAction = nullptr;
-            std::cout << "undoableContainerAction = nullptr" << std::endl;
+            //std::cout << "undoableContainerAction = nullptr" << std::endl;
         }
         
         return result;

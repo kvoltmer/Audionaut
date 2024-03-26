@@ -15,8 +15,12 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/AudioClip.h"
 
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Handlers/SnapToGridHandler.h"
 #include "Interface/Controls/RegionSelector.h"
 #include "Interface/ColourIds.h"
 
@@ -100,6 +104,10 @@ void RegionEditControl::mouseDrag (const juce::MouseEvent& e)
     }
     
     setBounds (bounds);
+    
+    auto audioClipStart = audioRegion->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::clocks);
+    auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange()) + audioClipStart;
+    zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
     repaint();
     
 }
@@ -113,11 +121,19 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
         // Undo: store old state
         auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
         
-        // note: add audio resource start
-        auto rangeInSeconds =   zoomHandler->xToSeconds(getBounds().toDouble().getHorizontalRange()) +
-                                audioRegion->getAudioResourceStartInSeconds();
-        audioRegion->validateData(rangeInSeconds);
-        audioRegion->setRegionData(rangeInSeconds, audium::seconds);
+        // note: add audio resource start (getAudioResourceStart)
+        auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange()) +
+                                audioRegion->getAudioResourceStart(audium::clocks);
+        
+        auto audioClipStart = audioRegion->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::clocks);
+        rangeInClocks += audioClipStart;
+        zoomHandler->snapToGrid(rangeInClocks);
+        rangeInClocks -= audioClipStart;
+        
+        audioRegion->validateData(rangeInClocks, audium::clocks);
+        audioRegion->setRegionData(rangeInClocks, audium::clocks);
+        
+        zoomHandler->getSnapToGridHandler()->clearRange();
         
         // Undo: store new state
         action->storeNewState();
@@ -143,7 +159,7 @@ void RegionEditControl::updateFromEngine(std::shared_ptr<AudioRegion> newRegion)
     auto bounds = getBounds().toFloat();
     
     // note: subtract audio resource start
-    auto rangeSeconds = audioRegion->getRegionData(audium::seconds) - audioRegion->getAudioResourceStartInSeconds();
+    auto rangeSeconds = audioRegion->getRegionData(audium::seconds) - audioRegion->getAudioResourceStart(audium::seconds);
     auto rangeX = zoomHandler->secondsToX(rangeSeconds);
     bounds.setX(rangeX.getStart());
     bounds.setWidth(rangeX.getLength());

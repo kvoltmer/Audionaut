@@ -10,10 +10,12 @@
 
 #include "ZoomHandler.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Interface/Handlers/SnapToGridHandler.h"
 
-
-ZoomHandler::ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler) :
+ZoomHandler::ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler,
+                         std::shared_ptr<SnapToGridHandler> snapToGridHandler) :
     playListScheduler(playListScheduler),
+    snapToGridHandler(snapToGridHandler),
     scrollbar(nullptr)
 {
     // the default zoom factor
@@ -101,6 +103,7 @@ void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
 {
     scrollbar = thescrollbar;
 }
+
 juce::Range<double> ZoomHandler::secondsToX(juce::Range<double> seconds) const
 {
     return juce::Range<double>(secondsToX(seconds.getStart()), secondsToX(seconds.getEnd()));
@@ -145,6 +148,15 @@ double ZoomHandler::xToBeats (const double x) const
     return xToBars(x) * 4.0;
 }
 
+juce::Range<double> ZoomHandler::clocksToX(juce::Range<double> clocks) const
+{
+    return juce::Range<double>(clocksToX(clocks.getStart()), clocksToX(clocks.getEnd()));
+}
+
+juce::Range<double> ZoomHandler::xToClocks(juce::Range<double> x) const
+{
+    return juce::Range<double>(xToClocks(x.getStart()), xToClocks(x.getEnd()));
+}
 
 double ZoomHandler::clocksToX (const double clocks) const
 {
@@ -340,6 +352,53 @@ const ZoomHandler::SegmentResult ZoomHandler::segmentsForWidth(const float total
     
     result.numSegments = (totalWidth / result.itemWidth) + 1;
     return result;
+}
+
+bool ZoomHandler::snapToGrid(juce::Range<double> &clocks)
+{
+    
+    auto segmentResult = segmentsForWidth(getContentWidth(), ZoomHandler::beats);
+    
+    auto startInBeats = TempoProvider::clocksToBeats(clocks.getStart());
+    auto endInBeats = TempoProvider::clocksToBeats(clocks.getEnd());
+    
+    auto tolerance = xToBeats(10.0);
+    
+    bool snapStart = false;
+    bool snapEnd = false;
+    
+    auto beats = 0.0;
+    for (auto i = 0; i < segmentResult.numSegments; i++)
+    {
+        if (std::abs(beats - std::max(startInBeats, 0.0)) < tolerance)
+        {
+            std::cout << "start snap to: " << beats << std::endl;
+            startInBeats = beats;
+            snapStart = true;
+        }
+        else if (std::abs(beats - std::max(endInBeats, 0.0)) < tolerance)
+        {
+            std::cout << "end snap to: " << beats << std::endl;
+            endInBeats = beats;
+            snapEnd = true;
+        }
+        beats += segmentResult.grid;
+    }
+        
+    if (snapStart && snapEnd)
+    {
+        clocks = juce::Range<double>(TempoProvider::beatsToClocks(startInBeats), TempoProvider::beatsToClocks(endInBeats));
+    }
+    else if (snapStart && !snapEnd)
+    {
+        clocks = clocks.withStart(TempoProvider::beatsToClocks(startInBeats));
+    }
+    else if (!snapStart && snapEnd)
+    {
+        clocks = clocks.withEnd(TempoProvider::beatsToClocks(endInBeats));
+    }
+ 
+    return (snapStart || snapEnd);
 }
 
 
