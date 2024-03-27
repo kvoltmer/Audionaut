@@ -74,9 +74,8 @@ public:
     int getNumChannels() const;
     void ensureNumChannels(int channelsNeeded);
     std::shared_ptr<AudioChannel> addChannel();
-    std::shared_ptr<AudioChannel> getChannel(int channelNumber) const { return audioChannels[channelNumber]; }
-    int getChannelNumberFor(AudioChannel* channel);
-    
+    std::shared_ptr<AudioChannel> getChannel(int channelNumber) const;
+
     int getTotalHeight() const;
     float getOutputLevel(int channelNumber) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannel(int channelNumber) const;

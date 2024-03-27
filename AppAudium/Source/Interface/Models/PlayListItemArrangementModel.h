@@ -105,7 +105,6 @@ public:
     
     int getRowHeight (int rowNumber) const override
     {
-        // auto channel = audioSubGroup->getAudioGroup().getChannel(rowNumber);
         auto channel = audioGroup->getChannel(rowNumber);
         if (channel != nullptr)
         {

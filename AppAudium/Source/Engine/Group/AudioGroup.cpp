@@ -118,7 +118,7 @@ bool AudioGroup::readFromStream (juce::InputStream& inputStream)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
-        getAudioGroupContainer().sendActionMessage(updateAll);
+        getAudioGroupContainer().sendActionMessage(rebuildAll);
         return true;
     }
     return false;
@@ -144,25 +144,19 @@ void AudioGroup::ensureNumChannels(int channelsNeeded)
 
 std::shared_ptr<AudioChannel> AudioGroup::addChannel()
 {
-    auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this));
+    auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this, (int)audioChannels.size()));
     audioChannels.push_back(channel);
     return channel;
 }
 
-int AudioGroup::getChannelNumberFor(AudioChannel* audioChannel)
+std::shared_ptr<AudioChannel> AudioGroup::getChannel(int channelNumber) const
 {
-    int number = 0;
-    for (auto channel : audioChannels)
+    if (channelNumber < audioChannels.size())
     {
-        if (channel.get() == audioChannel)
-        {
-            return number;
-        }
-        number++;
+        jassert(audioChannels[channelNumber]->getChannelNumber() == channelNumber);
+        return audioChannels[channelNumber];
     }
-    
-    //jassertfalse;
-    return 0;
+    return nullptr;
 }
 
 int AudioGroup::getTotalHeight() const
@@ -395,6 +389,13 @@ void AudioGroup::deleteChannel(std::shared_ptr<AudioChannel> channel)
         audioResourceContainer.onDeleteChannel(channel);
         audioChannels.erase(it);
     }
+    
+    auto count = 0;
+    for (auto channel : audioChannels)
+    {
+        channel->setChannelNumber(count++);
+    }
+    
     
 
     // cleanup subgroups

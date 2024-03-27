@@ -142,23 +142,20 @@ int AudioResource::getChannelPosition() const
 void AudioResource::setChannelPosition(int startChannel)
 {
     std::cout << "AudioResource::setChannelPosition " << startChannel << std::endl;
-    
-    //auto numChannels = getNumChannels();
+
     audioChannels.clear();
-    //audioGroup->ensureNumChannels(startChannel + numChannels);
-    
-    for (auto i = startChannel; i < audioGroup->getNumChannels(); i++)
+
+    for (auto i = 0; i < getNumChannels(); i++)
     {
-        auto channel = audioGroup->getChannel(i);
+        auto channel = audioGroup->getChannel(i + startChannel);
+        jassert(channel);
         if (channel != nullptr)
         {
             audioChannels.push_back(channel);
         }
-        else
-        {
-            jassertfalse;
-        }
     }
+    
+    jassert(audioChannels.size() == getNumChannels());
 }
 
 bool AudioResource::deleteChannel(std::shared_ptr<AudioChannel> channel)
