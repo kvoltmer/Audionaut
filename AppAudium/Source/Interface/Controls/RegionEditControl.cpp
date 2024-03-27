@@ -121,14 +121,16 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
         // Undo: store old state
         auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
         
-        // note: add audio resource start (getAudioResourceStart)
-        auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange()) +
-                                audioRegion->getAudioResourceStart(audium::clocks);
+        auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange());
         
         auto audioClipStart = audioRegion->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::clocks);
+
         rangeInClocks += audioClipStart;
         zoomHandler->snapToGrid(rangeInClocks);
         rangeInClocks -= audioClipStart;
+
+        // note: add audio resource start (getAudioResourceStart)
+        rangeInClocks += audioRegion->getAudioResourceStart(audium::clocks);
         
         audioRegion->validateData(rangeInClocks, audium::clocks);
         audioRegion->setRegionData(rangeInClocks, audium::clocks);
