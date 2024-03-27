@@ -100,9 +100,11 @@ public:
     
     float getOutputLevel(int channel) const
     {
-        if (channel < MAX_AUDIO_FILE_CHANNELS)
+        if (channel >= 0 &&
+            channel < MAX_AUDIO_FILE_CHANNELS)
+        {
             return outputLevel[channel].load();
-        
+        }
         return 0.f;
     }
     

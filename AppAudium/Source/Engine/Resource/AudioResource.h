@@ -90,6 +90,7 @@ public:
     bool isSelected() const { return selected; }
         
     bool containsChannelNumber(int channelNumber) const;
+    bool containsChannel(std::shared_ptr<AudioChannel> channel) const;
     int getChannelPosition() const;
     void setChannelPosition(int startChannel);
     bool deleteChannel(std::shared_ptr<AudioChannel> channel);

@@ -173,7 +173,6 @@ int AudioGroup::getTotalHeight() const
 float AudioGroup::getOutputLevel(int channelNumber) const
 {
     auto level = 0.f;
-    // TODO: move this to channel class
     auto channel = getChannel(channelNumber);
     if (channel != nullptr)
     {
@@ -182,7 +181,7 @@ float AudioGroup::getOutputLevel(int channelNumber) const
         {
             if (resource->getAudioTransportSource()->isPlaying())
             {
-                level += resource->getAudioTransportSource()->getOutputLevel(channelNumber);
+                level += resource->getAudioTransportSource()->getOutputLevel(channelNumber - resource->getChannelPosition());
             }
         }
     }
@@ -192,14 +191,12 @@ float AudioGroup::getOutputLevel(int channelNumber) const
 
 std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtChannel(int channelNumber) const
 {
-    // TODO: channel should hold a std:vector with audio resource
-    //auto channel = audioGroup->getChannel(rowNumber);
+    auto channel = getChannel(channelNumber);
     
     std::vector<std::shared_ptr<AudioResource>> result;
-    auto resources = getAudioResources();
-    for (auto resource : resources)
+    for (auto resource : getAudioResources())
     {
-        if (resource->containsChannelNumber(channelNumber))
+        if (resource->containsChannel(channel))
         {
             result.push_back(resource);
         }

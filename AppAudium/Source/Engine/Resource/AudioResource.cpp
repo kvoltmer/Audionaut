@@ -129,6 +129,17 @@ bool AudioResource::containsChannelNumber(int channelNumber) const
     return false;
 }
 
+bool AudioResource::containsChannel(std::shared_ptr<AudioChannel> channel) const
+{
+    auto it = std::find(audioChannels.begin(), audioChannels.end(), channel);
+    if (it != audioChannels.end())
+    {
+        return true;
+    }
+    
+    return false;
+}
+
 int AudioResource::getChannelPosition() const
 {
     if (audioChannels.size() > 0)
