@@ -97,7 +97,7 @@ public:
             }
             else
             {
-                jassertfalse;
+                std::cout << "error WaveFormViewBase channel mapping." << std::endl;
             }
         }
     }

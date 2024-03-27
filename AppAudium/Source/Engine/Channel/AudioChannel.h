@@ -18,8 +18,9 @@ class AudioChannel
 {
     
 public:
-    AudioChannel(AudioGroup &audioGroup) :
-        audioGroup(audioGroup)
+    AudioChannel(AudioGroup &audioGroup, int channelNumber) :
+        audioGroup(audioGroup),
+        channelNumber(channelNumber)
     {
     }
     
@@ -29,15 +30,22 @@ public:
     void setSelected(bool bSelected) { data.selected = bSelected; }
     bool isSelected() const { return data.selected; }
 
-    int getChannelNumber()
+    int getChannelNumber() const
     {
-        return audioGroup.getChannelNumberFor(this);
+        return channelNumber;
+    }
+    
+    void setChannelNumber(int number)
+    {
+        channelNumber = number;
     }
     
     AudioChannelData data;
     
 private:
     AudioGroup &audioGroup;
+    
+    int channelNumber = 0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioChannel)
     
