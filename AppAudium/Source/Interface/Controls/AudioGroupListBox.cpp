@@ -61,7 +61,9 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
                                                                                  *audiumEngine->getAudioRegionContainer(),
                                                                                  name);
         setNewGroupColour(group);
-        auto subGroup = group->createNewAudioSubGroup();
+        
+        // TODO: transport position
+        auto subGroup = group->createNewAudioSubGroup(0.0, audium::clocks);
 
 
         auto transportPosition = zoomHandler->xToSeconds(mouseX);

@@ -52,11 +52,8 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     {
         audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
         audioResources.push_back({group, audioResource});
-        
-        sendActionMessage(audioResourceCreatedAction);
         return audioResource;
     }
-    
     
     return nullptr;
 }

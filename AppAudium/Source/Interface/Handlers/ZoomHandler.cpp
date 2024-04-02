@@ -354,51 +354,118 @@ const ZoomHandler::SegmentResult ZoomHandler::segmentsForWidth(const float total
     return result;
 }
 
-bool ZoomHandler::snapToGrid(juce::Range<double> &clocks)
+bool ZoomHandler::snapToGrid(double &clocks)
 {
-    
     auto segmentResult = segmentsForWidth(getContentWidth(), ZoomHandler::beats);
     
-    auto startInBeats = TempoProvider::clocksToBeats(clocks.getStart());
-    auto endInBeats = TempoProvider::clocksToBeats(clocks.getEnd());
-    
-    auto tolerance = xToBeats(10.0);
-    
-    bool snapStart = false;
-    bool snapEnd = false;
-    
-    auto beats = 0.0;
+    auto beats      = TempoProvider::clocksToBeats(clocks);
+    auto tolerance  = xToBeats(10.0);
+    auto inc        = 0.0;
     for (auto i = 0; i < segmentResult.numSegments; i++)
     {
-        if (std::abs(beats - std::max(startInBeats, 0.0)) < tolerance)
+        if (std::abs(inc - std::max(beats, 0.0)) < tolerance)
         {
-            std::cout << "start snap to: " << beats << std::endl;
-            startInBeats = beats;
-            snapStart = true;
+            std::cout << "snap to: " << inc << std::endl;
+            clocks = TempoProvider::beatsToClocks(inc);
+            return true;
         }
-        else if (std::abs(beats - std::max(endInBeats, 0.0)) < tolerance)
-        {
-            std::cout << "end snap to: " << beats << std::endl;
-            endInBeats = beats;
-            snapEnd = true;
-        }
-        beats += segmentResult.grid;
+        inc += segmentResult.grid;
     }
+    
+    return false;
+}
+
+bool ZoomHandler::snapToGrid(juce::Range<double> &clocks)
+{
+//    auto segmentResult = segmentsForWidth(getContentWidth(), ZoomHandler::beats);
+//    
+//    auto startInBeats = TempoProvider::clocksToBeats(clocks.getStart());
+//    auto endInBeats = TempoProvider::clocksToBeats(clocks.getEnd());
+//    
+//    auto tolerance = xToBeats(10.0);
+    
+
+    double start = clocks.getStart();
+    double end = clocks.getEnd();
+    
+    bool snapStart = snapToGrid(start);
+    bool snapEnd = snapToGrid(end);
+    
+//    auto beats = 0.0;
+//    for (auto i = 0; i < segmentResult.numSegments; i++)
+//    {
+//        if (std::abs(beats - std::max(startInBeats, 0.0)) < tolerance)
+//        {
+//            std::cout << "start snap to: " << beats << std::endl;
+//            startInBeats = beats;
+//            snapStart = true;
+//        }
+//        else if (std::abs(beats - std::max(endInBeats, 0.0)) < tolerance)
+//        {
+//            std::cout << "end snap to: " << beats << std::endl;
+//            endInBeats = beats;
+//            snapEnd = true;
+//        }
+//        beats += segmentResult.grid;
+//    }
         
     if (snapStart && snapEnd)
     {
-        clocks = juce::Range<double>(TempoProvider::beatsToClocks(startInBeats), TempoProvider::beatsToClocks(endInBeats));
+        clocks = juce::Range<double>(start, end);
     }
     else if (snapStart && !snapEnd)
     {
-        clocks = clocks.withStart(TempoProvider::beatsToClocks(startInBeats));
+        clocks = clocks.withStart(start);
     }
     else if (!snapStart && snapEnd)
     {
-        clocks = clocks.withEnd(TempoProvider::beatsToClocks(endInBeats));
+        clocks = clocks.withEnd(end);
     }
  
     return (snapStart || snapEnd);
+    
+//    auto segmentResult = segmentsForWidth(getContentWidth(), ZoomHandler::beats);
+//
+//    auto startInBeats = TempoProvider::clocksToBeats(clocks.getStart());
+//    auto endInBeats = TempoProvider::clocksToBeats(clocks.getEnd());
+//
+//    auto tolerance = xToBeats(10.0);
+//
+//    bool snapStart = false;
+//    bool snapEnd = false;
+//
+//    auto beats = 0.0;
+//    for (auto i = 0; i < segmentResult.numSegments; i++)
+//    {
+//        if (std::abs(beats - std::max(startInBeats, 0.0)) < tolerance)
+//        {
+//            std::cout << "start snap to: " << beats << std::endl;
+//            startInBeats = beats;
+//            snapStart = true;
+//        }
+//        else if (std::abs(beats - std::max(endInBeats, 0.0)) < tolerance)
+//        {
+//            std::cout << "end snap to: " << beats << std::endl;
+//            endInBeats = beats;
+//            snapEnd = true;
+//        }
+//        beats += segmentResult.grid;
+//    }
+//
+//    if (snapStart && snapEnd)
+//    {
+//        clocks = juce::Range<double>(TempoProvider::beatsToClocks(startInBeats), TempoProvider::beatsToClocks(endInBeats));
+//    }
+//    else if (snapStart && !snapEnd)
+//    {
+//        clocks = clocks.withStart(TempoProvider::beatsToClocks(startInBeats));
+//    }
+//    else if (!snapStart && snapEnd)
+//    {
+//        clocks = clocks.withEnd(TempoProvider::beatsToClocks(endInBeats));
+//    }
+//
+//    return (snapStart || snapEnd);
 }
 
 

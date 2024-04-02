@@ -152,7 +152,7 @@ int AudioResource::getChannelPosition() const
 
 void AudioResource::setChannelPosition(int startChannel)
 {
-    std::cout << "AudioResource::setChannelPosition " << startChannel << std::endl;
+    //std::cout << "AudioResource::setChannelPosition " << startChannel << std::endl;
 
     audioChannels.clear();
 

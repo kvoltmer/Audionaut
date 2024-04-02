@@ -34,7 +34,6 @@ public:
     
     juce::Range<double> getRegionData(audium::TimeContextType context) const;
     
-    //double getAbsolueStartTime(audium::TimeContextType context) const;
     double getDurationTime(audium::TimeContextType context) const;
     
     void setSelected(bool bSelected) { selected = bSelected; }
