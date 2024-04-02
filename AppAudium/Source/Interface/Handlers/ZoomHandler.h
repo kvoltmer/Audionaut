@@ -86,6 +86,7 @@ public:
     
     const SegmentResult segmentsForWidth(const float totalWidth, SegmentType type);
     
+    bool snapToGrid(double &clocks);
     bool snapToGrid(juce::Range<double> &clocks);
     
     void focusViewOnPlayPosition();

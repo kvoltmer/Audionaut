@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
+#include "Engine/TimeContext.h"
 
 class AudioResourceContainer;
 class AudioResource;
@@ -58,6 +59,7 @@ public:
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannelPosition(int channelPosition) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const;
+    std::shared_ptr<AudioSubGroup> getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const;
     
     void setColour(juce::Colour colour);
     juce::Colour getColour() const { return groupColour; }
@@ -83,7 +85,7 @@ public:
     void setGain(float gain, int channelNumber);
     float getGain(int channelNumber) const;
     
-    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition = 0.0);
+    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition, audium::TimeContextType context);
     std::shared_ptr<AudioSubGroup> getSharedPtr(const AudioSubGroup* subGroup) const;
     
     std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;

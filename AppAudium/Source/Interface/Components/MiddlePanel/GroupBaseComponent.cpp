@@ -22,6 +22,7 @@
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Interface/Handlers/SnapToGridHandler.h"
 
 using namespace audium;
 
@@ -42,7 +43,7 @@ void GroupBaseComponent::paint (juce::Graphics& g)
     auto colour = findColour(audium::secondaryBackgroundColourId).brighter();
     if (externalDragAndDrop)
     {
-        g.fillAll (colour);
+        g.fillAll (colour.withAlpha(0.5f));
     }
     
     if (audioGroup->isSelected())
@@ -59,32 +60,30 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
         // Undo: store old state
         auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup);
                 
-        auto transportPosition = zoomHandler->xToSeconds(x);
+        //auto transportPositionOffset = zoomHandler->xToClocksWithOffset(x);
+        auto transportPosition = zoomHandler->xToClocks(x);
+        //std::cout << transportPositionOffset << std::endl;
         auto channelPosition = 0;
         
         for (auto i = 0; i < filenames.size(); i++)
         {
-            // check if we overlap with an existing resource (snap position to nearest resource)
-            const auto resources = audioGroup->getAudioResources();
-            std::shared_ptr<AudioSubGroup> subGroup = nullptr;
-            for (auto resource : resources)
+            // overlap?
+            auto subGroup = audioGroup->getSubGroupAtAbsolutePosition(transportPosition, audium::clocks);
+            if (subGroup != nullptr)
             {
-                if (resource->containsAbsolutePosition(transportPosition, audium::seconds))
-                {
-                    transportPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
-                    // position is below
-                    channelPosition = audioGroup->getNumChannels();
-                    subGroup = resource->getAudioSubGroup();
-                    break;
-                }
+                // inherit position of sub group
+                transportPosition = subGroup->getAudioClip()->getAbsolutePosition(audium::clocks);
+                // place below
+                channelPosition = audioGroup->getNumChannels();
             }
-            if (subGroup == nullptr)
+            else
             {
-                subGroup = audioGroup->createNewAudioSubGroup(transportPosition);
+                // create new sub group at position
+                zoomHandler->snapToGrid(transportPosition);
+                subGroup = audioGroup->createNewAudioSubGroup(transportPosition, audium::clocks);
             }
             
-            auto url = URL (File (filenames[i]));
-            auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(url,
+            auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(URL (File (filenames[i])),
                                                                                              audioGroup,
                                                                                              subGroup,
                                                                                              channelPosition);
@@ -99,6 +98,7 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
     
     externalDragAndDrop = false;
     regionSelector->setEnabled(true);
+    zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
 }
 
@@ -109,9 +109,25 @@ void GroupBaseComponent::fileDragEnter (const juce::StringArray& files, int x, i
     repaint();
 }
 
+void GroupBaseComponent::fileDragMove (const StringArray& files, int x, int y)
+{
+    
+    auto startWithOffset = zoomHandler->xToClocksWithOffset(x);
+    auto start = zoomHandler->xToClocks(x);
+    std::cout << startWithOffset << " " <<  start << std::endl;
+    //std::cout << start << std::endl;
+    auto end = start + 0.01;
+    
+    Range<double> rangeInClocks(start, end);
+    
+    
+    zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
+}
+
 void GroupBaseComponent::fileDragExit (const juce::StringArray& files)
 {
     externalDragAndDrop = false;
     regionSelector->setEnabled(true);
+    zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
 }

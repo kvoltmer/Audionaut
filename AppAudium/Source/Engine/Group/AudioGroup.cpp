@@ -51,6 +51,19 @@ std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtAbsol
     return audioResourceContainer.getAudioResourcesForGroupAtAbsoluteRange(const_cast<AudioGroup*>(this), rangeInSeconds);
 }
 
+std::shared_ptr<AudioSubGroup> AudioGroup::getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const
+{
+    std::shared_ptr<AudioSubGroup> subGroup = nullptr;
+    for (auto resource : getAudioResources())
+    {
+        if (resource->containsAbsolutePosition(position, context))
+        {
+            return resource->getAudioSubGroup();
+        }
+    }
+    return nullptr;
+}
+
 void AudioGroup::setColour(juce::Colour colour)
 {
     groupColour = colour;
@@ -74,7 +87,10 @@ bool AudioGroup::writeToJson (json& output)
     }
     
     
-    playListContainer->writeToJson(output);    
+    playListContainer->writeToJson(output);
+    
+    //std::cout << output.dump(4) << std::endl;
+
     return true;
 }
 
@@ -85,6 +101,8 @@ bool AudioGroup::writeToStream (juce::OutputStream& outputStream)
 
 bool AudioGroup::readFromJson (json& input)
 {
+    //std::cout << input.dump(4) << std::endl;
+    
     cleanup();
     
     groupName = input["name"].template get<std::string>();
@@ -226,10 +244,10 @@ float AudioGroup::getGain(int channelNumber) const
 }
 
 
-std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(double transportPosition)
+std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(double transportPosition, audium::TimeContextType context)
 {
     auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
-    subGroup->getAudioClip()->setAbsolutePosition(transportPosition, audium::seconds);
+    subGroup->getAudioClip()->setAbsolutePosition(transportPosition, context);
     audioSubGroups.push_back(subGroup);
     return subGroup;
 }

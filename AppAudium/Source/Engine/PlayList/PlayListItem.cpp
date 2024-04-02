@@ -25,11 +25,6 @@ juce::Range<double> PlayListItem::getRegionData(audium::TimeContextType context)
     return audioRegion->getRegionData(context);
 }
 
-//double PlayListItem::getAbsolueStartTime(audium::TimeContextType context) const
-//{
-//    return owner.getAbsolueStartTime(this, context);
-//}
-
 double PlayListItem::getDurationTime(audium::TimeContextType context) const
 {
     return getRegionData(context).getLength();

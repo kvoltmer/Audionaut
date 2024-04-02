@@ -103,7 +103,6 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
     jassert(subGroup != nullptr);
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, playListScheduler->getTempoProvider()));
     audioRegions.push_back(audioRegion);
-    // std::cout << "createRegion " << audioRegion << " index " << getRegionIndex(audioRegion) << std::endl;
     return audioRegion;
 }
 
