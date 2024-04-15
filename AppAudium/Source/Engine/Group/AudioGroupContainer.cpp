@@ -25,11 +25,9 @@ AudioGroupContainer::~AudioGroupContainer()
     jassert(audioGroups.empty());
 }
 
-void AudioGroupContainer::init(AudioResourceContainer *resourceContainer,
-          AudioRegionContainer *regionContainer)
+void AudioGroupContainer::init(AudioResourceContainer *resourceContainer)
 {
     audioResourceContainer = resourceContainer;
-    audioRegionContainer = regionContainer;
 }
 
 void AudioGroupContainer::cleanup()
@@ -61,10 +59,9 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getSharedPtr(const AudioGroup* 
 }
 
 std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(AudioResourceContainer &audioResourceContainer,
-                                                                     AudioRegionContainer &audioRegionContainer,
                                                                      const juce::String nameString)
 {
-    auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer, audioRegionContainer);
+    auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer);
     if (nameString.isEmpty())
     {
         audioGroup->setName(juce::String("Group ") + juce::String(audioGroups.size() + 1));
@@ -81,7 +78,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(AudioResour
 bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
 {
     
-    group->getAudioRegionContainer().deleteAudioRegionsForGroup(group);
+    group->getAudioRegionContainer()->deleteAudioRegionsForGroup(group);
     group->getAudioResourceContainer().removeAudioResourcesForGroup(group);
     
     auto it = std::find(audioGroups.begin(), audioGroups.end(), group);
@@ -98,7 +95,7 @@ bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
 void AudioGroupContainer::deleteSelectedGroups()
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(audioRegionContainer->getAudioGroupContainer());
+    auto action = std::make_unique<audium::UndoableContainerAction>(getptr());
     
     for (int i = static_cast<int>(audioGroups.size())-1; i >= 0; i--)
     {
@@ -145,14 +142,15 @@ bool AudioGroupContainer::readFromJson (json& input)
 {
     cleanup();
     jassert(audioGroups.size() == 0);
-    jassert(audioResourceContainer != nullptr && audioRegionContainer != nullptr);
+    jassert(audioResourceContainer != nullptr);
     
     auto jsonSubGroups = input["groups"];
     for (auto& jsonElement : jsonSubGroups)
     {
-        auto audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer, *audioRegionContainer);
+        auto audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer);
         audioGroups.push_back(audioGroup);
-        audioGroup->readFromJson(jsonElement);
+        if ( !audioGroup->readFromJson(jsonElement))
+            return false;
     }
     return true;
 }
@@ -216,4 +214,94 @@ void AudioGroupContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
     }
 }
 
+void AudioGroupContainer::createRegionsFromSelection(juce::String name)
+{
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(getptr());
+    
+    for (auto i = 0; i < getNumItems(); i++)
+    {
+        if (auto group = getAudioGroup(i))
+        {
+            // TODO: mode?
+            //if (playListScheduler->isArrangementMode())
+//            {
+//                if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks, audium::clocks))
+//                {
+//                    // we need the start of the actual audio file
+//                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolutePosition(audium::clocks) + item->getRegionData(audium::clocks).getStart();
+//                    
+//                    juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
+//                    auto localRangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(localRange);
+//                    createRegion(name, localRangeInSeconds, group, item->getRegion()->getAudioSubGroup());
+//                }
+//            }
+//            else
+//            {
+//                // get resources at this range
+//                auto rangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(selectedPositionClocks);
+//                // TODO: change this to subgroups
+//                auto resources = group->getAudioResourcesAtAbsoluteRange(rangeInSeconds);
+//                if (resources.size() > 0)
+//                {
+//                    // grab the first valid resource
+//                    auto resource  = resources[0];
+//                    
+//                    auto maxLength = 0.0;
+//                    for (auto res : resources)
+//                        maxLength = std::max(maxLength, res->getFileLength(audium::seconds));
+//                    
+//                    const auto transportPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
+//                    rangeInSeconds -= transportPosition;
+//                    const auto startPosition = resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
+//                    rangeInSeconds += startPosition;
+//                    
+//                    if (rangeInSeconds.getEnd() > maxLength)
+//                        rangeInSeconds.setEnd(maxLength);
+//                    
+//                    createRegion(name, rangeInSeconds, group, resource->getAudioSubGroup());
+//                }
+//            }
+        }
+    }
+    // clear selection
+    selectedPositionClocks = juce::Range<double>();
+    
+    
+    // Undo: store new state
+    action->storeNewState();
+    getUndoManager()->perform(action.release(), "Create Region(s)");
+    getUndoManager()->beginNewTransaction();
+}
+
+void AudioGroupContainer::setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context)
+{
+    if (context == audium::seconds)
+    {
+        selectedPositionClocks = tempoProvider->secondsToClocks(pos);
+    }
+    else if (context == audium::clocks)
+    {
+        selectedPositionClocks = pos;
+    }
+    else
+    {
+        jassertfalse;
+    }
+}
+
+juce::Range<double> AudioGroupContainer::getSelectedPosition(audium::TimeContextType context) const
+{
+    if (context == audium::seconds)
+    {
+        return tempoProvider->clocksToSeconds(selectedPositionClocks);
+    }
+    else if (context == audium::clocks)
+    {
+        return selectedPositionClocks;
+    }
+
+    jassertfalse;
+    return juce::Range<double>();
+}
 

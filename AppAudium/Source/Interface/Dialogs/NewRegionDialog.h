@@ -14,6 +14,7 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Interface/Components/MainComponent.h"
 
 using namespace juce;
@@ -78,7 +79,7 @@ private:
     
     void create(String name)
     {
-        audiumEngine->getAudioRegionContainer()->createRegionsFromSelection(name);
+        audiumEngine->getAudioGroupContainer()->createRegionsFromSelection(name);
     }
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;

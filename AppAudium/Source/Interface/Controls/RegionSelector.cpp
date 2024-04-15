@@ -13,6 +13,7 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
@@ -57,7 +58,7 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
             setSize (0, 0);
             dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
             currentDragMode = RegionSelector::outsideEdge;
-            audiumEngine->getAudioRegionContainer()->setSelectedPosition(juce::Range<double>(), audium::seconds);
+            audiumEngine->getAudioGroupContainer()->setSelectedPosition(juce::Range<double>(), audium::seconds);
         }
         else /// click inside -> modify current selection
         {
@@ -130,7 +131,7 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
         zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
         
         // set value in the engine
-        audiumEngine->getAudioRegionContainer()->setSelectedPosition(rangeInClocks, audium::clocks);
+        audiumEngine->getAudioGroupContainer()->setSelectedPosition(rangeInClocks, audium::clocks);
     }
 }
 
@@ -148,17 +149,17 @@ void RegionSelector::createRectangleAndSetBonds()
 
 void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
-    if (not audiumEngine->getAudioRegionContainer()->getSelectedPosition(audium::clocks).isEmpty())
+    if (not audiumEngine->getAudioGroupContainer()->getSelectedPosition(audium::clocks).isEmpty())
     {
         grabKeyboardFocus();
     }
     
-    auto rangeInClocks = audiumEngine->getAudioRegionContainer()->getSelectedPosition(audium::clocks);
+    auto rangeInClocks = audiumEngine->getAudioGroupContainer()->getSelectedPosition(audium::clocks);
     if (!rangeInClocks.isEmpty())
     {
         if (zoomHandler->snapToGrid(rangeInClocks))
         {
-            audiumEngine->getAudioRegionContainer()->setSelectedPosition(rangeInClocks, audium::clocks);
+            audiumEngine->getAudioGroupContainer()->setSelectedPosition(rangeInClocks, audium::clocks);
             updateFromEngine();
         }
     }
@@ -181,7 +182,7 @@ void RegionSelector::mouseWheelMove (const MouseEvent& e, const MouseWheelDetail
 
 bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComponent)
 {
-    const auto pos = audiumEngine->getAudioRegionContainer()->getSelectedPosition(audium::clocks);
+    const auto pos = audiumEngine->getAudioGroupContainer()->getSelectedPosition(audium::clocks);
     if (!pos.isEmpty())
     {
         if (key.isKeyCode (KeyPress::leftKey))
@@ -217,7 +218,7 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
         else if (key.isKeyCode (KeyPress::escapeKey))
         {
             // clear selection
-            audiumEngine->getAudioRegionContainer()->setSelectedPosition(juce::Range<double>(), audium::seconds);
+            audiumEngine->getAudioGroupContainer()->setSelectedPosition(juce::Range<double>(), audium::seconds);
             updateFromEngine();
             return true;
         }
@@ -228,7 +229,7 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
 
 void RegionSelector::updateFromEngine()
 {
-    auto pos = audiumEngine->getAudioRegionContainer()->getSelectedPosition(audium::seconds);
+    auto pos = audiumEngine->getAudioGroupContainer()->getSelectedPosition(audium::seconds);
     if (pos.isEmpty())
     {
         setSize(0, 0);

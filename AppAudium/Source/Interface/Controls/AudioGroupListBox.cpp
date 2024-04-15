@@ -58,7 +58,6 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
         juce::String name;
         // create NEW GROUP
         auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
-                                                                                 *audiumEngine->getAudioRegionContainer(),
                                                                                  name);
         setNewGroupColour(group);
         

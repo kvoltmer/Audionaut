@@ -29,9 +29,9 @@ public:
     AudioRegion(std::shared_ptr<AudioGroup> audioGroup,
                 std::shared_ptr<AudioSubGroup> audioSubGroup,
                 std::shared_ptr<TempoProvider> tempoProvider) :
-    audioGroup(audioGroup),
-    audioSubGroup(audioSubGroup),
-    tempoProvider(tempoProvider)
+        audioGroup(audioGroup),
+        audioSubGroup(audioSubGroup),
+        tempoProvider(tempoProvider)
     {
         jassert(audioGroup != nullptr);
     }

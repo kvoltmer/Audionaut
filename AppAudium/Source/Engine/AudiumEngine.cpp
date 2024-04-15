@@ -17,7 +17,6 @@
 #include "Engine/Factory/AudioGroupFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudiumTransportSource.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
@@ -47,7 +46,6 @@ void AudiumEngine::cleanup()
 {
     audioGroupContainer->cleanup();
     audioResourceContainer->cleanup();
-    audioRegionContainer->cleanup();
     undoManager->clearUndoHistory();
     currentFile = File();
 }
@@ -66,6 +64,11 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
                 currentFile = file;
                 undoManager->clearUndoHistory();
                 NullCheckedInvocation::invoke (callback, true, "");
+            }
+            else
+            {
+                cleanup();
+                NullCheckedInvocation::invoke (callback, false, "");
             }
         }
     }
@@ -234,11 +237,12 @@ int AudiumEngine::getSizeInUnits()
 
 void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> group)
 {
-    if (audioRegionContainer->getNumRegions(group.get()) == 0)
-    {
-        auto region = audioRegionContainer->createDefaultRegion(group);
-        group->getPlayListContainer()->createPlayListItem(region);
-    }
+    jassertfalse;
+//    if (audioRegionContainer->getNumRegions(group.get()) == 0)
+//    {
+//        auto region = audioRegionContainer->createDefaultRegion(group);
+//        group->getPlayListContainer()->createPlayListItem(region);
+//    }
 }
 
 
@@ -262,14 +266,15 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     auto subGroup = audioGroup->createNewAudioSubGroup();
     audioResourceContainer->addAudioResource(bounceUrl, audioGroup, subGroup);
 #endif
-    
-    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,
-                                                    audioRegionContainer,
-                                                    audioResourceContainer));
-    if (autoEdit->invokeAutoEdit(config))
-    {
-        autoEdit->applyAutoEditResult(sampleRate);
-    }
+  
+    // TODO: fixme
+//    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,
+//                                                    audioRegionContainer,
+//                                                    audioResourceContainer));
+//    if (autoEdit->invokeAutoEdit(config))
+//    {
+//        autoEdit->applyAutoEditResult(sampleRate);
+//    }
 }
 
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioGroup> group) const
