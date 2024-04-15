@@ -166,12 +166,14 @@ bool AudioClip::readFromJson (json& input)
 
 double AudioClip::getFileLength(audium::TimeContextType context) const
 {
-    jassert(audioSubGroup.getAudioResources().size() > 0);
+    if (audioSubGroup.getAudioResources().size() == 0)
+        std::cout << "AudioClip::getFileLength -> audioSubGroup.getAudioResources().size() == 0" << std::endl;
+    
     auto maxLength = 0.0;
     for (auto res : audioSubGroup.getAudioResources())
     {
         maxLength = std::max(maxLength, res->getFileLength(context));
     }
-    jassert(maxLength > 0.0);
+    
     return maxLength;
 }
