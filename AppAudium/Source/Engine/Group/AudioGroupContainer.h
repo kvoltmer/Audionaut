@@ -79,13 +79,6 @@ public:
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
     
-    void createRegionsFromSelection(juce::String name);
-    
-    // Used by RegionSelector
-    void setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context);
-    juce::Range<double> getSelectedPosition(audium::TimeContextType context) const;
-    
-
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
 private:
@@ -98,8 +91,7 @@ private:
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;
     int selectedGroup = 0;
     
-    // TODO: capsulte this
-    AudioRegionData::tRange selectedPositionClocks;
+
     
     // Discuss: inject depenendency
     AudioRegionAdapter audioRegionAdapter;

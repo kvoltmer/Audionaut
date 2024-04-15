@@ -11,6 +11,9 @@
 #pragma once
 #include <JuceHeader.h>
 
+#include "Engine/TimeContext.h"
+#include "Engine/Region/AudioRegionData.h"
+
 class AudioGroupContainer;
 class AudioRegion;
 
@@ -30,7 +33,13 @@ public:
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
 
     void deleteSelectedRegions();
+    
+    void createRegionsFromSelection(juce::String name, bool arrangementMode);
+    void setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context);
+    juce::Range<double> getSelectedPosition(audium::TimeContextType context) const;
 
 private:
     AudioGroupContainer &owner;
+    
+    AudioRegionData::tRange selectedPositionClocks;
 };
