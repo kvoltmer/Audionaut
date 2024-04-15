@@ -10,7 +10,9 @@
 
 #include "AudioGroupContainer.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioClip.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/TransportSourceContainer.h"
@@ -214,94 +216,5 @@ void AudioGroupContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
     }
 }
 
-void AudioGroupContainer::createRegionsFromSelection(juce::String name)
-{
-    // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(getptr());
-    
-    for (auto i = 0; i < getNumItems(); i++)
-    {
-        if (auto group = getAudioGroup(i))
-        {
-            // TODO: mode?
-            //if (playListScheduler->isArrangementMode())
-//            {
-//                if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks, audium::clocks))
-//                {
-//                    // we need the start of the actual audio file
-//                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolutePosition(audium::clocks) + item->getRegionData(audium::clocks).getStart();
-//                    
-//                    juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
-//                    auto localRangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(localRange);
-//                    createRegion(name, localRangeInSeconds, group, item->getRegion()->getAudioSubGroup());
-//                }
-//            }
-//            else
-//            {
-//                // get resources at this range
-//                auto rangeInSeconds = playListScheduler->getTempoProvider()->clocksToSeconds(selectedPositionClocks);
-//                // TODO: change this to subgroups
-//                auto resources = group->getAudioResourcesAtAbsoluteRange(rangeInSeconds);
-//                if (resources.size() > 0)
-//                {
-//                    // grab the first valid resource
-//                    auto resource  = resources[0];
-//                    
-//                    auto maxLength = 0.0;
-//                    for (auto res : resources)
-//                        maxLength = std::max(maxLength, res->getFileLength(audium::seconds));
-//                    
-//                    const auto transportPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
-//                    rangeInSeconds -= transportPosition;
-//                    const auto startPosition = resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
-//                    rangeInSeconds += startPosition;
-//                    
-//                    if (rangeInSeconds.getEnd() > maxLength)
-//                        rangeInSeconds.setEnd(maxLength);
-//                    
-//                    createRegion(name, rangeInSeconds, group, resource->getAudioSubGroup());
-//                }
-//            }
-        }
-    }
-    // clear selection
-    selectedPositionClocks = juce::Range<double>();
-    
-    
-    // Undo: store new state
-    action->storeNewState();
-    getUndoManager()->perform(action.release(), "Create Region(s)");
-    getUndoManager()->beginNewTransaction();
-}
 
-void AudioGroupContainer::setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context)
-{
-    if (context == audium::seconds)
-    {
-        selectedPositionClocks = tempoProvider->secondsToClocks(pos);
-    }
-    else if (context == audium::clocks)
-    {
-        selectedPositionClocks = pos;
-    }
-    else
-    {
-        jassertfalse;
-    }
-}
-
-juce::Range<double> AudioGroupContainer::getSelectedPosition(audium::TimeContextType context) const
-{
-    if (context == audium::seconds)
-    {
-        return tempoProvider->clocksToSeconds(selectedPositionClocks);
-    }
-    else if (context == audium::clocks)
-    {
-        return selectedPositionClocks;
-    }
-
-    jassertfalse;
-    return juce::Range<double>();
-}
 
