@@ -128,8 +128,7 @@ bool AudioGroup::readFromJson (json& input)
     }
     
     // PlayList
-    playListContainer->readFromJson(input);
-    return true;
+    return playListContainer->readFromJson(input);
 }
 
 bool AudioGroup::readFromStream (juce::InputStream& inputStream)

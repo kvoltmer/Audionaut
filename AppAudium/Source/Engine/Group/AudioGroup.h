@@ -31,7 +31,7 @@ class AudioGroup : public audium::Streamable
 public:
     AudioGroup(AudioGroupContainer &owner,
                AudioResourceContainer &audioResourceContainer,
-               AudioRegionContainer &audioRegionContainer,
+               std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                juce::String nameString) :
@@ -54,7 +54,7 @@ public:
     
     AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
     AudioGroupContainer &getAudioGroupContainer() const { return owner; }
-    AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
+    std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannelPosition(int channelPosition) const;
@@ -113,7 +113,7 @@ public:
 private:
     AudioGroupContainer &owner;
     AudioResourceContainer &audioResourceContainer;
-    AudioRegionContainer &audioRegionContainer;
+    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::string groupName;

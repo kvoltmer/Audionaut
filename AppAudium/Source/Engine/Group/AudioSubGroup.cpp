@@ -30,7 +30,7 @@ void AudioSubGroup::cleanup()
     const auto audioRegions = getAudioRegions();
     for (auto region : audioRegions)
     {
-        getAudioGroup().getAudioRegionContainer().deleteAudioRegion(region);
+        getAudioGroup().getAudioRegionContainer()->deleteAudioRegion(region);
     }
     jassert(getAudioRegions().size() == 0);
     
@@ -92,7 +92,7 @@ bool AudioSubGroup::readFromJson (json& input)
     auto jsonRegions = input["regions"];
     for (auto& jsonElement : jsonRegions)
     {
-        auto region = getAudioGroup().getAudioRegionContainer().createRegion(group, subGroup);
+        auto region = getAudioGroup().getAudioRegionContainer()->createRegion(group, subGroup);
         region->data = jsonElement;
     }
     
@@ -122,7 +122,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioSubGroup::getAudioResources() c
 
 std::vector<std::shared_ptr<AudioRegion>> AudioSubGroup::getAudioRegions() const
 {
-    return audioGroup.getAudioRegionContainer().getRegionsForSubGroup(this);
+    return audioGroup.getAudioRegionContainer()->getRegionsForSubGroup(this);
 }
 
 int AudioSubGroup::getNumChannels() const

@@ -65,6 +65,10 @@
                 file="Source/Engine/Group/AudioGroupContainer.cpp"/>
           <FILE id="uY1Ao1" name="AudioGroupContainer.h" compile="0" resource="0"
                 file="Source/Engine/Group/AudioGroupContainer.h"/>
+          <FILE id="Xw6tEJ" name="AudioRegionAdapter.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioRegionAdapter.cpp"/>
+          <FILE id="otPqzW" name="AudioRegionAdapter.h" compile="0" resource="0"
+                file="Source/Engine/Group/AudioRegionAdapter.h"/>
           <FILE id="zWymx0" name="AudioSubGroup.cpp" compile="1" resource="0"
                 file="Source/Engine/Group/AudioSubGroup.cpp"/>
           <FILE id="xDIL18" name="AudioSubGroup.h" compile="0" resource="0" file="Source/Engine/Group/AudioSubGroup.h"/>
