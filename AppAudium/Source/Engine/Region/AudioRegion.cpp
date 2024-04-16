@@ -15,6 +15,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Provider/TempoProvider.h"
+#include "Engine/PlayList/PlayListContainer.h"
 
 AudioRegion::~AudioRegion()
 {
@@ -135,4 +136,9 @@ void AudioRegion::setRegionLength(double newLength, audium::TimeContextType cont
 std::vector<std::shared_ptr<AudioResource>> AudioRegion::getAudioResources() const
 {
     return audioGroup->getAudioResourceContainer().getAudioResourcesForSubGroup(audioSubGroup.get());
+}
+
+bool AudioRegion::deleteAssociatedItems()
+{
+    return getAudioGroup()->getPlayListContainer()->deleteAssociatedItems(this);
 }

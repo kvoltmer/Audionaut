@@ -68,6 +68,8 @@ public:
     void setRegionEnd(double newEnd, audium::TimeContextType context);
     void setRegionLength(double newLength, audium::TimeContextType context);
     
+    bool deleteAssociatedItems();
+    
     AudioRegionData data;
     
 private:
