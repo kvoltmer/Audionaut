@@ -80,7 +80,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(AudioResour
 bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
 {
     
-    group->getAudioRegionContainer()->deleteAudioRegionsForGroup(group);
+    group->getAudioRegionContainer()->cleanup();
     group->getAudioResourceContainer().removeAudioResourcesForGroup(group);
     
     auto it = std::find(audioGroups.begin(), audioGroups.end(), group);
@@ -88,7 +88,6 @@ bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
     {
         group->cleanup();
         audioGroups.erase(it);
-        sendActionMessage(rebuildAll);
         return true;
     }
     return false;
@@ -97,7 +96,7 @@ bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
 void AudioGroupContainer::deleteSelectedGroups()
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(getptr());
+    auto action = std::make_unique<audium::UndoableContainerAction>(*this);
     
     for (int i = static_cast<int>(audioGroups.size())-1; i >= 0; i--)
     {
@@ -119,11 +118,11 @@ bool AudioGroupContainer::writeToStream (juce::OutputStream& outputStream)
     return audium::Streamable::writeToStream(outputStream);
 }
 
-bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream)
+bool AudioGroupContainer::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
-    if (audium::Streamable::readFromStream(inputStream))
+    if (audium::Streamable::readFromStream(inputStream, rebuild))
     {
-        sendActionMessage(rebuildAll);
+        sendActionMessage(rebuild ? rebuildAll : updateAll);
         return true;
     }
     return false;
@@ -140,19 +139,36 @@ bool AudioGroupContainer::writeToJson (json& output)
     return true;
 }
 
-bool AudioGroupContainer::readFromJson (json& input)
+bool AudioGroupContainer::readFromJson (json& input, bool rebuild)
 {
-    cleanup();
-    jassert(audioGroups.size() == 0);
-    jassert(audioResourceContainer != nullptr);
+    //std::cout << "AudioGroupContainer::readFromJson " << rebuild << std::endl;
     
-    auto jsonSubGroups = input["groups"];
-    for (auto& jsonElement : jsonSubGroups)
+    if (rebuild)
     {
-        auto audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer);
-        audioGroups.push_back(audioGroup);
-        if ( !audioGroup->readFromJson(jsonElement))
+        cleanup();
+        jassert(audioGroups.size() == 0);
+        jassert(audioResourceContainer != nullptr);
+    }
+    
+    auto jsonGroups = input["groups"];
+    int count = 0;
+    for (auto& jsonElement : jsonGroups)
+    {
+        std::shared_ptr<AudioGroup> audioGroup = nullptr;
+        if (rebuild)
+        {
+            audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer);
+            audioGroups.push_back(audioGroup);
+        }
+        else
+        {
+            audioGroup = audioGroups[count];
+        }
+        
+        if ( !audioGroup->readFromJson(jsonElement, rebuild))
             return false;
+        
+        count++;
     }
     return true;
 }

@@ -99,39 +99,61 @@ bool AudioGroup::writeToStream (juce::OutputStream& outputStream)
     return audium::Streamable::writeToStream(outputStream);
 }
 
-bool AudioGroup::readFromJson (json& input)
+bool AudioGroup::readFromJson (json& input, bool rebuild)
 {
     //std::cout << input.dump(4) << std::endl;
-    
-    cleanup();
+    if (rebuild)
+        cleanup();
     
     groupName = input["name"].template get<std::string>();
     groupColour = juce::Colour::fromString(input["colour"].template get<std::string>());
     
     // Channels
     auto jsonChannels = input["channels"];
+    auto c = 0;
     for (auto& jsonElement : jsonChannels)
     {
-        auto channel = addChannel();
+        std::shared_ptr<AudioChannel> channel = nullptr;
+        if (rebuild)
+        {
+            channel = addChannel();
+        }
+        else
+        {
+            channel = audioChannels[c];
+        }
+        
         channel->data = jsonElement;
+        c++;
     }
     
     // SubGroups
     auto jsonSubGroups = input["sub_groups"];
+    auto i = 0;
     for (auto& jsonElement : jsonSubGroups)
     {
-        auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
-        audioSubGroups.push_back(subGroup);
+        std::shared_ptr<AudioSubGroup> subGroup = nullptr;
+        if (rebuild)
+        {
+            subGroup = AudioGroupFactory::createAudioSubGroup(*this);
+            audioSubGroups.push_back(subGroup);
+        }
+        else
+        {
+            subGroup = audioSubGroups[i];
+        }
         
-        if (!subGroup->readFromJson(jsonElement))
+        if (!subGroup->readFromJson(jsonElement, rebuild))
             return false;
+        
+        i++;
     }
     
     // PlayList
-    return playListContainer->readFromJson(input);
+    return playListContainer->readFromJson(input, rebuild);
 }
 
-bool AudioGroup::readFromStream (juce::InputStream& inputStream)
+bool AudioGroup::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
@@ -302,12 +324,9 @@ std::vector<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(
 
 void AudioGroup::deleteSelectedSubGroups()
 {
-    // we need a shared_ptr for this
-    auto group = getAudioGroupContainer().getSharedPtr(this);
-    jassert(group);
     
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(group);
+    auto action = std::make_unique<audium::UndoableContainerAction>(getAudioGroupContainer());
 
     for (int i = static_cast<int>(audioSubGroups.size())-1; i >= 0; i--)
     {
@@ -373,12 +392,8 @@ void AudioGroup::setSelectedRows(juce::SparseSet<int>& selectedRows)
 
 void AudioGroup::deleteSelectedChannels()
 {
-    // we need a shared_ptr
-    auto group = getAudioGroupContainer().getSharedPtr(this);
-    jassert(group);
-    
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(group);
+    auto action = std::make_unique<audium::UndoableContainerAction>(getAudioGroupContainer());
 
     auto selected = getSelectedRows();
     for (int i = selected.size()-1; i >= 0; i--)

@@ -26,7 +26,7 @@ bool AudioRegion::writeToStream (juce::OutputStream& outputStream)
     return audium::Streamable::writeToStream(outputStream);
 }
 
-bool AudioRegion::readFromStream (juce::InputStream& inputStream)
+bool AudioRegion::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
@@ -42,7 +42,7 @@ bool AudioRegion::writeToJson (json& output)
     return true;
 }
 
-bool AudioRegion::readFromJson (json& input)
+bool AudioRegion::readFromJson (json& input, bool rebuild)
 {
     data = input;
     return true;

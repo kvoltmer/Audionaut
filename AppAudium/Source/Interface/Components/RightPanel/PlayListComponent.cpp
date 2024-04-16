@@ -6,7 +6,7 @@
 
 void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
-    auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup->getPlayListContainer());
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup->getAudioGroupContainer());
     
     auto insertIndex = static_cast<int>(audioGroup->getPlayListContainer()->playListItems.size());
     

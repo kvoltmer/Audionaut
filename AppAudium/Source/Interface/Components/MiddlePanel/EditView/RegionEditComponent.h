@@ -52,7 +52,7 @@ public:
             {
                 auto regionEditControl = regionEditControls[count];
                 regionEditControl->setBounds(0, DraggerControl::draggerHeight, 100, getHeight() - DraggerControl::draggerHeight);
-                regionEditControl->updateFromEngine();
+                regionEditControl->updateFromEngine(region);
             }
             count++;
         }
@@ -60,15 +60,14 @@ public:
     
     void updateFromEngine(std::shared_ptr<AudioSubGroup> subGroup)
     {
-        bool rebuild = false;
+        //bool rebuild = false;
         if (audioSubGroup != subGroup)
         {
-            rebuild = true;
+            //rebuild = true;
             audioSubGroup = subGroup;
         }
         
-        if (rebuild ||
-            mustRebuildComponents())
+        if (mustRebuildComponents())
         {
             rebuildComponents();
             resized();

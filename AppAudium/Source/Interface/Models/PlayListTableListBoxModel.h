@@ -87,7 +87,7 @@ public:
     void deleteKeyPressed (int lastRowSelected) override
     {
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(audiumEngine->getPlayListContainer(audioGroup));
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
         
         auto selected = listBox->getSelectedRows();
 

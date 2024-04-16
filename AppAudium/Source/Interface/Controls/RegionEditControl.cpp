@@ -121,7 +121,7 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
     {
         
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer(), false);
         
         auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange());
         
@@ -154,11 +154,10 @@ void RegionEditControl::mouseMove (const juce::MouseEvent& e)
 
 void RegionEditControl::updateFromEngine(std::shared_ptr<AudioRegion> newRegion)
 {
-    if (newRegion != nullptr &&
-        newRegion != audioRegion)
+    jassert(newRegion != nullptr);
+    if (newRegion != audioRegion)
     {
         audioRegion = newRegion;
-        std::cout << "RegionEditControl::updateFromEngine" << std::endl;
     }
     auto bounds = getBounds().toFloat();
     

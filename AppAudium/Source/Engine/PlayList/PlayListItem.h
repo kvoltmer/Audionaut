@@ -48,7 +48,7 @@ public:
     const PlayListContainer &getPlayListContainer() const { return owner; }
 
     bool writeToJson (json& output);
-    bool readFromJson (json& input);
+    bool readFromJson (json& input, bool rebuild);
     
     bool validateData();
 

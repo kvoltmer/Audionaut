@@ -34,16 +34,24 @@ public:
     }
     
     // json used as default implementation
-    virtual bool readFromStream (juce::InputStream& inputStream)
+    virtual bool readFromStream (juce::InputStream& inputStream, bool rebuild = true)
     {
         auto inputString = inputStream.readString().toStdString();
 
         json data = json::parse(inputString);
-        return readFromJson(data);
+        
+//        json compare;
+//        writeToJson(compare);
+//        if (compare == data)
+//        {
+//            std::cout << "data is equal" << std::endl;
+//        }
+        
+        return readFromJson(data, rebuild);
     }
 
     virtual bool writeToJson (json& output) { return false; }
-    virtual bool readFromJson (json& input) { return false; }
+    virtual bool readFromJson (json& input, bool rebuild) { return false; }
 
     
     virtual int getSizeInUnits() = 0;

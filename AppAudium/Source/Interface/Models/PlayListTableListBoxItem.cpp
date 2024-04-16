@@ -23,7 +23,7 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
     auto playListContainer = playListModel->getPlayListContainer();
     
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(playListContainer);
+    auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getAudioGroup()->getAudioGroupContainer());
     
     auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
     auto insertIndex = rowNumber + (before ? 0 : 1);

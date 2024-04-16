@@ -144,7 +144,7 @@ bool PlayListContainer::writeToStream (juce::OutputStream& outputStream)
     return audium::Streamable::writeToStream(outputStream);
 }
 
-bool PlayListContainer::readFromStream (juce::InputStream& inputStream)
+bool PlayListContainer::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
@@ -169,27 +169,38 @@ bool PlayListContainer::writeToJson (json& output)
     return true;
 }
 
-bool PlayListContainer::readFromJson (json& input)
+bool PlayListContainer::readFromJson (json& input, bool rebuild)
 {
-    cleanup();
+    if (rebuild)
+        cleanup();
     
     auto jsonPlayList = input["play_list"];
     auto jsonPlayListItems = jsonPlayList["play_list_items"];
+    auto i = 0;
     for (auto& jsonElement : jsonPlayListItems)
     {
         auto regionIndex = jsonElement["region_id"].template get<int>();
-        auto audioRegion    = audioRegionContainer.getRegion(regionIndex);
+        auto audioRegion = audioRegionContainer.getRegion(regionIndex);
         if (audioRegion != nullptr)
         {
-            auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
-            playListItems.push_back(playListItem);
-            playListItem->readFromJson(jsonElement);
+            std::shared_ptr<PlayListItem> playListItem = nullptr;
+            if (rebuild)
+            {
+                playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
+                playListItems.push_back(playListItem);
+            }
+            else
+            {
+                playListItem = playListItems[i];
+            }
+            playListItem->readFromJson(jsonElement, rebuild);
         }
         else
         {
             jassertfalse;
             return false;
         }
+        i++;
     }
     return true;
 }

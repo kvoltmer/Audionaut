@@ -94,7 +94,7 @@ void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
 void AudioRegionAdapter::deleteSelectedRegions()
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(owner.getptr());
+    auto action = std::make_unique<audium::UndoableContainerAction>(owner);
   
     auto selectedRegions = getSelectedAudioRegions();
     
@@ -113,7 +113,7 @@ void AudioRegionAdapter::deleteSelectedRegions()
 void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arrangementMode)
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(owner.getptr());
+    auto action = std::make_unique<audium::UndoableContainerAction>(owner);
     
     for (auto i = 0; i < owner.getNumItems(); i++)
     {

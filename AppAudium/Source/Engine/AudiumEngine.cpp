@@ -59,7 +59,7 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
         {
             juce::FileInputStream inputStream(file);
             if (inputStream.openedOk() &&
-                readFromStream(inputStream))
+                readFromStream(inputStream, true))
             {
                 currentFile = file;
                 undoManager->clearUndoHistory();
@@ -179,7 +179,7 @@ bool AudiumEngine::writeToStream (juce::OutputStream& outputStream)
     return audium::Streamable::writeToStream(outputStream);
 }
 
-bool AudiumEngine::readFromStream (juce::InputStream& inputStream)
+bool AudiumEngine::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
@@ -204,7 +204,7 @@ bool AudiumEngine::writeToJson (json& output)
     return true;
 }
 
-bool AudiumEngine::readFromJson (json& input)
+bool AudiumEngine::readFromJson (json& input, bool rebuild)
 {
     cleanup();
     
@@ -227,7 +227,7 @@ bool AudiumEngine::readFromJson (json& input)
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
         playListScheduler->getTempoProvider()->setTempo(tempo);
     
-    return audioGroupContainer->readFromJson(jsonAudium);
+    return audioGroupContainer->readFromJson(jsonAudium, rebuild);
 }
 
 int AudiumEngine::getSizeInUnits()

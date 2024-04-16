@@ -40,7 +40,7 @@ public:
         if (undoableContainerAction == nullptr)
         {
             //std::cout << "new audium::UndoableContainerAction" << std::endl;
-            undoableContainerAction = new audium::UndoableContainerAction(playListContainer);
+            undoableContainerAction = new audium::UndoableContainerAction(*audiumEngine->getAudioGroupContainer(), false);
         }
         
         switch (currentDragMode)
