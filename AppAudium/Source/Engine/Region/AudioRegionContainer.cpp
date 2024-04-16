@@ -130,17 +130,6 @@ int AudioRegionContainer::getNumRegions(const AudioGroup* group) const
     }
 }
 
-std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForGroup(std::shared_ptr<AudioGroup> group) const
-{
-    std::vector<std::shared_ptr<AudioRegion>> regions;
-    for (auto region : audioRegions)
-    {
-        if (region->getAudioGroup() == group)
-            regions.push_back(region);
-    }
-    return regions;
-}
-
 std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSubGroup(const AudioSubGroup* subGroup) const
 {
     std::vector<std::shared_ptr<AudioRegion>> regions;
@@ -150,16 +139,6 @@ std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSub
             regions.push_back(region);
     }
     return regions;
-}
-
-void AudioRegionContainer::deleteAudioRegionsForGroup(std::shared_ptr<AudioGroup> group)
-{
-    auto regions = getRegionsForGroup(group);
-    
-    for (auto region : regions)
-    {
-        deleteAudioRegion(region);
-    }
 }
 
 void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup)

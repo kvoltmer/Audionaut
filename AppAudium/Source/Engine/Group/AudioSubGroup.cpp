@@ -67,40 +67,71 @@ bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
     return audium::Streamable::writeToStream(outputStream);
 }
 
-bool AudioSubGroup::readFromJson (json& input)
+bool AudioSubGroup::readFromJson (json& input, bool rebuild)
 {
     // we use the shared_ptr
     const auto group = getAudioGroup().getAudioGroupContainer().getSharedPtr(&getAudioGroup());
     const auto subGroup = getAudioGroup().getSharedPtr(this);
     
-    cleanup();
+    if (rebuild)
+        cleanup();
     
     auto jsonResources = input["resources"];
+    auto resources = getAudioResources();
+    if (!rebuild)
+    {
+        jassert(resources.size() == jsonResources.size());
+    }
+    
+    auto r = 0;
     for (auto& jsonElement : jsonResources)
     {
         auto url = jsonElement["filename"].template get<std::string>();
-
-        auto resource = getAudioGroup().getAudioResourceContainer().addAudioResource(juce::URL(url), group, subGroup);
-        if (resource == nullptr)
-            return false;
+        std::shared_ptr<AudioResource> resource = nullptr;
+        if (rebuild)
+        {
+            resource = getAudioGroup().getAudioResourceContainer().addAudioResource(juce::URL(url), group, subGroup);
+        }
+        else
+        {
+            resource = resources[r];
+        }
         
-        resource->readFromJson(jsonElement);
+        if (resource == nullptr)
+        {
+            jassertfalse;
+            return false;
+        }
+        
+        resource->readFromJson(jsonElement, rebuild);
+        
+        r++;
     }
     
     audioClip->data = input["clip"];
 
     auto jsonRegions = input["regions"];
+    auto i = 0;
     for (auto& jsonElement : jsonRegions)
     {
-        auto region = getAudioGroup().getAudioRegionContainer()->createRegion(group, subGroup);
+        std::shared_ptr<AudioRegion> region = nullptr;
+        if (rebuild)
+        {
+            region = getAudioGroup().getAudioRegionContainer()->createRegion(group, subGroup);
+        }
+        else
+        {
+            region = getAudioGroup().getAudioRegionContainer()->getRegion(i);
+        }
         region->data = jsonElement;
+        i++;
     }
     
     
     return true;
 }
 
-bool AudioSubGroup::readFromStream (juce::InputStream& inputStream)
+bool AudioSubGroup::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {

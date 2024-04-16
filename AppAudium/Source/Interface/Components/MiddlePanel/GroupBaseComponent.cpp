@@ -58,7 +58,7 @@ void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int 
     if ( !filenames.isEmpty())
     {
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup);
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
                 
         //auto transportPositionOffset = zoomHandler->xToClocksWithOffset(x);
         auto transportPosition = zoomHandler->xToClocks(x);

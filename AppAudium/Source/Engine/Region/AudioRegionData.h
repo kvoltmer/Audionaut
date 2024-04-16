@@ -26,11 +26,20 @@ struct AudioRegionData
 };
 
 inline void to_json(json& j, const AudioRegionData& r) {
-    j = json{ {"name", r.name}, {"start", r.regionData.getStart()}, {"end", r.regionData.getEnd()} };
+    j = json{   {"name", r.name},
+                {"start", r.regionData.getStart()},
+                {"end", r.regionData.getEnd()},
+                {"selected", r.selected}
+    };
 }
 
 inline void from_json(const json& j, AudioRegionData& r) {
     j.at("name").get_to(r.name);
     r.regionData.setStart(j.at("start").get<double>());
     r.regionData.setEnd(j.at("end").get<double>());
+
+    if (j.contains("selected"))
+    {
+        j.at("selected").get_to(r.selected);
+    }
 }

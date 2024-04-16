@@ -39,7 +39,7 @@ public:
         audiumEngine(audiumEngine),
         regionSelector(regionSelector)
     {
-        updateFromEngine();
+        updateFromEngine(audioRegion);
         addKeyListener(this);
         setWantsKeyboardFocus(true);
     }
@@ -65,7 +65,7 @@ public:
 
     const Edge getDragMode(int x) const;
     
-    void updateFromEngine(std::shared_ptr<AudioRegion> audioRegion = nullptr);
+    void updateFromEngine(std::shared_ptr<AudioRegion> audioRegion);
     
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override;
 

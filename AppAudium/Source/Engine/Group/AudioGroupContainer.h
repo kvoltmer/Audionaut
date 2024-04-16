@@ -57,9 +57,9 @@ public:
     void deleteSelectedGroups();
     
     bool writeToStream (juce::OutputStream& outputStream) override;
-    bool readFromStream (juce::InputStream& inputStream) override;
+    bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     bool writeToJson (json& output) override;
-    bool readFromJson (json& input) override;
+    bool readFromJson (json& input, bool rebuild) override;
     int getSizeInUnits() override;
     
     std::shared_ptr<AudioGroup> getSelectedGroup() const { return audioGroups[selectedGroup]; }

@@ -107,7 +107,7 @@ public:
         auto audioRegions = audioGroupContainer->getAudioRegionAdapter().getAudioRegions();
         jassert(rowNumber < audioRegions.size());
         auto audioRegion = audioRegions[rowNumber];
-        auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audioGroupContainer.get(), false);
         
         if (columnId == regionName)
         {

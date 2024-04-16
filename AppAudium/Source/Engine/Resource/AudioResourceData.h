@@ -27,12 +27,3 @@ struct AudioResourceData
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AudioResourceData, url, gain, channelPos);
 
-//inline void to_json(json& j, const AudioRegionData& r) {
-//    j = json{ {"name", r.name}, {"start", r.regionData.getStart()}, {"end", r.regionData.getEnd()} };
-//}
-//
-//inline void from_json(const json& j, AudioRegionData& r) {
-//    j.at("name").get_to(r.name);
-//    r.regionData.setStart(j.at("start").get<double>());
-//    r.regionData.setEnd(j.at("end").get<double>());
-//}

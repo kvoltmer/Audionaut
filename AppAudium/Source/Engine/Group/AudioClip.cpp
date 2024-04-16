@@ -142,7 +142,7 @@ bool AudioClip::writeToStream (juce::OutputStream& outputStream)
     return audium::Streamable::writeToStream(outputStream);
 }
 
-bool AudioClip::readFromStream (juce::InputStream& inputStream)
+bool AudioClip::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
@@ -158,7 +158,7 @@ bool AudioClip::writeToJson (json& output)
     return true;
 }
 
-bool AudioClip::readFromJson (json& input)
+bool AudioClip::readFromJson (json& input, bool rebuild)
 {
     data = input;
     return true;

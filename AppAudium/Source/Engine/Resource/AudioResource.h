@@ -80,7 +80,7 @@ public:
     bool containsAbsolutePosition(double position, audium::TimeContextType context) const;
     
     bool writeToJson (json& output) override;
-    bool readFromJson (json& input) override;
+    bool readFromJson (json& input, bool rebuild) override;
     int getSizeInUnits() override { return 1; };
 
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }

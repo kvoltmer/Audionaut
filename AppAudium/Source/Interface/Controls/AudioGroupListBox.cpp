@@ -53,7 +53,7 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
     if ( !filenames.isEmpty())
     {
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(audiumEngine->getAudioGroupContainer());
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
         
         juce::String name;
         // create NEW GROUP

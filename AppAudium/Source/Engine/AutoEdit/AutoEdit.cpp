@@ -98,7 +98,7 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
     auto group = audioGroupContainer->getDefaultGroup();
     if (group != nullptr)
     {
-        auto action = std::make_unique<audium::UndoableContainerAction>(group);
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audioGroupContainer.get());
         
         auto countString = getCountFromFile();
         jassert(countString.length() > 0);

@@ -40,7 +40,7 @@ public:
         {
             //std::cout << "new audium::UndoableContainerAction" << std::endl;
             
-            undoableContainerAction = new audium::UndoableContainerAction(audioSubGroup->getAudioClip());
+            undoableContainerAction = new audium::UndoableContainerAction(*audiumEngine->getAudioGroupContainer(), false);
         }
         
         

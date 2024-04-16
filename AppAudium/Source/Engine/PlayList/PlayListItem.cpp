@@ -84,7 +84,7 @@ bool PlayListItem::writeToJson (json& output)
     return true;
 }
 
-bool PlayListItem::readFromJson (json& input)
+bool PlayListItem::readFromJson (json& input, bool rebuild)
 {
     auto regionName = input["region_name"].template get<std::string>();
     jassert(regionName == getRegion()->getName().toStdString());

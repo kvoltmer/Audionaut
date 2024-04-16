@@ -96,7 +96,7 @@ bool AudioResource::writeToJson (json& output)
     return true;
 }
 
-bool AudioResource::readFromJson (json& input)
+bool AudioResource::readFromJson (json& input, bool rebuild)
 {
     const auto inUrl        = input["filename"].template get<std::string>();
     const auto gain         = input["gain"].template get<float>();
