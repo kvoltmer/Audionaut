@@ -66,10 +66,20 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
     return audioRegion;
 }
 
+void AudioRegionContainer::cleanup()
+{
+    for (auto region : audioRegions)
+    {
+        region->deleteAssociatedItems();
+    }
+    
+    audioRegions.clear();
+}
+
 void AudioRegionContainer::deleteRegion(int atIndex)
 {
     auto region = getRegion(atIndex);
-    region->getAudioGroup()->getPlayListContainer()->deleteAssociatedItems(region);
+    region->deleteAssociatedItems();
     
     if (atIndex >= 0 && atIndex < audioRegions.size())
     {
@@ -164,11 +174,17 @@ void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSu
 
 void AudioRegionContainer::deleteAudioRegion(std::shared_ptr<AudioRegion> region)
 {
-    region->getAudioGroup()->getPlayListContainer()->deleteAssociatedItems(region);
-
+    region->deleteAssociatedItems();
+    
     auto atIndex = getRegionIndex(region);
-    jassert(atIndex >= 0 && atIndex < audioRegions.size());
-    audioRegions.erase(audioRegions.begin() + atIndex);
+    if (atIndex >= 0 && atIndex < audioRegions.size())
+    {
+        audioRegions.erase(audioRegions.begin() + atIndex);
+    }
+    else
+    {
+        jassertfalse;
+    }
 }
 
 std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const

@@ -41,14 +41,13 @@ public:
                                               juce::Range<double> position,
                                               std::shared_ptr<AudioGroup> group,
                                               std::shared_ptr<AudioSubGroup> subGroup);
+    
+    void cleanup();
     void deleteRegion(int rowNumber);
-
+    
     int getNumRegions(const AudioGroup* group = nullptr) const;
     std::shared_ptr<AudioRegion> getRegion(int index) const;
     int getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const;
-    
-    
-    void cleanup() { audioRegions.clear(); }
     
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForGroup(std::shared_ptr<AudioGroup> group) const;
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForSubGroup(const AudioSubGroup* subGroup) const;

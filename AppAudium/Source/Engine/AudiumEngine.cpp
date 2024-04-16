@@ -267,14 +267,12 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     audioResourceContainer->addAudioResource(bounceUrl, audioGroup, subGroup);
 #endif
   
-    // TODO: fixme
-//    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,
-//                                                    audioRegionContainer,
-//                                                    audioResourceContainer));
-//    if (autoEdit->invokeAutoEdit(config))
-//    {
-//        autoEdit->applyAutoEditResult(sampleRate);
-//    }
+    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,                                                    
+                                                    audioResourceContainer));
+    if (autoEdit->invokeAutoEdit(config))
+    {
+        autoEdit->applyAutoEditResult(sampleRate);
+    }
 }
 
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioGroup> group) const
