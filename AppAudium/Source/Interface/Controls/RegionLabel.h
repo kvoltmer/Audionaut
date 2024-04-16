@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
@@ -26,13 +27,13 @@ class RegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
     RegionLabel(std::shared_ptr<RegionTableListBox> owner,
-                 std::shared_ptr<AudioRegionContainer> audioRegionContainer,
+                 std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                  int columnId,
                  int rowNumber) :
         columnId(columnId),
         rowNumber(rowNumber),
         owner(owner),
-        audioRegionContainer(audioRegionContainer)
+        audioGroupContainer(audioGroupContainer)
     {
         setEditable (false, true, true);
         update (columnId, rowNumber, false);
@@ -51,7 +52,9 @@ public:
         this->rowNumber = rowNumber;
         
         juce::String text = "n/a";
-        if (AudioRegion* r = audioRegionContainer->getRegion(rowNumber).get())
+        auto audioRegions = audioGroupContainer->getAudioRegionAdapter().getAudioRegions();
+        jassert(rowNumber < audioRegions.size());
+        if (AudioRegion* r = audioRegions[rowNumber].get())
         {
             if (columnId == regionName)
             {
@@ -101,42 +104,35 @@ public:
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
         // Undo: store old state
-        auto audioRegion = audioRegionContainer->getRegion(rowNumber);
+        auto audioRegions = audioGroupContainer->getAudioRegionAdapter().getAudioRegions();
+        jassert(rowNumber < audioRegions.size());
+        auto audioRegion = audioRegions[rowNumber];
         auto action = std::make_unique<audium::UndoableContainerAction>(audioRegion);
         
         if (columnId == regionName)
         {
-            audioRegionContainer->setRegionName(rowNumber, labelThatHasChanged->getText());
+            audioRegion->setName(labelThatHasChanged->getText());
         }
         else if  (columnId == regionStart)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            audioRegionContainer->setRegionStart(rowNumber, seconds);
+            audioRegion->setRegionStart(seconds, audium::seconds);
         }
         else if  (columnId == regionEnd)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            audioRegionContainer->setRegionEnd(rowNumber, seconds);
+            audioRegion->setRegionEnd(seconds, audium::seconds);
         }
         else if  (columnId == regionLength)
         {
             const auto seconds = labelThatHasChanged->getText().getDoubleValue();
-            audioRegionContainer->setRegionLength(rowNumber, seconds);
+            audioRegion->setRegionLength(seconds, audium::seconds);
         }
         
         // Undo: store new state
         action->storeNewState();
-        audioRegionContainer->getUndoManager()->perform(action.release(), "Modify Region");
-        audioRegionContainer->getUndoManager()->beginNewTransaction();
-    }
-    
-    juce::String getRegionName() const
-    {
-        if (const AudioRegion* const r = audioRegionContainer->getRegion(rowNumber).get())
-        {
-            return r->getName();
-        }
-        return "n/a";
+        audioGroupContainer->getUndoManager()->perform(action.release(), "Modify Region");
+        audioGroupContainer->getUndoManager()->beginNewTransaction();
     }
     
     int getRowNumber() const
@@ -148,7 +144,8 @@ private:
     int columnId;
     int rowNumber;
     std::shared_ptr<RegionTableListBox> owner;
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
+    
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionLabel)
 };

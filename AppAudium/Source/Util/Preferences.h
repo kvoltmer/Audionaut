@@ -43,5 +43,5 @@ namespace PreferenceKeys
 {
     static const char* const defaultFile = "DefaultProjectFile";
     static const char* const initialOpenDirectory = "InitialOpenDirectory";
-    static const char* const initialSaveDirectory = "initialSaveDirectory";
+    static const char* const initialSaveDirectory = "InitialSaveDirectory";
 }

@@ -14,6 +14,8 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Interface/Components/MainComponent.h"
 
 using namespace juce;
@@ -78,7 +80,8 @@ private:
     
     void create(String name)
     {
-        audiumEngine->getAudioRegionContainer()->createRegionsFromSelection(name);
+        audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().createRegionsFromSelection(name,
+                                                                           audiumEngine->getPlayListScheduler()->isArrangementMode());
     }
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;

@@ -16,6 +16,7 @@
 
 class PlayListContainer;
 class AudioRegionContainer;
+class AudioGroupContainer;
 
 enum RegionColumns {
     regionName      = 1,
@@ -31,7 +32,7 @@ enum RegionColumns {
 class RegionTableListBoxModel  : public juce::TableListBoxModel {
 public:
     RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
-                            std::shared_ptr<AudioRegionContainer> audioRegionContainer);
+                            std::shared_ptr<AudioGroupContainer> audioGroupContainer);
     ~RegionTableListBoxModel() override;
 
     int getNumRows() override;
@@ -61,7 +62,7 @@ public:
 private:
     
     std::shared_ptr<RegionTableListBox> owner;
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
+    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionTableListBoxModel)
 };
