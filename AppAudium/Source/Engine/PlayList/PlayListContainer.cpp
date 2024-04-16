@@ -83,15 +83,18 @@ void PlayListContainer::deletePlayListItem(int atIndex, bool sendNotification)
     }
 }
 
-void PlayListContainer::deleteAssociatedItems(std::shared_ptr<AudioRegion> audioRegion)
+bool PlayListContainer::deleteAssociatedItems(const AudioRegion* audioRegion)
 {
+    bool success = false;
     for (int i = static_cast<int>(playListItems.size() - 1); i >= 0; i--)
     {
-        if (playListItems[i]->getRegion() == audioRegion)
+        if (playListItems[i]->getRegion().get() == audioRegion)
         {
             deletePlayListItem(i, false);
+            success = true;
         }
     }
+    return success;
 }
 
 const std::vector<std::shared_ptr<PlayListItem>> PlayListContainer::getPlayListItems() const

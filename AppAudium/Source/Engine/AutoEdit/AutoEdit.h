@@ -30,10 +30,8 @@ class AutoEdit {
     
 public:
     AutoEdit(std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-             std::shared_ptr<AudioRegionContainer> audioRegionContainer,
              std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
         audioGroupContainer(audioGroupContainer),
-        audioRegionContainer(audioRegionContainer),
         audioResourceContainer(audioResourceContainer)
     {}
     
@@ -47,7 +45,6 @@ public:
     
 private:
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
     std::string audioResourceFilePath;

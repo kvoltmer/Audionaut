@@ -48,19 +48,13 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto linkAudioDevice            = std::shared_ptr<LinkAudioDevice>          (new LinkAudioDevice(linkEngine,
                                                                                                      playListScheduler,
                                                                                                      audioResourceContainer));
-        
-    auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer(audioResourceContainer,
-                                                                                                          audioGroupContainer,
-                                                                                                          playListScheduler,
-                                                                                                          undoManager));
     
     // not sure how to avoid this:
-    audioGroupContainer->init(audioResourceContainer.get(), audioRegionContainer.get());
+    audioGroupContainer->init(audioResourceContainer.get());
         
     auto audiumEngine               = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioDeviceManager,
                                                                                                   audioGroupContainer,
                                                                                                   audioResourceContainer,
-                                                                                                  audioRegionContainer,
                                                                                                   playListScheduler,
                                                                                                   linkAudioDevice,
                                                                                                   undoManager));

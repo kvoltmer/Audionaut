@@ -34,14 +34,12 @@ public:
     AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
                  std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                  std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                 std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                  std::shared_ptr<PlayListScheduler> playListScheduler,
                  std::shared_ptr<LinkAudioDevice> linkAudioDevice,
                  std::shared_ptr<juce::UndoManager> undoManager) :
         audioDeviceManager(audioDeviceManager),
         audioGroupContainer(audioGroupContainer),
         audioResourceContainer(audioResourceContainer),
-        audioRegionContainer(audioRegionContainer),
         playListScheduler(playListScheduler),
         linkAudioDevice(linkAudioDevice),
         undoManager(undoManager)
@@ -74,7 +72,6 @@ public:
     
     std::shared_ptr<AudioGroupContainer> getAudioGroupContainer() const { return audioGroupContainer; }
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
-    std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     std::shared_ptr<PlayListContainer> getPlayListContainer(std::shared_ptr<AudioGroup> group) const;
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const { return undoManager; }
@@ -87,7 +84,6 @@ private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<PlayListScheduler> playListScheduler;
     std::shared_ptr<LinkAudioDevice> linkAudioDevice;
     std::shared_ptr<juce::UndoManager> undoManager;

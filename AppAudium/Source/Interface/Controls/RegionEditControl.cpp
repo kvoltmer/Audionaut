@@ -16,6 +16,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Group/AudioClip.h"
 
@@ -69,10 +70,11 @@ void RegionEditControl::mouseDown (const juce::MouseEvent& e)
     regionSelector->setEnabled(false);
     
     if(!e.mods.isCommandDown())
-        audiumEngine->getAudioRegionContainer()->deselectAll();
-    
+    {
+        audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().deselectAll();
+    }
     audioRegion->setSelected(e.mods.isCommandDown() ? !audioRegion->isSelected() : true);
-    audiumEngine->getAudioRegionContainer()->sendActionMessage(regionSelectedAction);
+    audiumEngine->getAudioGroupContainer()->sendActionMessage(regionSelectedAction);
 
     currentDragMode = getDragMode(e.getPosition().getX());
     
@@ -209,7 +211,7 @@ bool RegionEditControl::keyPressed (const KeyPress& key, Component* originatingC
 {
     if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
     {
-        audiumEngine->getAudioRegionContainer()->deleteSelectedRegions();
+        audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().deleteSelectedRegions();
         return true;
     }
     

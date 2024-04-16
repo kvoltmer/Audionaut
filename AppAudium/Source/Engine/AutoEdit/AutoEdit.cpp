@@ -129,7 +129,7 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
     {
         if (auto group = audioGroupContainer->getDefaultGroup())
         {
-            audioRegionContainer->deleteAudioRegionsForGroup(group);
+            group->getAudioRegionContainer()->cleanup();
             
             int counter = 1;
             auto segdata = nlohmann::json::parse(segFile);
@@ -150,7 +150,7 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
                 jassert(subGroups.size() > 0);
                 if (subGroups.size() > 0)
                 {
-                    audioRegionContainer->createRegion(regionName, position, group, subGroups[0]);
+                    group->getAudioRegionContainer()->createRegion(regionName, position, group, subGroups[0]);
                 }
             }
         }
@@ -180,26 +180,24 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
         auto songData = nlohmann::json::parse(songFile);
         for (auto& elem : songData)
         {
-            auto region = audioRegionContainer->getRegion(elem["index"]);
-            jassert(region != nullptr);
-            std::string filename = elem["file"];
-            jassert(juce::String(filename).contains(region->getName()));
-            
             if (auto group = audioGroupContainer->getDefaultGroup())
             {
+                auto region = group->getAudioRegionContainer()->getRegion(elem["index"]);
+                jassert(region != nullptr);
+                std::string filename = elem["file"];
+                jassert(juce::String(filename).contains(region->getName()));
+                
                 auto insertIndex = static_cast<int>(group->getPlayListContainer()->playListItems.size());
                 // CREATE PLAYLIST ITEM
                 group->getPlayListContainer()->createPlayListItem(elem["index"], insertIndex);
-            }
-            
-            
-            
-            // is the duration consitant?
-            double duration = elem["duration"];
-            double regionDuration = region->getRegionData(audium::seconds).getLength();
-            if (!juce::approximatelyEqual(duration, regionDuration))
-            {
-                std::cout << "duration not equal" << duration << " " << regionDuration << std::endl;
+                
+                // is the duration consitant?
+                double duration = elem["duration"];
+                double regionDuration = region->getRegionData(audium::seconds).getLength();
+                if (!juce::approximatelyEqual(duration, regionDuration))
+                {
+                    std::cout << "duration not equal" << duration << " " << regionDuration << std::endl;
+                }
             }
         }
     

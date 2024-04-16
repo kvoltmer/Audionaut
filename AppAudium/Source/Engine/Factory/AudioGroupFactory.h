@@ -14,6 +14,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Region/AudioRegionContainer.h"
 
 class AudioGroupFactory {
     
@@ -21,12 +22,19 @@ public:
     AudioGroupFactory() = default;
     
     static std::shared_ptr<AudioGroup> createAudioGroup(AudioGroupContainer &owner,
-                                                        AudioResourceContainer &audioResourceContainer,
-                                                        AudioRegionContainer &audioRegionContainer)
+                                                        AudioResourceContainer &audioResourceContainer)
     {
         auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
-        auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(audioRegionContainer,
+        
+        auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer(audioResourceContainer,
+                                                                                                              owner,
+                                                                                                              owner.getTempoProvider(),
+                                                                                                              owner.getUndoManager()));
+        
+        auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*audioRegionContainer.get(),
                                                                                            owner.getTempoProvider()));
+        
+
         auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(owner,
                                                                      audioResourceContainer,
                                                                      audioRegionContainer,

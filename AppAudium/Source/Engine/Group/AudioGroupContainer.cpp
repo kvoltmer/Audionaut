@@ -10,7 +10,9 @@
 
 #include "AudioGroupContainer.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioClip.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/TransportSourceContainer.h"
@@ -25,11 +27,9 @@ AudioGroupContainer::~AudioGroupContainer()
     jassert(audioGroups.empty());
 }
 
-void AudioGroupContainer::init(AudioResourceContainer *resourceContainer,
-          AudioRegionContainer *regionContainer)
+void AudioGroupContainer::init(AudioResourceContainer *resourceContainer)
 {
     audioResourceContainer = resourceContainer;
-    audioRegionContainer = regionContainer;
 }
 
 void AudioGroupContainer::cleanup()
@@ -61,10 +61,9 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getSharedPtr(const AudioGroup* 
 }
 
 std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(AudioResourceContainer &audioResourceContainer,
-                                                                     AudioRegionContainer &audioRegionContainer,
                                                                      const juce::String nameString)
 {
-    auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer, audioRegionContainer);
+    auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer);
     if (nameString.isEmpty())
     {
         audioGroup->setName(juce::String("Group ") + juce::String(audioGroups.size() + 1));
@@ -81,7 +80,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(AudioResour
 bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
 {
     
-    group->getAudioRegionContainer().deleteAudioRegionsForGroup(group);
+    group->getAudioRegionContainer()->deleteAudioRegionsForGroup(group);
     group->getAudioResourceContainer().removeAudioResourcesForGroup(group);
     
     auto it = std::find(audioGroups.begin(), audioGroups.end(), group);
@@ -98,7 +97,7 @@ bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
 void AudioGroupContainer::deleteSelectedGroups()
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(audioRegionContainer->getAudioGroupContainer());
+    auto action = std::make_unique<audium::UndoableContainerAction>(getptr());
     
     for (int i = static_cast<int>(audioGroups.size())-1; i >= 0; i--)
     {
@@ -145,14 +144,15 @@ bool AudioGroupContainer::readFromJson (json& input)
 {
     cleanup();
     jassert(audioGroups.size() == 0);
-    jassert(audioResourceContainer != nullptr && audioRegionContainer != nullptr);
+    jassert(audioResourceContainer != nullptr);
     
     auto jsonSubGroups = input["groups"];
     for (auto& jsonElement : jsonSubGroups)
     {
-        auto audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer, *audioRegionContainer);
+        auto audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer);
         audioGroups.push_back(audioGroup);
-        audioGroup->readFromJson(jsonElement);
+        if ( !audioGroup->readFromJson(jsonElement))
+            return false;
     }
     return true;
 }
@@ -215,5 +215,6 @@ void AudioGroupContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
         }
     }
 }
+
 
 
