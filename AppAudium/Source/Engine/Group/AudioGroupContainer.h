@@ -24,8 +24,7 @@ class TempoProvider;
 class AudioRegion;
 
 class AudioGroupContainer : public juce::ActionBroadcaster,
-                            public audium::Streamable,
-                            public std::enable_shared_from_this<AudioGroupContainer>
+                            public audium::Streamable
 {
         
 public:
@@ -39,11 +38,6 @@ public:
     }
     
     ~AudioGroupContainer();
-    
-    std::shared_ptr<AudioGroupContainer> getptr()
-    {
-        return shared_from_this();
-    }
     
     void init(AudioResourceContainer *audioResourceContainer);
     
