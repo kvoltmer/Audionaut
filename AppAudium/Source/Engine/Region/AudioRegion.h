@@ -53,7 +53,7 @@ public:
     juce::String getName() const { return data.name; }
     void setName(const juce::String newName) { data.name = newName.toStdString(); }
     
-    void setSelected(bool bSelected) { data.selected = bSelected; }
+    void setSelected(bool bSelected);
     bool isSelected() const { return data.selected; }
     
     const AudioRegionData::tRange getRegionData(audium::TimeContextType context) const;

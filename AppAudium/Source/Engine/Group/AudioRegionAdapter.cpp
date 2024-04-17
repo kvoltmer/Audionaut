@@ -81,6 +81,16 @@ juce::SparseSet<int> AudioRegionAdapter::getSelectedRows() const
 void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
 {
     deselectAll();
+    
+    // de-select all play list items
+    for (auto i = 0; i < owner.getNumItems(); i++)
+    {
+        if (auto group = owner.getAudioGroup(i))
+        {
+            group->getPlayListContainer()->deselectAll();
+        }
+    }
+    
     auto regions = getAudioRegions();
     for (auto i = 0; i < selectedRows.size(); i++)
     {
@@ -89,6 +99,15 @@ void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
             if (auto region = regions[selectedRows[i]])
             {
                 region->setSelected(true);
+                
+                // select associated play list items
+                for (auto i = 0; i < owner.getNumItems(); i++)
+                {
+                    if (auto group = owner.getAudioGroup(i))
+                    {
+                        group->getPlayListContainer()->selectPlayListItemWithRegion(region);
+                    }
+                }
             }
         }
         else

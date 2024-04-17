@@ -284,6 +284,18 @@ void PlayListContainer::selectPlayListItem(std::shared_ptr<PlayListItem> item, b
     sendActionMessage(playListItemSelection);
 }
 
+void PlayListContainer::selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region)
+{
+    for (auto item : playListItems)
+    {
+        if (item->getRegion() == region)
+        {
+            item->setSelected(true);
+        }
+    }
+    
+}
+
 double PlayListContainer::getTotalLength(audium::TimeContextType context) const
 {
     if (playListItems.size() > 0)
@@ -331,11 +343,15 @@ juce::SparseSet<int> PlayListContainer::getSelectedRows() const
 void PlayListContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 {
     deselectAll();
+    
+    audioRegionContainer.getAudioGroupContainer().getAudioRegionAdapter().deselectAll();
+    
     for (auto i = 0; i < selectedRows.size(); i++)
     {
         if (auto item = getPlayListItem(selectedRows[i]))
         {
             item->setSelected(true);
+            item->getRegion()->setSelected(true);
         }
     }
 }

@@ -81,7 +81,7 @@ void RegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
     auto selectedRows = owner->getSelectedRows();
     audioGroupContainer->getAudioRegionAdapter().setSelectedRows(selectedRows);
-    audioGroupContainer->sendActionMessage(updateMiddlePanelAction);
+    audioGroupContainer->sendActionMessage(updateAll);
 }
 
 void RegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)

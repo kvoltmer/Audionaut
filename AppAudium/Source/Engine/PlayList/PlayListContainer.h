@@ -97,6 +97,7 @@ public:
     const PlayListItem* currentPlayListItem = nullptr;
     
     void selectPlayListItem(std::shared_ptr<PlayListItem> item, bool bSelected);
+    void selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region);
     
     void deselectAll();
     void deleteSelectedItems();
