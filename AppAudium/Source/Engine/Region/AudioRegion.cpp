@@ -54,6 +54,10 @@ int AudioRegion::getSizeInUnits()
     return 1;
 }
 
+void AudioRegion::setSelected(bool bSelected)
+{
+    data.selected = bSelected;
+}
 
 const AudioRegionData::tRange AudioRegion::getRegionData(audium::TimeContextType context) const
 {

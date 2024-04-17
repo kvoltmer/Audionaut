@@ -111,7 +111,7 @@ public:
     {
         auto selectedRows = listBox->getSelectedRows();
         audioGroup->getPlayListContainer()->setSelectedRows(selectedRows);
-        audioGroup->getPlayListContainer()->sendActionMessage(updateMiddlePanelAction);
+        audioGroup->getPlayListContainer()->sendActionMessage(updateAll);
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
