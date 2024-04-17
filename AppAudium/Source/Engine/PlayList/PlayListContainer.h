@@ -57,12 +57,11 @@ public:
     ~PlayListContainer();
     
     
-    void createPlayListItem(std::shared_ptr<AudioRegion> audioRegion);
     // called from UI
-    void createPlayListItemUI(int regionIndex, int indexOfItemToPlaceBefore);
-    // called internally
-    void createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
+    bool createPlayListItemUI(int regionIndex, int indexOfItemToPlaceBefore);
+
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
+    
     void deletePlayListItem(int atIndex, bool sendNotification = true);
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
     
@@ -111,6 +110,9 @@ public:
 
 private:
     
+    // called internally
+    void createPlayListItem(std::shared_ptr<AudioRegion> audioRegion, int insertIndex);
+    void createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
     
     juce::CriticalSection readLock;
     

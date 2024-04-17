@@ -35,8 +35,12 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
         playListContainer->movePlayListItemBefore(item->rowNumber, insertIndex);
     }
     else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        playListContainer->createPlayListItemUI(item->getRowNumber(), insertIndex);
+    {        
+        if (not playListContainer->createPlayListItemUI(item->getRowNumber(), insertIndex))
+        {
+            hideInsertLines();
+            return;
+        }
     }
     
 

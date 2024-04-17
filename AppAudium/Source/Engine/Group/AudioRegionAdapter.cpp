@@ -84,9 +84,16 @@ void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
     auto regions = getAudioRegions();
     for (auto i = 0; i < selectedRows.size(); i++)
     {
-        if (auto region = regions[selectedRows[i]])
+        if (selectedRows[i] < regions.size())
         {
-            region->setSelected(true);
+            if (auto region = regions[selectedRows[i]])
+            {
+                region->setSelected(true);
+            }
+        }
+        else
+        {
+            jassertfalse;
         }
     }
 }
