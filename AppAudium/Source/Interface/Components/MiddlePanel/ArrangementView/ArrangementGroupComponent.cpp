@@ -16,12 +16,11 @@
 #include "Interface/ColourIds.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
-
+#include "Interface/Handlers/SnapToGridHandler.h"
+#include "Engine/Undo/UndoableContainerAction.h"
+#include "Interface/Controls/RegionLabel.h"
 
 using namespace audium;
-
-
-
 
 void ArrangementGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
 {
@@ -81,7 +80,6 @@ void ArrangementGroupComponent::rebuildComponents()
     }
 }
 
-
 void ArrangementGroupComponent::resized()
 {
     for (auto regionView : playListItemComponents)
@@ -95,5 +93,55 @@ void ArrangementGroupComponent::resized()
     }
 }
 
+void ArrangementGroupComponent::itemDragMove (const SourceDetails &dragSourceDetails)
+{
+    auto x = dragSourceDetails.localPosition.x;
+    auto start = zoomHandler->xToClocks(x);
+    auto end = start + 0.01;
+    Range<double> rangeInClocks(start, end);
+    
+    zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
+}
 
+void ArrangementGroupComponent::itemDragExit (const SourceDetails &dragSourceDetails)
+{
+    zoomHandler->getSnapToGridHandler()->clearRange();
+    repaint();
+}
 
+void ArrangementGroupComponent::itemDropped (const SourceDetails &dragSourceDetails)
+{
+
+    if ( RegionLabel* regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    {
+        // undo action stores current state
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup->getAudioGroupContainer());
+                
+        auto insertIndex = 0;
+        
+        auto x = dragSourceDetails.localPosition.x;
+        auto clocks = zoomHandler->xToClocks(x);
+        Range<double> rangeInClocks(0.0, clocks);
+
+        auto items = audioGroup->getPlayListContainer()->itemsAtAbsoluteRange(rangeInClocks, audium::clocks);
+        if (items.size() > 0)
+        {
+            insertIndex = audioGroup->getPlayListContainer()->getPlayListItemIndex(items.back()) + 1;
+            std::cout << "insert index: " << insertIndex << std::endl;
+        }
+        
+        if (auto playListItem = audioGroup->getPlayListContainer()->createPlayListItemUI(regionLabel->getRowNumber(), insertIndex))
+        {
+            zoomHandler->snapToGrid(clocks);
+            playListItem->setAbsolutePosition(clocks, audium::clocks);
+            
+            action->storeNewState();
+            auto undoManager = audioGroup->getAudioGroupContainer().getUndoManager();
+            undoManager->perform(action.release(), "Playlist modified");
+            undoManager->beginNewTransaction();
+        }
+    }
+    
+    zoomHandler->getSnapToGridHandler()->clearRange();
+    repaint();
+}

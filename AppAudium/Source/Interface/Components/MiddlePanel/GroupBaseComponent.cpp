@@ -111,15 +111,9 @@ void GroupBaseComponent::fileDragEnter (const juce::StringArray& files, int x, i
 
 void GroupBaseComponent::fileDragMove (const StringArray& files, int x, int y)
 {
-    
-    auto startWithOffset = zoomHandler->xToClocksWithOffset(x);
     auto start = zoomHandler->xToClocks(x);
-    std::cout << startWithOffset << " " <<  start << std::endl;
-    //std::cout << start << std::endl;
     auto end = start + 0.01;
-    
     Range<double> rangeInClocks(start, end);
-    
     
     zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
 }

@@ -69,29 +69,6 @@ public:
         return true;
     }
     
-//    void updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
-//    {
-//        if( dragSourceDetails.localPosition.y < getHeight() / 2 )
-//        {
-//            insertBefore = true;
-//            insertAfter = false;
-//        }
-//        else
-//        {
-//            insertAfter = true;
-//            insertBefore = false;
-//        }
-//
-//        repaint();
-//    }
-    
-//    void hideInsertLines()
-//    {
-//        insertBefore = false;
-//        insertAfter = false;
-//
-//        repaint();
-//    }
     void itemDragEnter (const SourceDetails &dragSourceDetails) override
     {
         //updateInsertLines(dragSourceDetails);

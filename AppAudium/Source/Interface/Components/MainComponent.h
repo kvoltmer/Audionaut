@@ -42,9 +42,10 @@ class HeaderComponent;
     Describe your class and how it works here!
                                                                     //[/Comments]
 */
-class MainComponent  : public juce::Component,
-                       private juce::ActionListener,
-                       private juce::ChangeListener
+class MainComponent :   public juce::Component,
+                        public juce::DragAndDropContainer,
+                        private juce::ActionListener,
+                        private juce::ChangeListener
 {
 public:
     //==============================================================================

@@ -17,7 +17,7 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
     }
     else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (not audioGroup->getPlayListContainer()->createPlayListItemUI(item->getRowNumber(), insertIndex))
+        if (audioGroup->getPlayListContainer()->createPlayListItemUI(item->getRowNumber(), insertIndex) == nullptr)
         {
             return;
         }

@@ -19,9 +19,9 @@ class PlayListTableListBoxItem : public juce::Component, public juce::DragAndDro
 public:
     
     PlayListTableListBoxItem(PlayListTableListBoxModel* owner, int columnNumber, int rowNumber) :
+        rowNumber(rowNumber),
         playListModel(owner),
-        columnNumber(columnNumber),
-        rowNumber(rowNumber)
+        columnNumber(columnNumber)
     {
         startTimer(25);
     }
