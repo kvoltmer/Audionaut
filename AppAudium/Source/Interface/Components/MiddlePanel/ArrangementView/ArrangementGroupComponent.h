@@ -26,13 +26,13 @@ class PlayListItemComponent;
 //==============================================================================
 /*
  
- Display Playlist items in Timeline
+ Display Playlist items on Timeline
  
  Display a AudioGroup as part of GroupListBoxModel.
  
  The ArrangementGroupComponent contains multiple playlist items (regions) in the Timeline.
  */
-class ArrangementGroupComponent : public GroupBaseComponent
+class ArrangementGroupComponent : public GroupBaseComponent, public juce::DragAndDropTarget
 {
 public:
         
@@ -49,11 +49,31 @@ public:
     
     void resized() override;
     
+    
+    /// Drag n Drop:
+    ///----------------------------------
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override
+    {
+        return true;
+    }
+    
+    void itemDragEnter (const SourceDetails &dragSourceDetails) override
+    {
+    }
+    
+    void itemDragMove (const SourceDetails &dragSourceDetails) override;
+    void itemDragExit (const SourceDetails &dragSourceDetails) override;
+    void itemDropped (const SourceDetails &dragSourceDetails) override;
+    
+    bool shouldDrawDragImageWhenOver () override
+    {
+        return true;
+    }
+    
 private:
     
     bool mustRebuildComponents() const;
     void rebuildComponents();
-    
     
     std::vector<std::shared_ptr<PlayListItemComponent>> playListItemComponents;
     

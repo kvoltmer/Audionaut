@@ -58,7 +58,7 @@ public:
     
     
     // called from UI
-    bool createPlayListItemUI(int regionIndex, int indexOfItemToPlaceBefore);
+    std::shared_ptr<PlayListItem> createPlayListItemUI(int regionIndex, int indexOfItemToPlaceBefore);
 
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
@@ -84,6 +84,8 @@ public:
     const PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
     const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
+    const std::vector<PlayListItem*> itemsAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
+    
     double getAbsolueStartTimeByOrder(const PlayListItem* playListItem, audium::TimeContextType context) const;
     
     // sets the absolute position based on the order
@@ -95,14 +97,13 @@ public:
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
     
     const PlayListItem* currentPlayListItem = nullptr;
-    
-    void selectPlayListItem(std::shared_ptr<PlayListItem> item, bool bSelected);
-    void selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region);
-    
+        
+    // selection:
     void deselectAll();
     void deleteSelectedItems();
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
+    void selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region);
     
     double getTotalLength(audium::TimeContextType context) const;
     
@@ -112,8 +113,8 @@ public:
 private:
     
     // called internally
-    void createPlayListItem(std::shared_ptr<AudioRegion> audioRegion, int insertIndex);
-    void createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
+    std::shared_ptr<PlayListItem> createPlayListItem(std::shared_ptr<AudioRegion> audioRegion, int insertIndex);
+    std::shared_ptr<PlayListItem> createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
     
     juce::CriticalSection readLock;
     
