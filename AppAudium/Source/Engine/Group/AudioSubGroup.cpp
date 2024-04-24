@@ -27,21 +27,30 @@ AudioSubGroup::~AudioSubGroup()
 
 void AudioSubGroup::cleanup()
 {
+    cleanupAudioRegions();
+    cleanupAudioResources();
+}
+
+void AudioSubGroup::cleanupAudioRegions()
+{
     const auto audioRegions = getAudioRegions();
     for (auto region : audioRegions)
     {
         getAudioGroup().getAudioRegionContainer()->deleteAudioRegion(region);
     }
     jassert(getAudioRegions().size() == 0);
-    
+}
+
+void AudioSubGroup::cleanupAudioResources()
+{
     const auto audioResources = getAudioResources();
     for (auto resource : audioResources)
     {
         getAudioGroup().getAudioResourceContainer().removeAudioResource(resource);
     }
     jassert(getAudioResources().size() == 0);
-
 }
+
 
 bool AudioSubGroup::writeToJson (json& output)
 {
@@ -69,6 +78,14 @@ bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
 
 bool AudioSubGroup::readFromJson (json& input, bool rebuild)
 {
+    json output;
+    writeToJson(output);
+    if (input == output)
+    {
+        std::cout << "skip AudioSubGroup::readFromJson" << std::endl;
+        return true;
+    }
+    
     // we use the shared_ptr
     const auto group = getAudioGroup().getAudioGroupContainer().getSharedPtr(&getAudioGroup());
     const auto subGroup = getAudioGroup().getSharedPtr(this);
@@ -110,21 +127,15 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     
     audioClip->data = input["clip"];
 
+    cleanupAudioRegions();
+    
     auto jsonRegions = input["regions"];
-    auto i = 0;
+
     for (auto& jsonElement : jsonRegions)
     {
         std::shared_ptr<AudioRegion> region = nullptr;
-        if (rebuild)
-        {
-            region = getAudioGroup().getAudioRegionContainer()->createRegion(group, subGroup);
-        }
-        else
-        {
-            region = getAudioGroup().getAudioRegionContainer()->getRegion(i);
-        }
+        region = getAudioGroup().getAudioRegionContainer()->createRegion(group, subGroup);
         region->data = jsonElement;
-        i++;
     }
     
     

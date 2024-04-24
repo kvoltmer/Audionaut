@@ -46,6 +46,11 @@ public:
         removeListener(this);
     }
     
+    const std::shared_ptr<AudioRegion> getRegion() const
+    {
+        return audioGroupContainer->getAudioRegionAdapter().getRegion(getRowNumber());
+    }
+    
     void update(int columnId, int rowNumber, bool isSelected)
     {
         this->columnId = columnId;

@@ -18,6 +18,28 @@
 #include "Engine/ActionMessages.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    {
+        if (regionLabel->getRegion() &&
+            regionLabel->getRegion()->getAudioGroup() == playListModel->getAudioGroup())
+        {
+            // return true if source details match this group
+            return true;
+        }
+    }
+    else if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
+    {
+        if (item->getPlayListModel() == playListModel)
+        {
+            // return true if source details match this model
+            return true;
+        }
+    }
+    return false;
+}
+
 void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetails)
 {
     auto playListContainer = playListModel->getPlayListContainer();
@@ -30,11 +52,11 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
     
     //std::cout << "row number: " << rowNumber + (before ? 0 : 1) << std::endl;
     
-    if ( PlayListTableListBoxItem* item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
+    if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
         playListContainer->movePlayListItemBefore(item->rowNumber, insertIndex);
     }
-    else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    else if (auto item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {        
         if (playListContainer->createPlayListItemUI(item->getRowNumber(), insertIndex) == nullptr)
         {
@@ -85,6 +107,8 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
     if (auto r = container->getPlayListItem(rowNumber))
     {
         juce::String text;
+        auto groupColour = r->getRegion()->getAudioGroup()->getColour();
+        auto groupHighlightColour = groupColour.brighter().brighter();
 
         if (columnNumber == 1)
         {
@@ -95,25 +119,19 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
             text = "n/a";
         }
 
-        auto textColour = r->getRegion()->getAudioGroup()->getColour();
-        g.setColour (selected ? textColour.brighter().brighter() : textColour);
-        
-
+        g.setColour (selected ? groupHighlightColour : groupColour);
         g.setFont (13.0f);
         g.drawText (text, 4, 0, getWidth() - 6, getHeight(), juce::Justification::centredLeft, true);
-    }
-    
-
-    
-    if( insertAfter )
-    {
-        g.setColour(juce::Colours::red);
-        g.fillRect(0, getHeight()-3, getWidth(), 3);
-    }
-    else if( insertBefore )
-    {
-        g.setColour(juce::Colours::red);
-        g.fillRect(0, 0, getWidth(), 3);
+        
+        g.setColour(groupColour);
+        if( insertAfter )
+        {
+            g.fillRect(0, getHeight()-3, getWidth(), 3);
+        }
+        else if( insertBefore )
+        {
+            g.fillRect(0, 0, getWidth(), 3);
+        }
     }
 }
 

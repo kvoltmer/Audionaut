@@ -102,6 +102,15 @@ bool AudioGroup::writeToStream (juce::OutputStream& outputStream)
 bool AudioGroup::readFromJson (json& input, bool rebuild)
 {
     //std::cout << input.dump(4) << std::endl;
+    json output;
+    writeToJson(output);
+    if (input == output)
+    {
+        std::cout << "skip AudioGroup::readFromJson" << std::endl;
+        return true;
+    }
+    
+    
     if (rebuild)
         cleanup();
     
@@ -302,12 +311,12 @@ void AudioGroup::setChannelHeight(int height)
     }
 }
 
-std::vector<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(bool arrangementMode) const
+std::list<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(bool arrangementMode) const
 {
-    // returns all items in the timeline
+    // returns all positionable items
     // note: depending on the arrangement or edit mode
     
-    std::vector<std::shared_ptr<PositionableBase>> result;
+    std::list<std::shared_ptr<PositionableBase>> result;
     if (arrangementMode)
     {
         auto playListItems = getPlayListContainer()->getPlayListItems();
@@ -319,6 +328,12 @@ std::vector<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(
         for (auto subGroup : getAudioSubGroups())
             result.push_back(subGroup->getAudioClip());
     }
+    
+    
+    result.sort( []( const std::shared_ptr<PositionableBase> a, const std::shared_ptr<PositionableBase> b ) {
+        return a->getAbsolutePositionRange(audium::clocks).getEnd() < b->getAbsolutePositionRange(audium::clocks).getEnd();
+    } );
+    
     return result;
 }
 
@@ -445,10 +460,96 @@ void AudioGroup::deleteChannel(std::shared_ptr<AudioChannel> channel)
             deleteSubGroup(static_cast<int>(std::distance(audioSubGroups.begin(), it)));
         }
     }
-
 }
 
+bool AudioGroup::addAudioFiles(const juce::StringArray& filenames,
+                               double position,
+                               bool arrangementMode,
+                               std::function<void (std::string)> callback)
+{
+    int channelPosition = 0;
+    std::shared_ptr<AudioSubGroup> subGroup = nullptr;
     
+    if (arrangementMode)
+    {
+        // try to figure out the position of the subGroup (edit mode!)
+        auto items = getPositionableItems(false);
+        auto subGroupPosition = 0.0;
+        if (items.size() > 0)
+        {
+            subGroupPosition = items.back()->getAbsolutePositionRange(audium::clocks).getEnd();
+        }
+        subGroup = createNewAudioSubGroup(subGroupPosition, audium::clocks);
+    }
+    else
+    {
+        subGroup = getSubGroupAtAbsolutePosition(position, audium::clocks);
+        if (subGroup == nullptr)
+        {
+            subGroup = createNewAudioSubGroup(position, audium::clocks);
+        }
+        else
+        {
+            position = subGroup->getAudioClip()->getAbsolutePosition(audium::clocks);
+            channelPosition = getNumChannels();
+        }
+    }
 
+    
+    
+    std::vector<std::shared_ptr<AudioResource>> resources;
+    
+    for (auto i = 0; i < filenames.size(); i++)
+    {
+        if (auto resource = addAudioFile(subGroup, filenames[i], channelPosition))
+        {
+            resources.push_back(resource);
+        }
+        else
+        {
+            NullCheckedInvocation::invoke (callback, filenames[i].toStdString());
+            return false;
+        }
+    }
+    
+    if (arrangementMode &&
+        resources.size() > 0)
+    {
+        createDefaultPlayListItem(resources.front(), subGroup, position, audium::clocks);
+    }
+    
+    return (resources.size() > 0);
+    
+}
 
+std::shared_ptr<AudioResource> AudioGroup::addAudioFile(std::shared_ptr<AudioSubGroup> subGroup,
+                                                        const juce::File filename,
+                                                        int &channelPosition)
+{
+    auto audioResource = getAudioResourceContainer().addAudioResource(URL (filename),
+                                                                      owner.getSharedPtr(this),
+                                                                      subGroup,
+                                                                      channelPosition);
+    if (audioResource != nullptr)
+    {
+        channelPosition += audioResource->getNumChannels();
+    }
+    return audioResource;
+}
 
+void AudioGroup::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
+                                           std::shared_ptr<AudioSubGroup> subGroup,
+                                           double position,
+                                           audium::TimeContextType context)
+{
+    // create default region
+    juce::Range<double> defaultRange(0.0, audioResource->getFileLength(audium::seconds));
+    auto region = getAudioRegionContainer()->createRegion(audioResource->getFileNameWithoutExtension(),
+                                                          defaultRange,
+                                                          owner.getSharedPtr(this),
+                                                          subGroup);
+    
+    juce::Range<double> range(position, position + region->getRegionData(context).getLength());
+    // create play list item
+    getPlayListContainer()->createPlayListItemAtPositionUI(region, range, context);
+}

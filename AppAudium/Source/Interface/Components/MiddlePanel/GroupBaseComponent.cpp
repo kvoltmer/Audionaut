@@ -54,48 +54,7 @@ void GroupBaseComponent::paint (juce::Graphics& g)
 }
 
 void GroupBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
-{
-    if ( !filenames.isEmpty())
-    {
-        // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
-                
-        //auto transportPositionOffset = zoomHandler->xToClocksWithOffset(x);
-        auto transportPosition = zoomHandler->xToClocks(x);
-        //std::cout << transportPositionOffset << std::endl;
-        auto channelPosition = 0;
-        
-        for (auto i = 0; i < filenames.size(); i++)
-        {
-            // overlap?
-            auto subGroup = audioGroup->getSubGroupAtAbsolutePosition(transportPosition, audium::clocks);
-            if (subGroup != nullptr)
-            {
-                // inherit position of sub group
-                transportPosition = subGroup->getAudioClip()->getAbsolutePosition(audium::clocks);
-                // place below
-                channelPosition = audioGroup->getNumChannels();
-            }
-            else
-            {
-                // create new sub group at position
-                zoomHandler->snapToGrid(transportPosition);
-                subGroup = audioGroup->createNewAudioSubGroup(transportPosition, audium::clocks);
-            }
-            
-            auto audioResource = audiumEngine->getAudioResourceContainer()->addAudioResource(URL (File (filenames[i])),
-                                                                                             audioGroup,
-                                                                                             subGroup,
-                                                                                             channelPosition);
-        }
-        
-        // Undo: store new state
-        action->storeNewState();
-        audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
-        audiumEngine->getUndoManager()->beginNewTransaction();
-        
-    }
-    
+{    
     externalDragAndDrop = false;
     regionSelector->setEnabled(true);
     zoomHandler->getSnapToGridHandler()->clearRange();
@@ -124,4 +83,14 @@ void GroupBaseComponent::fileDragExit (const juce::StringArray& files)
     regionSelector->setEnabled(true);
     zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
+}
+
+
+void GroupBaseComponent::mouseDown (const MouseEvent& event)
+{
+    // deselect
+    audioGroup->getPlayListContainer()->deselectAll();
+    
+    // pass on mouse events. unless row is not selected
+    getParentComponent()->mouseDown(event);
 }

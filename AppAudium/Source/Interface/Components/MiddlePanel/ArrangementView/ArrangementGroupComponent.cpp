@@ -93,6 +93,20 @@ void ArrangementGroupComponent::resized()
     }
 }
 
+bool ArrangementGroupComponent::isInterestedInDragSource (const SourceDetails &dragSourceDetails)
+{
+    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    {
+        if (regionLabel->getRegion() &&
+            regionLabel->getRegion()->getAudioGroup() == audioGroup)
+        {
+            // return true if source details match this group
+            return true;
+        }
+    }
+    return false;
+}
+
 void ArrangementGroupComponent::itemDragMove (const SourceDetails &dragSourceDetails)
 {
     auto x = dragSourceDetails.localPosition.x;
@@ -117,31 +131,52 @@ void ArrangementGroupComponent::itemDropped (const SourceDetails &dragSourceDeta
         // undo action stores current state
         auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup->getAudioGroupContainer());
                 
-        auto insertIndex = 0;
+        auto start = zoomHandler->xToClocks(dragSourceDetails.localPosition.x);
+        zoomHandler->snapToGrid(start);
         
-        auto x = dragSourceDetails.localPosition.x;
-        auto clocks = zoomHandler->xToClocks(x);
-        Range<double> rangeInClocks(0.0, clocks);
-
-        auto items = audioGroup->getPlayListContainer()->itemsAtAbsoluteRange(rangeInClocks, audium::clocks);
-        if (items.size() > 0)
+        // convert row number to region pointer
+        auto region = audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().getRegion(regionLabel->getRowNumber());
+        jassert(region);
+        if (region != nullptr)
         {
-            insertIndex = audioGroup->getPlayListContainer()->getPlayListItemIndex(items.back()) + 1;
-            std::cout << "insert index: " << insertIndex << std::endl;
-        }
-        
-        if (auto playListItem = audioGroup->getPlayListContainer()->createPlayListItemUI(regionLabel->getRowNumber(), insertIndex))
-        {
-            zoomHandler->snapToGrid(clocks);
-            playListItem->setAbsolutePosition(clocks, audium::clocks);
-            
-            action->storeNewState();
-            auto undoManager = audioGroup->getAudioGroupContainer().getUndoManager();
-            undoManager->perform(action.release(), "Playlist modified");
-            undoManager->beginNewTransaction();
+            juce::Range<double> position(start, start + region->getRegionData(audium::clocks).getLength());
+            if (audioGroup->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
+            {
+                action->storeNewState();
+                auto undoManager = audioGroup->getAudioGroupContainer().getUndoManager();
+                undoManager->perform(action.release(), "Playlist modified");
+                undoManager->beginNewTransaction();
+            }
         }
     }
     
     zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
+}
+
+void ArrangementGroupComponent::filesDropped (const StringArray& filenames, int x, int y)
+{
+    if ( !filenames.isEmpty())
+    {
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
+        
+        auto start = zoomHandler->xToClocks(x);
+        zoomHandler->snapToGrid(start);
+        
+        std::function<void (std::string)> callback = [](std::string error) {
+            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                        "Failed to open File.",
+                                                        "Failed to open: " + juce::String(error));
+        };
+        
+        if (audioGroup->addAudioFiles(filenames, start, true, callback))
+        {
+            action->storeNewState();
+            audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
+            audiumEngine->getUndoManager()->beginNewTransaction();
+        }
+    }
+
+    // call base class!
+    GroupBaseComponent::filesDropped(filenames, x, y);
 }

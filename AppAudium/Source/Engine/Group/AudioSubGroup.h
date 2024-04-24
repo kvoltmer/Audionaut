@@ -30,6 +30,8 @@ public:
     AudioSubGroup(AudioGroup& audioGroup);
     ~AudioSubGroup() override;
     void cleanup();
+    void cleanupAudioRegions();
+    void cleanupAudioResources();
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;

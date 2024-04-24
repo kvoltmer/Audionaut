@@ -64,11 +64,7 @@ public:
         playListTableListBox->updateContent();
     }
     
-    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override
-    {
-        return true;
-    }
-    
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
     void itemDragEnter (const SourceDetails &dragSourceDetails) override
     {
         //updateInsertLines(dragSourceDetails);

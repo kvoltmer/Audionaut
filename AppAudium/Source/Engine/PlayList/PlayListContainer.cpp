@@ -15,10 +15,34 @@
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioRegionAdapter.h"
 #include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 PlayListContainer::~PlayListContainer()
 {
     cleanup();
+}
+
+std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(std::shared_ptr<AudioRegion> audioRegion,
+                                                                                juce::Range<double> position,
+                                                                                audium::TimeContextType context)
+{
+    // find the insert index based on position
+    auto insertIndex = 0;
+    // want all items before the end of this position
+    auto items = itemsAtAbsoluteRange(juce::Range<double>(0.0, position.getEnd()), context);
+    if (items.size() > 0)
+    {
+        insertIndex = getPlayListItemIndex(items.back()) + 1;
+    }
+    //std::cout << "insert index: " << insertIndex << std::endl;
+    
+    if (auto playListItem = createPlayListItem(audioRegion, insertIndex))
+    {
+        playListItem->setAbsolutePosition(position.getStart(), context);
+        return playListItem;
+    }
+    
+    return nullptr;
 }
 
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(int rowNumber, int insertIndex)
@@ -179,28 +203,19 @@ bool PlayListContainer::writeToJson (json& output)
 
 bool PlayListContainer::readFromJson (json& input, bool rebuild)
 {
-    if (rebuild)
-        cleanup();
+    cleanup();
     
     auto jsonPlayList = input["play_list"];
     auto jsonPlayListItems = jsonPlayList["play_list_items"];
-    auto i = 0;
+
     for (auto& jsonElement : jsonPlayListItems)
     {
         auto regionIndex = jsonElement["region_id"].template get<int>();
         auto audioRegion = audioRegionContainer.getRegion(regionIndex);
         if (audioRegion != nullptr)
         {
-            std::shared_ptr<PlayListItem> playListItem = nullptr;
-            if (rebuild)
-            {
-                playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
-                playListItems.push_back(playListItem);
-            }
-            else
-            {
-                playListItem = playListItems[i];
-            }
+            auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this, audioRegion));
+            playListItems.push_back(playListItem);
             playListItem->readFromJson(jsonElement, rebuild);
         }
         else
@@ -208,7 +223,6 @@ bool PlayListContainer::readFromJson (json& input, bool rebuild)
             jassertfalse;
             return false;
         }
-        i++;
     }
     return true;
 }
@@ -316,6 +330,10 @@ double PlayListContainer::getTotalLength(audium::TimeContextType context) const
 
 void PlayListContainer::deleteSelectedItems()
 {
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioRegionContainer.getAudioGroupContainer());
+
+    
     auto selected = getSelectedRows();
     for (int i = selected.size()-1; i >= 0; i--)
     {
@@ -323,6 +341,11 @@ void PlayListContainer::deleteSelectedItems()
         jassert(item);
         deletePlayListItem(selected[i]);
     }
+    
+    // Undo: store new state and perform
+    action->storeNewState();
+    audioRegionContainer.getAudioGroupContainer().getUndoManager()->perform(action.release(), "Delete Selected Playlist Items");
+    audioRegionContainer.getAudioGroupContainer().getUndoManager()->beginNewTransaction();
 }
 
 void PlayListContainer::deselectAll()

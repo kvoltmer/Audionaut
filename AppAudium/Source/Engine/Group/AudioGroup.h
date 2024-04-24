@@ -97,7 +97,7 @@ public:
     
     void setChannelHeight(int height);
     
-    std::vector<std::shared_ptr<PositionableBase>> getPositionableItems(bool arrangementMode) const;
+    std::list<std::shared_ptr<PositionableBase>> getPositionableItems(bool arrangementMode) const;
     
     void deleteSelectedSubGroups();
     void deleteSubGroup(int atIndex);
@@ -109,6 +109,20 @@ public:
     
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
+    
+    bool addAudioFiles(const juce::StringArray& filenames,
+                       double positionClocks,
+                       bool arrangementMode,
+                       std::function<void (std::string)> callback);
+    
+    std::shared_ptr<AudioResource> addAudioFile(std::shared_ptr<AudioSubGroup> subGroup,
+                                                const juce::File filename,
+                                                int &channelPosition);
+    
+    void createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
+                                   std::shared_ptr<AudioSubGroup> subGroup,
+                                   double position,
+                                   audium::TimeContextType context);
     
 private:
     AudioGroupContainer &owner;

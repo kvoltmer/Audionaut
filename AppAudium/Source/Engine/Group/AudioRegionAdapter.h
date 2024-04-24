@@ -26,6 +26,7 @@ public:
     
     const std::vector<std::shared_ptr<AudioRegion>> getAudioRegions() const;
     const std::vector<std::shared_ptr<AudioRegion>> getSelectedAudioRegions() const;
+    std::shared_ptr<AudioRegion> getRegion(int rowNumber) const;
     
     void deselectAll();
     

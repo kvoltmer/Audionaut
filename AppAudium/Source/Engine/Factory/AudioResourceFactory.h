@@ -77,7 +77,6 @@ public:
             }
         }
         
-        jassert(audioResource != nullptr);
         return audioResource;
     }
     

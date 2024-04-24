@@ -58,7 +58,11 @@ public:
     
     
     // called from UI
-    std::shared_ptr<PlayListItem> createPlayListItemUI(int regionIndex, int indexOfItemToPlaceBefore);
+    std::shared_ptr<PlayListItem> createPlayListItemAtPositionUI(std::shared_ptr<AudioRegion> audioRegion,
+                                                                 juce::Range<double> position,
+                                                                 audium::TimeContextType context);
+    std::shared_ptr<PlayListItem> createPlayListItemUI(int regionIndex,
+                                                       int indexOfItemToPlaceBefore);
 
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
