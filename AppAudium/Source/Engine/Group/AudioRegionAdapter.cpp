@@ -40,6 +40,15 @@ const std::vector<std::shared_ptr<AudioRegion>> AudioRegionAdapter::getAudioRegi
     return result;
 }
 
+std::shared_ptr<AudioRegion> AudioRegionAdapter::getRegion(int rowNumber) const
+{
+    auto regions = getAudioRegions();
+    if (regions.size() > 0 && rowNumber < regions.size())
+        return regions[rowNumber];
+    
+    return nullptr;
+}
+
 const std::vector<std::shared_ptr<AudioRegion>> AudioRegionAdapter::getSelectedAudioRegions() const
 {
     std::vector<std::shared_ptr<AudioRegion>> result;

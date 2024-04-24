@@ -8,6 +8,7 @@
 #include "Engine/Factory/AudioGroupFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
@@ -52,37 +53,32 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
 {
     if ( !filenames.isEmpty())
     {
-        // Undo: store old state
         auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
         
-        juce::String name;
-        // create NEW GROUP
-        auto group = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
-                                                                                 name);
-        setNewGroupColour(group);
+        auto audioGroup = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
+                                                                                      juce::String());
+        setNewGroupColour(audioGroup);
+                
+        auto position = zoomHandler->xToClocks(mouseX);
+
+        bool arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
+
+        std::function<void (std::string)> callback = [](std::string error) {
+            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                        "Failed to open File.",
+                                                        "Failed to open: " + juce::String(error));
+        };
         
-        // TODO: transport position
-        auto subGroup = group->createNewAudioSubGroup(0.0, audium::clocks);
-
-
-        auto transportPosition = zoomHandler->xToSeconds(mouseX);
-        for (auto i = 0; i < filenames.size(); i++)
+        if (audioGroup->addAudioFiles(filenames, position, arrangementMode, callback))
         {
-            auto channelPosition = group->getNumChannels();
-            auto url = URL (File (filenames[i]));
-            audiumEngine->getAudioResourceContainer()->addAudioResource(url,
-                                                                        group,
-                                                                        subGroup,
-                                                                        channelPosition);
+            action->storeNewState();
+            audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
+            audiumEngine->getUndoManager()->beginNewTransaction();
         }
-        
-        // disabled for now
-        //audiumEngine->createDefaultRegionAndPlayList(group);
-        
-        // Undo: store new state
-        action->storeNewState();
-        audiumEngine->getUndoManager()->perform(action.release(), "Create Region(s)");
-        audiumEngine->getUndoManager()->beginNewTransaction();
+        else
+        {
+            audiumEngine->getAudioGroupContainer()->deleteAudioGroup(audioGroup);
+        }
     }
     
     

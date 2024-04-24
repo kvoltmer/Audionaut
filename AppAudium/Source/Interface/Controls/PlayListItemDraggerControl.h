@@ -99,7 +99,17 @@ public:
     {
         if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
         {
+            // Undo: store old state
+            auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
+
             playListItem->getRegion()->getAudioGroup()->getPlayListContainer()->deleteSelectedItems();
+            
+            
+            // Undo: store new state and perform
+            action->storeNewState();
+            audiumEngine->getUndoManager()->perform(action.release(), "Delete Selected Playlist Items");
+            audiumEngine->getUndoManager()->beginNewTransaction();
+            
             return true;
         }
         

@@ -52,10 +52,7 @@ public:
     
     /// Drag n Drop:
     ///----------------------------------
-    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override
-    {
-        return true;
-    }
+    bool isInterestedInDragSource (const SourceDetails &dragSourceDetails) override;
     
     void itemDragEnter (const SourceDetails &dragSourceDetails) override
     {
@@ -69,7 +66,9 @@ public:
     {
         return true;
     }
-    
+
+    void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
+
 private:
     
     bool mustRebuildComponents() const;

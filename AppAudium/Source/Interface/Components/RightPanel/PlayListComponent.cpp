@@ -4,6 +4,21 @@
 #include "Interface/Controls/RegionLabel.h"
 #include "Engine/Group/AudioGroupContainer.h"
 
+
+bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    {
+        if (regionLabel->getRegion() &&
+            regionLabel->getRegion()->getAudioGroup() == audioGroup)
+        {
+            // return true if source details match this group
+            return true;
+        }
+    }
+    return false;
+}
+
 void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
     auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup->getAudioGroupContainer());

@@ -49,11 +49,7 @@ public:
     void fileDragMove (const StringArray& files, int x, int y) override;
     void fileDragExit (const juce::StringArray& files) override;
     
-    /// pass on mouse events. unless row is not selected
-    void mouseDown (const MouseEvent& event) override
-    {
-        getParentComponent()->mouseDown(event);
-    }
+    void mouseDown (const MouseEvent& event) override;
     
 protected:
     

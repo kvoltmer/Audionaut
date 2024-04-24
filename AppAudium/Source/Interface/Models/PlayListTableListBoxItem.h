@@ -55,10 +55,7 @@ public:
     
     void mouseDoubleClick (const juce::MouseEvent&) override;
     
-    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override
-    {
-        return true;
-    }
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
     
     void updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
     {
@@ -112,6 +109,8 @@ public:
     void drawLinearProgress (juce::Graphics& g, double progress);
     
     int rowNumber = 0;
+    
+    const PlayListTableListBoxModel* getPlayListModel() const { return playListModel; }
     
 private:
     
