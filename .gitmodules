@@ -10,3 +10,6 @@
 [submodule "Submodules/link"]
 	path = Submodules/link
 	url = https://github.com/Ableton/link.git
+[submodule "Python/gaborgandalf"]
+	path = Python/gaborgandalf
+	url = git@github.com:Audionatomist/gaborgandalf.git
