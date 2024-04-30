@@ -124,6 +124,8 @@ public:
                                    double position,
                                    audium::TimeContextType context);
     
+    double getTotalLength(audium::TimeContextType context, bool arrangementMode) const;
+    
 private:
     AudioGroupContainer &owner;
     AudioResourceContainer &audioResourceContainer;

@@ -170,26 +170,11 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
 {
     double totalLength = 0.0;
     
-    if (isArrangementMode())
+    for (auto group : audioGroupContainer->getAudioGroups())
     {
-        for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
-        {
-            auto group = audioGroupContainer->getAudioGroup(i);
-            totalLength = juce::jmax(totalLength,
-                                     group->getPlayListContainer()->getTotalLength(context));
-        }
+        totalLength = juce::jmax(totalLength, group->getTotalLength(context, isArrangementMode()));
     }
-    else
-    {
-        for (auto i = 0; i < audioResourceContainer->getNumAudioResources(); i++)
-        {
-            auto resource = audioResourceContainer->getAudioResource(i);
-            totalLength = std::max(totalLength,
-                                   resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(context) +
-                                   resource->getAudioSubGroup()->getAudioClip()->getRegionData(context).getLength());
-        }
-    }
-    
+        
     if (addOverhead)
     {
         // add overhead to fit entire arrangement arrangement
@@ -314,6 +299,7 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> gr
 
 void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer, double sampleRate, int numSamples, int numOutputChannels)
 {
+    // remember last position and reset to 0
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsolutePosition(0.0, audium::seconds);
     startPlaying();
