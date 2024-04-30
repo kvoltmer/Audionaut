@@ -553,3 +553,21 @@ void AudioGroup::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
     // create play list item
     getPlayListContainer()->createPlayListItemAtPositionUI(region, range, context);
 }
+
+double AudioGroup::getTotalLength(audium::TimeContextType context, bool arrangementMode) const
+{
+    if (arrangementMode)
+    {
+        return getPlayListContainer()->getTotalLength(context);
+    }
+    else
+    {
+        double totalLength = 0.0;
+        for (auto subGroup : audioSubGroups)
+        {
+            totalLength = std::max(totalLength, subGroup->getAudioClip()->getAbsolutePositionRange(context).getEnd());
+        }
+        return totalLength;
+    }
+    return 0.0;
+}

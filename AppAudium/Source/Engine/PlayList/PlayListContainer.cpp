@@ -321,11 +321,12 @@ void PlayListContainer::selectPlayListItemWithRegion(std::shared_ptr<AudioRegion
 
 double PlayListContainer::getTotalLength(audium::TimeContextType context) const
 {
-    if (playListItems.size() > 0)
+    auto totalLength = 0.0;
+    for (auto item : playListItems)
     {
-        return playListItems.back()->getAbsolutePositionRange(context).getEnd();
+        totalLength = juce::jmax(totalLength, item->getAbsolutePositionRange(context).getEnd());
     }
-    return 0.0;
+    return totalLength;
 }
 
 void PlayListContainer::deleteSelectedItems()
