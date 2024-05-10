@@ -2,8 +2,9 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
-#include "Engine/AudioResourceContainer.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Handlers/SnapToGridHandler.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace Catch;
@@ -15,7 +16,8 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     juce::MessageManagerLock mmLock(Thread::getCurrentThread());
     
     auto engine      = AudiumFactory::createAudiumEngine();
-    auto zoomHandler = std::shared_ptr<ZoomHandler>(new ZoomHandler(engine->getPlayListScheduler()));
+    auto snap = std::shared_ptr<SnapToGridHandler>(new SnapToGridHandler());
+    auto zoomHandler = std::shared_ptr<ZoomHandler>(new ZoomHandler(engine->getPlayListScheduler(), snap));
     REQUIRE( zoomHandler != nullptr );
     
 
