@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="gxtGxr" name="Audionatomist" projectType="guiapp" useAppConfig="0"
+<JUCERPROJECT id="gxtGxr" name="Lola" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include"
-              bundleIdentifier="com.voltmer-systems.audionatomist" version="0.9.1"
-              companyName="Voltmer Praezlich GbR">
-  <MAINGROUP id="HQG80L" name="Audionatomist">
+              bundleIdentifier="com.voltmer-systems.lola" version="0.9.1" companyName="Voltmer Systems"
+              companyWebsite="www.voltmer-systems.com">
+  <MAINGROUP id="HQG80L" name="Lola">
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
       <FILE id="pY6hrq" name="README.txt" compile="0" resource="0" file="Catch2Tests/README.txt"/>
       <FILE id="A4Cl9P" name="CMakeLists.txt" compile="0" resource="0" file="Catch2Tests/CMakeLists.txt"/>
