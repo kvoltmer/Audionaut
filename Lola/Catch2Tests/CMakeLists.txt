@@ -72,6 +72,8 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Interface/Views/*.cpp
         ${SRC_PATH}/Interface/Widgets/*.cpp
         ${SRC_PATH}/Util/*.cpp
+        
+        ${SRC_PATH}/../JuceLibraryCode/BinaryData.cpp
         )
         
 file(GLOB SRC_TESTS
