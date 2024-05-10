@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../JuceLibraryCode/BinaryData.h"
 #include "Engine/AudiumEngine.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/AudioGroupListBox.h"
