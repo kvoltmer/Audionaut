@@ -47,10 +47,16 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
         ${SRC_PATH}/Engine/AutoEdit/*.cpp
         ${SRC_PATH}/Engine/Channel/*.cpp
-        ${SRC_PATH}/Engine/PlayList/*.cpp
         ${SRC_PATH}/Engine/Factory/*.cpp
-        ${SRC_PATH}/Engine/Link/*.cpp
         ${SRC_PATH}/Engine/Group/*.cpp
+        ${SRC_PATH}/Engine/Link/*.cpp
+        ${SRC_PATH}/Engine/Playback/*.cpp
+        ${SRC_PATH}/Engine/PlayList/*.cpp
+        ${SRC_PATH}/Engine/Provider/*.cpp
+        ${SRC_PATH}/Engine/Region/*.cpp
+        ${SRC_PATH}/Engine/Resource/*.cpp
+        ${SRC_PATH}/Engine/Undo/*.cpp
+        
         ${SRC_PATH}/Interface/*.cpp
         ${SRC_PATH}/Interface/Components/*.cpp
         ${SRC_PATH}/Interface/Components/HeaderPanel/*.cpp
