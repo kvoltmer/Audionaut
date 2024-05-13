@@ -19,22 +19,43 @@
 AudioResource::~AudioResource()
 {
     audioChannels.clear();
-    transportSource->setSource(nullptr);
+    if (transportSource != nullptr)
+        transportSource->setSource(nullptr);
 }
+
+juce::AudioFormatReader* AudioResource::getAudioFormatReader() const
+{
+    if (audioFormatReaderSource != nullptr)
+        return audioFormatReaderSource->getAudioFormatReader();
+    
+    return nullptr;
+}
+
 
 const juce::String AudioResource::getFileNameWithoutExtension() const
 {
-    return url.getLocalFile().getFileNameWithoutExtension();
+    if (url.isLocalFile())
+        return url.getLocalFile().getFileNameWithoutExtension();
+    
+    return "n/a";
 }
 
 const juce::String AudioResource::getFullPathName() const
 {
-    return url.getLocalFile().getFullPathName();
+    if (url.isLocalFile())
+        return url.getLocalFile().getFullPathName();
+    
+    return "not a local file";
 }
 
 const juce::String AudioResource::getUrlAsString() const
 {
     return url.toString(true);
+}
+
+const juce::String AudioResource::getRelativePath(const juce::File &directoryToBeRelativeTo) const
+{
+    return url.getLocalFile().getRelativePathFrom(directoryToBeRelativeTo);
 }
 
 double AudioResource::getSampleRate() const
@@ -44,19 +65,28 @@ double AudioResource::getSampleRate() const
 
 unsigned int AudioResource::getNumChannels() const
 {
-    return getAudioFormatReader()->numChannels;
+    if (getAudioFormatReader() != nullptr)
+        return getAudioFormatReader()->numChannels;
+    
+    return numChannels;
 }
 
 double AudioResource::getFileLength(audium::TimeContextType context) const
 {
+    auto length = lengthInSeconds;
+    if (getAudioTransportSource() != nullptr)
+        length = getAudioTransportSource()->getLengthInSeconds();
+    
     if (context == audium::seconds)
     {
-        return getAudioTransportSource()->getLengthInSeconds();
+        return length;
     }
     else if (context == audium::clocks)
     {
-        return owner.getTempoProvider()->secondsToClocks(getAudioTransportSource()->getLengthInSeconds());
+        return owner.getTempoProvider()->secondsToClocks(length);
     }
+    
+    jassertfalse;
     return 0.0;
 }
 
@@ -90,20 +120,63 @@ bool AudioResource::containsAbsolutePosition(double position, audium::TimeContex
 
 bool AudioResource::writeToJson (json& output)
 {
-    output["filename"]          = getUrlAsString().toStdString();
+    output["absolute_file_path"]          = getUrlAsString().toStdString();
+    output["relative_file_path"] = getRelativePath(AudiumEngine::projectDirectory).toStdString();
     output["gain"]              = getAudioTransportSource()->getGain();
-    output["channel_position"]   = getChannelPosition();
+    output["channel_position"]  = getChannelPosition();
+    output["number_of_channels"] = getNumChannels();
+    output["length_in_seconds"] = getFileLength(audium::seconds);
     return true;
+}
+
+const juce::URL AudioResource::urlFromJson (json& input)
+{
+    juce::String filePath;
+    
+    // relative path is always a local file
+    if (input.contains("relative_file_path"))
+    {
+        juce::String relPath = input["relative_file_path"].template get<std::string>();
+        filePath = AudiumEngine::projectDirectory.getChildFile(relPath).getFullPathName();
+        if (File(filePath).existsAsFile())
+            return URL(File(filePath));
+    }
+    
+    std::cout << "warning: relative path does not exist: " << filePath << std::endl;
+    
+    if (input.contains("absolute_file_path"))
+    {
+        filePath = input["absolute_file_path"].template get<std::string>();
+        auto file = juce::File::createFileWithoutCheckingPath(filePath);
+        if (file.existsAsFile())
+            return URL(file);
+    }
+    
+    std::cout << "error: absolute path does not exist: " << filePath << std::endl;
+    
+    if (input.contains("filename"))
+    {
+        filePath = input["filename"].template get<std::string>();
+    }
+    
+    return URL(File(filePath));
 }
 
 bool AudioResource::readFromJson (json& input, bool rebuild)
 {
-    const auto inUrl        = input["filename"].template get<std::string>();
     const auto gain         = input["gain"].template get<float>();
-    const auto channelPos   = input["channel_position"].template get<int>();;
+    const auto channelPos   = input["channel_position"].template get<int>();
+    
+    if (input.contains("number_of_channels"))
+        numChannels = input["number_of_channels"].template get<int>();
+    
+    if (input.contains("length_in_seconds"))
+        lengthInSeconds = input["length_in_seconds"].template get<double>();
+    
     setChannelPosition(channelPos);
-    jassert(this->url == juce::URL(inUrl));
-    getAudioTransportSource()->setGain(gain);
+    jassert(this->url == urlFromJson(input));
+    if (getAudioTransportSource() != nullptr)
+        getAudioTransportSource()->setGain(gain);
     return true;
 }
 

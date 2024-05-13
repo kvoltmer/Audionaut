@@ -57,7 +57,7 @@ public:
 
     std::shared_ptr<AudiumTransportSource> getAudioTransportSource() const { return transportSource; }
     
-    juce::AudioFormatReader* getAudioFormatReader() const { return audioFormatReaderSource->getAudioFormatReader(); }
+    juce::AudioFormatReader* getAudioFormatReader() const;
 
     const juce::String getFileNameWithoutExtension() const;
     
@@ -67,6 +67,8 @@ public:
     
     // Returns a string version of the URL.
     const juce::String getUrlAsString() const;
+    
+    const juce::String getRelativePath(const juce::File &directoryToBeRelativeTo) const;
     
     AudioResourceContainer& getContainer() const { return owner; }
     
@@ -82,6 +84,7 @@ public:
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
     int getSizeInUnits() override { return 1; };
+    static const juce::URL urlFromJson (json& input);
 
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
@@ -111,6 +114,9 @@ private:
     
     bool selected = false;
 
+    double lengthInSeconds = 1.0;
+    int numChannels = 1;
+    
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResource)

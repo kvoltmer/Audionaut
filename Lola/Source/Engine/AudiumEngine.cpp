@@ -20,6 +20,7 @@
 #include "Engine/AudiumTransportSource.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
+juce::File AudiumEngine::projectDirectory = File();
 
 AudiumEngine::~AudiumEngine()
 {
@@ -58,18 +59,22 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
             file.hasFileExtension (projectFileExtension))
         {
             juce::FileInputStream inputStream(file);
-            if (inputStream.openedOk() &&
-                readFromStream(inputStream, true))
+            if (inputStream.openedOk())
             {
-                currentFile = file;
-                undoManager->clearUndoHistory();
-                NullCheckedInvocation::invoke (callback, true, "");
+                projectDirectory = file.getParentDirectory();
+                if (readFromStream(inputStream, true))
+                {
+                    currentFile = file;
+                    undoManager->clearUndoHistory();
+                    NullCheckedInvocation::invoke (callback, true, "");
+                    return;
+                }
             }
-            else
-            {
-                cleanup();
-                NullCheckedInvocation::invoke (callback, false, "");
-            }
+            
+            // we failed to read :(
+            cleanup();
+            NullCheckedInvocation::invoke (callback, false, "");
+            
         }
     }
     catch (std::exception &e)
@@ -97,6 +102,8 @@ bool AudiumEngine::saveFile (const juce::File& f)
             return false;
         }
     }
+    
+    projectDirectory = file.getParentDirectory();
     
     juce::TemporaryFile temp (file);
         

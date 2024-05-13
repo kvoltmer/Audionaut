@@ -32,6 +32,8 @@ public:
                                                               int channelPosition)
     {
         std::shared_ptr<AudioResource> audioResource = nullptr;
+        std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource = nullptr;
+        std::shared_ptr<AudiumTransportSource> transportSource = nullptr;
      
         if (auto inputSource = makeAudioInputSource (url))
         {
@@ -56,28 +58,27 @@ public:
                         }
                     }
                     
+                    
                     if (reader != nullptr)
                     {
-                        auto audioFormatReaderSource    = std::shared_ptr<juce::AudioFormatReaderSource> (new juce::AudioFormatReaderSource(reader, true));
-                        auto transportSource            = group->getTransportSourceContainer()->createNewTransportSource();
+                        audioFormatReaderSource = std::shared_ptr<juce::AudioFormatReaderSource> (new juce::AudioFormatReaderSource(reader, true));
+                        transportSource = group->getTransportSourceContainer()->createNewTransportSource();
                         transportSource->setSource (audioFormatReaderSource.get(),
                                                     readAheadBufferSize,
                                                     readAheadThread,
                                                     reader->sampleRate);
-                        
-                        audioResource = std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
-                                                                                         group,
-                                                                                         subGroup,
-                                                                                         url,
-                                                                                         transportSource,
-                                                                                         audioFormatReaderSource,
-                                                                                         channelPosition));
                     }
                 }
             }
         }
         
-        return audioResource;
+        return std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
+                                                                         group,
+                                                                         subGroup,
+                                                                         url,
+                                                                         transportSource,
+                                                                         audioFormatReaderSource,
+                                                                         channelPosition));
     }
     
     static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)
