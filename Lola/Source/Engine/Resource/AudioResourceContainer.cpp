@@ -38,6 +38,8 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                    *formatManager.get(),
                                                                    &thread,
                                                                    channelPosition);
+    jassert(audioResource);
+    audioResources.push_back({group, audioResource});
     
     double sampleRate = 44100.0;
     int numSamples = 512;
@@ -51,11 +53,9 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
         audioResource->getAudioTransportSource())
     {
         audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
-        audioResources.push_back({group, audioResource});
-        return audioResource;
     }
     
-    return nullptr;
+    return audioResource;
 }
 
 void AudioResourceContainer::prepareToPlay (double sampleRate, int blockSize)

@@ -227,7 +227,8 @@ float AudioGroup::getOutputLevel(int channelNumber) const
         auto resources = getAudioResourcesAtChannel(channelNumber);
         for (auto resource : resources)
         {
-            if (resource->getAudioTransportSource()->isPlaying())
+            if (resource->getAudioTransportSource() &&
+                resource->getAudioTransportSource()->isPlaying())
             {
                 level += resource->getAudioTransportSource()->getOutputLevel(channelNumber - resource->getChannelPosition());
             }
@@ -266,7 +267,8 @@ float AudioGroup::getGain(int channelNumber) const
 {
     // TODO: move this to channel class
     auto resources = getAudioResourcesAtChannel(channelNumber);
-    if (resources.size() > 0)
+    if (resources.size() > 0 &&
+        resources[0]->getAudioTransportSource() != nullptr)
     {
         return resources[0]->getAudioTransportSource()->getGain();
     }

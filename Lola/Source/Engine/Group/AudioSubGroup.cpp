@@ -103,11 +103,11 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     auto r = 0;
     for (auto& jsonElement : jsonResources)
     {
-        auto url = jsonElement["filename"].template get<std::string>();
+        auto url = AudioResource::urlFromJson(jsonElement);
         std::shared_ptr<AudioResource> resource = nullptr;
         if (rebuild)
         {
-            resource = getAudioGroup().getAudioResourceContainer().addAudioResource(juce::URL(url), group, subGroup);
+            resource = getAudioGroup().getAudioResourceContainer().addAudioResource(url, group, subGroup);
         }
         else
         {

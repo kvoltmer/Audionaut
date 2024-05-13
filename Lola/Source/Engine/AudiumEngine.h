@@ -68,6 +68,8 @@ public:
     
     static const char* projectFileExtension;
     
+    static juce::File projectDirectory;
+    
     const juce::File getCurrentFile() const { return currentFile; }
     
     std::shared_ptr<AudioGroupContainer> getAudioGroupContainer() const { return audioGroupContainer; }
