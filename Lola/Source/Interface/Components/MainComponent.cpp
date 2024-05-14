@@ -22,6 +22,8 @@
 #include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
 #include "Interface/Components/RightPanel/RightPanelComponent.h"
 
+#include "Application/AudiumApplication.h"
+
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/ActionMessages.h"
@@ -263,7 +265,8 @@ void MainComponent::updateWindowTitle()
         if (audiumEngine->getUndoManager()->canUndo())
             fileName += " *";
 
-        getParentComponent()->setName(fileName);
+        auto appName = AudiumApplication::getApp().getApplicationName();
+        getParentComponent()->setName(fileName + " - " + appName);
     }
 }
 
