@@ -25,6 +25,11 @@ juce::Range<double> PlayListItem::getRegionData(audium::TimeContextType context)
     return audioRegion->getRegionData(context);
 }
 
+void PlayListItem::setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context)
+{
+    audioRegion->setRegionData(newRegionData, context);
+}
+
 double PlayListItem::getDurationTime(audium::TimeContextType context) const
 {
     return getRegionData(context).getLength();
