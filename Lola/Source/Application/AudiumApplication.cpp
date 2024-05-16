@@ -533,6 +533,7 @@ void AudiumApplication::updateUI()
     auto comp = dynamic_cast<MainComponent*>(mainWindow->getContentComponent());
     if (comp != nullptr)
     {
+        comp->rebuildUI();
         comp->updateUI();
     }
 }

@@ -13,6 +13,7 @@
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Region/AudioRegion.h"
 
 juce::Range<double> AudioClip::getAbsolutePositionRange(audium::TimeContextType context) const
 {
@@ -133,6 +134,31 @@ bool AudioClip::validateData()
         data.regionData.setLength(0.1);
         result |= true;
     }
+    
+    for (auto region : audioSubGroup.getAudioRegions())
+    {
+        auto audioRegionData = region->getRegionData(audium::seconds);
+        
+        if (!data.regionData.intersects(audioRegionData))
+        {
+            std::cout << "region does not intersect!" << std::endl;
+        }
+        else
+        {
+            if (data.regionData.getStart() > audioRegionData.getStart())
+            {
+                std::cout << "region->setRegionStart: " << data.regionData.getStart() << std::endl;
+                region->setRegionStart(data.regionData.getStart(), audium::seconds);
+            }
+            
+            if (data.regionData.getEnd() < audioRegionData.getEnd())
+            {
+                std::cout << "region->setRegionEnd: " << data.regionData.getEnd() << std::endl;
+                region->setRegionEnd(data.regionData.getEnd(), audium::seconds);
+            }
+        }
+    }
+    
     
     return result;
 }
