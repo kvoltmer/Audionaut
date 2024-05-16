@@ -84,7 +84,7 @@ AutoEditComponent::AutoEditComponent ()
     duration->setScrollbarsShown (true);
     duration->setCaretVisible (true);
     duration->setPopupMenuEnabled (true);
-    duration->setText (TRANS ("60.0"));
+    duration->setText (TRANS ("180"));
 
     duration->setBounds (149, 39, 150, 24);
 
@@ -257,7 +257,7 @@ BEGIN_JUCER_METADATA
          editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
          fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="33"/>
   <TEXTEDITOR name="duration" id="b471f82b6e65e3fa" memberName="duration" virtualName=""
-              explicitFocusOrder="0" pos="149 39 150 24" initialText="60.0"
+              explicitFocusOrder="0" pos="149 39 150 24" initialText="180"
               multiline="0" retKeyStartsLine="0" readonly="0" scrollbars="1"
               caret="1" popupmenu="1"/>
   <TEXTEDITOR name="new text editor" id="5e98bc81b03d3f15" memberName="numSegments"
