@@ -48,7 +48,9 @@ void GroupBaseComponent::paint (juce::Graphics& g)
     
     if (audioGroup->isSelected())
     {
-        g.fillAll (colour.withAlpha(0.3f));
+        g.setColour (juce::Colours::white.withAlpha(0.5f));
+        g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 1.0f);
+        
     }
     
 }
