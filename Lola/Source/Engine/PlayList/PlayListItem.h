@@ -33,6 +33,7 @@ public:
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
     juce::Range<double> getRegionData(audium::TimeContextType context) const;
+    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context);
     
     double getDurationTime(audium::TimeContextType context) const;
     
