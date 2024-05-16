@@ -69,15 +69,13 @@ void PlayListItemComponent::paint (juce::Graphics& g)
 {
     if (playListItem->isSelected())
     {
-        g.setColour (audium::getComplementaryColour(audioGroup->getColour()).darker());
-        g.fillAll();
+        g.setColour (juce::Colours::white.withAlpha(0.9f));
     }
-    
-    
-    g.setColour (audioGroup->getColour().withAlpha(0.50f));
+    else
+    {
+        g.setColour (audioGroup->getColour().withAlpha(0.50f));
+    }
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 1.0f);
-    
-    
 }
 
 void PlayListItemComponent::resized()
