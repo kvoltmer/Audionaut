@@ -42,6 +42,26 @@ juce::Range<double> PlayListItem::getAbsolutePositionRange(audium::TimeContextTy
     return juce::Range<double>(start, start + length);
 }
 
+void PlayListItem::setAbsoluteStartPosition(double newStart, audium::TimeContextType context)
+{
+    auto regionData = getRegionData(context);
+    
+    // offset in file
+    auto diff = newStart - getAbsolutePosition(context);
+    auto newLength = regionData.getLength() - diff;
+    auto newRegionStart = regionData.getStart() + diff;
+    setRegionData(juce::Range<double>(newRegionStart, newStart + newLength), context);
+    
+    setAbsolutePosition(newStart, context);
+}
+
+void PlayListItem::setLength(double newLength, audium::TimeContextType context)
+{
+    auto regionData = getRegionData(context);
+    regionData.setLength(newLength);
+    setRegionData(regionData, context);
+}
+
 double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 {
     

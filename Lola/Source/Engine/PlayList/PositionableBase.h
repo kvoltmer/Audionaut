@@ -23,6 +23,13 @@ protected:
 public:
     
     virtual juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const = 0;
+    
+    // set the left edge of a positionalbe item
+    virtual void setAbsoluteStartPosition(double newStart, audium::TimeContextType context) = 0;
+    
+    // set the length of a positionalbe item
+    virtual void setLength(double newLength, audium::TimeContextType context) = 0;
+    
     virtual double getAbsolutePosition(audium::TimeContextType context) const = 0;
     virtual void setAbsolutePosition(double position, audium::TimeContextType context) = 0;
 

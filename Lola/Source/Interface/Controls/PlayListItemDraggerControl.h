@@ -43,28 +43,14 @@ public:
             undoableContainerAction = new audium::UndoableContainerAction(*audiumEngine->getAudioGroupContainer(), false);
         }
         
-        const auto transportPosition = playListItem->getAbsolutePosition(context);
-        auto regionData = playListItem->getRegionData(context);
-        
         switch (currentDragMode)
         {
             case leftEdge:
-                {
-                    // offset in file
-                    auto diff = newData.getStart() - transportPosition;
-                    auto newLength = regionData.getLength() - diff;
-                    auto newStart = regionData.getStart() + diff;
-                    
-                    playListItem->setRegionData(juce::Range<double>(newStart, newStart + newLength), context);
-                    playListItem->setAbsolutePosition(newData.getStart(), context);
-                    repaint();
-                }
+                playListItem->setAbsoluteStartPosition(newData.getStart(), context);
+                repaint();
                 break;
             case rightEdge:
-                {
-                    regionData.setLength(newData.getLength());
-                    playListItem->setRegionData(regionData, context);
-                }
+                playListItem->setLength(newData.getLength(), context);
                 break;
             case middleEdge:
                 // position in transport
