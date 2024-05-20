@@ -34,6 +34,26 @@ juce::Range<double> AudioClip::getAbsolutePositionRange(audium::TimeContextType 
     return juce::Range(0.0, 0.0);
 }
 
+void AudioClip::setAbsoluteStartPosition(double newStart, audium::TimeContextType context)
+{
+    auto regionData = getRegionData(context);
+    
+    // offset in file
+    auto diff = newStart - getAbsolutePosition(context);
+    auto newLength = regionData.getLength() - diff;
+    auto newRegionStart = regionData.getStart() + diff;
+    setRegionData(juce::Range<double>(newRegionStart, newStart + newLength), context);
+    
+    setAbsolutePosition(newStart, context);
+}
+
+void AudioClip::setLength(double newLength, audium::TimeContextType context)
+{
+    auto regionData = getRegionData(context);
+    regionData.setLength(newLength);
+    setRegionData(regionData, context);
+}
+
 double AudioClip::getAbsolutePosition(audium::TimeContextType context) const
 {
     if (context == audium::seconds)

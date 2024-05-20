@@ -47,29 +47,15 @@ public:
         const auto audioResources = audioSubGroup->getAudioResources();
         if (audioResources.size() > 0)
         {
-            const auto transportPosition = audioSubGroup->getAudioClip()->getAbsolutePosition(context);
-            auto regionData = audioSubGroup->getAudioClip()->getRegionData(context);
             
             switch (currentDragMode)
             {
                 case leftEdge:
-                    {
-                        // offset in file
-                        auto diff = newData.getStart() - transportPosition;
-                        auto newLength = regionData.getLength() - diff;
-                        auto newStart = regionData.getStart() + diff;
-                        
-                        audioSubGroup->getAudioClip()->setRegionData(juce::Range<double>(newStart, newStart + newLength), context);
-                        audioSubGroup->getAudioClip()->setAbsolutePosition(newData.getStart(), context);
-                        repaint();
-                    }
+                    audioSubGroup->getAudioClip()->setAbsoluteStartPosition(newData.getStart(), context);
+                    repaint();
                     break;
                 case rightEdge:
-                    {
-                        // duration
-                        regionData.setLength(newData.getLength());
-                        audioSubGroup->getAudioClip()->setRegionData(regionData, context);
-                    }
+                    audioSubGroup->getAudioClip()->setLength(newData.getLength(), context);
                     break;
                 case middleEdge:
                     // position in transport
