@@ -26,10 +26,7 @@ public:
     }
     
     juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const override;
-    
-    void setAbsoluteStartPosition(double newStart, audium::TimeContextType context) override;
-    void setLength(double newLength, audium::TimeContextType context) override;
-    
+        
     double getAbsolutePosition(audium::TimeContextType context) const override;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
     
@@ -41,9 +38,9 @@ public:
     
     int getSizeInUnits() override { return 1; }
     
-    const juce::Range<double> getRegionData(audium::TimeContextType context) const;
+    juce::Range<double> getRegionData(audium::TimeContextType context) const override;
     
-    void setRegionData(const juce::Range<double> newRegionData, audium::TimeContextType context);
+    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
     
     bool validateData();
     

@@ -32,8 +32,8 @@ public:
         
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
-    juce::Range<double> getRegionData(audium::TimeContextType context) const;
-    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context);
+    juce::Range<double> getRegionData(audium::TimeContextType context) const override;
+    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
     
     double getDurationTime(audium::TimeContextType context) const;
     
@@ -41,10 +41,7 @@ public:
     bool isSelected() const { return selected; }
     
     juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const override;
-    
-    void setAbsoluteStartPosition(double newStart, audium::TimeContextType context) override;
-    void setLength(double newLength, audium::TimeContextType context) override;
-    
+        
     double getAbsolutePosition(audium::TimeContextType context) const override;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
     
