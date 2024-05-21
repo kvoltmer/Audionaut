@@ -24,11 +24,30 @@ public:
     
     virtual juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const = 0;
     
+    virtual juce::Range<double> getRegionData(audium::TimeContextType context) const = 0;
+    virtual void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) = 0;
+    
     // set the left edge of a positionalbe item
-    virtual void setAbsoluteStartPosition(double newStart, audium::TimeContextType context) = 0;
+    virtual void setAbsoluteStartPosition(double newStart, audium::TimeContextType context)
+    {
+        auto regionData = getRegionData(context);
+        
+        // offset in file
+        auto diff = newStart - getAbsolutePosition(context);
+        auto newLength = regionData.getLength() - diff;
+        auto newRegionStart = regionData.getStart() + diff;
+        setRegionData(juce::Range<double>(newRegionStart, newRegionStart + newLength), context);
+        
+        setAbsolutePosition(newStart, context);
+    }
     
     // set the length of a positionalbe item
-    virtual void setLength(double newLength, audium::TimeContextType context) = 0;
+    virtual void setLength(double newLength, audium::TimeContextType context)
+    {
+        auto regionData = getRegionData(context);
+        regionData.setLength(newLength);
+        setRegionData(regionData, context);
+    }
     
     virtual double getAbsolutePosition(audium::TimeContextType context) const = 0;
     virtual void setAbsolutePosition(double position, audium::TimeContextType context) = 0;
