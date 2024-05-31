@@ -15,11 +15,13 @@
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Provider/TempoProvider.h"
+#include "Engine/Core/AudioClipContainer.h"
 
 using namespace audium;
 
 std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {
+    
     auto undoManager                = std::shared_ptr<juce::UndoManager>        (new juce::UndoManager());
     
     auto audioDeviceManager         = std::shared_ptr<juce::AudioDeviceManager> (new juce::AudioDeviceManager());
@@ -39,11 +41,12 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                                                             formatManager,
                                                                                                             audioThumbnailCache,
                                                                                                             tempoProvider));
-    
+    auto audioClipContainer         = std::shared_ptr<AudioClipContainer>       (new AudioClipContainer());
     auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioGroupContainer,
                                                                                                        audioResourceContainer,
                                                                                                        tempoProvider,
-                                                                                                       linkEngine));
+                                                                                                       linkEngine,
+                                                                                                       audioClipContainer));
     
     auto linkAudioDevice            = std::shared_ptr<LinkAudioDevice>          (new LinkAudioDevice(linkEngine,
                                                                                                      playListScheduler,

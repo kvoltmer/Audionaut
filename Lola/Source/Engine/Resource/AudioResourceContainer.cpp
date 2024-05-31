@@ -115,7 +115,7 @@ int AudioResourceContainer::getNumAudioGroups() const
     return audioGroupContainer->getNumItems();
 }
 
-std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int index) const
+std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResourceAtIndex(int index) const
 {
     if (index < getNumAudioResources())
     {
@@ -124,6 +124,23 @@ std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int inde
         return it->second;
     }
     return nullptr;
+}
+
+int AudioResourceContainer::getAudioResourceIndex(std::shared_ptr<AudioResource> searchResource) const
+{
+    auto it = std::find_if(audioResources.begin(), audioResources.end(), [searchResource](const auto& item) {
+        return item.second == searchResource;
+    });
+    if (it == audioResources.end())
+    {
+        jassertfalse;
+        return -1; // not found
+    }
+    else
+    {
+        auto index = std::distance(audioResources.begin(), it);
+        return static_cast<int>(index);
+    }
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtAbsolutePosition(double positionInSeconds) const

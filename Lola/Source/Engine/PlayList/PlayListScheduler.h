@@ -21,6 +21,7 @@ class PlayListContainer;
 class PlayListItem;
 class AudioGroupContainer;
 class AudioResourceContainer;
+class AudioClipContainer;
 
 class PlayListScheduler
 {
@@ -30,11 +31,13 @@ public:
     PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                       std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                       std::shared_ptr<TempoProvider> tempoProvider,
-                      std::shared_ptr<audium::LinkEngine> linkEngine) :
+                      std::shared_ptr<audium::LinkEngine> linkEngine,
+                      std::shared_ptr<AudioClipContainer> audioClipContainer) :
         audioGroupContainer(audioGroupContainer),
         audioResourceContainer(audioResourceContainer),
         tempoProvider(tempoProvider),
-        linkEngine(linkEngine)
+        linkEngine(linkEngine),
+        audioClipContainer(audioClipContainer)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
         
@@ -78,6 +81,8 @@ public:
     
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     
+    void commitPlayListData();
+    
     PlayListSchedulerData data;
     
 private:
@@ -96,6 +101,7 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<audium::LinkEngine> linkEngine;
+    std::shared_ptr<AudioClipContainer> audioClipContainer;
     
     double sampleRate = 0.0;
     
