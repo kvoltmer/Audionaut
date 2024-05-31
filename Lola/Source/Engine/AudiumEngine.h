@@ -90,14 +90,12 @@ private:
     std::shared_ptr<LinkAudioDevice> linkAudioDevice;
     std::shared_ptr<juce::UndoManager> undoManager;
     
+    
     juce::File currentFile;
 
     json uiState;
     
-    /// TODO: thread save container
-    // std::is_trivially_copyable
-    // std::array, has a static size set at compile time. It does not have internal pointers and can therefore be copied simply by using memcpy. It therefore is trivial to copy.
-    std::atomic<std::array<int, 3>> test;
+
     
     void setBypass(bool bypass);
 

@@ -234,6 +234,7 @@
 		A9B61645C4E1D292FC719BF4 /* juce_gui_basics */ /* juce_gui_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_basics; path = ../../../Submodules/juce/modules/juce_gui_basics; sourceTree = SOURCE_ROOT; };
 		AD2284B76A676919EAA61ACB /* ActionMessages.h */ /* ActionMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ActionMessages.h; path = ../../Source/Engine/ActionMessages.h; sourceTree = SOURCE_ROOT; };
 		AEE072B655D55449FF8D5C45 /* SubGroupDraggerControl.h */ /* SubGroupDraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SubGroupDraggerControl.h; path = ../../Source/Interface/Controls/SubGroupDraggerControl.h; sourceTree = SOURCE_ROOT; };
+		B12677F86B19CC723E2BEC17 /* DspClipData.h */ /* DspClipData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DspClipData.h; path = ../../Source/Engine/Core/DspClipData.h; sourceTree = SOURCE_ROOT; };
 		B2225BCBC4CD1991936DFFE6 /* AudioRegionContainer.h */ /* AudioRegionContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegionContainer.h; path = ../../Source/Engine/Region/AudioRegionContainer.h; sourceTree = SOURCE_ROOT; };
 		B339C8A2151E20DF6FD32DE3 /* audium_AudioTransportSource.cpp */ /* audium_AudioTransportSource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_AudioTransportSource.cpp; path = ../../Source/Engine/Playback/audium_AudioTransportSource.cpp; sourceTree = SOURCE_ROOT; };
 		B38D98EC40F4868595516BE6 /* PlayListItemArrangementModel.h */ /* PlayListItemArrangementModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListItemArrangementModel.h; path = ../../Source/Interface/Models/PlayListItemArrangementModel.h; sourceTree = SOURCE_ROOT; };
@@ -295,6 +296,7 @@
 		F5F7DEF8952E76FA005897ED /* CMakeLists.txt */ /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = CMakeLists.txt; path = ../../Catch2Tests/CMakeLists.txt; sourceTree = SOURCE_ROOT; };
 		F606AA824C91677FAABA4C90 /* juce_audio_utils */ /* juce_audio_utils */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_utils; path = ../../../Submodules/juce/modules/juce_audio_utils; sourceTree = SOURCE_ROOT; };
 		F62ECD7362B186DC805B431E /* NewRegionDialog.h */ /* NewRegionDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NewRegionDialog.h; path = ../../Source/Interface/Dialogs/NewRegionDialog.h; sourceTree = SOURCE_ROOT; };
+		F90F2071384136BFA9D5AC6B /* AudioClipContainer.h */ /* AudioClipContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioClipContainer.h; path = ../../Source/Engine/Core/AudioClipContainer.h; sourceTree = SOURCE_ROOT; };
 		F9816C9AA6BF2BC4109172C2 /* include_juce_data_structures.mm */ /* include_juce_data_structures.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_data_structures.mm; path = ../../JuceLibraryCode/include_juce_data_structures.mm; sourceTree = SOURCE_ROOT; };
 		FB12E15EC8D6A7508A7AD628 /* juce_events */ /* juce_events */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_events; path = ../../../Submodules/juce/modules/juce_events; sourceTree = SOURCE_ROOT; };
 		FF8A35828E245DC65B5D294B /* include_juce_gui_extra.mm */ /* include_juce_gui_extra.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_gui_extra.mm; path = ../../JuceLibraryCode/include_juce_gui_extra.mm; sourceTree = SOURCE_ROOT; };
@@ -566,6 +568,15 @@
 			name = MiddlePanel;
 			sourceTree = "<group>";
 		};
+		764B43E3D7C7AFD386C0A576 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				F90F2071384136BFA9D5AC6B,
+				B12677F86B19CC723E2BEC17,
+			);
+			name = Core;
+			sourceTree = "<group>";
+		};
 		7C8358ADE3C3D6A7BB25143B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -809,6 +820,7 @@
 		FCB7E52916C7F60CEA2D39E3 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
+				764B43E3D7C7AFD386C0A576,
 				3A82F0A264C8847AB3096637,
 				D1A83A17077D93FB902AE177,
 				58795CAC1725B0979DF4BDF4,

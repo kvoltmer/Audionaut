@@ -21,7 +21,7 @@
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
-
+#include "Engine/Core/AudioClipContainer.h"
 
 using namespace::std::chrono;
 
@@ -197,6 +197,7 @@ void PlayListScheduler::startPlaying()
 {
     if (linkEngine != nullptr)
     {
+        commitPlayListData();
         linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
     }
@@ -330,5 +331,50 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer, double sam
     
 }
 
+void PlayListScheduler::commitPlayListData()
+{
+    AudioClipContainer::tDspClipArray dspClipArray;
+    int count = 0;
+    
+    for (const auto &group : audioGroupContainer->getAudioGroups())
+    {
+        if (isArrangementMode())
+        {
+            for (const auto &item : group->getPlayListContainer()->getPlayListItems())
+            {
+                for (const auto &resource : item->getRegion()->getAudioResources())
+                {
+                    DspClipData dspClipData;
+                    dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
+                    dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
+                    dspClipData.active          = true;
+                    dspClipData.resourceIndex   = audioResourceContainer->getAudioResourceIndex(resource);
+                    
+                    if (count < AUDIO_CLIP_ARRAY_SIZE)
+                        dspClipArray[count++] = dspClipData;
+                }
+            }
+        }
+        else
+        {
+            for (const auto &subGroup : group->getAudioSubGroups())
+            {
+                for (const auto &resource : subGroup->getAudioResources())
+                {
+                    DspClipData dspClipData;
+                    dspClipData.clipData        = subGroup->getAudioClip()->data;
+                    dspClipData.active          = true;
+                    dspClipData.resourceIndex   = audioResourceContainer->getAudioResourceIndex(resource);
 
+                    if (count < AUDIO_CLIP_ARRAY_SIZE)
+                        dspClipArray[count++] = dspClipData;
+                }
+            }
+        }
+    }
 
+    // commit data as atomic operation
+    audioClipContainer->atomicDspClipArray.store(dspClipArray);
+    
+    std::cout << "commitPlayListData: " << count << std::endl;
+}

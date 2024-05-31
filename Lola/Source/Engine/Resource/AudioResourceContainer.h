@@ -52,7 +52,9 @@ public:
     
     // still used by auto edit
     int getNumAudioResources() const;
-    std::shared_ptr<AudioResource> getAudioResource(int index) const;
+    // TODO: thread save!
+    std::shared_ptr<AudioResource> getAudioResourceAtIndex(int index) const;
+    int getAudioResourceIndex(std::shared_ptr<AudioResource> searchResource) const;
     std::vector<std::shared_ptr<AudioResource>> resourcesAtAbsolutePosition(double positionInSeconds) const;
     
     int getNumAudioGroups() const;
