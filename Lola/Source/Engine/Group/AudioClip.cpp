@@ -15,25 +15,6 @@
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Region/AudioRegion.h"
 
-juce::Range<double> AudioClip::getAbsolutePositionRange(audium::TimeContextType context) const
-{
-    const auto length = getRegionData(context).getLength();
-
-    if (context == audium::seconds)
-    {
-        auto tp = getAudioGroup().getAudioGroupContainer().getTempoProvider();
-        auto pos = tp->clocksToSeconds(data.absolutePositionClocks);
-        return juce::Range(pos, pos + length);
-    }
-    else if (context == audium::clocks)
-    {
-        return juce::Range(data.absolutePositionClocks, data.absolutePositionClocks + length);
-    }
-    
-    jassertfalse;
-    return juce::Range(0.0, 0.0);
-}
-
 double AudioClip::getAbsolutePosition(audium::TimeContextType context) const
 {
     if (context == audium::seconds)

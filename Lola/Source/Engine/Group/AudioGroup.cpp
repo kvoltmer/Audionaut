@@ -37,7 +37,6 @@ void AudioGroup::cleanup()
     
     audioChannels.clear();
     playListContainer->cleanup();
-    transportSourceContainer->cleanup();    
 }
 
 
@@ -558,9 +557,10 @@ void AudioGroup::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
 
 double AudioGroup::getTotalLength(audium::TimeContextType context, bool arrangementMode) const
 {
+    auto result1 = 0.0;
     if (arrangementMode)
     {
-        return getPlayListContainer()->getTotalLength(context);
+        result1 = getPlayListContainer()->getTotalLength(context);
     }
     else
     {
@@ -569,7 +569,49 @@ double AudioGroup::getTotalLength(audium::TimeContextType context, bool arrangem
         {
             totalLength = std::max(totalLength, subGroup->getAudioClip()->getAbsolutePositionRange(context).getEnd());
         }
-        return totalLength;
+        result1 = totalLength;
     }
-    return 0.0;
+                           
+    return result1;
 }
+
+
+std::vector<DspClipData> AudioGroup::getDspClipData(bool arrangementMode) const
+{
+    std::vector<DspClipData> result;
+    DspClipData dspClipData;
+    
+    if (arrangementMode)
+    {
+        // iterate playlist
+        for (const auto &item : getPlayListContainer()->getPlayListItems())
+        {
+            for (const auto &resource : item->getRegion()->getAudioResources())
+            {
+                dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
+                dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
+                dspClipData.active          = true;
+                dspClipData.resourceIndex   = audioResourceContainer.getAudioResourceIndex(resource);
+                result.push_back(dspClipData);
+            }
+        }
+    }
+    else
+    {
+        // iterate sub groups
+        for (const auto &subGroup : getAudioSubGroups())
+        {
+            for (const auto &resource : subGroup->getAudioResources())
+            {
+                dspClipData.clipData        = subGroup->getAudioClip()->data;
+                dspClipData.active          = true;
+                dspClipData.resourceIndex   = audioResourceContainer.getAudioResourceIndex(resource);
+                result.push_back(dspClipData);
+            }
+        }
+    }
+    
+    return result;
+}
+
+

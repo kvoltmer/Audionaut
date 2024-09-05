@@ -21,19 +21,22 @@ public:
     TransportSourceContainer() = default;
     ~TransportSourceContainer() = default;
     
-    void cleanup() { audioTransportSources.clear(); }
-    
     std::shared_ptr<AudiumTransportSource> createNewTransportSource();
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
-    void setLocalPosition (double seconds, int startSample);
-    double getLocalPosition() const;
+    void cleanup();
+    
+    //void setLocalPosition (double seconds, int startSample);
+    //double getLocalPosition() const;
     
     void startPlaying();
     void stopPlaying();
     bool isPlaying() const;
     
     void audioCallback(const juce::AudioSourceChannelInfo& info);
+    
+    std::shared_ptr<AudiumTransportSource> getTransportSourceAtIndex(int index) const;
+    int getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const;
     
 private:
     std::atomic<bool> playing;

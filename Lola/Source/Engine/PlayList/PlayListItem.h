@@ -39,9 +39,7 @@ public:
     
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
-    
-    juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const override;
-        
+            
     double getAbsolutePosition(audium::TimeContextType context) const override;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
     

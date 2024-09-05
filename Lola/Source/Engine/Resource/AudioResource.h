@@ -55,6 +55,7 @@ public:
     
     virtual ~AudioResource();
 
+    std::shared_ptr<AudiumTransportSource> createNewTransportSource(juce::TimeSliceThread* readAheadThread);
     std::shared_ptr<AudiumTransportSource> getAudioTransportSource() const { return transportSource; }
     
     juce::AudioFormatReader* getAudioFormatReader() const;
