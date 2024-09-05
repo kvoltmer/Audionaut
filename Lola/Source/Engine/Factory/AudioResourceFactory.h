@@ -62,11 +62,6 @@ public:
                     if (reader != nullptr)
                     {
                         audioFormatReaderSource = std::shared_ptr<juce::AudioFormatReaderSource> (new juce::AudioFormatReaderSource(reader, true));
-                        transportSource = group->getTransportSourceContainer()->createNewTransportSource();
-                        transportSource->setSource (audioFormatReaderSource.get(),
-                                                    readAheadBufferSize,
-                                                    readAheadThread,
-                                                    reader->sampleRate);
                     }
                 }
             }
@@ -76,7 +71,7 @@ public:
                                                                          group,
                                                                          subGroup,
                                                                          url,
-                                                                         transportSource,
+                                                                         nullptr,
                                                                          audioFormatReaderSource,
                                                                          channelPosition));
     }

@@ -13,6 +13,8 @@
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
+#include "Engine/Core/DspClipData.h"
+#include "Engine/Core/AudioClipContainer.h"
 
 class AudioResourceContainer;
 class AudioResource;
@@ -125,6 +127,8 @@ public:
                                    audium::TimeContextType context);
     
     double getTotalLength(audium::TimeContextType context, bool arrangementMode) const;
+    
+    std::vector<DspClipData> getDspClipData(bool arrangementMode) const;
     
 private:
     AudioGroupContainer &owner;

@@ -31,6 +31,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     jassert(group != nullptr);
     jassert(subGroup != nullptr);
 
+    // TODO: look for existing audio resource
     auto audioResource = AudioResourceFactory::createAudioResource(url,
                                                                    *this,
                                                                    group,
@@ -40,6 +41,9 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                    channelPosition);
     jassert(audioResource);
     audioResources.push_back({group, audioResource});
+    
+    
+    audioResource->createNewTransportSource(&thread);
     
     double sampleRate = 44100.0;
     int numSamples = 512;
@@ -109,12 +113,6 @@ int AudioResourceContainer::getNumAudioResources() const
     return static_cast<int>(audioResources.size());
 }
 
-int AudioResourceContainer::getNumAudioGroups() const
-{
-    jassert(static_cast<int>(getAudioGroups().size()) == audioGroupContainer->getNumItems());
-    return audioGroupContainer->getNumItems();
-}
-
 std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResourceAtIndex(int index) const
 {
     if (index < getNumAudioResources())
@@ -156,12 +154,6 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtA
     }
     
     return resources;
-}
-
-std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroup(int index) const
-{
-    jassert(index < getNumAudioGroups());
-    return getAudioGroups()[index];
 }
 
 void AudioResourceContainer::cleanup()

@@ -3,7 +3,7 @@
 <JUCERPROJECT id="gxtGxr" name="Lola" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include"
               bundleIdentifier="com.voltmer-systems.lola" version="0.9.1" companyName="Voltmer Systems"
-              companyWebsite="www.voltmer-systems.com">
+              companyWebsite="www.voltmer-systems.com" cppLanguageStandard="20">
   <MAINGROUP id="HQG80L" name="Lola">
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
       <FILE id="pY6hrq" name="README.txt" compile="0" resource="0" file="Catch2Tests/README.txt"/>
@@ -38,6 +38,8 @@
         <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
           <FILE id="ScorpU" name="AudioClipContainer.h" compile="0" resource="0"
                 file="Source/Engine/Core/AudioClipContainer.h"/>
+          <FILE id="Ox6quG" name="DspClip.cpp" compile="1" resource="0" file="Source/Engine/Core/DspClip.cpp"/>
+          <FILE id="EVuaOX" name="DspClip.h" compile="0" resource="0" file="Source/Engine/Core/DspClip.h"/>
           <FILE id="bNePQp" name="DspClipData.h" compile="0" resource="0" file="Source/Engine/Core/DspClipData.h"/>
         </GROUP>
         <FILE id="f3Gy4c" name="Streamable.h" compile="0" resource="0" file="Source/Engine/Streamable.h"/>

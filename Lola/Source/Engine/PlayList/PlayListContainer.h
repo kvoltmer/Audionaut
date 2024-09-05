@@ -99,9 +99,7 @@ public:
     void movePlayListItemsPosition(int startIndex, double amount, audium::TimeContextType context);
     
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
-    
-    const PlayListItem* currentPlayListItem = nullptr;
-        
+            
     // selection:
     void deselectAll();
     void deleteSelectedItems();

@@ -22,6 +22,8 @@ class AudioRegionContainer;
 class AudiumEngine;
 class TempoProvider;
 class AudioRegion;
+class TransportSourceContainer;
+class AudioResourceContainer;
 
 class AudioGroupContainer : public juce::ActionBroadcaster,
                             public audium::Streamable
@@ -30,21 +32,22 @@ class AudioGroupContainer : public juce::ActionBroadcaster,
 public:
     
     AudioGroupContainer(std::shared_ptr<juce::UndoManager> undoManager,
-                        std::shared_ptr<TempoProvider> tempoProvider) :
+                        std::shared_ptr<TempoProvider> tempoProvider,
+                        std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                        std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
         undoManager(undoManager),
         tempoProvider(tempoProvider),
+        audioResourceContainer(audioResourceContainer),
+        transportSourceContainer(transportSourceContainer),
         audioRegionAdapter(*this)
     {
     }
     
     ~AudioGroupContainer();
     
-    void init(AudioResourceContainer *audioResourceContainer);
-    
     bool groupIdExists(const int groupId) const;
         
-    std::shared_ptr<AudioGroup> createNewAudioGroup(AudioResourceContainer &audioResourceContainer,
-                                                    const juce::String nameString);
+    std::shared_ptr<AudioGroup> createNewAudioGroup(const juce::String nameString);
     void cleanup();
     
     bool deleteAudioGroup(std::shared_ptr<AudioGroup> group);
@@ -72,15 +75,15 @@ public:
     
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
+    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const noexcept { return transportSourceContainer; }
     
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
 private:
     std::shared_ptr<juce::UndoManager> undoManager;
     std::shared_ptr<TempoProvider> tempoProvider;
-    
-    // i don't like this pointer :(
-    AudioResourceContainer *audioResourceContainer = nullptr;
+    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;
     int selectedGroup = 0;

@@ -23,6 +23,18 @@ AudioResource::~AudioResource()
         transportSource->setSource(nullptr);
 }
 
+std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(juce::TimeSliceThread* readAheadThread)
+{
+    auto readAheadBufferSize = 48000;
+    transportSource = audioGroup->getTransportSourceContainer()->createNewTransportSource();
+    transportSource->setSource (audioFormatReaderSource.get(),
+                                readAheadBufferSize,
+                                readAheadThread,
+                                audioFormatReaderSource->getAudioFormatReader()->sampleRate);
+ 
+    return transportSource;
+}
+
 juce::AudioFormatReader* AudioResource::getAudioFormatReader() const
 {
     if (audioFormatReaderSource != nullptr)

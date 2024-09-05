@@ -15,13 +15,13 @@
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/PlayList/PlayListSchedulerData.h"
+#include "Engine/Core/AudioClipContainer.h"
 
 class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
 class AudioGroupContainer;
 class AudioResourceContainer;
-class AudioClipContainer;
 
 class PlayListScheduler
 {
@@ -32,12 +32,14 @@ public:
                       std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                       std::shared_ptr<TempoProvider> tempoProvider,
                       std::shared_ptr<audium::LinkEngine> linkEngine,
-                      std::shared_ptr<AudioClipContainer> audioClipContainer) :
+                      std::shared_ptr<AudioClipContainer> audioClipContainer,
+                      std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
         audioGroupContainer(audioGroupContainer),
         audioResourceContainer(audioResourceContainer),
         tempoProvider(tempoProvider),
         linkEngine(linkEngine),
-        audioClipContainer(audioClipContainer)
+        audioClipContainer(audioClipContainer),
+        transportSourceContainer(transportSourceContainer)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
         
@@ -58,9 +60,7 @@ public:
     void setEditMode(bool bEditMode) { data.editMode = bEditMode; }
     bool isEditMode() const { return data.editMode; }
     bool isArrangementMode() const { return !data.editMode; }
-    
-    void resetCurrentPlayListItem();
-    
+        
     void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioGroup> group, int playListItemIndex);
     int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const;
     double getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const;
@@ -89,11 +89,8 @@ private:
 
     double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const;
     
-    // Arrangement mode sequencing
-    void processInArrangementMode(double pos, int numSamples);
-    
-    // Edit mode sequencing
-    void processInEditMode(double absolutePosition, int numSamples);
+    // process sequencing
+    void process(double absolutePosition, int numSamples);
     
 private:
     
@@ -102,8 +99,9 @@ private:
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<audium::LinkEngine> linkEngine;
     std::shared_ptr<AudioClipContainer> audioClipContainer;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     
-    double sampleRate = 0.0;
+    double externalSampleRate = 0.0;
     
     int bufferSize = 0;
     

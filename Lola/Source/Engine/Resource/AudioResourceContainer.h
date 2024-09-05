@@ -19,19 +19,16 @@
 #include "Engine/Provider/TempoProvider.h"
 
 class TransportSourceContainer;
-class AudioGroupContainer;
 class AudiumEngine;
 
 class AudioResourceContainer :  public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                            std::shared_ptr<juce::AudioFormatManager> formatManager,
                            std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache,
                            std::shared_ptr<TempoProvider> tempoProvider) :
         audioDeviceManager(audioDeviceManager),
-        audioGroupContainer(audioGroupContainer),
         formatManager(formatManager),
         audioThumbnailCache(audioThumbnailCache),
         tempoProvider(tempoProvider)
@@ -55,10 +52,9 @@ public:
     // TODO: thread save!
     std::shared_ptr<AudioResource> getAudioResourceAtIndex(int index) const;
     int getAudioResourceIndex(std::shared_ptr<AudioResource> searchResource) const;
-    std::vector<std::shared_ptr<AudioResource>> resourcesAtAbsolutePosition(double positionInSeconds) const;
     
-    int getNumAudioGroups() const;
-    std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
+    
+    std::vector<std::shared_ptr<AudioResource>> resourcesAtAbsolutePosition(double positionInSeconds) const;
     
     void cleanup();
     
@@ -87,7 +83,6 @@ private:
     std::list<tAudioGroupPair> audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
-    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<juce::AudioFormatManager> formatManager;
     std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
     std::shared_ptr<TempoProvider> tempoProvider;

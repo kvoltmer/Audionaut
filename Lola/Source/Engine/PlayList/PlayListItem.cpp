@@ -35,13 +35,6 @@ double PlayListItem::getDurationTime(audium::TimeContextType context) const
     return getRegionData(context).getLength();
 }
 
-juce::Range<double> PlayListItem::getAbsolutePositionRange(audium::TimeContextType context) const
-{
-    const auto start = getAbsolutePosition(context);
-    const auto length = getRegionData(context).getLength();
-    return juce::Range<double>(start, start + length);
-}
-
 double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 {
     
