@@ -24,12 +24,10 @@ public:
     AudiumTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
         audioFormatReaderSource(audioFormatReaderSource)
     {
-        std::cout << audioFormatReaderSource.get() << std::endl;
     }
     
     ~AudiumTransportSource()
     {
-        std::cout << "~" << audioFormatReaderSource.get() << std::endl;
         setSource(nullptr);
     }
     
@@ -55,8 +53,7 @@ public:
     
     void stopIt()
     {
-        // work around not calling stop of base class!
-        setPosition(getLengthInSeconds());
+        stop();
     }
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override

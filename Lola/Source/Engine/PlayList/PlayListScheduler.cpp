@@ -80,26 +80,26 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
                 not transportSource->isPlaying())
             {
                 auto absolute = dspClip.getAbsolutePosition(audium::seconds);
-                auto localPosition = dspClip.getRegionData(audium::seconds).getStart();
+                auto local = dspClip.getRegionData(audium::seconds).getStart();
                 auto offset = absolute - transportPosition;
                 auto position = 0.0;
                 auto startSamples = 0;
                 
                 if (offset < 0.0)
                 {
-                    position = localPosition - offset;
+                    position = local - offset;
                 }
                 else
                 {
-                    auto startSamples = static_cast<int>(offset * externalSampleRate);
+                    startSamples = static_cast<int>(offset * externalSampleRate);
                     jassert(startSamples < numSamples);
-                    position = localPosition;
+                    position = local;
                 }
                 
                 auto duration = dspClip.getRegionData(audium::seconds).getEnd() - position;
                 
                 transportSource->schedulePosition(position, startSamples);
-                transportSource->scheduleDuration(duration, externalSampleRate);
+                transportSource->scheduleDuration(duration + (startSamples / externalSampleRate), externalSampleRate);
                 
                 //std::cout << "id: " << dspClip.dspClipData.transportSourceIndex << " ";
                 std::cout << "transport: " << transportPosition << " ";
