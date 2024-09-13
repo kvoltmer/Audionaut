@@ -19,8 +19,8 @@
 #include "Engine/TimeContext.h"
 #include "Engine/Streamable.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 
-class AudioResourceContainer;
 class AudioPlayer;
 class AudiumTransportSource;
 class AudioSubGroup;
@@ -35,30 +35,12 @@ public:
                   std::shared_ptr<AudioGroup> audioGroup,
                   std::shared_ptr<AudioSubGroup> audioSubGroup,
                   juce::URL url,
-                  std::shared_ptr<AudiumTransportSource> transportSource,
-                  std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
-                  int channelPosition) :
-        owner(audioResourceContainer),
-        audioGroup(audioGroup),
-        audioSubGroup(audioSubGroup),
-        url(url),
-        transportSource(transportSource),
-        audioFormatReaderSource(audioFormatReaderSource)
-    {
-        if (channelPosition >= 0)
-        {
-            auto numChannels = getNumChannels();
-            this->audioGroup->ensureNumChannels(channelPosition + numChannels);
-            setChannelPosition(channelPosition);
-        }
-    }
+                  int channelPosition);
     
     virtual ~AudioResource();
 
-    std::shared_ptr<AudiumTransportSource> createNewTransportSource(juce::TimeSliceThread* readAheadThread);
-    std::shared_ptr<AudiumTransportSource> getAudioTransportSource() const { return transportSource; }
-    
-    juce::AudioFormatReader* getAudioFormatReader() const;
+    std::shared_ptr<AudiumTransportSource> createNewTransportSource(juce::TimeSliceThread* readAheadThread,
+                                                                    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
 
     const juce::String getFileNameWithoutExtension() const;
     
@@ -109,9 +91,8 @@ private:
     
     juce::URL url;
     
-    std::shared_ptr<AudiumTransportSource> transportSource;
-            
-    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
+    // used for file info
+    std::unique_ptr<juce::AudioFormatReader> audioFormatReader;
     
     bool selected = false;
 

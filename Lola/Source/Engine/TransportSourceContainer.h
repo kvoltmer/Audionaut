@@ -21,13 +21,12 @@ public:
     TransportSourceContainer() = default;
     ~TransportSourceContainer() = default;
     
-    std::shared_ptr<AudiumTransportSource> createNewTransportSource();
+    std::shared_ptr<AudiumTransportSource> createAndAddTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
     void cleanup();
     
-    //void setLocalPosition (double seconds, int startSample);
-    //double getLocalPosition() const;
+    void prepareToPlay (double sampleRate, int blockSize);
     
     void startPlaying();
     void stopPlaying();

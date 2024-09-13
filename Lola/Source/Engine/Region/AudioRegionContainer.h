@@ -57,7 +57,7 @@ public:
     
     std::shared_ptr<juce::UndoManager> getUndoManager() const { return undoManager; }
     AudioGroupContainer& getAudioGroupContainer() const { return audioGroupContainer; }
-    
+    AudioResourceContainer& getAudioResourceContainer() const { return audioResourceContainer; }
 private:
     
     AudioResourceContainer &audioResourceContainer;

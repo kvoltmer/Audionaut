@@ -14,6 +14,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Group/AudioClip.h"
+#include "Engine/TransportSourceContainer.h"
 
 AudioSubGroup::AudioSubGroup(AudioGroup& audioGroup) :
     audioGroup(audioGroup)
@@ -27,6 +28,7 @@ AudioSubGroup::~AudioSubGroup()
 
 void AudioSubGroup::cleanup()
 {
+    cleanupTransportSources();
     cleanupAudioRegions();
     cleanupAudioResources();
 }
@@ -51,6 +53,13 @@ void AudioSubGroup::cleanupAudioResources()
     jassert(getAudioResources().size() == 0);
 }
 
+void AudioSubGroup::cleanupTransportSources()
+{
+    for (auto transportSource : transportSources)
+    {
+        audioGroup.getTransportSourceContainer()->removeTransportSource(transportSource);
+    }
+}
 
 bool AudioSubGroup::writeToJson (json& output)
 {
@@ -108,6 +117,11 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
         if (rebuild)
         {
             resource = getAudioGroup().getAudioResourceContainer().addAudioResource(url, group, subGroup);
+            if (resource != nullptr)
+            {
+                auto transportSource = getAudioGroup().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
+                transportSources.push_back(transportSource);
+            }
         }
         else
         {
@@ -125,7 +139,7 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
         r++;
     }
     
-    audioClip->data = input["clip"];
+    audioClip->readFromJson(input["clip"], rebuild);
 
     cleanupAudioRegions();
     

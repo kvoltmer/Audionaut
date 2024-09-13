@@ -21,9 +21,15 @@ class AudioGroup;
 class AudiumTransportSource : public audium::AudioTransportSource
 {
 public:
-    AudiumTransportSource() = default;
+    AudiumTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
+        audioFormatReaderSource(audioFormatReaderSource)
+    {
+        std::cout << audioFormatReaderSource.get() << std::endl;
+    }
+    
     ~AudiumTransportSource()
     {
+        std::cout << "~" << audioFormatReaderSource.get() << std::endl;
         setSource(nullptr);
     }
     
@@ -120,5 +126,7 @@ private:
     std::atomic<double> scheduledPosition = 0.0;
     
     SampleTimer durationTimer;
+    
+    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     
 };

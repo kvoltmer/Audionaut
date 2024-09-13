@@ -12,21 +12,19 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "AudiumTransportSource.h"
 
-std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createNewTransportSource()
+std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
-    std::cout << "createNewTransportSource" << std::endl;
-    auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource());
+    auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource(audioFormatReaderSource));
     audioTransportSources.push_back(transportSource);
     return transportSource;
 }
 
 bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource)
 {
-    std::cout << "removeTransportSource" << std::endl;
-    
     auto it = std::find(audioTransportSources.begin(), audioTransportSources.end(), audioTransportSource);
     if (it != audioTransportSources.end())
     {
+        audioTransportSource->setSource(nullptr);
         audioTransportSources.erase(it);
         return true;
     }
@@ -38,22 +36,13 @@ void TransportSourceContainer::cleanup()
     audioTransportSources.clear();
 }
 
-//void TransportSourceContainer::setLocalPosition (double seconds, int startSample)
-//{
-//    for (auto & transportSource : audioTransportSources)
-//    {
-//        transportSource->schedulePosition(seconds, startSample);
-//    }
-//}
-
-//double TransportSourceContainer::getLocalPosition() const
-//{
-//    for (auto & transportSource : audioTransportSources)
-//    {
-//        return transportSource->getCurrentPosition();
-//    }
-//    return 0;
-//}
+void TransportSourceContainer::prepareToPlay (double sampleRate, int blockSize)
+{
+    for (auto transportSources : audioTransportSources)
+    {
+        transportSources->prepareToPlay(blockSize, sampleRate);
+    }
+}
 
 void TransportSourceContainer::startPlaying()
 {
@@ -104,7 +93,8 @@ void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo&
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::getTransportSourceAtIndex(int index) const
 {
-    if (index < (int)audioTransportSources.size())
+    if (index >= 0 &&
+        index < (int)audioTransportSources.size())
     {
         auto it = audioTransportSources.begin();
         std::advance(it, index);

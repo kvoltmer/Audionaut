@@ -32,6 +32,7 @@ void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
     externalSampleRate = newSampleRate;
     bufferSize = newBufferSize;
     tempoProvider->prepareToPlay(newSampleRate, newBufferSize);
+    transportSourceContainer->prepareToPlay(newSampleRate, newBufferSize);
 }
 
 void PlayListScheduler::tick(bool isPlaying,
@@ -58,46 +59,57 @@ void PlayListScheduler::tick(bool isPlaying,
     }
 }
 
-void PlayListScheduler::process(double absolutePosition, int numSamples)
+void PlayListScheduler::process(double transportPosition, int numSamples)
 {
     // convert to seconds
-    const auto absolutePositionInSeconds = tempoProvider->clocksToSeconds(absolutePosition);
+    transportPosition = tempoProvider->clocksToSeconds(transportPosition);
     const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
+    auto transportRange = juce::Range<double> (transportPosition, transportPosition + secondsThisBuffer);
     
     auto dspClipDataVector = audioClipContainer->getDspClipDataVector();
     
     for (const auto &dspClipData : dspClipDataVector)
     {
-        DspClip dspClip(getTempoProvider(), dspClipData);
+        const DspClip dspClip(getTempoProvider(), dspClipData);
         
-        if (dspClip.getAbsolutePositionRange(audium::seconds).contains(absolutePositionInSeconds + secondsThisBuffer))
+        if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange))
         {
-            const auto resource = audioResourceContainer->getAudioResourceAtIndex(dspClip.dspClipData.resourceIndex);
-            const auto transportSource = resource->getAudioTransportSource();
-            if (not transportSource->isPlaying())
+            const auto transportSource = transportSourceContainer->getTransportSourceAtIndex(dspClip.dspClipData.transportSourceIndex);
+            
+            if (transportSource != nullptr &&
+                not transportSource->isPlaying())
             {
-                const auto startPosition = dspClip.getAbsolutePosition(audium::seconds);
-                const auto localPosition = dspClip.getRegionData(audium::seconds).getStart();
-                const auto diff = startPosition - absolutePositionInSeconds;
-
-                if (diff < 0.0)
+                auto absolute = dspClip.getAbsolutePosition(audium::seconds);
+                auto localPosition = dspClip.getRegionData(audium::seconds).getStart();
+                auto offset = absolute - transportPosition;
+                auto position = 0.0;
+                auto startSamples = 0;
+                
+                if (offset < 0.0)
                 {
-                    //transport->setLocalPosition(getTempoProvider()->clocksToSeconds(localPosition - diff), 0);
-                    transportSource->schedulePosition(localPosition - diff, 0);
+                    position = localPosition - offset;
                 }
                 else
                 {
-                    const auto startSamples = static_cast<int>(diff * externalSampleRate);
+                    auto startSamples = static_cast<int>(offset * externalSampleRate);
                     jassert(startSamples < numSamples);
-                    transportSource->schedulePosition(localPosition, startSamples);
+                    position = localPosition;
                 }
                 
-                std::cout << "resource id: " << dspClip.dspClipData.resourceIndex << " ";
-                std::cout << "absolute pos: " << absolutePositionInSeconds << " ";
-                std::cout << "start " <<  startPosition << " ";
-                std::cout << "diff " << diff << std::endl;
+                auto duration = dspClip.getRegionData(audium::seconds).getEnd() - position;
+                
+                transportSource->schedulePosition(position, startSamples);
+                transportSource->scheduleDuration(duration, externalSampleRate);
+                
+                //std::cout << "id: " << dspClip.dspClipData.transportSourceIndex << " ";
+                std::cout << "transport: " << transportPosition << " ";
+                std::cout << "absolute " <<  absolute << " ";
+                std::cout << "offset " << offset << " ";
+                std::cout << "position " << position << " ";
+                std::cout << "duration " << duration << " ";
+                std::cout << std::endl;
 
-                transportSource->scheduleDuration(dspClip.getRegionData(audium::seconds).getLength(), externalSampleRate);
+
             }
         }
     }
@@ -362,7 +374,7 @@ void PlayListScheduler::commitPlayListData()
     
     for (const auto &group : audioGroupContainer->getAudioGroups())
     {
-        auto dspClipData = group->getDspClipData(isArrangementMode());
+        auto dspClipData = group->getDspClipVector(isArrangementMode());
         
         for (const auto &clip : dspClipData)
         {

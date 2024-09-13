@@ -27,13 +27,19 @@ public:
                                                               AudioResourceContainer& audioResourceContainer,
                                                               std::shared_ptr<AudioGroup> group,
                                                               std::shared_ptr<AudioSubGroup> subGroup,
-                                                              juce::AudioFormatManager& formatManager,
-                                                              juce::TimeSliceThread* readAheadThread,
                                                               int channelPosition)
     {
-        std::shared_ptr<AudioResource> audioResource = nullptr;
+        return std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
+                                                                         group,
+                                                                         subGroup,
+                                                                         url,
+                                                                         channelPosition));
+    }
+    
+    static std::shared_ptr<juce::AudioFormatReaderSource> createAudioFormatReaderSource(juce::URL url,
+                                                                                        juce::AudioFormatManager& formatManager)
+    {
         std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource = nullptr;
-        std::shared_ptr<AudiumTransportSource> transportSource = nullptr;
      
         if (auto inputSource = makeAudioInputSource (url))
         {
@@ -43,7 +49,6 @@ public:
                 if (audioFormat != nullptr)
                 {
                     AudioFormatReader* reader = audioFormat->createMemoryMappedReader(url.getLocalFile());
-                    auto readAheadBufferSize = 48000;
                     if (reader == nullptr)
                     {
                         reader = audioFormat->createReaderFor(stream.release(), false);
@@ -51,13 +56,11 @@ public:
                     else
                     {
                         auto memReader = dynamic_cast<MemoryMappedAudioFormatReader*>(reader);
-                        if (memReader->mapEntireFile())
+                        if (memReader != nullptr)
                         {
-                            readAheadThread = nullptr;
-                            readAheadBufferSize = 0;
+                            memReader->mapEntireFile();
                         }
                     }
-                    
                     
                     if (reader != nullptr)
                     {
@@ -67,13 +70,7 @@ public:
             }
         }
         
-        return std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
-                                                                         group,
-                                                                         subGroup,
-                                                                         url,
-                                                                         nullptr,
-                                                                         audioFormatReaderSource,
-                                                                         channelPosition));
+        return audioFormatReaderSource;
     }
     
     static std::unique_ptr<juce::InputSource> makeAudioInputSource (const juce::URL& url)

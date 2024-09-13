@@ -32,7 +32,8 @@ public:
                                                                                                               owner.getUndoManager()));
         
         auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*audioRegionContainer.get(),
-                                                                                           owner.getTempoProvider()));
+                                                                                           owner.getTempoProvider(),
+                                                                                           owner.getTransportSourceContainer()));
         
 
         auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(owner,

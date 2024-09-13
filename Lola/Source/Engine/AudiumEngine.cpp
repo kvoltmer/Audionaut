@@ -141,9 +141,7 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
     auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
     double sampleRate = preferedSampleRate;
         
-    playListScheduler->prepareToPlay(sampleRate, numSamples);
-    audioResourceContainer->prepareToPlay(sampleRate, numSamples);
-    
+    playListScheduler->prepareToPlay(sampleRate, numSamples);    
     
     auto numOutputChannels = 2;
     
@@ -174,7 +172,6 @@ void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> 
     numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
     sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
     playListScheduler->prepareToPlay(sampleRate, numSamples);
-    audioResourceContainer->prepareToPlay(sampleRate, numSamples);
     
     
     setBypass(false);
