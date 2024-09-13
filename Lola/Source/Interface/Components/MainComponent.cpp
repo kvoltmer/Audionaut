@@ -256,6 +256,7 @@ void MainComponent::updateUI()
 
 void MainComponent::updateWindowTitle()
 {
+#if !defined(CATCH2_TESTS)
     if (getParentComponent() != nullptr)
     {
         auto fileName = audiumEngine->getCurrentFile().getFileNameWithoutExtension();
@@ -268,6 +269,7 @@ void MainComponent::updateWindowTitle()
         auto appName = AudiumApplication::getApp().getApplicationName();
         getParentComponent()->setName(fileName + " - " + appName);
     }
+#endif
 }
 
 void MainComponent::zoomIn()
