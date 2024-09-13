@@ -226,11 +226,12 @@ float AudioGroup::getOutputLevel(int channelNumber) const
         auto resources = getAudioResourcesAtChannel(channelNumber);
         for (auto resource : resources)
         {
-            if (resource->getAudioTransportSource() &&
-                resource->getAudioTransportSource()->isPlaying())
-            {
-                level += resource->getAudioTransportSource()->getOutputLevel(channelNumber - resource->getChannelPosition());
-            }
+            // TODO: fixme
+//            if (resource->getAudioTransportSource() &&
+//                resource->getAudioTransportSource()->isPlaying())
+//            {
+//                level += resource->getAudioTransportSource()->getOutputLevel(channelNumber - resource->getChannelPosition());
+//            }
         }
     }
     
@@ -255,22 +256,25 @@ std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtChann
 void AudioGroup::setGain(float gain, int channelNumber)
 {
     // TODO: move this to channel class
+    // TODO: fixme
     auto resources = getAudioResourcesAtChannel(channelNumber);
     for (auto resource : resources)
     {
-        resource->getAudioTransportSource()->setGain(gain);
+        jassertfalse;
+        //resource->getAudioTransportSource()->setGain(gain);
     }
 }
 
 float AudioGroup::getGain(int channelNumber) const
 {
     // TODO: move this to channel class
+    // TODO: fixme
     auto resources = getAudioResourcesAtChannel(channelNumber);
-    if (resources.size() > 0 &&
-        resources[0]->getAudioTransportSource() != nullptr)
-    {
-        return resources[0]->getAudioTransportSource()->getGain();
-    }
+//    if (resources.size() > 0 &&
+//        resources[0]->getAudioTransportSource() != nullptr)
+//    {
+//        return resources[0]->getAudioTransportSource()->getGain();
+//    }
     return 0.0;
 }
 
@@ -519,6 +523,8 @@ bool AudioGroup::addAudioFiles(const juce::StringArray& filenames,
         createDefaultPlayListItem(resources.front(), subGroup, position, audium::clocks);
     }
     
+    subGroup->getAudioClip()->validateData();
+    
     return (resources.size() > 0);
     
 }
@@ -533,6 +539,7 @@ std::shared_ptr<AudioResource> AudioGroup::addAudioFile(std::shared_ptr<AudioSub
                                                                       channelPosition);
     if (audioResource != nullptr)
     {
+        getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
         channelPosition += audioResource->getNumChannels();
     }
     return audioResource;
@@ -576,7 +583,7 @@ double AudioGroup::getTotalLength(audium::TimeContextType context, bool arrangem
 }
 
 
-std::vector<DspClipData> AudioGroup::getDspClipData(bool arrangementMode) const
+std::vector<DspClipData> AudioGroup::getDspClipVector(bool arrangementMode) const
 {
     std::vector<DspClipData> result;
     DspClipData dspClipData;
@@ -586,12 +593,12 @@ std::vector<DspClipData> AudioGroup::getDspClipData(bool arrangementMode) const
         // iterate playlist
         for (const auto &item : getPlayListContainer()->getPlayListItems())
         {
-            for (const auto &resource : item->getRegion()->getAudioResources())
+            for (const auto &transportSource : item->getTransportSources())
             {
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
                 dspClipData.active          = true;
-                dspClipData.resourceIndex   = audioResourceContainer.getAudioResourceIndex(resource);
+                dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);
                 result.push_back(dspClipData);
             }
         }
@@ -601,11 +608,11 @@ std::vector<DspClipData> AudioGroup::getDspClipData(bool arrangementMode) const
         // iterate sub groups
         for (const auto &subGroup : getAudioSubGroups())
         {
-            for (const auto &resource : subGroup->getAudioResources())
+            for (const auto &transportSource : subGroup->getTransportSources())
             {
                 dspClipData.clipData        = subGroup->getAudioClip()->data;
                 dspClipData.active          = true;
-                dspClipData.resourceIndex   = audioResourceContainer.getAudioResourceIndex(resource);
+                dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);
                 result.push_back(dspClipData);
             }
         }

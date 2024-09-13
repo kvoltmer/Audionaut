@@ -48,6 +48,7 @@ public:
     
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
+    
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     
     juce::String getName() const { return data.name; }

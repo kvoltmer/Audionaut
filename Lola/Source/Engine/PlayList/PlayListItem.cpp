@@ -13,11 +13,28 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Provider/TempoProvider.h"
+#include "Engine/Resource/AudioResource.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/TransportSourceContainer.h"
 
-PlayListItem::PlayListItem(const PlayListContainer &owner, std::shared_ptr<AudioRegion> audioRegion) :
+PlayListItem::PlayListItem(const PlayListContainer &owner,
+                           std::shared_ptr<AudioRegion> audioRegion) :
     owner(owner),
     audioRegion(audioRegion)
 {
+    for (const auto &resource : getRegion()->getAudioResources())
+    {
+        auto transportSource = owner.getAudioRegionContainer().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
+        transportSources.push_back(transportSource);
+    }
+}
+
+PlayListItem::~PlayListItem()
+{
+    for (auto transportSource : transportSources)
+    {
+        audioRegion->getAudioGroup()->getTransportSourceContainer()->removeTransportSource(transportSource);
+    }
 }
 
 juce::Range<double> PlayListItem::getRegionData(audium::TimeContextType context) const

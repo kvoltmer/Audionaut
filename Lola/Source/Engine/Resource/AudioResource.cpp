@@ -15,18 +15,50 @@
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Group/AudioClip.h"
+#include "Engine/Factory/AudioResourceFactory.h"
+
+AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
+                             std::shared_ptr<AudioGroup> audioGroup,
+                             std::shared_ptr<AudioSubGroup> audioSubGroup,
+                             juce::URL url,
+                             int channelPosition) :
+    owner(audioResourceContainer),
+    audioGroup(audioGroup),
+    audioSubGroup(audioSubGroup),
+    url(url)
+{
+    auto reader = owner.getAudioFormatManager()->createReaderFor (getUrl().getLocalFile());
+    audioFormatReader = std::unique_ptr<juce::AudioFormatReader>(reader);
+    
+    if (channelPosition >= 0)
+    {
+        auto numChannels = getNumChannels();
+        this->audioGroup->ensureNumChannels(channelPosition + numChannels);
+        setChannelPosition(channelPosition);
+    }
+}
+
 
 AudioResource::~AudioResource()
 {
     audioChannels.clear();
-    if (transportSource != nullptr)
-        transportSource->setSource(nullptr);
 }
 
-std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(juce::TimeSliceThread* readAheadThread)
+std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(juce::TimeSliceThread* readAheadThread,
+                                                                               std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
     auto readAheadBufferSize = 48000;
-    transportSource = audioGroup->getTransportSourceContainer()->createNewTransportSource();
+    
+    
+    auto memReader = dynamic_cast<MemoryMappedAudioFormatReader*>(audioFormatReaderSource->getAudioFormatReader());
+    if (memReader)
+    {
+        readAheadBufferSize = 0;
+        readAheadThread = nullptr;
+    }
+            
+    
+    auto transportSource = audioGroup->getTransportSourceContainer()->createAndAddTransportSource(audioFormatReaderSource);
     transportSource->setSource (audioFormatReaderSource.get(),
                                 readAheadBufferSize,
                                 readAheadThread,
@@ -34,15 +66,6 @@ std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(j
  
     return transportSource;
 }
-
-juce::AudioFormatReader* AudioResource::getAudioFormatReader() const
-{
-    if (audioFormatReaderSource != nullptr)
-        return audioFormatReaderSource->getAudioFormatReader();
-    
-    return nullptr;
-}
-
 
 const juce::String AudioResource::getFileNameWithoutExtension() const
 {
@@ -72,13 +95,19 @@ const juce::String AudioResource::getRelativePath(const juce::File &directoryToB
 
 double AudioResource::getSampleRate() const
 {
-    return getAudioFormatReader()->sampleRate;
+    if (audioFormatReader != nullptr)
+    {
+        return audioFormatReader->sampleRate;
+    }
+    return 44100.0;
 }
 
 unsigned int AudioResource::getNumChannels() const
 {
-    if (getAudioFormatReader() != nullptr)
-        return getAudioFormatReader()->numChannels;
+    if (audioFormatReader != nullptr)
+    {
+        return audioFormatReader->numChannels;
+    }
     
     return numChannels;
 }
@@ -86,8 +115,11 @@ unsigned int AudioResource::getNumChannels() const
 double AudioResource::getFileLength(audium::TimeContextType context) const
 {
     auto length = lengthInSeconds;
-    if (getAudioTransportSource() != nullptr)
-        length = getAudioTransportSource()->getLengthInSeconds();
+ 
+    if (audioFormatReader != nullptr)
+    {
+        length = audioFormatReader->lengthInSamples / audioFormatReader->sampleRate;
+    }
     
     if (context == audium::seconds)
     {
@@ -134,7 +166,8 @@ bool AudioResource::writeToJson (json& output)
 {
     output["absolute_file_path"]          = getUrlAsString().toStdString();
     output["relative_file_path"] = getRelativePath(AudiumEngine::projectDirectory).toStdString();
-    output["gain"]              = getAudioTransportSource()->getGain();
+    // TODO: fixme 
+    output["gain"]               = 1.0; // getAudioTransportSource()->getGain();
     output["channel_position"]  = getChannelPosition();
     output["number_of_channels"] = getNumChannels();
     output["length_in_seconds"] = getFileLength(audium::seconds);
@@ -187,8 +220,10 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     
     setChannelPosition(channelPos);
     jassert(this->url == urlFromJson(input));
-    if (getAudioTransportSource() != nullptr)
-        getAudioTransportSource()->setGain(gain);
+    
+    // TODO: fixme
+    //if (getAudioTransportSource() != nullptr)
+    //    getAudioTransportSource()->setGain(gain);
     return true;
 }
 

@@ -168,6 +168,7 @@ bool AudioClip::writeToJson (json& output)
 bool AudioClip::readFromJson (json& input, bool rebuild)
 {
     data = input;
+    validateData();
     return true;
 }
 

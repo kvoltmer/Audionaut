@@ -44,15 +44,14 @@ public:
                                                      std::shared_ptr<AudioSubGroup> subGroup,
                                                      int channelPosition = -1);
     
+    std::shared_ptr<AudiumTransportSource> createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource);
+    
+    
     void removeAudioResource(std::shared_ptr<AudioResource> resource);
     void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
     
     // still used by auto edit
     int getNumAudioResources() const;
-    // TODO: thread save!
-    std::shared_ptr<AudioResource> getAudioResourceAtIndex(int index) const;
-    int getAudioResourceIndex(std::shared_ptr<AudioResource> searchResource) const;
-    
     
     std::vector<std::shared_ptr<AudioResource>> resourcesAtAbsolutePosition(double positionInSeconds) const;
     
@@ -67,9 +66,7 @@ public:
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
         
     void onDeleteChannel(std::shared_ptr<AudioChannel> channel);
-    
-    void prepareToPlay (double sampleRate, int blockSize);
-    
+        
     std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
     std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }

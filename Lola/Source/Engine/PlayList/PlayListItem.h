@@ -22,14 +22,18 @@ using json = nlohmann::json;
 
 class AudioRegion;
 class PlayListContainer;
+class AudiumTransportSource;
 
 class PlayListItem : public PositionableBase
 {
     
 public:
     
-    PlayListItem(const PlayListContainer &owner, std::shared_ptr<AudioRegion> audioRegion);
-        
+    PlayListItem(const PlayListContainer &owner,
+                 std::shared_ptr<AudioRegion> audioRegion);
+    
+    ~PlayListItem() override;
+    
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
     juce::Range<double> getRegionData(audium::TimeContextType context) const override;
@@ -52,9 +56,13 @@ public:
     
     bool validateData();
 
+    const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
+    
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
+    std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
+    
     bool selected = false;
     
     // The absolute transport position

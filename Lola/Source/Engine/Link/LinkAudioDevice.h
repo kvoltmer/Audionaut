@@ -21,13 +21,15 @@
 
 class PlayListScheduler;
 class AudioResourceContainer;
+class TransportSourceContainer;
 
 class LinkAudioDevice : public juce::AudioIODeviceCallback {
         
 public:
     LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
                     std::shared_ptr<PlayListScheduler> playListScheduler,
-                    std::shared_ptr<AudioResourceContainer> audioResourceContainer);
+                    std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                    std::shared_ptr<TransportSourceContainer> transportSourceContainer);
     ~LinkAudioDevice();
     
     void audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
@@ -52,6 +54,7 @@ private:
     std::shared_ptr<audium::LinkEngine> linkEngine;
     std::shared_ptr<PlayListScheduler> playListScheduler;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     
     ableton::link::HostTimeFilter<ableton::link::platform::Clock> host_time_filter;
     std::uint64_t sample_time = 0;

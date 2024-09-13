@@ -22,6 +22,6 @@ struct DspClipData
     // Indicate if clip is active
     bool active = false;
     
-    int resourceIndex = -1;
+    int transportSourceIndex = -1;
 
 };
