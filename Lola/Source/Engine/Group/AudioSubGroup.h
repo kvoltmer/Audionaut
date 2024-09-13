@@ -22,6 +22,7 @@ class AudioGroup;
 class AudioResource;
 class AudioRegion;
 class AudioClip;
+class AudiumTransportSource;
 
 class AudioSubGroup : public audium::Streamable
 {
@@ -32,7 +33,8 @@ public:
     void cleanup();
     void cleanupAudioRegions();
     void cleanupAudioResources();
-    
+    void cleanupTransportSources();
+
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     
@@ -56,11 +58,15 @@ public:
 
     std::shared_ptr<AudioClip> getAudioClip() const { return audioClip; }
     
+    const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
+
 private:
     std::shared_ptr<AudioClip> audioClip;
     
     AudioGroup& audioGroup;
 
+    std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
+    
     bool selected = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioSubGroup)

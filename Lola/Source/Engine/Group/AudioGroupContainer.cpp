@@ -27,13 +27,11 @@ AudioGroupContainer::~AudioGroupContainer()
     jassert(audioGroups.empty());
 }
 
-void AudioGroupContainer::init(AudioResourceContainer *resourceContainer)
-{
-    audioResourceContainer = resourceContainer;
-}
-
 void AudioGroupContainer::cleanup()
 {
+    transportSourceContainer->cleanup();
+    audioResourceContainer->cleanup();
+    
     for (auto group : audioGroups)
     {
         group->cleanup();
@@ -60,8 +58,7 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getSharedPtr(const AudioGroup* 
     return nullptr;
 }
 
-std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(AudioResourceContainer &audioResourceContainer,
-                                                                     const juce::String nameString)
+std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const juce::String nameString)
 {
     auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer);
     if (nameString.isEmpty())
@@ -157,7 +154,7 @@ bool AudioGroupContainer::readFromJson (json& input, bool rebuild)
         std::shared_ptr<AudioGroup> audioGroup = nullptr;
         if (rebuild)
         {
-            audioGroup = AudioGroupFactory::createAudioGroup(*this, *audioResourceContainer);
+            audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer);
             audioGroups.push_back(audioGroup);
         }
         else

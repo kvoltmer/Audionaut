@@ -55,8 +55,7 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
     {
         auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
         
-        auto audioGroup = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(*audiumEngine->getAudioResourceContainer(),
-                                                                                      juce::String());
+        auto audioGroup = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(juce::String());
         setNewGroupColour(audioGroup);
                 
         auto position = zoomHandler->xToClocks(mouseX);

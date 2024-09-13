@@ -207,6 +207,8 @@ void LinkEngine::triggerScheduler(const double quantum,
     // Call the PlayListScheduler
     tickCallback(sessionState->isPlaying(), beats, static_cast<int>(numSamples));
     
+#if 0 // sample code that shows at which sample a trigger occurs
+    
     
     // The number of microseconds that elapse between samples
     const auto microsPerSample = 1e6 / mSampleRate;
@@ -233,6 +235,7 @@ void LinkEngine::triggerScheduler(const double quantum,
             }
         }
     }
+#endif
     
     
 }

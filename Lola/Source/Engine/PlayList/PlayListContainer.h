@@ -19,6 +19,7 @@
 
 class PlayListItem;
 class AudioRegionContainer;
+class TransportSourceContainer;
 
 
 template<typename C>
@@ -49,13 +50,15 @@ class PlayListContainer :   public audium::Streamable,
     
 public:
     PlayListContainer(const AudioRegionContainer &audioRegionContainer,
-                      std::shared_ptr<TempoProvider> tempoProvider) :
+                      std::shared_ptr<TempoProvider> tempoProvider,
+                      std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
         audioRegionContainer(audioRegionContainer),
-        tempoProvider(tempoProvider)
+        tempoProvider(tempoProvider),
+        transportSourceContainer(transportSourceContainer)
     {
     }
-    ~PlayListContainer();
     
+    ~PlayListContainer();
     
     // called from UI
     std::shared_ptr<PlayListItem> createPlayListItemAtPositionUI(std::shared_ptr<AudioRegion> audioRegion,
@@ -99,9 +102,7 @@ public:
     void movePlayListItemsPosition(int startIndex, double amount, audium::TimeContextType context);
     
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
-    
-    const PlayListItem* currentPlayListItem = nullptr;
-        
+            
     // selection:
     void deselectAll();
     void deleteSelectedItems();
@@ -124,6 +125,7 @@ private:
     
     const AudioRegionContainer &audioRegionContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListContainer)
 };

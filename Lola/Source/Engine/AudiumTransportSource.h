@@ -21,7 +21,11 @@ class AudioGroup;
 class AudiumTransportSource : public audium::AudioTransportSource
 {
 public:
-    AudiumTransportSource() = default;
+    AudiumTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
+        audioFormatReaderSource(audioFormatReaderSource)
+    {
+    }
+    
     ~AudiumTransportSource()
     {
         setSource(nullptr);
@@ -49,8 +53,7 @@ public:
     
     void stopIt()
     {
-        // work around not calling stop of base class!
-        setPosition(getLengthInSeconds());
+        stop();
     }
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
@@ -120,5 +123,7 @@ private:
     std::atomic<double> scheduledPosition = 0.0;
     
     SampleTimer durationTimer;
+    
+    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     
 };

@@ -46,8 +46,11 @@ public:
         switch (currentDragMode)
         {
             case leftEdge:
+                playListItem->setAbsoluteStartPosition(newData.getStart(), context);
+                repaint();
                 break;
             case rightEdge:
+                playListItem->setLength(newData.getLength(), context);
                 break;
             case middleEdge:
                 // position in transport

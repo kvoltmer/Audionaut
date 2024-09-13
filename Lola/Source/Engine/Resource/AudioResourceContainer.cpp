@@ -31,14 +31,26 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     jassert(group != nullptr);
     jassert(subGroup != nullptr);
 
+    // TODO: look for existing audio resource
     auto audioResource = AudioResourceFactory::createAudioResource(url,
                                                                    *this,
                                                                    group,
                                                                    subGroup,
-                                                                   *formatManager.get(),
-                                                                   &thread,
                                                                    channelPosition);
+    jassert(audioResource);
+    audioResources.push_back({group, audioResource});
+
+    return audioResource;
+}
+
+std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
+{
+    auto audioFormatReaderSource = AudioResourceFactory::createAudioFormatReaderSource(audioResource->getUrl(), *formatManager.get());
+                                                                   
+    auto transportSource = audioResource->createNewTransportSource(&thread, audioFormatReaderSource);
     
+    
+    // obsolete?
     double sampleRate = 44100.0;
     int numSamples = 512;
     if (audioDeviceManager->getCurrentAudioDevice() != nullptr)
@@ -47,23 +59,10 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
         numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
     }
     
-    if (audioResource &&
-        audioResource->getAudioTransportSource())
-    {
-        audioResource->getAudioTransportSource()->prepareToPlay(numSamples, sampleRate);
-        audioResources.push_back({group, audioResource});
-        return audioResource;
-    }
+    transportSource->prepareToPlay(numSamples, sampleRate);
     
-    return nullptr;
-}
-
-void AudioResourceContainer::prepareToPlay (double sampleRate, int blockSize)
-{
-    for (auto resource : audioResources)
-    {
-        resource.second->getAudioTransportSource()->prepareToPlay(blockSize, sampleRate);
-    }
+    
+    return transportSource;
 }
 
 void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> resource)
@@ -74,8 +73,6 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> 
         {
             auto group = (*it).first;
             auto resource = (*it).second;
-            
-            group->getTransportSourceContainer()->removeTransportSource(resource->getAudioTransportSource());
             audioResources.erase(it);
             break;
         }
@@ -109,23 +106,6 @@ int AudioResourceContainer::getNumAudioResources() const
     return static_cast<int>(audioResources.size());
 }
 
-int AudioResourceContainer::getNumAudioGroups() const
-{
-    jassert(static_cast<int>(getAudioGroups().size()) == audioGroupContainer->getNumItems());
-    return audioGroupContainer->getNumItems();
-}
-
-std::shared_ptr<AudioResource> AudioResourceContainer::getAudioResource(int index) const
-{
-    if (index < getNumAudioResources())
-    {
-        auto it = audioResources.begin();
-        std::advance(it, index);
-        return it->second;
-    }
-    return nullptr;
-}
-
 std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtAbsolutePosition(double positionInSeconds) const
 {
     std::vector<std::shared_ptr<AudioResource>> resources;
@@ -139,12 +119,6 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtA
     }
     
     return resources;
-}
-
-std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroup(int index) const
-{
-    jassert(index < getNumAudioGroups());
-    return getAudioGroups()[index];
 }
 
 void AudioResourceContainer::cleanup()

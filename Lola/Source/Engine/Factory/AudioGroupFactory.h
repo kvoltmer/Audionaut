@@ -23,24 +23,24 @@ public:
     AudioGroupFactory() = default;
     
     static std::shared_ptr<AudioGroup> createAudioGroup(AudioGroupContainer &owner,
-                                                        AudioResourceContainer &audioResourceContainer)
+                                                        std::shared_ptr<AudioResourceContainer> audioResourceContainer)
     {
-        auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
         
-        auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer(audioResourceContainer,
+        auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer(*audioResourceContainer.get(),
                                                                                                               owner,
                                                                                                               owner.getTempoProvider(),
                                                                                                               owner.getUndoManager()));
         
         auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*audioRegionContainer.get(),
-                                                                                           owner.getTempoProvider()));
+                                                                                           owner.getTempoProvider(),
+                                                                                           owner.getTransportSourceContainer()));
         
 
         auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(owner,
-                                                                     audioResourceContainer,
+                                                                     *audioResourceContainer.get(),
                                                                      audioRegionContainer,
                                                                      playListContainer,
-                                                                     transportSourceContainer,
+                                                                     owner.getTransportSourceContainer(),
                                                                      std::string()));
         return audioGroup;
     }

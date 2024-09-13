@@ -19,19 +19,16 @@
 #include "Engine/Provider/TempoProvider.h"
 
 class TransportSourceContainer;
-class AudioGroupContainer;
 class AudiumEngine;
 
 class AudioResourceContainer :  public juce::ActionBroadcaster
 {
 public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<AudioGroupContainer> audioGroupContainer,
                            std::shared_ptr<juce::AudioFormatManager> formatManager,
                            std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache,
                            std::shared_ptr<TempoProvider> tempoProvider) :
         audioDeviceManager(audioDeviceManager),
-        audioGroupContainer(audioGroupContainer),
         formatManager(formatManager),
         audioThumbnailCache(audioThumbnailCache),
         tempoProvider(tempoProvider)
@@ -47,16 +44,16 @@ public:
                                                      std::shared_ptr<AudioSubGroup> subGroup,
                                                      int channelPosition = -1);
     
+    std::shared_ptr<AudiumTransportSource> createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource);
+    
+    
     void removeAudioResource(std::shared_ptr<AudioResource> resource);
     void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
     
     // still used by auto edit
     int getNumAudioResources() const;
-    std::shared_ptr<AudioResource> getAudioResource(int index) const;
-    std::vector<std::shared_ptr<AudioResource>> resourcesAtAbsolutePosition(double positionInSeconds) const;
     
-    int getNumAudioGroups() const;
-    std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
+    std::vector<std::shared_ptr<AudioResource>> resourcesAtAbsolutePosition(double positionInSeconds) const;
     
     void cleanup();
     
@@ -69,9 +66,7 @@ public:
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
         
     void onDeleteChannel(std::shared_ptr<AudioChannel> channel);
-    
-    void prepareToPlay (double sampleRate, int blockSize);
-    
+        
     std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
     std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
@@ -85,7 +80,6 @@ private:
     std::list<tAudioGroupPair> audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
-    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
     std::shared_ptr<juce::AudioFormatManager> formatManager;
     std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
     std::shared_ptr<TempoProvider> tempoProvider;
