@@ -22,24 +22,28 @@ using json = nlohmann::json;
 
 class AudioRegion;
 class PlayListContainer;
+class AudiumTransportSource;
 
 class PlayListItem : public PositionableBase
 {
     
 public:
     
-    PlayListItem(const PlayListContainer &owner, std::shared_ptr<AudioRegion> audioRegion);
-        
+    PlayListItem(const PlayListContainer &owner,
+                 std::shared_ptr<AudioRegion> audioRegion);
+    
+    ~PlayListItem() override;
+    
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
-    juce::Range<double> getRegionData(audium::TimeContextType context) const;
+    juce::Range<double> getRegionData(audium::TimeContextType context) const override;
+    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
     
     double getDurationTime(audium::TimeContextType context) const;
     
     void setSelected(bool bSelected) { selected = bSelected; }
     bool isSelected() const { return selected; }
-    
-    juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const override;
+            
     double getAbsolutePosition(audium::TimeContextType context) const override;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
     
@@ -52,9 +56,13 @@ public:
     
     bool validateData();
 
+    const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
+    
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
+    std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
+    
     bool selected = false;
     
     // The absolute transport position

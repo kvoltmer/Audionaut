@@ -13,13 +13,16 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Provider/TempoProvider.h"
+#include "Engine/TransportSourceContainer.h"
 
 LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
                                  std::shared_ptr<PlayListScheduler> playListScheduler,
-                                 std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
+                                 std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                                 std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
     linkEngine(linkEngine),
     playListScheduler(playListScheduler),
-    audioResourceContainer(audioResourceContainer)
+    audioResourceContainer(audioResourceContainer),
+    transportSourceContainer(transportSourceContainer)
 {
 }
 
@@ -79,7 +82,7 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
         playListScheduler->prepareToPlay(sampleRate, bufferSize);
     }
     
-    audioResourceContainer->prepareToPlay(sampleRate, bufferSize);
+    transportSourceContainer->prepareToPlay(sampleRate, bufferSize);
     
     auto deviceLatency = device->getOutputLatencyInSamples();
     

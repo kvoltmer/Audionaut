@@ -13,25 +13,7 @@
 #include "Engine/Group/AudioGroupContainer.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Resource/AudioResource.h"
-
-juce::Range<double> AudioClip::getAbsolutePositionRange(audium::TimeContextType context) const
-{
-    const auto length = getRegionData(context).getLength();
-
-    if (context == audium::seconds)
-    {
-        auto tp = getAudioGroup().getAudioGroupContainer().getTempoProvider();
-        auto pos = tp->clocksToSeconds(data.absolutePositionClocks);
-        return juce::Range(pos, pos + length);
-    }
-    else if (context == audium::clocks)
-    {
-        return juce::Range(data.absolutePositionClocks, data.absolutePositionClocks + length);
-    }
-    
-    jassertfalse;
-    return juce::Range(0.0, 0.0);
-}
+#include "Engine/Region/AudioRegion.h"
 
 double AudioClip::getAbsolutePosition(audium::TimeContextType context) const
 {
@@ -66,7 +48,7 @@ void AudioClip::setAbsolutePosition(double newPosition, audium::TimeContextType 
     }
 }
 
-const juce::Range<double> AudioClip::getRegionData(audium::TimeContextType context) const
+juce::Range<double> AudioClip::getRegionData(audium::TimeContextType context) const
 {
     if (data.regionData.isEmpty())
     {
@@ -85,7 +67,7 @@ const juce::Range<double> AudioClip::getRegionData(audium::TimeContextType conte
     return juce::Range<double>(0.0, 0.0);
 }
 
-void AudioClip::setRegionData(const juce::Range<double> newRegionData, audium::TimeContextType context)
+void AudioClip::setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context)
 {
     jassert(!newRegionData.isEmpty());
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
@@ -134,6 +116,31 @@ bool AudioClip::validateData()
         result |= true;
     }
     
+    for (auto region : audioSubGroup.getAudioRegions())
+    {
+        auto audioRegionData = region->getRegionData(audium::seconds);
+        
+        if (!data.regionData.intersects(audioRegionData))
+        {
+            std::cout << "region does not intersect!" << std::endl;
+        }
+        else
+        {
+            if (data.regionData.getStart() > audioRegionData.getStart())
+            {
+                std::cout << "region->setRegionStart: " << data.regionData.getStart() << std::endl;
+                region->setRegionStart(data.regionData.getStart(), audium::seconds);
+            }
+            
+            if (data.regionData.getEnd() < audioRegionData.getEnd())
+            {
+                std::cout << "region->setRegionEnd: " << data.regionData.getEnd() << std::endl;
+                region->setRegionEnd(data.regionData.getEnd(), audium::seconds);
+            }
+        }
+    }
+    
+    
     return result;
 }
 
@@ -161,6 +168,7 @@ bool AudioClip::writeToJson (json& output)
 bool AudioClip::readFromJson (json& input, bool rebuild)
 {
     data = input;
+    validateData();
     return true;
 }
 

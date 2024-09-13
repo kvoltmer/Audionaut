@@ -22,8 +22,10 @@ struct AudioClipData
     
     // The absolute transport position
     double absolutePositionClocks = 0.0;
+    
     // The start and end in seconds
     tRange regionData;
+    
 };
 
 // custom to_json method will be automatically called by the json constructor

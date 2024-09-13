@@ -22,11 +22,43 @@ protected:
     
 public:
     
-    virtual juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const = 0;
+    virtual juce::Range<double> getRegionData(audium::TimeContextType context) const = 0;
+    virtual void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) = 0;
+ 
     virtual double getAbsolutePosition(audium::TimeContextType context) const = 0;
     virtual void setAbsolutePosition(double position, audium::TimeContextType context) = 0;
+    
+    juce::Range<double> getAbsolutePositionRange(audium::TimeContextType context) const
+    {
+        const auto start = getAbsolutePosition(context);
+        const auto length = getRegionData(context).getLength();
+        return juce::Range<double>(start, start + length);
+    }
+    
+    // set the left edge of a positionalbe item
+    void setAbsoluteStartPosition(double newStart, audium::TimeContextType context)
+    {
+        auto regionData = getRegionData(context);
+        
+        // offset in file
+        auto diff = newStart - getAbsolutePosition(context);
+        auto newLength = regionData.getLength() - diff;
+        auto newRegionStart = regionData.getStart() + diff;
+        setRegionData(juce::Range<double>(newRegionStart, newRegionStart + newLength), context);
+        
+        setAbsolutePosition(newStart, context);
+    }
+    
+    // set the length of a positionalbe item
+    void setLength(double newLength, audium::TimeContextType context)
+    {
+        auto regionData = getRegionData(context);
+        regionData.setLength(newLength);
+        setRegionData(regionData, context);
+    }
+
 
 private:
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PositionableBase)
+    JUCE_LEAK_DETECTOR (PositionableBase)
 };

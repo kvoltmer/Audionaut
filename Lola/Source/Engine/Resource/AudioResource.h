@@ -19,8 +19,8 @@
 #include "Engine/TimeContext.h"
 #include "Engine/Streamable.h"
 #include "Engine/Group/AudioGroup.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 
-class AudioResourceContainer;
 class AudioPlayer;
 class AudiumTransportSource;
 class AudioSubGroup;
@@ -35,29 +35,12 @@ public:
                   std::shared_ptr<AudioGroup> audioGroup,
                   std::shared_ptr<AudioSubGroup> audioSubGroup,
                   juce::URL url,
-                  std::shared_ptr<AudiumTransportSource> transportSource,
-                  std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource,
-                  int channelPosition) :
-        owner(audioResourceContainer),
-        audioGroup(audioGroup),
-        audioSubGroup(audioSubGroup),
-        url(url),
-        transportSource(transportSource),
-        audioFormatReaderSource(audioFormatReaderSource)
-    {
-        if (channelPosition >= 0)
-        {
-            auto numChannels = getNumChannels();
-            this->audioGroup->ensureNumChannels(channelPosition + numChannels);
-            setChannelPosition(channelPosition);
-        }
-    }
+                  int channelPosition);
     
     virtual ~AudioResource();
 
-    std::shared_ptr<AudiumTransportSource> getAudioTransportSource() const { return transportSource; }
-    
-    juce::AudioFormatReader* getAudioFormatReader() const { return audioFormatReaderSource->getAudioFormatReader(); }
+    std::shared_ptr<AudiumTransportSource> createNewTransportSource(juce::TimeSliceThread* readAheadThread,
+                                                                    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
 
     const juce::String getFileNameWithoutExtension() const;
     
@@ -67,6 +50,8 @@ public:
     
     // Returns a string version of the URL.
     const juce::String getUrlAsString() const;
+    
+    const juce::String getRelativePath(const juce::File &directoryToBeRelativeTo) const;
     
     AudioResourceContainer& getContainer() const { return owner; }
     
@@ -82,6 +67,7 @@ public:
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
     int getSizeInUnits() override { return 1; };
+    static const juce::URL urlFromJson (json& input);
 
     std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
@@ -105,12 +91,14 @@ private:
     
     juce::URL url;
     
-    std::shared_ptr<AudiumTransportSource> transportSource;
-            
-    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
+    // used for file info
+    std::unique_ptr<juce::AudioFormatReader> audioFormatReader;
     
     bool selected = false;
 
+    double lengthInSeconds = 1.0;
+    int numChannels = 1;
+    
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResource)
