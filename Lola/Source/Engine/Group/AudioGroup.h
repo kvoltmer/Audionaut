@@ -94,7 +94,7 @@ public:
     
     std::vector<std::shared_ptr<AudioSubGroup>> getAudioSubGroups() const { return audioSubGroups; }
     
-    void setSelected(bool bSelected) { selected = bSelected; }
+    void setSelected(bool bSelected);
     bool isSelected() const { return selected; }
     
     void setChannelHeight(int height);
@@ -103,9 +103,11 @@ public:
     
     void deleteSelectedSubGroups();
     void deleteSubGroup(int atIndex);
-    void deselectAllSubGroups();
     
-    void deselectAllChannels();
+    void selectAllSubGroups(bool bSelected);
+    
+    void selectAllChannels(bool bSelected);
+    
     void deleteSelectedChannels();
     void deleteChannel(std::shared_ptr<AudioChannel> channel);
     

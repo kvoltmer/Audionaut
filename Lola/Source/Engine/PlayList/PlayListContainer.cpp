@@ -111,7 +111,7 @@ void PlayListContainer::deletePlayListItem(int atIndex, bool sendNotification)
     {
         playListItems.erase(playListItems.begin() + atIndex);
         if (sendNotification)
-            sendActionMessage(playListDeletedAction);
+            audioRegionContainer.getAudioGroupContainer().sendActionMessage(playListDeletedAction);
     }
 }
 
@@ -180,7 +180,6 @@ bool PlayListContainer::readFromStream (juce::InputStream& inputStream, bool reb
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
-        sendActionMessage(playListOrderAction);
         return true;
     }
     return false;
@@ -331,10 +330,6 @@ double PlayListContainer::getTotalLength(audium::TimeContextType context) const
 
 void PlayListContainer::deleteSelectedItems()
 {
-    // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(audioRegionContainer.getAudioGroupContainer());
-
-    
     auto selected = getSelectedRows();
     for (int i = selected.size()-1; i >= 0; i--)
     {
@@ -342,11 +337,15 @@ void PlayListContainer::deleteSelectedItems()
         jassert(item);
         deletePlayListItem(selected[i]);
     }
-    
-    // Undo: store new state and perform
-    action->storeNewState();
-    audioRegionContainer.getAudioGroupContainer().getUndoManager()->perform(action.release(), "Delete Selected Playlist Items");
-    audioRegionContainer.getAudioGroupContainer().getUndoManager()->beginNewTransaction();
+}
+
+
+void PlayListContainer::selectAll()
+{
+    for (auto item : playListItems)
+    {
+        item->setSelected(true);
+    }
 }
 
 void PlayListContainer::deselectAll()
@@ -375,14 +374,17 @@ void PlayListContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 {
     deselectAll();
     
+#if SELECT_REGIONS
     audioRegionContainer.getAudioGroupContainer().getAudioRegionAdapter().deselectAll();
-    
+#endif
     for (auto i = 0; i < selectedRows.size(); i++)
     {
         if (auto item = getPlayListItem(selectedRows[i]))
         {
             item->setSelected(true);
+#if SELECT_REGIONS
             item->getRegion()->setSelected(true);
+#endif
         }
     }
 }

@@ -213,7 +213,6 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
 
         case StandardApplicationCommandIDs::selectAll:
             result.setInfo (TRANS ("Select All"), String(), "Editing", 0);
-            // TODO: result.setActive (currentPaintRoutine != nullptr || currentLayout != nullptr);
             result.defaultKeypresses.add (KeyPress ('a', cmd, 0));
             break;
 
@@ -271,12 +270,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case StandardApplicationCommandIDs::undo:
             getEngine()->getUndoManager()->undo();
-//            document->dispatchPendingMessages();
             break;
-
         case StandardApplicationCommandIDs::redo:
             getEngine()->getUndoManager()->redo();
-//            document->dispatchPendingMessages();
             break;
         case StandardApplicationCommandIDs::cut:
             notImplemented();
@@ -330,11 +326,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
 
         case StandardApplicationCommandIDs::selectAll:
-            notImplemented();
-//            if (currentLayout != nullptr)
-//                currentLayout->selectAll();
-//            else if (currentPaintRoutine != nullptr)
-//                currentPaintRoutine->selectAll();
+            mainComponent->selectAll();
             break;
 
         case StandardApplicationCommandIDs::deselectAll:

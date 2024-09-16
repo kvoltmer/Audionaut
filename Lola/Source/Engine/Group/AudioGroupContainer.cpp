@@ -198,7 +198,6 @@ void AudioGroupContainer::deselectAll()
 {
     for (auto group : audioGroups)
     {
-        group->deselectAllChannels();
         group->setSelected(false);
     }
 }

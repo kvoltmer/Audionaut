@@ -73,7 +73,7 @@ public:
         if (deselectOthers)
             playListItem->getRegion()->getAudioGroup()->getPlayListContainer()->deselectAll();
         playListItem->setSelected(bSelected);
-        playListItem->getPlayListContainer().sendActionMessage(playListItemSelection);
+        audiumEngine->getAudioGroupContainer()->sendActionMessage(playListItemSelection);
     }
     
     const juce::String getLabelString() const override
@@ -105,8 +105,10 @@ public:
             // Undo: store old state
             auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
 
-            playListItem->getRegion()->getAudioGroup()->getPlayListContainer()->deleteSelectedItems();
-            
+            for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
+            {
+                group->getPlayListContainer()->deleteSelectedItems();
+            }
             
             // Undo: store new state and perform
             action->storeNewState();
