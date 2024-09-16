@@ -37,6 +37,8 @@ public:
     std::shared_ptr<AudiumTransportSource> getTransportSourceAtIndex(int index) const;
     int getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const;
     
+    float getOutputLevel(int channelNumber) const;
+    
 private:
     std::atomic<bool> playing;
     std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources;

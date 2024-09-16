@@ -67,6 +67,9 @@ public:
     void pageRight();
 
     void toggleEditArrangementComponent();
+    
+    void selectAll();
+    
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;

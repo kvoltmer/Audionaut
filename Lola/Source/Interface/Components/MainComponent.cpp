@@ -80,10 +80,6 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     resized();
 
     audiumEngine->getAudioGroupContainer()->addActionListener(this);
-    for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
-    {
-        audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
-    }
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->addActionListener(this);
 
@@ -96,10 +92,6 @@ MainComponent::~MainComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
     audiumEngine->getAudioGroupContainer()->removeActionListener(this);
-    for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
-    {
-        audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->removeActionListener(this);
-    }
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->removeActionListener(this);
     //[/Destructor_pre]
@@ -189,10 +181,6 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == audioResourceCreatedAction)
     {
         middlePanelComponent->updateUI();
-        for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
-        {
-            audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
-        }
         rightPanelComponent->updateUI();
     }
     else if (message == audioGroupCreatedAction)
@@ -298,6 +286,15 @@ void MainComponent::toggleEditArrangementComponent()
     auto editMode = !audiumEngine->getPlayListScheduler()->isEditMode();
     audiumEngine->getPlayListScheduler()->setEditMode(editMode);
     audiumEngine->getUiState()["editMode"] = editMode;
+    updateUI();
+}
+
+void MainComponent::selectAll()
+{
+    for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
+    {
+        group->setSelected(true);
+    }
     updateUI();
 }
 

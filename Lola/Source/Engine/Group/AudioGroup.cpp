@@ -219,23 +219,7 @@ int AudioGroup::getTotalHeight() const
 
 float AudioGroup::getOutputLevel(int channelNumber) const
 {
-    auto level = 0.f;
-    auto channel = getChannel(channelNumber);
-    if (channel != nullptr)
-    {
-        auto resources = getAudioResourcesAtChannel(channelNumber);
-        for (auto resource : resources)
-        {
-            // TODO: fixme
-//            if (resource->getAudioTransportSource() &&
-//                resource->getAudioTransportSource()->isPlaying())
-//            {
-//                level += resource->getAudioTransportSource()->getOutputLevel(channelNumber - resource->getChannelPosition());
-//            }
-        }
-    }
-    
-    return level;
+    return transportSourceContainer->getOutputLevel(channelNumber);
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtChannel(int channelNumber) const
@@ -308,6 +292,15 @@ std::shared_ptr<AudioSubGroup> AudioGroup::getDefaultSubGroup() const
     return  nullptr;
 }
 
+void AudioGroup::setSelected(bool bSelected)
+{
+    selectAllChannels(bSelected);
+    selectAllSubGroups(bSelected);
+    bSelected ? getPlayListContainer()->selectAll() : getPlayListContainer()->deselectAll();
+    selected = bSelected;
+}
+
+
 void AudioGroup::setChannelHeight(int height)
 {
     for (auto i = 0; i < getNumChannels(); i++)
@@ -372,16 +365,16 @@ void AudioGroup::deleteSubGroup(int atIndex)
     }
 }
 
-void AudioGroup::deselectAllSubGroups()
+void AudioGroup::selectAllSubGroups(bool bSelected)
 {
     for (auto subGroup : audioSubGroups)
-        subGroup->setSelected(false);
+        subGroup->setSelected(bSelected);
 }
 
-void AudioGroup::deselectAllChannels()
+void AudioGroup::selectAllChannels(bool bSelected)
 {
     for (auto channel : audioChannels)
-        channel->setSelected(false);
+        channel->setSelected(bSelected);
 }
 
 juce::SparseSet<int> AudioGroup::getSelectedRows() const
@@ -400,7 +393,7 @@ juce::SparseSet<int> AudioGroup::getSelectedRows() const
 
 void AudioGroup::setSelectedRows(juce::SparseSet<int>& selectedRows)
 {
-    deselectAllChannels();
+    selectAllChannels(false);
     for (auto i = 0; i < selectedRows.size(); i++)
     {
         if (auto channel = getChannel(selectedRows[i]))
