@@ -71,7 +71,7 @@ public:
     void setSelected(bool bSelected, bool deselectOthers) override
     {
         if (deselectOthers)
-            playListItem->getRegion()->getAudioGroup()->getPlayListContainer()->deselectAll();
+            playListItem->getRegion()->getAudioGroup()->getPlayListContainer()->selectAllItems(false);
         playListItem->setSelected(bSelected);
         audiumEngine->getAudioGroupContainer()->sendActionMessage(playListItemSelection);
     }

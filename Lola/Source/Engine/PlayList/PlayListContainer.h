@@ -103,8 +103,7 @@ public:
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
             
     // selection:
-    void selectAll();
-    void deselectAll();
+    void selectAllItems(bool bSelected);
     void deleteSelectedItems();
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);

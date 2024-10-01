@@ -15,6 +15,8 @@
 #include "Engine/TimeContext.h"
 #include "Engine/Core/DspClipData.h"
 #include "Engine/Core/AudioClipContainer.h"
+#include "Engine/Selection/Selectable.h"
+#include "Engine/Selection/SelectionManager.h"
 
 class AudioResourceContainer;
 class AudioResource;
@@ -27,7 +29,7 @@ class AudioChannel;
 class PositionableBase;
 class AudioGroupContainer;
 
-class AudioGroup : public audium::Streamable
+class AudioGroup : public audium::Streamable, public audium::Selectable
 {
     
 public:
@@ -36,12 +38,15 @@ public:
                std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
+               std::shared_ptr<audium::SelectionManager> selectionManager,
                juce::String nameString) :
+        audium::Selectable(selectionManager),
         owner(owner),
         audioResourceContainer(audioResourceContainer),
         audioRegionContainer(audioRegionContainer),
         playListContainer(playListContainer),
         transportSourceContainer(transportSourceContainer),
+        selectionManager(selectionManager),
         groupName(nameString.toStdString())
     {
     }
@@ -94,8 +99,8 @@ public:
     
     std::vector<std::shared_ptr<AudioSubGroup>> getAudioSubGroups() const { return audioSubGroups; }
     
-    void setSelected(bool bSelected);
-    bool isSelected() const { return selected; }
+    // audium::Selectable override
+    void setSelected(bool bSelected, bool selectChildren) override;
     
     void setChannelHeight(int height);
     
@@ -138,14 +143,13 @@ private:
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<audium::SelectionManager> selectionManager;
     std::string groupName;
     juce::Colour groupColour = juce::Colours::pink;
     
     std::vector<std::shared_ptr<AudioSubGroup>> audioSubGroups;
     
     std::vector<std::shared_ptr<AudioChannel>> audioChannels;
-    
-    bool selected = false;
         
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroup)
 

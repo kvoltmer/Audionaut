@@ -41,6 +41,7 @@ public:
                                                                      audioRegionContainer,
                                                                      playListContainer,
                                                                      owner.getTransportSourceContainer(),
+                                                                     owner.getSelectionManager(),
                                                                      std::string()));
         return audioGroup;
     }

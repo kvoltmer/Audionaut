@@ -46,10 +46,13 @@ public:
     bool perform (const InvocationInfo& info) override;
     
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
+    
+    bool isSomethingSelected();
+    
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
     NewRegionDialog newRegionDialog;
     AutoEditDialog autoEditDialog;
     
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
 };
