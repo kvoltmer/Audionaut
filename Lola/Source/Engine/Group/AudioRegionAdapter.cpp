@@ -96,7 +96,7 @@ void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
     {
         if (auto group = owner.getAudioGroup(i))
         {
-            group->getPlayListContainer()->deselectAll();
+            group->getPlayListContainer()->selectAllItems(false);
         }
     }
     

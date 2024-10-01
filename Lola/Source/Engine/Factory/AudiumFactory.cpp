@@ -16,6 +16,7 @@
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Core/AudioClipContainer.h"
+#include "Engine/Selection/SelectionManager.h"
 
 using namespace audium;
 
@@ -23,6 +24,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {
     
     auto undoManager                = std::shared_ptr<juce::UndoManager>        (new juce::UndoManager());
+    
+    auto selectionManager           = std::shared_ptr<audium::SelectionManager> (new audium::SelectionManager());
     
     auto audioDeviceManager         = std::shared_ptr<juce::AudioDeviceManager> (new juce::AudioDeviceManager());
     
@@ -44,7 +47,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto audioGroupContainer        = std::shared_ptr<AudioGroupContainer>      (new AudioGroupContainer(undoManager,
                                                                                                          tempoProvider,
                                                                                                          audioResourceContainer,
-                                                                                                         transportSourceContainer));
+                                                                                                         transportSourceContainer,
+                                                                                                         selectionManager));
     
     auto audioClipContainer         = std::shared_ptr<AudioClipContainer>       (new AudioClipContainer());
     auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioGroupContainer,

@@ -198,7 +198,7 @@ void AudioGroupContainer::deselectAll()
 {
     for (auto group : audioGroups)
     {
-        group->setSelected(false);
+        group->setSelected(false, true);
     }
 }
 
@@ -223,10 +223,25 @@ void AudioGroupContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
     {
         if (auto group = getAudioGroup(selectedRows[i]))
         {
-            group->setSelected(true);
+            group->setSelected(true, false);
         }
     }
 }
 
+
+bool AudioGroupContainer::isSomethingSelected()
+{
+    for (auto group : audioGroups)
+    {
+        if (group->isSelected())
+            return true;
+        
+//        if (group->isSomethingSelected())
+//            return true;
+    }
+    
+    return false;
+    
+}
 
 

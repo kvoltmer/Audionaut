@@ -293,8 +293,68 @@ void MainComponent::selectAll()
 {
     for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
     {
-        group->setSelected(true);
+        group->setSelected(true, true);
     }
+    updateUI();
+}
+
+void MainComponent::copy()
+{
+    
+    json jout;
+    //auto result = writeToJson(jout);
+    //outputStream.writeString(jout.dump(2));
+    
+    for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
+    {
+        if (group->isSelected())
+        {
+            auto success = group->writeToJson(jout);
+            jassert(success);
+        }
+        else
+        {
+            
+        }
+        //group->
+    }
+    //currentLayout->copySelectedToClipboard();
+    
+    //            if (currentLayout != nullptr)
+    //                currentLayout->copySelectedToClipboard();
+    //            else if (currentPaintRoutine != nullptr)
+    //                currentPaintRoutine->copySelectedToClipboard();
+
+    String test = "bla";
+    
+    juce::SystemClipboard::copyTextToClipboard (test);
+    
+    updateUI();
+}
+
+void MainComponent::paste()
+{
+    auto test = juce::SystemClipboard::getTextFromClipboard();
+//            {
+//                if (auto doc = parseXML (SystemClipboard::getTextFromClipboard()))
+//                {
+//                    if (doc->hasTagName (ComponentLayout::clipboardXmlTag))
+//                    {
+//                        if (currentLayout != nullptr)
+//                            currentLayout->paste();
+//                    }
+//                    else if (doc->hasTagName (PaintRoutine::clipboardXmlTag))
+//                    {
+//                        if (currentPaintRoutine != nullptr)
+//                            currentPaintRoutine->paste();
+//                    }
+//                }
+//            }
+    updateUI();
+}
+
+void MainComponent::duplicate()
+{
     updateUI();
 }
 

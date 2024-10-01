@@ -292,12 +292,17 @@ std::shared_ptr<AudioSubGroup> AudioGroup::getDefaultSubGroup() const
     return  nullptr;
 }
 
-void AudioGroup::setSelected(bool bSelected)
+
+void AudioGroup::setSelected(bool bSelected, bool selectChildren)
 {
-    selectAllChannels(bSelected);
-    selectAllSubGroups(bSelected);
-    bSelected ? getPlayListContainer()->selectAll() : getPlayListContainer()->deselectAll();
-    selected = bSelected;
+    if (selectChildren)
+    {
+        selectAllChannels(bSelected);
+        selectAllSubGroups(bSelected);
+        getPlayListContainer()->selectAllItems(bSelected);
+    }
+
+    audium::Selectable::setSelected(bSelected, selectChildren);
 }
 
 

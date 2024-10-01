@@ -89,6 +89,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::loopPlayList,
         CommandIDs::createRegion,
         CommandIDs::autoEdit,
+        CommandIDs::duplicate,
         CommandIDs::zoomIn,
         CommandIDs::zoomOut,
         CommandIDs::pageLeft,
@@ -102,8 +103,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         StandardApplicationCommandIDs::copy,
         StandardApplicationCommandIDs::paste,
         StandardApplicationCommandIDs::del,
-        StandardApplicationCommandIDs::selectAll,
-        StandardApplicationCommandIDs::deselectAll
+        StandardApplicationCommandIDs::selectAll
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -175,13 +175,13 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
 
         case StandardApplicationCommandIDs::cut:
             result.setInfo (TRANS ("Cut"), String(), "Editing", 0);
-            // TODO: result.setActive (isSomethingSelected());
+            result.setActive (isSomethingSelected());
             result.defaultKeypresses.add (KeyPress ('x', cmd, 0));
             break;
 
         case StandardApplicationCommandIDs::copy:
             result.setInfo (TRANS ("Copy"), String(), "Editing", 0);
-            // TODO: result.setActive (isSomethingSelected());
+            result.setActive (isSomethingSelected());
             result.defaultKeypresses.add (KeyPress ('c', cmd, 0));
             break;
 
@@ -208,7 +208,8 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
 
         case StandardApplicationCommandIDs::del:
             result.setInfo (TRANS ("Delete"), String(), "Editing", 0);
-            // TODO: result.setActive (isSomethingSelected());
+            result.defaultKeypresses.add (KeyPress (KeyPress::deleteKey, ModifierKeys::noModifiers, 0));
+            result.setActive (isSomethingSelected());
             break;
 
         case StandardApplicationCommandIDs::selectAll:
@@ -216,9 +217,8 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress ('a', cmd, 0));
             break;
 
-        case StandardApplicationCommandIDs::deselectAll:
-            result.setInfo (TRANS ("Deselect All"), String(), "Editing", 0);
-            // TODO: result.setActive (currentPaintRoutine != nullptr || currentLayout != nullptr);
+        case CommandIDs::duplicate:
+            result.setInfo (TRANS ("Duplicate"), String(), "Editing", 0);
             result.defaultKeypresses.add (KeyPress ('d', cmd, 0));
             break;
             
@@ -290,31 +290,11 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
 
         case StandardApplicationCommandIDs::copy:
-            notImplemented();
-//            if (currentLayout != nullptr)
-//                currentLayout->copySelectedToClipboard();
-//            else if (currentPaintRoutine != nullptr)
-//                currentPaintRoutine->copySelectedToClipboard();
-
+            mainComponent->copy();
             break;
 
         case StandardApplicationCommandIDs::paste:
-            notImplemented();
-//            {
-//                if (auto doc = parseXML (SystemClipboard::getTextFromClipboard()))
-//                {
-//                    if (doc->hasTagName (ComponentLayout::clipboardXmlTag))
-//                    {
-//                        if (currentLayout != nullptr)
-//                            currentLayout->paste();
-//                    }
-//                    else if (doc->hasTagName (PaintRoutine::clipboardXmlTag))
-//                    {
-//                        if (currentPaintRoutine != nullptr)
-//                            currentPaintRoutine->paste();
-//                    }
-//                }
-//            }
+            mainComponent->paste();
             break;
 
         case StandardApplicationCommandIDs::del:
@@ -329,18 +309,8 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             mainComponent->selectAll();
             break;
 
-        case StandardApplicationCommandIDs::deselectAll:
-            notImplemented();
-//            if (currentLayout != nullptr)
-//            {
-//                currentLayout->getSelectedSet().deselectAll();
-//            }
-//            else if (currentPaintRoutine != nullptr)
-//            {
-//                currentPaintRoutine->getSelectedElements().deselectAll();
-//                currentPaintRoutine->getSelectedPoints().deselectAll();
-//            }
-
+        case CommandIDs::duplicate:
+            mainComponent->duplicate();
             break;
             
         default:
@@ -348,4 +318,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     }
 
     return true;
+}
+
+bool AudiumMainWindow::isSomethingSelected()
+{
+    return getEngine()->getAudioGroupContainer()->isSomethingSelected();
 }

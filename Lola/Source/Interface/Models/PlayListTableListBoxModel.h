@@ -118,7 +118,7 @@ public:
     void backgroundClicked (const juce::MouseEvent&) override
     {
         listBox->deselectAllRows();
-        audioGroup->getPlayListContainer()->deselectAll();
+        audioGroup->getPlayListContainer()->selectAllItems(false);
         audioGroup->getAudioGroupContainer().sendActionMessage(updateAll);
     }
 

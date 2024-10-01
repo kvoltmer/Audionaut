@@ -69,6 +69,9 @@ public:
     void toggleEditArrangementComponent();
     
     void selectAll();
+    void duplicate();
+    void copy();
+    void paste();
     
     //[/UserMethods]
 

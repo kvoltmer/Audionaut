@@ -339,20 +339,11 @@ void PlayListContainer::deleteSelectedItems()
     }
 }
 
-
-void PlayListContainer::selectAll()
+void PlayListContainer::selectAllItems(bool bSelected)
 {
     for (auto item : playListItems)
     {
-        item->setSelected(true);
-    }
-}
-
-void PlayListContainer::deselectAll()
-{
-    for (auto item : playListItems)
-    {
-        item->setSelected(false);
+        item->setSelected(bSelected);
     }
 }
 
@@ -372,7 +363,7 @@ juce::SparseSet<int> PlayListContainer::getSelectedRows() const
 
 void PlayListContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 {
-    deselectAll();
+    selectAllItems(false);
     
 #if SELECT_REGIONS
     audioRegionContainer.getAudioGroupContainer().getAudioRegionAdapter().deselectAll();
