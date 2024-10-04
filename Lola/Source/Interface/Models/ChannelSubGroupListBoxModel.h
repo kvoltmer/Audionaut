@@ -87,7 +87,7 @@ public:
     
     void deleteKeyPressed (int lastRowSelected) override
     {
-        audioGroup->deleteSelectedChannels();
+        audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
     }
     
     void backgroundClicked (const juce::MouseEvent&) override

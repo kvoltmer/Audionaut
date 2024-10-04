@@ -82,14 +82,14 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> 
     //sendActionMessage(audioResourceRemovedAction);
 }
 
-void AudioResourceContainer::removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group)
+void AudioResourceContainer::removeAudioResourcesForGroup (AudioGroup *group)
 {
     jassert(group != nullptr);
     if (group != nullptr)
     {        
         for (auto it = audioResources.begin(); it != audioResources.end();)
         {
-            if ((*it).first == group)
+            if ((*it).first.get() == group)
             {
                 audioResources.erase(it++);
             }
@@ -195,7 +195,7 @@ std::vector<std::shared_ptr<AudioGroup>> AudioResourceContainer::getAudioGroups(
     return result;
 }
 
-void AudioResourceContainer::onDeleteChannel(std::shared_ptr<AudioChannel> channel)
+void AudioResourceContainer::onDeleteChannel(AudioChannel* channel)
 {
     std::vector<std::shared_ptr<AudioResource>> resourcesToRemove;
     

@@ -71,7 +71,9 @@ public:
     void setSelected(bool bSelected, bool deselectOthers) override
     {
         if (deselectOthers)
-            playListItem->getRegion()->getAudioGroup()->getPlayListContainer()->selectAllItems(false);
+        {
+            audiumEngine->getAudioGroupContainer()->selectAllGroups(false, true);
+        }
         playListItem->setSelected(bSelected);
         audiumEngine->getAudioGroupContainer()->sendActionMessage(playListItemSelection);
     }
@@ -102,19 +104,7 @@ public:
     {
         if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
         {
-            // Undo: store old state
-            auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
-
-            for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
-            {
-                group->getPlayListContainer()->deleteSelectedItems();
-            }
-            
-            // Undo: store new state and perform
-            action->storeNewState();
-            audiumEngine->getUndoManager()->perform(action.release(), "Delete Selected Playlist Items");
-            audiumEngine->getUndoManager()->beginNewTransaction();
-            
+            audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();            
             return true;
         }
         

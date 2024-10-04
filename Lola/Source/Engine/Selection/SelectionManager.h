@@ -24,13 +24,27 @@ public:
     SelectionManager() = default;
     ~SelectionManager() = default;
     
-    void selectItem(Selectable* object, bool bSelected)
+    void selectItem(std::shared_ptr<Selectable> object, bool bSelected)
     {
-        std::cout << "selectItem: " << object << " " << bSelected <<  std::endl;
+        auto it = std::find(selectedObjects.begin(), selectedObjects.end(), object);
+        
+        if (it != selectedObjects.end())
+            selectedObjects.erase(it);
+        
+        if (bSelected)
+            selectedObjects.push_back(object);
     }
+    
+    bool isSomethingSelected() const { return selectedObjects.size() > 0; }
+    
+    std::vector<std::shared_ptr<Selectable>> getSelectedObjects() const { return selectedObjects; }
+    
+    void clear() { selectedObjects.clear(); }
     
 private:
         
+    std::vector<std::shared_ptr<Selectable>> selectedObjects;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SelectionManager)
 };
 

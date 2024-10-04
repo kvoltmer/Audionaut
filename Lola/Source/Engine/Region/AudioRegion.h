@@ -14,7 +14,8 @@
 #include "Engine/TimeContext.h"
 #include "Engine/Streamable.h"
 #include "Engine/Region/AudioRegionData.h"
-
+#include "Engine/Selection/Selectable.h"
+#include "Engine/Selection/SelectionManager.h"
 
 class AudioGroup;
 class AudioResource;
@@ -22,13 +23,15 @@ class TempoProvider;
 class AudioSubGroup;
 
 //==============================================================================
-class AudioRegion : public audium::Streamable
+class AudioRegion : public audium::Streamable, public audium::Selectable
 {    
     
 public:
     AudioRegion(std::shared_ptr<AudioGroup> audioGroup,
                 std::shared_ptr<AudioSubGroup> audioSubGroup,
-                std::shared_ptr<TempoProvider> tempoProvider) :
+                std::shared_ptr<TempoProvider> tempoProvider,
+                std::shared_ptr<audium::SelectionManager> selectionManager) :
+        audium::Selectable(selectionManager),
         audioGroup(audioGroup),
         audioSubGroup(audioSubGroup),
         tempoProvider(tempoProvider)
@@ -53,9 +56,6 @@ public:
     
     juce::String getName() const { return data.name; }
     void setName(const juce::String newName) { data.name = newName.toStdString(); }
-    
-    void setSelected(bool bSelected);
-    bool isSelected() const { return data.selected; }
     
     const AudioRegionData::tRange getRegionData(audium::TimeContextType context) const;
     void setRegionData(const AudioRegionData::tRange newRegionData, audium::TimeContextType context);

@@ -67,13 +67,13 @@ int GroupListBoxModel::getRowHeight (int rowNumber) const
 
 void GroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
-    audiumEngine->getAudioGroupContainer()->deleteSelectedGroups();
+    audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
 }
 
 void GroupListBoxModel::backgroundClicked (const juce::MouseEvent&)
 {
     owner->deselectAllRows();
-    audiumEngine->getAudioGroupContainer()->deselectAll();
+    audiumEngine->getAudioGroupContainer()->selectAllGroups(false, true);
     audiumEngine->getAudioGroupContainer()->sendActionMessage(updateAll);
 }
 

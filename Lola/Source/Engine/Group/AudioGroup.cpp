@@ -191,7 +191,9 @@ void AudioGroup::ensureNumChannels(int channelsNeeded)
 
 std::shared_ptr<AudioChannel> AudioGroup::addChannel()
 {
-    auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this, (int)audioChannels.size()));
+    auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this,
+                                                                  (int)audioChannels.size(),
+                                                                  selectionManager));
     audioChannels.push_back(channel);
     return channel;
 }
@@ -340,25 +342,44 @@ std::list<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(bo
     return result;
 }
 
-void AudioGroup::deleteSelectedSubGroups()
+bool AudioGroup::deleteSelectedObject(std::shared_ptr<audium::Selectable> object)
 {
+    // TODO: proove if object exits. Unless the dynamic_cast may crash
     
-    // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(getAudioGroupContainer());
-
-    for (int i = static_cast<int>(audioSubGroups.size())-1; i >= 0; i--)
+    
+    if (AudioSubGroup* subGroup = dynamic_cast<AudioSubGroup*>(object.get()))
     {
-        if (audioSubGroups[i]->isSelected())
-        {
-            deleteSubGroup(i);
-        }
+        return deleteSubGroup(subGroup);
+    }
+    else if (AudioChannel* audioChannel = dynamic_cast<AudioChannel*>(object.get()))
+    {
+        return deleteChannel(audioChannel);
+    }
+    else if (AudioRegion* audioRegion = dynamic_cast<AudioRegion*>(object.get()))
+    {
+        return audioRegionContainer->deleteAudioRegion(audioRegion);
+    }
+    else if (PlayListItem* playListItem = dynamic_cast<PlayListItem*>(object.get()))
+    {
+        return playListContainer->deletePlayListItem(playListItem);
     }
     
-    // Undo: store new state and perform
-    action->storeNewState();
-    getAudioGroupContainer().getUndoManager()->perform(action.release(), "Delete Selected Group(s)");
-    getAudioGroupContainer().getUndoManager()->beginNewTransaction();
+    return false;
+}
+
+bool AudioGroup::deleteSubGroup(AudioSubGroup* subGroup)
+{
+    auto it = std::find_if(audioSubGroups.begin(), audioSubGroups.end(), [subGroup](const auto& item) {
+        return item.get() == subGroup;
+    });
     
+    if (it != audioSubGroups.end()) {
+        subGroup->cleanup();
+        audioSubGroups.erase(it);
+        return true;
+    }
+
+    return false;
 }
 
 void AudioGroup::deleteSubGroup(int atIndex)
@@ -373,13 +394,13 @@ void AudioGroup::deleteSubGroup(int atIndex)
 void AudioGroup::selectAllSubGroups(bool bSelected)
 {
     for (auto subGroup : audioSubGroups)
-        subGroup->setSelected(bSelected);
+        subGroup->setSelected(bSelected, false);
 }
 
 void AudioGroup::selectAllChannels(bool bSelected)
 {
     for (auto channel : audioChannels)
-        channel->setSelected(bSelected);
+        channel->setSelected(bSelected, false);
 }
 
 juce::SparseSet<int> AudioGroup::getSelectedRows() const
@@ -403,38 +424,23 @@ void AudioGroup::setSelectedRows(juce::SparseSet<int>& selectedRows)
     {
         if (auto channel = getChannel(selectedRows[i]))
         {
-            channel->setSelected(true);
+            channel->setSelected(true, false);
         }
     }
 }
 
-void AudioGroup::deleteSelectedChannels()
-{
-    // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(getAudioGroupContainer());
-
-    auto selected = getSelectedRows();
-    for (int i = selected.size()-1; i >= 0; i--)
-    {
-        auto channel = getChannel(selected[i]);
-        
-        deleteChannel(channel);
-    }
+bool AudioGroup::deleteChannel(AudioChannel* channel) {
     
-    // Undo: store new state and perform
-    action->storeNewState();
-    getAudioGroupContainer().getUndoManager()->perform(action.release(), "Delete Selected Channel(s)");
-    getAudioGroupContainer().getUndoManager()->beginNewTransaction();
+    bool result = false;
     
-}
-
-void AudioGroup::deleteChannel(std::shared_ptr<AudioChannel> channel)
-{
-    auto it = std::find(audioChannels.begin(), audioChannels.end(), channel);
-    if (it != audioChannels.end())
-    {
+    auto it = std::find_if(audioChannels.begin(), audioChannels.end(), [channel](const auto& item) {
+        return item.get() == channel;
+    });
+    
+    if (it != audioChannels.end()) {
         audioResourceContainer.onDeleteChannel(channel);
         audioChannels.erase(it);
+        result = true;
     }
     
     auto count = 0;
@@ -442,8 +448,6 @@ void AudioGroup::deleteChannel(std::shared_ptr<AudioChannel> channel)
     {
         channel->setChannelNumber(count++);
     }
-    
-    
 
     // cleanup subgroups
     std::vector<std::shared_ptr<AudioSubGroup>> subGroupsToDelete;
@@ -463,6 +467,8 @@ void AudioGroup::deleteChannel(std::shared_ptr<AudioChannel> channel)
             deleteSubGroup(static_cast<int>(std::distance(audioSubGroups.begin(), it)));
         }
     }
+    
+    return result;
 }
 
 bool AudioGroup::addAudioFiles(const juce::StringArray& filenames,

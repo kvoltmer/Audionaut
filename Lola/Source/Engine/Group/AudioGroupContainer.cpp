@@ -74,38 +74,51 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const juce:
     return audioGroup;
 }
 
-bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
+bool AudioGroupContainer::deleteAudioGroup(AudioGroup* group)
 {
+    auto it = std::find_if(audioGroups.begin(), audioGroups.end(), [group](const auto& item) {
+        return item.get() == group;
+    });
     
-    group->getAudioRegionContainer()->cleanup();
-    group->getAudioResourceContainer().removeAudioResourcesForGroup(group);
-    
-    auto it = std::find(audioGroups.begin(), audioGroups.end(), group);
-    if (it != audioGroups.end())
-    {
-        group->cleanup();
+    if (it != audioGroups.end()) {
+        group->getAudioRegionContainer()->cleanup();
+        group->getAudioResourceContainer().removeAudioResourcesForGroup(group);
         audioGroups.erase(it);
         return true;
     }
+
     return false;
 }
 
-void AudioGroupContainer::deleteSelectedGroups()
+bool AudioGroupContainer::deleteAudioGroup(std::shared_ptr<AudioGroup> group)
+{
+    return deleteAudioGroup(group.get());
+}
+
+void AudioGroupContainer::deleteSelectedObjects()
 {
     // Undo: store old state
     auto action = std::make_unique<audium::UndoableContainerAction>(*this);
+
+    auto objects = selectionManager->getSelectedObjects();
     
-    for (int i = static_cast<int>(audioGroups.size())-1; i >= 0; i--)
-    {
-        if (audioGroups[i]->isSelected())
-        {
-            deleteAudioGroup(audioGroups[i]);
+    for (auto object : objects) {
+        if (auto group = dynamic_cast<AudioGroup*>(object.get())) {
+            deleteAudioGroup(group);
+        }
+        else {
+            for (auto g : audioGroups) {
+                if (g->deleteSelectedObject(object))
+                    continue;
+            }
         }
     }
     
-    // Undo: store new state
+    selectionManager->clear();
+    
+    // Undo: store new state and perform
     action->storeNewState();
-    undoManager->perform(action.release(), "Delete Group(s)");
+    undoManager->perform(action.release(), "Delete Selected Objects(s)");
     undoManager->beginNewTransaction();
     
 }
@@ -194,12 +207,10 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getDefaultGroup() const
     return nullptr;
 }
 
-void AudioGroupContainer::deselectAll()
+void AudioGroupContainer::selectAllGroups(bool bSelected, bool selectChildren)
 {
     for (auto group : audioGroups)
-    {
-        group->setSelected(false, true);
-    }
+        group->setSelected(bSelected, selectChildren);
 }
 
 juce::SparseSet<int> AudioGroupContainer::getSelectedRows() const
@@ -218,7 +229,7 @@ juce::SparseSet<int> AudioGroupContainer::getSelectedRows() const
 
 void AudioGroupContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 {
-    deselectAll();
+    selectAllGroups(false, true);
     for (auto i = 0; i < selectedRows.size(); i++)
     {
         if (auto group = getAudioGroup(selectedRows[i]))
@@ -231,17 +242,5 @@ void AudioGroupContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 
 bool AudioGroupContainer::isSomethingSelected()
 {
-    for (auto group : audioGroups)
-    {
-        if (group->isSelected())
-            return true;
-        
-//        if (group->isSomethingSelected())
-//            return true;
-    }
-    
-    return false;
-    
+    return selectionManager->isSomethingSelected();
 }
-
-

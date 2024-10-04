@@ -19,18 +19,21 @@ using json = nlohmann::json;
 
 #include "Engine/TimeContext.h"
 #include "Engine/PlayList/PositionableBase.h"
+#include "Engine/Selection/Selectable.h"
+#include "Engine/Selection/SelectionManager.h"
 
 class AudioRegion;
 class PlayListContainer;
 class AudiumTransportSource;
 
-class PlayListItem : public PositionableBase
+class PlayListItem : public PositionableBase, public audium::Selectable
 {
     
 public:
     
     PlayListItem(const PlayListContainer &owner,
-                 std::shared_ptr<AudioRegion> audioRegion);
+                 std::shared_ptr<AudioRegion> audioRegion,
+                 std::shared_ptr<audium::SelectionManager> selectionManager);
     
     ~PlayListItem() override;
     
@@ -40,9 +43,6 @@ public:
     void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
     
     double getDurationTime(audium::TimeContextType context) const;
-    
-    void setSelected(bool bSelected) { selected = bSelected; }
-    bool isSelected() const { return selected; }
             
     double getAbsolutePosition(audium::TimeContextType context) const override;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
@@ -62,8 +62,6 @@ private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
     std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
-    
-    bool selected = false;
     
     // The absolute transport position
     double absolutePositionClocks = 0.0;

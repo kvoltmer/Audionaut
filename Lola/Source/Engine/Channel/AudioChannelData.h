@@ -18,9 +18,8 @@ using json = nlohmann::json;
 struct AudioChannelData
 {
     int height = 100;
-    bool selected = false;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AudioChannelData, height, selected);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AudioChannelData, height);
 
 

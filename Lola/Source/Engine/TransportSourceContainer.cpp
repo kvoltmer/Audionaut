@@ -79,7 +79,8 @@ void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo&
         const auto channels = info.buffer->getNumChannels();
         juce::AudioBuffer<float> tempBuffer(channels, info.numSamples);
         juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, info.startSample, info.numSamples);
-        transportSource->getNextAudioBlock(tempBufferInfo);
+        if (transportSource != nullptr)
+            transportSource->getNextAudioBlock(tempBufferInfo);
         
         for (auto c = 0; c < channels; c++)
         {

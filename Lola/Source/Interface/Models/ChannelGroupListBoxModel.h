@@ -87,12 +87,12 @@ public:
     
     void deleteKeyPressed (int lastRowSelected) override
     {
-        audiumEngine->getAudioGroupContainer()->deleteSelectedGroups();
+        audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
-        audiumEngine->getAudioGroupContainer()->deselectAll();
+        audiumEngine->getAudioGroupContainer()->selectAllGroups(false, true);
         owner->deselectAllRows();
         audiumEngine->getAudioGroupContainer()->sendActionMessage(updateMiddlePanelAction);
     }
