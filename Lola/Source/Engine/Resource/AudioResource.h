@@ -79,7 +79,7 @@ public:
     bool containsChannel(std::shared_ptr<AudioChannel> channel) const;
     int getChannelPosition() const;
     void setChannelPosition(int startChannel);
-    bool deleteChannel(std::shared_ptr<AudioChannel> channel);
+    bool deleteChannel(AudioChannel* channel);
     
 private:
 

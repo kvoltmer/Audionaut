@@ -16,7 +16,9 @@
 #include "Engine/Group/AudioClip.h"
 #include "Engine/TransportSourceContainer.h"
 
-AudioSubGroup::AudioSubGroup(AudioGroup& audioGroup) :
+AudioSubGroup::AudioSubGroup(AudioGroup& audioGroup,
+                             std::shared_ptr<audium::SelectionManager> selectionManager) :
+    audium::Selectable(selectionManager),
     audioGroup(audioGroup)
 {
     audioClip = std::shared_ptr<AudioClip> (new AudioClip(*this));
@@ -195,5 +197,3 @@ std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const
     }
     return nullptr;
 }
-
-

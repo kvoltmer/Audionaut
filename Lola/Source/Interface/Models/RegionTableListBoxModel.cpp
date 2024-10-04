@@ -91,7 +91,7 @@ void RegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)
 
 void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
-    audioGroupContainer->getAudioRegionAdapter().deleteSelectedRegions();
+    audioGroupContainer->deleteSelectedObjects();
 }
 
 juce::var RegionTableListBoxModel::getDragSourceDescription (const juce::SparseSet<int>& currentlySelectedRows)

@@ -48,7 +48,7 @@ public:
     
     
     void removeAudioResource(std::shared_ptr<AudioResource> resource);
-    void removeAudioResourcesForGroup (std::shared_ptr<AudioGroup> group);
+    void removeAudioResourcesForGroup (AudioGroup *group);
     
     // still used by auto edit
     int getNumAudioResources() const;
@@ -65,7 +65,7 @@ public:
     
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
         
-    void onDeleteChannel(std::shared_ptr<AudioChannel> channel);
+    void onDeleteChannel(AudioChannel* channel);
         
     std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
     std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }

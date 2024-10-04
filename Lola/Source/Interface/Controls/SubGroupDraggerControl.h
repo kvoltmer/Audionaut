@@ -76,8 +76,8 @@ public:
     void setSelected(bool bSelected, bool deselectOthers) override
     {
         if (deselectOthers)
-            audioSubGroup->getAudioGroup().selectAllSubGroups(false);
-        audioSubGroup->setSelected(bSelected);
+            audioSubGroup->getAudioGroup().getAudioGroupContainer().selectAllGroups(false, true);
+        audioSubGroup->setSelected(bSelected, false);
     }
     
     const juce::String getLabelString() const override
@@ -111,7 +111,7 @@ public:
     {
         if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
         {
-            audioSubGroup->getAudioGroup().deleteSelectedSubGroups();
+            audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
             return true;
         }
         

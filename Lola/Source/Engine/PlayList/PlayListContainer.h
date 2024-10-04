@@ -69,6 +69,8 @@ public:
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
     void deletePlayListItem(int atIndex, bool sendNotification = true);
+    bool deletePlayListItem(PlayListItem* playListItem);
+
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
     
     const std::vector<std::shared_ptr<PlayListItem>> getPlayListItems() const;
@@ -104,7 +106,6 @@ public:
             
     // selection:
     void selectAllItems(bool bSelected);
-    void deleteSelectedItems();
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
     void selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region);

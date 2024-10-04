@@ -144,7 +144,7 @@ public:
     void setSelected(bool bSelected, bool deselectOthers)
     {
         if (deselectOthers)
-            audioGroup->getAudioGroupContainer().deselectAll();
+            audioGroup->getAudioGroupContainer().selectAllGroups(false, true);
         audioGroup->setSelected(bSelected, false);
         
         audioGroup->getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
@@ -154,7 +154,8 @@ public:
     {
         if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
         {
-            audioGroup->getAudioGroupContainer().deleteSelectedGroups();
+            
+            audioGroup->getAudioGroupContainer().deleteSelectedObjects();
             return true;
         }
         

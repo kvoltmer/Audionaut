@@ -289,9 +289,11 @@ void AudioResource::setChannelPosition(int startChannel)
     jassert(audioChannels.size() == getNumChannels());
 }
 
-bool AudioResource::deleteChannel(std::shared_ptr<AudioChannel> channel)
+bool AudioResource::deleteChannel(AudioChannel* channel)
 {
-    auto it = std::find(audioChannels.begin(), audioChannels.end(), channel);
+    auto it = std::find_if(audioChannels.begin(), audioChannels.end(), [channel](const auto& item) {
+        return item.get() == channel;
+    });
     if (it != audioChannels.end())
     {
         audioChannels.erase(it);

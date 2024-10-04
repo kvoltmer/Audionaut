@@ -17,7 +17,7 @@
 namespace audium
 {
 
-class Selectable
+class Selectable : public std::enable_shared_from_this<Selectable>
 {
 
 public:
@@ -28,14 +28,20 @@ public:
     
     virtual ~Selectable() = default;
     
-    virtual void setSelected(bool bSelected, bool selectChildren)
-    {
-        selected = bSelected;
-        selectionManager->selectItem(this, bSelected);
+    virtual void setSelected(bool bSelected, bool selectChildren = false) {
+        if (selected != bSelected) {
+            selected = bSelected;
+            jassert(selectionManager);
+            selectionManager->selectItem(getSharedPtr(), bSelected);
+        }
     }
     
     virtual bool isSelected() const { return selected; }
     
+    std::shared_ptr<Selectable> getSharedPtr()
+    {
+        return shared_from_this();
+    }
     
 private:
     bool selected = false;

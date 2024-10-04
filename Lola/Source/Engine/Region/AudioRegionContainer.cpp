@@ -42,7 +42,10 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
 {
     jassert(group != nullptr);
     jassert(subGroup != nullptr);
-    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group, subGroup, tempoProvider));
+    auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(group,
+                                                                    subGroup,
+                                                                    tempoProvider,
+                                                                    group->getSelectionManager()));
     audioRegions.push_back(audioRegion);
     return audioRegion;
 }
@@ -74,18 +77,6 @@ void AudioRegionContainer::cleanup()
     }
     
     audioRegions.clear();
-}
-
-void AudioRegionContainer::deleteRegion(int atIndex)
-{
-    auto region = getRegion(atIndex);
-    region->deleteAssociatedItems();
-    
-    if (atIndex >= 0 && atIndex < audioRegions.size())
-    {
-        audioRegions.erase(audioRegions.begin() + atIndex);
-        audioGroupContainer.sendActionMessage(regionDeletedAction);
-    }
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) const
@@ -153,18 +144,23 @@ void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSu
 
 void AudioRegionContainer::deleteAudioRegion(std::shared_ptr<AudioRegion> region)
 {
-    region->deleteAssociatedItems();
-    
-    auto atIndex = getRegionIndex(region);
-    if (atIndex >= 0 && atIndex < audioRegions.size())
-    {
-        audioRegions.erase(audioRegions.begin() + atIndex);
-    }
-    else
-    {
-        jassertfalse;
-    }
+    deleteAudioRegion(region.get());
 }
+
+bool AudioRegionContainer::deleteAudioRegion(AudioRegion* region) {
+    auto it = std::find_if(audioRegions.begin(), audioRegions.end(), [region](const auto& item) {
+        return item.get() == region;
+    });
+    
+    if (it != audioRegions.end()) {
+        region->deleteAssociatedItems();
+        audioRegions.erase(it);
+        return true;
+    }
+
+    return false;
+}
+
 
 std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const
 {

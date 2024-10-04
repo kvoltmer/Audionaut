@@ -13,12 +13,17 @@
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioGroup.h"
 #include "Engine/Channel/AudioChannelData.h"
+#include "Engine/Selection/Selectable.h"
+#include "Engine/Selection/SelectionManager.h"
 
-class AudioChannel
+class AudioChannel : public audium::Selectable
 {
     
 public:
-    AudioChannel(AudioGroup &audioGroup, int channelNumber) :
+    AudioChannel(AudioGroup &audioGroup,
+                 int channelNumber,
+                 std::shared_ptr<audium::SelectionManager> selectionManager) :
+        audium::Selectable(selectionManager),
         audioGroup(audioGroup),
         channelNumber(channelNumber)
     {
@@ -26,9 +31,6 @@ public:
     
     int getChannelHeight() const { return data.height; }
     void setChannelHeight(int height) { data.height = height; }
-        
-    void setSelected(bool bSelected) { data.selected = bSelected; }
-    bool isSelected() const { return data.selected; }
 
     int getChannelNumber() const
     {

@@ -53,8 +53,9 @@ public:
     std::shared_ptr<AudioGroup> createNewAudioGroup(const juce::String nameString);
     void cleanup();
     
+    bool deleteAudioGroup(AudioGroup* group);
     bool deleteAudioGroup(std::shared_ptr<AudioGroup> group);
-    void deleteSelectedGroups();
+    void deleteSelectedObjects();
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
@@ -72,7 +73,7 @@ public:
     
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const { return audioGroups; }
         
-    void deselectAll();
+    void selectAllGroups(bool bSelected, bool selectChildren);
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
     bool isSomethingSelected();

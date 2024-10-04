@@ -298,11 +298,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
 
         case StandardApplicationCommandIDs::del:
-            notImplemented();
-//            if (currentLayout != nullptr)
-//                currentLayout->deleteSelected();
-//            else if (currentPaintRoutine != nullptr)
-//                currentPaintRoutine->deleteSelected();
+            getEngine()->getAudioGroupContainer()->deleteSelectedObjects();
             break;
 
         case StandardApplicationCommandIDs::selectAll:
