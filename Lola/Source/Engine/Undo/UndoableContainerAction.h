@@ -66,7 +66,6 @@ struct UndoableContainerAction final : public juce::UndoableAction
     juce::MemoryBlock newMemoryBlock;
     bool rebuild = true;
     
-    //JUCE_DECLARE_NON_COPYABLE (UndoableContainerAction)
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UndoableContainerAction)
 };
 

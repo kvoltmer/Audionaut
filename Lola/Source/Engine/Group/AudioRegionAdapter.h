@@ -32,8 +32,6 @@ public:
     
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
-
-    void deleteSelectedRegions();
     
     void createRegionsFromSelection(juce::String name, bool arrangementMode);
     void setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context);

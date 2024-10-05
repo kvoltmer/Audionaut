@@ -111,13 +111,15 @@ public:
     {
         auto selectedRows = listBox->getSelectedRows();
         audioGroup->getPlayListContainer()->setSelectedRows(selectedRows);
-        audioGroup->getPlayListContainer()->sendActionMessage(updateAll);
+        // only update transport (updateAll would mess with the keyboard focus)
+        audioGroup->getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
         listBox->deselectAllRows();
-        audioGroup->getPlayListContainer()->deselectAll();
+        audioGroup->getPlayListContainer()->selectAllItems(false);
+        audioGroup->getAudioGroupContainer().sendActionMessage(updateAll);
     }
 
     

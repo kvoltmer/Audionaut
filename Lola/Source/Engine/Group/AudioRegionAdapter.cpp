@@ -96,7 +96,7 @@ void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
     {
         if (auto group = owner.getAudioGroup(i))
         {
-            group->getPlayListContainer()->deselectAll();
+            group->getPlayListContainer()->selectAllItems(false);
         }
     }
     
@@ -125,25 +125,6 @@ void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
         }
     }
 }
-
-void AudioRegionAdapter::deleteSelectedRegions()
-{
-    // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(owner);
-  
-    auto selectedRegions = getSelectedAudioRegions();
-    
-    for (auto region : selectedRegions)
-    {
-        region->getAudioGroup()->getAudioRegionContainer()->deleteAudioRegion(region);
-    }
-    
-    // Undo: store new state
-    action->storeNewState();
-    owner.getUndoManager()->perform(action.release(), "Delete Region(s)");
-    owner.getUndoManager()->beginNewTransaction();
-}
-
 
 void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arrangementMode)
 {

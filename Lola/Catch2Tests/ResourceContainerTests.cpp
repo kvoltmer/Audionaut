@@ -21,7 +21,7 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
         
         WHEN("adding audio resources without any group provided")
         {
-            auto group = AudioGroupFactory::createAudioGroup(*groupContainer, *resourceContainer);
+            auto group = AudioGroupFactory::createAudioGroup(*groupContainer, resourceContainer);
             auto subGroup = group->createNewAudioSubGroup(0.0, audium::clocks);
             for (int i = 0; i < numResources; i++)
             {

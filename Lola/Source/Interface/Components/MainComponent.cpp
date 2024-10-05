@@ -80,10 +80,6 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     resized();
 
     audiumEngine->getAudioGroupContainer()->addActionListener(this);
-    for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
-    {
-        audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
-    }
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->addActionListener(this);
 
@@ -96,10 +92,6 @@ MainComponent::~MainComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
     audiumEngine->getAudioGroupContainer()->removeActionListener(this);
-    for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
-    {
-        audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->removeActionListener(this);
-    }
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->removeActionListener(this);
     //[/Destructor_pre]
@@ -189,10 +181,6 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == audioResourceCreatedAction)
     {
         middlePanelComponent->updateUI();
-        for (auto i = 0; i < audiumEngine->getAudioGroupContainer()->getNumItems(); i++)
-        {
-            audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getPlayListContainer()->addActionListener(this);
-        }
         rightPanelComponent->updateUI();
     }
     else if (message == audioGroupCreatedAction)
@@ -256,6 +244,7 @@ void MainComponent::updateUI()
 
 void MainComponent::updateWindowTitle()
 {
+#if !defined(CATCH2_TESTS)
     if (getParentComponent() != nullptr)
     {
         auto fileName = audiumEngine->getCurrentFile().getFileNameWithoutExtension();
@@ -268,6 +257,7 @@ void MainComponent::updateWindowTitle()
         auto appName = AudiumApplication::getApp().getApplicationName();
         getParentComponent()->setName(fileName + " - " + appName);
     }
+#endif
 }
 
 void MainComponent::zoomIn()
@@ -296,6 +286,75 @@ void MainComponent::toggleEditArrangementComponent()
     auto editMode = !audiumEngine->getPlayListScheduler()->isEditMode();
     audiumEngine->getPlayListScheduler()->setEditMode(editMode);
     audiumEngine->getUiState()["editMode"] = editMode;
+    updateUI();
+}
+
+void MainComponent::selectAll()
+{
+    for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
+    {
+        group->setSelected(true, true);
+    }
+    updateUI();
+}
+
+void MainComponent::copy()
+{
+    
+    json jout;
+    //auto result = writeToJson(jout);
+    //outputStream.writeString(jout.dump(2));
+    
+    for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
+    {
+        if (group->isSelected())
+        {
+            auto success = group->writeToJson(jout);
+            jassert(success);
+        }
+        else
+        {
+            
+        }
+        //group->
+    }
+    //currentLayout->copySelectedToClipboard();
+    
+    //            if (currentLayout != nullptr)
+    //                currentLayout->copySelectedToClipboard();
+    //            else if (currentPaintRoutine != nullptr)
+    //                currentPaintRoutine->copySelectedToClipboard();
+
+    String test = "bla";
+    
+    juce::SystemClipboard::copyTextToClipboard (test);
+    
+    updateUI();
+}
+
+void MainComponent::paste()
+{
+    auto test = juce::SystemClipboard::getTextFromClipboard();
+//            {
+//                if (auto doc = parseXML (SystemClipboard::getTextFromClipboard()))
+//                {
+//                    if (doc->hasTagName (ComponentLayout::clipboardXmlTag))
+//                    {
+//                        if (currentLayout != nullptr)
+//                            currentLayout->paste();
+//                    }
+//                    else if (doc->hasTagName (PaintRoutine::clipboardXmlTag))
+//                    {
+//                        if (currentPaintRoutine != nullptr)
+//                            currentPaintRoutine->paste();
+//                    }
+//                }
+//            }
+    updateUI();
+}
+
+void MainComponent::duplicate()
+{
     updateUI();
 }
 

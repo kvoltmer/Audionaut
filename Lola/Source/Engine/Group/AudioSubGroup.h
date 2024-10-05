@@ -15,6 +15,8 @@
 
 #include "Engine/TimeContext.h"
 #include "Engine/Streamable.h"
+#include "Engine/Selection/Selectable.h"
+#include "Engine/Selection/SelectionManager.h"
 
 using json = nlohmann::json;
 
@@ -24,12 +26,12 @@ class AudioRegion;
 class AudioClip;
 class AudiumTransportSource;
 
-class AudioSubGroup : public audium::Streamable
+class AudioSubGroup : public audium::Streamable, public audium::Selectable
 {
         
 public:
-    AudioSubGroup(AudioGroup& audioGroup);
-    ~AudioSubGroup() override;
+    AudioSubGroup(AudioGroup& audioGroup, std::shared_ptr<audium::SelectionManager> selectionManager);
+    virtual ~AudioSubGroup() override;
     void cleanup();
     void cleanupAudioRegions();
     void cleanupAudioResources();
@@ -52,10 +54,6 @@ public:
 
     AudioGroup& getAudioGroup() const { return audioGroup; }
     
-    void setSelected(bool bSelected) { selected = bSelected; }
-    bool isSelected() const { return selected; }
-
-
     std::shared_ptr<AudioClip> getAudioClip() const { return audioClip; }
     
     const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
@@ -67,7 +65,6 @@ private:
 
     std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
     
-    bool selected = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioSubGroup)
 

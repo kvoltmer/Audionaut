@@ -15,6 +15,7 @@
 #include "Engine/TimeContext.h"
 #include "Engine/Region/AudioRegionData.h"
 #include "Engine/Group/AudioRegionAdapter.h"
+#include "Engine/Selection/SelectionManager.h"
 
 class AudioGroup;
 class AudioResourceContainer;
@@ -34,11 +35,13 @@ public:
     AudioGroupContainer(std::shared_ptr<juce::UndoManager> undoManager,
                         std::shared_ptr<TempoProvider> tempoProvider,
                         std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                        std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
+                        std::shared_ptr<TransportSourceContainer> transportSourceContainer,
+                        std::shared_ptr<audium::SelectionManager> selectionManager) :
         undoManager(undoManager),
         tempoProvider(tempoProvider),
         audioResourceContainer(audioResourceContainer),
         transportSourceContainer(transportSourceContainer),
+        selectionManager(selectionManager),
         audioRegionAdapter(*this)
     {
     }
@@ -50,8 +53,9 @@ public:
     std::shared_ptr<AudioGroup> createNewAudioGroup(const juce::String nameString);
     void cleanup();
     
+    bool deleteAudioGroup(AudioGroup* group);
     bool deleteAudioGroup(std::shared_ptr<AudioGroup> group);
-    void deleteSelectedGroups();
+    void deleteSelectedObjects();
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
@@ -69,13 +73,15 @@ public:
     
     std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const { return audioGroups; }
         
-    void deselectAll();
+    void selectAllGroups(bool bSelected, bool selectChildren);
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
+    bool isSomethingSelected();
     
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const noexcept { return transportSourceContainer; }
+    std::shared_ptr<audium::SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
@@ -84,6 +90,7 @@ private:
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<audium::SelectionManager> selectionManager;
     
     std::vector<std::shared_ptr<AudioGroup>> audioGroups;
     int selectedGroup = 0;

@@ -41,12 +41,13 @@ public:
                                                                      audioRegionContainer,
                                                                      playListContainer,
                                                                      owner.getTransportSourceContainer(),
+                                                                     owner.getSelectionManager(),
                                                                      std::string()));
         return audioGroup;
     }
     
     static std::shared_ptr<AudioSubGroup> createAudioSubGroup(AudioGroup &audioGroup)
     {
-        return std::shared_ptr<AudioSubGroup>(new AudioSubGroup(audioGroup));
+        return std::shared_ptr<AudioSubGroup>(new AudioSubGroup(audioGroup, audioGroup.getSelectionManager()));
     }
 };
