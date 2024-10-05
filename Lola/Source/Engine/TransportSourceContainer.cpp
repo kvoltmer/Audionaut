@@ -15,17 +15,14 @@
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
     auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource(audioFormatReaderSource));
-    audioTransportSources.push_back(transportSource);
+    audioTransportSources.add(transportSource);
     return transportSource;
 }
 
 bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource)
 {
-    auto it = std::find(audioTransportSources.begin(), audioTransportSources.end(), audioTransportSource);
-    if (it != audioTransportSources.end())
-    {
-        audioTransportSource->setSource(nullptr);
-        audioTransportSources.erase(it);
+    if (audioTransportSources.contains(audioTransportSource)) {
+        audioTransportSources.remove(getTransportSourceIndex(audioTransportSource));
         return true;
     }
     return false;
@@ -38,9 +35,9 @@ void TransportSourceContainer::cleanup()
 
 void TransportSourceContainer::prepareToPlay (double sampleRate, int blockSize)
 {
-    for (auto transportSources : audioTransportSources)
+    for (auto transportSource : audioTransportSources)
     {
-        transportSources->prepareToPlay(blockSize, sampleRate);
+        transportSource->prepareToPlay(blockSize, sampleRate);
     }
 }
 
@@ -94,28 +91,23 @@ std::shared_ptr<AudiumTransportSource> TransportSourceContainer::getTransportSou
     if (index >= 0 &&
         index < (int)audioTransportSources.size())
     {
-        auto it = audioTransportSources.begin();
-        std::advance(it, index);
-        return (*it);
+        return audioTransportSources[index];
     }
     return nullptr;
 }
 
 int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const
 {
-    auto it = std::find_if(audioTransportSources.begin(), audioTransportSources.end(), [searchTransportSource](const auto& item) {
-        return item == searchTransportSource;
-    });
-    if (it == audioTransportSources.end())
+    int count = 0;
+    for (auto transportSource : audioTransportSources)
     {
-        jassertfalse;
-        return -1; // not found
+        if (transportSource == searchTransportSource)
+            break;
+        
+        count++;
     }
-    else
-    {
-        auto index = std::distance(audioTransportSources.begin(), it);
-        return static_cast<int>(index);
-    }
+    
+    return count;
 }
 
 float TransportSourceContainer::getOutputLevel(int channelNumber) const
