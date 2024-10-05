@@ -210,7 +210,7 @@ bool RegionEditControl::keyPressed (const KeyPress& key, Component* originatingC
 {
     if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
     {
-        audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().deleteSelectedRegions();
+        audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
         return true;
     }
     

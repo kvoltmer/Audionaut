@@ -67,6 +67,12 @@ public:
     void pageRight();
 
     void toggleEditArrangementComponent();
+    
+    void selectAll();
+    void duplicate();
+    void copy();
+    void paste();
+    
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;

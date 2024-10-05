@@ -76,17 +76,15 @@ void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo&
 {
     for (auto transportSource : audioTransportSources)
     {
+        const auto channels = info.buffer->getNumChannels();
+        juce::AudioBuffer<float> tempBuffer(channels, info.numSamples);
+        juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, info.startSample, info.numSamples);
         if (transportSource != nullptr)
-        {
-            const auto channels = info.buffer->getNumChannels();
-            juce::AudioBuffer<float> tempBuffer(channels, info.numSamples);
-            juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, info.startSample, info.numSamples);
             transportSource->getNextAudioBlock(tempBufferInfo);
-            
-            for (auto c = 0; c < channels; c++)
-            {
-                info.buffer->addFrom(c, info.startSample, tempBuffer.getReadPointer(c), info.numSamples);
-            }
+        
+        for (auto c = 0; c < channels; c++)
+        {
+            info.buffer->addFrom(c, info.startSample, tempBuffer.getReadPointer(c), info.numSamples);
         }
     }
 }
@@ -118,4 +116,17 @@ int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTran
         auto index = std::distance(audioTransportSources.begin(), it);
         return static_cast<int>(index);
     }
+}
+
+float TransportSourceContainer::getOutputLevel(int channelNumber) const
+{
+    
+    auto level = 0.f;
+    
+    for (auto transportSource : audioTransportSources)
+    {
+        level += transportSource->getOutputLevel(channelNumber /* - resource->getChannelPosition() */);
+    }
+    
+    return level;
 }

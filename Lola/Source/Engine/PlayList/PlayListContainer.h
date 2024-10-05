@@ -44,8 +44,7 @@ void MoveItemBefore(C& container, size_t currentIndex, size_t indexOfItemToPlace
     }
 }
 
-class PlayListContainer :   public audium::Streamable,
-                            public juce::ActionBroadcaster
+class PlayListContainer : public audium::Streamable
 {
     
 public:
@@ -70,6 +69,8 @@ public:
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
     void deletePlayListItem(int atIndex, bool sendNotification = true);
+    bool deletePlayListItem(PlayListItem* playListItem);
+
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
     
     const std::vector<std::shared_ptr<PlayListItem>> getPlayListItems() const;
@@ -104,8 +105,7 @@ public:
     std::vector<std::shared_ptr<PlayListItem>> playListItems;
             
     // selection:
-    void deselectAll();
-    void deleteSelectedItems();
+    void selectAllItems(bool bSelected);
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
     void selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region);

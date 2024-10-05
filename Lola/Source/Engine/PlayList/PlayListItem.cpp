@@ -18,7 +18,9 @@
 #include "Engine/TransportSourceContainer.h"
 
 PlayListItem::PlayListItem(const PlayListContainer &owner,
-                           std::shared_ptr<AudioRegion> audioRegion) :
+                           std::shared_ptr<AudioRegion> audioRegion,
+                           std::shared_ptr<audium::SelectionManager> selectionManager) :
+    audium::Selectable(selectionManager),
     owner(owner),
     audioRegion(audioRegion)
 {
@@ -95,7 +97,7 @@ bool PlayListItem::writeToJson (json& output)
     output["region_id"] = owner.getAudioRegionContainer().getRegionIndex(getRegion());
     output["region_name"] = getRegion()->getName().toStdString();
     output["position_clocks"] = absolutePositionClocks;
-    output["selected"] = selected;
+    output["selected"] = isSelected();
     return true;
 }
 
@@ -112,7 +114,7 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
         absolutePositionClocks = input.at("position_clocks").get<double>();
     
     if (input.contains("selected"))
-        selected = input.at("selected").get<bool>();
+        setSelected(input.at("selected").get<bool>());
 
     return true;
 }

@@ -45,6 +45,7 @@ juce_generate_juce_header(${APP_NAME})
 
 file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
+        ${SRC_PATH}/Engine/Core/*.cpp
         ${SRC_PATH}/Engine/AutoEdit/*.cpp
         ${SRC_PATH}/Engine/Channel/*.cpp
         ${SRC_PATH}/Engine/Factory/*.cpp
@@ -104,6 +105,7 @@ target_include_directories(${APP_NAME}
 target_compile_definitions(${APP_NAME}
     PRIVATE
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
+        CATCH2_TESTS=1
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
         JUCE_USE_CURL=0)    # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
 

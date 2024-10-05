@@ -67,14 +67,14 @@ int GroupListBoxModel::getRowHeight (int rowNumber) const
 
 void GroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 {
-    audiumEngine->getAudioGroupContainer()->deleteSelectedGroups();
+    audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
 }
 
 void GroupListBoxModel::backgroundClicked (const juce::MouseEvent&)
 {
     owner->deselectAllRows();
-    audiumEngine->getAudioGroupContainer()->deselectAll();
-    audiumEngine->getAudioGroupContainer()->sendActionMessage(updateMiddlePanelAction);
+    audiumEngine->getAudioGroupContainer()->selectAllGroups(false, true);
+    audiumEngine->getAudioGroupContainer()->sendActionMessage(updateAll);
 }
 
 void GroupListBoxModel::listWasScrolled()
@@ -86,5 +86,5 @@ void GroupListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
     auto selectedRows = owner->getSelectedRows();
     audiumEngine->getAudioGroupContainer()->setSelectedRows(selectedRows);
-    audiumEngine->getAudioGroupContainer()->sendActionMessage(updateMiddlePanelAction);
+    audiumEngine->getAudioGroupContainer()->sendActionMessage(updateAll);
 }
