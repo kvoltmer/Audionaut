@@ -41,6 +41,8 @@ public:
     
     void clear() { selectedObjects.clear(); }
     
+    void deselectAll();
+    
 private:
         
     std::vector<std::shared_ptr<Selectable>> selectedObjects;

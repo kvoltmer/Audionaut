@@ -98,8 +98,8 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     }
     
     // we use the shared_ptr
-    const auto group = getAudioGroup().getAudioGroupContainer().getSharedPtr(&getAudioGroup());
-    const auto subGroup = getAudioGroup().getSharedPtr(this);
+    std::shared_ptr<AudioGroup> group = std::dynamic_pointer_cast<AudioGroup> (getAudioGroup().getSharedPtr());
+    std::shared_ptr<AudioSubGroup> subGroup = std::dynamic_pointer_cast<AudioSubGroup> (getSharedPtr());
     
     if (rebuild)
         cleanup();

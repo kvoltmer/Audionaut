@@ -76,7 +76,7 @@ public:
     void setSelected(bool bSelected, bool deselectOthers) override
     {
         if (deselectOthers)
-            audioSubGroup->getAudioGroup().getAudioGroupContainer().selectAllGroups(false, true);
+            audioSubGroup->getAudioGroup().getSelectionManager()->deselectAll();
         audioSubGroup->setSelected(bSelected, false);
     }
     

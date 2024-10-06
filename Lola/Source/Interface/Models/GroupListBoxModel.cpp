@@ -73,7 +73,7 @@ void GroupListBoxModel::deleteKeyPressed (int lastRowSelected)
 void GroupListBoxModel::backgroundClicked (const juce::MouseEvent&)
 {
     owner->deselectAllRows();
-    audiumEngine->getAudioGroupContainer()->selectAllGroups(false, true);
+    audiumEngine->getAudioGroupContainer()->getSelectionManager()->deselectAll();
     audiumEngine->getAudioGroupContainer()->sendActionMessage(updateAll);
 }
 

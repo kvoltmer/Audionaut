@@ -17,6 +17,7 @@
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/Selection/SelectableObjectContainer.h"
 
 class AudioResourceContainer;
 class AudioResource;
@@ -28,6 +29,8 @@ class AudioRegionContainer;
 class AudioChannel;
 class PositionableBase;
 class AudioGroupContainer;
+
+typedef audium::SelectableObjectContainer<AudioSubGroup> tAudioSubGroupContainer;
 
 class AudioGroup : public audium::Streamable, public audium::Selectable
 {
@@ -49,11 +52,13 @@ public:
         selectionManager(selectionManager),
         groupName(nameString.toStdString())
     {
+        audioSubGroupContainer = std::shared_ptr<tAudioSubGroupContainer> (new tAudioSubGroupContainer());
+
     }
     
     virtual ~AudioGroup() override;
     
-    void cleanup();
+    void cleanup() override;
     
     // group name:
     const juce::String getName() const { return groupName; }
@@ -96,12 +101,8 @@ public:
     
     // sub groups:
     std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition, audium::TimeContextType context);
-    std::shared_ptr<AudioSubGroup> getSharedPtr(const AudioSubGroup* subGroup) const;
     std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;
-    std::vector<std::shared_ptr<AudioSubGroup>> getAudioSubGroups() const { return audioSubGroups; }
-    bool deleteSubGroup(AudioSubGroup* subGroup);
-    void deleteSubGroup(int atIndex);
-    void selectAllSubGroups(bool bSelected);
+    std::vector<std::shared_ptr<AudioSubGroup>> getAudioSubGroups() const { return audioSubGroupContainer->getObjects(); }
     
     // channel height:
     int getTotalHeight() const;
@@ -153,11 +154,15 @@ private:
     std::string groupName;
     
     juce::Colour groupColour = juce::Colours::pink;
-    
-    std::vector<std::shared_ptr<AudioSubGroup>> audioSubGroups;
+        
     
     std::vector<std::shared_ptr<AudioChannel>> audioChannels;
         
+public:
+    std::shared_ptr<tAudioSubGroupContainer> audioSubGroupContainer;
+    
+private:
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroup)
 
 };

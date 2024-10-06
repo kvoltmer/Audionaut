@@ -48,16 +48,6 @@ std::shared_ptr<AudioGroup> AudioGroupContainer::getAudioGroup(int index) const
     return nullptr;
 }
 
-std::shared_ptr<AudioGroup> AudioGroupContainer::getSharedPtr(const AudioGroup* g) const
-{
-    for (auto group : audioGroups)
-    {
-        if (group.get() == g)
-            return group;
-    }
-    return nullptr;
-}
-
 std::shared_ptr<AudioGroup> AudioGroupContainer::createNewAudioGroup(const juce::String nameString)
 {
     auto audioGroup = AudioGroupFactory::createAudioGroup(*this, audioResourceContainer);
@@ -229,7 +219,7 @@ juce::SparseSet<int> AudioGroupContainer::getSelectedRows() const
 
 void AudioGroupContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 {
-    selectAllGroups(false, true);
+    getSelectionManager()->deselectAll();
     for (auto i = 0; i < selectedRows.size(); i++)
     {
         if (auto group = getAudioGroup(selectedRows[i]))

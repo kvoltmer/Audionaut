@@ -17,6 +17,8 @@
 namespace audium
 {
 
+class SelectionManager;
+
 class Selectable : public std::enable_shared_from_this<Selectable>
 {
 
@@ -42,6 +44,8 @@ public:
     {
         return shared_from_this();
     }
+    
+    virtual void cleanup() {}
     
 private:
     bool selected = false;
