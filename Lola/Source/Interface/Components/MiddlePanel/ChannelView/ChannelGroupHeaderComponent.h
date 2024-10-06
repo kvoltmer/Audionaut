@@ -144,7 +144,7 @@ public:
     void setSelected(bool bSelected, bool deselectOthers)
     {
         if (deselectOthers)
-            audioGroup->getAudioGroupContainer().selectAllGroups(false, true);
+            audioGroup->getSelectionManager()->deselectAll();
         audioGroup->setSelected(bSelected, false);
         
         audioGroup->getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);

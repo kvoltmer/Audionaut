@@ -35,13 +35,14 @@ public:
                                                                                            owner.getTempoProvider(),
                                                                                            owner.getTransportSourceContainer()));
         
-
+//        auto audioSubGroups = std::shared_ptr<tSubGroupContainer> (new tSubGroupContainer());
         auto audioGroup = std::shared_ptr<AudioGroup>(new AudioGroup(owner,
                                                                      *audioResourceContainer.get(),
                                                                      audioRegionContainer,
                                                                      playListContainer,
                                                                      owner.getTransportSourceContainer(),
                                                                      owner.getSelectionManager(),
+                                                                     //audioSubGroups,
                                                                      std::string()));
         return audioGroup;
     }

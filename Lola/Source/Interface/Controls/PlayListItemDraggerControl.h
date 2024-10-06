@@ -72,7 +72,7 @@ public:
     {
         if (deselectOthers)
         {
-            audiumEngine->getAudioGroupContainer()->selectAllGroups(false, true);
+            audiumEngine->getAudioGroupContainer()->getSelectionManager()->deselectAll();
         }
         playListItem->setSelected(bSelected);
         audiumEngine->getAudioGroupContainer()->sendActionMessage(playListItemSelection);

@@ -92,7 +92,7 @@ public:
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
-        audiumEngine->getAudioGroupContainer()->selectAllGroups(false, true);
+        audiumEngine->getAudioGroupContainer()->getSelectionManager()->deselectAll();
         owner->deselectAllRows();
         audiumEngine->getAudioGroupContainer()->sendActionMessage(updateMiddlePanelAction);
     }

@@ -66,11 +66,7 @@ const std::vector<std::shared_ptr<AudioRegion>> AudioRegionAdapter::getSelectedA
 
 void AudioRegionAdapter::deselectAll()
 {
-    auto audioRegions = getAudioRegions();
-    for (auto region : audioRegions)
-    {
-        region->setSelected(false);
-    }
+    owner.getSelectionManager()->deselectAll();
 }
 
 juce::SparseSet<int> AudioRegionAdapter::getSelectedRows() const

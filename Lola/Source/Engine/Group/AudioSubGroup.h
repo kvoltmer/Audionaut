@@ -32,7 +32,7 @@ class AudioSubGroup : public audium::Streamable, public audium::Selectable
 public:
     AudioSubGroup(AudioGroup& audioGroup, std::shared_ptr<audium::SelectionManager> selectionManager);
     virtual ~AudioSubGroup() override;
-    void cleanup();
+    void cleanup() override;
     void cleanupAudioRegions();
     void cleanupAudioResources();
     void cleanupTransportSources();

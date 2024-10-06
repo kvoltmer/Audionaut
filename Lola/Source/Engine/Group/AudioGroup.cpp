@@ -29,11 +29,7 @@ AudioGroup::~AudioGroup()
 
 void AudioGroup::cleanup()
 {
-    for (auto subGroup : audioSubGroups)
-    {
-        subGroup->cleanup();
-    }
-    audioSubGroups.clear();
+    audioSubGroupContainer->cleanup();
     
     audioChannels.clear();
     playListContainer->cleanup();
@@ -78,7 +74,7 @@ bool AudioGroup::writeToJson (json& output)
         output["channels"] += channel->data;
     }
     
-    for (auto subGroup : audioSubGroups)
+    for (auto subGroup : audioSubGroupContainer->getObjects())
     {
         json j;
         subGroup->writeToJson(j);
@@ -144,11 +140,11 @@ bool AudioGroup::readFromJson (json& input, bool rebuild)
         if (rebuild)
         {
             subGroup = AudioGroupFactory::createAudioSubGroup(*this);
-            audioSubGroups.push_back(subGroup);
+            audioSubGroupContainer->push_back(subGroup);
         }
         else
         {
-            subGroup = audioSubGroups[i];
+            subGroup = audioSubGroupContainer->getObjects()[i];
         }
         
         if (!subGroup->readFromJson(jsonElement, rebuild))
@@ -173,7 +169,7 @@ bool AudioGroup::readFromStream (juce::InputStream& inputStream, bool rebuild)
 
 int AudioGroup::getSizeInUnits()
 {
-    return (int)audioSubGroups.size() * 16;
+    return (int)audioSubGroupContainer->getObjects().size() * 16;
 }
 
 int AudioGroup::getNumChannels() const
@@ -269,26 +265,15 @@ std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(double transpo
 {
     auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
     subGroup->getAudioClip()->setAbsolutePosition(transportPosition, context);
-    audioSubGroups.push_back(subGroup);
+    audioSubGroupContainer->push_back(subGroup);
     return subGroup;
 }
 
-std::shared_ptr<AudioSubGroup> AudioGroup::getSharedPtr(const AudioSubGroup* sub) const
-{
-    for (auto subGroup : audioSubGroups)
-    {
-        if (subGroup.get() == sub)
-            return subGroup;
-    }
-    return nullptr;
-}
-
-
 std::shared_ptr<AudioSubGroup> AudioGroup::getDefaultSubGroup() const
 {
-    if (audioSubGroups.size() > 0)
+    if (audioSubGroupContainer->getObjects().size() > 0)
     {
-        return audioSubGroups[0];
+        return audioSubGroupContainer->getObjects()[0];
     }
     jassertfalse;
     return  nullptr;
@@ -300,7 +285,7 @@ void AudioGroup::setSelected(bool bSelected, bool selectChildren)
     if (selectChildren)
     {
         selectAllChannels(bSelected);
-        selectAllSubGroups(bSelected);
+        audioSubGroupContainer->selectAllObjects(bSelected);
         getPlayListContainer()->selectAllItems(bSelected);
     }
 
@@ -349,7 +334,7 @@ bool AudioGroup::deleteSelectedObject(std::shared_ptr<audium::Selectable> object
     
     if (AudioSubGroup* subGroup = dynamic_cast<AudioSubGroup*>(object.get()))
     {
-        return deleteSubGroup(subGroup);
+        return audioSubGroupContainer->deleteObject(subGroup);
     }
     else if (AudioChannel* audioChannel = dynamic_cast<AudioChannel*>(object.get()))
     {
@@ -367,35 +352,6 @@ bool AudioGroup::deleteSelectedObject(std::shared_ptr<audium::Selectable> object
     return false;
 }
 
-bool AudioGroup::deleteSubGroup(AudioSubGroup* subGroup)
-{
-    auto it = std::find_if(audioSubGroups.begin(), audioSubGroups.end(), [subGroup](const auto& item) {
-        return item.get() == subGroup;
-    });
-    
-    if (it != audioSubGroups.end()) {
-        subGroup->cleanup();
-        audioSubGroups.erase(it);
-        return true;
-    }
-
-    return false;
-}
-
-void AudioGroup::deleteSubGroup(int atIndex)
-{
-    if (atIndex >= 0 && atIndex < audioSubGroups.size())
-    {
-        audioSubGroups[atIndex]->cleanup();
-        audioSubGroups.erase(audioSubGroups.begin() + atIndex);
-    }
-}
-
-void AudioGroup::selectAllSubGroups(bool bSelected)
-{
-    for (auto subGroup : audioSubGroups)
-        subGroup->setSelected(bSelected, false);
-}
 
 void AudioGroup::selectAllChannels(bool bSelected)
 {
@@ -451,7 +407,7 @@ bool AudioGroup::deleteChannel(AudioChannel* channel) {
 
     // cleanup subgroups
     std::vector<std::shared_ptr<AudioSubGroup>> subGroupsToDelete;
-    for (auto subGroup : audioSubGroups)
+    for (auto subGroup : audioSubGroupContainer->getObjects())
     {
         if (subGroup->getAudioResources().size() == 0)
         {
@@ -461,11 +417,7 @@ bool AudioGroup::deleteChannel(AudioChannel* channel) {
     
     for (auto item : subGroupsToDelete)
     {
-        auto it = std::find(audioSubGroups.begin(), audioSubGroups.end(), item);
-        if (it != audioSubGroups.end())
-        {
-            deleteSubGroup(static_cast<int>(std::distance(audioSubGroups.begin(), it)));
-        }
+        audioSubGroupContainer->deleteObject(item.get());
     }
     
     return result;
@@ -538,7 +490,7 @@ std::shared_ptr<AudioResource> AudioGroup::addAudioFile(std::shared_ptr<AudioSub
                                                         int &channelPosition)
 {
     auto audioResource = getAudioResourceContainer().addAudioResource(URL (filename),
-                                                                      owner.getSharedPtr(this),
+                                                                      std::dynamic_pointer_cast<AudioGroup>(getSharedPtr()),
                                                                       subGroup,
                                                                       channelPosition);
     if (audioResource != nullptr)
@@ -558,7 +510,7 @@ void AudioGroup::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
     juce::Range<double> defaultRange(0.0, audioResource->getFileLength(audium::seconds));
     auto region = getAudioRegionContainer()->createRegion(audioResource->getFileNameWithoutExtension(),
                                                           defaultRange,
-                                                          owner.getSharedPtr(this),
+                                                          std::dynamic_pointer_cast<AudioGroup>(getSharedPtr()),
                                                           subGroup);
     
     juce::Range<double> range(position, position + region->getRegionData(context).getLength());
@@ -576,7 +528,7 @@ double AudioGroup::getTotalLength(audium::TimeContextType context, bool arrangem
     else
     {
         double totalLength = 0.0;
-        for (auto subGroup : audioSubGroups)
+        for (auto subGroup : audioSubGroupContainer->getObjects())
         {
             totalLength = std::max(totalLength, subGroup->getAudioClip()->getAbsolutePositionRange(context).getEnd());
         }

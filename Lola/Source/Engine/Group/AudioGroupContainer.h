@@ -67,7 +67,6 @@ public:
     
     int getNumItems() const { return static_cast<int>(audioGroups.size());}
     std::shared_ptr<AudioGroup> getAudioGroup(int index) const;
-    std::shared_ptr<AudioGroup> getSharedPtr(const AudioGroup* g) const;
         
     std::shared_ptr<AudioGroup> getDefaultGroup() const;
     
