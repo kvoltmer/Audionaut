@@ -14,6 +14,8 @@
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
+    const ScopedLock sl (callbackLock);
+
     auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource(audioFormatReaderSource));
     audioTransportSources.add(transportSource);
     return transportSource;
@@ -21,6 +23,8 @@ std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTra
 
 bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource)
 {
+    const ScopedLock sl (callbackLock);
+
     if (audioTransportSources.contains(audioTransportSource)) {
         audioTransportSources.remove(getTransportSourceIndex(audioTransportSource));
         return true;
@@ -30,11 +34,15 @@ bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTrans
 
 void TransportSourceContainer::cleanup()
 {
+    const ScopedLock sl (callbackLock);
+
     audioTransportSources.clear();
 }
 
 void TransportSourceContainer::prepareToPlay (double sampleRate, int blockSize)
 {
+    const ScopedLock sl (callbackLock);
+
     for (auto transportSource : audioTransportSources)
     {
         transportSource->prepareToPlay(blockSize, sampleRate);
@@ -43,6 +51,8 @@ void TransportSourceContainer::prepareToPlay (double sampleRate, int blockSize)
 
 void TransportSourceContainer::startPlaying()
 {
+    const ScopedLock sl (callbackLock);
+
     playing = true;
     for (auto & transportSource : audioTransportSources)
     {
@@ -52,6 +62,8 @@ void TransportSourceContainer::startPlaying()
 
 void TransportSourceContainer::stopPlaying()
 {
+    const ScopedLock sl (callbackLock);
+
     for (auto & transportSource : audioTransportSources)
     {
 
@@ -71,6 +83,8 @@ bool TransportSourceContainer::isPlaying() const
 
 void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo& info)
 {
+    const ScopedLock sl (callbackLock);
+    
     for (auto transportSource : audioTransportSources)
     {
         const auto channels = info.buffer->getNumChannels();
@@ -88,6 +102,8 @@ void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo&
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::getTransportSourceAtIndex(int index) const
 {
+    const ScopedLock sl (callbackLock);
+
     if (index >= 0 &&
         index < (int)audioTransportSources.size())
     {
@@ -98,6 +114,8 @@ std::shared_ptr<AudiumTransportSource> TransportSourceContainer::getTransportSou
 
 int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const
 {
+    const ScopedLock sl (callbackLock);
+
     int count = 0;
     for (auto transportSource : audioTransportSources)
     {
@@ -112,7 +130,8 @@ int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTran
 
 float TransportSourceContainer::getOutputLevel(int channelNumber) const
 {
-    
+    const ScopedLock sl (callbackLock);
+
     auto level = 0.f;
     
     for (auto transportSource : audioTransportSources)

@@ -52,15 +52,20 @@ public:
     void cleanup() {
         for (auto object : objects)
             object->cleanup();
+        objects.clear();
     }
     
     void push_back(std::shared_ptr<ElementType> object) {
         objects.push_back(object);
     }
     
+    size_t size() const {
+        return objects.size();
+    }
+    
     juce::SparseSet<int> getSelectedRows() const {
         juce::SparseSet<int> result;
-        for (auto i = 0; i < objects.size(); i++) {
+        for (auto i = 0; i < size(); i++) {
             if (objects[i] != nullptr &&
                 objects[i]->isSelected()) {
                 result.addRange ({i, i + 1});
@@ -80,7 +85,6 @@ public:
         }
     }
     
-private:
     std::vector<std::shared_ptr<ElementType>> objects;
 };
 

@@ -31,7 +31,7 @@ void AudioGroup::cleanup()
 {
     audioSubGroupContainer->cleanup();
     audioChannelContainer->cleanup();
-    playListContainer->cleanup();
+    playListContainer->playListItems.cleanup();
 }
 
 
@@ -285,7 +285,7 @@ void AudioGroup::setSelected(bool bSelected, bool selectChildren)
     {
         audioChannelContainer->selectAllObjects(bSelected);
         audioSubGroupContainer->selectAllObjects(bSelected);
-        getPlayListContainer()->selectAllItems(bSelected);
+        getPlayListContainer()->playListItems.selectAllObjects(bSelected);
     }
 
     audium::Selectable::setSelected(bSelected, selectChildren);

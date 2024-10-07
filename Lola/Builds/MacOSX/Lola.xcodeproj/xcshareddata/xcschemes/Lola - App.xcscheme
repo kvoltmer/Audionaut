@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "160C71CC35ECD0DE4AD0BCA8"
-               BuildableName = "Audionatomist.app"
+               BuildableName = "Lola.app"
                BlueprintName = "Lola - App"
                ReferencedContainer = "container:Lola.xcodeproj">
             </BuildableReference>
@@ -44,7 +44,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "160C71CC35ECD0DE4AD0BCA8"
-            BuildableName = "Audionatomist.app"
+            BuildableName = "Lola.app"
             BlueprintName = "Lola - App"
             ReferencedContainer = "container:Lola.xcodeproj">
          </BuildableReference>
@@ -73,7 +73,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "160C71CC35ECD0DE4AD0BCA8"
-            BuildableName = "Audionatomist.app"
+            BuildableName = "Lola.app"
             BlueprintName = "Lola - App"
             ReferencedContainer = "container:Lola.xcodeproj">
          </BuildableReference>

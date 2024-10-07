@@ -360,8 +360,8 @@
                smallIcon="dicuzh" bigIcon="Ezvz9P" appSandboxInheritance="1"
                appSandboxOptions="com.apple.security.files.user-selected.read-write">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionatomist" headerPath="$(SRCROOT)/../../Source"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="Audionatomist" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Lola" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Lola" headerPath="$(SRCROOT)/../../Source"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
