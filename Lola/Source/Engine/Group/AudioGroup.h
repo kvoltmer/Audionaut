@@ -31,6 +31,7 @@ class PositionableBase;
 class AudioGroupContainer;
 
 typedef audium::SelectableObjectContainer<AudioSubGroup> tAudioSubGroupContainer;
+typedef audium::SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
 
 class AudioGroup : public audium::Streamable, public audium::Selectable
 {
@@ -42,6 +43,8 @@ public:
                std::shared_ptr<PlayListContainer> playListContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                std::shared_ptr<audium::SelectionManager> selectionManager,
+               std::shared_ptr<tAudioSubGroupContainer> subGroups,
+               std::shared_ptr<tAudioChannelContainer> channels,
                juce::String nameString) :
         audium::Selectable(selectionManager),
         owner(owner),
@@ -50,10 +53,10 @@ public:
         playListContainer(playListContainer),
         transportSourceContainer(transportSourceContainer),
         selectionManager(selectionManager),
+        audioSubGroupContainer(subGroups),
+        audioChannelContainer(channels),
         groupName(nameString.toStdString())
     {
-        audioSubGroupContainer = std::shared_ptr<tAudioSubGroupContainer> (new tAudioSubGroupContainer());
-
     }
     
     virtual ~AudioGroup() override;
@@ -118,12 +121,8 @@ public:
     void ensureNumChannels(int channelsNeeded);
     std::shared_ptr<AudioChannel> addChannel();
     std::shared_ptr<AudioChannel> getChannel(int channelNumber) const;
-    void selectAllChannels(bool bSelected);
     bool deleteChannel(AudioChannel* channel);
     
-    
-    juce::SparseSet<int> getSelectedRows() const;
-    void setSelectedRows(juce::SparseSet<int>& selectedRows);
     
     bool addAudioFiles(const juce::StringArray& filenames,
                        double positionClocks,
@@ -150,18 +149,16 @@ private:
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::SelectionManager> selectionManager;
-    
-    std::string groupName;
-    
-    juce::Colour groupColour = juce::Colours::pink;
-        
-    
-    std::vector<std::shared_ptr<AudioChannel>> audioChannels;
         
 public:
     std::shared_ptr<tAudioSubGroupContainer> audioSubGroupContainer;
+    std::shared_ptr<tAudioChannelContainer> audioChannelContainer;
     
 private:
+
+    std::string groupName;
+    
+    juce::Colour groupColour = juce::Colours::pink;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroup)
 

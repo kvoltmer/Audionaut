@@ -69,7 +69,7 @@ public:
             this->audioGroup = audioGroup;
         }
         channelsListBox->updateContent();
-        channelsListBox->setSelectedRows(audioGroup->getSelectedRows());
+        channelsListBox->setSelectedRows(audioGroup->audioChannelContainer->getSelectedRows(), dontSendNotification);
     }
 
 private:

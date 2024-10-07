@@ -30,8 +30,7 @@ AudioGroup::~AudioGroup()
 void AudioGroup::cleanup()
 {
     audioSubGroupContainer->cleanup();
-    
-    audioChannels.clear();
+    audioChannelContainer->cleanup();
     playListContainer->cleanup();
 }
 
@@ -69,7 +68,7 @@ bool AudioGroup::writeToJson (json& output)
     output["name"] = groupName;
     output["colour"] = groupColour.toString().toStdString();
     
-    for (auto channel : audioChannels)
+    for (auto channel : audioChannelContainer->getObjects())
     {
         output["channels"] += channel->data;
     }
@@ -124,7 +123,7 @@ bool AudioGroup::readFromJson (json& input, bool rebuild)
         }
         else
         {
-            channel = audioChannels[c];
+            channel = audioChannelContainer->getObjects()[c];
         }
         
         channel->data = jsonElement;
@@ -174,7 +173,7 @@ int AudioGroup::getSizeInUnits()
 
 int AudioGroup::getNumChannels() const
 {
-    return static_cast<int>(audioChannels.size());
+    return static_cast<int>(audioChannelContainer->getObjects().size());
 }
 
 void AudioGroup::ensureNumChannels(int channelsNeeded)
@@ -188,18 +187,18 @@ void AudioGroup::ensureNumChannels(int channelsNeeded)
 std::shared_ptr<AudioChannel> AudioGroup::addChannel()
 {
     auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this,
-                                                                  (int)audioChannels.size(),
+                                                                  (int)audioChannelContainer->getObjects().size(),
                                                                   selectionManager));
-    audioChannels.push_back(channel);
+    audioChannelContainer->push_back(channel);
     return channel;
 }
 
 std::shared_ptr<AudioChannel> AudioGroup::getChannel(int channelNumber) const
 {
-    if (channelNumber < audioChannels.size())
+    if (channelNumber < audioChannelContainer->getObjects().size())
     {
-        jassert(audioChannels[channelNumber]->getChannelNumber() == channelNumber);
-        return audioChannels[channelNumber];
+        jassert(audioChannelContainer->getObjects()[channelNumber]->getChannelNumber() == channelNumber);
+        return audioChannelContainer->getObjects()[channelNumber];
     }
     return nullptr;
 }
@@ -284,7 +283,7 @@ void AudioGroup::setSelected(bool bSelected, bool selectChildren)
 {
     if (selectChildren)
     {
-        selectAllChannels(bSelected);
+        audioChannelContainer->selectAllObjects(bSelected);
         audioSubGroupContainer->selectAllObjects(bSelected);
         getPlayListContainer()->selectAllItems(bSelected);
     }
@@ -353,54 +352,17 @@ bool AudioGroup::deleteSelectedObject(std::shared_ptr<audium::Selectable> object
 }
 
 
-void AudioGroup::selectAllChannels(bool bSelected)
-{
-    for (auto channel : audioChannels)
-        channel->setSelected(bSelected, false);
-}
-
-juce::SparseSet<int> AudioGroup::getSelectedRows() const
-{
-    juce::SparseSet<int> result;
-    for (auto i = 0; i < getNumChannels(); i++)
-    {
-        if (getChannel(i) != nullptr &&
-            getChannel(i)->isSelected())
-        {
-            result.addRange ({i, i + 1});
-        }
-    }
-    return result;
-}
-
-void AudioGroup::setSelectedRows(juce::SparseSet<int>& selectedRows)
-{
-    selectAllChannels(false);
-    for (auto i = 0; i < selectedRows.size(); i++)
-    {
-        if (auto channel = getChannel(selectedRows[i]))
-        {
-            channel->setSelected(true, false);
-        }
-    }
-}
-
 bool AudioGroup::deleteChannel(AudioChannel* channel) {
     
     bool result = false;
-    
-    auto it = std::find_if(audioChannels.begin(), audioChannels.end(), [channel](const auto& item) {
-        return item.get() == channel;
-    });
-    
-    if (it != audioChannels.end()) {
+    if (audioChannelContainer->objectExists(channel))
+    {
         audioResourceContainer.onDeleteChannel(channel);
-        audioChannels.erase(it);
-        result = true;
+        result = audioChannelContainer->deleteObject(channel);
     }
     
     auto count = 0;
-    for (auto channel : audioChannels)
+    for (auto channel : audioChannelContainer->getObjects())
     {
         channel->setChannelNumber(count++);
     }
