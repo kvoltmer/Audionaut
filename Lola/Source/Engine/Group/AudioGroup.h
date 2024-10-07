@@ -21,6 +21,7 @@
 
 class AudioResourceContainer;
 class AudioResource;
+class PlayListItem;
 class PlayListContainer;
 class PlayListScheduler;
 class TransportSourceContainer;

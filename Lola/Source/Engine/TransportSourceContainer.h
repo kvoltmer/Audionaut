@@ -41,7 +41,7 @@ public:
     
 private:
     std::atomic<bool> playing;
-    
+    juce::CriticalSection callbackLock;
     juce::Array<std::shared_ptr<AudiumTransportSource>, juce::CriticalSection> audioTransportSources;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)

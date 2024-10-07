@@ -174,7 +174,7 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
         // cleanup playlist
         if (auto group = audioGroupContainer->getDefaultGroup())
         {
-            group->getPlayListContainer()->cleanup();
+            group->getPlayListContainer()->playListItems.cleanup();
         }
         
         auto songData = nlohmann::json::parse(songFile);

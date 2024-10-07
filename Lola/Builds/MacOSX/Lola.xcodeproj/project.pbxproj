@@ -175,7 +175,7 @@
 		6270899D38E368FD88F5F516 /* AudioRegionData.h */ /* AudioRegionData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegionData.h; path = ../../Source/Engine/Region/AudioRegionData.h; sourceTree = SOURCE_ROOT; };
 		6281C6C7B678AEFB2F47C339 /* AudiumMenuModel.cpp */ /* AudiumMenuModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumMenuModel.cpp; path = ../../Source/Application/AudiumMenuModel.cpp; sourceTree = SOURCE_ROOT; };
 		6373A60BC5F852259A3F5976 /* Cocoa.framework */ /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		65EE5B24CA6AA1915694E01E /* App */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Audionatomist.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		65EE5B24CA6AA1915694E01E /* App */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lola.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		65FA0FE104D1D2422632E136 /* AudiumCommandIDs.h */ /* AudiumCommandIDs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumCommandIDs.h; path = ../../Source/Application/AudiumCommandIDs.h; sourceTree = SOURCE_ROOT; };
 		6620DDAA4F2A88961B286AEE /* AudioChannelData.h */ /* AudioChannelData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioChannelData.h; path = ../../Source/Engine/Channel/AudioChannelData.h; sourceTree = SOURCE_ROOT; };
 		6635C70632EE050E628A48F0 /* Main.cpp */ /* Main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Main.cpp; path = ../../Source/Application/Main.cpp; sourceTree = SOURCE_ROOT; };
@@ -1091,7 +1091,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/juce/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include";
 				PRODUCT_BUNDLE_IDENTIFIER = com.voltmer-systems.lola;
-				PRODUCT_NAME = "Audionatomist";
+				PRODUCT_NAME = "Lola";
 				USE_HEADERMAP = NO;
 				VALID_ARCHS = "i386 x86_64 arm64 arm64e";
 			};
@@ -1137,7 +1137,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				PRODUCT_NAME = "Audionatomist";
+				PRODUCT_NAME = "Lola";
 				SDKROOT = macosx;
 				WARNING_CFLAGS = "-Wreorder";
 				ZERO_LINK = NO;
@@ -1185,7 +1185,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = "Audionatomist";
+				PRODUCT_NAME = "Lola";
 				SDKROOT = macosx;
 				WARNING_CFLAGS = "-Wreorder";
 				ZERO_LINK = NO;
@@ -1256,7 +1256,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/juce/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include";
 				PRODUCT_BUNDLE_IDENTIFIER = com.voltmer-systems.lola;
-				PRODUCT_NAME = "Audionatomist";
+				PRODUCT_NAME = "Lola";
 				USE_HEADERMAP = NO;
 				VALID_ARCHS = "i386 x86_64 arm64 arm64e";
 			};

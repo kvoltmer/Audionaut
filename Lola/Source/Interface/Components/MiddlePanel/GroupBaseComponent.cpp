@@ -91,7 +91,7 @@ void GroupBaseComponent::fileDragExit (const juce::StringArray& files)
 void GroupBaseComponent::mouseDown (const MouseEvent& event)
 {
     // deselect
-    audioGroup->getPlayListContainer()->selectAllItems(false);
+    audioGroup->getSelectionManager()->deselectAll();
     
     // pass on mouse events. unless row is not selected
     getParentComponent()->mouseDown(event);
