@@ -21,6 +21,7 @@
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/Group/AudioGroupContainer.h"
 //[/Headers]
 
 #include "ChannelComponent.h"
@@ -198,7 +199,13 @@ void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
 void ChannelComponent::mouseDown (const juce::MouseEvent& e)
 {
     //[UserCode_mouseDown] -- Add your code here...
+    
+    // hier?
+    audioGroup->getSelectionManager()->deselectAll();
+    
     getParentComponent()->mouseDown(e);
+    
+    audioGroup->getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
 
     //[/UserCode_mouseDown]
 }

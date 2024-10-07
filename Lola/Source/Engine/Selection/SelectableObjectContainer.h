@@ -37,6 +37,13 @@ public:
         return false;
     }
     
+    bool objectExists(ElementType* object) const {
+        auto it = std::find_if(objects.begin(), objects.end(), [object](const auto& item) {
+            return item.get() == object;
+        });
+        return it != objects.end();
+    }
+    
     void selectAllObjects(bool bSelected) {
         for (auto object : objects)
             object->setSelected(bSelected, false);
@@ -49,6 +56,28 @@ public:
     
     void push_back(std::shared_ptr<ElementType> object) {
         objects.push_back(object);
+    }
+    
+    juce::SparseSet<int> getSelectedRows() const {
+        juce::SparseSet<int> result;
+        for (auto i = 0; i < objects.size(); i++) {
+            if (objects[i] != nullptr &&
+                objects[i]->isSelected()) {
+                result.addRange ({i, i + 1});
+            }
+        }
+        return result;
+    }
+    
+    void setSelectedRows(juce::SparseSet<int>& selectedRows) {
+        selectAllObjects(false);
+        for (auto i = 0; i < selectedRows.size(); i++)
+        {
+            if (auto object = objects[selectedRows[i]])
+            {
+                object->setSelected(true, false);
+            }
+        }
     }
     
 private:

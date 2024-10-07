@@ -100,7 +100,7 @@ public:
     void selectedRowsChanged (int lastRowSelected) override
     {
         auto selectedRows = owner.getSelectedRows();
-        audioGroup->setSelectedRows(selectedRows);
+        audioGroup->audioChannelContainer->setSelectedRows(selectedRows);
         audiumEngine->getAudioGroupContainer()->sendActionMessage(updateArrangementAction);
     }
     
