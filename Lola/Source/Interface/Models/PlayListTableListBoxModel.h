@@ -86,20 +86,7 @@ public:
 
     void deleteKeyPressed (int lastRowSelected) override
     {
-        // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
-        
-        auto selected = listBox->getSelectedRows();
-
-        for (int i = selected.size()-1; i >= 0; i--)
-        {
-            audiumEngine->getPlayListContainer(audioGroup)->deletePlayListItem(selected[i]);
-        }
-        
-        // Undo: store new state
-        action->storeNewState();
-        audiumEngine->getUndoManager()->perform(action.release(), "Delete PlayList Item(s)");
-        audiumEngine->getUndoManager()->beginNewTransaction();
+        audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
     }
     
     juce::var getDragSourceDescription (const juce::SparseSet< int > &rowsToDescribe) override
