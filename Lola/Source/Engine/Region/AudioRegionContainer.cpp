@@ -46,6 +46,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
                                                                     subGroup,
                                                                     tempoProvider,
                                                                     group->getSelectionManager()));
+    audioRegion->data.id = static_cast<int>(audioRegions.size());
     audioRegions.push_back(audioRegion);
     return audioRegion;
 }
@@ -83,6 +84,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) cons
 {
     if (rowNumber >= 0 && rowNumber < audioRegions.size())
     {
+        jassert(audioRegions[rowNumber]->data.id == rowNumber);
         return audioRegions[rowNumber];
     }
     return nullptr;
@@ -99,6 +101,7 @@ int AudioRegionContainer::getRegionIndex(std::shared_ptr<AudioRegion> searchRegi
     else
     {
         auto index = std::distance(audioRegions.begin(), it);
+        jassert(audioRegions[index]->data.id == index);
         return static_cast<int>(index);
     }
 }

@@ -43,6 +43,8 @@ public:
     
     void deselectAll();
     
+    void copySelectedToClipboard();
+    
 private:
         
     std::vector<std::shared_ptr<Selectable>> selectedObjects;

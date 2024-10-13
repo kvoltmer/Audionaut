@@ -58,11 +58,11 @@ const AudioRegionData::tRange AudioRegion::getRegionData(audium::TimeContextType
 {
     if (context == audium::seconds)
     {
-        return data.regionData;
+        return data.range;
     }
     else if (context == audium::clocks)
     {
-        return tempoProvider->secondsToClocks(data.regionData);
+        return tempoProvider->secondsToClocks(data.range);
     }
     
     jassertfalse;
@@ -75,11 +75,11 @@ void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, aud
 
     if (context == audium::seconds)
     {
-        data.regionData = newRegionData;
+        data.range = newRegionData;
     }
     else if (context == audium::clocks)
     {
-        data.regionData = tempoProvider->clocksToSeconds(newRegionData);
+        data.range = tempoProvider->clocksToSeconds(newRegionData);
     }
 }
 
