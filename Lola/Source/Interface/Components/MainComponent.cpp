@@ -300,36 +300,8 @@ void MainComponent::selectAll()
 
 void MainComponent::copy()
 {
-    
-    json jout;
-    //auto result = writeToJson(jout);
-    //outputStream.writeString(jout.dump(2));
-    
-    for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
-    {
-        if (group->isSelected())
-        {
-            auto success = group->writeToJson(jout);
-            jassert(success);
-        }
-        else
-        {
-            
-        }
-        //group->
-    }
-    //currentLayout->copySelectedToClipboard();
-    
-    //            if (currentLayout != nullptr)
-    //                currentLayout->copySelectedToClipboard();
-    //            else if (currentPaintRoutine != nullptr)
-    //                currentPaintRoutine->copySelectedToClipboard();
+    audiumEngine->getAudioGroupContainer()->getSelectionManager()->copySelectedToClipboard();
 
-    String test = "bla";
-    
-    juce::SystemClipboard::copyTextToClipboard (test);
-    
-    updateUI();
 }
 
 void MainComponent::paste()

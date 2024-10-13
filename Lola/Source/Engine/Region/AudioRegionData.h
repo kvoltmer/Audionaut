@@ -21,18 +21,24 @@ struct AudioRegionData
     typedef class juce::Range<double> tRange;
     
     std::string name;
-    tRange      regionData;
+    tRange      range;
+    int         id = -1; // invalid
 };
 
 inline void to_json(json& j, const AudioRegionData& r) {
     j = json{   {"name", r.name},
-                {"start", r.regionData.getStart()},
-                {"end", r.regionData.getEnd()}
+                {"start", r.range.getStart()},
+                {"end", r.range.getEnd()},
+                {"id", r.id}
     };
 }
 
 inline void from_json(const json& j, AudioRegionData& r) {
     j.at("name").get_to(r.name);
-    r.regionData.setStart(j.at("start").get<double>());
-    r.regionData.setEnd(j.at("end").get<double>());
+    r.range.setStart(j.at("start").get<double>());
+    r.range.setEnd(j.at("end").get<double>());
+    
+    if (j.contains("id"))
+        j.at("id").get_to(r.id);
+    
 }

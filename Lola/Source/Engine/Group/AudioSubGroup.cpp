@@ -143,17 +143,32 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     
     audioClip->readFromJson(input["clip"], rebuild);
 
-    cleanupAudioRegions();
+    if (rebuild)
+        cleanupAudioRegions();
     
     auto jsonRegions = input["regions"];
 
+    
     for (auto& jsonElement : jsonRegions)
     {
+        AudioRegionData data = jsonElement;
+        
         std::shared_ptr<AudioRegion> region = nullptr;
-        region = getAudioGroup().getAudioRegionContainer()->createRegion(group, subGroup);
-        region->data = jsonElement;
+        if (rebuild)
+        {
+            region = getAudioGroup().getAudioRegionContainer()->createRegion(group, subGroup);
+        }
+        else
+        {
+            region = getAudioGroup().getAudioRegionContainer()->getRegion(data.id);
+        }
+        jassert(region);
+        auto old_id = region->data.id;
+        // assign data
+        region->data = data;
+        // keep old id
+        region->data.id = old_id;
     }
-    
     
     return true;
 }
