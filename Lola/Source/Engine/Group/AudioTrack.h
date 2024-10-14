@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    AudioGroup.h
+    AudioTrack.h
     Created: 26 Sep 2023 11:22:03am
     Author:  Klaus Voltmer
 
@@ -29,16 +29,16 @@ class AudioSubGroup;
 class AudioRegionContainer;
 class AudioChannel;
 class PositionableBase;
-class AudioGroupContainer;
+class AudioTrackContainer;
 
 typedef audium::SelectableObjectContainer<AudioSubGroup> tAudioSubGroupContainer;
 typedef audium::SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
 
-class AudioGroup : public audium::Streamable, public audium::Selectable
+class AudioTrack : public audium::Streamable, public audium::Selectable
 {
     
 public:
-    AudioGroup(AudioGroupContainer &owner,
+    AudioTrack(AudioTrackContainer &owner,
                AudioResourceContainer &audioResourceContainer,
                std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                std::shared_ptr<PlayListContainer> playListContainer,
@@ -56,25 +56,25 @@ public:
         selectionManager(selectionManager),
         audioSubGroupContainer(subGroups),
         audioChannelContainer(channels),
-        groupName(nameString.toStdString())
+        name(nameString.toStdString())
     {
     }
     
-    virtual ~AudioGroup() override;
+    virtual ~AudioTrack() override;
     
     void cleanup() override;
     
-    // group name:
-    const juce::String getName() const { return groupName; }
-    void setName(const juce::String newName) { groupName = newName.toStdString(); }
+    // track name:
+    const juce::String getName() const { return name; }
+    void setName(const juce::String newName) { name = newName.toStdString(); }
     
-    // group colour:
+    // track colour:
     void setColour(juce::Colour colour);
     juce::Colour getColour() const { return groupColour; }
     
     // pointer and references to other classes:
     AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
-    AudioGroupContainer &getAudioGroupContainer() const { return owner; }
+    AudioTrackContainer &getAudioTrackContainer() const { return owner; }
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
@@ -144,7 +144,7 @@ public:
     std::vector<DspClipData> getDspClipVector(bool arrangementMode) const;
     
 private:
-    AudioGroupContainer &owner;
+    AudioTrackContainer &owner;
     AudioResourceContainer &audioResourceContainer;
     std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
@@ -157,10 +157,10 @@ public:
     
 private:
 
-    std::string groupName;
+    std::string name;
     
     juce::Colour groupColour = juce::Colours::pink;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroup)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)
 
 };

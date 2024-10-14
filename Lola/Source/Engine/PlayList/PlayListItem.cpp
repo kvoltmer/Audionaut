@@ -35,7 +35,7 @@ PlayListItem::~PlayListItem()
 {
     for (auto transportSource : transportSources)
     {
-        audioRegion->getAudioGroup()->getTransportSourceContainer()->removeTransportSource(transportSource);
+        audioRegion->getAudioTrack()->getTransportSourceContainer()->removeTransportSource(transportSource);
     }
 }
 

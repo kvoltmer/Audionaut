@@ -14,7 +14,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/Resource/AudioResource.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Provider/TempoProvider.h"
 
@@ -40,7 +40,7 @@ public:
     ~AudioResourceContainer();
     
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
-                                                     std::shared_ptr<AudioGroup> group,
+                                                     std::shared_ptr<AudioTrack> track,
                                                      std::shared_ptr<AudioSubGroup> subGroup,
                                                      int channelPosition = -1);
     
@@ -48,7 +48,7 @@ public:
     
     
     void removeAudioResource(std::shared_ptr<AudioResource> resource);
-    void removeAudioResourcesForGroup (AudioGroup *group);
+    void removeAudioResourcesForGroup (AudioTrack *track);
     
     // still used by auto edit
     int getNumAudioResources() const;
@@ -57,13 +57,13 @@ public:
     
     void cleanup();
     
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioGroup *group) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioTrack *track) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForSubGroup(const AudioSubGroup *subGroup) const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const;
 
-    std::shared_ptr<AudioGroup> getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const;
+    std::shared_ptr<AudioTrack> getAudioTrackForResource(std::shared_ptr<AudioResource> resource) const;
     
-    std::vector<std::shared_ptr<AudioGroup>> getAudioGroups() const;
+    std::vector<std::shared_ptr<AudioTrack>> getAudioTracks() const;
         
     void onDeleteChannel(AudioChannel* channel);
         
@@ -71,13 +71,13 @@ public:
     std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     
-    typedef std::pair<std::shared_ptr<AudioGroup>, std::shared_ptr<AudioResource>> tAudioGroupPair;
+    typedef std::pair<std::shared_ptr<AudioTrack>, std::shared_ptr<AudioResource>> tAudioTrackPair;
     
     void deselectAllResources();
         
 private:
-    /// list of pairs. this enables sorting etc.. by AudioGroup
-    std::list<tAudioGroupPair> audioResources;
+    /// list of pairs. this enables sorting etc.. by AudioTrack
+    std::list<tAudioTrackPair> audioResources;
     
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<juce::AudioFormatManager> formatManager;

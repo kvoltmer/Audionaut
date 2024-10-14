@@ -9,8 +9,8 @@
 */
 
 #include "AudioRegion.h"
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioResourceFactory.h"
@@ -30,7 +30,7 @@ bool AudioRegion::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
-        audioGroup->getAudioGroupContainer().sendActionMessage(updateAll);
+        audioTrack->getAudioTrackContainer().sendActionMessage(updateAll);
         return true;
     }
     return false;
@@ -134,10 +134,10 @@ void AudioRegion::setRegionLength(double newLength, audium::TimeContextType cont
 
 std::vector<std::shared_ptr<AudioResource>> AudioRegion::getAudioResources() const
 {
-    return audioGroup->getAudioResourceContainer().getAudioResourcesForSubGroup(audioSubGroup.get());
+    return audioTrack->getAudioResourceContainer().getAudioResourcesForSubGroup(audioSubGroup.get());
 }
 
 bool AudioRegion::deleteAssociatedItems()
 {
-    return getAudioGroup()->getPlayListContainer()->deleteAssociatedItems(this);
+    return getAudioTrack()->getPlayListContainer()->deleteAssociatedItems(this);
 }

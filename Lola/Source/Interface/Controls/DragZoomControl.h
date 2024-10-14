@@ -14,18 +14,18 @@
 #include "../JuceLibraryCode/BinaryData.h"
 #include "Engine/AudiumEngine.h"
 #include "Interface/Handlers/ZoomHandler.h"
-#include "Interface/Controls/AudioGroupListBox.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Interface/Controls/AudioTrackListBox.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 
 class DragZoomControl  : public juce::Component, public juce::ChangeBroadcaster
 {
 public:
-    DragZoomControl(std::shared_ptr<AudioGroupListBox> audioGroupListBox,
+    DragZoomControl(std::shared_ptr<AudioTrackListBox> audioTrackListBox,
                     std::shared_ptr<AudiumEngine> audiumEngine,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     bool arrangementMode) :
-        audioGroupListBox(audioGroupListBox),
+        audioTrackListBox(audioTrackListBox),
         audiumEngine(audiumEngine),
         zoomHandler(zoomHandler),
         arrangementMode(arrangementMode)
@@ -154,7 +154,7 @@ public:
 
 private:
     std::unique_ptr<juce::DrawableRectangle>    visibileRectangle;
-    std::shared_ptr<AudioGroupListBox>          audioGroupListBox;
+    std::shared_ptr<AudioTrackListBox>          audioTrackListBox;
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     bool                                        arrangementMode;

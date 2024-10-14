@@ -23,9 +23,9 @@ bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDrop
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         if (regionLabel->getRegion() &&
-            regionLabel->getRegion()->getAudioGroup() == playListModel->getAudioGroup())
+            regionLabel->getRegion()->getAudioTrack() == playListModel->getAudioTrack())
         {
-            // return true if source details match this group
+            // return true if source details match this track
             return true;
         }
     }
@@ -45,7 +45,7 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
     auto playListContainer = playListModel->getPlayListContainer();
     
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getAudioGroup()->getAudioGroupContainer());
+    auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getAudioTrack()->getAudioTrackContainer());
     
     auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
     auto insertIndex = rowNumber + (before ? 0 : 1);
@@ -103,11 +103,11 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
         drawLinearProgress(g, progress);
     }
     
-    auto container = playListModel->getAudioGroup()->getPlayListContainer();
+    auto container = playListModel->getAudioTrack()->getPlayListContainer();
     if (auto r = container->getPlayListItem(rowNumber))
     {
         juce::String text;
-        auto groupColour = r->getRegion()->getAudioGroup()->getColour();
+        auto groupColour = r->getRegion()->getAudioTrack()->getColour();
         auto groupHighlightColour = groupColour.brighter().brighter();
 
         if (columnNumber == 1)
@@ -137,19 +137,19 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 
 void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
 {
-    auto group = playListModel->getAudioGroup();
-    playListModel->getPlayListScheduler()->setCurrentPositionAtPlayListItemIndex(group, rowNumber);
+    auto track = playListModel->getAudioTrack();
+    playListModel->getPlayListScheduler()->setCurrentPositionAtPlayListItemIndex(track, rowNumber);
 }
 
 void PlayListTableListBoxItem::timerCallback()
 {
-    auto group = playListModel->getAudioGroup();
-    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndexAtCurrentPosition(group);
+    auto track = playListModel->getAudioTrack();
+    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndexAtCurrentPosition(track);
     
     auto theProgress = 0.0;
     if (itemPlaying == rowNumber)
     {
-        theProgress = playListModel->getPlayListScheduler()->getPlayListItemProgress(group, rowNumber);
+        theProgress = playListModel->getPlayListScheduler()->getPlayListItemProgress(track, rowNumber);
     }
     else
     {

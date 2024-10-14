@@ -14,7 +14,7 @@
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Models/PlayListItemArrangementModel.h"
 
-class AudioGroup;
+class AudioTrack;
 class PlayListItem;
 class ZoomHandler;
 class RegionSelector;
@@ -22,13 +22,13 @@ class AudiumEngine;
 
 //==============================================================================
 /*
-Display a PlayListItem within a AudioGroup
+Display a PlayListItem within a AudioTrack
 */
 class PlayListItemComponent  : public juce::Component, public juce::ChangeListener
 {
 public:
     PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
-                          std::shared_ptr<AudioGroup> audioGroup,
+                          std::shared_ptr<AudioTrack> audioTrack,
                           std::shared_ptr<PlayListContainer> playListContainer,
                           std::shared_ptr<PlayListItem> playListItem,
                           std::shared_ptr<ZoomHandler> zoomHandler,
@@ -44,7 +44,7 @@ public:
     
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioGroup>     audioGroup;
+    std::shared_ptr<AudioTrack>     audioTrack;
     std::shared_ptr<PlayListItem>   playListItem;
     std::shared_ptr<RegionSelector> regionSelector;
         

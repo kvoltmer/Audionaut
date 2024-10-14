@@ -14,7 +14,7 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Interface/Components/MainComponent.h"
 
@@ -80,7 +80,7 @@ private:
     
     void create(String name)
     {
-        audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().createRegionsFromSelection(name,
+        audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().createRegionsFromSelection(name,
                                                                            audiumEngine->getPlayListScheduler()->isArrangementMode());
     }
     

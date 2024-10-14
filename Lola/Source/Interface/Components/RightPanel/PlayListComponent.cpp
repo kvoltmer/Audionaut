@@ -2,7 +2,7 @@
 #include "PlayListComponent.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Controls/RegionLabel.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 
 bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
@@ -10,9 +10,9 @@ bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget:
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         if (regionLabel->getRegion() &&
-            regionLabel->getRegion()->getAudioGroup() == audioGroup)
+            regionLabel->getRegion()->getAudioTrack() == audioTrack)
         {
-            // return true if source details match this group
+            // return true if source details match this track
             return true;
         }
     }
@@ -21,25 +21,25 @@ bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget:
 
 void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
-    auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup->getAudioGroupContainer());
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
     
-    auto insertIndex = static_cast<int>(audioGroup->getPlayListContainer()->playListItems.size());
+    auto insertIndex = static_cast<int>(audioTrack->getPlayListContainer()->playListItems.size());
     
     if ( PlayListTableListBoxItem* item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
-        audioGroup->getPlayListContainer()->movePlayListItemBefore(item->rowNumber,
+        audioTrack->getPlayListContainer()->movePlayListItemBefore(item->rowNumber,
                                                                    insertIndex);
     }
     else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (audioGroup->getPlayListContainer()->createPlayListItemUI(item->getRowNumber(), insertIndex) == nullptr)
+        if (audioTrack->getPlayListContainer()->createPlayListItemUI(item->getRowNumber(), insertIndex) == nullptr)
         {
             return;
         }
     }
     
     action->storeNewState();
-    auto undoManager = audioGroup->getAudioGroupContainer().getUndoManager();
+    auto undoManager = audioTrack->getAudioTrackContainer().getUndoManager();
     undoManager->perform(action.release(), "Playlist modified");
     undoManager->beginNewTransaction();
     

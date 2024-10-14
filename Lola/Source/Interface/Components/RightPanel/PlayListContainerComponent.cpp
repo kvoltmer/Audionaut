@@ -48,11 +48,11 @@ void PlayListContainerComponent::createComponents()
     removeAllChildren();
     playListComponents.clear();
     
-    auto groups = audiumEngine->getAudioResourceContainer()->getAudioGroups();
+    auto groups = audiumEngine->getAudioResourceContainer()->getAudioTracks();
     
-    for (auto group : groups)
+    for (auto track : groups)
     {
-        auto playListComponent = std::shared_ptr<PlayListComponent>(new PlayListComponent(audiumEngine, group));
+        auto playListComponent = std::shared_ptr<PlayListComponent>(new PlayListComponent(audiumEngine, track));
         playListComponents.push_back(playListComponent);
         addAndMakeVisible(playListComponent.get());
     }

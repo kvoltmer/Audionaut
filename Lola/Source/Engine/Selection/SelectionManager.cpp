@@ -10,8 +10,8 @@
 
 #include "SelectionManager.h"
 #include "Selectable.h"
-#include "Engine/Group/AudioGroupContainer.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Channel/AudioChannel.h"
@@ -38,8 +38,8 @@ void SelectionManager::copySelectedToClipboard() {
     
     for (auto object : selectedObjects) {
         json j;
-        if (AudioGroup* group = dynamic_cast<AudioGroup*>(object.get())) {
-            group->writeToJson(j);
+        if (AudioTrack* track = dynamic_cast<AudioTrack*>(object.get())) {
+            track->writeToJson(j);
             jout["groups"] += j;
         }
         if (AudioSubGroup* subgroup = dynamic_cast<AudioSubGroup*>(object.get())) {

@@ -9,8 +9,8 @@
 */
 
 #include "AudioRegionAdapter.h"
-#include "Engine/Group/AudioGroupContainer.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/Group/AudioClip.h"
@@ -19,7 +19,7 @@
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 
-AudioRegionAdapter::AudioRegionAdapter(AudioGroupContainer &owner) :
+AudioRegionAdapter::AudioRegionAdapter(AudioTrackContainer &owner) :
     owner(owner)
 {
 }
@@ -30,10 +30,10 @@ const std::vector<std::shared_ptr<AudioRegion>> AudioRegionAdapter::getAudioRegi
     
     for (auto g = 0; g < owner.getNumItems(); g++)
     {
-        auto group = owner.getAudioGroup(g);
-        for (auto i = 0; i < group->getAudioRegionContainer()->getNumRegions() ; i++)
+        auto track = owner.getAudioTrack(g);
+        for (auto i = 0; i < track->getAudioRegionContainer()->getNumRegions() ; i++)
         {
-            result.push_back(group->getAudioRegionContainer()->getRegion(i));
+            result.push_back(track->getAudioRegionContainer()->getRegion(i));
         }
     }
     
@@ -99,9 +99,9 @@ void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
                 // select associated play list items
                 for (auto i = 0; i < owner.getNumItems(); i++)
                 {
-                    if (auto group = owner.getAudioGroup(i))
+                    if (auto track = owner.getAudioTrack(i))
                     {
-                        group->getPlayListContainer()->selectPlayListItemWithRegion(region);
+                        track->getPlayListContainer()->selectPlayListItemWithRegion(region);
                     }
                 }
             }
@@ -120,19 +120,19 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
     
     for (auto i = 0; i < owner.getNumItems(); i++)
     {
-        if (auto group = owner.getAudioGroup(i))
+        if (auto track = owner.getAudioTrack(i))
         {
             
             if (arrangementMode)
             {
-                if (auto item = group->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks, audium::clocks))
+                if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks, audium::clocks))
                 {
                     // we need the start of the actual audio file
                     auto localStart = selectedPositionClocks.getStart() - item->getAbsolutePosition(audium::clocks) + item->getRegionData(audium::clocks).getStart();
                     
                     juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
                     auto localRangeInSeconds = owner.getTempoProvider()->clocksToSeconds(localRange);
-                    group->getAudioRegionContainer()->createRegion(name, localRangeInSeconds, group, item->getRegion()->getAudioSubGroup());
+                    track->getAudioRegionContainer()->createRegion(name, localRangeInSeconds, track, item->getRegion()->getAudioSubGroup());
                 }
             }
             else
@@ -140,7 +140,7 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
                 // get resources at this range
                 auto rangeInSeconds = owner.getTempoProvider()->clocksToSeconds(selectedPositionClocks);
                 // TODO: change this to subgroups
-                auto resources = group->getAudioResourcesAtAbsoluteRange(rangeInSeconds);
+                auto resources = track->getAudioResourcesAtAbsoluteRange(rangeInSeconds);
                 if (resources.size() > 0)
                 {
                     // grab the first valid resource
@@ -158,7 +158,7 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
                     if (rangeInSeconds.getEnd() > maxLength)
                         rangeInSeconds.setEnd(maxLength);
                     
-                    group->getAudioRegionContainer()->createRegion(name, rangeInSeconds, group, resource->getAudioSubGroup());
+                    track->getAudioRegionContainer()->createRegion(name, rangeInSeconds, track, resource->getAudioSubGroup());
                 }
             }
         }

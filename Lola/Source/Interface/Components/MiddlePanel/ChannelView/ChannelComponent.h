@@ -47,12 +47,12 @@ class ChannelComponent  : public juce::Component,
 {
 public:
     //==============================================================================
-    ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std::shared_ptr<AudiumEngine> engine, int rowNumber);
+    ChannelComponent (std::shared_ptr<AudioTrack> audioTrack, std::shared_ptr<AudiumEngine> engine, int rowNumber);
     ~ChannelComponent() override;
 
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
-    void refreshComponent(std::shared_ptr<AudioGroup> audioGroup, int rowNumber, bool isRowSelected);
+    void refreshComponent(std::shared_ptr<AudioTrack> audioTrack, int rowNumber, bool isRowSelected);
     void timerCallback() override;
     void stopTheTimer() { stopTimer(); }
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override;
@@ -73,7 +73,7 @@ public:
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
-    std::shared_ptr<AudioGroup> audioGroup;
+    std::shared_ptr<AudioTrack> audioTrack;
     std::shared_ptr<AudiumEngine> engine;
     std::unique_ptr<LevelMeter> levelMeter;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;

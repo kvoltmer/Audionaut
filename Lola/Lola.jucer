@@ -63,8 +63,8 @@
                 file="Source/Engine/Channel/AudioChannelData.h"/>
         </GROUP>
         <GROUP id="{38829D96-12DD-C636-0C91-D4606DFE0C72}" name="Factory">
-          <FILE id="jEBWMg" name="AudioGroupFactory.h" compile="0" resource="0"
-                file="Source/Engine/Factory/AudioGroupFactory.h"/>
+          <FILE id="jEBWMg" name="AudioTrackFactory.h" compile="0" resource="0"
+                file="Source/Engine/Factory/AudioTrackFactory.h"/>
           <FILE id="VRfXqH" name="AudioResourceFactory.h" compile="0" resource="0"
                 file="Source/Engine/Factory/AudioResourceFactory.h"/>
           <FILE id="M4fDCK" name="AudiumFactory.cpp" compile="1" resource="0"
@@ -72,15 +72,15 @@
           <FILE id="ErnMCa" name="AudiumFactory.h" compile="0" resource="0" file="Source/Engine/Factory/AudiumFactory.h"/>
         </GROUP>
         <GROUP id="{AE3695CD-F0F3-4924-68C1-084658B86D39}" name="Group">
+          <FILE id="JFowSd" name="AudioTrack.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioTrack.cpp"/>
+          <FILE id="JxLaEn" name="AudioTrack.h" compile="0" resource="0" file="Source/Engine/Group/AudioTrack.h"/>
+          <FILE id="RFg3yf" name="AudioTrackContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioTrackContainer.cpp"/>
+          <FILE id="SIX9na" name="AudioTrackContainer.h" compile="0" resource="0"
+                file="Source/Engine/Group/AudioTrackContainer.h"/>
           <FILE id="yXlj3o" name="AudioClip.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioClip.cpp"/>
           <FILE id="YWQQTo" name="AudioClip.h" compile="0" resource="0" file="Source/Engine/Group/AudioClip.h"/>
           <FILE id="JW1CwN" name="AudioClipData.h" compile="0" resource="0" file="Source/Engine/Group/AudioClipData.h"/>
-          <FILE id="S6GFZG" name="AudioGroup.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioGroup.cpp"/>
-          <FILE id="q95WEA" name="AudioGroup.h" compile="0" resource="0" file="Source/Engine/Group/AudioGroup.h"/>
-          <FILE id="G5bPkP" name="AudioGroupContainer.cpp" compile="1" resource="0"
-                file="Source/Engine/Group/AudioGroupContainer.cpp"/>
-          <FILE id="uY1Ao1" name="AudioGroupContainer.h" compile="0" resource="0"
-                file="Source/Engine/Group/AudioGroupContainer.h"/>
           <FILE id="Xw6tEJ" name="AudioRegionAdapter.cpp" compile="1" resource="0"
                 file="Source/Engine/Group/AudioRegionAdapter.cpp"/>
           <FILE id="otPqzW" name="AudioRegionAdapter.h" compile="0" resource="0"
@@ -238,10 +238,10 @@
             </GROUP>
             <FILE id="nZ2YVn" name="ArrangementEditBaseComponent.h" compile="0"
                   resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"/>
-            <FILE id="TrmNCI" name="GroupBaseComponent.cpp" compile="1" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/GroupBaseComponent.cpp"/>
-            <FILE id="RMeAIj" name="GroupBaseComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MiddlePanel/GroupBaseComponent.h"/>
+            <FILE id="TrmNCI" name="AudioTrackBaseComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/AudioTrackBaseComponent.cpp"/>
+            <FILE id="RMeAIj" name="AudioTrackBaseComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"/>
           </GROUP>
           <GROUP id="{03CC010F-0C39-7C47-7C64-039A8E0AD17F}" name="HeaderPanel">
             <FILE id="DJ2fXt" name="HeaderComponent.cpp" compile="1" resource="0"
@@ -274,10 +274,10 @@
                 file="Source/Interface/Models/ChannelGroupListBoxModel.h"/>
           <FILE id="zizRO1" name="ChannelSubGroupListBoxModel.h" compile="0"
                 resource="0" file="Source/Interface/Models/ChannelSubGroupListBoxModel.h"/>
-          <FILE id="cpmXGN" name="GroupListBoxModel.cpp" compile="1" resource="0"
-                file="Source/Interface/Models/GroupListBoxModel.cpp"/>
-          <FILE id="eYSeuv" name="GroupListBoxModel.h" compile="0" resource="0"
-                file="Source/Interface/Models/GroupListBoxModel.h"/>
+          <FILE id="cpmXGN" name="AudioTrackListBoxModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/AudioTrackListBoxModel.cpp"/>
+          <FILE id="eYSeuv" name="AudioTrackListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/AudioTrackListBoxModel.h"/>
           <FILE id="JhbMbX" name="SubGroupListBoxModel.h" compile="0" resource="0"
                 file="Source/Interface/Models/SubGroupListBoxModel.h"/>
           <FILE id="eE3Tt0" name="PlayListTableListBoxItem.cpp" compile="1" resource="0"
@@ -324,10 +324,10 @@
                 file="Source/Interface/Controls/RegionTableListBox.h"/>
           <FILE id="t9n5bB" name="TransportPositionControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/TransportPositionControl.h"/>
-          <FILE id="sKgt7C" name="AudioGroupListBox.cpp" compile="1" resource="0"
-                file="Source/Interface/Controls/AudioGroupListBox.cpp"/>
-          <FILE id="rUFHxk" name="AudioGroupListBox.h" compile="0" resource="0"
-                file="Source/Interface/Controls/AudioGroupListBox.h"/>
+          <FILE id="sKgt7C" name="AudioTrackListBox.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/AudioTrackListBox.cpp"/>
+          <FILE id="rUFHxk" name="AudioTrackListBox.h" compile="0" resource="0"
+                file="Source/Interface/Controls/AudioTrackListBox.h"/>
         </GROUP>
         <GROUP id="{251C6FB2-3F49-498C-8DDC-157FCCAC8565}" name="Views">
           <FILE id="hpKHS1" name="GridView.h" compile="0" resource="0" file="Source/Interface/Views/GridView.h"/>

@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "ArrangementGroupComponent.h"
 #include "Util/EngineAccess.h"
-#include "Interface/Controls/AudioGroupListBox.h"
+#include "Interface/Controls/AudioTrackListBox.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
 #include "Interface/ColourIds.h"
 #include "Engine/PlayList/PlayListContainer.h"
@@ -22,9 +22,9 @@
 
 using namespace audium;
 
-void ArrangementGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents)
+void ArrangementGroupComponent::refreshComponent (std::shared_ptr<AudioTrack> track, bool forceRebuildComponents)
 {
-    audioGroup = group;
+    audioTrack = track;
     
     if (mustRebuildComponents() ||
         forceRebuildComponents)
@@ -37,7 +37,7 @@ void ArrangementGroupComponent::refreshComponent (std::shared_ptr<AudioGroup> gr
 bool ArrangementGroupComponent::mustRebuildComponents() const
 {
     // compare play list items
-    auto playListContainer = audiumEngine->getPlayListContainer(audioGroup);
+    auto playListContainer = audiumEngine->getPlayListContainer(audioTrack);
     auto playListItems = playListContainer->getPlayListItems();
     
     if (playListItems.size() != playListItemComponents.size())
@@ -62,14 +62,14 @@ void ArrangementGroupComponent::rebuildComponents()
     playListItemComponents.clear();
     
     // get all play list items and create components
-    auto playListContainer = audiumEngine->getPlayListContainer(audioGroup);
+    auto playListContainer = audiumEngine->getPlayListContainer(audioTrack);
     jassert(playListContainer);
     auto playListItems = playListContainer->getPlayListItems();
     
     for (auto playListItem : playListItems)
     {
         auto groupRegion = std::shared_ptr<PlayListItemComponent>(new PlayListItemComponent(audiumEngine,
-                                                                                            audioGroup,
+                                                                                            audioTrack,
                                                                                             playListContainer,
                                                                                             playListItem,
                                                                                             zoomHandler,
@@ -98,9 +98,9 @@ bool ArrangementGroupComponent::isInterestedInDragSource (const SourceDetails &d
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         if (regionLabel->getRegion() &&
-            regionLabel->getRegion()->getAudioGroup() == audioGroup)
+            regionLabel->getRegion()->getAudioTrack() == audioTrack)
         {
-            // return true if source details match this group
+            // return true if source details match this track
             return true;
         }
     }
@@ -129,21 +129,21 @@ void ArrangementGroupComponent::itemDropped (const SourceDetails &dragSourceDeta
     if ( RegionLabel* regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         // undo action stores current state
-        auto action = std::make_unique<audium::UndoableContainerAction>(audioGroup->getAudioGroupContainer());
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
                 
         auto start = zoomHandler->xToClocks(dragSourceDetails.localPosition.x);
         zoomHandler->snapToGrid(start);
         
         // convert row number to region pointer
-        auto region = audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().getRegion(regionLabel->getRowNumber());
+        auto region = audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getRegion(regionLabel->getRowNumber());
         jassert(region);
         if (region != nullptr)
         {
             juce::Range<double> position(start, start + region->getRegionData(audium::clocks).getLength());
-            if (audioGroup->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
+            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
             {
                 action->storeNewState();
-                auto undoManager = audioGroup->getAudioGroupContainer().getUndoManager();
+                auto undoManager = audioTrack->getAudioTrackContainer().getUndoManager();
                 undoManager->perform(action.release(), "Playlist modified");
                 undoManager->beginNewTransaction();
             }
@@ -158,7 +158,7 @@ void ArrangementGroupComponent::filesDropped (const StringArray& filenames, int 
 {
     if ( !filenames.isEmpty())
     {
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
         
         auto start = zoomHandler->xToClocks(x);
         zoomHandler->snapToGrid(start);
@@ -169,7 +169,7 @@ void ArrangementGroupComponent::filesDropped (const StringArray& filenames, int 
                                                         "Failed to open: " + juce::String(error));
         };
         
-        if (audioGroup->addAudioFiles(filenames, start, true, callback))
+        if (audioTrack->addAudioFiles(filenames, start, true, callback))
         {
             action->storeNewState();
             audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
@@ -178,5 +178,5 @@ void ArrangementGroupComponent::filesDropped (const StringArray& filenames, int 
     }
 
     // call base class!
-    GroupBaseComponent::filesDropped(filenames, x, y);
+    AudioTrackBaseComponent::filesDropped(filenames, x, y);
 }

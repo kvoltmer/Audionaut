@@ -14,9 +14,9 @@
 #include "Engine/ActionMessages.h"
 
 class AudioResourceContainer;
-class AudioGroupContainer;
+class AudioTrackContainer;
 class PlayListScheduler;
-class AudioGroup;
+class AudioTrack;
 class AudioSubGroup;
 
 class AudioRegionContainer
@@ -24,27 +24,27 @@ class AudioRegionContainer
                                             
 public:
     AudioRegionContainer(AudioResourceContainer &audioResourceContainer,
-                         AudioGroupContainer &audioGroupContainer,
+                         AudioTrackContainer &audioTrackContainer,
                          std::shared_ptr<TempoProvider> tempoProvider,
                          std::shared_ptr<juce::UndoManager> undoManager) :
         audioResourceContainer(audioResourceContainer),
-        audioGroupContainer(audioGroupContainer),
+        audioTrackContainer(audioTrackContainer),
         tempoProvider(tempoProvider),
         undoManager(undoManager)
     {}
     
-    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioGroup> group);
-    std::shared_ptr<AudioRegion> createRegion(std::shared_ptr<AudioGroup> group,
+    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioTrack> track);
+    std::shared_ptr<AudioRegion> createRegion(std::shared_ptr<AudioTrack> track,
                                               std::shared_ptr<AudioSubGroup> subGroup);
     
     std::shared_ptr<AudioRegion> createRegion(juce::String regionName,
                                               juce::Range<double> position,
-                                              std::shared_ptr<AudioGroup> group,
+                                              std::shared_ptr<AudioTrack> track,
                                               std::shared_ptr<AudioSubGroup> subGroup);
     
     void cleanup();
     
-    int getNumRegions(const AudioGroup* group = nullptr) const;
+    int getNumRegions(const AudioTrack* track = nullptr) const;
     std::shared_ptr<AudioRegion> getRegion(int index) const;
     int getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const;
     
@@ -56,12 +56,12 @@ public:
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const;
     
     std::shared_ptr<juce::UndoManager> getUndoManager() const { return undoManager; }
-    AudioGroupContainer& getAudioGroupContainer() const { return audioGroupContainer; }
+    AudioTrackContainer& getAudioTrackContainer() const { return audioTrackContainer; }
     AudioResourceContainer& getAudioResourceContainer() const { return audioResourceContainer; }
 private:
     
     AudioResourceContainer &audioResourceContainer;
-    AudioGroupContainer &audioGroupContainer;
+    AudioTrackContainer &audioTrackContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<juce::UndoManager> undoManager;
 

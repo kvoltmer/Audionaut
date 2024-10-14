@@ -40,7 +40,7 @@ public:
         if (undoableContainerAction == nullptr)
         {
             //std::cout << "new audium::UndoableContainerAction" << std::endl;
-            undoableContainerAction = new audium::UndoableContainerAction(*audiumEngine->getAudioGroupContainer(), false);
+            undoableContainerAction = new audium::UndoableContainerAction(*audiumEngine->getAudioTrackContainer(), false);
         }
         
         switch (currentDragMode)
@@ -72,10 +72,10 @@ public:
     {
         if (deselectOthers)
         {
-            audiumEngine->getAudioGroupContainer()->getSelectionManager()->deselectAll();
+            audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
         }
         playListItem->setSelected(bSelected);
-        audiumEngine->getAudioGroupContainer()->sendActionMessage(playListItemSelection);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(playListItemSelection);
     }
     
     const juce::String getLabelString() const override
@@ -104,7 +104,7 @@ public:
     {
         if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
         {
-            audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();            
+            audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();            
             return true;
         }
         

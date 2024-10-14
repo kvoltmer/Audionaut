@@ -15,11 +15,11 @@
 
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/RegionSelector.h"
-#include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
+#include "Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"
 
 using namespace juce;
 
-class AudioGroup;
+class AudioTrack;
 class PlayListContainer;
 class PlayListItemComponent;
 
@@ -28,24 +28,24 @@ class PlayListItemComponent;
  
  Display Playlist items on Timeline
  
- Display a AudioGroup as part of GroupListBoxModel.
+ Display a AudioTrack as part of AudioTrackListBoxModel.
  
  The ArrangementGroupComponent contains multiple playlist items (regions) in the Timeline.
  */
-class ArrangementGroupComponent : public GroupBaseComponent, public juce::DragAndDropTarget
+class ArrangementGroupComponent : public AudioTrackBaseComponent, public juce::DragAndDropTarget
 {
 public:
         
-    ArrangementGroupComponent (std::shared_ptr<AudioGroup> group,
+    ArrangementGroupComponent (std::shared_ptr<AudioTrack> track,
                                std::shared_ptr<AudiumEngine> audiumEngine,
                                std::shared_ptr<ZoomHandler> zoomHandler,
                                std::shared_ptr<RegionSelector> regionSelector) :
-        GroupBaseComponent(group, audiumEngine, zoomHandler, regionSelector)
+        AudioTrackBaseComponent(track, audiumEngine, zoomHandler, regionSelector)
     {
-        refreshComponent(group);
+        refreshComponent(track);
     }
     
-    void refreshComponent (std::shared_ptr<AudioGroup> audioGroup, bool forceRebuildComponents = false) override;
+    void refreshComponent (std::shared_ptr<AudioTrack> audioTrack, bool forceRebuildComponents = false) override;
     
     void resized() override;
     

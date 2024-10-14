@@ -12,8 +12,8 @@
 
 #include <JuceHeader.h>
 
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Controls/AudiumLabel.h"
 
@@ -23,10 +23,10 @@ class ChannelGroupHeaderComponent : public juce::Component,
                                     public juce::KeyListener
 {
 public:
-    ChannelGroupHeaderComponent(std::shared_ptr<AudioGroup> audioGroup) :
-        audioGroup(audioGroup)
+    ChannelGroupHeaderComponent(std::shared_ptr<AudioTrack> audioTrack) :
+        audioTrack(audioTrack)
     {
-        groupNameLabel.reset (new AudiumLabel ("group name",
+        groupNameLabel.reset (new AudiumLabel ("track name",
                                              TRANS ("n/a")));
         addAndMakeVisible (groupNameLabel.get());
         groupNameLabel->setFont (juce::Font (12.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
@@ -34,7 +34,7 @@ public:
         groupNameLabel->setEditable (false, true, false);
         
 
-        groupNameLabel->setColour (juce::Label::textColourId, audioGroup->getColour());
+        groupNameLabel->setColour (juce::Label::textColourId, audioTrack->getColour());
         groupNameLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
         //groupNameLabel->setColour (juce::Label::outlineColourId, Colours::black);
         groupNameLabel->setColour (juce::TextEditor::textColourId, juce::Colours::black);
@@ -65,7 +65,7 @@ public:
 
     ~ChannelGroupHeaderComponent() override
     {
-        audioGroup = nullptr;
+        audioTrack = nullptr;
         removeKeyListener(this);
     }
 
@@ -80,13 +80,13 @@ public:
     {
         if (labelThatHasChanged == groupNameLabel.get())
         {
-            audioGroup->setName(groupNameLabel->getText());
+            audioTrack->setName(groupNameLabel->getText());
         }
     }
     
     void updateFromEngine()
     {
-        groupNameLabel->setText(audioGroup->getName(), dontSendNotification);
+        groupNameLabel->setText(audioTrack->getName(), dontSendNotification);
     }
     
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override
@@ -113,15 +113,15 @@ public:
 
             channelSizeComboBox->setText("", dontSendNotification);
 
-            audioGroup->setChannelHeight(height);
-            audioGroup->getAudioResourceContainer().sendActionMessage("");
+            audioTrack->setChannelHeight(height);
+            audioTrack->getAudioResourceContainer().sendActionMessage("");
         }
     }
     
     
     void paint (juce::Graphics& g) override
     {
-        if (audioGroup->isSelected())
+        if (audioTrack->isSelected())
         {
             auto colour = findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.3f);
             g.fillAll (colour);
@@ -138,16 +138,16 @@ public:
     
     bool isSelected() const
     {
-        return audioGroup->isSelected();
+        return audioTrack->isSelected();
     }
     
     void setSelected(bool bSelected, bool deselectOthers)
     {
         if (deselectOthers)
-            audioGroup->getSelectionManager()->deselectAll();
-        audioGroup->setSelected(bSelected, false);
+            audioTrack->getSelectionManager()->deselectAll();
+        audioTrack->setSelected(bSelected, false);
         
-        audioGroup->getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
+        audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
     }
 
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override
@@ -155,7 +155,7 @@ public:
         if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
         {
             
-            audioGroup->getAudioGroupContainer().deleteSelectedObjects();
+            audioTrack->getAudioTrackContainer().deleteSelectedObjects();
             return true;
         }
         
@@ -163,7 +163,7 @@ public:
     }
     
 private:
-    std::shared_ptr<AudioGroup> audioGroup;
+    std::shared_ptr<AudioTrack> audioTrack;
     
     std::unique_ptr<AudiumLabel> groupNameLabel;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;

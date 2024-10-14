@@ -9,17 +9,17 @@
 */
 
 #include "AudioSubGroup.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/TransportSourceContainer.h"
 
-AudioSubGroup::AudioSubGroup(AudioGroup& audioGroup,
+AudioSubGroup::AudioSubGroup(AudioTrack& audioTrack,
                              std::shared_ptr<audium::SelectionManager> selectionManager) :
     audium::Selectable(selectionManager),
-    audioGroup(audioGroup)
+    audioTrack(audioTrack)
 {
     audioClip = std::shared_ptr<AudioClip> (new AudioClip(*this));
 }
@@ -40,7 +40,7 @@ void AudioSubGroup::cleanupAudioRegions()
     const auto audioRegions = getAudioRegions();
     for (auto region : audioRegions)
     {
-        getAudioGroup().getAudioRegionContainer()->deleteAudioRegion(region);
+        getAudioTrack().getAudioRegionContainer()->deleteAudioRegion(region);
     }
     jassert(getAudioRegions().size() == 0);
 }
@@ -50,7 +50,7 @@ void AudioSubGroup::cleanupAudioResources()
     const auto audioResources = getAudioResources();
     for (auto resource : audioResources)
     {
-        getAudioGroup().getAudioResourceContainer().removeAudioResource(resource);
+        getAudioTrack().getAudioResourceContainer().removeAudioResource(resource);
     }
     jassert(getAudioResources().size() == 0);
 }
@@ -59,7 +59,7 @@ void AudioSubGroup::cleanupTransportSources()
 {
     for (auto transportSource : transportSources)
     {
-        audioGroup.getTransportSourceContainer()->removeTransportSource(transportSource);
+        audioTrack.getTransportSourceContainer()->removeTransportSource(transportSource);
     }
 }
 
@@ -98,7 +98,7 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     }
     
     // we use the shared_ptr
-    std::shared_ptr<AudioGroup> group = std::dynamic_pointer_cast<AudioGroup> (getAudioGroup().getSharedPtr());
+    std::shared_ptr<AudioTrack> track = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
     std::shared_ptr<AudioSubGroup> subGroup = std::dynamic_pointer_cast<AudioSubGroup> (getSharedPtr());
     
     if (rebuild)
@@ -118,10 +118,10 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
         std::shared_ptr<AudioResource> resource = nullptr;
         if (rebuild)
         {
-            resource = getAudioGroup().getAudioResourceContainer().addAudioResource(url, group, subGroup);
+            resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url, track, subGroup);
             if (resource != nullptr)
             {
-                auto transportSource = getAudioGroup().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
+                auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
                 transportSources.push_back(transportSource);
             }
         }
@@ -156,11 +156,11 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
         std::shared_ptr<AudioRegion> region = nullptr;
         if (rebuild)
         {
-            region = getAudioGroup().getAudioRegionContainer()->createRegion(group, subGroup);
+            region = getAudioTrack().getAudioRegionContainer()->createRegion(track, subGroup);
         }
         else
         {
-            region = getAudioGroup().getAudioRegionContainer()->getRegion(data.id);
+            region = getAudioTrack().getAudioRegionContainer()->getRegion(data.id);
         }
         jassert(region);
         auto old_id = region->data.id;
@@ -177,7 +177,7 @@ bool AudioSubGroup::readFromStream (juce::InputStream& inputStream, bool rebuild
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
-        getAudioGroup().getAudioGroupContainer().sendActionMessage(updateAll);
+        getAudioTrack().getAudioTrackContainer().sendActionMessage(updateAll);
         return true;
     }
     return false;
@@ -190,17 +190,17 @@ int AudioSubGroup::getSizeInUnits()
 
 std::vector<std::shared_ptr<AudioResource>> AudioSubGroup::getAudioResources() const
 {
-    return audioGroup.getAudioResourceContainer().getAudioResourcesForSubGroup(this);
+    return audioTrack.getAudioResourceContainer().getAudioResourcesForSubGroup(this);
 }
 
 std::vector<std::shared_ptr<AudioRegion>> AudioSubGroup::getAudioRegions() const
 {
-    return audioGroup.getAudioRegionContainer()->getRegionsForSubGroup(this);
+    return audioTrack.getAudioRegionContainer()->getRegionsForSubGroup(this);
 }
 
 int AudioSubGroup::getNumChannels() const
 {
-    return audioGroup.getNumChannels();
+    return audioTrack.getNumChannels();
 }
 
 std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "Engine/Resource/AudioResource.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Channel/AudioChannelData.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
@@ -20,11 +20,11 @@ class AudioChannel : public audium::Selectable
 {
     
 public:
-    AudioChannel(AudioGroup &audioGroup,
+    AudioChannel(AudioTrack &audioTrack,
                  int channelNumber,
                  std::shared_ptr<audium::SelectionManager> selectionManager) :
         audium::Selectable(selectionManager),
-        audioGroup(audioGroup),
+        audioTrack(audioTrack),
         channelNumber(channelNumber)
     {
     }
@@ -45,7 +45,7 @@ public:
     AudioChannelData data;
     
 private:
-    AudioGroup &audioGroup;
+    AudioTrack &audioTrack;
     
     int channelNumber = 0;
     

@@ -9,10 +9,10 @@
 #include "Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
-#include "Interface/Controls/AudioGroupListBox.h"
+#include "Interface/Controls/AudioTrackListBox.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelGroupComponent.h"
 
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 class ChannelGroupListBoxModel : public audium::ListBoxModel {
     
@@ -31,7 +31,7 @@ public:
     
     int getNumRows() override
     {
-        return audiumEngine->getAudioGroupContainer()->getNumItems();
+        return audiumEngine->getAudioTrackContainer()->getNumItems();
     }
 
     void paintListBoxItem ( int rowNumber,
@@ -50,12 +50,12 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        auto audioGroup = audiumEngine->getAudioGroupContainer()->getAudioGroup(rowNumber);
+        auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(rowNumber);
         if (existingComponentToUpdate == nullptr)
         {
-            if (audioGroup != nullptr)
+            if (audioTrack != nullptr)
             {
-                return new ChannelGroupComponent(audioGroup, audiumEngine);
+                return new ChannelGroupComponent(audioTrack, audiumEngine);
             }
         }
         else
@@ -63,10 +63,10 @@ public:
             auto component = dynamic_cast<ChannelGroupComponent*>(existingComponentToUpdate);
             jassert(component);
         
-            if (audioGroup != nullptr)
+            if (audioTrack != nullptr)
             {
-                // update of audioGroup since row might have changed after delete
-                component->refreshComponent(audioGroup);
+                // update of audioTrack since row might have changed after delete
+                component->refreshComponent(audioTrack);
             }
             return component;
         }
@@ -78,23 +78,23 @@ public:
     
     int getRowHeight (int rowNumber) const override
     {
-        auto group = audiumEngine->getAudioGroupContainer()->getAudioGroup(rowNumber);
-        if (group != nullptr)
-            return group->getTotalHeight() + DraggerControl::draggerHeight;
+        auto track = audiumEngine->getAudioTrackContainer()->getAudioTrack(rowNumber);
+        if (track != nullptr)
+            return track->getTotalHeight() + DraggerControl::draggerHeight;
         
         return 0;
     }
     
     void deleteKeyPressed (int lastRowSelected) override
     {
-        audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
+        audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
-        audiumEngine->getAudioGroupContainer()->getSelectionManager()->deselectAll();
+        audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
         owner->deselectAllRows();
-        audiumEngine->getAudioGroupContainer()->sendActionMessage(updateMiddlePanelAction);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateMiddlePanelAction);
     }
     
     void listWasScrolled() override

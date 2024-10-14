@@ -16,7 +16,7 @@
 
 #define MAX_AUDIO_FILE_CHANNELS 64
 
-class AudioGroup;
+class AudioTrack;
 
 class AudiumTransportSource : public audium::AudioTransportSource
 {

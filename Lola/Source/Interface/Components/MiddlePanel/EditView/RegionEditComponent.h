@@ -114,8 +114,8 @@ public:
     
     void mouseDown (const juce::MouseEvent& e) override
     {
-        audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().deselectAll();
-        audiumEngine->getAudioGroupContainer()->sendActionMessage(regionSelectedAction);
+        audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().deselectAll();
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(regionSelectedAction);
     }
     
 private:

@@ -18,7 +18,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Interface/ColourIds.h"
 #include "Engine/Region/AudioRegion.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Interface/Widgets/audium_AudioThumbnail.h"
@@ -115,7 +115,7 @@ public:
     {
         // paint a vertical gradient as background:
         
-        // bottom colour = transparent version of the group colour
+        // bottom colour = transparent version of the track colour
         const auto bottomColour = colour.withAlpha(0.375f);
         
         // top colour = complementary colour of bottom

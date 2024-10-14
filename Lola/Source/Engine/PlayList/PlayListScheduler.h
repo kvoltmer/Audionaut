@@ -20,7 +20,7 @@
 class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
-class AudioGroupContainer;
+class AudioTrackContainer;
 class AudioResourceContainer;
 
 class PlayListScheduler
@@ -28,13 +28,13 @@ class PlayListScheduler
     
     
 public:
-    PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+    PlayListScheduler(std::shared_ptr<AudioTrackContainer> audioTrackContainer,
                       std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                       std::shared_ptr<TempoProvider> tempoProvider,
                       std::shared_ptr<audium::LinkEngine> linkEngine,
                       std::shared_ptr<AudioClipContainer> audioClipContainer,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
-        audioGroupContainer(audioGroupContainer),
+        audioTrackContainer(audioTrackContainer),
         audioResourceContainer(audioResourceContainer),
         tempoProvider(tempoProvider),
         linkEngine(linkEngine),
@@ -61,9 +61,9 @@ public:
     bool isEditMode() const { return data.editMode; }
     bool isArrangementMode() const { return !data.editMode; }
         
-    void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioGroup> group, int playListItemIndex);
-    int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const;
-    double getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const;
+    void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioTrack> track, int playListItemIndex);
+    int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track) const;
+    double getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const;
     
     
     double getAbsolutePosition(audium::TimeContextType context) const;
@@ -94,7 +94,7 @@ private:
     
 private:
     
-    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+    std::shared_ptr<AudioTrackContainer> audioTrackContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<audium::LinkEngine> linkEngine;

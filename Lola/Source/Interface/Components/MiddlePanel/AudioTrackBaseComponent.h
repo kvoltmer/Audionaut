@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    GroupBaseComponent.h
+    AudioTrackBaseComponent.h
     Created: 27 Nov 2023 12:17:09pm
     Author:  Klaus Voltmer
 
@@ -15,30 +15,30 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/RegionSelector.h"
 
-class AudioGroup;
+class AudioTrack;
 class PlayListContainer;
 class PlayListItemComponent;
 
 //==============================================================================
 /*
  
- Base class to display an AudioGroup.
+ Base class to display an AudioTrack.
  
- This class is created here: GroupListBoxModel::refreshComponentForRow
+ This class is created here: AudioTrackListBoxModel::refreshComponentForRow
  
 */
 
-class GroupBaseComponent  : public juce::Component, public juce::FileDragAndDropTarget
+class AudioTrackBaseComponent  : public juce::Component, public juce::FileDragAndDropTarget
 {
 public:
-    GroupBaseComponent (std::shared_ptr<AudioGroup> audioGroup,
+    AudioTrackBaseComponent (std::shared_ptr<AudioTrack> audioTrack,
                         std::shared_ptr<AudiumEngine> audiumEngine,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector);
     
-    virtual ~GroupBaseComponent() = default;
+    virtual ~AudioTrackBaseComponent() = default;
     
-    virtual void refreshComponent (std::shared_ptr<AudioGroup> audioGroup, bool forceRebuildComponents = false) = 0;
+    virtual void refreshComponent (std::shared_ptr<AudioTrack> audioTrack, bool forceRebuildComponents = false) = 0;
 
     void paint (juce::Graphics&) override;
     
@@ -53,7 +53,7 @@ public:
     
 protected:
     
-    std::shared_ptr<AudioGroup> audioGroup;
+    std::shared_ptr<AudioTrack> audioTrack;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
@@ -61,5 +61,5 @@ protected:
     bool externalDragAndDrop = false;
 
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GroupBaseComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackBaseComponent)
 };

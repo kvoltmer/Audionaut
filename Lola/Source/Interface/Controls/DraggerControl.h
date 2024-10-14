@@ -17,8 +17,8 @@
 #include "Interface/Controls/RegionSelector.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Interface/ColourIds.h"
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 

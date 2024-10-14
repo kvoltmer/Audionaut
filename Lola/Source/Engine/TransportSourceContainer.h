@@ -12,7 +12,7 @@
 #include <JuceHeader.h>
 
 class AudioResourceContainer;
-class AudioGroup;
+class AudioTrack;
 class AudiumTransportSource;
 
 class TransportSourceContainer

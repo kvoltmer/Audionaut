@@ -1,15 +1,15 @@
 /*
   ==============================================================================
 
-    AudioGroup.cpp
+    AudioTrack.cpp
     Created: 28 Sep 2023 1:33:20pm
     Author:  Klaus Voltmer
 
   ==============================================================================
 */
 
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
@@ -17,17 +17,17 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/TransportSourceContainer.h"
-#include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
-AudioGroup::~AudioGroup()
+AudioTrack::~AudioTrack()
 {
     cleanup();
 }
 
-void AudioGroup::cleanup()
+void AudioTrack::cleanup()
 {
     audioSubGroupContainer->cleanup();
     audioChannelContainer->cleanup();
@@ -35,17 +35,17 @@ void AudioGroup::cleanup()
 }
 
 
-std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResources() const
+std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResources() const
 {
-    return audioResourceContainer.getAudioResourcesForGroup(const_cast<AudioGroup*>(this));
+    return audioResourceContainer.getAudioResourcesForGroup(const_cast<AudioTrack*>(this));
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const
+std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const
 {
-    return audioResourceContainer.getAudioResourcesForGroupAtAbsoluteRange(const_cast<AudioGroup*>(this), rangeInSeconds);
+    return audioResourceContainer.getAudioResourcesForGroupAtAbsoluteRange(const_cast<AudioTrack*>(this), rangeInSeconds);
 }
 
-std::shared_ptr<AudioSubGroup> AudioGroup::getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const
+std::shared_ptr<AudioSubGroup> AudioTrack::getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const
 {
     std::shared_ptr<AudioSubGroup> subGroup = nullptr;
     for (auto resource : getAudioResources())
@@ -58,14 +58,14 @@ std::shared_ptr<AudioSubGroup> AudioGroup::getSubGroupAtAbsolutePosition(double 
     return nullptr;
 }
 
-void AudioGroup::setColour(juce::Colour colour)
+void AudioTrack::setColour(juce::Colour colour)
 {
     groupColour = colour;
 }
 
-bool AudioGroup::writeToJson (json& output)
+bool AudioTrack::writeToJson (json& output)
 {
-    output["name"] = groupName;
+    output["name"] = name;
     output["colour"] = groupColour.toString().toStdString();
     
     for (auto channel : audioChannelContainer->getObjects())
@@ -88,19 +88,19 @@ bool AudioGroup::writeToJson (json& output)
     return true;
 }
 
-bool AudioGroup::writeToStream (juce::OutputStream& outputStream)
+bool AudioTrack::writeToStream (juce::OutputStream& outputStream)
 {
     return audium::Streamable::writeToStream(outputStream);
 }
 
-bool AudioGroup::readFromJson (json& input, bool rebuild)
+bool AudioTrack::readFromJson (json& input, bool rebuild)
 {
     //std::cout << input.dump(4) << std::endl;
     json output;
     writeToJson(output);
     if (input == output)
     {
-        std::cout << "skip AudioGroup::readFromJson" << std::endl;
+        std::cout << "skip AudioTrack::readFromJson" << std::endl;
         return true;
     }
     
@@ -108,7 +108,7 @@ bool AudioGroup::readFromJson (json& input, bool rebuild)
     if (rebuild)
         cleanup();
     
-    groupName = input["name"].template get<std::string>();
+    name = input["name"].template get<std::string>();
     groupColour = juce::Colour::fromString(input["colour"].template get<std::string>());
     
     // Channels
@@ -138,7 +138,7 @@ bool AudioGroup::readFromJson (json& input, bool rebuild)
         std::shared_ptr<AudioSubGroup> subGroup = nullptr;
         if (rebuild)
         {
-            subGroup = AudioGroupFactory::createAudioSubGroup(*this);
+            subGroup = AudioTrackFactory::createAudioSubGroup(*this);
             audioSubGroupContainer->push_back(subGroup);
         }
         else
@@ -156,27 +156,27 @@ bool AudioGroup::readFromJson (json& input, bool rebuild)
     return playListContainer->readFromJson(input, rebuild);
 }
 
-bool AudioGroup::readFromStream (juce::InputStream& inputStream, bool rebuild)
+bool AudioTrack::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
-        getAudioGroupContainer().sendActionMessage(rebuildAll);
+        getAudioTrackContainer().sendActionMessage(rebuildAll);
         return true;
     }
     return false;
 }
 
-int AudioGroup::getSizeInUnits()
+int AudioTrack::getSizeInUnits()
 {
     return (int)audioSubGroupContainer->getObjects().size() * 16;
 }
 
-int AudioGroup::getNumChannels() const
+int AudioTrack::getNumChannels() const
 {
     return static_cast<int>(audioChannelContainer->getObjects().size());
 }
 
-void AudioGroup::ensureNumChannels(int channelsNeeded)
+void AudioTrack::ensureNumChannels(int channelsNeeded)
 {
     while (getNumChannels() < channelsNeeded)
     {
@@ -184,7 +184,7 @@ void AudioGroup::ensureNumChannels(int channelsNeeded)
     }
 }
 
-std::shared_ptr<AudioChannel> AudioGroup::addChannel()
+std::shared_ptr<AudioChannel> AudioTrack::addChannel()
 {
     auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this,
                                                                   (int)audioChannelContainer->getObjects().size(),
@@ -193,7 +193,7 @@ std::shared_ptr<AudioChannel> AudioGroup::addChannel()
     return channel;
 }
 
-std::shared_ptr<AudioChannel> AudioGroup::getChannel(int channelNumber) const
+std::shared_ptr<AudioChannel> AudioTrack::getChannel(int channelNumber) const
 {
     if (channelNumber < audioChannelContainer->getObjects().size())
     {
@@ -203,7 +203,7 @@ std::shared_ptr<AudioChannel> AudioGroup::getChannel(int channelNumber) const
     return nullptr;
 }
 
-int AudioGroup::getTotalHeight() const
+int AudioTrack::getTotalHeight() const
 {
     int height = 0;
     auto channels = getNumChannels();
@@ -214,12 +214,12 @@ int AudioGroup::getTotalHeight() const
     return height;
 }
 
-float AudioGroup::getOutputLevel(int channelNumber) const
+float AudioTrack::getOutputLevel(int channelNumber) const
 {
     return transportSourceContainer->getOutputLevel(channelNumber);
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtChannel(int channelNumber) const
+std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtChannel(int channelNumber) const
 {
     auto channel = getChannel(channelNumber);
     
@@ -234,7 +234,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioGroup::getAudioResourcesAtChann
     return result;
 }
 
-void AudioGroup::setGain(float gain, int channelNumber)
+void AudioTrack::setGain(float gain, int channelNumber)
 {
     // TODO: move this to channel class
     // TODO: fixme
@@ -246,7 +246,7 @@ void AudioGroup::setGain(float gain, int channelNumber)
     }
 }
 
-float AudioGroup::getGain(int channelNumber) const
+float AudioTrack::getGain(int channelNumber) const
 {
     // TODO: move this to channel class
     // TODO: fixme
@@ -260,15 +260,15 @@ float AudioGroup::getGain(int channelNumber) const
 }
 
 
-std::shared_ptr<AudioSubGroup> AudioGroup::createNewAudioSubGroup(double transportPosition, audium::TimeContextType context)
+std::shared_ptr<AudioSubGroup> AudioTrack::createNewAudioSubGroup(double transportPosition, audium::TimeContextType context)
 {
-    auto subGroup = AudioGroupFactory::createAudioSubGroup(*this);
+    auto subGroup = AudioTrackFactory::createAudioSubGroup(*this);
     subGroup->getAudioClip()->setAbsolutePosition(transportPosition, context);
     audioSubGroupContainer->push_back(subGroup);
     return subGroup;
 }
 
-std::shared_ptr<AudioSubGroup> AudioGroup::getDefaultSubGroup() const
+std::shared_ptr<AudioSubGroup> AudioTrack::getDefaultSubGroup() const
 {
     if (audioSubGroupContainer->getObjects().size() > 0)
     {
@@ -279,7 +279,7 @@ std::shared_ptr<AudioSubGroup> AudioGroup::getDefaultSubGroup() const
 }
 
 
-void AudioGroup::setSelected(bool bSelected, bool selectChildren)
+void AudioTrack::setSelected(bool bSelected, bool selectChildren)
 {
     if (selectChildren)
     {
@@ -292,7 +292,7 @@ void AudioGroup::setSelected(bool bSelected, bool selectChildren)
 }
 
 
-void AudioGroup::setChannelHeight(int height)
+void AudioTrack::setChannelHeight(int height)
 {
     for (auto i = 0; i < getNumChannels(); i++)
     {
@@ -300,7 +300,7 @@ void AudioGroup::setChannelHeight(int height)
     }
 }
 
-std::list<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(bool arrangementMode) const
+std::list<std::shared_ptr<PositionableBase>> AudioTrack::getPositionableItems(bool arrangementMode) const
 {
     // returns all positionable items
     // note: depending on the arrangement or edit mode
@@ -326,7 +326,7 @@ std::list<std::shared_ptr<PositionableBase>> AudioGroup::getPositionableItems(bo
     return result;
 }
 
-bool AudioGroup::deleteSelectedObject(std::shared_ptr<audium::Selectable> object)
+bool AudioTrack::deleteSelectedObject(std::shared_ptr<audium::Selectable> object)
 {
     // TODO: proove if object exits. Unless the dynamic_cast may crash
     
@@ -352,7 +352,7 @@ bool AudioGroup::deleteSelectedObject(std::shared_ptr<audium::Selectable> object
 }
 
 
-bool AudioGroup::deleteChannel(AudioChannel* channel) {
+bool AudioTrack::deleteChannel(AudioChannel* channel) {
     
     bool result = false;
     if (audioChannelContainer->objectExists(channel))
@@ -385,7 +385,7 @@ bool AudioGroup::deleteChannel(AudioChannel* channel) {
     return result;
 }
 
-bool AudioGroup::addAudioFiles(const juce::StringArray& filenames,
+bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
                                double position,
                                bool arrangementMode,
                                std::function<void (std::string)> callback)
@@ -447,12 +447,12 @@ bool AudioGroup::addAudioFiles(const juce::StringArray& filenames,
     
 }
 
-std::shared_ptr<AudioResource> AudioGroup::addAudioFile(std::shared_ptr<AudioSubGroup> subGroup,
+std::shared_ptr<AudioResource> AudioTrack::addAudioFile(std::shared_ptr<AudioSubGroup> subGroup,
                                                         const juce::File filename,
                                                         int &channelPosition)
 {
     auto audioResource = getAudioResourceContainer().addAudioResource(URL (filename),
-                                                                      std::dynamic_pointer_cast<AudioGroup>(getSharedPtr()),
+                                                                      std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
                                                                       subGroup,
                                                                       channelPosition);
     if (audioResource != nullptr)
@@ -463,7 +463,7 @@ std::shared_ptr<AudioResource> AudioGroup::addAudioFile(std::shared_ptr<AudioSub
     return audioResource;
 }
 
-void AudioGroup::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
+void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
                                            std::shared_ptr<AudioSubGroup> subGroup,
                                            double position,
                                            audium::TimeContextType context)
@@ -472,7 +472,7 @@ void AudioGroup::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
     juce::Range<double> defaultRange(0.0, audioResource->getFileLength(audium::seconds));
     auto region = getAudioRegionContainer()->createRegion(audioResource->getFileNameWithoutExtension(),
                                                           defaultRange,
-                                                          std::dynamic_pointer_cast<AudioGroup>(getSharedPtr()),
+                                                          std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
                                                           subGroup);
     
     juce::Range<double> range(position, position + region->getRegionData(context).getLength());
@@ -480,7 +480,7 @@ void AudioGroup::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
     getPlayListContainer()->createPlayListItemAtPositionUI(region, range, context);
 }
 
-double AudioGroup::getTotalLength(audium::TimeContextType context, bool arrangementMode) const
+double AudioTrack::getTotalLength(audium::TimeContextType context, bool arrangementMode) const
 {
     auto result1 = 0.0;
     if (arrangementMode)
@@ -501,7 +501,7 @@ double AudioGroup::getTotalLength(audium::TimeContextType context, bool arrangem
 }
 
 
-std::vector<DspClipData> AudioGroup::getDspClipVector(bool arrangementMode) const
+std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) const
 {
     std::vector<DspClipData> result;
     DspClipData dspClipData;

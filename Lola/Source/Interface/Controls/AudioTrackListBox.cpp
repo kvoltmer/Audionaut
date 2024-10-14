@@ -1,11 +1,11 @@
 
 #include <JuceHeader.h>
-#include "AudioGroupListBox.h"
+#include "AudioTrackListBox.h"
 
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -16,9 +16,9 @@
 using namespace audium;
 
 //==============================================================================
-AudioGroupListBox::AudioGroupListBox (std::shared_ptr<AudiumEngine> audiumEngine,
+AudioTrackListBox::AudioTrackListBox (std::shared_ptr<AudiumEngine> audiumEngine,
                                       std::shared_ptr<ZoomHandler> zoomHandler) :
-    audium::ListBox("AudioGroupListBox", nullptr),
+    audium::ListBox("AudioTrackListBox", nullptr),
     audiumEngine(audiumEngine),
     zoomHandler(zoomHandler)
 {
@@ -26,37 +26,37 @@ AudioGroupListBox::AudioGroupListBox (std::shared_ptr<AudiumEngine> audiumEngine
     setColour(ListBox::backgroundColourId, juce::Colours::transparentBlack);
 }
 
-AudioGroupListBox::~AudioGroupListBox()
+AudioTrackListBox::~AudioTrackListBox()
 {
 }
 
-void AudioGroupListBox::setNewGroupColour(std::shared_ptr<AudioGroup> audioGroup)
+void AudioTrackListBox::setNewGroupColour(std::shared_ptr<AudioTrack> audioTrack)
 {
-    if (audioGroup->getColour() == juce::Colours::pink)
+    if (audioTrack->getColour() == juce::Colours::pink)
     {
         auto newColour = audium::getNewWaveFormColour();
         
-        auto numGroups = audiumEngine->getAudioGroupContainer()->getNumItems();
+        auto numGroups = audiumEngine->getAudioTrackContainer()->getNumItems();
         for (auto i = 0; i < numGroups; i++)
         {
-            if(newColour == audiumEngine->getAudioGroupContainer()->getAudioGroup(i)->getColour())
+            if(newColour == audiumEngine->getAudioTrackContainer()->getAudioTrack(i)->getColour())
             {
                 newColour = audium::getNewWaveFormColour();
             }
         }
         
-        audioGroup->setColour(newColour);
+        audioTrack->setColour(newColour);
     }
 }
 
-void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
+void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
 {
     if ( !filenames.isEmpty())
     {
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
         
-        auto audioGroup = audiumEngine->getAudioGroupContainer()->createNewAudioGroup(juce::String());
-        setNewGroupColour(audioGroup);
+        auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
+        setNewGroupColour(audioTrack);
                 
         auto position = zoomHandler->xToClocks(mouseX);
 
@@ -68,7 +68,7 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
                                                         "Failed to open: " + juce::String(error));
         };
         
-        if (audioGroup->addAudioFiles(filenames, position, arrangementMode, callback))
+        if (audioTrack->addAudioFiles(filenames, position, arrangementMode, callback))
         {
             action->storeNewState();
             audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
@@ -76,7 +76,7 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
         }
         else
         {
-            audiumEngine->getAudioGroupContainer()->deleteAudioGroup(audioGroup);
+            audiumEngine->getAudioTrackContainer()->deleteAudioTrack(audioTrack);
         }
     }
     
@@ -85,12 +85,12 @@ void AudioGroupListBox::filesDropped (const juce::StringArray& filenames, int mo
     repaint();
 }
 
-void AudioGroupListBox::fileDragEnter (const juce::StringArray& files, int x, int y)
+void AudioTrackListBox::fileDragEnter (const juce::StringArray& files, int x, int y)
 {
     setColour(ListBox::backgroundColourId, findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.5f));
     repaint();
 }
-void AudioGroupListBox::fileDragExit (const juce::StringArray& files)
+void AudioTrackListBox::fileDragExit (const juce::StringArray& files)
 {
     setColour(ListBox::backgroundColourId, juce::Colours::transparentBlack);
     repaint();
