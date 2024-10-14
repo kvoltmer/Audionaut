@@ -298,7 +298,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
 
         case StandardApplicationCommandIDs::del:
-            getEngine()->getAudioGroupContainer()->deleteSelectedObjects();
+            getEngine()->getAudioTrackContainer()->deleteSelectedObjects();
             break;
 
         case StandardApplicationCommandIDs::selectAll:
@@ -318,5 +318,5 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
 
 bool AudiumMainWindow::isSomethingSelected()
 {
-    return getEngine()->getAudioGroupContainer()->isSomethingSelected();
+    return getEngine()->getAudioTrackContainer()->isSomethingSelected();
 }

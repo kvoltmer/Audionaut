@@ -14,7 +14,7 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Engine/Resource/AudioResource.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/AudiumTransportSource.h"
 
@@ -25,12 +25,12 @@ public:
     
     static std::shared_ptr<AudioResource> createAudioResource(juce::URL url,
                                                               AudioResourceContainer& audioResourceContainer,
-                                                              std::shared_ptr<AudioGroup> group,
+                                                              std::shared_ptr<AudioTrack> track,
                                                               std::shared_ptr<AudioSubGroup> subGroup,
                                                               int channelPosition)
     {
         return std::shared_ptr<AudioResource>(new AudioResource(audioResourceContainer,
-                                                                         group,
+                                                                         track,
                                                                          subGroup,
                                                                          url,
                                                                          channelPosition));

@@ -42,7 +42,7 @@ public:
     
     bool validateData();
     
-    AudioGroup &getAudioGroup() const { return audioSubGroup.getAudioGroup(); }
+    AudioTrack &getAudioTrack() const { return audioSubGroup.getAudioTrack(); }
     
     double getFileLength(audium::TimeContextType context) const;
 

@@ -16,7 +16,7 @@ void EditGroupComponent::filesDropped (const StringArray& filenames, int x, int 
     if ( !filenames.isEmpty())
     {
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
                 
         auto position = zoomHandler->xToClocks(x);
         zoomHandler->snapToGrid(position);
@@ -27,7 +27,7 @@ void EditGroupComponent::filesDropped (const StringArray& filenames, int x, int 
                                                         "Failed to open: " + juce::String(error));
         };
         
-        if (audioGroup->addAudioFiles(filenames, position, false, callback))
+        if (audioTrack->addAudioFiles(filenames, position, false, callback))
         {
             action->storeNewState();
             audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
@@ -36,5 +36,5 @@ void EditGroupComponent::filesDropped (const StringArray& filenames, int x, int 
     }
     
     // call base class!
-    GroupBaseComponent::filesDropped(filenames, x, y);
+    AudioTrackBaseComponent::filesDropped(filenames, x, y);
 }

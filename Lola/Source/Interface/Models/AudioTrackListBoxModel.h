@@ -9,15 +9,15 @@
 #include "Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
-#include "Interface/Controls/AudioGroupListBox.h"
+#include "Interface/Controls/AudioTrackListBox.h"
 
-class AudioGroupContainer;
+class AudioTrackContainer;
 
-class GroupListBoxModel : public audium::ListBoxModel {
+class AudioTrackListBoxModel : public audium::ListBoxModel {
     
 public:
     
-    GroupListBoxModel(std::shared_ptr<AudioGroupListBox> owner,
+    AudioTrackListBoxModel(std::shared_ptr<AudioTrackListBox> owner,
                            std::shared_ptr<AudiumEngine> audiumEngine,
                            std::shared_ptr<ZoomHandler> zoomHandler,
                            std::shared_ptr<RegionSelector> regionSelector,
@@ -30,7 +30,7 @@ public:
     {
     }
     
-    ~GroupListBoxModel() override
+    ~AudioTrackListBoxModel() override
     {
     }
     
@@ -58,7 +58,7 @@ public:
 
         
 private:
-    std::shared_ptr<AudioGroupListBox> owner;
+    std::shared_ptr<AudioTrackListBox> owner;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;

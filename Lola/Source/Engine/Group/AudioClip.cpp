@@ -9,8 +9,8 @@
 */
 
 #include "AudioClip.h"
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Region/AudioRegion.h"
@@ -19,7 +19,7 @@ double AudioClip::getAbsolutePosition(audium::TimeContextType context) const
 {
     if (context == audium::seconds)
     {
-        auto tp = getAudioGroup().getAudioGroupContainer().getTempoProvider();
+        auto tp = getAudioTrack().getAudioTrackContainer().getTempoProvider();
         return tp->clocksToSeconds(data.absolutePositionClocks);
     }
     else if (context == audium::clocks)
@@ -35,7 +35,7 @@ void AudioClip::setAbsolutePosition(double newPosition, audium::TimeContextType 
 {
     if (context == audium::seconds)
     {
-        auto tp = getAudioGroup().getAudioGroupContainer().getTempoProvider();
+        auto tp = getAudioTrack().getAudioTrackContainer().getTempoProvider();
         data.absolutePositionClocks = tp->secondsToClocks(newPosition);
     }
     else if (context == audium::clocks)
@@ -61,7 +61,7 @@ juce::Range<double> AudioClip::getRegionData(audium::TimeContextType context) co
     }
     else if (context == audium::clocks)
     {
-        return getAudioGroup().getAudioGroupContainer().getTempoProvider()->secondsToClocks(data.regionData);
+        return getAudioTrack().getAudioTrackContainer().getTempoProvider()->secondsToClocks(data.regionData);
     }
     jassertfalse;
     return juce::Range<double>(0.0, 0.0);
@@ -77,7 +77,7 @@ void AudioClip::setRegionData(juce::Range<double> newRegionData, audium::TimeCon
     }
     else if (context == audium::clocks)
     {
-        data.regionData = getAudioGroup().getAudioGroupContainer().getTempoProvider()->clocksToSeconds(newRegionData);
+        data.regionData = getAudioTrack().getAudioTrackContainer().getTempoProvider()->clocksToSeconds(newRegionData);
     }
 
     if (data.regionData.getStart() < 0.0)
@@ -153,7 +153,7 @@ bool AudioClip::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
-        getAudioGroup().getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
+        getAudioTrack().getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
         return true;
     }
     return false;

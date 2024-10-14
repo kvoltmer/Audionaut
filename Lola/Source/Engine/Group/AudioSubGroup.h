@@ -20,7 +20,7 @@
 
 using json = nlohmann::json;
 
-class AudioGroup;
+class AudioTrack;
 class AudioResource;
 class AudioRegion;
 class AudioClip;
@@ -30,7 +30,7 @@ class AudioSubGroup : public audium::Streamable, public audium::Selectable
 {
         
 public:
-    AudioSubGroup(AudioGroup& audioGroup, std::shared_ptr<audium::SelectionManager> selectionManager);
+    AudioSubGroup(AudioTrack& audioTrack, std::shared_ptr<audium::SelectionManager> selectionManager);
     virtual ~AudioSubGroup() override;
     void cleanup() override;
     void cleanupAudioRegions();
@@ -52,7 +52,7 @@ public:
     int getNumChannels() const;
     std::shared_ptr<AudioResource> getChannel(int rowNumber) const;
 
-    AudioGroup& getAudioGroup() const { return audioGroup; }
+    AudioTrack& getAudioTrack() const { return audioTrack; }
     
     std::shared_ptr<AudioClip> getAudioClip() const { return audioClip; }
     
@@ -61,7 +61,7 @@ public:
 private:
     std::shared_ptr<AudioClip> audioClip;
     
-    AudioGroup& audioGroup;
+    AudioTrack& audioTrack;
 
     std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
     

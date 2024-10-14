@@ -15,7 +15,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Region/AudioRegionContainer.h"
 
-#include "Interface/Components/MiddlePanel/GroupBaseComponent.h"
+#include "Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"
 #include "Interface/Views/AudioResourceView.h"
 #include "Interface/Controls/SubGroupDraggerControl.h"
 #include "Interface/Handlers/ZoomHandler.h"
@@ -30,22 +30,22 @@ Display AudioSubGroups -> Timeline
  
  */
 
-class EditGroupComponent  : public GroupBaseComponent, public juce::ChangeListener
+class EditGroupComponent  : public AudioTrackBaseComponent, public juce::ChangeListener
 {
 public:
         
-    EditGroupComponent (std::shared_ptr<AudioGroup> group,
+    EditGroupComponent (std::shared_ptr<AudioTrack> track,
                         std::shared_ptr<AudiumEngine> audiumEngine,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector) :
-        GroupBaseComponent(group, audiumEngine, zoomHandler, regionSelector)
+        AudioTrackBaseComponent(track, audiumEngine, zoomHandler, regionSelector)
     {
-        refreshComponent(group);
+        refreshComponent(track);
     }    
     
-    void refreshComponent (std::shared_ptr<AudioGroup> group, bool forceRebuildComponents = false) override
+    void refreshComponent (std::shared_ptr<AudioTrack> track, bool forceRebuildComponents = false) override
     {
-        audioGroup = group;
+        audioTrack = track;
         
         if (mustRebuildComponents() ||
             forceRebuildComponents)
@@ -62,7 +62,7 @@ public:
     
     bool mustRebuildComponents() const
     {
-        if (audioGroup->getAudioSubGroups().size() != subGroupListViews.size())
+        if (audioTrack->getAudioSubGroups().size() != subGroupListViews.size())
         {
             return true;
         }
@@ -79,8 +79,8 @@ public:
         subGroupListViews.clear();
         subGroupListModels.clear();
         
-        // create a ListBox and ListBoxModel for each sub group
-        auto subGroups = audioGroup->getAudioSubGroups();
+        // create a ListBox and ListBoxModel for each sub track
+        auto subGroups = audioTrack->getAudioSubGroups();
         for (auto subGroup : subGroups)
         {
             auto subGroupListView = std::shared_ptr<SubGroupListBox>(new SubGroupListBox(audiumEngine,
@@ -101,7 +101,7 @@ public:
                                                                                               audiumEngine,
                                                                                               subGroup,
                                                                                               zoomHandler,
-                                                                                              audioGroup->getColour(),
+                                                                                              audioTrack->getColour(),
                                                                                               regionSelector));
             dragger->addChangeListener(this);
             subGroupListView->setHeaderComponent(std::move(dragger));
@@ -124,7 +124,7 @@ public:
     
     void updateFromEngine()
     {
-        const auto subGroups = audioGroup->getAudioSubGroups();
+        const auto subGroups = audioTrack->getAudioSubGroups();
         jassert(subGroups.size() == subGroupListViews.size());
         int counter = 0;
         for (auto subGroup : subGroups)
@@ -139,7 +139,7 @@ public:
     {
         
         // set size and position of subgroups on timeline
-        auto subGroups = audioGroup->getAudioSubGroups();
+        auto subGroups = audioTrack->getAudioSubGroups();
         //jassert(subGroups.size() == subGroupListViews.size());
         int counter = 0;
         for (auto subGroup : subGroups)
@@ -148,7 +148,7 @@ public:
             auto pos = zoomHandler->clocksToX(posRange.getStart());
             auto width = zoomHandler->clocksToX(posRange.getLength());
             
-            auto height = audioGroup->getTotalHeight() + DraggerControl::draggerHeight;
+            auto height = audioTrack->getTotalHeight() + DraggerControl::draggerHeight;
             
             juce::Rectangle<double> rect_tmp(pos, 0.0, width, height);
             

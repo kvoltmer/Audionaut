@@ -18,7 +18,7 @@
 
 #include "Engine/TimeContext.h"
 #include "Engine/Streamable.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 
 class AudioPlayer;
@@ -32,7 +32,7 @@ class AudioResource : public audium::Streamable
     
 public:
     AudioResource(AudioResourceContainer& audioResourceContainer,
-                  std::shared_ptr<AudioGroup> audioGroup,
+                  std::shared_ptr<AudioTrack> audioTrack,
                   std::shared_ptr<AudioSubGroup> audioSubGroup,
                   juce::URL url,
                   int channelPosition);
@@ -69,7 +69,7 @@ public:
     int getSizeInUnits() override { return 1; };
     static const juce::URL urlFromJson (json& input);
 
-    std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
+    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
     
     void setSelected(bool bSelected, bool deselectOthers);
@@ -85,7 +85,7 @@ private:
 
     AudioResourceContainer& owner;
     
-    std::shared_ptr<AudioGroup> audioGroup;
+    std::shared_ptr<AudioTrack> audioTrack;
     std::shared_ptr<AudioSubGroup> audioSubGroup;
     std::vector<std::shared_ptr<AudioChannel>> audioChannels;
     

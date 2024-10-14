@@ -16,8 +16,8 @@
 #include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
 
-class AudioGroupContainer;
-class AudioGroup;
+class AudioTrackContainer;
+class AudioTrack;
 class PlayListContainer;
 class AudioRegionContainer;
 class AudioResourceContainer;
@@ -32,13 +32,13 @@ class AudiumEngine : public audium::Streamable
     
 public:
     AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                 std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                 std::shared_ptr<AudioTrackContainer> audioTrackContainer,
                  std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                  std::shared_ptr<PlayListScheduler> playListScheduler,
                  std::shared_ptr<LinkAudioDevice> linkAudioDevice,
                  std::shared_ptr<juce::UndoManager> undoManager) :
         audioDeviceManager(audioDeviceManager),
-        audioGroupContainer(audioGroupContainer),
+        audioTrackContainer(audioTrackContainer),
         audioResourceContainer(audioResourceContainer),
         playListScheduler(playListScheduler),
         linkAudioDevice(linkAudioDevice),
@@ -64,7 +64,7 @@ public:
     bool readFromJson (json& input, bool rebuild) override;
     int getSizeInUnits() override;
     
-    void createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> group);
+    void createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> track);
     
     static const char* projectFileExtension;
     
@@ -72,9 +72,9 @@ public:
     
     const juce::File getCurrentFile() const { return currentFile; }
     
-    std::shared_ptr<AudioGroupContainer> getAudioGroupContainer() const { return audioGroupContainer; }
+    std::shared_ptr<AudioTrackContainer> getAudioTrackContainer() const { return audioTrackContainer; }
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
-    std::shared_ptr<PlayListContainer> getPlayListContainer(std::shared_ptr<AudioGroup> group) const;
+    std::shared_ptr<PlayListContainer> getPlayListContainer(std::shared_ptr<AudioTrack> track) const;
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const { return undoManager; }
 
@@ -84,7 +84,7 @@ public:
     
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
-    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+    std::shared_ptr<AudioTrackContainer> audioTrackContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<PlayListScheduler> playListScheduler;
     std::shared_ptr<LinkAudioDevice> linkAudioDevice;

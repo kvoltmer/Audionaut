@@ -9,7 +9,7 @@
 */
 
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/AudiumTransportSource.h"
 #include "Engine/ActionMessages.h"
@@ -24,21 +24,21 @@ AudioResourceContainer::~AudioResourceContainer()
 }
 
 std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,
-                                                                         std::shared_ptr<AudioGroup> group,
+                                                                         std::shared_ptr<AudioTrack> track,
                                                                          std::shared_ptr<AudioSubGroup> subGroup,
                                                                          int channelPosition)
 {
-    jassert(group != nullptr);
+    jassert(track != nullptr);
     jassert(subGroup != nullptr);
 
     // TODO: look for existing audio resource
     auto audioResource = AudioResourceFactory::createAudioResource(url,
                                                                    *this,
-                                                                   group,
+                                                                   track,
                                                                    subGroup,
                                                                    channelPosition);
     jassert(audioResource);
-    audioResources.push_back({group, audioResource});
+    audioResources.push_back({track, audioResource});
 
     return audioResource;
 }
@@ -71,7 +71,7 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> 
     {
         if ((*it).second == resource)
         {
-            auto group = (*it).first;
+            auto track = (*it).first;
             auto resource = (*it).second;
             audioResources.erase(it);
             break;
@@ -82,14 +82,14 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> 
     //sendActionMessage(audioResourceRemovedAction);
 }
 
-void AudioResourceContainer::removeAudioResourcesForGroup (AudioGroup *group)
+void AudioResourceContainer::removeAudioResourcesForGroup (AudioTrack *track)
 {
-    jassert(group != nullptr);
-    if (group != nullptr)
+    jassert(track != nullptr);
+    if (track != nullptr)
     {        
         for (auto it = audioResources.begin(); it != audioResources.end();)
         {
-            if ((*it).first.get() == group)
+            if ((*it).first.get() == track)
             {
                 audioResources.erase(it++);
             }
@@ -126,12 +126,12 @@ void AudioResourceContainer::cleanup()
     audioResources.clear();
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroup(AudioGroup *group) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroup(AudioTrack *track) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
     {
-        if (itr->first.get() == group)
+        if (itr->first.get() == track)
         {
             result.push_back(itr->second);
         }
@@ -146,21 +146,21 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     {
         if (itr->second->getAudioSubGroup().get() == subGroup)
         {
-            jassert(itr->first.get() == &subGroup->getAudioGroup());
+            jassert(itr->first.get() == &subGroup->getAudioTrack());
             result.push_back(itr->second);
         }
     }
     return result;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAtAbsoluteRange(AudioGroup *group, juce::Range<double> rangeInSeconds) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const
 {
     
     std::vector<std::shared_ptr<AudioResource>> result;
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
     {
         /// TODO: also check on end
-        if (itr->first.get() == group &&
+        if (itr->first.get() == track &&
             itr->second->containsAbsolutePosition(rangeInSeconds.getStart(), audium::seconds))
         {
             result.push_back(itr->second);
@@ -169,7 +169,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
-std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroupForResource(std::shared_ptr<AudioResource> resource) const
+std::shared_ptr<AudioTrack> AudioResourceContainer::getAudioTrackForResource(std::shared_ptr<AudioResource> resource) const
 {
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
     {
@@ -182,9 +182,9 @@ std::shared_ptr<AudioGroup> AudioResourceContainer::getAudioGroupForResource(std
     
 }
 
-std::vector<std::shared_ptr<AudioGroup>> AudioResourceContainer::getAudioGroups() const
+std::vector<std::shared_ptr<AudioTrack>> AudioResourceContainer::getAudioTracks() const
 {
-    std::vector<std::shared_ptr<AudioGroup>> result;
+    std::vector<std::shared_ptr<AudioTrack>> result;
     for(auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
     {
         if (std::find(result.begin(), result.end(), it->first) == result.end())

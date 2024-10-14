@@ -15,8 +15,8 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Group/AudioClip.h"
 
@@ -71,10 +71,10 @@ void RegionEditControl::mouseDown (const juce::MouseEvent& e)
     
     if(!e.mods.isCommandDown())
     {
-        audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().deselectAll();
+        audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().deselectAll();
     }
     audioRegion->setSelected(e.mods.isCommandDown() ? !audioRegion->isSelected() : true);
-    audiumEngine->getAudioGroupContainer()->sendActionMessage(regionSelectedAction);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(regionSelectedAction);
 
     currentDragMode = getDragMode(e.getPosition().getX());
     
@@ -121,7 +121,7 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
     {
         
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer(), false);
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer(), false);
         
         auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange());
         
@@ -210,7 +210,7 @@ bool RegionEditControl::keyPressed (const KeyPress& key, Component* originatingC
 {
     if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
     {
-        audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
+        audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
         return true;
     }
     

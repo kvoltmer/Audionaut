@@ -25,9 +25,9 @@
 #include "Application/AudiumApplication.h"
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 //[/Headers]
 
@@ -79,7 +79,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     resized();
 
-    audiumEngine->getAudioGroupContainer()->addActionListener(this);
+    audiumEngine->getAudioTrackContainer()->addActionListener(this);
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->addActionListener(this);
 
@@ -91,7 +91,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 MainComponent::~MainComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
-    audiumEngine->getAudioGroupContainer()->removeActionListener(this);
+    audiumEngine->getAudioTrackContainer()->removeActionListener(this);
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->removeActionListener(this);
     //[/Destructor_pre]
@@ -183,7 +183,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         middlePanelComponent->updateUI();
         rightPanelComponent->updateUI();
     }
-    else if (message == audioGroupCreatedAction)
+    else if (message == audioTrackCreatedAction)
     {
         // TODO: update with context to rebuild everything
         updateUI();
@@ -291,16 +291,16 @@ void MainComponent::toggleEditArrangementComponent()
 
 void MainComponent::selectAll()
 {
-    for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
+    for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks())
     {
-        group->setSelected(true, true);
+        track->setSelected(true, true);
     }
     updateUI();
 }
 
 void MainComponent::copy()
 {
-    audiumEngine->getAudioGroupContainer()->getSelectionManager()->copySelectedToClipboard();
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->copySelectedToClipboard();
 
 }
 

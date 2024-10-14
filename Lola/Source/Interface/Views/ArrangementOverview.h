@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Interface/Handlers/ZoomHandler.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 
 class ArrangementOverview  : public juce::Component
@@ -49,20 +49,20 @@ public:
         
         auto bounds = getLocalBounds().reduced(1, 1).toFloat();
         
-        auto numGroups = audiumEngine->getAudioGroupContainer()->getNumItems();
+        auto numGroups = audiumEngine->getAudioTrackContainer()->getNumItems();
         auto h = bounds.getHeight() / static_cast<float>(numGroups);
         auto y = bounds.getY();
         
         auto totalLength = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds, true);
         jassert(totalLength > 0.0);
         int i = 0;
-        for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
+        for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks())
         {
-            for (auto item : group->getPositionableItems(arrangementMode))
+            for (auto item : track->getPositionableItems(arrangementMode))
             {
                 groupRectangles.push_back(std::make_unique<juce::DrawableRectangle>());
                 addAndMakeVisible(groupRectangles[i].get());
-                groupRectangles[i]->setFill (group->getColour().withAlpha (0.375f));
+                groupRectangles[i]->setFill (track->getColour().withAlpha (0.375f));
                 
                 auto position = item->getAbsolutePositionRange(audium::seconds);
                 auto relativePos = position.getStart() / totalLength;

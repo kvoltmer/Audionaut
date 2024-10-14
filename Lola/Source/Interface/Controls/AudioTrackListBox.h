@@ -6,17 +6,17 @@
 
 class AudiumEngine;
 class ZoomHandler;
-class AudioGroup;
+class AudioTrack;
 
 //==============================================================================
 /*
 */
-class AudioGroupListBox  : public audium::ListBox, public juce::FileDragAndDropTarget
+class AudioTrackListBox  : public audium::ListBox, public juce::FileDragAndDropTarget
 {
 public:
-    AudioGroupListBox (std::shared_ptr<AudiumEngine> audiumEngine,
+    AudioTrackListBox (std::shared_ptr<AudiumEngine> audiumEngine,
                        std::shared_ptr<ZoomHandler> zoomHandler);
-    ~AudioGroupListBox() override;
+    ~AudioTrackListBox() override;
     
     // drag & drop
     void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
@@ -24,11 +24,11 @@ public:
     void fileDragEnter (const juce::StringArray& files, int x, int y) override;
     void fileDragExit (const juce::StringArray& files) override;
     
-    void setNewGroupColour(std::shared_ptr<AudioGroup> group);
+    void setNewGroupColour(std::shared_ptr<AudioTrack> track);
     
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioGroupListBox)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackListBox)
 };

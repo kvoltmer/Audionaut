@@ -13,9 +13,9 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/AudiumTransportSource.h"
@@ -129,12 +129,12 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
 
 //void PlayListScheduler::processInArrangementMode(double absolutePosition, int numSamples)
 //{
-//    // iterate over group container
-//    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+//    // iterate over track container
+//    for (auto i = 0; i < audioTrackContainer->getNumItems(); i++)
 //    {
-//        const auto group = audioGroupContainer->getAudioGroup(i);
-//        const auto playlist = group->getPlayListContainer();
-//        const auto transport = group->getTransportSourceContainer();
+//        const auto track = audioTrackContainer->getAudioTrack(i);
+//        const auto playlist = track->getPlayListContainer();
+//        const auto transport = track->getTransportSourceContainer();
 //        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(numSamples) / externalSampleRate);
 //        const auto item = playlist->itemAtAbsolutePosition(absolutePosition + clocksThisBuffer, audium::clocks);
 //        
@@ -214,9 +214,9 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
 {
     double totalLength = 0.0;
     
-    for (auto group : audioGroupContainer->getAudioGroups())
+    for (auto track : audioTrackContainer->getAudioTracks())
     {
-        totalLength = juce::jmax(totalLength, group->getTotalLength(context, isArrangementMode()));
+        totalLength = juce::jmax(totalLength, track->getTotalLength(context, isArrangementMode()));
     }
         
     if (addOverhead)
@@ -300,28 +300,28 @@ void PlayListScheduler::setAbsolutePosition(double newPosition, audium::TimeCont
 }
 
 
-int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const
+int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track) const
 {
-    const auto item = group->getPlayListContainer()->itemAtAbsolutePosition(getAbsolutePosition(audium::clocks), audium::clocks);
+    const auto item = track->getPlayListContainer()->itemAtAbsolutePosition(getAbsolutePosition(audium::clocks), audium::clocks);
     if (item != nullptr)
     {
-        return group->getPlayListContainer()->getPlayListItemIndex(item);
+        return track->getPlayListContainer()->getPlayListItemIndex(item);
     }
     return -1;
 }
 
-void PlayListScheduler::setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioGroup> group, int playListItemIndex)
+void PlayListScheduler::setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioTrack> track, int playListItemIndex)
 {
-    const auto item = group->getPlayListContainer()->getPlayListItem(playListItemIndex);
+    const auto item = track->getPlayListContainer()->getPlayListItem(playListItemIndex);
     if (item != nullptr)
     {
         data.startPositionClocks = item->getAbsolutePosition(audium::clocks);
     }
 }
 
-double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const
+double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const
 {
-    const auto item = group->getPlayListContainer()->getPlayListItem(playListItemIndex);
+    const auto item = track->getPlayListContainer()->getPlayListItem(playListItemIndex);
     if (item != nullptr)
     {
         auto localPosition = absoluteToLocalPosition(getAbsolutePosition(audium::clocks), item.get(), audium::clocks);
@@ -372,9 +372,9 @@ void PlayListScheduler::commitPlayListData()
     int count = 0;
     
     
-    for (const auto &group : audioGroupContainer->getAudioGroups())
+    for (const auto &track : audioTrackContainer->getAudioTracks())
     {
-        auto dspClipData = group->getDspClipVector(isArrangementMode());
+        auto dspClipData = track->getDspClipVector(isArrangementMode());
         
         for (const auto &clip : dspClipData)
         {

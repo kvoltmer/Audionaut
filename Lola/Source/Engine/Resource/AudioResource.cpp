@@ -18,12 +18,12 @@
 #include "Engine/Factory/AudioResourceFactory.h"
 
 AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
-                             std::shared_ptr<AudioGroup> audioGroup,
+                             std::shared_ptr<AudioTrack> audioTrack,
                              std::shared_ptr<AudioSubGroup> audioSubGroup,
                              juce::URL url,
                              int channelPosition) :
     owner(audioResourceContainer),
-    audioGroup(audioGroup),
+    audioTrack(audioTrack),
     audioSubGroup(audioSubGroup),
     url(url)
 {
@@ -33,7 +33,7 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
     if (channelPosition >= 0)
     {
         auto numChannels = getNumChannels();
-        this->audioGroup->ensureNumChannels(channelPosition + numChannels);
+        this->audioTrack->ensureNumChannels(channelPosition + numChannels);
         setChannelPosition(channelPosition);
     }
 }
@@ -58,7 +58,7 @@ std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(j
     }
             
     
-    auto transportSource = audioGroup->getTransportSourceContainer()->createAndAddTransportSource(audioFormatReaderSource);
+    auto transportSource = audioTrack->getTransportSourceContainer()->createAndAddTransportSource(audioFormatReaderSource);
     transportSource->setSource (audioFormatReaderSource.get(),
                                 readAheadBufferSize,
                                 readAheadThread,
@@ -278,7 +278,7 @@ void AudioResource::setChannelPosition(int startChannel)
 
     for (auto i = 0; i < getNumChannels(); i++)
     {
-        auto channel = audioGroup->getChannel(i + startChannel);
+        auto channel = audioTrack->getChannel(i + startChannel);
         jassert(channel);
         if (channel != nullptr)
         {

@@ -18,13 +18,13 @@
 
 //==============================================================================
 PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
-                                             std::shared_ptr<AudioGroup> audioGroup,
+                                             std::shared_ptr<AudioTrack> audioTrack,
                                              std::shared_ptr<PlayListContainer> playListContainer,
                                              std::shared_ptr<PlayListItem> playListItem,
                                              std::shared_ptr<ZoomHandler> zoomHandler,
                                              std::shared_ptr<RegionSelector> regionSelector) :
     audiumEngine(audiumEngine),
-    audioGroup(audioGroup),
+    audioTrack(audioTrack),
     playListItem(playListItem),
     regionSelector(regionSelector)
 {
@@ -32,7 +32,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     playListItemListBox.reset(new audium::ListBox());
     addAndMakeVisible(playListItemListBox.get());
     playListItemArrangementModel.reset(new PlayListItemArrangementModel(*playListItemListBox.get(),
-                                                                        audioGroup,
+                                                                        audioTrack,
                                                                         playListItem,
                                                                         audiumEngine,
                                                                         zoomHandler,
@@ -46,7 +46,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
                                                                                                 playListContainer,
                                                                                                 playListItem,
                                                                                                 zoomHandler,
-                                                                                                audioGroup->getColour(),
+                                                                                                audioTrack->getColour(),
                                                                                                 regionSelector));
     dragger->addChangeListener(this);
     playListItemListBox->setHeaderComponent(std::move(dragger));
@@ -73,7 +73,7 @@ void PlayListItemComponent::paint (juce::Graphics& g)
     }
     else
     {
-        g.setColour (audioGroup->getColour().withAlpha(0.50f));
+        g.setColour (audioTrack->getColour().withAlpha(0.50f));
     }
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 1.0f);
 }

@@ -15,7 +15,7 @@
 class AudioResourceContainer;
 class AudioRegionContainer;
 class PlayListContainer;
-class AudioGroupContainer;
+class AudioTrackContainer;
 
 struct AutoEditConfig {
     std::string mode = "random";
@@ -29,9 +29,9 @@ struct AutoEditConfig {
 class AutoEdit {
     
 public:
-    AutoEdit(std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+    AutoEdit(std::shared_ptr<AudioTrackContainer> audioTrackContainer,
              std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
-        audioGroupContainer(audioGroupContainer),
+        audioTrackContainer(audioTrackContainer),
         audioResourceContainer(audioResourceContainer)
     {}
     
@@ -44,7 +44,7 @@ public:
     static const juce::String getTempDirectory();
     
 private:
-    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+    std::shared_ptr<AudioTrackContainer> audioTrackContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     
     std::string audioResourceFilePath;

@@ -75,7 +75,7 @@ public:
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
     
     const std::vector<std::shared_ptr<PlayListItem>> getPlayListItems() const;
-    int getNumItems(std::shared_ptr<AudioGroup> group = nullptr) const;
+    int getNumItems(std::shared_ptr<AudioTrack> track = nullptr) const;
     
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;

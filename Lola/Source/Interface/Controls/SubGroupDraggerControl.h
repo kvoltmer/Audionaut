@@ -11,7 +11,7 @@
 #pragma once
 
 #include "DraggerControl.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioClip.h"
 
 class SubGroupDraggerControl : public DraggerControl
@@ -40,7 +40,7 @@ public:
         {
             //std::cout << "new audium::UndoableContainerAction" << std::endl;
             
-            undoableContainerAction = new audium::UndoableContainerAction(*audiumEngine->getAudioGroupContainer(), false);
+            undoableContainerAction = new audium::UndoableContainerAction(*audiumEngine->getAudioTrackContainer(), false);
         }
         
         
@@ -76,7 +76,7 @@ public:
     void setSelected(bool bSelected, bool deselectOthers) override
     {
         if (deselectOthers)
-            audioSubGroup->getAudioGroup().getSelectionManager()->deselectAll();
+            audioSubGroup->getAudioTrack().getSelectionManager()->deselectAll();
         audioSubGroup->setSelected(bSelected, false);
     }
     
@@ -111,7 +111,7 @@ public:
     {
         if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
         {
-            audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
+            audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
             return true;
         }
         

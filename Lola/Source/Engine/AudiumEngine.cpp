@@ -11,10 +11,10 @@
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
 #include "Engine/AutoEdit/AutoEdit.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
-#include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudiumTransportSource.h"
@@ -45,7 +45,7 @@ void AudiumEngine::uninitialise()
 
 void AudiumEngine::cleanup()
 {
-    audioGroupContainer->cleanup();
+    audioTrackContainer->cleanup();
     audioResourceContainer->cleanup();
     undoManager->clearUndoHistory();
     currentFile = File();
@@ -197,7 +197,7 @@ bool AudiumEngine::writeToJson (json& output)
 {
     json jsonAudium;
 
-    audioGroupContainer->writeToJson(jsonAudium);
+    audioTrackContainer->writeToJson(jsonAudium);
     
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
     jsonAudium["file_version"] = audium::Streamable::fileVersion;
@@ -232,21 +232,21 @@ bool AudiumEngine::readFromJson (json& input, bool rebuild)
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
         playListScheduler->getTempoProvider()->setTempo(tempo);
     
-    return audioGroupContainer->readFromJson(jsonAudium, rebuild);
+    return audioTrackContainer->readFromJson(jsonAudium, rebuild);
 }
 
 int AudiumEngine::getSizeInUnits()
 {
-    return audioGroupContainer->getSizeInUnits() + 1;
+    return audioTrackContainer->getSizeInUnits() + 1;
 }
 
-void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> group)
+void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> track)
 {
     jassertfalse;
-//    if (audioRegionContainer->getNumRegions(group.get()) == 0)
+//    if (audioRegionContainer->getNumRegions(track.get()) == 0)
 //    {
-//        auto region = audioRegionContainer->createDefaultRegion(group);
-//        group->getPlayListContainer()->createPlayListItem(region);
+//        auto region = audioRegionContainer->createDefaultRegion(track);
+//        track->getPlayListContainer()->createPlayListItem(region);
 //    }
 }
 
@@ -261,7 +261,7 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     bounceToFile(bounceFile, nullptr, sampleRate);
     config.bounceFileName = bounceFile.getFullPathName().toStdString();
   
-    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,                                                    
+    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioTrackContainer,                                                    
                                                     audioResourceContainer));
     if (autoEdit->invokeAutoEdit(config))
     {
@@ -269,7 +269,7 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     }
 }
 
-std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioGroup> group) const
+std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const
 {
-    return group->getPlayListContainer();
+    return track->getPlayListContainer();
 }

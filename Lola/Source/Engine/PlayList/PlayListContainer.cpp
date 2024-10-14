@@ -13,9 +13,9 @@
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioRegionAdapter.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 PlayListContainer::~PlayListContainer()
@@ -49,7 +49,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(int rowNumber, int insertIndex)
 {
     // convert row number to region index
-    auto regions = audioRegionContainer.getAudioGroupContainer().getAudioRegionAdapter().getAudioRegions();
+    auto regions = audioRegionContainer.getAudioTrackContainer().getAudioRegionAdapter().getAudioRegions();
     jassert(rowNumber < regions.size());
     auto region = regions[rowNumber];
     
@@ -85,7 +85,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(std::shared_
     
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this,
                                                                        audioRegion,
-                                                                       audioRegion->getAudioGroup()->getSelectionManager()));
+                                                                       audioRegion->getAudioTrack()->getSelectionManager()));
     playListItems.objects.insert(playListItems.objects.begin() + insertIndex, playListItem);
     
     auto pos = itemBefore ? itemBefore->getAbsolutePositionRange(audium::clocks).getEnd() : 0.0;
@@ -120,7 +120,7 @@ void PlayListContainer::deletePlayListItem(int atIndex, bool sendNotification)
         deletePlayListItem(playListItems.getObjects()[atIndex].get());
         
         if (sendNotification)
-            audioRegionContainer.getAudioGroupContainer().sendActionMessage(playListDeletedAction);
+            audioRegionContainer.getAudioTrackContainer().sendActionMessage(playListDeletedAction);
     }
 }
 
@@ -143,7 +143,7 @@ const std::vector<std::shared_ptr<PlayListItem>> PlayListContainer::getPlayListI
     return playListItems.getObjects();
 }
 
-int PlayListContainer::getNumItems(std::shared_ptr<AudioGroup> group) const
+int PlayListContainer::getNumItems(std::shared_ptr<AudioTrack> track) const
 {
     return static_cast<int>(playListItems.size());
 }
@@ -210,7 +210,7 @@ bool PlayListContainer::readFromJson (json& input, bool rebuild)
         {
             auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this,
                                                                                audioRegion,
-                                                                               audioRegion->getAudioGroup()->getSelectionManager()));
+                                                                               audioRegion->getAudioTrack()->getSelectionManager()));
             playListItems.push_back(playListItem);
             playListItem->readFromJson(jsonElement, rebuild);
         }
