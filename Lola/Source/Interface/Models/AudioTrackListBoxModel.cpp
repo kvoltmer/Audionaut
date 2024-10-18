@@ -33,7 +33,7 @@ juce::Component* AudioTrackListBoxModel::refreshComponentForRow (int rowNumber, 
             }
             else
             {
-                return new EditGroupComponent(audioTrack, audiumEngine, zoomHandler, regionSelector);
+                return new AudioTrackRegionEditComponent(audioTrack, audiumEngine, zoomHandler, regionSelector);
             }
         }
     }

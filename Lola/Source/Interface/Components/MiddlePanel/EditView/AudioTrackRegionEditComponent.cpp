@@ -1,17 +1,17 @@
 /*
   ==============================================================================
 
-    EditGroupComponent.cpp
+    AudioTrackRegionEditComponent.cpp
     Created: 18 Apr 2024 2:41:36pm
     Author:  Klaus Voltmer
 
   ==============================================================================
 */
 
-#include "EditGroupComponent.h"
+#include "AudioTrackRegionEditComponent.h"
 
 
-void EditGroupComponent::filesDropped (const StringArray& filenames, int x, int y)
+void AudioTrackRegionEditComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
     if ( !filenames.isEmpty())
     {

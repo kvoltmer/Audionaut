@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    EditGroupComponent.h
+    AudioTrackRegionEditComponent.h
     Created: 27 Nov 2023 12:11:36pm
     Author:  Klaus Voltmer
 
@@ -30,11 +30,11 @@ Display AudioSubGroups -> Timeline
  
  */
 
-class EditGroupComponent  : public AudioTrackBaseComponent, public juce::ChangeListener
+class AudioTrackRegionEditComponent  : public AudioTrackBaseComponent, public juce::ChangeListener
 {
 public:
         
-    EditGroupComponent (std::shared_ptr<AudioTrack> track,
+    AudioTrackRegionEditComponent (std::shared_ptr<AudioTrack> track,
                         std::shared_ptr<AudiumEngine> audiumEngine,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector) :
@@ -72,7 +72,7 @@ public:
     
     void rebuildComponents()
     {
-        std::cout << "EditGroupComponent::rebuildComponents" << std::endl;
+        std::cout << "AudioTrackRegionEditComponent::rebuildComponents" << std::endl;
         
         // cleanup
         removeAllChildren();
@@ -166,5 +166,5 @@ private:
     std::vector<std::shared_ptr<SubGroupListBox>> subGroupListViews;
     std::vector<std::shared_ptr<SubGroupListBoxModel>> subGroupListModels;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EditGroupComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackRegionEditComponent)
 };

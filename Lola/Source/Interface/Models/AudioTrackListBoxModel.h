@@ -6,7 +6,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.h"
-#include "Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"
+#include "Interface/Components/MiddlePanel/EditView/AudioTrackRegionEditComponent.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Controls/AudioTrackListBox.h"
