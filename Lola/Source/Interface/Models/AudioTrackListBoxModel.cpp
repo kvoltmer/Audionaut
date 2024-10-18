@@ -29,7 +29,7 @@ juce::Component* AudioTrackListBoxModel::refreshComponentForRow (int rowNumber, 
         {
             if (arrangementMode)
             {
-                return new ArrangementGroupComponent(audioTrack, audiumEngine, zoomHandler, regionSelector);
+                return new AudioTrackComponent(audioTrack, audiumEngine, zoomHandler, regionSelector);
             }
             else
             {

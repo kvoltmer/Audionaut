@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    ArrangementGroupComponent.cpp
+    AudioTrackComponent.cpp
     Created: 27 Nov 2022 3:25:58pm
     Author:  Klaus Voltmer
 
@@ -9,7 +9,7 @@
 */
 
 #include <JuceHeader.h>
-#include "ArrangementGroupComponent.h"
+#include "AudioTrackComponent.h"
 #include "Util/EngineAccess.h"
 #include "Interface/Controls/AudioTrackListBox.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
@@ -22,7 +22,7 @@
 
 using namespace audium;
 
-void ArrangementGroupComponent::refreshComponent (std::shared_ptr<AudioTrack> track, bool forceRebuildComponents)
+void AudioTrackComponent::refreshComponent (std::shared_ptr<AudioTrack> track, bool forceRebuildComponents)
 {
     audioTrack = track;
     
@@ -34,7 +34,7 @@ void ArrangementGroupComponent::refreshComponent (std::shared_ptr<AudioTrack> tr
     resized();
 }
 
-bool ArrangementGroupComponent::mustRebuildComponents() const
+bool AudioTrackComponent::mustRebuildComponents() const
 {
     // compare play list items
     auto playListContainer = audiumEngine->getPlayListContainer(audioTrack);
@@ -56,7 +56,7 @@ bool ArrangementGroupComponent::mustRebuildComponents() const
     return false;
 }
 
-void ArrangementGroupComponent::rebuildComponents()
+void AudioTrackComponent::rebuildComponents()
 {
     removeAllChildren();
     playListItemComponents.clear();
@@ -80,7 +80,7 @@ void ArrangementGroupComponent::rebuildComponents()
     }
 }
 
-void ArrangementGroupComponent::resized()
+void AudioTrackComponent::resized()
 {
     for (auto regionView : playListItemComponents)
     {
@@ -93,7 +93,7 @@ void ArrangementGroupComponent::resized()
     }
 }
 
-bool ArrangementGroupComponent::isInterestedInDragSource (const SourceDetails &dragSourceDetails)
+bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSourceDetails)
 {
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
@@ -107,7 +107,7 @@ bool ArrangementGroupComponent::isInterestedInDragSource (const SourceDetails &d
     return false;
 }
 
-void ArrangementGroupComponent::itemDragMove (const SourceDetails &dragSourceDetails)
+void AudioTrackComponent::itemDragMove (const SourceDetails &dragSourceDetails)
 {
     auto x = dragSourceDetails.localPosition.x;
     auto start = zoomHandler->xToClocks(x);
@@ -117,13 +117,13 @@ void ArrangementGroupComponent::itemDragMove (const SourceDetails &dragSourceDet
     zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
 }
 
-void ArrangementGroupComponent::itemDragExit (const SourceDetails &dragSourceDetails)
+void AudioTrackComponent::itemDragExit (const SourceDetails &dragSourceDetails)
 {
     zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
 }
 
-void ArrangementGroupComponent::itemDropped (const SourceDetails &dragSourceDetails)
+void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
 
     if ( RegionLabel* regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
@@ -154,7 +154,7 @@ void ArrangementGroupComponent::itemDropped (const SourceDetails &dragSourceDeta
     repaint();
 }
 
-void ArrangementGroupComponent::filesDropped (const StringArray& filenames, int x, int y)
+void AudioTrackComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
     if ( !filenames.isEmpty())
     {

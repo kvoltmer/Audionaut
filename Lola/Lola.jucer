@@ -227,10 +227,10 @@
             <GROUP id="{E58A07C4-B58F-25CE-C91A-E093F52645A1}" name="ArrangementView">
               <FILE id="peKTnY" name="ArrangementComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"/>
-              <FILE id="Ws25ey" name="ArrangementGroupComponent.cpp" compile="1"
-                    resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementGroupComponent.cpp"/>
-              <FILE id="AZJ9Ow" name="ArrangementGroupComponent.h" compile="0" resource="0"
-                    file="Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementGroupComponent.h"/>
+              <FILE id="Ws25ey" name="AudioTrackComponent.cpp" compile="1" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.cpp"/>
+              <FILE id="AZJ9Ow" name="AudioTrackComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.h"/>
               <FILE id="k5fw3k" name="PlayListItemComponent.cpp" compile="1" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.cpp"/>
               <FILE id="MSH6BQ" name="PlayListItemComponent.h" compile="0" resource="0"
