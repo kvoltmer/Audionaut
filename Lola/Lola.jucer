@@ -215,10 +215,10 @@
             </GROUP>
             <GROUP id="{B76B0D36-C9A9-6C1E-B42A-40EF5EABF872}" name="EditView">
               <FILE id="yEfxaX" name="EditComponent.h" compile="0" resource="0" file="Source/Interface/Components/MiddlePanel/EditView/EditComponent.h"/>
-              <FILE id="fbcAlm" name="EditGroupComponent.cpp" compile="1" resource="0"
-                    file="Source/Interface/Components/MiddlePanel/EditView/EditGroupComponent.cpp"/>
-              <FILE id="b3SGrh" name="EditGroupComponent.h" compile="0" resource="0"
-                    file="Source/Interface/Components/MiddlePanel/EditView/EditGroupComponent.h"/>
+              <FILE id="fbcAlm" name="AudioTrackRegionEditComponent.cpp" compile="1"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/EditView/AudioTrackRegionEditComponent.cpp"/>
+              <FILE id="b3SGrh" name="AudioTrackRegionEditComponent.h" compile="0"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/EditView/AudioTrackRegionEditComponent.h"/>
               <FILE id="CYmTQU" name="RegionEditComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/EditView/RegionEditComponent.h"/>
               <FILE id="s1QcPt" name="SubGroupListBox.h" compile="0" resource="0"
