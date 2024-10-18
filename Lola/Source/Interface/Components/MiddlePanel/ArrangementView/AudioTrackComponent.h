@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    ArrangementGroupComponent.h
+    AudioTrackComponent.h
     Created: 27 Nov 2022 3:25:58pm
     Author:  Klaus Voltmer
 
@@ -26,17 +26,15 @@ class PlayListItemComponent;
 //==============================================================================
 /*
  
- Display Playlist items on Timeline
+ Display an audio track as part of AudioTrackListBoxModel (playlist items on timeline).
  
- Display a AudioTrack as part of AudioTrackListBoxModel.
- 
- The ArrangementGroupComponent contains multiple playlist items (regions) in the Timeline.
+ The AudioTrackComponent contains multiple playlist items (regions) in the Timeline.
  */
-class ArrangementGroupComponent : public AudioTrackBaseComponent, public juce::DragAndDropTarget
+class AudioTrackComponent : public AudioTrackBaseComponent, public juce::DragAndDropTarget
 {
 public:
         
-    ArrangementGroupComponent (std::shared_ptr<AudioTrack> track,
+    AudioTrackComponent (std::shared_ptr<AudioTrack> track,
                                std::shared_ptr<AudiumEngine> audiumEngine,
                                std::shared_ptr<ZoomHandler> zoomHandler,
                                std::shared_ptr<RegionSelector> regionSelector) :
@@ -76,6 +74,6 @@ private:
     
     std::vector<std::shared_ptr<PlayListItemComponent>> playListItemComponents;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ArrangementGroupComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackComponent)
     
 };
