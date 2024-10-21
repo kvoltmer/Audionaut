@@ -15,6 +15,9 @@
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/AudiumEngine.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 namespace audium {
 
@@ -26,45 +29,124 @@ void SelectionManager::deselectAll() {
     jassert(selectedObjects.size() == 0);
 }
 
-
-
-
-
-void SelectionManager::copySelectedToClipboard() {
+const SelectionContextType SelectionManager::getSelectionContext() const {
     
-    // TODO: introduce an object scope
-    
-    json jout;
-    
-    for (auto object : selectedObjects) {
-        json j;
+    if (selectedObjects.size() > 0) {
+        auto object = selectedObjects.front();
         if (AudioTrack* track = dynamic_cast<AudioTrack*>(object.get())) {
-            track->writeToJson(j);
-            jout["groups"] += j;
+            return audio_track;
         }
         if (AudioSubGroup* subgroup = dynamic_cast<AudioSubGroup*>(object.get())) {
-            subgroup->writeToJson(j);
-            jout["sub_group"] += j;
+            return sub_group;
         }
         else if (AudioChannel* channel = dynamic_cast<AudioChannel*>(object.get())) {
-            jout["channels"] += channel->data;
+            return audio_channel;
         }
         else if (AudioRegion* region = dynamic_cast<AudioRegion*>(object.get())) {
-            region->writeToJson(j);
-            jout["regions"] += j;
+            return audio_region;
         }
         else if (PlayListItem* playListItem = dynamic_cast<PlayListItem*>(object.get())) {
-            playListItem->writeToJson(j);
-            jout["play_list_items"] += j;
+            return play_list_item;
         }
+        else {
+            jassertfalse;
+        }
+    }
+    return invalid_context;
+}
+
+void SelectionManager::copySelectedToClipboard() {
         
+    json jout, json_lola;
+    
+//        if (AudioTrack* track = dynamic_cast<AudioTrack*>(object.get())) {
+//        if (AudioSubGroup* subgroup = dynamic_cast<AudioSubGroup*>(object.get())) {
+//        if (AudioChannel* channel = dynamic_cast<AudioChannel*>(object.get())) {
+//        if (AudioRegion* region = dynamic_cast<AudioRegion*>(object.get())) {//
+    
+    switch (auto context = getSelectionContext()) {
+        case play_list_item:
+            for (auto object : selectedObjects) {
+                if (PlayListItem* playListItem = dynamic_cast<PlayListItem*>(object.get())) {
+                    json j;
+                    playListItem->writeToJson(j);
+                    jout["play_list_items"] += j;
+                }
+            }
+            break;
+            
+        default:
+            break;
     }
     
-    juce::String jsonText = jout.dump(2);
+    
+    json_lola["lola"] = jout;
+    
+    juce::String jsonText = json_lola.dump(2);
     
     std::cout << jsonText << std::endl;
     
     juce::SystemClipboard::copyTextToClipboard (jsonText);
 }
+
+
+bool SelectionManager::canParseFromClipboard() {
+    
+    try
+    {
+        auto txt = juce::SystemClipboard::getTextFromClipboard().toStdString();
+        
+        if (json::accept(txt))
+        {
+            json data = json::parse(txt);
+            if (data.contains("lola")) {
+                return true;
+            }
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+    }
+    return false;
+}
+
+void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEngine) {
+
+    try {
+        json data = json::parse(juce::SystemClipboard::getTextFromClipboard().toStdString());
+        std::cout << data.dump(2) << std::endl;
+        
+        
+        if (data.contains("lola")) {
+            auto lolaData = data["lola"];
+            
+            if (lolaData.contains("play_list_items")) {
+                auto jsonPlayListItems = lolaData["play_list_items"];
+                auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::clocks);
+                
+                for (auto& jsonElement : jsonPlayListItems) {
+                    if (jsonElement.contains("track_id")) {
+                        auto track_id = jsonElement.at("track_id").get<int>();
+                        
+                        auto playListContainer = audiumEngine->getAudioTrackContainer()->getAudioTrack(track_id)->getPlayListContainer();
+                        if (playListContainer != nullptr) {
+                            if (auto playListItem = playListContainer->createPlayListItemFromJson(jsonElement)) {
+                            
+                                // TODO: check it there is already an item at this position
+                                playListItem->setAbsolutePosition(pos, audium::clocks);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch (std::exception &e) {
+        std::cout << e.what() << std::endl;
+    }
+}
+
+
 
 } // namespace audium

@@ -306,22 +306,7 @@ void MainComponent::copy()
 
 void MainComponent::paste()
 {
-    auto test = juce::SystemClipboard::getTextFromClipboard();
-//            {
-//                if (auto doc = parseXML (SystemClipboard::getTextFromClipboard()))
-//                {
-//                    if (doc->hasTagName (ComponentLayout::clipboardXmlTag))
-//                    {
-//                        if (currentLayout != nullptr)
-//                            currentLayout->paste();
-//                    }
-//                    else if (doc->hasTagName (PaintRoutine::clipboardXmlTag))
-//                    {
-//                        if (currentPaintRoutine != nullptr)
-//                            currentPaintRoutine->paste();
-//                    }
-//                }
-//            }
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->pasteFromClipboard(audiumEngine);
     updateUI();
 }
 

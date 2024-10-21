@@ -67,7 +67,8 @@ public:
     
     int getNumItems() const { return static_cast<int>(audioTracks.size());}
     std::shared_ptr<AudioTrack> getAudioTrack(int index) const;
-        
+    int getAudioTrackId(std::shared_ptr<AudioTrack> searchTrack) const;
+    
     std::shared_ptr<AudioTrack> getDefaultGroup() const;
     
     std::vector<std::shared_ptr<AudioTrack>> getAudioTracks() const { return audioTracks; }

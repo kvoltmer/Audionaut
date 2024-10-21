@@ -79,7 +79,11 @@ public:
     
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
+    std::shared_ptr<PlayListItem> createPlayListItemFromJson (json& jsonItem);
+    
     int getSizeInUnits() override;
+    
+    
 
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
     int getPlayListItemIndex(const PlayListItem* item) const;

@@ -49,6 +49,21 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::getAudioTrack(int index) const
     return nullptr;
 }
 
+int AudioTrackContainer::getAudioTrackId(std::shared_ptr<AudioTrack> searchTrack) const
+{
+    auto it = std::find(audioTracks.begin(), audioTracks.end(), searchTrack);
+    if (it == audioTracks.end())
+    {
+        jassertfalse;
+        return -1; // not found
+    }
+    else
+    {
+        auto index = std::distance(audioTracks.begin(), it);
+        return static_cast<int>(index);
+    }
+}
+
 std::shared_ptr<AudioTrack> AudioTrackContainer::createNewAudioTrack(const juce::String nameString)
 {
     auto audioTrack = AudioTrackFactory::createAudioTrack(*this, audioResourceContainer);

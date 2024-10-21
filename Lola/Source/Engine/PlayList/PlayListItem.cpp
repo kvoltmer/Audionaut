@@ -94,10 +94,11 @@ void PlayListItem::moveAbsolutePosition(double amount, audium::TimeContextType c
 
 bool PlayListItem::writeToJson (json& output)
 {
-    output["region_id"] = owner.getAudioRegionContainer().getRegionIndex(getRegion());
+    output["region_id"] = owner.getAudioRegionContainer().getRegionId(getRegion());
     output["region_name"] = getRegion()->getName().toStdString();
     output["position_clocks"] = absolutePositionClocks;
     output["selected"] = isSelected();
+    output["track_id"] = getRegion()->getAudioTrack()->getId();
     return true;
 }
 
@@ -107,7 +108,7 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
     jassert(regionName == getRegion()->getName().toStdString());
 
     auto regionId = input["region_id"].template get<int>();
-    auto id = owner.getAudioRegionContainer().getRegionIndex(getRegion());
+    auto id = owner.getAudioRegionContainer().getRegionId(getRegion());
     jassert(id == regionId);
     
     if (input.contains("position_clocks"))
@@ -116,6 +117,12 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
     if (input.contains("selected"))
         setSelected(input.at("selected").get<bool>());
 
+    if (input.contains("track_id"))
+    {
+        auto track_id = input.at("track_id").get<int>();
+        jassert(track_id == getRegion()->getAudioTrack()->getId());
+    }
+        
     return true;
 }
 

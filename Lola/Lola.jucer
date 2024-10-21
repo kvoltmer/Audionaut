@@ -39,6 +39,8 @@
           <FILE id="N9t1dH" name="Selectable.h" compile="0" resource="0" file="Source/Engine/Selection/Selectable.h"/>
           <FILE id="Hwzk6n" name="SelectableObjectContainer.h" compile="0" resource="0"
                 file="Source/Engine/Selection/SelectableObjectContainer.h"/>
+          <FILE id="ArsXhk" name="SelectionContext.h" compile="0" resource="0"
+                file="Source/Engine/Selection/SelectionContext.h"/>
           <FILE id="eSQkn0" name="SelectionManager.cpp" compile="1" resource="0"
                 file="Source/Engine/Selection/SelectionManager.cpp"/>
           <FILE id="LcQig6" name="SelectionManager.h" compile="0" resource="0"

@@ -72,6 +72,8 @@ public:
     void setColour(juce::Colour colour);
     juce::Colour getColour() const { return groupColour; }
     
+    int getId();
+    
     // pointer and references to other classes:
     AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
     AudioTrackContainer &getAudioTrackContainer() const { return owner; }

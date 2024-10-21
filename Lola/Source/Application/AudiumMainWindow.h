@@ -48,6 +48,7 @@ public:
 private:
     
     bool isSomethingSelected();
+    bool canPaste();
     
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;

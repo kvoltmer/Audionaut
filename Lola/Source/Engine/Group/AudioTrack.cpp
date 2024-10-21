@@ -63,6 +63,11 @@ void AudioTrack::setColour(juce::Colour colour)
     groupColour = colour;
 }
 
+int AudioTrack::getId()
+{
+    return owner.getAudioTrackId(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()));
+}
+
 bool AudioTrack::writeToJson (json& output)
 {
     output["name"] = name;

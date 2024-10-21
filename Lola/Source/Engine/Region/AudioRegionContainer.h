@@ -46,7 +46,7 @@ public:
     
     int getNumRegions(const AudioTrack* track = nullptr) const;
     std::shared_ptr<AudioRegion> getRegion(int index) const;
-    int getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const;
+    int getRegionId(std::shared_ptr<AudioRegion> searchRegion) const;
     
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForSubGroup(const AudioSubGroup* subGroup) const;
     void deleteAudioRegion(std::shared_ptr<AudioRegion> region);
