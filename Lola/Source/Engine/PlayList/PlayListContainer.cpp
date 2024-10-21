@@ -54,7 +54,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(int rowNum
     auto region = regions[rowNumber];
     
     // check if region exists in conainer
-    if (audioRegionContainer.getRegionIndex(region) >= 0)
+    if (audioRegionContainer.getRegionId(region) >= 0)
     {
         auto playListItem = createPlayListItem(region, insertIndex);
         
@@ -204,23 +204,27 @@ bool PlayListContainer::readFromJson (json& input, bool rebuild)
 
     for (auto& jsonElement : jsonPlayListItems)
     {
-        auto regionIndex = jsonElement["region_id"].template get<int>();
-        auto audioRegion = audioRegionContainer.getRegion(regionIndex);
-        if (audioRegion != nullptr)
-        {
-            auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this,
-                                                                               audioRegion,
-                                                                               audioRegion->getAudioTrack()->getSelectionManager()));
-            playListItems.push_back(playListItem);
-            playListItem->readFromJson(jsonElement, rebuild);
-        }
-        else
-        {
-            jassertfalse;
+        if (createPlayListItemFromJson(jsonElement) == nullptr)
             return false;
-        }
     }
     return true;
+}
+
+std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (json& jsonElement)
+{
+    auto regionIndex = jsonElement["region_id"].template get<int>();
+    auto audioRegion = audioRegionContainer.getRegion(regionIndex);
+    if (audioRegion != nullptr)
+    {
+        auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this,
+                                                                           audioRegion,
+                                                                           audioRegion->getAudioTrack()->getSelectionManager()));
+        playListItems.push_back(playListItem);
+        if (playListItem->readFromJson(jsonElement, false))
+            return playListItem;
+    }
+    
+    return nullptr;
 }
 
 int PlayListContainer::getSizeInUnits()

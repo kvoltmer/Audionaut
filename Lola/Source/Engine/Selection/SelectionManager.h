@@ -11,6 +11,9 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "SelectionContext.h"
+
+class AudiumEngine;
 
 namespace audium
 {
@@ -43,7 +46,11 @@ public:
     
     void deselectAll();
     
+    const SelectionContextType getSelectionContext() const;
+    
     void copySelectedToClipboard();
+    bool canParseFromClipboard();
+    void pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEngine);
     
 private:
         

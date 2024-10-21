@@ -90,7 +90,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) cons
     return nullptr;
 }
 
-int AudioRegionContainer::getRegionIndex(std::shared_ptr<AudioRegion> searchRegion) const
+int AudioRegionContainer::getRegionId(std::shared_ptr<AudioRegion> searchRegion) const
 {
     auto it = std::find(audioRegions.begin(), audioRegions.end(), searchRegion);
     if (it == audioRegions.end())

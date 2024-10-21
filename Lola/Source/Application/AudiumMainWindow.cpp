@@ -14,6 +14,8 @@
 #include "Util/EngineAccess.h"
 #include "Engine/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Selection/SelectionManager.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
     : DocumentWindow (name,
@@ -185,25 +187,10 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress ('c', cmd, 0));
             break;
 
-        case StandardApplicationCommandIDs::paste:
-            {
-                result.setInfo (TRANS ("Paste"), String(), "Editing", 0);
-                result.defaultKeypresses.add (KeyPress ('v', cmd, 0));
-
-                bool canPaste = false;
-
-                // TODO:
-//                if (auto doc = parseXML (SystemClipboard::getTextFromClipboard()))
-//                {
-//                    if (doc->hasTagName (ComponentLayout::clipboardXmlTag))
-//                        canPaste = (currentLayout != nullptr);
-//                    else if (doc->hasTagName (PaintRoutine::clipboardXmlTag))
-//                        canPaste = (currentPaintRoutine != nullptr);
-//                }
-
-                result.setActive (canPaste);
-            }
-
+        case StandardApplicationCommandIDs::paste:            
+            result.setInfo (TRANS ("Paste"), String(), "Editing", 0);
+            result.defaultKeypresses.add (KeyPress ('v', cmd, 0));
+            result.setActive (canPaste());
             break;
 
         case StandardApplicationCommandIDs::del:
@@ -319,4 +306,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
 bool AudiumMainWindow::isSomethingSelected()
 {
     return getEngine()->getAudioTrackContainer()->isSomethingSelected();
+}
+
+bool AudiumMainWindow::canPaste()
+{
+    return getEngine()->getAudioTrackContainer()->getSelectionManager()->canParseFromClipboard();
 }

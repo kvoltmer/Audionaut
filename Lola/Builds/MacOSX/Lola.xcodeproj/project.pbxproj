@@ -294,6 +294,7 @@
 		E5935523B78925C658B9086B /* TransportSourceContainer.cpp */ /* TransportSourceContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TransportSourceContainer.cpp; path = ../../Source/Engine/TransportSourceContainer.cpp; sourceTree = SOURCE_ROOT; };
 		E7074F66C3DD69F43FBB467D /* AutoEditComponent.cpp */ /* AutoEditComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AutoEditComponent.cpp; path = ../../Source/Interface/Dialogs/AutoEditComponent.cpp; sourceTree = SOURCE_ROOT; };
 		E7D40ECC830522FB5F052F11 /* audium_AudioThumbnail.h */ /* audium_AudioThumbnail.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = audium_AudioThumbnail.h; path = ../../Source/Interface/Widgets/audium_AudioThumbnail.h; sourceTree = SOURCE_ROOT; };
+		E7DCC773606E61410D6A0216 /* SelectionContext.h */ /* SelectionContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SelectionContext.h; path = ../../Source/Engine/Selection/SelectionContext.h; sourceTree = SOURCE_ROOT; };
 		EBCAA43C5258D98640A638F6 /* juce_audio_formats */ /* juce_audio_formats */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_formats; path = ../../../Submodules/juce/modules/juce_audio_formats; sourceTree = SOURCE_ROOT; };
 		ECB46507DAEC7211AEAFD67D /* Preferences.h */ /* Preferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Preferences.h; path = ../../Source/Util/Preferences.h; sourceTree = SOURCE_ROOT; };
 		ED4953391298A2F1212A2BDB /* ArrangementOverview.h */ /* ArrangementOverview.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ArrangementOverview.h; path = ../../Source/Interface/Views/ArrangementOverview.h; sourceTree = SOURCE_ROOT; };
@@ -805,6 +806,7 @@
 			children = (
 				D9CD4CFFE043714175B25D56,
 				6ED79F6C594EFFE31DB3C689,
+				E7DCC773606E61410D6A0216,
 				CCE3F7F89E7D505303A815E3,
 				6E8033EA1E1FCCFBE1AF27F7,
 			);
