@@ -20,7 +20,9 @@ private:
     
 public:
     SelectableObjectContainer() = default;
-    
+    ~SelectableObjectContainer() {
+        jassert(objects.size() == 0);
+    }
     std::vector<std::shared_ptr<ElementType>> getObjects() const { return objects; }
     
     bool deleteObject(ElementType* object) {
