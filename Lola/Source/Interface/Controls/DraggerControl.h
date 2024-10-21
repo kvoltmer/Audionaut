@@ -226,7 +226,7 @@ protected:
 
     juce::Rectangle<int> originalBounds;
 
-    audium::UndoableContainerAction *undoableContainerAction = nullptr;
+    std::unique_ptr<audium::UndoableContainerAction> undoableContainerAction;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DraggerControl)
 };

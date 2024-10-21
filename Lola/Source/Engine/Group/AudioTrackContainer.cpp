@@ -29,6 +29,7 @@ AudioTrackContainer::~AudioTrackContainer()
 
 void AudioTrackContainer::cleanup()
 {
+    selectionManager->clear();
     transportSourceContainer->cleanup();
     audioResourceContainer->cleanup();
     
