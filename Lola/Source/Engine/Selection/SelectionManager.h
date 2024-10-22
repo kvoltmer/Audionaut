@@ -50,7 +50,7 @@ public:
     
     void copySelectedToClipboard();
     bool canParseFromClipboard();
-    void pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEngine);
+    void pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEngine, bool duplicateAction);
     
 private:
         

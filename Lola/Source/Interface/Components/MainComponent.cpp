@@ -301,18 +301,17 @@ void MainComponent::selectAll()
 void MainComponent::copy()
 {
     audiumEngine->getAudioTrackContainer()->getSelectionManager()->copySelectedToClipboard();
-
 }
 
 void MainComponent::paste()
 {
-    audiumEngine->getAudioTrackContainer()->getSelectionManager()->pasteFromClipboard(audiumEngine);
-    updateUI();
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->pasteFromClipboard(audiumEngine, false);
 }
 
 void MainComponent::duplicate()
 {
-    updateUI();
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->copySelectedToClipboard();
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->pasteFromClipboard(audiumEngine, true);
 }
 
 //[/MiscUserCode]

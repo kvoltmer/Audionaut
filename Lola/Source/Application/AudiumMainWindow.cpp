@@ -262,28 +262,15 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             getEngine()->getUndoManager()->redo();
             break;
         case StandardApplicationCommandIDs::cut:
-            notImplemented();
-//            if (currentLayout != nullptr)
-//            {
-//                currentLayout->copySelectedToClipboard();
-//                currentLayout->deleteSelected();
-//            }
-//            else if (currentPaintRoutine != nullptr)
-//            {
-//                currentPaintRoutine->copySelectedToClipboard();
-//                currentPaintRoutine->deleteSelected();
-//            }
-
+            mainComponent->copy();
+            getEngine()->getAudioTrackContainer()->deleteSelectedObjects();
             break;
-
         case StandardApplicationCommandIDs::copy:
             mainComponent->copy();
             break;
-
         case StandardApplicationCommandIDs::paste:
             mainComponent->paste();
             break;
-
         case StandardApplicationCommandIDs::del:
             getEngine()->getAudioTrackContainer()->deleteSelectedObjects();
             break;

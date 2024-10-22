@@ -18,6 +18,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 namespace audium {
 
@@ -111,7 +112,8 @@ bool SelectionManager::canParseFromClipboard() {
     return false;
 }
 
-void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEngine) {
+void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEngine,
+                                          bool duplicateAction) {
 
     try {
         json data = json::parse(juce::SystemClipboard::getTextFromClipboard().toStdString());
@@ -122,6 +124,13 @@ void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEn
             auto lolaData = data["lola"];
             
             if (lolaData.contains("play_list_items")) {
+                
+                // deselect all and select newly created item below
+                deselectAll();
+                
+                // undo
+                auto action = std::make_unique<UndoableContainerAction>(*audiumEngine->getAudioTrackContainer().get());
+                
                 auto jsonPlayListItems = lolaData["play_list_items"];
                 auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::clocks);
                 
@@ -132,13 +141,28 @@ void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEn
                         auto playListContainer = audiumEngine->getAudioTrackContainer()->getAudioTrack(track_id)->getPlayListContainer();
                         if (playListContainer != nullptr) {
                             if (auto playListItem = playListContainer->createPlayListItemFromJson(jsonElement)) {
-                            
-                                // TODO: check it there is already an item at this position
-                                playListItem->setAbsolutePosition(pos, audium::clocks);
+                                
+                                if (duplicateAction) {
+                                    auto end = playListItem->getAbsolutePositionRange(audium::clocks).getEnd();
+                                    playListItem->setAbsolutePosition(end, audium::clocks);
+                                }
+                                else {
+                                    // TODO: check if item exists at this position
+                                    playListItem->setAbsolutePosition(pos, audium::clocks);
+                                }
+                                playListItem->setSelected(true);
+                                
+                                // TODO: multiple opbjects not supported at this time
+                                break;
                             }
                         }
                     }
                 }
+                
+                // undo
+                action->storeNewState();
+                audiumEngine->getUndoManager()->perform(action.release(), "Paste Objects(s)");
+                audiumEngine->getUndoManager()->beginNewTransaction();
             }
         }
     }
