@@ -100,6 +100,8 @@ public:
     // sets the absolute position based on the order
     void forcePositionByOrder();
     
+    void sortByPosition();
+    
     // move the absolute position of all playlist items by an amount
     void movePlayListItemsPosition(int startIndex, double amount, audium::TimeContextType context);
     

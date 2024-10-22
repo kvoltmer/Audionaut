@@ -86,6 +86,9 @@ public:
     {
         bool result = playListItem->validateData();
         
+        // sort by position
+        playListContainer->sortByPosition();
+        
         if (undoableContainerAction != nullptr)
         {
             // Undo: store new state
