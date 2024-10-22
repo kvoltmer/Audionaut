@@ -257,6 +257,15 @@ void PlayListContainer::forcePositionByOrder()
     }
 }
 
+void PlayListContainer::sortByPosition()
+{
+    std::sort(playListItems.objects.begin(), playListItems.objects.end(),
+              [](const std::shared_ptr<PlayListItem> i1, const std::shared_ptr<PlayListItem> i2)
+    {
+        return (i1->getAbsolutePosition(audium::clocks) < i2->getAbsolutePosition(audium::clocks));
+    });
+}
+
 const PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position, audium::TimeContextType context) const
 {
     for (auto item : playListItems.getObjects())
