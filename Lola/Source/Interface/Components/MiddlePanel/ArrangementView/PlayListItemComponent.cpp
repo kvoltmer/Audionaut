@@ -87,3 +87,8 @@ void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)
 {
     playListItemListBox->updateContent();
 }
+
+DraggerControl* PlayListItemComponent::getDraggerControl() const
+{
+    return static_cast<DraggerControl*>(playListItemListBox->getHeaderComponent());
+}
