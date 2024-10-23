@@ -30,9 +30,9 @@ void RegionEditControl::paintFileNameLabel (juce::Graphics& g)
     g.setFont (12.0f);
     const auto name = audioRegion->getName();
     juce::Rectangle<int> bonds(5,
-                         5,
-                         g.getCurrentFont().getStringWidth(name),
-                         g.getCurrentFont().getHeight());
+                               5,
+                               GlyphArrangement::getStringWidth (g.getCurrentFont(), name),
+                               g.getCurrentFont().getHeight());
     
     g.setColour(juce::Colours::black.withAlpha(0.25f));
     g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
