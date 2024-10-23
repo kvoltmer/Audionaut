@@ -53,10 +53,9 @@ public:
         g.setFont (12.0f);
         
         juce::Rectangle<int> bonds(5,
-                             4,
-                             g.getCurrentFont().getStringWidth(label),
-                             g.getCurrentFont().getHeight());
-        
+                                   4,
+                                   GlyphArrangement::getStringWidth (g.getCurrentFont(), label),
+                                   g.getCurrentFont().getHeight());
         
         g.setColour (findColour(audium::defaultTextColourId));
         g.drawFittedText (label, bonds, juce::Justification::topLeft, 1);

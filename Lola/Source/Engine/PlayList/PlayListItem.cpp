@@ -128,13 +128,9 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
 
 bool PlayListItem::validateData()
 {
-    bool result = false;
-    
-    if (getAbsolutePosition(audium::clocks) < 0.0)
-    {
+    if (getAbsolutePosition(audium::clocks) < 0.0) {
         setAbsolutePosition(0.0, audium::clocks);
-        result |= true;
+        return true;
     }
-    
-    return result;
+    return false;
 }

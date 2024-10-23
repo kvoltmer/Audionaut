@@ -134,11 +134,11 @@ public:
         /// background is expanded by 2 pixels
         
         g.setFont (12.0f);
-        
+        auto label = audioResource->getFileNameWithoutExtension();
         juce::Rectangle<int> bonds(5,
-                             5,
-                             g.getCurrentFont().getStringWidth(audioResource->getFileNameWithoutExtension()),
-                             g.getCurrentFont().getHeight());
+                                   5,
+                                   GlyphArrangement::getStringWidth (g.getCurrentFont(), label),
+                                   g.getCurrentFont().getHeight());
         
         g.setColour(juce::Colours::black.withAlpha(0.25f));
         g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
