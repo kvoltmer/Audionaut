@@ -19,6 +19,7 @@ class PlayListItem;
 class ZoomHandler;
 class RegionSelector;
 class AudiumEngine;
+class DraggerControl;
 
 //==============================================================================
 /*
@@ -41,6 +42,8 @@ public:
     void changeListenerCallback (ChangeBroadcaster* source) override;
     
     std::shared_ptr<PlayListItem> getPlayListItem() const { return playListItem; }
+    
+    DraggerControl* getDraggerControl() const;
     
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;

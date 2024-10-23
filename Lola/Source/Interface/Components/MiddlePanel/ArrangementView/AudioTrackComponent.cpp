@@ -19,6 +19,7 @@
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/Controls/RegionLabel.h"
+#include "Interface/Controls/DraggerControl.h"
 
 using namespace audium;
 
@@ -97,11 +98,20 @@ bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSou
 {
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (regionLabel->getRegion() &&
-            regionLabel->getRegion()->getAudioTrack() == audioTrack)
+        if (regionLabel->getRegion()->getAudioTrack() == audioTrack)
         {
-            // return true if source details match this track
-            return true;
+            return true; // source details match this track
+        }
+    }
+//    else if (auto component = dynamic_cast<DraggerControl*>(dragSourceDetails.sourceComponent.get()))
+//    {
+//
+//    }
+    else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
+    {
+        if (playListItemComponent->getPlayListItem()->getRegion()->getAudioTrack() == audioTrack)
+        {
+            return true; // source details match this track
         }
     }
     return false;
@@ -110,8 +120,19 @@ bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSou
 void AudioTrackComponent::itemDragMove (const SourceDetails &dragSourceDetails)
 {
     auto x = dragSourceDetails.localPosition.x;
+    auto length = 0.01;
+    if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
+    {
+        // apply x offset
+        x -= playListItemComponent->getDraggerControl()->mouseDownOffset.getX();
+        if (auto region = playListItemComponent->getPlayListItem()->getRegion())
+        {
+            length = region->getRegionData(audium::clocks).getLength();
+        }
+    }
+    
     auto start = zoomHandler->xToClocks(x);
-    auto end = start + 0.01;
+    auto end = start + length;
     Range<double> rangeInClocks(start, end);
     
     zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
@@ -125,30 +146,47 @@ void AudioTrackComponent::itemDragExit (const SourceDetails &dragSourceDetails)
 
 void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
-
-    if ( RegionLabel* regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        // undo action stores current state
-        auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
-                
-        auto start = zoomHandler->xToClocks(dragSourceDetails.localPosition.x);
-        zoomHandler->snapToGrid(start);
+    // undo
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
+    
+    auto x = dragSourceDetails.localPosition.x;
+    
+    // apply x offset
+    if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
+        x -= playListItemComponent->getDraggerControl()->mouseDownOffset.getX();
         
-        // convert row number to region pointer
-        auto region = audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getRegion(regionLabel->getRowNumber());
-        jassert(region);
-        if (region != nullptr)
+    auto pos = zoomHandler->xToClocks(x);
+    zoomHandler->snapToGrid(pos);
+    
+    bool success = false;
+    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    {
+        if (auto region = regionLabel->getRegion())
         {
-            juce::Range<double> position(start, start + region->getRegionData(audium::clocks).getLength());
+            juce::Range<double> position(pos, pos + region->getRegionData(audium::clocks).getLength());
             if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
-            {
-                action->storeNewState();
-                auto undoManager = audioTrack->getAudioTrackContainer().getUndoManager();
-                undoManager->perform(action.release(), "Playlist modified");
-                undoManager->beginNewTransaction();
-            }
+                success = true;
         }
     }
+    else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
+    {
+        if (auto region = playListItemComponent->getPlayListItem()->getRegion())
+        {
+            juce::Range<double> position(pos, pos + region->getRegionData(audium::clocks).getLength());
+            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
+                success = true;
+        }
+    }
+    
+    if (success)
+    {
+        action->storeNewState();
+        auto undoManager = audioTrack->getAudioTrackContainer().getUndoManager();
+        undoManager->perform(action.release(), "item dropped");
+        undoManager->beginNewTransaction();
+    }
+    
+    
     
     zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
