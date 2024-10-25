@@ -14,6 +14,7 @@
 class AudioResourceContainer;
 class AudioTrack;
 class AudiumTransportSource;
+class AudioResource;
 
 class TransportSourceContainer
 {
@@ -21,7 +22,8 @@ public:
     TransportSourceContainer() = default;
     ~TransportSourceContainer() = default;
     
-    std::shared_ptr<AudiumTransportSource> createAndAddTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
+    std::shared_ptr<AudiumTransportSource> createAndAddTransportSource(AudioResource& audioResource,
+                                                                       std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
     void cleanup();

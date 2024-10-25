@@ -16,14 +16,15 @@
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/PlayList/PlayListSchedulerData.h"
 #include "Engine/Core/AudioClipContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
-class AudioTrackContainer;
+
 class AudioResourceContainer;
 
-class PlayListScheduler
+class PlayListScheduler : public juce::ChangeListener
 {
     
     
@@ -43,9 +44,18 @@ public:
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
         
+        audioTrackContainer->addChangeListener(this);
     }
     
-    ~PlayListScheduler() = default;
+    ~PlayListScheduler()
+    {
+        audioTrackContainer->removeChangeListener(this);
+    }
+    
+    void changeListenerCallback (juce::ChangeBroadcaster* source) override
+    {
+        commitPlayListData();
+    }
 
     void prepareToPlay (double sampleRate, int blockSize);
     
@@ -62,7 +72,7 @@ public:
     bool isArrangementMode() const { return !data.editMode; }
         
     void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioTrack> track, int playListItemIndex);
-    int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track) const;
+    int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track);
     double getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const;
     
     
@@ -106,6 +116,8 @@ private:
     int bufferSize = 0;
     
     std::atomic<bool> forcePosition = false;
+    
+    std::atomic<bool> dataCommited = false;
     
     juce::CriticalSection readLock;
 

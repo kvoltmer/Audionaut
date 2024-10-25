@@ -86,11 +86,11 @@ public:
     
 
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
-    int getPlayListItemIndex(const PlayListItem* item) const;
+    int getPlayListItemIndex(PlayListItem* item);
     
     AudioRegionData::tRange getPlayListDataAtIndex(int index) const;
     
-    const PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
+    PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
     const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
     const std::vector<PlayListItem*> itemsAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;

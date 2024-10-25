@@ -157,15 +157,9 @@ std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) cons
     return nullptr;
 }
 
-int PlayListContainer::getPlayListItemIndex(const PlayListItem* item) const
+int PlayListContainer::getPlayListItemIndex(PlayListItem* item)
 {
-    for (auto i = 0; i < playListItems.size(); i++)
-    {
-        if (playListItems.getObjects()[i].get() == item)
-            return i;
-    }
-    
-    return -1;
+    return playListItems.getIndex(std::dynamic_pointer_cast<PlayListItem>(item->getSharedPtr()));
 }
 
 AudioRegionData::tRange PlayListContainer::getPlayListDataAtIndex(int index) const
@@ -266,7 +260,7 @@ void PlayListContainer::sortByPosition()
     });
 }
 
-const PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position, audium::TimeContextType context) const
+PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position, audium::TimeContextType context) const
 {
     for (auto item : playListItems.getObjects())
     {

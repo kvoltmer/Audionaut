@@ -17,11 +17,14 @@
 #define MAX_AUDIO_FILE_CHANNELS 64
 
 class AudioTrack;
+class AudioResource;
 
 class AudiumTransportSource : public audium::AudioTransportSource
 {
 public:
-    AudiumTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
+    AudiumTransportSource(AudioResource& audioResource,
+                          std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
+        audioResource(audioResource),
         audioFormatReaderSource(audioFormatReaderSource)
     {
     }
@@ -111,9 +114,15 @@ public:
         return 0.f;
     }
     
+    AudioResource& getAudioResource() const {
+        return audioResource;
+    }
+    
 private:
     
     typedef audium::AudioTransportSource tBase;
+    
+    AudioResource& audioResource;
     
     std::atomic<float> outputLevel[MAX_AUDIO_FILE_CHANNELS];
     

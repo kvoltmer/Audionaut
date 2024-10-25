@@ -15,7 +15,6 @@
 
 class AudioResourceContainer;
 class AudioTrackContainer;
-class PlayListScheduler;
 class AudioTrack;
 class AudioSubGroup;
 

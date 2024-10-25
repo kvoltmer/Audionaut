@@ -75,9 +75,11 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
         if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange))
         {
             const auto transportSource = transportSourceContainer->getTransportSourceAtIndex(dspClip.dspClipData.transportSourceIndex);
+            if (transportSource == nullptr)
+                continue;
             
-            if (transportSource != nullptr &&
-                not transportSource->isPlaying())
+            if (not transportSource->isPlaying() ||
+                dataCommited.load())
             {
                 auto absolute = dspClip.getAbsolutePosition(audium::seconds);
                 auto local = dspClip.getRegionData(audium::seconds).getStart();
@@ -100,6 +102,7 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
                 
                 transportSource->schedulePosition(position, startSamples);
                 transportSource->scheduleDuration(duration + (startSamples / externalSampleRate), externalSampleRate);
+                transportSource->setGain(dspClip.dspClipData.gain);
                 
                 //std::cout << "id: " << dspClip.dspClipData.transportSourceIndex << " ";
                 std::cout << "transport: " << transportPosition << " ";
@@ -114,6 +117,7 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
         }
     }
     
+    dataCommited.store(false);
 }
 
 void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
@@ -300,9 +304,9 @@ void PlayListScheduler::setAbsolutePosition(double newPosition, audium::TimeCont
 }
 
 
-int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track) const
+int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track)
 {
-    const auto item = track->getPlayListContainer()->itemAtAbsolutePosition(getAbsolutePosition(audium::clocks), audium::clocks);
+    auto item = track->getPlayListContainer()->itemAtAbsolutePosition(getAbsolutePosition(audium::clocks), audium::clocks);
     if (item != nullptr)
     {
         return track->getPlayListContainer()->getPlayListItemIndex(item);
@@ -366,6 +370,7 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer, double ext
 
 void PlayListScheduler::commitPlayListData()
 {
+    std::cout << "PlayListScheduler::commitPlayListData" << std::endl;
     
     DspClipArray<> dspClipArray;
         
@@ -392,6 +397,7 @@ void PlayListScheduler::commitPlayListData()
 
     // commit data as atomic operation
     audioClipContainer->atomicDspClipArray.store(dspClipArray);
+    dataCommited.store(true);
     
 #if 0 // print resource id and it's postion
     for (auto i = 0; i < dspClipArray.size(); i++)
