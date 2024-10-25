@@ -27,6 +27,7 @@ class TransportSourceContainer;
 class AudioResourceContainer;
 
 class AudioTrackContainer : public juce::ActionBroadcaster,
+                            public juce::ChangeBroadcaster,
                             public audium::Streamable
 {
         

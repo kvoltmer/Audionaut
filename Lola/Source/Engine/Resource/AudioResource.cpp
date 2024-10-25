@@ -58,7 +58,7 @@ std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(j
     }
             
     
-    auto transportSource = audioTrack->getTransportSourceContainer()->createAndAddTransportSource(audioFormatReaderSource);
+    auto transportSource = audioTrack->getTransportSourceContainer()->createAndAddTransportSource(*this, audioFormatReaderSource);
     transportSource->setSource (audioFormatReaderSource.get(),
                                 readAheadBufferSize,
                                 readAheadThread,
@@ -209,7 +209,6 @@ const juce::URL AudioResource::urlFromJson (json& input)
 
 bool AudioResource::readFromJson (json& input, bool rebuild)
 {
-    const auto gain         = input["gain"].template get<float>();
     const auto channelPos   = input["channel_position"].template get<int>();
     
     if (input.contains("number_of_channels"))
@@ -220,10 +219,7 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     
     setChannelPosition(channelPos);
     jassert(this->url == urlFromJson(input));
-    
-    // TODO: fixme
-    //if (getAudioTransportSource() != nullptr)
-    //    getAudioTransportSource()->setGain(gain);
+
     return true;
 }
 

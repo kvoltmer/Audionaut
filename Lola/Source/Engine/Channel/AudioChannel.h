@@ -21,25 +21,29 @@ class AudioChannel : public audium::Selectable
     
 public:
     AudioChannel(AudioTrack &audioTrack,
-                 int channelNumber,
                  std::shared_ptr<audium::SelectionManager> selectionManager) :
         audium::Selectable(selectionManager),
-        audioTrack(audioTrack),
-        channelNumber(channelNumber)
+        audioTrack(audioTrack)
     {
     }
     
-    int getChannelHeight() const { return data.height; }
-    void setChannelHeight(int height) { data.height = height; }
+    int getChannelHeight() const noexcept {
+        return data.height;
+    }
+    void setChannelHeight(const int height) {
+        data.height = height;
+    }
+    
+    void setGain(const float new_gain) {
+        data.gain = new_gain;
+    }
+    float getGain() const noexcept {
+        return data.gain;
+    }
 
-    int getChannelNumber() const
-    {
-        return channelNumber;
-    }
-    
-    void setChannelNumber(int number)
-    {
-        channelNumber = number;
+    int getChannelNumber() {
+        auto channel = std::dynamic_pointer_cast<AudioChannel>(getSharedPtr());
+        return audioTrack.audioChannelContainer->getIndex(channel);
     }
     
     AudioChannelData data;
@@ -47,7 +51,6 @@ public:
 private:
     AudioTrack &audioTrack;
     
-    int channelNumber = 0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioChannel)
     

@@ -18,8 +18,20 @@ using json = nlohmann::json;
 struct AudioChannelData
 {
     int height = 100;
+    float gain = 1.0f;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AudioChannelData, height);
+// custom to_json method will be automatically called by the json constructor
+inline void to_json(json& j, const AudioChannelData& d) {
+    j = json{   {"height", d.height},
+                {"gain", d.gain}};
+}
 
+// custom from_json method will be automatically called by the json constructor
+inline void from_json(const json& j, AudioChannelData& d) {
+    j.at("height").get_to(d.height);
+    if (j.contains("gain")) {
+        d.gain = j.at("gain").get<float>();
+    }
+}
 

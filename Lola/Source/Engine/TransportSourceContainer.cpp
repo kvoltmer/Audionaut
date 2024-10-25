@@ -12,11 +12,12 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "AudiumTransportSource.h"
 
-std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
+std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(AudioResource& audioResource,
+                                                                                             std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
     const ScopedLock sl (callbackLock);
 
-    auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource(audioFormatReaderSource));
+    auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource(audioResource, audioFormatReaderSource));
     audioTransportSources.add(transportSource);
     return transportSource;
 }

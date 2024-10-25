@@ -130,8 +130,8 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         {
             channel = audioChannelContainer->getObjects()[c];
         }
-        
-        channel->data = jsonElement;
+        if (channel != nullptr)
+            channel->data = jsonElement;
         c++;
     }
     
@@ -151,8 +151,9 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
             subGroup = audioSubGroupContainer->getObjects()[i];
         }
         
-        if (!subGroup->readFromJson(jsonElement, rebuild))
-            return false;
+        if (subGroup != nullptr)
+            if (!subGroup->readFromJson(jsonElement, rebuild))
+                return false;
         
         i++;
     }
@@ -191,8 +192,7 @@ void AudioTrack::ensureNumChannels(int channelsNeeded)
 
 std::shared_ptr<AudioChannel> AudioTrack::addChannel()
 {
-    auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this,
-                                                                  (int)audioChannelContainer->getObjects().size(),
+    auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this,                                                                  
                                                                   selectionManager));
     audioChannelContainer->push_back(channel);
     return channel;
@@ -239,28 +239,27 @@ std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtChann
     return result;
 }
 
-void AudioTrack::setGain(float gain, int channelNumber)
-{
-    // TODO: move this to channel class
-    // TODO: fixme
-    auto resources = getAudioResourcesAtChannel(channelNumber);
-    for (auto resource : resources)
-    {
-        jassertfalse;
-        //resource->getAudioTransportSource()->setGain(gain);
+void AudioTrack::setGain(float gain, int channelNumber) {
+
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        // undo
+        auto action = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);
+        
+        channel->setGain(gain);
+        
+        // undo
+        action->storeNewState();
+        
+        getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set Gain");
+        getAudioTrackContainer().getUndoManager()->beginNewTransaction();
     }
+    
 }
 
-float AudioTrack::getGain(int channelNumber) const
-{
-    // TODO: move this to channel class
-    // TODO: fixme
-    auto resources = getAudioResourcesAtChannel(channelNumber);
-//    if (resources.size() > 0 &&
-//        resources[0]->getAudioTransportSource() != nullptr)
-//    {
-//        return resources[0]->getAudioTransportSource()->getGain();
-//    }
+float AudioTrack::getGain(int channelNumber) const {
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        return channel->getGain();
+    }
     return 0.0;
 }
 
@@ -333,9 +332,6 @@ std::list<std::shared_ptr<PositionableBase>> AudioTrack::getPositionableItems(bo
 
 bool AudioTrack::deleteSelectedObject(std::shared_ptr<audium::Selectable> object)
 {
-    // TODO: proove if object exits. Unless the dynamic_cast may crash
-    
-    
     if (AudioSubGroup* subGroup = dynamic_cast<AudioSubGroup*>(object.get()))
     {
         return audioSubGroupContainer->deleteObject(subGroup);
@@ -364,12 +360,6 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
     {
         audioResourceContainer.onDeleteChannel(channel);
         result = audioChannelContainer->deleteObject(channel);
-    }
-    
-    auto count = 0;
-    for (auto channel : audioChannelContainer->getObjects())
-    {
-        channel->setChannelNumber(count++);
     }
 
     // cleanup subgroups
@@ -516,11 +506,17 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
         // iterate playlist
         for (const auto &item : getPlayListContainer()->getPlayListItems())
         {
+            
             for (const auto &transportSource : item->getTransportSources())
             {
+                dspClipData.active = true;
+                auto channelPosition = transportSource->getAudioResource().getChannelPosition();
+                if (audioChannelContainer->objectExistsAtIndex(channelPosition))
+                    dspClipData.gain = audioChannelContainer->objects[channelPosition]->getGain();
+                
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
-                dspClipData.active          = true;
+                
                 dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);
                 result.push_back(dspClipData);
             }

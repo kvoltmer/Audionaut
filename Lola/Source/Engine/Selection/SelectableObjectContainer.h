@@ -23,6 +23,7 @@ public:
     ~SelectableObjectContainer() {
         jassert(objects.size() == 0);
     }
+    
     std::vector<std::shared_ptr<ElementType>> getObjects() const { return objects; }
     
     bool deleteObject(ElementType* object) {
@@ -44,6 +45,10 @@ public:
             return item.get() == object;
         });
         return it != objects.end();
+    }
+    
+    bool objectExistsAtIndex(int index) const {
+        return (index >= 0 && index < objects.size());
     }
     
     void selectAllObjects(bool bSelected) {
@@ -85,6 +90,15 @@ public:
                 object->setSelected(true, false);
             }
         }
+    }
+    
+    int getIndex(std::shared_ptr<ElementType> searchObject) const
+    {
+        auto it = std::find(objects.begin(), objects.end(), searchObject);
+        if (it != objects.end())
+            return static_cast<int>(std::distance(objects.begin(), it));
+
+        return -1;
     }
     
     std::vector<std::shared_ptr<ElementType>> objects;

@@ -103,10 +103,6 @@ bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSou
             return true; // source details match this track
         }
     }
-//    else if (auto component = dynamic_cast<DraggerControl*>(dragSourceDetails.sourceComponent.get()))
-//    {
-//
-//    }
     else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
     {
         if (playListItemComponent->getPlayListItem()->getRegion()->getAudioTrack() == audioTrack)

@@ -138,7 +138,11 @@ bool AudioTrackContainer::readFromStream (juce::InputStream& inputStream, bool r
 {
     if (audium::Streamable::readFromStream(inputStream, rebuild))
     {
+        // change message for UI
         sendActionMessage(rebuild ? rebuildAll : updateAll);
+        
+        // change message for Scheduler
+        sendChangeMessage();
         return true;
     }
     return false;
