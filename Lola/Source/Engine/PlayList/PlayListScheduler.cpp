@@ -79,7 +79,7 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
                 continue;
             
             if (not transportSource->isPlaying() ||
-                dataCommited.load())
+                newDataCommited.load())
             {
                 auto absolute = dspClip.getAbsolutePosition(audium::seconds);
                 auto local = dspClip.getRegionData(audium::seconds).getStart();
@@ -117,7 +117,7 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
         }
     }
     
-    dataCommited.store(false);
+    newDataCommited.store(false);
 }
 
 void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
@@ -397,7 +397,7 @@ void PlayListScheduler::commitPlayListData()
 
     // commit data as atomic operation
     audioClipContainer->atomicDspClipArray.store(dspClipArray);
-    dataCommited.store(true);
+    newDataCommited.store(true);
     
 #if 0 // print resource id and it's postion
     for (auto i = 0; i < dspClipArray.size(); i++)

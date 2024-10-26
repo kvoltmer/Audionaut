@@ -39,7 +39,7 @@ public:
     std::shared_ptr<AudiumTransportSource> getTransportSourceAtIndex(int index) const;
     int getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const;
     
-    float getOutputLevel(int channelNumber) const;
+    const float getOutputLevel(const int trackNumber, const int channelNumber) const;
     
 private:
     std::atomic<bool> playing;

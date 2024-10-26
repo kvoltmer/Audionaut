@@ -13,6 +13,7 @@
 
 #include "Engine/PlayList/SampleTimer.h"
 #include "Engine/Playback/audium_AudioTransportSource.h"
+#include "Engine/Resource/AudioResource.h"
 
 #define MAX_AUDIO_FILE_CHANNELS 64
 
@@ -98,7 +99,9 @@ public:
             tBase::getNextAudioBlock(infoPart2);
         }
         
-        for (auto i = 0; i < info.buffer->getNumChannels(); i++)
+        // We need the number of channels of the actual file.
+        auto numChannels = audioResource.getNumChannels();
+        for (auto i = 0; i < numChannels; i++)
         {
             outputLevel[i] = info.buffer->getMagnitude(i, info.startSample, info.numSamples);
         }

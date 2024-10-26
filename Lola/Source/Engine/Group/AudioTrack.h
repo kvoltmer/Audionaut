@@ -72,7 +72,8 @@ public:
     void setColour(juce::Colour colour);
     juce::Colour getColour() const { return groupColour; }
     
-    int getId();
+    // return the id (actually the index within the container's array)
+    const int getId() const;
     
     // pointer and references to other classes:
     AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
@@ -99,7 +100,7 @@ public:
     void setSelected(bool bSelected, bool selectChildren) override;
     
 
-    float getOutputLevel(int channelNumber) const;
+    const float getOutputLevel(int channelNumber) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannel(int channelNumber) const;
     
     void setGain(float gain, int channelNumber);

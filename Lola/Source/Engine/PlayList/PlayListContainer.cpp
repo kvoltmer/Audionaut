@@ -157,9 +157,9 @@ std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) cons
     return nullptr;
 }
 
-int PlayListContainer::getPlayListItemIndex(PlayListItem* item)
+int PlayListContainer::getPlayListItemIndex(PlayListItem* item) const
 {
-    return playListItems.getIndex(std::dynamic_pointer_cast<PlayListItem>(item->getSharedPtr()));
+    return playListItems.getIndex(std::dynamic_pointer_cast<const PlayListItem>(item->getSharedPtr()));
 }
 
 AudioRegionData::tRange PlayListContainer::getPlayListDataAtIndex(int index) const

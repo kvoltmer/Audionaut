@@ -63,9 +63,9 @@ void AudioTrack::setColour(juce::Colour colour)
     groupColour = colour;
 }
 
-int AudioTrack::getId()
+const int AudioTrack::getId() const
 {
-    return owner.getAudioTrackId(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()));
+    return owner.getAudioTrackId(std::dynamic_pointer_cast<const AudioTrack>(getSharedPtr()));
 }
 
 bool AudioTrack::writeToJson (json& output)
@@ -219,9 +219,9 @@ int AudioTrack::getTotalHeight() const
     return height;
 }
 
-float AudioTrack::getOutputLevel(int channelNumber) const
+const float AudioTrack::getOutputLevel(int channelNumber) const
 {
-    return transportSourceContainer->getOutputLevel(channelNumber);
+    return transportSourceContainer->getOutputLevel(getId(), channelNumber);
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtChannel(int channelNumber) const

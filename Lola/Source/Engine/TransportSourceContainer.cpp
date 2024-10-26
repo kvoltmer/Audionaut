@@ -129,7 +129,7 @@ int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTran
     return count;
 }
 
-float TransportSourceContainer::getOutputLevel(int channelNumber) const
+const float TransportSourceContainer::getOutputLevel(const int trackNumber, const int channelNumber) const
 {
     const ScopedLock sl (callbackLock);
 
@@ -137,7 +137,10 @@ float TransportSourceContainer::getOutputLevel(int channelNumber) const
     
     for (auto transportSource : audioTransportSources)
     {
-        level += transportSource->getOutputLevel(channelNumber /* - resource->getChannelPosition() */);
+        if (trackNumber == transportSource->getAudioResource().getAudioTrack()->getId()) {
+            auto channel = channelNumber - transportSource->getAudioResource().getChannelPosition();
+            level += transportSource->getOutputLevel(channel);
+        }
     }
     
     return level;

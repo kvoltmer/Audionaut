@@ -49,7 +49,7 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::getAudioTrack(int index) const
     return nullptr;
 }
 
-int AudioTrackContainer::getAudioTrackId(std::shared_ptr<AudioTrack> searchTrack) const
+int AudioTrackContainer::getAudioTrackId(std::shared_ptr<const AudioTrack> searchTrack) const
 {
     auto it = std::find(audioTracks.begin(), audioTracks.end(), searchTrack);
     if (it == audioTracks.end())
