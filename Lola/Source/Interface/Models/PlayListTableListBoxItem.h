@@ -30,13 +30,6 @@ public:
     {
         stopTimer();
     }
-
-//    PlayListTableListBoxItem(const PlayListTableListBoxItem& other)
-//    {
-//        c = other.c;
-//        idNum = other.idNum;
-//        owner = other.owner;
-//    }
     
     void paint(juce::Graphics& g) override;
     
@@ -48,10 +41,7 @@ public:
         }
     }
     
-    void mouseDown (const juce::MouseEvent& e) override
-    {
-        getParentComponent()->mouseDown(e);
-    }
+    void mouseDown (const juce::MouseEvent& e) override;
     
     void mouseDoubleClick (const juce::MouseEvent&) override;
     
