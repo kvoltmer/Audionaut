@@ -135,6 +135,20 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
     }
 }
 
+void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
+{
+    auto track = playListModel->getAudioTrack();
+    if (!e.mods.isCommandDown() &&
+        !e.mods.isShiftDown())
+    {
+        track->getSelectionManager()->deselectAll();
+    }
+    
+    getParentComponent()->mouseDown(e);
+
+    track->getAudioTrackContainer().sendActionMessage(updateAll);
+}
+
 void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
 {
     auto track = playListModel->getAudioTrack();
