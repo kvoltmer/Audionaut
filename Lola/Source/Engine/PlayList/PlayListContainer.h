@@ -86,7 +86,7 @@ public:
     
 
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
-    int getPlayListItemIndex(PlayListItem* item);
+    int getPlayListItemIndex(PlayListItem* item) const;
     
     AudioRegionData::tRange getPlayListDataAtIndex(int index) const;
     

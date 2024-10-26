@@ -40,10 +40,9 @@ public:
     
     virtual bool isSelected() const { return selected; }
     
-    std::shared_ptr<Selectable> getSharedPtr()
-    {
-        return shared_from_this();
-    }
+    std::shared_ptr<Selectable> getSharedPtr() { return shared_from_this(); }
+
+    std::shared_ptr<const Selectable> getSharedPtr() const { return shared_from_this(); }
     
     virtual void cleanup() {}
     

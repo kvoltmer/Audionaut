@@ -117,7 +117,7 @@ private:
     
     std::atomic<bool> forcePosition = false;
     
-    std::atomic<bool> dataCommited = false;
+    std::atomic<bool> newDataCommited = false;
     
     juce::CriticalSection readLock;
 

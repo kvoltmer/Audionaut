@@ -92,7 +92,7 @@ public:
         }
     }
     
-    int getIndex(std::shared_ptr<ElementType> searchObject) const
+    int getIndex(std::shared_ptr<const ElementType> searchObject) const
     {
         auto it = std::find(objects.begin(), objects.end(), searchObject);
         if (it != objects.end())
