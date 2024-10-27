@@ -28,7 +28,7 @@ public:
     
     void paint (juce::Graphics&) override;
     void resized() override;
-    void updateUI(UIContext context = RebuildContext);
+    void updateUI(UIContext context = ContentContext);
     void clearSelection();
 
     
