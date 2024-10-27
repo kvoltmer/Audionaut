@@ -104,6 +104,13 @@ void PlayListContainer::movePlayListItemsPosition(int startIndex, double amount,
 
 void PlayListContainer::movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore)
 {
+    // TODO: swap position
+//    auto currentPos = getPlayListItem(currentIndex)->getAbsolutePosition(audium::clocks);
+//    auto beforePos = getPlayListItem(indexOfItemToPlaceBefore)->getAbsolutePosition(audium::clocks);
+//
+//    getPlayListItem(currentIndex)->setAbsolutePosition(beforePos, audium::clocks);
+//    getPlayListItem(indexOfItemToPlaceBefore)->setAbsolutePosition(currentPos, audium::clocks);
+    
     MoveItemBefore(playListItems.objects,
                    currentIndex,
                    indexOfItemToPlaceBefore);
