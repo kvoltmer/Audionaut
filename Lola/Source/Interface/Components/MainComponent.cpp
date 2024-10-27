@@ -149,7 +149,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     if (message == regionCreatedAction)
     {
         middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == regionClearedAction)
     {
@@ -157,21 +157,21 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     }
     else if (message == regionModifiedAction)
     {
-        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == regionSelectedAction)
     {
         middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == playListItemCreatedAction)
     {
         middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == playListItemTriggered)
     {
-        rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == playListItemSelection)
     {
@@ -183,19 +183,13 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         middlePanelComponent->updateUI();
         rightPanelComponent->updateUI();
     }
-    else if (message == audioTrackCreatedAction)
-    {
-        // TODO: update with context to rebuild everything
-        updateUI();
-    }
     else if (message == scrolledVertically)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::VerticalScrollContext);
     }
     else if (message == rebuildAll)
     {
-        middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
-        rightPanelComponent->updateUI();
+        rebuildUI();
     }
     else if (message == updateAll)
     {
@@ -213,6 +207,11 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
     }
+    else if (message == updateSelection)
+    {
+        middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
+        rightPanelComponent->updateUI(SelectionContext);
+    }
     else // update everything (eg. region deleted)
     {
         updateUI();
@@ -227,7 +226,7 @@ void MainComponent::changeListenerCallback (ChangeBroadcaster* source)
 void MainComponent::rebuildUI()
 {
     middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
-    rightPanelComponent->updateUI();
+    rightPanelComponent->updateUI(RebuildContext);
 }
 
 void MainComponent::updateUI()
@@ -237,7 +236,7 @@ void MainComponent::updateUI()
     middlePanelComponent->showEditComponent(editMode);
 
     middlePanelComponent->updateUI();
-    rightPanelComponent->updateUI();
+    rightPanelComponent->updateUI(ContentContext);
 
     updateWindowTitle();
 }

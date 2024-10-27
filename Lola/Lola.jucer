@@ -164,6 +164,7 @@
               file="Source/Engine/TransportSourceContainer.h"/>
       </GROUP>
       <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
+        <FILE id="Z0WoBP" name="UIContext.h" compile="0" resource="0" file="Source/Interface/UIContext.h"/>
         <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
           <FILE id="y2L75o" name="AutoEditComponent.cpp" compile="1" resource="0"
                 file="Source/Interface/Dialogs/AutoEditComponent.cpp"/>

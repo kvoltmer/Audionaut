@@ -72,7 +72,7 @@ public:
     void setColour(juce::Colour colour);
     juce::Colour getColour() const { return groupColour; }
     
-    // return the id (actually the index within the container's array)
+    // returns the index within the container's array
     const int getId() const;
     
     // pointer and references to other classes:

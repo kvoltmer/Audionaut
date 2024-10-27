@@ -40,9 +40,41 @@ bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDrop
     return false;
 }
 
+void PlayListTableListBoxItem::updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
+    auto insertIndex = rowNumber + (before ? 0 : 1);
+    
+    if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
+    {
+        //std::cout << "movePlayListItemBefore this: " << rowNumber << " item: " << item->rowNumber << " insert: " << insertIndex << std::endl;
+        
+        if (rowNumber == item->rowNumber ||
+            item->rowNumber == insertIndex)
+        {
+            repaint();
+            return;
+        }
+    }
+    
+    if( dragSourceDetails.localPosition.y < getHeight() / 2 )
+    {
+        insertBefore = true;
+        insertAfter = false;
+    }
+    else
+    {
+        insertAfter = true;
+        insertBefore = false;
+    }
+    
+    repaint();
+}
+
 void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetails)
 {
     auto playListContainer = playListModel->getPlayListContainer();
+    
     
     // Undo: store old state
     auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getAudioTrack()->getAudioTrackContainer());
@@ -52,27 +84,32 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
     
     //std::cout << "row number: " << rowNumber + (before ? 0 : 1) << std::endl;
     
+    bool modified = false;
+    
     if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
-        playListContainer->movePlayListItemBefore(item->rowNumber, insertIndex);
+        if (rowNumber != item->rowNumber &&
+            item->rowNumber != insertIndex)
+        {
+            playListContainer->movePlayListItemBefore(item->rowNumber, insertIndex);
+            modified = true;
+        }
     }
     else if (auto item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {        
-        if (playListContainer->createPlayListItemUI(item->getRowNumber(), insertIndex) == nullptr)
-        {
-            hideInsertLines();
-            return;
-        }
+        playListContainer->createPlayListItemUI(item->getRowNumber(), insertIndex);
+        modified = true;
     }
     
-
-    // Undo: store new state
-    action->storeNewState();
-    // oh dear
-    auto undoManager = playListModel->getPlayListContainer()->getAudioRegionContainer().getUndoManager();
-    undoManager->perform(action.release(), "Playlist changed");
-    undoManager->beginNewTransaction();
-    
+    if (modified)
+    {
+        // Undo: store new state
+        action->storeNewState();
+        // oh dear
+        auto undoManager = playListModel->getPlayListContainer()->getAudioRegionContainer().getUndoManager();
+        undoManager->perform(action.release(), "Playlist changed");
+        undoManager->beginNewTransaction();
+    }
     
     hideInsertLines();
 }
@@ -137,6 +174,8 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 
 void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
 {
+    
+    // must call deselect since items of other playlists might be selected
     auto track = playListModel->getAudioTrack();
     if (!e.mods.isCommandDown() &&
         !e.mods.isShiftDown())
@@ -144,9 +183,16 @@ void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
         track->getSelectionManager()->deselectAll();
     }
     
+    // select this item
+    auto container = playListModel->getAudioTrack()->getPlayListContainer();
+    if (auto item = container->getPlayListItem(rowNumber))
+        item->setSelected(true);
+    
+    // pass on the event to the model
     getParentComponent()->mouseDown(e);
 
-    track->getAudioTrackContainer().sendActionMessage(updateAll);
+    // update
+    track->getAudioTrackContainer().sendActionMessage(updateSelection);
 }
 
 void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
