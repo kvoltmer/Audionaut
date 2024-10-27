@@ -173,11 +173,6 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         rightPanelComponent->updateUI(ContentContext);
     }
-    else if (message == playListItemSelection)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI();
-    }
     else if (message == audioResourceCreatedAction)
     {
         middlePanelComponent->updateUI();

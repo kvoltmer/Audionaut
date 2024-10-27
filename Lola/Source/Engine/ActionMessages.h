@@ -22,7 +22,6 @@ const char* const playListItemCreatedAction = "playlist item created";
 const char* const playListOrderAction = "playlist order changed";
 const char* const playListDeletedAction = "playlist deleted";
 const char* const playListItemTriggered = "playlist item triggerd";
-const char* const playListItemSelection = "playlist item selection changed";
 const char* const audioResourceCreatedAction = "audio resource created";
 const char* const audioResourceRemovedAction = "audio resource removed";
 const char* const audioResourceSelectedAction = "audio resource selected";

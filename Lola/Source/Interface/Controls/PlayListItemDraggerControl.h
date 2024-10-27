@@ -74,7 +74,7 @@ public:
             audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
         }
         playListItem->setSelected(bSelected);
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(playListItemSelection);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
     }
     
     const juce::String getLabelString() const override

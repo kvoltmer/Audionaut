@@ -39,10 +39,13 @@ void PlayListContainerComponent::updateUI(UIContext context)
     for (auto playListComponent : playListComponents)
     {
         if (context == SelectionContext)
+        {
             playListComponent->updateSelection();
-        
-        if (context == ContentContext)
+        }
+        else
+        {
             playListComponent->updateUI();
+        }
     }
     
     auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
