@@ -28,15 +28,21 @@ PlayListContainerComponent::~PlayListContainerComponent()
 {
 }
 
-void PlayListContainerComponent::updateUI()
+void PlayListContainerComponent::updateUI(UIContext context)
 {
-    // TODO: don't recreate suff -> introduce a context
-    createComponents();
-    resized();
+    if (context == RebuildContext)
+    {
+        createComponents();
+        resized();
+    }
     
     for (auto playListComponent : playListComponents)
     {
-        playListComponent->updateUI();
+        if (context == SelectionContext)
+            playListComponent->updateSelection();
+        
+        if (context == ContentContext)
+            playListComponent->updateUI();
     }
     
     auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);

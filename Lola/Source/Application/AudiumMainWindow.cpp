@@ -292,7 +292,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
 
 bool AudiumMainWindow::isSomethingSelected()
 {
-    return getEngine()->getAudioTrackContainer()->isSomethingSelected();
+    return getEngine()->getAudioTrackContainer()->getSelectionManager()->isSomethingSelected();
 }
 
 bool AudiumMainWindow::canPaste()

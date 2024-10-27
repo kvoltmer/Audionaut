@@ -47,21 +47,7 @@ public:
     
     bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
     
-    void updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
-    {
-        if( dragSourceDetails.localPosition.y < getHeight() / 2 )
-        {
-            insertBefore = true;
-            insertAfter = false;
-        }
-        else
-        {
-            insertAfter = true;
-            insertBefore = false;
-        }
-        
-        repaint();
-    }
+    void updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails);
     
     void hideInsertLines()
     {

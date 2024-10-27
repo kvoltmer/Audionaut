@@ -87,11 +87,15 @@ public:
         return true;
     }
     
-    void updateUI()
+    void updateSelection()
     {
         auto selectedRows = audioTrack->getPlayListContainer()->playListItems.getSelectedRows();
         playListTableListBox->setSelectedRows(selectedRows, juce::dontSendNotification);
-        
+    }
+    
+    void updateUI()
+    {
+        updateSelection();
         playListTableListBox->updateContent();
     }
     

@@ -77,8 +77,9 @@ public:
         regionTableListBox->setSelectedRows(selection, juce::dontSendNotification);
     }
     
-    void updateUI()
+    void updateUI(UIContext context)
     {
+        /// TODO: inplement UI context
         updateSelection();
         regionTableListBox->updateContent();
     }

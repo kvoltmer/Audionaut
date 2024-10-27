@@ -52,16 +52,10 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::getAudioTrack(int index) const
 int AudioTrackContainer::getAudioTrackId(std::shared_ptr<const AudioTrack> searchTrack) const
 {
     auto it = std::find(audioTracks.begin(), audioTracks.end(), searchTrack);
-    if (it == audioTracks.end())
-    {
-        jassertfalse;
-        return -1; // not found
-    }
-    else
-    {
-        auto index = std::distance(audioTracks.begin(), it);
-        return static_cast<int>(index);
-    }
+    if (it != audioTracks.end())
+        return static_cast<int>(std::distance(audioTracks.begin(), it));
+    
+    return -1; // not found
 }
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::createNewAudioTrack(const juce::String nameString)
@@ -76,7 +70,7 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::createNewAudioTrack(const juce:
         audioTrack->setName(nameString);
     }
     audioTracks.push_back(audioTrack);
-    sendActionMessage(audioTrackCreatedAction);
+    sendActionMessage(rebuildAll);
     return audioTrack;
 }
 
@@ -247,10 +241,4 @@ void AudioTrackContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
             track->setSelected(true, false);
         }
     }
-}
-
-
-bool AudioTrackContainer::isSomethingSelected()
-{
-    return selectionManager->isSomethingSelected();
 }
