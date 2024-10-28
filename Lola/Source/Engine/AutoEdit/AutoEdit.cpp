@@ -60,7 +60,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
     }
     else
     {
-        juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "no audio data", "bounce audio failed.");
+        juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "no audio data", "export audio failed.");
     }
     
     return false;

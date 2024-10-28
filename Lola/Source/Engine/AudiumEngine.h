@@ -15,6 +15,7 @@
 
 #include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
+#include "Engine/ExportAudioConfig.h"
 
 class AudioTrackContainer;
 class AudioTrack;
@@ -54,9 +55,7 @@ public:
     
     void openFile (const juce::File& file, std::function<void (bool,std::string)> callback);
     bool saveFile (const juce::File& file);
-    void bounceToFile(const juce::File& f, std::function<void (bool)> callback,
-                      double preferedSampleRate,
-                      bool defaultGroupOnly = false);
+    void bounceToFile(const audium::ExportAudioConfig config);
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
