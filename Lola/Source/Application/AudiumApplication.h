@@ -62,11 +62,13 @@ public:
     void askUserToOpenFile();
     void saveProjectAs(std::function<void (bool)> callback);
     void saveProject(std::function<void (bool)> callback);
-    void bounceProject();
     void updateUI();
     
     
     AudiumLookAndFeel lookAndFeel;
+    
+    File initialSaveDirectory;
+    File initialOpenDirectory;
 
 private:
 
@@ -79,8 +81,7 @@ private:
     void initCommandManager();
     void handleAsyncUpdate() override;
     
-    File initialSaveDirectory;
-    File initialOpenDirectory;
+
     
     //==============================================================================
    #if JUCE_MAC

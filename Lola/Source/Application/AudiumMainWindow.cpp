@@ -16,6 +16,9 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Interface/Dialogs/NewRegionDialog.h"
+#include "Interface/Dialogs/AutoEditDialog.h"
+#include "Interface/Dialogs/ExportAudioDialog.h"
 
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
     : DocumentWindow (name,
@@ -91,6 +94,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::loopPlayList,
         CommandIDs::createRegion,
         CommandIDs::autoEdit,
+        CommandIDs::bounceProject,
         CommandIDs::duplicate,
         CommandIDs::zoomIn,
         CommandIDs::zoomOut,
@@ -133,6 +137,10 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case CommandIDs::autoEdit:
             result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
             result.defaultKeypresses.add (KeyPress ('e', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::bounceProject:
+            result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
+            result.defaultKeypresses.add ({ 'b', ModifierKeys::commandModifier | ModifierKeys::altModifier, 0 });
             break;
         case CommandIDs::toggleFullScreen:
             result.setInfo ("Full Screen", "Enter full screen", CommandCategories::view, 0);
@@ -220,18 +228,27 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     {
         case CommandIDs::playStop:
             getEngine()->getPlayListScheduler()->isPlaying() ?
-                getEngine()->getPlayListScheduler()->stopPlaying() :
-                getEngine()->getPlayListScheduler()->startPlaying();
+            getEngine()->getPlayListScheduler()->stopPlaying() :
+            getEngine()->getPlayListScheduler()->startPlaying();
             mainComponent->updateUI();
             break;
         case CommandIDs::loopPlayList:
             getEngine()->getPlayListScheduler()->setLoopPlayList(!getEngine()->getPlayListScheduler()->getLoopPlayList());
             break;
         case CommandIDs::createRegion:
-            newRegionDialog.createNewRegion(getEngine());
+            if (newRegionDialog == nullptr)
+                newRegionDialog = std::make_unique<NewRegionDialog>();
+            newRegionDialog->createNewRegion(getEngine());
             break;
         case CommandIDs::autoEdit:
-            autoEditDialog.invokeAutoEdit(getEngine(), mainComponent);
+            if (autoEditDialog == nullptr)
+                autoEditDialog = std::make_unique<AutoEditDialog>();
+            autoEditDialog->invokeAutoEdit(getEngine(), mainComponent);
+            break;
+        case CommandIDs::bounceProject:
+            if (exportAudioDialog == nullptr)
+                exportAudioDialog = std::make_unique<ExportAudioDialog>();
+            exportAudioDialog->invoke(getEngine(), mainComponent);
             break;
         case CommandIDs::toggleFullScreen:
             setFullScreen (!isFullScreen());

@@ -35,6 +35,8 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <FILE id="WTONDo" name="ExportAudioConfig.h" compile="0" resource="0"
+              file="Source/Engine/ExportAudioConfig.h"/>
         <GROUP id="{0AC7E64F-80C6-74C3-823D-493CC3105D80}" name="Selection">
           <FILE id="N9t1dH" name="Selectable.h" compile="0" resource="0" file="Source/Engine/Selection/Selectable.h"/>
           <FILE id="Hwzk6n" name="SelectableObjectContainer.h" compile="0" resource="0"
@@ -172,6 +174,10 @@
                 file="Source/Interface/Dialogs/AutoEditComponent.h"/>
           <FILE id="HO4Dqt" name="AutoEditDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AutoEditDialog.h"/>
+          <FILE id="f9OpEm" name="ExportAudioComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ExportAudioComponent.h"/>
+          <FILE id="oKVp3j" name="ExportAudioDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ExportAudioDialog.h"/>
           <FILE id="sr4hwK" name="NewRegionDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/NewRegionDialog.h"/>
         </GROUP>

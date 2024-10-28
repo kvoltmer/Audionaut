@@ -133,22 +133,20 @@ void AudiumEngine::setBypass(bool bypass)
     linkAudioDevice->setBypass(bypass);
 }
 
-void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback,
-                                double preferedSampleRate,
-                                bool defaultGroupOnly)
+void AudiumEngine::bounceToFile(const audium::ExportAudioConfig config)
 {
-    std::cout << "bounce -> " << f.getFullPathName().toStdString() << std::endl;
+    setBypass(true);
+    
+    std::cout << "bounce -> " << config.fileName.getFullPathName().toStdString() << std::endl;
     
     auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
-    double sampleRate = preferedSampleRate;
+    double sampleRate = config.sampleRate;
         
     playListScheduler->prepareToPlay(sampleRate, numSamples);    
     
     auto numOutputChannels = 2;
-    
-    setBypass(true);
 
-    juce::TemporaryFile tempFile (f);
+    juce::TemporaryFile tempFile (config.fileName);
     std::unique_ptr<OutputStream> outStream (tempFile.getFile().createOutputStream());
 
     if (outStream != nullptr)
@@ -253,19 +251,20 @@ void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> tr
 
 void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
 {
-    double sampleRate = 48000.0;
-    
     // first bounce the mix
-    const auto bounceFile = juce::File::createTempFile(".wav");
-     
-    bounceToFile(bounceFile, nullptr, sampleRate);
-    config.bounceFileName = bounceFile.getFullPathName().toStdString();
+    audium::ExportAudioConfig bounceConfig;
+    bounceConfig.fileName = juce::File::createTempFile(".wav");
+    bounceConfig.sampleRate = 48000.0;
+    bounceToFile(bounceConfig);
+    
+    //
+    config.bounceFileName = bounceConfig.fileName.getFullPathName().toStdString();
   
     std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioTrackContainer,                                                    
                                                     audioResourceContainer));
     if (autoEdit->invokeAutoEdit(config))
     {
-        autoEdit->applyAutoEditResult(sampleRate);
+        autoEdit->applyAutoEditResult(bounceConfig.sampleRate);
     }
 }
 
