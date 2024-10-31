@@ -105,3 +105,9 @@ void LinkAudioDevice::stopPlaying()
 {
     linkEngine->stopPlaying();
 }
+
+void LinkAudioDevice::setBypass(bool isByPass)
+{
+    byPass = isByPass;
+    transportSourceContainer->setBypass(isByPass);
+}

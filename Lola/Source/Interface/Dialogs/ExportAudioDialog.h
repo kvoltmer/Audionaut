@@ -17,6 +17,7 @@
 #include "Interface/Components/MainComponent.h"
 #include "Interface/Dialogs/ExportAudioComponent.h"
 #include "Application/AudiumApplication.h"
+#include "Engine/Export/AudioExportThread.h"
 
 using namespace juce;
 
@@ -46,13 +47,9 @@ private:
         asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Parameters:"),
                                                           "",
                                                           MessageBoxIconType::NoIcon, mainComponent.get());
-
         asyncAlertWindow->addCustomComponent(exportAudioComponent.get());
-        asyncAlertWindow->addButton (TRANS ("Export"),  1, KeyPress (KeyPress::returnKey));
+        asyncAlertWindow->addButton (TRANS ("Export..."),  1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"), 0, KeyPress (KeyPress::escapeKey));
-        
-
-
 
         auto resultCallback = [safeThis = WeakReference<ExportAudioDialog> { this }, this] (int result)
         {
@@ -67,6 +64,7 @@ private:
             if (result == 0)
                 return;
             
+           
             //auto mode = autoEditComponent->getEditMode().toString().getIntValue();
             
             safeThis->config.sampleRate = 96000.0;
@@ -83,7 +81,7 @@ private:
     {
         auto dir = AudiumApplication::getApp().initialSaveDirectory;
         
-        chooser = std::make_unique<FileChooser> ((" Export As Wav File."), dir, "*.wav");
+        chooser = std::make_unique<FileChooser> (("Export As Wav File. Choose a filename..."), dir, "*.wav");
         auto flags = FileBrowserComponent::saveMode
                    | FileBrowserComponent::canSelectFiles
                    | FileBrowserComponent::warnAboutOverwriting;
@@ -94,12 +92,23 @@ private:
             
             if (result != File{})
             {
+                // assign the choosen filename
                 config.fileName = result;
-                audiumEngine->bounceToFile(config);
+                
+                // create the thread
+                auto thread = std::make_unique<AudioExportThread>(*audiumEngine.get(), config);
+                
+                // start the thread
+                if (thread->runThread())
+                {
+                    // thread finished normally..
+                }
+                else
+                {
+                    // user pressed the cancel button..
+                }
             }
         });
-        
-        //audiumEngine->bounceToFile(<#const juce::File &f#>, <#std::function<void (bool)> callback#>, <#double preferedSampleRate#>)
     }
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;
@@ -109,7 +118,11 @@ private:
     std::shared_ptr<MainComponent> mainComponent;
     
     std::unique_ptr<juce::FileChooser> chooser;
+    
+    
+public:
     audium::ExportAudioConfig config;
     
+private:
     JUCE_DECLARE_WEAK_REFERENCEABLE (ExportAudioDialog)
 };

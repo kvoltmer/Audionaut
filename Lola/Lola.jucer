@@ -3,7 +3,8 @@
 <JUCERPROJECT id="gxtGxr" name="Lola" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include"
               bundleIdentifier="com.voltmer-systems.lola" version="0.9.1" companyName="Voltmer Systems"
-              companyWebsite="www.voltmer-systems.com" cppLanguageStandard="20">
+              companyWebsite="www.voltmer-systems.com" cppLanguageStandard="20"
+              defines="JUCE_MODAL_LOOPS_PERMITTED=1">
   <MAINGROUP id="HQG80L" name="Lola">
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
       <FILE id="pY6hrq" name="README.txt" compile="0" resource="0" file="Catch2Tests/README.txt"/>
@@ -35,6 +36,12 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <GROUP id="{6F75617E-7F56-58FA-1D3F-51D388D99F41}" name="Export">
+          <FILE id="JiHzcv" name="AudioExportThread.cpp" compile="1" resource="0"
+                file="Source/Engine/Export/AudioExportThread.cpp"/>
+          <FILE id="duXPV9" name="AudioExportThread.h" compile="0" resource="0"
+                file="Source/Engine/Export/AudioExportThread.h"/>
+        </GROUP>
         <FILE id="WTONDo" name="ExportAudioConfig.h" compile="0" resource="0"
               file="Source/Engine/ExportAudioConfig.h"/>
         <GROUP id="{0AC7E64F-80C6-74C3-823D-493CC3105D80}" name="Selection">

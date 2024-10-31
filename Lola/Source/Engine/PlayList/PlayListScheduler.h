@@ -17,6 +17,7 @@
 #include "Engine/PlayList/PlayListSchedulerData.h"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/ExportAudioConfig.h"
 
 class TransportSourceContainer;
 class PlayListContainer;
@@ -85,7 +86,9 @@ public:
     
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
-    void bounceToFile(juce::AudioFormatWriter* writer, double sampleRate, int numSamples, int numOutputChannels);
+    void bounceToFile(juce::AudioFormatWriter* writer,
+                      audium::ExportAudioConfig &config,
+                      std::function<void ()> callback);
     
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
     

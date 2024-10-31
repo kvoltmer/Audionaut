@@ -55,7 +55,6 @@ public:
     
     void openFile (const juce::File& file, std::function<void (bool,std::string)> callback);
     bool saveFile (const juce::File& file);
-    void bounceToFile(const audium::ExportAudioConfig config);
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
@@ -76,10 +75,13 @@ public:
     std::shared_ptr<PlayListContainer> getPlayListContainer(std::shared_ptr<AudioTrack> track) const;
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const { return undoManager; }
-
+    std::shared_ptr<juce::AudioDeviceManager> getAudioDeviceManager() const { return audioDeviceManager; }
+    
     void invokeAutoEdit(const AutoEditConfig config);
     
     json& getUiState() { return uiState; }
+    
+    void setBypass(bool bypass);
     
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
@@ -89,14 +91,9 @@ private:
     std::shared_ptr<LinkAudioDevice> linkAudioDevice;
     std::shared_ptr<juce::UndoManager> undoManager;
     
-    
     juce::File currentFile;
 
     json uiState;
-    
-
-    
-    void setBypass(bool bypass);
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumEngine)

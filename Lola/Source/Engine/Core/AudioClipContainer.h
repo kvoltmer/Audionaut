@@ -15,7 +15,7 @@
 
 #include "Engine/Core/DspClipData.h"
 
-#define AUDIO_CLIP_ARRAY_SIZE 4096
+#define AUDIO_CLIP_ARRAY_SIZE 512
 
 // std::array, has a static size set at compile time.
 // It does not have internal pointers and can therefore be copied simply by using memcpy.

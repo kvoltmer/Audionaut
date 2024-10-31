@@ -335,7 +335,9 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> tr
     return 0.0;
 }
 
-void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer, double externalSampleRate, int numSamples, int numOutputChannels)
+void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
+                                     audium::ExportAudioConfig &config,
+                                     std::function<void ()> callback)
 {
     // remember last position and reset to 0
     auto lastPosition = getAbsolutePosition(audium::seconds);
@@ -343,24 +345,29 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer, double ext
     startPlaying();
     
     auto seconds = getTotalLength(audium::seconds);
-    auto iterations = static_cast<int>(seconds * externalSampleRate) / numSamples;
+    auto iterations = static_cast<int>(seconds * externalSampleRate) / config.blockSize;
     iterations += 1; // add one iteration to be on the save side
     auto position = 0.0;
-    juce::AudioBuffer<float> buffer(numOutputChannels, numSamples);
-    juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
+    juce::AudioBuffer<float> buffer(config.numChannels, config.blockSize);
+    juce::AudioSourceChannelInfo info (&buffer, 0, config.blockSize);
     
     for (auto i = 0; i < iterations; ++i)
     {
-        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(numSamples) / externalSampleRate);
+        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config.blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
-        tick(true, position, numSamples);
+        tick(true, position, config.blockSize);
         position += beatsThisBuffer;
         
         
         buffer.clear();
         audioCallback(info);
         writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
+        
+        config.progress = i / (double)iterations;
+        
+        if (callback)
+            callback();
     }
     
     setAbsolutePosition(lastPosition, audium::seconds);
