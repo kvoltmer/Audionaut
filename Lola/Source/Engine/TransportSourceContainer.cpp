@@ -131,6 +131,9 @@ int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTran
 
 const float TransportSourceContainer::getOutputLevel(const int trackNumber, const int channelNumber) const
 {
+    if (byPass)
+        return 0.f;
+    
     const ScopedLock sl (callbackLock);
     
     auto level = 0.f;

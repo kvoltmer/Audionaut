@@ -70,6 +70,12 @@ void AudiumLookAndFeel::setupColours()
     // Combo Box
     setColour(ComboBox::backgroundColourId, Colour(Colours::grey).withAlpha(0.5f));
     
+    // AlertWindow
+    setColour(AlertWindow::backgroundColourId, findColour(secondaryBackgroundColourId));
+    
+    // Button
+    setColour(TextButton::buttonColourId, findColour(backgroundColourId));
+
 }
 
 void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
@@ -122,7 +128,7 @@ void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
 juce::Font AudiumLookAndFeel::getComboBoxFont (juce::ComboBox& box)
 {
     const auto fontSize = jmin (12.0f, (float) box.getHeight() * 0.85f);
-    return { fontSize };
+    return FontOptions { fontSize, Font::bold };
 }
 
 void AudiumLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height, bool,
@@ -163,3 +169,9 @@ Label * AudiumLookAndFeel::createComboBoxTextBox (ComboBox & combo)
     label->setInterceptsMouseClicks (false, false);
     return label;
 }
+
+int AudiumLookAndFeel::getAlertWindowButtonHeight()    { return 20; }
+Font AudiumLookAndFeel::getAlertWindowTitleFont()      { return withDefaultMetrics (FontOptions { 14.0f, Font::bold }); }
+Font AudiumLookAndFeel::getAlertWindowMessageFont()    { return withDefaultMetrics (FontOptions { 12.0f }); }
+Font AudiumLookAndFeel::getAlertWindowFont()           { return withDefaultMetrics (FontOptions { 10.0f }); }
+

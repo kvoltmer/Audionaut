@@ -19,8 +19,12 @@ struct ExportAudioConfig {
 
     int bitDepth            = 24;
     double sampleRate       = 44100;
+    int blockSize           = 1024;
     int numChannels         = 2;
     juce::File fileName;
+    
+    double progress = 0.0;
+    std::string progressMessage;
     
 };
 
