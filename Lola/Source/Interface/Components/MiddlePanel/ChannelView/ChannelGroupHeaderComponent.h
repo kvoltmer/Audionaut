@@ -29,7 +29,7 @@ public:
         groupNameLabel.reset (new AudiumLabel ("track name",
                                              TRANS ("n/a")));
         addAndMakeVisible (groupNameLabel.get());
-        groupNameLabel->setFont (juce::Font (12.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+        groupNameLabel->setFont (juce::FontOptions (12.00f));
         groupNameLabel->setJustificationType (juce::Justification::centredLeft);
         groupNameLabel->setEditable (false, true, false);
         
