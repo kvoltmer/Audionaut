@@ -73,6 +73,10 @@ void AudiumLookAndFeel::setupColours()
     // AlertWindow
     setColour(AlertWindow::backgroundColourId, findColour(secondaryBackgroundColourId));
     
+    // ResizableWindow
+    setColour(ResizableWindow::backgroundColourId, findColour(secondaryBackgroundColourId));
+    
+    
     // Button
     setColour(TextButton::buttonColourId, findColour(backgroundColourId));
 

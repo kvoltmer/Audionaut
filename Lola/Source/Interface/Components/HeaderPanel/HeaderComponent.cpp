@@ -47,7 +47,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     tempo__label.reset (new juce::Label ("new label",
                                          TRANS ("120.0")));
     addAndMakeVisible (tempo__label.get());
-    tempo__label->setFont (juce::Font (13.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    tempo__label->setFont (juce::FontOptions (13.00f));
     tempo__label->setJustificationType (juce::Justification::centred);
     tempo__label->setEditable (true, true, false);
     tempo__label->setColour (juce::Label::backgroundColourId, juce::Colours::grey);
@@ -62,7 +62,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     bars__label.reset (new juce::Label ("new label",
                                         TRANS ("0")));
     addAndMakeVisible (bars__label.get());
-    bars__label->setFont (juce::Font (13.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    bars__label->setFont (juce::FontOptions (13.00f));
     bars__label->setJustificationType (juce::Justification::centredRight);
     bars__label->setEditable (true, true, false);
     bars__label->setColour (juce::Label::backgroundColourId, juce::Colours::grey);
@@ -76,7 +76,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     beats__label.reset (new juce::Label ("new label",
                                          TRANS ("0")));
     addAndMakeVisible (beats__label.get());
-    beats__label->setFont (juce::Font (13.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    beats__label->setFont (juce::FontOptions (13.00f));
     beats__label->setJustificationType (juce::Justification::centredRight);
     beats__label->setEditable (true, true, false);
     beats__label->setColour (juce::Label::backgroundColourId, juce::Colours::grey);
@@ -90,7 +90,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     rest__label.reset (new juce::Label ("new label",
                                         TRANS ("0")));
     addAndMakeVisible (rest__label.get());
-    rest__label->setFont (juce::Font (13.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    rest__label->setFont (juce::FontOptions (13.00f));
     rest__label->setJustificationType (juce::Justification::centredRight);
     rest__label->setEditable (true, true, false);
     rest__label->setColour (juce::Label::backgroundColourId, juce::Colours::grey);

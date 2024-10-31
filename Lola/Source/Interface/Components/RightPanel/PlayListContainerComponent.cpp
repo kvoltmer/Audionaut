@@ -69,7 +69,7 @@ void PlayListContainerComponent::createComponents()
     footerLabel.reset(new juce::Label ("new label",
                                        TRANS ("label text")));
     addAndMakeVisible(footerLabel.get());
-    footerLabel->setFont (juce::Font (13.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    footerLabel->setFont (juce::FontOptions { 13.0f });
     footerLabel->setJustificationType (juce::Justification::centredLeft);
     footerLabel->setEditable (false, false, false);
     footerLabel->setColour (juce::Label::backgroundColourId, findColour(audium::backgroundColourId));

@@ -33,9 +33,9 @@ AutoEditComponent::AutoEditComponent ()
     //[/Constructor_pre]
 
     juce__label.reset (new juce::Label ("new label",
-                                        TRANS ("Assemble Duration")));
+                                        TRANS ("Assemble Duration (Seconds)")));
     addAndMakeVisible (juce__label.get());
-    juce__label->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    juce__label->setFont (juce::FontOptions (12.00f));
     juce__label->setJustificationType (juce::Justification::centredLeft);
     juce__label->setEditable (false, false, false);
     juce__label->setColour (juce::TextEditor::textColourId, juce::Colours::black);
@@ -46,7 +46,7 @@ AutoEditComponent::AutoEditComponent ()
     juce__label2.reset (new juce::Label ("new label",
                                          TRANS ("Number of Segments")));
     addAndMakeVisible (juce__label2.get());
-    juce__label2->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    juce__label2->setFont (juce::FontOptions (12.00f));
     juce__label2->setJustificationType (juce::Justification::centredLeft);
     juce__label2->setEditable (false, false, false);
     juce__label2->setColour (juce::TextEditor::textColourId, juce::Colours::black);
@@ -57,7 +57,7 @@ AutoEditComponent::AutoEditComponent ()
     juce__label3.reset (new juce::Label ("new label",
                                          TRANS ("Min. Segment Length")));
     addAndMakeVisible (juce__label3.get());
-    juce__label3->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    juce__label3->setFont (juce::FontOptions (12.00f));
     juce__label3->setJustificationType (juce::Justification::centredLeft);
     juce__label3->setEditable (false, false, false);
     juce__label3->setColour (juce::TextEditor::textColourId, juce::Colours::black);
@@ -68,7 +68,7 @@ AutoEditComponent::AutoEditComponent ()
     juce__label4.reset (new juce::Label ("new label",
                                          TRANS ("Max. Segment Length")));
     addAndMakeVisible (juce__label4.get());
-    juce__label4->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    juce__label4->setFont (juce::FontOptions (12.00f));
     juce__label4->setJustificationType (juce::Justification::centredLeft);
     juce__label4->setEditable (false, false, false);
     juce__label4->setColour (juce::TextEditor::textColourId, juce::Colours::black);
@@ -140,7 +140,7 @@ AutoEditComponent::AutoEditComponent ()
     juce__label5.reset (new juce::Label ("new label",
                                          TRANS ("Assemble Mode")));
     addAndMakeVisible (juce__label5.get());
-    juce__label5->setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    juce__label5->setFont (juce::FontOptions (12.00f));
     juce__label5->setJustificationType (juce::Justification::centredLeft);
     juce__label5->setEditable (false, false, false);
     juce__label5->setColour (juce::TextEditor::textColourId, juce::Colours::black);
@@ -183,22 +183,10 @@ AutoEditComponent::~AutoEditComponent()
 //==============================================================================
 void AutoEditComponent::paint (juce::Graphics& g)
 {
-    //[UserPrePaint] Add your own custom painting code here..
-    //[/UserPrePaint]
-
-    g.fillAll (juce::Colour (0xff323e44));
-
-    //[UserPaint] Add your own custom painting code here..
-    //[/UserPaint]
 }
 
 void AutoEditComponent::resized()
 {
-    //[UserPreResize] Add your own custom resize code here..
-    //[/UserPreResize]
-
-    //[UserResized] Add your own custom resize handling here..
-    //[/UserResized]
 }
 
 void AutoEditComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)

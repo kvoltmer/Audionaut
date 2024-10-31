@@ -37,6 +37,8 @@ public:
     
     juce::Label* createComboBoxTextBox (juce::ComboBox&) override;
     
+    
+    // AlertWindow
     int getAlertWindowButtonHeight() override;
     juce::Font getAlertWindowTitleFont() override;
     juce::Font getAlertWindowMessageFont() override;

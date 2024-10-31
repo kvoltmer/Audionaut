@@ -46,7 +46,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack, std:
     volumeLabeldB.reset (new juce::Label ("new label",
                                           TRANS ("dB")));
     addAndMakeVisible (volumeLabeldB.get());
-    volumeLabeldB->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    volumeLabeldB->setFont (juce::FontOptions (11.00f));
     volumeLabeldB->setJustificationType (juce::Justification::centredLeft);
     volumeLabeldB->setEditable (false, false, false);
     volumeLabeldB->setColour (juce::Label::backgroundColourId, juce::Colour (0x00000000));
@@ -66,7 +66,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack, std:
     volumeLevel.reset (new juce::Label ("new label",
                                         TRANS ("-60")));
     addAndMakeVisible (volumeLevel.get());
-    volumeLevel->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    volumeLevel->setFont (juce::FontOptions (11.00f));
     volumeLevel->setJustificationType (juce::Justification::centredRight);
     volumeLevel->setEditable (true, true, false);
     volumeLevel->setColour (juce::Label::backgroundColourId, juce::Colour (0x00000000));
