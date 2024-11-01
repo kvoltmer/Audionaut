@@ -253,6 +253,7 @@
 		A96B870D734284F177524816 /* audium_ListBox.cpp */ /* audium_ListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_ListBox.cpp; path = ../../Source/Interface/Widgets/audium_ListBox.cpp; sourceTree = SOURCE_ROOT; };
 		A9B61645C4E1D292FC719BF4 /* juce_gui_basics */ /* juce_gui_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_basics; path = ../../../Submodules/juce/modules/juce_gui_basics; sourceTree = SOURCE_ROOT; };
 		ABB4D8B1A90C513BD91D7DB5 /* include_juce_graphics_Harfbuzz.cpp */ /* include_juce_graphics_Harfbuzz.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_graphics_Harfbuzz.cpp; path = ../../JuceLibraryCode/include_juce_graphics_Harfbuzz.cpp; sourceTree = SOURCE_ROOT; };
+		AC2E93E31A964D3A67A696FE /* DefaultLabel.h */ /* DefaultLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DefaultLabel.h; path = ../../Source/Interface/Controls/DefaultLabel.h; sourceTree = SOURCE_ROOT; };
 		AD2284B76A676919EAA61ACB /* ActionMessages.h */ /* ActionMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ActionMessages.h; path = ../../Source/Engine/ActionMessages.h; sourceTree = SOURCE_ROOT; };
 		AEE072B655D55449FF8D5C45 /* SubGroupDraggerControl.h */ /* SubGroupDraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SubGroupDraggerControl.h; path = ../../Source/Interface/Controls/SubGroupDraggerControl.h; sourceTree = SOURCE_ROOT; };
 		B12677F86B19CC723E2BEC17 /* DspClipData.h */ /* DspClipData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DspClipData.h; path = ../../Source/Engine/Core/DspClipData.h; sourceTree = SOURCE_ROOT; };
@@ -691,6 +692,7 @@
 		A60DF503B2F410F6DDB29C77 /* Controls */ = {
 			isa = PBXGroup;
 			children = (
+				AC2E93E31A964D3A67A696FE,
 				A40C7A7DFF271A4D4D530CB3,
 				2133E7BD10D0BFDBA72C207E,
 				4DF301F0CAEBC41ABA382935,

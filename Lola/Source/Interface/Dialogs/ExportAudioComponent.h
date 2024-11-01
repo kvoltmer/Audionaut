@@ -51,11 +51,20 @@ public:
 
     void resized() override
     {
-        // This method is where you should set the bounds of any child
-        // components that your component contains..
+        juce::FlexBox fb;
+        fb.flexDirection = juce::FlexBox::Direction::column;
+        
+        for (auto label : labels)
+        {
+            fb.items.add (juce::FlexItem (*label.get()).withFlex (0, 1, getWidth()));
+        }
 
+        fb.performLayout (getLocalBounds());
     }
 
 private:
+    
+    std::vector<std::shared_ptr<juce::Label>> labels;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ExportAudioComponent)
 };
