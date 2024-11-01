@@ -37,7 +37,7 @@ public:
     {
         setEditable (false, true, true);
         update (columnId, rowNumber, false);
-        setFont(13.0f);
+        setFont (juce::FontOptions (13.00f));
         addListener(this);
     }
 

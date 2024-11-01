@@ -310,6 +310,7 @@
                 resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="huzCxv" name="DefaultLabel.h" compile="0" resource="0" file="Source/Interface/Controls/DefaultLabel.h"/>
           <FILE id="c3NpvE" name="AudiumLabel.h" compile="0" resource="0" file="Source/Interface/Controls/AudiumLabel.h"/>
           <FILE id="pX9JqX" name="DragZoomControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/DragZoomControl.h"/>
