@@ -23,6 +23,7 @@ class AudioRegionAdapter
 public:
     
     AudioRegionAdapter(AudioTrackContainer &owner);
+    ~AudioRegionAdapter() = default;
     
     const std::vector<std::shared_ptr<AudioRegion>> getAudioRegions() const;
     const std::vector<std::shared_ptr<AudioRegion>> getSelectedAudioRegions() const;
@@ -41,4 +42,6 @@ private:
     AudioTrackContainer &owner;
     
     AudioRegionData::tRange selectedPositionClocks;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionAdapter)
 };

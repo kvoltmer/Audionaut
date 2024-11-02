@@ -176,6 +176,7 @@ Label * AudiumLookAndFeel::createComboBoxTextBox (ComboBox & combo)
 
 int AudiumLookAndFeel::getAlertWindowButtonHeight()    { return 20; }
 Font AudiumLookAndFeel::getAlertWindowTitleFont()      { return withDefaultMetrics (FontOptions { 14.0f, Font::bold }); }
-Font AudiumLookAndFeel::getAlertWindowMessageFont()    { return withDefaultMetrics (FontOptions { 12.0f }); }
+Font AudiumLookAndFeel::getAlertWindowMessageFont()    { return withDefaultMetrics (FontOptions { 13.0f }); }
 Font AudiumLookAndFeel::getAlertWindowFont()           { return withDefaultMetrics (FontOptions { 10.0f }); }
 
+const float AudiumLookAndFeel::labelFontSize = 13.f;

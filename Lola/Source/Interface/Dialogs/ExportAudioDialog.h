@@ -25,32 +25,32 @@ class ExportAudioDialog
 {
     
 public:
-    ExportAudioDialog()
+    ExportAudioDialog(std::shared_ptr<AudiumEngine> engine) :
+        audiumEngine(engine)
     {
-        exportAudioComponent.reset(new ExportAudioComponent());
+        exportAudioComponent.reset(new ExportAudioComponent(engine));
     }
     
-    void invoke(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<MainComponent> component)
+    void invoke(std::shared_ptr<MainComponent> component)
     {
-        invokeInternal(engine, component);
+        invokeInternal(component);
     }
     
 private:
     
     static String getClassNameFieldName()  { return "Auto Edit Name"; }
     
-    void invokeInternal(std::shared_ptr<AudiumEngine> engine,
-                                std::shared_ptr<MainComponent> component)
+    void invokeInternal(std::shared_ptr<MainComponent> component)
     {
-        audiumEngine = engine;
         mainComponent = component;
-        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Parameters:"),
+        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Export Audio"),
                                                           "",
                                                           MessageBoxIconType::NoIcon, mainComponent.get());
         asyncAlertWindow->addCustomComponent(exportAudioComponent.get());
         asyncAlertWindow->addButton (TRANS ("Export..."),  1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"), 0, KeyPress (KeyPress::escapeKey));
-
+        exportAudioComponent->update();
+        
         auto resultCallback = [safeThis = WeakReference<ExportAudioDialog> { this }, this] (int result)
         {
             if (safeThis == nullptr)
@@ -64,17 +64,22 @@ private:
             if (result == 0)
                 return;
             
-           
-            //auto mode = autoEditComponent->getEditMode().toString().getIntValue();
+            // get the sample rate
+            auto sr = exportAudioComponent->getSampleRate().toString().getIntValue();
+            safeThis->config.sampleRate = (double) sr;
             
-            safeThis->config.sampleRate = 96000.0;
+            // get the number of output channels
+            auto chans = exportAudioComponent->getOutputChannels().toString().getIntValue();
+            if (chans == 3)
+                chans = audiumEngine->getAudioTrackContainer()->getNumChannels();
+            safeThis->config.numChannels = chans;
+            
+            
+            
             safeThis->exportAudio();
         };
 
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);
-        auto editor = asyncAlertWindow->getTextEditor(getClassNameFieldName());
-        if (editor != nullptr)
-            editor->toFront(true);
     }
     
     void exportAudio()

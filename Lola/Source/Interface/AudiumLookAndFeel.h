@@ -47,7 +47,10 @@ public:
     static const int channelsWidth = 85;
     static const int dragZoomControlHeight = 25;
     static const int transportPositionControlHeight = 25;
+    static const float labelFontSize;
     
 private:
     void setupColours();
 };
+
+

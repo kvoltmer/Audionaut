@@ -9,7 +9,7 @@
 */
 
 #pragma once
-
+#include <memory>
 #include <JuceHeader.h>
 
 #include "AudiumMainWindow.h"
@@ -17,7 +17,10 @@
 #include "Application/AudiumCommandIDs.h"
 #include "Interface/AudiumLookAndFeel.h"
 
+class SettingsDialog;
+class AboutDialog;
 class AudiumFactory;
+
 
 //==============================================================================
 class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
@@ -77,11 +80,15 @@ private:
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
+    std::unique_ptr<juce::Component> aboutWindow;
+    std::shared_ptr<SettingsDialog> settingsDialog;
+    std::shared_ptr<AboutDialog> aboutDialog;
     
     void initCommandManager();
     void handleAsyncUpdate() override;
     
-
+    void showAboutWindow();
+    void showSettingsDialog();
     
     //==============================================================================
    #if JUCE_MAC
