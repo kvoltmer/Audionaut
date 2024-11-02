@@ -242,3 +242,12 @@ void AudioTrackContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
         }
     }
 }
+
+int AudioTrackContainer::getNumChannels() const
+{
+    int channels = 0;
+    for (auto track : audioTracks) {
+        channels += track->getNumChannels();
+    }
+    return channels;
+}

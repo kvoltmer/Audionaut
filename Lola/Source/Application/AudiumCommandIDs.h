@@ -19,7 +19,7 @@ namespace CommandIDs
         enableNewVersionCheck   = 0x300026,
         
     
-        showProjectSettings     = 0x300030,
+        showSettingsWindow      = 0x300030,
 
         closeWindow             = 0x300040,
 

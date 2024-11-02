@@ -126,6 +126,7 @@
 		20C02FEAB38C7AE1951EA655 /* juce_gui_extra */ /* juce_gui_extra */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_extra; path = ../../../Submodules/juce/modules/juce_gui_extra; sourceTree = SOURCE_ROOT; };
 		2133E7BD10D0BFDBA72C207E /* DragZoomControl.h */ /* DragZoomControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DragZoomControl.h; path = ../../Source/Interface/Controls/DragZoomControl.h; sourceTree = SOURCE_ROOT; };
 		21E8218C5578FAF32AEE977E /* LevelMeter.h */ /* LevelMeter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LevelMeter.h; path = ../../Source/Interface/Controls/LevelMeter.h; sourceTree = SOURCE_ROOT; };
+		2237408C511E2EAA07849583 /* AboutDialog.h */ /* AboutDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AboutDialog.h; path = ../../Source/Interface/Dialogs/AboutDialog.h; sourceTree = SOURCE_ROOT; };
 		22AD7FAA33DF69C2DCCA4667 /* DiscRecording.framework */ /* DiscRecording.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiscRecording.framework; path = System/Library/Frameworks/DiscRecording.framework; sourceTree = SDKROOT; };
 		23BCBB355881E118F4E39507 /* SnapToGridHandler.cpp */ /* SnapToGridHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SnapToGridHandler.cpp; path = ../../Source/Interface/Handlers/SnapToGridHandler.cpp; sourceTree = SOURCE_ROOT; };
 		24F5063E15B125FCE205B79F /* RegionTableListBoxModel.h */ /* RegionTableListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionTableListBoxModel.h; path = ../../Source/Interface/Models/RegionTableListBoxModel.h; sourceTree = SOURCE_ROOT; };
@@ -148,6 +149,7 @@
 		3C22B432B568A08F505A5486 /* DspClip.h */ /* DspClip.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DspClip.h; path = ../../Source/Engine/Core/DspClip.h; sourceTree = SOURCE_ROOT; };
 		3EAF65124DEAE2090689ABBB /* RegionComponent.h */ /* RegionComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionComponent.h; path = ../../Source/Interface/Components/RightPanel/RegionComponent.h; sourceTree = SOURCE_ROOT; };
 		3F436BA69588E2039CDFB0F5 /* CoreMIDI.framework */ /* CoreMIDI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMIDI.framework; path = System/Library/Frameworks/CoreMIDI.framework; sourceTree = SDKROOT; };
+		401ADB784677352C68E0DA29 /* AboutWindowComponent.h */ /* AboutWindowComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AboutWindowComponent.h; path = ../../Source/Interface/Dialogs/AboutWindowComponent.h; sourceTree = SOURCE_ROOT; };
 		40C4B2AFB6AEC8724EBF0CC7 /* SubGroupListBoxModel.h */ /* SubGroupListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SubGroupListBoxModel.h; path = ../../Source/Interface/Models/SubGroupListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		41C5D3B1E81DCFA1BE08D14C /* LevelMeter.cpp */ /* LevelMeter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LevelMeter.cpp; path = ../../Source/Interface/Controls/LevelMeter.cpp; sourceTree = SOURCE_ROOT; };
 		4347FD8278FC68736C4AECD2 /* ChannelsHeaderComponent.h */ /* ChannelsHeaderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelsHeaderComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelsHeaderComponent.h; sourceTree = SOURCE_ROOT; };
@@ -286,6 +288,7 @@
 		D086E09B1C51205513609A0B /* RegionEditControl.cpp */ /* RegionEditControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionEditControl.cpp; path = ../../Source/Interface/Controls/RegionEditControl.cpp; sourceTree = SOURCE_ROOT; };
 		D0FD3C88C9809AA0C63BB2DB /* LinkEngine.hpp */ /* LinkEngine.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LinkEngine.hpp; path = ../../Source/Engine/Link/LinkEngine.hpp; sourceTree = SOURCE_ROOT; };
 		D1A83A17077D93FB902AE177 /* TimeContext.h */ /* TimeContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TimeContext.h; path = ../../Source/Engine/TimeContext.h; sourceTree = SOURCE_ROOT; };
+		D86D2ABE8CAA425BC9C41A6A /* SettingsDialog.h */ /* SettingsDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SettingsDialog.h; path = ../../Source/Interface/Dialogs/SettingsDialog.h; sourceTree = SOURCE_ROOT; };
 		D8950D3AC385340A9172F172 /* UndoableContainerAction.h */ /* UndoableContainerAction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UndoableContainerAction.h; path = ../../Source/Engine/Undo/UndoableContainerAction.h; sourceTree = SOURCE_ROOT; };
 		D983C7A6E23DC948014EE2B0 /* ColourIds.h */ /* ColourIds.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ColourIds.h; path = ../../Source/Interface/ColourIds.h; sourceTree = SOURCE_ROOT; };
 		D9CD4CFFE043714175B25D56 /* Selectable.h */ /* Selectable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Selectable.h; path = ../../Source/Engine/Selection/Selectable.h; sourceTree = SOURCE_ROOT; };
@@ -671,12 +674,15 @@
 		9BE2411EEC9E2E92208463DB /* Dialogs */ = {
 			isa = PBXGroup;
 			children = (
+				2237408C511E2EAA07849583,
+				401ADB784677352C68E0DA29,
+				CD915B059555AF45DF4EB0A9,
 				E7074F66C3DD69F43FBB467D,
 				4F52032EA1179E2EDC03E78A,
-				CD915B059555AF45DF4EB0A9,
-				53F6687D1EC597959EF528D2,
 				BF81D9B3912654FFE80A4E81,
+				53F6687D1EC597959EF528D2,
 				F62ECD7362B186DC805B431E,
+				D86D2ABE8CAA425BC9C41A6A,
 			);
 			name = Dialogs;
 			sourceTree = "<group>";

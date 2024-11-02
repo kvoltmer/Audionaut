@@ -11,10 +11,8 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Interface/AudiumLookAndFeel.h"
 
-//==============================================================================
-/*
-*/
 class DefaultLabel  : public juce::Label
 {
 public:
@@ -22,7 +20,7 @@ public:
                  const juce::String& labelText = juce::String()) :
         juce::Label(componentName, labelText)
     {
-        setFont (juce::FontOptions (13.00f));
+        setFont (juce::FontOptions (AudiumLookAndFeel::labelFontSize));
         setJustificationType (juce::Justification::left);
         setEditable (true, true, false);
         

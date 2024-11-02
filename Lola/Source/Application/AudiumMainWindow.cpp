@@ -247,8 +247,8 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
-                exportAudioDialog = std::make_unique<ExportAudioDialog>();
-            exportAudioDialog->invoke(getEngine(), mainComponent);
+                exportAudioDialog = std::make_unique<ExportAudioDialog>(getEngine());
+            exportAudioDialog->invoke(mainComponent);
             break;
         case CommandIDs::toggleFullScreen:
             setFullScreen (!isFullScreen());

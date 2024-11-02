@@ -17,6 +17,8 @@
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
 #include "AudiumMainWindow.h"
+#include "Interface/Dialogs/SettingsDialog.h"
+#include "Interface/Dialogs/AboutDialog.h"
 
 //==============================================================================
 AudiumApplication& AudiumApplication::getApp()
@@ -78,10 +80,10 @@ void AudiumApplication::handleAsyncUpdate()
 {
     menuModel.reset (new AudiumMenuModel());
     
-   #if JUCE_MAC
+#if JUCE_MAC
     rebuildAppleMenu();
     appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
-   #endif
+#endif
     
 }
 
@@ -235,7 +237,8 @@ PopupMenu AudiumApplication::createFileMenu()
     menu.addSeparator();
 
    #if ! JUCE_MAC
-//    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showSettingsWindow);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::enableNewVersionCheck);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::showGlobalPathsWindow);
@@ -287,6 +290,8 @@ PopupMenu AudiumApplication::createExtraAppleMenuItems()
 {
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::showSettingsWindow);
     return menu;
 }
 
@@ -310,6 +315,8 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::defaultProject,
                                 CommandIDs::saveProject,
                                 CommandIDs::saveProjectAs,
+        CommandIDs::showAboutWindow,
+        CommandIDs::showSettingsWindow,
                                 //CommandIDs::bounceProject,
             
     };
@@ -347,7 +354,11 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::showAboutWindow:
         result.setInfo ("About", "Shows the 'About' page.", CommandCategories::general, 0);
         break;
-
+    case CommandIDs::showSettingsWindow:
+        result.setInfo ("Settings...", "Shows the 'Settings' dialog.", CommandCategories::general, 0);
+        result.defaultKeypresses.add (KeyPress (',', ModifierKeys::commandModifier, 0));
+        break;
+            
     case CommandIDs::checkForNewVersion:
         result.setInfo ("Check for New Version...", "Checks the web server for a new version", CommandCategories::general, 0);
         break;
@@ -392,8 +403,10 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             saveProjectAs(nullptr);
             break;
         case CommandIDs::showAboutWindow:
-            notImplemented();
-            //showAboutWindow();
+            showAboutWindow();
+            break;
+        case CommandIDs::showSettingsWindow:
+            showSettingsDialog();
             break;
 
         default:
@@ -511,4 +524,18 @@ void AudiumApplication::updateUI()
         comp->rebuildUI();
         comp->updateUI();
     }
+}
+
+void AudiumApplication::showAboutWindow()
+{    
+    if (aboutDialog == nullptr)
+        aboutDialog = std::make_shared<AboutDialog>();
+    aboutDialog->invoke(mainWindow->getContentComponent());
+}
+
+void AudiumApplication::showSettingsDialog()
+{
+    if (settingsDialog == nullptr)
+        settingsDialog = std::make_shared<SettingsDialog>(audiumEngine);
+    settingsDialog->invoke(mainWindow->getContentComponent());
 }

@@ -1,11 +1,10 @@
 
+#include "HeaderComponent.h"
+
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkEngine.hpp"
-
-
-#include "HeaderComponent.h"
 #include "Interface/Controls/DefaultLabel.h"
-
+#include "Interface/ColourIds.h"
 
 //==============================================================================
 HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListScheduler) :
@@ -69,6 +68,7 @@ HeaderComponent::~HeaderComponent()
 
 void HeaderComponent::paint (juce::Graphics& g)
 {
+    g.fillAll (findColour (audium::secondaryBackgroundColourId));
 }
 
 void HeaderComponent::resized()

@@ -345,9 +345,11 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
     startPlaying();
     
     auto seconds = getTotalLength(audium::seconds);
+    jassert(config.sampleRate == externalSampleRate);
     auto iterations = static_cast<int>(seconds * externalSampleRate) / config.blockSize;
     iterations += 1; // add one iteration to be on the save side
     auto position = 0.0;
+    
     juce::AudioBuffer<float> buffer(config.numChannels, config.blockSize);
     juce::AudioSourceChannelInfo info (&buffer, 0, config.blockSize);
     
