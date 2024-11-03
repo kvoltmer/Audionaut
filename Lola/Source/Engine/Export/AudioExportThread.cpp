@@ -18,7 +18,7 @@ void AudioExportThread::bounceToFile(audium::ExportAudioConfig &config)
     audiumEngine.setBypass(true);
     audiumEngine.getPlayListScheduler()->prepareToPlay(config.sampleRate, config.blockSize);
         
-    juce::TemporaryFile tempFile (config.fileName);
+    TemporaryFile tempFile (config.fileName);
     std::unique_ptr<OutputStream> outStream (tempFile.getFile().createOutputStream());
 
     if (outStream != nullptr)

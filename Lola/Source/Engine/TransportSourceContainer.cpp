@@ -57,7 +57,7 @@ void TransportSourceContainer::startPlaying()
     playing = true;
     for (auto & transportSource : audioTransportSources)
     {
-        transportSource->start();
+        transportSource->getAudioTransportSource()->start();
     }
 }
 
@@ -69,7 +69,7 @@ void TransportSourceContainer::stopPlaying()
     {
 
         // workaround: set the position to the very end
-        if (transportSource->isPlaying())
+        if (transportSource->getAudioTransportSource()->isPlaying())
         {
             transportSource->stopIt();
         }
@@ -92,7 +92,9 @@ void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo&
         juce::AudioBuffer<float> tempBuffer(channels, info.numSamples);
         juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, info.startSample, info.numSamples);
         if (transportSource != nullptr)
+        {
             transportSource->getNextAudioBlock(tempBufferInfo);
+        }
         
         for (auto c = 0; c < channels; c++)
         {

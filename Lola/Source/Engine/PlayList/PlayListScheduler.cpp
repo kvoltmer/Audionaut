@@ -26,6 +26,7 @@
 
 using namespace::std::chrono;
 
+using namespace::juce;
 
 void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
 {
@@ -78,7 +79,7 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
             if (transportSource == nullptr)
                 continue;
             
-            if (not transportSource->isPlaying() ||
+            if (not transportSource->getAudioTransportSource()->isPlaying() ||
                 newDataCommited.load())
             {
                 auto absolute = dspClip.getAbsolutePosition(audium::seconds);
@@ -102,7 +103,7 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
                 
                 transportSource->schedulePosition(position, startSamples);
                 transportSource->scheduleDuration(duration + (startSamples / externalSampleRate), externalSampleRate);
-                transportSource->setGain(dspClip.dspClipData.gain);
+                transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.gain);
                 
                 //std::cout << "id: " << dspClip.dspClipData.transportSourceIndex << " ";
                 std::cout << "transport: " << transportPosition << " ";

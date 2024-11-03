@@ -47,42 +47,23 @@ std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSo
 {
     auto audioFormatReaderSource = AudioResourceFactory::createAudioFormatReaderSource(audioResource->getUrl(), *formatManager.get());
                                                                    
-    auto transportSource = audioResource->createNewTransportSource(&thread, audioFormatReaderSource);
-    
-    
-    // obsolete?
-    double sampleRate = 44100.0;
-    int numSamples = 512;
-    if (audioDeviceManager->getCurrentAudioDevice() != nullptr)
-    {
-        sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
-        numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
-    }
-    
-    transportSource->prepareToPlay(numSamples, sampleRate);
-    
-    
+    auto transportSource = audioResource->createNewTransportSource(audioFormatReaderSource);
+
     return transportSource;
 }
 
 void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> resource)
 {
-    for (auto it = audioResources.begin(); it != audioResources.end();)
-    {
-        if ((*it).second == resource)
-        {
-            auto track = (*it).first;
-            auto resource = (*it).second;
+    for (auto it = audioResources.begin(); it != audioResources.end();) {
+        if ((*it).second == resource) {
             audioResources.erase(it);
             break;
         }
         ++it;
     }
-    
-    //sendActionMessage(audioResourceRemovedAction);
 }
 
-void AudioResourceContainer::removeAudioResourcesForGroup (AudioTrack *track)
+void AudioResourceContainer::removeAudioResourcesForTrack (AudioTrack *track)
 {
     jassert(track != nullptr);
     if (track != nullptr)

@@ -48,7 +48,7 @@ public:
     
     
     void removeAudioResource(std::shared_ptr<AudioResource> resource);
-    void removeAudioResourcesForGroup (AudioTrack *track);
+    void removeAudioResourcesForTrack (AudioTrack *track);
     
     // still used by auto edit
     int getNumAudioResources() const;
@@ -70,10 +70,13 @@ public:
     std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
     std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
+    std::shared_ptr<juce::AudioDeviceManager> getAudioDeviceManager() const { return audioDeviceManager; }
     
     typedef std::pair<std::shared_ptr<AudioTrack>, std::shared_ptr<AudioResource>> tAudioTrackPair;
     
     void deselectAllResources();
+    
+    juce::TimeSliceThread *getReadAheadThread() { return &thread; }
         
 private:
     /// list of pairs. this enables sorting etc.. by AudioTrack
@@ -85,8 +88,8 @@ private:
     std::shared_ptr<TempoProvider> tempoProvider;
     
     
-    /// TODO: find a proper home for this
-    juce::TimeSliceThread thread  { "audio file read ahead" };
+    
+    juce::TimeSliceThread thread  { "read ahead thread" };
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceContainer)

@@ -20,7 +20,7 @@
 class AudioTrack;
 class AudioResource;
 
-class AudiumTransportSource : public audium::AudioTransportSource
+class AudiumTransportSource : public juce::AudioSource
 {
 public:
     AudiumTransportSource(AudioResource& audioResource,
@@ -28,20 +28,62 @@ public:
         audioResource(audioResource),
         audioFormatReaderSource(audioFormatReaderSource)
     {
+        //channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(this, false);
+        
+        audioTransportSource = std::make_shared<audium::AudioTransportSource>();
+  
+        // source
+        auto readAheadBufferSize = 48000;
+        auto readAheadThread = audioResource.getContainer().getReadAheadThread();
+        auto memReader = dynamic_cast<MemoryMappedAudioFormatReader*>(audioFormatReaderSource->getAudioFormatReader());
+        if (memReader)
+        {
+            readAheadBufferSize = 0;
+            readAheadThread = nullptr;
+        }
+
+        audioTransportSource->setSource (audioFormatReaderSource.get(),
+                                         readAheadBufferSize,
+                                         readAheadThread,
+                                         audioFormatReaderSource->getAudioFormatReader()->sampleRate);
+        
     }
     
     ~AudiumTransportSource()
     {
-        setSource(nullptr);
+        //setSource(nullptr);
+        audioTransportSource->setSource(nullptr);
     }
+
+    void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override
+    {
+        
+        audioTransportSource->prepareToPlay(samplesPerBlockExpected, sampleRate);
+        
+//        // TODO: set the number of channels
+//        channelRemapping->setNumberOfChannelsToProduce(8);
+//
+//        channelRemapping->prepareToPlay(samplesPerBlockExpected, sampleRate);
+//
+//        channelRemapping->setOutputChannelMapping(0, 0);
+//        channelRemapping->setOutputChannelMapping(1, 1);
+        
+        
+    }
+    
+    void releaseResources() override
+    {
+        audioTransportSource->releaseResources();
+    }
+
     
     void schedulePosition (double newPosition, int startSample)
     {
         if (startSample == 0)
         {
-            setPosition(newPosition);
-            if (!isPlaying())
-                start();
+            audioTransportSource->setPosition(newPosition);
+            if (!audioTransportSource->isPlaying())
+                audioTransportSource->start();
         }
         else
         {
@@ -57,20 +99,20 @@ public:
     
     void stopIt()
     {
-        stop();
+        audioTransportSource->stop();
     }
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
     {
-        if (getBufferingSource() != nullptr &&
-            getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false)
+        if (audioTransportSource->getBufferingSource() != nullptr &&
+            audioTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false)
         {
             std::cout << "waitForNextAudioBlockReady" << std::endl;
         }
         
         if (scheduledSample == 0)
         {
-            tBase::getNextAudioBlock(info);
+            audioTransportSource->getNextAudioBlock(info);
             
             auto offset = 0;
             if (durationTimer.process(info.numSamples, offset))
@@ -85,18 +127,18 @@ public:
             
             // process 1st part
             juce::AudioSourceChannelInfo infoPart1 (info.buffer, 0, startSample);
-            tBase::getNextAudioBlock(infoPart1);
+            audioTransportSource->getNextAudioBlock(infoPart1);
             
-            setPosition(scheduledPosition.load());
+            audioTransportSource->setPosition(scheduledPosition.load());
             //std::cout << "scheduledPosition " << scheduledPosition.load() << std::endl;
          
             // workaround. TODO: re-implement juce transportsource
-            if (not isPlaying())
-                start();
+            if (not audioTransportSource->isPlaying())
+                audioTransportSource->start();
             
             // process 2nd part
             juce::AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
-            tBase::getNextAudioBlock(infoPart2);
+            audioTransportSource->getNextAudioBlock(infoPart2);
         }
         
         // We need the number of channels of the actual file.
@@ -121,9 +163,13 @@ public:
         return audioResource;
     }
     
+    //juce::ChannelRemappingAudioSource* getChannelRemapping() const { return channelRemapping.get(); }
+    
+    std::shared_ptr<audium::AudioTransportSource> getAudioTransportSource() const { return audioTransportSource; }
+    
 private:
     
-    typedef audium::AudioTransportSource tBase;
+    //typedef audium::AudioTransportSource tBase;
     
     AudioResource& audioResource;
     
@@ -137,5 +183,9 @@ private:
     SampleTimer durationTimer;
     
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
+    
+    std::shared_ptr<audium::AudioTransportSource> audioTransportSource;
+    
+    std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping;
     
 };

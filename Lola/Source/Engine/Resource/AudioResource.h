@@ -39,8 +39,7 @@ public:
     
     virtual ~AudioResource();
 
-    std::shared_ptr<AudiumTransportSource> createNewTransportSource(juce::TimeSliceThread* readAheadThread,
-                                                                    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
+    std::shared_ptr<AudiumTransportSource> createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
 
     const juce::String getFileNameWithoutExtension() const;
     

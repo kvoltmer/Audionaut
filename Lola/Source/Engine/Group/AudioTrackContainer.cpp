@@ -82,7 +82,7 @@ bool AudioTrackContainer::deleteAudioTrack(AudioTrack* track)
     
     if (it != audioTracks.end()) {
         track->getAudioRegionContainer()->cleanup();
-        track->getAudioResourceContainer().removeAudioResourcesForGroup(track);
+        track->getAudioResourceContainer().removeAudioResourcesForTrack(track);
         audioTracks.erase(it);
         return true;
     }

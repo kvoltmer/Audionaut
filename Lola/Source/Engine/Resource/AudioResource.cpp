@@ -44,26 +44,21 @@ AudioResource::~AudioResource()
     audioChannels.clear();
 }
 
-std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(juce::TimeSliceThread* readAheadThread,
-                                                                               std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
+std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
-    auto readAheadBufferSize = 48000;
-    
-    
-    auto memReader = dynamic_cast<MemoryMappedAudioFormatReader*>(audioFormatReaderSource->getAudioFormatReader());
-    if (memReader)
-    {
-        readAheadBufferSize = 0;
-        readAheadThread = nullptr;
-    }
-            
-    
     auto transportSource = audioTrack->getTransportSourceContainer()->createAndAddTransportSource(*this, audioFormatReaderSource);
-    transportSource->setSource (audioFormatReaderSource.get(),
-                                readAheadBufferSize,
-                                readAheadThread,
-                                audioFormatReaderSource->getAudioFormatReader()->sampleRate);
- 
+    
+    auto sampleRate = 44100.0;
+    auto numSamples = 512;
+    auto device = owner.getAudioDeviceManager()->getCurrentAudioDevice();
+    if (device != nullptr)
+    {
+        sampleRate = device->getCurrentSampleRate();
+        numSamples = device->getCurrentBufferSizeSamples();
+    }
+    
+    transportSource->prepareToPlay(numSamples, sampleRate);
+    
     return transportSource;
 }
 
