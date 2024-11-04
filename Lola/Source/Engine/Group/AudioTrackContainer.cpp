@@ -15,7 +15,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
@@ -56,6 +56,18 @@ int AudioTrackContainer::getAudioTrackId(std::shared_ptr<const AudioTrack> searc
         return static_cast<int>(std::distance(audioTracks.begin(), it));
     
     return -1; // not found
+}
+
+int AudioTrackContainer::getChannelOffset(std::shared_ptr<const AudioTrack> searchTrack) const
+{
+    int numChannels = 0;
+    for (auto track : audioTracks) {
+        if (track == searchTrack)
+            return numChannels;
+        
+        numChannels += track->getNumChannels();
+    }
+    return numChannels;
 }
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::createNewAudioTrack(const juce::String nameString)

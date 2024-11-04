@@ -12,7 +12,7 @@
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Group/AudioTrackContainer.h"

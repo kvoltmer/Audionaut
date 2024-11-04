@@ -13,7 +13,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Provider/TempoProvider.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 
 LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
                                  std::shared_ptr<PlayListScheduler> playListScheduler,
