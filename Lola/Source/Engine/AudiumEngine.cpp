@@ -17,7 +17,7 @@
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/AudiumTransportSource.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Export/AudioExportThread.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";

@@ -16,10 +16,10 @@
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Channel/AudioChannel.h"
-#include "Engine/AudiumTransportSource.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 AudioTrack::~AudioTrack()
@@ -66,6 +66,11 @@ void AudioTrack::setColour(juce::Colour colour)
 const int AudioTrack::getId() const
 {
     return owner.getAudioTrackId(std::dynamic_pointer_cast<const AudioTrack>(getSharedPtr()));
+}
+
+const int AudioTrack::getChannelOffset() const
+{
+    return owner.getChannelOffset(std::dynamic_pointer_cast<const AudioTrack>(getSharedPtr()));
 }
 
 bool AudioTrack::writeToJson (json& output)

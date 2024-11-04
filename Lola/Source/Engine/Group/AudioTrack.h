@@ -75,6 +75,9 @@ public:
     // returns the index within the container's array
     const int getId() const;
     
+    // returns the audio track's channel offset
+    const int getChannelOffset() const;
+    
     // pointer and references to other classes:
     AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
     AudioTrackContainer &getAudioTrackContainer() const { return owner; }

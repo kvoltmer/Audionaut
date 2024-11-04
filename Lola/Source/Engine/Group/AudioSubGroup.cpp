@@ -14,7 +14,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioClip.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 
 AudioSubGroup::AudioSubGroup(AudioTrack& audioTrack,
                              std::shared_ptr<audium::SelectionManager> selectionManager) :

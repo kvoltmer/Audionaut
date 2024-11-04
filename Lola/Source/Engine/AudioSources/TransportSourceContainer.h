@@ -41,6 +41,8 @@ public:
     int getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const;
     
     const float getOutputLevel(const int trackNumber, const int channelNumber) const;
+     
+    void applyChannelMapping();
     
 private:
     std::atomic<bool> playing = false;

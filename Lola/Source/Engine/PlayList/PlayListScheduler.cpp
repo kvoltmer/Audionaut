@@ -9,7 +9,7 @@
 */
 
 #include "PlayListScheduler.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/ActionMessages.h"
@@ -18,7 +18,7 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResource.h"
-#include "Engine/AudiumTransportSource.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Core/AudioClipContainer.h"
@@ -123,7 +123,24 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
 
 void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
 {
-    transportSourceContainer->audioCallback(info);
+    auto totalChannels = audioTrackContainer->getNumChannels();
+    juce::AudioBuffer<float> tempBuffer(totalChannels, info.numSamples);
+    tempBuffer.clear();
+    juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, info.startSample, info.numSamples);
+    
+    // render the entire bus (all channels)
+    transportSourceContainer->audioCallback(tempBufferInfo);
+    
+    // mix down bus to out channels
+    for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
+        for (auto i = 0; i < totalChannels; i++) {
+            info.buffer->addFrom(c,
+                                 info.startSample,
+                                 tempBuffer.getReadPointer(i),
+                                 info.numSamples);
+        }
+    }
+    
 }
 
 double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const
@@ -343,6 +360,7 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
     // remember last position and reset to 0
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsolutePosition(0.0, audium::seconds);
+    transportSourceContainer->applyChannelMapping();
     startPlaying();
     
     auto seconds = getTotalLength(audium::seconds);

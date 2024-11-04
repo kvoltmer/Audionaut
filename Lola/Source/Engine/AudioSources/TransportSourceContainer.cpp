@@ -11,6 +11,8 @@
 #include "TransportSourceContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "AudiumTransportSource.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(AudioResource& audioResource,
                                                                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
@@ -152,4 +154,12 @@ const float TransportSourceContainer::getOutputLevel(const int trackNumber, cons
     }
     
     return level;
+}
+
+void TransportSourceContainer::applyChannelMapping()
+{
+    for (auto transportSource : audioTransportSources)
+    {
+        transportSource->applyChannelMapping();
+    }
 }

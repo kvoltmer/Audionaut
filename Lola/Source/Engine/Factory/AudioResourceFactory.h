@@ -15,8 +15,8 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/TransportSourceContainer.h"
-#include "Engine/AudiumTransportSource.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
 
 class AudioResourceFactory {
     
