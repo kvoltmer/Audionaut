@@ -200,7 +200,7 @@ std::vector<std::shared_ptr<AudioRegion>> AudioSubGroup::getAudioRegions() const
 
 int AudioSubGroup::getNumChannels() const
 {
-    return audioTrack.getNumChannels();
+    return audioTrack.getNumAudioTrackChannels();
 }
 
 std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const

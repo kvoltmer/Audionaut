@@ -123,7 +123,7 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
 
 void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
 {
-    auto totalChannels = audioTrackContainer->getNumChannels();
+    auto totalChannels = audioTrackContainer->getNumAudioTrackChannels();
     juce::AudioBuffer<float> tempBuffer(totalChannels, info.numSamples);
     tempBuffer.clear();
     juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, info.startSample, info.numSamples);
@@ -360,7 +360,7 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
     // remember last position and reset to 0
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsolutePosition(0.0, audium::seconds);
-    transportSourceContainer->applyChannelMapping();
+
     startPlaying();
     
     auto seconds = getTotalLength(audium::seconds);
@@ -436,4 +436,7 @@ void PlayListScheduler::commitPlayListData()
         }
     }
 #endif
+    
+    // update channel mapping
+    transportSourceContainer->applyChannelMapping();
 }

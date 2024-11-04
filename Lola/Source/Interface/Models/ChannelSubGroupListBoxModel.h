@@ -36,7 +36,7 @@ public:
     
     int getNumRows() override
     {
-        return audioTrack->getNumChannels();
+        return audioTrack->getNumAudioTrackChannels();
     }
 
     void paintListBoxItem ( int rowNumber,

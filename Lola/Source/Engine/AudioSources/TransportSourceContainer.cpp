@@ -12,7 +12,6 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "AudiumTransportSource.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioTrackContainer.h"
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(AudioResource& audioResource,
                                                                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
@@ -50,6 +49,8 @@ void TransportSourceContainer::prepareToPlay (double sampleRate, int blockSize)
     {
         transportSource->prepareToPlay(blockSize, sampleRate);
     }
+    
+    applyChannelMapping();
 }
 
 void TransportSourceContainer::startPlaying()
@@ -87,21 +88,22 @@ bool TransportSourceContainer::isPlaying() const
 void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo& info)
 {
     const ScopedLock sl (callbackLock);
-    
-    for (auto transportSource : audioTransportSources)
-    {
-        const auto channels = info.buffer->getNumChannels();
-        juce::AudioBuffer<float> tempBuffer(channels, info.numSamples);
-        juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, info.startSample, info.numSamples);
-        if (transportSource != nullptr)
-        {
-            transportSource->getNextAudioBlock(tempBufferInfo);
-        }
         
-        for (auto c = 0; c < channels; c++)
-        {
-            info.buffer->addFrom(c, info.startSample, tempBuffer.getReadPointer(c), info.numSamples);
-        }
+    // avoid reallocating
+    audioBusBuffer.setSize(info.buffer->getNumChannels(), info.numSamples, false, false, true);
+    juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
+    
+    for (auto transportSource : audioTransportSources) {
+        if (transportSource != nullptr)
+            transportSource->getNextAudioBlock(audioBusInfo);
+        
+        for (auto c = 0; c < info.buffer->getNumChannels(); c++)
+            info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
+    }
+    
+    for (auto i = 0; i < std::min(info.buffer->getNumChannels(), MAX_AUDIO_CHANNELS); i++)
+    {
+        outputLevel[i] = info.buffer->getMagnitude(i, info.startSample, info.numSamples);
     }
 }
 
@@ -133,27 +135,15 @@ int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTran
     return count;
 }
 
-const float TransportSourceContainer::getOutputLevel(const int trackNumber, const int channelNumber) const
+const float TransportSourceContainer::getOutputLevel(const int channelNumber) const
 {
     if (byPass)
         return 0.f;
+        
+    if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
+        return outputLevel[channelNumber];
     
-    const ScopedLock sl (callbackLock);
-    
-    auto level = 0.f;
-    
-    if (trackNumber >= 0)
-    {
-        for (auto transportSource : audioTransportSources)
-        {
-            if (trackNumber == transportSource->getAudioResource().getAudioTrack()->getId()) {
-                auto channel = channelNumber - transportSource->getAudioResource().getChannelPosition();
-                level += transportSource->getOutputLevel(channel);
-            }
-        }
-    }
-    
-    return level;
+    return 0.f;
 }
 
 void TransportSourceContainer::applyChannelMapping()

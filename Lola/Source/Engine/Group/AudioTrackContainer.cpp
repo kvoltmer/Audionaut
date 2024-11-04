@@ -65,7 +65,7 @@ int AudioTrackContainer::getChannelOffset(std::shared_ptr<const AudioTrack> sear
         if (track == searchTrack)
             return numChannels;
         
-        numChannels += track->getNumChannels();
+        numChannels += track->getNumAudioTrackChannels();
     }
     return numChannels;
 }
@@ -255,11 +255,11 @@ void AudioTrackContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
     }
 }
 
-int AudioTrackContainer::getNumChannels() const
+int AudioTrackContainer::getNumAudioTrackChannels() const
 {
     int channels = 0;
     for (auto track : audioTracks) {
-        channels += track->getNumChannels();
+        channels += track->getNumAudioTrackChannels();
     }
     return channels;
 }

@@ -11,6 +11,8 @@
 #pragma once
 #include <JuceHeader.h>
 
+#define MAX_AUDIO_CHANNELS 64
+
 class AudioResourceContainer;
 class AudioTrack;
 class AudiumTransportSource;
@@ -40,15 +42,21 @@ public:
     std::shared_ptr<AudiumTransportSource> getTransportSourceAtIndex(int index) const;
     int getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const;
     
-    const float getOutputLevel(const int trackNumber, const int channelNumber) const;
+    const float getOutputLevel(const int channelNumber) const;
      
     void applyChannelMapping();
     
 private:
     std::atomic<bool> playing = false;
     std::atomic<bool> byPass = false;
+    
     juce::CriticalSection callbackLock;
+    
     juce::Array<std::shared_ptr<AudiumTransportSource>> audioTransportSources;
+    
+    juce::AudioBuffer<float> audioBusBuffer;
+    
+    std::atomic<float> outputLevel[MAX_AUDIO_CHANNELS];
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)
 };

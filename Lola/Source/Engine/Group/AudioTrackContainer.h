@@ -86,7 +86,7 @@ public:
     
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
-    int getNumChannels() const;
+    int getNumAudioTrackChannels() const;
     
 private:
     std::shared_ptr<juce::UndoManager> undoManager;

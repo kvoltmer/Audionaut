@@ -10,6 +10,7 @@
 
 #include "AudiumTransportSource.h"
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource,
                       std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
@@ -45,11 +46,6 @@ void AudiumTransportSource::prepareToPlay (int samplesPerBlockExpected, double s
 {
     if (mainSource != nullptr)
         mainSource->prepareToPlay(samplesPerBlockExpected, sampleRate);
-        
-    channelRemapping->setNumberOfChannelsToProduce(8);
-
-    channelRemapping->setOutputChannelMapping(0, 0);
-    channelRemapping->setOutputChannelMapping(1, 1);
 }
 
 void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
@@ -101,6 +97,9 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
 
 void AudiumTransportSource::applyChannelMapping()
 {
+    auto totalChannels = audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels();
+    channelRemapping->setNumberOfChannelsToProduce(totalChannels);
+    
     channelRemapping->clearAllMappings();
     
     auto startChannel = getAudioResource().getChannelPosition() + getAudioResource().getAudioTrack()->getChannelOffset();

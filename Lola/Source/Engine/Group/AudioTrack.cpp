@@ -182,14 +182,14 @@ int AudioTrack::getSizeInUnits()
     return (int)audioSubGroupContainer->getObjects().size() * 16;
 }
 
-int AudioTrack::getNumChannels() const
+int AudioTrack::getNumAudioTrackChannels() const
 {
     return static_cast<int>(audioChannelContainer->getObjects().size());
 }
 
 void AudioTrack::ensureNumChannels(int channelsNeeded)
 {
-    while (getNumChannels() < channelsNeeded)
+    while (getNumAudioTrackChannels() < channelsNeeded)
     {
         addChannel();
     }
@@ -216,7 +216,7 @@ std::shared_ptr<AudioChannel> AudioTrack::getChannel(int channelNumber) const
 int AudioTrack::getTotalHeight() const
 {
     int height = 0;
-    auto channels = getNumChannels();
+    auto channels = getNumAudioTrackChannels();
     for (auto c = 0; c < channels; c++)
     {
         height += getChannel(c)->getChannelHeight();
@@ -226,7 +226,8 @@ int AudioTrack::getTotalHeight() const
 
 const float AudioTrack::getOutputLevel(int channelNumber) const
 {
-    return transportSourceContainer->getOutputLevel(getId(), channelNumber);
+    // adding the track's channel offset
+    return transportSourceContainer->getOutputLevel(channelNumber + getChannelOffset());
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtChannel(int channelNumber) const
@@ -303,7 +304,7 @@ void AudioTrack::setSelected(bool bSelected, bool selectChildren)
 
 void AudioTrack::setChannelHeight(int height)
 {
-    for (auto i = 0; i < getNumChannels(); i++)
+    for (auto i = 0; i < getNumAudioTrackChannels(); i++)
     {
         getChannel(i)->setChannelHeight(height);
     }
@@ -414,7 +415,7 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
         else
         {
             position = subGroup->getAudioClip()->getAbsolutePosition(audium::clocks);
-            channelPosition = getNumChannels();
+            channelPosition = getNumAudioTrackChannels();
         }
     }
 
