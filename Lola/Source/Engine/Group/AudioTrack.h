@@ -124,7 +124,7 @@ public:
     bool deleteSelectedObject(std::shared_ptr<audium::Selectable> object);
     
     // channels:
-    int getNumChannels() const;
+    int getNumAudioTrackChannels() const;
     void ensureNumChannels(int channelsNeeded);
     std::shared_ptr<AudioChannel> addChannel();
     std::shared_ptr<AudioChannel> getChannel(int channelNumber) const;

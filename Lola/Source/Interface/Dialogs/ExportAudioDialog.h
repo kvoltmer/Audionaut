@@ -71,7 +71,7 @@ private:
             // get the number of output channels
             auto chans = exportAudioComponent->getOutputChannels().toString().getIntValue();
             if (chans == 3)
-                chans = audiumEngine->getAudioTrackContainer()->getNumChannels();
+                chans = audiumEngine->getAudioTrackContainer()->getNumAudioTrackChannels();
             safeThis->config.numChannels = chans;
             
             
