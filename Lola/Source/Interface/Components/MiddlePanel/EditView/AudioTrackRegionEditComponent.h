@@ -157,9 +157,6 @@ public:
             counter++;
         }
     }
-    
-    void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
-
 
 private:
         

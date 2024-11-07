@@ -56,7 +56,31 @@ void AudioTrackBaseComponent::paint (juce::Graphics& g)
 }
 
 void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
-{    
+{
+    if ( !filenames.isEmpty())
+    {
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
+                
+        auto position = zoomHandler->xToClocks(x);
+        zoomHandler->snapToGrid(position);
+        
+        std::function<void (std::string)> callback = [](std::string error) {
+            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                        "Failed to open File.",
+                                                        "Failed to open: " + juce::String(error));
+        };
+        
+        auto arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
+        if (audioTrack->addAudioFiles(filenames, position, arrangementMode, callback))
+        {
+            action->storeNewState();
+            audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
+            audiumEngine->getUndoManager()->beginNewTransaction();
+        }
+    }
+    
+    
     externalDragAndDrop = false;
     regionSelector->setEnabled(true);
     zoomHandler->getSnapToGridHandler()->clearRange();

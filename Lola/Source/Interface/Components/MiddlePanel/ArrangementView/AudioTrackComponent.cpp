@@ -188,29 +188,3 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
     repaint();
 }
 
-void AudioTrackComponent::filesDropped (const StringArray& filenames, int x, int y)
-{
-    if ( !filenames.isEmpty())
-    {
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
-        
-        auto start = zoomHandler->xToClocks(x);
-        zoomHandler->snapToGrid(start);
-        
-        std::function<void (std::string)> callback = [](std::string error) {
-            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                        "Failed to open File.",
-                                                        "Failed to open: " + juce::String(error));
-        };
-        
-        if (audioTrack->addAudioFiles(filenames, start, true, callback))
-        {
-            action->storeNewState();
-            audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
-            audiumEngine->getUndoManager()->beginNewTransaction();
-        }
-    }
-
-    // call base class!
-    AudioTrackBaseComponent::filesDropped(filenames, x, y);
-}
