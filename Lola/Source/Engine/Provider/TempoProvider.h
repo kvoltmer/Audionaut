@@ -49,10 +49,10 @@ public:
         sendActionMessage (tempoChanged);
     }
     
-    void prepareToPlay (double newSampleRate, int newBlockSize)
+    void prepareToPlay (int samplesPerBlockExpected, double sampleRate_)
     {
-        sampleRate = newSampleRate;
-        bufferSize = newBlockSize;
+        sampleRate = sampleRate_;
+        bufferSize = samplesPerBlockExpected;
     }
     
     uint64_t secondsToSamples(double seconds)

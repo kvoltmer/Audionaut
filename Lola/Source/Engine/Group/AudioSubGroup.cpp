@@ -121,8 +121,14 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
             resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url, track, subGroup);
             if (resource != nullptr)
             {
-                auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
-                transportSources.push_back(transportSource);
+                if (auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource))
+                {
+                    transportSources.push_back(transportSource);
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
         else

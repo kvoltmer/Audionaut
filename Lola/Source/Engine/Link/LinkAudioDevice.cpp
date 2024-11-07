@@ -64,7 +64,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
         
         juce::AudioBuffer<float> buffer (outputChannelData, totalNumOutputChannels, numSamples);
         juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
-        playListScheduler->audioCallback(info);
+        playListScheduler->processAudio(info);
         
         sample_time += numSamples;
     }
@@ -79,10 +79,8 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
     
     if (playListScheduler != nullptr)
     {
-        playListScheduler->prepareToPlay(sampleRate, bufferSize);
+        playListScheduler->prepareToPlay(bufferSize, sampleRate);
     }
-    
-    transportSourceContainer->prepareToPlay(sampleRate, bufferSize);
     
     auto deviceLatency = device->getOutputLatencyInSamples();
     

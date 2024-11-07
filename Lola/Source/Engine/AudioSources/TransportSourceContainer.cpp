@@ -41,13 +41,14 @@ void TransportSourceContainer::cleanup()
     audioTransportSources.clear();
 }
 
-void TransportSourceContainer::prepareToPlay (double sampleRate, int blockSize)
+void TransportSourceContainer::prepareToPlay (int samplesPerBlockExpected,
+                                              double sampleRate)
 {
     const ScopedLock sl (callbackLock);
 
     for (auto transportSource : audioTransportSources)
     {
-        transportSource->prepareToPlay(blockSize, sampleRate);
+        transportSource->prepareToPlay(samplesPerBlockExpected, sampleRate);
     }
     
     applyChannelMapping();
@@ -70,7 +71,6 @@ void TransportSourceContainer::stopPlaying()
 
     for (auto & transportSource : audioTransportSources)
     {
-
         // workaround: set the position to the very end
         if (transportSource->getAudioTransportSource()->isPlaying())
         {
@@ -85,7 +85,7 @@ bool TransportSourceContainer::isPlaying() const
     return playing;
 }
 
-void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo& info)
+void TransportSourceContainer::getNextAudioBlock(const juce::AudioSourceChannelInfo& info)
 {
     const ScopedLock sl (callbackLock);
         
@@ -101,8 +101,7 @@ void TransportSourceContainer::audioCallback(const juce::AudioSourceChannelInfo&
             info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
     }
     
-    for (auto i = 0; i < std::min(info.buffer->getNumChannels(), MAX_AUDIO_CHANNELS); i++)
-    {
+    for (auto i = 0; i < std::min(info.buffer->getNumChannels(), MAX_AUDIO_CHANNELS); i++) {
         outputLevel[i] = info.buffer->getMagnitude(i, info.startSample, info.numSamples);
     }
 }

@@ -33,7 +33,8 @@ AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource,
     audioTransportSource->setSource (audioFormatReaderSource.get(),
                                      readAheadBufferSize,
                                      readAheadThread,
-                                     audioFormatReaderSource->getAudioFormatReader()->sampleRate);
+                                     audioFormatReaderSource->getAudioFormatReader()->sampleRate,
+                                     audioFormatReaderSource->getAudioFormatReader()->numChannels);
     
     // the channel remapping source
     channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(audioTransportSource.get(), false);
