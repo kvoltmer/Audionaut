@@ -18,25 +18,30 @@ class AudioTrack;
 class AudiumTransportSource;
 class AudioResource;
 
-class TransportSourceContainer
+class TransportSourceContainer : public juce::AudioSource
 {
 public:
     TransportSourceContainer() = default;
     ~TransportSourceContainer() = default;
     
+    void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill) override;
+    void prepareToPlay (int samplesPerBlockExpected,
+                        double sampleRate) override;
+    
+    void releaseResources() override {
+        cleanup();
+    }
+
     std::shared_ptr<AudiumTransportSource> createAndAddTransportSource(AudioResource& audioResource,
                                                                        std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
     void cleanup();
-    
-    void prepareToPlay (double sampleRate, int blockSize);
-    
+        
     void startPlaying();
     void stopPlaying();
     bool isPlaying() const;
     
-    void audioCallback(const juce::AudioSourceChannelInfo& info);
     void setBypass(bool isByPass) { byPass = isByPass; }
 
     std::shared_ptr<AudiumTransportSource> getTransportSourceAtIndex(int index) const;

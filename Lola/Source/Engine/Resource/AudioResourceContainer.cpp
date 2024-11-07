@@ -46,10 +46,12 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
 {
     auto audioFormatReaderSource = AudioResourceFactory::createAudioFormatReaderSource(audioResource->getUrl(), *formatManager.get());
-                                                                   
-    auto transportSource = audioResource->createNewTransportSource(audioFormatReaderSource);
-
-    return transportSource;
+                                                            
+    if (audioFormatReaderSource != nullptr)
+    {
+        return audioResource->createNewTransportSource(audioFormatReaderSource);
+    }
+    return nullptr;
 }
 
 void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> resource)

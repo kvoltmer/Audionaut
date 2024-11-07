@@ -16,7 +16,7 @@ using namespace juce;
 void AudioExportThread::bounceToFile(audium::ExportAudioConfig &config)
 {
     audiumEngine.setBypass(true);
-    audiumEngine.getPlayListScheduler()->prepareToPlay(config.sampleRate, config.blockSize);
+    audiumEngine.getPlayListScheduler()->prepareToPlay(config.blockSize, config.sampleRate);
         
     TemporaryFile tempFile (config.fileName);
     std::unique_ptr<OutputStream> outStream (tempFile.getFile().createOutputStream());
@@ -47,6 +47,6 @@ void AudioExportThread::bounceToFile(audium::ExportAudioConfig &config)
     auto device = audiumEngine.getAudioDeviceManager()->getCurrentAudioDevice();
     auto numSamples = device->getCurrentBufferSizeSamples();
     auto sampleRate = device->getCurrentSampleRate();
-    audiumEngine.getPlayListScheduler()->prepareToPlay(sampleRate, numSamples);
+    audiumEngine.getPlayListScheduler()->prepareToPlay(numSamples, sampleRate);
     audiumEngine.setBypass(false);
 }

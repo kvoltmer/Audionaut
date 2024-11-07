@@ -28,12 +28,12 @@ using namespace::std::chrono;
 
 using namespace::juce;
 
-void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
+void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    externalSampleRate = newSampleRate;
-    bufferSize = newBufferSize;
-    tempoProvider->prepareToPlay(newSampleRate, newBufferSize);
-    transportSourceContainer->prepareToPlay(newSampleRate, newBufferSize);
+    externalSampleRate = sampleRate;
+    bufferSize = samplesPerBlockExpected;
+    tempoProvider->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    transportSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void PlayListScheduler::tick(bool isPlaying,
@@ -121,23 +121,40 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
     newDataCommited.store(false);
 }
 
-void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
+void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
 {
-    auto totalChannels = audioTrackContainer->getNumAudioTrackChannels();
-    juce::AudioBuffer<float> tempBuffer(totalChannels, info.numSamples);
+    auto outputChannels = outputInfo.buffer->getNumChannels();
+    auto totalChannels = std::max(outputInfo.buffer->getNumChannels(),
+                                  audioTrackContainer->getNumAudioTrackChannels());
+    juce::AudioBuffer<float> tempBuffer(totalChannels, outputInfo.numSamples);
     tempBuffer.clear();
-    juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, info.startSample, info.numSamples);
+    juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, outputInfo.startSample, outputInfo.numSamples);
     
+        
     // render the entire bus (all channels)
-    transportSourceContainer->audioCallback(tempBufferInfo);
+    transportSourceContainer->getNextAudioBlock(tempBufferInfo);
     
-    // mix down bus to out channels
-    for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
-        for (auto i = 0; i < totalChannels; i++) {
-            info.buffer->addFrom(c,
-                                 info.startSample,
-                                 tempBuffer.getReadPointer(i),
-                                 info.numSamples);
+    // stereo or mono output
+    if (outputChannels == 2 || outputChannels == 1)
+    {
+        for (auto c = 0; c < outputChannels; c++) {
+            for (auto i = 0; i < totalChannels; i++) {
+                outputInfo.buffer->addFrom(c,
+                                           outputInfo.startSample,
+                                           tempBuffer.getReadPointer(i),
+                                           outputInfo.numSamples);
+            }
+        }
+    }
+    else // multichannel output
+    {
+        jassert(outputChannels == totalChannels);
+        
+        for (auto c = 0; c < std::min(outputChannels, totalChannels); c++) {
+            outputInfo.buffer->addFrom(c,
+                                       outputInfo.startSample,
+                                       tempBuffer.getReadPointer(c),
+                                       outputInfo.numSamples);
         }
     }
     
@@ -382,7 +399,7 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
         
         
         buffer.clear();
-        audioCallback(info);
+        processAudio(info);
         writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
         
         config.progress = i / (double)iterations;
@@ -439,4 +456,5 @@ void PlayListScheduler::commitPlayListData()
     
     // update channel mapping
     transportSourceContainer->applyChannelMapping();
+    
 }

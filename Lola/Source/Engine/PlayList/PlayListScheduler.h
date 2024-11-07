@@ -18,8 +18,8 @@
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/ExportAudioConfig.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 
-class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
 
@@ -58,7 +58,7 @@ public:
         commitPlayListData();
     }
 
-    void prepareToPlay (double sampleRate, int blockSize);
+    void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     
 
     void startPlaying();
@@ -82,7 +82,7 @@ public:
     
     void tick(bool isPlaying, double beats, int numSamples);
     
-    void audioCallback (const juce::AudioSourceChannelInfo& info);
+    void processAudio (const juce::AudioSourceChannelInfo& info);
     
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
