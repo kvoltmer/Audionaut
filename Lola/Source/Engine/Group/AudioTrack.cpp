@@ -394,32 +394,30 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     int channelPosition = 0;
     std::shared_ptr<AudioSubGroup> subGroup = nullptr;
     
+    bool subGroupCreated = false;
     if (arrangementMode)
     {
-        // try to figure out the position of the subGroup (edit mode!)
-        auto items = getPositionableItems(false);
-        auto subGroupPosition = 0.0;
-        if (items.size() > 0)
+        if (auto playListItem = getPlayListContainer()->itemAtAbsolutePosition(position,
+                                                                               audium::clocks))
         {
-            subGroupPosition = items.back()->getAbsolutePositionRange(audium::clocks).getEnd();
+            subGroup = playListItem->getRegion()->getAudioSubGroup();
         }
-        subGroup = createNewAudioSubGroup(subGroupPosition, audium::clocks);
     }
     else
     {
         subGroup = getSubGroupAtAbsolutePosition(position, audium::clocks);
-        if (subGroup == nullptr)
-        {
-            subGroup = createNewAudioSubGroup(position, audium::clocks);
-        }
-        else
-        {
-            position = subGroup->getAudioClip()->getAbsolutePosition(audium::clocks);
-            channelPosition = getNumAudioTrackChannels();
-        }
     }
-
     
+    if (subGroup == nullptr)
+    {
+        subGroup = createNewAudioSubGroup(position, audium::clocks);
+        subGroupCreated = true;
+    }
+    else
+    {
+        position = subGroup->getAudioClip()->getAbsolutePosition(audium::clocks);
+        channelPosition = getNumAudioTrackChannels();
+    }
     
     std::vector<std::shared_ptr<AudioResource>> resources;
     
@@ -437,7 +435,7 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     }
     
     if (arrangementMode &&
-        resources.size() > 0)
+        subGroupCreated)
     {
         createDefaultPlayListItem(resources.front(), subGroup, position, audium::clocks);
     }

@@ -64,9 +64,7 @@ public:
     {
         return true;
     }
-
-    void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
-
+    
 private:
     
     bool mustRebuildComponents() const;
