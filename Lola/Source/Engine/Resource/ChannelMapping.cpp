@@ -20,21 +20,18 @@ void ChannelMapping::clear()
 
 void ChannelMapping::setOutputChannelMapping (const int sourceIndex, const int destIndex)
 {
+    auto source = getSourceChannel(destIndex);
+    if (source >= 0)
+    {
+        // destination is already mapped!
+        remappedChannels.set (source, -1);
+    }
+    
     while (remappedChannels.size() < sourceIndex)
         remappedChannels.add (-1);
     
     remappedChannels.set (sourceIndex, destIndex);
-    
-    if (destIndex >= 0)
-    {
-        auto src = sourceIndex;
-        auto dst = getRemappedChannel(sourceIndex);
-        
-        std::cout << "source: " << src << " dest: " << dst << std::endl;
-        
-        auto src2  = getSourceChannel(destIndex);
-        jassert(src == src2);
-    }
+
 }
 
 
@@ -58,6 +55,11 @@ int ChannelMapping::getSourceChannel (const int destChannelIndex) const
 }
 
 
+bool ChannelMapping::containsSourceChannelNumber(int channelNumber) const
+{
+    return getSourceChannel(channelNumber) >= 0;
+}
+
 bool ChannelMapping::anyOutputMapping() const
 {
     if (remappedChannels.size() > 0)
@@ -70,6 +72,19 @@ bool ChannelMapping::anyOutputMapping() const
     }
     
     return false;
+}
+
+bool ChannelMapping::deleteChannel(const int destIndex)
+{
+    auto sourceIndex = getSourceChannel(destIndex);
+    if (sourceIndex >= 0)
+    {
+        setOutputChannelMapping(sourceIndex, -1);
+    }
+    
+    // returns true in case there is no more mapping
+    return !anyOutputMapping();
+
 }
 
 void ChannelMapping::decrementChannelMapping(int startChannelNumber)
@@ -110,6 +125,19 @@ bool ChannelMapping::readFromJson (json& input, bool rebuild)
         return true;
     }
     return false;
+}
+
+int ChannelMapping::getChannelPosition() const
+{
+    return getRemappedChannel(0);
+}
+
+void ChannelMapping::setChannelPosition(int startChannel, int numChannels)
+{
+    clear();
+    for (auto i = 0; i < numChannels; i++) {
+        setOutputChannelMapping(i, i + startChannel);
+    }
 }
 
 } // namespace audium

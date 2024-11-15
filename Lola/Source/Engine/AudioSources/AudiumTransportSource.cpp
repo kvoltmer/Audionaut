@@ -11,6 +11,7 @@
 #include "AudiumTransportSource.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Resource/ChannelMapping.h"
 
 AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource,
                       std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
@@ -108,7 +109,7 @@ void AudiumTransportSource::applyChannelMapping()
     
     auto channelOffset = getAudioResource().getAudioTrack()->getChannelOffset();
     
-    auto mapping = getAudioResource().getChannelMapping();
+    auto mapping = getAudioResource().getChannelMapping().getData();
     
     auto numAudioFileChannels = audioResource.getNumChannels();
     

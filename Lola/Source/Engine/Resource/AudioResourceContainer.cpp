@@ -17,6 +17,8 @@
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioClip.h"
+#include "Engine/Resource/ChannelMapping.h"
+#include "Engine/Channel/AudioChannel.h"
 
 AudioResourceContainer::~AudioResourceContainer()
 {
@@ -186,7 +188,7 @@ void AudioResourceContainer::onDeleteChannel(AudioTrack* audioTrack, AudioChanne
     {
         if (it->first.get() == audioTrack)
         {
-            if (it->second->deleteChannel(channel))
+            if (it->second->getChannelMapping().deleteChannel(channel->getChannelNumber()))
             {
                 // no more channel mapping -> remove
                 resourcesToRemove.push_back(it->second);

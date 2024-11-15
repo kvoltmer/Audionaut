@@ -22,6 +22,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Interface/Widgets/audium_AudioThumbnail.h"
+#include "Engine/Resource/ChannelMapping.h"
 
 //==============================================================================
 /*
@@ -89,12 +90,7 @@ public:
             const auto thumbArea    = getClippedDrawingArea();
             const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
             const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
-            
-            //const auto channel = rowNumber - audioResource->getChannelPosition();
-            
-            /// TODO: fixme!
-            //const auto channel = rowNumber - audioResource->getRemappedOutputChannel(0);
-            const auto channel = audioResource->getSourceChannel(rowNumber);
+            const auto channel      = audioResource->getChannelMapping().getSourceChannel(rowNumber);
             
             if (channel >= 0 && channel < audioResource->getNumChannels())
             {

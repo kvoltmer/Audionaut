@@ -41,7 +41,7 @@ public:
                   juce::URL url,
                   int channelPosition);
     
-    virtual ~AudioResource();
+    virtual ~AudioResource() override;
 
     std::shared_ptr<AudiumTransportSource> createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
 
@@ -78,15 +78,7 @@ public:
     void setSelected(bool bSelected, bool deselectOthers);
     bool isSelected() const { return selected; }
         
-    bool containsChannelNumber(int channelNumber) const;
-    bool containsChannel(std::shared_ptr<AudioChannel> channel) const;
-    int getChannelPosition() const;
-    void setChannelPosition(int startChannel);
-    bool deleteChannel(AudioChannel* channel);
-    void decrementChannelMapping(int startChannelNumber);
-    const juce::Array<int> getChannelMapping() const;
-    int getRemappedOutputChannel (int outputChannelIndex) const;
-    int getSourceChannel (int destChannelIndex) const;
+    audium::ChannelMapping &getChannelMapping() const { return *channelMapping.get();}
 
 private:
 
