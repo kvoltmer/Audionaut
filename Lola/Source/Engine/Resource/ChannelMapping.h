@@ -34,15 +34,21 @@ public:
     int getRemappedChannel (int sourceChannelIndex) const;
     int getSourceChannel (int destChannelIndex) const;
 
-
+    bool containsSourceChannelNumber(int channelNumber) const;
     bool anyOutputMapping() const;
 
+    bool deleteChannel(int sourceChannelIndex);
     void decrementChannelMapping(int startChannelNumber);
 
     bool writeToJson (json& output);
     bool readFromJson (json& input, bool rebuild);
 
-    const juce::Array<int> getChannelMapping() const { return remappedChannels; }
+    // TODO: remove me
+    int getChannelPosition() const;
+    void setChannelPosition(int startChannel, int numChannels);
+
+
+    const juce::Array<int> getData() const { return remappedChannels; }
 
 private:
 

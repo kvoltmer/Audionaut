@@ -104,7 +104,6 @@ public:
     
 
     const float getOutputLevel(int channelNumber) const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannel(int channelNumber) const;
     
     void setGain(float gain, int channelNumber);
     float getGain(int channelNumber) const;

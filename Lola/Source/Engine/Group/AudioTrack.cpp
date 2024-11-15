@@ -21,6 +21,7 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Resource/ChannelMapping.h"
 
 AudioTrack::~AudioTrack()
 {
@@ -230,21 +231,6 @@ const float AudioTrack::getOutputLevel(int channelNumber) const
     return transportSourceContainer->getOutputLevel(channelNumber + getChannelOffset());
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtChannel(int channelNumber) const
-{
-    auto channel = getChannel(channelNumber);
-    
-    std::vector<std::shared_ptr<AudioResource>> result;
-    for (auto resource : getAudioResources())
-    {
-        if (resource->containsChannel(channel))
-        {
-            result.push_back(resource);
-        }
-    }
-    return result;
-}
-
 void AudioTrack::setGain(float gain, int channelNumber) {
 
     if (auto channel = audioChannelContainer->objects[channelNumber]) {
@@ -371,8 +357,9 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
         if (audioChannelContainer->deleteObject(channel)) {
             // change mapping
             for (auto resource : getAudioResources())
-                resource->decrementChannelMapping(channelNumber);
-            
+            {
+                resource->getChannelMapping().decrementChannelMapping(channelNumber);
+            }
             
             // cleanup subgroups
             deleteEmptySubGroups();
@@ -527,7 +514,7 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
             for (const auto &transportSource : item->getTransportSources())
             {
                 dspClipData.active = true;
-                auto channelPosition = transportSource->getAudioResource().getChannelPosition();
+                auto channelPosition = transportSource->getAudioResource().getChannelMapping().getChannelPosition();
                 if (audioChannelContainer->objectExistsAtIndex(channelPosition))
                     dspClipData.gain = audioChannelContainer->objects[channelPosition]->getGain();
                 

@@ -15,6 +15,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/Resource/ChannelMapping.h"
 
 AudioSubGroup::AudioSubGroup(AudioTrack& audioTrack,
                              std::shared_ptr<audium::SelectionManager> selectionManager) :
@@ -213,7 +214,7 @@ std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const
 {
     for (auto resource : getAudioResources())
     {
-        if (resource->containsChannelNumber(rowNumber))
+        if (resource->getChannelMapping().containsSourceChannelNumber(rowNumber))
             return resource;
     }
     return nullptr;

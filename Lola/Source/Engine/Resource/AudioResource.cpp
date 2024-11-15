@@ -18,15 +18,15 @@
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
 
-AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
-                             std::shared_ptr<AudioTrack> audioTrack,
-                             std::shared_ptr<AudioSubGroup> audioSubGroup,
-                             juce::URL url,
+AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
+                             std::shared_ptr<AudioTrack> audioTrack_,
+                             std::shared_ptr<AudioSubGroup> audioSubGroup_,
+                             juce::URL url_,
                              int channelPosition) :
-    owner(audioResourceContainer),
-    audioTrack(audioTrack),
-    audioSubGroup(audioSubGroup),
-    url(url)
+    owner(audioResourceContainer_),
+    audioTrack(audioTrack_),
+    audioSubGroup(audioSubGroup_),
+    url(url_)
 {
     auto reader = owner.getAudioFormatManager()->createReaderFor (getUrl().getLocalFile());
     audioFormatReader = std::unique_ptr<juce::AudioFormatReader>(reader);
@@ -35,8 +35,8 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
     
     if (channelPosition >= 0)
     {
-        this->audioTrack->ensureNumChannels(channelPosition + getNumChannels());
-        setChannelPosition(channelPosition);
+        audioTrack->ensureNumChannels(channelPosition + getNumChannels());
+        channelMapping->setChannelPosition(channelPosition, getNumChannels());
     }
 }
 
@@ -160,13 +160,10 @@ bool AudioResource::containsAbsolutePosition(double position, audium::TimeContex
 
 bool AudioResource::writeToJson (json& output)
 {
-    output["absolute_file_path"]          = getUrlAsString().toStdString();
-    output["relative_file_path"] = getRelativePath(AudiumEngine::projectDirectory).toStdString();
-    // TODO: fixme 
-    output["gain"]               = 1.0; // getAudioTransportSource()->getGain();
-    output["channel_position"]  = getChannelPosition();
-    output["number_of_channels"] = getNumChannels();
-    output["length_in_seconds"] = getFileLength(audium::seconds);
+    output["absolute_file_path"]    = getUrlAsString().toStdString();
+    output["relative_file_path"]    = getRelativePath(AudiumEngine::projectDirectory).toStdString();
+    output["number_of_channels"]    = getNumChannels();
+    output["length_in_seconds"]     = getFileLength(audium::seconds);
     
     channelMapping->writeToJson(output);
     
@@ -217,12 +214,13 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     
     if (! channelMapping->readFromJson(input, rebuild))
     {
+        // TODO: remove legacy code
         auto channelPos = 0;
         if (input.contains("channel_position"))
         {
             channelPos = input["channel_position"].template get<int>();
+            channelMapping->setChannelPosition(channelPos, getNumChannels());
         }
-        setChannelPosition(channelPos);
     }
     
     jassert(this->url == urlFromJson(input));
@@ -237,69 +235,5 @@ void AudioResource::setSelected(bool bSelected, bool deselectOthers)
         owner.deselectAllResources();
 
     selected = bSelected;
-}
-
-
-bool AudioResource::containsChannelNumber(int channelNumber) const
-{
-    for (auto i = 0; i < getNumChannels(); i++) {
-        if (channelMapping->getRemappedChannel(i) == channelNumber)
-            return true;
-    }
-    
-    return false;
-}
-
-bool AudioResource::containsChannel(std::shared_ptr<AudioChannel> channel) const
-{
-    return containsChannelNumber(channel->getChannelNumber());
-}
-
-int AudioResource::getChannelPosition() const
-{
-    return channelMapping->getRemappedChannel(0);
-}
-
-void AudioResource::setChannelPosition(int startChannel)
-{
-    std::cout << "AudioResource::setChannelPosition " << startChannel << std::endl;
-
-    channelMapping->clear();
-    for (auto i = 0; i < getNumChannels(); i++)
-    {
-        channelMapping->setOutputChannelMapping(i, i + startChannel);
-    }
-}
-
-bool AudioResource::deleteChannel(AudioChannel* channel)
-{
-    auto chanNumber = channel->getChannelNumber();
-    if (containsChannelNumber(chanNumber))
-    {
-        channelMapping->setOutputChannelMapping(chanNumber, -1);
-    }
-    
-    // returns true in case there is no more mapping
-    return !channelMapping->anyOutputMapping();
-}
-
-void AudioResource::decrementChannelMapping(int startChannelNumber)
-{
-    channelMapping->decrementChannelMapping(startChannelNumber);
-}
-
-const juce::Array<int> AudioResource::getChannelMapping() const
-{
-    return channelMapping->getChannelMapping();
-}
-
-int AudioResource::getRemappedOutputChannel (int outputChannelIndex) const
-{
-    return channelMapping->getRemappedChannel(outputChannelIndex);
-}
-
-int AudioResource::getSourceChannel (int destChannelIndex) const
-{
-    return channelMapping->getSourceChannel(destChannelIndex);
 }
 
