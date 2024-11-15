@@ -99,16 +99,20 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
 void AudiumTransportSource::applyChannelMapping()
 {
     auto totalChannels = audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels();
+    if (audioResource.getNumChannels() > totalChannels)
+        totalChannels = audioResource.getNumChannels();
+    
     channelRemapping->setNumberOfChannelsToProduce(totalChannels);
     
     channelRemapping->clearAllMappings();
     
-    auto startChannel = getAudioResource().getChannelPosition() + getAudioResource().getAudioTrack()->getChannelOffset();
+    auto channelOffset = getAudioResource().getAudioTrack()->getChannelOffset();
     
-    auto numAudioFileChannels = (int)audioResource.getNumChannels();
+    auto mapping = getAudioResource().getChannelMapping();
     
-    for (auto i = 0; i < numAudioFileChannels; i++)
-    {
-        channelRemapping->setOutputChannelMapping(i, startChannel++);
+    auto numAudioFileChannels = audioResource.getNumChannels();
+    
+    for (auto source = 0; source < std::min((int)numAudioFileChannels, mapping.size()); source++) {
+        channelRemapping->setOutputChannelMapping(source, mapping[source] + channelOffset);
     }
 }

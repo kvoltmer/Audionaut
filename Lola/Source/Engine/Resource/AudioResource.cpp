@@ -16,6 +16,7 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/Factory/AudioResourceFactory.h"
+#include "Engine/Resource/ChannelMapping.h"
 
 AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
                              std::shared_ptr<AudioTrack> audioTrack,
@@ -30,10 +31,11 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
     auto reader = owner.getAudioFormatManager()->createReaderFor (getUrl().getLocalFile());
     audioFormatReader = std::unique_ptr<juce::AudioFormatReader>(reader);
     
+    channelMapping = std::make_unique<audium::ChannelMapping>();
+    
     if (channelPosition >= 0)
     {
-        auto numChannels = getNumChannels();
-        this->audioTrack->ensureNumChannels(channelPosition + numChannels);
+        this->audioTrack->ensureNumChannels(channelPosition + getNumChannels());
         setChannelPosition(channelPosition);
     }
 }
@@ -41,7 +43,6 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer,
 
 AudioResource::~AudioResource()
 {
-    audioChannels.clear();
 }
 
 std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
@@ -166,6 +167,9 @@ bool AudioResource::writeToJson (json& output)
     output["channel_position"]  = getChannelPosition();
     output["number_of_channels"] = getNumChannels();
     output["length_in_seconds"] = getFileLength(audium::seconds);
+    
+    channelMapping->writeToJson(output);
+    
     return true;
 }
 
@@ -204,15 +208,23 @@ const juce::URL AudioResource::urlFromJson (json& input)
 
 bool AudioResource::readFromJson (json& input, bool rebuild)
 {
-    const auto channelPos   = input["channel_position"].template get<int>();
-    
     if (input.contains("number_of_channels"))
         numChannels = input["number_of_channels"].template get<int>();
     
     if (input.contains("length_in_seconds"))
         lengthInSeconds = input["length_in_seconds"].template get<double>();
     
-    setChannelPosition(channelPos);
+    
+    if (! channelMapping->readFromJson(input, rebuild))
+    {
+        auto channelPos = 0;
+        if (input.contains("channel_position"))
+        {
+            channelPos = input["channel_position"].template get<int>();
+        }
+        setChannelPosition(channelPos);
+    }
+    
     jassert(this->url == urlFromJson(input));
 
     return true;
@@ -230,65 +242,64 @@ void AudioResource::setSelected(bool bSelected, bool deselectOthers)
 
 bool AudioResource::containsChannelNumber(int channelNumber) const
 {
-    juce::Range<int> channelRange(getChannelPosition(),
-                                  getChannelPosition() + getNumChannels());
-    
-    if (channelRange.contains(channelNumber))
-    {
-        return true;
+    for (auto i = 0; i < getNumChannels(); i++) {
+        if (channelMapping->getRemappedChannel(i) == channelNumber)
+            return true;
     }
+    
     return false;
 }
 
 bool AudioResource::containsChannel(std::shared_ptr<AudioChannel> channel) const
 {
-    auto it = std::find(audioChannels.begin(), audioChannels.end(), channel);
-    if (it != audioChannels.end())
-    {
-        return true;
-    }
-    
-    return false;
+    return containsChannelNumber(channel->getChannelNumber());
 }
 
 int AudioResource::getChannelPosition() const
 {
-    if (audioChannels.size() > 0)
-    {
-        return audioChannels[0]->getChannelNumber();
-    }
-    
-    return 0;
+    return channelMapping->getRemappedChannel(0);
 }
 
 void AudioResource::setChannelPosition(int startChannel)
 {
-    //std::cout << "AudioResource::setChannelPosition " << startChannel << std::endl;
+    std::cout << "AudioResource::setChannelPosition " << startChannel << std::endl;
 
-    audioChannels.clear();
-
+    channelMapping->clear();
     for (auto i = 0; i < getNumChannels(); i++)
     {
-        auto channel = audioTrack->getChannel(i + startChannel);
-        jassert(channel);
-        if (channel != nullptr)
-        {
-            audioChannels.push_back(channel);
-        }
+        channelMapping->setOutputChannelMapping(i, i + startChannel);
     }
-    
-    jassert(audioChannels.size() == getNumChannels());
 }
 
 bool AudioResource::deleteChannel(AudioChannel* channel)
 {
-    auto it = std::find_if(audioChannels.begin(), audioChannels.end(), [channel](const auto& item) {
-        return item.get() == channel;
-    });
-    if (it != audioChannels.end())
+    auto chanNumber = channel->getChannelNumber();
+    if (containsChannelNumber(chanNumber))
     {
-        audioChannels.erase(it);
+        channelMapping->setOutputChannelMapping(chanNumber, -1);
     }
     
-    return audioChannels.size() == 0;
+    // returns true in case there is no more mapping
+    return !channelMapping->anyOutputMapping();
 }
+
+void AudioResource::decrementChannelMapping(int startChannelNumber)
+{
+    channelMapping->decrementChannelMapping(startChannelNumber);
+}
+
+const juce::Array<int> AudioResource::getChannelMapping() const
+{
+    return channelMapping->getChannelMapping();
+}
+
+int AudioResource::getRemappedOutputChannel (int outputChannelIndex) const
+{
+    return channelMapping->getRemappedChannel(outputChannelIndex);
+}
+
+int AudioResource::getSourceChannel (int destChannelIndex) const
+{
+    return channelMapping->getSourceChannel(destChannelIndex);
+}
+

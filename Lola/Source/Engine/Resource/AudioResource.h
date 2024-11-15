@@ -27,6 +27,10 @@ class AudioSubGroup;
 class AudioRegion;
 class AudioChannel;
 
+namespace audium {
+    class ChannelMapping;
+}
+
 class AudioResource : public audium::Streamable
 {
     
@@ -79,19 +83,24 @@ public:
     int getChannelPosition() const;
     void setChannelPosition(int startChannel);
     bool deleteChannel(AudioChannel* channel);
-    
+    void decrementChannelMapping(int startChannelNumber);
+    const juce::Array<int> getChannelMapping() const;
+    int getRemappedOutputChannel (int outputChannelIndex) const;
+    int getSourceChannel (int destChannelIndex) const;
+
 private:
 
     AudioResourceContainer& owner;
     
     std::shared_ptr<AudioTrack> audioTrack;
     std::shared_ptr<AudioSubGroup> audioSubGroup;
-    std::vector<std::shared_ptr<AudioChannel>> audioChannels;
     
     juce::URL url;
     
     // used for file info
     std::unique_ptr<juce::AudioFormatReader> audioFormatReader;
+    
+    std::unique_ptr<audium::ChannelMapping> channelMapping;
     
     bool selected = false;
 

@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "795A8C6B56C5466E956406D2"
-               BuildableName = "install"
-               BlueprintName = "install"
-               ReferencedContainer = "container:_build/AUDIUM_TESTS.xcodeproj">
+               BlueprintIdentifier = "B22C4174AF7340E2BF516ABC"
+               BuildableName = "LolaTests"
+               BlueprintName = "LolaTests"
+               ReferencedContainer = "container:_build/Lola_Tests.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -38,7 +38,18 @@
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
-      allowLocationSimulation = "YES">
+      allowLocationSimulation = "YES"
+      viewDebuggingEnabled = "No">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "B22C4174AF7340E2BF516ABC"
+            BuildableName = "LolaTests"
+            BlueprintName = "LolaTests"
+            ReferencedContainer = "container:_build/Lola_Tests.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -46,15 +57,16 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <MacroExpansion>
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "795A8C6B56C5466E956406D2"
-            BuildableName = "install"
-            BlueprintName = "install"
-            ReferencedContainer = "container:_build/AUDIUM_TESTS.xcodeproj">
+            BlueprintIdentifier = "B22C4174AF7340E2BF516ABC"
+            BuildableName = "LolaTests"
+            BlueprintName = "LolaTests"
+            ReferencedContainer = "container:_build/Lola_Tests.xcodeproj">
          </BuildableReference>
-      </MacroExpansion>
+      </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

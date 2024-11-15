@@ -62,6 +62,7 @@ public:
                                                 juce::Component* existingComponentToUpdate) override
     {
     
+        // TODO: fixme
         auto audioSubGroup = playListItem->getRegion()->getAudioSubGroup();
         auto audioResource = audioSubGroup->getChannel(rowNumber);
         

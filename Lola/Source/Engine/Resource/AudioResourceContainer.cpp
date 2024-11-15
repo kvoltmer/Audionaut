@@ -109,7 +109,7 @@ void AudioResourceContainer::cleanup()
     audioResources.clear();
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroup(AudioTrack *track) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForTrack(AudioTrack *track) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
@@ -136,7 +136,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForGroupAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForTrackAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const
 {
     
     std::vector<std::shared_ptr<AudioResource>> result;
@@ -178,16 +178,19 @@ std::vector<std::shared_ptr<AudioTrack>> AudioResourceContainer::getAudioTracks(
     return result;
 }
 
-void AudioResourceContainer::onDeleteChannel(AudioChannel* channel)
+void AudioResourceContainer::onDeleteChannel(AudioTrack* audioTrack, AudioChannel* channel)
 {
     std::vector<std::shared_ptr<AudioResource>> resourcesToRemove;
     
     for (auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
     {
-        if (it->second->deleteChannel(channel))
+        if (it->first.get() == audioTrack)
         {
-            // no more channel mapping -> remove
-            resourcesToRemove.push_back(it->second);
+            if (it->second->deleteChannel(channel))
+            {
+                // no more channel mapping -> remove
+                resourcesToRemove.push_back(it->second);
+            }
         }
     }
     

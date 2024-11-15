@@ -37,12 +37,12 @@ void AudioTrack::cleanup()
 
 std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResources() const
 {
-    return audioResourceContainer.getAudioResourcesForGroup(const_cast<AudioTrack*>(this));
+    return audioResourceContainer.getAudioResourcesForTrack(const_cast<AudioTrack*>(this));
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const
 {
-    return audioResourceContainer.getAudioResourcesForGroupAtAbsoluteRange(const_cast<AudioTrack*>(this), rangeInSeconds);
+    return audioResourceContainer.getAudioResourcesForTrackAtAbsoluteRange(const_cast<AudioTrack*>(this), rangeInSeconds);
 }
 
 std::shared_ptr<AudioSubGroup> AudioTrack::getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const
@@ -362,13 +362,28 @@ bool AudioTrack::deleteSelectedObject(std::shared_ptr<audium::Selectable> object
 bool AudioTrack::deleteChannel(AudioChannel* channel) {
     
     bool result = false;
-    if (audioChannelContainer->objectExists(channel))
-    {
-        audioResourceContainer.onDeleteChannel(channel);
-        result = audioChannelContainer->deleteObject(channel);
-    }
 
-    // cleanup subgroups
+    if (audioChannelContainer->objectExists(channel)) {
+        auto channelNumber = channel->getChannelNumber();
+        
+        audioResourceContainer.onDeleteChannel(this, channel);
+        
+        if (audioChannelContainer->deleteObject(channel)) {
+            // change mapping
+            for (auto resource : getAudioResources())
+                resource->decrementChannelMapping(channelNumber);
+            
+            
+            // cleanup subgroups
+            deleteEmptySubGroups();
+        }
+    }
+    
+    return result;
+}
+
+void AudioTrack::deleteEmptySubGroups()
+{
     std::vector<std::shared_ptr<AudioSubGroup>> subGroupsToDelete;
     for (auto subGroup : audioSubGroupContainer->getObjects())
     {
@@ -382,8 +397,6 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
     {
         audioSubGroupContainer->deleteObject(item.get());
     }
-    
-    return result;
 }
 
 bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,

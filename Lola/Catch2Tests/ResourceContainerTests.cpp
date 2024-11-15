@@ -2,7 +2,7 @@
 
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/Factory/AudioTrackFactory.h"
 
 SCENARIO("resource container scenario", "[engine][resource][container]")
 {
@@ -16,12 +16,12 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
     GIVEN("the AudioResourceContainer")
     {
         auto resourceContainer  = engine->getAudioResourceContainer();
-        auto groupContainer  = engine->getAudioGroupContainer();
+        auto groupContainer  = engine->getAudioTrackContainer();
         int numResources = 10;
         
         WHEN("adding audio resources without any group provided")
         {
-            auto group = AudioGroupFactory::createAudioGroup(*groupContainer, resourceContainer);
+            auto group = AudioTrackFactory::createAudioTrack(*groupContainer, resourceContainer);
             auto subGroup = group->createNewAudioSubGroup(0.0, audium::clocks);
             for (int i = 0; i < numResources; i++)
             {
@@ -30,7 +30,7 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
             
             THEN("there must be 1 group that contains all resources")
             {
-                auto groups = resourceContainer->getAudioGroups();
+                auto groups = resourceContainer->getAudioTracks();
                 //REQUIRE( groups.size() == 1 );
                 
                 //auto resources = resourceContainer->getAudioResourcesForGroup(groups[0].get());
@@ -45,19 +45,19 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
         WHEN("adding 2 groups with numResources each")
         {
             
-//            auto group1 = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
+//            auto group1 = AudioTrackFactory::createAudioTrack(*resourceContainer, *regionContainer);
 //            auto subGroup1 = group1->createNewAudioSubGroup();
 //            for (int i = 0; i < numResources; i++)
 //                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group1, subGroup1);
 //            
-//            auto group2 = AudioGroupFactory::createAudioGroup(*resourceContainer, *regionContainer);
+//            auto group2 = AudioTrackFactory::createAudioTrack(*resourceContainer, *regionContainer);
 //            auto subGroup2 = group2->createNewAudioSubGroup();
 //            for (int i = 0; i < numResources; i++)
 //                resourceContainer->addAudioResource(juce::URL(inFile), *engine, group2, subGroup2);
 //            
 //            THEN("we get 2 groups ")
 //            {
-//                auto groups = resourceContainer->getAudioGroups();
+//                auto groups = resourceContainer->getAudioTracks();
 //                REQUIRE(groups.size() == 2);
 //                
 //                for (auto group : groups)
@@ -70,11 +70,11 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
 //            }
 //            
 //            
-//            resourceContainer->deleteAudioGroup(0);
+//            resourceContainer->deleteAudioTrack(0);
 //            
 //            THEN("group2 10 left")
 //            {
-//                auto groups = resourceContainer->getAudioGroups();
+//                auto groups = resourceContainer->getAudioTracks();
 //                REQUIRE(groups.size() == 1);
 //                
 //                REQUIRE( resourceContainer->getNumAudioResources() == numResources );

@@ -57,15 +57,15 @@ public:
     
     void cleanup();
     
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroup(AudioTrack *track) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForTrack(AudioTrack *track) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForSubGroup(const AudioSubGroup *subGroup) const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForGroupAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForTrackAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const;
 
     std::shared_ptr<AudioTrack> getAudioTrackForResource(std::shared_ptr<AudioResource> resource) const;
     
     std::vector<std::shared_ptr<AudioTrack>> getAudioTracks() const;
         
-    void onDeleteChannel(AudioChannel* channel);
+    void onDeleteChannel(AudioTrack* audioTrack, AudioChannel* channel);
         
     std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
     std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }

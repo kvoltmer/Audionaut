@@ -129,7 +129,7 @@ public:
     std::shared_ptr<AudioChannel> addChannel();
     std::shared_ptr<AudioChannel> getChannel(int channelNumber) const;
     bool deleteChannel(AudioChannel* channel);
-    
+    void deleteEmptySubGroups();
     
     bool addAudioFiles(const juce::StringArray& filenames,
                        double positionClocks,
