@@ -90,7 +90,12 @@ public:
             const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
             const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
             
-            const auto channel = rowNumber - audioResource->getChannelPosition();
+            //const auto channel = rowNumber - audioResource->getChannelPosition();
+            
+            /// TODO: fixme!
+            //const auto channel = rowNumber - audioResource->getRemappedOutputChannel(0);
+            const auto channel = audioResource->getSourceChannel(rowNumber);
+            
             if (channel >= 0 && channel < audioResource->getNumChannels())
             {
                 audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, channel, verticalZoomFactor);

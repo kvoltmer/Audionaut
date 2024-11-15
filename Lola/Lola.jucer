@@ -165,6 +165,10 @@
                 file="Source/Engine/Resource/AudioResourceContainer.h"/>
           <FILE id="MR7guu" name="AudioResourceData.h" compile="0" resource="0"
                 file="Source/Engine/Resource/AudioResourceData.h"/>
+          <FILE id="h0LKN6" name="ChannelMapping.cpp" compile="1" resource="0"
+                file="Source/Engine/Resource/ChannelMapping.cpp"/>
+          <FILE id="BMWUaX" name="ChannelMapping.h" compile="0" resource="0"
+                file="Source/Engine/Resource/ChannelMapping.h"/>
         </GROUP>
         <GROUP id="{71D24ABD-A319-5DE9-E24C-2AE51F6F1A35}" name="Undo">
           <FILE id="S8P8ar" name="UndoableContainerAction.h" compile="0" resource="0"
