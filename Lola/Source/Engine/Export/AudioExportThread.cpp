@@ -13,7 +13,7 @@
 
 using namespace juce;
 
-void AudioExportThread::bounceToFile(audium::ExportAudioConfig &config)
+void AudioExportThread::bounceToFile(audium::ExportAudioConfig &config_)
 {
     audiumEngine.setBypass(true);
     audiumEngine.getPlayListScheduler()->prepareToPlay(config.blockSize, config.sampleRate);
@@ -26,7 +26,7 @@ void AudioExportThread::bounceToFile(audium::ExportAudioConfig &config)
         const StringPairArray metadata;
         WavAudioFormat wav;
         std::unique_ptr<AudioFormatWriter> writer (wav.createWriterFor (outStream.get(), config.sampleRate,
-                                                                        config.numChannels, config.bitDepth,
+                                                                        (unsigned int)config_.numChannels, config_.bitDepth,
                                                                         metadata, 0));
         if (writer != nullptr)
         {
@@ -44,9 +44,11 @@ void AudioExportThread::bounceToFile(audium::ExportAudioConfig &config)
     }
     
     // change back to device settings
-    auto device = audiumEngine.getAudioDeviceManager()->getCurrentAudioDevice();
-    auto numSamples = device->getCurrentBufferSizeSamples();
-    auto sampleRate = device->getCurrentSampleRate();
-    audiumEngine.getPlayListScheduler()->prepareToPlay(numSamples, sampleRate);
+    if (auto device = audiumEngine.getAudioDeviceManager()->getCurrentAudioDevice())
+    {
+        auto numSamples = device->getCurrentBufferSizeSamples();
+        auto sampleRate = device->getCurrentSampleRate();
+        audiumEngine.getPlayListScheduler()->prepareToPlay(numSamples, sampleRate);
+    }
     audiumEngine.setBypass(false);
 }

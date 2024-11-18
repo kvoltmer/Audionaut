@@ -13,46 +13,40 @@
 #include <atomic>
 #include <cassert>
 
-// This call not used anywhere.
+namespace audium
+{
+
 class SampleTimer {
-    
     
 public:
     SampleTimer() = default;
     
     // returns true once timer is due
-    bool process(int numSamples, int& offset)
-    {
-        if (active)
-        {
-            if (sampleCounter - numSamples < 0)
-            {
+    bool process(int numSamples, int& offset) {
+        if (active) {
+            if (sampleCounter - numSamples <= 0) {
                 offset = sampleCounter;
                 sampleCounter = 0;
                 active = false;
                 return true;
             }
-            else
-            {
+            else {
                 sampleCounter -= numSamples;
             }
         }
         return false;
     }
-
-    void schedule(int numSamples = 0)
-    {
+    
+    void schedule(int numSamples = 0) {
         sampleCounter = numSamples;
         active = true;
     }
     
-    void invalidate()
-    {
+    void invalidate() {
         active = false;
     }
     
-    bool isActive() const noexcept
-    {
+    bool isActive() const noexcept {
         return active;
     }
     
@@ -60,3 +54,5 @@ private:
     int sampleCounter = 0;
     std::atomic<bool> active = false;
 };
+
+} // namespace audium
