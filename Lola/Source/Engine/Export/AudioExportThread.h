@@ -17,37 +17,23 @@
 class AudioExportThread  : public juce::ThreadWithProgressWindow
 {
 public:
-    AudioExportThread(AudiumEngine &audiumEngine,
-                      audium::ExportAudioConfig &config) :
+    AudioExportThread(AudiumEngine &audiumEngine_,
+                      audium::ExportAudioConfig &config_) :
         juce::ThreadWithProgressWindow ("exporting...", true, true),
-        audiumEngine(audiumEngine),
-        config(config)
+        audiumEngine(audiumEngine_),
+        config(config_)
     {
     }
 
     void run()
     {
-//        auto thingsToDo = 100;
-//        for (int i = 0; i < thingsToDo; ++i)
-//        {
-//            // must check this as often as possible, because this is
-//            // how we know if the user's pressed 'cancel'
-//            if (threadShouldExit())
-//                break;
-//
-//            // this will update the progress bar on the dialog box
-//            setProgress (i / (double) thingsToDo);
-//
-//
-//            //   ... do the business here...
-//        }
         bounceToFile(config);
     }
     
-private:
     
     void bounceToFile(audium::ExportAudioConfig &config);
 
+private:
     
     AudiumEngine &audiumEngine;
     audium::ExportAudioConfig &config;

@@ -10,7 +10,7 @@
 
 #include "TransportSourceContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "AudiumTransportSource.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Group/AudioTrack.h"
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(AudioResource& audioResource,
@@ -91,6 +91,7 @@ void TransportSourceContainer::getNextAudioBlock(const juce::AudioSourceChannelI
         
     // avoid reallocating
     audioBusBuffer.setSize(info.buffer->getNumChannels(), info.numSamples, false, false, true);
+    audioBusBuffer.clear();
     juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
     
     for (auto transportSource : audioTransportSources) {

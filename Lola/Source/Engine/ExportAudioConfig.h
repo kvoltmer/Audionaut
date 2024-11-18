@@ -21,6 +21,7 @@ struct ExportAudioConfig {
     double sampleRate       = 44100;
     int blockSize           = 1024;
     int numChannels         = 2;
+    double positionSeconds  = 0.0;
     juce::File fileName;
     
     double progress = 0.0;

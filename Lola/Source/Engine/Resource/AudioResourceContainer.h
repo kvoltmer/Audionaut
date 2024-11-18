@@ -24,14 +24,14 @@ class AudiumEngine;
 class AudioResourceContainer :  public juce::ActionBroadcaster
 {
 public:
-    AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager,
-                           std::shared_ptr<juce::AudioFormatManager> formatManager,
-                           std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache,
-                           std::shared_ptr<TempoProvider> tempoProvider) :
-        audioDeviceManager(audioDeviceManager),
-        formatManager(formatManager),
-        audioThumbnailCache(audioThumbnailCache),
-        tempoProvider(tempoProvider)
+    AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager_,
+                           std::shared_ptr<juce::AudioFormatManager> formatManager_,
+                           std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache_,
+                           std::shared_ptr<TempoProvider> tempoProvider_) :
+        audioDeviceManager(audioDeviceManager_),
+        formatManager(formatManager_),
+        audioThumbnailCache(audioThumbnailCache_),
+        tempoProvider(tempoProvider_)
     {
         formatManager->registerBasicFormats();
         thread.startThread();

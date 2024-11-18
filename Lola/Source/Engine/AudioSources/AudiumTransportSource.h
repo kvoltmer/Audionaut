@@ -26,7 +26,7 @@ public:
     AudiumTransportSource(AudioResource& audioResource,
                           std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     
-    ~AudiumTransportSource()
+    ~AudiumTransportSource() override
     {
         audioTransportSource->setSource(nullptr);
     }
@@ -44,12 +44,12 @@ public:
         if (startSample == 0)
         {
             audioTransportSource->setPosition(newPosition);
-            if (!audioTransportSource->isPlaying())
-                audioTransportSource->start();
+//            if (!audioTransportSource->isPlaying())
+//                audioTransportSource->start();
         }
         else
         {
-            scheduledSample.store(startSample);
+            scheduledStartSample.store(startSample);
             scheduledPosition = newPosition;
         }
     }
@@ -82,6 +82,10 @@ public:
     
     std::shared_ptr<audium::AudioTransportSource> getAudioTransportSource() const { return audioTransportSource; }
     
+#if CATCH2_TESTS
+    int64 samplesProcessed = 0;
+#endif
+    
 private:
     
     
@@ -90,11 +94,11 @@ private:
     std::atomic<float> outputLevel[MAX_AUDIO_FILE_CHANNELS];
     
     // the sample position where the position change should happen
-    std::atomic<int> scheduledSample = 0;
+    std::atomic<int> scheduledStartSample = 0;
     // the scheduled position change
     std::atomic<double> scheduledPosition = 0.0;
     
-    SampleTimer durationTimer;
+    audium::SampleTimer durationTimer;
     
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     

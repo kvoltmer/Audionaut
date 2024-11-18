@@ -30,30 +30,30 @@ class PlayListScheduler : public juce::ChangeListener
     
     
 public:
-    PlayListScheduler(std::shared_ptr<AudioTrackContainer> audioTrackContainer,
-                      std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                      std::shared_ptr<TempoProvider> tempoProvider,
-                      std::shared_ptr<audium::LinkEngine> linkEngine,
-                      std::shared_ptr<AudioClipContainer> audioClipContainer,
-                      std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
-        audioTrackContainer(audioTrackContainer),
-        audioResourceContainer(audioResourceContainer),
-        tempoProvider(tempoProvider),
-        linkEngine(linkEngine),
-        audioClipContainer(audioClipContainer),
-        transportSourceContainer(transportSourceContainer)
+    PlayListScheduler(std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
+                      std::shared_ptr<AudioResourceContainer> audioResourceContainer_,
+                      std::shared_ptr<TempoProvider> tempoProvider_,
+                      std::shared_ptr<audium::LinkEngine> linkEngine_,
+                      std::shared_ptr<AudioClipContainer> audioClipContainer_,
+                      std::shared_ptr<TransportSourceContainer> transportSourceContainer_) :
+        audioTrackContainer(audioTrackContainer_),
+        audioResourceContainer(audioResourceContainer_),
+        tempoProvider(tempoProvider_),
+        linkEngine(linkEngine_),
+        audioClipContainer(audioClipContainer_),
+        transportSourceContainer(transportSourceContainer_)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
         
         audioTrackContainer->addChangeListener(this);
     }
     
-    ~PlayListScheduler()
+    ~PlayListScheduler() override
     {
         audioTrackContainer->removeChangeListener(this);
     }
     
-    void changeListenerCallback (juce::ChangeBroadcaster* source) override
+    void changeListenerCallback (juce::ChangeBroadcaster*) override
     {
         commitPlayListData();
     }

@@ -74,7 +74,7 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
             
             // we failed to read :(
             cleanup();
-            NullCheckedInvocation::invoke (callback, false, "");
+            NullCheckedInvocation::invoke (callback, false, "unknown error");
             
         }
     }

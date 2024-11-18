@@ -13,10 +13,10 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
 
-AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource,
-                      std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource) :
-    audioResource(audioResource),
-    audioFormatReaderSource(audioFormatReaderSource)
+AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource_,
+                      std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
+    audioResource(audioResource_),
+    audioFormatReaderSource(audioFormatReaderSource_)
 {
     // the transport source
     audioTransportSource = std::make_shared<audium::AudioTransportSource>();
@@ -35,7 +35,7 @@ AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource,
                                      readAheadBufferSize,
                                      readAheadThread,
                                      audioFormatReaderSource->getAudioFormatReader()->sampleRate,
-                                     audioFormatReaderSource->getAudioFormatReader()->numChannels);
+                                     static_cast<int>(audioFormatReaderSource->getAudioFormatReader()->numChannels));
     
     // the channel remapping source
     channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(audioTransportSource.get(), false);
@@ -58,35 +58,40 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         std::cout << "waitForNextAudioBlockReady" << std::endl;
     }
     
-    if (scheduledSample == 0)
+    if (scheduledStartSample.load() == 0)
     {
-        mainSource->getNextAudioBlock(info);
-        
         auto offset = 0;
         if (durationTimer.process(info.numSamples, offset))
         {
+            AudioSourceChannelInfo infoStop (info);
+            infoStop.numSamples = offset;
+            mainSource->getNextAudioBlock(infoStop);
             stopIt();
+        }
+        else
+        {
+            mainSource->getNextAudioBlock(info);
         }
     }
     else
     {
-        auto startSample = scheduledSample.load();
-        scheduledSample.store(0);
-        
-        // process 1st part
-        juce::AudioSourceChannelInfo infoPart1 (info.buffer, 0, startSample);
-        mainSource->getNextAudioBlock(infoPart1);
+        auto startSample = scheduledStartSample.load();
+        scheduledStartSample.store(0);
+        jassert(startSample < info.numSamples);
         
         audioTransportSource->setPosition(scheduledPosition.load());
-        //std::cout << "scheduledPosition " << scheduledPosition.load() << std::endl;
-     
-        // workaround. TODO: re-implement juce transportsource
-        if (not audioTransportSource->isPlaying())
-            audioTransportSource->start();
         
         // process 2nd part
-        juce::AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
+        AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
         mainSource->getNextAudioBlock(infoPart2);
+        
+        auto offset = 0;
+        if (durationTimer.process(infoPart2.numSamples, offset))
+        {
+            jassertfalse; // hu?
+            stopIt();
+        }
+        
     }
     
     // We need the number of channels of the actual file.
@@ -95,13 +100,18 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
     {
         outputLevel[i] = info.buffer->getMagnitude(i, info.startSample, info.numSamples);
     }
+    
+#if CATCH2_TESTS
+    samplesProcessed += info.numSamples;
+#endif
 }
 
 void AudiumTransportSource::applyChannelMapping()
 {
     auto totalChannels = audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels();
-    if (audioResource.getNumChannels() > totalChannels)
-        totalChannels = audioResource.getNumChannels();
+    auto audioFileChannels = static_cast<int>(audioResource.getNumChannels());
+    if (audioFileChannels > totalChannels)
+        totalChannels = audioFileChannels;
     
     channelRemapping->setNumberOfChannelsToProduce(totalChannels);
     
