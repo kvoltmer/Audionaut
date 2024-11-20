@@ -24,7 +24,7 @@ public:
         jassert(objects.size() == 0);
     }
     
-    std::vector<std::shared_ptr<ElementType>> getObjects() const { return objects; }
+    const std::vector<std::shared_ptr<ElementType>> &getObjects() const { return objects; }
     
     bool deleteObject(ElementType* object) {
         auto it = std::find_if(objects.begin(), objects.end(), [object](const auto& item) {

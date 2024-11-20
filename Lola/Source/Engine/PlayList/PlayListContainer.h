@@ -73,6 +73,7 @@ public:
     bool deletePlayListItem(PlayListItem* playListItem);
 
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
+    bool exitsInPlayList(const AudioRegion* audioRegion);
     
     const std::vector<std::shared_ptr<PlayListItem>> getPlayListItems() const;
     int getNumItems(std::shared_ptr<AudioTrack> track = nullptr) const;

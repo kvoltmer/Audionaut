@@ -32,6 +32,7 @@ namespace CommandIDs
         createRegion            = 0x300060,
         autoEdit                = 0x300061,
         duplicate               = 0x300062,
+        cleanupRegions          = 0x300063,
 
         enableSnapToGrid        = 0x300070,
         zoomIn                  = 0x300071,

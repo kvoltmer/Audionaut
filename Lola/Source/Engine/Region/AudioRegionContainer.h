@@ -51,6 +51,8 @@ public:
     void deleteAudioRegion(std::shared_ptr<AudioRegion> region);
     bool deleteAudioRegion(AudioRegion* region);
     void deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup);
+    void deleteUnusedRegions();
+    void sortRegionIds();
 
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const;
     

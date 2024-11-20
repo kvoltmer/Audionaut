@@ -163,9 +163,6 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
             }
         }
     }
-    // clear selection
-    selectedPositionClocks = juce::Range<double>();
-    
     
     // Undo: store new state
     action->storeNewState();

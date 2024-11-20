@@ -34,8 +34,7 @@ public:
         playListTableListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(playListTableListBox.get());
         
-        auto playListName = "Playlist - " + track->getName();
-        playListTableListBox->getHeader().addColumn (playListName, 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        playListTableListBox->getHeader().addColumn (track->getName(), 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
         playListTableListBox->getHeader().setStretchToFitActive (true);
         playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, track->getColour());
         playListTableListBox->setHeaderHeight(25);

@@ -46,7 +46,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
                                                                     subGroup,
                                                                     tempoProvider,
                                                                     track->getSelectionManager()));
-    audioRegion->data.id = static_cast<int>(audioRegions.size());
+    audioRegion->data.region_id = static_cast<int>(audioRegions.size());
     audioRegions.push_back(audioRegion);
     return audioRegion;
 }
@@ -84,7 +84,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) cons
 {
     if (rowNumber >= 0 && rowNumber < audioRegions.size())
     {
-        jassert(audioRegions[rowNumber]->data.id == rowNumber);
+        jassert(audioRegions[rowNumber]->data.region_id == rowNumber);
         return audioRegions[rowNumber];
     }
     return nullptr;
@@ -93,17 +93,15 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) cons
 int AudioRegionContainer::getRegionId(std::shared_ptr<AudioRegion> searchRegion) const
 {
     auto it = std::find(audioRegions.begin(), audioRegions.end(), searchRegion);
-    if (it == audioRegions.end())
-    {
-        jassertfalse;
-        return -1; // not found
-    }
-    else
+    if (it != audioRegions.end())
     {
         auto index = std::distance(audioRegions.begin(), it);
-        jassert(audioRegions[index]->data.id == index);
+        jassert(audioRegions[index]->data.region_id == index);
         return static_cast<int>(index);
     }
+    
+    jassertfalse;
+    return -1; // not found
 }
 
 int AudioRegionContainer::getNumRegions(const AudioTrack* track) const
@@ -158,12 +156,37 @@ bool AudioRegionContainer::deleteAudioRegion(AudioRegion* region) {
     if (it != audioRegions.end()) {
         region->deleteAssociatedItems();
         audioRegions.erase(it);
+        sortRegionIds();
         return true;
     }
+    
 
     return false;
 }
 
+void AudioRegionContainer::deleteUnusedRegions()
+{
+    std::vector<std::shared_ptr<AudioRegion>> deleteList;
+    for (auto region : audioRegions) {
+        if (not region->getAudioTrack()->getPlayListContainer()->exitsInPlayList(region.get())) {
+            deleteList.push_back(region);
+        }
+    }
+    
+    for (auto region : deleteList) {
+        std::cout << "delete: " << region->getAudioTrack()->getName() << " " << region->getName() << std::endl;
+        deleteAudioRegion(region);
+    }
+    
+}
+
+void AudioRegionContainer::sortRegionIds()
+{
+    auto counter = 0;
+    for (auto region : audioRegions) {
+        region->data.region_id = counter++;
+    }
+}
 
 std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const
 {

@@ -167,14 +167,14 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
         }
         else
         {
-            region = getAudioTrack().getAudioRegionContainer()->getRegion(data.id);
+            region = getAudioTrack().getAudioRegionContainer()->getRegion(data.region_id);
         }
         jassert(region);
-        auto old_id = region->data.id;
+        auto old_id = region->data.region_id;
         // assign data
         region->data = data;
         // keep old id
-        region->data.id = old_id;
+        region->data.region_id = old_id;
     }
     
     return true;
