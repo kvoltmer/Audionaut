@@ -142,7 +142,23 @@ bool PlayListContainer::deleteAssociatedItems(const AudioRegion* audioRegion)
             success = true;
         }
     }
+    
+//    for (auto item : playListItems.getObjects())
+//    {
+//        item->
+//    }
+    
+    
     return success;
+}
+
+bool PlayListContainer::exitsInPlayList(const AudioRegion* region)
+{
+    auto it = std::find_if(playListItems.getObjects().begin(), playListItems.getObjects().end(), [region](const auto& item) {
+        return item->getRegion().get() == region;
+    });
+    
+    return it != playListItems.getObjects().end();
 }
 
 const std::vector<std::shared_ptr<PlayListItem>> PlayListContainer::getPlayListItems() const

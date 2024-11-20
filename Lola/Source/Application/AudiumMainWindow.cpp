@@ -93,6 +93,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::playStop,
         CommandIDs::loopPlayList,
         CommandIDs::createRegion,
+        CommandIDs::cleanupRegions,
         CommandIDs::autoEdit,
         CommandIDs::bounceProject,
         CommandIDs::duplicate,
@@ -133,6 +134,9 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case CommandIDs::createRegion:
             result.setInfo ("Create Region", "Creates a new region", CommandCategories::editing, 0);
             result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::cleanupRegions:
+            result.setInfo ("Delete Unused Regions", "Deletes all unused regions", CommandCategories::editing, 0);
             break;
         case CommandIDs::autoEdit:
             result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
@@ -239,6 +243,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             if (newRegionDialog == nullptr)
                 newRegionDialog = std::make_unique<NewRegionDialog>();
             newRegionDialog->createNewRegion(getEngine());
+            break;
+        case CommandIDs::cleanupRegions:
+            getEngine()->getAudioTrackContainer()->deleteUnusedRegions();
             break;
         case CommandIDs::autoEdit:
             if (autoEditDialog == nullptr)

@@ -57,6 +57,7 @@ public:
     bool deleteAudioTrack(AudioTrack* track);
     bool deleteAudioTrack(std::shared_ptr<AudioTrack> track);
     void deleteSelectedObjects();
+    void deleteUnusedRegions();
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;

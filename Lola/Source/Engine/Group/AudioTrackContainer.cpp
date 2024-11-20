@@ -135,6 +135,21 @@ void AudioTrackContainer::deleteSelectedObjects()
     
 }
 
+void AudioTrackContainer::deleteUnusedRegions()
+{
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(*this);
+
+    for (auto track : audioTracks) {
+        track->getAudioRegionContainer()->deleteUnusedRegions();
+    }
+    
+    // Undo: store new state and perform
+    action->storeNewState();
+    undoManager->perform(action.release(), "Delete Unused Regions");
+    undoManager->beginNewTransaction();
+}
+
 bool AudioTrackContainer::writeToStream (juce::OutputStream& outputStream)
 {
     return audium::Streamable::writeToStream(outputStream);

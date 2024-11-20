@@ -44,8 +44,6 @@ public:
         if (startSample == 0)
         {
             audioTransportSource->setPosition(newPosition);
-//            if (!audioTransportSource->isPlaying())
-//                audioTransportSource->start();
         }
         else
         {
