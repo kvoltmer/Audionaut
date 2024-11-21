@@ -35,7 +35,7 @@ public:
         owner(owner),
         audioTrackContainer(audioTrackContainer)
     {
-        setEditable (false, true, true);
+        setEditable (false, true, false);
         update (columnId, rowNumber, false);
         setFont (juce::FontOptions (13.00f));
         addListener(this);
