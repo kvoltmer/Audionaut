@@ -22,6 +22,7 @@ public:
     void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
     bool isInterestedInFileDrag (const juce::StringArray& /*files*/) override { return true; }
     void fileDragEnter (const juce::StringArray& files, int x, int y) override;
+    void fileDragMove (const StringArray& files, int x, int y) override;
     void fileDragExit (const juce::StringArray& files) override;
     
     void setNewGroupColour(std::shared_ptr<AudioTrack> track);
