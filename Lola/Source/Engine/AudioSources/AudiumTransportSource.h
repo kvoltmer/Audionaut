@@ -64,15 +64,6 @@ public:
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override;
     
-    float getOutputLevel(int channel) const
-    {
-        if (channel >= 0 &&
-            channel < MAX_AUDIO_FILE_CHANNELS)
-        {
-            return outputLevel[channel].load();
-        }
-        return 0.f;
-    }
     
     AudioResource& getAudioResource() const { return audioResource; }
     
@@ -88,9 +79,7 @@ private:
     
     
     AudioResource& audioResource;
-    
-    std::atomic<float> outputLevel[MAX_AUDIO_FILE_CHANNELS];
-    
+        
     // the sample position where the position change should happen
     std::atomic<int> scheduledStartSample = 0;
     // the scheduled position change
