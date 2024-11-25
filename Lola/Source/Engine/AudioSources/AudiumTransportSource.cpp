@@ -94,13 +94,6 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         
     }
     
-    // We need the number of channels of the actual file.
-    auto numAudioFileChannels = (int)audioResource.getNumChannels();
-    for (auto i = 0; i < std::min(info.buffer->getNumChannels(), numAudioFileChannels); i++)
-    {
-        outputLevel[i] = info.buffer->getMagnitude(i, info.startSample, info.numSamples);
-    }
-    
 #if CATCH2_TESTS
     samplesProcessed += info.numSamples;
 #endif
