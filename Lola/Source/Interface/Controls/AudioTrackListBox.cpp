@@ -95,3 +95,16 @@ void AudioTrackListBox::fileDragExit (const juce::StringArray& files)
     setColour(ListBox::backgroundColourId, juce::Colours::transparentBlack);
     repaint();
 }
+
+
+void AudioTrackListBox::resized()
+{
+    // call base class
+    audium::ListBox::resized();
+    
+    
+//    auto bounds = getLocalBounds();
+//    auto contentBounds = getViewport()->getViewedComponent()->getBounds();
+//    std::cout << contentBounds.getHeight() << std::endl;
+//    std::cout << bounds.getHeight() << std::endl;
+}

@@ -342,7 +342,11 @@ public:
             //newH += owner.model->getRowHeight(r);
         }
         
-        
+        if (owner.model != nullptr)
+        {
+            // add space for drag & drop
+            newH += owner.model->getExtraSpaceAtBottom();
+        }
 
         if (newY + newH < getMaximumVisibleHeight() && newH > getMaximumVisibleHeight())
             newY = getMaximumVisibleHeight() - newH;
@@ -1298,5 +1302,6 @@ String ListBoxModel::getTooltipForRow (int)                             { return
 MouseCursor ListBoxModel::getMouseCursorForRow (int)                    { return MouseCursor::NormalCursor; }
 // kvo
 int ListBoxModel::getRowHeight (int rowNumber) const { return 10; }
+int ListBoxModel::getExtraSpaceAtBottom() const { return 0; }
 
 } // namespace audium

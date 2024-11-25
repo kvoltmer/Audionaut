@@ -108,6 +108,7 @@ public:
             {
                 channelsComponent->setVerticalScrollOffset(arrangementComponent->getVerticalScrollOffset());
             }
+    
         }
         else if (context == ForceRebuildContext)
         {
