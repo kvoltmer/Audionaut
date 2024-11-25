@@ -26,6 +26,8 @@ public:
     
     void setNewGroupColour(std::shared_ptr<AudioTrack> track);
     
+    void resized() override;
+    
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;

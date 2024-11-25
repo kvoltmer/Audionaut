@@ -6,6 +6,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
 #include "Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 int AudioTrackListBoxModel::getNumRows()
 {
@@ -87,4 +88,9 @@ void AudioTrackListBoxModel::selectedRowsChanged (int lastRowSelected)
     auto selectedRows = owner->getSelectedRows();
     audiumEngine->getAudioTrackContainer()->setSelectedRows(selectedRows);
     audiumEngine->getAudioTrackContainer()->sendActionMessage(updateAll);
+}
+
+int AudioTrackListBoxModel::getExtraSpaceAtBottom() const
+{
+    return AudiumLookAndFeel::extraSpaceAtBottom;
 }

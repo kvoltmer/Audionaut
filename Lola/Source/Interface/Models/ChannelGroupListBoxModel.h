@@ -11,7 +11,7 @@
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Controls/AudioTrackListBox.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelGroupComponent.h"
-
+#include "Interface/AudiumLookAndFeel.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
 class ChannelGroupListBoxModel : public audium::ListBoxModel {
@@ -103,6 +103,11 @@ public:
     
     void selectedRowsChanged (int lastRowSelected) override
     {
+    }
+    
+    int getExtraSpaceAtBottom() const override
+    {
+        return AudiumLookAndFeel::extraSpaceAtBottom;
     }
         
 private:

@@ -48,7 +48,7 @@ public:
     static const int dragZoomControlHeight = 25;
     static const int transportPositionControlHeight = 25;
     static const float labelFontSize;
-    
+    static const int extraSpaceAtBottom = 200;
 private:
     void setupColours();
 };

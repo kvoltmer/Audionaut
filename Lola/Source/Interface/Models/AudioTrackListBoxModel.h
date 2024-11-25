@@ -55,7 +55,7 @@ public:
     
     void selectedRowsChanged (int lastRowSelected) override;
     
-
+    int getExtraSpaceAtBottom() const override;
         
 private:
     std::shared_ptr<AudioTrackListBox> owner;
