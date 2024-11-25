@@ -10,6 +10,7 @@
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
+#include "Interface/Handlers/SnapToGridHandler.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
 
@@ -59,7 +60,8 @@ void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mo
         setNewGroupColour(audioTrack);
                 
         auto position = zoomHandler->xToClocks(mouseX);
-
+        zoomHandler->snapToGrid(position);
+        
         bool arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
 
         std::function<void (std::string)> callback = [](std::string error) {
@@ -90,9 +92,20 @@ void AudioTrackListBox::fileDragEnter (const juce::StringArray& files, int x, in
     setColour(ListBox::backgroundColourId, findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.5f));
     repaint();
 }
+
+void AudioTrackListBox::fileDragMove (const StringArray& files, int x, int y)
+{
+    auto start = zoomHandler->xToClocks(x);
+    auto end = start + 0.01;
+    Range<double> rangeInClocks(start, end);
+    
+    zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
+}
+
 void AudioTrackListBox::fileDragExit (const juce::StringArray& files)
 {
     setColour(ListBox::backgroundColourId, juce::Colours::transparentBlack);
+    zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
 }
 
