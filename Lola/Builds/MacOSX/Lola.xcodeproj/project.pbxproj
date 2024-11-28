@@ -92,6 +92,7 @@
 		E6C80767828DC715C269562F /* Cocoa.framework */ = {isa = PBXBuildFile; fileRef = 6373A60BC5F852259A3F5976; };
 		E7545CCAEB8945B676D67DF6 /* include_juce_audio_processors_ara.cpp */ = {isa = PBXBuildFile; fileRef = 104BFF64B92517E032E9A097; };
 		E87B67A6D7DDC0765008F70B /* include_juce_graphics.mm */ = {isa = PBXBuildFile; fileRef = 7E08ED9600CBA2E3D9B1D88F; };
+		E920083CC268F888B5B80BF2 /* DraggerControl.cpp */ = {isa = PBXBuildFile; fileRef = 72EF955B126DC0797C0BA924; };
 		E9EB3C5D6E72B5E2028AADF8 /* App */ = {isa = PBXBuildFile; fileRef = 65EE5B24CA6AA1915694E01E; };
 		F687ABFD320ED8F7494336AB /* AudioRegionView.cpp */ = {isa = PBXBuildFile; fileRef = 80A7607D4A9CE5B5D5107580; };
 		F6DB9E50FB9B911D1D30AA15 /* PlayListScheduler.cpp */ = {isa = PBXBuildFile; fileRef = 5FD6D72AF76F4D6569EBD29F; };
@@ -200,6 +201,7 @@
 		6ED79F6C594EFFE31DB3C689 /* SelectableObjectContainer.h */ /* SelectableObjectContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SelectableObjectContainer.h; path = ../../Source/Engine/Selection/SelectableObjectContainer.h; sourceTree = SOURCE_ROOT; };
 		6F75568B0D072582C1F4CE0A /* RegionTableListBox.h */ /* RegionTableListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionTableListBox.h; path = ../../Source/Interface/Controls/RegionTableListBox.h; sourceTree = SOURCE_ROOT; };
 		71508ADE3ED7A1FDC3FD454B /* AudioResource.cpp */ /* AudioResource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioResource.cpp; path = ../../Source/Engine/Resource/AudioResource.cpp; sourceTree = SOURCE_ROOT; };
+		72EF955B126DC0797C0BA924 /* DraggerControl.cpp */ /* DraggerControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DraggerControl.cpp; path = ../../Source/Interface/Controls/DraggerControl.cpp; sourceTree = SOURCE_ROOT; };
 		7374848A55ED5FE1AFE36B05 /* DspClip.cpp */ /* DspClip.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DspClip.cpp; path = ../../Source/Engine/Core/DspClip.cpp; sourceTree = SOURCE_ROOT; };
 		75AE15142944F2F4928340F7 /* ChannelMapping.h */ /* ChannelMapping.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelMapping.h; path = ../../Source/Engine/Resource/ChannelMapping.h; sourceTree = SOURCE_ROOT; };
 		78220737D71F4A95C1825E8A /* PlayListItem.cpp */ /* PlayListItem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListItem.cpp; path = ../../Source/Engine/PlayList/PlayListItem.cpp; sourceTree = SOURCE_ROOT; };
@@ -721,6 +723,7 @@
 				2133E7BD10D0BFDBA72C207E,
 				4DF301F0CAEBC41ABA382935,
 				AEE072B655D55449FF8D5C45,
+				72EF955B126DC0797C0BA924,
 				6BBAA6DFE177CD89EB2B263E,
 				D086E09B1C51205513609A0B,
 				580F0546329F53D3275E4369,
@@ -1058,6 +1061,7 @@
 				3775D900697B541067876134,
 				63AE7E83398F33BA6144FBD5,
 				3CC8732FBE5A8FEFD49D5D4B,
+				E920083CC268F888B5B80BF2,
 				E4B83AB0CD765FE9A893B841,
 				43269E7B8FA7BF40B55404E1,
 				9AA5ACB43D75D718D1D16B1E,
