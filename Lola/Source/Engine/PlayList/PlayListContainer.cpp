@@ -48,23 +48,29 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(
 
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(int rowNumber, int insertIndex)
 {
-    // convert row number to region index
-    auto regions = audioRegionContainer.getAudioTrackContainer().getAudioRegionAdapter().getAudioRegions();
-    jassert(rowNumber < regions.size());
-    auto region = regions[rowNumber];
+    // convert row number to region
+    auto region = audioRegionContainer.getAudioTrackContainer().getAudioRegionAdapter().getRegion(rowNumber);
     
-    // check if region exists in conainer
-    if (audioRegionContainer.getRegionId(region) >= 0)
+    if (region != nullptr)
     {
         auto playListItem = createPlayListItem(region, insertIndex);
-        
-        // move to the left
-        auto length = getPlayListItem(insertIndex)->getRegionData(audium::clocks).getLength();
-        movePlayListItemsPosition(insertIndex + 1, length, audium::clocks);
-        
+        movePlayListItemsPosition(insertIndex);
         return playListItem;
     }
     return nullptr;
+}
+
+std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemsUI(std::vector<std::shared_ptr<AudioRegion>> regions,
+                                                   int indexOfItemToPlaceBefore)
+{
+    std::shared_ptr<PlayListItem> playListItem = nullptr;
+    for (auto region : regions) {
+        playListItem = createPlayListItem(region, indexOfItemToPlaceBefore);
+        movePlayListItemsPosition(indexOfItemToPlaceBefore);
+        indexOfItemToPlaceBefore++;
+    }
+    
+    return playListItem;
 }
 
 
@@ -94,11 +100,24 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(std::shared_
     return playListItem;
 }
 
-void PlayListContainer::movePlayListItemsPosition(int startIndex, double amount, audium::TimeContextType context)
+void PlayListContainer::movePlayListItemsPosition(int startIndex)
 {
-    for (auto iter = playListItems.objects.begin() + startIndex; iter != playListItems.objects.end(); iter++)
-    {
-        (*iter)->moveAbsolutePosition(amount, context);
+    // try to make way for item at startIndex
+    auto context = audium::clocks;
+    auto item = playListItems.objects.begin() + startIndex;
+    if (item != playListItems.objects.end()) {
+        auto range = (*item)->getAbsolutePositionRange(context);
+        auto length = range.getLength();
+        
+        for (auto iter = playListItems.objects.begin() + startIndex + 1; iter != playListItems.objects.end(); iter++) {
+            if ((*iter)->getAbsolutePositionRange(context).intersects(range)) {
+                (*iter)->moveAbsolutePosition(length, context);
+                range = (*iter)->getAbsolutePositionRange(context);
+            }
+            else {
+                break;
+            }
+        }
     }
 }
 
@@ -161,7 +180,7 @@ bool PlayListContainer::exitsInPlayList(const AudioRegion* region)
     return it != playListItems.getObjects().end();
 }
 
-const std::vector<std::shared_ptr<PlayListItem>> PlayListContainer::getPlayListItems() const
+const std::vector<std::shared_ptr<PlayListItem>> &PlayListContainer::getPlayListItems() const
 {
     return playListItems.getObjects();
 }

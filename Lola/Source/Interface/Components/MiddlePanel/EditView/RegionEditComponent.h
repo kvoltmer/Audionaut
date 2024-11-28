@@ -98,7 +98,7 @@ public:
 
     void rebuildComponents()
     {
-        std::cout << "RegionEditComponent::rebuildComponents" << std::endl;
+        //std::cout << "RegionEditComponent::rebuildComponents" << std::endl;
         
         removeAllChildren();
         regionEditControls.clear();

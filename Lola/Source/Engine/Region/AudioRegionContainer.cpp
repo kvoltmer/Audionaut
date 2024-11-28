@@ -133,6 +133,17 @@ std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSub
     return regions;
 }
 
+std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getSelectedRegions() const
+{
+    std::vector<std::shared_ptr<AudioRegion>> regions;
+    for (auto region : audioRegions)
+    {
+        if (region->isSelected())
+            regions.push_back(region);
+    }
+    return regions;
+}
+
 void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup)
 {
     auto regions = getRegionsForSubGroup(audioSubGroup.get());

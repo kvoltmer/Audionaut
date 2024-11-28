@@ -66,6 +66,8 @@ public:
                                                                  audium::TimeContextType context);
     std::shared_ptr<PlayListItem> createPlayListItemUI(int regionIndex,
                                                        int indexOfItemToPlaceBefore);
+    std::shared_ptr<PlayListItem> createPlayListItemsUI(std::vector<std::shared_ptr<AudioRegion>> regions,
+                                                       int indexOfItemToPlaceBefore);
 
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
@@ -75,7 +77,7 @@ public:
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
     bool exitsInPlayList(const AudioRegion* audioRegion);
     
-    const std::vector<std::shared_ptr<PlayListItem>> getPlayListItems() const;
+    const std::vector<std::shared_ptr<PlayListItem>> &getPlayListItems() const;
     int getNumItems(std::shared_ptr<AudioTrack> track = nullptr) const;
     
     bool writeToJson (json& output) override;
@@ -104,7 +106,7 @@ public:
     void sortByPosition();
     
     // move the absolute position of all playlist items by an amount
-    void movePlayListItemsPosition(int startIndex, double amount, audium::TimeContextType context);
+    void movePlayListItemsPosition(int startIndex);
     
     audium::SelectableObjectContainer<PlayListItem> playListItems;
             

@@ -157,11 +157,15 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
     bool success = false;
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (auto region = regionLabel->getRegion())
+        // drop all selected regions
+        auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
+        for (auto region : selectedRegions)
         {
             juce::Range<double> position(pos, pos + region->getRegionData(audium::clocks).getLength());
             if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
                 success = true;
+            
+            pos += region->getRegionData(audium::clocks).getLength();
         }
     }
     else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))

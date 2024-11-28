@@ -72,7 +72,7 @@ public:
     
     void rebuildComponents()
     {
-        std::cout << "AudioTrackRegionEditComponent::rebuildComponents" << std::endl;
+        //std::cout << "AudioTrackRegionEditComponent::rebuildComponents" << std::endl;
         
         // cleanup
         removeAllChildren();
