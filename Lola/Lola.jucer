@@ -331,6 +331,8 @@
                 file="Source/Interface/Controls/PlayListItemDraggerControl.h"/>
           <FILE id="N579q1" name="SubGroupDraggerControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/SubGroupDraggerControl.h"/>
+          <FILE id="OBwQux" name="DraggerControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/DraggerControl.cpp"/>
           <FILE id="s7vYjW" name="DraggerControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/DraggerControl.h"/>
           <FILE id="CIIORu" name="RegionEditControl.cpp" compile="1" resource="0"
