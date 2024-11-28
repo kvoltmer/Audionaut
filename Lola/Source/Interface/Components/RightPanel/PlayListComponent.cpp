@@ -32,10 +32,24 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
     }
     else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (audioTrack->getPlayListContainer()->createPlayListItemUI(item->getRowNumber(), insertIndex) == nullptr)
+        bool success = false;
+        auto pos = 0.0;
+        auto last = audioTrack->getPlayListContainer()->playListItems.objects.back();
+        if (last != nullptr)
+            pos = last->getAbsolutePositionRange(audium::clocks).getEnd();
+        
+        // drop all selected regions
+        auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
+        for (auto region : selectedRegions)
         {
-            return;
+            juce::Range<double> position(pos, pos + region->getRegionData(audium::clocks).getLength());
+            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
+                success = true;
+            
+            pos += region->getRegionData(audium::clocks).getLength();
         }
+        jassert(success);
+        
     }
     
     action->storeNewState();

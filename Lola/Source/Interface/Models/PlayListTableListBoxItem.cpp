@@ -95,9 +95,17 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
             modified = true;
         }
     }
-    else if (auto item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {        
-        playListContainer->createPlayListItemUI(item->getRowNumber(), insertIndex);
+    else if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    {
+        auto selectedRegions = playListModel->getAudioTrack()->getAudioRegionContainer()->getSelectedRegions();
+        if (selectedRegions.size() <= 1) {
+            playListContainer->createPlayListItemUI(regionLabel->getRowNumber(), insertIndex);
+        }
+        else {
+            // multiple selection
+            playListContainer->createPlayListItemsUI(selectedRegions, insertIndex);
+        }
+        
         modified = true;
     }
     

@@ -48,6 +48,7 @@ public:
     int getRegionId(std::shared_ptr<AudioRegion> searchRegion) const;
     
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForSubGroup(const AudioSubGroup* subGroup) const;
+    std::vector<std::shared_ptr<AudioRegion>> getSelectedRegions() const;
     void deleteAudioRegion(std::shared_ptr<AudioRegion> region);
     bool deleteAudioRegion(AudioRegion* region);
     void deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup);
