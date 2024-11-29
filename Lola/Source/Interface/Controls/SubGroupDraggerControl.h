@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "DraggerControl.h"
+#include "Interface/Controls/DraggerControl.h"
+
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioClip.h"
 
@@ -33,38 +34,7 @@ public:
     {
     }
     
-    void commitData(const juce::Range<double> newData, audium::TimeContextType context) override
-    {
-        // undo        
-        if (undoableContainerAction == nullptr)
-        {
-            undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer(), false);
-        }
-        
-        
-        const auto audioResources = audioSubGroup->getAudioResources();
-        if (audioResources.size() > 0)
-        {
-            
-            switch (currentDragMode)
-            {
-                case leftEdge:
-                    audioSubGroup->getAudioClip()->setAbsoluteStartPosition(newData.getStart(), context);
-                    repaint();
-                    break;
-                case rightEdge:
-                    audioSubGroup->getAudioClip()->setLength(newData.getLength(), context);
-                    break;
-                case middleEdge:
-                    // position in transport
-                    audioSubGroup->getAudioClip()->setAbsolutePosition(newData.getStart(), context);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-    
+    void commitData(const juce::Range<double> newData, audium::TimeContextType context) override;
     
     bool isSelected() const override
     {
@@ -88,32 +58,7 @@ public:
         return "";
     }
     
-    bool validateData() override
-    {
-        bool result = audioSubGroup->getAudioClip()->validateData();
-        
-        if (undoableContainerAction != nullptr)
-        {
-            // Undo: store new state
-            undoableContainerAction->storeNewState();
-            audiumEngine->getUndoManager()->perform(undoableContainerAction.release(), "Modify Item");
-            audiumEngine->getUndoManager()->beginNewTransaction();
-        }
-        
-        return result;
-    }
-    
-    bool keyPressed (const KeyPress& key, Component* originatingComponent) override
-    {
-        if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
-        {
-            audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
-            return true;
-        }
-        
-        return false;
-    }
-    
+    bool validateData() override;
     
 private:
     std::shared_ptr<AudioSubGroup> audioSubGroup;

@@ -150,9 +150,9 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
                     for (auto res : resources)
                         maxLength = std::max(maxLength, res->getFileLength(audium::seconds));
                     
-                    const auto transportPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
+                    const auto transportPosition = resource->getAudioSubGroup()->getAbsolutePosition(audium::seconds);
                     rangeInSeconds -= transportPosition;
-                    const auto startPosition = resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
+                    const auto startPosition = resource->getAudioSubGroup()->getRegionData(audium::seconds).getStart();
                     rangeInSeconds += startPosition;
                     
                     if (rangeInSeconds.getEnd() > maxLength)

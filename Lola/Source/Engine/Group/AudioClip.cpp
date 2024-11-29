@@ -185,3 +185,8 @@ double AudioClip::getFileLength(audium::TimeContextType context) const
     
     return maxLength;
 }
+
+AudioTrack &AudioClip::getAudioTrack() const
+{
+    return audioSubGroup.getAudioTrack();
+}

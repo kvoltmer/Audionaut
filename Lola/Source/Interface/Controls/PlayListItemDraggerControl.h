@@ -10,8 +10,10 @@
 
 #pragma once
 
-#include "DraggerControl.h"
+#include "Interface/Controls/DraggerControl.h"
+
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/PlayList/PlayListContainer.h"
 
 class PlayListItemDraggerControl : public DraggerControl
 {
@@ -34,34 +36,8 @@ public:
     {
     }
     
-    void commitData(const juce::Range<double> newData, audium::TimeContextType context) override
-    {
-        // undo
-        if (undoableContainerAction == nullptr)
-        {
-            undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer(), false);
-        }
+    void commitData(const juce::Range<double> newData, audium::TimeContextType context) override;
         
-        switch (currentDragMode)
-        {
-            case leftEdge:
-                playListItem->setAbsoluteStartPosition(newData.getStart(), context);
-                repaint();
-                break;
-            case rightEdge:
-                playListItem->setLength(newData.getLength(), context);
-                break;
-            case middleEdge:
-                // position in transport
-                playListItem->setAbsolutePosition(newData.getStart(), context);
-                break;
-            default:
-                break;
-        }
-        
-    }
-    
-    
     bool isSelected() const override
     {
         return playListItem->isSelected();
@@ -82,36 +58,7 @@ public:
         return playListItem->getRegion()->getName();
     }
     
-    bool validateData() override
-    {
-        bool result = playListItem->validateData();
-        
-        // sort by position
-        playListContainer->sortByPosition();
-        
-        if (undoableContainerAction != nullptr)
-        {
-            // Undo: store new state
-            undoableContainerAction->storeNewState();
-            audiumEngine->getUndoManager()->perform(undoableContainerAction.release(), "Modify Item");
-            audiumEngine->getUndoManager()->beginNewTransaction();
-        }
-        
-        return result;
-    }
-    
-    bool keyPressed (const KeyPress& key, Component* originatingComponent) override
-    {
-        if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
-        {
-            audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();            
-            return true;
-        }
-        
-        return false;
-    }
-    
-    
+    bool validateData() override;
     
 private:
     std::shared_ptr<PlayListContainer> playListContainer;

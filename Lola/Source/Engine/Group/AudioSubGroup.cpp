@@ -64,6 +64,21 @@ void AudioSubGroup::cleanupTransportSources()
     }
 }
 
+double AudioSubGroup::getAbsolutePosition(audium::TimeContextType context) const  {
+    return audioClip->getAbsolutePosition(context);
+}
+void AudioSubGroup::setAbsolutePosition(double position, audium::TimeContextType context)  {
+    audioClip->setAbsolutePosition(position, context);
+}
+
+juce::Range<double> AudioSubGroup::getRegionData(audium::TimeContextType context) const  {
+    return audioClip->getRegionData(context);
+}
+void AudioSubGroup::setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context)  {
+    audioClip->setRegionData(newRegionData, context);
+}
+
+
 bool AudioSubGroup::writeToJson (json& output)
 {
     output["clip"] = audioClip->data;

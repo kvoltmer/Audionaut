@@ -107,7 +107,7 @@ void RegionEditControl::mouseDrag (const juce::MouseEvent& e)
     
     setBounds (bounds);
     
-    auto audioClipStart = audioRegion->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::clocks);
+    auto audioClipStart = audioRegion->getAudioSubGroup()->getAbsolutePosition(audium::clocks);
     auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange()) + audioClipStart;
     zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
     repaint();
@@ -125,7 +125,7 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
         
         auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange());
         
-        auto audioClipStart = audioRegion->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::clocks);
+        auto audioClipStart = audioRegion->getAudioSubGroup()->getAbsolutePosition(audium::clocks);
 
         rangeInClocks += audioClipStart;
         zoomHandler->snapToGrid(rangeInClocks);

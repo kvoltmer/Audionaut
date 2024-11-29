@@ -87,11 +87,6 @@ void PlayListItem::setAbsolutePosition(double newPosition, audium::TimeContextTy
     }
 }
 
-void PlayListItem::moveAbsolutePosition(double amount, audium::TimeContextType context)
-{
-    setAbsolutePosition(getAbsolutePosition(context) + amount, context);
-}
-
 bool PlayListItem::writeToJson (json& output)
 {
     output["region_id"] = owner.getAudioRegionContainer().getRegionId(getRegion());

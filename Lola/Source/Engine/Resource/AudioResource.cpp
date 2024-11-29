@@ -147,8 +147,8 @@ std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWith
 
 bool AudioResource::containsAbsolutePosition(double position, audium::TimeContextType context) const
 {
-    auto startTime = getAudioSubGroup()->getAudioClip()->getAbsolutePosition(context);
-    auto endTime = startTime + getAudioSubGroup()->getAudioClip()->getRegionData(context).getLength();
+    auto startTime = getAudioSubGroup()->getAbsolutePosition(context);
+    auto endTime = startTime + getAudioSubGroup()->getRegionData(context).getLength();
     juce::Range<double> absoluteRange(startTime, endTime);
     if (absoluteRange.contains(position))
     {
