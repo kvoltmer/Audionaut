@@ -144,7 +144,7 @@ public:
         int counter = 0;
         for (auto subGroup : subGroups)
         {
-            auto posRange = subGroup->getAudioClip()->getAbsolutePositionRange(audium::clocks);
+            auto posRange = subGroup->getAbsolutePositionRange(audium::clocks);
             auto pos = zoomHandler->clocksToX(posRange.getStart());
             auto width = zoomHandler->clocksToX(posRange.getLength());
             

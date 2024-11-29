@@ -259,7 +259,7 @@ float AudioTrack::getGain(int channelNumber) const {
 std::shared_ptr<AudioSubGroup> AudioTrack::createNewAudioSubGroup(double transportPosition, audium::TimeContextType context)
 {
     auto subGroup = AudioTrackFactory::createAudioSubGroup(*this);
-    subGroup->getAudioClip()->setAbsolutePosition(transportPosition, context);
+    subGroup->setAbsolutePosition(transportPosition, context);
     audioSubGroupContainer->push_back(subGroup);
     return subGroup;
 }
@@ -311,7 +311,7 @@ std::list<std::shared_ptr<PositionableBase>> AudioTrack::getPositionableItems(bo
     else
     {
         for (auto subGroup : getAudioSubGroups())
-            result.push_back(subGroup->getAudioClip());
+            result.push_back(subGroup);
     }
     
     
@@ -415,7 +415,7 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     }
     else
     {
-        position = subGroup->getAudioClip()->getAbsolutePosition(audium::clocks);
+        position = subGroup->getAbsolutePosition(audium::clocks);
         channelPosition = getNumAudioTrackChannels();
     }
     
@@ -491,7 +491,7 @@ double AudioTrack::getTotalLength(audium::TimeContextType context, bool arrangem
         double totalLength = 0.0;
         for (auto subGroup : audioSubGroupContainer->getObjects())
         {
-            totalLength = std::max(totalLength, subGroup->getAudioClip()->getAbsolutePositionRange(context).getEnd());
+            totalLength = std::max(totalLength, subGroup->getAbsolutePositionRange(context).getEnd());
         }
         result1 = totalLength;
     }

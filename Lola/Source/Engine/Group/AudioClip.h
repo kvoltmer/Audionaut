@@ -15,8 +15,7 @@
 #include "Engine/Streamable.h"
 #include "Engine/PlayList/PositionableBase.h"
 
-class AudioClip :   public PositionableBase,
-                    public audium::Streamable
+class AudioClip : public audium::Streamable
 {
     
 public:
@@ -25,8 +24,11 @@ public:
     {
     }
         
-    double getAbsolutePosition(audium::TimeContextType context) const override;
-    void setAbsolutePosition(double position, audium::TimeContextType context) override;
+    double getAbsolutePosition(audium::TimeContextType context) const;
+    void setAbsolutePosition(double position, audium::TimeContextType context);
+    
+    juce::Range<double> getRegionData(audium::TimeContextType context) const;
+    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context);
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
@@ -36,13 +38,9 @@ public:
     
     int getSizeInUnits() override { return 1; }
     
-    juce::Range<double> getRegionData(audium::TimeContextType context) const override;
-    
-    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
-    
     bool validateData();
     
-    AudioTrack &getAudioTrack() const { return audioSubGroup.getAudioTrack(); }
+    AudioTrack &getAudioTrack() const;
     
     double getFileLength(audium::TimeContextType context) const;
 

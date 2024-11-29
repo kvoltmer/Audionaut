@@ -20,7 +20,9 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
-
+#include "Engine/AudiumEngine.h"
+#include "Engine/Region/AudioRegion.h"
+#include "Engine/PlayList/PositionableBase.h"
 
 class DraggerControl  : public juce::Component,
                         public juce::ChangeBroadcaster,
@@ -91,6 +93,8 @@ public:
     void mouseUp (const juce::MouseEvent& e) override;
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseMove (const juce::MouseEvent& e) override;
+    
+    bool keyPressed (const KeyPress& key, Component* originatingComponent) override;
 
     void updateMouseZone (const juce::MouseEvent& e)
     {
@@ -133,6 +137,10 @@ public:
     }
     
     virtual void commitData(const juce::Range<double> newData, audium::TimeContextType context) = 0;
+    
+    bool commitPositionData(const PositionableBase &positionableBase,
+                            const juce::Range<double> newRange,
+                            const audium::TimeContextType context);
     
     virtual bool isSelected() const = 0;
     

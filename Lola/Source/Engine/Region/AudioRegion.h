@@ -41,6 +41,8 @@ public:
     
     ~AudioRegion();
     
+    void sendActionMessage (const juce::String& message) const;
+    
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     

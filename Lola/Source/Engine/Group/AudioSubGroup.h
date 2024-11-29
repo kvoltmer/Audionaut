@@ -17,16 +17,19 @@
 #include "Engine/Streamable.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/PlayList/PositionableBase.h"
 
 using json = nlohmann::json;
 
 class AudioTrack;
 class AudioResource;
 class AudioRegion;
-class AudioClip;
 class AudiumTransportSource;
+class AudioClip;
 
-class AudioSubGroup : public audium::Streamable, public audium::Selectable
+class AudioSubGroup :   public PositionableBase,
+                        public audium::Selectable,
+                        public audium::Streamable
 {
         
 public:
@@ -37,8 +40,15 @@ public:
     void cleanupAudioResources();
     void cleanupTransportSources();
 
+    // PositionableBase overrides
+    double getAbsolutePosition(audium::TimeContextType context) const override;
+    void setAbsolutePosition(double position, audium::TimeContextType context) override;
+    juce::Range<double> getRegionData(audium::TimeContextType context) const override;
+    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
+    
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
+    
     
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;

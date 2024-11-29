@@ -8,7 +8,7 @@
   ==============================================================================
 */
 
-#include "DraggerControl.h"
+#include "Interface/Controls/DraggerControl.h"
 
 void DraggerControl::mouseDown (const juce::MouseEvent& e)
 {
@@ -34,18 +34,17 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
     if (regionSelector != nullptr)
         regionSelector->setEnabled(true);
     
-    if (std::abs(e.getOffsetFromDragStart().getX()) > 0)
-    {
+    if (std::abs(e.getOffsetFromDragStart().getX()) > 0) {
         auto rangeInClocks = zoomHandler->xToClocks(componentToDrag->getBounds().toDouble().getHorizontalRange());
         zoomHandler->snapToGrid(rangeInClocks);
         commitRangeToEngine(rangeInClocks);
         validateData();
         sendChangeMessage();
     }
-    
-    // deselect others
-    setSelected(isSelected(), !e.mods.isAnyModifierKeyDown());
-    
+    else {
+        // deselect others
+        setSelected(isSelected(), !e.mods.isAnyModifierKeyDown());
+    }
     zoomHandler->getSnapToGridHandler()->clearRange();
 }
 
@@ -93,4 +92,67 @@ void DraggerControl::mouseDrag (const juce::MouseEvent& e)
 void DraggerControl::mouseMove (const juce::MouseEvent& e)
 {
     updateMouseZone (e);
+}
+
+bool DraggerControl::keyPressed (const KeyPress& key, Component* originatingComponent)
+{
+    if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
+    {
+        audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
+        return true;
+    }
+    
+    return false;
+}
+
+bool DraggerControl::commitPositionData(const PositionableBase &positionableBase,
+                                        const juce::Range<double> newRange,
+                                        const audium::TimeContextType context)
+{
+    // apply for all selected items
+    auto selectedItems = audiumEngine->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects();
+    auto diff = 0.0;
+    
+    switch (currentDragMode)
+    {
+        case leftEdge:
+            diff = newRange.getStart() - positionableBase.getAbsolutePosition(context);
+            if (std::abs(diff) > 0.0) {
+                for (auto item : selectedItems) {
+                    if (auto pItem = dynamic_cast<PositionableBase*>(item.get()))
+                        pItem->moveAbsoluteStartPosition(diff, context);
+                }
+            }
+            break;
+        case rightEdge:
+            // move length
+            diff = newRange.getLength() - positionableBase.getRegionData(context).getLength();
+            if (std::abs(diff) > 0.0) {
+                for (auto item : selectedItems) {
+                    if (auto pItem = dynamic_cast<PositionableBase*>(item.get()))
+                        pItem->moveLength(diff, context);
+                }
+            }
+            break;
+        case middleEdge:
+            // move position
+            diff = newRange.getStart() - positionableBase.getAbsolutePosition(context);
+            if (std::abs(diff) > 0.0) {
+                for (auto item : selectedItems) {
+                    if (auto pItem = dynamic_cast<PositionableBase*>(item.get()))
+                        pItem->moveAbsolutePosition(diff, context);
+                }
+            }
+            break;
+        default:
+            break;
+    }
+    
+    if (std::abs(diff) > 0.0)
+    {
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        return true;
+    }
+    
+    return false;
 }

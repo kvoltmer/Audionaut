@@ -40,7 +40,7 @@ public:
     
     bool isSomethingSelected() const { return selectedObjects.size() > 0; }
     
-    std::vector<std::shared_ptr<Selectable>> getSelectedObjects() const { return selectedObjects; }
+    const std::vector<std::shared_ptr<Selectable>> &getSelectedObjects() const { return selectedObjects; }
     
     void clear() { selectedObjects.clear(); }
     

@@ -230,8 +230,8 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
 //    {
 //        if (not resource->getAudioTransportSource()->isPlaying())
 //        {
-//            const auto startPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
-//            const auto localPosition = resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
+//            const auto startPosition = resource->getAudioSubGroup()->getAbsolutePosition(audium::seconds);
+//            const auto localPosition = resource->getAudioSubGroup()->getRegionData(audium::seconds).getStart();
 //            const auto diff = startPosition - absolutePositionInSeconds;
 //
 //            if (diff < 0.0)
@@ -247,7 +247,7 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
 //            
 //            std::cout << "absolute pos: " << absolutePositionInSeconds << " start " <<  startPosition << " diff " << diff << std::endl;
 //
-//            resource->getAudioTransportSource()->scheduleDuration(resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getLength(), externalSampleRate);
+//            resource->getAudioTransportSource()->scheduleDuration(resource->getAudioSubGroup()->getRegionData(audium::seconds).getLength(), externalSampleRate);
 //        }
 //    }
 //}

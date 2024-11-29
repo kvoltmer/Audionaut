@@ -19,6 +19,7 @@
 		23874446D4D448B966D134F7 /* QuartzCore.framework */ = {isa = PBXBuildFile; fileRef = BD120C92EBF0312BF1D4DBB1; };
 		25CA3F65B774F34F76468809 /* PlayListItemComponent.cpp */ = {isa = PBXBuildFile; fileRef = 4B7F78AB457B000D361921A6; };
 		28D0D35B318F71C7C90D0E5E /* WebKit.framework */ = {isa = PBXBuildFile; fileRef = B49AA8C79C8A8C9FCDA5A44C; };
+		29290AF35AA2A743A46B3746 /* PlayListItemDraggerControl.cpp */ = {isa = PBXBuildFile; fileRef = 7CC846E1E9F0687AC3AC09F4; };
 		2ADE5191AED619A3F7F5520A /* RecentFilesMenuTemplate.nib */ = {isa = PBXBuildFile; fileRef = 57548F766A379B66DB3C67F7; };
 		2B1C1AB625A978E70C78EC97 /* AudioRegionAdapter.cpp */ = {isa = PBXBuildFile; fileRef = 0850DA0A9D93EDCFB3AEF06D; };
 		2C0D16C8A70F3A71D3336D6A /* Metal.framework */ = {isa = PBXBuildFile; fileRef = 1F44340B66A109B0DEE52DF7; settings = { ATTRIBUTES = (Weak, ); }; };
@@ -59,6 +60,7 @@
 		8827D5B86EADB8CB6F36A795 /* Accelerate.framework */ = {isa = PBXBuildFile; fileRef = 5021A59AD0929868402BFD6B; };
 		8C4692341D2989171369C296 /* include_juce_audio_processors_lv2_libs.cpp */ = {isa = PBXBuildFile; fileRef = 99EC09CF576D0301C44A6777; };
 		8D0290B779E10141A72692AF /* include_juce_audio_formats.mm */ = {isa = PBXBuildFile; fileRef = 7A3311AE998AACD2A1510C86; };
+		8D05774AC9E5812212390299 /* SubGroupDraggerControl.cpp */ = {isa = PBXBuildFile; fileRef = 22C1D84BE88F256DFA951A4C; };
 		8D8400584C5C1D895C098B5A /* ZoomHandler.cpp */ = {isa = PBXBuildFile; fileRef = 1CC6D2F41DEFEC0E947D67C4; };
 		90604054E06103D6AFE63F65 /* AudioRegion.cpp */ = {isa = PBXBuildFile; fileRef = 98761E06E3AA2ACF7AD31005; };
 		94856FC278508DBFE75FBA58 /* AudiumApplication.cpp */ = {isa = PBXBuildFile; fileRef = 462481D51BD3607FCD44651D; };
@@ -131,6 +133,7 @@
 		21E8218C5578FAF32AEE977E /* LevelMeter.h */ /* LevelMeter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LevelMeter.h; path = ../../Source/Interface/Controls/LevelMeter.h; sourceTree = SOURCE_ROOT; };
 		2237408C511E2EAA07849583 /* AboutDialog.h */ /* AboutDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AboutDialog.h; path = ../../Source/Interface/Dialogs/AboutDialog.h; sourceTree = SOURCE_ROOT; };
 		22AD7FAA33DF69C2DCCA4667 /* DiscRecording.framework */ /* DiscRecording.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiscRecording.framework; path = System/Library/Frameworks/DiscRecording.framework; sourceTree = SDKROOT; };
+		22C1D84BE88F256DFA951A4C /* SubGroupDraggerControl.cpp */ /* SubGroupDraggerControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SubGroupDraggerControl.cpp; path = ../../Source/Interface/Controls/SubGroupDraggerControl.cpp; sourceTree = SOURCE_ROOT; };
 		23BCBB355881E118F4E39507 /* SnapToGridHandler.cpp */ /* SnapToGridHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SnapToGridHandler.cpp; path = ../../Source/Interface/Handlers/SnapToGridHandler.cpp; sourceTree = SOURCE_ROOT; };
 		24F5063E15B125FCE205B79F /* RegionTableListBoxModel.h */ /* RegionTableListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionTableListBoxModel.h; path = ../../Source/Interface/Models/RegionTableListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		25423A74B016191855679F72 /* include_juce_audio_processors.mm */ /* include_juce_audio_processors.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_processors.mm; path = ../../JuceLibraryCode/include_juce_audio_processors.mm; sourceTree = SOURCE_ROOT; };
@@ -208,6 +211,7 @@
 		7A3311AE998AACD2A1510C86 /* include_juce_audio_formats.mm */ /* include_juce_audio_formats.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_formats.mm; path = ../../JuceLibraryCode/include_juce_audio_formats.mm; sourceTree = SOURCE_ROOT; };
 		7AEEBB541767E0CBA5B16C3F /* AudioTrackListBox.cpp */ /* AudioTrackListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrackListBox.cpp; path = ../../Source/Interface/Controls/AudioTrackListBox.cpp; sourceTree = SOURCE_ROOT; };
 		7C1C1E1AF54BD71226534D42 /* AudioTrackFactory.h */ /* AudioTrackFactory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackFactory.h; path = ../../Source/Engine/Factory/AudioTrackFactory.h; sourceTree = SOURCE_ROOT; };
+		7CC846E1E9F0687AC3AC09F4 /* PlayListItemDraggerControl.cpp */ /* PlayListItemDraggerControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListItemDraggerControl.cpp; path = ../../Source/Interface/Controls/PlayListItemDraggerControl.cpp; sourceTree = SOURCE_ROOT; };
 		7D9939772D1857BAF66CBFDC /* ArrangementEditBaseComponent.h */ /* ArrangementEditBaseComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ArrangementEditBaseComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h; sourceTree = SOURCE_ROOT; };
 		7DBC95C19E562AB57CAF2EA8 /* CoreAudio.framework */ /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		7E08ED9600CBA2E3D9B1D88F /* include_juce_graphics.mm */ /* include_juce_graphics.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_graphics.mm; path = ../../JuceLibraryCode/include_juce_graphics.mm; sourceTree = SOURCE_ROOT; };
@@ -721,7 +725,9 @@
 				AC2E93E31A964D3A67A696FE,
 				A40C7A7DFF271A4D4D530CB3,
 				2133E7BD10D0BFDBA72C207E,
+				7CC846E1E9F0687AC3AC09F4,
 				4DF301F0CAEBC41ABA382935,
+				22C1D84BE88F256DFA951A4C,
 				AEE072B655D55449FF8D5C45,
 				72EF955B126DC0797C0BA924,
 				6BBAA6DFE177CD89EB2B263E,
@@ -1061,6 +1067,8 @@
 				3775D900697B541067876134,
 				63AE7E83398F33BA6144FBD5,
 				3CC8732FBE5A8FEFD49D5D4B,
+				29290AF35AA2A743A46B3746,
+				8D05774AC9E5812212390299,
 				E920083CC268F888B5B80BF2,
 				E4B83AB0CD765FE9A893B841,
 				43269E7B8FA7BF40B55404E1,
