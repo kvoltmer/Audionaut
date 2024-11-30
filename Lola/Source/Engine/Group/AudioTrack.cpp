@@ -421,6 +421,8 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     
     std::vector<std::shared_ptr<AudioResource>> resources;
     
+    juce::String errors;
+    
     for (auto i = 0; i < filenames.size(); i++)
     {
         if (auto resource = addAudioFile(subGroup, filenames[i], channelPosition))
@@ -429,9 +431,14 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
         }
         else
         {
-            NullCheckedInvocation::invoke (callback, filenames[i].toStdString());
-            return false;
+            errors += filenames[i];
         }
+    }
+    
+    if (resources.size() == 0)
+    {
+        NullCheckedInvocation::invoke (callback, errors.toStdString());
+        return false;
     }
     
     if (arrangementMode &&
@@ -456,8 +463,12 @@ std::shared_ptr<AudioResource> AudioTrack::addAudioFile(std::shared_ptr<AudioSub
                                                                       channelPosition);
     if (audioResource != nullptr)
     {
-        getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
-        channelPosition += audioResource->getNumChannels();
+        auto transportSource = getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
+        jassert(transportSource);
+        if (transportSource != nullptr)
+        {
+            channelPosition += audioResource->getNumChannels();
+        }
     }
     return audioResource;
 }

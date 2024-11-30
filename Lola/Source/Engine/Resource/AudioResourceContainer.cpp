@@ -33,16 +33,22 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     jassert(track != nullptr);
     jassert(subGroup != nullptr);
 
-    // TODO: look for existing audio resource
-    auto audioResource = AudioResourceFactory::createAudioResource(url,
-                                                                   *this,
-                                                                   track,
-                                                                   subGroup,
-                                                                   channelPosition);
-    jassert(audioResource);
-    audioResources.push_back({track, audioResource});
-
-    return audioResource;
+    auto audioFormat = formatManager->findFormatForFileExtension(url.getLocalFile().getFileExtension());
+    
+    if (audioFormat != nullptr) {
+        // TODO: look for existing audio resource
+        auto audioResource = AudioResourceFactory::createAudioResource(url,
+                                                                       *this,
+                                                                       track,
+                                                                       subGroup,
+                                                                       channelPosition);
+        jassert(audioResource);
+        audioResources.push_back({track, audioResource});
+        
+        return audioResource;
+    }
+    
+    return nullptr;
 }
 
 std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)

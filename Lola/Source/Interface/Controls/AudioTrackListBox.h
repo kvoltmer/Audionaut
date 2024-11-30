@@ -32,6 +32,7 @@ public:
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
+    std::shared_ptr<AudioTrack> audioTrack;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackListBox)
 };
