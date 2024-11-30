@@ -37,7 +37,7 @@ public:
             selectionManager->selectItem(getSharedPtr(), bSelected);
         }
     }
-    
+        
     virtual bool isSelected() const { return selected; }
     
     std::shared_ptr<Selectable> getSharedPtr() { return shared_from_this(); }

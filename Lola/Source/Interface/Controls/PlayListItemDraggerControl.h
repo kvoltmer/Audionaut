@@ -19,26 +19,30 @@ class PlayListItemDraggerControl : public DraggerControl
 {
 public:
     
-    PlayListItemDraggerControl(juce::Component* componentToDrag,
-                               std::shared_ptr<AudiumEngine> audiumEngine,
-                               std::shared_ptr<PlayListContainer> playListContainer,
-                               std::shared_ptr<PlayListItem> playListItem,
-                               std::shared_ptr<ZoomHandler> zoomHandler,
-                               juce::Colour colour,
-                               std::shared_ptr<RegionSelector> regionSelector) :
-        DraggerControl(componentToDrag,
-                       audiumEngine,
-                       zoomHandler,
-                       colour,
-                       regionSelector,
-                       std::static_pointer_cast<PositionableBase>(playListItem)),
-        playListContainer(playListContainer),
-        playListItem(playListItem)
+    PlayListItemDraggerControl(juce::Component* componentToDrag_,
+                               std::shared_ptr<AudiumEngine> audiumEngine_,
+                               std::shared_ptr<PlayListContainer> playListContainer_,
+                               std::shared_ptr<PlayListItem> playListItem_,
+                               std::shared_ptr<ZoomHandler> zoomHandler_,
+                               juce::Colour colour_,
+                               std::shared_ptr<RegionSelector> regionSelector_) :
+        DraggerControl(componentToDrag_,
+                       audiumEngine_,
+                       zoomHandler_,
+                       colour_,
+                       regionSelector_,
+                       std::static_pointer_cast<PositionableBase>(playListItem_)),
+        playListContainer(playListContainer_),
+        playListItem(playListItem_)
     {
+        regionSelector->playListItemDraggerControls.push_back(this);
     }
 
     ~PlayListItemDraggerControl() override
     {
+        std::erase_if(regionSelector->playListItemDraggerControls, [this](const auto* item) {
+            return item == this;
+        });
     }
         
     bool isSelected() const override
@@ -55,6 +59,8 @@ public:
         playListItem->setSelected(bSelected);
         audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
     }
+    
+    void shiftSelect() override;
     
     const juce::String getLabelString() const override
     {

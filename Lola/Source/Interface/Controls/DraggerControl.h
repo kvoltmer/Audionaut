@@ -148,6 +148,8 @@ public:
     
     virtual void setSelected(bool bSelected, bool deselectOthers) = 0;
     
+    virtual void shiftSelect() = 0;
+    
     virtual const juce::String getLabelString() const = 0;
     
     virtual bool validateData() = 0;

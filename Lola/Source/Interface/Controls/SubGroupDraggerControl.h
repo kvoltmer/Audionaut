@@ -33,10 +33,14 @@ public:
                        std::static_pointer_cast<PositionableBase>(audioSubGroup)),
         audioSubGroup(audioSubGroup)
     {
+        regionSelector->subGroupDraggerControls.push_back(this);
     }
 
     ~SubGroupDraggerControl() override
     {
+        std::erase_if(regionSelector->subGroupDraggerControls, [this](const auto* item) {
+            return item == this;
+        });
     }
         
     bool isSelected() const override
@@ -50,6 +54,8 @@ public:
             audioSubGroup->getAudioTrack().getSelectionManager()->deselectAll();
         audioSubGroup->setSelected(bSelected, false);
     }
+    
+    void shiftSelect() override;
     
     const juce::String getLabelString() const override
     {
