@@ -25,7 +25,12 @@ public:
                            std::shared_ptr<ZoomHandler> zoomHandler,
                            juce::Colour colour,
                            std::shared_ptr<RegionSelector> regionSelector) :
-        DraggerControl(componentToDrag, audiumEngine, zoomHandler, colour, regionSelector),
+        DraggerControl(componentToDrag,
+                       audiumEngine,
+                       zoomHandler,
+                       colour,
+                       regionSelector,
+                       std::static_pointer_cast<PositionableBase>(audioSubGroup)),
         audioSubGroup(audioSubGroup)
     {
     }
@@ -33,9 +38,7 @@ public:
     ~SubGroupDraggerControl() override
     {
     }
-    
-    void commitData(const juce::Range<double> newData, audium::TimeContextType context) override;
-    
+        
     bool isSelected() const override
     {
         return audioSubGroup->isSelected();

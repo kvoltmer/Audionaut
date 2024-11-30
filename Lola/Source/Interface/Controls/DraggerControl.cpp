@@ -39,6 +39,11 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
         zoomHandler->snapToGrid(rangeInClocks);
         commitRangeToEngine(rangeInClocks);
         validateData();
+        if (undoableContainerAction != nullptr) {
+            undoableContainerAction->storeNewState();
+            audiumEngine->getUndoManager()->perform(undoableContainerAction.release(), "Modify Item");
+            audiumEngine->getUndoManager()->beginNewTransaction();
+        }
         sendChangeMessage();
     }
     else {
@@ -103,6 +108,17 @@ bool DraggerControl::keyPressed (const KeyPress& key, Component* originatingComp
     }
     
     return false;
+}
+
+void DraggerControl::commitData(const juce::Range<double> newData, audium::TimeContextType context)
+{
+    // undo
+    if (undoableContainerAction == nullptr)
+    {
+        undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer(), false);
+    }
+ 
+    commitPositionData(*positionableObject.get(), newData, context);
 }
 
 bool DraggerControl::commitPositionData(const PositionableBase &positionableBase,
