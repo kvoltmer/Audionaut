@@ -14,6 +14,8 @@
 
 class ZoomHandler;
 class AudiumEngine;
+class PlayListItemDraggerControl;
+class SubGroupDraggerControl;
 
 class RegionSelector :  public juce::Component,
                         public juce::KeyListener
@@ -44,6 +46,7 @@ public:
     {
         owner->removeMouseListener (this);
         removeKeyListener(this);
+        jassert(playListItemDraggerControls.size() == 0);
     }
     
     void paint (Graphics& g) override;
@@ -66,6 +69,12 @@ public:
     const Edge getDragMode(int x) const;
     
     void updateFromEngine();
+    
+    // play list dragger controls
+    std::vector<PlayListItemDraggerControl*> playListItemDraggerControls;
+    
+    // sub group dragger controls
+    std::vector<SubGroupDraggerControl*> subGroupDraggerControls;
     
 private:
     

@@ -19,8 +19,13 @@ void DraggerControl::mouseDown (const juce::MouseEvent& e)
     
     originalBounds = componentToDrag->getBounds();
     
-    setSelected(e.mods.isCommandDown() ? !isSelected() : true, false);
-    
+    if (e.mods.isShiftDown()) {
+        shiftSelect();
+    }
+    else {
+        bool deselectOthers = !isSelected() && !e.mods.isAnyModifierKeyDown();
+        setSelected(e.mods.isCommandDown() ? !isSelected() : true, deselectOthers);
+    }
     auto rangeInClocks = zoomHandler->xToClocks(componentToDrag->getBounds().toDouble().getHorizontalRange());
     zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
     
@@ -46,10 +51,7 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
         }
         sendChangeMessage();
     }
-    else {
-        // deselect others
-        setSelected(isSelected(), !e.mods.isAnyModifierKeyDown());
-    }
+
     zoomHandler->getSnapToGridHandler()->clearRange();
 }
 
