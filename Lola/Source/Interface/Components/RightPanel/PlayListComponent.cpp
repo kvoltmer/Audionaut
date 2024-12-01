@@ -34,9 +34,10 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
     {
         bool success = false;
         auto pos = 0.0;
-        auto last = audioTrack->getPlayListContainer()->playListItems.objects.back();
-        if (last != nullptr)
+        if (audioTrack->getPlayListContainer()->playListItems.objects.size() > 0) {
+            auto last = audioTrack->getPlayListContainer()->playListItems.objects.back();
             pos = last->getAbsolutePositionRange(audium::clocks).getEnd();
+        }
         
         // drop all selected regions
         auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
