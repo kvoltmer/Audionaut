@@ -62,8 +62,6 @@ void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mo
         auto position = zoomHandler->xToClocks(mouseX);
         zoomHandler->snapToGrid(position);
         
-        bool arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
-        
         std::function<void (std::string)> callback = [this](std::string error) {
             audiumEngine->getAudioTrackContainer()->deleteAudioTrack(audioTrack);
             
@@ -72,6 +70,7 @@ void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mo
                                                         "Failed to open: " + juce::String(error));
         };
         
+        bool arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
         if (audioTrack->addAudioFiles(filenames, position, arrangementMode, callback))
         {
             action->storeNewState();
