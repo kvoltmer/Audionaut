@@ -60,6 +60,18 @@ bool ChannelMapping::containsSourceChannelNumber(int channelNumber) const
     return getSourceChannel(channelNumber) >= 0;
 }
 
+bool ChannelMapping::containsDestinationChannelNumber(int channelNumber) const
+{
+    for (auto i = 0; i < remappedChannels.size(); i++)
+    {
+        if (getRemappedChannel(i) == channelNumber)
+            return true;
+    }
+    
+    
+    return false;
+}
+
 bool ChannelMapping::anyOutputMapping() const
 {
     if (remappedChannels.size() > 0)

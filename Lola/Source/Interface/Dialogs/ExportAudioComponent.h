@@ -79,7 +79,7 @@ public:
             addAndMakeVisible (sampleRateDropDown.get());
 
             sampleRateLabel = std::make_unique<juce::Label> (String{}, TRANS ("Sample rate:"));
-            sampleRateLabel->setFont (juce::FontOptions (AudiumLookAndFeel::labelFontSize));
+            sampleRateLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
             sampleRateLabel->attachToComponent (sampleRateDropDown.get(), true);
         }
         else
@@ -111,7 +111,7 @@ public:
             addAndMakeVisible (outputChanDropDown.get());
 
             outputChanLabel = std::make_unique<juce::Label> (String{}, TRANS ("Output channels:"));
-            outputChanLabel->setFont (juce::FontOptions (AudiumLookAndFeel::labelFontSize));
+            outputChanLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
             outputChanLabel->attachToComponent (outputChanDropDown.get(), true);
         }
         else

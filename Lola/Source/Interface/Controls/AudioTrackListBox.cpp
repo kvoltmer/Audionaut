@@ -35,18 +35,7 @@ void AudioTrackListBox::setNewGroupColour(std::shared_ptr<AudioTrack> audioTrack
 {
     if (audioTrack->getColour() == juce::Colours::pink)
     {
-        auto newColour = audium::getNewWaveFormColour();
-        
-        auto numGroups = audiumEngine->getAudioTrackContainer()->getNumItems();
-        for (auto i = 0; i < numGroups; i++)
-        {
-            if(newColour == audiumEngine->getAudioTrackContainer()->getAudioTrack(i)->getColour())
-            {
-                newColour = audium::getNewWaveFormColour();
-            }
-        }
-        
-        audioTrack->setColour(newColour);
+        audioTrack->setColour(audiumEngine->getAudioTrackContainer()->getNewAudioTrackColour());
     }
 }
 

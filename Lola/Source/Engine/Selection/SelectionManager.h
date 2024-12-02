@@ -11,7 +11,11 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <nlohmann/json.hpp>
+
 #include "SelectionContext.h"
+
+using json = nlohmann::json;
 
 class AudiumEngine;
 
@@ -54,6 +58,10 @@ public:
     
 private:
         
+    void pastePlayListItems(const json &input,
+                            std::shared_ptr<AudiumEngine> audiumEngine,
+                            bool duplicateAction);
+    
     std::vector<std::shared_ptr<Selectable>> selectedObjects;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SelectionManager)

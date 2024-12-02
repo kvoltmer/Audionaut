@@ -16,6 +16,7 @@
 #include "Engine/Group/AudioClip.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
+#include "Engine/Channel/AudioChannel.h"
 
 AudioSubGroup::AudioSubGroup(AudioTrack& audioTrack,
                              std::shared_ptr<audium::SelectionManager> selectionManager) :
@@ -95,6 +96,27 @@ bool AudioSubGroup::writeToJson (json& output)
         output["regions"] += region->data;
     }
         
+    return true;
+}
+
+bool AudioSubGroup::writeChannelToJson (json& output, AudioChannel* audioChannel)
+{
+    output["clip"] = audioClip->data;
+
+    for (auto resource : getAudioResources())
+    {
+        json j;
+        
+        if (resource->getChannelMapping().containsDestinationChannelNumber(audioChannel->getChannelNumber())) {
+            resource->writeToJson(j);
+            output["resources"] += j;
+        }
+    }
+    
+    for (auto region : getAudioRegions())
+    {
+        output["regions"] += region->data;
+    }
     return true;
 }
 

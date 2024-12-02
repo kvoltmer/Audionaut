@@ -76,6 +76,8 @@ void AudiumLookAndFeel::setupColours()
     // ResizableWindow
     setColour(ResizableWindow::backgroundColourId, findColour(secondaryBackgroundColourId));
     
+    // PopupMenu
+    setColour(PopupMenu::backgroundColourId, findColour(secondaryBackgroundColourId));
     
     // Button
     setColour(TextButton::buttonColourId, findColour(backgroundColourId));
@@ -174,9 +176,14 @@ Label * AudiumLookAndFeel::createComboBoxTextBox (ComboBox & combo)
     return label;
 }
 
+Font AudiumLookAndFeel::getPopupMenuFont()
+{
+    return withDefaultMetrics (FontOptions (defaultFontSize));
+}
+
 int AudiumLookAndFeel::getAlertWindowButtonHeight()    { return 20; }
 Font AudiumLookAndFeel::getAlertWindowTitleFont()      { return withDefaultMetrics (FontOptions { 14.0f, Font::bold }); }
-Font AudiumLookAndFeel::getAlertWindowMessageFont()    { return withDefaultMetrics (FontOptions { 13.0f }); }
+Font AudiumLookAndFeel::getAlertWindowMessageFont()    { return withDefaultMetrics (FontOptions { defaultFontSize }); }
 Font AudiumLookAndFeel::getAlertWindowFont()           { return withDefaultMetrics (FontOptions { 10.0f }); }
 
-const float AudiumLookAndFeel::labelFontSize = 13.f;
+const float AudiumLookAndFeel::defaultFontSize = 13.f;

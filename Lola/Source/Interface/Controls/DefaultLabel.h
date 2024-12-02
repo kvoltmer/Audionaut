@@ -20,7 +20,7 @@ public:
                  const juce::String& labelText = juce::String()) :
         juce::Label(componentName, labelText)
     {
-        setFont (juce::FontOptions (AudiumLookAndFeel::labelFontSize));
+        setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
         setJustificationType (juce::Justification::left);
         setEditable (true, true, false);
         

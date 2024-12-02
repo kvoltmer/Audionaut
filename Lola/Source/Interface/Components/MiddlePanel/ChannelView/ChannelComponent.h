@@ -70,7 +70,10 @@ public:
     static const char* channelScale_png;
     static const int channelScale_pngSize;
 
+    enum { moveChannelToNewTrackId = 0xf836743, reservedId = 0xf836744 };
 
+    std::shared_ptr<AudiumEngine> getEngine() const { return engine; }
+    
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
     std::shared_ptr<AudioTrack> audioTrack;
@@ -84,7 +87,6 @@ private:
     std::unique_ptr<juce::Label> volumeLabeldB;
     std::unique_ptr<juce::ImageButton> volumeScaleButton;
     std::unique_ptr<juce::Label> volumeLevel;
-
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelComponent)

@@ -59,6 +59,8 @@ public:
     void deleteSelectedObjects();
     void deleteUnusedRegions();
     
+    void moveSelectedChannelsToNewAudioTrack();
+
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     bool writeToJson (json& output) override;
@@ -88,6 +90,8 @@ public:
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
     int getNumAudioTrackChannels() const;
+    
+    juce::Colour getNewAudioTrackColour() const;
     
 private:
     std::shared_ptr<juce::UndoManager> undoManager;
