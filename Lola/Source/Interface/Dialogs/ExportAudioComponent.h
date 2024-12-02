@@ -123,7 +123,6 @@ public:
         int i = 1;
         for (auto chan : availableOutputChans)
         {
-            //const auto intRate = roundToInt (rate);
             outputChanDropDown->addItem (chan, i++);
         }
 
@@ -156,7 +155,8 @@ private:
     const std::vector<std::string> availableOutputChans = {
         "mono",
         "stereo",
-        "multi-channel"
+        "multi-channel",
+        "multi-mono (individual mono file per channel)"
     };
     
 
