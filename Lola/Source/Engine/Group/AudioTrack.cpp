@@ -99,6 +99,30 @@ bool AudioTrack::writeToJson (json& output)
     return true;
 }
 
+bool AudioTrack::writeChannelToJson (json& output, AudioChannel* audioChannel)
+{
+    
+    for (auto channel : audioChannelContainer->getObjects())
+    {
+        if (channel.get() == audioChannel)
+            output["channels"] += channel->data;
+    }
+    
+    for (auto subGroup : audioSubGroupContainer->getObjects())
+    {
+        json j;
+        subGroup->writeChannelToJson(j, audioChannel);
+        output["sub_groups"] += j;
+    }
+    
+    
+    playListContainer->writeToJson(output);
+    
+    //std::cout << output.dump(4) << std::endl;
+
+    return true;
+}
+
 bool AudioTrack::writeToStream (juce::OutputStream& outputStream)
 {
     return audium::Streamable::writeToStream(outputStream);
@@ -119,8 +143,11 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     if (rebuild)
         cleanup();
     
-    name = input["name"].template get<std::string>();
-    groupColour = juce::Colour::fromString(input["colour"].template get<std::string>());
+    if (input.contains("name"))
+        name = input["name"].template get<std::string>();
+    
+    if (input.contains("colour"))
+        groupColour = juce::Colour::fromString(input["colour"].template get<std::string>());
     
     // Channels
     auto jsonChannels = input["channels"];

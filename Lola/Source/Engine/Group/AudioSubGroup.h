@@ -26,6 +26,7 @@ class AudioResource;
 class AudioRegion;
 class AudiumTransportSource;
 class AudioClip;
+class AudioChannel;
 
 class AudioSubGroup :   public PositionableBase,
                         public audium::Selectable,
@@ -52,6 +53,8 @@ public:
     
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
+    bool writeChannelToJson (json& output, AudioChannel* audioChannel);
+
     
     int getSizeInUnits() override;
     

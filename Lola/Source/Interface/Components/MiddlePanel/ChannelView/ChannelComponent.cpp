@@ -196,17 +196,46 @@ void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
     //[/UserlabelTextChanged_Post]
 }
 
+static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
+{
+    if (component != nullptr && result != 0)
+    {
+        switch (result) {
+            case ChannelComponent::moveChannelToNewTrackId:
+                component->getEngine()->getAudioTrackContainer()->moveSelectedChannelsToNewAudioTrack();
+                break;
+                
+            default:
+                break;
+        }
+    }
+}
+
 void ChannelComponent::mouseDown (const juce::MouseEvent& e)
 {
     //[UserCode_mouseDown] -- Add your code here...
     
-    // hier?
-    audioTrack->getSelectionManager()->deselectAll();
-    
-    getParentComponent()->mouseDown(e);
-    
-    audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
+    if (e.mods.isPopupMenu()) {
+        
+        PopupMenu m;
+        
+        m.addItem (moveChannelToNewTrackId, TRANS ("Move channel(s) to new track"), true);
+        
+        if (m.getNumItems() > 0)
+        {
+            m.setLookAndFeel (&getLookAndFeel());
 
+            m.showMenuAsync (PopupMenu::Options(),
+                             ModalCallbackFunction::forComponent (channelMenuCallback, this, rowNumber));
+        }
+    } else {
+        // hier?
+        audioTrack->getSelectionManager()->deselectAll();
+        
+        getParentComponent()->mouseDown(e);
+        
+        audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
+    }
     //[/UserCode_mouseDown]
 }
 
@@ -279,6 +308,8 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
         engine->getAudioResourceContainer()->sendActionMessage("");
     }
 }
+
+
 
 //[/MiscUserCode]
 

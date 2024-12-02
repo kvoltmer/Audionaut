@@ -35,6 +35,7 @@ public:
     int getSourceChannel (int destChannelIndex) const;
 
     bool containsSourceChannelNumber(int channelNumber) const;
+    bool containsDestinationChannelNumber(int channelNumber) const;
     bool anyOutputMapping() const;
 
     bool deleteChannel(int sourceChannelIndex);

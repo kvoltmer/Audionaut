@@ -115,7 +115,11 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
     if (input.contains("track_id"))
     {
         auto track_id = input.at("track_id").get<int>();
-        jassert(track_id == getRegion()->getAudioTrack()->getId());
+        if (track_id != getRegion()->getAudioTrack()->getId())
+        {
+            std::cout << "warning: track_id: " << track_id << " != " <<
+                        getRegion()->getAudioTrack()->getId() << std::endl;
+        }
     }
         
     return true;

@@ -20,6 +20,10 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Channel/AudioChannel.h"
+#include "Engine/Resource/ChannelMapping.h"
+
+#include "Interface/ColourIds.h"
 
 AudioTrackContainer::~AudioTrackContainer()
 {
@@ -82,7 +86,6 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::createNewAudioTrack(const juce:
         audioTrack->setName(nameString);
     }
     audioTracks.push_back(audioTrack);
-    sendActionMessage(rebuildAll);
     return audioTrack;
 }
 
@@ -150,6 +153,45 @@ void AudioTrackContainer::deleteUnusedRegions()
     undoManager->beginNewTransaction();
 }
 
+
+void AudioTrackContainer::moveSelectedChannelsToNewAudioTrack()
+{
+    try {
+        
+        // TODO: rething this implementation
+        auto audioTrack = createNewAudioTrack(juce::String());
+        audioTrack->setColour(getNewAudioTrackColour());
+        
+        json output;
+        
+        std::vector<AudioChannel*> deleteList;
+        auto objects = selectionManager->getSelectedObjects();
+        for (auto object : objects) {
+            if (auto channel = dynamic_cast<AudioChannel*>(object.get())) {
+                channel->getAudioTrack().writeChannelToJson(output, channel);
+                deleteList.push_back(channel);
+                break;
+            }
+        }
+        
+        //std::cout << output.dump(4) << std::endl;
+        
+        if (audioTrack->readFromJson(output, true)) {
+            for (auto resource : audioTrack->getAudioResources()) {
+                resource->getChannelMapping().setChannelPosition(0, resource->getNumChannels());
+            }
+            for (auto channel : deleteList)
+            {
+                channel->getAudioTrack().deleteChannel(channel);
+            }
+        }
+        
+        
+    }  catch (std::exception &e) {
+        std::cout << e.what() << std::endl;
+    }
+}
+
 bool AudioTrackContainer::writeToStream (juce::OutputStream& outputStream)
 {
     return audium::Streamable::writeToStream(outputStream);
@@ -175,7 +217,7 @@ bool AudioTrackContainer::writeToJson (json& output)
     {
         json j;
         track->writeToJson(j);
-        output["groups"] += j;
+        output["audio_tracks"] += j;
     }
     return true;
 }
@@ -191,7 +233,13 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
         jassert(audioResourceContainer != nullptr);
     }
     
-    auto jsonGroups = input["groups"];
+    json jsonGroups;
+    if (input.contains("audio_tracks")) {
+        jsonGroups = input["audio_tracks"];
+    }
+    else if (input.contains("groups")) {
+        jsonGroups = input["groups"];
+    }
     int count = 0;
     for (auto& jsonElement : jsonGroups)
     {
@@ -277,4 +325,16 @@ int AudioTrackContainer::getNumAudioTrackChannels() const
         channels += track->getNumAudioTrackChannels();
     }
     return channels;
+}
+
+juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
+{
+    auto newColour = audium::getNewWaveFormColour();
+    
+    for (auto track : audioTracks) {
+        if(newColour == track->getColour())
+            newColour = audium::getNewWaveFormColour();
+    }
+    
+    return newColour;
 }

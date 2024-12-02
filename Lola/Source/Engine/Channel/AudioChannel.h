@@ -48,6 +48,8 @@ public:
     
     AudioChannelData data;
     
+    AudioTrack &getAudioTrack() const { return audioTrack; }
+    
 private:
     AudioTrack &audioTrack;
     
