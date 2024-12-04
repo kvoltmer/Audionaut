@@ -79,20 +79,8 @@ void RightPanelComponent::resized()
 
 void RightPanelComponent::updateUI(UIContext context)
 {
-    switch (context) {
-        case EntireContext:
-            regionComponent->updateUI();
-            playListContainerComponent->updateUI();
-            break;
-        case PlayListContext:
-            playListContainerComponent->updateUI();
-            break;
-        case RegionListContext:
-            regionComponent->updateUI();
-            break;
-        default:
-            break;
-    }
+    regionComponent->updateUI(context);
+    playListContainerComponent->updateUI(context);
     
     // obsolete?
     resized();

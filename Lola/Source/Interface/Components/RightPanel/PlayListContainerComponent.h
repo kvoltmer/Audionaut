@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Interface/UIContext.h"
 
 class AudiumEngine;
 class PlayListComponent;
@@ -26,7 +27,7 @@ public:
     
     void createComponents();
 
-    void updateUI();
+    void updateUI(UIContext context = RebuildContext);
 private:
     
     std::shared_ptr<AudiumEngine> audiumEngine;

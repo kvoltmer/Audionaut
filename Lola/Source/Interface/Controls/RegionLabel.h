@@ -12,8 +12,8 @@
 
 #include <JuceHeader.h>
 #include "Engine/Region/AudioRegion.h"
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
@@ -27,17 +27,17 @@ class RegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
     RegionLabel(std::shared_ptr<RegionTableListBox> owner,
-                 std::shared_ptr<AudioGroupContainer> audioGroupContainer,
+                 std::shared_ptr<AudioTrackContainer> audioTrackContainer,
                  int columnId,
                  int rowNumber) :
         columnId(columnId),
         rowNumber(rowNumber),
         owner(owner),
-        audioGroupContainer(audioGroupContainer)
+        audioTrackContainer(audioTrackContainer)
     {
-        setEditable (false, true, true);
+        setEditable (false, true, false);
         update (columnId, rowNumber, false);
-        setFont(13.0f);
+        setFont (juce::FontOptions (13.00f));
         addListener(this);
     }
 
@@ -48,7 +48,7 @@ public:
     
     const std::shared_ptr<AudioRegion> getRegion() const
     {
-        return audioGroupContainer->getAudioRegionAdapter().getRegion(getRowNumber());
+        return audioTrackContainer->getAudioRegionAdapter().getRegion(getRowNumber());
     }
     
     void update(int columnId, int rowNumber, bool isSelected)
@@ -57,7 +57,7 @@ public:
         this->rowNumber = rowNumber;
         
         juce::String text = "n/a";
-        auto audioRegions = audioGroupContainer->getAudioRegionAdapter().getAudioRegions();
+        auto audioRegions = audioTrackContainer->getAudioRegionAdapter().getAudioRegions();
         jassert(rowNumber < audioRegions.size());
         if (AudioRegion* r = audioRegions[rowNumber].get())
         {
@@ -81,7 +81,7 @@ public:
                 text = juce::String(seconds, 4);
             }
             
-            auto textColour = r->getAudioGroup()->getColour();
+            auto textColour = r->getAudioTrack()->getColour();
             setColour (juce::Label::textColourId, isSelected ? textColour.brighter() : textColour);
             
         }
@@ -109,10 +109,10 @@ public:
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
         // Undo: store old state
-        auto audioRegions = audioGroupContainer->getAudioRegionAdapter().getAudioRegions();
+        auto audioRegions = audioTrackContainer->getAudioRegionAdapter().getAudioRegions();
         jassert(rowNumber < audioRegions.size());
         auto audioRegion = audioRegions[rowNumber];
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audioGroupContainer.get(), false);
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get(), false);
         
         if (columnId == regionName)
         {
@@ -136,8 +136,8 @@ public:
         
         // Undo: store new state
         action->storeNewState();
-        audioGroupContainer->getUndoManager()->perform(action.release(), "Modify Region");
-        audioGroupContainer->getUndoManager()->beginNewTransaction();
+        audioTrackContainer->getUndoManager()->perform(action.release(), "Modify Region");
+        audioTrackContainer->getUndoManager()->beginNewTransaction();
     }
     
     int getRowNumber() const
@@ -150,7 +150,7 @@ private:
     int rowNumber;
     std::shared_ptr<RegionTableListBox> owner;
     
-    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+    std::shared_ptr<AudioTrackContainer> audioTrackContainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionLabel)
 };

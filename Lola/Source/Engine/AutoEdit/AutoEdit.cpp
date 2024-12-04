@@ -17,8 +17,8 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 const juce::String AutoEdit::getTempDirectory()
@@ -60,7 +60,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
     }
     else
     {
-        juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "no audio data", "bounce audio failed.");
+        juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "no audio data", "export audio failed.");
     }
     
     return false;
@@ -95,10 +95,10 @@ const std::string AutoEdit::getCountFromFile() const
 }
 void AutoEdit::applyAutoEditResult(double sampleRate)
 {
-    auto group = audioGroupContainer->getDefaultGroup();
-    if (group != nullptr)
+    auto track = audioTrackContainer->getDefaultGroup();
+    if (track != nullptr)
     {
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audioGroupContainer.get());
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get());
         
         auto countString = getCountFromFile();
         jassert(countString.length() > 0);
@@ -115,8 +115,8 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
         
         // Undo: store new state
         action->storeNewState();
-        audioGroupContainer->getUndoManager()->perform(action.release(), "Auto Edit");
-        audioGroupContainer->getUndoManager()->beginNewTransaction();
+        audioTrackContainer->getUndoManager()->perform(action.release(), "Auto Edit");
+        audioTrackContainer->getUndoManager()->beginNewTransaction();
     }
 }
 
@@ -127,9 +127,9 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
     segFile.open(segFileName, std::ios::in);
     if (segFile.is_open())
     {
-        if (auto group = audioGroupContainer->getDefaultGroup())
+        if (auto track = audioTrackContainer->getDefaultGroup())
         {
-            group->getAudioRegionContainer()->cleanup();
+            track->getAudioRegionContainer()->cleanup();
             
             int counter = 1;
             auto segdata = nlohmann::json::parse(segFile);
@@ -144,13 +144,13 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
                 
                 // CREATE REGIONs:
                     
-                // use the first sub group
-                auto subGroups = group->getAudioSubGroups();
+                // use the first sub track
+                auto subGroups = track->getAudioSubGroups();
                 
                 jassert(subGroups.size() > 0);
                 if (subGroups.size() > 0)
                 {
-                    group->getAudioRegionContainer()->createRegion(regionName, position, group, subGroups[0]);
+                    track->getAudioRegionContainer()->createRegion(regionName, position, track, subGroups[0]);
                 }
             }
         }
@@ -172,24 +172,24 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
     if (songFile.is_open())
     {
         // cleanup playlist
-        if (auto group = audioGroupContainer->getDefaultGroup())
+        if (auto track = audioTrackContainer->getDefaultGroup())
         {
-            group->getPlayListContainer()->cleanup();
+            track->getPlayListContainer()->playListItems.cleanup();
         }
         
         auto songData = nlohmann::json::parse(songFile);
         for (auto& elem : songData)
         {
-            if (auto group = audioGroupContainer->getDefaultGroup())
+            if (auto track = audioTrackContainer->getDefaultGroup())
             {
-                auto region = group->getAudioRegionContainer()->getRegion(elem["index"]);
+                auto region = track->getAudioRegionContainer()->getRegion(elem["index"]);
                 jassert(region != nullptr);
                 std::string filename = elem["file"];
                 jassert(juce::String(filename).contains(region->getName()));
                 
-                auto insertIndex = static_cast<int>(group->getPlayListContainer()->playListItems.size());
+                auto insertIndex = static_cast<int>(track->getPlayListContainer()->playListItems.size());
                 // CREATE PLAYLIST ITEM
-                group->getPlayListContainer()->createPlayListItemUI(elem["index"], insertIndex);
+                track->getPlayListContainer()->createPlayListItemUI(elem["index"], insertIndex);
                 
                 // is the duration consitant?
                 double duration = elem["duration"];

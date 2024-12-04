@@ -9,9 +9,9 @@
 */
 
 #include "AudiumFactory.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Provider/TempoProvider.h"
@@ -44,14 +44,14 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
     
-    auto audioGroupContainer        = std::shared_ptr<AudioGroupContainer>      (new AudioGroupContainer(undoManager,
+    auto audioTrackContainer        = std::shared_ptr<AudioTrackContainer>      (new AudioTrackContainer(undoManager,
                                                                                                          tempoProvider,
                                                                                                          audioResourceContainer,
                                                                                                          transportSourceContainer,
                                                                                                          selectionManager));
     
     auto audioClipContainer         = std::shared_ptr<AudioClipContainer>       (new AudioClipContainer());
-    auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioGroupContainer,
+    auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioTrackContainer,
                                                                                                        audioResourceContainer,
                                                                                                        tempoProvider,
                                                                                                        linkEngine,
@@ -64,7 +64,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                                                      transportSourceContainer));
         
     auto audiumEngine               = std::shared_ptr<AudiumEngine>             (new AudiumEngine(audioDeviceManager,
-                                                                                                  audioGroupContainer,
+                                                                                                  audioTrackContainer,
                                                                                                   audioResourceContainer,
                                                                                                   playListScheduler,
                                                                                                   linkAudioDevice,

@@ -12,14 +12,14 @@
 
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 namespace audium
 {
 
 struct UndoableContainerAction final : public juce::UndoableAction
 {
-    UndoableContainerAction (AudioGroupContainer &container, bool rebuild = true) noexcept :
+    UndoableContainerAction (AudioTrackContainer &container, bool rebuild = true) noexcept :
         container (container),
         rebuild (rebuild)
     {
@@ -61,7 +61,7 @@ struct UndoableContainerAction final : public juce::UndoableAction
     
     int getSizeInUnits() override    { return container.getSizeInUnits(); }
     
-    AudioGroupContainer &container;
+    AudioTrackContainer &container;
     juce::MemoryBlock oldMemoryBlock;
     juce::MemoryBlock newMemoryBlock;
     bool rebuild = true;

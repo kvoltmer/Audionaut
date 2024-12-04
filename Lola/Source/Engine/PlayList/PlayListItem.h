@@ -37,6 +37,8 @@ public:
     
     ~PlayListItem() override;
     
+    void cleanup() override {}
+    
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
     
     juce::Range<double> getRegionData(audium::TimeContextType context) const override;
@@ -46,9 +48,7 @@ public:
             
     double getAbsolutePosition(audium::TimeContextType context) const override;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
-    
-    void moveAbsolutePosition(double amount, audium::TimeContextType context);
-    
+        
     const PlayListContainer &getPlayListContainer() const { return owner; }
 
     bool writeToJson (json& output);

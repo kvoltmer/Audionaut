@@ -1,0 +1,112 @@
+/*
+  ==============================================================================
+
+    AudioTrackContainer.h
+    Created: 10 Oct 2023 12:12:23pm
+    Author:  Klaus Voltmer
+
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+#include "Engine/Streamable.h"
+#include "Engine/TimeContext.h"
+#include "Engine/Region/AudioRegionData.h"
+#include "Engine/Group/AudioRegionAdapter.h"
+#include "Engine/Selection/SelectionManager.h"
+
+class AudioTrack;
+class AudioResourceContainer;
+class AudioRegionContainer;
+class AudiumEngine;
+class TempoProvider;
+class AudioRegion;
+class TransportSourceContainer;
+class AudioResourceContainer;
+
+class AudioTrackContainer : public juce::ActionBroadcaster,
+                            public juce::ChangeBroadcaster,
+                            public audium::Streamable
+{
+        
+public:
+    
+    AudioTrackContainer(std::shared_ptr<juce::UndoManager> undoManager,
+                        std::shared_ptr<TempoProvider> tempoProvider,
+                        std::shared_ptr<AudioResourceContainer> audioResourceContainer,
+                        std::shared_ptr<TransportSourceContainer> transportSourceContainer,
+                        std::shared_ptr<audium::SelectionManager> selectionManager) :
+        undoManager(undoManager),
+        tempoProvider(tempoProvider),
+        audioResourceContainer(audioResourceContainer),
+        transportSourceContainer(transportSourceContainer),
+        selectionManager(selectionManager),
+        audioRegionAdapter(*this)
+    {
+    }
+    
+    ~AudioTrackContainer();
+    
+    bool groupIdExists(const int groupId) const;
+        
+    std::shared_ptr<AudioTrack> createNewAudioTrack(const juce::String nameString);
+    void cleanup();
+    
+    bool deleteAudioTrack(AudioTrack* track);
+    bool deleteAudioTrack(std::shared_ptr<AudioTrack> track);
+    void deleteSelectedObjects();
+    void deleteUnusedRegions();
+    
+    void moveSelectedChannelsToNewAudioTrack();
+
+    bool writeToStream (juce::OutputStream& outputStream) override;
+    bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input, bool rebuild) override;
+    int getSizeInUnits() override;
+    
+    std::shared_ptr<AudioTrack> getSelectedGroup() const { return audioTracks[selectedGroup]; }
+    
+    int getNumItems() const { return static_cast<int>(audioTracks.size());}
+    std::shared_ptr<AudioTrack> getAudioTrack(int index) const;
+    int getAudioTrackId(std::shared_ptr<const AudioTrack> searchTrack) const;
+    int getChannelOffset(std::shared_ptr<const AudioTrack> searchTrack) const;
+    
+    std::shared_ptr<AudioTrack> getDefaultGroup() const;
+    
+    std::vector<std::shared_ptr<AudioTrack>> getAudioTracks() const { return audioTracks; }
+        
+    void selectAllGroups(bool bSelected, bool selectChildren);
+    juce::SparseSet<int> getSelectedRows() const;
+    void setSelectedRows(juce::SparseSet<int>& selectedRows);
+
+    std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
+    std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
+    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const noexcept { return transportSourceContainer; }
+    std::shared_ptr<audium::SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
+    
+    AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
+    
+    int getNumAudioTrackChannels() const;
+    
+    juce::Colour getNewAudioTrackColour() const;
+    
+private:
+    std::shared_ptr<juce::UndoManager> undoManager;
+    std::shared_ptr<TempoProvider> tempoProvider;
+    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<audium::SelectionManager> selectionManager;
+    
+    std::vector<std::shared_ptr<AudioTrack>> audioTracks;
+    int selectedGroup = 0;
+    
+
+    
+    // Discuss: inject depenendency
+    AudioRegionAdapter audioRegionAdapter;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackContainer)
+};

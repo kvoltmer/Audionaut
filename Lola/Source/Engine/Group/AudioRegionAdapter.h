@@ -14,7 +14,7 @@
 #include "Engine/TimeContext.h"
 #include "Engine/Region/AudioRegionData.h"
 
-class AudioGroupContainer;
+class AudioTrackContainer;
 class AudioRegion;
 
 class AudioRegionAdapter
@@ -22,7 +22,8 @@ class AudioRegionAdapter
     
 public:
     
-    AudioRegionAdapter(AudioGroupContainer &owner);
+    AudioRegionAdapter(AudioTrackContainer &owner);
+    ~AudioRegionAdapter() = default;
     
     const std::vector<std::shared_ptr<AudioRegion>> getAudioRegions() const;
     const std::vector<std::shared_ptr<AudioRegion>> getSelectedAudioRegions() const;
@@ -38,7 +39,9 @@ public:
     juce::Range<double> getSelectedPosition(audium::TimeContextType context) const;
 
 private:
-    AudioGroupContainer &owner;
+    AudioTrackContainer &owner;
     
     AudioRegionData::tRange selectedPositionClocks;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionAdapter)
 };

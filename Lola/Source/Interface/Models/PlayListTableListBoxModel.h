@@ -17,7 +17,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 #include "Interface/Controls/PlayListTableListBox.h"
@@ -29,16 +29,16 @@ class PlayListTableListBoxModel : public juce::TableListBoxModel {
 public:
     PlayListTableListBoxModel(std::shared_ptr<PlayListTableListBox> listBox,
                               std::shared_ptr<AudiumEngine> engine,
-                              std::shared_ptr<AudioGroup> group) :
+                              std::shared_ptr<AudioTrack> track) :
         listBox(listBox),
         audiumEngine(engine),
-        audioGroup(group)
+        audioTrack(track)
     {
     }
     
     int getNumRows() override
     {
-        return audiumEngine->getPlayListContainer(audioGroup)->getNumItems();
+        return audiumEngine->getPlayListContainer(audioTrack)->getNumItems();
     }
 
     void paintRowBackground (juce::Graphics& g,
@@ -65,7 +65,7 @@ public:
     {
         if (existingComponentToUpdate == nullptr)
         {
-//            auto items = audiumEngine->getPlayListContainer(audioGroup)->getPlayListItems();
+//            auto items = audiumEngine->getPlayListContainer(audioTrack)->getPlayListItems();
 //            const PlayListItem* const p = items[rowNumber].get();
             {
                 return new PlayListTableListBoxItem(this, columnId, rowNumber);
@@ -86,20 +86,7 @@ public:
 
     void deleteKeyPressed (int lastRowSelected) override
     {
-        // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer());
-        
-        auto selected = listBox->getSelectedRows();
-
-        for (int i = selected.size()-1; i >= 0; i--)
-        {
-            audiumEngine->getPlayListContainer(audioGroup)->deletePlayListItem(selected[i]);
-        }
-        
-        // Undo: store new state
-        action->storeNewState();
-        audiumEngine->getUndoManager()->perform(action.release(), "Delete PlayList Item(s)");
-        audiumEngine->getUndoManager()->beginNewTransaction();
+        audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
     }
     
     juce::var getDragSourceDescription (const juce::SparseSet< int > &rowsToDescribe) override
@@ -110,30 +97,28 @@ public:
     void selectedRowsChanged (int lastRowSelected) override
     {
         auto selectedRows = listBox->getSelectedRows();
-        audioGroup->getPlayListContainer()->setSelectedRows(selectedRows);
-        // only update transport (updateAll would mess with the keyboard focus)
-        audioGroup->getAudioGroupContainer().sendActionMessage(updateMiddlePanelAction);
+        audioTrack->getPlayListContainer()->playListItems.setSelectedRows(selectedRows);
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
     {
         listBox->deselectAllRows();
-        audioGroup->getPlayListContainer()->selectAllItems(false);
-        audioGroup->getAudioGroupContainer().sendActionMessage(updateAll);
+        audioTrack->getPlayListContainer()->playListItems.selectAllObjects(false);
+        audioTrack->getAudioTrackContainer().sendActionMessage(updateAll);
     }
 
     
     std::shared_ptr<PlayListTableListBox> listBox;
     
-    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioGroup); }
+    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioTrack); }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
     
-    std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
+    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
     
 private:
     
     std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioGroup> audioGroup;
+    std::shared_ptr<AudioTrack> audioTrack;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListTableListBoxModel)
 };

@@ -149,6 +149,10 @@ public:
     /** get individual row height
     */
     virtual int getRowHeight (int rowNumber) const;
+    
+    /** get height offset (will add extra space the bottom of the viewed content)
+     */
+    virtual int getExtraSpaceAtBottom() const;
 
 private:
    #if ! JUCE_DISABLE_ASSERTIONS

@@ -15,8 +15,8 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Group/AudioClip.h"
 
@@ -30,9 +30,9 @@ void RegionEditControl::paintFileNameLabel (juce::Graphics& g)
     g.setFont (12.0f);
     const auto name = audioRegion->getName();
     juce::Rectangle<int> bonds(5,
-                         5,
-                         g.getCurrentFont().getStringWidth(name),
-                         g.getCurrentFont().getHeight());
+                               5,
+                               GlyphArrangement::getStringWidth (g.getCurrentFont(), name),
+                               g.getCurrentFont().getHeight());
     
     g.setColour(juce::Colours::black.withAlpha(0.25f));
     g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
@@ -71,10 +71,10 @@ void RegionEditControl::mouseDown (const juce::MouseEvent& e)
     
     if(!e.mods.isCommandDown())
     {
-        audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().deselectAll();
+        audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().deselectAll();
     }
     audioRegion->setSelected(e.mods.isCommandDown() ? !audioRegion->isSelected() : true);
-    audiumEngine->getAudioGroupContainer()->sendActionMessage(regionSelectedAction);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(regionSelectedAction);
 
     currentDragMode = getDragMode(e.getPosition().getX());
     
@@ -107,7 +107,7 @@ void RegionEditControl::mouseDrag (const juce::MouseEvent& e)
     
     setBounds (bounds);
     
-    auto audioClipStart = audioRegion->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::clocks);
+    auto audioClipStart = audioRegion->getAudioSubGroup()->getAbsolutePosition(audium::clocks);
     auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange()) + audioClipStart;
     zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
     repaint();
@@ -121,11 +121,11 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
     {
         
         // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioGroupContainer(), false);
+        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer(), false);
         
         auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange());
         
-        auto audioClipStart = audioRegion->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::clocks);
+        auto audioClipStart = audioRegion->getAudioSubGroup()->getAbsolutePosition(audium::clocks);
 
         rangeInClocks += audioClipStart;
         zoomHandler->snapToGrid(rangeInClocks);
@@ -210,7 +210,7 @@ bool RegionEditControl::keyPressed (const KeyPress& key, Component* originatingC
 {
     if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
     {
-        audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
+        audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
         return true;
     }
     

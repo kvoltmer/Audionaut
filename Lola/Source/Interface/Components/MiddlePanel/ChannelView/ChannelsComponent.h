@@ -16,7 +16,7 @@
 #include "Interface/Models/ChannelGroupListBoxModel.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsHeaderComponent.h"
 #include "Util/EngineAccess.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 class ChannelsComponent  : public juce::Component
 {
@@ -62,7 +62,7 @@ public:
     
     void setVerticalScrollOffset(double offset)
     {
-        //std::cout << offset << std::endl;
+        // std::cout << "setVerticalScrollOffset " << offset << std::endl;
         auto range = audioChannelsListBox->getViewport()->getVerticalScrollBar().getCurrentRange().withStart(offset);
         audioChannelsListBox->getViewport()->getVerticalScrollBar().setCurrentRange(range, sendNotificationSync);
     }

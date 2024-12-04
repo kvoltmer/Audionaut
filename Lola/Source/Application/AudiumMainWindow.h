@@ -13,8 +13,10 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Interface/Components/MainComponent.h"
-#include "Interface/Dialogs/NewRegionDialog.h"
-#include "Interface/Dialogs/AutoEditDialog.h"
+
+class NewRegionDialog;
+class AutoEditDialog;
+class ExportAudioDialog;
 
 //==============================================================================
 /*
@@ -48,11 +50,14 @@ public:
 private:
     
     bool isSomethingSelected();
-    
+    bool canPaste();
+        
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
-    NewRegionDialog newRegionDialog;
-    AutoEditDialog autoEditDialog;
+    
+    std::unique_ptr<NewRegionDialog> newRegionDialog;
+    std::unique_ptr<AutoEditDialog> autoEditDialog;
+    std::unique_ptr<ExportAudioDialog> exportAudioDialog;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
 };

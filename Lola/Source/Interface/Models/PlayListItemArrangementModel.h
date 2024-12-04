@@ -15,7 +15,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Channel/AudioChannel.h"
 
@@ -27,13 +27,13 @@ class PlayListItemArrangementModel  : public audium::ListBoxModel
 {
 public:
     PlayListItemArrangementModel(audium::ListBox& owner,
-                                 std::shared_ptr<AudioGroup> audioGroup,
+                                 std::shared_ptr<AudioTrack> audioTrack,
                                  std::shared_ptr<PlayListItem> playListItem,
                                  std::shared_ptr<AudiumEngine> audiumEngine,
                                  std::shared_ptr<ZoomHandler> zoomHandler,
                                  std::shared_ptr<RegionSelector> regionSelector) :
         owner(owner),
-        audioGroup(audioGroup),
+        audioTrack(audioTrack),
         playListItem(playListItem),
         audiumEngine(audiumEngine),
         zoomHandler(zoomHandler),
@@ -62,6 +62,7 @@ public:
                                                 juce::Component* existingComponentToUpdate) override
     {
     
+        // TODO: fixme
         auto audioSubGroup = playListItem->getRegion()->getAudioSubGroup();
         auto audioResource = audioSubGroup->getChannel(rowNumber);
         
@@ -75,7 +76,7 @@ public:
                                                      audioResource,
                                                      zoomHandler,
                                                      playListItem->getRegion(),
-                                                     audioGroup->getColour(),
+                                                     audioTrack->getColour(),
                                                      regionSelector,
                                                      rowNumber);
                 return component;
@@ -105,7 +106,7 @@ public:
     
     int getRowHeight (int rowNumber) const override
     {
-        auto channel = audioGroup->getChannel(rowNumber);
+        auto channel = audioTrack->getChannel(rowNumber);
         if (channel != nullptr)
         {
             return channel->getChannelHeight();
@@ -132,7 +133,7 @@ public:
 private:
     
     audium::ListBox& owner;
-    std::shared_ptr<AudioGroup> audioGroup;
+    std::shared_ptr<AudioTrack> audioTrack;
     std::shared_ptr<PlayListItem> playListItem;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;

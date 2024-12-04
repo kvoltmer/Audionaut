@@ -98,7 +98,7 @@ public:
 
     void rebuildComponents()
     {
-        std::cout << "RegionEditComponent::rebuildComponents" << std::endl;
+        //std::cout << "RegionEditComponent::rebuildComponents" << std::endl;
         
         removeAllChildren();
         regionEditControls.clear();
@@ -114,8 +114,8 @@ public:
     
     void mouseDown (const juce::MouseEvent& e) override
     {
-        audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().deselectAll();
-        audiumEngine->getAudioGroupContainer()->sendActionMessage(regionSelectedAction);
+        audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().deselectAll();
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(regionSelectedAction);
     }
     
 private:

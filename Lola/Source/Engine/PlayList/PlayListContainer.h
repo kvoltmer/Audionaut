@@ -16,8 +16,9 @@
 
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Streamable.h"
+#include "Engine/Selection/SelectableObjectContainer.h"
+#include "Engine/PlayList/PlayListItem.h"
 
-class PlayListItem;
 class AudioRegionContainer;
 class TransportSourceContainer;
 
@@ -65,6 +66,8 @@ public:
                                                                  audium::TimeContextType context);
     std::shared_ptr<PlayListItem> createPlayListItemUI(int regionIndex,
                                                        int indexOfItemToPlaceBefore);
+    std::shared_ptr<PlayListItem> createPlayListItemsUI(std::vector<std::shared_ptr<AudioRegion>> regions,
+                                                       int indexOfItemToPlaceBefore);
 
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
@@ -72,24 +75,25 @@ public:
     bool deletePlayListItem(PlayListItem* playListItem);
 
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
+    bool exitsInPlayList(const AudioRegion* audioRegion);
     
-    const std::vector<std::shared_ptr<PlayListItem>> getPlayListItems() const;
-    int getNumItems(std::shared_ptr<AudioGroup> group = nullptr) const;
+    const std::vector<std::shared_ptr<PlayListItem>> &getPlayListItems() const;
+    int getNumItems(std::shared_ptr<AudioTrack> track = nullptr) const;
     
-    bool writeToStream (juce::OutputStream& outputStream) override;
-    bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
+    std::shared_ptr<PlayListItem> createPlayListItemFromJson (json& jsonItem);
+    
     int getSizeInUnits() override;
     
-    void cleanup() { playListItems.clear(); }
+    
 
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
-    int getPlayListItemIndex(const PlayListItem* item) const;
+    int getPlayListItemIndex(PlayListItem* item) const;
     
     AudioRegionData::tRange getPlayListDataAtIndex(int index) const;
     
-    const PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
+    PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
     const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
     const std::vector<PlayListItem*> itemsAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
@@ -99,15 +103,14 @@ public:
     // sets the absolute position based on the order
     void forcePositionByOrder();
     
-    // move the absolute position of all playlist items by an amount
-    void movePlayListItemsPosition(int startIndex, double amount, audium::TimeContextType context);
+    void sortByPosition();
     
-    std::vector<std::shared_ptr<PlayListItem>> playListItems;
+    // move the absolute position of all playlist items by an amount
+    void movePlayListItemsPosition(int startIndex);
+    
+    audium::SelectableObjectContainer<PlayListItem> playListItems;
             
     // selection:
-    void selectAllItems(bool bSelected);
-    juce::SparseSet<int> getSelectedRows() const;
-    void setSelectedRows(juce::SparseSet<int>& selectedRows);
     void selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region);
     
     double getTotalLength(audium::TimeContextType context) const;

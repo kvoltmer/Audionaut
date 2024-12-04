@@ -16,6 +16,9 @@
 #include "Application/AudiumMenuModel.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
+#include "AudiumMainWindow.h"
+#include "Interface/Dialogs/SettingsDialog.h"
+#include "Interface/Dialogs/AboutDialog.h"
 
 //==============================================================================
 AudiumApplication& AudiumApplication::getApp()
@@ -49,7 +52,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         audiumEngine->openFile(file, [file] (bool openedSuccessfully, std::string error)
         {
             if (!openedSuccessfully)
-                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error.", "Failed to open:\n" + file.getFullPathName());
+                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error: " + error, "Failed to open:\n" + file.getFullPathName());
         });
     }
     
@@ -77,10 +80,10 @@ void AudiumApplication::handleAsyncUpdate()
 {
     menuModel.reset (new AudiumMenuModel());
     
-   #if JUCE_MAC
+#if JUCE_MAC
     rebuildAppleMenu();
     appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
-   #endif
+#endif
     
 }
 
@@ -234,7 +237,8 @@ PopupMenu AudiumApplication::createFileMenu()
     menu.addSeparator();
 
    #if ! JUCE_MAC
-//    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showSettingsWindow);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::enableNewVersionCheck);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::showGlobalPathsWindow);
@@ -259,6 +263,8 @@ PopupMenu AudiumApplication::createEditMenu()
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::selectAll);
     menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
+    menu.addCommandItem(commandManager.get(), CommandIDs::cleanupRegions);
+    menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
     menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::loopPlayList);
@@ -286,6 +292,8 @@ PopupMenu AudiumApplication::createExtraAppleMenuItems()
 {
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::showSettingsWindow);
     return menu;
 }
 
@@ -309,7 +317,9 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::defaultProject,
                                 CommandIDs::saveProject,
                                 CommandIDs::saveProjectAs,
-                                CommandIDs::bounceProject,
+        CommandIDs::showAboutWindow,
+        CommandIDs::showSettingsWindow,
+                                //CommandIDs::bounceProject,
             
     };
 
@@ -343,16 +353,14 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
         result.setInfo ("Save as...", "Saves the current project to a new location", CommandCategories::general, 0);
         result.defaultKeypresses.add ({ 's', ModifierKeys::commandModifier | ModifierKeys::shiftModifier, 0 });
         break;
-            
-    case CommandIDs::bounceProject:
-        result.setInfo ("Bounce Mix...", "Bounce current project as audio file", CommandCategories::general, 0);
-        result.defaultKeypresses.add ({ 'b', ModifierKeys::commandModifier | ModifierKeys::altModifier, 0 });
-        break;
-
     case CommandIDs::showAboutWindow:
         result.setInfo ("About", "Shows the 'About' page.", CommandCategories::general, 0);
         break;
-
+    case CommandIDs::showSettingsWindow:
+        result.setInfo ("Settings...", "Shows the 'Settings' dialog.", CommandCategories::general, 0);
+        result.defaultKeypresses.add (KeyPress (',', ModifierKeys::commandModifier, 0));
+        break;
+            
     case CommandIDs::checkForNewVersion:
         result.setInfo ("Check for New Version...", "Checks the web server for a new version", CommandCategories::general, 0);
         break;
@@ -396,12 +404,11 @@ bool AudiumApplication::perform (const InvocationInfo& info)
         case CommandIDs::saveProjectAs:
             saveProjectAs(nullptr);
             break;
-        case CommandIDs::bounceProject:
-            bounceProject();
-            break;
         case CommandIDs::showAboutWindow:
-            notImplemented();
-            //showAboutWindow();
+            showAboutWindow();
+            break;
+        case CommandIDs::showSettingsWindow:
+            showSettingsDialog();
             break;
 
         default:
@@ -509,24 +516,7 @@ void AudiumApplication::saveProject(std::function<void (bool)> callback)
     NullCheckedInvocation::invoke (callback, result);
 }
 
-void AudiumApplication::bounceProject()
-{
-    chooser = std::make_unique<FileChooser> (("Bounce Project As Wav File."), initialSaveDirectory, "*.wav");
-    auto flags = FileBrowserComponent::saveMode
-               | FileBrowserComponent::canSelectFiles
-               | FileBrowserComponent::warnAboutOverwriting;
 
-    chooser->launchAsync (flags, [this] (const FileChooser& fc)
-    {
-        const auto result = fc.getResult();
-        
-        if (result != File{})
-        {
-            // testing
-            audiumEngine->bounceToFile(result, nullptr, 48000.0);
-        }
-    });
-}
 
 void AudiumApplication::updateUI()
 {
@@ -536,4 +526,18 @@ void AudiumApplication::updateUI()
         comp->rebuildUI();
         comp->updateUI();
     }
+}
+
+void AudiumApplication::showAboutWindow()
+{    
+    if (aboutDialog == nullptr)
+        aboutDialog = std::make_shared<AboutDialog>();
+    aboutDialog->invoke(mainWindow->getContentComponent());
+}
+
+void AudiumApplication::showSettingsDialog()
+{
+    if (settingsDialog == nullptr)
+        settingsDialog = std::make_shared<SettingsDialog>(audiumEngine);
+    settingsDialog->invoke(mainWindow->getContentComponent());
 }

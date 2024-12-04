@@ -37,10 +37,25 @@ public:
     
     juce::Label* createComboBoxTextBox (juce::ComboBox&) override;
     
+    
+    // AlertWindow
+    int getAlertWindowButtonHeight() override;
+    juce::Font getAlertWindowTitleFont() override;
+    juce::Font getAlertWindowMessageFont() override;
+    juce::Font getAlertWindowFont() override;
+    
+    
+    // PopupMenu
+    juce::Font getPopupMenuFont() override;
+    
+    // Various statics
     static const int channelsWidth = 85;
     static const int dragZoomControlHeight = 25;
     static const int transportPositionControlHeight = 25;
-    
+    static const float defaultFontSize;
+    static const int extraSpaceAtBottom = 200;
 private:
     void setupColours();
 };
+
+

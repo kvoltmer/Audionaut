@@ -9,8 +9,8 @@
 */
 
 #include "AudioRegion.h"
-#include "Engine/Group/AudioGroup.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioResourceFactory.h"
@@ -19,6 +19,11 @@
 
 AudioRegion::~AudioRegion()
 {
+}
+
+void AudioRegion::sendActionMessage (const juce::String& message) const
+{
+    audioTrack->getAudioTrackContainer().sendActionMessage(message);
 }
 
 bool AudioRegion::writeToStream (juce::OutputStream& outputStream)
@@ -30,7 +35,7 @@ bool AudioRegion::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
     if (audium::Streamable::readFromStream(inputStream))
     {
-        audioGroup->getAudioGroupContainer().sendActionMessage(updateAll);
+        sendActionMessage(updateAll);
         return true;
     }
     return false;
@@ -58,11 +63,11 @@ const AudioRegionData::tRange AudioRegion::getRegionData(audium::TimeContextType
 {
     if (context == audium::seconds)
     {
-        return data.regionData;
+        return data.range;
     }
     else if (context == audium::clocks)
     {
-        return tempoProvider->secondsToClocks(data.regionData);
+        return tempoProvider->secondsToClocks(data.range);
     }
     
     jassertfalse;
@@ -75,11 +80,11 @@ void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, aud
 
     if (context == audium::seconds)
     {
-        data.regionData = newRegionData;
+        data.range = newRegionData;
     }
     else if (context == audium::clocks)
     {
-        data.regionData = tempoProvider->clocksToSeconds(newRegionData);
+        data.range = tempoProvider->clocksToSeconds(newRegionData);
     }
 }
 
@@ -103,12 +108,12 @@ bool AudioRegion::validateData(AudioRegionData::tRange& newData, audium::TimeCon
 
 double AudioRegion::getAudioResourceStart(audium::TimeContextType context) const
 {
-    return audioSubGroup->getAudioClip()->getRegionData(context).getStart();
+    return audioSubGroup->getRegionData(context).getStart();
 }
 
 double AudioRegion::getAudioResourceEnd(audium::TimeContextType context) const
 {
-    return audioSubGroup->getAudioClip()->getRegionData(context).getEnd();
+    return audioSubGroup->getRegionData(context).getEnd();
 }
 
 void AudioRegion::setRegionStart(double newStart, audium::TimeContextType context)
@@ -134,10 +139,10 @@ void AudioRegion::setRegionLength(double newLength, audium::TimeContextType cont
 
 std::vector<std::shared_ptr<AudioResource>> AudioRegion::getAudioResources() const
 {
-    return audioGroup->getAudioResourceContainer().getAudioResourcesForSubGroup(audioSubGroup.get());
+    return audioTrack->getAudioResourceContainer().getAudioResourcesForSubGroup(audioSubGroup.get());
 }
 
 bool AudioRegion::deleteAssociatedItems()
 {
-    return getAudioGroup()->getPlayListContainer()->deleteAssociatedItems(this);
+    return getAudioTrack()->getPlayListContainer()->deleteAssociatedItems(this);
 }

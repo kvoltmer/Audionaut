@@ -15,7 +15,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Channel/AudioChannel.h"
 
@@ -50,7 +50,7 @@ public:
                             int width, int height,
                             bool rowIsSelected) override
     {
-        auto channel = audioSubGroup->getAudioGroup().getChannel(rowNumber);
+        auto channel = audioSubGroup->getAudioTrack().getChannel(rowNumber);
         
         if (channel != nullptr &&
             channel->isSelected())
@@ -75,7 +75,7 @@ public:
                                                        audioResource,
                                                        zoomHandler,
                                                        nullptr,
-                                                       audioSubGroup->getAudioGroup().getColour(),
+                                                       audioSubGroup->getAudioTrack().getColour(),
                                                        regionSelector,
                                                        rowNumber);
                 return component;
@@ -105,7 +105,7 @@ public:
     
     int getRowHeight (int rowNumber) const override
     {
-        auto channel = audioSubGroup->getAudioGroup().getChannel(rowNumber);
+        auto channel = audioSubGroup->getAudioTrack().getChannel(rowNumber);
         if (channel != nullptr)
         {
             return channel->getChannelHeight();

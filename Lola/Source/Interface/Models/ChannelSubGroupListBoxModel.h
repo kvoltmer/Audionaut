@@ -16,17 +16,17 @@
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 class ChannelSubGroupListBoxModel  : public audium::ListBoxModel
 {
 public:
     ChannelSubGroupListBoxModel(audium::ListBox& owner,
                                 std::shared_ptr<AudiumEngine> audiumEngine,
-                                std::shared_ptr<AudioGroup> audioGroup) :
+                                std::shared_ptr<AudioTrack> audioTrack) :
         owner(owner),
         audiumEngine(audiumEngine),
-        audioGroup(audioGroup)
+        audioTrack(audioTrack)
     {
     }
     
@@ -36,7 +36,7 @@ public:
     
     int getNumRows() override
     {
-        return audioGroup->getNumChannels();
+        return audioTrack->getNumAudioTrackChannels();
     }
 
     void paintListBoxItem ( int rowNumber,
@@ -49,12 +49,12 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        auto channel = audioGroup->getChannel(rowNumber);
+        auto channel = audioTrack->getChannel(rowNumber);
         if (channel != nullptr)
         {
             if (existingComponentToUpdate == nullptr)
             {
-                return new ChannelComponent(audioGroup, audiumEngine, rowNumber);
+                return new ChannelComponent(audioTrack, audiumEngine, rowNumber);
                 
             }
             else
@@ -64,8 +64,8 @@ public:
                 
                 if (component != nullptr)
                 {
-                    // update of audioGroup since row might have changed after delete
-                    component->refreshComponent(audioGroup, rowNumber, isRowSelected);
+                    // update of audioTrack since row might have changed after delete
+                    component->refreshComponent(audioTrack, rowNumber, isRowSelected);
                 }
                 return component;
             }
@@ -78,16 +78,16 @@ public:
     
     int getRowHeight (int rowNumber) const override
     {
-        auto channel = audioGroup->getChannel(rowNumber);
+        auto channel = audioTrack->getChannel(rowNumber);
         if (channel != nullptr)
-            return audioGroup->getChannel(rowNumber)->getChannelHeight();
+            return audioTrack->getChannel(rowNumber)->getChannelHeight();
         
         return 50;
     }
     
     void deleteKeyPressed (int lastRowSelected) override
     {
-        audiumEngine->getAudioGroupContainer()->deleteSelectedObjects();
+        audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
@@ -100,19 +100,19 @@ public:
     void selectedRowsChanged (int lastRowSelected) override
     {
         auto selectedRows = owner.getSelectedRows();
-        audioGroup->setSelectedRows(selectedRows);
-        audiumEngine->getAudioGroupContainer()->sendActionMessage(updateArrangementAction);
+        audioTrack->audioChannelContainer->setSelectedRows(selectedRows);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
     }
     
-    void setAudioGroup(std::shared_ptr<AudioGroup> group)
+    void setAudioTrack(std::shared_ptr<AudioTrack> track)
     {
-        audioGroup = group;
+        audioTrack = track;
     }
         
 private:
     audium::ListBox& owner;
     std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioGroup> audioGroup;
+    std::shared_ptr<AudioTrack> audioTrack;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelSubGroupListBoxModel)

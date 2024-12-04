@@ -11,13 +11,14 @@
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
 #include "Engine/AutoEdit/AutoEdit.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
-#include "Engine/Factory/AudioGroupFactory.h"
+#include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/AudiumTransportSource.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/Export/AudioExportThread.h"
 
 const char* AudiumEngine::projectFileExtension = ".audium";
 juce::File AudiumEngine::projectDirectory = File();
@@ -45,7 +46,7 @@ void AudiumEngine::uninitialise()
 
 void AudiumEngine::cleanup()
 {
-    audioGroupContainer->cleanup();
+    audioTrackContainer->cleanup();
     audioResourceContainer->cleanup();
     undoManager->clearUndoHistory();
     currentFile = File();
@@ -73,12 +74,13 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
             
             // we failed to read :(
             cleanup();
-            NullCheckedInvocation::invoke (callback, false, "");
+            NullCheckedInvocation::invoke (callback, false, "unknown error");
             
         }
     }
     catch (std::exception &e)
     {
+        cleanup();
         std::cout << e.what() << std::endl;
         NullCheckedInvocation::invoke (callback, false, e.what());
     }
@@ -132,52 +134,6 @@ void AudiumEngine::setBypass(bool bypass)
     linkAudioDevice->setBypass(bypass);
 }
 
-void AudiumEngine::bounceToFile(const juce::File& f, std::function<void (bool)> callback,
-                                double preferedSampleRate,
-                                bool defaultGroupOnly)
-{
-    std::cout << "bounce -> " << f.getFullPathName().toStdString() << std::endl;
-    
-    auto numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
-    double sampleRate = preferedSampleRate;
-        
-    playListScheduler->prepareToPlay(sampleRate, numSamples);    
-    
-    auto numOutputChannels = 2;
-    
-    setBypass(true);
-
-    juce::TemporaryFile tempFile (f);
-    std::unique_ptr<OutputStream> outStream (tempFile.getFile().createOutputStream());
-
-    if (outStream != nullptr)
-    {
-        const StringPairArray metadata;
-        WavAudioFormat wav;
-        std::unique_ptr<AudioFormatWriter> writer (wav.createWriterFor (outStream.get(), sampleRate,
-                                                                        numOutputChannels, (int) 32,
-                                                                        metadata, 0));
-        if (writer != nullptr)
-        {
-            outStream.release();
-            
-            playListScheduler->bounceToFile(writer.get(), sampleRate, numSamples, numOutputChannels);
-
-            writer.reset();
-            tempFile.overwriteTargetFileWithTemporary();
-        }
-    }
-    
-    // change back to device settings
-    numSamples = audioDeviceManager->getCurrentAudioDevice()->getCurrentBufferSizeSamples();
-    sampleRate = audioDeviceManager->getCurrentAudioDevice()->getCurrentSampleRate();
-    playListScheduler->prepareToPlay(sampleRate, numSamples);
-    
-    
-    setBypass(false);
-    std::cout << "done" << std::endl;
-}
-
 bool AudiumEngine::writeToStream (juce::OutputStream& outputStream)
 {
     return audium::Streamable::writeToStream(outputStream);
@@ -196,7 +152,7 @@ bool AudiumEngine::writeToJson (json& output)
 {
     json jsonAudium;
 
-    audioGroupContainer->writeToJson(jsonAudium);
+    audioTrackContainer->writeToJson(jsonAudium);
     
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
     jsonAudium["file_version"] = audium::Streamable::fileVersion;
@@ -231,44 +187,56 @@ bool AudiumEngine::readFromJson (json& input, bool rebuild)
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
         playListScheduler->getTempoProvider()->setTempo(tempo);
     
-    return audioGroupContainer->readFromJson(jsonAudium, rebuild);
+    return audioTrackContainer->readFromJson(jsonAudium, rebuild);
 }
 
 int AudiumEngine::getSizeInUnits()
 {
-    return audioGroupContainer->getSizeInUnits() + 1;
+    return audioTrackContainer->getSizeInUnits() + 1;
 }
 
-void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioGroup> group)
+void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> track)
 {
     jassertfalse;
-//    if (audioRegionContainer->getNumRegions(group.get()) == 0)
+//    if (audioRegionContainer->getNumRegions(track.get()) == 0)
 //    {
-//        auto region = audioRegionContainer->createDefaultRegion(group);
-//        group->getPlayListContainer()->createPlayListItem(region);
+//        auto region = audioRegionContainer->createDefaultRegion(track);
+//        track->getPlayListContainer()->createPlayListItem(region);
 //    }
 }
 
 
 void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
 {
-    double sampleRate = 48000.0;
-    
     // first bounce the mix
-    const auto bounceFile = juce::File::createTempFile(".wav");
-     
-    bounceToFile(bounceFile, nullptr, sampleRate);
-    config.bounceFileName = bounceFile.getFullPathName().toStdString();
-  
-    std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioGroupContainer,                                                    
-                                                    audioResourceContainer));
-    if (autoEdit->invokeAutoEdit(config))
+    audium::ExportAudioConfig bounceConfig;
+    bounceConfig.fileName = juce::File::createTempFile(".wav");
+    bounceConfig.sampleRate = 48000.0;
+    
+    // create the thread
+    auto thread = std::make_unique<AudioExportThread>(*this, bounceConfig);
+    
+    // start the thread
+    if (thread->runThread())
     {
-        autoEdit->applyAutoEditResult(sampleRate);
+        // thread finished normally..
+        config.bounceFileName = bounceConfig.fileName.getFullPathName().toStdString();
+      
+        std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioTrackContainer,
+                                                        audioResourceContainer));
+        if (autoEdit->invokeAutoEdit(config))
+        {
+            autoEdit->applyAutoEditResult(bounceConfig.sampleRate);
+        }
     }
+    else
+    {
+        // user pressed the cancel button..
+    }
+
 }
 
-std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioGroup> group) const
+std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const
 {
-    return group->getPlayListContainer();
+    return track->getPlayListContainer();
 }

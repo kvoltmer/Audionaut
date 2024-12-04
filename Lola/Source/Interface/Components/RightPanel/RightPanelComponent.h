@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Interface/UIContext.h"
 
 //==============================================================================
 /*
@@ -24,16 +25,10 @@ class RightPanelComponent  : public juce::Component
 public:
     RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);
     ~RightPanelComponent() override;
-
-    enum UIContext {
-        EntireContext,
-        PlayListContext,
-        RegionListContext
-    };
     
     void paint (juce::Graphics&) override;
     void resized() override;
-    void updateUI(UIContext context = EntireContext);
+    void updateUI(UIContext context = ContentContext);
     void clearSelection();
 
     
