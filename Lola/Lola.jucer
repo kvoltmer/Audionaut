@@ -369,6 +369,8 @@
           <FILE id="hpKHS1" name="GridView.h" compile="0" resource="0" file="Source/Interface/Views/GridView.h"/>
           <FILE id="Fx8wUZ" name="ArrangementOverview.h" compile="0" resource="0"
                 file="Source/Interface/Views/ArrangementOverview.h"/>
+          <FILE id="kEIzFq" name="WaveFormViewBase.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/WaveFormViewBase.cpp"/>
           <FILE id="nZmqga" name="WaveFormViewBase.h" compile="0" resource="0"
                 file="Source/Interface/Views/WaveFormViewBase.h"/>
           <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"
