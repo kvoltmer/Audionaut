@@ -9,16 +9,16 @@
 */
 
 #include "PlayListScheduler.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResource.h"
-#include "Engine/AudiumTransportSource.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Core/AudioClipContainer.h"
@@ -26,13 +26,14 @@
 
 using namespace::std::chrono;
 
+using namespace::juce;
 
-void PlayListScheduler::prepareToPlay (double newSampleRate, int newBufferSize)
+void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    externalSampleRate = newSampleRate;
-    bufferSize = newBufferSize;
-    tempoProvider->prepareToPlay(newSampleRate, newBufferSize);
-    transportSourceContainer->prepareToPlay(newSampleRate, newBufferSize);
+    externalSampleRate = sampleRate;
+    bufferSize = samplesPerBlockExpected;
+    tempoProvider->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    transportSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void PlayListScheduler::tick(bool isPlaying,
@@ -59,10 +60,10 @@ void PlayListScheduler::tick(bool isPlaying,
     }
 }
 
-void PlayListScheduler::process(double transportPosition, int numSamples)
+void PlayListScheduler::process(double transportPositionClocks, int numSamples)
 {
     // convert to seconds
-    transportPosition = tempoProvider->clocksToSeconds(transportPosition);
+    auto transportPosition = tempoProvider->clocksToSeconds(transportPositionClocks);
     const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
     auto transportRange = juce::Range<double> (transportPosition, transportPosition + secondsThisBuffer);
     
@@ -75,9 +76,11 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
         if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange))
         {
             const auto transportSource = transportSourceContainer->getTransportSourceAtIndex(dspClip.dspClipData.transportSourceIndex);
+            if (transportSource == nullptr)
+                continue;
             
-            if (transportSource != nullptr &&
-                not transportSource->isPlaying())
+            if (not transportSource->getAudioTransportSource()->isPlaying() ||
+                newDataCommited.load())
             {
                 auto absolute = dspClip.getAbsolutePosition(audium::seconds);
                 auto local = dspClip.getRegionData(audium::seconds).getStart();
@@ -88,25 +91,30 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
                 if (offset < 0.0)
                 {
                     position = local - offset;
+                    
+                    startSamples = 0; // startSamples is 0
                 }
                 else
                 {
+                    position = local;
+                    
                     startSamples = static_cast<int>(offset * externalSampleRate);
                     jassert(startSamples < numSamples);
-                    position = local;
                 }
                 
                 auto duration = dspClip.getRegionData(audium::seconds).getEnd() - position;
                 
+                jassert(position >= 0.0 && duration >= 0.0);
                 transportSource->schedulePosition(position, startSamples);
-                transportSource->scheduleDuration(duration + (startSamples / externalSampleRate), externalSampleRate);
+                transportSource->scheduleDuration(duration, externalSampleRate);
+                transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.gain);
+                transportSource->getAudioTransportSource()->start();
                 
-                //std::cout << "id: " << dspClip.dspClipData.transportSourceIndex << " ";
-                std::cout << "transport: " << transportPosition << " ";
-                std::cout << "absolute " <<  absolute << " ";
-                std::cout << "offset " << offset << " ";
-                std::cout << "position " << position << " ";
-                std::cout << "duration " << duration << " ";
+                std::cout << "transport-pos: " << transportPosition << " ";
+                std::cout << "clip-pos: " <<  absolute << " ";
+                std::cout << "offset: " << offset << " ";
+                std::cout << "file-pos: " << position << " ";
+                std::cout << "duration: " << duration << " ";
                 std::cout << std::endl;
 
 
@@ -114,11 +122,46 @@ void PlayListScheduler::process(double transportPosition, int numSamples)
         }
     }
     
+    newDataCommited.store(false);
 }
 
-void PlayListScheduler::audioCallback(const juce::AudioSourceChannelInfo& info)
+void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
 {
-    transportSourceContainer->audioCallback(info);
+    auto outputChannels = outputInfo.buffer->getNumChannels();
+    auto totalChannels = std::max(outputInfo.buffer->getNumChannels(),
+                                  audioTrackContainer->getNumAudioTrackChannels());
+    juce::AudioBuffer<float> tempBuffer(totalChannels, outputInfo.numSamples);
+    tempBuffer.clear();
+    juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, outputInfo.startSample, outputInfo.numSamples);
+    
+        
+    // render the entire bus (all channels)
+    transportSourceContainer->getNextAudioBlock(tempBufferInfo);
+    
+    // stereo or mono output
+    if (outputChannels == 2 || outputChannels == 1)
+    {
+        for (auto c = 0; c < outputChannels; c++) {
+            for (auto i = 0; i < totalChannels; i++) {
+                outputInfo.buffer->addFrom(c,
+                                           outputInfo.startSample,
+                                           tempBuffer.getReadPointer(i),
+                                           outputInfo.numSamples);
+            }
+        }
+    }
+    else // multichannel output
+    {
+        jassert(outputChannels == totalChannels);
+        
+        for (auto c = 0; c < std::min(outputChannels, totalChannels); c++) {
+            outputInfo.buffer->addFrom(c,
+                                       outputInfo.startSample,
+                                       tempBuffer.getReadPointer(c),
+                                       outputInfo.numSamples);
+        }
+    }
+    
 }
 
 double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const
@@ -129,12 +172,12 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
 
 //void PlayListScheduler::processInArrangementMode(double absolutePosition, int numSamples)
 //{
-//    // iterate over group container
-//    for (auto i = 0; i < audioGroupContainer->getNumItems(); i++)
+//    // iterate over track container
+//    for (auto i = 0; i < audioTrackContainer->getNumItems(); i++)
 //    {
-//        const auto group = audioGroupContainer->getAudioGroup(i);
-//        const auto playlist = group->getPlayListContainer();
-//        const auto transport = group->getTransportSourceContainer();
+//        const auto track = audioTrackContainer->getAudioTrack(i);
+//        const auto playlist = track->getPlayListContainer();
+//        const auto transport = track->getTransportSourceContainer();
 //        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(numSamples) / externalSampleRate);
 //        const auto item = playlist->itemAtAbsolutePosition(absolutePosition + clocksThisBuffer, audium::clocks);
 //        
@@ -187,8 +230,8 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
 //    {
 //        if (not resource->getAudioTransportSource()->isPlaying())
 //        {
-//            const auto startPosition = resource->getAudioSubGroup()->getAudioClip()->getAbsolutePosition(audium::seconds);
-//            const auto localPosition = resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getStart();
+//            const auto startPosition = resource->getAudioSubGroup()->getAbsolutePosition(audium::seconds);
+//            const auto localPosition = resource->getAudioSubGroup()->getRegionData(audium::seconds).getStart();
 //            const auto diff = startPosition - absolutePositionInSeconds;
 //
 //            if (diff < 0.0)
@@ -204,7 +247,7 @@ double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const
 //            
 //            std::cout << "absolute pos: " << absolutePositionInSeconds << " start " <<  startPosition << " diff " << diff << std::endl;
 //
-//            resource->getAudioTransportSource()->scheduleDuration(resource->getAudioSubGroup()->getAudioClip()->getRegionData(audium::seconds).getLength(), externalSampleRate);
+//            resource->getAudioTransportSource()->scheduleDuration(resource->getAudioSubGroup()->getRegionData(audium::seconds).getLength(), externalSampleRate);
 //        }
 //    }
 //}
@@ -214,9 +257,9 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
 {
     double totalLength = 0.0;
     
-    for (auto group : audioGroupContainer->getAudioGroups())
+    for (auto track : audioTrackContainer->getAudioTracks())
     {
-        totalLength = juce::jmax(totalLength, group->getTotalLength(context, isArrangementMode()));
+        totalLength = juce::jmax(totalLength, track->getTotalLength(context, isArrangementMode()));
     }
         
     if (addOverhead)
@@ -300,28 +343,28 @@ void PlayListScheduler::setAbsolutePosition(double newPosition, audium::TimeCont
 }
 
 
-int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const
+int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track)
 {
-    const auto item = group->getPlayListContainer()->itemAtAbsolutePosition(getAbsolutePosition(audium::clocks), audium::clocks);
+    auto item = track->getPlayListContainer()->itemAtAbsolutePosition(getAbsolutePosition(audium::clocks), audium::clocks);
     if (item != nullptr)
     {
-        return group->getPlayListContainer()->getPlayListItemIndex(item);
+        return track->getPlayListContainer()->getPlayListItemIndex(item);
     }
     return -1;
 }
 
-void PlayListScheduler::setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioGroup> group, int playListItemIndex)
+void PlayListScheduler::setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioTrack> track, int playListItemIndex)
 {
-    const auto item = group->getPlayListContainer()->getPlayListItem(playListItemIndex);
+    const auto item = track->getPlayListContainer()->getPlayListItem(playListItemIndex);
     if (item != nullptr)
     {
         data.startPositionClocks = item->getAbsolutePosition(audium::clocks);
     }
 }
 
-double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const
+double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const
 {
-    const auto item = group->getPlayListContainer()->getPlayListItem(playListItemIndex);
+    const auto item = track->getPlayListContainer()->getPlayListItem(playListItemIndex);
     if (item != nullptr)
     {
         auto localPosition = absoluteToLocalPosition(getAbsolutePosition(audium::clocks), item.get(), audium::clocks);
@@ -331,33 +374,62 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioGroup> gr
     return 0.0;
 }
 
-void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer, double externalSampleRate, int numSamples, int numOutputChannels)
+void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
+                                     audium::ExportAudioConfig &config,
+                                     std::function<void ()> callback)
 {
-    // remember last position and reset to 0
+    // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
-    setAbsolutePosition(0.0, audium::seconds);
+    setAbsolutePosition(config.positionSeconds, audium::seconds);
+
     startPlaying();
     
-    auto seconds = getTotalLength(audium::seconds);
-    auto iterations = static_cast<int>(seconds * externalSampleRate) / numSamples;
-    iterations += 1; // add one iteration to be on the save side
-    auto position = 0.0;
-    juce::AudioBuffer<float> buffer(numOutputChannels, numSamples);
-    juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
+    jassert((int)config.sampleRate == (int)externalSampleRate);
     
+    auto totalSamples   = static_cast<int64>((getTotalLength(audium::seconds) - config.positionSeconds) * externalSampleRate);
+    auto iterations     = static_cast<int64>(totalSamples) / config.blockSize;
+    auto remainder      = totalSamples - (iterations * config.blockSize);
+    jassert(remainder < config.blockSize);
+    
+    auto positionBeats = TempoProvider::clocksToBeats(getAbsolutePosition(audium::clocks));
+    
+    AudioBuffer<float> buffer(config.numChannels, config.blockSize);
+    AudioSourceChannelInfo info (&buffer, 0, config.blockSize);
+    int64 samplesWritten = 0;
     for (auto i = 0; i < iterations; ++i)
     {
-        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(numSamples) / externalSampleRate);
+        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config.blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
-        tick(true, position, numSamples);
-        position += beatsThisBuffer;
+        tick(true, positionBeats, config.blockSize);
+        positionBeats += beatsThisBuffer;
         
         
         buffer.clear();
-        audioCallback(info);
-        writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
+        processAudio(info);
+
+        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+        
+        samplesWritten += info.numSamples;
+        
+        config.progress = i / (double)iterations;
+        
+        if (callback)
+            callback();
     }
+    
+    // process remaining samples
+    if (remainder > 0)
+    {
+        buffer.clear();
+        info.numSamples = static_cast<int>(remainder);
+        processAudio(info);
+        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+        samplesWritten += info.numSamples;
+    }
+    
+    jassert(samplesWritten == totalSamples);
+    
     
     setAbsolutePosition(lastPosition, audium::seconds);
     stopPlaying();
@@ -366,15 +438,16 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer, double ext
 
 void PlayListScheduler::commitPlayListData()
 {
+    std::cout << "PlayListScheduler::commitPlayListData" << std::endl;
     
     DspClipArray<> dspClipArray;
         
     int count = 0;
     
     
-    for (const auto &group : audioGroupContainer->getAudioGroups())
+    for (const auto &track : audioTrackContainer->getAudioTracks())
     {
-        auto dspClipData = group->getDspClipVector(isArrangementMode());
+        auto dspClipData = track->getDspClipVector(isArrangementMode());
         
         for (const auto &clip : dspClipData)
         {
@@ -392,6 +465,7 @@ void PlayListScheduler::commitPlayListData()
 
     // commit data as atomic operation
     audioClipContainer->atomicDspClipArray.store(dspClipArray);
+    newDataCommited.store(true);
     
 #if 0 // print resource id and it's postion
     for (auto i = 0; i < dspClipArray.size(); i++)
@@ -402,4 +476,8 @@ void PlayListScheduler::commitPlayListData()
         }
     }
 #endif
+    
+    // update channel mapping
+    transportSourceContainer->applyChannelMapping();
+    
 }

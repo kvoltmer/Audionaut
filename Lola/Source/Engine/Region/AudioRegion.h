@@ -17,7 +17,7 @@
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
 
-class AudioGroup;
+class AudioTrack;
 class AudioResource;
 class TempoProvider;
 class AudioSubGroup;
@@ -27,19 +27,21 @@ class AudioRegion : public audium::Streamable, public audium::Selectable
 {    
     
 public:
-    AudioRegion(std::shared_ptr<AudioGroup> audioGroup,
+    AudioRegion(std::shared_ptr<AudioTrack> audioTrack,
                 std::shared_ptr<AudioSubGroup> audioSubGroup,
                 std::shared_ptr<TempoProvider> tempoProvider,
                 std::shared_ptr<audium::SelectionManager> selectionManager) :
         audium::Selectable(selectionManager),
-        audioGroup(audioGroup),
+        audioTrack(audioTrack),
         audioSubGroup(audioSubGroup),
         tempoProvider(tempoProvider)
     {
-        jassert(audioGroup != nullptr);
+        jassert(audioTrack != nullptr);
     }
     
     ~AudioRegion();
+    
+    void sendActionMessage (const juce::String& message) const;
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
@@ -49,7 +51,7 @@ public:
     
     int getSizeInUnits() override;
     
-    std::shared_ptr<AudioGroup> getAudioGroup() const { return audioGroup; }
+    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
@@ -75,7 +77,7 @@ public:
     
 private:
     
-    std::shared_ptr<AudioGroup> audioGroup;
+    std::shared_ptr<AudioTrack> audioTrack;
     std::shared_ptr<AudioSubGroup> audioSubGroup;
     std::shared_ptr<TempoProvider> tempoProvider;
     

@@ -16,38 +16,49 @@
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/PlayList/PlayListSchedulerData.h"
 #include "Engine/Core/AudioClipContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/ExportAudioConfig.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 
-class TransportSourceContainer;
 class PlayListContainer;
 class PlayListItem;
-class AudioGroupContainer;
+
 class AudioResourceContainer;
 
-class PlayListScheduler
+class PlayListScheduler : public juce::ChangeListener
 {
     
     
 public:
-    PlayListScheduler(std::shared_ptr<AudioGroupContainer> audioGroupContainer,
-                      std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                      std::shared_ptr<TempoProvider> tempoProvider,
-                      std::shared_ptr<audium::LinkEngine> linkEngine,
-                      std::shared_ptr<AudioClipContainer> audioClipContainer,
-                      std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
-        audioGroupContainer(audioGroupContainer),
-        audioResourceContainer(audioResourceContainer),
-        tempoProvider(tempoProvider),
-        linkEngine(linkEngine),
-        audioClipContainer(audioClipContainer),
-        transportSourceContainer(transportSourceContainer)
+    PlayListScheduler(std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
+                      std::shared_ptr<AudioResourceContainer> audioResourceContainer_,
+                      std::shared_ptr<TempoProvider> tempoProvider_,
+                      std::shared_ptr<audium::LinkEngine> linkEngine_,
+                      std::shared_ptr<AudioClipContainer> audioClipContainer_,
+                      std::shared_ptr<TransportSourceContainer> transportSourceContainer_) :
+        audioTrackContainer(audioTrackContainer_),
+        audioResourceContainer(audioResourceContainer_),
+        tempoProvider(tempoProvider_),
+        linkEngine(linkEngine_),
+        audioClipContainer(audioClipContainer_),
+        transportSourceContainer(transportSourceContainer_)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
         
+        audioTrackContainer->addChangeListener(this);
     }
     
-    ~PlayListScheduler() = default;
+    ~PlayListScheduler() override
+    {
+        audioTrackContainer->removeChangeListener(this);
+    }
+    
+    void changeListenerCallback (juce::ChangeBroadcaster*) override
+    {
+        commitPlayListData();
+    }
 
-    void prepareToPlay (double sampleRate, int blockSize);
+    void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     
 
     void startPlaying();
@@ -61,9 +72,9 @@ public:
     bool isEditMode() const { return data.editMode; }
     bool isArrangementMode() const { return !data.editMode; }
         
-    void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioGroup> group, int playListItemIndex);
-    int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioGroup> group) const;
-    double getPlayListItemProgress(std::shared_ptr<AudioGroup> group, int playListItemIndex) const;
+    void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioTrack> track, int playListItemIndex);
+    int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track);
+    double getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const;
     
     
     double getAbsolutePosition(audium::TimeContextType context) const;
@@ -71,11 +82,13 @@ public:
     
     void tick(bool isPlaying, double beats, int numSamples);
     
-    void audioCallback (const juce::AudioSourceChannelInfo& info);
+    void processAudio (const juce::AudioSourceChannelInfo& info);
     
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
-    void bounceToFile(juce::AudioFormatWriter* writer, double sampleRate, int numSamples, int numOutputChannels);
+    void bounceToFile(juce::AudioFormatWriter* writer,
+                      audium::ExportAudioConfig &config,
+                      std::function<void ()> callback);
     
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
     
@@ -94,7 +107,7 @@ private:
     
 private:
     
-    std::shared_ptr<AudioGroupContainer> audioGroupContainer;
+    std::shared_ptr<AudioTrackContainer> audioTrackContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<audium::LinkEngine> linkEngine;
@@ -106,6 +119,8 @@ private:
     int bufferSize = 0;
     
     std::atomic<bool> forcePosition = false;
+    
+    std::atomic<bool> newDataCommited = false;
     
     juce::CriticalSection readLock;
 

@@ -13,7 +13,7 @@
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Controls/RegionLabel.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Undo/UndoableContainerAction.h"
@@ -23,9 +23,9 @@ bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDrop
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         if (regionLabel->getRegion() &&
-            regionLabel->getRegion()->getAudioGroup() == playListModel->getAudioGroup())
+            regionLabel->getRegion()->getAudioTrack() == playListModel->getAudioTrack())
         {
-            // return true if source details match this group
+            // return true if source details match this track
             return true;
         }
     }
@@ -40,39 +40,84 @@ bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDrop
     return false;
 }
 
+void PlayListTableListBoxItem::updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
+    auto insertIndex = rowNumber + (before ? 0 : 1);
+    
+    if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
+    {
+        //std::cout << "movePlayListItemBefore this: " << rowNumber << " item: " << item->rowNumber << " insert: " << insertIndex << std::endl;
+        
+        if (rowNumber == item->rowNumber ||
+            item->rowNumber == insertIndex)
+        {
+            repaint();
+            return;
+        }
+    }
+    
+    if( dragSourceDetails.localPosition.y < getHeight() / 2 )
+    {
+        insertBefore = true;
+        insertAfter = false;
+    }
+    else
+    {
+        insertAfter = true;
+        insertBefore = false;
+    }
+    
+    repaint();
+}
+
 void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetails)
 {
     auto playListContainer = playListModel->getPlayListContainer();
     
+    
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getAudioGroup()->getAudioGroupContainer());
+    auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getAudioTrack()->getAudioTrackContainer());
     
     auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
     auto insertIndex = rowNumber + (before ? 0 : 1);
     
     //std::cout << "row number: " << rowNumber + (before ? 0 : 1) << std::endl;
     
+    bool modified = false;
+    
     if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
-        playListContainer->movePlayListItemBefore(item->rowNumber, insertIndex);
-    }
-    else if (auto item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {        
-        if (playListContainer->createPlayListItemUI(item->getRowNumber(), insertIndex) == nullptr)
+        if (rowNumber != item->rowNumber &&
+            item->rowNumber != insertIndex)
         {
-            hideInsertLines();
-            return;
+            playListContainer->movePlayListItemBefore(item->rowNumber, insertIndex);
+            modified = true;
         }
     }
+    else if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    {
+        auto selectedRegions = playListModel->getAudioTrack()->getAudioRegionContainer()->getSelectedRegions();
+        if (selectedRegions.size() <= 1) {
+            playListContainer->createPlayListItemUI(regionLabel->getRowNumber(), insertIndex);
+        }
+        else {
+            // multiple selection
+            playListContainer->createPlayListItemsUI(selectedRegions, insertIndex);
+        }
+        
+        modified = true;
+    }
     
-
-    // Undo: store new state
-    action->storeNewState();
-    // oh dear
-    auto undoManager = playListModel->getPlayListContainer()->getAudioRegionContainer().getUndoManager();
-    undoManager->perform(action.release(), "Playlist changed");
-    undoManager->beginNewTransaction();
-    
+    if (modified)
+    {
+        // Undo: store new state
+        action->storeNewState();
+        // oh dear
+        auto undoManager = playListModel->getPlayListContainer()->getAudioRegionContainer().getUndoManager();
+        undoManager->perform(action.release(), "Playlist changed");
+        undoManager->beginNewTransaction();
+    }
     
     hideInsertLines();
 }
@@ -103,11 +148,11 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
         drawLinearProgress(g, progress);
     }
     
-    auto container = playListModel->getAudioGroup()->getPlayListContainer();
+    auto container = playListModel->getAudioTrack()->getPlayListContainer();
     if (auto r = container->getPlayListItem(rowNumber))
     {
         juce::String text;
-        auto groupColour = r->getRegion()->getAudioGroup()->getColour();
+        auto groupColour = r->getRegion()->getAudioTrack()->getColour();
         auto groupHighlightColour = groupColour.brighter().brighter();
 
         if (columnNumber == 1)
@@ -135,21 +180,44 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
     }
 }
 
+void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
+{
+    
+    // must call deselect since items of other playlists might be selected
+    auto track = playListModel->getAudioTrack();
+    if (!e.mods.isCommandDown() &&
+        !e.mods.isShiftDown())
+    {
+        track->getSelectionManager()->deselectAll();
+    }
+    
+    // select this item
+    auto container = playListModel->getAudioTrack()->getPlayListContainer();
+    if (auto item = container->getPlayListItem(rowNumber))
+        item->setSelected(true);
+    
+    // pass on the event to the model
+    getParentComponent()->mouseDown(e);
+
+    // update
+    track->getAudioTrackContainer().sendActionMessage(updateSelection);
+}
+
 void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)
 {
-    auto group = playListModel->getAudioGroup();
-    playListModel->getPlayListScheduler()->setCurrentPositionAtPlayListItemIndex(group, rowNumber);
+    auto track = playListModel->getAudioTrack();
+    playListModel->getPlayListScheduler()->setCurrentPositionAtPlayListItemIndex(track, rowNumber);
 }
 
 void PlayListTableListBoxItem::timerCallback()
 {
-    auto group = playListModel->getAudioGroup();
-    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndexAtCurrentPosition(group);
+    auto track = playListModel->getAudioTrack();
+    auto itemPlaying = playListModel->getPlayListScheduler()->getPlayListItemIndexAtCurrentPosition(track);
     
     auto theProgress = 0.0;
     if (itemPlaying == rowNumber)
     {
-        theProgress = playListModel->getPlayListScheduler()->getPlayListItemProgress(group, rowNumber);
+        theProgress = playListModel->getPlayListScheduler()->getPlayListItemProgress(track, rowNumber);
     }
     else
     {

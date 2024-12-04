@@ -17,31 +17,44 @@
 #include "Engine/Streamable.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/PlayList/PositionableBase.h"
 
 using json = nlohmann::json;
 
-class AudioGroup;
+class AudioTrack;
 class AudioResource;
 class AudioRegion;
-class AudioClip;
 class AudiumTransportSource;
+class AudioClip;
+class AudioChannel;
 
-class AudioSubGroup : public audium::Streamable, public audium::Selectable
+class AudioSubGroup :   public PositionableBase,
+                        public audium::Selectable,
+                        public audium::Streamable
 {
         
 public:
-    AudioSubGroup(AudioGroup& audioGroup, std::shared_ptr<audium::SelectionManager> selectionManager);
+    AudioSubGroup(AudioTrack& audioTrack, std::shared_ptr<audium::SelectionManager> selectionManager);
     virtual ~AudioSubGroup() override;
-    void cleanup();
+    void cleanup() override;
     void cleanupAudioRegions();
     void cleanupAudioResources();
     void cleanupTransportSources();
 
+    // PositionableBase overrides
+    double getAbsolutePosition(audium::TimeContextType context) const override;
+    void setAbsolutePosition(double position, audium::TimeContextType context) override;
+    juce::Range<double> getRegionData(audium::TimeContextType context) const override;
+    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
+    
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     
+    
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
+    bool writeChannelToJson (json& output, AudioChannel* audioChannel);
+
     
     int getSizeInUnits() override;
     
@@ -52,7 +65,7 @@ public:
     int getNumChannels() const;
     std::shared_ptr<AudioResource> getChannel(int rowNumber) const;
 
-    AudioGroup& getAudioGroup() const { return audioGroup; }
+    AudioTrack& getAudioTrack() const { return audioTrack; }
     
     std::shared_ptr<AudioClip> getAudioClip() const { return audioClip; }
     
@@ -61,7 +74,7 @@ public:
 private:
     std::shared_ptr<AudioClip> audioClip;
     
-    AudioGroup& audioGroup;
+    AudioTrack& audioTrack;
 
     std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
     

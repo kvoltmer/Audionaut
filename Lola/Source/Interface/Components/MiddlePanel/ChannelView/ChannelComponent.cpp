@@ -18,9 +18,10 @@
 */
 
 //[Headers] You can add your own extra header files here...
-#include "Engine/AudiumTransportSource.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/Group/AudioTrackContainer.h"
 //[/Headers]
 
 #include "ChannelComponent.h"
@@ -30,11 +31,11 @@
 //[/MiscUserDefs]
 
 //==============================================================================
-ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std::shared_ptr<AudiumEngine> engine, int rowNumber)
+ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack, std::shared_ptr<AudiumEngine> engine, int rowNumber)
 {
     //[Constructor_pre] You can add your own custom stuff here..
 
-    this->audioGroup = audioGroup;
+    this->audioTrack = audioTrack;
     this->engine = engine;
     
     levelMeter.reset (new LevelMeter (true, false));
@@ -45,7 +46,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std:
     volumeLabeldB.reset (new juce::Label ("new label",
                                           TRANS ("dB")));
     addAndMakeVisible (volumeLabeldB.get());
-    volumeLabeldB->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    volumeLabeldB->setFont (juce::FontOptions (11.00f));
     volumeLabeldB->setJustificationType (juce::Justification::centredLeft);
     volumeLabeldB->setEditable (false, false, false);
     volumeLabeldB->setColour (juce::Label::backgroundColourId, juce::Colour (0x00000000));
@@ -65,7 +66,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std:
     volumeLevel.reset (new juce::Label ("new label",
                                         TRANS ("-60")));
     addAndMakeVisible (volumeLevel.get());
-    volumeLevel->setFont (juce::Font (11.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    volumeLevel->setFont (juce::FontOptions (11.00f));
     volumeLevel->setJustificationType (juce::Justification::centredRight);
     volumeLevel->setEditable (true, true, false);
     volumeLevel->setColour (juce::Label::backgroundColourId, juce::Colour (0x00000000));
@@ -101,7 +102,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioGroup> audioGroup, std:
 
     startTimerHz(60);
     
-    refreshComponent(audioGroup, rowNumber, false);
+    refreshComponent(audioTrack, rowNumber, false);
     
     //[/Constructor]
 }
@@ -110,7 +111,7 @@ ChannelComponent::~ChannelComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
     stopTimer();
-    audioGroup = nullptr;
+    audioTrack = nullptr;
     //[/Destructor_pre]
 
     volumeLabeldB = nullptr;
@@ -131,8 +132,8 @@ void ChannelComponent::paint (juce::Graphics& g)
     g.fillAll (juce::Colour (0xff323232));
 
     //[UserPaint] Add your own custom painting code here..
-    if (audioGroup->getChannel(rowNumber) != nullptr &&
-        audioGroup->getChannel(rowNumber)->isSelected())
+    if (audioTrack->getChannel(rowNumber) != nullptr &&
+        audioTrack->getChannel(rowNumber)->isSelected())
     {
         g.setColour (juce::Colours::white.withAlpha(0.25f));
     }
@@ -187,7 +188,7 @@ void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
         //[UserLabelCode_volumeLevel] -- add your label text handling code here..
         auto db = volumeLevel->getText().getFloatValue();
         auto gain = LevelMeter::decebelToGain(db);
-        audioGroup->setGain(gain, rowNumber);
+        audioTrack->setGain(gain, rowNumber);
         //[/UserLabelCode_volumeLevel]
     }
 
@@ -195,11 +196,46 @@ void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
     //[/UserlabelTextChanged_Post]
 }
 
+static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
+{
+    if (component != nullptr && result != 0)
+    {
+        switch (result) {
+            case ChannelComponent::moveChannelToNewTrackId:
+                component->getEngine()->getAudioTrackContainer()->moveSelectedChannelsToNewAudioTrack();
+                break;
+                
+            default:
+                break;
+        }
+    }
+}
+
 void ChannelComponent::mouseDown (const juce::MouseEvent& e)
 {
     //[UserCode_mouseDown] -- Add your code here...
-    getParentComponent()->mouseDown(e);
+    
+    if (e.mods.isPopupMenu()) {
+        
+        PopupMenu m;
+        
+        m.addItem (moveChannelToNewTrackId, TRANS ("Move channel(s) to new track"), true);
+        
+        if (m.getNumItems() > 0)
+        {
+            m.setLookAndFeel (&getLookAndFeel());
 
+            m.showMenuAsync (PopupMenu::Options(),
+                             ModalCallbackFunction::forComponent (channelMenuCallback, this, rowNumber));
+        }
+    } else {
+        // hier?
+        audioTrack->getSelectionManager()->deselectAll();
+        
+        getParentComponent()->mouseDown(e);
+        
+        audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
+    }
     //[/UserCode_mouseDown]
 }
 
@@ -221,16 +257,16 @@ bool ChannelComponent::keyPressed (const juce::KeyPress& key)
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
-void ChannelComponent::refreshComponent(std::shared_ptr<AudioGroup> audioGroup, int rowNumber, bool isRowSelected)
+void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack, int rowNumber, bool isRowSelected)
 {
-    this->audioGroup = audioGroup;
+    this->audioTrack = audioTrack;
     this->rowNumber = rowNumber;
 
 
-    volumeLevel->setColour (juce::Label::textColourId, audioGroup->getColour());
-    volumeLabeldB->setColour (juce::Label::textColourId, audioGroup->getColour());
+    volumeLevel->setColour (juce::Label::textColourId, audioTrack->getColour());
+    volumeLabeldB->setColour (juce::Label::textColourId, audioTrack->getColour());
 
-    auto gain = audioGroup->getGain(rowNumber);
+    auto gain = audioTrack->getGain(rowNumber);
     volumeLevel->setText(String(LevelMeter::gainToDecebel(gain)), dontSendNotification);
 
     if (not isTimerRunning())
@@ -241,7 +277,7 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioGroup> audioGroup, 
 
 void ChannelComponent::timerCallback()
 {
-    levelMeter->setLevel(audioGroup->getOutputLevel(rowNumber));
+    levelMeter->setLevel(audioTrack->getOutputLevel(rowNumber));
 }
 
 void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
@@ -268,10 +304,12 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
 
         channelSizeComboBox->setText("", dontSendNotification);
 
-        audioGroup->getChannel(rowNumber)->setChannelHeight(height);
+        audioTrack->getChannel(rowNumber)->setChannelHeight(height);
         engine->getAudioResourceContainer()->sendActionMessage("");
     }
 }
+
+
 
 //[/MiscUserCode]
 
@@ -287,7 +325,7 @@ BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="ChannelComponent" componentName=""
                  parentClasses="public juce::Component, private juce::Timer, public juce::ComboBox::Listener"
-                 constructorParams="std::shared_ptr&lt;AudioGroup&gt; audioGroup, std::shared_ptr&lt;AudiumEngine&gt; engine, int rowNumber"
+                 constructorParams="std::shared_ptr&lt;AudioTrack&gt; audioTrack, std::shared_ptr&lt;AudiumEngine&gt; engine, int rowNumber"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="1" initialWidth="60" initialHeight="100">
   <METHODS>

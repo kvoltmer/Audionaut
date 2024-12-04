@@ -25,9 +25,9 @@
 #include "Application/AudiumApplication.h"
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 //[/Headers]
 
@@ -79,7 +79,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 
     resized();
 
-    audiumEngine->getAudioGroupContainer()->addActionListener(this);
+    audiumEngine->getAudioTrackContainer()->addActionListener(this);
     audiumEngine->getAudioResourceContainer()->addActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->addActionListener(this);
 
@@ -91,7 +91,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
 MainComponent::~MainComponent()
 {
     //[Destructor_pre]. You can add your own custom destruction code here..
-    audiumEngine->getAudioGroupContainer()->removeActionListener(this);
+    audiumEngine->getAudioTrackContainer()->removeActionListener(this);
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->removeActionListener(this);
     //[/Destructor_pre]
@@ -149,7 +149,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     if (message == regionCreatedAction)
     {
         middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == regionClearedAction)
     {
@@ -157,36 +157,26 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     }
     else if (message == regionModifiedAction)
     {
-        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == regionSelectedAction)
     {
         middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(RightPanelComponent::RegionListContext);
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == playListItemCreatedAction)
     {
         middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == playListItemTriggered)
     {
-        rightPanelComponent->updateUI(RightPanelComponent::PlayListContext);
-    }
-    else if (message == playListItemSelection)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI();
+        rightPanelComponent->updateUI(ContentContext);
     }
     else if (message == audioResourceCreatedAction)
     {
         middlePanelComponent->updateUI();
         rightPanelComponent->updateUI();
-    }
-    else if (message == audioGroupCreatedAction)
-    {
-        // TODO: update with context to rebuild everything
-        updateUI();
     }
     else if (message == scrolledVertically)
     {
@@ -194,8 +184,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     }
     else if (message == rebuildAll)
     {
-        middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
-        rightPanelComponent->updateUI();
+        rebuildUI();
     }
     else if (message == updateAll)
     {
@@ -213,6 +202,11 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
     }
+    else if (message == updateSelection)
+    {
+        middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
+        rightPanelComponent->updateUI(SelectionContext);
+    }
     else // update everything (eg. region deleted)
     {
         updateUI();
@@ -227,7 +221,7 @@ void MainComponent::changeListenerCallback (ChangeBroadcaster* source)
 void MainComponent::rebuildUI()
 {
     middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
-    rightPanelComponent->updateUI();
+    rightPanelComponent->updateUI(RebuildContext);
 }
 
 void MainComponent::updateUI()
@@ -237,7 +231,7 @@ void MainComponent::updateUI()
     middlePanelComponent->showEditComponent(editMode);
 
     middlePanelComponent->updateUI();
-    rightPanelComponent->updateUI();
+    rightPanelComponent->updateUI(ContentContext);
 
     updateWindowTitle();
 }
@@ -291,71 +285,27 @@ void MainComponent::toggleEditArrangementComponent()
 
 void MainComponent::selectAll()
 {
-    for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
+    for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks())
     {
-        group->setSelected(true, true);
+        track->setSelected(true, true);
     }
     updateUI();
 }
 
 void MainComponent::copy()
 {
-    
-    json jout;
-    //auto result = writeToJson(jout);
-    //outputStream.writeString(jout.dump(2));
-    
-    for (auto group : audiumEngine->getAudioGroupContainer()->getAudioGroups())
-    {
-        if (group->isSelected())
-        {
-            auto success = group->writeToJson(jout);
-            jassert(success);
-        }
-        else
-        {
-            
-        }
-        //group->
-    }
-    //currentLayout->copySelectedToClipboard();
-    
-    //            if (currentLayout != nullptr)
-    //                currentLayout->copySelectedToClipboard();
-    //            else if (currentPaintRoutine != nullptr)
-    //                currentPaintRoutine->copySelectedToClipboard();
-
-    String test = "bla";
-    
-    juce::SystemClipboard::copyTextToClipboard (test);
-    
-    updateUI();
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->copySelectedToClipboard();
 }
 
 void MainComponent::paste()
 {
-    auto test = juce::SystemClipboard::getTextFromClipboard();
-//            {
-//                if (auto doc = parseXML (SystemClipboard::getTextFromClipboard()))
-//                {
-//                    if (doc->hasTagName (ComponentLayout::clipboardXmlTag))
-//                    {
-//                        if (currentLayout != nullptr)
-//                            currentLayout->paste();
-//                    }
-//                    else if (doc->hasTagName (PaintRoutine::clipboardXmlTag))
-//                    {
-//                        if (currentPaintRoutine != nullptr)
-//                            currentPaintRoutine->paste();
-//                    }
-//                }
-//            }
-    updateUI();
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->pasteFromClipboard(audiumEngine, false);
 }
 
 void MainComponent::duplicate()
 {
-    updateUI();
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->copySelectedToClipboard();
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->pasteFromClipboard(audiumEngine, true);
 }
 
 //[/MiscUserCode]

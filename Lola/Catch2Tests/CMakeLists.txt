@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(AUDIUM_TESTS VERSION 0.0.1)
+project(Lola_Tests VERSION 0.0.1)
 
-set(APP_NAME "AudiumTests")
+set(APP_NAME "LolaTests")
 message(STATUS "Name: ${APP_NAME}")
 
 set(SUBMODULES_PATH "../../Submodules")
@@ -57,6 +57,9 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/Region/*.cpp
         ${SRC_PATH}/Engine/Resource/*.cpp
         ${SRC_PATH}/Engine/Undo/*.cpp
+        ${SRC_PATH}/Engine/AudioSources/*.cpp
+        ${SRC_PATH}/Engine/Export/*.cpp
+        ${SRC_PATH}/Engine/Selection/*.cpp
         
         ${SRC_PATH}/Interface/*.cpp
         ${SRC_PATH}/Interface/Components/*.cpp
@@ -79,9 +82,10 @@ file(GLOB SRC_AUDIUM
         
 file(GLOB SRC_TESTS
         #JuceTest.cpp
-        FactorialTest.cpp
+        #FactorialTest.cpp
         ZoomHandlerTests.cpp
         ResourceContainerTests.cpp
+        Tests/*.cpp
         )
 
 target_sources(${APP_NAME}
@@ -104,10 +108,16 @@ target_include_directories(${APP_NAME}
 
 target_compile_definitions(${APP_NAME}
     PRIVATE
-        # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
+        JUCE_MODAL_LOOPS_PERMITTED=1
         CATCH2_TESTS=1
+        # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
         JUCE_USE_CURL=0)    # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
+
+
+#target_compile_options( ${APP_NAME}
+#    PRIVATE
+#        -Wall -Wcast-align -Wfloat-equal -Wno-ignored-qualifiers -Wsign-compare -Wsign-conversion -Wstrict-aliasing -Wswitch-enum -Wuninitialized -Wunreachable-code -Wunused-parameter -Wmissing-field-initializers -Wshadow-all -Wshorten-64-to-32 -Wconversion -Wint-conversion -Wconditional-uninitialized -Wconstant-conversion -Wbool-conversion -Wextra-semi -Wshift-sign-overflow -Wmissing-prototypes -Wnullable-to-nonnull-conversion -Wpedantic -Wdeprecated -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunused-private-field -Winconsistent-missing-destructor-override -Wshadow-field-in-constructor "-fsigned-char" )
 
 # If the target needs extra binary assets, they can be added here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional

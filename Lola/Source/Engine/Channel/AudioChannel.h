@@ -11,7 +11,7 @@
 #pragma once
 
 #include "Engine/Resource/AudioResource.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Channel/AudioChannelData.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
@@ -20,34 +20,39 @@ class AudioChannel : public audium::Selectable
 {
     
 public:
-    AudioChannel(AudioGroup &audioGroup,
-                 int channelNumber,
+    AudioChannel(AudioTrack &audioTrack,
                  std::shared_ptr<audium::SelectionManager> selectionManager) :
         audium::Selectable(selectionManager),
-        audioGroup(audioGroup),
-        channelNumber(channelNumber)
+        audioTrack(audioTrack)
     {
     }
     
-    int getChannelHeight() const { return data.height; }
-    void setChannelHeight(int height) { data.height = height; }
+    int getChannelHeight() const noexcept {
+        return data.height;
+    }
+    void setChannelHeight(const int height) {
+        data.height = height;
+    }
+    
+    void setGain(const float new_gain) {
+        data.gain = new_gain;
+    }
+    float getGain() const noexcept {
+        return data.gain;
+    }
 
-    int getChannelNumber() const
-    {
-        return channelNumber;
-    }
-    
-    void setChannelNumber(int number)
-    {
-        channelNumber = number;
+    int getChannelNumber() const {
+        auto channel = std::dynamic_pointer_cast<const AudioChannel>(getSharedPtr());
+        return audioTrack.audioChannelContainer->getIndex(channel);
     }
     
     AudioChannelData data;
     
-private:
-    AudioGroup &audioGroup;
+    AudioTrack &getAudioTrack() const { return audioTrack; }
     
-    int channelNumber = 0;
+private:
+    AudioTrack &audioTrack;
+    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioChannel)
     

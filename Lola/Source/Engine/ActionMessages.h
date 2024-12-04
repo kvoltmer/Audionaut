@@ -22,17 +22,16 @@ const char* const playListItemCreatedAction = "playlist item created";
 const char* const playListOrderAction = "playlist order changed";
 const char* const playListDeletedAction = "playlist deleted";
 const char* const playListItemTriggered = "playlist item triggerd";
-const char* const playListItemSelection = "playlist item selection changed";
 const char* const audioResourceCreatedAction = "audio resource created";
 const char* const audioResourceRemovedAction = "audio resource removed";
 const char* const audioResourceSelectedAction = "audio resource selected";
 
-const char* const audioGroupCreatedAction   = "audio group created";
 const char* const tempoChanged              = "tempo changed";
 const char* const scrolledVertically        = "arrangement scrolled";
 
 const char* const rebuildAll                = "rebuild all";
 const char* const updateAll                 = "update all";
+const char* const updateSelection           = "update selection";
 
 const char* const updateMiddlePanelAction   = "update middle panel";
 const char* const updateRightPanelAction    = "update right panel";

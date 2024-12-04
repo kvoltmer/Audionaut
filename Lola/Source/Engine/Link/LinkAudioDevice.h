@@ -46,7 +46,7 @@ public:
     void startPlaying();
     void stopPlaying();
     
-    void setBypass(bool isByPass) { byPass = isByPass; }
+    void setBypass(bool isByPass);
             
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
     

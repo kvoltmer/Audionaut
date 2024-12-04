@@ -14,7 +14,7 @@
 #include "Engine/Resource/AudioResource.h"
 #include "Interface/ColourIds.h"
 #include "Engine/Region/AudioRegion.h"
-#include "Engine/Group/AudioGroup.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace juce;

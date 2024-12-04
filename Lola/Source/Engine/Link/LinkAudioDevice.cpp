@@ -13,7 +13,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Provider/TempoProvider.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 
 LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
                                  std::shared_ptr<PlayListScheduler> playListScheduler,
@@ -64,7 +64,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
         
         juce::AudioBuffer<float> buffer (outputChannelData, totalNumOutputChannels, numSamples);
         juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
-        playListScheduler->audioCallback(info);
+        playListScheduler->processAudio(info);
         
         sample_time += numSamples;
     }
@@ -79,10 +79,8 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
     
     if (playListScheduler != nullptr)
     {
-        playListScheduler->prepareToPlay(sampleRate, bufferSize);
+        playListScheduler->prepareToPlay(bufferSize, sampleRate);
     }
-    
-    transportSourceContainer->prepareToPlay(sampleRate, bufferSize);
     
     auto deviceLatency = device->getOutputLatencyInSamples();
     
@@ -104,4 +102,10 @@ void LinkAudioDevice::startPlaying()
 void LinkAudioDevice::stopPlaying()
 {
     linkEngine->stopPlaying();
+}
+
+void LinkAudioDevice::setBypass(bool isByPass)
+{
+    byPass = isByPass;
+    transportSourceContainer->setBypass(isByPass);
 }

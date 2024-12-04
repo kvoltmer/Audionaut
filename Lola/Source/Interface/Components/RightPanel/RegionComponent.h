@@ -15,7 +15,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Interface/Controls/RegionTableListBox.h"
-#include "Engine/Group/AudioGroupContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 //==============================================================================
 /*
@@ -30,7 +30,7 @@ public:
     {
         regionTableListBox.reset(new RegionTableListBox());
         regionTableListBoxModel.reset(new RegionTableListBoxModel(regionTableListBox,
-                                                                  audiumEngine->getAudioGroupContainer()));
+                                                                  audiumEngine->getAudioTrackContainer()));
 
         regionTableListBox->setModel(regionTableListBoxModel.get());
         regionTableListBox->setMultipleSelectionEnabled(true);
@@ -73,12 +73,13 @@ public:
     
     void updateSelection()
     {
-        auto selection = audiumEngine->getAudioGroupContainer()->getAudioRegionAdapter().getSelectedRows();
+        auto selection = audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getSelectedRows();
         regionTableListBox->setSelectedRows(selection, juce::dontSendNotification);
     }
     
-    void updateUI()
+    void updateUI(UIContext context)
     {
+        /// TODO: inplement UI context
         updateSelection();
         regionTableListBox->updateContent();
     }

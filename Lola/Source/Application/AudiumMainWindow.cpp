@@ -12,8 +12,13 @@
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Selection/SelectionManager.h"
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Interface/Dialogs/NewRegionDialog.h"
+#include "Interface/Dialogs/AutoEditDialog.h"
+#include "Interface/Dialogs/ExportAudioDialog.h"
 
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
     : DocumentWindow (name,
@@ -88,7 +93,9 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::playStop,
         CommandIDs::loopPlayList,
         CommandIDs::createRegion,
+        CommandIDs::cleanupRegions,
         CommandIDs::autoEdit,
+        CommandIDs::bounceProject,
         CommandIDs::duplicate,
         CommandIDs::zoomIn,
         CommandIDs::zoomOut,
@@ -128,9 +135,16 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Create Region", "Creates a new region", CommandCategories::editing, 0);
             result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::commandModifier, 0));
             break;
+        case CommandIDs::cleanupRegions:
+            result.setInfo ("Delete Unused Regions", "Deletes all unused regions", CommandCategories::editing, 0);
+            break;
         case CommandIDs::autoEdit:
             result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
             result.defaultKeypresses.add (KeyPress ('e', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::bounceProject:
+            result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
+            result.defaultKeypresses.add ({ 'b', ModifierKeys::commandModifier | ModifierKeys::altModifier, 0 });
             break;
         case CommandIDs::toggleFullScreen:
             result.setInfo ("Full Screen", "Enter full screen", CommandCategories::view, 0);
@@ -185,25 +199,10 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress ('c', cmd, 0));
             break;
 
-        case StandardApplicationCommandIDs::paste:
-            {
-                result.setInfo (TRANS ("Paste"), String(), "Editing", 0);
-                result.defaultKeypresses.add (KeyPress ('v', cmd, 0));
-
-                bool canPaste = false;
-
-                // TODO:
-//                if (auto doc = parseXML (SystemClipboard::getTextFromClipboard()))
-//                {
-//                    if (doc->hasTagName (ComponentLayout::clipboardXmlTag))
-//                        canPaste = (currentLayout != nullptr);
-//                    else if (doc->hasTagName (PaintRoutine::clipboardXmlTag))
-//                        canPaste = (currentPaintRoutine != nullptr);
-//                }
-
-                result.setActive (canPaste);
-            }
-
+        case StandardApplicationCommandIDs::paste:            
+            result.setInfo (TRANS ("Paste"), String(), "Editing", 0);
+            result.defaultKeypresses.add (KeyPress ('v', cmd, 0));
+            result.setActive (canPaste());
             break;
 
         case StandardApplicationCommandIDs::del:
@@ -233,18 +232,30 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     {
         case CommandIDs::playStop:
             getEngine()->getPlayListScheduler()->isPlaying() ?
-                getEngine()->getPlayListScheduler()->stopPlaying() :
-                getEngine()->getPlayListScheduler()->startPlaying();
+            getEngine()->getPlayListScheduler()->stopPlaying() :
+            getEngine()->getPlayListScheduler()->startPlaying();
             mainComponent->updateUI();
             break;
         case CommandIDs::loopPlayList:
             getEngine()->getPlayListScheduler()->setLoopPlayList(!getEngine()->getPlayListScheduler()->getLoopPlayList());
             break;
         case CommandIDs::createRegion:
-            newRegionDialog.createNewRegion(getEngine());
+            if (newRegionDialog == nullptr)
+                newRegionDialog = std::make_unique<NewRegionDialog>();
+            newRegionDialog->createNewRegion(getEngine());
+            break;
+        case CommandIDs::cleanupRegions:
+            getEngine()->getAudioTrackContainer()->deleteUnusedRegions();
             break;
         case CommandIDs::autoEdit:
-            autoEditDialog.invokeAutoEdit(getEngine(), mainComponent);
+            if (autoEditDialog == nullptr)
+                autoEditDialog = std::make_unique<AutoEditDialog>();
+            autoEditDialog->invokeAutoEdit(getEngine(), mainComponent);
+            break;
+        case CommandIDs::bounceProject:
+            if (exportAudioDialog == nullptr)
+                exportAudioDialog = std::make_unique<ExportAudioDialog>(getEngine());
+            exportAudioDialog->invoke(mainComponent);
             break;
         case CommandIDs::toggleFullScreen:
             setFullScreen (!isFullScreen());
@@ -275,30 +286,17 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             getEngine()->getUndoManager()->redo();
             break;
         case StandardApplicationCommandIDs::cut:
-            notImplemented();
-//            if (currentLayout != nullptr)
-//            {
-//                currentLayout->copySelectedToClipboard();
-//                currentLayout->deleteSelected();
-//            }
-//            else if (currentPaintRoutine != nullptr)
-//            {
-//                currentPaintRoutine->copySelectedToClipboard();
-//                currentPaintRoutine->deleteSelected();
-//            }
-
+            mainComponent->copy();
+            getEngine()->getAudioTrackContainer()->deleteSelectedObjects();
             break;
-
         case StandardApplicationCommandIDs::copy:
             mainComponent->copy();
             break;
-
         case StandardApplicationCommandIDs::paste:
             mainComponent->paste();
             break;
-
         case StandardApplicationCommandIDs::del:
-            getEngine()->getAudioGroupContainer()->deleteSelectedObjects();
+            getEngine()->getAudioTrackContainer()->deleteSelectedObjects();
             break;
 
         case StandardApplicationCommandIDs::selectAll:
@@ -318,5 +316,10 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
 
 bool AudiumMainWindow::isSomethingSelected()
 {
-    return getEngine()->getAudioGroupContainer()->isSomethingSelected();
+    return getEngine()->getAudioTrackContainer()->getSelectionManager()->isSomethingSelected();
+}
+
+bool AudiumMainWindow::canPaste()
+{
+    return getEngine()->getAudioTrackContainer()->getSelectionManager()->canParseFromClipboard();
 }

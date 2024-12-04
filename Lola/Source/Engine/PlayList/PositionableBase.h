@@ -48,7 +48,7 @@ public:
         
         setAbsolutePosition(newStart, context);
     }
-    
+        
     // set the length of a positionalbe item
     void setLength(double newLength, audium::TimeContextType context)
     {
@@ -56,7 +56,24 @@ public:
         regionData.setLength(newLength);
         setRegionData(regionData, context);
     }
-
+    
+    // move left edge by amount
+    void moveAbsoluteStartPosition(double amount, audium::TimeContextType context)
+    {
+        setAbsoluteStartPosition(getAbsolutePosition(context) + amount, context);
+    }
+    
+    // move length by amount
+    void moveLength(double amount, audium::TimeContextType context)
+    {
+        setLength(getRegionData(context).getLength() + amount, context);
+    }
+    
+    // move position by amount
+    void moveAbsolutePosition(double amount, audium::TimeContextType context)
+    {
+        setAbsolutePosition(getAbsolutePosition(context) + amount, context);
+    }
 
 private:
     

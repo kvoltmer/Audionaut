@@ -15,7 +15,7 @@
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "Engine/TransportSourceContainer.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 
 PlayListItem::PlayListItem(const PlayListContainer &owner,
                            std::shared_ptr<AudioRegion> audioRegion,
@@ -35,7 +35,7 @@ PlayListItem::~PlayListItem()
 {
     for (auto transportSource : transportSources)
     {
-        audioRegion->getAudioGroup()->getTransportSourceContainer()->removeTransportSource(transportSource);
+        audioRegion->getAudioTrack()->getTransportSourceContainer()->removeTransportSource(transportSource);
     }
 }
 
@@ -87,17 +87,13 @@ void PlayListItem::setAbsolutePosition(double newPosition, audium::TimeContextTy
     }
 }
 
-void PlayListItem::moveAbsolutePosition(double amount, audium::TimeContextType context)
-{
-    setAbsolutePosition(getAbsolutePosition(context) + amount, context);
-}
-
 bool PlayListItem::writeToJson (json& output)
 {
-    output["region_id"] = owner.getAudioRegionContainer().getRegionIndex(getRegion());
+    output["region_id"] = owner.getAudioRegionContainer().getRegionId(getRegion());
     output["region_name"] = getRegion()->getName().toStdString();
     output["position_clocks"] = absolutePositionClocks;
     output["selected"] = isSelected();
+    output["track_id"] = getRegion()->getAudioTrack()->getId();
     return true;
 }
 
@@ -107,7 +103,7 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
     jassert(regionName == getRegion()->getName().toStdString());
 
     auto regionId = input["region_id"].template get<int>();
-    auto id = owner.getAudioRegionContainer().getRegionIndex(getRegion());
+    auto id = owner.getAudioRegionContainer().getRegionId(getRegion());
     jassert(id == regionId);
     
     if (input.contains("position_clocks"))
@@ -116,18 +112,24 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
     if (input.contains("selected"))
         setSelected(input.at("selected").get<bool>());
 
+    if (input.contains("track_id"))
+    {
+        auto track_id = input.at("track_id").get<int>();
+        if (track_id != getRegion()->getAudioTrack()->getId())
+        {
+            std::cout << "warning: track_id: " << track_id << " != " <<
+                        getRegion()->getAudioTrack()->getId() << std::endl;
+        }
+    }
+        
     return true;
 }
 
 bool PlayListItem::validateData()
 {
-    bool result = false;
-    
-    if (getAbsolutePosition(audium::clocks) < 0.0)
-    {
+    if (getAbsolutePosition(audium::clocks) < 0.0) {
         setAbsolutePosition(0.0, audium::clocks);
-        result |= true;
+        return true;
     }
-    
-    return result;
+    return false;
 }

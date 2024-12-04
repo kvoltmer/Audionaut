@@ -28,15 +28,24 @@ PlayListContainerComponent::~PlayListContainerComponent()
 {
 }
 
-void PlayListContainerComponent::updateUI()
+void PlayListContainerComponent::updateUI(UIContext context)
 {
-    // TODO: don't recreate suff -> introduce a context
-    createComponents();
-    resized();
+    if (context == RebuildContext)
+    {
+        createComponents();
+        resized();
+    }
     
     for (auto playListComponent : playListComponents)
     {
-        playListComponent->updateUI();
+        if (context == SelectionContext)
+        {
+            playListComponent->updateSelection();
+        }
+        else
+        {
+            playListComponent->updateUI();
+        }
     }
     
     auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
@@ -48,11 +57,11 @@ void PlayListContainerComponent::createComponents()
     removeAllChildren();
     playListComponents.clear();
     
-    auto groups = audiumEngine->getAudioResourceContainer()->getAudioGroups();
+    auto groups = audiumEngine->getAudioResourceContainer()->getAudioTracks();
     
-    for (auto group : groups)
+    for (auto track : groups)
     {
-        auto playListComponent = std::shared_ptr<PlayListComponent>(new PlayListComponent(audiumEngine, group));
+        auto playListComponent = std::shared_ptr<PlayListComponent>(new PlayListComponent(audiumEngine, track));
         playListComponents.push_back(playListComponent);
         addAndMakeVisible(playListComponent.get());
     }
@@ -60,7 +69,7 @@ void PlayListContainerComponent::createComponents()
     footerLabel.reset(new juce::Label ("new label",
                                        TRANS ("label text")));
     addAndMakeVisible(footerLabel.get());
-    footerLabel->setFont (juce::Font (13.00f, juce::Font::plain).withTypefaceStyle ("Regular"));
+    footerLabel->setFont (juce::FontOptions { 13.0f });
     footerLabel->setJustificationType (juce::Justification::centredLeft);
     footerLabel->setEditable (false, false, false);
     footerLabel->setColour (juce::Label::backgroundColourId, findColour(audium::backgroundColourId));
