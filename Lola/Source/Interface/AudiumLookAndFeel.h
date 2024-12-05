@@ -21,6 +21,7 @@ public:
     
     static LookAndFeel_V4::ColourScheme getDarkAudiumColourScheme();
     
+    // Button
     void drawButtonBackground (juce::Graphics& g,
                                juce::Button& button,
                                const juce::Colour& backgroundColour,
@@ -28,15 +29,14 @@ public:
                                bool shouldDrawButtonAsDown) override;
     
     
+    // Combobox
     juce::Font getComboBoxFont (juce::ComboBox&) override;
-    
     void drawComboBox (juce::Graphics& g, int width, int height, bool,
                                           int, int, int, int, juce::ComboBox& box) override;
-    
     void positionComboBoxText (juce::ComboBox& box, juce::Label& label) override;
-    
     juce::Label* createComboBoxTextBox (juce::ComboBox&) override;
-    
+    juce::PopupMenu::Options getOptionsForComboBoxPopupMenu (juce::ComboBox& box, juce::Label& label) override;
+
     
     // AlertWindow
     int getAlertWindowButtonHeight() override;
