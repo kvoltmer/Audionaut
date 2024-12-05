@@ -305,7 +305,7 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
         channelSizeComboBox->setText("", dontSendNotification);
 
         audioTrack->getChannel(rowNumber)->setChannelHeight(height);
-        engine->getAudioResourceContainer()->sendActionMessage("");
+        engine->getAudioResourceContainer()->sendActionMessage(updateMiddlePanelAction);
     }
 }
 
