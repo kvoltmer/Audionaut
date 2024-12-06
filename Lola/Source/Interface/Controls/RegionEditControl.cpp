@@ -34,7 +34,7 @@ void RegionEditControl::paintFileNameLabel (juce::Graphics& g)
                                GlyphArrangement::getStringWidth (g.getCurrentFont(), name),
                                g.getCurrentFont().getHeight());
     
-    g.setColour(juce::Colours::black.withAlpha(0.25f));
+    g.setColour(findColour(audium::secondaryBackgroundColourId));
     g.fillRoundedRectangle (bonds.expanded(2, 2).toFloat(), 3.0f);
     
     g.setColour (findColour(audium::defaultTextColourId));

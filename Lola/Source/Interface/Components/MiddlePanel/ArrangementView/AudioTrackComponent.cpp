@@ -91,6 +91,8 @@ void AudioTrackComponent::resized()
         juce::Rectangle<double> rect_tmp(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
         
         regionView->setBounds(rect_tmp.toNearestInt());
+        if (playListItem->isSelected())
+            regionView->toFront(false);
     }
 }
 

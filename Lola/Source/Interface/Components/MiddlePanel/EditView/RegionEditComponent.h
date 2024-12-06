@@ -53,6 +53,8 @@ public:
                 auto regionEditControl = regionEditControls[count];
                 regionEditControl->setBounds(0, DraggerControl::draggerHeight, 100, getHeight() - DraggerControl::draggerHeight);
                 regionEditControl->updateFromEngine(region);
+                if (region->isSelected())
+                    regionEditControl->toFront(false);
             }
             count++;
         }
@@ -77,10 +79,12 @@ public:
             const auto regions = audioSubGroup->getAudioRegions();
             jassert(regions.size() == regionEditControls.size());
             auto count = 0;
-            for (auto regionEdit : regionEditControls)
+            for (auto regionEditControl : regionEditControls)
             {
-                regionEdit->updateFromEngine(regions[count]);
-                count++;
+                auto region = regions[count++];
+                regionEditControl->updateFromEngine(region);
+                if (region->isSelected())
+                    regionEditControl->toFront(false);
             }
         }
     }
