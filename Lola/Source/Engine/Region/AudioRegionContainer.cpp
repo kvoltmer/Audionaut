@@ -185,7 +185,7 @@ void AudioRegionContainer::deleteUnusedRegions()
     }
     
     for (auto region : deleteList) {
-        std::cout << "delete: " << region->getAudioTrack()->getName() << " " << region->getName() << std::endl;
+        std::cout << "delete: " << region->getAudioTrack()->getAudioTrackName() << " " << region->getName() << std::endl;
         deleteAudioRegion(region);
     }
     

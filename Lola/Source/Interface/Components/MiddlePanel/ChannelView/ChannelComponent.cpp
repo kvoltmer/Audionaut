@@ -1,39 +1,15 @@
-/*
-  ==============================================================================
 
-  This is an automatically generated GUI class created by the Projucer!
+#include "ChannelComponent.h"
 
-  Be careful when adding custom code to these files, as only the code within
-  the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
-  and re-saved.
-
-  Created with Projucer version: 7.0.8
-
-  ------------------------------------------------------------------------------
-
-  The Projucer is part of the JUCE library.
-  Copyright (c) 2020 - Raw Material Software Limited.
-
-  ==============================================================================
-*/
-
-//[Headers] You can add your own extra header files here...
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Group/AudioTrackContainer.h"
-//[/Headers]
-
-#include "ChannelComponent.h"
-
-
-//[MiscUserDefs] You can add your own user definitions and misc code here...
-//[/MiscUserDefs]
+#include "Engine/Undo/UndoableContainerAction.h"
 
 //==============================================================================
 ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack, std::shared_ptr<AudiumEngine> engine, int rowNumber)
 {
-    //[Constructor_pre] You can add your own custom stuff here..
 
     this->audioTrack = audioTrack;
     this->engine = engine;
@@ -41,7 +17,6 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack, std:
     levelMeter.reset (new LevelMeter (true, false));
     addAndMakeVisible(levelMeter.get());
 
-    //[/Constructor_pre]
 
     volumeLabeldB.reset (new juce::Label ("new label",
                                           TRANS ("dB")));
@@ -75,14 +50,8 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack, std:
     volumeLevel->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
     volumeLevel->addListener (this);
 
-
-    //[UserPreSize]
-    //[/UserPreSize]
-
     setSize (60, 100);
 
-
-    //[Constructor] You can add your own custom stuff here..
 
     channelSizeComboBox.reset (new juce::ComboBox ("channel size combo box"));
     addAndMakeVisible (channelSizeComboBox.get());
@@ -104,34 +73,22 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack, std:
     
     refreshComponent(audioTrack, rowNumber, false);
     
-    //[/Constructor]
 }
 
 ChannelComponent::~ChannelComponent()
 {
-    //[Destructor_pre]. You can add your own custom destruction code here..
     stopTimer();
     audioTrack = nullptr;
-    //[/Destructor_pre]
-
     volumeLabeldB = nullptr;
     volumeScaleButton = nullptr;
     volumeLevel = nullptr;
-
-
-    //[Destructor]. You can add your own custom destruction code here..
-    //[/Destructor]
 }
 
 //==============================================================================
 void ChannelComponent::paint (juce::Graphics& g)
 {
-    //[UserPrePaint] Add your own custom painting code here..
-    //[/UserPrePaint]
-
     g.fillAll (juce::Colour (0xff323232));
 
-    //[UserPaint] Add your own custom painting code here..
     if (audioTrack->getChannel(rowNumber) != nullptr &&
         audioTrack->getChannel(rowNumber)->isSelected())
     {
@@ -143,15 +100,10 @@ void ChannelComponent::paint (juce::Graphics& g)
     }
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
 
-
-    //[/UserPaint]
 }
 
 void ChannelComponent::resized()
 {
-    //[UserPreResize] Add your own custom resize code here..
-    //[/UserPreResize]
-
     volumeLabeldB->setBounds ((getWidth() / 2) + -10, proportionOfHeight (0.5000f) - (20 / 2), 30, 20);
     volumeScaleButton->setBounds (getWidth() - 10, 0, 10, proportionOfHeight (1.0000f));
     volumeLevel->setBounds ((getWidth() / 2) + -30, proportionOfHeight (0.5000f) - (20 / 2), 27, 20);
@@ -159,103 +111,73 @@ void ChannelComponent::resized()
 
     //levelMeter->setBounds(40, 3, 7, 94);
     levelMeter->setBounds(getWidth() - 20, 3, 7, getHeight() - 6);
-
-    //[/UserResized]
 }
 
 void ChannelComponent::buttonClicked (juce::Button* buttonThatWasClicked)
 {
-    //[UserbuttonClicked_Pre]
-    //[/UserbuttonClicked_Pre]
-
     if (buttonThatWasClicked == volumeScaleButton.get())
     {
-        //[UserButtonCode_volumeScaleButton] -- add your button handler code here..
-        //[/UserButtonCode_volumeScaleButton]
     }
-
-    //[UserbuttonClicked_Post]
-    //[/UserbuttonClicked_Post]
 }
 
 void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
 {
-    //[UserlabelTextChanged_Pre]
-    //[/UserlabelTextChanged_Pre]
-
     if (labelThatHasChanged == volumeLevel.get())
     {
-        //[UserLabelCode_volumeLevel] -- add your label text handling code here..
         auto db = volumeLevel->getText().getFloatValue();
         auto gain = LevelMeter::decebelToGain(db);
         audioTrack->setGain(gain, rowNumber);
-        //[/UserLabelCode_volumeLevel]
-    }
-
-    //[UserlabelTextChanged_Post]
-    //[/UserlabelTextChanged_Post]
-}
-
-static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
-{
-    if (component != nullptr && result != 0)
-    {
-        switch (result) {
-            case ChannelComponent::moveChannelToNewTrackId:
-                component->getEngine()->getAudioTrackContainer()->moveSelectedChannelsToNewAudioTrack();
-                break;
-                
-            default:
-                break;
-        }
     }
 }
+
+//static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
+//{
+//    if (component != nullptr && result != 0)
+//    {
+//        switch (result) {
+//            case ChannelComponent::moveChannelToNewTrackId:
+//                component->getEngine()->getAudioTrackContainer()->moveSelectedChannelsToNewAudioTrack();
+//                break;
+//
+//            default:
+//                break;
+//        }
+//    }
+//}
 
 void ChannelComponent::mouseDown (const juce::MouseEvent& e)
 {
-    //[UserCode_mouseDown] -- Add your code here...
-    
     if (e.mods.isPopupMenu()) {
-        
-        PopupMenu m;
-        
-        m.addItem (moveChannelToNewTrackId, TRANS ("Move channel(s) to new track"), true);
-        
-        if (m.getNumItems() > 0)
-        {
-            m.setLookAndFeel (&getLookAndFeel());
-
-            m.showMenuAsync (PopupMenu::Options(),
-                             ModalCallbackFunction::forComponent (channelMenuCallback, this, rowNumber));
-        }
+    
+// TODO: fix -> unstable
+//        PopupMenu m;
+//
+//        m.addItem (moveChannelToNewTrackId, TRANS ("Move channel(s) to new track"), true);
+//
+//        if (m.getNumItems() > 0)
+//        {
+//            m.setLookAndFeel (&getLookAndFeel());
+//
+//            m.showMenuAsync (PopupMenu::Options(),
+//                             ModalCallbackFunction::forComponent (channelMenuCallback, this, rowNumber));
+//        }
     } else {
-        // hier?
+        
         audioTrack->getSelectionManager()->deselectAll();
-        
         getParentComponent()->mouseDown(e);
-        
         audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
     }
-    //[/UserCode_mouseDown]
 }
 
 void ChannelComponent::mouseUp (const juce::MouseEvent& e)
 {
-    //[UserCode_mouseUp] -- Add your code here...
     getParentComponent()->mouseUp(e);
-    //[/UserCode_mouseUp]
 }
 
 bool ChannelComponent::keyPressed (const juce::KeyPress& key)
 {
-    //[UserCode_keyPressed] -- Add your code here...
     return false;  // Return true if your handler uses this key event, or false to allow it to be passed-on.
-    //[/UserCode_keyPressed]
 }
-
-
-
-//[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
 void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack, int rowNumber, bool isRowSelected)
 {
@@ -304,59 +226,17 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
 
         channelSizeComboBox->setText("", dontSendNotification);
 
+        // undo
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+        
         audioTrack->getChannel(rowNumber)->setChannelHeight(height);
-        engine->getAudioResourceContainer()->sendActionMessage(updateMiddlePanelAction);
+        
+        // undo
+        action->storeNewState();
+        audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set audio track height");
+        audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
     }
 }
-
-
-
-//[/MiscUserCode]
-
-
-//==============================================================================
-#if 0
-/*  -- Projucer information section --
-
-    This is where the Projucer stores the metadata that describe this GUI layout, so
-    make changes in here at your peril!
-
-BEGIN_JUCER_METADATA
-
-<JUCER_COMPONENT documentType="Component" className="ChannelComponent" componentName=""
-                 parentClasses="public juce::Component, private juce::Timer, public juce::ComboBox::Listener"
-                 constructorParams="std::shared_ptr&lt;AudioTrack&gt; audioTrack, std::shared_ptr&lt;AudiumEngine&gt; engine, int rowNumber"
-                 variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
-                 overlayOpacity="0.330" fixedSize="1" initialWidth="60" initialHeight="100">
-  <METHODS>
-    <METHOD name="mouseDown (const juce::MouseEvent&amp; e)"/>
-    <METHOD name="keyPressed (const juce::KeyPress&amp; key)"/>
-    <METHOD name="mouseUp (const juce::MouseEvent&amp; e)"/>
-  </METHODS>
-  <BACKGROUND backgroundColour="ff323232"/>
-  <LABEL name="new label" id="2134eb9441d110f8" memberName="volumeLabeldB"
-         virtualName="" explicitFocusOrder="0" pos="-10C 50%c 30 20" bkgCol="0"
-         textCol="ffffffff" edTextCol="ff000000" edBkgCol="0" labelText="dB"
-         editableSingleClick="0" editableDoubleClick="0" focusDiscardsChanges="0"
-         fontname="Default font" fontsize="11.0" kerning="0.0" bold="0"
-         italic="0" justification="33"/>
-  <IMAGEBUTTON name="volume scale" id="5be2ef2162e0d2d0" memberName="volumeScaleButton"
-               virtualName="" explicitFocusOrder="0" pos="0Rr 0 10 100%" buttonText="new button"
-               connectedEdges="0" needsCallback="1" radioGroupId="0" keepProportions="0"
-               resourceNormal="channelScale_png" opacityNormal="1.0" colourNormal="0"
-               resourceOver="" opacityOver="1.0" colourOver="0" resourceDown=""
-               opacityDown="1.0" colourDown="0"/>
-  <LABEL name="new label" id="53bdf774398f1561" memberName="volumeLevel"
-         virtualName="" explicitFocusOrder="0" pos="-30C 50%c 27 20" bkgCol="0"
-         textCol="ffffffff" edTextCol="ff000000" edBkgCol="0" labelText="-60"
-         editableSingleClick="1" editableDoubleClick="1" focusDiscardsChanges="0"
-         fontname="Default font" fontsize="11.0" kerning="0.0" bold="0"
-         italic="0" justification="34"/>
-</JUCER_COMPONENT>
-
-END_JUCER_METADATA
-*/
-#endif
 
 //==============================================================================
 // Binary resources - be careful not to edit any of these sections!

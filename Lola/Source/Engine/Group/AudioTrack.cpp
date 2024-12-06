@@ -35,6 +35,10 @@ void AudioTrack::cleanup()
     playListContainer->playListItems.cleanup();
 }
 
+void AudioTrack::setAudioTrackName(const juce::String newName)
+{
+    name = newName.toStdString();
+}
 
 std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResources() const
 {

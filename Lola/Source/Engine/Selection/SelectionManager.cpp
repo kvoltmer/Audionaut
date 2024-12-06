@@ -144,7 +144,7 @@ void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEn
                     
                     if (audioTrack->readFromJson(jsonTrack, true)) {
                         audioTrack->setColour(audiumEngine->getAudioTrackContainer()->getNewAudioTrackColour());
-                        audioTrack->setName(audioTrack->getName() + " cpy");
+                        audioTrack->setAudioTrackName(audioTrack->getAudioTrackName() + " cpy");
                     }
                 }
             }

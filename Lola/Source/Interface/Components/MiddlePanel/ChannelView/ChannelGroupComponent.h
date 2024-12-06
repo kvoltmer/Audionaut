@@ -70,6 +70,10 @@ public:
         }
         channelsListBox->updateContent();
         channelsListBox->setSelectedRows(audioTrack->audioChannelContainer->getSelectedRows(), dontSendNotification);
+        
+        auto headerComponent = dynamic_cast<ChannelGroupHeaderComponent*>( channelsListBox->getHeaderComponent() );
+        if (headerComponent != nullptr)
+            headerComponent->updateFromEngine();
     }
 
 private:
