@@ -79,11 +79,11 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::createNewAudioTrack(const juce:
     auto audioTrack = AudioTrackFactory::createAudioTrack(*this, audioResourceContainer);
     if (nameString.isEmpty())
     {
-        audioTrack->setName(juce::String("Track ") + juce::String(audioTracks.size() + 1));
+        audioTrack->setAudioTrackName(juce::String("Track ") + juce::String(audioTracks.size() + 1));
     }
     else
     {
-        audioTrack->setName(nameString);
+        audioTrack->setAudioTrackName(nameString);
     }
     audioTracks.push_back(audioTrack);
     return audioTrack;

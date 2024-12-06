@@ -64,9 +64,8 @@ public:
     
     void cleanup() override;
     
-    // track name:
-    const juce::String getName() const { return name; }
-    void setName(const juce::String newName) { name = newName.toStdString(); }
+    const juce::String getAudioTrackName() const { return name; }
+    void setAudioTrackName(const juce::String newName);
     
     // track colour:
     void setColour(juce::Colour colour);
