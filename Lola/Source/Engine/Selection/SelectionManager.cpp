@@ -19,6 +19,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Region/AudioRegionContainer.h"
 
 namespace audium {
 
@@ -62,7 +63,6 @@ void SelectionManager::copySelectedToClipboard() {
     
 //        if (AudioSubGroup* subgroup = dynamic_cast<AudioSubGroup*>(object.get())) {
 //        if (AudioChannel* channel = dynamic_cast<AudioChannel*>(object.get())) {
-//        if (AudioRegion* region = dynamic_cast<AudioRegion*>(object.get())) {//
     
     switch (auto context = getSelectionContext()) {
         case play_list_item:
@@ -80,6 +80,16 @@ void SelectionManager::copySelectedToClipboard() {
                     json track;
                     audioTrack->writeToJson(track);
                     jout["audio_tracks"] += track;
+                }
+            }
+            break;
+
+        case audio_region:
+            for (auto object : selectedObjects) {
+                if (AudioRegion* audioRegion = dynamic_cast<AudioRegion*>(object.get())) {
+                    json j;
+                    audioRegion->writeToJson(j);
+                    jout["audio_regions"] += j;
                 }
             }
             break;
@@ -144,10 +154,33 @@ void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEn
                     
                     if (audioTrack->readFromJson(jsonTrack, true)) {
                         audioTrack->setColour(audiumEngine->getAudioTrackContainer()->getNewAudioTrackColour());
-                        audioTrack->setAudioTrackName(audioTrack->getAudioTrackName() + " cpy");
+                        audioTrack->setAudioTrackName(audioTrack->getAudioTrackName() + "-cpy");
                     }
                 }
             }
+            else if (lolaData.contains("audio_regions")) {
+                auto jsonRegions = lolaData["audio_regions"];
+                
+                for (auto& jsonRegion : jsonRegions) {
+                    if (jsonRegion.contains("track_id") &&
+                        jsonRegion.contains("sub_group_id")) {
+                        auto track_id = jsonRegion.at("track_id").get<int>();
+                        auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(track_id);
+                        jassert(audioTrack);
+                        if (audioTrack != nullptr) {
+                            auto sub_group_id = jsonRegion.at("sub_group_id").get<int>();
+                            auto subGroup = audioTrack->audioSubGroupContainer->getObjects()[sub_group_id];
+                            jassert(subGroup);
+                            if (subGroup != nullptr) {
+                                auto region = audioTrack->getAudioRegionContainer()->createRegion(audioTrack, subGroup);
+                                region->readFromJson(jsonRegion, false);
+                                region->setName(region->getName() + "-cpy");
+                            }
+                        }
+                    }
+                }
+            }
+            
             // undo
             action->storeNewState();
             audiumEngine->getUndoManager()->perform(action.release(), "Paste Objects(s)");

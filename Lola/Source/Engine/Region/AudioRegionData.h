@@ -22,15 +22,18 @@ struct AudioRegionData
     
     std::string name;
     tRange      range;
-    // TODO: region_id is obsolete. see: AudioRegionContainer::getRegionId
-    int         region_id = -1; // invalid
+    int         region_id      = -1;
+    int         track_id       = -1;
+    int         sub_group_id   = -1;
 };
 
 inline void to_json(json& j, const AudioRegionData& r) {
     j = json{   {"name", r.name},
                 {"start", r.range.getStart()},
                 {"end", r.range.getEnd()},
-                {"id", r.region_id}
+                {"id", r.region_id},
+                {"track_id", r.track_id},
+                {"sub_group_id", r.sub_group_id},
     };
 }
 
@@ -42,4 +45,9 @@ inline void from_json(const json& j, AudioRegionData& r) {
     if (j.contains("id"))
         j.at("id").get_to(r.region_id);
     
+    if (j.contains("track_id"))
+        j.at("track_id").get_to(r.track_id);
+    
+    if (j.contains("sub_group_id"))
+        j.at("sub_group_id").get_to(r.sub_group_id);
 }
