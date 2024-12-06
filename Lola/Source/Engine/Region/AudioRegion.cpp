@@ -16,6 +16,7 @@
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/Region/AudioRegionContainer.h"
 
 AudioRegion::~AudioRegion()
 {
@@ -43,6 +44,13 @@ bool AudioRegion::readFromStream (juce::InputStream& inputStream, bool rebuild)
 
 bool AudioRegion::writeToJson (json& output)
 {
+    // make sure all id's are up to date
+    auto shared_ptr = std::dynamic_pointer_cast<AudioRegion> (getSharedPtr());
+    data.region_id      = audioTrack->getAudioRegionContainer()->getRegionId(shared_ptr);
+    data.track_id       = audioTrack->getId();
+    data.sub_group_id   = audioTrack->audioSubGroupContainer->getIndex(audioSubGroup);
+     
+    
     output = data;
     return true;
 }
