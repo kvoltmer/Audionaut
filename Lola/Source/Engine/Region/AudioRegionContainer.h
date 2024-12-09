@@ -22,14 +22,14 @@ class AudioRegionContainer
 {
                                             
 public:
-    AudioRegionContainer(AudioResourceContainer &audioResourceContainer,
-                         AudioTrackContainer &audioTrackContainer,
-                         std::shared_ptr<TempoProvider> tempoProvider,
-                         std::shared_ptr<juce::UndoManager> undoManager) :
-        audioResourceContainer(audioResourceContainer),
-        audioTrackContainer(audioTrackContainer),
-        tempoProvider(tempoProvider),
-        undoManager(undoManager)
+    AudioRegionContainer(AudioResourceContainer &audioResourceContainer_,
+                         AudioTrackContainer &audioTrackContainer_,
+                         std::shared_ptr<TempoProvider> tempoProvider_,
+                         std::shared_ptr<juce::UndoManager> undoManager_) :
+        audioResourceContainer(audioResourceContainer_),
+        audioTrackContainer(audioTrackContainer_),
+        tempoProvider(tempoProvider_),
+        undoManager(undoManager_)
     {}
     
     std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioTrack> track);
@@ -39,7 +39,11 @@ public:
     std::shared_ptr<AudioRegion> createRegion(juce::String regionName,
                                               juce::Range<double> position,
                                               std::shared_ptr<AudioTrack> track,
-                                              std::shared_ptr<AudioSubGroup> subGroup);
+                                              std::shared_ptr<AudioSubGroup> subGroup,
+                                              audium::TimeContextType context);
+    
+    static std::string formatNumber(long num);
+    const juce::String getUniqueName(juce::String regionName) const;
     
     void cleanup();
     

@@ -54,7 +54,8 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
 std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String regionName,
                                                                 juce::Range<double> position,
                                                                 std::shared_ptr<AudioTrack> track,
-                                                                std::shared_ptr<AudioSubGroup> subGroup)
+                                                                std::shared_ptr<AudioSubGroup> subGroup,
+                                                                audium::TimeContextType context)
 {
     jassert(track != nullptr);
     
@@ -64,10 +65,41 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
     }
     
     auto audioRegion = createRegion(track, subGroup);
-    audioRegion->setRegionData(position, audium::seconds);
+    audioRegion->setRegionData(position, context);
     audioRegion->setName(regionName);
     audioTrackContainer.sendActionMessage(regionCreatedAction);
     return audioRegion;
+}
+
+std::string AudioRegionContainer::formatNumber(long num)
+{
+    std::ostringstream oss;
+    oss << std::setfill('0') << std::setw(2) << num;
+    return oss.str();
+}
+
+const juce::String AudioRegionContainer::getUniqueName(juce::String regionName) const
+{
+    // - remove digits and '-' at end:
+    std::string regionNameStd = regionName.toStdString();
+    size_t last_index = regionNameStd.find_last_not_of("0123456789-");
+    regionNameStd = regionNameStd.substr(0, last_index + 1);
+    
+    auto counter = 0;
+    auto trail = 0;
+    for (auto region : audioRegions) {
+        if (region->getName().contains(juce::String(regionNameStd))) {
+            trail = std::max(trail, std::abs(region->getName().getTrailingIntValue()));
+            counter++;
+        }
+    }
+    
+    if (counter == 0)
+        counter = 1;
+    
+    auto newNumber = std::max(trail + 1, counter);
+    
+    return regionNameStd + "-" + formatNumber(newNumber);
 }
 
 void AudioRegionContainer::cleanup()
@@ -95,9 +127,7 @@ int AudioRegionContainer::getRegionId(std::shared_ptr<AudioRegion> searchRegion)
     auto it = std::find(audioRegions.begin(), audioRegions.end(), searchRegion);
     if (it != audioRegions.end())
     {
-        auto index = std::distance(audioRegions.begin(), it);
-        jassert(audioRegions[index]->data.region_id == index);
-        return static_cast<int>(index);
+        return static_cast<int>(std::distance(audioRegions.begin(), it));
     }
     
     jassertfalse;

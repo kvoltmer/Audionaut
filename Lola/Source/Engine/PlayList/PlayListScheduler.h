@@ -94,13 +94,16 @@ public:
     
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     
+    // TODO: maybe move this to class PositionableBase
+    static juce::Range<double> absoluteToLocalRange(juce::Range<double> absoluteRange, const PlayListItem* item, audium::TimeContextType context);
+    static double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context);
+    static juce::Range<double> absoluteToLocalRange(juce::Range<double> absoluteRange, std::shared_ptr<AudioSubGroup> subGroup, audium::TimeContextType context);
+    
     void commitPlayListData();
     
     PlayListSchedulerData data;
     
 private:
-
-    double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const;
     
     // process sequencing
     void process(double absolutePosition, int numSamples);

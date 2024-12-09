@@ -35,8 +35,11 @@ public:
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
     
     void createRegionsFromSelection(juce::String name, bool arrangementMode);
-    void setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context);
-    juce::Range<double> getSelectedPosition(audium::TimeContextType context) const;
+    void splitRegionsFromSelection(bool withUndo = true);
+    
+    void setSelectedRange(juce::Range<double> pos, audium::TimeContextType context);
+    juce::Range<double> getSelectedRange(audium::TimeContextType context) const;
+    bool anyRangeSelected() const;
 
 private:
     AudioTrackContainer &owner;

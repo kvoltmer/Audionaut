@@ -164,10 +164,23 @@ void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputI
     
 }
 
-double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const
+juce::Range<double> PlayListScheduler::absoluteToLocalRange(juce::Range<double> absoluteRange, const PlayListItem* item, audium::TimeContextType context)
 {
-    auto offset = absolutePosition - item->getAbsolutePosition(context);
-    return offset + item->getRegionData(audium::clocks).getStart();
+    auto start = absoluteToLocalPosition(absoluteRange.getStart(), item, context);
+    auto end = absoluteToLocalPosition(absoluteRange.getEnd(), item, context);
+    return juce::Range<double>(start, end);
+}
+
+double PlayListScheduler::absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context)
+{
+    return absolutePosition - item->getAbsolutePosition(context) + item->getRegionData(context).getStart();
+}
+
+juce::Range<double> PlayListScheduler::absoluteToLocalRange(juce::Range<double> absoluteRange, std::shared_ptr<AudioSubGroup> subGroup, audium::TimeContextType context)
+{
+    auto start = absoluteRange.getStart() - subGroup->getAbsolutePosition(context) + subGroup->getRegionData(context).getStart();
+    auto end = absoluteRange.getEnd() - subGroup->getAbsolutePosition(context) + subGroup->getRegionData(context).getStart();
+    return juce::Range<double>(start, end);
 }
 
 //void PlayListScheduler::processInArrangementMode(double absolutePosition, int numSamples)

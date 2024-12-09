@@ -150,7 +150,7 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
                 jassert(subGroups.size() > 0);
                 if (subGroups.size() > 0)
                 {
-                    track->getAudioRegionContainer()->createRegion(regionName, position, track, subGroups[0]);
+                    track->getAudioRegionContainer()->createRegion(regionName, position, track, subGroups[0], audium::seconds);
                 }
             }
         }

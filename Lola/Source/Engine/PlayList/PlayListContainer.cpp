@@ -24,13 +24,14 @@ PlayListContainer::~PlayListContainer()
 }
 
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(std::shared_ptr<AudioRegion> audioRegion,
-                                                                                juce::Range<double> position,
+                                                                                double position,
                                                                                 audium::TimeContextType context)
 {
     // find the insert index based on position
     auto insertIndex = 0;
     // want all items before the end of this position
-    auto items = itemsAtAbsoluteRange(juce::Range<double>(0.0, position.getEnd()), context);
+    auto items = itemsAtAbsoluteRange(juce::Range<double>(0.0,
+                                                          position + audioRegion->getRegionData(context).getLength()), context);
     if (items.size() > 0)
     {
         insertIndex = getPlayListItemIndex(items.back()) + 1;
@@ -39,7 +40,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(
     
     if (auto playListItem = createPlayListItem(audioRegion, insertIndex))
     {
-        playListItem->setAbsolutePosition(position.getStart(), context);
+        playListItem->setAbsolutePosition(position, context);
         return playListItem;
     }
     
@@ -161,13 +162,7 @@ bool PlayListContainer::deleteAssociatedItems(const AudioRegion* audioRegion)
             success = true;
         }
     }
-    
-//    for (auto item : playListItems.getObjects())
-//    {
-//        item->
-//    }
-    
-    
+
     return success;
 }
 
@@ -202,18 +197,6 @@ std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) cons
 int PlayListContainer::getPlayListItemIndex(PlayListItem* item) const
 {
     return playListItems.getIndex(std::dynamic_pointer_cast<const PlayListItem>(item->getSharedPtr()));
-}
-
-AudioRegionData::tRange PlayListContainer::getPlayListDataAtIndex(int index) const
-{
-    const juce::ScopedLock sl (readLock);
-    if (index >= 0 && index < playListItems.size())
-    {
-        return playListItems.getObjects()[index]->getRegionData(audium::clocks);
-    }
-    
-    // empty range
-    return AudioRegionData::tRange();
 }
 
 bool PlayListContainer::writeToJson (json& output)
@@ -318,17 +301,12 @@ PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position, audium:
     return nullptr;
 }
 
-const PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const
+PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const
 {
-    for (auto item : playListItems.getObjects())
-    {
-        auto startTime = item->getAbsolutePosition(context);
-        auto endTime = startTime + item->getDurationTime(context);
-        juce::Range<double> absoluteRange(startTime, endTime);
+    for (auto item : playListItems.getObjects()) {
+        auto absoluteRange = item->getAbsolutePositionRange(context);
         if (absoluteRange.contains(range))
-        {
             return item.get();
-        }
     }
     
     return nullptr;
@@ -338,16 +316,10 @@ const std::vector<PlayListItem*> PlayListContainer::itemsAtAbsoluteRange(juce::R
 {
     std::vector<PlayListItem*> result;
     
-    for (auto item : playListItems.getObjects())
-    {
-        auto startTime = item->getAbsolutePosition(context);
-        auto endTime = startTime + item->getDurationTime(context);
-        juce::Range<double> absoluteRange(startTime, endTime);
-        
-        if (range.contains(absoluteRange))
-        {
+    for (auto item : playListItems.getObjects()) {
+        auto absoluteRange = item->getAbsolutePositionRange(context);
+        if (absoluteRange.contains(range))
             result.push_back(item.get());
-        }
     }
     
     return result;
