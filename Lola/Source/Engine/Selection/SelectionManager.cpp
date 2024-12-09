@@ -172,9 +172,13 @@ void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEn
                             auto subGroup = audioTrack->audioSubGroupContainer->getObjects()[sub_group_id];
                             jassert(subGroup);
                             if (subGroup != nullptr) {
+                                std::string name;
+                                if (jsonRegion.contains("name"))
+                                    name = jsonRegion.at("name").get<std::string>();
+                                auto newName = audioTrack->getAudioRegionContainer()->getUniqueName(name);
                                 auto region = audioTrack->getAudioRegionContainer()->createRegion(audioTrack, subGroup);
                                 region->readFromJson(jsonRegion, false);
-                                region->setName(region->getName() + "-cpy");
+                                region->setName(newName);
                             }
                         }
                     }

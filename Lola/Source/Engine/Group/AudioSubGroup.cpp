@@ -93,7 +93,9 @@ bool AudioSubGroup::writeToJson (json& output)
     
     for (auto region : getAudioRegions())
     {
-        output["regions"] += region->data;
+        json r;
+        region->writeToJson(r);
+        output["regions"] += r;
     }
         
     return true;
@@ -255,4 +257,13 @@ std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const
             return resource;
     }
     return nullptr;
+}
+
+const juce::String AudioSubGroup::getName() const
+{
+    const auto audioResources = getAudioResources();
+    if (audioResources.size() > 0)
+        return audioResources[0]->getFileNameWithoutExtension();
+    
+    return juce::String();
 }

@@ -145,6 +145,7 @@ void AudioTrackContainer::deleteUnusedRegions()
 
     for (auto track : audioTracks) {
         track->getAudioRegionContainer()->deleteUnusedRegions();
+        track->deleteUnusedSubGroups();
     }
     
     // Undo: store new state and perform

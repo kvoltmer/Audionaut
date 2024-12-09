@@ -18,9 +18,10 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
-AudioRegionAdapter::AudioRegionAdapter(AudioTrackContainer &owner) :
-    owner(owner)
+AudioRegionAdapter::AudioRegionAdapter(AudioTrackContainer &owner_) :
+    owner(owner_)
 {
 }
 
@@ -117,49 +118,32 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
 {
     // Undo: store old state
     auto action = std::make_unique<audium::UndoableContainerAction>(owner);
+   
+    auto context = audium::clocks;
+    auto selectedRange = getSelectedRange(context);
     
-    for (auto i = 0; i < owner.getNumItems(); i++)
-    {
-        if (auto track = owner.getAudioTrack(i))
-        {
-            
-            if (arrangementMode)
-            {
-                if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedPositionClocks, audium::clocks))
-                {
-                    // we need the start of the actual audio file
-                    auto localStart = selectedPositionClocks.getStart() - item->getAbsolutePosition(audium::clocks) + item->getRegionData(audium::clocks).getStart();
-                    
-                    juce::Range<double> localRange(localStart, localStart + selectedPositionClocks.getLength());
-                    auto localRangeInSeconds = owner.getTempoProvider()->clocksToSeconds(localRange);
-                    track->getAudioRegionContainer()->createRegion(name, localRangeInSeconds, track, item->getRegion()->getAudioSubGroup());
-                }
+    for (auto track : owner.getAudioTracks()) {
+        if (arrangementMode) {
+            auto context = audium::clocks;
+            if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
+                auto localRange = PlayListScheduler::absoluteToLocalRange(selectedRange, item, context);
+                name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                track->getAudioRegionContainer()->createRegion(name,
+                                                               localRange,
+                                                               track,
+                                                               item->getRegion()->getAudioSubGroup(),
+                                                               context);
             }
-            else
-            {
-                // get resources at this range
-                auto rangeInSeconds = owner.getTempoProvider()->clocksToSeconds(selectedPositionClocks);
-                // TODO: change this to subgroups
-                auto resources = track->getAudioResourcesAtAbsoluteRange(rangeInSeconds);
-                if (resources.size() > 0)
-                {
-                    // grab the first valid resource
-                    auto resource  = resources[0];
-                    
-                    auto maxLength = 0.0;
-                    for (auto res : resources)
-                        maxLength = std::max(maxLength, res->getFileLength(audium::seconds));
-                    
-                    const auto transportPosition = resource->getAudioSubGroup()->getAbsolutePosition(audium::seconds);
-                    rangeInSeconds -= transportPosition;
-                    const auto startPosition = resource->getAudioSubGroup()->getRegionData(audium::seconds).getStart();
-                    rangeInSeconds += startPosition;
-                    
-                    if (rangeInSeconds.getEnd() > maxLength)
-                        rangeInSeconds.setEnd(maxLength);
-                    
-                    track->getAudioRegionContainer()->createRegion(name, rangeInSeconds, track, resource->getAudioSubGroup());
-                }
+        }
+        else
+        {
+            if (auto subGroup = track->getSubGroupAtAbsoluteRange(selectedRange, context)) {
+                auto localRange = PlayListScheduler::absoluteToLocalRange(selectedRange, subGroup, context);
+                track->getAudioRegionContainer()->createRegion(name,
+                                                               localRange,
+                                                               track,
+                                                               subGroup,
+                                                               context);
             }
         }
     }
@@ -170,7 +154,73 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
     owner.getUndoManager()->beginNewTransaction();
 }
 
-void AudioRegionAdapter::setSelectedPosition(juce::Range<double> pos, audium::TimeContextType context)
+void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
+{
+    // Undo: store old state
+    auto action = withUndo ? std::make_unique<audium::UndoableContainerAction>(owner) : nullptr;
+    auto context = audium::clocks;
+    auto selectedRange = getSelectedRange(context);
+    juce::String name;
+    juce::Range<double> absoluteRange, localRange;
+    std::shared_ptr<AudioRegion> region;
+    
+    for (auto track : owner.getAudioTracks()) {
+        if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
+            
+            bool success = false;
+            auto itemRange = item->getAbsolutePositionRange(context);
+        
+            // - region of possible start (left of selection)
+            if (selectedRange.getStart() - itemRange.getStart() > 0.0) {
+                
+                absoluteRange = juce::Range<double>(itemRange.getStart(), selectedRange.getStart());
+                localRange = PlayListScheduler::absoluteToLocalRange(absoluteRange, item, context);
+                name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                region = track->getAudioRegionContainer()->createRegion(name,
+                                                                        localRange,
+                                                                        track,
+                                                                        item->getRegion()->getAudioSubGroup(),
+                                                                        context);
+                track->getPlayListContainer()->createPlayListItemAtPositionUI(region, item->getAbsolutePosition(context), context);
+                success = true;
+            }
+            
+            // - region of selection
+            if (selectedRange.getLength() > 0.0) {
+                localRange = PlayListScheduler::absoluteToLocalRange(selectedRange, item, context);
+                name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                region = track->getAudioRegionContainer()->createRegion(name, localRange, track, item->getRegion()->getAudioSubGroup(), context);
+                track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getStart(), context);
+                success = true;
+            }
+            
+            // - region of possible remainder
+            if (itemRange.getEnd() - selectedRange.getEnd() > 0.0) {
+                
+                absoluteRange = juce::Range<double>(selectedRange.getEnd(), itemRange.getEnd());
+                localRange = PlayListScheduler::absoluteToLocalRange(absoluteRange, item, context);
+                name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                region = track->getAudioRegionContainer()->createRegion(name, localRange, track, item->getRegion()->getAudioSubGroup(), context);
+                track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getEnd(), context);
+                success = true;
+            }
+            
+            if (success) {
+                track->getPlayListContainer()->deletePlayListItem(item);
+                track->getPlayListContainer()->sortByPosition();
+            }
+        }
+    }
+    
+    // Undo: store new state
+    if (action != nullptr) {
+        action->storeNewState();
+        owner.getUndoManager()->perform(action.release(), "Split Region(s)");
+        owner.getUndoManager()->beginNewTransaction();
+    }
+}
+
+void AudioRegionAdapter::setSelectedRange(juce::Range<double> pos, audium::TimeContextType context)
 {
     if (context == audium::seconds)
     {
@@ -186,7 +236,7 @@ void AudioRegionAdapter::setSelectedPosition(juce::Range<double> pos, audium::Ti
     }
 }
 
-juce::Range<double> AudioRegionAdapter::getSelectedPosition(audium::TimeContextType context) const
+juce::Range<double> AudioRegionAdapter::getSelectedRange(audium::TimeContextType context) const
 {
     if (context == audium::seconds)
     {
@@ -199,4 +249,9 @@ juce::Range<double> AudioRegionAdapter::getSelectedPosition(audium::TimeContextT
 
     jassertfalse;
     return juce::Range<double>();
+}
+
+bool AudioRegionAdapter::anyRangeSelected() const
+{
+    return !selectedPositionClocks.isEmpty();
 }

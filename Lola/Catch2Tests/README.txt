@@ -20,3 +20,7 @@ clang: error: no such file or directory: '/Users/klausvoltmer/dev/Audium/Lola/Ca
 note:
 you can use find_package(Catch2) in case catch2 is installed
 
+XCode arguments:
+-r console
+[Filter]
+-d yes

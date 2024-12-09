@@ -50,15 +50,22 @@ std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtAbsol
     return audioResourceContainer.getAudioResourcesForTrackAtAbsoluteRange(const_cast<AudioTrack*>(this), rangeInSeconds);
 }
 
+std::shared_ptr<AudioSubGroup> AudioTrack::getSubGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const
+{
+    for (auto subGroup : audioSubGroupContainer->getObjects()) {
+        auto absoluteRange = subGroup->getAbsolutePositionRange(context);
+        if (absoluteRange.contains(range))
+            return subGroup;
+    }
+    return nullptr;
+}
+
 std::shared_ptr<AudioSubGroup> AudioTrack::getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const
 {
-    std::shared_ptr<AudioSubGroup> subGroup = nullptr;
-    for (auto resource : getAudioResources())
-    {
-        if (resource->containsAbsolutePosition(position, context))
-        {
-            return resource->getAudioSubGroup();
-        }
+    for (auto subGroup : audioSubGroupContainer->getObjects()) {
+        auto absoluteRange = subGroup->getAbsolutePositionRange(context);
+        if (absoluteRange.contains(position))
+            return subGroup;
     }
     return nullptr;
 }
@@ -417,6 +424,23 @@ void AudioTrack::deleteEmptySubGroups()
     }
 }
 
+void AudioTrack::deleteUnusedSubGroups()
+{
+    std::vector<std::shared_ptr<AudioSubGroup>> subGroupsToDelete;
+    for (auto subGroup : audioSubGroupContainer->getObjects())
+    {
+        if (subGroup->getAudioRegions().size() == 0)
+        {
+            subGroupsToDelete.push_back(subGroup);
+        }
+    }
+    
+    for (auto item : subGroupsToDelete)
+    {
+        audioSubGroupContainer->deleteObject(item.get());
+    }
+}
+
 bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
                                double position,
                                bool arrangementMode,
@@ -510,15 +534,15 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
                                            audium::TimeContextType context)
 {
     // create default region
-    juce::Range<double> defaultRange(0.0, audioResource->getFileLength(audium::seconds));
+    juce::Range<double> defaultRange(0.0, audioResource->getFileLength(context));
     auto region = getAudioRegionContainer()->createRegion(audioResource->getFileNameWithoutExtension(),
                                                           defaultRange,
                                                           std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
-                                                          subGroup);
+                                                          subGroup,
+                                                          context);
     
-    juce::Range<double> range(position, position + region->getRegionData(context).getLength());
     // create play list item
-    getPlayListContainer()->createPlayListItemAtPositionUI(region, range, context);
+    getPlayListContainer()->createPlayListItemAtPositionUI(region, position, context);
 }
 
 double AudioTrack::getTotalLength(audium::TimeContextType context, bool arrangementMode) const

@@ -84,6 +84,7 @@ const AudioRegionData::tRange AudioRegion::getRegionData(audium::TimeContextType
 
 void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, audium::TimeContextType context)
 {
+    jassert(!newRegionData.isEmpty());
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
 
     if (context == audium::seconds)

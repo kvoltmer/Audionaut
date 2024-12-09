@@ -76,7 +76,7 @@ public:
     
     std::shared_ptr<AudioTrack> getDefaultGroup() const;
     
-    std::vector<std::shared_ptr<AudioTrack>> getAudioTracks() const { return audioTracks; }
+    const std::vector<std::shared_ptr<AudioTrack>> &getAudioTracks() const { return audioTracks; }
         
     void selectAllGroups(bool bSelected, bool selectChildren);
     juce::SparseSet<int> getSelectedRows() const;

@@ -88,6 +88,7 @@ public:
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannelPosition(int channelPosition) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const;
+    std::shared_ptr<AudioSubGroup> getSubGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     std::shared_ptr<AudioSubGroup> getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const;
     
 
@@ -129,6 +130,7 @@ public:
     std::shared_ptr<AudioChannel> getChannel(int channelNumber) const;
     bool deleteChannel(AudioChannel* channel);
     void deleteEmptySubGroups();
+    void deleteUnusedSubGroups();
     
     bool addAudioFiles(const juce::StringArray& filenames,
                        double positionClocks,

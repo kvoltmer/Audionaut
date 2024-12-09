@@ -62,7 +62,7 @@ public:
     
     // called from UI
     std::shared_ptr<PlayListItem> createPlayListItemAtPositionUI(std::shared_ptr<AudioRegion> audioRegion,
-                                                                 juce::Range<double> position,
+                                                                 double position,
                                                                  audium::TimeContextType context);
     std::shared_ptr<PlayListItem> createPlayListItemUI(int regionIndex,
                                                        int indexOfItemToPlaceBefore);
@@ -90,11 +90,9 @@ public:
 
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
     int getPlayListItemIndex(PlayListItem* item) const;
-    
-    AudioRegionData::tRange getPlayListDataAtIndex(int index) const;
-    
+        
     PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
-    const PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
+    PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
     const std::vector<PlayListItem*> itemsAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
@@ -123,9 +121,7 @@ private:
     // called internally
     std::shared_ptr<PlayListItem> createPlayListItem(std::shared_ptr<AudioRegion> audioRegion, int insertIndex);
     std::shared_ptr<PlayListItem> createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
-    
-    juce::CriticalSection readLock;
-    
+        
     const AudioRegionContainer &audioRegionContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;

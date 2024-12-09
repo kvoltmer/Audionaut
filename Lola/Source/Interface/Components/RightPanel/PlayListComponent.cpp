@@ -43,8 +43,7 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
         auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
         for (auto region : selectedRegions)
         {
-            juce::Range<double> position(pos, pos + region->getRegionData(audium::clocks).getLength());
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
+            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
                 success = true;
             
             pos += region->getRegionData(audium::clocks).getLength();
