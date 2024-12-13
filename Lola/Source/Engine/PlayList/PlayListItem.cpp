@@ -127,9 +127,29 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
 
 bool PlayListItem::validateData()
 {
-    if (getAbsolutePosition(audium::clocks) < 0.0) {
-        setAbsolutePosition(0.0, audium::clocks);
-        return true;
+    auto context = audium::clocks;
+    auto position = getAbsolutePosition(context);
+    
+    // must be positive
+    if (position < 0.0) {
+        setAbsolutePosition(0.0, context);
     }
+    
+    // end must not exeed file length
+    auto totalLength = audioRegion->getAudioResourceEnd(context);
+    auto regionData = getRegionData(context);
+    if (regionData.getEnd() > totalLength) {
+        regionData.setEnd(totalLength);
+        setRegionData(regionData, context);
+    }
+    
+    // start must be negative
+    if (regionData.getStart() < 0.0) {
+        auto newPosition = position - regionData.getStart();
+        regionData.setStart(0.0);
+        setRegionData(regionData, context);
+        setAbsolutePosition(newPosition, context);
+    }
+    
     return false;
 }
