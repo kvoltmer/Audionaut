@@ -87,6 +87,9 @@ public:
                     regionEditControl->toFront(false);
             }
         }
+        
+        regionSelector->updateFromEngine();
+
     }
 
     bool mustRebuildComponents() const

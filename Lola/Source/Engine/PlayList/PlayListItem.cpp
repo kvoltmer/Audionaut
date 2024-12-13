@@ -130,12 +130,12 @@ bool PlayListItem::validateData()
     auto context = audium::clocks;
     auto position = getAbsolutePosition(context);
     
-    // must be positive
+    // Absolute position must be positive
     if (position < 0.0) {
         setAbsolutePosition(0.0, context);
     }
     
-    // end must not exeed file length
+    // End must NOT exeed file length
     auto totalLength = audioRegion->getAudioResourceEnd(context);
     auto regionData = getRegionData(context);
     if (regionData.getEnd() > totalLength) {
@@ -143,7 +143,7 @@ bool PlayListItem::validateData()
         setRegionData(regionData, context);
     }
     
-    // start must be negative
+    // Start must NOT be negative
     if (regionData.getStart() < 0.0) {
         auto newPosition = position - regionData.getStart();
         regionData.setStart(0.0);
