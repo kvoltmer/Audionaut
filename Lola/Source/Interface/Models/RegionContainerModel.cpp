@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    RegionTableListBoxModel.cpp
+    RegionContainerModel.cpp
     Created: 7 Jun 2023 2:01:04pm
     Author:  Klaus Voltmer
 
@@ -9,31 +9,36 @@
 */
 
 #include <JuceHeader.h>
-#include "RegionTableListBoxModel.h"
+
+#include "RegionContainerModel.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Controls/RegionLabel.h"
+#include "Engine/AudiumEngine.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
 //==============================================================================
-RegionTableListBoxModel::RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
-                                                 std::shared_ptr<AudioTrackContainer> audioTrackContainer) :
-    owner(owner),
-    audioTrackContainer(audioTrackContainer)
+
+RegionContainerModel::RegionContainerModel(std::shared_ptr<juce::TableListBox> owner_,
+                     std::shared_ptr<AudiumEngine> audiumEngine_,
+                     std::shared_ptr<AudioTrack> audioTrack_) :
+    owner(owner_),
+    audiumEngine(audiumEngine_),
+    audioTrack(audioTrack_)
 {
 }
 
-RegionTableListBoxModel::~RegionTableListBoxModel()
+RegionContainerModel::~RegionContainerModel()
 {
 }
 
-int RegionTableListBoxModel::getNumRows()
+int RegionContainerModel::getNumRows()
 {
-    return static_cast<int>(audioTrackContainer->getAudioRegionAdapter().getAudioRegions().size());
+    return audioTrack->getAudioRegionContainer()->getNumRegions();
 }
 
-void RegionTableListBoxModel::paintRowBackground (juce::Graphics& g,
+void RegionContainerModel::paintRowBackground (juce::Graphics& g,
                                  int rowNumber,
                                  int width, int height,
                                  bool rowIsSelected)
@@ -44,7 +49,7 @@ void RegionTableListBoxModel::paintRowBackground (juce::Graphics& g,
     }
 }
 
-void RegionTableListBoxModel::paintCell (juce::Graphics& g,
+void RegionContainerModel::paintCell (juce::Graphics& g,
                         int rowNumber,
                         int columnId,
                         int width, int height,
@@ -52,16 +57,16 @@ void RegionTableListBoxModel::paintCell (juce::Graphics& g,
 {    
 }
 
-juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
+juce::Component* RegionContainerModel::refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
                                             juce::Component* existingComponentToUpdate)
 {
-    auto regions = audioTrackContainer->getAudioRegionAdapter().getAudioRegions();
+    auto region = audioTrack->getAudioRegionContainer()->getRegion(rowNumber);
     if (existingComponentToUpdate == nullptr)
     {
-        if (rowNumber < regions.size())
+        if (region != nullptr)
         {
-            return new RegionLabel(audioTrackContainer,
-                                   nullptr,
+            return new RegionLabel(audiumEngine->getAudioTrackContainer(),
+                                   audioTrack->getAudioRegionContainer(),
                                    columnId,
                                    rowNumber);
         }
@@ -80,24 +85,25 @@ juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber
     return nullptr;
 }
 
-void RegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
+void RegionContainerModel::selectedRowsChanged (int lastRowSelected)
 {
     auto selectedRows = owner->getSelectedRows();
-    audioTrackContainer->getAudioRegionAdapter().setSelectedRows(selectedRows);
-    audioTrackContainer->sendActionMessage(updateAll);
+    
+    audioTrack->getAudioRegionContainer()->setSelectedRows(selectedRows);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateAll);
 }
 
-void RegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)
+void RegionContainerModel::backgroundClicked (const juce::MouseEvent&)
 {
     owner->deselectAllRows();
 }
 
-void RegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
+void RegionContainerModel::deleteKeyPressed (int lastRowSelected)
 {
-    audioTrackContainer->deleteSelectedObjects();
+    audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
 }
 
-juce::var RegionTableListBoxModel::getDragSourceDescription (const juce::SparseSet<int>& currentlySelectedRows)
+juce::var RegionContainerModel::getDragSourceDescription (const juce::SparseSet<int>& currentlySelectedRows)
 {
     return "region";
 }

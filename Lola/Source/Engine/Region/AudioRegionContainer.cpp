@@ -245,3 +245,31 @@ std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForRes
     }
     return result;
 }
+
+
+juce::SparseSet<int> AudioRegionContainer::getSelectedRows() const {
+    juce::SparseSet<int> result;
+    for (auto i = 0; i < audioRegions.size(); i++) {
+        if (audioRegions[i] != nullptr &&
+            audioRegions[i]->isSelected()) {
+            result.addRange ({i, i + 1});
+        }
+    }
+    return result;
+}
+
+void AudioRegionContainer::setSelectedRows(juce::SparseSet<int>& selectedRows) {
+
+
+    for (auto region : audioRegions)
+        region->setSelected(false);
+    
+    for (auto i = 0; i < selectedRows.size(); i++)
+    {
+        if (auto object = audioRegions[selectedRows[i]])
+        {
+            object->setSelected(true, false);
+        }
+    }
+}
+

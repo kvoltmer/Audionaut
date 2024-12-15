@@ -289,6 +289,14 @@
                   file="Source/Interface/Components/RightPanel/PlayListContainerComponent.h"/>
             <FILE id="MuXKoO" name="RegionComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/RightPanel/RegionComponent.h"/>
+            <FILE id="Myx1PD" name="RegionsPerTrackComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionsPerTrackComponent.cpp"/>
+            <FILE id="wB6LIx" name="RegionsPerTrackComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionsPerTrackComponent.h"/>
+            <FILE id="yQP4Ii" name="RegionsPerTrackContainerComponent.cpp" compile="1"
+                  resource="0" file="Source/Interface/Components/RightPanel/RegionsPerTrackContainerComponent.cpp"/>
+            <FILE id="YO8ym9" name="RegionsPerTrackContainerComponent.h" compile="0"
+                  resource="0" file="Source/Interface/Components/RightPanel/RegionsPerTrackContainerComponent.h"/>
             <FILE id="pUtSng" name="RightPanelComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/RightPanel/RightPanelComponent.cpp"/>
             <FILE id="BNndd2" name="RightPanelComponent.h" compile="0" resource="0"
@@ -299,6 +307,10 @@
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
+          <FILE id="b5NBYW" name="RegionContainerModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/RegionContainerModel.cpp"/>
+          <FILE id="p5hkwc" name="RegionContainerModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/RegionContainerModel.h"/>
           <FILE id="oZwTNT" name="ChannelGroupListBoxModel.h" compile="0" resource="0"
                 file="Source/Interface/Models/ChannelGroupListBoxModel.h"/>
           <FILE id="zizRO1" name="ChannelSubGroupListBoxModel.h" compile="0"
@@ -323,6 +335,7 @@
                 resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="UGbQL4" name="RegionLabel.cpp" compile="1" resource="0" file="Source/Interface/Controls/RegionLabel.cpp"/>
           <FILE id="huzCxv" name="DefaultLabel.h" compile="0" resource="0" file="Source/Interface/Controls/DefaultLabel.h"/>
           <FILE id="c3NpvE" name="AudiumLabel.h" compile="0" resource="0" file="Source/Interface/Controls/AudiumLabel.h"/>
           <FILE id="pX9JqX" name="DragZoomControl.h" compile="0" resource="0"

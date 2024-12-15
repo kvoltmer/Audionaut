@@ -22,8 +22,8 @@ bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDrop
 {
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (regionLabel->getRegion() &&
-            regionLabel->getRegion()->getAudioTrack() == playListModel->getAudioTrack())
+        if (regionLabel->getRegion(regionLabel->getRowNumber()) &&
+            regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == playListModel->getAudioTrack())
         {
             // return true if source details match this track
             return true;
