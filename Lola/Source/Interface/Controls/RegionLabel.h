@@ -11,10 +11,12 @@
 #pragma once
 
 #include <JuceHeader.h>
+
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
+
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -26,14 +28,14 @@
 class RegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
-    RegionLabel(std::shared_ptr<RegionTableListBox> owner,
-                 std::shared_ptr<AudioTrackContainer> audioTrackContainer,
-                 int columnId,
-                 int rowNumber) :
-        columnId(columnId),
-        rowNumber(rowNumber),
-        owner(owner),
-        audioTrackContainer(audioTrackContainer)
+    RegionLabel(std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
+                std::shared_ptr<AudioRegionContainer> audioRegionContainer_,
+                int columnId_,
+                int rowNumber_) :
+        columnId(columnId_),
+        rowNumber(rowNumber_),
+        audioTrackContainer(audioTrackContainer_),
+        audioRegionContainer(audioRegionContainer_)
     {
         setEditable (false, true, false);
         update (columnId, rowNumber, false);
@@ -45,10 +47,15 @@ public:
     {
         removeListener(this);
     }
-    
-    const std::shared_ptr<AudioRegion> getRegion() const
+        
+    const std::shared_ptr<AudioRegion> getRegion(int rowNumber) const
     {
-        return audioTrackContainer->getAudioRegionAdapter().getRegion(getRowNumber());
+        if (audioRegionContainer != nullptr) {
+            return audioRegionContainer->getRegion(rowNumber);
+        }
+        else {
+            return audioTrackContainer->getAudioRegionAdapter().getRegion(rowNumber);
+        }
     }
     
     void update(int columnId, int rowNumber, bool isSelected)
@@ -57,9 +64,8 @@ public:
         this->rowNumber = rowNumber;
         
         juce::String text = "n/a";
-        auto audioRegions = audioTrackContainer->getAudioRegionAdapter().getAudioRegions();
-        jassert(rowNumber < audioRegions.size());
-        if (AudioRegion* r = audioRegions[rowNumber].get())
+
+        if (auto r = getRegion(rowNumber))
         {
             if (columnId == regionName)
             {
@@ -90,18 +96,13 @@ public:
 
     }
     
-    /// pass on mouse events. unless row is not selected
-    void mouseDown (const juce::MouseEvent& e) override
-    {
-        getParentComponent()->mouseDown(e);
-    }
+    void mouseDown (const juce::MouseEvent& e) override;
     
     void mouseDrag(const juce::MouseEvent& e) override
     {
         if( juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(this))
         {
             container->startDragging("RegionLabel", this);
-            //container->startDragging("PlayListTableListBoxItem", this);
         }
     }
     
@@ -109,9 +110,8 @@ public:
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
         // Undo: store old state
-        auto audioRegions = audioTrackContainer->getAudioRegionAdapter().getAudioRegions();
-        jassert(rowNumber < audioRegions.size());
-        auto audioRegion = audioRegions[rowNumber];
+        
+        auto audioRegion = getRegion(rowNumber);
         auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get(), false);
         
         if (columnId == regionName)
@@ -148,9 +148,9 @@ public:
 private:
     int columnId;
     int rowNumber;
-    std::shared_ptr<RegionTableListBox> owner;
     
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;
+    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionLabel)
 };

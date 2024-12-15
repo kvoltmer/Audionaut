@@ -14,13 +14,12 @@
 #include "PlayListComponent.h"
 #include "Interface/ColourIds.h"
 #include "Engine/Provider/TempoProvider.h"
-#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 //==============================================================================
 PlayListContainerComponent::PlayListContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
-    
     updateUI();
 }
 
@@ -57,10 +56,9 @@ void PlayListContainerComponent::createComponents()
     removeAllChildren();
     playListComponents.clear();
     
-    auto groups = audiumEngine->getAudioResourceContainer()->getAudioTracks();
+    auto tracks = audiumEngine->getAudioTrackContainer()->getAudioTracks();
     
-    for (auto track : groups)
-    {
+    for (auto track : tracks) {
         auto playListComponent = std::shared_ptr<PlayListComponent>(new PlayListComponent(audiumEngine, track));
         playListComponents.push_back(playListComponent);
         addAndMakeVisible(playListComponent.get());

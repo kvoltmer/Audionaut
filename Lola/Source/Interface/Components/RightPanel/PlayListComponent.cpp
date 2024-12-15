@@ -9,8 +9,8 @@ bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget:
 {
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (regionLabel->getRegion() &&
-            regionLabel->getRegion()->getAudioTrack() == audioTrack)
+        if (regionLabel->getRegion(regionLabel->getRowNumber()) &&
+            regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == audioTrack)
         {
             // return true if source details match this track
             return true;
