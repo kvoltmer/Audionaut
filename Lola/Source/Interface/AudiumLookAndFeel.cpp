@@ -63,6 +63,7 @@ void AudiumLookAndFeel::setupColours()
     // Table
     setColour(TableListBox::backgroundColourId, findColour(secondaryBackgroundColourId));
     setColour(TableHeaderComponent::backgroundColourId, findColour(backgroundColourId));
+    setColour(TableHeaderComponent::highlightColourId, Colours::transparentBlack);
     setColour(TableHeaderComponent::textColourId, findColour(audium::defaultTextColourId));
     
     // Combo Box
