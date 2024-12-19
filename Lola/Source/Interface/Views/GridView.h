@@ -14,6 +14,7 @@
 
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -63,6 +64,7 @@ public:
             {
                 // draw regular grid line
                 g.setColour (juce::Colours::black.withAlpha(0.5f));
+                rect.setHeight(rect.getHeight() - AudiumLookAndFeel::extraSpaceAtBottom);
                 g.fillRect(rect);
             }
             
@@ -77,7 +79,7 @@ public:
         {
             currentRangeClocks = snapToGridHandler->getRange();
             repaint();
-            //std::cout << "GridView " << range.getStart() << " " << range.getEnd() << std::endl;
+            //std::cout << "GridView " << currentRangeClocks.getStart() << " " << currentRangeClocks.getEnd() << std::endl;
         }
     }
 

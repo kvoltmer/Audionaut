@@ -52,6 +52,7 @@ public:
     static const int channelsWidth = 85;
     static const int dragZoomControlHeight = 25;
     static const int transportPositionControlHeight = 25;
+    static const int tableHeaderHeight = 25;
     static const float defaultFontSize;
     static const int extraSpaceAtBottom = 200;
 private:

@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 
 #include "Interface/Models/RegionContainerModel.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 class AudiumEngine;
 class AudioTrack;
@@ -34,10 +35,11 @@ public:
         regionListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(regionListBox.get());
         
-        regionListBox->getHeader().addColumn ("n/a", 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionListBox->getHeader().addColumn ("", 1, 250, 0, 800,
+                                              juce::TableHeaderComponent::notResizableOrSortable);
         regionListBox->getHeader().setStretchToFitActive (true);
         
-        regionListBox->setHeaderHeight(25);
+        regionListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
         regionListBox->setOutlineThickness (0);
         
     }

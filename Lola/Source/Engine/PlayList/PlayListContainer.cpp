@@ -47,18 +47,13 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(
     return nullptr;
 }
 
-std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(int rowNumber, int insertIndex)
+std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(std::shared_ptr<AudioRegion> region, int insertIndex)
 {
-    // convert row number to region
-    auto region = audioRegionContainer.getAudioTrackContainer().getAudioRegionAdapter().getRegion(rowNumber);
+    jassert(region);
+    auto playListItem = createPlayListItem(region, insertIndex);
+    movePlayListItemsPosition(insertIndex);
+    return playListItem;
     
-    if (region != nullptr)
-    {
-        auto playListItem = createPlayListItem(region, insertIndex);
-        movePlayListItemsPosition(insertIndex);
-        return playListItem;
-    }
-    return nullptr;
 }
 
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemsUI(std::vector<std::shared_ptr<AudioRegion>> regions,

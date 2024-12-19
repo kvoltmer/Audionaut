@@ -189,7 +189,7 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
                 
                 auto insertIndex = static_cast<int>(track->getPlayListContainer()->playListItems.size());
                 // CREATE PLAYLIST ITEM
-                track->getPlayListContainer()->createPlayListItemUI(elem["index"], insertIndex);
+                track->getPlayListContainer()->createPlayListItemUI(region, insertIndex);
                 
                 // is the duration consitant?
                 double duration = elem["duration"];

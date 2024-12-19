@@ -64,7 +64,7 @@ public:
     std::shared_ptr<PlayListItem> createPlayListItemAtPositionUI(std::shared_ptr<AudioRegion> audioRegion,
                                                                  double position,
                                                                  audium::TimeContextType context);
-    std::shared_ptr<PlayListItem> createPlayListItemUI(int regionIndex,
+    std::shared_ptr<PlayListItem> createPlayListItemUI(std::shared_ptr<AudioRegion> region,
                                                        int indexOfItemToPlaceBefore);
     std::shared_ptr<PlayListItem> createPlayListItemsUI(std::vector<std::shared_ptr<AudioRegion>> regions,
                                                        int indexOfItemToPlaceBefore);
