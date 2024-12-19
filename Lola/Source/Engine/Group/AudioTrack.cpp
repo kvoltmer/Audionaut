@@ -146,7 +146,7 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     writeToJson(output);
     if (input == output)
     {
-        std::cout << "skip AudioTrack::readFromJson" << std::endl;
+        //std::cout << "skip AudioTrack::readFromJson" << std::endl;
         return true;
     }
     
