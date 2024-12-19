@@ -108,8 +108,12 @@ bool DraggerControl::keyPressed (const KeyPress& key, Component* originatingComp
         audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
         return true;
     }
-    
-    return false;
+    else
+    {
+        // send update to redraw
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        return false;
+    }
 }
 
 void DraggerControl::commitData(const juce::Range<double> newData, audium::TimeContextType context)
