@@ -41,6 +41,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(
     if (auto playListItem = createPlayListItem(audioRegion, insertIndex))
     {
         playListItem->setAbsolutePosition(position, context);
+        sortByPosition();
         return playListItem;
     }
     
