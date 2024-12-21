@@ -29,19 +29,18 @@ public:
     double getZoomFactor() const noexcept;
     
     juce::Range<double> getVisibleRange() const noexcept;
-    void setVisibleRange(juce::Range<double> newRange, juce::NotificationType notification);
+    void setVisibleRange(juce::Range<double> newRange, juce::NotificationType notification = juce::sendNotificationAsync);
     
     juce::Range<double> getVisibleRangeInSeconds() const noexcept;
     
-    void setHorizontalScrollBar(juce::ScrollBar* thescrollbar);
+    void setViewport(juce::Viewport *view) { viewPort = view; };
+    int getScrollBarHeight() const { return viewPort->getHorizontalScrollBar().getHeight(); }
     
     double secondsToXWithOffset (const double time) const;
     double xToSecondsWithOffset (const double x) const;
  
     double clocksToXWithOffset (const double clocks) const;
     double xToClocksWithOffset (const double x) const;
-    
-    int getScrollBarHeight() const { return scrollbar->getHeight(); }
 
     juce::Range<double> secondsToX(juce::Range<double> seconds) const;
     juce::Range<double> xToSeconds(juce::Range<double> x) const;
@@ -118,9 +117,10 @@ private:
     std::shared_ptr<PlayListScheduler> playListScheduler;
     
     std::shared_ptr<SnapToGridHandler> snapToGridHandler;
+
     
-    // the scrollbar
-    juce::ScrollBar* scrollbar = nullptr;
+    // the ViewPort of the arrangement view
+    juce::Viewport* viewPort = nullptr;
     
     // zoom factor
     double zoomFactor = 0.0;

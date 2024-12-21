@@ -22,11 +22,13 @@ class TransportPositionControl  :   public juce::Component,
 {
 public:
     TransportPositionControl(std::shared_ptr<audium::ListBox> lb,
-                             std::shared_ptr<ZoomHandler> zoomHandler,
-                             std::shared_ptr<AudiumEngine> audiumEngine) :
+                             std::shared_ptr<RegionSelector> regionSelector_,
+                             std::shared_ptr<ZoomHandler> zoomHandler_,
+                             std::shared_ptr<AudiumEngine> audiumEngine_) :
         owner(lb),
-        zoomHandler(zoomHandler),
-        audiumEngine(audiumEngine)
+        regionSelector(regionSelector_),
+        zoomHandler(zoomHandler_),
+        audiumEngine(audiumEngine_)
     {
         setOpaque(true);
         
@@ -34,11 +36,14 @@ public:
         addAndMakeVisible(transportView.get());
         transportView->toBack();
         
-        currentPositionMarker.setFill (Colours::white);
-        addAndMakeVisible (currentPositionMarker);
+        startPositionMarker.setFill (Colours::white.withAlpha (0.85f));
+        addAndMakeVisible (startPositionMarker);
         
-        mouseOverMarker.setFill (Colours::red.withAlpha (0.85f));
+        mouseOverMarker.setFill (Colours::red.withAlpha (0.25f));
         addAndMakeVisible (mouseOverMarker);
+        
+        mouseOverGridMarker.setFill(juce::Colours::red.withAlpha(0.75f));
+        addAndMakeVisible(mouseOverGridMarker);
         
         startTimerHz (40);
     }
@@ -49,6 +54,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
+
     }
 
     void resized() override
@@ -59,73 +65,91 @@ public:
     void timerCallback() override
     {
         auto clocks = 0.0;
-        auto playListScheduler = audiumEngine->getPlayListScheduler();
-        if (playListScheduler != nullptr)
-        {
-            clocks = playListScheduler->getAbsolutePosition(audium::clocks);
+        if (auto playListScheduler = audiumEngine->getPlayListScheduler()) {
+            clocks = playListScheduler->getAbsoluteStartPosition(audium::clocks);
         }
         
-        currentPositionMarker.setRectangle (Rectangle<float> (zoomHandler->clocksToX(clocks) - 0.75f, 0,
+        startPositionMarker.setRectangle (Rectangle<float> (zoomHandler->clocksToX(clocks) - 0.75f, 0,
                                                               1.5f, (float) getHeight()));
+    }
     
-        if (playListScheduler->isPlaying())
-        {
-            currentPositionMarker.setVisible(false);
-        }
-        else
-        {
-            counter++;
-            if (counter > 20)
-            {
-                // toggle
-                currentPositionMarker.setVisible( !currentPositionMarker.isVisible());
-                counter = 0;
+    
+    void mouseUp (const MouseEvent& e) override
+    {
+        std::cout << "TransportPositionControl::mouseUp" << std::endl;
+        if (regionSelector->isEnabled()) {
+            auto selectedRange = audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getSelectedRange(audium::clocks);
+            auto relativeEvent = e.getEventRelativeTo(owner.get());
+            auto y = relativeEvent.getPosition().getY();
+            
+            if (selectedRange.isEmpty() ||
+                y < AudiumLookAndFeel::transportPositionControlHeight) {
+                
+                auto x = relativeEvent.getPosition().getX();
+                //auto seconds = zoomHandler->xToSecondsWithOffset(x);
+                auto clocks = zoomHandler->xToClocksWithOffset(x);
+                // std::cout << x1 << " " << x << " " << pos << std::endl;
+                
+                zoomHandler->snapToGrid(clocks);
+                
+                // set transport position
+                audiumEngine->getPlayListScheduler()->setAbsolutePosition(clocks, audium::clocks);
             }
         }
     }
     
-    
     void mouseDown (const MouseEvent& e) override
     {
-        mouseDrag(e);
-
     }
     
     void mouseDrag (const MouseEvent& e) override
     {
-        // auto x1 = e.getPosition().getX();
-        auto relativeEvent = e.getEventRelativeTo(owner.get());
-        auto x = relativeEvent.getPosition().getX();
-        auto seconds = zoomHandler->xToSecondsWithOffset(x);
-        // std::cout << x1 << " " << x << " " << pos << std::endl;
-
-        // set transport position
-        audiumEngine->getPlayListScheduler()->setAbsolutePosition(seconds, audium::seconds);
     }
     
     void mouseMove (const MouseEvent& e) override
     {
-        mouseOverMarker.setRectangle (Rectangle<float> (e.getPosition().getX() - 0.75f, 0,
-                                                              1.5f, (float) getHeight()));
+        auto relativeEvent = e.getEventRelativeTo(owner.get());
+        auto x = relativeEvent.getPosition().getX();
+        x += zoomHandler->getVisibleRange().getStart();
+        
+        auto clocks = zoomHandler->xToClocks(x);
+        if (zoomHandler->snapToGrid(clocks)) {
+            mouseOverGridMarker.setVisible(true);
+            mouseOverMarker.setVisible(false);
+            
+            auto gridX = zoomHandler->clocksToX(clocks);
+            
+            mouseOverGridMarker.setRectangle (Rectangle<float> (gridX - 0.75f, 0, 1.5f, (float) getHeight()));
+        }
+        else {
+            mouseOverGridMarker.setVisible(false);
+            mouseOverMarker.setVisible(true);
+        }
+        
+        mouseOverMarker.setRectangle (Rectangle<float> (x - 0.75f, 0, 1.5f, (float) getHeight()));
     }
     
     void mouseEnter (const MouseEvent&) override
     {
         mouseOverMarker.setVisible(true);
+        mouseOverGridMarker.setVisible(true);
     }
     void mouseExit (const MouseEvent&) override
     {
         mouseOverMarker.setVisible(false);
+        mouseOverGridMarker.setVisible(false);
     }
 
 private:
-    /// TODO: maybe viewport is sufficiant?
+
     std::shared_ptr<audium::ListBox> owner;
+    std::shared_ptr<RegionSelector> regionSelector;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<AudiumEngine> audiumEngine;
     
-    juce::DrawableRectangle currentPositionMarker;
+    juce::DrawableRectangle startPositionMarker;
     juce::DrawableRectangle mouseOverMarker;
+    juce::DrawableRectangle mouseOverGridMarker;
     
     std::unique_ptr<TransportView> transportView;
     

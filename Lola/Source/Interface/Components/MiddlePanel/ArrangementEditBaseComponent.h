@@ -51,7 +51,7 @@ public:
         
         // region selector
         regionSelector.reset(new RegionSelector(audioTrackListBox, zoomHandler, audiumEngine));
-        
+        addAndMakeVisible(regionSelector.get());
         
         // audio track list model
         audioTrackListBoxModel.reset(new AudioTrackListBoxModel(audioTrackListBox,
@@ -60,11 +60,14 @@ public:
                                                                 regionSelector,
                                                                 arrangementMode));
         audioTrackListBox->setModel(audioTrackListBoxModel.get());
-        auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(audioTrackListBox, zoomHandler, audiumEngine));
+        auto headerComponent = std::unique_ptr<TransportPositionControl> (new TransportPositionControl(audioTrackListBox,
+                                                                                                       regionSelector,
+                                                                                                       zoomHandler,
+                                                                                                       audiumEngine));
+        audioTrackListBox->addMouseListener (headerComponent.get(), true);
         audioTrackListBox->setHeaderComponent(std::move(headerComponent));
         audioTrackListBox->getHeaderComponent()->setSize(getWidth(), AudiumLookAndFeel::transportPositionControlHeight);
         audioTrackListBox->setOutlineThickness(0);
-        audioTrackListBox->setMultipleSelectionEnabled(true);
         audioTrackListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(audioTrackListBox.get());
         
@@ -72,29 +75,32 @@ public:
         dragZoomControl.reset(new DragZoomControl(audioTrackListBox, audiumEngine, zoomHandler, arrangementMode));
         addAndMakeVisible(dragZoomControl.get());
         dragZoomControl->addChangeListener(this);
-        
-        // region selector component
-        addAndMakeVisible(regionSelector.get());
+                
         
         // play postition view (on top)
         playPositionMarker.reset(new PlayPositionMarker(zoomHandler, audiumEngine));
         addAndMakeVisible(playPositionMarker.get());
 
-        // scroll bar -> zoom handler
-        zoomHandler->setHorizontalScrollBar(&audioTrackListBox->getHorizontalScrollBar());
+        // view port -> zoom handler
+        zoomHandler->setViewport(audioTrackListBox->getViewport());
         
         // grid view
         gridView.reset(new GridView(zoomHandler));
         zoomHandler->getSnapToGridHandler()->addChangeListener(gridView.get());
         audioTrackListBox->getViewport()->getViewedComponent()->addAndMakeVisible(gridView.get());
+        
+        // background
         gridView->toBack();
         
+        // foreground
+        regionSelector->toFront(false);
+        
         updateUI();
-
     }
 
     virtual ~ArrangementEditBaseComponent() override
     {
+        audioTrackListBox->removeMouseListener (audioTrackListBox->getHeaderComponent());
         dragZoomControl->removeChangeListener(this);
         zoomHandler->getSnapToGridHandler()->removeChangeListener(gridView.get());
         
@@ -214,7 +220,7 @@ protected:
     std::shared_ptr<GridView>                   gridView;
     
     std::shared_ptr<AudioTrackListBox>          audioTrackListBox;
-    std::unique_ptr<AudioTrackListBoxModel>          audioTrackListBoxModel;
+    std::unique_ptr<AudioTrackListBoxModel>     audioTrackListBoxModel;
     std::unique_ptr<PlayPositionMarker>         playPositionMarker;
     std::unique_ptr<DragZoomControl>            dragZoomControl;
     std::unique_ptr<ArrangementOverview>        arrangementOverview;

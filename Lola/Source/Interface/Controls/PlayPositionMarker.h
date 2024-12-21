@@ -12,13 +12,8 @@
 
 #include <JuceHeader.h>
 #include "Engine/PlayList/PlayListScheduler.h"
-
-//==============================================================================
-/*
-*/
-
-class AudiumEngine;
-
+#include "Engine/AudiumEngine.h"
+#include "Interface/Handlers/ZoomHandler.h"
 
 class PlayPositionMarker  : public juce::Component,
                             private juce::Timer
@@ -31,6 +26,7 @@ public:
     {
         currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
         addAndMakeVisible (currentPositionMarker);
+        
         startTimerHz (60);
         
         setInterceptsMouseClicks(false, true);
@@ -40,8 +36,9 @@ public:
     {
     }
 
-    void paint (juce::Graphics&) override
+    void paint (juce::Graphics& g) override
     {
+        //g.fillAll (juce::Colours::red);
     }
 
     void resized() override
@@ -50,24 +47,30 @@ public:
     
     void timerCallback() override
     {
-        updateCursorPosition();
+        if (getParentComponent()->isVisible())
+            updateCursorPosition();
     }
     
     void updateCursorPosition()
     {
         if (audiumEngine->getPlayListScheduler() != nullptr)
         {
-            if (audiumEngine->getPlayListScheduler()->isPlaying())
+            if (1)//audiumEngine->getPlayListScheduler()->isPlaying())
             {
-                currentPositionMarker.setVisible(true);
+                //currentPositionMarker.setVisible(true);
                 auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::seconds);
                 auto xPos = zoomHandler->secondsToXWithOffset(pos);
-                currentPositionMarker.setRectangle (Rectangle<float> (xPos - 0.75f, 0,
-                                                                      1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
+                
+                currentPositionMarker.setVisible(xPos >= 0);
+                
+                if (xPos >= 0.0) {
+                    currentPositionMarker.setRectangle (Rectangle<float> (xPos - 0.75f, 0,
+                                                                          1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
+                }
             }
             else
             {
-                currentPositionMarker.setVisible(false);
+                //currentPositionMarker.setVisible(false);
             }
         }
     }

@@ -15,8 +15,7 @@
 ZoomHandler::ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler,
                          std::shared_ptr<SnapToGridHandler> snapToGridHandler) :
     playListScheduler(playListScheduler),
-    snapToGridHandler(snapToGridHandler),
-    scrollbar(nullptr)
+    snapToGridHandler(snapToGridHandler)
 {
     // the default zoom factor
     zoomFactor = 1.0;
@@ -75,19 +74,17 @@ double ZoomHandler::getContentWidth() const
 
 juce::Range<double> ZoomHandler::getVisibleRange() const noexcept
 {
-    if (scrollbar != nullptr)
-    {
-        return scrollbar->getCurrentRange();
+    if (viewPort != nullptr) {
+        return viewPort->getHorizontalScrollBar().getCurrentRange();
     }
-    else
-    {
+    else {
         return juce::Range<double>();
     }
 }
 
 void ZoomHandler::setVisibleRange(juce::Range<double> newRange, juce::NotificationType notification)
 {
-    scrollbar->setCurrentRange(newRange, notification);
+    viewPort->getHorizontalScrollBar().setCurrentRange(newRange, notification);
 }
 
 juce::Range<double> ZoomHandler::getVisibleRangeInSeconds() const noexcept
@@ -99,10 +96,6 @@ juce::Range<double> ZoomHandler::getVisibleRangeInSeconds() const noexcept
     return juce::Range<double> (xToSeconds(visibleRange.getStart()), xToSeconds(visibleRange.getEnd()));
 }
 
-void ZoomHandler::setHorizontalScrollBar(juce::ScrollBar* thescrollbar)
-{
-    scrollbar = thescrollbar;
-}
 
 juce::Range<double> ZoomHandler::secondsToX(juce::Range<double> seconds) const
 {
@@ -172,7 +165,7 @@ double ZoomHandler::secondsToXWithOffset (const double time) const
 {
     auto x = secondsToX(time);
     auto offset = getVisibleRange().getStart();
-    return std::max (0.0, x - offset);
+    return x - offset;
 }
 
 double ZoomHandler::xToSecondsWithOffset (const double x) const
@@ -365,7 +358,7 @@ bool ZoomHandler::snapToGrid(double &clocks)
         
         for (auto i = 0; i < segmentResult.numSegments; i++) {
             if (std::abs(inc - std::max(beats, 0.0)) < tolerance) {
-                std::cout << "snap to: " << inc << std::endl;
+                //std::cout << "snap to: " << inc << std::endl;
                 clocks = TempoProvider::beatsToClocks(inc);
                 return true;
             }
@@ -408,7 +401,7 @@ void ZoomHandler::focusViewOnPlayPosition()
     {
         auto newStart = posX - (range.getLength() / 2);
         auto newRange = range.movedToStartAt(newStart);
-        scrollbar->setCurrentRange(newRange);
+        setVisibleRange(newRange);
     }
 }
 
@@ -421,7 +414,7 @@ void ZoomHandler::focusView(double positionInSeconds)
         //std::cout << "seconds " << positionInSeconds << " " << posX << std::endl;
         const auto newStart = posX - (getVisibleRange().getLength() * 0.5);
         const auto newRange = getVisibleRange().movedToStartAt(newStart);
-        scrollbar->setCurrentRange(newRange);
+        setVisibleRange(newRange);
     }
 }
 
@@ -433,8 +426,7 @@ void ZoomHandler::centerView(double positionInClocks, double center)
     const auto newStart = posX - (getVisibleRange().getLength() * center);
     const auto newRange = getVisibleRange().movedToStartAt(newStart);
     
-    const auto oldRange = scrollbar->getCurrentRange();
-    scrollbar->setCurrentRange(newRange);
+    setVisibleRange(newRange);
 
 }
 
@@ -443,13 +435,14 @@ void ZoomHandler::timerCallback()
     if (playListScheduler->isPlaying() &&
         playListScheduler->getFollowTransport())
     {
+        
         auto posX = secondsToX(playListScheduler->getAbsolutePosition(audium::seconds));
         if(!getVisibleRange().contains(posX))
         {
             //std::cout << "seconds " << playListScheduler->getAbsolutePositionSeconds() << " " << posX << std::endl;
             auto newStart = posX;// - (getVisibleRange().getLength() / 2);
             auto newRange = getVisibleRange().movedToStartAt(newStart);
-            scrollbar->setCurrentRange(newRange);
+            setVisibleRange(newRange);
         }
     }
 }
@@ -457,10 +450,10 @@ void ZoomHandler::timerCallback()
 void ZoomHandler::pageLeft()
 {
     const auto newRange = getVisibleRange().movedToStartAt(getVisibleRange().getStart() - getVisibleRange().getLength());
-    scrollbar->setCurrentRange(newRange);
+    setVisibleRange(newRange);
 }
 void ZoomHandler::pageRight()
 {
     const auto newRange = getVisibleRange().movedToStartAt(getVisibleRange().getEnd());
-    scrollbar->setCurrentRange(newRange);
+    setVisibleRange(newRange);
 }
