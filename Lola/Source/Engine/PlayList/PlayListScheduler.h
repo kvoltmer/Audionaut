@@ -79,7 +79,8 @@ public:
     
     double getAbsolutePosition(audium::TimeContextType context) const;
     void setAbsolutePosition(double newPosition, audium::TimeContextType context);
-    
+    double getAbsoluteStartPosition(audium::TimeContextType context) const;
+
     void tick(bool isPlaying, double beats, int numSamples);
     
     void processAudio (const juce::AudioSourceChannelInfo& info);

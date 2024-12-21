@@ -326,14 +326,11 @@ bool PlayListScheduler::isPlaying() const
 
 double PlayListScheduler::getAbsolutePosition(audium::TimeContextType context) const
 {
-    const auto clocks = isPlaying() ? data.transportPositionClocks : data.startPositionClocks;
-    if (context == audium::clocks)
-    {
-        return clocks;
+    if (context == audium::clocks) {
+        return data.transportPositionClocks;
     }
-    else if (context == audium::seconds)
-    {
-        return getTempoProvider()->clocksToSeconds(clocks);
+    else if (context == audium::seconds) {
+        return getTempoProvider()->clocksToSeconds(data.transportPositionClocks);
     }
     
     jassertfalse;
@@ -342,19 +339,33 @@ double PlayListScheduler::getAbsolutePosition(audium::TimeContextType context) c
 
 void PlayListScheduler::setAbsolutePosition(double newPosition, audium::TimeContextType context)
 {
-    if (linkEngine != nullptr)
-    {
-        if (context == audium::clocks)
-        {
-            data.startPositionClocks = newPosition;
-        }
-        else if (context == audium::seconds)
-        {
-            data.startPositionClocks = getTempoProvider()->secondsToClocks(newPosition);
-        }
+    auto positionClocks = 0.0;
+    if (context == audium::clocks) {
+        positionClocks = newPosition;
+    }
+    else if (context == audium::seconds) {
+        positionClocks = getTempoProvider()->secondsToClocks(newPosition);
+    }
+    
+    data.startPositionClocks = positionClocks;
+    
+    if (!isPlaying()) {
+        data.transportPositionClocks = positionClocks;
     }
 }
 
+double PlayListScheduler::getAbsoluteStartPosition(audium::TimeContextType context) const
+{
+    if (context == audium::clocks) {
+        return data.startPositionClocks;
+    }
+    else if (context == audium::seconds) {
+        return getTempoProvider()->clocksToSeconds(data.startPositionClocks);
+    }
+    
+    jassertfalse;
+    return 0.0;
+}
 
 int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track)
 {
