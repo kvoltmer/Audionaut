@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="gxtGxr" name="Lola" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include"
-              bundleIdentifier="com.voltmer-systems.lola" version="0.9.1" companyName="Voltmer Systems"
+              bundleIdentifier="com.voltmer-systems.lola" version="0.9.2" companyName="Voltmer Systems"
               companyWebsite="www.voltmer-systems.com" cppLanguageStandard="20"
               defines="JUCE_MODAL_LOOPS_PERMITTED=1">
   <MAINGROUP id="HQG80L" name="Lola">
@@ -407,12 +407,15 @@
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
-               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="0" useLegacyBuildSystem="0"
+               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
                smallIcon="dicuzh" bigIcon="Ezvz9P" appSandboxInheritance="1"
-               appSandboxOptions="com.apple.security.files.user-selected.read-write">
+               appSandboxOptions="com.apple.security.files.user-selected.read-write"
+               customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Lola" headerPath="$(SRCROOT)/../../Source"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="Lola" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Lola" headerPath="$(SRCROOT)/../../Source"
+                       customXcodeFlags="INSTALL_PATH=/Applications"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Lola" headerPath="$(SRCROOT)/../../Source"
+                       customXcodeFlags="INSTALL_PATH=/Applications"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>

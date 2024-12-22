@@ -280,6 +280,7 @@
 		AC56136A076FC15C2E904E25 /* AudiumTransportSource.cpp */ /* AudiumTransportSource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumTransportSource.cpp; path = ../../Source/Engine/AudioSources/AudiumTransportSource.cpp; sourceTree = SOURCE_ROOT; };
 		AD2284B76A676919EAA61ACB /* ActionMessages.h */ /* ActionMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ActionMessages.h; path = ../../Source/Engine/ActionMessages.h; sourceTree = SOURCE_ROOT; };
 		AEE072B655D55449FF8D5C45 /* SubGroupDraggerControl.h */ /* SubGroupDraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SubGroupDraggerControl.h; path = ../../Source/Interface/Controls/SubGroupDraggerControl.h; sourceTree = SOURCE_ROOT; };
+		B1016E77461B39B1DE997705 /* App.entitlements */ /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = App.entitlements; path = App.entitlements; sourceTree = SOURCE_ROOT; };
 		B12677F86B19CC723E2BEC17 /* DspClipData.h */ /* DspClipData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DspClipData.h; path = ../../Source/Engine/Core/DspClipData.h; sourceTree = SOURCE_ROOT; };
 		B2225BCBC4CD1991936DFFE6 /* AudioRegionContainer.h */ /* AudioRegionContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegionContainer.h; path = ../../Source/Engine/Region/AudioRegionContainer.h; sourceTree = SOURCE_ROOT; };
 		B339C8A2151E20DF6FD32DE3 /* audium_AudioTransportSource.cpp */ /* audium_AudioTransportSource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_AudioTransportSource.cpp; path = ../../Source/Engine/Playback/audium_AudioTransportSource.cpp; sourceTree = SOURCE_ROOT; };
@@ -1000,7 +1001,7 @@
 								enabled = 0;
 							};
 							com.apple.Sandbox = {
-								enabled = 0;
+								enabled = 1;
 							};
 						};
 					};
@@ -1134,6 +1135,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_LINK_OBJC_RUNTIME = NO;
+				CODE_SIGN_ENTITLEMENTS = "App.entitlements";
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				COPY_PHASE_STRIP = NO;
@@ -1163,8 +1165,8 @@
 					"JUCE_MODAL_LOOPS_PERMITTED=1",
 					"LINK_PLATFORM_MACOSX=1",
 					"JUCER_XCODE_MAC_F6D2F4CF=1",
-					"JUCE_APP_VERSION=0.9.1",
-					"JUCE_APP_VERSION_HEX=0x901",
+					"JUCE_APP_VERSION=0.9.2",
+					"JUCE_APP_VERSION_HEX=0x902",
 					"JucePlugin_Build_VST=0",
 					"JucePlugin_Build_VST3=0",
 					"JucePlugin_Build_AU=0",
@@ -1186,7 +1188,7 @@
 				);
 				INFOPLIST_FILE = Info-App.plist;
 				INFOPLIST_PREPROCESS = NO;
-				INSTALL_PATH = "$(HOME)/Applications";
+				INSTALL_PATH = "/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/juce/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include";
 				PRODUCT_BUNDLE_IDENTIFIER = com.voltmer-systems.lola;
@@ -1299,6 +1301,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_LINK_OBJC_RUNTIME = NO;
+				CODE_SIGN_ENTITLEMENTS = "App.entitlements";
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				DEAD_CODE_STRIPPING = YES;
@@ -1328,8 +1331,8 @@
 					"JUCE_MODAL_LOOPS_PERMITTED=1",
 					"LINK_PLATFORM_MACOSX=1",
 					"JUCER_XCODE_MAC_F6D2F4CF=1",
-					"JUCE_APP_VERSION=0.9.1",
-					"JUCE_APP_VERSION_HEX=0x901",
+					"JUCE_APP_VERSION=0.9.2",
+					"JUCE_APP_VERSION_HEX=0x902",
 					"JucePlugin_Build_VST=0",
 					"JucePlugin_Build_VST3=0",
 					"JucePlugin_Build_AU=0",
@@ -1351,7 +1354,7 @@
 				);
 				INFOPLIST_FILE = Info-App.plist;
 				INFOPLIST_PREPROCESS = NO;
-				INSTALL_PATH = "$(HOME)/Applications";
+				INSTALL_PATH = "/Applications";
 				LLVM_LTO = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/juce/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include";
