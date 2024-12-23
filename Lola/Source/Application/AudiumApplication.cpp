@@ -49,8 +49,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     {
         const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
         
-        audiumEngine->openFile(file, [file] (bool openedSuccessfully, std::string error)
-        {
+        audiumEngine->openFile(file, [file] (bool openedSuccessfully, std::string error) {
             if (!openedSuccessfully)
                 juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error: " + error, "Failed to open:\n" + file.getFullPathName());
         });
@@ -460,8 +459,8 @@ void AudiumApplication::askUserToOpenFile()
                     juce::String errorMessage(error);
                     juce::String filename = result.getFileName();
                     juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                                "Failed to open File.",
-                                                                "Failed to open " + filename +".\n\n" + errorMessage);
+                                                                "Error",
+                                                                "Failed to open " + filename +"\n\n" + errorMessage);
                 }
             });
         }

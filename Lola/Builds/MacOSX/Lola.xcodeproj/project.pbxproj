@@ -113,6 +113,7 @@
 		0092F8F0B3A3078C3789EFA2 /* AudioRegion.h */ /* AudioRegion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegion.h; path = ../../Source/Engine/Region/AudioRegion.h; sourceTree = SOURCE_ROOT; };
 		00B0848F45E53B0B0D3D8AFB /* RegionTableListBox.cpp */ /* RegionTableListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionTableListBox.cpp; path = ../../Source/Interface/Controls/RegionTableListBox.cpp; sourceTree = SOURCE_ROOT; };
 		03DF3A11364360FFACBE47A6 /* PlayListComponent.h */ /* PlayListComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListComponent.h; path = ../../Source/Interface/Components/RightPanel/PlayListComponent.h; sourceTree = SOURCE_ROOT; };
+		04BF35AA6E3058FD68483871 /* music-512-sobel-glow.png */ /* music-512-sobel-glow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "music-512-sobel-glow.png"; path = "../../Resources/music-512-sobel-glow.png"; sourceTree = SOURCE_ROOT; };
 		05B46617E562A6E50F8D63E8 /* ZoomHandler.h */ /* ZoomHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ZoomHandler.h; path = ../../Source/Interface/Handlers/ZoomHandler.h; sourceTree = SOURCE_ROOT; };
 		068707BEEF91E3C5815141F9 /* AudioResourceFactory.h */ /* AudioResourceFactory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResourceFactory.h; path = ../../Source/Engine/Factory/AudioResourceFactory.h; sourceTree = SOURCE_ROOT; };
 		0850DA0A9D93EDCFB3AEF06D /* AudioRegionAdapter.cpp */ /* AudioRegionAdapter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegionAdapter.cpp; path = ../../Source/Engine/Group/AudioRegionAdapter.cpp; sourceTree = SOURCE_ROOT; };
@@ -158,6 +159,7 @@
 		381C16B10EEBED549FB2BBD2 /* juce_data_structures */ /* juce_data_structures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_data_structures; path = ../../../Submodules/juce/modules/juce_data_structures; sourceTree = SOURCE_ROOT; };
 		3A82F0A264C8847AB3096637 /* Streamable.h */ /* Streamable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Streamable.h; path = ../../Source/Engine/Streamable.h; sourceTree = SOURCE_ROOT; };
 		3AF4EE7AF9EAFD08F56B5F84 /* AudioRegionView.h */ /* AudioRegionView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegionView.h; path = ../../Source/Interface/Views/AudioRegionView.h; sourceTree = SOURCE_ROOT; };
+		3B2E8229A8E3B92550A22EAE /* music-1024-sobel-glow.png */ /* music-1024-sobel-glow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "music-1024-sobel-glow.png"; path = "../../Resources/music-1024-sobel-glow.png"; sourceTree = SOURCE_ROOT; };
 		3B45C1B587B072E12D0C8FD8 /* PlayListScheduler.h */ /* PlayListScheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListScheduler.h; path = ../../Source/Engine/PlayList/PlayListScheduler.h; sourceTree = SOURCE_ROOT; };
 		3C22B432B568A08F505A5486 /* DspClip.h */ /* DspClip.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DspClip.h; path = ../../Source/Engine/Core/DspClip.h; sourceTree = SOURCE_ROOT; };
 		3EAF65124DEAE2090689ABBB /* RegionComponent.h */ /* RegionComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionComponent.h; path = ../../Source/Interface/Components/RightPanel/RegionComponent.h; sourceTree = SOURCE_ROOT; };
@@ -241,7 +243,6 @@
 		87FDC755ECAF2D008E8E2FF1 /* juce_audio_devices */ /* juce_audio_devices */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_devices; path = ../../../Submodules/juce/modules/juce_audio_devices; sourceTree = SOURCE_ROOT; };
 		887C3A1464606CAC6659DC00 /* AudioTrackListBox.h */ /* AudioTrackListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackListBox.h; path = ../../Source/Interface/Controls/AudioTrackListBox.h; sourceTree = SOURCE_ROOT; };
 		88B927322C42EE178FD07CEB /* AudioResourceData.h */ /* AudioResourceData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResourceData.h; path = ../../Source/Engine/Resource/AudioResourceData.h; sourceTree = SOURCE_ROOT; };
-		8C08D80D62B1B0A7AAB7D527 /* music-512.png */ /* music-512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "music-512.png"; path = "../../Resources/music-512.png"; sourceTree = SOURCE_ROOT; };
 		8D37E966475206DF93CB732C /* PlayListContainer.h */ /* PlayListContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListContainer.h; path = ../../Source/Engine/PlayList/PlayListContainer.h; sourceTree = SOURCE_ROOT; };
 		8DCF650D089A100D7636D993 /* juce_audio_basics */ /* juce_audio_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_basics; path = ../../../Submodules/juce/modules/juce_audio_basics; sourceTree = SOURCE_ROOT; };
 		9018382E5D713205AFDE2343 /* ChannelsComponent.h */ /* ChannelsComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelsComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h; sourceTree = SOURCE_ROOT; };
@@ -339,7 +340,6 @@
 		EF54783210A386FD62378BC6 /* AudioResource.h */ /* AudioResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResource.h; path = ../../Source/Engine/Resource/AudioResource.h; sourceTree = SOURCE_ROOT; };
 		EF8DD043B0CEFFAC7AFE5227 /* AudiumFactory.cpp */ /* AudiumFactory.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumFactory.cpp; path = ../../Source/Engine/Factory/AudiumFactory.cpp; sourceTree = SOURCE_ROOT; };
 		EFB67C5172FD56D59C0F3443 /* include_juce_audio_utils.mm */ /* include_juce_audio_utils.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_utils.mm; path = ../../JuceLibraryCode/include_juce_audio_utils.mm; sourceTree = SOURCE_ROOT; };
-		F0041B38DD48345088CEB4A3 /* music-1024.png */ /* music-1024.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "music-1024.png"; path = "../../Resources/music-1024.png"; sourceTree = SOURCE_ROOT; };
 		F0C4F5AE7B7A830FDF5AEC81 /* PlayListContainer.cpp */ /* PlayListContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListContainer.cpp; path = ../../Source/Engine/PlayList/PlayListContainer.cpp; sourceTree = SOURCE_ROOT; };
 		F2C3C13BF9EFDA97A3296E84 /* AudioClip.cpp */ /* AudioClip.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioClip.cpp; path = ../../Source/Engine/Group/AudioClip.cpp; sourceTree = SOURCE_ROOT; };
 		F3D057FCB74BF350042A73EE /* AudioTrackRegionEditComponent.cpp */ /* AudioTrackRegionEditComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrackRegionEditComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/EditView/AudioTrackRegionEditComponent.cpp; sourceTree = SOURCE_ROOT; };
@@ -806,8 +806,8 @@
 		B31E3680D6A49693251B06BE /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				8C08D80D62B1B0A7AAB7D527,
-				F0041B38DD48345088CEB4A3,
+				04BF35AA6E3058FD68483871,
+				3B2E8229A8E3B92550A22EAE,
 				96AC39DC12BE49CADA52A77D,
 			);
 			name = Resources;
@@ -1139,7 +1139,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				COPY_PHASE_STRIP = NO;
-				EXCLUDED_ARCHS = "";
+				EXCLUDED_ARCHS = "i386";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1165,8 +1165,8 @@
 					"JUCE_MODAL_LOOPS_PERMITTED=1",
 					"LINK_PLATFORM_MACOSX=1",
 					"JUCER_XCODE_MAC_F6D2F4CF=1",
-					"JUCE_APP_VERSION=0.9.2",
-					"JUCE_APP_VERSION_HEX=0x902",
+					"JUCE_APP_VERSION=0.9.3",
+					"JUCE_APP_VERSION_HEX=0x903",
 					"JucePlugin_Build_VST=0",
 					"JucePlugin_Build_VST3=0",
 					"JucePlugin_Build_AU=0",
@@ -1194,7 +1194,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.voltmer-systems.lola;
 				PRODUCT_NAME = "Lola";
 				USE_HEADERMAP = NO;
-				VALID_ARCHS = "i386 x86_64 arm64 arm64e";
+				VALID_ARCHS = "arm64 arm64e x86_64";
 			};
 			name = Debug;
 		};
@@ -1305,7 +1305,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				DEAD_CODE_STRIPPING = YES;
-				EXCLUDED_ARCHS = "";
+				EXCLUDED_ARCHS = "i386";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1331,8 +1331,8 @@
 					"JUCE_MODAL_LOOPS_PERMITTED=1",
 					"LINK_PLATFORM_MACOSX=1",
 					"JUCER_XCODE_MAC_F6D2F4CF=1",
-					"JUCE_APP_VERSION=0.9.2",
-					"JUCE_APP_VERSION_HEX=0x902",
+					"JUCE_APP_VERSION=0.9.3",
+					"JUCE_APP_VERSION_HEX=0x903",
 					"JucePlugin_Build_VST=0",
 					"JucePlugin_Build_VST3=0",
 					"JucePlugin_Build_AU=0",
@@ -1361,7 +1361,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.voltmer-systems.lola;
 				PRODUCT_NAME = "Lola";
 				USE_HEADERMAP = NO;
-				VALID_ARCHS = "i386 x86_64 arm64 arm64e";
+				VALID_ARCHS = "arm64 arm64e x86_64";
 			};
 			name = Release;
 		};
