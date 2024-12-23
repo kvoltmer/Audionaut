@@ -155,6 +155,8 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     for (auto& jsonElement : jsonResources)
     {
         auto url = AudioResource::urlFromJson(jsonElement);
+        AudioResource::testUrl(url);
+        
         std::shared_ptr<AudioResource> resource = nullptr;
         if (rebuild)
         {

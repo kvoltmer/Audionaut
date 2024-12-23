@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="gxtGxr" name="Lola" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include"
-              bundleIdentifier="com.voltmer-systems.lola" version="0.9.2" companyName="Voltmer Systems"
+              bundleIdentifier="com.voltmer-systems.lola" version="0.9.3" companyName="Voltmer Systems"
               companyWebsite="www.voltmer-systems.com" cppLanguageStandard="20"
               defines="JUCE_MODAL_LOOPS_PERMITTED=1">
   <MAINGROUP id="HQG80L" name="Lola">
@@ -397,8 +397,10 @@
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
         <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">
-          <FILE id="dicuzh" name="music-512.png" compile="0" resource="1" file="Resources/music-512.png"/>
-          <FILE id="Ezvz9P" name="music-1024.png" compile="0" resource="1" file="Resources/music-1024.png"/>
+          <FILE id="jVWC1N" name="music-512-sobel-glow.png" compile="0" resource="1"
+                file="Resources/music-512-sobel-glow.png"/>
+          <FILE id="MCuy9V" name="music-1024-sobel-glow.png" compile="0" resource="1"
+                file="Resources/music-1024-sobel-glow.png"/>
           <FILE id="zKjXO3" name="zoomin.svg" compile="0" resource="1" file="Resources/zoomin.svg"/>
         </GROUP>
       </GROUP>
@@ -408,9 +410,11 @@
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
                extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
-               smallIcon="dicuzh" bigIcon="Ezvz9P" appSandboxInheritance="1"
-               appSandboxOptions="com.apple.security.files.user-selected.read-write"
-               customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;">
+               smallIcon="jVWC1N" bigIcon="MCuy9V" appSandboxInheritance="1"
+               appSandboxOptions="com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write"
+               customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
+               xcodeValidArchs="arm64,arm64e,x86_64" documentExtensions="audium, lola, wav, aiff"
+               appSandboxHomeDirRW="/Documents/&#10;/Desktop/">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Lola" headerPath="$(SRCROOT)/../../Source"
                        customXcodeFlags="INSTALL_PATH=/Applications"/>
