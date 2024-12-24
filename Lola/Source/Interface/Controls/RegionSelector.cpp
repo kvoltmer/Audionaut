@@ -21,7 +21,7 @@
 void RegionSelector::paint (Graphics& g)
 {
     auto thumbArea = getLocalBounds().reduced(expandedWidth, 0);
-    g.setColour (Colours::white.withAlpha(0.5f));
+    g.setColour (Colours::white.withAlpha(0.75f));
     g.drawRoundedRectangle (thumbArea.toFloat(), 3.0f, 0.75f);
     g.setColour (Colours::white.withAlpha(0.125f));
     g.fillRoundedRectangle (thumbArea.toFloat(), 3.0f);
@@ -155,20 +155,21 @@ bool RegionSelector::createRectangleAndSetBonds()
 
 void RegionSelector::mouseUp (const juce::MouseEvent& e)
 {
-    if (not audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getSelectedRange(audium::clocks).isEmpty())
-    {
-        grabKeyboardFocus();
+    if (isEnabled()) {
+        auto regionAdapter = &audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter();
+        if (! regionAdapter->getSelectedRange(audium::clocks).isEmpty())
+            grabKeyboardFocus();
+        
+        auto rangeInClocks = regionAdapter->getSelectedRange(audium::clocks);
+        if (! rangeInClocks.isEmpty()) {
+            zoomHandler->snapToGrid(rangeInClocks);
+            regionAdapter->setSelectedRange(rangeInClocks, audium::clocks);
+            audiumEngine->getPlayListScheduler()->setAbsolutePosition(rangeInClocks.getStart(), audium::clocks);
+            updateFromEngine();
+        }
+        
+        zoomHandler->getSnapToGridHandler()->clearRange();
     }
-    
-    auto rangeInClocks = audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getSelectedRange(audium::clocks);
-    if (!rangeInClocks.isEmpty()) {
-        zoomHandler->snapToGrid(rangeInClocks);
-        audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().setSelectedRange(rangeInClocks, audium::clocks);
-        audiumEngine->getPlayListScheduler()->setAbsolutePosition(rangeInClocks.getStart(), audium::clocks);
-        updateFromEngine();
-    }
-    
-    zoomHandler->getSnapToGridHandler()->clearRange();
 }
 
 void RegionSelector::mouseMove (const juce::MouseEvent& e)
