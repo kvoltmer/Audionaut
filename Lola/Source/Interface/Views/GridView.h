@@ -55,7 +55,7 @@ public:
                  std::abs(static_cast<double>(x) - range.getEnd()) < 10.0))
             {
                 // draw dashed line
-                g.setColour (juce::Colours::yellow.withAlpha(0.75f));
+                g.setColour (findColour (audium::gridColourId));
                 juce::Line<float> line(rect.getTopLeft(), rect.getBottomLeft());
                 const float myDashLength[] = { 6, 6 };
                 g.drawDashedLine(line, &myDashLength[0], 2);
