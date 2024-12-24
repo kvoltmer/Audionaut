@@ -45,31 +45,18 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     audiumEngine = AudiumFactory::createAudiumEngine();
     audiumEngine->initialise();
 
-    if (Preferences::valueExists(PreferenceKeys::defaultFile))
-    {
-        const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
-        
-        audiumEngine->openFile(file, [file] (bool openedSuccessfully, std::string error) {
-            if (!openedSuccessfully)
-                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error: " + error, "Failed to open:\n" + file.getFullPathName());
-        });
-    }
-    
+
     initialOpenDirectory = initialSaveDirectory = File::getSpecialLocation (File::userDocumentsDirectory);
     
     if (Preferences::valueExists(PreferenceKeys::initialOpenDirectory))
-    {
         initialOpenDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialOpenDirectory));
-    }
-
-    if (Preferences::valueExists(PreferenceKeys::initialSaveDirectory))
-    {
-        initialSaveDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialSaveDirectory));
-    }
     
+    if (Preferences::valueExists(PreferenceKeys::initialSaveDirectory))
+        initialSaveDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialSaveDirectory));
     
     
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
+    
     
     // do further initialisation in a moment when the message loop has started
     triggerAsyncUpdate();
@@ -83,6 +70,14 @@ void AudiumApplication::handleAsyncUpdate()
     rebuildAppleMenu();
     appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
 #endif
+    
+    if (Preferences::valueExists(PreferenceKeys::defaultFile)) {
+        const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
+        audiumEngine->openFile(file, [file] (bool openedSuccessfully, std::string error) {
+            if (!openedSuccessfully)
+                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error: " + error, "Failed to open:\n" + file.getFullPathName());
+        });
+    }
     
 }
 

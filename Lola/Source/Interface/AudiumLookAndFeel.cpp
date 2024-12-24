@@ -37,27 +37,13 @@ void AudiumLookAndFeel::setupColours()
     setColourScheme(getDarkAudiumColourScheme());
     
     setColour (backgroundColourId,                   Colours::darkgrey);
-    
     setColour (secondaryBackgroundColourId,          Colours::darkgrey.darker());
-    
     setColour (defaultTextColourId,                  Colour(Colours::lightgrey).brighter());
     
-    setColour (widgetTextColourId,                   Colours::white);
-    setColour (defaultButtonBackgroundColourId,      Colour (0xffa45c94));
-    setColour (secondaryButtonBackgroundColourId,    Colours::black);
-    setColour (userButtonBackgroundColourId,         Colour (0xffa45c94));
-    setColour (defaultIconColourId,                  Colours::white);
-    setColour (treeIconColourId,                     Colour (0xffa9a9a9));
-    setColour (defaultHighlightColourId,             Colour (Colours::lightgrey));
-    setColour (defaultHighlightedTextColourId,       Colours::black);
-    setColour (codeEditorLineNumberColourId,         Colour (0xffaaaaaa));
-    setColour (activeTabIconColourId,                Colours::white);
-    setColour (inactiveTabBackgroundColourId,        Colour (0xff181f22));
-    setColour (inactiveTabIconColourId,              Colour (0xffa9a9a9));
-    setColour (contentHeaderBackgroundColourId,      Colours::black);
-    setColour (widgetBackgroundColourId,             Colour (0xff495358));
-    setColour (secondaryWidgetBackgroundColourId,    Colour (0xff303b41));
+    setColour (gridColourId,                         Colours::yellow.withAlpha(0.75f));
     
+    setColour (defaultHighlightColourId,             Colour (Colours::lightgrey));
+
     setColour(listBoxBackgroundColourId, findColour(secondaryBackgroundColourId).brighter().withAlpha(0.3f));
     
     // Table
