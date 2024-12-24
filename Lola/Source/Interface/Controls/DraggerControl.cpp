@@ -12,9 +12,6 @@
 
 void DraggerControl::mouseDown (const juce::MouseEvent& e)
 {
-    if (regionSelector != nullptr)
-        regionSelector->setEnabled(false);
-
     currentDragMode = getDragMode(e.getPosition().getX());
     
     originalBounds = componentToDrag->getBounds();
@@ -36,9 +33,6 @@ void DraggerControl::mouseDown (const juce::MouseEvent& e)
 
 void DraggerControl::mouseUp (const juce::MouseEvent& e)
 {
-    if (regionSelector != nullptr)
-        regionSelector->setEnabled(true);
-    
     if (std::abs(e.getOffsetFromDragStart().getX()) > 0) {
         auto rangeInClocks = zoomHandler->xToClocks(componentToDrag->getBounds().toDouble().getHorizontalRange());
         zoomHandler->snapToGrid(rangeInClocks);
@@ -99,6 +93,18 @@ void DraggerControl::mouseDrag (const juce::MouseEvent& e)
 void DraggerControl::mouseMove (const juce::MouseEvent& e)
 {
     updateMouseZone (e);
+}
+
+void DraggerControl::mouseEnter (const MouseEvent& e)
+{
+    if (regionSelector != nullptr)
+        regionSelector->setEnabled(false);
+}
+
+void DraggerControl::mouseExit (const MouseEvent& e)
+{
+    if (regionSelector != nullptr)
+        regionSelector->setEnabled(true);
 }
 
 bool DraggerControl::keyPressed (const KeyPress& key, Component* originatingComponent)
