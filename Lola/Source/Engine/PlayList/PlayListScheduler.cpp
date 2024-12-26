@@ -23,6 +23,7 @@
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Core/DspClip.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 
 using namespace::std::chrono;
 

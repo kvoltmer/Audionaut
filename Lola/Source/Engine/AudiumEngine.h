@@ -15,7 +15,7 @@
 
 #include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
-#include "Engine/ExportAudioConfig.h"
+#include "Engine/Export/ExportAudioConfig.h"
 
 class AudioTrackContainer;
 class AudioTrack;

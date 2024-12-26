@@ -53,23 +53,21 @@ void AudiumTransportSource::prepareToPlay (int samplesPerBlockExpected, double s
 void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
     if (audioTransportSource->getBufferingSource() != nullptr &&
-        audioTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false)
-    {
+        audioTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false) {
         std::cout << "waitForNextAudioBlockReady" << std::endl;
     }
     
-    if (scheduledStartSample.load() == 0)
-    {
+    if (scheduledStartSample.load() == 0) {
         auto offset = 0;
-        if (durationTimer.process(info.numSamples, offset))
-        {
-            AudioSourceChannelInfo infoStop (info);
-            infoStop.numSamples = offset;
-            mainSource->getNextAudioBlock(infoStop);
+        if (durationTimer.process(info.numSamples, offset)) {
+            if (offset > 0) {
+                AudioSourceChannelInfo infoStop (info);
+                infoStop.numSamples = offset;
+                mainSource->getNextAudioBlock(infoStop);
+            }
             stopIt();
         }
-        else
-        {
+        else {
             mainSource->getNextAudioBlock(info);
         }
     }

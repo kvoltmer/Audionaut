@@ -17,11 +17,11 @@
 #include "Engine/PlayList/PlayListSchedulerData.h"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/ExportAudioConfig.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/Export/ExportAudioConfig.h"
 
 class PlayListContainer;
 class PlayListItem;
+class TransportSourceContainer;
 
 class AudioResourceContainer;
 
