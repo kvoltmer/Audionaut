@@ -80,7 +80,8 @@ void TransportSourceContainer::getNextAudioBlock(const juce::AudioSourceChannelI
     
     auto values = audioTransportSources.getObjectsLockFree();
     for (std::size_t i = 0; i < values.size(); ++i) {
-        if (auto transportSource = values[i]) {
+        auto transportSource = values[i];
+        if (transportSource != nullptr) {
             transportSource->getNextAudioBlock(audioBusInfo);
             for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
                 info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
@@ -143,4 +144,9 @@ void TransportSourceContainer::applyChannelMapping()
     {
         transportSource->applyChannelMapping();
     }
+}
+
+void TransportSourceContainer::commitTransportSources()
+{
+    audioTransportSources.commit();
 }

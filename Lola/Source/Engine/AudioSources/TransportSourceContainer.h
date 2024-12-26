@@ -14,7 +14,7 @@
 #include "Engine/Core/LockFreeContainer.h"
 
 #define MAX_AUDIO_CHANNELS 64
-#define MAX_TRANSPORT_SOURCES 1024
+#define MAX_TRANSPORT_SOURCES 512
 
 class AudioResourceContainer;
 class AudioTrack;

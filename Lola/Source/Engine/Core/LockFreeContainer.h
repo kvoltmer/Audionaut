@@ -18,7 +18,6 @@ public:
     {
         if (objects.size() < _Size) {
             objects.push_back(object);
-            commit();
             return true;
         }
         return false;
@@ -32,7 +31,6 @@ public:
             });
             
             if (it != objects.end()) {
-                commit(object); // commit excluding the object to be removed.
                 objects.erase(it);
                 return true;
             }
@@ -57,14 +55,12 @@ public:
         return lock_free_objects.load(std::memory_order_relaxed);
     }
     
-private:
-    
-    void commit (std::shared_ptr<_Tp> excludeObject = nullptr)
+    void commit ()
     {
         std::array<_Tp*, _Size> values;
         
         for (std::size_t i = 0; i < _Size; i++) {
-            if (i < objects.size() && objects[i] != excludeObject) {
+            if (i < objects.size()) {
                 values[i] = objects[i].get();
             }
             else {
@@ -74,6 +70,8 @@ private:
         
         lock_free_objects.store(values);
     }
+    
+private:
     
     std::vector<std::shared_ptr<_Tp>> objects;
     
