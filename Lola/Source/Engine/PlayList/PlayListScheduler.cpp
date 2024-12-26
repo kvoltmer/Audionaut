@@ -505,4 +505,6 @@ void PlayListScheduler::commitPlayListData()
     // update channel mapping
     transportSourceContainer->applyChannelMapping();
     
+    transportSourceContainer->commitTransportSources();
+    
 }
