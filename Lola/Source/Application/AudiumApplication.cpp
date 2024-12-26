@@ -75,8 +75,10 @@ void AudiumApplication::handleAsyncUpdate()
         const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
         audiumEngine->openFile(file, [file] (bool openedSuccessfully, std::string error) {
             if (!openedSuccessfully)
-                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error: " + error, "Failed to open:\n" + file.getFullPathName());
+                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                            "Error: " + error, "Failed to open:\n" + file.getFullPathName());
         });
+        updateUI();
     }
     
 }

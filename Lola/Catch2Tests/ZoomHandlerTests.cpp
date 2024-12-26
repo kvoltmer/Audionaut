@@ -47,7 +47,6 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     
     zoomHandler->setZoomFactor(1.0);
     auto scrollbar = std::make_unique<juce::ScrollBar>(false);
-    zoomHandler->setHorizontalScrollBar(scrollbar.get());
     
     // 1 bar = 200 pixels
     // 1 second = 100 pixels (@120BPM)

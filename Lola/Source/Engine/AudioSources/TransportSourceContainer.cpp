@@ -16,8 +16,6 @@
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(AudioResource& audioResource,
                                                                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
-    const ScopedLock sl (callbackLock);
-
     auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource(audioResource, audioFormatReaderSource));
     audioTransportSources.add(transportSource);
     return transportSource;
@@ -25,28 +23,18 @@ std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTra
 
 bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource)
 {
-    const ScopedLock sl (callbackLock);
-
-    if (audioTransportSources.contains(audioTransportSource)) {
-        audioTransportSources.remove(getTransportSourceIndex(audioTransportSource));
-        return true;
-    }
-    return false;
+    return audioTransportSources.remove(audioTransportSource);
 }
 
 void TransportSourceContainer::cleanup()
 {
-    const ScopedLock sl (callbackLock);
-
     audioTransportSources.clear();
 }
 
 void TransportSourceContainer::prepareToPlay (int samplesPerBlockExpected,
                                               double sampleRate)
 {
-    const ScopedLock sl (callbackLock);
-
-    for (auto transportSource : audioTransportSources)
+    for (auto transportSource : audioTransportSources.getObjects())
     {
         transportSource->prepareToPlay(samplesPerBlockExpected, sampleRate);
     }
@@ -56,10 +44,8 @@ void TransportSourceContainer::prepareToPlay (int samplesPerBlockExpected,
 
 void TransportSourceContainer::startPlaying()
 {
-    const ScopedLock sl (callbackLock);
-
     playing = true;
-    for (auto & transportSource : audioTransportSources)
+    for (auto & transportSource : audioTransportSources.getObjects())
     {
         transportSource->getAudioTransportSource()->start();
     }
@@ -67,9 +53,7 @@ void TransportSourceContainer::startPlaying()
 
 void TransportSourceContainer::stopPlaying()
 {
-    const ScopedLock sl (callbackLock);
-
-    for (auto & transportSource : audioTransportSources)
+    for (auto & transportSource : audioTransportSources.getObjects())
     {
         // workaround: set the position to the very end
         if (transportSource->getAudioTransportSource()->isPlaying())
@@ -87,19 +71,21 @@ bool TransportSourceContainer::isPlaying() const
 
 void TransportSourceContainer::getNextAudioBlock(const juce::AudioSourceChannelInfo& info)
 {
-    const ScopedLock sl (callbackLock);
+
         
     // avoid reallocating
     audioBusBuffer.setSize(info.buffer->getNumChannels(), info.numSamples, false, false, true);
     audioBusBuffer.clear();
     juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
     
-    for (auto transportSource : audioTransportSources) {
-        if (transportSource != nullptr)
+    auto values = audioTransportSources.getObjectsLockFree();
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        if (auto transportSource = values[i]) {
             transportSource->getNextAudioBlock(audioBusInfo);
-        
-        for (auto c = 0; c < info.buffer->getNumChannels(); c++)
-            info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
+            for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
+                info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
+            }
+        }
     }
     
     for (auto i = 0; i < std::min(info.buffer->getNumChannels(), MAX_AUDIO_CHANNELS); i++) {
@@ -109,30 +95,35 @@ void TransportSourceContainer::getNextAudioBlock(const juce::AudioSourceChannelI
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::getTransportSourceAtIndex(int index) const
 {
-    const ScopedLock sl (callbackLock);
-
     if (index >= 0 &&
-        index < (int)audioTransportSources.size())
+        index < (int)audioTransportSources.getObjects().size())
     {
-        return audioTransportSources[index];
+        return audioTransportSources.getObjects()[index];
     }
     return nullptr;
 }
 
-int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const
+int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchObject) const
 {
-    const ScopedLock sl (callbackLock);
-
-    int count = 0;
-    for (auto transportSource : audioTransportSources)
+    //int getIndex(std::shared_ptr<const ElementType> searchObject) const
     {
-        if (transportSource == searchTransportSource)
-            break;
-        
-        count++;
+        auto it = std::find(audioTransportSources.getObjects().begin(), audioTransportSources.getObjects().end(), searchObject);
+        if (it != audioTransportSources.getObjects().end())
+            return static_cast<int>(std::distance(audioTransportSources.getObjects().begin(), it));
+
+        return -1;
     }
-    
-    return count;
+
+//    int count = 0;
+//    for (auto transportSource : audioTransportSources)
+//    {
+//        if (transportSource == searchTransportSource)
+//            break;
+//
+//        count++;
+//    }
+//
+//    return count;
 }
 
 const float TransportSourceContainer::getOutputLevel(const int channelNumber) const
@@ -148,7 +139,7 @@ const float TransportSourceContainer::getOutputLevel(const int channelNumber) co
 
 void TransportSourceContainer::applyChannelMapping()
 {
-    for (auto transportSource : audioTransportSources)
+    for (auto transportSource : audioTransportSources.getObjects())
     {
         transportSource->applyChannelMapping();
     }

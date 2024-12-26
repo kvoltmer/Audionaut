@@ -47,13 +47,13 @@
                 file="Source/Engine/AudioSources/TransportSourceContainer.h"/>
         </GROUP>
         <GROUP id="{6F75617E-7F56-58FA-1D3F-51D388D99F41}" name="Export">
+          <FILE id="QNyjxw" name="ExportAudioConfig.h" compile="0" resource="0"
+                file="Source/Engine/Export/ExportAudioConfig.h"/>
           <FILE id="JiHzcv" name="AudioExportThread.cpp" compile="1" resource="0"
                 file="Source/Engine/Export/AudioExportThread.cpp"/>
           <FILE id="duXPV9" name="AudioExportThread.h" compile="0" resource="0"
                 file="Source/Engine/Export/AudioExportThread.h"/>
         </GROUP>
-        <FILE id="WTONDo" name="ExportAudioConfig.h" compile="0" resource="0"
-              file="Source/Engine/ExportAudioConfig.h"/>
         <GROUP id="{0AC7E64F-80C6-74C3-823D-493CC3105D80}" name="Selection">
           <FILE id="N9t1dH" name="Selectable.h" compile="0" resource="0" file="Source/Engine/Selection/Selectable.h"/>
           <FILE id="Hwzk6n" name="SelectableObjectContainer.h" compile="0" resource="0"
@@ -66,6 +66,8 @@
                 file="Source/Engine/Selection/SelectionManager.h"/>
         </GROUP>
         <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
+          <FILE id="wTx6z6" name="LockFreeContainer.h" compile="0" resource="0"
+                file="Source/Engine/Core/LockFreeContainer.h"/>
           <FILE id="ScorpU" name="AudioClipContainer.h" compile="0" resource="0"
                 file="Source/Engine/Core/AudioClipContainer.h"/>
           <FILE id="Ox6quG" name="DspClip.cpp" compile="1" resource="0" file="Source/Engine/Core/DspClip.cpp"/>

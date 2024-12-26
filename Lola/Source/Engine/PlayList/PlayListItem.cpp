@@ -37,6 +37,7 @@ PlayListItem::~PlayListItem()
     {
         audioRegion->getAudioTrack()->getTransportSourceContainer()->removeTransportSource(transportSource);
     }
+    transportSources.clear();
 }
 
 juce::Range<double> PlayListItem::getRegionData(audium::TimeContextType context) const

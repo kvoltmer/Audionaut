@@ -11,7 +11,10 @@
 #pragma once
 #include <JuceHeader.h>
 
+#include "Engine/Core/LockFreeContainer.h"
+
 #define MAX_AUDIO_CHANNELS 64
+#define MAX_TRANSPORT_SOURCES 1024
 
 class AudioResourceContainer;
 class AudioTrack;
@@ -22,7 +25,7 @@ class TransportSourceContainer : public juce::AudioSource
 {
 public:
     TransportSourceContainer() = default;
-    ~TransportSourceContainer() = default;
+    ~TransportSourceContainer() override = default;
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill) override;
     void prepareToPlay (int samplesPerBlockExpected,
@@ -51,13 +54,13 @@ public:
      
     void applyChannelMapping();
     
+    void commitTransportSources();
+    
 private:
     std::atomic<bool> playing = false;
     std::atomic<bool> byPass = false;
     
-    juce::CriticalSection callbackLock;
-    
-    juce::Array<std::shared_ptr<AudiumTransportSource>> audioTransportSources;
+    audium::LockFreeContainer<AudiumTransportSource, MAX_TRANSPORT_SOURCES> audioTransportSources;
     
     juce::AudioBuffer<float> audioBusBuffer;
     
