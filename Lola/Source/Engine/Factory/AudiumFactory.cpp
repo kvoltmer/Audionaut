@@ -17,6 +17,7 @@
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/Playback/Playback.h"
 
 using namespace audium;
 
@@ -42,7 +43,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                                                             audioThumbnailCache,
                                                                                                             tempoProvider));
     
-    auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer());
+    auto playback                   = std::shared_ptr<audium::Playback>         (new audium::Playback());
+    
+    auto transportSourceContainer   = std::shared_ptr<TransportSourceContainer> (new TransportSourceContainer(playback));
     
     auto audioTrackContainer        = std::shared_ptr<AudioTrackContainer>      (new AudioTrackContainer(undoManager,
                                                                                                          tempoProvider,
@@ -51,12 +54,14 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                                                          selectionManager));
     
     auto audioClipContainer         = std::shared_ptr<AudioClipContainer>       (new AudioClipContainer());
+    
     auto playListScheduler          = std::shared_ptr<PlayListScheduler>        (new PlayListScheduler(audioTrackContainer,
                                                                                                        audioResourceContainer,
                                                                                                        tempoProvider,
                                                                                                        linkEngine,
                                                                                                        audioClipContainer,
-                                                                                                       transportSourceContainer));
+                                                                                                       transportSourceContainer,
+                                                                                                       playback));
     
     auto linkAudioDevice            = std::shared_ptr<LinkAudioDevice>          (new LinkAudioDevice(linkEngine,
                                                                                                      playListScheduler,

@@ -33,8 +33,7 @@ PlayListItem::PlayListItem(const PlayListContainer &owner,
 
 PlayListItem::~PlayListItem()
 {
-    for (auto transportSource : transportSources)
-    {
+    for (auto transportSource : transportSources) {
         audioRegion->getAudioTrack()->getTransportSourceContainer()->removeTransportSource(transportSource);
     }
     transportSources.clear();
