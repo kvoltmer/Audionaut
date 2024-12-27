@@ -30,23 +30,12 @@ public:
     
     void prepareToPlay (int samplesPerBlockExpected,
                         double sampleRate);
-    
-    void releaseResources() {
-        cleanup();
-    }
+    void cleanup();
 
     std::shared_ptr<AudiumTransportSource> createAndAddTransportSource(AudioResource& audioResource,
                                                                        std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
-    void cleanup();
-        
-    void startPlaying();
-    void stopPlaying();
-    bool isPlaying() const;
-    
-    void setBypass(bool isByPass) { byPass = isByPass; }
-
     std::shared_ptr<AudiumTransportSource> getTransportSourceAtIndex(int index) const;
     int getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const;
     
@@ -55,13 +44,10 @@ public:
     void applyChannelMapping();
     
 private:
-    std::atomic<bool> playing = false;
-    std::atomic<bool> byPass = false;
     
     std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources;
     
     std::shared_ptr<audium::Playback> playback;
-    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)
 };

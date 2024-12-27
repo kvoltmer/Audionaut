@@ -63,9 +63,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                           playback);
     
     auto linkAudioDevice            = std::make_shared<LinkAudioDevice>(linkEngine,
-                                                                        playListScheduler,
-                                                                        audioResourceContainer,
-                                                                        transportSourceContainer);
+                                                                        playListScheduler);
         
     auto audiumEngine               = std::make_shared<AudiumEngine>(audioDeviceManager,
                                                                      audioTrackContainer,
