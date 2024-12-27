@@ -12,7 +12,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/PlayList/SampleTimer.h"
-#include "Engine/Playback/audium_AudioTransportSource.h"
+#include "Engine/AudioSources/audium_AudioTransportSource.h"
 
 
 #define MAX_AUDIO_FILE_CHANNELS 64
