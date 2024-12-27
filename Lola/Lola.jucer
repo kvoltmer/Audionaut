@@ -45,6 +45,10 @@
                 file="Source/Engine/AudioSources/TransportSourceContainer.cpp"/>
           <FILE id="BgDcMc" name="TransportSourceContainer.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/TransportSourceContainer.h"/>
+          <FILE id="pLvPaN" name="audium_AudioTransportSource.cpp" compile="1"
+                resource="0" file="Source/Engine/AudioSources/audium_AudioTransportSource.cpp"/>
+          <FILE id="tyX7Fa" name="audium_AudioTransportSource.h" compile="0"
+                resource="0" file="Source/Engine/AudioSources/audium_AudioTransportSource.h"/>
         </GROUP>
         <GROUP id="{6F75617E-7F56-58FA-1D3F-51D388D99F41}" name="Export">
           <FILE id="QNyjxw" name="ExportAudioConfig.h" compile="0" resource="0"
@@ -120,12 +124,7 @@
           <FILE id="CplGKz" name="LinkEngine.cpp" compile="1" resource="0" file="Source/Engine/Link/LinkEngine.cpp"/>
           <FILE id="Rf1W4c" name="LinkEngine.hpp" compile="0" resource="0" file="Source/Engine/Link/LinkEngine.hpp"/>
         </GROUP>
-        <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback">
-          <FILE id="jZotN2" name="audium_AudioTransportSource.cpp" compile="1"
-                resource="0" file="Source/Engine/Playback/audium_AudioTransportSource.cpp"/>
-          <FILE id="NLF0xK" name="audium_AudioTransportSource.h" compile="0"
-                resource="0" file="Source/Engine/Playback/audium_AudioTransportSource.h"/>
-        </GROUP>
+        <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback"/>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
           <FILE id="sr2twv" name="PlayListSchedulerData.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListSchedulerData.h"/>
