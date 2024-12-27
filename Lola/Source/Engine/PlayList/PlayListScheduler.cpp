@@ -24,6 +24,7 @@
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Core/DspClip.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/Playback/Playback.h"
 
 using namespace::std::chrono;
 
@@ -35,6 +36,8 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
     bufferSize = samplesPerBlockExpected;
     tempoProvider->prepareToPlay(samplesPerBlockExpected, sampleRate);
     transportSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    
+    playback->start();
 }
 
 void PlayListScheduler::tick(bool isPlaying,
@@ -110,6 +113,7 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
                 transportSource->scheduleDuration(duration, externalSampleRate);
                 transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.gain);
                 transportSource->getAudioTransportSource()->start();
+                playback->startVoice(transportSource);
                 
                 std::cout << "transport-pos: " << transportPosition << " ";
                 std::cout << "clip-pos: " <<  absolute << " ";
@@ -137,7 +141,8 @@ void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputI
     
         
     // render the entire bus (all channels)
-    transportSourceContainer->getNextAudioBlock(tempBufferInfo);
+    //transportSourceContainer->getNextAudioBlock(tempBufferInfo);
+    playback->processAudioBlock(tempBufferInfo);
     
     // stereo or mono output
     if (outputChannels == 2 || outputChannels == 1)
@@ -301,6 +306,7 @@ void PlayListScheduler::startPlaying()
         commitPlayListData();
         linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
+        playback->start();
     }
 }
 
@@ -313,6 +319,7 @@ void PlayListScheduler::stopPlaying()
     }
     
     transportSourceContainer->stopPlaying();
+    playback->stop();
 }
 
 bool PlayListScheduler::isPlaying() const
@@ -504,7 +511,5 @@ void PlayListScheduler::commitPlayListData()
     
     // update channel mapping
     transportSourceContainer->applyChannelMapping();
-    
-    transportSourceContainer->commitTransportSources();
     
 }

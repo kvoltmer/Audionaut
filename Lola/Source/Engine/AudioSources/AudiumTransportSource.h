@@ -62,6 +62,16 @@ public:
         audioTransportSource->stop();
     }
     
+    bool isPlaying() const noexcept
+    {
+        return audioTransportSource->isPlaying();
+    }
+    
+    bool isStopped() const noexcept
+    {
+        return audioTransportSource->isStopped();
+    }
+    
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override;
     
     

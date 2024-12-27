@@ -11,27 +11,27 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "Engine/Core/LockFreeContainer.h"
-
-#define MAX_AUDIO_CHANNELS 64
-#define MAX_TRANSPORT_SOURCES 512
-
 class AudioResourceContainer;
 class AudioTrack;
 class AudiumTransportSource;
 class AudioResource;
 
-class TransportSourceContainer : public juce::AudioSource
+namespace audium {
+    class Playback;
+}
+
+class TransportSourceContainer
 {
 public:
-    TransportSourceContainer() = default;
-    ~TransportSourceContainer() override = default;
+    TransportSourceContainer(std::shared_ptr<audium::Playback> playback_) :
+        playback(playback_)
+    {}
+    ~TransportSourceContainer() = default;
     
-    void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill) override;
     void prepareToPlay (int samplesPerBlockExpected,
-                        double sampleRate) override;
+                        double sampleRate);
     
-    void releaseResources() override {
+    void releaseResources() {
         cleanup();
     }
 
@@ -54,17 +54,14 @@ public:
      
     void applyChannelMapping();
     
-    void commitTransportSources();
-    
 private:
     std::atomic<bool> playing = false;
     std::atomic<bool> byPass = false;
     
-    audium::LockFreeContainer<AudiumTransportSource, MAX_TRANSPORT_SOURCES> audioTransportSources;
+    std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources;
     
-    juce::AudioBuffer<float> audioBusBuffer;
+    std::shared_ptr<audium::Playback> playback;
     
-    std::atomic<float> outputLevel[MAX_AUDIO_CHANNELS];
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)
 };

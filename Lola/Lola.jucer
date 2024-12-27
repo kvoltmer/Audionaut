@@ -124,7 +124,12 @@
           <FILE id="CplGKz" name="LinkEngine.cpp" compile="1" resource="0" file="Source/Engine/Link/LinkEngine.cpp"/>
           <FILE id="Rf1W4c" name="LinkEngine.hpp" compile="0" resource="0" file="Source/Engine/Link/LinkEngine.hpp"/>
         </GROUP>
-        <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback"/>
+        <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback">
+          <FILE id="kBDQRJ" name="Playback.cpp" compile="1" resource="0" file="Source/Engine/Playback/Playback.cpp"/>
+          <FILE id="TuWOT6" name="Playback.h" compile="0" resource="0" file="Source/Engine/Playback/Playback.h"/>
+          <FILE id="mWPkuL" name="Voice.cpp" compile="1" resource="0" file="Source/Engine/Playback/Voice.cpp"/>
+          <FILE id="LVBVN6" name="Voice.h" compile="0" resource="0" file="Source/Engine/Playback/Voice.h"/>
+        </GROUP>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
           <FILE id="sr2twv" name="PlayListSchedulerData.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListSchedulerData.h"/>
