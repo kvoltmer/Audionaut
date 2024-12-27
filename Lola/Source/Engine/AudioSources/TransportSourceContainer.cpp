@@ -48,34 +48,6 @@ void TransportSourceContainer::prepareToPlay (int samplesPerBlockExpected,
     applyChannelMapping();
 }
 
-void TransportSourceContainer::startPlaying()
-{
-    playing = true;
-    for (auto & transportSource : audioTransportSources)
-    {
-        transportSource->getAudioTransportSource()->start();
-    }
-}
-
-void TransportSourceContainer::stopPlaying()
-{
-    for (auto & transportSource : audioTransportSources)
-    {
-        // workaround: set the position to the very end
-        if (transportSource->getAudioTransportSource()->isPlaying())
-        {
-            transportSource->stopIt();
-        }
-    }
-    playing = false;
-}
-
-bool TransportSourceContainer::isPlaying() const
-{
-    return playing;
-}
-
-
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::getTransportSourceAtIndex(int index) const
 {
     if (index >= 0 &&
