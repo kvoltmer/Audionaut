@@ -10,3 +10,6 @@
 [submodule "Submodules/link"]
 	path = Submodules/link
 	url = https://github.com/Ableton/link.git
+[submodule "Submodules/farbot"]
+	path = Submodules/farbot
+	url = https://github.com/hogliux/farbot.git
