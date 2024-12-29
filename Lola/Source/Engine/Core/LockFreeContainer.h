@@ -1,82 +1,74 @@
 
 #pragma once
 
+#include <farbot/RealtimeTraits.hpp>
+#include <farbot/fifo.hpp>
+
 namespace audium
 {
 
-template <class _Tp, size_t _Size>
+
+template <class _Tp>
 class LockFreeContainer
 {
 private:
     
 public:
-    LockFreeContainer() = default;
-    ~LockFreeContainer() {
+    LockFreeContainer(int capacity) :
+        fifo(capacity)
+    {
     }
     
-    bool add (std::shared_ptr<_Tp> object)
-    {
-        if (objects.size() < _Size) {
-            objects.push_back(object);
-            return true;
-        }
-        return false;
-    }
+    ~LockFreeContainer() = default;
+
+    static_assert (farbot::is_realtime_move_assignable<_Tp>::value);
+    static_assert(! std::atomic<_Tp>::is_always_lock_free);
     
-    bool remove (std::shared_ptr<_Tp> object)
+    std::vector<_Tp> &getProducerObjects ()
     {
-        if (objects.size() > 0) {
-            auto it = std::find_if(objects.begin(), objects.end(), [object](const auto& item) {
-                return item == object;
-            });
-            
-            if (it != objects.end()) {
-                objects.erase(it);
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    const std::vector<std::shared_ptr<_Tp>> &getObjects () const
-    {
-        return objects;
+        return producer_objects;
     }
     
     void clear ()
     {
-        objects.clear();
-        commit();
+        producer_objects.clear();
     }
     
-    const std::array<_Tp*, _Size> getObjectsLockFree () const
+    const std::vector<_Tp> &getConsumerObjects ()
     {
-        return lock_free_objects.load(std::memory_order_relaxed);
+        return consumer_objects;
     }
     
     void commit ()
     {
-        std::array<_Tp*, _Size> values;
-        
-        for (std::size_t i = 0; i < _Size; i++) {
-            if (i < objects.size()) {
-                values[i] = objects[i].get();
-            }
-            else {
-                values[i] = nullptr;
-            }
+        if (!objects_committed.load()) {
+            for (_Tp object : producer_objects)
+                fifo.push(std::move(object));
+            
+            objects_committed.store(true);
         }
-        
-        lock_free_objects.store(values);
     }
     
+    bool pull ()
+    {
+        if (objects_committed.load()) {
+            consumer_objects.clear();
+            _Tp object;
+            while (fifo.pop (object))
+                consumer_objects.push_back(object);
+            objects_committed.store(false);
+            return true;
+        }
+        return false;
+    }
+
 private:
-    
-    std::vector<std::shared_ptr<_Tp>> objects;
-    
-    std::atomic<std::array<_Tp*, _Size>> lock_free_objects;
-    
+    farbot::fifo<_Tp, farbot::fifo_options::concurrency::single, farbot::fifo_options::concurrency::single> fifo;
+   
+    std::vector<_Tp> producer_objects;
+    std::vector<_Tp> consumer_objects;
+        
+    std::atomic<bool> objects_committed = false;
 };
 
 } // namespace audium

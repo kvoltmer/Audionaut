@@ -26,6 +26,8 @@
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/Playback/Playback.h"
 
+#include "Engine/Core/LockFreeContainer.h"
+
 using namespace::std::chrono;
 
 using namespace::juce;
@@ -71,11 +73,12 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
     const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
     auto transportRange = juce::Range<double> (transportPosition, transportPosition + secondsThisBuffer);
     
-    auto dspClipDataVector = audioClipContainer->getDspClipDataVector();
+    auto clipsChanged = audioClipContainer->pull();
+    auto dspClips = audioClipContainer->getConsumerObjects();
     
-    for (const auto &dspClipData : dspClipDataVector)
+    for (auto clipData : dspClips)
     {
-        const DspClip dspClip(getTempoProvider(), dspClipData);
+        const DspClip dspClip(getTempoProvider(), clipData);
         
         if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange))
         {
@@ -83,8 +86,8 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
             if (transportSource == nullptr)
                 continue;
             
-            if (not transportSource->getAudioTransportSource()->isPlaying() ||
-                newDataCommited.load())
+            if (not playback->isPlaying(transportSource) ||
+                clipsChanged)
             {
                 auto absolute = dspClip.getAbsolutePosition(audium::seconds);
                 auto local = dspClip.getRegionData(audium::seconds).getStart();
@@ -115,19 +118,17 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
                 transportSource->getAudioTransportSource()->start();
                 playback->startVoice(transportSource);
                 
-                std::cout << "transport-pos: " << transportPosition << " ";
-                std::cout << "clip-pos: " <<  absolute << " ";
-                std::cout << "offset: " << offset << " ";
-                std::cout << "file-pos: " << position << " ";
-                std::cout << "duration: " << duration << " ";
-                std::cout << std::endl;
+//                std::cout << "transport-pos: " << transportPosition << " ";
+//                std::cout << "clip-pos: " <<  absolute << " ";
+//                std::cout << "offset: " << offset << " ";
+//                std::cout << "file-pos: " << position << " ";
+//                std::cout << "duration: " << duration << " ";
+//                std::cout << std::endl;
 
 
             }
         }
     }
-    
-    newDataCommited.store(false);
 }
 
 void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
@@ -388,33 +389,18 @@ void PlayListScheduler::commitPlayListData()
 {
     std::cout << "PlayListScheduler::commitPlayListData" << std::endl;
     
-    DspClipArray<> dspClipArray;
-        
-    int count = 0;
+    audioClipContainer->clear();
     
-    
-    for (const auto &track : audioTrackContainer->getAudioTracks())
-    {
-        auto dspClipData = track->getDspClipVector(isArrangementMode());
-        
-        for (const auto &clip : dspClipData)
-        {
-            if (count < dspClipArray.size())
-            {
-                dspClipArray[count++] = clip;
-            }
-            else
-            {
-                std::cout << "tDspClipArray overflow " << count << std::endl;
-                return;
-            }
+    for (auto track : audioTrackContainer->getAudioTracks()) {
+        auto clips = track->getDspClipVector(isArrangementMode());
+        for (auto clip : clips) {
+            audioClipContainer->push_back(clip);
         }
     }
 
-    // commit data as atomic operation
-    audioClipContainer->atomicDspClipArray.store(dspClipArray);
-    newDataCommited.store(true);
-    
+    // commit data
+    audioClipContainer->commit();
+        
 #if 0 // print resource id and it's postion
     for (auto i = 0; i < dspClipArray.size(); i++)
     {
