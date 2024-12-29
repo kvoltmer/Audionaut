@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include "Playback.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
 
 namespace audium
 {
@@ -37,6 +38,14 @@ bool Playback::stopVoice(const std::shared_ptr<AudiumTransportSource> source)
 {
     if (auto voice = findVoice(source)) {
         voice->stop();
+        return true;
+    }
+    return false;
+}
+
+bool Playback::isPlaying(const std::shared_ptr<AudiumTransportSource> source)
+{
+    if (findVoice(source) != nullptr) {
         return true;
     }
     return false;
@@ -87,6 +96,7 @@ Voice *Playback::getAvailableVoice()
         if (!voices[i].processing.load())
             return &voices[i];
     }
+    jassertfalse;
     return nullptr;
 }
 

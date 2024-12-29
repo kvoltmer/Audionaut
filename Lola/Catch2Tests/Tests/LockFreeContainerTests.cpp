@@ -5,55 +5,52 @@
 #include "Engine/Factory/AudioTrackFactory.h"
 
 #include "Engine/Core/LockFreeContainer.h"
+#include "Engine/Core/DspClipData.h"
 
-class Dummy {
-    
-};
+
 
 SCENARIO("lock free container scenario", "[engine][lock-free][container]")
 {
     GIVEN("a LockFreeContainer")
     {
-        auto container = std::make_unique<audium::LockFreeContainer<Dummy, 1024>>();
-        auto numItems = 100;
+        auto container = std::make_unique<audium::LockFreeContainer<DspClipData>>(1024);
+        
+        // test data
+        std::size_t numItems = 100;
+        std::vector<DspClipData> test_data;
+        for (std::size_t i = 0; i < numItems; i++) {
+            DspClipData clip;
+            clip.clipData.regionData.setStart(i);
+            clip.clipData.regionData.setEnd(i+1);
+            test_data.push_back(clip);
+        }
+        
         WHEN("adding number of items")
         {
-            std::vector<std::shared_ptr<Dummy>> vector;
-            for (auto i = 0; i < numItems; i++) {
-                auto dummy = std::make_shared<Dummy>();
-                container->add(dummy);
-                vector.push_back(dummy);
+            for (auto clip : test_data) {
+                container->getProducerObjects().push_back(clip);
             }
+            container->commit();
             
             THEN("number of items must exist")
             {
-                auto lockFree = container->getObjectsLockFree();
-                auto count = 0;
-                for (auto item : lockFree)
-                {
-                    if (item != nullptr)
-                        count++;
-                }
-                REQUIRE(count == numItems);
-                REQUIRE(container->getObjects().size() == numItems);
+                REQUIRE(container->pull());
+                auto lockFree = container->getConsumerObjects();
                 
-
-            }
-            AND_THEN("container ist clean")
-            {
-                for (auto d : vector) {
-                    container->remove(d);
+                REQUIRE(lockFree.size() == numItems);
+                auto counter = 0;
+                for (auto clip : lockFree) {
+                    REQUIRE((int)clip.clipData.regionData.getStart() == counter);
+                    REQUIRE((int)clip.clipData.regionData.getEnd() == counter+1);
+                    counter++;
                 }
                 
-                auto lockFree = container->getObjectsLockFree();
-                auto count = 0;
-                for (auto item : lockFree)
-                {
-                    if (item != nullptr)
-                        count++;
-                }
-                REQUIRE(count == 0);
-                REQUIRE(container->getObjects().size() == 0);
+                container->clear();
+                container->commit();
+                
+                REQUIRE(container->pull());
+                lockFree = container->getConsumerObjects();
+                REQUIRE(lockFree.size() == 0);
             }
         }
     }

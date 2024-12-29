@@ -14,34 +14,49 @@
 #include <concepts>
 
 #include "Engine/Core/DspClipData.h"
-
-#define AUDIO_CLIP_ARRAY_SIZE 512
-
-// std::array, has a static size set at compile time.
-// It does not have internal pointers and can therefore be copied simply by using memcpy.
-// It therefore is trivial to copy (std::is_trivially_copyable)
-template <size_t N = AUDIO_CLIP_ARRAY_SIZE>
-class DspClipArray : public std::array<DspClipData, N>
-{
-};
+#include "Engine/Core/LockFreeContainer.h"
 
 class AudioClipContainer {
     
 public:
     
-    std::atomic<DspClipArray<AUDIO_CLIP_ARRAY_SIZE>> atomicDspClipArray;
-    
-    const std::vector<DspClipData> getDspClipDataVector() const
+    AudioClipContainer(int capacity) :
+        dspClips(capacity)
     {
-        std::vector<DspClipData> result;
-        auto data = atomicDspClipArray.load();
-        for (auto i = 0; i < data.size(); i++)
-        {
-            if (!data[i].active) break;
-            
-            result.push_back(data[i]);
-        }
-        return result;
+        
     }
     
+    ~AudioClipContainer() = default;
+    
+    void clear()
+    {
+        dspClips.getProducerObjects().clear();
+    }
+    
+    void push_back(DspClipData clip)
+    {
+        dspClips.getProducerObjects().push_back(clip);
+    }
+    
+    void commit()
+    {
+        dspClips.commit();
+    }
+    
+    bool pull()
+    {
+        return dspClips.pull();
+    }
+    
+    const std::vector<DspClipData> &getConsumerObjects()
+    {
+        return dspClips.getConsumerObjects();
+    }
+    
+private:
+    
+    audium::LockFreeContainer<DspClipData> dspClips;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioClipContainer)
+
 };

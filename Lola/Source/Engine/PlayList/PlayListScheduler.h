@@ -129,11 +129,6 @@ private:
     int bufferSize = 0;
     
     std::atomic<bool> forcePosition = false;
-    
-    std::atomic<bool> newDataCommited = false;
-    
-    juce::CriticalSection readLock;
-
-    
+        
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

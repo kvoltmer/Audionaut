@@ -29,6 +29,8 @@ public:
     bool startVoice(std::shared_ptr<AudiumTransportSource> source);
     bool stopVoice(const std::shared_ptr<AudiumTransportSource> source);
     
+    bool isPlaying(const std::shared_ptr<AudiumTransportSource> source);
+    
     void processAudioBlock (const juce::AudioSourceChannelInfo& info);
     
     const float getOutputLevel(const int channelNumber) const;

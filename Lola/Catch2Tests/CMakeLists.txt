@@ -97,6 +97,7 @@ target_sources(${APP_NAME}
 target_include_directories(${APP_NAME}
                         PUBLIC ../Source/
                         PUBLIC ../../Submodules/json/include
+                        PUBLIC ../../Submodules/farbot/include
                         )
 # c++ standard
 #set(CMAKE_CXX_STANDARD 20)

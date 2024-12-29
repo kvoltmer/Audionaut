@@ -52,7 +52,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                             transportSourceContainer,
                                                                             selectionManager);
     
-    auto audioClipContainer         = std::make_shared<AudioClipContainer>();
+    auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
     
     auto playListScheduler          = std::make_shared<PlayListScheduler>(audioTrackContainer,
                                                                           audioResourceContainer,

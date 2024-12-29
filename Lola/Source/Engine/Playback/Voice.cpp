@@ -29,6 +29,8 @@ void Voice::start(std::shared_ptr<AudiumTransportSource> transportSource_)
 
 void Voice::stop()
 {
+    if (transportSource != nullptr)
+        transportSource->getAudioTransportSource()->stop();
     processing.store(false);
     transportSource = nullptr;
 }
