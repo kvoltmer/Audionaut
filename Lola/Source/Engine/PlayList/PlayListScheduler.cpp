@@ -86,7 +86,7 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
             if (transportSource == nullptr)
                 continue;
             
-            if (not playback->isPlaying(transportSource) ||
+            if (not transportSource->getAudioTransportSource()->isPlaying() ||
                 clipsChanged)
             {
                 auto absolute = dspClip.getAbsolutePosition(audium::seconds);
@@ -114,7 +114,7 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
                 jassert(position >= 0.0 && duration >= 0.0);
                 transportSource->schedulePosition(position, startSamples);
                 transportSource->scheduleDuration(duration, externalSampleRate);
-                transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.gain);
+                transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clip_gain);
                 transportSource->getAudioTransportSource()->start();
                 playback->startVoice(transportSource);
                 
@@ -142,7 +142,6 @@ void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputI
     
         
     // render the entire bus (all channels)
-    //transportSourceContainer->getNextAudioBlock(tempBufferInfo);
     playback->processAudioBlock(tempBufferInfo);
     
     // stereo or mono output

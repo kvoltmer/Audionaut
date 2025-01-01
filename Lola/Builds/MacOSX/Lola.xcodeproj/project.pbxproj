@@ -12,6 +12,7 @@
 		090A584AB0AC23AB9528BCCD /* EngineAccess.cpp */ = {isa = PBXBuildFile; fileRef = 15B08AD17A4543A6F9323602; };
 		09DA1E72737CDFF5EBF24565 /* include_juce_gui_basics.mm */ = {isa = PBXBuildFile; fileRef = 93967D9818A6F5B95C07B32B; };
 		0ED909B948FDDBF4CB7E2510 /* AudiumMenuModel.cpp */ = {isa = PBXBuildFile; fileRef = 6281C6C7B678AEFB2F47C339; };
+		11305B4F1829E4A489532937 /* AudioChannel.cpp */ = {isa = PBXBuildFile; fileRef = C182B2E0DF718AE811E78D8B; };
 		14C53151AB22EE2F0BA96F36 /* AudioToolbox.framework */ = {isa = PBXBuildFile; fileRef = BC325BA600975DA123084DA3; };
 		166F04F1CEEC30DE3FE692E0 /* MetalKit.framework */ = {isa = PBXBuildFile; fileRef = DACCB6E5DE52ECB29A1B1574; settings = { ATTRIBUTES = (Weak, ); }; };
 		167269CB4D148F8798D9FE23 /* RegionTableListBox.cpp */ = {isa = PBXBuildFile; fileRef = 00B0848F45E53B0B0D3D8AFB; };
@@ -308,6 +309,7 @@
 		BE87328F6D75995A9B23C9EF /* PlayListComponent.cpp */ /* PlayListComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListComponent.cpp; path = ../../Source/Interface/Components/RightPanel/PlayListComponent.cpp; sourceTree = SOURCE_ROOT; };
 		BF81D9B3912654FFE80A4E81 /* ExportAudioDialog.h */ /* ExportAudioDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ExportAudioDialog.h; path = ../../Source/Interface/Dialogs/ExportAudioDialog.h; sourceTree = SOURCE_ROOT; };
 		C10F86E30937D0CBB1F0748A /* AutoEdit.h */ /* AutoEdit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoEdit.h; path = ../../Source/Engine/AutoEdit/AutoEdit.h; sourceTree = SOURCE_ROOT; };
+		C182B2E0DF718AE811E78D8B /* AudioChannel.cpp */ /* AudioChannel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioChannel.cpp; path = ../../Source/Engine/Channel/AudioChannel.cpp; sourceTree = SOURCE_ROOT; };
 		C535EC3B1DAC64329A524774 /* HeaderComponent.h */ /* HeaderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HeaderComponent.h; path = ../../Source/Interface/Components/HeaderPanel/HeaderComponent.h; sourceTree = SOURCE_ROOT; };
 		C7202C377D3DE8D18030C3B9 /* README.txt */ /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = README.txt; path = ../../Catch2Tests/README.txt; sourceTree = SOURCE_ROOT; };
 		CA39B6E9F9CE7E4D8C8168A4 /* TransportPositionControl.h */ /* TransportPositionControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TransportPositionControl.h; path = ../../Source/Interface/Controls/TransportPositionControl.h; sourceTree = SOURCE_ROOT; };
@@ -673,6 +675,7 @@
 		89D71E0194174333497F05CE /* Channel */ = {
 			isa = PBXGroup;
 			children = (
+				C182B2E0DF718AE811E78D8B,
 				B4F39B4C0CE67784DC3888B2,
 				6620DDAA4F2A88961B286AEE,
 			);
@@ -1065,6 +1068,7 @@
 				42A4845EDB822EE81D6CCCAC,
 				77D7642D8B9CFBF2276AA63E,
 				CDA95CD2511DEFBB590AA722,
+				11305B4F1829E4A489532937,
 				D3A2B0EB82EB2FAD1C34827B,
 				6683D39BE00F743773ACD3BD,
 				5E58276753980A3B968C5B4A,

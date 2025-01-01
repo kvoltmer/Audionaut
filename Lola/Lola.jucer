@@ -85,6 +85,8 @@
           <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
         </GROUP>
         <GROUP id="{44EAE852-D94A-E010-D086-40CC86FE8C48}" name="Channel">
+          <FILE id="styheO" name="AudioChannel.cpp" compile="1" resource="0"
+                file="Source/Engine/Channel/AudioChannel.cpp"/>
           <FILE id="DQADtm" name="AudioChannel.h" compile="0" resource="0" file="Source/Engine/Channel/AudioChannel.h"/>
           <FILE id="yVxzet" name="AudioChannelData.h" compile="0" resource="0"
                 file="Source/Engine/Channel/AudioChannelData.h"/>

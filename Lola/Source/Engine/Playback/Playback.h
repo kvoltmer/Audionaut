@@ -20,7 +20,7 @@ class Playback
 {
 public:
     
-    Playback() = default;
+    Playback();
     ~Playback() = default;
     
     void start();
@@ -34,6 +34,9 @@ public:
     void processAudioBlock (const juce::AudioSourceChannelInfo& info);
     
     const float getOutputLevel(const int channelNumber) const;
+
+    const float getOutputGain(const int channelNumber) const;
+    void setOutputGain(const int channelNumber, const float gain);
     
 private:
     
@@ -50,6 +53,8 @@ private:
     Voice voices[MAX_VOICES];
     
     std::atomic<float> outputLevel[MAX_AUDIO_CHANNELS];
+    
+    std::atomic<float> outputGain[MAX_AUDIO_CHANNELS];
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Playback)
 };

@@ -43,6 +43,8 @@ public:
      
     void applyChannelMapping();
     
+    std::shared_ptr<audium::Playback> getPlayback() const { return playback; }
+    
 private:
     
     std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources;

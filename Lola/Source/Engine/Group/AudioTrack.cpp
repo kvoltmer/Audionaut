@@ -174,8 +174,10 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         {
             channel = audioChannelContainer->getObjects()[c];
         }
-        if (channel != nullptr)
+        if (channel != nullptr) {
             channel->data = jsonElement;
+            channel->commitGain();
+        }
         c++;
     }
     
@@ -580,9 +582,9 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
             for (const auto &transportSource : item->getTransportSources())
             {
                 dspClipData.active = true;
-                auto channelPosition = transportSource->getAudioResource().getChannelMapping().getChannelPosition();
-                if (audioChannelContainer->objectExistsAtIndex(channelPosition))
-                    dspClipData.gain = audioChannelContainer->objects[channelPosition]->getGain();
+//                auto channelPosition = transportSource->getAudioResource().getChannelMapping().getChannelPosition();
+//                if (audioChannelContainer->objectExistsAtIndex(channelPosition))
+//                    dspClipData.gain = audioChannelContainer->objects[channelPosition]->getGain();
                 
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
