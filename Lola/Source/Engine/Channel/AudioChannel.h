@@ -34,12 +34,10 @@ public:
         data.height = height;
     }
     
-    void setGain(const float new_gain) {
-        data.gain = new_gain;
-    }
-    float getGain() const noexcept {
-        return data.gain;
-    }
+    void setGain(const float new_gain);
+    float getGain() const noexcept;
+    
+    void commitGain();
 
     int getChannelNumber() const {
         auto channel = std::dynamic_pointer_cast<const AudioChannel>(getSharedPtr());

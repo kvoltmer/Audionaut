@@ -10,6 +10,14 @@
 namespace audium
 {
 
+Playback::Playback()
+{
+    for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
+        outputLevel[i] = 0.f;
+        outputGain[i] = 1.f;
+    }
+}
+
 /// Start the processing
 void Playback::start()
 {
@@ -27,7 +35,14 @@ void Playback::stop()
 
 bool Playback::startVoice(std::shared_ptr<AudiumTransportSource> transportSource)
 {
-    if(auto newVoice = getAvailableVoice()) {
+    
+    // voice already playing?
+    if (auto voice = findVoice(transportSource))
+        if (voice->getTransportSource()->getAudioTransportSource()->isPlaying())
+            return true;
+    
+    // start a new voice
+    if (auto newVoice = getAvailableVoice()) {
         newVoice->start(transportSource);
         return true;
     }
@@ -56,7 +71,8 @@ void Playback::processAudioBlock (const juce::AudioSourceChannelInfo& info)
     if (readyToProcess.load())
     {
         // avoid reallocating
-        audioBusBuffer.setSize(info.buffer->getNumChannels(), info.numSamples, false, false, true);
+        auto numChannels = std::min(info.buffer->getNumChannels(), MAX_AUDIO_CHANNELS);
+        audioBusBuffer.setSize(numChannels, info.numSamples, false, false, true);
         audioBusBuffer.clear();
         juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
         
@@ -70,7 +86,11 @@ void Playback::processAudioBlock (const juce::AudioSourceChannelInfo& info)
         }
 
         
-        for (auto i = 0; i < std::min(info.buffer->getNumChannels(), MAX_AUDIO_CHANNELS); i++) {
+        for (auto i = 0; i < numChannels; i++) {
+            auto startGain = outputGain[i].load();
+            auto endGain = outputGain[i].load();
+            info.buffer->applyGainRamp(i, info.startSample, info.numSamples, startGain, endGain);
+            
             outputLevel[i] = info.buffer->getMagnitude(i, info.startSample, info.numSamples);
         }
     }
@@ -118,5 +138,20 @@ int Playback::getNumberOfVoices() const
     }
     return counter;
 }
+
+const float Playback::getOutputGain(const int channelNumber) const
+{
+    if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
+        return outputGain[channelNumber];
+    
+    return 0.f;
+}
+
+void Playback::setOutputGain(const int channelNumber, const float gain)
+{
+    if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
+        outputGain[channelNumber] = gain;
+}
+
 
 } // namespace audium
