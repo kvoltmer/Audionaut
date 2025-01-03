@@ -159,7 +159,7 @@ void AudioTrackContainer::moveSelectedChannelsToNewAudioTrack()
 {
     try {
         
-        // TODO: rething this implementation
+        // TODO: rethink this implementation
         auto audioTrack = createNewAudioTrack(juce::String());
         audioTrack->setColour(getNewAudioTrackColour());
         
@@ -330,11 +330,11 @@ int AudioTrackContainer::getNumAudioTrackChannels() const
 
 juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
 {
-    auto newColour = audium::getNewWaveFormColour();
+    auto newColour = audium::WaveFormColours::getNewWaveFormColour();
     
     for (auto track : audioTracks) {
         if(newColour == track->getColour())
-            newColour = audium::getNewWaveFormColour();
+            newColour = audium::WaveFormColours::getNewWaveFormColour();
     }
     
     return newColour;

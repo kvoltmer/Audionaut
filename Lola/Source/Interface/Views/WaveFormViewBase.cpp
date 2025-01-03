@@ -53,7 +53,7 @@ void WaveFormViewBase::paintBackground (juce::Graphics& g)
     const auto bottomColour = colour.withAlpha(0.375f);
     
     // top colour = complementary colour of bottom
-    const auto topColour = audium::getComplementaryColour(bottomColour);
+    const auto topColour = audium::WaveFormColours::getComplementaryColour(bottomColour);
     
     auto colourGradient = juce::ColourGradient::vertical(topColour, getLocalBounds().getTopLeft().getY(),
                                                          bottomColour, getLocalBounds().getBottomLeft().getY());

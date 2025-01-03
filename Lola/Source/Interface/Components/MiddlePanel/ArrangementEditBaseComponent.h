@@ -115,6 +115,12 @@ public:
 
     void paint (juce::Graphics& g) override
     {
+        if (audiumEngine->getAudioResourceContainer()->getNumAudioResources() == 0) {
+            g.setColour (juce::Colours::white.withAlpha(0.75f));
+            g.setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+            g.drawText ("Drop Audio Files Here", getLocalBounds(),
+                        juce::Justification::centred, true);
+        }
     }
 
     void resized() override
