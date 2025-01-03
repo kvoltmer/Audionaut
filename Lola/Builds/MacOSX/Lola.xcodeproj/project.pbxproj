@@ -43,6 +43,7 @@
 		4A8AF8534DDE8E5A4E97CD8D /* TransportSourceContainer.cpp */ = {isa = PBXBuildFile; fileRef = 4D29270EED662FCEDECFF44A; };
 		4ABF177467832242153DF416 /* Main.cpp */ = {isa = PBXBuildFile; fileRef = 6635C70632EE050E628A48F0; };
 		4AEB71E53A29D683D72A9F41 /* audium_ListBox.cpp */ = {isa = PBXBuildFile; fileRef = A96B870D734284F177524816; };
+		4C697C36AE12575E6165BF21 /* ColourIds.cpp */ = {isa = PBXBuildFile; fileRef = 185CB895C357DC866B5C866E; };
 		4CA291EE967A9CDB338E14FD /* include_juce_dsp.mm */ = {isa = PBXBuildFile; fileRef = E138ACDCC3A702D0B7A742EF; };
 		5286B01DB14BE28BDA88F629 /* AutoEditComponent.cpp */ = {isa = PBXBuildFile; fileRef = E7074F66C3DD69F43FBB467D; };
 		5C62C0C8EE35E00AC1B8E3AC /* RightPanelComponent.cpp */ = {isa = PBXBuildFile; fileRef = BCC2B6A9AAC816A403A24E63; };
@@ -136,6 +137,7 @@
 		173BC887E916684F8DFB96DE /* RegionsPerTrackContainerComponent.cpp */ /* RegionsPerTrackContainerComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionsPerTrackContainerComponent.cpp; path = ../../Source/Interface/Components/RightPanel/RegionsPerTrackContainerComponent.cpp; sourceTree = SOURCE_ROOT; };
 		1759C02F6B3B9F8E2D69CAD7 /* audium_AudioThumbnail.cpp */ /* audium_AudioThumbnail.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_AudioThumbnail.cpp; path = ../../Source/Interface/Widgets/audium_AudioThumbnail.cpp; sourceTree = SOURCE_ROOT; };
 		17F1E3D64CE6F24C735B64BA /* AudioResourceView.h */ /* AudioResourceView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResourceView.h; path = ../../Source/Interface/Views/AudioResourceView.h; sourceTree = SOURCE_ROOT; };
+		185CB895C357DC866B5C866E /* ColourIds.cpp */ /* ColourIds.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ColourIds.cpp; path = ../../Source/Interface/ColourIds.cpp; sourceTree = SOURCE_ROOT; };
 		1CC6D2F41DEFEC0E947D67C4 /* ZoomHandler.cpp */ /* ZoomHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ZoomHandler.cpp; path = ../../Source/Interface/Handlers/ZoomHandler.cpp; sourceTree = SOURCE_ROOT; };
 		1EFE69740FBE22B839195ABD /* AudioTrackBaseComponent.h */ /* AudioTrackBaseComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackBaseComponent.h; path = ../../Source/Interface/Components/MiddlePanel/AudioTrackBaseComponent.h; sourceTree = SOURCE_ROOT; };
 		1F44340B66A109B0DEE52DF7 /* Metal.framework */ /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
@@ -929,6 +931,7 @@
 				9BE2411EEC9E2E92208463DB,
 				8715E10D92C11AA88EAF3D05,
 				483FBB3F0EC1E3D8EFB8E078,
+				185CB895C357DC866B5C866E,
 				D983C7A6E23DC948014EE2B0,
 				1397994DC312F9449DB97082,
 				39BA290D074F3377CDFD6338,
@@ -1090,6 +1093,7 @@
 				3886E546FC38F3D25492FB2C,
 				5286B01DB14BE28BDA88F629,
 				2C317733B07AECA65EA0862F,
+				4C697C36AE12575E6165BF21,
 				65DB121ADA7F1D26B04AA405,
 				4AEB71E53A29D683D72A9F41,
 				03D80B405B1452F83F882B78,

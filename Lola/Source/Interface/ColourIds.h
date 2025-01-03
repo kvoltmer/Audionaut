@@ -32,28 +32,13 @@ static const juce::uint32 waveFormColours[numWaveFormColours] = {
     0xfffbf8cc,0xfffde4cf,0xffffcfd2,0xfff1c0e8,0xffcfbaf0,0xffa3c4f3,0xff90dbf4,0xff8eecf5,0xff98f5e1,0xffb9fbc0 // second palette
 };
 
-static juce::Colour getNewWaveFormColour()
-{
-    /// simply iteraterate our colour scheme and assign our current waveFormColourSchemecolour
-    auto result  = juce::Colour(waveFormColours[currentWaveFormColour++]);
-    if (currentWaveFormColour >= numWaveFormColours)
-        currentWaveFormColour = 0;
-    return result;
-}
-
-static juce::Colour getCurrentWaveFormColour()
-{
-    return juce::Colour(waveFormColours[currentWaveFormColour]);
-}
-
-static juce::Colour getComplementaryColour(juce::Colour c)
-{
-    float c_r = c.getFloatRed();
-    float c_g = c.getFloatGreen();
-    float c_b = c.getFloatBlue();
-    float c_a = c.getFloatAlpha();
-    return juce::Colour::fromFloatRGBA(1.f - c_r, 1.f - c_g, 1.f - c_b, c_a);
-}
-
-
+class WaveFormColours {
+        
+public:
+    
+    static void resetWaveFormColour();
+    static juce::Colour getNewWaveFormColour();
+    static juce::Colour getCurrentWaveFormColour();
+    static juce::Colour getComplementaryColour(juce::Colour c);
+};
 } // namespace audium

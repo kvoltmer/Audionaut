@@ -213,6 +213,7 @@
               file="Source/Interface/AudiumLookAndFeel.cpp"/>
         <FILE id="HYtvw9" name="AudiumLookAndFeel.h" compile="0" resource="0"
               file="Source/Interface/AudiumLookAndFeel.h"/>
+        <FILE id="Jt0jme" name="ColourIds.cpp" compile="1" resource="0" file="Source/Interface/ColourIds.cpp"/>
         <FILE id="WxdqR9" name="ColourIds.h" compile="0" resource="0" file="Source/Interface/ColourIds.h"/>
         <GROUP id="{5B27ED8A-CA94-0C20-47D2-019C8929A810}" name="Widgets">
           <FILE id="WylrD8" name="audium_AudioThumbnail.cpp" compile="1" resource="0"
