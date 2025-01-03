@@ -41,12 +41,19 @@ public:
     
     void commit ()
     {
-        if (!objects_committed.load()) {
-            for (_Tp object : producer_objects)
-                fifo.push(std::move(object));
-            
-            objects_committed.store(true);
+        if (objects_committed.load()) {
+            objects_committed.store(false);
+            _Tp object;
+            while (fifo.pop (object)) {
+                ;
+            }
         }
+        
+        for (_Tp object : producer_objects) {
+            fifo.push(std::move(object));
+        }
+        
+        objects_committed.store(true);
     }
     
     bool pull ()
