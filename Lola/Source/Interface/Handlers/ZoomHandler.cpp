@@ -457,3 +457,15 @@ void ZoomHandler::pageRight()
     const auto newRange = getVisibleRange().movedToStartAt(getVisibleRange().getEnd());
     setVisibleRange(newRange);
 }
+
+juce::Point<int> ZoomHandler::autoScroll(const juce::MouseEvent& e)
+{
+    auto pos = e.getEventRelativeTo(getViewPort()).getPosition();
+
+    auto oldPoint = getViewPort()->getViewedComponent()->getBounds().getTopLeft();
+    if (getViewPort()->autoScroll(pos.getX(), pos.getY(), 30, 20)) {
+        auto newPoint = getViewPort()->getViewedComponent()->getBounds().getTopLeft();
+        return oldPoint - newPoint;
+    }
+    return juce::Point<int>(0, 0);
+}

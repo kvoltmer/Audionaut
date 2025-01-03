@@ -160,6 +160,8 @@ public:
     
     juce::Point<float> mouseDownOffset;
     
+    juce::Point<int> autoScrollOffset;
+    
 protected:
     
     juce::Component* componentToDrag;

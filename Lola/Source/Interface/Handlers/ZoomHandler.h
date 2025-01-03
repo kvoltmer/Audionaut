@@ -105,6 +105,9 @@ public:
     void pageLeft();
     void pageRight();
     
+    juce::Point<int> autoScroll(const juce::MouseEvent& e);
+    
+    juce::Viewport* getViewPort() const { return viewPort; }
  
     // max zoom in factor
     double maxZoomInFactor = 0.0;
