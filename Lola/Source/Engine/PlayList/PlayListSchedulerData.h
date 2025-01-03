@@ -18,7 +18,7 @@ using json = nlohmann::json;
 struct PlayListSchedulerData
 {
     // Edit or Arrangement Mode
-    bool editMode = true;
+    bool editMode = false;
     
     bool followTransport = true;
     
