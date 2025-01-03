@@ -28,6 +28,8 @@ void DraggerControl::mouseDown (const juce::MouseEvent& e)
     
     mouseDownOffset = getLocalPoint (this, e.position);
     
+    autoScrollOffset = juce::Point<int>(0, 0);
+    
     repaint();
 }
 
@@ -51,6 +53,11 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
 
 void DraggerControl::mouseDrag (const juce::MouseEvent& e)
 {
+
+    beginDragAutoRepeat(40);
+    autoScrollOffset += zoomHandler->autoScroll(e);
+
+    
     if (e.mods.isAltDown())
     {
         if (juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(componentToDrag))
@@ -60,7 +67,8 @@ void DraggerControl::mouseDrag (const juce::MouseEvent& e)
     }
     else
     {
-        auto distance = e.getOffsetFromDragStart();
+        auto distance = e.getOffsetFromDragStart() + autoScrollOffset;
+        
         distance.setY(0); // drag vertically only
         if (std::abs(distance.getX()) > 0)
         {

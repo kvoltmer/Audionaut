@@ -142,7 +142,7 @@ int Playback::getNumberOfVoices() const
 const float Playback::getOutputGain(const int channelNumber) const
 {
     if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
-        return outputGain[channelNumber];
+        return outputGain[channelNumber].load();
     
     return 0.f;
 }
