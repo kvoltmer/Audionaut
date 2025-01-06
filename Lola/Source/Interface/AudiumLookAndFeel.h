@@ -48,8 +48,11 @@ public:
     // PopupMenu
     juce::Font getPopupMenuFont() override;
     
+    // Slider
+    juce::Label* createSliderTextBox (juce::Slider& slider) override;
+    
     // Various statics
-    static const int channelsWidth = 85;
+    static const int channelsWidth = 100;
     static const int dragZoomControlHeight = 25;
     static const int transportPositionControlHeight = 25;
     static const int tableHeaderHeight = 25;
