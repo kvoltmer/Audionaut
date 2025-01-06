@@ -30,6 +30,7 @@ public:
         startTimerHz (60);
         
         setInterceptsMouseClicks(false, true);
+        
     }
 
     ~PlayPositionMarker() override
@@ -53,13 +54,13 @@ public:
     
     void updateCursorPosition()
     {
-        if (audiumEngine->getPlayListScheduler() != nullptr)
-        {
-            if (1)//audiumEngine->getPlayListScheduler()->isPlaying())
-            {
-                //currentPositionMarker.setVisible(true);
-                auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::seconds);
-                auto xPos = zoomHandler->secondsToXWithOffset(pos);
+        if (audiumEngine->getPlayListScheduler() != nullptr) {
+
+            auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::seconds);
+            auto xPos = zoomHandler->secondsToXWithOffset(pos);
+            
+            if (static_cast<int>(xPos) != lastXPos) {
+                lastXPos = static_cast<int>(xPos);
                 
                 currentPositionMarker.setVisible(xPos >= 0);
                 
@@ -67,10 +68,6 @@ public:
                     currentPositionMarker.setRectangle (Rectangle<float> (xPos - 0.75f, 0,
                                                                           1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
                 }
-            }
-            else
-            {
-                //currentPositionMarker.setVisible(false);
             }
         }
     }
@@ -81,6 +78,8 @@ private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     
     juce::DrawableRectangle currentPositionMarker;
+    
+    int lastXPos = -1;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayPositionMarker)
 };

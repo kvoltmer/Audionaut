@@ -201,6 +201,16 @@ Font AudiumLookAndFeel::getPopupMenuFont()
     return withDefaultMetrics (FontOptions (defaultFontSize));
 }
 
+
+Label* AudiumLookAndFeel::createSliderTextBox (Slider& slider)
+{
+    auto* l = LookAndFeel_V4::createSliderTextBox (slider);
+
+    // default font for sliders
+    l->setFont (juce::FontOptions (11.00f));
+    return l;
+}
+
 int AudiumLookAndFeel::getAlertWindowButtonHeight()    { return 20; }
 Font AudiumLookAndFeel::getAlertWindowTitleFont()      { return withDefaultMetrics (FontOptions { 14.0f, Font::bold }); }
 Font AudiumLookAndFeel::getAlertWindowMessageFont()    { return withDefaultMetrics (FontOptions { defaultFontSize }); }

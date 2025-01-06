@@ -23,7 +23,7 @@ public:
         zoomHandler(zoomHandler)
     {
         setInterceptsMouseClicks(false, true);
-        
+        setOpaque(true);
     }
 
     ~TransportView() override
