@@ -133,38 +133,48 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
 
 void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
 {
-    auto outputChannels = outputInfo.buffer->getNumChannels();
-    auto totalChannels = std::max(outputInfo.buffer->getNumChannels(),
-                                  audioTrackContainer->getNumAudioTrackChannels());
-    juce::AudioBuffer<float> tempBuffer(totalChannels, outputInfo.numSamples);
-    tempBuffer.clear();
-    juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, outputInfo.startSample, outputInfo.numSamples);
-    
+    auto totalChannels = audioTrackContainer->getNumAudioTrackChannels();
+    if (totalChannels > 0) {
+        juce::AudioBuffer<float> tempBuffer(totalChannels, outputInfo.numSamples);
+        tempBuffer.clear();
+        juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, outputInfo.startSample, outputInfo.numSamples);
         
-    // render the entire bus (all channels)
-    playback->processAudioBlock(tempBufferInfo);
-    
-    // stereo or mono output
-    if (outputChannels == 2 || outputChannels == 1)
-    {
-        for (auto c = 0; c < outputChannels; c++) {
+        
+        // render the entire bus (all channels)
+        playback->processAudioBlock(tempBufferInfo);
+        
+        auto outputChannels = outputInfo.buffer->getNumChannels();
+        // stereo or mono output
+        if (outputChannels == 1) {
             for (auto i = 0; i < totalChannels; i++) {
-                outputInfo.buffer->addFrom(c,
+                outputInfo.buffer->addFrom(0,
                                            outputInfo.startSample,
                                            tempBuffer.getReadPointer(i),
                                            outputInfo.numSamples);
             }
+            
         }
-    }
-    else // multichannel output
-    {
-        jassert(outputChannels == totalChannels);
-        
-        for (auto c = 0; c < std::min(outputChannels, totalChannels); c++) {
-            outputInfo.buffer->addFrom(c,
-                                       outputInfo.startSample,
-                                       tempBuffer.getReadPointer(c),
-                                       outputInfo.numSamples);
+        else if (outputChannels == 2)
+        {
+            for (auto c = 0; c < outputChannels; c++) {
+                for (auto i = 0; i < totalChannels; i++) {
+                    outputInfo.buffer->addFrom(c,
+                                               outputInfo.startSample,
+                                               tempBuffer.getReadPointer(i),
+                                               outputInfo.numSamples);
+                }
+            }
+        }
+        else // multichannel output
+        {
+            jassert(outputChannels == totalChannels);
+            
+            for (auto c = 0; c < std::min(outputChannels, totalChannels); c++) {
+                outputInfo.buffer->addFrom(c,
+                                           outputInfo.startSample,
+                                           tempBuffer.getReadPointer(c),
+                                           outputInfo.numSamples);
+            }
         }
     }
     
