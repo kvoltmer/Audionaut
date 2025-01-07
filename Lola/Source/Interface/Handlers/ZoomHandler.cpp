@@ -460,12 +460,13 @@ void ZoomHandler::pageRight()
 
 juce::Point<int> ZoomHandler::autoScroll(const juce::MouseEvent& e)
 {
-    auto pos = e.getEventRelativeTo(getViewPort()).getPosition();
-
-    auto oldPoint = getViewPort()->getViewedComponent()->getBounds().getTopLeft();
-    if (getViewPort()->autoScroll(pos.getX(), pos.getY(), 30, 20)) {
-        auto newPoint = getViewPort()->getViewedComponent()->getBounds().getTopLeft();
-        return oldPoint - newPoint;
-    }
+// TODO: getViewPort()->autoScroll is buggy
+//    auto pos = e.getEventRelativeTo(getViewPort()).getPosition();
+//    std::cout << "autoScroll pos " << pos.getX() << std::endl;
+//    auto oldPoint = getViewPort()->getViewedComponent()->getBounds().getTopLeft();
+//    if (getViewPort()->autoScroll(pos.getX(), pos.getY(), 30, 20)) {
+//        auto newPoint = getViewPort()->getViewedComponent()->getBounds().getTopLeft();
+//        return oldPoint - newPoint;
+//    }
     return juce::Point<int>(0, 0);
 }
