@@ -106,6 +106,9 @@ public:
     /** Returns true if it's currently playing. */
     bool isPlaying() const noexcept     { return playing; }
 
+    /** Returns true if it's stopped. */
+    bool isStopped() const noexcept     { return stopped; }
+    
     //==============================================================================
     /** Changes the gain to apply to the output.
         @param newGain  a factor by which to multiply the outgoing samples,

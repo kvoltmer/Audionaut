@@ -170,9 +170,23 @@ bool AudioResource::writeToJson (json& output)
     return true;
 }
 
+void AudioResource::testUrl (const juce::URL& url)
+{
+    if (url.isLocalFile()) {
+        juce::File file = url.getLocalFile();
+        auto fin = std::make_unique<juce::FileInputStream> (file);
+
+        if (!fin->openedOk())
+        {
+            throw std::runtime_error(file.getFullPathName().toStdString() + "\nError: " + fin->getStatus().getErrorMessage().toStdString());
+        }
+    }
+}
+
 const juce::URL AudioResource::urlFromJson (json& input)
 {
     juce::String filePath;
+    juce::File file;
     
     // relative path is always a local file
     if (input.contains("relative_file_path"))
@@ -188,18 +202,14 @@ const juce::URL AudioResource::urlFromJson (json& input)
     if (input.contains("absolute_file_path"))
     {
         filePath = input["absolute_file_path"].template get<std::string>();
-        auto file = juce::File::createFileWithoutCheckingPath(filePath);
+        file = juce::File::createFileWithoutCheckingPath(filePath);
         if (file.existsAsFile())
             return URL(file);
     }
     
     std::cout << "error: absolute path does not exist: " << filePath << std::endl;
-    
-    if (input.contains("filename"))
-    {
-        filePath = input["filename"].template get<std::string>();
-    }
-    
+    throw std::runtime_error(file.getFullPathName().toStdString() + "\n\nError: File not found.");
+
     return URL(File(filePath));
 }
 

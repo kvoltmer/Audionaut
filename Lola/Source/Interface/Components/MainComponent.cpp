@@ -185,6 +185,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     else if (message == rebuildAll)
     {
         rebuildUI();
+        updateUI();
     }
     else if (message == updateAll)
     {

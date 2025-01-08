@@ -71,6 +71,8 @@ public:
     
     const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
 
+    const juce::String getName() const;
+    
 private:
     std::shared_ptr<AudioClip> audioClip;
     

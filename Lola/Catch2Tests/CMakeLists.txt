@@ -46,6 +46,7 @@ juce_generate_juce_header(${APP_NAME})
 file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
         ${SRC_PATH}/Engine/Core/*.cpp
+        ${SRC_PATH}/Engine/Channel/*.cpp
         ${SRC_PATH}/Engine/AutoEdit/*.cpp
         ${SRC_PATH}/Engine/Channel/*.cpp
         ${SRC_PATH}/Engine/Factory/*.cpp
@@ -97,7 +98,11 @@ target_sources(${APP_NAME}
 target_include_directories(${APP_NAME}
                         PUBLIC ../Source/
                         PUBLIC ../../Submodules/json/include
+                        PUBLIC ../../Submodules/farbot/include
                         )
+# c++ standard
+#set(CMAKE_CXX_STANDARD 20)
+set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 20)
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use

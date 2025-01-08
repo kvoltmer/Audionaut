@@ -16,6 +16,7 @@
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -41,7 +42,7 @@ public:
         regionTableListBox->getHeader().addColumn ("End", regionEnd, 250, 80, 800, juce::TableHeaderComponent::notSortable);
         regionTableListBox->getHeader().addColumn ("Length", regionLength, 150, 80, 800, juce::TableHeaderComponent::notSortable);
         regionTableListBox->getHeader().setStretchToFitActive (true);
-        regionTableListBox->setHeaderHeight(25);
+        regionTableListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
         regionTableListBox->setOutlineThickness (0);
         regionTableListBox->updateContent();
     }

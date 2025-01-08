@@ -11,39 +11,31 @@
 #pragma once
 #include <JuceHeader.h>
 
-#define MAX_AUDIO_CHANNELS 64
-
 class AudioResourceContainer;
 class AudioTrack;
 class AudiumTransportSource;
 class AudioResource;
 
-class TransportSourceContainer : public juce::AudioSource
+namespace audium {
+    class Playback;
+}
+
+class TransportSourceContainer
 {
 public:
-    TransportSourceContainer() = default;
+    TransportSourceContainer(std::shared_ptr<audium::Playback> playback_) :
+        playback(playback_)
+    {}
     ~TransportSourceContainer() = default;
     
-    void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill) override;
     void prepareToPlay (int samplesPerBlockExpected,
-                        double sampleRate) override;
-    
-    void releaseResources() override {
-        cleanup();
-    }
+                        double sampleRate);
+    void cleanup();
 
     std::shared_ptr<AudiumTransportSource> createAndAddTransportSource(AudioResource& audioResource,
                                                                        std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
-    void cleanup();
-        
-    void startPlaying();
-    void stopPlaying();
-    bool isPlaying() const;
-    
-    void setBypass(bool isByPass) { byPass = isByPass; }
-
     std::shared_ptr<AudiumTransportSource> getTransportSourceAtIndex(int index) const;
     int getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const;
     
@@ -51,17 +43,13 @@ public:
      
     void applyChannelMapping();
     
+    std::shared_ptr<audium::Playback> getPlayback() const { return playback; }
+    
 private:
-    std::atomic<bool> playing = false;
-    std::atomic<bool> byPass = false;
     
-    juce::CriticalSection callbackLock;
+    std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources;
     
-    juce::Array<std::shared_ptr<AudiumTransportSource>> audioTransportSources;
-    
-    juce::AudioBuffer<float> audioBusBuffer;
-    
-    std::atomic<float> outputLevel[MAX_AUDIO_CHANNELS];
+    std::shared_ptr<audium::Playback> playback;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)
 };

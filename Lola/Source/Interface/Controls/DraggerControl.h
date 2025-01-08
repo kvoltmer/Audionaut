@@ -95,6 +95,8 @@ public:
     void mouseUp (const juce::MouseEvent& e) override;
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseMove (const juce::MouseEvent& e) override;
+    void mouseEnter (const MouseEvent& e) override;
+    void mouseExit (const MouseEvent& e) override;
     
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override;
 
@@ -157,6 +159,8 @@ public:
     static constexpr int draggerHeight = 19;
     
     juce::Point<float> mouseDownOffset;
+    
+    juce::Point<int> autoScrollOffset;
     
 protected:
     

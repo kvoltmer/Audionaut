@@ -12,7 +12,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/PlayList/SampleTimer.h"
-#include "Engine/Playback/audium_AudioTransportSource.h"
+#include "Engine/AudioSources/audium_AudioTransportSource.h"
 
 
 #define MAX_AUDIO_FILE_CHANNELS 64
@@ -60,6 +60,16 @@ public:
     void stopIt()
     {
         audioTransportSource->stop();
+    }
+    
+    bool isPlaying() const noexcept
+    {
+        return audioTransportSource->isPlaying();
+    }
+    
+    bool isStopped() const noexcept
+    {
+        return audioTransportSource->isStopped();
     }
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override;

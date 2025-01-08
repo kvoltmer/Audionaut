@@ -46,16 +46,15 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     
     
     zoomHandler->setZoomFactor(1.0);
-    auto scrollbar = std::make_unique<juce::ScrollBar>(false);
-    zoomHandler->setHorizontalScrollBar(scrollbar.get());
+//    auto scrollbar = std::make_unique<juce::ScrollBar>(false);
     
     // 1 bar = 200 pixels
     // 1 second = 100 pixels (@120BPM)
     
     // Set the limit to 1000 pixels = 10 seconds @120BPM
-    scrollbar->setRangeLimits(juce::Range<double>(0.0, 1000.0));
+//    scrollbar->setRangeLimits(juce::Range<double>(0.0, 1000.0));
     // Changes the position of the scrollbar's 'thumb'.
-    scrollbar->setCurrentRange(juce::Range<double>(100.0, 200.0));
+//    scrollbar->setCurrentRange(juce::Range<double>(100.0, 200.0));
     
     
     auto visibleRange = zoomHandler->getVisibleRange();

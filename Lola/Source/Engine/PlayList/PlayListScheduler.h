@@ -17,13 +17,16 @@
 #include "Engine/PlayList/PlayListSchedulerData.h"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/ExportAudioConfig.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/Export/ExportAudioConfig.h"
 
 class PlayListContainer;
 class PlayListItem;
-
+class TransportSourceContainer;
 class AudioResourceContainer;
+
+namespace audium {
+    class Playback;
+}
 
 class PlayListScheduler : public juce::ChangeListener
 {
@@ -35,13 +38,15 @@ public:
                       std::shared_ptr<TempoProvider> tempoProvider_,
                       std::shared_ptr<audium::LinkEngine> linkEngine_,
                       std::shared_ptr<AudioClipContainer> audioClipContainer_,
-                      std::shared_ptr<TransportSourceContainer> transportSourceContainer_) :
+                      std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                      std::shared_ptr<audium::Playback> playback_) :
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
         tempoProvider(tempoProvider_),
         linkEngine(linkEngine_),
         audioClipContainer(audioClipContainer_),
-        transportSourceContainer(transportSourceContainer_)
+        transportSourceContainer(transportSourceContainer_),
+        playback(playback_)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
         
@@ -79,7 +84,8 @@ public:
     
     double getAbsolutePosition(audium::TimeContextType context) const;
     void setAbsolutePosition(double newPosition, audium::TimeContextType context);
-    
+    double getAbsoluteStartPosition(audium::TimeContextType context) const;
+
     void tick(bool isPlaying, double beats, int numSamples);
     
     void processAudio (const juce::AudioSourceChannelInfo& info);
@@ -94,13 +100,16 @@ public:
     
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     
+    // TODO: maybe move this to class PositionableBase
+    static juce::Range<double> absoluteToLocalRange(juce::Range<double> absoluteRange, const PlayListItem* item, audium::TimeContextType context);
+    static double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context);
+    static juce::Range<double> absoluteToLocalRange(juce::Range<double> absoluteRange, std::shared_ptr<AudioSubGroup> subGroup, audium::TimeContextType context);
+    
     void commitPlayListData();
     
     PlayListSchedulerData data;
     
 private:
-
-    double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context) const;
     
     // process sequencing
     void process(double absolutePosition, int numSamples);
@@ -113,17 +122,13 @@ private:
     std::shared_ptr<audium::LinkEngine> linkEngine;
     std::shared_ptr<AudioClipContainer> audioClipContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<audium::Playback> playback;
     
     double externalSampleRate = 0.0;
     
     int bufferSize = 0;
     
     std::atomic<bool> forcePosition = false;
-    
-    std::atomic<bool> newDataCommited = false;
-    
-    juce::CriticalSection readLock;
-
-    
+        
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

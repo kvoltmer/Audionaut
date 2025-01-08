@@ -3,6 +3,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist>
   <dict>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>CFBundleExecutable</key>
     <string>${EXECUTABLE_NAME}</string>
     <key>CFBundleIconFile</key>
@@ -18,14 +20,36 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.9.1</string>
+    <string>0.9.3</string>
     <key>CFBundleVersion</key>
-    <string>0.9.1</string>
+    <string>0.9.3</string>
     <key>NSHumanReadableCopyright</key>
     <string></string>
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.music</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>audium</string>
+          <string>lola</string>
+          <string>wav</string>
+          <string>aiff</string>
+        </array>
+        <key>CFBundleTypeName</key>
+        <string>audium</string>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleTypeIconFile</key>
+        <string>Icon</string>
+        <key>NSPersistentStoreTypeKey</key>
+        <string>XML</string>
+        <key>LSHandlerRank</key>
+        <string>Default</string>
+      </dict>
+    </array>
   </dict>
 </plist>

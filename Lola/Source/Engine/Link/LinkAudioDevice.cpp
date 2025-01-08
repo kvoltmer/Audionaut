@@ -11,18 +11,12 @@
 #include "LinkAudioDevice.h"
 #include "LinkEngine.hpp"
 #include "Engine/PlayList/PlayListScheduler.h"
-#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Provider/TempoProvider.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
 
 LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
-                                 std::shared_ptr<PlayListScheduler> playListScheduler,
-                                 std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                                 std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
+                                 std::shared_ptr<PlayListScheduler> playListScheduler) :
     linkEngine(linkEngine),
-    playListScheduler(playListScheduler),
-    audioResourceContainer(audioResourceContainer),
-    transportSourceContainer(transportSourceContainer)
+    playListScheduler(playListScheduler)
 {
 }
 
@@ -107,5 +101,4 @@ void LinkAudioDevice::stopPlaying()
 void LinkAudioDevice::setBypass(bool isByPass)
 {
     byPass = isByPass;
-    transportSourceContainer->setBypass(isByPass);
 }

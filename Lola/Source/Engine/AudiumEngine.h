@@ -15,7 +15,7 @@
 
 #include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
-#include "Engine/ExportAudioConfig.h"
+#include "Engine/Export/ExportAudioConfig.h"
 
 class AudioTrackContainer;
 class AudioTrack;
@@ -52,6 +52,7 @@ public:
     void initialise();
     void uninitialise();
     void cleanup();
+    void createNewProject();
     
     void openFile (const juce::File& file, std::function<void (bool,std::string)> callback);
     bool saveFile (const juce::File& file);

@@ -81,6 +81,7 @@ void PlayListItemComponent::paint (juce::Graphics& g)
 void PlayListItemComponent::resized()
 {
     playListItemListBox->setBounds(getLocalBounds());
+    regionSelector->updateFromEngine();
 }
 
 void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)

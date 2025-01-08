@@ -22,8 +22,8 @@ bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDrop
 {
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (regionLabel->getRegion() &&
-            regionLabel->getRegion()->getAudioTrack() == playListModel->getAudioTrack())
+        if (regionLabel->getRegion(regionLabel->getRowNumber()) &&
+            regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == playListModel->getAudioTrack())
         {
             // return true if source details match this track
             return true;
@@ -98,8 +98,13 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
     else if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         auto selectedRegions = playListModel->getAudioTrack()->getAudioRegionContainer()->getSelectedRegions();
-        if (selectedRegions.size() <= 1) {
-            playListContainer->createPlayListItemUI(regionLabel->getRowNumber(), insertIndex);
+        if (selectedRegions.size() == 0) {
+            jassertfalse;
+        }
+        if (selectedRegions.size() == 1) {
+            auto rowNumber = regionLabel->getRowNumber();
+            auto region = playListModel->getAudioTrack()->getAudioRegionContainer()->getRegion(rowNumber);
+            playListContainer->createPlayListItemUI(region, insertIndex);
         }
         else {
             // multiple selection
@@ -182,13 +187,20 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 
 void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
 {
-    
-    // must call deselect since items of other playlists might be selected
     auto track = playListModel->getAudioTrack();
-    if (!e.mods.isCommandDown() &&
-        !e.mods.isShiftDown())
+    
+    if (!e.mods.isAnyModifierKeyDown())
     {
-        track->getSelectionManager()->deselectAll();
+        // items of other playlists might be selected
+        // deselect all objects except regions of this track
+        auto objects = track->getAudioTrackContainer().getSelectionManager()->getSelectedObjects();
+        for (auto object : objects) {
+            if (auto item = dynamic_cast<PlayListItem*>(object.get())) {
+                if (item->getRegion()->getAudioTrack() == track)
+                    continue;
+            }
+            object->setSelected(false);
+        }
     }
     
     // select this item

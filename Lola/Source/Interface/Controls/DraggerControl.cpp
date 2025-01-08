@@ -12,9 +12,6 @@
 
 void DraggerControl::mouseDown (const juce::MouseEvent& e)
 {
-    if (regionSelector != nullptr)
-        regionSelector->setEnabled(false);
-
     currentDragMode = getDragMode(e.getPosition().getX());
     
     originalBounds = componentToDrag->getBounds();
@@ -31,14 +28,13 @@ void DraggerControl::mouseDown (const juce::MouseEvent& e)
     
     mouseDownOffset = getLocalPoint (this, e.position);
     
+    autoScrollOffset = juce::Point<int>(0, 0);
+    
     repaint();
 }
 
 void DraggerControl::mouseUp (const juce::MouseEvent& e)
 {
-    if (regionSelector != nullptr)
-        regionSelector->setEnabled(true);
-    
     if (std::abs(e.getOffsetFromDragStart().getX()) > 0) {
         auto rangeInClocks = zoomHandler->xToClocks(componentToDrag->getBounds().toDouble().getHorizontalRange());
         zoomHandler->snapToGrid(rangeInClocks);
@@ -57,6 +53,11 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
 
 void DraggerControl::mouseDrag (const juce::MouseEvent& e)
 {
+
+    beginDragAutoRepeat(40);
+    autoScrollOffset += zoomHandler->autoScroll(e);
+
+    
     if (e.mods.isAltDown())
     {
         if (juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(componentToDrag))
@@ -66,7 +67,8 @@ void DraggerControl::mouseDrag (const juce::MouseEvent& e)
     }
     else
     {
-        auto distance = e.getOffsetFromDragStart();
+        auto distance = e.getOffsetFromDragStart() + autoScrollOffset;
+        
         distance.setY(0); // drag vertically only
         if (std::abs(distance.getX()) > 0)
         {
@@ -101,6 +103,18 @@ void DraggerControl::mouseMove (const juce::MouseEvent& e)
     updateMouseZone (e);
 }
 
+void DraggerControl::mouseEnter (const MouseEvent& e)
+{
+    if (regionSelector != nullptr)
+        regionSelector->setEnabled(false);
+}
+
+void DraggerControl::mouseExit (const MouseEvent& e)
+{
+    if (regionSelector != nullptr)
+        regionSelector->setEnabled(true);
+}
+
 bool DraggerControl::keyPressed (const KeyPress& key, Component* originatingComponent)
 {
     if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
@@ -108,8 +122,12 @@ bool DraggerControl::keyPressed (const KeyPress& key, Component* originatingComp
         audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
         return true;
     }
-    
-    return false;
+    else
+    {
+        // send update to redraw
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        return false;
+    }
 }
 
 void DraggerControl::commitData(const juce::Range<double> newData, audium::TimeContextType context)

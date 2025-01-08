@@ -20,6 +20,8 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Export/AudioExportThread.h"
 
+#include "Interface/ColourIds.h"
+
 const char* AudiumEngine::projectFileExtension = ".audium";
 juce::File AudiumEngine::projectDirectory = File();
 
@@ -50,6 +52,17 @@ void AudiumEngine::cleanup()
     audioResourceContainer->cleanup();
     undoManager->clearUndoHistory();
     currentFile = File();
+}
+
+void AudiumEngine::createNewProject()
+{
+    audium::WaveFormColours::resetWaveFormColour();
+    for (auto i = 0; i < 1; i++) {
+        auto track = audioTrackContainer->createNewAudioTrack("Track " + String(i+1));
+        track->setColour(audioTrackContainer->getNewAudioTrackColour());
+        track->addChannel();
+        track->addChannel();
+    }
 }
 
 void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,std::string)> callback)
