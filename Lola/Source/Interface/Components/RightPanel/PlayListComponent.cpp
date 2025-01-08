@@ -9,8 +9,8 @@ bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget:
 {
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (regionLabel->getRegion() &&
-            regionLabel->getRegion()->getAudioTrack() == audioTrack)
+        if (regionLabel->getRegion(regionLabel->getRowNumber()) &&
+            regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == audioTrack)
         {
             // return true if source details match this track
             return true;
@@ -43,8 +43,7 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
         auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
         for (auto region : selectedRegions)
         {
-            juce::Range<double> position(pos, pos + region->getRegionData(audium::clocks).getLength());
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
+            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
                 success = true;
             
             pos += region->getRegionData(audium::clocks).getLength();

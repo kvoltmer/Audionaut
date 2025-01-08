@@ -45,32 +45,18 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     audiumEngine = AudiumFactory::createAudiumEngine();
     audiumEngine->initialise();
 
-    if (Preferences::valueExists(PreferenceKeys::defaultFile))
-    {
-        const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
-        
-        audiumEngine->openFile(file, [file] (bool openedSuccessfully, std::string error)
-        {
-            if (!openedSuccessfully)
-                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error: " + error, "Failed to open:\n" + file.getFullPathName());
-        });
-    }
-    
+
     initialOpenDirectory = initialSaveDirectory = File::getSpecialLocation (File::userDocumentsDirectory);
     
     if (Preferences::valueExists(PreferenceKeys::initialOpenDirectory))
-    {
         initialOpenDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialOpenDirectory));
-    }
-
-    if (Preferences::valueExists(PreferenceKeys::initialSaveDirectory))
-    {
-        initialSaveDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialSaveDirectory));
-    }
     
+    if (Preferences::valueExists(PreferenceKeys::initialSaveDirectory))
+        initialSaveDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialSaveDirectory));
     
     
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
+    
     
     // do further initialisation in a moment when the message loop has started
     triggerAsyncUpdate();
@@ -84,6 +70,20 @@ void AudiumApplication::handleAsyncUpdate()
     rebuildAppleMenu();
     appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
 #endif
+    
+    if (Preferences::valueExists(PreferenceKeys::defaultFile)) {
+        const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
+        audiumEngine->openFile(file, [file] (bool openedSuccessfully, std::string error) {
+            if (!openedSuccessfully)
+                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                            "Error: " + error, "Failed to open:\n" + file.getFullPathName());
+        });
+    }
+    
+    if (!audiumEngine->getCurrentFile().exists()) {
+        audiumEngine->createNewProject();
+    }
+    updateUI();
     
 }
 
@@ -263,6 +263,7 @@ PopupMenu AudiumApplication::createEditMenu()
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::selectAll);
     menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
+    menu.addCommandItem(commandManager.get(), CommandIDs::splitRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::cleanupRegions);
     menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
@@ -435,35 +436,45 @@ void AudiumApplication::createNewProject()
 {
     askToSaveIfDirtyAndInvoke([this](void){
         audiumEngine->cleanup();
+        audiumEngine->createNewProject();
         updateUI();
     });
 }
 
 void AudiumApplication::askUserToOpenFile()
 {
-    chooser = std::make_unique<juce::FileChooser> ("Open File", initialOpenDirectory, "*" + String(AudiumEngine::projectFileExtension));
-    auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles;
+    askToSaveIfDirtyAndInvoke([this](void){
+    
+        // clear old project
+        audiumEngine->cleanup();
+        updateUI();
+        
+        // open chooser...
+        chooser = std::make_unique<juce::FileChooser> ("Open File", initialOpenDirectory, "*" + String(AudiumEngine::projectFileExtension));
+        auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles;
 
-    chooser->launchAsync (flags, [this] (const FileChooser& fc)
-    {
-        const auto result = fc.getResult();
-
-        if (result != File{})
+        chooser->launchAsync (flags, [this] (const FileChooser& fc)
         {
-            audiumEngine->openFile(result, [this, result](bool success, std::string error) {
-                if (success) {
-                    updateUI();
-                    initialOpenDirectory = result.getParentDirectory();
-                }
-                else {
-                    juce::String errorMessage(error);
-                    juce::String filename = result.getFileName();
-                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                                "Failed to open File.",
-                                                                "Failed to open " + filename +".\n\n" + errorMessage);
-                }
-            });
-        }
+            const auto result = fc.getResult();
+
+            if (result != File{})
+            {
+                audiumEngine->openFile(result, [this, result](bool success, std::string error) {
+                    if (success) {
+                        updateUI();
+                        initialOpenDirectory = result.getParentDirectory();
+                    }
+                    else {
+                        juce::String errorMessage(error);
+                        juce::String filename = result.getFileName();
+                        juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                                    "Error",
+                                                                    "Failed to open " + filename +"\n\n" + errorMessage);
+                    }
+                });
+            }
+        });
+        
     });
 }
 

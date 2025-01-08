@@ -93,6 +93,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::playStop,
         CommandIDs::loopPlayList,
         CommandIDs::createRegion,
+        CommandIDs::splitRegion,
         CommandIDs::cleanupRegions,
         CommandIDs::autoEdit,
         CommandIDs::bounceProject,
@@ -120,6 +121,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
 {
     const int cmd = ModifierKeys::commandModifier;
     const int shift = ModifierKeys::shiftModifier;
+    bool bActive = false;
     
     switch (commandID)
     {
@@ -133,7 +135,17 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             break;
         case CommandIDs::createRegion:
             result.setInfo ("Create Region", "Creates a new region", CommandCategories::editing, 0);
+            result.setActive (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().anyRangeSelected());
             result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::splitRegion:
+            result.setInfo ("Split Region", "Splits a region", CommandCategories::editing, 0);
+            if (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().anyRangeSelected() &&
+                getEngine()->getPlayListScheduler()->isArrangementMode()) {
+                bActive = true;
+            }
+            result.setActive (bActive);
+            result.defaultKeypresses.add (KeyPress ('e', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::cleanupRegions:
             result.setInfo ("Delete Unused Regions", "Deletes all unused regions", CommandCategories::editing, 0);
@@ -231,9 +243,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     switch (info.commandID)
     {
         case CommandIDs::playStop:
-            getEngine()->getPlayListScheduler()->isPlaying() ?
-            getEngine()->getPlayListScheduler()->stopPlaying() :
-            getEngine()->getPlayListScheduler()->startPlaying();
+            if (auto scheduler = getEngine()->getPlayListScheduler()) {
+                scheduler->isPlaying() ? scheduler->stopPlaying() : scheduler->startPlaying();
+            }
             mainComponent->updateUI();
             break;
         case CommandIDs::loopPlayList:
@@ -243,6 +255,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             if (newRegionDialog == nullptr)
                 newRegionDialog = std::make_unique<NewRegionDialog>();
             newRegionDialog->createNewRegion(getEngine());
+            break;
+        case CommandIDs::splitRegion:
+            getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().splitRegionsFromSelection();
             break;
         case CommandIDs::cleanupRegions:
             getEngine()->getAudioTrackContainer()->deleteUnusedRegions();

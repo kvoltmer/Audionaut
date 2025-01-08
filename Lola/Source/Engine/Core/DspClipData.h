@@ -22,7 +22,7 @@ struct DspClipData
     // Indicate if clip is active
     bool active = false;
     
-    float gain = 1.f;
+    float clip_gain = 1.f;
     
     int transportSourceIndex = -1;
 

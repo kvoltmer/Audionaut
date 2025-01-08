@@ -79,11 +79,11 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::createNewAudioTrack(const juce:
     auto audioTrack = AudioTrackFactory::createAudioTrack(*this, audioResourceContainer);
     if (nameString.isEmpty())
     {
-        audioTrack->setName(juce::String("Track ") + juce::String(audioTracks.size() + 1));
+        audioTrack->setAudioTrackName(juce::String("Track ") + juce::String(audioTracks.size() + 1));
     }
     else
     {
-        audioTrack->setName(nameString);
+        audioTrack->setAudioTrackName(nameString);
     }
     audioTracks.push_back(audioTrack);
     return audioTrack;
@@ -145,6 +145,7 @@ void AudioTrackContainer::deleteUnusedRegions()
 
     for (auto track : audioTracks) {
         track->getAudioRegionContainer()->deleteUnusedRegions();
+        track->deleteUnusedSubGroups();
     }
     
     // Undo: store new state and perform
@@ -158,7 +159,7 @@ void AudioTrackContainer::moveSelectedChannelsToNewAudioTrack()
 {
     try {
         
-        // TODO: rething this implementation
+        // TODO: rethink this implementation
         auto audioTrack = createNewAudioTrack(juce::String());
         audioTrack->setColour(getNewAudioTrackColour());
         
@@ -329,11 +330,11 @@ int AudioTrackContainer::getNumAudioTrackChannels() const
 
 juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
 {
-    auto newColour = audium::getNewWaveFormColour();
+    auto newColour = audium::WaveFormColours::getNewWaveFormColour();
     
     for (auto track : audioTracks) {
         if(newColour == track->getColour())
-            newColour = audium::getNewWaveFormColour();
+            newColour = audium::WaveFormColours::getNewWaveFormColour();
     }
     
     return newColour;

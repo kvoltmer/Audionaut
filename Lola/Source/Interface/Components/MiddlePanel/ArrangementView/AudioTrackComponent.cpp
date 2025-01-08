@@ -91,6 +91,8 @@ void AudioTrackComponent::resized()
         juce::Rectangle<double> rect_tmp(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
         
         regionView->setBounds(rect_tmp.toNearestInt());
+        if (playListItem->isSelected())
+            regionView->toFront(false);
     }
 }
 
@@ -98,7 +100,7 @@ bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSou
 {
     if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        if (regionLabel->getRegion()->getAudioTrack() == audioTrack)
+        if (regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == audioTrack)
         {
             return true; // source details match this track
         }
@@ -161,8 +163,7 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
         auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
         for (auto region : selectedRegions)
         {
-            juce::Range<double> position(pos, pos + region->getRegionData(audium::clocks).getLength());
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
+            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
                 success = true;
             
             pos += region->getRegionData(audium::clocks).getLength();
@@ -172,8 +173,7 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
     {
         if (auto region = playListItemComponent->getPlayListItem()->getRegion())
         {
-            juce::Range<double> position(pos, pos + region->getRegionData(audium::clocks).getLength());
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, position, audium::clocks) != nullptr)
+            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
                 success = true;
         }
     }

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="gxtGxr" name="Lola" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include"
-              bundleIdentifier="com.voltmer-systems.lola" version="0.9.1" companyName="Voltmer Systems"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
+              bundleIdentifier="com.voltmer-systems.lola" version="0.9.3" companyName="Voltmer Systems"
               companyWebsite="www.voltmer-systems.com" cppLanguageStandard="20"
               defines="JUCE_MODAL_LOOPS_PERMITTED=1">
   <MAINGROUP id="HQG80L" name="Lola">
@@ -45,15 +45,19 @@
                 file="Source/Engine/AudioSources/TransportSourceContainer.cpp"/>
           <FILE id="BgDcMc" name="TransportSourceContainer.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/TransportSourceContainer.h"/>
+          <FILE id="pLvPaN" name="audium_AudioTransportSource.cpp" compile="1"
+                resource="0" file="Source/Engine/AudioSources/audium_AudioTransportSource.cpp"/>
+          <FILE id="tyX7Fa" name="audium_AudioTransportSource.h" compile="0"
+                resource="0" file="Source/Engine/AudioSources/audium_AudioTransportSource.h"/>
         </GROUP>
         <GROUP id="{6F75617E-7F56-58FA-1D3F-51D388D99F41}" name="Export">
+          <FILE id="QNyjxw" name="ExportAudioConfig.h" compile="0" resource="0"
+                file="Source/Engine/Export/ExportAudioConfig.h"/>
           <FILE id="JiHzcv" name="AudioExportThread.cpp" compile="1" resource="0"
                 file="Source/Engine/Export/AudioExportThread.cpp"/>
           <FILE id="duXPV9" name="AudioExportThread.h" compile="0" resource="0"
                 file="Source/Engine/Export/AudioExportThread.h"/>
         </GROUP>
-        <FILE id="WTONDo" name="ExportAudioConfig.h" compile="0" resource="0"
-              file="Source/Engine/ExportAudioConfig.h"/>
         <GROUP id="{0AC7E64F-80C6-74C3-823D-493CC3105D80}" name="Selection">
           <FILE id="N9t1dH" name="Selectable.h" compile="0" resource="0" file="Source/Engine/Selection/Selectable.h"/>
           <FILE id="Hwzk6n" name="SelectableObjectContainer.h" compile="0" resource="0"
@@ -66,6 +70,8 @@
                 file="Source/Engine/Selection/SelectionManager.h"/>
         </GROUP>
         <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
+          <FILE id="wTx6z6" name="LockFreeContainer.h" compile="0" resource="0"
+                file="Source/Engine/Core/LockFreeContainer.h"/>
           <FILE id="ScorpU" name="AudioClipContainer.h" compile="0" resource="0"
                 file="Source/Engine/Core/AudioClipContainer.h"/>
           <FILE id="Ox6quG" name="DspClip.cpp" compile="1" resource="0" file="Source/Engine/Core/DspClip.cpp"/>
@@ -79,6 +85,8 @@
           <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
         </GROUP>
         <GROUP id="{44EAE852-D94A-E010-D086-40CC86FE8C48}" name="Channel">
+          <FILE id="styheO" name="AudioChannel.cpp" compile="1" resource="0"
+                file="Source/Engine/Channel/AudioChannel.cpp"/>
           <FILE id="DQADtm" name="AudioChannel.h" compile="0" resource="0" file="Source/Engine/Channel/AudioChannel.h"/>
           <FILE id="yVxzet" name="AudioChannelData.h" compile="0" resource="0"
                 file="Source/Engine/Channel/AudioChannelData.h"/>
@@ -119,10 +127,10 @@
           <FILE id="Rf1W4c" name="LinkEngine.hpp" compile="0" resource="0" file="Source/Engine/Link/LinkEngine.hpp"/>
         </GROUP>
         <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback">
-          <FILE id="jZotN2" name="audium_AudioTransportSource.cpp" compile="1"
-                resource="0" file="Source/Engine/Playback/audium_AudioTransportSource.cpp"/>
-          <FILE id="NLF0xK" name="audium_AudioTransportSource.h" compile="0"
-                resource="0" file="Source/Engine/Playback/audium_AudioTransportSource.h"/>
+          <FILE id="kBDQRJ" name="Playback.cpp" compile="1" resource="0" file="Source/Engine/Playback/Playback.cpp"/>
+          <FILE id="TuWOT6" name="Playback.h" compile="0" resource="0" file="Source/Engine/Playback/Playback.h"/>
+          <FILE id="mWPkuL" name="Voice.cpp" compile="1" resource="0" file="Source/Engine/Playback/Voice.cpp"/>
+          <FILE id="LVBVN6" name="Voice.h" compile="0" resource="0" file="Source/Engine/Playback/Voice.h"/>
         </GROUP>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
           <FILE id="sr2twv" name="PlayListSchedulerData.h" compile="0" resource="0"
@@ -205,6 +213,7 @@
               file="Source/Interface/AudiumLookAndFeel.cpp"/>
         <FILE id="HYtvw9" name="AudiumLookAndFeel.h" compile="0" resource="0"
               file="Source/Interface/AudiumLookAndFeel.h"/>
+        <FILE id="Jt0jme" name="ColourIds.cpp" compile="1" resource="0" file="Source/Interface/ColourIds.cpp"/>
         <FILE id="WxdqR9" name="ColourIds.h" compile="0" resource="0" file="Source/Interface/ColourIds.h"/>
         <GROUP id="{5B27ED8A-CA94-0C20-47D2-019C8929A810}" name="Widgets">
           <FILE id="WylrD8" name="audium_AudioThumbnail.cpp" compile="1" resource="0"
@@ -289,6 +298,14 @@
                   file="Source/Interface/Components/RightPanel/PlayListContainerComponent.h"/>
             <FILE id="MuXKoO" name="RegionComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/RightPanel/RegionComponent.h"/>
+            <FILE id="Myx1PD" name="RegionsPerTrackComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionsPerTrackComponent.cpp"/>
+            <FILE id="wB6LIx" name="RegionsPerTrackComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionsPerTrackComponent.h"/>
+            <FILE id="yQP4Ii" name="RegionsPerTrackContainerComponent.cpp" compile="1"
+                  resource="0" file="Source/Interface/Components/RightPanel/RegionsPerTrackContainerComponent.cpp"/>
+            <FILE id="YO8ym9" name="RegionsPerTrackContainerComponent.h" compile="0"
+                  resource="0" file="Source/Interface/Components/RightPanel/RegionsPerTrackContainerComponent.h"/>
             <FILE id="pUtSng" name="RightPanelComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/RightPanel/RightPanelComponent.cpp"/>
             <FILE id="BNndd2" name="RightPanelComponent.h" compile="0" resource="0"
@@ -299,6 +316,10 @@
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
+          <FILE id="b5NBYW" name="RegionContainerModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/RegionContainerModel.cpp"/>
+          <FILE id="p5hkwc" name="RegionContainerModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/RegionContainerModel.h"/>
           <FILE id="oZwTNT" name="ChannelGroupListBoxModel.h" compile="0" resource="0"
                 file="Source/Interface/Models/ChannelGroupListBoxModel.h"/>
           <FILE id="zizRO1" name="ChannelSubGroupListBoxModel.h" compile="0"
@@ -349,6 +370,7 @@
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
           <FILE id="keLPLt" name="PlayPositionMarker.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayPositionMarker.h"/>
+          <FILE id="UGbQL4" name="RegionLabel.cpp" compile="1" resource="0" file="Source/Interface/Controls/RegionLabel.cpp"/>
           <FILE id="M14ssi" name="RegionLabel.h" compile="0" resource="0" file="Source/Interface/Controls/RegionLabel.h"/>
           <FILE id="kQnaR9" name="RegionSelector.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/RegionSelector.cpp"/>
@@ -384,8 +406,10 @@
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
         <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">
-          <FILE id="dicuzh" name="music-512.png" compile="0" resource="1" file="Resources/music-512.png"/>
-          <FILE id="Ezvz9P" name="music-1024.png" compile="0" resource="1" file="Resources/music-1024.png"/>
+          <FILE id="jVWC1N" name="music-512-sobel-glow.png" compile="0" resource="1"
+                file="Resources/music-512-sobel-glow.png"/>
+          <FILE id="MCuy9V" name="music-1024-sobel-glow.png" compile="0" resource="1"
+                file="Resources/music-1024-sobel-glow.png"/>
           <FILE id="zKjXO3" name="zoomin.svg" compile="0" resource="1" file="Resources/zoomin.svg"/>
         </GROUP>
       </GROUP>
@@ -394,12 +418,17 @@
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
-               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="0" useLegacyBuildSystem="0"
-               smallIcon="dicuzh" bigIcon="Ezvz9P" appSandboxInheritance="1"
-               appSandboxOptions="com.apple.security.files.user-selected.read-write">
+               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
+               smallIcon="jVWC1N" bigIcon="MCuy9V" appSandboxInheritance="1"
+               appSandboxOptions="com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write"
+               customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
+               xcodeValidArchs="arm64,arm64e,x86_64" documentExtensions="audium, lola, wav, aiff"
+               appSandboxHomeDirRW="/Documents/&#10;/Desktop/">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Lola" headerPath="$(SRCROOT)/../../Source"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="Lola" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Lola" headerPath="$(SRCROOT)/../../Source"
+                       customXcodeFlags="INSTALL_PATH=/Applications"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Lola" headerPath="$(SRCROOT)/../../Source"
+                       customXcodeFlags="INSTALL_PATH=/Applications"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
@@ -417,6 +446,27 @@
         <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug"/>
+        <CONFIGURATION isDebug="0" name="Release"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_core" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_dsp" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_events" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
+      </MODULEPATHS>
+    </LINUX_MAKE>
   </EXPORTFORMATS>
   <MODULES>
     <MODULE id="juce_analytics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>

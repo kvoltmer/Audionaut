@@ -28,6 +28,7 @@ public:
     void createComponents();
 
     void updateUI(UIContext context = RebuildContext);
+    
 private:
     
     std::shared_ptr<AudiumEngine> audiumEngine;

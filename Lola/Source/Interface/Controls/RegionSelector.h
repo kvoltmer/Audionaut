@@ -79,7 +79,6 @@ public:
 private:
     
     std::shared_ptr<audium::ListBox> owner;
-    
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<AudiumEngine> audiumEngine;
     
@@ -94,7 +93,7 @@ private:
     
     bool avoidDragging = true;
     
-    void createRectangleAndSetBonds();
+    bool createRectangleAndSetBonds();
     
     
 };

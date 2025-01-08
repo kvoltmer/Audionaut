@@ -26,25 +26,27 @@ public:
     ChannelGroupHeaderComponent(std::shared_ptr<AudioTrack> audioTrack) :
         audioTrack(audioTrack)
     {
-        groupNameLabel.reset (new AudiumLabel ("track name",
+        audioTrackNameLabel.reset (new AudiumLabel ("track name",
                                              TRANS ("n/a")));
-        addAndMakeVisible (groupNameLabel.get());
-        groupNameLabel->setFont (juce::FontOptions (12.00f));
-        groupNameLabel->setJustificationType (juce::Justification::centredLeft);
-        groupNameLabel->setEditable (false, true, false);
+        addAndMakeVisible (audioTrackNameLabel.get());
         
-
-        groupNameLabel->setColour (juce::Label::textColourId, audioTrack->getColour());
-        groupNameLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
-        //groupNameLabel->setColour (juce::Label::outlineColourId, Colours::black);
-        groupNameLabel->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-        groupNameLabel->setColour (juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack);
-        groupNameLabel->setColour (juce::TextEditor::highlightColourId, juce::Colour (0xbff4ff80));
+        audioTrackNameLabel->setFont (juce::FontOptions (12.00f));
+        audioTrackNameLabel->setJustificationType (juce::Justification::centredLeft);
+        audioTrackNameLabel->setEditable (false, true, false);
+    
+        // Label colours:
+        audioTrackNameLabel->setColour (juce::Label::textColourId, audioTrack->getColour());
+        audioTrackNameLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
+        audioTrackNameLabel->setColour (juce::TextEditor::textColourId, audioTrack->getColour());
+        audioTrackNameLabel->setColour (juce::Label::textWhenEditingColourId, audioTrack->getColour());
+        audioTrackNameLabel->setColour (juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack);
+        audioTrackNameLabel->setColour (juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+        
         
         // avoid scaling of text
-        groupNameLabel->setMinimumHorizontalScale(1.f);
+        audioTrackNameLabel->setMinimumHorizontalScale(1.f);
         
-        groupNameLabel->addListener (this);
+        audioTrackNameLabel->addListener (this);
         
         channelSizeComboBox.reset (new juce::ComboBox ("channel size combo box"));
         addAndMakeVisible (channelSizeComboBox.get());
@@ -73,20 +75,28 @@ public:
     {
         auto bounds = getLocalBounds().reduced(1, 1);
         bounds.removeFromLeft(25);
-        groupNameLabel->setBounds(bounds);
+        audioTrackNameLabel->setBounds(bounds);
     }
     
     void labelTextChanged (juce::Label* labelThatHasChanged) override
     {
-        if (labelThatHasChanged == groupNameLabel.get())
+        if (labelThatHasChanged == audioTrackNameLabel.get())
         {
-            audioTrack->setName(groupNameLabel->getText());
+            // undo
+            auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+            
+            audioTrack->setAudioTrackName(audioTrackNameLabel->getText());
+            
+            // undo
+            action->storeNewState();
+            audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set audio track name");
+            audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
         }
     }
     
     void updateFromEngine()
     {
-        groupNameLabel->setText(audioTrack->getName(), dontSendNotification);
+        audioTrackNameLabel->setText(audioTrack->getAudioTrackName(), dontSendNotification);
     }
     
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override
@@ -113,8 +123,15 @@ public:
 
             channelSizeComboBox->setText("", dontSendNotification);
 
+            // undo
+            auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+            
             audioTrack->setChannelHeight(height);
-            audioTrack->getAudioResourceContainer().sendActionMessage("");
+            
+            // undo
+            action->storeNewState();
+            audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set audio track height");
+            audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
         }
     }
     
@@ -165,7 +182,7 @@ public:
 private:
     std::shared_ptr<AudioTrack> audioTrack;
     
-    std::unique_ptr<AudiumLabel> groupNameLabel;
+    std::unique_ptr<AudiumLabel> audioTrackNameLabel;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelGroupHeaderComponent)

@@ -71,7 +71,8 @@ public:
     bool readFromJson (json& input, bool rebuild) override;
     int getSizeInUnits() override { return 1; }
     static const juce::URL urlFromJson (json& input);
-
+    static void testUrl (const juce::URL& url);
+    
     std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
     

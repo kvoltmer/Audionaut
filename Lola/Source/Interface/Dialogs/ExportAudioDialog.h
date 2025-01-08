@@ -13,7 +13,7 @@
 #include <iostream>
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
-#include "Engine/ExportAudioConfig.h"
+#include "Engine/Export/ExportAudioConfig.h"
 #include "Interface/Components/MainComponent.h"
 #include "Interface/Dialogs/ExportAudioComponent.h"
 #include "Application/AudiumApplication.h"

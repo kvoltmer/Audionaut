@@ -59,12 +59,7 @@ public:
     
     const juce::String getLabelString() const override
     {
-        const auto audioResources = audioSubGroup->getAudioResources();
-        if (audioResources.size() > 0)
-        {
-            return audioResources[0]->getFileNameWithoutExtension();
-        }
-        return "";
+        return audioSubGroup->getName();
     }
     
     bool validateData() override;

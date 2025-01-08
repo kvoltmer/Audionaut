@@ -14,6 +14,7 @@
 
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -49,11 +50,12 @@ public:
             Rectangle<float> rect(x, rectangle.getY(), 1.f, rectangle.getHeight());
             
             if (!range.isEmpty() &&
+                !juce::ModifierKeys::currentModifiers.isShiftDown() &&
                 (std::abs(static_cast<double>(x) - std::max(range.getStart(), 0.0)) < 10.0 ||
                  std::abs(static_cast<double>(x) - range.getEnd()) < 10.0))
             {
                 // draw dashed line
-                g.setColour (juce::Colours::yellow.withAlpha(0.75f));
+                g.setColour (findColour (audium::gridColourId));
                 juce::Line<float> line(rect.getTopLeft(), rect.getBottomLeft());
                 const float myDashLength[] = { 6, 6 };
                 g.drawDashedLine(line, &myDashLength[0], 2);
@@ -62,6 +64,7 @@ public:
             {
                 // draw regular grid line
                 g.setColour (juce::Colours::black.withAlpha(0.5f));
+                rect.setHeight(rect.getHeight() - AudiumLookAndFeel::extraSpaceAtBottom);
                 g.fillRect(rect);
             }
             
@@ -76,7 +79,7 @@ public:
         {
             currentRangeClocks = snapToGridHandler->getRange();
             repaint();
-            //std::cout << "GridView " << range.getStart() << " " << range.getEnd() << std::endl;
+            //std::cout << "GridView " << currentRangeClocks.getStart() << " " << currentRangeClocks.getEnd() << std::endl;
         }
     }
 

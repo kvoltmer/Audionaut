@@ -16,6 +16,7 @@
 
 #include "Interface/Models/PlayListTableListBoxModel.h"
 #include "Interface/Controls/PlayListTableListBox.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -34,12 +35,12 @@ public:
         playListTableListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(playListTableListBox.get());
         
-        playListTableListBox->getHeader().addColumn (track->getName(), 1, 250, 80, 800, juce::TableHeaderComponent::notSortable);
+        playListTableListBox->getHeader().addColumn ("", 1, 250, 0, 800,
+                                                     juce::TableHeaderComponent::notResizableOrSortable);
         playListTableListBox->getHeader().setStretchToFitActive (true);
-        playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, track->getColour());
-        playListTableListBox->setHeaderHeight(25);
+        
+        playListTableListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
         playListTableListBox->setOutlineThickness (0);
-        playListTableListBox->updateContent();
     }
 
     ~PlayListComponent() override
@@ -96,6 +97,9 @@ public:
     {
         updateSelection();
         playListTableListBox->updateContent();
+        
+        playListTableListBox->getHeader().setColumnName(1, audioTrack->getAudioTrackName());
+        playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, audioTrack->getColour());
     }
     
     std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }

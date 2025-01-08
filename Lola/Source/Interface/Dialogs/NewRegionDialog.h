@@ -16,7 +16,10 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Components/MainComponent.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioSubGroup.h"
 
 using namespace juce;
 
@@ -41,12 +44,26 @@ private:
                                                           TRANS ("Please enter the name for the new region"),
                                                           MessageBoxIconType::NoIcon, nullptr);
 
-        asyncAlertWindow->addTextEditor (getClassNameFieldName(), String(), String(), false);
+        String name;
+        auto context = audium::clocks;
+        auto selectedRange = audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getSelectedRange(context);
+        for (auto track : engine->getAudioTrackContainer()->getAudioTracks()) {
+            if (audiumEngine->getPlayListScheduler()->isArrangementMode()) {
+                if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
+                    name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                    break;
+                }
+            } else {
+                if (auto subGroup = track->getSubGroupAtAbsoluteRange(selectedRange, context)) {
+                    name = track->getAudioRegionContainer()->getUniqueName(subGroup->getName());
+                    break;
+                }
+            }
+        }
+        
+        asyncAlertWindow->addTextEditor (getClassNameFieldName(), name, String(), false);
         asyncAlertWindow->addButton (TRANS ("Create Region"),  1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"),        0, KeyPress (KeyPress::escapeKey));
-        
-
-
 
         auto resultCallback = [safeThis = WeakReference<NewRegionDialog> { this }, this] (int result)
         {
@@ -80,8 +97,8 @@ private:
     
     void create(String name)
     {
-        audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().createRegionsFromSelection(name,
-                                                                           audiumEngine->getPlayListScheduler()->isArrangementMode());
+        bool isArrangement = audiumEngine->getPlayListScheduler()->isArrangementMode();
+        audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().createRegionsFromSelection(name, isArrangement);
     }
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;

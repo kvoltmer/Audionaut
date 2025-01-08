@@ -37,38 +37,25 @@ void AudiumLookAndFeel::setupColours()
     setColourScheme(getDarkAudiumColourScheme());
     
     setColour (backgroundColourId,                   Colours::darkgrey);
-    
     setColour (secondaryBackgroundColourId,          Colours::darkgrey.darker());
-    
     setColour (defaultTextColourId,                  Colour(Colours::lightgrey).brighter());
     
-    setColour (widgetTextColourId,                   Colours::white);
-    setColour (defaultButtonBackgroundColourId,      Colour (0xffa45c94));
-    setColour (secondaryButtonBackgroundColourId,    Colours::black);
-    setColour (userButtonBackgroundColourId,         Colour (0xffa45c94));
-    setColour (defaultIconColourId,                  Colours::white);
-    setColour (treeIconColourId,                     Colour (0xffa9a9a9));
-    setColour (defaultHighlightColourId,             Colour (Colours::lightgrey));
-    setColour (defaultHighlightedTextColourId,       Colours::black);
-    setColour (codeEditorLineNumberColourId,         Colour (0xffaaaaaa));
-    setColour (activeTabIconColourId,                Colours::white);
-    setColour (inactiveTabBackgroundColourId,        Colour (0xff181f22));
-    setColour (inactiveTabIconColourId,              Colour (0xffa9a9a9));
-    setColour (contentHeaderBackgroundColourId,      Colours::black);
-    setColour (widgetBackgroundColourId,             Colour (0xff495358));
-    setColour (secondaryWidgetBackgroundColourId,    Colour (0xff303b41));
+    setColour (gridColourId,                         Colours::yellow.withAlpha(0.75f));
     
-    //g.fillAll (owner->findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.3f));
+    setColour (defaultHighlightColourId,             Colour (Colours::lightgrey));
 
     setColour(listBoxBackgroundColourId, findColour(secondaryBackgroundColourId).brighter().withAlpha(0.3f));
     
     // Table
     setColour(TableListBox::backgroundColourId, findColour(secondaryBackgroundColourId));
     setColour(TableHeaderComponent::backgroundColourId, findColour(backgroundColourId));
+    setColour(TableHeaderComponent::highlightColourId, Colours::transparentBlack);
     setColour(TableHeaderComponent::textColourId, findColour(audium::defaultTextColourId));
     
     // Combo Box
-    setColour(ComboBox::backgroundColourId, Colour(Colours::grey).withAlpha(0.5f));
+    setColour(ComboBox::backgroundColourId, findColour(secondaryBackgroundColourId));
+    setColour(ComboBox::outlineColourId, findColour(backgroundColourId));
+    
     
     // AlertWindow
     setColour(AlertWindow::backgroundColourId, findColour(secondaryBackgroundColourId));
@@ -133,37 +120,58 @@ void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
 
 juce::Font AudiumLookAndFeel::getComboBoxFont (juce::ComboBox& box)
 {
-    const auto fontSize = jmin (12.0f, (float) box.getHeight() * 0.85f);
-    return FontOptions { fontSize, Font::bold };
+    return withDefaultMetrics (FontOptions (defaultFontSize));
 }
 
 void AudiumLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height, bool,
                                    int, int, int, int, juce::ComboBox& box)
 {
+    auto cornerSize = box.findParentComponentOfClass<ChoicePropertyComponent>() != nullptr ? 0.0f : 3.0f;
     Rectangle<int> boxBounds (0, 0, width, height);
+
+    g.setColour (box.findColour (ComboBox::backgroundColourId));
+    g.fillRoundedRectangle (boxBounds.toFloat(), cornerSize);
+
+    g.setColour (box.findColour (ComboBox::outlineColourId));
+    g.drawRoundedRectangle (boxBounds.toFloat().reduced (0.5f, 0.5f), cornerSize, 1.0f);
+
+    auto arrowSize = std::min(15, height);
+    
+    // arrow zone on the left
+    Rectangle<int> arrowZone (1, height/2 - arrowSize/2, arrowSize-2, arrowSize-2);
+ 
     
     if (box.isMouseOver(true))
     {
-        g.setColour (box.findColour (ComboBox::backgroundColourId));
-        g.fillEllipse(0, 0, height, height);
+        g.setColour (Colour(Colours::grey).withAlpha(0.5f));
+        g.fillEllipse(arrowZone.getX(),
+                      arrowZone.getY(),
+                      arrowZone.getWidth(),
+                      arrowZone.getHeight());
     }
     
-    // arrow zone on the left
-    Rectangle<int> arrowZone (0, 0, height, height);
+    
     Path path;
     path.startNewSubPath ((float) arrowZone.getX() + 3.0f, (float) arrowZone.getCentreY() - 2.0f);
     path.lineTo ((float) arrowZone.getCentreX(), (float) arrowZone.getCentreY() + 3.0f);
     path.lineTo ((float) arrowZone.getRight() - 3.0f, (float) arrowZone.getCentreY() - 2.0f);
 
     g.setColour (box.findColour (ComboBox::arrowColourId).withAlpha ((box.isEnabled() ? 0.9f : 0.2f)));
-    g.strokePath (path, PathStrokeType (1.0f));
+    g.strokePath (path, PathStrokeType (2.0f));
 }
 
 
 void AudiumLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& label)
 {
-    label.setBounds (1, 1,
-                     box.getWidth() - 2,
+    
+    auto height = box.getHeight();
+    
+    // arrow zone on the left
+    auto arrowSize = std::min(15, height);
+    
+    label.setBounds (1 + arrowSize,
+                     1,
+                     box.getWidth() - 2 - arrowSize,
                      box.getHeight() - 2);
 
     label.setFont (getComboBoxFont (box));
@@ -176,9 +184,31 @@ Label * AudiumLookAndFeel::createComboBoxTextBox (ComboBox & combo)
     return label;
 }
 
+PopupMenu::Options AudiumLookAndFeel::getOptionsForComboBoxPopupMenu (ComboBox& box, Label& label)
+{
+//    return PopupMenu::Options();
+    return PopupMenu::Options().withItemThatMustBeVisible (box.getSelectedId())
+                               .withInitiallySelectedItem (box.getSelectedId());
+//                               .withMinimumWidth (box.getWidth())
+//                               .withMaximumNumColumns (1)
+//                               .withStandardItemHeight (label.getHeight());
+}
+
+
+
 Font AudiumLookAndFeel::getPopupMenuFont()
 {
     return withDefaultMetrics (FontOptions (defaultFontSize));
+}
+
+
+Label* AudiumLookAndFeel::createSliderTextBox (Slider& slider)
+{
+    auto* l = LookAndFeel_V4::createSliderTextBox (slider);
+
+    // default font for sliders
+    l->setFont (juce::FontOptions (11.00f));
+    return l;
 }
 
 int AudiumLookAndFeel::getAlertWindowButtonHeight()    { return 20; }

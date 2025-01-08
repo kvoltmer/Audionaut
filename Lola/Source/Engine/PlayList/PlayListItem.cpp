@@ -33,10 +33,10 @@ PlayListItem::PlayListItem(const PlayListContainer &owner,
 
 PlayListItem::~PlayListItem()
 {
-    for (auto transportSource : transportSources)
-    {
+    for (auto transportSource : transportSources) {
         audioRegion->getAudioTrack()->getTransportSourceContainer()->removeTransportSource(transportSource);
     }
+    transportSources.clear();
 }
 
 juce::Range<double> PlayListItem::getRegionData(audium::TimeContextType context) const
@@ -127,9 +127,29 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
 
 bool PlayListItem::validateData()
 {
-    if (getAbsolutePosition(audium::clocks) < 0.0) {
-        setAbsolutePosition(0.0, audium::clocks);
-        return true;
+    auto context = audium::clocks;
+    auto position = getAbsolutePosition(context);
+    
+    // Absolute position must be positive
+    if (position < 0.0) {
+        setAbsolutePosition(0.0, context);
     }
+    
+    // End must NOT exeed file length
+    auto totalLength = audioRegion->getAudioResourceEnd(context);
+    auto regionData = getRegionData(context);
+    if (regionData.getEnd() > totalLength) {
+        regionData.setEnd(totalLength);
+        setRegionData(regionData, context);
+    }
+    
+    // Start must NOT be negative
+    if (regionData.getStart() < 0.0) {
+        auto newPosition = position - regionData.getStart();
+        regionData.setStart(0.0);
+        setRegionData(regionData, context);
+        setAbsolutePosition(newPosition, context);
+    }
+    
     return false;
 }

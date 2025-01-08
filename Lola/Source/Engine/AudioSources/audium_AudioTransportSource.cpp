@@ -103,9 +103,6 @@ void AudioTransportSource::stop()
     {
         playing = false;
         stopped = true;
-//        int n = 500;
-//        while (--n >= 0 && ! stopped)
-//            Thread::sleep (2);
     }
 }
 
