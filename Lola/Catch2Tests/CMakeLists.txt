@@ -46,6 +46,7 @@ juce_generate_juce_header(${APP_NAME})
 file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
         ${SRC_PATH}/Engine/Core/*.cpp
+        ${SRC_PATH}/Engine/Channel/*.cpp
         ${SRC_PATH}/Engine/AutoEdit/*.cpp
         ${SRC_PATH}/Engine/Channel/*.cpp
         ${SRC_PATH}/Engine/Factory/*.cpp

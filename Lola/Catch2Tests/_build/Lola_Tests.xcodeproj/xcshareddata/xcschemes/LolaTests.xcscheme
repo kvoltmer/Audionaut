@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-r console [lock-free] -d yes"
+            argument = "-r console -d yes"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
