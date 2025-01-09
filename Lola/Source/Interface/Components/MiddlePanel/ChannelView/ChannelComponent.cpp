@@ -57,7 +57,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
     addAndMakeVisible(panSlider.get());
     configurePanSlider(panSlider.get());
     panSlider->onValueChange = [this, rowNumber] {
-        //audioTrack->setGain(Decibels::decibelsToGain(volumeSlider->getValue()), rowNumber);
+        audioTrack->setPan(panSlider->getValue(), rowNumber);
     };
     
     // undo!
@@ -125,8 +125,11 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_,
     audioTrack = audioTrack_;
     rowNumber = rowNumber_;
 
-    auto gain = audioTrack->getGain(rowNumber);
-    volumeSlider->setValue(LevelMeter::gainToDecebel(gain), dontSendNotification);
+    
+    volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)),
+                           dontSendNotification);
+    
+    panSlider->setValue(audioTrack->getPan(rowNumber), dontSendNotification);
     
     if (not isTimerRunning())
     {

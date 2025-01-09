@@ -176,7 +176,7 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         }
         if (channel != nullptr) {
             channel->data = jsonElement;
-            channel->commitGain();
+            channel->commitChannelData();
         }
         c++;
     }
@@ -275,15 +275,15 @@ void AudioTrack::setGain(float gain, int channelNumber) {
 
     if (auto channel = audioChannelContainer->objects[channelNumber]) {
         // undo
-        auto action = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);
+//        auto action = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);
         
         channel->setGain(gain);
         
-        // undo
-        action->storeNewState();
-        
-        getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set Gain");
-        getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+//        // undo
+//        action->storeNewState();
+//
+//        getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set Gain");
+//        getAudioTrackContainer().getUndoManager()->beginNewTransaction();
     }
     
 }
@@ -291,6 +291,30 @@ void AudioTrack::setGain(float gain, int channelNumber) {
 float AudioTrack::getGain(int channelNumber) const {
     if (auto channel = audioChannelContainer->objects[channelNumber]) {
         return channel->getGain();
+    }
+    return 0.0;
+}
+
+void AudioTrack::setPan(float pan, int channelNumber) {
+
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        // undo
+//        auto action = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);
+//
+        channel->setPan(pan);
+        
+        // undo
+//        action->storeNewState();
+//
+//        getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set Pan");
+//        getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+    }
+    
+}
+
+float AudioTrack::getPan(int channelNumber) const {
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        return channel->getPan();
     }
     return 0.0;
 }
@@ -482,8 +506,18 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     
     for (auto i = 0; i < filenames.size(); i++)
     {
+        auto numResourcesLoaded = getAudioResources().size();
         if (auto resource = addAudioFile(subGroup, filenames[i], channelPosition))
         {
+            // apply stereo pan
+            // in case it's the first resource and the file is stereo
+            if (numResourcesLoaded == 0) {
+                if (resource->getNumChannels() == 2) {
+                    setPan(-1.f, 0);
+                    setPan(1.f, 1);
+                }
+            }
+            
             resources.push_back(resource);
         }
         else

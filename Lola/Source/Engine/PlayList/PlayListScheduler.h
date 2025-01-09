@@ -26,6 +26,9 @@ class AudioResourceContainer;
 
 namespace audium {
     class Playback;
+    
+template <class>
+    class AudioBusRenderer;
 }
 
 class PlayListScheduler : public juce::ChangeListener
@@ -39,14 +42,16 @@ public:
                       std::shared_ptr<audium::LinkEngine> linkEngine_,
                       std::shared_ptr<AudioClipContainer> audioClipContainer_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
-                      std::shared_ptr<audium::Playback> playback_) :
+                      std::shared_ptr<audium::Playback> playback_,
+                      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer_) :
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
         tempoProvider(tempoProvider_),
         linkEngine(linkEngine_),
         audioClipContainer(audioClipContainer_),
         transportSourceContainer(transportSourceContainer_),
-        playback(playback_)
+        playback(playback_),
+        audioBusRenderer(audioBusRenderer_)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
         
@@ -123,6 +128,7 @@ private:
     std::shared_ptr<AudioClipContainer> audioClipContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::Playback> playback;
+    std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer;
     
     double externalSampleRate = 0.0;
     

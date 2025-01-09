@@ -37,7 +37,10 @@ public:
     void setGain(const float new_gain);
     float getGain() const noexcept;
     
-    void commitGain();
+    void setPan(const float new_pan);
+    float getPan() const noexcept;
+    
+    void commitChannelData();
 
     int getChannelNumber() const {
         auto channel = std::dynamic_pointer_cast<const AudioChannel>(getSharedPtr());
