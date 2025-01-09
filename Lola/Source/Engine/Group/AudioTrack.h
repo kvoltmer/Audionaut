@@ -109,6 +109,9 @@ public:
     void setGain(float gain, int channelNumber);
     float getGain(int channelNumber) const;
     
+    void setPan(float pan, int channelNumber);
+    float getPan(int channelNumber) const;
+    
     // sub groups:
     std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition, audium::TimeContextType context);
     std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;

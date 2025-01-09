@@ -94,6 +94,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioSubGroup_8caaf481.o \
   $(JUCE_OBJDIR)/LinkAudioDevice_ad84cc6b.o \
   $(JUCE_OBJDIR)/LinkEngine_c7ee2fcd.o \
+  $(JUCE_OBJDIR)/AudioBusRenderer_7f6f5a1d.o \
   $(JUCE_OBJDIR)/Playback_61ca68b.o \
   $(JUCE_OBJDIR)/Voice_f531b98c.o \
   $(JUCE_OBJDIR)/PlayListContainer_29209da0.o \
@@ -281,6 +282,11 @@ $(JUCE_OBJDIR)/LinkAudioDevice_ad84cc6b.o: ../../Source/Engine/Link/LinkAudioDev
 $(JUCE_OBJDIR)/LinkEngine_c7ee2fcd.o: ../../Source/Engine/Link/LinkEngine.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling LinkEngine.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AudioBusRenderer_7f6f5a1d.o: ../../Source/Engine/Playback/AudioBusRenderer.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AudioBusRenderer.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/Playback_61ca68b.o: ../../Source/Engine/Playback/Playback.cpp
