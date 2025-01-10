@@ -70,6 +70,8 @@
                 file="Source/Engine/Selection/SelectionManager.h"/>
         </GROUP>
         <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
+          <FILE id="jX0IBu" name="LockFreeCommander.h" compile="0" resource="0"
+                file="Source/Engine/Core/LockFreeCommander.h"/>
           <FILE id="wTx6z6" name="LockFreeContainer.h" compile="0" resource="0"
                 file="Source/Engine/Core/LockFreeContainer.h"/>
           <FILE id="ScorpU" name="AudioClipContainer.h" compile="0" resource="0"

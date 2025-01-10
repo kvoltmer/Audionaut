@@ -12,11 +12,18 @@
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
+#include "Engine/Core/LockFreeCommander.h"
 
 void AudioChannel::setGain(const float new_gain)
 {
     data.gain = new_gain;
-    commitChannelData();
+    
+    // commit
+    auto lockFreeCommander = audioTrack.getAudioTrackContainer().lockFreeCommander;
+    lockFreeCommander->fifo.push([this] {
+        auto chan = getChannelNumber() + audioTrack.getChannelOffset();
+        audioTrack.getTransportSourceContainer()->audioBusRenderer->setGain(chan, data.gain);
+    });
 }
 
 float AudioChannel::getGain() const noexcept
@@ -27,7 +34,13 @@ float AudioChannel::getGain() const noexcept
 void AudioChannel::setPan(const float new_pan)
 {
     data.pan = new_pan;
-    commitChannelData();
+    
+    // commit
+    auto lockFreeCommander = audioTrack.getAudioTrackContainer().lockFreeCommander;
+    lockFreeCommander->fifo.push([this] {
+        auto chan = getChannelNumber() + audioTrack.getChannelOffset();
+        audioTrack.getTransportSourceContainer()->audioBusRenderer->setPan(chan, data.pan);
+    });
 }
 
 float AudioChannel::getPan() const noexcept
@@ -37,8 +50,6 @@ float AudioChannel::getPan() const noexcept
 
 void AudioChannel::commitChannelData()
 {
-    auto chan = getChannelNumber() + audioTrack.getChannelOffset();
-    // std::cout << "commitChannelData " << chan << " " << data.gain <<  " " << data.pan << std::endl;
-    audioTrack.getTransportSourceContainer()->audioBusRenderer->setGain(chan, data.gain);
-    audioTrack.getTransportSourceContainer()->audioBusRenderer->setPan(chan, data.pan);
+    setGain(data.gain);
+    setPan(data.pan);
 }
