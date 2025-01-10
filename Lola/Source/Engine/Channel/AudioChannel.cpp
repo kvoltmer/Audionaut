@@ -38,7 +38,7 @@ float AudioChannel::getPan() const noexcept
 void AudioChannel::commitChannelData()
 {
     auto chan = getChannelNumber() + audioTrack.getChannelOffset();
-    
+    // std::cout << "commitChannelData " << chan << " " << data.gain <<  " " << data.pan << std::endl;
     audioTrack.getTransportSourceContainer()->audioBusRenderer->setGain(chan, data.gain);
     audioTrack.getTransportSourceContainer()->audioBusRenderer->setPan(chan, data.pan);
 }

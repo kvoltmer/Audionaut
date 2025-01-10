@@ -31,20 +31,23 @@ public:
     
     void setPan(const int channelNumber, const SampleType newPan) {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
+            // std::cout << "setPan " << channelNumber << " " << newPan << std::endl;
             panners[channelNumber].setPan(newPan);
         }
     }
 
     void setGain(const int channelNumber, const SampleType newGain) {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
+            // std::cout << "setGain " << channelNumber << " " << newGain << std::endl;
             gains[channelNumber].setGainLinear(newGain);
         }
     }
     
     const float getOutputLevel(const int channelNumber) const
     {
-        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
+        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             return outputLevel[channelNumber];
+        }
         
         return 0.f;
     }

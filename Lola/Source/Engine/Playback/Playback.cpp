@@ -45,6 +45,7 @@ bool Playback::stopVoice(const std::shared_ptr<AudiumTransportSource> source)
 
 void Playback::stopAllVoices()
 {
+    // std::cout << "stopAllVoices" << std::endl;
     for(auto i = 0; i < MAX_VOICES; ++i) {
         voices[i].stop();
     }
@@ -74,9 +75,16 @@ void Playback::processAudioBlock (const juce::AudioSourceChannelInfo& info)
             }
         }
     }
+}
 
-    
-
+int Playback::getNumVoices() const
+{
+    int counter = 0;
+    for (auto i = 0; i < MAX_VOICES; ++i) {
+        if (voices[i].processing.load())
+            counter++;
+    }
+    return counter;
 }
 
 Voice *Playback::getAvailableVoice()

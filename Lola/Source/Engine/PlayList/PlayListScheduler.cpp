@@ -113,17 +113,22 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
                 auto duration = dspClip.getRegionData(audium::seconds).getEnd() - position;
                 
                 jassert(position >= 0.0 && duration >= 0.0);
-                transportSource->schedulePosition(position, startSamples);
-                transportSource->scheduleDuration(duration, externalSampleRate);
-                transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clip_gain);
-                transportSource->getAudioTransportSource()->start();
-                playback->startVoice(transportSource);
                 
+                if ( !transportSource->getAudioTransportSource()->isPlaying()) {
+                    
+                    transportSource->schedulePosition(position, startSamples);
+                    transportSource->scheduleDuration(duration, externalSampleRate);
+                    //transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clip_gain);
+                    transportSource->getAudioTransportSource()->start();
+                    playback->startVoice(transportSource);
+                    
+                }
 //                std::cout << "transport-pos: " << transportPosition << " ";
 //                std::cout << "clip-pos: " <<  absolute << " ";
 //                std::cout << "offset: " << offset << " ";
 //                std::cout << "file-pos: " << position << " ";
 //                std::cout << "duration: " << duration << " ";
+//                std::cout << "gain: " << dspClip.dspClipData.clip_gain << " ";
 //                std::cout << std::endl;
 
 

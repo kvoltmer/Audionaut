@@ -30,6 +30,8 @@ public:
     
     void processAudioBlock (const juce::AudioSourceChannelInfo& info);
     
+    int getNumVoices() const;
+    
 private:
     
     Voice* getAvailableVoice();

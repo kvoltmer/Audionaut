@@ -51,6 +51,13 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
     volumeSlider->onValueChange = [this, rowNumber] {
         audioTrack->setGain(Decibels::decibelsToGain(volumeSlider->getValue()), rowNumber);
     };
+    volumeSlider->onDragStart = [this] {
+        audioTrack->onDragStart();
+    };
+    
+    volumeSlider->onDragEnd = [this] {
+        audioTrack->onDragEnd();
+    };
     
     // pan slider
     panSlider = std::make_unique<juce::Slider>();
@@ -59,9 +66,12 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
     panSlider->onValueChange = [this, rowNumber] {
         audioTrack->setPan(panSlider->getValue(), rowNumber);
     };
-    
-    // undo!
-    //panSlider->onDragStart
+    panSlider->onDragStart = [this] {
+        audioTrack->onDragStart();
+    };
+    panSlider->onDragEnd = [this] {
+        audioTrack->onDragEnd();
+    };
 
     setSize (AudiumLookAndFeel::channelsWidth, 100);
     

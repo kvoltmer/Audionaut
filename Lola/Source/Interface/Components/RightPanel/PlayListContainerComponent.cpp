@@ -15,16 +15,20 @@
 #include "Interface/ColourIds.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Playback/Playback.h"
+#include "Engine/AudioSources/TransportSourceContainer.h"
 
 //==============================================================================
 PlayListContainerComponent::PlayListContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
     updateUI();
+    startTimer(50);
 }
 
 PlayListContainerComponent::~PlayListContainerComponent()
 {
+    stopTimer();
 }
 
 void PlayListContainerComponent::updateUI(UIContext context)
@@ -48,7 +52,8 @@ void PlayListContainerComponent::updateUI(UIContext context)
     }
     
     auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
-    footerLabel->setText(TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
+    totalLengthLabel->setText(TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
+    
 }
 
 void PlayListContainerComponent::createComponents()
@@ -64,15 +69,22 @@ void PlayListContainerComponent::createComponents()
         addAndMakeVisible(playListComponent.get());
     }
     
-    footerLabel.reset(new juce::Label ("new label",
-                                       TRANS ("label text")));
-    addAndMakeVisible(footerLabel.get());
-    footerLabel->setFont (juce::FontOptions { 13.0f });
-    footerLabel->setJustificationType (juce::Justification::centredLeft);
-    footerLabel->setEditable (false, false, false);
-    footerLabel->setColour (juce::Label::backgroundColourId, findColour(audium::backgroundColourId));
-
-    footerLabel->setColour (juce::TextEditor::textColourId, juce::Colours::black);
+    totalLengthLabel.reset(new juce::Label());
+    addAndMakeVisible(totalLengthLabel.get());
+    totalLengthLabel->setFont (juce::FontOptions { 13.0f });
+    totalLengthLabel->setJustificationType (juce::Justification::centredLeft);
+    totalLengthLabel->setEditable (false, false, false);
+    totalLengthLabel->setColour (juce::Label::backgroundColourId, findColour(audium::backgroundColourId));
+    totalLengthLabel->setColour (juce::TextEditor::textColourId, juce::Colours::black);
+    
+    numVoicesLabel.reset(new juce::Label());
+    addAndMakeVisible(numVoicesLabel.get());
+    numVoicesLabel->setFont (juce::FontOptions { 13.0f });
+    numVoicesLabel->setJustificationType (juce::Justification::centredLeft);
+    numVoicesLabel->setEditable (false, false, false);
+    numVoicesLabel->setColour (juce::Label::backgroundColourId, findColour(audium::backgroundColourId));
+    numVoicesLabel->setColour (juce::TextEditor::textColourId, juce::Colours::black);
+    
 }
 
 void PlayListContainerComponent::paint (juce::Graphics&)
@@ -96,7 +108,18 @@ void PlayListContainerComponent::resized()
     bounds.removeFromBottom(headerHeight);
     fb.performLayout (bounds);
     
-    juce::Rectangle<int> footerBounds(0, bounds.getHeight(), bounds.getWidth(), headerHeight);
-    footerLabel->setBounds(footerBounds);
+    auto width = bounds.getWidth() / 2;
+    
+    juce::Rectangle<int> totalLengthBounds(0, bounds.getHeight(), width, headerHeight);
+    totalLengthLabel->setBounds(totalLengthBounds);
+    
+    juce::Rectangle<int> numVoiceBounds(bounds.getWidth() - width, bounds.getHeight(), width, headerHeight);
+    numVoicesLabel->setBounds(numVoiceBounds);
 
+}
+
+void PlayListContainerComponent::timerCallback()
+{
+    auto numVoices = audiumEngine->getAudioTrackContainer()->getTransportSourceContainer()->playback->getNumVoices();
+    numVoicesLabel->setText("Voices " + juce::String(numVoices), juce::dontSendNotification);
 }
