@@ -1,18 +1,8 @@
-/*
-  ==============================================================================
-
-    DspClipData.h
-    Created: 31 May 2024 11:42:19am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include "Engine/Group/AudioClipData.h"
 
-
+namespace audium {
 
 struct DspClipData
 {
@@ -25,5 +15,7 @@ struct DspClipData
     float clip_gain = 1.f;
     
     int transportSourceIndex = -1;
-
+    
 };
+
+} // namespace audium

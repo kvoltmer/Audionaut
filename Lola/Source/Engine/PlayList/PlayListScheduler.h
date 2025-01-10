@@ -43,7 +43,7 @@ public:
                       std::shared_ptr<AudioResourceContainer> audioResourceContainer_,
                       std::shared_ptr<TempoProvider> tempoProvider_,
                       std::shared_ptr<audium::LinkEngine> linkEngine_,
-                      std::shared_ptr<AudioClipContainer> audioClipContainer_,
+                      std::shared_ptr<audium::AudioClipContainer> audioClipContainer_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
                       std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer_,
@@ -135,7 +135,7 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<audium::LinkEngine> linkEngine;
-    std::shared_ptr<AudioClipContainer> audioClipContainer;
+    std::shared_ptr<audium::AudioClipContainer> audioClipContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::Playback> playback;
     std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer;

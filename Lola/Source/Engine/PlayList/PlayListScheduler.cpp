@@ -79,7 +79,7 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
     
     for (auto clipData : dspClips)
     {
-        const DspClip dspClip(getTempoProvider(), clipData);
+        const audium::DspClip dspClip(getTempoProvider(), clipData);
         
         if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange))
         {

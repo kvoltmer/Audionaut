@@ -15,16 +15,16 @@
 #include "Engine/Core/DspClipData.h"
 #include "Engine/Provider/TempoProvider.h"
 
-
+namespace audium {
 
 class DspClip : public PositionableBase
 {
 public:
     DspClip(std::shared_ptr<TempoProvider> tempoProvider, DspClipData data) :
-        tempoProvider(tempoProvider),
-        dspClipData(data)
+    tempoProvider(tempoProvider),
+    dspClipData(data)
     {}
-        
+    
     juce::Range<double> getRegionData(audium::TimeContextType context) const override;
     void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
     
@@ -37,3 +37,5 @@ private:
 public:
     DspClipData dspClipData;
 };
+
+} // namespace audium
