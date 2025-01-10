@@ -25,8 +25,9 @@
 #include "Engine/Core/DspClip.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/Playback/Playback.h"
-
+#include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeContainer.h"
+#include "Engine/Core/LockFreeCommander.h"
 
 using namespace::std::chrono;
 
@@ -38,8 +39,8 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
     bufferSize = samplesPerBlockExpected;
     tempoProvider->prepareToPlay(samplesPerBlockExpected, sampleRate);
     transportSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
-    
-    playback->start();
+    playback->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    audioBusRenderer->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void PlayListScheduler::tick(bool isPlaying,
@@ -112,17 +113,22 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
                 auto duration = dspClip.getRegionData(audium::seconds).getEnd() - position;
                 
                 jassert(position >= 0.0 && duration >= 0.0);
-                transportSource->schedulePosition(position, startSamples);
-                transportSource->scheduleDuration(duration, externalSampleRate);
-                transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clip_gain);
-                transportSource->getAudioTransportSource()->start();
-                playback->startVoice(transportSource);
                 
+                if ( !transportSource->getAudioTransportSource()->isPlaying()) {
+                    
+                    transportSource->schedulePosition(position, startSamples);
+                    transportSource->scheduleDuration(duration, externalSampleRate);
+                    //transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clip_gain);
+                    transportSource->getAudioTransportSource()->start();
+                    playback->startVoice(transportSource);
+                    
+                }
 //                std::cout << "transport-pos: " << transportPosition << " ";
 //                std::cout << "clip-pos: " <<  absolute << " ";
 //                std::cout << "offset: " << offset << " ";
 //                std::cout << "file-pos: " << position << " ";
 //                std::cout << "duration: " << duration << " ";
+//                std::cout << "gain: " << dspClip.dspClipData.clip_gain << " ";
 //                std::cout << std::endl;
 
 
@@ -133,51 +139,10 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
 
 void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
 {
-    auto totalChannels = audioTrackContainer->getNumAudioTrackChannels();
-    if (totalChannels > 0) {
-        juce::AudioBuffer<float> tempBuffer(totalChannels, outputInfo.numSamples);
-        tempBuffer.clear();
-        juce::AudioSourceChannelInfo tempBufferInfo (&tempBuffer, outputInfo.startSample, outputInfo.numSamples);
-        
-        
-        // render the entire bus (all channels)
-        playback->processAudioBlock(tempBufferInfo);
-        
-        auto outputChannels = outputInfo.buffer->getNumChannels();
-        // stereo or mono output
-        if (outputChannels == 1) {
-            for (auto i = 0; i < totalChannels; i++) {
-                outputInfo.buffer->addFrom(0,
-                                           outputInfo.startSample,
-                                           tempBuffer.getReadPointer(i),
-                                           outputInfo.numSamples);
-            }
-            
-        }
-        else if (outputChannels == 2)
-        {
-            for (auto c = 0; c < outputChannels; c++) {
-                for (auto i = 0; i < totalChannels; i++) {
-                    outputInfo.buffer->addFrom(c,
-                                               outputInfo.startSample,
-                                               tempBuffer.getReadPointer(i),
-                                               outputInfo.numSamples);
-                }
-            }
-        }
-        else // multichannel output
-        {
-            jassert(outputChannels == totalChannels);
-            
-            for (auto c = 0; c < std::min(outputChannels, totalChannels); c++) {
-                outputInfo.buffer->addFrom(c,
-                                           outputInfo.startSample,
-                                           tempBuffer.getReadPointer(c),
-                                           outputInfo.numSamples);
-            }
-        }
-    }
-    
+    lockFreeCommander->invoke();
+
+    audioBusRenderer->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
+    audioBusRenderer->processAudioBlock(outputInfo);
 }
 
 juce::Range<double> PlayListScheduler::absoluteToLocalRange(juce::Range<double> absoluteRange, const PlayListItem* item, audium::TimeContextType context)
@@ -233,19 +198,15 @@ void PlayListScheduler::startPlaying()
         commitPlayListData();
         linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
-        playback->start();
     }
 }
 
 void PlayListScheduler::stopPlaying()
 {
-    
-    if (linkEngine != nullptr)
-    {
+    if (linkEngine != nullptr) {
         linkEngine->stopPlaying();
     }
-    
-    playback->stop();
+    playback->stopAllVoices();
 }
 
 bool PlayListScheduler::isPlaying() const

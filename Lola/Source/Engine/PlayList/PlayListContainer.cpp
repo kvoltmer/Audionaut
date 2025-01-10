@@ -212,15 +212,31 @@ bool PlayListContainer::writeToJson (json& output)
 
 bool PlayListContainer::readFromJson (json& input, bool rebuild)
 {
-    playListItems.cleanup();
+    if (rebuild)
+        playListItems.cleanup();
     
     auto jsonPlayList = input["play_list"];
     auto jsonPlayListItems = jsonPlayList["play_list_items"];
-
+    auto i = 0;
     for (auto& jsonElement : jsonPlayListItems)
     {
-        if (createPlayListItemFromJson(jsonElement) == nullptr)
+        std::shared_ptr<PlayListItem> playListItem = nullptr;
+        if (rebuild) {
+            playListItem = createPlayListItemFromJson(jsonElement);
+            playListItems.push_back(playListItem);
+        }
+        else {
+            playListItem = playListItems.getObjects()[i];
+        }
+        
+        if ( playListItem != nullptr) {
+            if (!playListItem->readFromJson(jsonElement, false))
+                return false;
+        }
+        else {
             return false;
+        }
+        i++;
     }
     return true;
 }
@@ -231,12 +247,9 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (jso
     auto audioRegion = audioRegionContainer.getRegion(regionIndex);
     if (audioRegion != nullptr)
     {
-        auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this,
-                                                                           audioRegion,
-                                                                           audioRegion->getAudioTrack()->getSelectionManager()));
-        playListItems.push_back(playListItem);
-        if (playListItem->readFromJson(jsonElement, false))
-            return playListItem;
+        return std::shared_ptr<PlayListItem>(new PlayListItem(*this,
+                                                              audioRegion,
+                                                              audioRegion->getAudioTrack()->getSelectionManager()));
     }
     
     return nullptr;
