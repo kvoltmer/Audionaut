@@ -27,7 +27,7 @@
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeContainer.h"
-
+#include "Engine/Core/LockFreeCommander.h"
 
 using namespace::std::chrono;
 
@@ -139,6 +139,8 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
 
 void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
 {
+    lockFreeCommander->invoke();
+
     audioBusRenderer->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
     audioBusRenderer->processAudioBlock(outputInfo);
 }

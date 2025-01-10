@@ -219,6 +219,7 @@
 		685048203793CB093B04D748 /* juce_graphics */ /* juce_graphics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_graphics; path = ../../../Submodules/juce/modules/juce_graphics; sourceTree = SOURCE_ROOT; };
 		6BBAA6DFE177CD89EB2B263E /* DraggerControl.h */ /* DraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DraggerControl.h; path = ../../Source/Interface/Controls/DraggerControl.h; sourceTree = SOURCE_ROOT; };
 		6BBB93E04733A38498C8EACC /* AudioSubGroup.h */ /* AudioSubGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioSubGroup.h; path = ../../Source/Engine/Group/AudioSubGroup.h; sourceTree = SOURCE_ROOT; };
+		6CF79CC87DC41EFA1EAA7107 /* LockFreeCommander.h */ /* LockFreeCommander.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LockFreeCommander.h; path = ../../Source/Engine/Core/LockFreeCommander.h; sourceTree = SOURCE_ROOT; };
 		6D8AC9B6CB6D3128D93BC4FA /* ChannelMapping.cpp */ /* ChannelMapping.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ChannelMapping.cpp; path = ../../Source/Engine/Resource/ChannelMapping.cpp; sourceTree = SOURCE_ROOT; };
 		6DA263F7CDEFFDFAC0EB223E /* RegionSelector.h */ /* RegionSelector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionSelector.h; path = ../../Source/Interface/Controls/RegionSelector.h; sourceTree = SOURCE_ROOT; };
 		6E8033EA1E1FCCFBE1AF27F7 /* SelectionManager.h */ /* SelectionManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SelectionManager.h; path = ../../Source/Engine/Selection/SelectionManager.h; sourceTree = SOURCE_ROOT; };
@@ -648,6 +649,7 @@
 		764B43E3D7C7AFD386C0A576 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				6CF79CC87DC41EFA1EAA7107,
 				A6BE31D73B57D8C96A41DD2C,
 				F90F2071384136BFA9D5AC6B,
 				7374848A55ED5FE1AFE36B05,

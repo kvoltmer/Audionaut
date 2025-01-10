@@ -10,6 +10,8 @@
 
 #pragma once
 #include <JuceHeader.h>
+#include <farbot/fifo.hpp>
+
 #include "Engine/TimeContext.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -26,6 +28,7 @@ class AudioResourceContainer;
 
 namespace audium {
     class Playback;
+    class LockFreeCommander;
     
 template <class>
     class AudioBusRenderer;
@@ -43,7 +46,8 @@ public:
                       std::shared_ptr<AudioClipContainer> audioClipContainer_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
-                      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer_) :
+                      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer_,
+                      std::shared_ptr<audium::LockFreeCommander> lockFreeCommander_) :
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
         tempoProvider(tempoProvider_),
@@ -51,11 +55,14 @@ public:
         audioClipContainer(audioClipContainer_),
         transportSourceContainer(transportSourceContainer_),
         playback(playback_),
-        audioBusRenderer(audioBusRenderer_)
+        audioBusRenderer(audioBusRenderer_),
+        lockFreeCommander(lockFreeCommander_)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
         
         audioTrackContainer->addChangeListener(this);
+        
+        
     }
     
     ~PlayListScheduler() override
@@ -114,6 +121,9 @@ public:
     
     PlayListSchedulerData data;
     
+
+
+    
 private:
     
     // process sequencing
@@ -129,6 +139,7 @@ private:
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::Playback> playback;
     std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer;
+    std::shared_ptr<audium::LockFreeCommander> lockFreeCommander;
     
     double externalSampleRate = 0.0;
     
