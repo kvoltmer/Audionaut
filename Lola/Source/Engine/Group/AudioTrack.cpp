@@ -20,7 +20,6 @@
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
-#include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/Resource/ChannelMapping.h"
 
 AudioTrack::~AudioTrack()
@@ -176,7 +175,7 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         }
         if (channel != nullptr) {
             channel->data = jsonElement;
-            channel->commitGain();
+            channel->commitChannelData();
         }
         c++;
     }
@@ -272,20 +271,9 @@ const float AudioTrack::getOutputLevel(int channelNumber) const
 }
 
 void AudioTrack::setGain(float gain, int channelNumber) {
-
     if (auto channel = audioChannelContainer->objects[channelNumber]) {
-        // undo
-        auto action = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);
-        
         channel->setGain(gain);
-        
-        // undo
-        action->storeNewState();
-        
-        getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set Gain");
-        getAudioTrackContainer().getUndoManager()->beginNewTransaction();
     }
-    
 }
 
 float AudioTrack::getGain(int channelNumber) const {
@@ -295,6 +283,33 @@ float AudioTrack::getGain(int channelNumber) const {
     return 0.0;
 }
 
+void AudioTrack::setPan(float pan, int channelNumber) {
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        channel->setPan(pan);
+    }
+}
+
+float AudioTrack::getPan(int channelNumber) const {
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        return channel->getPan();
+    }
+    return 0.0;
+}
+
+void AudioTrack::onDragStart()
+{
+    undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);
+}
+
+void AudioTrack::onDragEnd()
+{
+    if (undoableContainerAction != nullptr) {
+        undoableContainerAction->storeNewState();
+        getAudioTrackContainer().getUndoManager()->perform(undoableContainerAction.release(),
+                                                           "Set Track Parameter");
+        getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+    }
+}
 
 std::shared_ptr<AudioSubGroup> AudioTrack::createNewAudioSubGroup(double transportPosition, audium::TimeContextType context)
 {
@@ -482,8 +497,18 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     
     for (auto i = 0; i < filenames.size(); i++)
     {
+        auto numResourcesLoaded = getAudioResources().size();
         if (auto resource = addAudioFile(subGroup, filenames[i], channelPosition))
         {
+            // apply stereo pan
+            // in case it's the first resource and the file is stereo
+            if (numResourcesLoaded == 0) {
+                if (resource->getNumChannels() == 2) {
+                    setPan(-1.f, 0);
+                    setPan(1.f, 1);
+                }
+            }
+            
             resources.push_back(resource);
         }
         else

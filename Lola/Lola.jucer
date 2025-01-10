@@ -70,6 +70,8 @@
                 file="Source/Engine/Selection/SelectionManager.h"/>
         </GROUP>
         <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
+          <FILE id="jX0IBu" name="LockFreeCommander.h" compile="0" resource="0"
+                file="Source/Engine/Core/LockFreeCommander.h"/>
           <FILE id="wTx6z6" name="LockFreeContainer.h" compile="0" resource="0"
                 file="Source/Engine/Core/LockFreeContainer.h"/>
           <FILE id="ScorpU" name="AudioClipContainer.h" compile="0" resource="0"
@@ -127,8 +129,14 @@
           <FILE id="Rf1W4c" name="LinkEngine.hpp" compile="0" resource="0" file="Source/Engine/Link/LinkEngine.hpp"/>
         </GROUP>
         <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback">
+          <FILE id="isjbav" name="AudioBusRenderer.cpp" compile="1" resource="0"
+                file="Source/Engine/Playback/AudioBusRenderer.cpp"/>
+          <FILE id="JTNbDj" name="AudioBusRenderer.h" compile="0" resource="0"
+                file="Source/Engine/Playback/AudioBusRenderer.h"/>
           <FILE id="kBDQRJ" name="Playback.cpp" compile="1" resource="0" file="Source/Engine/Playback/Playback.cpp"/>
           <FILE id="TuWOT6" name="Playback.h" compile="0" resource="0" file="Source/Engine/Playback/Playback.h"/>
+          <FILE id="jQYb2Z" name="PlaybackDefines.h" compile="0" resource="0"
+                file="Source/Engine/Playback/PlaybackDefines.h"/>
           <FILE id="mWPkuL" name="Voice.cpp" compile="1" resource="0" file="Source/Engine/Playback/Voice.cpp"/>
           <FILE id="LVBVN6" name="Voice.h" compile="0" resource="0" file="Source/Engine/Playback/Voice.h"/>
         </GROUP>

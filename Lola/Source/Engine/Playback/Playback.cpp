@@ -12,30 +12,15 @@ namespace audium
 
 Playback::Playback()
 {
-    for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
-        outputLevel[i] = 0.f;
-        outputGain[i] = 1.f;
-    }
 }
 
-/// Start the processing
-void Playback::start()
+void Playback::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    readyToProcess.store(true);
-}
-
-/// Stop the processing
-void Playback::stop()
-{
-    readyToProcess.store(false);
-    for(auto i = 0; i < MAX_VOICES; ++i) {
-        voices[i].stop();
-    }
+    std::cout << "Playback::prepareToPlay " << samplesPerBlockExpected << " " << sampleRate << std::endl;
 }
 
 bool Playback::startVoice(std::shared_ptr<AudiumTransportSource> transportSource)
 {
-    
     // voice already playing?
     if (auto voice = findVoice(transportSource))
         if (voice->getTransportSource()->getAudioTransportSource()->isPlaying())
@@ -58,6 +43,14 @@ bool Playback::stopVoice(const std::shared_ptr<AudiumTransportSource> source)
     return false;
 }
 
+void Playback::stopAllVoices()
+{
+    // std::cout << "stopAllVoices" << std::endl;
+    for(auto i = 0; i < MAX_VOICES; ++i) {
+        voices[i].stop();
+    }
+}
+
 bool Playback::isPlaying(const std::shared_ptr<AudiumTransportSource> source)
 {
     if (findVoice(source) != nullptr) {
@@ -68,46 +61,30 @@ bool Playback::isPlaying(const std::shared_ptr<AudiumTransportSource> source)
 
 void Playback::processAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
-    if (readyToProcess.load())
-    {
-        // avoid reallocating
-        auto numChannels = std::min(info.buffer->getNumChannels(), MAX_AUDIO_CHANNELS);
-        audioBusBuffer.setSize(numChannels, info.numSamples, false, false, true);
-        audioBusBuffer.clear();
-        juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
-        
-        for (auto i = 0; i < MAX_VOICES; ++i) {
-            if (voices[i].processing.load()) {
-                voices[i].processAudioBlock(audioBusInfo);
-                for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
-                    info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
-                }
+    // avoid reallocating
+    auto numChannels = std::min(info.buffer->getNumChannels(), MAX_AUDIO_CHANNELS);
+    audioBusBuffer.setSize(numChannels, info.numSamples, false, false, true);
+    audioBusBuffer.clear();
+    juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
+    
+    for (auto i = 0; i < MAX_VOICES; ++i) {
+        if (voices[i].processing.load()) {
+            voices[i].processAudioBlock(audioBusInfo);
+            for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
+                info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
             }
         }
-
-        
-        for (auto i = 0; i < numChannels; i++) {
-            auto startGain = outputGain[i].load();
-            auto endGain = outputGain[i].load();
-            info.buffer->applyGainRamp(i, info.startSample, info.numSamples, startGain, endGain);
-            
-            outputLevel[i] = info.buffer->getMagnitude(i, info.startSample, info.numSamples);
-        }
     }
-    else {
-        std::memset(outputLevel, 0, sizeof(float) * MAX_AUDIO_CHANNELS);
-    }
-    
-    
 }
 
-
-const float Playback::getOutputLevel(const int channelNumber) const
+int Playback::getNumVoices() const
 {
-    if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
-        return outputLevel[channelNumber];
-    
-    return 0.f;
+    int counter = 0;
+    for (auto i = 0; i < MAX_VOICES; ++i) {
+        if (voices[i].processing.load())
+            counter++;
+    }
+    return counter;
 }
 
 Voice *Playback::getAvailableVoice()
@@ -137,20 +114,6 @@ int Playback::getNumberOfVoices() const
             counter++;
     }
     return counter;
-}
-
-const float Playback::getOutputGain(const int channelNumber) const
-{
-    if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
-        return outputGain[channelNumber].load();
-    
-    return 0.f;
-}
-
-void Playback::setOutputGain(const int channelNumber, const float gain)
-{
-    if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
-        outputGain[channelNumber] = gain;
 }
 
 

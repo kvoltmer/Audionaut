@@ -180,10 +180,12 @@ bool AudioTransportSource::isLooping() const
     return positionableSource != nullptr && positionableSource->isLooping();
 }
 
+#if PROCESS_GAIN
 void AudioTransportSource::setGain (const float newGain) noexcept
 {
     gain = newGain;
 }
+#endif
 
 void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double newSampleRate)
 {
@@ -226,12 +228,14 @@ void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info
 
         if (! playing)
         {
+#if PROCESS_GAIN
             // just stopped playing, so fade out the last block..
             for (int i = info.buffer->getNumChannels(); --i >= 0;)
                 info.buffer->applyGainRamp (i, info.startSample, jmin (256, info.numSamples), 1.0f, 0.0f);
 
             if (info.numSamples > 256)
-                info.buffer->clear (info.startSample + 256, info.numSamples - 256);
+                 info.buffer->clear (info.startSample + 256, info.numSamples - 256);
+#endif
         }
 
         if (hasStreamFinished())
@@ -241,17 +245,19 @@ void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info
         }
 
         stopped = ! playing;
-
+#if PROCESS_GAIN
         for (int i = info.buffer->getNumChannels(); --i >= 0;)
             info.buffer->applyGainRamp (i, info.startSample, info.numSamples, lastGain, gain);
+#endif
     }
     else
     {
         info.clearActiveBufferRegion();
         stopped = true;
     }
-
+#if PROCESS_GAIN
     lastGain = gain;
+#endif
 }
 
 } // namespace audium

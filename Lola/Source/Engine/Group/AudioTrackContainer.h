@@ -26,6 +26,10 @@ class AudioRegion;
 class TransportSourceContainer;
 class AudioResourceContainer;
 
+namespace audium {
+    class LockFreeCommander;
+}
+
 class AudioTrackContainer : public juce::ActionBroadcaster,
                             public juce::ChangeBroadcaster,
                             public audium::Streamable
@@ -37,7 +41,9 @@ public:
                         std::shared_ptr<TempoProvider> tempoProvider,
                         std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                         std::shared_ptr<TransportSourceContainer> transportSourceContainer,
-                        std::shared_ptr<audium::SelectionManager> selectionManager) :
+                        std::shared_ptr<audium::SelectionManager> selectionManager,
+                        std::shared_ptr<audium::LockFreeCommander> lockFreeCommander_) :
+        lockFreeCommander(lockFreeCommander_),
         undoManager(undoManager),
         tempoProvider(tempoProvider),
         audioResourceContainer(audioResourceContainer),
@@ -92,6 +98,8 @@ public:
     int getNumAudioTrackChannels() const;
     
     juce::Colour getNewAudioTrackColour() const;
+    
+    std::shared_ptr<audium::LockFreeCommander> lockFreeCommander;
     
 private:
     std::shared_ptr<juce::UndoManager> undoManager;

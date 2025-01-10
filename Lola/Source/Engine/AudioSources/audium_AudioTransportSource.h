@@ -109,6 +109,7 @@ public:
     /** Returns true if it's stopped. */
     bool isStopped() const noexcept     { return stopped; }
     
+#if PROCESS_GAIN
     //==============================================================================
     /** Changes the gain to apply to the output.
         @param newGain  a factor by which to multiply the outgoing samples,
@@ -120,7 +121,7 @@ public:
         @see setGain
     */
     float getGain() const noexcept      { return gain; }
-
+#endif
     //==============================================================================
     /** Implementation of the AudioSource method. */
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
@@ -155,7 +156,9 @@ private:
     AudioSource* masterSource = nullptr;
 
     CriticalSection callbackLock;
+#if PROCESS_GAIN
     float gain = 1.0f, lastGain = 1.0f;
+#endif
     std::atomic<bool> playing { false }, stopped { true };
     double sampleRate = 44100.0, sourceSampleRate = 0;
     int blockSize = 128, readAheadBufferSize = 0;

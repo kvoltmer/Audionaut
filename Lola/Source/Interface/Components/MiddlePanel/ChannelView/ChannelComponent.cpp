@@ -51,17 +51,27 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
     volumeSlider->onValueChange = [this, rowNumber] {
         audioTrack->setGain(Decibels::decibelsToGain(volumeSlider->getValue()), rowNumber);
     };
+    volumeSlider->onDragStart = [this] {
+        audioTrack->onDragStart();
+    };
+    
+    volumeSlider->onDragEnd = [this] {
+        audioTrack->onDragEnd();
+    };
     
     // pan slider
     panSlider = std::make_unique<juce::Slider>();
     addAndMakeVisible(panSlider.get());
     configurePanSlider(panSlider.get());
     panSlider->onValueChange = [this, rowNumber] {
-        //audioTrack->setGain(Decibels::decibelsToGain(volumeSlider->getValue()), rowNumber);
+        audioTrack->setPan(panSlider->getValue(), rowNumber);
     };
-    
-    // undo!
-    //panSlider->onDragStart
+    panSlider->onDragStart = [this] {
+        audioTrack->onDragStart();
+    };
+    panSlider->onDragEnd = [this] {
+        audioTrack->onDragEnd();
+    };
 
     setSize (AudiumLookAndFeel::channelsWidth, 100);
     
@@ -125,8 +135,11 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_,
     audioTrack = audioTrack_;
     rowNumber = rowNumber_;
 
-    auto gain = audioTrack->getGain(rowNumber);
-    volumeSlider->setValue(LevelMeter::gainToDecebel(gain), dontSendNotification);
+    
+    volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)),
+                           dontSendNotification);
+    
+    panSlider->setValue(audioTrack->getPan(rowNumber), dontSendNotification);
     
     if (not isTimerRunning())
     {

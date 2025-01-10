@@ -18,6 +18,8 @@
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Playback/Playback.h"
+#include "Engine/Playback/AudioBusRenderer.h"
+#include "Engine/Core/LockFreeCommander.h"
 
 using namespace audium;
 
@@ -44,15 +46,22 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto playback                   = std::make_shared<audium::Playback>();
     
-    auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback);
+    auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback);
+    
+    auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback, audioBusRenderer);
+    
+    auto lockFreeCommander          = std::make_shared<LockFreeCommander>(64);
     
     auto audioTrackContainer        = std::make_shared<AudioTrackContainer>(undoManager,
                                                                             tempoProvider,
                                                                             audioResourceContainer,
                                                                             transportSourceContainer,
-                                                                            selectionManager);
+                                                                            selectionManager,
+                                                                            lockFreeCommander);
     
     auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
+    
+    
     
     auto playListScheduler          = std::make_shared<PlayListScheduler>(audioTrackContainer,
                                                                           audioResourceContainer,
@@ -60,7 +69,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                           linkEngine,
                                                                           audioClipContainer,
                                                                           transportSourceContainer,
-                                                                          playback);
+                                                                          playback,
+                                                                          audioBusRenderer,
+                                                                          lockFreeCommander);
     
     auto linkAudioDevice            = std::make_shared<LinkAudioDevice>(linkEngine,
                                                                         playListScheduler);

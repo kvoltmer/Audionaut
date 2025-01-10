@@ -18,13 +18,17 @@ class AudioResource;
 
 namespace audium {
     class Playback;
+template <class>
+    class AudioBusRenderer;
 }
 
 class TransportSourceContainer
 {
 public:
-    TransportSourceContainer(std::shared_ptr<audium::Playback> playback_) :
-        playback(playback_)
+    TransportSourceContainer(std::shared_ptr<audium::Playback> playback_,
+                             std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer_) :
+        playback(playback_),
+        audioBusRenderer(audioBusRenderer_)
     {}
     ~TransportSourceContainer() = default;
     
@@ -43,13 +47,14 @@ public:
      
     void applyChannelMapping();
     
-    std::shared_ptr<audium::Playback> getPlayback() const { return playback; }
+    
+    // TODO: remove this workaround later
+    std::shared_ptr<audium::Playback> playback;
+    std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer;
     
 private:
     
     std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources;
-    
-    std::shared_ptr<audium::Playback> playback;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)
 };
