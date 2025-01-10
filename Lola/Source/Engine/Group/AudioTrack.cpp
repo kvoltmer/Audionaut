@@ -22,6 +22,8 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Resource/ChannelMapping.h"
 
+using namespace audium;
+
 AudioTrack::~AudioTrack()
 {
     cleanup();

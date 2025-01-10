@@ -156,7 +156,7 @@ public:
     
     double getTotalLength(audium::TimeContextType context, bool arrangementMode) const;
     
-    std::vector<DspClipData> getDspClipVector(bool arrangementMode) const;
+    std::vector<audium::DspClipData> getDspClipVector(bool arrangementMode) const;
     
 private:
     AudioTrackContainer &owner;

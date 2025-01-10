@@ -17,12 +17,11 @@
 void AudioChannel::setGain(const float new_gain)
 {
     data.gain = new_gain;
+    auto c = getChannelNumber() + audioTrack.getChannelOffset();
     
     // commit
-    auto lockFreeCommander = audioTrack.getAudioTrackContainer().lockFreeCommander;
-    lockFreeCommander->fifo.push([this] {
-        auto chan = getChannelNumber() + audioTrack.getChannelOffset();
-        audioTrack.getTransportSourceContainer()->audioBusRenderer->setGain(chan, data.gain);
+    audioTrack.getAudioTrackContainer().lockFreeCommander->fifo.push([this, c] {
+        audioTrack.getTransportSourceContainer()->audioBusRenderer->setGain(c, data.gain);
     });
 }
 
@@ -34,12 +33,11 @@ float AudioChannel::getGain() const noexcept
 void AudioChannel::setPan(const float new_pan)
 {
     data.pan = new_pan;
+    auto c = getChannelNumber() + audioTrack.getChannelOffset();
     
     // commit
-    auto lockFreeCommander = audioTrack.getAudioTrackContainer().lockFreeCommander;
-    lockFreeCommander->fifo.push([this] {
-        auto chan = getChannelNumber() + audioTrack.getChannelOffset();
-        audioTrack.getTransportSourceContainer()->audioBusRenderer->setPan(chan, data.pan);
+    audioTrack.getAudioTrackContainer().lockFreeCommander->fifo.push([this, c] {
+        audioTrack.getTransportSourceContainer()->audioBusRenderer->setPan(c, data.pan);
     });
 }
 
