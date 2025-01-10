@@ -212,6 +212,8 @@ bool PlayListContainer::writeToJson (json& output)
 
 bool PlayListContainer::readFromJson (json& input, bool rebuild)
 {
+    // TODO: handle rebuild
+    
     playListItems.cleanup();
     
     auto jsonPlayList = input["play_list"];

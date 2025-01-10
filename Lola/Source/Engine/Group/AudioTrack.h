@@ -18,6 +18,7 @@
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Selection/SelectableObjectContainer.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 class AudioResourceContainer;
 class AudioResource;
@@ -112,6 +113,10 @@ public:
     void setPan(float pan, int channelNumber);
     float getPan(int channelNumber) const;
     
+    // undo for continious parameters:
+    void onDragStart();
+    void onDragEnd();
+    
     // sub groups:
     std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition, audium::TimeContextType context);
     std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;
@@ -170,6 +175,8 @@ private:
     std::string name;
     
     juce::Colour groupColour = juce::Colours::pink;
+    
+    std::unique_ptr<audium::UndoableContainerAction> undoableContainerAction;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)
 

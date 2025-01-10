@@ -48,7 +48,7 @@ public:
     void applyChannelMapping();
     
     
-    // TODO: remove this later
+    // TODO: remove this workaround later
     std::shared_ptr<audium::Playback> playback;
     std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer;
     
