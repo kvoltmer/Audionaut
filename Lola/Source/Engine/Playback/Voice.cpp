@@ -11,13 +11,17 @@ namespace audium
 
 void Voice::processAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
-    if (processing.load() && transportSource != nullptr)
-    {
+    if (processing.load() && transportSource != nullptr) {
+        
+        info.clearActiveBufferRegion();
         transportSource->getNextAudioBlock(info);
         
         if (transportSource == nullptr ||
-            transportSource->isStopped())
-            stop();
+            transportSource->isStopped()) {
+            
+            processing.store(false);
+            transportSource = nullptr;
+        }
     }
 }
 
@@ -31,8 +35,6 @@ void Voice::stop()
 {
     if (transportSource != nullptr)
         transportSource->getAudioTransportSource()->stop();
-    processing.store(false);
-    transportSource = nullptr;
 }
 
 
