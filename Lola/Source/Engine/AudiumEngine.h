@@ -55,7 +55,7 @@ public:
     void createNewProject();
     
     void openFile (const juce::File& file, std::function<void (bool,std::string)> callback);
-    bool saveFile (const juce::File& file);
+    void saveFile (const juce::File& file, std::function<void (bool,std::string)> callback);
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
