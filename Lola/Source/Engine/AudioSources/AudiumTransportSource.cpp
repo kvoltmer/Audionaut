@@ -60,12 +60,14 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
     if (scheduledStartSample.load() == 0) {
         auto offset = 0;
         if (durationTimer.process(info.numSamples, offset)) {
+            // reached end of clip -> schedule stop
+            audioTransportSource->stop();
             if (offset > 0) {
                 AudioSourceChannelInfo infoStop (info);
                 infoStop.numSamples = offset;
                 mainSource->getNextAudioBlock(infoStop);
             }
-            stopIt();
+            
         }
         else {
             mainSource->getNextAudioBlock(info);
@@ -87,7 +89,7 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         if (durationTimer.process(infoPart2.numSamples, offset))
         {
             jassertfalse; // hu?
-            stopIt();
+            audioTransportSource->stop();
         }
         
     }
