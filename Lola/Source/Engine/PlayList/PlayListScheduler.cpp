@@ -166,19 +166,15 @@ juce::Range<double> PlayListScheduler::absoluteToLocalRange(juce::Range<double> 
 
 double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool addOverhead) const
 {
-    double totalLength = 0.0;
+    auto totalLength = totalLengthClocks.load();
+
+    if (context == audium::seconds)
+        totalLength = tempoProvider->clocksToSeconds(totalLength);
     
-    for (auto track : audioTrackContainer->getAudioTracks())
-    {
-        totalLength = juce::jmax(totalLength, track->getTotalLength(context, isArrangementMode()));
-    }
-        
-    if (addOverhead)
-    {
+    if (addOverhead) {
         // add overhead to fit entire arrangement arrangement
-        auto overhead = 4 * 96.0;
-        if (context == audium::seconds)
-        {
+        auto overhead = 8 * 96.0;
+        if (context == audium::seconds) {
             overhead = tempoProvider->clocksToSeconds(overhead);
         }
         
@@ -370,18 +366,15 @@ void PlayListScheduler::commitPlayListData()
 
     // commit data
     audioClipContainer->commit();
-        
-#if 0 // print resource id and it's postion
-    for (auto i = 0; i < dspClipArray.size(); i++)
-    {
-        if (dspClipArray[i].active)
-        {
-            std::cout << i << " res: " << dspClipArray[i].resourceIndex << " pos: " << dspClipArray[i].clipData.absolutePositionClocks << std::endl;
-        }
-    }
-#endif
     
     // update channel mapping
     transportSourceContainer->applyChannelMapping();
+    
+    // calc total length
+    double totalLength = 0.0;
+    for (auto track : audioTrackContainer->getAudioTracks()) {
+        totalLength = juce::jmax(totalLength, track->getTotalLength(audium::clocks, isArrangementMode()));
+    }
+    totalLengthClocks = totalLength;
     
 }

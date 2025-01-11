@@ -50,10 +50,6 @@ void PlayListContainerComponent::updateUI(UIContext context)
             playListComponent->updateUI();
         }
     }
-    
-    auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
-    totalLengthLabel->setText(TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
-    
 }
 
 void PlayListContainerComponent::createComponents()
@@ -120,6 +116,9 @@ void PlayListContainerComponent::resized()
 
 void PlayListContainerComponent::timerCallback()
 {
+    auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
+    totalLengthLabel->setText(TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
+    
     auto numVoices = audiumEngine->getAudioTrackContainer()->getTransportSourceContainer()->playback->getNumVoices();
     numVoicesLabel->setText("Voices " + juce::String(numVoices), juce::dontSendNotification);
 }
