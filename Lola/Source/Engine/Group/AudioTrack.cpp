@@ -239,8 +239,10 @@ void AudioTrack::ensureNumChannels(int channelsNeeded)
 
 std::shared_ptr<AudioChannel> AudioTrack::addChannel()
 {
-    auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this,                                                                  
-                                                                  selectionManager));
+    auto channel = std::make_shared<AudioChannel>(*this,
+                                                  selectionManager,
+                                                  getAudioTrackContainer().lockFreeCommander,
+                                                  getTransportSourceContainer()->audioBusRenderer);
     audioChannelContainer->push_back(channel);
     return channel;
 }

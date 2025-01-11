@@ -20,8 +20,9 @@ void AudioChannel::setGain(const float new_gain)
     auto c = getChannelNumber() + audioTrack.getChannelOffset();
     
     // commit
-    audioTrack.getAudioTrackContainer().lockFreeCommander->fifo.push([this, c] {
-        audioTrack.getTransportSourceContainer()->audioBusRenderer->setGain(c, data.gain);
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push([ptr, c, new_gain] {
+        ptr->setGain(c, new_gain);
     });
 }
 
@@ -36,8 +37,9 @@ void AudioChannel::setPan(const float new_pan)
     auto c = getChannelNumber() + audioTrack.getChannelOffset();
     
     // commit
-    audioTrack.getAudioTrackContainer().lockFreeCommander->fifo.push([this, c] {
-        audioTrack.getTransportSourceContainer()->audioBusRenderer->setPan(c, data.pan);
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push([ptr, c, new_pan] {
+        ptr->setPan(c, new_pan);
     });
 }
 
