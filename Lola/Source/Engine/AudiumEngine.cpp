@@ -155,11 +155,11 @@ bool AudiumEngine::writeToStream (juce::OutputStream& outputStream)
 
 bool AudiumEngine::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
-    if (audium::Streamable::readFromStream(inputStream))
-    {
-        return true;
-    }
-    return false;
+    setBypass(true);
+    auto result = audium::Streamable::readFromStream(inputStream);
+    // std::cout << "AudiumEngine::readFromStream done" << std::endl;
+    setBypass(false);
+    return result;
 }
 
 bool AudiumEngine::writeToJson (json& output)

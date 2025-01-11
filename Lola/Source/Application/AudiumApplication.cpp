@@ -37,8 +37,15 @@ juce::ApplicationCommandManager& AudiumApplication::getCommandManager()
 
 void AudiumApplication::initialise (const juce::String& commandLine)
 {
-    Preferences::init(getApplicationName());
     LookAndFeel::setDefaultLookAndFeel (&lookAndFeel);
+    
+    Preferences::init(getApplicationName());
+    
+    if (Preferences::valueExists(PreferenceKeys::recentFiles)) {
+        recentFiles.restoreFromString (Preferences::getValue (PreferenceKeys::recentFiles));
+        recentFiles.removeNonExistentFiles();
+    }
+    
     initCommandManager();
     
     // create audium engine
@@ -73,15 +80,7 @@ void AudiumApplication::handleAsyncUpdate()
     
     if (Preferences::valueExists(PreferenceKeys::defaultFile)) {
         const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
-        audiumEngine->openFile(file, [file] (bool openedSuccessfully, std::string error) {
-            if (!openedSuccessfully) {
-                juce::String errorMessage(error);
-                juce::String filename = file.getFileName();
-                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                            "Error",
-                                                            "Failed to open " + filename +"\n\n" + errorMessage);
-            }
-        });
+        openFile(juce::File(Preferences::getValue(PreferenceKeys::defaultFile)));
     }
     
     if (!audiumEngine->getCurrentFile().exists()) {
@@ -95,10 +94,7 @@ void AudiumApplication::shutdown()
 {
     // Add your application's shutdown code here..
     
-    Preferences::setValue(PreferenceKeys::initialOpenDirectory, initialOpenDirectory.getFullPathName());
-    Preferences::setValue(PreferenceKeys::initialSaveDirectory, initialSaveDirectory.getFullPathName());
-    
-    Preferences::synchronize();
+    updateSettings();
 
 #if JUCE_MAC
     MenuBarModel::setMacMainMenu (nullptr);
@@ -210,6 +206,9 @@ PopupMenu AudiumApplication::createMenu (const String& menuName)
     return {};
 }
 
+int recentProjectsBaseID = 100;
+
+
 PopupMenu AudiumApplication::createFileMenu()
 {
     PopupMenu menu;
@@ -218,17 +217,15 @@ PopupMenu AudiumApplication::createFileMenu()
     menu.addCommandItem (commandManager.get(), CommandIDs::openProject);
 
     {
-        PopupMenu recentFiles;
+        PopupMenu recentFilesMenu;
+        recentFiles.createPopupMenuItems (recentFilesMenu, recentProjectsBaseID, true, true);
 
-        //settings->recentFiles.createPopupMenuItems (recentFiles, recentProjectsBaseID, true, true);
-
-        if (recentFiles.getNumItems() > 0)
-        {
-            recentFiles.addSeparator();
-            recentFiles.addCommandItem (commandManager.get(), CommandIDs::clearRecentFiles);
+        if (recentFilesMenu.getNumItems() > 0) {
+            recentFilesMenu.addSeparator();
+            recentFilesMenu.addCommandItem (commandManager.get(), CommandIDs::clearRecentFiles);
         }
 
-        menu.addSubMenu ("Open Recent", recentFiles);
+        menu.addSubMenu ("Open Recent", recentFilesMenu);
     }
 
     menu.addSeparator();
@@ -244,8 +241,6 @@ PopupMenu AudiumApplication::createFileMenu()
     menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
     menu.addCommandItem (commandManager.get(), CommandIDs::showSettingsWindow);
 //    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::enableNewVersionCheck);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::showGlobalPathsWindow);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::quit);
    #endif
@@ -305,11 +300,9 @@ PopupMenu AudiumApplication::createExtraAppleMenuItems()
 
 void AudiumApplication::handleMainMenuCommand (int menuItemID)
 {
-//    if (menuItemID >= recentProjectsBaseID && menuItemID < (recentProjectsBaseID + 100))
-//    {
-//        // open a file from the "recent files" menu
-//        openFile (settings->recentFiles.getFile (menuItemID - recentProjectsBaseID), nullptr);
-//    }
+    if (menuItemID >= recentProjectsBaseID && menuItemID < (recentProjectsBaseID + 100)) {
+        openFile (recentFiles.getFile (menuItemID - recentProjectsBaseID));
+    }
 }
 
 //==============================================================================
@@ -317,15 +310,14 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
 {
     JUCEApplication::getAllCommands (commands);
 
-    const CommandID ids[] = { CommandIDs::newProject,
+    const CommandID ids[] = {   CommandIDs::newProject,
                                 CommandIDs::openProject,
                                 CommandIDs::defaultProject,
                                 CommandIDs::saveProject,
                                 CommandIDs::saveProjectAs,
-        CommandIDs::showAboutWindow,
-        CommandIDs::showSettingsWindow,
-                                //CommandIDs::bounceProject,
-            
+                                CommandIDs::showAboutWindow,
+                                CommandIDs::showSettingsWindow,
+                                CommandIDs::clearRecentFiles,
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -369,6 +361,10 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::checkForNewVersion:
         result.setInfo ("Check for New Version...", "Checks the web server for a new version", CommandCategories::general, 0);
         break;
+    case CommandIDs::clearRecentFiles:
+        result.setInfo ("Clear Recent Files", "Clears all recent files from the menu", CommandCategories::general, 0);
+        result.setActive (recentFiles.getNumFiles() > 0);
+        break;
 
     default:
         JUCEApplication::getCommandInfo (commandID, result);
@@ -387,22 +383,18 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             askUserToOpenFile();
             break;
         case CommandIDs::defaultProject:
-            if (audiumEngine->getCurrentFile() != File{})
-            {
+            if (audiumEngine->getCurrentFile() != File()) {
                 Preferences::setValue(PreferenceKeys::defaultFile, audiumEngine->getCurrentFile().getFullPathName());
             }
-            else
-            {
+            else {
                 Preferences::removeKey(PreferenceKeys::defaultFile);
             }
             break;
         case CommandIDs::saveProject:
-            if (audiumEngine->getCurrentFile() == File{})
-            {
+            if (audiumEngine->getCurrentFile() == File()) {
                 saveProjectAs(nullptr);
             }
-            else
-            {
+            else {
                 saveProject(nullptr);
             }
             break;
@@ -414,6 +406,9 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             break;
         case CommandIDs::showSettingsWindow:
             showSettingsDialog();
+            break;
+        case CommandIDs::clearRecentFiles:
+            clearRecentFiles();
             break;
 
         default:
@@ -457,23 +452,28 @@ void AudiumApplication::askUserToOpenFile()
         auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles;
 
         chooser->launchAsync (flags, [this] (const FileChooser& fc) {
-            const auto file = fc.getResult();
-
-            if (file != File()) {
-                audiumEngine->openFile(file, [this, file](bool success, std::string error) {
-                    if (success) {
-                        updateUI();
-                        initialOpenDirectory = file.getParentDirectory();
-                    }
-                    else {
-                        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                              "Error",
-                                                              "Failed to open " + file.getFileName() +"\n\n" + String(error));
-                    }
-                });
-            }
+            openFile(fc.getResult());
         });
         
+    });
+}
+
+void AudiumApplication::openFile(juce::File file)
+{
+    audiumEngine->openFile(file, [this, file](bool success, std::string error) {
+        if (success) {
+            updateUI();
+            initialOpenDirectory = file.getParentDirectory();
+            
+            RecentlyOpenedFilesList::registerRecentFileNatively (file);
+            recentFiles.addFile (file);
+            updateSettings();
+        }
+        else {
+            NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                  "Error",
+                                                  "Failed to open " + file.getFileName() +"\n\n" + String(error));
+        }
     });
 }
 
@@ -536,4 +536,20 @@ void AudiumApplication::showSettingsDialog()
     if (settingsDialog == nullptr)
         settingsDialog = std::make_shared<SettingsDialog>(audiumEngine);
     settingsDialog->invoke(mainWindow->getContentComponent());
+}
+
+void AudiumApplication::clearRecentFiles()
+{
+    recentFiles.clear();
+    recentFiles.clearRecentFilesNatively();
+    updateSettings();
+    menuModel->menuItemsChanged();
+}
+
+void AudiumApplication::updateSettings()
+{
+    Preferences::setValue(PreferenceKeys::initialOpenDirectory, initialOpenDirectory.getFullPathName());
+    Preferences::setValue(PreferenceKeys::initialSaveDirectory, initialSaveDirectory.getFullPathName());
+    Preferences::setValue(PreferenceKeys::recentFiles, recentFiles.toString());
+    Preferences::synchronize();
 }
