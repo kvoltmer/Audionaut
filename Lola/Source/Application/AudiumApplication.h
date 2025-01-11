@@ -65,6 +65,7 @@ public:
     void askUserToOpenFile();
     void saveProjectAs(std::function<void (bool)> callback);
     void saveProject(std::function<void (bool)> callback);
+    void saveProjectToFile(juce::File file, std::function<void (bool)> callback);
     void updateUI();
     
     

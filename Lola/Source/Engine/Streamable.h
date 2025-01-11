@@ -37,17 +37,11 @@ public:
     virtual bool readFromStream (juce::InputStream& inputStream, bool rebuild = true)
     {
         auto inputString = inputStream.readString().toStdString();
-
-        json data = json::parse(inputString);
-        
-//        json compare;
-//        writeToJson(compare);
-//        if (compare == data)
-//        {
-//            std::cout << "data is equal" << std::endl;
-//        }
-        
-        return readFromJson(data, rebuild);
+        if (inputString.empty())
+            throw std::runtime_error("empty input string");
+    
+        auto json = json::parse(inputString);
+        return readFromJson(json, rebuild);
     }
 
     virtual bool writeToJson (json& output) { return false; }
