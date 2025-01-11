@@ -147,5 +147,7 @@ private:
     
     std::atomic<bool> forcePosition = false;
         
+    std::atomic<double> totalLengthClocks = 0.0;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

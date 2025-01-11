@@ -125,8 +125,16 @@ public:
         }
         else if (context == ArrangementContext)
         {
-            arrangementComponent->updateUI();
-            editComponent->updateUI();
+            if (arrangementComponent->isVisible()) {
+                arrangementComponent->updateUI();
+            }
+            else if (editComponent->isVisible()) {
+                editComponent->updateUI();
+            }
+            else {
+                jassertfalse;
+            }
+            
         }
     }
     

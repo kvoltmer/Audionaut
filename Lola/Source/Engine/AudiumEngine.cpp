@@ -80,6 +80,7 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
                 {
                     currentFile = file;
                     undoManager->clearUndoHistory();
+                    playListScheduler->commitPlayListData();
                     NullCheckedInvocation::invoke (callback, true, "");
                     return;
                 }
