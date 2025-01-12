@@ -238,12 +238,3 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     return true;
 }
 
-
-void AudioResource::setSelected(bool bSelected, bool deselectOthers)
-{
-    if (deselectOthers)
-        owner.deselectAllResources();
-
-    selected = bSelected;
-}
-

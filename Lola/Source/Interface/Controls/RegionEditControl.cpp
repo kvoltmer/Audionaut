@@ -74,7 +74,7 @@ void RegionEditControl::mouseDown (const juce::MouseEvent& e)
         audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().deselectAll();
     }
     audioRegion->setSelected(e.mods.isCommandDown() ? !audioRegion->isSelected() : true);
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(regionSelectedAction);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
 
     currentDragMode = getDragMode(e.getPosition().getX());
     

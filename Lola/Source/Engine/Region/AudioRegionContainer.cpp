@@ -67,7 +67,6 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
     auto audioRegion = createRegion(track, subGroup);
     audioRegion->setRegionData(position, context);
     audioRegion->setName(regionName);
-    audioTrackContainer.sendActionMessage(regionCreatedAction);
     return audioRegion;
 }
 

@@ -208,14 +208,4 @@ void AudioResourceContainer::onDeleteChannel(AudioTrack* audioTrack, AudioChanne
     }
 }
 
-void AudioResourceContainer::deselectAllResources()
-{
-    for (auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
-    {
-        it->second->setSelected(false, false);
-    }
-    
-    sendActionMessage(audioResourceSelectedAction);
-}
-
 

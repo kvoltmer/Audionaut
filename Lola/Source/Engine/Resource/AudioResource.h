@@ -75,9 +75,6 @@ public:
     
     std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
-    
-    void setSelected(bool bSelected, bool deselectOthers);
-    bool isSelected() const { return selected; }
         
     audium::ChannelMapping &getChannelMapping() const { return *channelMapping.get();}
 
@@ -94,8 +91,6 @@ private:
     std::unique_ptr<juce::AudioFormatReader> audioFormatReader;
     
     std::unique_ptr<audium::ChannelMapping> channelMapping;
-    
-    bool selected = false;
 
     double lengthInSeconds = 1.0;
     int numChannels = 1;
