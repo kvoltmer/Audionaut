@@ -241,8 +241,7 @@ std::shared_ptr<AudioChannel> AudioTrack::addChannel()
 {
     auto channel = std::make_shared<AudioChannel>(*this,
                                                   selectionManager,
-                                                  getAudioTrackContainer().lockFreeCommander,
-                                                  getTransportSourceContainer()->audioBusRenderer);
+                                                  getAudioTrackContainer().audioBusInterface);
     audioChannelContainer->push_back(channel);
     return channel;
 }
@@ -270,8 +269,10 @@ int AudioTrack::getTotalHeight() const
 
 const float AudioTrack::getOutputLevel(int channelNumber) const
 {
-    // adding the track's channel offset
-    return transportSourceContainer->getOutputLevel(channelNumber + getChannelOffset());
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        return channel->getOutputLevel();
+    }
+    return 0.f;
 }
 
 void AudioTrack::setGain(float gain, int channelNumber) {

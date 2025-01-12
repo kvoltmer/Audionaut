@@ -18,7 +18,7 @@
 
 
 
-/// The Audium engine
+/// The Audium factory
 class AudiumFactory {
     
 public:

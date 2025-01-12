@@ -129,6 +129,10 @@
           <FILE id="Rf1W4c" name="LinkEngine.hpp" compile="0" resource="0" file="Source/Engine/Link/LinkEngine.hpp"/>
         </GROUP>
         <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback">
+          <FILE id="kbi6z3" name="AudioBusInterface.cpp" compile="1" resource="0"
+                file="Source/Engine/Playback/AudioBusInterface.cpp"/>
+          <FILE id="hFhhDN" name="AudioBusInterface.h" compile="0" resource="0"
+                file="Source/Engine/Playback/AudioBusInterface.h"/>
           <FILE id="isjbav" name="AudioBusRenderer.cpp" compile="1" resource="0"
                 file="Source/Engine/Playback/AudioBusRenderer.cpp"/>
           <FILE id="JTNbDj" name="AudioBusRenderer.h" compile="0" resource="0"
@@ -143,6 +147,8 @@
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
           <FILE id="sr2twv" name="PlayListSchedulerData.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListSchedulerData.h"/>
+          <FILE id="iIqNIF" name="PositionableBase.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/PositionableBase.cpp"/>
           <FILE id="iREjhA" name="PositionableBase.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PositionableBase.h"/>
           <FILE id="UTFjED" name="SampleTimer.h" compile="0" resource="0" file="Source/Engine/PlayList/SampleTimer.h"/>
