@@ -74,8 +74,6 @@ public:
     
     typedef std::pair<std::shared_ptr<AudioTrack>, std::shared_ptr<AudioResource>> tAudioTrackPair;
     
-    void deselectAllResources();
-    
     juce::TimeSliceThread *getReadAheadThread() { return &thread; }
         
 private:

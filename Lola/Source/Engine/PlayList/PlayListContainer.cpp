@@ -136,14 +136,10 @@ bool PlayListContainer::deletePlayListItem(PlayListItem* playListItem) {
     return playListItems.deleteObject(playListItem);
 }
 
-void PlayListContainer::deletePlayListItem(int atIndex, bool sendNotification)
+void PlayListContainer::deletePlayListItem(int atIndex)
 {
-    if (atIndex >= 0 && atIndex < playListItems.size())
-    {
+    if (atIndex >= 0 && atIndex < playListItems.size()) {
         deletePlayListItem(playListItems.getObjects()[atIndex].get());
-        
-        if (sendNotification)
-            audioRegionContainer.getAudioTrackContainer().sendActionMessage(playListDeletedAction);
     }
 }
 
@@ -154,7 +150,7 @@ bool PlayListContainer::deleteAssociatedItems(const AudioRegion* audioRegion)
     {
         if (playListItems.getObjects()[i]->getRegion().get() == audioRegion)
         {
-            deletePlayListItem(i, false);
+            deletePlayListItem(i);
             success = true;
         }
     }

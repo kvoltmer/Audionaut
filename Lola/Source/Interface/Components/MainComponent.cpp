@@ -146,39 +146,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
 {
     //std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
 
-    if (message == regionCreatedAction)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == regionClearedAction)
-    {
-        rightPanelComponent->clearSelection();
-    }
-    else if (message == regionModifiedAction)
-    {
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == regionSelectedAction)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == playListItemCreatedAction)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == playListItemTriggered)
-    {
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == audioResourceCreatedAction)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI();
-    }
-    else if (message == scrolledVertically)
+    if (message == scrolledVertically)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::VerticalScrollContext);
     }
