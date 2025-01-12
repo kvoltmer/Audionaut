@@ -108,28 +108,19 @@ public:
                       audium::ExportAudioConfig &config,
                       std::function<void ()> callback);
     
-    audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
-    
+    std::shared_ptr<audium::LinkEngine> getLinkEngine() const { return linkEngine; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
-    
-    // TODO: maybe move this to class PositionableBase
-    static juce::Range<double> absoluteToLocalRange(juce::Range<double> absoluteRange, const PlayListItem* item, audium::TimeContextType context);
-    static double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context);
-    static juce::Range<double> absoluteToLocalRange(juce::Range<double> absoluteRange, std::shared_ptr<AudioSubGroup> subGroup, audium::TimeContextType context);
+    std::shared_ptr<audium::Playback> getPlayback() const { return playback; }
     
     void commitPlayListData();
     
     PlayListSchedulerData data;
-    
 
-
-    
 private:
     
     // process sequencing
     void process(double absolutePosition, int numSamples);
     
-private:
     
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;

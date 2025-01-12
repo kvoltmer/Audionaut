@@ -14,16 +14,11 @@
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
 
-void AudioChannel::setGain(const float new_gain)
+void AudioChannel::setGain(const float newGain)
 {
-    data.gain = new_gain;
+    data.gain = newGain;
     auto c = getChannelNumber() + audioTrack.getChannelOffset();
-    
-    // commit
-    auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, c, new_gain] {
-        ptr->setGain(c, new_gain);
-    });
+    audioBusInterface->setGain(c, newGain);
 }
 
 float AudioChannel::getGain() const noexcept
@@ -31,16 +26,11 @@ float AudioChannel::getGain() const noexcept
     return data.gain;
 }
 
-void AudioChannel::setPan(const float new_pan)
+void AudioChannel::setPan(const float newPan)
 {
-    data.pan = new_pan;
+    data.pan = newPan;
     auto c = getChannelNumber() + audioTrack.getChannelOffset();
-    
-    // commit
-    auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, c, new_pan] {
-        ptr->setPan(c, new_pan);
-    });
+    audioBusInterface->setPan(c, newPan);
 }
 
 float AudioChannel::getPan() const noexcept
@@ -52,4 +42,9 @@ void AudioChannel::commitChannelData()
 {
     setGain(data.gain);
     setPan(data.pan);
+}
+
+const float AudioChannel::getOutputLevel() const
+{
+    return audioBusInterface->getOutputLevel(getChannelNumber());
 }

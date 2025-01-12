@@ -119,6 +119,6 @@ void PlayListContainerComponent::timerCallback()
     auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
     totalLengthLabel->setText(TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
     
-    auto numVoices = audiumEngine->getAudioTrackContainer()->getTransportSourceContainer()->playback->getNumVoices();
+    auto numVoices = audiumEngine->getPlayListScheduler()->getPlayback()->getNumVoices();
     numVoicesLabel->setText("Voices " + juce::String(numVoices), juce::dontSendNotification);
 }

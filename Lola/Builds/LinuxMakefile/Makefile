@@ -94,9 +94,11 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioSubGroup_8caaf481.o \
   $(JUCE_OBJDIR)/LinkAudioDevice_ad84cc6b.o \
   $(JUCE_OBJDIR)/LinkEngine_c7ee2fcd.o \
+  $(JUCE_OBJDIR)/AudioBusInterface_816dcfe9.o \
   $(JUCE_OBJDIR)/AudioBusRenderer_7f6f5a1d.o \
   $(JUCE_OBJDIR)/Playback_61ca68b.o \
   $(JUCE_OBJDIR)/Voice_f531b98c.o \
+  $(JUCE_OBJDIR)/PositionableBase_8b3640ed.o \
   $(JUCE_OBJDIR)/PlayListContainer_29209da0.o \
   $(JUCE_OBJDIR)/PlayListItem_8cc1eb1e.o \
   $(JUCE_OBJDIR)/PlayListScheduler_18e264da.o \
@@ -284,6 +286,11 @@ $(JUCE_OBJDIR)/LinkEngine_c7ee2fcd.o: ../../Source/Engine/Link/LinkEngine.cpp
 	@echo "Compiling LinkEngine.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/AudioBusInterface_816dcfe9.o: ../../Source/Engine/Playback/AudioBusInterface.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AudioBusInterface.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/AudioBusRenderer_7f6f5a1d.o: ../../Source/Engine/Playback/AudioBusRenderer.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AudioBusRenderer.cpp"
@@ -297,6 +304,11 @@ $(JUCE_OBJDIR)/Playback_61ca68b.o: ../../Source/Engine/Playback/Playback.cpp
 $(JUCE_OBJDIR)/Voice_f531b98c.o: ../../Source/Engine/Playback/Voice.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling Voice.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/PositionableBase_8b3640ed.o: ../../Source/Engine/PlayList/PositionableBase.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling PositionableBase.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/PlayListContainer_29209da0.o: ../../Source/Engine/PlayList/PlayListContainer.cpp

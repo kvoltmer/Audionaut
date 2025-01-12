@@ -13,7 +13,6 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Playback/Playback.h"
-#include "Engine/Playback/AudioBusRenderer.h"
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(AudioResource& audioResource,
                                                                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
@@ -66,11 +65,6 @@ int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTran
         return static_cast<int>(std::distance(audioTransportSources.begin(), it));
 
     return -1;
-}
-
-const float TransportSourceContainer::getOutputLevel(const int channelNumber) const
-{
-    return audioBusRenderer->getOutputLevel(channelNumber);
 }
 
 void TransportSourceContainer::applyChannelMapping()

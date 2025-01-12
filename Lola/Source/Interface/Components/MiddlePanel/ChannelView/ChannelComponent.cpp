@@ -135,14 +135,10 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_,
     audioTrack = audioTrack_;
     rowNumber = rowNumber_;
 
-    
-    volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)),
-                           dontSendNotification);
-    
+    volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)), dontSendNotification);
     panSlider->setValue(audioTrack->getPan(rowNumber), dontSendNotification);
     
-    if (not isTimerRunning())
-    {
+    if (not isTimerRunning()) {
         startTimerHz(60);
     }
 }
