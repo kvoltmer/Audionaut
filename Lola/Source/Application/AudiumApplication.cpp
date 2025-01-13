@@ -219,7 +219,7 @@ PopupMenu AudiumApplication::createFileMenu()
     {
         PopupMenu recentFilesMenu;
         recentFiles.createPopupMenuItems (recentFilesMenu, recentProjectsBaseID, true, true);
-
+        // std::cout << "recentFiles.createPopupMenuItems" << std::endl;
         if (recentFilesMenu.getNumItems() > 0) {
             recentFilesMenu.addSeparator();
             recentFilesMenu.addCommandItem (commandManager.get(), CommandIDs::clearRecentFiles);
@@ -301,7 +301,13 @@ PopupMenu AudiumApplication::createExtraAppleMenuItems()
 void AudiumApplication::handleMainMenuCommand (int menuItemID)
 {
     if (menuItemID >= recentProjectsBaseID && menuItemID < (recentProjectsBaseID + 100)) {
-        openFile (recentFiles.getFile (menuItemID - recentProjectsBaseID));
+        askToSaveIfDirtyAndInvoke([this, menuItemID](void) {
+            openFile (recentFiles.getFile (menuItemID - recentProjectsBaseID));
+        
+            // will update the open recent menu
+            commandManager->commandStatusChanged();
+            
+        });
     }
 }
 
@@ -486,7 +492,10 @@ void AudiumApplication::saveProjectAs(std::function<void (bool)> callback)
 
     chooser->launchAsync (flags, [this, callback] (const FileChooser& fc)
     {
-        saveProjectToFile(fc.getResult(), callback);
+        auto file = fc.getResult();
+        saveProjectToFile(file, callback);
+        RecentlyOpenedFilesList::registerRecentFileNatively (file);
+        recentFiles.addFile (file);
     });
 
 }
