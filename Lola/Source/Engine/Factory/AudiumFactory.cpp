@@ -85,7 +85,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                      audioResourceContainer,
                                                                      playListScheduler,
                                                                      linkAudioDevice,
-                                                                     undoManager);
+                                                                     undoManager,
+                                                                     audioBusInterface);
     return audiumEngine;
 }
 

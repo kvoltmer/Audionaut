@@ -71,6 +71,9 @@ private:
 
     int rowNumber = 0;
     
+    // used for timer updates
+    int channelNumber = -1;
+    
     static void configureVolumeSlider(juce::Slider *slider);
     static void configurePanSlider(juce::Slider *slider);
     

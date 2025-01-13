@@ -49,9 +49,7 @@ public:
         auto channel = std::dynamic_pointer_cast<const AudioChannel>(getSharedPtr());
         return audioTrack.audioChannelContainer->getIndex(channel);
     }
-    
-    const float getOutputLevel() const;
-    
+        
     AudioChannelData data;
     
     AudioTrack &getAudioTrack() const { return audioTrack; }

@@ -46,11 +46,6 @@ std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResources() cons
     return audioResourceContainer.getAudioResourcesForTrack(const_cast<AudioTrack*>(this));
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const
-{
-    return audioResourceContainer.getAudioResourcesForTrackAtAbsoluteRange(const_cast<AudioTrack*>(this), rangeInSeconds);
-}
-
 std::shared_ptr<AudioSubGroup> AudioTrack::getSubGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const
 {
     for (auto subGroup : audioSubGroupContainer->getObjects()) {
@@ -265,14 +260,6 @@ int AudioTrack::getTotalHeight() const
         height += getChannel(c)->getChannelHeight();
     }
     return height;
-}
-
-const float AudioTrack::getOutputLevel(int channelNumber) const
-{
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
-        return channel->getOutputLevel();
-    }
-    return 0.f;
 }
 
 void AudioTrack::setGain(float gain, int channelNumber) {

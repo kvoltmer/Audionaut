@@ -7,6 +7,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/AudiumLookAndFeel.h"
+#include "Engine/Playback/AudioBusInterface.h"
 
 ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
                                     std::shared_ptr<AudiumEngine> engine_,
@@ -135,6 +136,8 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_,
     audioTrack = audioTrack_;
     rowNumber = rowNumber_;
 
+    channelNumber = audioTrack->getChannel(rowNumber)->getChannelNumber();
+    
     volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)), dontSendNotification);
     panSlider->setValue(audioTrack->getPan(rowNumber), dontSendNotification);
     
@@ -145,7 +148,8 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_,
 
 void ChannelComponent::timerCallback()
 {
-    levelMeter->setLevel(audioTrack->getOutputLevel(rowNumber));
+    auto lvl = engine->getAudioBusInterface()->getOutputLevel(channelNumber);
+    levelMeter->setLevel(lvl);
 }
 
 void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
