@@ -125,7 +125,7 @@ private:
 class AudioThumbnail::LevelDataSource final : public TimeSliceClient
 {
 public:
-    LevelDataSource (AudioThumbnail& thumb, AudioFormatReader* newReader, int64 hash)
+    LevelDataSource (AudioThumbnail& thumb, std::shared_ptr<AudioFormatReader> newReader, int64 hash)
         : hashCode (hash), owner (thumb), reader (newReader)
     {
     }
@@ -156,8 +156,9 @@ public:
             numChannels = reader->numChannels;
             sampleRate = reader->sampleRate;
 
-            if (lengthInSamples <= 0 || isFullyLoaded())
-                reader.reset();
+            if (lengthInSamples <= 0 || isFullyLoaded()) {
+                ; // do nothing
+            }
             else
                 owner.cache.getTimeSliceThread().addTimeSliceClient (this);
         }
@@ -191,8 +192,6 @@ public:
 
     void releaseResources()
     {
-        const ScopedLock sl (readerLock);
-        reader.reset();
     }
 
     int useTimeSlice() override
@@ -249,7 +248,7 @@ public:
 private:
     AudioThumbnail& owner;
     std::unique_ptr<InputSource> source;
-    std::unique_ptr<AudioFormatReader> reader;
+    std::shared_ptr<AudioFormatReader> reader;
     CriticalSection readerLock;
     std::atomic<uint32> lastReaderUseTime { 0 };
 
@@ -763,12 +762,26 @@ bool AudioThumbnail::setSource (InputSource* const newSource)
     return newSource != nullptr && setDataSource (new LevelDataSource (*this, newSource));
 }
 
-void AudioThumbnail::setReader (AudioFormatReader* newReader, int64 hash)
+
+void AudioThumbnail::setReader (std::shared_ptr<AudioFormatReader> newReader, int64 hash)
 {
     clear();
 
     if (newReader != nullptr)
         setDataSource (new LevelDataSource (*this, newReader, hash));
+}
+
+void AudioThumbnail::setReader (AudioFormatReader* newReader, int64 hash)
+{
+    // not tested!
+    jassertfalse;
+    
+    clear();
+
+    if (newReader != nullptr) {
+        std::shared_ptr<AudioFormatReader> sharedReader(newReader);
+        setDataSource (new LevelDataSource (*this, sharedReader, hash));
+    }
 }
 
 void AudioThumbnail::setSource (const AudioBuffer<float>* newSource, double rate, int64 hash)
