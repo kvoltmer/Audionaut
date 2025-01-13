@@ -41,22 +41,18 @@ public:
     static std::shared_ptr<juce::AudioFormatReader> createAudioFormatReader(juce::URL url,
                                                                       juce::AudioFormatManager& formatManager)
     {
-
         if (auto audioFormat = formatManager.findFormatForFileExtension(url.getLocalFile().getFileExtension())) {
-            if (auto inputSource = std::make_unique<juce::URLInputSource>(url)) {
+            
+            auto reader = std::shared_ptr<AudioFormatReader>(audioFormat->createMemoryMappedReader(url.getLocalFile()));
+            if (reader != nullptr) {
+                if (auto memReader = dynamic_cast<juce::MemoryMappedAudioFormatReader*>(reader.get())) {
+                    memReader->mapEntireFile();
+                }
+                return reader;
+            }
+            else if (auto inputSource = std::make_unique<juce::URLInputSource>(url)) {
                 if (auto stream = rawToUniquePtr (inputSource->createInputStream())) {
-                    
-                    auto reader = std::shared_ptr<AudioFormatReader>(audioFormat->createMemoryMappedReader(url.getLocalFile()));
-                    if (reader != nullptr) {
-                        if (auto memReader = dynamic_cast<juce::MemoryMappedAudioFormatReader*>(reader.get())) {
-                            memReader->mapEntireFile();
-                        }
-                    }
-                    else {
-                        reader = std::shared_ptr<juce::AudioFormatReader>(audioFormat->createReaderFor(stream.release(), false));
-                    }
-                    
-                    return reader;
+                    return std::shared_ptr<juce::AudioFormatReader>(audioFormat->createReaderFor(stream.release(), false));
                 }
             }
         }

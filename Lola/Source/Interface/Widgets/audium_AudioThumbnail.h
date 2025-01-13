@@ -80,6 +80,8 @@ public:
     */
     void setReader (AudioFormatReader* newReader, int64 hashCode) override;
 
+    void setReader (std::shared_ptr<AudioFormatReader> newReader, int64 hashCode);
+    
     /** Sets an AudioBuffer as the source for the thumbnail.
 
         The buffer contents aren't copied and you must ensure that the lifetime of the buffer is
