@@ -61,7 +61,7 @@ public:
         //auto sourceSamplesPerThumbnailSample = 4096*4;
         audioThumbnail.reset(new audium::AudioThumbnail(sourceSamplesPerThumbnailSample, *formatManager, *thumbnailCache));
         audioThumbnail->setColour(colour);
-        if (auto inputSource = AudioResourceFactory::makeAudioInputSource(audioResource->getUrl()))
+        if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl()))
         {
             //audioThumbnail->setReader(audioResource->getAudioFormatReader().get(), inputSource->hashCode());
             audioThumbnail->setSource(inputSource.release());

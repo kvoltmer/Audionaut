@@ -39,6 +39,8 @@ public:
     
     ~AudioResourceContainer();
     
+    std::shared_ptr<AudioResource> findResourceWithUrl(juce::URL url) const;
+    
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      std::shared_ptr<AudioTrack> track,
                                                      std::shared_ptr<AudioSubGroup> subGroup,
