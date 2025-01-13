@@ -46,5 +46,9 @@ void AudioChannel::commitChannelData()
 
 const float AudioChannel::getOutputLevel() const
 {
-    return audioBusInterface->getOutputLevel(getChannelNumber());
+    auto channel = getAudioTrack().getChannelOffset() + getChannelNumber();
+    if (audioBusInterface)
+        return audioBusInterface->getOutputLevel(channel);
+
+    return 0.f;
 }
