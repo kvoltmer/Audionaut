@@ -39,7 +39,8 @@ public:
                   std::shared_ptr<AudioTrack> audioTrack,
                   std::shared_ptr<AudioSubGroup> audioSubGroup,
                   juce::URL url,
-                  int channelPosition);
+                  int channelPosition,
+                  std::shared_ptr<juce::AudioFormatReader> reader);
     
     virtual ~AudioResource() override;
 
@@ -78,6 +79,9 @@ public:
         
     audium::ChannelMapping &getChannelMapping() const { return *channelMapping.get();}
 
+    // shared between resources
+    std::shared_ptr<juce::AudioFormatReader> audioFormatReader;
+    
 private:
 
     AudioResourceContainer& owner;
@@ -87,8 +91,8 @@ private:
     
     juce::URL url;
     
-    // used for file info
-    std::unique_ptr<juce::AudioFormatReader> audioFormatReader;
+    
+
     
     std::unique_ptr<audium::ChannelMapping> channelMapping;
 
