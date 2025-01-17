@@ -127,7 +127,6 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
             auto context = audium::clocks;
             if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
                 auto localRange = item->absoluteToLocalRange(selectedRange, context);
-                name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
                 track->getAudioRegionContainer()->createRegion(name,
                                                                localRange,
                                                                track,
