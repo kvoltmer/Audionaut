@@ -62,8 +62,19 @@ public:
         audioThumbnail.reset(new audium::AudioThumbnail(sourceSamplesPerThumbnailSample, *formatManager, *thumbnailCache));
         audioThumbnail->setColour(colour);
         if (audioResource->audioFormatReader != nullptr) {
-            auto hashCode = audioResource->getUrl().toString(true).hashCode64();
-            audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
+            
+            // reuse shared_ptr if the file is memory mapped
+            if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
+                auto hashCode = audioResource->getUrl().toString(true).hashCode64();
+                audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
+            }
+            else {
+            
+                // create a new input source
+                if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
+                    audioThumbnail->setSource(inputSource.release());
+                }
+            }
         }
         audioThumbnail->addChangeListener(this);
     }
