@@ -50,6 +50,11 @@ public:
     
     // Slider
     juce::Label* createSliderTextBox (juce::Slider& slider) override;
+    void drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
+                                           float sliderPos,
+                                           float minSliderPos,
+                                           float maxSliderPos,
+                                           const juce::Slider::SliderStyle style, juce::Slider& slider) override;
     
     // Various statics
     static const int channelsWidth = 100;

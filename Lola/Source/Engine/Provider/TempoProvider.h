@@ -29,10 +29,10 @@ public:
     
     void setTempo(double newTempo)
     {
-        tempoBPM = newTempo;
+        tempoBPM = std::max(30.0, newTempo);
         if (linkEngine != nullptr)
         {
-            linkEngine->setTempo(newTempo);
+            linkEngine->setTempo(tempoBPM);
         }
         
         sendActionMessage (tempoChanged);

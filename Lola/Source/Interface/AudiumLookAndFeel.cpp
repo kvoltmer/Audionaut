@@ -69,6 +69,9 @@ void AudiumLookAndFeel::setupColours()
     // Button
     setColour(TextButton::buttonColourId, findColour(backgroundColourId));
 
+    // Slider
+    setColour(Slider::backgroundColourId, Colours::transparentBlack);
+    
 }
 
 void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
@@ -206,9 +209,24 @@ Label* AudiumLookAndFeel::createSliderTextBox (Slider& slider)
 {
     auto* l = LookAndFeel_V4::createSliderTextBox (slider);
 
-    // default font for sliders
-    l->setFont (juce::FontOptions (11.00f));
+    // try to extract the font size from the name
+    auto fontSize = slider.getName().getTrailingIntValue();
+    if (fontSize > 0)
+        l->setFont (juce::FontOptions ((float)fontSize));
+    else
+        l->setFont (juce::FontOptions (11.00f));
     return l;
+}
+
+void AudiumLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
+                                       float sliderPos,
+                                       float minSliderPos,
+                                       float maxSliderPos,
+                                       const juce::Slider::SliderStyle style, juce::Slider& slider)
+{
+    g.fillAll (slider.findColour(Slider::backgroundColourId));
+
+    LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
 }
 
 int AudiumLookAndFeel::getAlertWindowButtonHeight()    { return 20; }

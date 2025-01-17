@@ -32,7 +32,7 @@ private:
     //==============================================================================
     std::unique_ptr<juce::TextButton> link__textButton;
     
-    std::unique_ptr<DefaultLabel> tempoLabel;
+    std::unique_ptr<juce::Slider> tempoSlider;
     
     std::unique_ptr<DefaultLabel> bars__label;
     std::unique_ptr<DefaultLabel> beats__label;
