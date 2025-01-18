@@ -4,7 +4,6 @@
 #include <JuceHeader.h>
 
 class PlayListScheduler;
-class DefaultLabel;
 
 class HeaderComponent  : public juce::Component,
                          private juce::Timer,
@@ -12,7 +11,6 @@ class HeaderComponent  : public juce::Component,
                          public juce::Label::Listener
 {
 public:
-    //==============================================================================
     HeaderComponent (std::shared_ptr<PlayListScheduler> playListScheduler);
     ~HeaderComponent() override;
 
@@ -24,25 +22,24 @@ public:
     void buttonClicked (juce::Button* buttonThatWasClicked) override;
     void labelTextChanged (juce::Label* labelThatHasChanged) override;
 
-
-
 private:
+    
+    void configureSlider(juce::Slider* slider);
+    
     std::shared_ptr<PlayListScheduler> playListScheduler;
 
-    //==============================================================================
-    std::unique_ptr<juce::TextButton> link__textButton;
-    
+    std::unique_ptr<juce::TextButton> linkButton;
     std::unique_ptr<juce::Slider> tempoSlider;
+    std::unique_ptr<juce::Slider> barsSlider;
+    std::unique_ptr<juce::Slider> beatsSlider;
+    std::unique_ptr<juce::Slider> clicksSlider;
     
-    std::unique_ptr<DefaultLabel> bars__label;
-    std::unique_ptr<DefaultLabel> beats__label;
-    std::unique_ptr<DefaultLabel> rest__label;
+    int lastBeatsValue = 0;
+    int lastBarsValue = 0;
+    int lastClicksValue = 0;
 
-
-    //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)
 };
 
-//[EndFile] You can add extra defines here...
-//[/EndFile]
+
 

@@ -164,7 +164,7 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
         if (! rangeInClocks.isEmpty()) {
             zoomHandler->snapToGrid(rangeInClocks);
             regionAdapter->setSelectedRange(rangeInClocks, audium::clocks);
-            audiumEngine->getPlayListScheduler()->setAbsolutePosition(rangeInClocks.getStart(), audium::clocks);
+            audiumEngine->getPlayListScheduler()->setAbsoluteStartPosition(rangeInClocks.getStart(), audium::clocks);
             updateFromEngine();
         }
         
