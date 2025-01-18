@@ -148,6 +148,9 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
         totalLength = tempoProvider->clocksToSeconds(totalLength);
     
     if (addOverhead) {
+        // in case transport is ahead
+        totalLength = std::max(totalLength, getAbsolutePosition(context));
+        
         // add overhead to fit entire arrangement arrangement
         auto overhead = 8 * 96.0;
         if (context == audium::seconds) {
@@ -155,7 +158,6 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
         }
         
         overhead = std::max(overhead, totalLength * 0.01);
-        
         
         totalLength += overhead;
     }
@@ -202,8 +204,11 @@ double PlayListScheduler::getAbsolutePosition(audium::TimeContextType context) c
     return 0.0;
 }
 
-void PlayListScheduler::setAbsolutePosition(double newPosition, audium::TimeContextType context)
+void PlayListScheduler::setAbsoluteStartPosition(double newPosition, audium::TimeContextType context)
 {
+    if (newPosition < 0.0)
+        newPosition = 0.0;
+    
     auto positionClocks = 0.0;
     if (context == audium::clocks) {
         positionClocks = newPosition;
@@ -267,7 +272,7 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
 {
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
-    setAbsolutePosition(config.positionSeconds, audium::seconds);
+    setAbsoluteStartPosition(config.positionSeconds, audium::seconds);
 
     startPlaying();
     
@@ -316,7 +321,7 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
     jassert(samplesWritten == totalSamples);
     
     
-    setAbsolutePosition(lastPosition, audium::seconds);
+    setAbsoluteStartPosition(lastPosition, audium::seconds);
     stopPlaying();
     
 }

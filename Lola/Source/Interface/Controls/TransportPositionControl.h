@@ -96,7 +96,7 @@ public:
                 zoomHandler->snapToGrid(clocks);
                 
                 // set transport position
-                audiumEngine->getPlayListScheduler()->setAbsolutePosition(clocks, audium::clocks);
+                audiumEngine->getPlayListScheduler()->setAbsoluteStartPosition(clocks, audium::clocks);
             }
         }
     }

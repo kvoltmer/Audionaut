@@ -113,6 +113,16 @@ public:
         return clocks / 24.0;
     }
     
+    static double clicksToClocks(double clicks)
+    {
+        return clicks * 6.0;
+    }
+    
+    static double clocksToClicks(double clocks)
+    {
+        return clocks / 6.0;
+    }
+    
     static double barsToClocks(double bars)
     {
         return bars * 96.0;

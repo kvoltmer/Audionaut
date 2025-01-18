@@ -93,11 +93,10 @@ public:
     int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track);
     double getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const;
     
-    
-    double getAbsolutePosition(audium::TimeContextType context) const;
-    void setAbsolutePosition(double newPosition, audium::TimeContextType context);
+    void setAbsoluteStartPosition(double newPosition, audium::TimeContextType context);
     double getAbsoluteStartPosition(audium::TimeContextType context) const;
-
+    double getAbsolutePosition(audium::TimeContextType context) const;
+    
     void tick(bool isPlaying, double beats, int numSamples);
     
     void processAudio (const juce::AudioSourceChannelInfo& info);
