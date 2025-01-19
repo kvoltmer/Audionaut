@@ -7,6 +7,7 @@
 
 #include "Interface/Controls/DefaultLabel.h"
 #include "Interface/ColourIds.h"
+#include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 
 using namespace juce;
 
@@ -145,9 +146,26 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     };
     stopButton->setColour(TextButton::buttonColourId, Colours::grey);
     
-    // Stereo Meter
+    // master meter
     stereoMeter = std::make_unique<StereoMeter>();
     addAndMakeVisible(stereoMeter.get());
+    
+    // master volume
+    volumeSlider = std::make_unique<juce::Slider>("Master Volume Font 13");
+    addAndMakeVisible(volumeSlider.get());
+    ChannelComponent::configureVolumeSlider(volumeSlider.get());
+    volumeSlider->onValueChange = [this] {
+        auto gain = Decibels::decibelsToGain(volumeSlider->getValue());
+        this->playListScheduler->getAudioBusInterface()->setMasterGain(gain);
+    };
+    volumeSlider->onDragStart = [this] {
+        // TODO: undo/redo
+    };
+    
+    volumeSlider->onDragEnd = [this] {
+        // TODO: undo/redo
+    };
+    
     
     setSize (1200, 40);
     startTimerHz(60.f);
@@ -175,7 +193,8 @@ void HeaderComponent::resized()
     playButton->setBounds(450, 10, 35, 20);
     stopButton->setBounds(500, 10, 35, 20);
     
-    stereoMeter->setBounds(700, 10, 70, 20);
+    volumeSlider->setBounds(600, 10, 90, 20);
+    stereoMeter->setBounds(700, 10, 110, 20);
 }
 
 void HeaderComponent::buttonClicked (juce::Button* buttonThatWasClicked)

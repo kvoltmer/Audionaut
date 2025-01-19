@@ -46,6 +46,7 @@ private:
     juce::DrawablePath playImage;
     
     std::unique_ptr<StereoMeter> stereoMeter;
+    std::unique_ptr<juce::Slider> volumeSlider;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)
 };

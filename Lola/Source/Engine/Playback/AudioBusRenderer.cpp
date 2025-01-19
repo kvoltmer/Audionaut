@@ -116,6 +116,11 @@ void AudioBusRenderer<SampleType>::processAudioBlock(const juce::AudioSourceChan
                 }
             }
             
+            // master gain
+            juce::dsp::AudioBlock<SampleType> master (*outputInfo.buffer);
+            juce::dsp::ProcessContextReplacing<SampleType> gainContext(master);
+            masterGain.process(gainContext);
+            
             // master level
             for (auto m = 0; m < outputChannels; ++m) {
                 masterLevel[m].store(outputInfo.buffer->getMagnitude(m, outputInfo.startSample, outputInfo.numSamples));
