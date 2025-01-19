@@ -32,6 +32,8 @@ public:
     void setPan(const int channelNumber, const float newPan);
     void setGain(const int channelNumber, const float newGain);
     
+    void setMasterGain(const float newGain);
+    
     const float getChannelLevel(const int channelNumber) const;
     const float getMasterLevel(const int channelNumber) const;
 

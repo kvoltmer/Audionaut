@@ -19,6 +19,7 @@ public:
     AudioBusRenderer(std::shared_ptr<audium::Playback> playback_) :
         playback(playback_)
     {
+        setMasterGain(1.f);
     }
     
     ~AudioBusRenderer() = default;
@@ -29,18 +30,25 @@ public:
     
     void processAudioBlock(const juce::AudioSourceChannelInfo& outputInfo);
     
-    void setPan(const int channelNumber, const SampleType newPan) {
+    void setPan(const int channelNumber, const SampleType newPan)
+    {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             // std::cout << "setPan " << channelNumber << " " << newPan << std::endl;
             panners[channelNumber].setPan(newPan);
         }
     }
 
-    void setGain(const int channelNumber, const SampleType newGain) {
+    void setGain(const int channelNumber, const SampleType newGain)
+    {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             // std::cout << "setGain " << channelNumber << " " << newGain << std::endl;
             gains[channelNumber].setGainLinear(newGain);
         }
+    }
+    
+    void setMasterGain(const float newGain)
+    {
+        masterGain.setGainLinear(newGain);
     }
     
     const float getChannelLevel(const int channelNumber) const
@@ -69,6 +77,7 @@ private:
         
     juce::dsp::Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
     juce::dsp::Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
+    juce::dsp::Gain<SampleType> masterGain;
     
     std::atomic<float> channelLevel[MAX_AUDIO_CHANNELS];
     std::atomic<float> masterLevel[2];
