@@ -43,11 +43,18 @@ public:
         }
     }
     
-    const float getOutputLevel(const int channelNumber) const
+    const float getChannelLevel(const int channelNumber) const
     {
-        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
-            return outputLevel[channelNumber];
-        }
+        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
+            return channelLevel[channelNumber].load();
+        
+        return 0.f;
+    }
+    
+    const float getMasterLevel(const int channelNumber) const
+    {
+        if (channelNumber >= 0 && channelNumber < 2)
+            return masterLevel[channelNumber].load();
         
         return 0.f;
     }
@@ -63,7 +70,8 @@ private:
     juce::dsp::Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
     juce::dsp::Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
     
-    std::atomic<float> outputLevel[MAX_AUDIO_CHANNELS];
+    std::atomic<float> channelLevel[MAX_AUDIO_CHANNELS];
+    std::atomic<float> masterLevel[2];
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioBusRenderer)
 

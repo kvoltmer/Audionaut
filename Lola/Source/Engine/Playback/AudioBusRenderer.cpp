@@ -75,7 +75,7 @@ void AudioBusRenderer<SampleType>::processAudioBlock(const juce::AudioSourceChan
             audioBus.copyFrom(i, busInfo.startSample, channelBuffer.getReadPointer(0), busInfo.numSamples);
             
 
-            outputLevel[i].store(channelBuffer.getMagnitude(0, busInfo.startSample, busInfo.numSamples));
+            channelLevel[i].store(channelBuffer.getMagnitude(0, busInfo.startSample, busInfo.numSamples));
         }
         
         //
@@ -114,7 +114,11 @@ void AudioBusRenderer<SampleType>::processAudioBlock(const juce::AudioSourceChan
                                                stereoBuffer.getReadPointer(c),
                                                outputInfo.numSamples);
                 }
-
+            }
+            
+            // master level
+            for (auto m = 0; m < outputChannels; ++m) {
+                masterLevel[m].store(outputInfo.buffer->getMagnitude(m, outputInfo.startSample, outputInfo.numSamples));
             }
         }
         else // multichannel output

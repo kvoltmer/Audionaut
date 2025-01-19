@@ -4,6 +4,23 @@
 namespace audium
 {
 
+void AudioBusInterface::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
+{
+    audioBusRenderer->prepareToPlay(samplesPerBlockExpected, sampleRate);
+}
+
+void AudioBusInterface::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
+{
+    lockFreeCommander->invoke();
+
+    audioBusRenderer->processAudioBlock(outputInfo);
+}
+
+void AudioBusInterface::setNumAudioBusChannels(int numChannels)
+{
+    audioBusRenderer->setNumAudioBusChannels(numChannels);
+}
+
 void AudioBusInterface::setPan(const int channelNumber, const float newPan)
 {
     auto ptr = audioBusRenderer.get();
@@ -20,9 +37,14 @@ void AudioBusInterface::setGain(const int channelNumber, const float newGain)
     });
 }
 
-const float AudioBusInterface::getOutputLevel(const int channelNumber) const
+const float AudioBusInterface::getChannelLevel(const int channelNumber) const
 {
-    return audioBusRenderer->getOutputLevel(channelNumber);
+    return audioBusRenderer->getChannelLevel(channelNumber);
+}
+
+const float AudioBusInterface::getMasterLevel(const int channelNumber) const
+{
+    return audioBusRenderer->getMasterLevel(channelNumber);
 }
 
 } // namespace audium

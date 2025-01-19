@@ -26,6 +26,7 @@
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
+#include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Core/LockFreeContainer.h"
 #include "Engine/Core/LockFreeCommander.h"
 
@@ -40,7 +41,7 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
     tempoProvider->prepareToPlay(samplesPerBlockExpected, sampleRate);
     transportSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
     playback->prepareToPlay(samplesPerBlockExpected, sampleRate);
-    audioBusRenderer->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    audioBusInterface->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void PlayListScheduler::tick(bool isPlaying,
@@ -134,10 +135,10 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
 
 void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
 {
-    lockFreeCommander->invoke();
+    // TODO: avoid allocations in the audio thread ;/
+    audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
 
-    audioBusRenderer->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
-    audioBusRenderer->processAudioBlock(outputInfo);
+    audioBusInterface->processAudio(outputInfo);
 }
 
 double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool addOverhead) const

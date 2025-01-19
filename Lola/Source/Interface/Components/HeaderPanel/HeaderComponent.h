@@ -3,6 +3,8 @@
 
 #include <JuceHeader.h>
 
+#include "Interface/Controls/LevelMeter.h"
+
 class PlayListScheduler;
 
 class HeaderComponent  : public juce::Component,
@@ -42,6 +44,8 @@ private:
     std::unique_ptr<juce::DrawableButton> stopButton;
     juce::DrawablePath stopImage;
     juce::DrawablePath playImage;
+    
+    std::unique_ptr<StereoMeter> stereoMeter;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)
 };

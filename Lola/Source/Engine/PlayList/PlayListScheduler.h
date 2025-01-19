@@ -28,10 +28,7 @@ class AudioResourceContainer;
 
 namespace audium {
     class Playback;
-    class LockFreeCommander;
-    
-template <class>
-    class AudioBusRenderer;
+    class AudioBusInterface;
 }
 
 class PlayListScheduler : public juce::ChangeListener
@@ -46,8 +43,7 @@ public:
                       std::shared_ptr<audium::AudioClipContainer> audioClipContainer_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
-                      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer_,
-                      std::shared_ptr<audium::LockFreeCommander> lockFreeCommander_) :
+                      std::shared_ptr<audium::AudioBusInterface> audioBusInterface_) :
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
         tempoProvider(tempoProvider_),
@@ -55,8 +51,7 @@ public:
         audioClipContainer(audioClipContainer_),
         transportSourceContainer(transportSourceContainer_),
         playback(playback_),
-        audioBusRenderer(audioBusRenderer_),
-        lockFreeCommander(lockFreeCommander_)
+        audioBusInterface(audioBusInterface_)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) {
             tick(isPlaying, beats, numSamples);
@@ -110,6 +105,7 @@ public:
     std::shared_ptr<audium::LinkEngine> getLinkEngine() const { return linkEngine; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     std::shared_ptr<audium::Playback> getPlayback() const { return playback; }
+    std::shared_ptr<audium::AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
     
     void commitPlayListData();
     
@@ -128,8 +124,7 @@ private:
     std::shared_ptr<audium::AudioClipContainer> audioClipContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::Playback> playback;
-    std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer;
-    std::shared_ptr<audium::LockFreeCommander> lockFreeCommander;
+    std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
     
     double externalSampleRate = 0.0;
     

@@ -2,7 +2,9 @@
 #include "HeaderComponent.h"
 
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Link/LinkEngine.hpp"
+
 #include "Interface/Controls/DefaultLabel.h"
 #include "Interface/ColourIds.h"
 
@@ -143,6 +145,10 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     };
     stopButton->setColour(TextButton::buttonColourId, Colours::grey);
     
+    // Stereo Meter
+    stereoMeter = std::make_unique<StereoMeter>();
+    addAndMakeVisible(stereoMeter.get());
+    
     setSize (1200, 40);
     startTimerHz(60.f);
 }
@@ -168,6 +174,8 @@ void HeaderComponent::resized()
     
     playButton->setBounds(450, 10, 35, 20);
     stopButton->setBounds(500, 10, 35, 20);
+    
+    stereoMeter->setBounds(700, 10, 70, 20);
 }
 
 void HeaderComponent::buttonClicked (juce::Button* buttonThatWasClicked)
@@ -205,6 +213,9 @@ void HeaderComponent::timerCallback()
     barsSlider->setValue(TempoProvider::clocksToBars(clocks), juce::dontSendNotification);
     beatsSlider->setValue(TempoProvider::clocksToBeats(clocks), juce::dontSendNotification);
     clicksSlider->setValue(TempoProvider::clocksToClicks(clocks), juce::dontSendNotification);
+    
+    for (auto c = 0; c < 2; ++c)
+        stereoMeter->setLevel(c, playListScheduler->getAudioBusInterface()->getMasterLevel(c));
 }
 
 void HeaderComponent::configureSlider(juce::Slider* slider)
