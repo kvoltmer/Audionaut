@@ -117,9 +117,33 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     clicksSlider->updateText();
     
 
+    // PLAY
+    playButton = std::make_unique<juce::DrawableButton>("Play", juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
+    addAndMakeVisible(playButton.get());
+    juce::Path play;
+    play.addTriangle(0, 0, 0, 10, 10, 5);
+    playImage.setPath(play);
+    playImage.setFill (FillType(Colours::white));
+    playButton->setImages(&playImage);
+    playButton->onClick = [this]() {
+        this->playListScheduler->startPlaying();
+    };
+    playButton->setColour(TextButton::buttonColourId, Colours::grey);
+    
+    // STOP
+    stopButton = std::make_unique<juce::DrawableButton>("Stop", juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
+    addAndMakeVisible(stopButton.get());
+    juce::Path stop;
+    stop.addRoundedRectangle(0, 0, 10, 10, 2.f);
+    stopImage.setPath(stop);
+    stopImage.setFill (FillType(Colours::white));
+    stopButton->setImages(&stopImage);
+    stopButton->onClick = [this]() {
+        this->playListScheduler->stopPlaying();
+    };
+    stopButton->setColour(TextButton::buttonColourId, Colours::grey);
+    
     setSize (1200, 40);
-
-
     startTimerHz(60.f);
 }
 
@@ -136,10 +160,14 @@ void HeaderComponent::paint (juce::Graphics& g)
 void HeaderComponent::resized()
 {
     linkButton->setBounds (5, 10, 70, 20);
-    tempoSlider->setBounds (496, 10, 70, 20);
+    tempoSlider->setBounds (125, 10, 70, 20);
+    
     barsSlider->setBounds (235, 10, 70, 20);
     beatsSlider->setBounds (308, 10, 35, 20);
     clicksSlider->setBounds (346, 10, 35, 20);
+    
+    playButton->setBounds(450, 10, 35, 20);
+    stopButton->setBounds(500, 10, 35, 20);
 }
 
 void HeaderComponent::buttonClicked (juce::Button* buttonThatWasClicked)

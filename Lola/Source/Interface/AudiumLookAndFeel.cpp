@@ -80,7 +80,7 @@ void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
                                            bool shouldDrawButtonAsHighlighted,
                                            bool shouldDrawButtonAsDown)
 {
-    auto cornerSize = 3.0f;
+    auto cornerSize = 1.0f;
     auto bounds = button.getLocalBounds().toFloat().reduced (0.5f, 0.5f);
 
     auto baseColour = backgroundColour.withMultipliedSaturation (button.hasKeyboardFocus (true) ? 1.3f : 0.9f)
@@ -116,7 +116,8 @@ void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
     {
         g.fillRoundedRectangle (bounds, cornerSize);
 
-        g.setColour (button.findColour (ComboBox::outlineColourId));
+        //g.setColour (button.findColour (ComboBox::outlineColourId));
+        g.setColour (Colours::white.withAlpha(0.1f));
         g.drawRoundedRectangle (bounds, cornerSize, 1.0f);
     }
 }
