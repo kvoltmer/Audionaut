@@ -148,7 +148,7 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_,
 
 void ChannelComponent::timerCallback()
 {
-    auto lvl = engine->getAudioBusInterface()->getOutputLevel(channelNumber);
+    auto lvl = engine->getAudioBusInterface()->getChannelLevel(channelNumber);
     levelMeter->setLevel(lvl);
 }
 

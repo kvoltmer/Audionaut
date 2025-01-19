@@ -23,10 +23,17 @@ public:
     
     ~AudioBusInterface() = default;
     
+    void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
+    
+    void processAudio(const juce::AudioSourceChannelInfo& outputInfo);
+    
+    void setNumAudioBusChannels(int numChannels);
+    
     void setPan(const int channelNumber, const float newPan);
     void setGain(const int channelNumber, const float newGain);
     
-    const float getOutputLevel(const int channelNumber) const;
+    const float getChannelLevel(const int channelNumber) const;
+    const float getMasterLevel(const int channelNumber) const;
 
 private:
 
