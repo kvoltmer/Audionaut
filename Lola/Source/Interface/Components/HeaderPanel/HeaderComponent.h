@@ -37,6 +37,11 @@ private:
     int lastBeatsValue = 0;
     int lastBarsValue = 0;
     int lastClicksValue = 0;
+    
+    std::unique_ptr<juce::DrawableButton> playButton;
+    std::unique_ptr<juce::DrawableButton> stopButton;
+    juce::DrawablePath stopImage;
+    juce::DrawablePath playImage;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)
 };

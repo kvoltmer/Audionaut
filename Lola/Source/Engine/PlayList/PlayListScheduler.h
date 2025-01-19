@@ -58,11 +58,11 @@ public:
         audioBusRenderer(audioBusRenderer_),
         lockFreeCommander(lockFreeCommander_)
     {
-        linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
+        linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) {
+            tick(isPlaying, beats, numSamples);
+        };
         
         audioTrackContainer->addChangeListener(this);
-        
-        
     }
     
     ~PlayListScheduler() override
