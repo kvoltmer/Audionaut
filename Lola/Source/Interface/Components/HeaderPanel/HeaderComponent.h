@@ -5,7 +5,7 @@
 
 #include "Interface/Controls/LevelMeter.h"
 
-class PlayListScheduler;
+class AudiumEngine;
 
 class HeaderComponent  : public juce::Component,
                          private juce::Timer,
@@ -13,7 +13,7 @@ class HeaderComponent  : public juce::Component,
                          public juce::Label::Listener
 {
 public:
-    HeaderComponent (std::shared_ptr<PlayListScheduler> playListScheduler);
+    HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine);
     ~HeaderComponent() override;
 
 
@@ -24,11 +24,13 @@ public:
     void buttonClicked (juce::Button* buttonThatWasClicked) override;
     void labelTextChanged (juce::Label* labelThatHasChanged) override;
 
+    void updateUI();
+    
 private:
     
     void configureSlider(juce::Slider* slider);
     
-    std::shared_ptr<PlayListScheduler> playListScheduler;
+    std::shared_ptr<AudiumEngine> audiumEngine;
 
     std::unique_ptr<juce::TextButton> linkButton;
     std::unique_ptr<juce::Slider> tempoSlider;

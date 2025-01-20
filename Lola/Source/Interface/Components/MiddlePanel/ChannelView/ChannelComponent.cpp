@@ -113,7 +113,6 @@ ChannelComponent::~ChannelComponent()
     audioTrack = nullptr;
 }
 
-//==============================================================================
 void ChannelComponent::paint (juce::Graphics& g)
 {
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));

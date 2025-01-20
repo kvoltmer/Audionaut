@@ -18,7 +18,7 @@
 MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     audiumEngine(audiumEngine_)
 {
-    headerComponent.reset(new HeaderComponent(audiumEngine->getPlayListScheduler()));
+    headerComponent.reset(new HeaderComponent(audiumEngine));
     middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
     rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
@@ -129,12 +129,14 @@ void MainComponent::changeListenerCallback (ChangeBroadcaster* source)
 
 void MainComponent::rebuildUI()
 {
+    headerComponent->updateUI();
     middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
     rightPanelComponent->updateUI(RebuildContext);
 }
 
 void MainComponent::updateUI()
 {
+    headerComponent->updateUI();
     auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
     middlePanelComponent->showArrangementComponent(!editMode);
     middlePanelComponent->showEditComponent(editMode);

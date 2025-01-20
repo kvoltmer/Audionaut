@@ -1,6 +1,7 @@
 
 #include "HeaderComponent.h"
 
+#include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Link/LinkEngine.hpp"
@@ -12,9 +13,11 @@
 using namespace juce;
 
 //==============================================================================
-HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListScheduler) :
-    playListScheduler(playListScheduler)
+HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
+    audiumEngine(audiumEngine_)
 {
+    auto scheduler = audiumEngine->getPlayListScheduler().get();
+    
     // Link
     linkButton.reset (new juce::TextButton ("Link"));
     addAndMakeVisible (linkButton.get());
@@ -22,8 +25,9 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     linkButton->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff7a7a7a));
     linkButton->setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff12a4e2));
     linkButton->setClickingTogglesState(true);
-    linkButton->onClick = [this] {
-        this->playListScheduler->getLinkEngine()->enableLink(linkButton->getToggleState());
+    auto linkEngine = audiumEngine->getPlayListScheduler()->getLinkEngine().get();
+    linkButton->onClick = [this, linkEngine] {
+        linkEngine->enableLink(linkButton->getToggleState());
     };
 
     
@@ -33,8 +37,9 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     configureSlider(tempoSlider.get());
     tempoSlider->setVelocityModeParameters(1.0, 2, 0.001);
     tempoSlider->setNormalisableRange(NormalisableRange<double>(30, 999, 0.01));
-    tempoSlider->onValueChange = [this]() {
-        this->playListScheduler->getTempoProvider()->setTempo(tempoSlider->getValue());
+    auto tempoProvider = audiumEngine->getPlayListScheduler()->getTempoProvider().get();
+    tempoSlider->onValueChange = [this, tempoProvider]() {
+        tempoProvider->setTempo(tempoSlider->getValue());
     };
 
     // Bars
@@ -46,12 +51,13 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     barsSlider->onDragStart = [this]() {
         lastBarsValue = static_cast<int>(barsSlider->getValue());
     };
-    barsSlider->onValueChange = [this]() {
+    
+    barsSlider->onValueChange = [this, scheduler]() {
         auto barsDiff = static_cast<int>(barsSlider->getValue()) - lastBarsValue;
         if (abs(barsDiff) > 0) {
             auto clocksDiff = TempoProvider::barsToClocks(barsDiff);
-            auto clocks = this->playListScheduler->getAbsoluteStartPosition(audium::clocks);
-            this->playListScheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
+            auto clocks = scheduler->getAbsoluteStartPosition(audium::clocks);
+            scheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
             lastBarsValue = static_cast<int>(barsSlider->getValue());
         }
     };
@@ -73,12 +79,12 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     beatsSlider->onDragStart = [this]() {
         lastBeatsValue = static_cast<int>(beatsSlider->getValue());
     };
-    beatsSlider->onValueChange = [this]() {
+    beatsSlider->onValueChange = [this, scheduler]() {
         auto beatsDiff = static_cast<int>(beatsSlider->getValue()) - lastBeatsValue;
         if (abs(beatsDiff) > 0) {
             auto clocksDiff = TempoProvider::beatsToClocks(beatsDiff);
-            auto clocks = this->playListScheduler->getAbsoluteStartPosition(audium::clocks);
-            this->playListScheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
+            auto clocks = scheduler->getAbsoluteStartPosition(audium::clocks);
+            scheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
             lastBeatsValue = static_cast<int>(beatsSlider->getValue());
         }
     };
@@ -101,12 +107,12 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     beatsSlider->onDragStart = [this]() {
         lastClicksValue = static_cast<int>(clicksSlider->getValue());
     };
-    clicksSlider->onValueChange = [this]() {
+    clicksSlider->onValueChange = [this, scheduler]() {
         auto clicksDiff = static_cast<int>(clicksSlider->getValue()) - lastClicksValue;
         if (abs(clicksDiff) > 0) {
             auto clocksDiff = TempoProvider::clicksToClocks(clicksDiff);
-            auto clocks = this->playListScheduler->getAbsoluteStartPosition(audium::clocks);
-            this->playListScheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
+            auto clocks = scheduler->getAbsoluteStartPosition(audium::clocks);
+            scheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
             lastClicksValue = static_cast<int>(clicksSlider->getValue());
         }
     };
@@ -128,8 +134,8 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     playImage.setPath(play);
     playImage.setFill (FillType(Colours::white));
     playButton->setImages(&playImage);
-    playButton->onClick = [this]() {
-        this->playListScheduler->startPlaying();
+    playButton->onClick = [this, scheduler]() {
+        scheduler->startPlaying();
     };
     playButton->setColour(TextButton::buttonColourId, Colours::grey);
     
@@ -141,8 +147,8 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     stopImage.setPath(stop);
     stopImage.setFill (FillType(Colours::white));
     stopButton->setImages(&stopImage);
-    stopButton->onClick = [this]() {
-        this->playListScheduler->stopPlaying();
+    stopButton->onClick = [this, scheduler]() {
+        scheduler->stopPlaying();
     };
     stopButton->setColour(TextButton::buttonColourId, Colours::grey);
     
@@ -156,7 +162,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<PlayListScheduler> playListSch
     ChannelComponent::configureVolumeSlider(volumeSlider.get());
     volumeSlider->onValueChange = [this] {
         auto gain = Decibels::decibelsToGain(volumeSlider->getValue());
-        this->playListScheduler->getAudioBusInterface()->setMasterGain(gain);
+        this->audiumEngine->getAudioTrackContainer()->setMasterGain(gain);
     };
     volumeSlider->onDragStart = [this] {
         // TODO: undo/redo
@@ -209,9 +215,17 @@ void HeaderComponent::labelTextChanged (juce::Label* labelThatHasChanged)
 {
 }
 
+void HeaderComponent::updateUI()
+{
+    auto gain = audiumEngine->getAudioTrackContainer()->getMasterGain();
+    volumeSlider->setValue(LevelMeter::gainToDecebel(gain), dontSendNotification);
+}
+
 void HeaderComponent::timerCallback()
 {
-    const auto numPeers = playListScheduler->getLinkEngine()->numPeers();
+    auto scheduler = audiumEngine->getPlayListScheduler().get();
+    
+    const auto numPeers = scheduler->getLinkEngine()->numPeers();
     juce::String txt;
     if (numPeers > 0) {
         txt = juce::String(numPeers) + " Link";
@@ -224,17 +238,17 @@ void HeaderComponent::timerCallback()
     linkButton->setButtonText(txt);
 
     
-    auto tempo = playListScheduler->getTempoProvider()->getTempo();
+    auto tempo = scheduler->getTempoProvider()->getTempo();
     tempoSlider->setValue(tempo, dontSendNotification);
 
     
-    auto clocks = playListScheduler->getAbsolutePosition(audium::clocks);
+    auto clocks = scheduler->getAbsolutePosition(audium::clocks);
     barsSlider->setValue(TempoProvider::clocksToBars(clocks), juce::dontSendNotification);
     beatsSlider->setValue(TempoProvider::clocksToBeats(clocks), juce::dontSendNotification);
     clicksSlider->setValue(TempoProvider::clocksToClicks(clocks), juce::dontSendNotification);
     
     for (auto c = 0; c < 2; ++c)
-        stereoMeter->setLevel(c, playListScheduler->getAudioBusInterface()->getMasterLevel(c));
+        stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
 }
 
 void HeaderComponent::configureSlider(juce::Slider* slider)
