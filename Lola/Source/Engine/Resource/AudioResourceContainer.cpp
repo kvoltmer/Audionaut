@@ -59,8 +59,10 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                        subGroup,
                                                                        channelPosition,
                                                                        reader);
-        audioResources.push_back({track, audioResource});
-        return audioResource;
+        if (audioResource->audioFormatReader != nullptr) {
+            audioResources.push_back({track, audioResource});
+            return audioResource;
+        }
     }
     
     return nullptr;
@@ -69,8 +71,10 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
 {
     auto source = std::make_shared<AudioFormatReaderSource>(audioResource->audioFormatReader.get(), false);
-    jassert(source);
-    return audioResource->createNewTransportSource(source);
+    if (source != nullptr && source->getAudioFormatReader() != nullptr) {
+        return audioResource->createNewTransportSource(source);
+    }
+    return nullptr;
 }
 
 void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> resource)

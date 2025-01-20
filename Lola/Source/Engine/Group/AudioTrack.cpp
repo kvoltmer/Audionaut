@@ -538,7 +538,6 @@ std::shared_ptr<AudioResource> AudioTrack::addAudioFile(std::shared_ptr<AudioSub
     if (audioResource != nullptr)
     {
         auto transportSource = getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
-        jassert(transportSource);
         if (transportSource != nullptr)
         {
             channelPosition += audioResource->getNumChannels();
