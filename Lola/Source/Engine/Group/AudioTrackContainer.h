@@ -55,6 +55,9 @@ public:
     
     ~AudioTrackContainer();
     
+    void setMasterGain(const float newGain);
+    const float getMasterGain() const noexcept;
+    
     bool groupIdExists(const int groupId) const;
         
     std::shared_ptr<AudioTrack> createNewAudioTrack(const juce::String nameString);
@@ -111,6 +114,7 @@ private:
     std::vector<std::shared_ptr<AudioTrack>> audioTracks;
     int selectedGroup = 0;
     
+    float masterGain = 1.f;
 
     
     // Discuss: inject depenendency
