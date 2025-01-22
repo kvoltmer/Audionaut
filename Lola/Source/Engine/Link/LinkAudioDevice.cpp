@@ -37,7 +37,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
         if (outputChannelData[i] != nullptr)
             juce::zeromem (outputChannelData[i], (size_t) numSamples * sizeof (float));
     
-    if (not byPass)
+    if (not byPass.load())
     {
         // Synchronize host time to reference the point when its output reaches the speaker.
         const auto hostTime =  host_time_filter.sampleTimeToHostTime(sample_time);
@@ -100,5 +100,5 @@ void LinkAudioDevice::stopPlaying()
 
 void LinkAudioDevice::setBypass(bool isByPass)
 {
-    byPass = isByPass;
+    byPass.store(isByPass);
 }
