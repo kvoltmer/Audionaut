@@ -481,6 +481,27 @@
         <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="$(SRCROOT)/../../Source"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_core" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_dsp" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_events" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
+      </MODULEPATHS>
+    </VS2022>
   </EXPORTFORMATS>
   <MODULES>
     <MODULE id="juce_analytics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
