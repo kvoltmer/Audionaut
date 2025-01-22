@@ -20,6 +20,8 @@
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
+#include "Engine/Playback/AudioBusInterface.h"
+
 
 using namespace audium;
 
@@ -48,16 +50,18 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback);
     
-    auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback, audioBusRenderer);
+    auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback);
     
-    auto lockFreeCommander          = std::make_shared<LockFreeCommander>(64);
+    auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
+    
+    auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer);
     
     auto audioTrackContainer        = std::make_shared<AudioTrackContainer>(undoManager,
                                                                             tempoProvider,
                                                                             audioResourceContainer,
                                                                             transportSourceContainer,
                                                                             selectionManager,
-                                                                            lockFreeCommander);
+                                                                            audioBusInterface);
     
     auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
     
@@ -70,8 +74,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                           audioClipContainer,
                                                                           transportSourceContainer,
                                                                           playback,
-                                                                          audioBusRenderer,
-                                                                          lockFreeCommander);
+                                                                          audioBusInterface);
     
     auto linkAudioDevice            = std::make_shared<LinkAudioDevice>(linkEngine,
                                                                         playListScheduler);
@@ -81,7 +84,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                      audioResourceContainer,
                                                                      playListScheduler,
                                                                      linkAudioDevice,
-                                                                     undoManager);
+                                                                     undoManager,
+                                                                     audioBusInterface);
     return audiumEngine;
 }
 

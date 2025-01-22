@@ -63,8 +63,10 @@ public:
     void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
     void createNewProject();
     void askUserToOpenFile();
+    void openFile(juce::File file);
     void saveProjectAs(std::function<void (bool)> callback);
     void saveProject(std::function<void (bool)> callback);
+    void saveProjectToFile(juce::File file, std::function<void (bool)> callback);
     void updateUI();
     
     
@@ -84,12 +86,18 @@ private:
     std::shared_ptr<SettingsDialog> settingsDialog;
     std::shared_ptr<AboutDialog> aboutDialog;
     
+    juce::RecentlyOpenedFilesList recentFiles;
+    
     void initCommandManager();
     void handleAsyncUpdate() override;
     
     void showAboutWindow();
     void showSettingsDialog();
     
+    void clearRecentFiles();
+    
+    void updateSettings();
+
     //==============================================================================
    #if JUCE_MAC
     class AppleMenuRebuildListener  : private MenuBarModel::Listener

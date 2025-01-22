@@ -18,6 +18,8 @@ void AudioTransportSource::setSource (PositionableAudioSource* const newSource,
                                       int readAheadSize, TimeSliceThread* readAheadThread,
                                       double sourceSampleRateToCorrectFor, int maxNumChannels)
 {
+    isPrepared = false;
+    
     if (source == newSource)
     {
         if (source == nullptr)
@@ -69,8 +71,6 @@ void AudioTransportSource::setSource (PositionableAudioSource* const newSource,
     }
 
     {
-        const ScopedLock sl (callbackLock);
-
         source = newSource;
         resamplerSource = newResamplerSource;
         bufferingSource = newBufferingSource;
@@ -88,19 +88,17 @@ void AudioTransportSource::setSource (PositionableAudioSource* const newSource,
 
 void AudioTransportSource::start()
 {
-    if ((! playing) && masterSource != nullptr)
-    {
-        {
-            playing = true;
-            stopped = false;
-        }
+    jassert(isPrepared);
+    if ((! playing) && masterSource != nullptr) {
+        playing = true;
+        stopped = false;
     }
 }
 
 void AudioTransportSource::stop()
 {
-    if (playing)
-    {
+    jassert(isPrepared);
+    if (playing) {
         playing = false;
         stopped = true;
     }
@@ -108,12 +106,14 @@ void AudioTransportSource::stop()
 
 void AudioTransportSource::setPosition (double newPosition)
 {
+    jassert(isPrepared);
     if (sampleRate > 0.0)
         setNextReadPosition ((int64) (newPosition * sampleRate));
 }
 
 double AudioTransportSource::getCurrentPosition() const
 {
+    jassert(isPrepared);
     if (sampleRate > 0.0)
         return (double) getNextReadPosition() / sampleRate;
 
@@ -136,8 +136,7 @@ bool AudioTransportSource::hasStreamFinished() const noexcept
 
 void AudioTransportSource::setNextReadPosition (int64 newPosition)
 {
-    if (positionableSource != nullptr)
-    {
+    if (positionableSource != nullptr) {
         if (sampleRate > 0 && sourceSampleRate > 0)
             newPosition = (int64) ((double) newPosition * sourceSampleRate / sampleRate);
 
@@ -150,10 +149,7 @@ void AudioTransportSource::setNextReadPosition (int64 newPosition)
 
 int64 AudioTransportSource::getNextReadPosition() const
 {
-    const ScopedLock sl (callbackLock);
-
-    if (positionableSource != nullptr)
-    {
+    if (positionableSource != nullptr) {
         const double ratio = (sampleRate > 0 && sourceSampleRate > 0) ? sampleRate / sourceSampleRate : 1.0;
         return (int64) ((double) positionableSource->getNextReadPosition() * ratio);
     }
@@ -163,33 +159,26 @@ int64 AudioTransportSource::getNextReadPosition() const
 
 int64 AudioTransportSource::getTotalLength() const
 {
-    const ScopedLock sl (callbackLock);
-
-    if (positionableSource != nullptr)
-    {
+    if (positionableSource != nullptr) {
         const double ratio = (sampleRate > 0 && sourceSampleRate > 0) ? sampleRate / sourceSampleRate : 1.0;
         return (int64) ((double) positionableSource->getTotalLength() * ratio);
     }
-
     return 0;
 }
 
 bool AudioTransportSource::isLooping() const
 {
-    const ScopedLock sl (callbackLock);
     return positionableSource != nullptr && positionableSource->isLooping();
 }
 
-#if PROCESS_GAIN
 void AudioTransportSource::setGain (const float newGain) noexcept
 {
     gain = newGain;
 }
-#endif
 
 void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double newSampleRate)
 {
-    const ScopedLock sl (callbackLock);
+    isPrepared = false;
 
     sampleRate = newSampleRate;
     blockSize = samplesPerBlockExpected;
@@ -205,12 +194,12 @@ void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double ne
 
 void AudioTransportSource::releaseMasterResources()
 {
-    const ScopedLock sl (callbackLock);
+    isPrepared = false;
 
     if (masterSource != nullptr)
         masterSource->releaseResources();
 
-    isPrepared = false;
+    
 }
 
 void AudioTransportSource::releaseResources()
@@ -220,44 +209,38 @@ void AudioTransportSource::releaseResources()
 
 void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info)
 {
-    const ScopedLock sl (callbackLock);
-
-    if (masterSource != nullptr && ! stopped)
-    {
+    if (masterSource != nullptr &&
+        isPrepared &&
+        (playing || stopped)) {
+        
+        
         masterSource->getNextAudioBlock (info);
 
-        if (! playing)
+        if (!playing && stopped)
         {
-#if PROCESS_GAIN
             // just stopped playing, so fade out the last block..
             for (int i = info.buffer->getNumChannels(); --i >= 0;)
                 info.buffer->applyGainRamp (i, info.startSample, jmin (256, info.numSamples), 1.0f, 0.0f);
 
             if (info.numSamples > 256)
                  info.buffer->clear (info.startSample + 256, info.numSamples - 256);
-#endif
+            
+            stopped = true;
+        }
+        else if (hasStreamFinished()) {
+            stop();
         }
 
-        if (hasStreamFinished())
-        {
-            playing = false;
-            //sendChangeMessage();
-        }
-
-        stopped = ! playing;
-#if PROCESS_GAIN
         for (int i = info.buffer->getNumChannels(); --i >= 0;)
             info.buffer->applyGainRamp (i, info.startSample, info.numSamples, lastGain, gain);
-#endif
+
     }
-    else
-    {
+    else {
         info.clearActiveBufferRegion();
         stopped = true;
     }
-#if PROCESS_GAIN
-    lastGain = gain;
-#endif
+
+    lastGain.store(gain.load());
 }
 
 } // namespace audium

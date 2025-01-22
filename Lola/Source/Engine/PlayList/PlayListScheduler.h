@@ -28,10 +28,7 @@ class AudioResourceContainer;
 
 namespace audium {
     class Playback;
-    class LockFreeCommander;
-    
-template <class>
-    class AudioBusRenderer;
+    class AudioBusInterface;
 }
 
 class PlayListScheduler : public juce::ChangeListener
@@ -43,11 +40,10 @@ public:
                       std::shared_ptr<AudioResourceContainer> audioResourceContainer_,
                       std::shared_ptr<TempoProvider> tempoProvider_,
                       std::shared_ptr<audium::LinkEngine> linkEngine_,
-                      std::shared_ptr<AudioClipContainer> audioClipContainer_,
+                      std::shared_ptr<audium::AudioClipContainer> audioClipContainer_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
-                      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer_,
-                      std::shared_ptr<audium::LockFreeCommander> lockFreeCommander_) :
+                      std::shared_ptr<audium::AudioBusInterface> audioBusInterface_) :
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
         tempoProvider(tempoProvider_),
@@ -55,14 +51,13 @@ public:
         audioClipContainer(audioClipContainer_),
         transportSourceContainer(transportSourceContainer_),
         playback(playback_),
-        audioBusRenderer(audioBusRenderer_),
-        lockFreeCommander(lockFreeCommander_)
+        audioBusInterface(audioBusInterface_)
     {
-        linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) { tick(isPlaying, beats, numSamples); };
+        linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) {
+            tick(isPlaying, beats, numSamples);
+        };
         
         audioTrackContainer->addChangeListener(this);
-        
-        
     }
     
     ~PlayListScheduler() override
@@ -93,11 +88,10 @@ public:
     int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track);
     double getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const;
     
-    
-    double getAbsolutePosition(audium::TimeContextType context) const;
-    void setAbsolutePosition(double newPosition, audium::TimeContextType context);
+    void setAbsoluteStartPosition(double newPosition, audium::TimeContextType context);
     double getAbsoluteStartPosition(audium::TimeContextType context) const;
-
+    double getAbsolutePosition(audium::TimeContextType context) const;
+    
     void tick(bool isPlaying, double beats, int numSamples);
     
     void processAudio (const juce::AudioSourceChannelInfo& info);
@@ -108,38 +102,29 @@ public:
                       audium::ExportAudioConfig &config,
                       std::function<void ()> callback);
     
-    audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
-    
+    std::shared_ptr<audium::LinkEngine> getLinkEngine() const { return linkEngine; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
-    
-    // TODO: maybe move this to class PositionableBase
-    static juce::Range<double> absoluteToLocalRange(juce::Range<double> absoluteRange, const PlayListItem* item, audium::TimeContextType context);
-    static double absoluteToLocalPosition(double absolutePosition, const PlayListItem* item, audium::TimeContextType context);
-    static juce::Range<double> absoluteToLocalRange(juce::Range<double> absoluteRange, std::shared_ptr<AudioSubGroup> subGroup, audium::TimeContextType context);
+    std::shared_ptr<audium::Playback> getPlayback() const { return playback; }
+    std::shared_ptr<audium::AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
     
     void commitPlayListData();
     
     PlayListSchedulerData data;
-    
 
-
-    
 private:
     
     // process sequencing
     void process(double absolutePosition, int numSamples);
     
-private:
     
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<audium::LinkEngine> linkEngine;
-    std::shared_ptr<AudioClipContainer> audioClipContainer;
+    std::shared_ptr<audium::AudioClipContainer> audioClipContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::Playback> playback;
-    std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer;
-    std::shared_ptr<audium::LockFreeCommander> lockFreeCommander;
+    std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
     
     double externalSampleRate = 0.0;
     
@@ -147,5 +132,7 @@ private:
     
     std::atomic<bool> forcePosition = false;
         
+    std::atomic<double> totalLengthClocks = 0.0;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

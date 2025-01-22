@@ -27,7 +27,7 @@ class TransportSourceContainer;
 class AudioResourceContainer;
 
 namespace audium {
-    class LockFreeCommander;
+    class AudioBusInterface;
 }
 
 class AudioTrackContainer : public juce::ActionBroadcaster,
@@ -42,8 +42,8 @@ public:
                         std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                         std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                         std::shared_ptr<audium::SelectionManager> selectionManager,
-                        std::shared_ptr<audium::LockFreeCommander> lockFreeCommander_) :
-        lockFreeCommander(lockFreeCommander_),
+                        std::shared_ptr<audium::AudioBusInterface> audioBusInterface_) :
+        audioBusInterface(audioBusInterface_),
         undoManager(undoManager),
         tempoProvider(tempoProvider),
         audioResourceContainer(audioResourceContainer),
@@ -54,6 +54,9 @@ public:
     }
     
     ~AudioTrackContainer();
+    
+    void setMasterGain(const float newGain);
+    const float getMasterGain() const noexcept;
     
     bool groupIdExists(const int groupId) const;
         
@@ -99,7 +102,7 @@ public:
     
     juce::Colour getNewAudioTrackColour() const;
     
-    std::shared_ptr<audium::LockFreeCommander> lockFreeCommander;
+    std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
     
 private:
     std::shared_ptr<juce::UndoManager> undoManager;
@@ -111,6 +114,7 @@ private:
     std::vector<std::shared_ptr<AudioTrack>> audioTracks;
     int selectedGroup = 0;
     
+    float masterGain = 1.f;
 
     
     // Discuss: inject depenendency

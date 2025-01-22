@@ -22,6 +22,8 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Resource/ChannelMapping.h"
 
+using namespace audium;
+
 AudioTrack::~AudioTrack()
 {
     cleanup();
@@ -42,11 +44,6 @@ void AudioTrack::setAudioTrackName(const juce::String newName)
 std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResources() const
 {
     return audioResourceContainer.getAudioResourcesForTrack(const_cast<AudioTrack*>(this));
-}
-
-std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const
-{
-    return audioResourceContainer.getAudioResourcesForTrackAtAbsoluteRange(const_cast<AudioTrack*>(this), rangeInSeconds);
 }
 
 std::shared_ptr<AudioSubGroup> AudioTrack::getSubGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const
@@ -237,8 +234,9 @@ void AudioTrack::ensureNumChannels(int channelsNeeded)
 
 std::shared_ptr<AudioChannel> AudioTrack::addChannel()
 {
-    auto channel = std::shared_ptr<AudioChannel>(new AudioChannel(*this,                                                                  
-                                                                  selectionManager));
+    auto channel = std::make_shared<AudioChannel>(*this,
+                                                  selectionManager,
+                                                  getAudioTrackContainer().audioBusInterface);
     audioChannelContainer->push_back(channel);
     return channel;
 }
@@ -262,12 +260,6 @@ int AudioTrack::getTotalHeight() const
         height += getChannel(c)->getChannelHeight();
     }
     return height;
-}
-
-const float AudioTrack::getOutputLevel(int channelNumber) const
-{
-    // adding the track's channel offset
-    return transportSourceContainer->getOutputLevel(channelNumber + getChannelOffset());
 }
 
 void AudioTrack::setGain(float gain, int channelNumber) {
@@ -546,7 +538,6 @@ std::shared_ptr<AudioResource> AudioTrack::addAudioFile(std::shared_ptr<AudioSub
     if (audioResource != nullptr)
     {
         auto transportSource = getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
-        jassert(transportSource);
         if (transportSource != nullptr)
         {
             channelPosition += audioResource->getNumChannels();

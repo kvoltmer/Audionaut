@@ -29,10 +29,10 @@ public:
     
     void setTempo(double newTempo)
     {
-        tempoBPM = newTempo;
+        tempoBPM = std::max(30.0, newTempo);
         if (linkEngine != nullptr)
         {
-            linkEngine->setTempo(newTempo);
+            linkEngine->setTempo(tempoBPM);
         }
         
         sendActionMessage (tempoChanged);
@@ -111,6 +111,16 @@ public:
     {
         // 96th / 24 = 4th
         return clocks / 24.0;
+    }
+    
+    static double clicksToClocks(double clicks)
+    {
+        return clicks * 6.0;
+    }
+    
+    static double clocksToClicks(double clocks)
+    {
+        return clocks / 6.0;
     }
     
     static double barsToClocks(double bars)

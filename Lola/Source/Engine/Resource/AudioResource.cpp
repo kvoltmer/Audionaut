@@ -22,19 +22,22 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
                              std::shared_ptr<AudioTrack> audioTrack_,
                              std::shared_ptr<AudioSubGroup> audioSubGroup_,
                              juce::URL url_,
-                             int channelPosition) :
+                             int channelPosition,
+                             std::shared_ptr<juce::AudioFormatReader> reader_) :
+    audioFormatReader(reader_),
     owner(audioResourceContainer_),
     audioTrack(audioTrack_),
     audioSubGroup(audioSubGroup_),
     url(url_)
 {
-    auto reader = owner.getAudioFormatManager()->createReaderFor (getUrl().getLocalFile());
-    audioFormatReader = std::unique_ptr<juce::AudioFormatReader>(reader);
+    if (audioFormatReader == nullptr) {
+        auto af = owner.getAudioFormatManager();
+        audioFormatReader = AudioResourceFactory::createAudioFormatReader(url, *af.get());
+    }
     
     channelMapping = std::make_unique<audium::ChannelMapping>();
     
-    if (channelPosition >= 0)
-    {
+    if (channelPosition >= 0) {
         audioTrack->ensureNumChannels(channelPosition + getNumChannels());
         channelMapping->setChannelPosition(channelPosition, getNumChannels());
     }
@@ -52,8 +55,7 @@ std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(s
     auto sampleRate = 44100.0;
     auto numSamples = 512;
     auto device = owner.getAudioDeviceManager()->getCurrentAudioDevice();
-    if (device != nullptr)
-    {
+    if (device != nullptr) {
         sampleRate = device->getCurrentSampleRate();
         numSamples = device->getCurrentBufferSizeSamples();
     }
@@ -100,11 +102,9 @@ double AudioResource::getSampleRate() const
 
 unsigned int AudioResource::getNumChannels() const
 {
-    if (audioFormatReader != nullptr)
-    {
+    if (audioFormatReader != nullptr) {
         return audioFormatReader->numChannels;
     }
-    
     return numChannels;
 }
 
@@ -112,17 +112,14 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
 {
     auto length = lengthInSeconds;
  
-    if (audioFormatReader != nullptr)
-    {
+    if (audioFormatReader != nullptr) {
         length = audioFormatReader->lengthInSamples / audioFormatReader->sampleRate;
     }
     
-    if (context == audium::seconds)
-    {
+    if (context == audium::seconds) {
         return length;
     }
-    else if (context == audium::clocks)
-    {
+    else if (context == audium::clocks) {
         return owner.getTempoProvider()->secondsToClocks(length);
     }
     
@@ -135,8 +132,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWith
     std::vector<std::shared_ptr<AudioResource>> result;
     auto resources = owner.getAudioResourcesForSubGroup(audioSubGroup.get());
  
-    for (auto resource : resources)
-    {
+    for (auto resource : resources) {
         if (resource.get() == this)
             continue;
     
@@ -150,8 +146,7 @@ bool AudioResource::containsAbsolutePosition(double position, audium::TimeContex
     auto startTime = getAudioSubGroup()->getAbsolutePosition(context);
     auto endTime = startTime + getAudioSubGroup()->getRegionData(context).getLength();
     juce::Range<double> absoluteRange(startTime, endTime);
-    if (absoluteRange.contains(position))
-    {
+    if (absoluteRange.contains(position)) {
         return true;
     }
 
@@ -176,8 +171,7 @@ void AudioResource::testUrl (const juce::URL& url)
         juce::File file = url.getLocalFile();
         auto fin = std::make_unique<juce::FileInputStream> (file);
 
-        if (!fin->openedOk())
-        {
+        if (!fin->openedOk()) {
             throw std::runtime_error(file.getFullPathName().toStdString() + "\nError: " + fin->getStatus().getErrorMessage().toStdString());
         }
     }
@@ -189,8 +183,7 @@ const juce::URL AudioResource::urlFromJson (json& input)
     juce::File file;
     
     // relative path is always a local file
-    if (input.contains("relative_file_path"))
-    {
+    if (input.contains("relative_file_path")) {
         juce::String relPath = input["relative_file_path"].template get<std::string>();
         filePath = AudiumEngine::projectDirectory.getChildFile(relPath).getFullPathName();
         if (File(filePath).existsAsFile())
@@ -199,8 +192,7 @@ const juce::URL AudioResource::urlFromJson (json& input)
     
     std::cout << "warning: relative path does not exist: " << filePath << std::endl;
     
-    if (input.contains("absolute_file_path"))
-    {
+    if (input.contains("absolute_file_path")) {
         filePath = input["absolute_file_path"].template get<std::string>();
         file = juce::File::createFileWithoutCheckingPath(filePath);
         if (file.existsAsFile())
@@ -222,28 +214,15 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
         lengthInSeconds = input["length_in_seconds"].template get<double>();
     
     
-    if (! channelMapping->readFromJson(input, rebuild))
-    {
+    if (! channelMapping->readFromJson(input, rebuild)) {
         // TODO: remove legacy code
         auto channelPos = 0;
-        if (input.contains("channel_position"))
-        {
+        if (input.contains("channel_position")) {
             channelPos = input["channel_position"].template get<int>();
             channelMapping->setChannelPosition(channelPos, getNumChannels());
         }
     }
-    
     jassert(this->url == urlFromJson(input));
-
     return true;
-}
-
-
-void AudioResource::setSelected(bool bSelected, bool deselectOthers)
-{
-    if (deselectOthers)
-        owner.deselectAllResources();
-
-    selected = bSelected;
 }
 

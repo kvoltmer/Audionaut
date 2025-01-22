@@ -16,6 +16,8 @@
 #include "Engine/Core/DspClipData.h"
 #include "Engine/Core/LockFreeContainer.h"
 
+namespace audium {
+
 class AudioClipContainer {
     
 public:
@@ -23,7 +25,6 @@ public:
     AudioClipContainer(int capacity) :
         dspClips(capacity)
     {
-        
     }
     
     ~AudioClipContainer() = default;
@@ -56,7 +57,9 @@ public:
 private:
     
     audium::LockFreeContainer<DspClipData> dspClips;
-
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioClipContainer)
-
+    
 };
+
+} // namespace audium

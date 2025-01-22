@@ -71,7 +71,7 @@ public:
 
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
-    void deletePlayListItem(int atIndex, bool sendNotification = true);
+    void deletePlayListItem(int atIndex);
     bool deletePlayListItem(PlayListItem* playListItem);
 
     bool deleteAssociatedItems(const AudioRegion* audioRegion);

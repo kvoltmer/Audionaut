@@ -80,6 +80,7 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
                 {
                     currentFile = file;
                     undoManager->clearUndoHistory();
+                    playListScheduler->commitPlayListData();
                     NullCheckedInvocation::invoke (callback, true, "");
                     return;
                 }
@@ -100,46 +101,46 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
     
 }
 
-bool AudiumEngine::saveFile (const juce::File& f)
+void AudiumEngine::saveFile (const juce::File& file_, std::function<void (bool,std::string)> callback)
 {
-    juce::File file = f;
-    
-    if (! file.hasFileExtension (projectFileExtension))
+    try
     {
-        file = juce::File(file.getFullPathName() + projectFileExtension);
-    }
-    
-    if (! file.exists())
-    {
-        auto result = file.create();
-        if (result != juce::Result::ok())
-        {
-            return false;
-        }
-    }
-    
-    projectDirectory = file.getParentDirectory();
-    
-    juce::TemporaryFile temp (file);
+        auto file = file_;
         
-    juce::FileOutputStream out (temp.getFile());
+        if (! file.hasFileExtension (projectFileExtension))
+            file = juce::File(file.getFullPathName() + projectFileExtension);
+        
+        if (! file.exists())
+            file.create();
+        
+        projectDirectory = file.getParentDirectory();
+        
+        juce::TemporaryFile temp (file);
+            
+        juce::FileOutputStream out (temp.getFile());
 
-    if (! (out.openedOk()))
-    {
-        std::cout << out.getStatus().getErrorMessage().toStdString() << std::endl;
-        return false;
-    }
-    
-    writeToStream(out);
-    undoManager->clearUndoHistory();
-    
+        if (out.failedToOpen()) {
+            NullCheckedInvocation::invoke (callback, false, out.getStatus().getErrorMessage().toStdString());
+            return;
+        }
 
-    if (temp.overwriteTargetFileWithTemporary())
-    {
-        currentFile = file;
-        return true;
+        if (writeToStream(out)) {
+            if (temp.overwriteTargetFileWithTemporary()) {
+                currentFile = file;
+                undoManager->clearUndoHistory();
+                NullCheckedInvocation::invoke (callback, true, "");
+                return;
+            }
+        }
+        
+        jassertfalse;
+        NullCheckedInvocation::invoke (callback, false, "unknown error");
     }
-    return false;
+    catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        NullCheckedInvocation::invoke (callback, false, e.what());
+    }
 }
 
 void AudiumEngine::setBypass(bool bypass)
@@ -154,11 +155,11 @@ bool AudiumEngine::writeToStream (juce::OutputStream& outputStream)
 
 bool AudiumEngine::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
-    if (audium::Streamable::readFromStream(inputStream))
-    {
-        return true;
-    }
-    return false;
+    setBypass(true);
+    auto result = audium::Streamable::readFromStream(inputStream);
+    // std::cout << "AudiumEngine::readFromStream done" << std::endl;
+    setBypass(false);
+    return result;
 }
 
 bool AudiumEngine::writeToJson (json& output)

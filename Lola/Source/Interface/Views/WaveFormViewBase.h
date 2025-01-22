@@ -61,10 +61,20 @@ public:
         //auto sourceSamplesPerThumbnailSample = 4096*4;
         audioThumbnail.reset(new audium::AudioThumbnail(sourceSamplesPerThumbnailSample, *formatManager, *thumbnailCache));
         audioThumbnail->setColour(colour);
-        if (auto inputSource = AudioResourceFactory::makeAudioInputSource(audioResource->getUrl()))
-        {
-            //audioThumbnail->setReader(audioResource->getAudioFormatReader().get(), inputSource->hashCode());
-            audioThumbnail->setSource(inputSource.release());
+        if (audioResource->audioFormatReader != nullptr) {
+            
+            // reuse shared_ptr if the file is memory mapped
+            if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
+                auto hashCode = audioResource->getUrl().toString(true).hashCode64();
+                audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
+            }
+            else {
+            
+                // create a new input source
+                if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
+                    audioThumbnail->setSource(inputSource.release());
+                }
+            }
         }
         audioThumbnail->addChangeListener(this);
     }

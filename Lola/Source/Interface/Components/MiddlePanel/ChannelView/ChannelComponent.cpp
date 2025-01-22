@@ -7,6 +7,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/AudiumLookAndFeel.h"
+#include "Engine/Playback/AudioBusInterface.h"
 
 ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
                                     std::shared_ptr<AudiumEngine> engine_,
@@ -112,7 +113,6 @@ ChannelComponent::~ChannelComponent()
     audioTrack = nullptr;
 }
 
-//==============================================================================
 void ChannelComponent::paint (juce::Graphics& g)
 {
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
@@ -134,22 +134,21 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_,
 {
     audioTrack = audioTrack_;
     rowNumber = rowNumber_;
-
     
-    volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)),
-                           dontSendNotification);
-    
+    volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)), dontSendNotification);
     panSlider->setValue(audioTrack->getPan(rowNumber), dontSendNotification);
     
-    if (not isTimerRunning())
-    {
+    if (not isTimerRunning()) {
         startTimerHz(60);
     }
+    
+    channelNumber = audioTrack->getChannel(rowNumber)->getChannelNumber() + audioTrack->getChannelOffset();
 }
 
 void ChannelComponent::timerCallback()
 {
-    levelMeter->setLevel(audioTrack->getOutputLevel(rowNumber));
+    auto lvl = engine->getAudioBusInterface()->getChannelLevel(channelNumber);
+    levelMeter->setLevel(lvl);
 }
 
 void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)

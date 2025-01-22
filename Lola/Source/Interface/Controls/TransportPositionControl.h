@@ -36,7 +36,7 @@ public:
         addAndMakeVisible(transportView.get());
         transportView->toBack();
         
-        startPositionMarker.setFill (Colours::white.withAlpha (0.85f));
+        startPositionMarker.setFill (Colours::red.withAlpha (0.85f));
         addAndMakeVisible (startPositionMarker);
         
         mouseOverGridMarker.setFill(findColour (audium::gridColourId));
@@ -96,7 +96,7 @@ public:
                 zoomHandler->snapToGrid(clocks);
                 
                 // set transport position
-                audiumEngine->getPlayListScheduler()->setAbsolutePosition(clocks, audium::clocks);
+                audiumEngine->getPlayListScheduler()->setAbsoluteStartPosition(clocks, audium::clocks);
             }
         }
     }

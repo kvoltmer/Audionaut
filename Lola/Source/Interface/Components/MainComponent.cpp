@@ -1,23 +1,5 @@
-/*
-  ==============================================================================
 
-  This is an automatically generated GUI class created by the Projucer!
 
-  Be careful when adding custom code to these files, as only the code within
-  the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
-  and re-saved.
-
-  Created with Projucer version: 7.0.8
-
-  ------------------------------------------------------------------------------
-
-  The Projucer is part of the JUCE library.
-  Copyright (c) 2020 - Raw Material Software Limited.
-
-  ==============================================================================
-*/
-
-//[Headers] You can add your own extra header files here...
 #include "Interface/Components/HeaderPanel/HeaderComponent.h"
 #include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
 #include "Interface/Components/RightPanel/RightPanelComponent.h"
@@ -29,37 +11,21 @@
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-//[/Headers]
 
 #include "MainComponent.h"
 
-
-//[MiscUserDefs] You can add your own user definitions and misc code here...
-//[/MiscUserDefs]
-
 //==============================================================================
-MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
+MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
+    audiumEngine(audiumEngine_)
 {
-    //[Constructor_pre] You can add your own custom stuff here..
-
-    this->audiumEngine = audiumEngine;
-
-    headerComponent.reset(new HeaderComponent(audiumEngine->getPlayListScheduler()));
+    headerComponent.reset(new HeaderComponent(audiumEngine));
     middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
     rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
     stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, true));
 
-    //[/Constructor_pre]
-
-
-    //[UserPreSize]
-    //[/UserPreSize]
 
     setSize (1200, 800);
-
-
-    //[Constructor] You can add your own custom stuff here..
 
     addAndMakeVisible(headerComponent.get());
     addAndMakeVisible(middlePanelComponent.get());
@@ -84,43 +50,23 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine)
     audiumEngine->getPlayListScheduler()->getTempoProvider()->addActionListener(this);
 
     audiumEngine->getUndoManager()->addChangeListener(this);
-
-    //[/Constructor]
 }
 
 MainComponent::~MainComponent()
 {
-    //[Destructor_pre]. You can add your own custom destruction code here..
     audiumEngine->getAudioTrackContainer()->removeActionListener(this);
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->removeActionListener(this);
-    //[/Destructor_pre]
-
-
-
-    //[Destructor]. You can add your own custom destruction code here..
-    //[/Destructor]
 }
 
 //==============================================================================
 void MainComponent::paint (juce::Graphics& g)
 {
-    //[UserPrePaint] Add your own custom painting code here..
-    //[/UserPrePaint]
-
     g.fillAll (juce::Colour (0xff282829));
-
-    //[UserPaint] Add your own custom painting code here..
-    //[/UserPaint]
 }
 
 void MainComponent::resized()
 {
-    //[UserPreResize] Add your own custom resize code here..
-    //[/UserPreResize]
-
-    //[UserResized] Add your own custom resize handling here..
-
     const auto headerHeight = headerComponent->getHeight();
     headerComponent->setBounds(0, 0, getWidth(), headerHeight);
 
@@ -134,51 +80,13 @@ void MainComponent::resized()
     stretchableLayoutManager->layOutComponents (comps, 3,
                                0, headerHeight, getWidth(), getHeight() - headerHeight,
                                false, true);
-
-    //[/UserResized]
 }
-
-
-
-//[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
 void MainComponent::actionListenerCallback (const juce::String& message)
 {
     //std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
 
-    if (message == regionCreatedAction)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == regionClearedAction)
-    {
-        rightPanelComponent->clearSelection();
-    }
-    else if (message == regionModifiedAction)
-    {
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == regionSelectedAction)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == playListItemCreatedAction)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == playListItemTriggered)
-    {
-        rightPanelComponent->updateUI(ContentContext);
-    }
-    else if (message == audioResourceCreatedAction)
-    {
-        middlePanelComponent->updateUI();
-        rightPanelComponent->updateUI();
-    }
-    else if (message == scrolledVertically)
+    if (message == scrolledVertically)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::VerticalScrollContext);
     }
@@ -221,12 +129,14 @@ void MainComponent::changeListenerCallback (ChangeBroadcaster* source)
 
 void MainComponent::rebuildUI()
 {
+    headerComponent->updateUI();
     middlePanelComponent->updateUI(MiddlePanelComponent::ForceRebuildContext);
     rightPanelComponent->updateUI(RebuildContext);
 }
 
 void MainComponent::updateUI()
 {
+    headerComponent->updateUI();
     auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
     middlePanelComponent->showArrangementComponent(!editMode);
     middlePanelComponent->showEditComponent(editMode);
@@ -308,32 +218,3 @@ void MainComponent::duplicate()
     audiumEngine->getAudioTrackContainer()->getSelectionManager()->copySelectedToClipboard();
     audiumEngine->getAudioTrackContainer()->getSelectionManager()->pasteFromClipboard(audiumEngine, true);
 }
-
-//[/MiscUserCode]
-
-
-//==============================================================================
-#if 0
-/*  -- Projucer information section --
-
-    This is where the Projucer stores the metadata that describe this GUI layout, so
-    make changes in here at your peril!
-
-BEGIN_JUCER_METADATA
-
-<JUCER_COMPONENT documentType="Component" className="MainComponent" componentName=""
-                 parentClasses="public juce::Component, private juce::ActionListener, private juce::ChangeListener"
-                 constructorParams="std::shared_ptr&lt;AudiumEngine&gt; audiumEngine"
-                 variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
-                 overlayOpacity="0.330" fixedSize="0" initialWidth="1200" initialHeight="800">
-  <BACKGROUND backgroundColour="ff282829"/>
-</JUCER_COMPONENT>
-
-END_JUCER_METADATA
-*/
-#endif
-
-
-//[EndFile] You can add extra defines here...
-//[/EndFile]
-

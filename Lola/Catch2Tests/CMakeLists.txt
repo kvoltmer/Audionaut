@@ -148,6 +148,7 @@ target_link_libraries(${APP_NAME}
         juce::juce_core
         juce::juce_audio_formats
         juce::juce_audio_utils
+        juce::juce_dsp
         Catch2::Catch2WithMain
         Ableton::Link
     PUBLIC

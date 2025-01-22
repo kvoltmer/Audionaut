@@ -69,6 +69,9 @@ void AudiumLookAndFeel::setupColours()
     // Button
     setColour(TextButton::buttonColourId, findColour(backgroundColourId));
 
+    // Slider
+    setColour(Slider::backgroundColourId, Colours::transparentBlack);
+    
 }
 
 void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
@@ -77,7 +80,7 @@ void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
                                            bool shouldDrawButtonAsHighlighted,
                                            bool shouldDrawButtonAsDown)
 {
-    auto cornerSize = 3.0f;
+    auto cornerSize = 1.0f;
     auto bounds = button.getLocalBounds().toFloat().reduced (0.5f, 0.5f);
 
     auto baseColour = backgroundColour.withMultipliedSaturation (button.hasKeyboardFocus (true) ? 1.3f : 0.9f)
@@ -113,7 +116,8 @@ void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
     {
         g.fillRoundedRectangle (bounds, cornerSize);
 
-        g.setColour (button.findColour (ComboBox::outlineColourId));
+        //g.setColour (button.findColour (ComboBox::outlineColourId));
+        g.setColour (Colours::white.withAlpha(0.1f));
         g.drawRoundedRectangle (bounds, cornerSize, 1.0f);
     }
 }
@@ -206,9 +210,24 @@ Label* AudiumLookAndFeel::createSliderTextBox (Slider& slider)
 {
     auto* l = LookAndFeel_V4::createSliderTextBox (slider);
 
-    // default font for sliders
-    l->setFont (juce::FontOptions (11.00f));
+    // try to extract the font size from the name
+    auto fontSize = slider.getName().getTrailingIntValue();
+    if (fontSize > 0)
+        l->setFont (juce::FontOptions ((float)fontSize));
+    else
+        l->setFont (juce::FontOptions (11.00f));
     return l;
+}
+
+void AudiumLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
+                                       float sliderPos,
+                                       float minSliderPos,
+                                       float maxSliderPos,
+                                       const juce::Slider::SliderStyle style, juce::Slider& slider)
+{
+    g.fillAll (slider.findColour(Slider::backgroundColourId));
+
+    LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
 }
 
 int AudiumLookAndFeel::getAlertWindowButtonHeight()    { return 20; }

@@ -87,8 +87,6 @@ public:
     std::shared_ptr<audium::SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtChannelPosition(int channelPosition) const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesAtAbsoluteRange(juce::Range<double> rangeInSeconds) const;
     std::shared_ptr<AudioSubGroup> getSubGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     std::shared_ptr<AudioSubGroup> getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const;
     
@@ -103,9 +101,6 @@ public:
    
     // audium::Selectable override:
     void setSelected(bool bSelected, bool selectChildren) override;
-    
-
-    const float getOutputLevel(int channelNumber) const;
     
     void setGain(float gain, int channelNumber);
     float getGain(int channelNumber) const;
@@ -156,7 +151,7 @@ public:
     
     double getTotalLength(audium::TimeContextType context, bool arrangementMode) const;
     
-    std::vector<DspClipData> getDspClipVector(bool arrangementMode) const;
+    std::vector<audium::DspClipData> getDspClipVector(bool arrangementMode) const;
     
 private:
     AudioTrackContainer &owner;

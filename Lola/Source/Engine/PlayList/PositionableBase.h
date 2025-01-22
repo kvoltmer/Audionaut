@@ -74,6 +74,12 @@ public:
     {
         setAbsolutePosition(getAbsolutePosition(context) + amount, context);
     }
+    
+    const juce::Range<double> absoluteToLocalRange(const juce::Range<double> absoluteRange,
+                                                   audium::TimeContextType context) const;
+    
+    const double absoluteToLocalPosition(const double absolutePosition,
+                                         audium::TimeContextType context) const;
 
 private:
     
