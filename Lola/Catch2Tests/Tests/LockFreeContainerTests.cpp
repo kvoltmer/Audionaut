@@ -7,7 +7,7 @@
 #include "Engine/Core/LockFreeContainer.h"
 #include "Engine/Core/DspClipData.h"
 
-
+using namespace audium;
 
 SCENARIO("lock free container scenario", "[engine][lock-free][container]")
 {

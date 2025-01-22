@@ -15,15 +15,18 @@
 #include "Engine/Channel/AudioChannelData.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/Playback/AudioBusInterface.h"
 
 class AudioChannel : public audium::Selectable
 {
     
 public:
-    AudioChannel(AudioTrack &audioTrack,
-                 std::shared_ptr<audium::SelectionManager> selectionManager) :
-        audium::Selectable(selectionManager),
-        audioTrack(audioTrack)
+    AudioChannel(AudioTrack &audioTrack_,
+                 std::shared_ptr<audium::SelectionManager> selectionManager_,
+                 std::shared_ptr<audium::AudioBusInterface> audioBusInterface_) :
+        audium::Selectable(selectionManager_),
+        audioTrack(audioTrack_),
+        audioBusInterface(audioBusInterface_)
     {
     }
     
@@ -46,7 +49,7 @@ public:
         auto channel = std::dynamic_pointer_cast<const AudioChannel>(getSharedPtr());
         return audioTrack.audioChannelContainer->getIndex(channel);
     }
-    
+        
     AudioChannelData data;
     
     AudioTrack &getAudioTrack() const { return audioTrack; }
@@ -54,6 +57,7 @@ public:
 private:
     AudioTrack &audioTrack;
     
+    std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioChannel)
     

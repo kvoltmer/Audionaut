@@ -88,19 +88,7 @@ public:
     /** Returns true if the player has stopped because its input stream ran out of data. */
     bool hasStreamFinished() const noexcept;
 
-    //==============================================================================
-    /** Starts playing (if a source has been selected).
-
-        If it starts playing, this will send a message to any ChangeListeners
-        that are registered with this object.
-    */
     void start();
-
-    /** Stops playing.
-
-        If it's actually playing, this will send a message to any ChangeListeners
-        that are registered with this object.
-    */
     void stop();
 
     /** Returns true if it's currently playing. */
@@ -109,19 +97,10 @@ public:
     /** Returns true if it's stopped. */
     bool isStopped() const noexcept     { return stopped; }
     
-#if PROCESS_GAIN
-    //==============================================================================
-    /** Changes the gain to apply to the output.
-        @param newGain  a factor by which to multiply the outgoing samples,
-                        so 1.0 = 0dB, 0.5 = -6dB, 2.0 = 6dB, etc.
-    */
-    void setGain (float newGain) noexcept;
 
-    /** Returns the current gain setting.
-        @see setGain
-    */
+    void setGain (float newGain) noexcept;
     float getGain() const noexcept      { return gain; }
-#endif
+
     //==============================================================================
     /** Implementation of the AudioSource method. */
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
@@ -155,14 +134,14 @@ private:
     PositionableAudioSource* positionableSource = nullptr;
     AudioSource* masterSource = nullptr;
 
-    CriticalSection callbackLock;
-#if PROCESS_GAIN
-    float gain = 1.0f, lastGain = 1.0f;
-#endif
-    std::atomic<bool> playing { false }, stopped { true };
-    double sampleRate = 44100.0, sourceSampleRate = 0;
+    std::atomic<float> gain = 1.0f;
+    std::atomic<float> lastGain = 1.0f;
+
+    std::atomic<bool> playing  = false;
+    std::atomic<bool> stopped  = true;
+    double sampleRate = 44100.0, sourceSampleRate = 0.0;
     int blockSize = 128, readAheadBufferSize = 0;
-    bool isPrepared = false;
+    std::atomic<bool> isPrepared = false;
 
     void releaseMasterResources();
 

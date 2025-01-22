@@ -31,6 +31,19 @@ AudioTrackContainer::~AudioTrackContainer()
     jassert(audioTracks.empty());
 }
 
+void AudioTrackContainer::setMasterGain(const float newGain)
+{
+    if (std::abs(newGain - masterGain) > 0.f) {
+        masterGain = newGain;
+        audioBusInterface->setMasterGain(newGain);
+    }
+}
+
+const float AudioTrackContainer::getMasterGain() const noexcept
+{
+    return masterGain;
+}
+
 void AudioTrackContainer::cleanup()
 {
     selectionManager->clear();
@@ -220,6 +233,7 @@ bool AudioTrackContainer::writeToJson (json& output)
         track->writeToJson(j);
         output["audio_tracks"] += j;
     }
+    output["master_gain"] = getMasterGain();
     return true;
 }
 
@@ -227,11 +241,17 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
 {
     //std::cout << "AudioTrackContainer::readFromJson " << rebuild << std::endl;
     
-    if (rebuild)
-    {
+    if (rebuild) {
         cleanup();
         jassert(audioTracks.size() == 0);
         jassert(audioResourceContainer != nullptr);
+    }
+    
+    if (input.contains("master_gain")) {
+        setMasterGain(input.at("master_gain").get<float>());
+    }
+    else {
+        setMasterGain(1.f);
     }
     
     json jsonGroups;
@@ -242,16 +262,13 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
         jsonGroups = input["groups"];
     }
     int count = 0;
-    for (auto& jsonElement : jsonGroups)
-    {
+    for (auto& jsonElement : jsonGroups) {
         std::shared_ptr<AudioTrack> audioTrack = nullptr;
-        if (rebuild)
-        {
+        if (rebuild) {
             audioTrack = AudioTrackFactory::createAudioTrack(*this, audioResourceContainer);
             audioTracks.push_back(audioTrack);
         }
-        else
-        {
+        else {
             audioTrack = audioTracks[count];
         }
         

@@ -39,6 +39,8 @@ public:
     
     ~AudioResourceContainer();
     
+    std::shared_ptr<AudioResource> findResourceWithUrl(juce::URL url) const;
+    
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      std::shared_ptr<AudioTrack> track,
                                                      std::shared_ptr<AudioSubGroup> subGroup,
@@ -73,8 +75,6 @@ public:
     std::shared_ptr<juce::AudioDeviceManager> getAudioDeviceManager() const { return audioDeviceManager; }
     
     typedef std::pair<std::shared_ptr<AudioTrack>, std::shared_ptr<AudioResource>> tAudioTrackPair;
-    
-    void deselectAllResources();
     
     juce::TimeSliceThread *getReadAheadThread() { return &thread; }
         

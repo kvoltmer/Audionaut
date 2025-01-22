@@ -59,6 +59,9 @@ public:
     enum { moveChannelToNewTrackId = 0xf836743, reservedId = 0xf836744 };
 
     std::shared_ptr<AudiumEngine> getEngine() const { return engine; }
+
+    static void configureVolumeSlider(juce::Slider *slider);
+    static void configurePanSlider(juce::Slider *slider);
     
 private:
     std::shared_ptr<AudioTrack> audioTrack;
@@ -71,8 +74,10 @@ private:
 
     int rowNumber = 0;
     
-    static void configureVolumeSlider(juce::Slider *slider);
-    static void configurePanSlider(juce::Slider *slider);
+    // used for timer updates
+    int channelNumber = -1;
+    
+
     
     // linear scaling
     static const double scale_linear(const double dVal, const double dMin, const double dMax)

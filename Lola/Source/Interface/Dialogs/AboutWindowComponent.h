@@ -42,7 +42,7 @@ public:
         auto bounds = getLocalBounds();
         bounds.removeFromBottom (20);
 
-        auto leftSlice   = bounds.removeFromLeft (150);
+//        auto leftSlice   = bounds.removeFromLeft (150);
         auto centreSlice = bounds.withTrimmedRight (150);
 
 //        juceLogoBounds = leftSlice.removeFromTop (150).toFloat();

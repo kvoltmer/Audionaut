@@ -3,8 +3,9 @@
 
 #include <JuceHeader.h>
 
-class PlayListScheduler;
-class DefaultLabel;
+#include "Interface/Controls/LevelMeter.h"
+
+class AudiumEngine;
 
 class HeaderComponent  : public juce::Component,
                          private juce::Timer,
@@ -12,8 +13,7 @@ class HeaderComponent  : public juce::Component,
                          public juce::Label::Listener
 {
 public:
-    //==============================================================================
-    HeaderComponent (std::shared_ptr<PlayListScheduler> playListScheduler);
+    HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine);
     ~HeaderComponent() override;
 
 
@@ -24,25 +24,34 @@ public:
     void buttonClicked (juce::Button* buttonThatWasClicked) override;
     void labelTextChanged (juce::Label* labelThatHasChanged) override;
 
-
-
+    void updateUI();
+    
 private:
-    std::shared_ptr<PlayListScheduler> playListScheduler;
-
-    //==============================================================================
-    std::unique_ptr<juce::TextButton> link__textButton;
     
-    std::unique_ptr<DefaultLabel> tempoLabel;
+    void configureSlider(juce::Slider* slider);
     
-    std::unique_ptr<DefaultLabel> bars__label;
-    std::unique_ptr<DefaultLabel> beats__label;
-    std::unique_ptr<DefaultLabel> rest__label;
+    std::shared_ptr<AudiumEngine> audiumEngine;
 
+    std::unique_ptr<juce::TextButton> linkButton;
+    std::unique_ptr<juce::Slider> tempoSlider;
+    std::unique_ptr<juce::Slider> barsSlider;
+    std::unique_ptr<juce::Slider> beatsSlider;
+    std::unique_ptr<juce::Slider> clicksSlider;
+    
+    int lastBeatsValue = 0;
+    int lastBarsValue = 0;
+    int lastClicksValue = 0;
+    
+    std::unique_ptr<juce::DrawableButton> playButton;
+    std::unique_ptr<juce::DrawableButton> stopButton;
+    juce::DrawablePath stopImage;
+    juce::DrawablePath playImage;
+    
+    std::unique_ptr<StereoMeter> stereoMeter;
+    std::unique_ptr<juce::Slider> volumeSlider;
 
-    //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)
 };
 
-//[EndFile] You can add extra defines here...
-//[/EndFile]
+
 

@@ -57,11 +57,6 @@ public:
         durationTimer.schedule(static_cast<int>(duration * sr));
     }
     
-    void stopIt()
-    {
-        audioTransportSource->stop();
-    }
-    
     bool isPlaying() const noexcept
     {
         return audioTransportSource->isPlaying();

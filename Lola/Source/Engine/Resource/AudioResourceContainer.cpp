@@ -25,6 +25,17 @@ AudioResourceContainer::~AudioResourceContainer()
     audioResources.clear();
 }
 
+std::shared_ptr<AudioResource> AudioResourceContainer::findResourceWithUrl(juce::URL url) const
+{
+    for (auto it = audioResources.begin(); it != audioResources.end(); ++it) {
+        if ((*it).second->getUrl() == url) {
+//            std::cout << "found url: " << url.getFileName() << std::endl;
+            return (*it).second;
+        }
+    }
+    return nullptr;
+}
+
 std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,
                                                                          std::shared_ptr<AudioTrack> track,
                                                                          std::shared_ptr<AudioSubGroup> subGroup,
@@ -36,16 +47,22 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     auto audioFormat = formatManager->findFormatForFileExtension(url.getLocalFile().getFileExtension());
     
     if (audioFormat != nullptr) {
-        // TODO: look for existing audio resource
+        
+        std::shared_ptr<juce::AudioFormatReader> reader = nullptr;
+        if (auto existingResource = findResourceWithUrl(url)) {
+            reader = existingResource->audioFormatReader;
+        }
+        
         auto audioResource = AudioResourceFactory::createAudioResource(url,
                                                                        *this,
                                                                        track,
                                                                        subGroup,
-                                                                       channelPosition);
-        jassert(audioResource);
-        audioResources.push_back({track, audioResource});
-        
-        return audioResource;
+                                                                       channelPosition,
+                                                                       reader);
+        if (audioResource->audioFormatReader != nullptr) {
+            audioResources.push_back({track, audioResource});
+            return audioResource;
+        }
     }
     
     return nullptr;
@@ -53,11 +70,9 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 
 std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
 {
-    auto audioFormatReaderSource = AudioResourceFactory::createAudioFormatReaderSource(audioResource->getUrl(), *formatManager.get());
-                                                            
-    if (audioFormatReaderSource != nullptr)
-    {
-        return audioResource->createNewTransportSource(audioFormatReaderSource);
+    auto source = std::make_shared<AudioFormatReaderSource>(audioResource->audioFormatReader.get(), false);
+    if (source != nullptr && source->getAudioFormatReader() != nullptr) {
+        return audioResource->createNewTransportSource(source);
     }
     return nullptr;
 }
@@ -206,16 +221,6 @@ void AudioResourceContainer::onDeleteChannel(AudioTrack* audioTrack, AudioChanne
     {
         removeAudioResource(resource);
     }
-}
-
-void AudioResourceContainer::deselectAllResources()
-{
-    for (auto it = audioResources.begin(), end = audioResources.end(); it != end; it++)
-    {
-        it->second->setSelected(false, false);
-    }
-    
-    sendActionMessage(audioResourceSelectedAction);
 }
 
 

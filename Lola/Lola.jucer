@@ -129,6 +129,10 @@
           <FILE id="Rf1W4c" name="LinkEngine.hpp" compile="0" resource="0" file="Source/Engine/Link/LinkEngine.hpp"/>
         </GROUP>
         <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback">
+          <FILE id="kbi6z3" name="AudioBusInterface.cpp" compile="1" resource="0"
+                file="Source/Engine/Playback/AudioBusInterface.cpp"/>
+          <FILE id="hFhhDN" name="AudioBusInterface.h" compile="0" resource="0"
+                file="Source/Engine/Playback/AudioBusInterface.h"/>
           <FILE id="isjbav" name="AudioBusRenderer.cpp" compile="1" resource="0"
                 file="Source/Engine/Playback/AudioBusRenderer.cpp"/>
           <FILE id="JTNbDj" name="AudioBusRenderer.h" compile="0" resource="0"
@@ -143,6 +147,8 @@
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
           <FILE id="sr2twv" name="PlayListSchedulerData.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListSchedulerData.h"/>
+          <FILE id="iIqNIF" name="PositionableBase.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/PositionableBase.cpp"/>
           <FILE id="iREjhA" name="PositionableBase.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PositionableBase.h"/>
           <FILE id="UTFjED" name="SampleTimer.h" compile="0" resource="0" file="Source/Engine/PlayList/SampleTimer.h"/>
@@ -475,6 +481,27 @@
         <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="$(SRCROOT)/../../Source"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="$(SRCROOT)/../../Source"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_core" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_dsp" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_events" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
+      </MODULEPATHS>
+    </VS2022>
   </EXPORTFORMATS>
   <MODULES>
     <MODULE id="juce_analytics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
