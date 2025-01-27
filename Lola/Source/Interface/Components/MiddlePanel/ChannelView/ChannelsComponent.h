@@ -18,7 +18,7 @@
 #include "Util/EngineAccess.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
-class ChannelsComponent  : public juce::Component
+class ChannelsComponent  : public juce::Component, public juce::DragAndDropTarget
 {
 public:
     ChannelsComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
@@ -38,6 +38,7 @@ public:
         // hide scrollbars
         audioChannelsListBox->getViewport()->setScrollBarsShown(false, false);
         addAndMakeVisible(audioChannelsListBox.get());
+        audioChannelsListBox->setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
     }
 
     ~ChannelsComponent() override
@@ -46,10 +47,8 @@ public:
         audioChannelsListBox->setHeaderComponent(nullptr);
     }
 
-    void paint (juce::Graphics& ) override
-    {
-    }
-
+    void paint (juce::Graphics& ) override;
+    
     void resized() override
     {
         audioChannelsListBox->setBounds(getLocalBounds());
@@ -66,12 +65,37 @@ public:
         auto range = audioChannelsListBox->getViewport()->getVerticalScrollBar().getCurrentRange().withStart(offset);
         audioChannelsListBox->getViewport()->getVerticalScrollBar().setCurrentRange(range, sendNotificationSync);
     }
+    
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
+    void itemDragEnter (const SourceDetails &dragSourceDetails) override
+    {
+        itemDrag = true;
+        repaint();
+    }
+    
+    void itemDragMove (const SourceDetails &dragSourceDetails) override
+    {
+    }
+    
+    void itemDragExit (const SourceDetails &dragSourceDetails) override
+    {
+        itemDrag = false;
+        repaint();
+    }
+    
+    void itemDropped (const SourceDetails &dragSourceDetails) override;
+    
+    bool shouldDrawDragImageWhenOver () override
+    {
+        return true;
+    }
 
 private:
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<audium::ListBox>            audioChannelsListBox;
     std::shared_ptr<ChannelGroupListBoxModel>  audioChannelsListBoxModel;
     
+    bool itemDrag = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelsComponent)
 };

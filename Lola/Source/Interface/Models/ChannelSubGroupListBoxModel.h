@@ -49,16 +49,11 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        auto channel = audioTrack->getChannel(rowNumber);
-        if (channel != nullptr)
-        {
-            if (existingComponentToUpdate == nullptr)
-            {
+        if (auto channel = audioTrack->getChannel(rowNumber)) {
+            if (existingComponentToUpdate == nullptr) {
                 return new ChannelComponent(audioTrack, audiumEngine, rowNumber);
-                
             }
-            else
-            {
+            else {
                 auto component = dynamic_cast<ChannelComponent*>(existingComponentToUpdate);
                 jassert(component);
                 

@@ -50,28 +50,19 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(rowNumber);
-        if (existingComponentToUpdate == nullptr)
-        {
-            if (audioTrack != nullptr)
-            {
+        if (auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(rowNumber)) {
+            
+            if (existingComponentToUpdate == nullptr) {
                 return new ChannelGroupComponent(audioTrack, audiumEngine);
             }
-        }
-        else
-        {
-            auto component = dynamic_cast<ChannelGroupComponent*>(existingComponentToUpdate);
-            jassert(component);
-        
-            if (audioTrack != nullptr)
-            {
+            else {
+                auto component = dynamic_cast<ChannelGroupComponent*>(existingComponentToUpdate);
+                jassert(component);
                 // update of audioTrack since row might have changed after delete
                 component->refreshComponent(audioTrack);
+                return component;
             }
-            return component;
         }
-        
-        
         return nullptr;
     }
 

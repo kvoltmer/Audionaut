@@ -931,6 +931,9 @@
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelComponent.cpp">
       <Filter>Lola\Source\Interface\Components\MiddlePanel\ChannelView</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelsComponent.cpp">
+      <Filter>Lola\Source\Interface\Components\MiddlePanel\ChannelView</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\EditView\AudioTrackRegionEditComponent.cpp">
       <Filter>Lola\Source\Interface\Components\MiddlePanel\EditView</Filter>
     </ClCompile>

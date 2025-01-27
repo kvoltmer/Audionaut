@@ -41,8 +41,7 @@ void AudioTrackListBox::setNewGroupColour(std::shared_ptr<AudioTrack> audioTrack
 
 void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
 {
-    if ( !filenames.isEmpty())
-    {
+    if ( !filenames.isEmpty()) {
         auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
         
         audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
@@ -60,20 +59,19 @@ void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mo
         };
         
         bool arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
-        if (audioTrack->addAudioFiles(filenames, position, arrangementMode, callback))
-        {
+        if (audioTrack->addAudioFiles(filenames, position, arrangementMode, callback)) {
             action->storeNewState();
             audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
             audiumEngine->getUndoManager()->beginNewTransaction();
-            setColour(ListBox::backgroundColourId, juce::Colours::transparentBlack);
-            repaint();
         }
     }
+    externalDragAndDrop = false;
+    repaint();
 }
 
 void AudioTrackListBox::fileDragEnter (const juce::StringArray& files, int x, int y)
 {
-    setColour(ListBox::backgroundColourId, findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.5f));
+    externalDragAndDrop = true;
     repaint();
 }
 
@@ -88,20 +86,23 @@ void AudioTrackListBox::fileDragMove (const StringArray& files, int x, int y)
 
 void AudioTrackListBox::fileDragExit (const juce::StringArray& files)
 {
-    setColour(ListBox::backgroundColourId, juce::Colours::transparentBlack);
+    externalDragAndDrop = false;
+    
     zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
 }
 
-
-void AudioTrackListBox::resized()
+void AudioTrackListBox::paint (juce::Graphics& g)
 {
-    // call base class
-    audium::ListBox::resized();
+    if (externalDragAndDrop) {
+        auto height = getHeaderComponent()->getHeight();
+        for (auto r = 0; r < getModel()->getNumRows(); r++) {
+            height += getModel()->getRowHeight(r);
+        }
+        g.setColour(findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.5f));
+        g.fillRect(0, height, getWidth(), getHeight()-height);
+    }
+
     
-    
-//    auto bounds = getLocalBounds();
-//    auto contentBounds = getViewport()->getViewedComponent()->getBounds();
-//    std::cout << contentBounds.getHeight() << std::endl;
-//    std::cout << bounds.getHeight() << std::endl;
+    audium::ListBox::paint(g);
 }
