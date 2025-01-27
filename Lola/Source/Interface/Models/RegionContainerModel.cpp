@@ -18,7 +18,6 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
-//==============================================================================
 
 RegionContainerModel::RegionContainerModel(std::shared_ptr<juce::TableListBox> owner_,
                      std::shared_ptr<AudiumEngine> audiumEngine_,

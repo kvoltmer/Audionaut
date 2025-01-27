@@ -63,19 +63,13 @@ public:
     juce::Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        if (existingComponentToUpdate == nullptr)
-        {
-//            auto items = audiumEngine->getPlayListContainer(audioTrack)->getPlayListItems();
-//            const PlayListItem* const p = items[rowNumber].get();
-            {
-                return new PlayListTableListBoxItem(this, columnId, rowNumber);
-            }
+        if (existingComponentToUpdate == nullptr) {
+            return new PlayListTableListBoxItem(this, columnId, rowNumber);
+            
         }
-        else
-        {
+        else {
             auto component = dynamic_cast<PlayListTableListBoxItem*>(existingComponentToUpdate);
-            if (component != nullptr)
-            {
+            if (component != nullptr) {
                 component->update(columnId, rowNumber, isRowSelected);
                 return component;
             }

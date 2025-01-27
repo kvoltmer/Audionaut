@@ -26,11 +26,10 @@
 
 #include "Interface/Controls/LevelMeter.h"
 
-class ChannelComponent  : public juce::Component,
-                          private juce::Timer,
-                          public juce::ComboBox::Listener,
-                          public juce::Button::Listener,
-                          public juce::Label::Listener
+class ChannelComponent  :   public juce::Component,
+                            private juce::Timer,
+                            public juce::ComboBox::Listener,
+                            public juce::DragAndDropTarget
 {
 public:
     ChannelComponent (std::shared_ptr<AudioTrack> audioTrack,
@@ -46,11 +45,55 @@ public:
 
     void paint (juce::Graphics& g) override;
     void resized() override;
-    void buttonClicked (juce::Button* buttonThatWasClicked) override;
-    void labelTextChanged (juce::Label* labelThatHasChanged) override;
     void mouseDown (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
     bool keyPressed (const juce::KeyPress& key) override;
+    
+    void mouseDrag(const juce::MouseEvent& e) override
+    {
+        if( juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(this))
+        {
+            container->startDragging("ChannelComponent", this);
+            //container->startDragging("PlayListTableListBoxItem", this);
+            
+        }
+    }
+    
+    //void mouseDoubleClick (const juce::MouseEvent&) override;
+    
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
+    
+    void updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails);
+    
+    void hideInsertLines()
+    {
+        insertBefore = false;
+        insertAfter = false;
+        
+        repaint();
+    }
+    void itemDragEnter (const SourceDetails &dragSourceDetails) override
+    {
+        updateInsertLines(dragSourceDetails);
+    }
+    
+    void itemDragMove (const SourceDetails &dragSourceDetails) override
+    {
+        updateInsertLines(dragSourceDetails);
+    }
+    
+    void itemDragExit (const SourceDetails &dragSourceDetails) override
+    {
+        hideInsertLines();
+    }
+    
+    void itemDropped (const SourceDetails &dragSourceDetails) override;
+    
+    bool shouldDrawDragImageWhenOver () override
+    {
+        return true;
+    }
+    
 
     // Binary resources:
     static const char* channelScale_png;
@@ -77,6 +120,8 @@ private:
     // used for timer updates
     int channelNumber = -1;
     
+    bool insertAfter = false;
+    bool insertBefore = false;
 
     
     // linear scaling

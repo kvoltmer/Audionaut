@@ -26,13 +26,15 @@ public:
     void fileDragExit (const juce::StringArray& files) override;
     
     void setNewGroupColour(std::shared_ptr<AudioTrack> track);
-    
-    void resized() override;
+        
+    void paint (juce::Graphics& g) override;
     
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<AudioTrack> audioTrack;
+    
+    bool externalDragAndDrop = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackListBox)
 };

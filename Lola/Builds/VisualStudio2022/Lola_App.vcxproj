@@ -185,6 +185,7 @@
     <ClCompile Include="..\..\Source\Interface\Handlers\SnapToGridHandler.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Handlers\ZoomHandler.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelComponent.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelsComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\EditView\AudioTrackRegionEditComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\AudioTrackComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\PlayListItemComponent.cpp"/>

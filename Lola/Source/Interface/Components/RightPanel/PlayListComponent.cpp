@@ -23,14 +23,7 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
     auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
     
-    auto insertIndex = static_cast<int>(audioTrack->getPlayListContainer()->playListItems.size());
-    
-    if ( PlayListTableListBoxItem* item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
-    {
-        audioTrack->getPlayListContainer()->movePlayListItemBefore(item->rowNumber,
-                                                                   insertIndex);
-    }
-    else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         bool success = false;
         auto pos = 0.0;
@@ -61,4 +54,31 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
     triggerAsyncUpdate();
     
     //hideInsertLines();
+}
+
+
+void PlayListComponent::updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    auto height = playListTableListBox->getHeaderHeight();
+    height += playListTableListBox->getRowHeight() * playListTableListBoxModel->getNumRows();
+    
+    auto after = dragSourceDetails.localPosition.y > height;
+    
+    if (auto item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) &&
+        after) {
+        itemDrag = true;
+    }
+
+    repaint();
+}
+
+void PlayListComponent::paint(juce::Graphics &g)
+{
+    if (itemDrag) {
+        g.setColour(audioTrack->getColour());
+        auto height = playListTableListBox->getHeaderHeight();
+        height += playListTableListBox->getRowHeight() * playListTableListBoxModel->getNumRows();
+        g.fillRect(0, height, getWidth(), 3);
+    }
+
 }

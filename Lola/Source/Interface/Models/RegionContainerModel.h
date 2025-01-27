@@ -15,9 +15,6 @@
 class AudiumEngine;
 class AudioTrack;
 
-//==============================================================================
-/*
-*/
 
 class RegionContainerModel  : public juce::TableListBoxModel {
 public:

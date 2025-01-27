@@ -41,6 +41,7 @@ public:
         
         playListTableListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
         playListTableListBox->setOutlineThickness (0);
+        playListTableListBox->setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
     }
 
     ~PlayListComponent() override
@@ -50,9 +51,7 @@ public:
         playListTableListBoxModel = nullptr;
     }
 
-    void paint (juce::Graphics& g) override
-    {
-    }
+    void paint (juce::Graphics& g) override;
 
     void resized() override
     {
@@ -64,20 +63,23 @@ public:
         playListTableListBox->updateContent();
     }
     
+    void updateInsertLines(const SourceDetails &dragSourceDetails);
+
     bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
     void itemDragEnter (const SourceDetails &dragSourceDetails) override
     {
-        //updateInsertLines(dragSourceDetails);
+        updateInsertLines(dragSourceDetails);
     }
     
     void itemDragMove (const SourceDetails &dragSourceDetails) override
     {
-        //updateInsertLines(dragSourceDetails);
+        updateInsertLines(dragSourceDetails);
     }
     
     void itemDragExit (const SourceDetails &dragSourceDetails) override
     {
-        //hideInsertLines();
+        itemDrag = false;
+        repaint();
     }
     
     void itemDropped (const SourceDetails &dragSourceDetails) override;
@@ -110,6 +112,8 @@ private:
     std::shared_ptr<AudioTrack> audioTrack;
     std::shared_ptr<PlayListTableListBox> playListTableListBox;
     std::unique_ptr<PlayListTableListBoxModel> playListTableListBoxModel;
+    
+    bool itemDrag = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListComponent)
 };

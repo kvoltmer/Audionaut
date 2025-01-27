@@ -61,16 +61,16 @@ public:
         channelsListBox->setBounds(getLocalBounds());
     }
     
-    void refreshComponent(std::shared_ptr<AudioTrack> audioTrack)
+    void refreshComponent(std::shared_ptr<AudioTrack> newAudioTrack)
     {
-        if (this->audioTrack != audioTrack)
-        {
-            channelsListBoxModel->setAudioTrack(audioTrack);
-            this->audioTrack = audioTrack;
+        if (audioTrack != newAudioTrack) {
+            channelsListBoxModel->setAudioTrack(newAudioTrack);
+            audioTrack = newAudioTrack;
         }
         channelsListBox->updateContent();
         channelsListBox->setSelectedRows(audioTrack->audioChannelContainer->getSelectedRows(), dontSendNotification);
         
+        // the audio track title
         auto headerComponent = dynamic_cast<ChannelGroupHeaderComponent*>( channelsListBox->getHeaderComponent() );
         if (headerComponent != nullptr)
             headerComponent->updateFromEngine();

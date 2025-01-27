@@ -22,8 +22,6 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
     volumeScaleButton.reset (new juce::ImageButton ("volume scale"));
     addAndMakeVisible (volumeScaleButton.get());
     volumeScaleButton->setButtonText (TRANS ("new button"));
-    volumeScaleButton->addListener (this);
-
     volumeScaleButton->setImages (false, true, false,
                                   juce::ImageCache::getFromMemory (channelScale_png, channelScale_pngSize), 1.000f, juce::Colour (0x00000000),
                                   juce::Image(), 1.000f, juce::Colour (0x00000000),
@@ -127,6 +125,18 @@ void ChannelComponent::paint (juce::Graphics& g)
         g.setColour (juce::Colours::black.withAlpha(0.50f));
     }
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
+    
+    
+//    g.setColour(groupColour);
+    g.setColour(juce::Colours::red);
+    if( insertAfter )
+    {
+        g.fillRect(0, getHeight()-3, getWidth(), 3);
+    }
+    else if( insertBefore )
+    {
+        g.fillRect(0, 0, getWidth(), 3);
+    }
 
 }
 
@@ -241,17 +251,6 @@ void ChannelComponent::configurePanSlider(juce::Slider *slider)
     slider->updateText();
 }
 
-void ChannelComponent::buttonClicked (juce::Button* buttonThatWasClicked)
-{
-    if (buttonThatWasClicked == volumeScaleButton.get())
-    {
-    }
-}
-
-void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
-{
-}
-
 //static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
 //{
 //    if (component != nullptr && result != 0)
@@ -299,6 +298,105 @@ void ChannelComponent::mouseUp (const juce::MouseEvent& e)
 bool ChannelComponent::keyPressed (const juce::KeyPress& key)
 {
     return false;  // Return true if your handler uses this key event, or false to allow it to be passed-on.
+}
+
+bool ChannelComponent::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    if (auto item = dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get())) {
+        //if (item->getPlayListModel() == playListModel)
+        {
+            // return true if source details match this model
+            return true;
+        }
+    }
+    return false;
+}
+
+void ChannelComponent::updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
+    auto insertIndex = rowNumber + (before ? 0 : 1);
+    
+    if (auto item = dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get()))
+    {
+       // std::cout << "movePlayListItemBefore this: " << rowNumber << " item: " << item->rowNumber << " insert: " << insertIndex << std::endl;
+        
+        if (rowNumber == item->rowNumber ||
+            item->rowNumber == insertIndex)
+        {
+            repaint();
+            return;
+        }
+    }
+    
+    if( dragSourceDetails.localPosition.y < getHeight() / 2 )
+    {
+        insertBefore = true;
+        insertAfter = false;
+    }
+    else
+    {
+        insertAfter = true;
+        insertBefore = false;
+    }
+    
+    repaint();
+}
+
+void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
+{
+    //auto playListContainer = playListModel->getPlayListContainer();
+    
+    
+    // Undo: store old state
+    //auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getAudioTrack()->getAudioTrackContainer());
+    
+    auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
+    auto insertIndex = rowNumber + (before ? 0 : 1);
+    
+    std::cout << "row number: " << rowNumber + (before ? 0 : 1) << std::endl;
+    
+//    bool modified = false;
+//
+//    if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
+//    {
+//        if (rowNumber != item->rowNumber &&
+//            item->rowNumber != insertIndex)
+//        {
+//            playListContainer->movePlayListItemBefore(item->rowNumber, insertIndex);
+//            modified = true;
+//        }
+//    }
+//    else if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+//    {
+//        auto selectedRegions = playListModel->getAudioTrack()->getAudioRegionContainer()->getSelectedRegions();
+//        if (selectedRegions.size() == 0) {
+//            jassertfalse;
+//        }
+//        if (selectedRegions.size() == 1) {
+//            auto rowNumber = regionLabel->getRowNumber();
+//            auto region = playListModel->getAudioTrack()->getAudioRegionContainer()->getRegion(rowNumber);
+//            playListContainer->createPlayListItemUI(region, insertIndex);
+//        }
+//        else {
+//            // multiple selection
+//            playListContainer->createPlayListItemsUI(selectedRegions, insertIndex);
+//        }
+//
+//        modified = true;
+//    }
+//
+//    if (modified)
+//    {
+//        // Undo: store new state
+//        action->storeNewState();
+//        // oh dear
+//        auto undoManager = playListModel->getPlayListContainer()->getAudioRegionContainer().getUndoManager();
+//        undoManager->perform(action.release(), "Playlist changed");
+//        undoManager->beginNewTransaction();
+//    }
+    
+    hideInsertLines();
 }
 
 //==============================================================================
