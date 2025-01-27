@@ -39,8 +39,10 @@ public:
                   std::shared_ptr<AudioTrack> audioTrack,
                   std::shared_ptr<AudioSubGroup> audioSubGroup,
                   juce::URL url,
-                  int channelPosition,
-                  std::shared_ptr<juce::AudioFormatReader> reader);
+                  std::shared_ptr<juce::AudioFormatReader> reader,
+                  int destChannel,
+                  int sourceChannel
+                  );
     
     virtual ~AudioResource() override;
 
@@ -60,7 +62,7 @@ public:
     AudioResourceContainer& getContainer() const { return owner; }
     
     double getSampleRate() const;
-    unsigned int getNumChannels() const;
+    unsigned int getNumAudioFileChannels() const;
     
     double getFileLength(audium::TimeContextType context) const;
     

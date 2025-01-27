@@ -28,11 +28,11 @@ public:
     
     void clear();
     
-    void setOutputChannelMapping (int sourceChannelIndex,
-                                  int destChannelIndex);
+    void setOutputChannelMapping (int sourceChannel,
+                                  int destChannel);
 
-    int getRemappedChannel (int sourceChannelIndex) const;
-    int getSourceChannel (int destChannelIndex) const;
+    int getRemappedChannel (int sourceChannel) const;
+    int getSourceChannel (int destChannel) const;
 
     bool containsSourceChannelNumber(int channelNumber) const;
     bool containsDestinationChannelNumber(int channelNumber) const;
@@ -43,11 +43,6 @@ public:
 
     bool writeToJson (json& output);
     bool readFromJson (json& input, bool rebuild);
-
-    // TODO: remove me
-    int getChannelPosition() const;
-    void setChannelPosition(int startChannel, int numChannels);
-
 
     const juce::Array<int> getData() const { return remappedChannels; }
 

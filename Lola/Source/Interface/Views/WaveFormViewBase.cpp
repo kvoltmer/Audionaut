@@ -12,13 +12,11 @@
 
 void WaveFormViewBase::paint (juce::Graphics& g)
 {
-    
     paintBackground(g);
     
     jassert(audioResource != nullptr);
     
-    if (audioThumbnail->getTotalLength() > 0.0)
-    {
+    if (audioThumbnail->getTotalLength() > 0.0) {
         // the waveform colour
         g.setColour (colour);
                 
@@ -28,12 +26,11 @@ void WaveFormViewBase::paint (juce::Graphics& g)
         const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
         const auto channel      = audioResource->getChannelMapping().getSourceChannel(rowNumber);
         
-        if (channel >= 0 && channel < audioResource->getNumChannels())
-        {
+        if (channel >= 0 &&
+            channel < audioResource->getNumAudioFileChannels()) {
             audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, channel, verticalZoomFactor);
         }
-        else
-        {
+        else {
             std::cout << "error WaveFormViewBase channel mapping." << std::endl;
         }
     }

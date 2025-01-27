@@ -18,19 +18,19 @@ void ChannelMapping::clear()
     remappedChannels.clear();
 }
 
-void ChannelMapping::setOutputChannelMapping (const int sourceIndex, const int destIndex)
+void ChannelMapping::setOutputChannelMapping (const int sourceChannel, const int destChannel)
 {
-    auto source = getSourceChannel(destIndex);
+    auto source = getSourceChannel(destChannel);
     if (source >= 0)
     {
         // destination is already mapped!
         remappedChannels.set (source, -1);
     }
     
-    while (remappedChannels.size() < sourceIndex)
+    while (remappedChannels.size() < sourceChannel)
         remappedChannels.add (-1);
     
-    remappedChannels.set (sourceIndex, destIndex);
+    remappedChannels.set (sourceChannel, destChannel);
 
 }
 
@@ -137,19 +137,6 @@ bool ChannelMapping::readFromJson (json& input, bool rebuild)
         return true;
     }
     return false;
-}
-
-int ChannelMapping::getChannelPosition() const
-{
-    return getRemappedChannel(0);
-}
-
-void ChannelMapping::setChannelPosition(int startChannel, int numChannels)
-{
-    clear();
-    for (auto i = 0; i < numChannels; i++) {
-        setOutputChannelMapping(i, i + startChannel);
-    }
 }
 
 } // namespace audium

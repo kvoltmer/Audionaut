@@ -24,18 +24,20 @@ public:
     AudioResourceFactory() = default;
     
     static std::shared_ptr<AudioResource> createAudioResource(juce::URL url,
+                                                              std::shared_ptr<juce::AudioFormatReader> reader,
                                                               AudioResourceContainer& audioResourceContainer,
                                                               std::shared_ptr<AudioTrack> track,
                                                               std::shared_ptr<AudioSubGroup> subGroup,
-                                                              int channelPosition,
-                                                              std::shared_ptr<juce::AudioFormatReader> reader)
+                                                              int destChannel,
+                                                              int sourceChannel)
     {
         return std::make_shared<AudioResource>(audioResourceContainer,
                                                track,
                                                subGroup,
                                                url,
-                                               channelPosition,
-                                               reader);
+                                               reader,
+                                               destChannel,
+                                               sourceChannel);
     }
     
     static std::shared_ptr<juce::AudioFormatReader> createAudioFormatReader(juce::URL url,

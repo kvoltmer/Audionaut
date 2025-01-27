@@ -173,32 +173,32 @@ void AudioTrackContainer::moveSelectedChannelsToNewAudioTrack()
     try {
         
         // TODO: rethink this implementation
-        auto audioTrack = createNewAudioTrack(juce::String());
-        audioTrack->setColour(getNewAudioTrackColour());
-        
-        json output;
-        
-        std::vector<AudioChannel*> deleteList;
-        auto objects = selectionManager->getSelectedObjects();
-        for (auto object : objects) {
-            if (auto channel = dynamic_cast<AudioChannel*>(object.get())) {
-                channel->getAudioTrack().writeChannelToJson(output, channel);
-                deleteList.push_back(channel);
-                break;
-            }
-        }
-        
-        //std::cout << output.dump(4) << std::endl;
-        
-        if (audioTrack->readFromJson(output, true)) {
-            for (auto resource : audioTrack->getAudioResources()) {
-                resource->getChannelMapping().setChannelPosition(0, resource->getNumChannels());
-            }
-            for (auto channel : deleteList)
-            {
-                channel->getAudioTrack().deleteChannel(channel);
-            }
-        }
+//        auto audioTrack = createNewAudioTrack(juce::String());
+//        audioTrack->setColour(getNewAudioTrackColour());
+//        
+//        json output;
+//        
+//        std::vector<AudioChannel*> deleteList;
+//        auto objects = selectionManager->getSelectedObjects();
+//        for (auto object : objects) {
+//            if (auto channel = dynamic_cast<AudioChannel*>(object.get())) {
+//                channel->getAudioTrack().writeChannelToJson(output, channel);
+//                deleteList.push_back(channel);
+//                break;
+//            }
+//        }
+//        
+//        //std::cout << output.dump(4) << std::endl;
+//        
+//        if (audioTrack->readFromJson(output, true)) {
+//            for (auto resource : audioTrack->getAudioResources()) {
+//                resource->getChannelMapping().setChannelPosition(0, resource->getNumChannels());
+//            }
+//            for (auto channel : deleteList)
+//            {
+//                channel->getAudioTrack().deleteChannel(channel);
+//            }
+//        }
         
         
     }  catch (std::exception &e) {

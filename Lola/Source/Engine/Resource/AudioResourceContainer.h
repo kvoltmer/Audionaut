@@ -40,11 +40,13 @@ public:
     ~AudioResourceContainer();
     
     std::shared_ptr<AudioResource> findResourceWithUrl(juce::URL url) const;
-    
+    std::shared_ptr<juce::AudioFormatReader> getAudioFormatReaderForUrl(juce::URL url);
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
+                                                     std::shared_ptr<juce::AudioFormatReader> audioFormatReader,
                                                      std::shared_ptr<AudioTrack> track,
                                                      std::shared_ptr<AudioSubGroup> subGroup,
-                                                     int channelPosition = -1);
+                                                     int destChannel = -1,
+                                                     int sourceChannel = -1);
     
     std::shared_ptr<AudiumTransportSource> createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource);
     

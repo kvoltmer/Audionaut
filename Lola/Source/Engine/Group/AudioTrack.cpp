@@ -455,56 +455,40 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
                                bool arrangementMode,
                                std::function<void (std::string)> callback)
 {
-    int channelPosition = 0;
+    int destChannel = 0;
     std::shared_ptr<AudioSubGroup> subGroup = nullptr;
     
     bool subGroupCreated = false;
-    if (arrangementMode)
-    {
+    if (arrangementMode) {
         if (auto playListItem = getPlayListContainer()->itemAtAbsolutePosition(position,
-                                                                               audium::clocks))
-        {
+                                                                               audium::clocks)) {
             subGroup = playListItem->getRegion()->getAudioSubGroup();
         }
     }
-    else
-    {
+    else {
         subGroup = getSubGroupAtAbsolutePosition(position, audium::clocks);
     }
     
-    if (subGroup == nullptr)
-    {
+    if (subGroup == nullptr) {
         subGroup = createNewAudioSubGroup(position, audium::clocks);
         subGroupCreated = true;
     }
-    else
-    {
+    else {
         position = subGroup->getAbsolutePosition(audium::clocks);
-        channelPosition = getNumAudioTrackChannels();
+        destChannel = getNumAudioTrackChannels();
     }
     
     std::vector<std::shared_ptr<AudioResource>> resources;
     
     juce::String errors;
     
-    for (auto i = 0; i < filenames.size(); i++)
-    {
-        auto numResourcesLoaded = getAudioResources().size();
-        if (auto resource = addAudioFile(subGroup, filenames[i], channelPosition))
-        {
-            // apply stereo pan
-            // in case it's the first resource and the file is stereo
-            if (numResourcesLoaded == 0) {
-                if (resource->getNumChannels() == 2) {
-                    setPan(-1.f, 0);
-                    setPan(1.f, 1);
-                }
-            }
-            
-            resources.push_back(resource);
+    for (auto i = 0; i < filenames.size(); i++) {
+        auto audioFileResources = addAudioFile(subGroup, filenames[i], destChannel);
+        if (audioFileResources.size() > 0) {
+            for (auto resource : audioFileResources)
+                resources.push_back(resource);
         }
-        else
-        {
+        else {
             errors += filenames[i];
         }
     }
@@ -527,23 +511,39 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     
 }
 
-std::shared_ptr<AudioResource> AudioTrack::addAudioFile(std::shared_ptr<AudioSubGroup> subGroup,
-                                                        const juce::File filename,
-                                                        int &channelPosition)
+std::vector<std::shared_ptr<AudioResource>> AudioTrack::addAudioFile (std::shared_ptr<AudioSubGroup> subGroup,
+                                                                      const juce::File filename,
+                                                                      int &destChannel)
 {
-    auto audioResource = getAudioResourceContainer().addAudioResource(URL (filename),
-                                                                      std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
-                                                                      subGroup,
-                                                                      channelPosition);
-    if (audioResource != nullptr)
-    {
-        auto transportSource = getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
-        if (transportSource != nullptr)
-        {
-            channelPosition += audioResource->getNumChannels();
+    std::vector<std::shared_ptr<AudioResource>> result;
+    auto numResourcesLoaded = getAudioResources().size();
+    auto url = URL (filename);
+    auto chan = destChannel;
+    auto audioFormatReader = getAudioResourceContainer().getAudioFormatReaderForUrl(url);
+    for (auto sourceChannel = 0; sourceChannel < audioFormatReader->numChannels; sourceChannel++) {
+        auto audioResource = getAudioResourceContainer().addAudioResource(url,
+                                                                          audioFormatReader,
+                                                                          std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
+                                                                          subGroup,
+                                                                          destChannel,
+                                                                          sourceChannel);
+        if (audioResource != nullptr) {
+            auto transportSource = getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
+            if (transportSource != nullptr)
+                destChannel += 1;
+            
+            result.push_back(audioResource);
         }
     }
-    return audioResource;
+    
+    // apply stereo pan
+    if (numResourcesLoaded == 0 &&
+        audioFormatReader->numChannels == 2) {
+            setPan(-1.f, chan);
+            setPan(1.f, chan + 1);
+    }
+    
+    return result;
 }
 
 void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
@@ -598,9 +598,9 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
             for (const auto &transportSource : item->getTransportSources())
             {
                 dspClipData.active = true;
-//                auto channelPosition = transportSource->getAudioResource().getChannelMapping().getChannelPosition();
-//                if (audioChannelContainer->objectExistsAtIndex(channelPosition))
-//                    dspClipData.gain = audioChannelContainer->objects[channelPosition]->getGain();
+//                auto destChannel = transportSource->getAudioResource().getChannelMapping().getChannelPosition();
+//                if (audioChannelContainer->objectExistsAtIndex(destChannel))
+//                    dspClipData.gain = audioChannelContainer->objects[destChannel]->getGain();
                 
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);

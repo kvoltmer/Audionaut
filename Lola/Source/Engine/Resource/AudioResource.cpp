@@ -22,24 +22,23 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
                              std::shared_ptr<AudioTrack> audioTrack_,
                              std::shared_ptr<AudioSubGroup> audioSubGroup_,
                              juce::URL url_,
-                             int channelPosition,
-                             std::shared_ptr<juce::AudioFormatReader> reader_) :
+                             std::shared_ptr<juce::AudioFormatReader> reader_,
+                             int destChannel,
+                             int sourceChannel) :
     audioFormatReader(reader_),
     owner(audioResourceContainer_),
     audioTrack(audioTrack_),
     audioSubGroup(audioSubGroup_),
     url(url_)
 {
-    if (audioFormatReader == nullptr) {
-        auto af = owner.getAudioFormatManager();
-        audioFormatReader = AudioResourceFactory::createAudioFormatReader(url, *af.get());
-    }
+    jassert(audioFormatReader != nullptr);
     
     channelMapping = std::make_unique<audium::ChannelMapping>();
     
-    if (channelPosition >= 0) {
-        audioTrack->ensureNumChannels(channelPosition + getNumChannels());
-        channelMapping->setChannelPosition(channelPosition, getNumChannels());
+    if (destChannel >= 0 &&
+        sourceChannel >= 0) {
+        audioTrack->ensureNumChannels(destChannel + 1);
+        channelMapping->setOutputChannelMapping(sourceChannel, destChannel);
     }
 }
 
@@ -93,14 +92,13 @@ const juce::String AudioResource::getRelativePath(const juce::File &directoryToB
 
 double AudioResource::getSampleRate() const
 {
-    if (audioFormatReader != nullptr)
-    {
+    if (audioFormatReader != nullptr) {
         return audioFormatReader->sampleRate;
     }
     return 44100.0;
 }
 
-unsigned int AudioResource::getNumChannels() const
+unsigned int AudioResource::getNumAudioFileChannels() const
 {
     if (audioFormatReader != nullptr) {
         return audioFormatReader->numChannels;
@@ -157,7 +155,7 @@ bool AudioResource::writeToJson (json& output)
 {
     output["absolute_file_path"]    = getUrlAsString().toStdString();
     output["relative_file_path"]    = getRelativePath(AudiumEngine::projectDirectory).toStdString();
-    output["number_of_channels"]    = getNumChannels();
+    output["number_of_channels"]    = getNumAudioFileChannels();
     output["length_in_seconds"]     = getFileLength(audium::seconds);
     
     channelMapping->writeToJson(output);
@@ -215,12 +213,7 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     
     
     if (! channelMapping->readFromJson(input, rebuild)) {
-        // TODO: remove legacy code
-        auto channelPos = 0;
-        if (input.contains("channel_position")) {
-            channelPos = input["channel_position"].template get<int>();
-            channelMapping->setChannelPosition(channelPos, getNumChannels());
-        }
+        return false;
     }
     jassert(this->url == urlFromJson(input));
     return true;
