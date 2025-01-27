@@ -140,9 +140,9 @@ public:
                        bool arrangementMode,
                        std::function<void (std::string)> callback);
     
-    std::shared_ptr<AudioResource> addAudioFile(std::shared_ptr<AudioSubGroup> subGroup,
-                                                const juce::File filename,
-                                                int &channelPosition);
+    std::vector<std::shared_ptr<AudioResource>> addAudioFile (std::shared_ptr<AudioSubGroup> subGroup,
+                                                              const juce::File filename,
+                                                              int &destChannel);
     
     void createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
                                    std::shared_ptr<AudioSubGroup> subGroup,

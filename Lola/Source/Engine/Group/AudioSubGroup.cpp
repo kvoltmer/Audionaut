@@ -160,7 +160,11 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
         std::shared_ptr<AudioResource> resource = nullptr;
         if (rebuild)
         {
-            resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url, track, subGroup);
+            auto audioFormatReader = getAudioTrack().getAudioResourceContainer().getAudioFormatReaderForUrl(url);
+            resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url,
+                                                                                    audioFormatReader,
+                                                                                    track,
+                                                                                    subGroup);
             if (resource != nullptr)
             {
                 if (auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource))

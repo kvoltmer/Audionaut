@@ -36,33 +36,43 @@ std::shared_ptr<AudioResource> AudioResourceContainer::findResourceWithUrl(juce:
     return nullptr;
 }
 
-std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,
-                                                                         std::shared_ptr<AudioTrack> track,
-                                                                         std::shared_ptr<AudioSubGroup> subGroup,
-                                                                         int channelPosition)
+std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::getAudioFormatReaderForUrl(juce::URL url)
 {
-    jassert(track != nullptr);
-    jassert(subGroup != nullptr);
-
     auto audioFormat = formatManager->findFormatForFileExtension(url.getLocalFile().getFileExtension());
     
     if (audioFormat != nullptr) {
         
-        std::shared_ptr<juce::AudioFormatReader> reader = nullptr;
         if (auto existingResource = findResourceWithUrl(url)) {
-            reader = existingResource->audioFormatReader;
+            return existingResource->audioFormatReader;
         }
-        
-        auto audioResource = AudioResourceFactory::createAudioResource(url,
-                                                                       *this,
-                                                                       track,
-                                                                       subGroup,
-                                                                       channelPosition,
-                                                                       reader);
-        if (audioResource->audioFormatReader != nullptr) {
-            audioResources.push_back({track, audioResource});
-            return audioResource;
+        else {
+            return AudioResourceFactory::createAudioFormatReader(url, *formatManager.get());
         }
+    }
+    return nullptr;
+}
+
+
+std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,
+                                                                         std::shared_ptr<juce::AudioFormatReader> audioFormatReader,
+                                                                         std::shared_ptr<AudioTrack> track,
+                                                                         std::shared_ptr<AudioSubGroup> subGroup,
+                                                                         int destChannel,
+                                                                         int sourceChannel)
+{
+    jassert(track != nullptr);
+    jassert(subGroup != nullptr);
+            
+    auto audioResource = AudioResourceFactory::createAudioResource(url,
+                                                                   audioFormatReader,
+                                                                   *this,
+                                                                   track,
+                                                                   subGroup,
+                                                                   destChannel,
+                                                                   sourceChannel);
+    if (audioResource->audioFormatReader != nullptr) {
+        audioResources.push_back({track, audioResource});
+        return audioResource;
     }
     
     return nullptr;

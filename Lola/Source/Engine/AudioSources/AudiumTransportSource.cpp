@@ -102,7 +102,7 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
 void AudiumTransportSource::applyChannelMapping()
 {
     auto totalChannels = audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels();
-    auto audioFileChannels = static_cast<int>(audioResource.getNumChannels());
+    auto audioFileChannels = static_cast<int>(audioResource.getNumAudioFileChannels());
     if (audioFileChannels > totalChannels)
         totalChannels = audioFileChannels;
     
@@ -114,7 +114,7 @@ void AudiumTransportSource::applyChannelMapping()
     
     auto mapping = getAudioResource().getChannelMapping().getData();
     
-    auto numAudioFileChannels = audioResource.getNumChannels();
+    auto numAudioFileChannels = audioResource.getNumAudioFileChannels();
     
     for (auto source = 0; source < std::min((int)numAudioFileChannels, mapping.size()); source++) {
         channelRemapping->setOutputChannelMapping(source, mapping[source] + channelOffset);
