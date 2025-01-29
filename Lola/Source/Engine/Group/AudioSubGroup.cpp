@@ -122,6 +122,58 @@ bool AudioSubGroup::writeChannelToJson (json& output, AudioChannel* audioChannel
     return true;
 }
 
+void AudioSubGroup::mergeFromJson(json& input, int destinationChannel)
+{
+    // we use the shared_ptr
+    std::shared_ptr<AudioTrack> track = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
+    std::shared_ptr<AudioSubGroup> subGroup = std::dynamic_pointer_cast<AudioSubGroup> (getSharedPtr());
+    
+    auto jsonResources = input["resources"];
+    auto resources = getAudioResources();
+    
+    for (auto& jsonResource : jsonResources) {
+        auto url = AudioResource::urlFromJson(jsonResource);
+        AudioResource::testUrl(url);
+        
+        std::shared_ptr<AudioResource> resource = nullptr;
+
+        auto audioFormatReader = getAudioTrack().getAudioResourceContainer().getAudioFormatReaderForUrl(url);
+        resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url,
+                                                                                    audioFormatReader,
+                                                                                    track,
+                                                                                    subGroup);
+        if (auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource)) {
+            transportSources.push_back(transportSource);
+        }
+        
+        resource->readFromJson(jsonResource, false);
+        if (destinationChannel >= 0) {
+            auto sourceChannel = resource->getChannelMapping().getSourceChannel();
+            resource->getChannelMapping().setOutputChannelMapping(sourceChannel, destinationChannel);
+        }
+    }
+    
+    audioClip->readFromJson(input["clip"], false);
+
+    auto jsonRegions = input["regions"];
+    
+    for (auto& jsonRegion : jsonRegions) {
+        AudioRegionData data = jsonRegion;
+        
+        auto region = track->getAudioRegionContainer()->getRegionWithData(data);
+        
+        if (region == nullptr)
+            region = getAudioTrack().getAudioRegionContainer()->createRegion(track, subGroup);
+        
+        jassert(region);
+        auto old_id = region->data.region_id;
+        // assign data
+        region->data = data;
+        // keep old id
+        region->data.region_id = old_id;
+    }
+}
+
 bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
 {
     return audium::Streamable::writeToStream(outputStream);

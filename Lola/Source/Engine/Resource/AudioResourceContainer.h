@@ -64,7 +64,8 @@ public:
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForTrack(AudioTrack *track) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForSubGroup(const AudioSubGroup *subGroup) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForTrackAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const;
-
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForChannel(const AudioChannel *channel) const;
+    
     std::shared_ptr<AudioTrack> getAudioTrackForResource(std::shared_ptr<AudioResource> resource) const;
     
     std::vector<std::shared_ptr<AudioTrack>> getAudioTracks() const;

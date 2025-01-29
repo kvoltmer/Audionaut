@@ -185,6 +185,27 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForChannel(const AudioChannel *channel) const
+{
+    std::vector<std::shared_ptr<AudioResource>> result;
+    for (const auto &itr : audioResources) {
+        
+        if (itr.first.get() == &channel->getAudioTrack()) {
+            auto resource = itr.second;
+            auto destChannel = resource->getChannelMapping().getDestinationChannel();
+            if (destChannel == channel->getChannelNumber()) {
+                result.push_back(resource);
+            }
+        }
+        
+    }
+    
+    return result;
+
+    
+}
+
+
 std::shared_ptr<AudioTrack> AudioResourceContainer::getAudioTrackForResource(std::shared_ptr<AudioResource> resource) const
 {
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)

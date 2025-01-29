@@ -204,9 +204,9 @@ void SelectionManager::pastePlayListItems(const json &input,
     deselectAll();
     
     auto jsonPlayListItems = input["play_list_items"];
-    auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::clocks);
     
-    // TODO: multiple objects not supported at this time
+    
+    // TODO: paste multiple objects
     auto& jsonElement = jsonPlayListItems.front();
     if (jsonElement.contains("track_id")) {
         
@@ -215,13 +215,17 @@ void SelectionManager::pastePlayListItems(const json &input,
         
         if (playListContainer != nullptr) {
             if (auto playListItem = playListContainer->createPlayListItemFromJson(jsonElement)) {
-                if (duplicateAction) {
-                    auto end = playListItem->getAbsolutePositionRange(audium::clocks).getEnd();
-                    playListItem->setAbsolutePosition(end, audium::clocks);
-                } else {
-                    // TODO: check if item exists at this position
-                    playListItem->setAbsolutePosition(pos, audium::clocks);
-                }
+                playListContainer->playListItems.push_back(playListItem);
+                
+                // adapt position
+                auto newPos = audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::clocks);
+                if (duplicateAction)
+                    newPos = playListItem->getAbsolutePositionRange(audium::clocks).getEnd();
+  
+                newPos = playListContainer->findNextFreePosition(newPos, audium::clocks);
+                
+                playListItem->setAbsolutePosition(newPos, audium::clocks);
+                
                 playListItem->setSelected(true);
             }
             

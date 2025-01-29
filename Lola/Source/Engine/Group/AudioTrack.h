@@ -98,6 +98,7 @@ public:
     bool readFromJson (json& input, bool rebuild) override;
     int getSizeInUnits() override;
     bool writeChannelToJson (json& output, AudioChannel* audioChannel);
+    void mergeChannelFromJson(json& input);
    
     // audium::Selectable override:
     void setSelected(bool bSelected, bool selectChildren) override;
@@ -114,6 +115,7 @@ public:
     
     // sub groups:
     std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition, audium::TimeContextType context);
+    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(juce::Range<double> transportPositionRange, audium::TimeContextType context);
     std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;
     std::vector<std::shared_ptr<AudioSubGroup>> getAudioSubGroups() const { return audioSubGroupContainer->getObjects(); }
     

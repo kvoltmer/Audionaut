@@ -64,6 +64,8 @@ public:
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
     
+    std::shared_ptr<AudioRegion> getRegionWithData(const AudioRegionData &data) const;
+    
     std::shared_ptr<juce::UndoManager> getUndoManager() const { return undoManager; }
     AudioTrackContainer& getAudioTrackContainer() const { return audioTrackContainer; }
     AudioResourceContainer& getAudioResourceContainer() const { return audioResourceContainer; }

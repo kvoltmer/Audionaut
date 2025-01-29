@@ -67,30 +67,19 @@ public:
     }
     
     bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
-    void itemDragEnter (const SourceDetails &dragSourceDetails) override
-    {
-        itemDrag = true;
-        repaint();
-    }
-    
-    void itemDragMove (const SourceDetails &dragSourceDetails) override
-    {
-    }
-    
-    void itemDragExit (const SourceDetails &dragSourceDetails) override
-    {
-        itemDrag = false;
-        repaint();
-    }
-    
+    void itemDragEnter (const SourceDetails &dragSourceDetails) override;
+    void itemDragMove (const SourceDetails &dragSourceDetails) override;
+    void itemDragExit (const SourceDetails &dragSourceDetails) override;
     void itemDropped (const SourceDetails &dragSourceDetails) override;
-    
     bool shouldDrawDragImageWhenOver () override
     {
         return true;
     }
 
 private:
+    
+    int getListBoxHeight() const;
+    
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<audium::ListBox>            audioChannelsListBox;
     std::shared_ptr<ChannelGroupListBoxModel>  audioChannelsListBoxModel;

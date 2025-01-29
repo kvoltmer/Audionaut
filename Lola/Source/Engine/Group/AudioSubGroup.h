@@ -54,6 +54,7 @@ public:
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
     bool writeChannelToJson (json& output, AudioChannel* audioChannel);
+    void mergeFromJson(json& input, int destinationChannel = -1);
 
     
     int getSizeInUnits() override;

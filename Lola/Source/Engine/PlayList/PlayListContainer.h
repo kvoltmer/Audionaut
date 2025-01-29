@@ -82,6 +82,8 @@ public:
     
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
+    void mergeFromJson(json& input);
+    bool playListItemExists(std::shared_ptr<PlayListItem> item) const;
     std::shared_ptr<PlayListItem> createPlayListItemFromJson (json& jsonItem);
     
     int getSizeInUnits() override;
@@ -102,6 +104,8 @@ public:
     void forcePositionByOrder();
     
     void sortByPosition();
+    
+    double findNextFreePosition(double position, audium::TimeContextType context) const;
     
     // move the absolute position of all playlist items by an amount
     void movePlayListItemsPosition(int startIndex);
