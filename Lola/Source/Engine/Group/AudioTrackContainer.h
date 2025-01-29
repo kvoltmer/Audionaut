@@ -68,8 +68,6 @@ public:
     void deleteSelectedObjects();
     void deleteUnusedRegions();
     
-    void moveSelectedChannelsToNewAudioTrack();
-
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     bool writeToJson (json& output) override;

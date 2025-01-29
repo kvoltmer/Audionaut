@@ -64,6 +64,11 @@ int ChannelMapping::getDestinationChannel() const
     return -1;
 }
 
+void ChannelMapping::setDestinationChannel(int newDestChannel)
+{
+    setOutputChannelMapping(getSourceChannel(), newDestChannel);
+}
+
 int ChannelMapping::getSourceChannel() const
 {
     if (remappedChannels.size() > 0) {

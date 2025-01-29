@@ -1,22 +1,3 @@
-/*
-  ==============================================================================
-
-  This is an automatically generated GUI class created by the Projucer!
-
-  Be careful when adding custom code to these files, as only the code within
-  the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
-  and re-saved.
-
-  Created with Projucer version: 7.0.8
-
-  ------------------------------------------------------------------------------
-
-  The Projucer is part of the JUCE library.
-  Copyright (c) 2020 - Raw Material Software Limited.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
@@ -97,7 +78,8 @@ public:
     enum { moveChannelToNewTrackId = 0xf836743, reservedId = 0xf836744 };
 
     std::shared_ptr<AudiumEngine> getEngine() const { return engine; }
-
+    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
+    
     static void configureVolumeSlider(juce::Slider *slider);
     static void configurePanSlider(juce::Slider *slider);
     

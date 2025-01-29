@@ -167,45 +167,6 @@ void AudioTrackContainer::deleteUnusedRegions()
     undoManager->beginNewTransaction();
 }
 
-
-void AudioTrackContainer::moveSelectedChannelsToNewAudioTrack()
-{
-    try {
-        
-        // TODO: rethink this implementation
-//        auto audioTrack = createNewAudioTrack(juce::String());
-//        audioTrack->setColour(getNewAudioTrackColour());
-//        
-//        json output;
-//        
-//        std::vector<AudioChannel*> deleteList;
-//        auto objects = selectionManager->getSelectedObjects();
-//        for (auto object : objects) {
-//            if (auto channel = dynamic_cast<AudioChannel*>(object.get())) {
-//                channel->getAudioTrack().writeChannelToJson(output, channel);
-//                deleteList.push_back(channel);
-//                break;
-//            }
-//        }
-//        
-//        //std::cout << output.dump(4) << std::endl;
-//        
-//        if (audioTrack->readFromJson(output, true)) {
-//            for (auto resource : audioTrack->getAudioResources()) {
-//                resource->getChannelMapping().setChannelPosition(0, resource->getNumChannels());
-//            }
-//            for (auto channel : deleteList)
-//            {
-//                channel->getAudioTrack().deleteChannel(channel);
-//            }
-//        }
-        
-        
-    }  catch (std::exception &e) {
-        std::cout << e.what() << std::endl;
-    }
-}
-
 bool AudioTrackContainer::writeToStream (juce::OutputStream& outputStream)
 {
     return audium::Streamable::writeToStream(outputStream);
@@ -213,8 +174,7 @@ bool AudioTrackContainer::writeToStream (juce::OutputStream& outputStream)
 
 bool AudioTrackContainer::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
-    if (audium::Streamable::readFromStream(inputStream, rebuild))
-    {
+    if (audium::Streamable::readFromStream(inputStream, rebuild)) {
         // change message for UI
         sendActionMessage(rebuild ? rebuildAll : updateAll);
         
@@ -227,8 +187,7 @@ bool AudioTrackContainer::readFromStream (juce::InputStream& inputStream, bool r
 
 bool AudioTrackContainer::writeToJson (json& output)
 {
-    for (auto& track : audioTracks)
-    {
+    for (auto& track : audioTracks) {
         json j;
         track->writeToJson(j);
         output["audio_tracks"] += j;

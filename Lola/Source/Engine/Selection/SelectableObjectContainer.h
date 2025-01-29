@@ -104,4 +104,28 @@ public:
     std::vector<std::shared_ptr<ElementType>> objects;
 };
 
+
+
+template<typename C>
+void MoveItemBefore(C& container, size_t currentIndex, size_t indexOfItemToPlaceBefore)
+{
+    if( currentIndex == indexOfItemToPlaceBefore ) return;
+    
+    jassert( juce::isPositiveAndBelow((int)currentIndex, (int)container.size() ));
+    jassert( juce::isPositiveAndBelow((int)indexOfItemToPlaceBefore, (int)container.size() + 1 ));
+    
+    if (currentIndex < indexOfItemToPlaceBefore)
+    {
+        std::rotate(container.begin() + currentIndex,
+                    container.begin() + currentIndex + 1,
+                    container.begin() + indexOfItemToPlaceBefore);
+    }
+    else
+    {
+        std::rotate(container.begin() + indexOfItemToPlaceBefore,
+                    container.begin() + currentIndex,
+                    container.begin() + currentIndex + 1);
+    }
+}
+
 } // namespace audium
