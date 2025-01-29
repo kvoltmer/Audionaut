@@ -237,6 +237,37 @@ bool PlayListContainer::readFromJson (json& input, bool rebuild)
     return true;
 }
 
+void PlayListContainer::mergeFromJson(json& input)
+{
+    auto jsonPlayList = input["play_list"];
+    auto jsonPlayListItems = jsonPlayList["play_list_items"];
+
+    for (auto& jsonElement : jsonPlayListItems) {
+        
+        auto playListItem = createPlayListItemFromJson(jsonElement);
+        jsonElement["track_id"] = playListItem->getRegion()->getAudioTrack()->getId();
+        if (playListItem->readFromJson(jsonElement, false)) {
+            
+            if (!playListItemExists(playListItem))
+                playListItems.push_back(playListItem);
+            else
+                std::cout << "playListItemExists" << std::endl;
+        }
+    }
+}
+
+
+bool PlayListContainer::playListItemExists(std::shared_ptr<PlayListItem> other) const
+{
+    for (auto item : playListItems.getObjects()) {
+        if (item->getAbsolutePositionRange(audium::clocks) == other->getAbsolutePositionRange(audium::clocks) &&
+            item->getRegion() == other->getRegion()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (json& jsonElement)
 {
     auto regionIndex = jsonElement["region_id"].template get<int>();
@@ -289,6 +320,17 @@ void PlayListContainer::sortByPosition()
         return (i1->getAbsolutePosition(audium::clocks) < i2->getAbsolutePosition(audium::clocks));
     });
 }
+
+double PlayListContainer::findNextFreePosition(double position, audium::TimeContextType context) const
+{
+    auto &pos = position;
+    while (auto item = itemAtAbsolutePosition(pos, context)) {
+        pos = item->getAbsolutePositionRange(context).getEnd();
+    }
+    
+    return pos;
+}
+
 
 PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position, audium::TimeContextType context) const
 {

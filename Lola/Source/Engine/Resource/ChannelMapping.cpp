@@ -21,8 +21,7 @@ void ChannelMapping::clear()
 void ChannelMapping::setOutputChannelMapping (const int sourceChannel, const int destChannel)
 {
     auto source = getSourceChannel(destChannel);
-    if (source >= 0)
-    {
+    if (source >= 0) {
         // destination is already mapped!
         remappedChannels.set (source, -1);
     }
@@ -31,7 +30,6 @@ void ChannelMapping::setOutputChannelMapping (const int sourceChannel, const int
         remappedChannels.add (-1);
     
     remappedChannels.set (sourceChannel, destChannel);
-
 }
 
 
@@ -54,6 +52,30 @@ int ChannelMapping::getSourceChannel (const int destChannelIndex) const
     return -1;
 }
 
+int ChannelMapping::getDestinationChannel() const
+{
+    if (remappedChannels.size() > 0) {
+        for (auto i = 0; i < remappedChannels.size(); i++) {
+            if (getRemappedChannel(i) >= 0) {
+                return getRemappedChannel(i);
+            }
+        }
+    }
+    return -1;
+}
+
+int ChannelMapping::getSourceChannel() const
+{
+    if (remappedChannels.size() > 0) {
+        for (auto i = 0; i < remappedChannels.size(); i++) {
+            if (getRemappedChannel(i) >= 0) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
 
 bool ChannelMapping::containsSourceChannelNumber(int channelNumber) const
 {
@@ -62,8 +84,7 @@ bool ChannelMapping::containsSourceChannelNumber(int channelNumber) const
 
 bool ChannelMapping::containsDestinationChannelNumber(int channelNumber) const
 {
-    for (auto i = 0; i < remappedChannels.size(); i++)
-    {
+    for (auto i = 0; i < remappedChannels.size(); i++) {
         if (getRemappedChannel(i) == channelNumber)
             return true;
     }
@@ -74,10 +95,8 @@ bool ChannelMapping::containsDestinationChannelNumber(int channelNumber) const
 
 bool ChannelMapping::anyOutputMapping() const
 {
-    if (remappedChannels.size() > 0)
-    {
-        for (auto i = 0; i < remappedChannels.size(); i++)
-        {
+    if (remappedChannels.size() > 0) {
+        for (auto i = 0; i < remappedChannels.size(); i++) {
             if (getRemappedChannel(i) >= 0)
                 return true;
         }
@@ -89,8 +108,7 @@ bool ChannelMapping::anyOutputMapping() const
 bool ChannelMapping::deleteChannel(const int destIndex)
 {
     auto sourceIndex = getSourceChannel(destIndex);
-    if (sourceIndex >= 0)
-    {
+    if (sourceIndex >= 0) {
         setOutputChannelMapping(sourceIndex, -1);
     }
     
@@ -101,11 +119,9 @@ bool ChannelMapping::deleteChannel(const int destIndex)
 
 void ChannelMapping::decrementChannelMapping(int startChannelNumber)
 {
-    for (auto i = 0; i < remappedChannels.size(); i++)
-    {
+    for (auto i = 0; i < remappedChannels.size(); i++) {
         auto dest = getRemappedChannel(i);
-        if (dest >= startChannelNumber)
-        {
+        if (dest >= startChannelNumber) {
             auto newDest = dest - 1;
             jassert(newDest >= 0);
             std::cout << "remapping " << i << " -> " << newDest << std::endl;

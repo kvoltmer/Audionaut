@@ -51,16 +51,11 @@ public:
     
     void mouseDrag(const juce::MouseEvent& e) override
     {
-        if( juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(this))
-        {
+        if (juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(this)) {
             container->startDragging("ChannelComponent", this);
-            //container->startDragging("PlayListTableListBoxItem", this);
-            
         }
     }
-    
-    //void mouseDoubleClick (const juce::MouseEvent&) override;
-    
+        
     bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
     
     void updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails);

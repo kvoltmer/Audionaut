@@ -272,3 +272,16 @@ void AudioRegionContainer::setSelectedRows(juce::SparseSet<int>& selectedRows) {
     }
 }
 
+std::shared_ptr<AudioRegion> AudioRegionContainer::getRegionWithData(const AudioRegionData &data) const
+{
+    for (auto region : audioRegions) {
+        if (region->data.range == data.range &&
+            region->data.name == data.name) {
+            return region;
+        }
+    }
+    return nullptr;
+}
+
+
+

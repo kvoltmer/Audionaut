@@ -108,26 +108,55 @@ bool AudioTrack::writeToJson (json& output)
 
 bool AudioTrack::writeChannelToJson (json& output, AudioChannel* audioChannel)
 {
-    
-    for (auto channel : audioChannelContainer->getObjects())
-    {
+    for (auto channel : audioChannelContainer->getObjects()) {
         if (channel.get() == audioChannel)
             output["channels"] += channel->data;
     }
     
-    for (auto subGroup : audioSubGroupContainer->getObjects())
-    {
+    for (auto subGroup : audioSubGroupContainer->getObjects()) {
         json j;
         subGroup->writeChannelToJson(j, audioChannel);
         output["sub_groups"] += j;
     }
     
-    
     playListContainer->writeToJson(output);
     
-    //std::cout << output.dump(4) << std::endl;
+    std::cout << output.dump(4) << std::endl;
 
     return true;
+}
+
+void AudioTrack::mergeChannelFromJson(json& input)
+{
+    auto context = audium::clocks;
+    
+    // merge channels
+    auto jsonChannels = input["channels"];
+    auto destChannel = 0;
+    for (auto& jsonElement : jsonChannels) {
+        auto channel = addChannel();
+        destChannel = channel->getChannelNumber();
+        channel->data = jsonElement;
+        channel->commitChannelData();
+    }
+    
+    // merge sub groups
+    auto jsonSubGroups = input["sub_groups"];
+    for (auto& jsonSubGroup : jsonSubGroups) {
+        
+        // use temporary sub group to get the postion
+        AudioSubGroup tmp(*this, getSelectionManager());
+        tmp.getAudioClip()->readFromJson(jsonSubGroup["clip"], true);
+        auto subGroupPosition = tmp.getAbsolutePositionRange(context);
+        
+        auto subGroup = getSubGroupAtAbsoluteRange(subGroupPosition, context);
+        if (subGroup == nullptr) {
+            subGroup = createNewAudioSubGroup(subGroupPosition, context);
+        }
+        subGroup->mergeFromJson(jsonSubGroup, destChannel);
+    }
+    // merge playlist
+    getPlayListContainer()->mergeFromJson(input);
 }
 
 bool AudioTrack::writeToStream (juce::OutputStream& outputStream)
@@ -307,6 +336,15 @@ std::shared_ptr<AudioSubGroup> AudioTrack::createNewAudioSubGroup(double transpo
 {
     auto subGroup = AudioTrackFactory::createAudioSubGroup(*this);
     subGroup->setAbsolutePosition(transportPosition, context);
+    audioSubGroupContainer->push_back(subGroup);
+    return subGroup;
+}
+
+std::shared_ptr<AudioSubGroup> AudioTrack::createNewAudioSubGroup(juce::Range<double> transportPositionRange, audium::TimeContextType context)
+{
+    auto subGroup = AudioTrackFactory::createAudioSubGroup(*this);
+    subGroup->setAbsolutePosition(transportPositionRange.getStart(), context);
+    subGroup->setLength(transportPositionRange.getLength(), context);
     audioSubGroupContainer->push_back(subGroup);
     return subGroup;
 }

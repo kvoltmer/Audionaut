@@ -34,6 +34,10 @@ public:
     int getRemappedChannel (int sourceChannel) const;
     int getSourceChannel (int destChannel) const;
 
+    // single channel mapping
+    int getDestinationChannel() const;
+    int getSourceChannel() const;
+    
     bool containsSourceChannelNumber(int channelNumber) const;
     bool containsDestinationChannelNumber(int channelNumber) const;
     bool anyOutputMapping() const;
