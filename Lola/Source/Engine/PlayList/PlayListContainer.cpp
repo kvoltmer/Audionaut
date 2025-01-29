@@ -127,9 +127,9 @@ void PlayListContainer::movePlayListItemBefore(int currentIndex, int indexOfItem
 //    getPlayListItem(currentIndex)->setAbsolutePosition(beforePos, audium::clocks);
 //    getPlayListItem(indexOfItemToPlaceBefore)->setAbsolutePosition(currentPos, audium::clocks);
     
-    MoveItemBefore(playListItems.objects,
-                   currentIndex,
-                   indexOfItemToPlaceBefore);
+    audium::MoveItemBefore(playListItems.objects,
+                           currentIndex,
+                           indexOfItemToPlaceBefore);
 }
 
 bool PlayListContainer::deletePlayListItem(PlayListItem* playListItem) {

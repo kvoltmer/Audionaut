@@ -441,8 +441,7 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
         
         if (audioChannelContainer->deleteObject(channel)) {
             // change mapping
-            for (auto resource : getAudioResources())
-            {
+            for (auto resource : getAudioResources()) {
                 resource->getChannelMapping().decrementChannelMapping(channelNumber);
             }
             
@@ -457,16 +456,13 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
 void AudioTrack::deleteEmptySubGroups()
 {
     std::vector<std::shared_ptr<AudioSubGroup>> subGroupsToDelete;
-    for (auto subGroup : audioSubGroupContainer->getObjects())
-    {
-        if (subGroup->getAudioResources().size() == 0)
-        {
+    for (auto subGroup : audioSubGroupContainer->getObjects()) {
+        if (subGroup->getAudioResources().size() == 0) {
             subGroupsToDelete.push_back(subGroup);
         }
     }
     
-    for (auto item : subGroupsToDelete)
-    {
+    for (auto item : subGroupsToDelete) {
         audioSubGroupContainer->deleteObject(item.get());
     }
 }
@@ -474,16 +470,13 @@ void AudioTrack::deleteEmptySubGroups()
 void AudioTrack::deleteUnusedSubGroups()
 {
     std::vector<std::shared_ptr<AudioSubGroup>> subGroupsToDelete;
-    for (auto subGroup : audioSubGroupContainer->getObjects())
-    {
-        if (subGroup->getAudioRegions().size() == 0)
-        {
+    for (auto subGroup : audioSubGroupContainer->getObjects()) {
+        if (subGroup->getAudioRegions().size() == 0) {
             subGroupsToDelete.push_back(subGroup);
         }
     }
     
-    for (auto item : subGroupsToDelete)
-    {
+    for (auto item : subGroupsToDelete) {
         audioSubGroupContainer->deleteObject(item.get());
     }
 }

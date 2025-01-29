@@ -8,6 +8,8 @@
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Engine/Playback/AudioBusInterface.h"
+#include "Engine/Resource/ChannelMapping.h"
+#include "Util/EngineAccess.h"
 
 ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
                                     std::shared_ptr<AudiumEngine> engine_,
@@ -126,9 +128,7 @@ void ChannelComponent::paint (juce::Graphics& g)
     }
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
     
-    
-//    g.setColour(groupColour);
-    g.setColour(juce::Colours::red);
+    g.setColour(audioTrack->getColour());
     if( insertAfter )
     {
         g.fillRect(0, getHeight()-3, getWidth(), 3);
@@ -314,88 +314,89 @@ bool ChannelComponent::isInterestedInDragSource (const juce::DragAndDropTarget::
 
 void ChannelComponent::updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
-    auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
-    auto insertIndex = rowNumber + (before ? 0 : 1);
-    
-    if (auto item = dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get()))
-    {
-       // std::cout << "movePlayListItemBefore this: " << rowNumber << " item: " << item->rowNumber << " insert: " << insertIndex << std::endl;
+    if (auto channelComponent = dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get())) {
         
-        if (rowNumber == item->rowNumber ||
-            item->rowNumber == insertIndex)
-        {
-            repaint();
+        auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
+        auto insertIndex = rowNumber + (before ? 0 : 1);
+                    
+        if (getAudioTrack() == channelComponent->getAudioTrack() &&
+            (rowNumber == channelComponent->rowNumber ||
+             insertIndex == channelComponent->rowNumber)) {
+            hideInsertLines();
             return;
         }
+        
+        if (before) {
+            insertBefore = true;
+            insertAfter = false;
+        }
+        else {
+            insertAfter = true;
+            insertBefore = false;
+        }
     }
-    
-    if( dragSourceDetails.localPosition.y < getHeight() / 2 )
-    {
-        insertBefore = true;
-        insertAfter = false;
-    }
-    else
-    {
-        insertAfter = true;
-        insertBefore = false;
-    }
-    
     repaint();
 }
 
 void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
-    //auto playListContainer = playListModel->getPlayListContainer();
+    if (auto channelComponent = dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get())) {
+        
+        auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
+        auto insertIndex = rowNumber + (before ? 0 : 1);
+        if (getAudioTrack() == channelComponent->getAudioTrack() &&
+            (rowNumber == channelComponent->rowNumber ||
+             insertIndex == channelComponent->rowNumber)) {
+            hideInsertLines();
+            return;
+        }
+        
+        
+        
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(getAudioTrack()->getAudioTrackContainer());
+        
+        if (getAudioTrack() == channelComponent->getAudioTrack()) {
+        
+            std::cout << "MoveItemBefore -> currentIndex: " << channelComponent->rowNumber << " indexOfItemToPlaceBefore " << insertIndex << std::endl;
+            
+            // remember old channel mapping
+            std::vector<int> channelNumbers;
+            for (auto channel : getAudioTrack()->audioChannelContainer->objects)
+                channelNumbers.push_back(channel->getChannelNumber());
+            
+            audium::MoveItemBefore(getAudioTrack()->audioChannelContainer->objects,
+                                   channelComponent->rowNumber,
+                                   insertIndex);
+            
+            audium::MoveItemBefore(channelNumbers,
+                                   channelComponent->rowNumber,
+                                   insertIndex);
     
-    
-    // Undo: store old state
-    //auto action = std::make_unique<audium::UndoableContainerAction>(playListModel->getAudioTrack()->getAudioTrackContainer());
-    
-    auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
-    auto insertIndex = rowNumber + (before ? 0 : 1);
-    
-    std::cout << "row number: " << rowNumber + (before ? 0 : 1) << std::endl;
-    
-//    bool modified = false;
-//
-//    if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
-//    {
-//        if (rowNumber != item->rowNumber &&
-//            item->rowNumber != insertIndex)
-//        {
-//            playListContainer->movePlayListItemBefore(item->rowNumber, insertIndex);
-//            modified = true;
-//        }
-//    }
-//    else if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-//    {
-//        auto selectedRegions = playListModel->getAudioTrack()->getAudioRegionContainer()->getSelectedRegions();
-//        if (selectedRegions.size() == 0) {
-//            jassertfalse;
-//        }
-//        if (selectedRegions.size() == 1) {
-//            auto rowNumber = regionLabel->getRowNumber();
-//            auto region = playListModel->getAudioTrack()->getAudioRegionContainer()->getRegion(rowNumber);
-//            playListContainer->createPlayListItemUI(region, insertIndex);
-//        }
-//        else {
-//            // multiple selection
-//            playListContainer->createPlayListItemsUI(selectedRegions, insertIndex);
-//        }
-//
-//        modified = true;
-//    }
-//
-//    if (modified)
-//    {
-//        // Undo: store new state
-//        action->storeNewState();
-//        // oh dear
-//        auto undoManager = playListModel->getPlayListContainer()->getAudioRegionContainer().getUndoManager();
-//        undoManager->perform(action.release(), "Playlist changed");
-//        undoManager->beginNewTransaction();
-//    }
-    
+            
+            // re-mapping destination channels
+            for (auto resource : getAudioTrack()->getAudioResources()) {
+                auto dst = resource->getChannelMapping().getDestinationChannel();
+                auto it = std::find(channelNumbers.begin(), channelNumbers.end(), dst);
+                if (it != channelNumbers.end()) {
+                    auto newDst = static_cast<int>(std::distance(channelNumbers.begin(), it));
+                    resource->getChannelMapping().setDestinationChannel(newDst);
+                }
+            }
+            
+        }
+        else {
+            // TODO: implement
+            notImplemented();
+        }
+        
+        // Undo: store new state
+        action->storeNewState();
+        auto undoManager = engine->getUndoManager();
+        engine->getUndoManager()->perform(action.release(), "Channels changed");
+        engine->getUndoManager()->beginNewTransaction();
+        
+    }
     hideInsertLines();
 }
 

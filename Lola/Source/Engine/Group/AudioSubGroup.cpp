@@ -105,18 +105,15 @@ bool AudioSubGroup::writeChannelToJson (json& output, AudioChannel* audioChannel
 {
     output["clip"] = audioClip->data;
 
-    for (auto resource : getAudioResources())
-    {
+    for (auto resource : getAudioResources()) {
         json j;
-        
         if (resource->getChannelMapping().containsDestinationChannelNumber(audioChannel->getChannelNumber())) {
             resource->writeToJson(j);
             output["resources"] += j;
         }
     }
     
-    for (auto region : getAudioRegions())
-    {
+    for (auto region : getAudioRegions()) {
         output["regions"] += region->data;
     }
     return true;

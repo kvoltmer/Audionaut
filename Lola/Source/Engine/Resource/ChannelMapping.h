@@ -36,6 +36,7 @@ public:
 
     // single channel mapping
     int getDestinationChannel() const;
+    void setDestinationChannel(int newDestChannel);
     int getSourceChannel() const;
     
     bool containsSourceChannelNumber(int channelNumber) const;
