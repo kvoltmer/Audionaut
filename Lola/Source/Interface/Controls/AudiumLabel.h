@@ -15,8 +15,8 @@
 class AudiumLabel  : public juce::Label
 {
 public:
-    AudiumLabel (const String& componentName = String(),
-           const String& labelText = String()) :
+    AudiumLabel (const juce::String& componentName = juce::String(),
+           const juce::String& labelText = juce::String()) :
         juce::Label(componentName, labelText)
     {
         setEditable (false, true, true);
@@ -32,5 +32,10 @@ public:
     void mouseDown (const juce::MouseEvent& e) override
     {
         getParentComponent()->mouseDown(e);
+    }
+    
+    void mouseDrag(const juce::MouseEvent& e) override
+    {
+        getParentComponent()->mouseDrag(e);
     }
 };

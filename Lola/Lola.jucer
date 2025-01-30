@@ -258,6 +258,8 @@
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"/>
               <FILE id="pJGRxg" name="ChannelGroupComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupComponent.h"/>
+              <FILE id="IcgMq4" name="ChannelGroupHeaderComponent.cpp" compile="1"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.cpp"/>
               <FILE id="Kr5S34" name="ChannelGroupHeaderComponent.h" compile="0"
                     resource="0" file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h"/>
               <FILE id="o83xsI" name="ChannelsComponent.cpp" compile="1" resource="0"
