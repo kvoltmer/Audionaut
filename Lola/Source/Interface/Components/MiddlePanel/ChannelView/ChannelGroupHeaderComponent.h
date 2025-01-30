@@ -14,13 +14,16 @@
 
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/ActionMessages.h"
+
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Controls/AudiumLabel.h"
 
 class ChannelGroupHeaderComponent : public juce::Component,
                                     public juce::Label::Listener,
                                     public juce::ComboBox::Listener,
-                                    public juce::KeyListener
+                                    public juce::KeyListener,
+                                    public juce::DragAndDropTarget
 {
 public:
     ChannelGroupHeaderComponent(std::shared_ptr<AudioTrack> audioTrack) :
@@ -96,7 +99,7 @@ public:
     
     void updateFromEngine()
     {
-        audioTrackNameLabel->setText(audioTrack->getAudioTrackName(), dontSendNotification);
+        audioTrackNameLabel->setText(audioTrack->getAudioTrackName(), juce::dontSendNotification);
     }
     
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override
@@ -121,7 +124,7 @@ public:
                     break;
             }
 
-            channelSizeComboBox->setText("", dontSendNotification);
+            channelSizeComboBox->setText("", juce::dontSendNotification);
 
             // undo
             auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
@@ -136,17 +139,7 @@ public:
     }
     
     
-    void paint (juce::Graphics& g) override
-    {
-        if (audioTrack->isSelected())
-        {
-            auto colour = findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.3f);
-            g.fillAll (colour);
-        }
-        
-        g.setColour (Colours::black);
-        g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-    }
+    void paint (juce::Graphics& g) override;
     
     void mouseDown (const juce::MouseEvent& e) override
     {
@@ -167,23 +160,62 @@ public:
         audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
     }
 
-    bool keyPressed (const KeyPress& key, Component* originatingComponent) override
+    bool keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent) override
     {
-        if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
-        {
-            
+        if (key.isKeyCode (juce::KeyPress::deleteKey) || key.isKeyCode (juce::KeyPress::backspaceKey)) {
             audioTrack->getAudioTrackContainer().deleteSelectedObjects();
             return true;
         }
-        
         return false;
     }
     
+    void mouseDrag(const juce::MouseEvent& e) override
+    {
+        if (juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(this)) {
+            container->startDragging("ChannelGroupHeaderComponent", this);
+        }
+    }
+        
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
+    
+    void updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails);
+    
+    void hideInsertLines()
+    {
+        insertBefore = false;
+        
+        repaint();
+    }
+    void itemDragEnter (const SourceDetails &dragSourceDetails) override
+    {
+        updateInsertLines(dragSourceDetails);
+    }
+    
+    void itemDragMove (const SourceDetails &dragSourceDetails) override
+    {
+        updateInsertLines(dragSourceDetails);
+    }
+    
+    void itemDragExit (const SourceDetails &dragSourceDetails) override
+    {
+        hideInsertLines();
+    }
+    
+    void itemDropped (const SourceDetails &dragSourceDetails) override;
+    
+    bool shouldDrawDragImageWhenOver () override
+    {
+        return true;
+    }
+    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
+
 private:
     std::shared_ptr<AudioTrack> audioTrack;
     
     std::unique_ptr<AudiumLabel> audioTrackNameLabel;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;
+    
+    bool insertBefore = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelGroupHeaderComponent)
 };

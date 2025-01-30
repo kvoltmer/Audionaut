@@ -116,6 +116,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/SnapToGridHandler_51ca2978.o \
   $(JUCE_OBJDIR)/ZoomHandler_aafc8870.o \
   $(JUCE_OBJDIR)/ChannelComponent_2fdebb65.o \
+  $(JUCE_OBJDIR)/ChannelGroupHeaderComponent_57dc7e93.o \
   $(JUCE_OBJDIR)/ChannelsComponent_c4a4038c.o \
   $(JUCE_OBJDIR)/AudioTrackRegionEditComponent_9d9cc7ae.o \
   $(JUCE_OBJDIR)/AudioTrackComponent_e9b51eee.o \
@@ -395,6 +396,11 @@ $(JUCE_OBJDIR)/ZoomHandler_aafc8870.o: ../../Source/Interface/Handlers/ZoomHandl
 $(JUCE_OBJDIR)/ChannelComponent_2fdebb65.o: ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling ChannelComponent.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ChannelGroupHeaderComponent_57dc7e93.o: ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ChannelGroupHeaderComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/ChannelsComponent_c4a4038c.o: ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.cpp

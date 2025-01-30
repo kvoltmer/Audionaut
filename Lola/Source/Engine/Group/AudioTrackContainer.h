@@ -102,6 +102,8 @@ public:
     
     std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
     
+    std::vector<std::shared_ptr<AudioTrack>> audioTracks;
+    
 private:
     std::shared_ptr<juce::UndoManager> undoManager;
     std::shared_ptr<TempoProvider> tempoProvider;
@@ -109,7 +111,6 @@ private:
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::SelectionManager> selectionManager;
     
-    std::vector<std::shared_ptr<AudioTrack>> audioTracks;
     int selectedGroup = 0;
     
     float masterGain = 1.f;

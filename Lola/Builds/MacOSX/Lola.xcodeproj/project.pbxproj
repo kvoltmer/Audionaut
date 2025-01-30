@@ -93,6 +93,7 @@
 		C7E01543145F382740DBCE2E /* ChannelMapping.cpp */ = {isa = PBXBuildFile; fileRef = 6D8AC9B6CB6D3128D93BC4FA; };
 		C8949253863B11F346377536 /* HeaderComponent.cpp */ = {isa = PBXBuildFile; fileRef = 4468CC1C68E6B9520FDF6E20; };
 		CDA95CD2511DEFBB590AA722 /* AutoEdit.cpp */ = {isa = PBXBuildFile; fileRef = 9BF7BC63A9CB9770D4AA89B3; };
+		CE379C66302560C5CB6B7F88 /* ChannelGroupHeaderComponent.cpp */ = {isa = PBXBuildFile; fileRef = C7A2C992729CBEC1D5A5E03F; };
 		D378E780FCD2FF4680CF5E6D /* include_juce_audio_utils.mm */ = {isa = PBXBuildFile; fileRef = EFB67C5172FD56D59C0F3443; };
 		D3A2B0EB82EB2FAD1C34827B /* AudiumFactory.cpp */ = {isa = PBXBuildFile; fileRef = EF8DD043B0CEFFAC7AFE5227; };
 		D50EA7BFEDBE0DB7D353D9A1 /* include_juce_audio_basics.mm */ = {isa = PBXBuildFile; fileRef = 326D33688206104FED891964; };
@@ -324,6 +325,7 @@
 		C182B2E0DF718AE811E78D8B /* AudioChannel.cpp */ /* AudioChannel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioChannel.cpp; path = ../../Source/Engine/Channel/AudioChannel.cpp; sourceTree = SOURCE_ROOT; };
 		C535EC3B1DAC64329A524774 /* HeaderComponent.h */ /* HeaderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HeaderComponent.h; path = ../../Source/Interface/Components/HeaderPanel/HeaderComponent.h; sourceTree = SOURCE_ROOT; };
 		C7202C377D3DE8D18030C3B9 /* README.txt */ /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = README.txt; path = ../../Catch2Tests/README.txt; sourceTree = SOURCE_ROOT; };
+		C7A2C992729CBEC1D5A5E03F /* ChannelGroupHeaderComponent.cpp */ /* ChannelGroupHeaderComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ChannelGroupHeaderComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.cpp; sourceTree = SOURCE_ROOT; };
 		CA39B6E9F9CE7E4D8C8168A4 /* TransportPositionControl.h */ /* TransportPositionControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TransportPositionControl.h; path = ../../Source/Interface/Controls/TransportPositionControl.h; sourceTree = SOURCE_ROOT; };
 		CAFD7E7A5EC218460C239503 /* AudiumTransportSource.h */ /* AudiumTransportSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumTransportSource.h; path = ../../Source/Engine/AudioSources/AudiumTransportSource.h; sourceTree = SOURCE_ROOT; };
 		CB19A935EF026FE60A0F874E /* WaveFormViewBase.cpp */ /* WaveFormViewBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = WaveFormViewBase.cpp; path = ../../Source/Interface/Views/WaveFormViewBase.cpp; sourceTree = SOURCE_ROOT; };
@@ -581,6 +583,7 @@
 				E460A10ACA07926504BD4E72,
 				CF6214DF537EF846309FBAAC,
 				DC439E9FC4BB68035665FF04,
+				C7A2C992729CBEC1D5A5E03F,
 				9E73B749E8327F615AEA55E1,
 				A1772A9E5D22DA6FA0F26F8C,
 				9018382E5D713205AFDE2343,
@@ -1122,6 +1125,7 @@
 				03D80B405B1452F83F882B78,
 				8D8400584C5C1D895C098B5A,
 				69C938DD131F1E1F748770D0,
+				CE379C66302560C5CB6B7F88,
 				BD8E5A82683D3F94DCB12A6C,
 				7C4109EF2F4B3E1DE9CD1416,
 				6D92D859126255A30E2C29E7,
