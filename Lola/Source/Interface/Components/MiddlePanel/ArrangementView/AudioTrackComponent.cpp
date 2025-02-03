@@ -20,6 +20,7 @@
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/Controls/RegionLabel.h"
 #include "Interface/Controls/DraggerControl.h"
+#include "Interface/Models/PlayListTableListBoxItem.h"
 
 using namespace audium;
 
@@ -98,21 +99,31 @@ void AudioTrackComponent::resized()
 
 bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSourceDetails)
 {
-    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        if (regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == audioTrack)
-        {
-            return true; // source details match this track
-        }
-    }
-    else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
+    if (dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
+    return false;
+}
+
+void AudioTrackComponent::itemDragEnter (const SourceDetails &dragSourceDetails)
+{
+    if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
     {
         if (playListItemComponent->getPlayListItem()->getRegion()->getAudioTrack() == audioTrack)
         {
-            return true; // source details match this track
+            externalDragAndDrop = false; // source details match this track -> no highlight!
+        }
+        else
+        {
+            externalDragAndDrop = true;
         }
     }
-    return false;
+    else {
+        externalDragAndDrop = true;
+    }
 }
 
 void AudioTrackComponent::itemDragMove (const SourceDetails &dragSourceDetails)
@@ -139,12 +150,13 @@ void AudioTrackComponent::itemDragMove (const SourceDetails &dragSourceDetails)
 void AudioTrackComponent::itemDragExit (const SourceDetails &dragSourceDetails)
 {
     zoomHandler->getSnapToGridHandler()->clearRange();
+    externalDragAndDrop = false;
     repaint();
 }
 
 void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
-    // undo
+    // undo 
     auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
     
     auto x = dragSourceDetails.localPosition.x;
@@ -157,38 +169,24 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
     zoomHandler->snapToGrid(pos);
     
     bool success = false;
-    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        // drop all selected regions
-        auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
-        for (auto region : selectedRegions)
-        {
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
-                success = true;
-            
-            pos += region->getRegionData(audium::clocks).getLength();
-        }
+    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get())) {
+        audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
+        success = true;
     }
-    else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
-    {
-        if (auto region = playListItemComponent->getPlayListItem()->getRegion())
-        {
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
-                success = true;
-        }
+    else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get())) {
+        audioTrack->dropPlayListItem(playListItemComponent->getPlayListItem(), pos, audium::clocks);
+        success = true;
     }
     
-    if (success)
-    {
+    if (success) {
         action->storeNewState();
         auto undoManager = audioTrack->getAudioTrackContainer().getUndoManager();
         undoManager->perform(action.release(), "item dropped");
         undoManager->beginNewTransaction();
     }
-    
-    
-    
+
     zoomHandler->getSnapToGridHandler()->clearRange();
+    externalDragAndDrop = false;
     repaint();
 }
 

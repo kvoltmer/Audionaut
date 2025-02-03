@@ -119,6 +119,22 @@ bool AudioSubGroup::writeChannelToJson (json& output, AudioChannel* audioChannel
     return true;
 }
 
+std::shared_ptr<AudioResource> AudioSubGroup::addAudioResourceFromUrl(const juce::URL url)
+{
+    std::shared_ptr<AudioTrack> track       = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
+    std::shared_ptr<AudioSubGroup> subGroup = std::dynamic_pointer_cast<AudioSubGroup> (getSharedPtr());
+    
+    auto audioFormatReader  = track->getAudioResourceContainer().getAudioFormatReaderForUrl(url);
+    auto resource           = track->getAudioResourceContainer().addAudioResource(url,
+                                                                                  audioFormatReader,
+                                                                                  track,
+                                                                                  subGroup);
+    if (auto transportSource = track->getAudioResourceContainer().createTransportSourceForAudioResource(resource)) {
+        transportSources.push_back(transportSource);
+    }
+    return resource;
+}
+
 void AudioSubGroup::mergeFromJson(json& input, int destinationChannel)
 {
     // we use the shared_ptr
@@ -132,21 +148,22 @@ void AudioSubGroup::mergeFromJson(json& input, int destinationChannel)
         auto url = AudioResource::urlFromJson(jsonResource);
         AudioResource::testUrl(url);
         
-        std::shared_ptr<AudioResource> resource = nullptr;
-
-        auto audioFormatReader = getAudioTrack().getAudioResourceContainer().getAudioFormatReaderForUrl(url);
-        resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url,
-                                                                                    audioFormatReader,
-                                                                                    track,
-                                                                                    subGroup);
-        if (auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource)) {
-            transportSources.push_back(transportSource);
-        }
-        
-        resource->readFromJson(jsonResource, false);
-        if (destinationChannel >= 0) {
-            auto sourceChannel = resource->getChannelMapping().getSourceChannel();
-            resource->getChannelMapping().setOutputChannelMapping(sourceChannel, destinationChannel);
+//        std::shared_ptr<AudioResource> resource = nullptr;
+//
+//        auto audioFormatReader = getAudioTrack().getAudioResourceContainer().getAudioFormatReaderForUrl(url);
+//        resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url,
+//                                                                                    audioFormatReader,
+//                                                                                    track,
+//                                                                                    subGroup);
+//        if (auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource)) {
+//            transportSources.push_back(transportSource);
+//        }
+        if (auto resource = addAudioResourceFromUrl(url)) {
+            resource->readFromJson(jsonResource, false);
+            if (destinationChannel >= 0) {
+                auto sourceChannel = resource->getChannelMapping().getSourceChannel();
+                resource->getChannelMapping().setOutputChannelMapping(sourceChannel, destinationChannel);
+            }
         }
     }
     
@@ -209,22 +226,24 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
         std::shared_ptr<AudioResource> resource = nullptr;
         if (rebuild)
         {
-            auto audioFormatReader = getAudioTrack().getAudioResourceContainer().getAudioFormatReaderForUrl(url);
-            resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url,
-                                                                                    audioFormatReader,
-                                                                                    track,
-                                                                                    subGroup);
-            if (resource != nullptr)
-            {
-                if (auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource))
-                {
-                    transportSources.push_back(transportSource);
-                }
-                else
-                {
-                    return false;
-                }
-            }
+            resource = addAudioResourceFromUrl(url);
+            
+//            auto audioFormatReader = getAudioTrack().getAudioResourceContainer().getAudioFormatReaderForUrl(url);
+//            resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url,
+//                                                                                    audioFormatReader,
+//                                                                                    track,
+//                                                                                    subGroup);
+//            if (resource != nullptr)
+//            {
+//                if (auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource))
+//                {
+//                    transportSources.push_back(transportSource);
+//                }
+//                else
+//                {
+//                    return false;
+//                }
+//            }
         }
         else
         {

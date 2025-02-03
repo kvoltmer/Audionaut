@@ -26,12 +26,14 @@ class PlayListContainer : public audium::Streamable
 {
     
 public:
-    PlayListContainer(const AudioRegionContainer &audioRegionContainer,
-                      std::shared_ptr<TempoProvider> tempoProvider,
-                      std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
-        audioRegionContainer(audioRegionContainer),
-        tempoProvider(tempoProvider),
-        transportSourceContainer(transportSourceContainer)
+    PlayListContainer(const AudioRegionContainer &audioRegionContainer_,
+                      std::shared_ptr<TempoProvider> tempoProvider_,
+                      std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                      std::shared_ptr<audium::SelectionManager> selectionManager_) :
+        audioRegionContainer(audioRegionContainer_),
+        tempoProvider(tempoProvider_),
+        transportSourceContainer(transportSourceContainer_),
+        selectionManager(selectionManager_)
     {
     }
     
@@ -42,8 +44,6 @@ public:
                                                                  double position,
                                                                  audium::TimeContextType context);
     std::shared_ptr<PlayListItem> createPlayListItemUI(std::shared_ptr<AudioRegion> region,
-                                                       int indexOfItemToPlaceBefore);
-    std::shared_ptr<PlayListItem> createPlayListItemsUI(std::vector<std::shared_ptr<AudioRegion>> regions,
                                                        int indexOfItemToPlaceBefore);
 
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
@@ -97,6 +97,8 @@ public:
     const AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
 
+    std::vector<std::shared_ptr<PlayListItem>> getSelectedItems(bool global = false) const;
+    
 private:
     
     // called internally
@@ -106,6 +108,7 @@ private:
     const AudioRegionContainer &audioRegionContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<audium::SelectionManager> selectionManager;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListContainer)
 };

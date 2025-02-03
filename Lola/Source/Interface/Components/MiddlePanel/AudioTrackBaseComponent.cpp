@@ -26,7 +26,6 @@
 
 using namespace audium;
 
-
 AudioTrackBaseComponent::AudioTrackBaseComponent (std::shared_ptr<AudioTrack> track,
                                         std::shared_ptr<AudiumEngine> audiumEngine,
                                         std::shared_ptr<ZoomHandler> zoomHandler,
@@ -40,14 +39,13 @@ AudioTrackBaseComponent::AudioTrackBaseComponent (std::shared_ptr<AudioTrack> tr
 
 void AudioTrackBaseComponent::paint (juce::Graphics& g)
 {
-    auto colour = findColour(audium::secondaryBackgroundColourId).brighter();
-    if (externalDragAndDrop)
-    {
+    
+    if (externalDragAndDrop) {
+        auto colour = findColour(audium::secondaryBackgroundColourId).brighter();
         g.fillAll (colour.withAlpha(0.5f));
     }
     
-    if (audioTrack->isSelected())
-    {
+    if (audioTrack->isSelected()) {
         g.setColour (juce::Colours::white.withAlpha(0.5f));
         g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 1.0f);
         

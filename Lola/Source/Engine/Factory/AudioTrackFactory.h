@@ -33,7 +33,8 @@ public:
         
         auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*audioRegionContainer.get(),
                                                                                            owner.getTempoProvider(),
-                                                                                           owner.getTransportSourceContainer()));
+                                                                                           owner.getTransportSourceContainer(),
+                                                                                           owner.getSelectionManager()));
         
         auto subGroups  = std::shared_ptr<tAudioSubGroupContainer> (new tAudioSubGroupContainer());
         auto channels   = std::shared_ptr<tAudioChannelContainer> (new tAudioChannelContainer());

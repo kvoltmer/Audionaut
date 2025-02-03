@@ -13,10 +13,13 @@
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Interface/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
+#include "Interface/Controls/DraggerControl.h"
+#include "Interface/Controls/RegionLabel.h"
 
 using namespace audium;
 
-//==============================================================================
+
 AudioTrackListBox::AudioTrackListBox (std::shared_ptr<AudiumEngine> audiumEngine,
                                       std::shared_ptr<ZoomHandler> zoomHandler) :
     audium::ListBox("AudioTrackListBox", nullptr),
@@ -44,13 +47,13 @@ void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mo
     if ( !filenames.isEmpty()) {
         auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
         
-        audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
+        auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
         setNewGroupColour(audioTrack);
                 
         auto position = zoomHandler->xToClocks(mouseX);
         zoomHandler->snapToGrid(position);
         
-        std::function<void (std::string)> callback = [this](std::string error) {
+        std::function<void (std::string)> callback = [this, audioTrack](std::string error) {
             audiumEngine->getAudioTrackContainer()->deleteAudioTrack(audioTrack);
             
             juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
@@ -87,10 +90,96 @@ void AudioTrackListBox::fileDragMove (const StringArray& files, int x, int y)
 void AudioTrackListBox::fileDragExit (const juce::StringArray& files)
 {
     externalDragAndDrop = false;
-    
     zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
 }
+
+bool AudioTrackListBox::isInterestedInDragSource (const SourceDetails &dragSourceDetails)
+{
+    if (dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
+    return false;
+}
+
+void AudioTrackListBox::itemDragEnter (const SourceDetails &dragSourceDetails)
+{
+    externalDragAndDrop = true;
+    repaint();
+}
+
+void AudioTrackListBox::itemDragMove (const SourceDetails &dragSourceDetails)
+{
+    auto x = dragSourceDetails.localPosition.x;
+    auto length = 0.01;
+    if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
+    {
+        // apply x offset
+        x -= playListItemComponent->getDraggerControl()->mouseDownOffset.getX();
+        if (auto region = playListItemComponent->getPlayListItem()->getRegion())
+        {
+            length = region->getRegionData(audium::clocks).getLength();
+        }
+    }
+
+    auto start = zoomHandler->xToClocksWithOffset(x);
+    auto end = start + length;
+    Range<double> rangeInClocks(start, end);
+    
+    zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
+}
+
+void AudioTrackListBox::itemDragExit (const SourceDetails &dragSourceDetails)
+{
+    externalDragAndDrop = false;
+    zoomHandler->getSnapToGridHandler()->clearRange();
+    repaint();
+}
+
+void AudioTrackListBox::itemDropped (const SourceDetails &dragSourceDetails)
+{
+    // undo
+    auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
+    
+    auto x = dragSourceDetails.localPosition.x;
+    
+    // apply x offset
+    if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
+        x -= playListItemComponent->getDraggerControl()->mouseDownOffset.getX();
+        
+    auto pos = zoomHandler->xToClocksWithOffset(x);
+    zoomHandler->snapToGrid(pos);
+    
+    bool success = false;
+    
+    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get())) {
+        auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
+        setNewGroupColour(audioTrack);
+        audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
+        success = true;
+    }
+    else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get())) {
+        auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
+        setNewGroupColour(audioTrack);
+        audioTrack->dropPlayListItem(playListItemComponent->getPlayListItem(), pos, audium::clocks);
+        success = true;
+    }
+    
+    if (success) {
+        action->storeNewState();
+        auto undoManager = audiumEngine->getAudioTrackContainer()->getUndoManager();
+        undoManager->perform(action.release(), "item dropped");
+        undoManager->beginNewTransaction();
+    }
+    
+    zoomHandler->getSnapToGridHandler()->clearRange();
+    externalDragAndDrop = false;
+    repaint();
+}
+
 
 void AudioTrackListBox::paint (juce::Graphics& g)
 {
@@ -106,3 +195,4 @@ void AudioTrackListBox::paint (juce::Graphics& g)
     
     audium::ListBox::paint(g);
 }
+

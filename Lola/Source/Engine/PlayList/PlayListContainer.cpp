@@ -32,14 +32,12 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(
     // want all items before the end of this position
     auto items = itemsAtAbsoluteRange(juce::Range<double>(0.0,
                                                           position + audioRegion->getRegionData(context).getLength()), context);
-    if (items.size() > 0)
-    {
+    if (items.size() > 0) {
         insertIndex = getPlayListItemIndex(items.back()) + 1;
     }
     //std::cout << "insert index: " << insertIndex << std::endl;
     
-    if (auto playListItem = createPlayListItem(audioRegion, insertIndex))
-    {
+    if (auto playListItem = createPlayListItem(audioRegion, insertIndex)) {
         playListItem->setAbsolutePosition(position, context);
         sortByPosition();
         return playListItem;
@@ -56,20 +54,6 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(std::share
     return playListItem;
     
 }
-
-std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemsUI(std::vector<std::shared_ptr<AudioRegion>> regions,
-                                                   int indexOfItemToPlaceBefore)
-{
-    std::shared_ptr<PlayListItem> playListItem = nullptr;
-    for (auto region : regions) {
-        playListItem = createPlayListItem(region, indexOfItemToPlaceBefore);
-        movePlayListItemsPosition(indexOfItemToPlaceBefore);
-        indexOfItemToPlaceBefore++;
-    }
-    
-    return playListItem;
-}
-
 
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(int regionIndex, int insertIndex)
 {
@@ -393,3 +377,26 @@ double PlayListContainer::getTotalLength(audium::TimeContextType context) const
     return totalLength;
 }
 
+
+std::vector<std::shared_ptr<PlayListItem>> PlayListContainer::getSelectedItems(bool global) const
+{
+    std::vector<std::shared_ptr<PlayListItem>> result;
+    
+    if (global) {
+        auto selectedObjects = selectionManager->getSelectedObjects();
+        for (auto object : selectedObjects) {
+            if (auto playListItem = std::dynamic_pointer_cast<PlayListItem>(object)) {
+                jassert(playListItem->isSelected());
+                result.push_back(playListItem);
+            }
+        }
+    }
+    else {
+        
+        for (auto item : playListItems.objects) {
+            if (item->isSelected())
+                result.push_back(item);
+        }
+    }
+    return result;
+}
