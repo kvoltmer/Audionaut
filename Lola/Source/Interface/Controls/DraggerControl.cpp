@@ -53,19 +53,20 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
 
 void DraggerControl::mouseDrag (const juce::MouseEvent& e)
 {
-
+    auto container = juce::DragAndDropContainer::findParentDragContainerFor(componentToDrag);
+    auto dragActive = (container != nullptr && container->isDragAndDropActive());
+    auto dragVertrically = (std::abs(e.getDistanceFromDragStartY()) > 20 && std::abs(e.getDistanceFromDragStartX()) < 20);
+    
     beginDragAutoRepeat(40);
     autoScrollOffset += zoomHandler->autoScroll(e);
 
-    
-    if (e.mods.isAltDown())
-    {
-        if (juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(componentToDrag))
-        {
+    if (e.mods.isAltDown() ||
+        dragVertrically) {
+
+        if (container != nullptr)
             container->startDragging("DraggerControl", componentToDrag);
-        }
     }
-    else
+    else if (!dragActive)
     {
         auto distance = e.getOffsetFromDragStart() + autoScrollOffset;
         

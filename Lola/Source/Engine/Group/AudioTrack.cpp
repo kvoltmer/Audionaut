@@ -349,6 +349,50 @@ std::shared_ptr<AudioSubGroup> AudioTrack::createNewAudioSubGroup(juce::Range<do
     return subGroup;
 }
 
+std::shared_ptr<AudioSubGroup> AudioTrack::createNewAudioSubGroup(const std::shared_ptr<AudioSubGroup> otherSubGroup)
+{
+    auto context = audium::clocks;
+    
+    auto subGroup = findSubGroup(otherSubGroup);
+    
+    if (subGroup == nullptr) {
+        subGroup = AudioTrackFactory::createAudioSubGroup(*this);
+        
+        // clone all resources
+        auto otherResources = otherSubGroup->getAudioResources();
+        for (auto resource : otherResources) {
+            
+            auto newResource = subGroup->addAudioResourceFromUrl(resource->getUrl());
+            auto srcChannel = resource->getChannelMapping().getSourceChannel();
+            auto dstChannel = resource->getChannelMapping().getDestinationChannel();
+            newResource->getChannelMapping().setOutputChannelMapping(srcChannel, dstChannel);
+        }
+        
+        subGroup->setAbsolutePosition(otherSubGroup->getAbsolutePosition(context), context);
+        audioSubGroupContainer->push_back(subGroup);
+    }
+    
+    return subGroup;
+}
+
+std::shared_ptr<AudioSubGroup> AudioTrack::findSubGroup(const std::shared_ptr<AudioSubGroup> otherSubGroup)
+{
+    // TODO: == operator for subgroup
+    auto context = audium::clocks;
+    for (auto subGroup : audioSubGroupContainer->getObjects()) {
+        if (subGroup->getRegionData(context) == otherSubGroup->getRegionData(context) &&
+            subGroup->getAbsolutePosition(context) == otherSubGroup->getAbsolutePosition(context) &&
+            subGroup->getName() == otherSubGroup->getName() &&
+            subGroup->getAudioResources().size() == otherSubGroup->getAudioResources().size())
+        {
+            return subGroup;
+        }
+
+
+    }
+    return  nullptr;
+}
+
 std::shared_ptr<AudioSubGroup> AudioTrack::getDefaultSubGroup() const
 {
     if (audioSubGroupContainer->getObjects().size() > 0)
@@ -659,4 +703,63 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
     return result;
 }
 
+void AudioTrack::dropSelectedAudioRegions(int insertIndex)
+{
+    auto selectedRegions = getAudioRegionContainer()->getSelectedRegions(true);
+    jassert(selectedRegions.size() > 0);
+    
+    for (auto region : selectedRegions) {
+        auto newRegion = region;
+        if (this != region->getAudioTrack().get()) {
+            // need to copy region
+            newRegion = getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()), region);
+        }
+        
+        playListContainer->createPlayListItemUI(newRegion, insertIndex);
+        insertIndex++;
+    }
+}
 
+void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType context)
+{
+    // drop all selected regions
+    auto selectedRegions = getAudioRegionContainer()->getSelectedRegions(true);
+    for (auto region : selectedRegions) {
+        auto newRegion = region;
+        if (this != region->getAudioTrack().get()) {
+            // need to copy region
+            newRegion = getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()), region);
+        }
+        
+        getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, pos, context);
+        pos += newRegion->getRegionData(context).getLength();
+    }
+
+}
+
+void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos, audium::TimeContextType context)
+{
+    auto region = item->getRegion();
+    // drag on different track -> create region and play list item
+    if (this != region->getAudioTrack().get()) {
+        if (auto newRegion = getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()), region)) {
+            auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, pos, context);
+            item->setSelected(false);
+            newItem->setSelected(true);
+            if (!ModifierKeys::currentModifiers.isAltDown()) {
+                region->getAudioTrack()->getPlayListContainer()->deletePlayListItem(item.get());
+            }
+        }
+    }
+    else {
+        // same track
+        if (ModifierKeys::currentModifiers.isAltDown()) {
+            // copy
+            getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context);
+        }
+        else {
+            // move
+            item->setAbsolutePosition(pos, context);
+        }
+    }
+}

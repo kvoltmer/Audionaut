@@ -7,15 +7,9 @@
 
 bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
-    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        if (regionLabel->getRegion(regionLabel->getRowNumber()) &&
-            regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == audioTrack)
-        {
-            // return true if source details match this track
-            return true;
-        }
-    }
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+
     return false;
 }
 
@@ -23,7 +17,7 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
     auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
     
-    if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    if (auto item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
         bool success = false;
         auto pos = 0.0;
@@ -32,17 +26,8 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
             pos = last->getAbsolutePositionRange(audium::clocks).getEnd();
         }
         
-        // drop all selected regions
-        auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
-        for (auto region : selectedRegions)
-        {
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
-                success = true;
-            
-            pos += region->getRegionData(audium::clocks).getLength();
-        }
-        jassert(success);
-        
+        audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
+        success = true;
     }
     
     action->storeNewState();

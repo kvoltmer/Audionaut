@@ -70,6 +70,39 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
     return audioRegion;
 }
 
+std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<AudioTrack> track,
+                                                                const std::shared_ptr<AudioRegion> otherRegion)
+{
+    auto context = audium::clocks;
+    
+    // - create channels if needed
+    if (track->getNumAudioTrackChannels() < otherRegion->getAudioTrack()->getNumAudioTrackChannels())
+        track->ensureNumChannels(otherRegion->getAudioTrack()->getNumAudioTrackChannels());
+    
+    // - find / create subgroup
+    auto newSubGroup = track->createNewAudioSubGroup(otherRegion->getAudioSubGroup());
+    
+    // - find region
+    std::shared_ptr<AudioRegion> newRegion = nullptr;
+    auto regions = getRegionsForSubGroup(newSubGroup.get());
+    for (auto region : regions) {
+        // TODO: == operator for AudioRegion
+        if (region->getRegionData(context) == otherRegion->getRegionData(context) &&
+            region->getName() == otherRegion->getName()) {
+            newRegion = region;
+            break;
+        }
+    }
+    
+    // - create region
+    if (newRegion == nullptr) {
+        newRegion = createRegion(track, newSubGroup);
+        newRegion->setRegionData(otherRegion->getRegionData(context), context);
+        newRegion->setName(otherRegion->getName());
+    }
+    return newRegion;
+}
+
 std::string AudioRegionContainer::formatNumber(long num)
 {
     std::ostringstream oss;
@@ -162,15 +195,31 @@ std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSub
     return regions;
 }
 
-std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getSelectedRegions() const
+std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getSelectedRegions(bool global) const
 {
-    std::vector<std::shared_ptr<AudioRegion>> regions;
-    for (auto region : audioRegions)
-    {
-        if (region->isSelected())
-            regions.push_back(region);
+    std::vector<std::shared_ptr<AudioRegion>> result;
+    
+    if (global) {
+        auto selectedObjects = audioTrackContainer.getSelectionManager()->getSelectedObjects();
+        
+        for (auto object : selectedObjects) {
+            if (auto region = std::dynamic_pointer_cast<AudioRegion>(object)) {
+                jassert(region->isSelected());
+                result.push_back(region);
+            }
+        }
     }
-    return regions;
+    else {
+        for (auto r : audioRegions) {
+            if (r->isSelected()) {
+                result.push_back(r);
+            }
+        }
+    }
+
+
+
+    return result;
 }
 
 void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup)

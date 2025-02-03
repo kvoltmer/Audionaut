@@ -20,16 +20,10 @@
 
 bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
-    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        if (regionLabel->getRegion(regionLabel->getRowNumber()) &&
-            regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == playListModel->getAudioTrack())
-        {
-            // return true if source details match this track
-            return true;
-        }
-    }
-    else if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
+    if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
         if (item->getPlayListModel() == playListModel)
         {
@@ -97,20 +91,7 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
     }
     else if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
     {
-        auto selectedRegions = playListModel->getAudioTrack()->getAudioRegionContainer()->getSelectedRegions();
-        if (selectedRegions.size() == 0) {
-            jassertfalse;
-        }
-        if (selectedRegions.size() == 1) {
-            auto rowNumber = regionLabel->getRowNumber();
-            auto region = playListModel->getAudioTrack()->getAudioRegionContainer()->getRegion(rowNumber);
-            playListContainer->createPlayListItemUI(region, insertIndex);
-        }
-        else {
-            // multiple selection
-            playListContainer->createPlayListItemsUI(selectedRegions, insertIndex);
-        }
-        
+        playListModel->getAudioTrack()->dropSelectedAudioRegions(insertIndex);
         modified = true;
     }
     

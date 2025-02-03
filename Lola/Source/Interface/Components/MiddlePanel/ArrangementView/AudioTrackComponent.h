@@ -49,21 +49,12 @@ public:
     
     
     /// Drag n Drop:
-    ///----------------------------------
     bool isInterestedInDragSource (const SourceDetails &dragSourceDetails) override;
-    
-    void itemDragEnter (const SourceDetails &dragSourceDetails) override
-    {
-    }
-    
+    void itemDragEnter (const SourceDetails &dragSourceDetails) override;
     void itemDragMove (const SourceDetails &dragSourceDetails) override;
     void itemDragExit (const SourceDetails &dragSourceDetails) override;
     void itemDropped (const SourceDetails &dragSourceDetails) override;
-    
-    bool shouldDrawDragImageWhenOver () override
-    {
-        return true;
-    }
+    bool shouldDrawDragImageWhenOver () override { return true; }
     
 private:
     

@@ -42,6 +42,9 @@ public:
                                               std::shared_ptr<AudioSubGroup> subGroup,
                                               audium::TimeContextType context);
     
+    std::shared_ptr<AudioRegion> createRegion(std::shared_ptr<AudioTrack> track,
+                                              const std::shared_ptr<AudioRegion> otherRegion);
+    
     static std::string formatNumber(long num);
     const juce::String getUniqueName(juce::String regionName) const;
     
@@ -52,7 +55,7 @@ public:
     int getRegionId(std::shared_ptr<AudioRegion> searchRegion) const;
     
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForSubGroup(const AudioSubGroup* subGroup) const;
-    std::vector<std::shared_ptr<AudioRegion>> getSelectedRegions() const;
+    std::vector<std::shared_ptr<AudioRegion>> getSelectedRegions(bool global = false) const;
     void deleteAudioRegion(std::shared_ptr<AudioRegion> region);
     bool deleteAudioRegion(AudioRegion* region);
     void deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup);
