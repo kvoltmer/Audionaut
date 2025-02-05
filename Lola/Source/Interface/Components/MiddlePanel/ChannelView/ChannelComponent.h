@@ -80,7 +80,7 @@ public:
     std::shared_ptr<AudiumEngine> getEngine() const { return engine; }
     std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
     
-    static void configureVolumeSlider(juce::Slider *slider);
+    static void configureVolumeSlider(juce::Slider *slider, double dbMax = 6.0);
     static void configurePanSlider(juce::Slider *slider);
     
 private:

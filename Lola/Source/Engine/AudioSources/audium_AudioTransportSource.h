@@ -99,7 +99,7 @@ public:
     
 
     void setGain (float newGain) noexcept;
-    float getGain() const noexcept      { return gain; }
+    float getGain() const noexcept;
 
     //==============================================================================
     /** Implementation of the AudioSource method. */
@@ -135,7 +135,6 @@ private:
     AudioSource* masterSource = nullptr;
 
     std::atomic<float> gain = 1.0f;
-    std::atomic<float> lastGain = 1.0f;
 
     std::atomic<bool> playing  = false;
     std::atomic<bool> stopped  = true;
@@ -143,6 +142,8 @@ private:
     int blockSize = 128, readAheadBufferSize = 0;
     std::atomic<bool> isPrepared = false;
 
+    juce::dsp::Gain<float> clipGain;
+    
     void releaseMasterResources();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTransportSource)

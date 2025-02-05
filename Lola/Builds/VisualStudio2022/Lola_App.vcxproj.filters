@@ -4299,6 +4299,9 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h">
+      <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\DefaultLabel.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
     </ClInclude>

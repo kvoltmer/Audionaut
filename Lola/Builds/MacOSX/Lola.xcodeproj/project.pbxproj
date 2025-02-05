@@ -259,6 +259,7 @@
 		87121392AC06CCE30AB209C5 /* AudiumApplication.h */ /* AudiumApplication.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumApplication.h; path = ../../Source/Application/AudiumApplication.h; sourceTree = SOURCE_ROOT; };
 		8715E10D92C11AA88EAF3D05 /* AudiumLookAndFeel.cpp */ /* AudiumLookAndFeel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumLookAndFeel.cpp; path = ../../Source/Interface/AudiumLookAndFeel.cpp; sourceTree = SOURCE_ROOT; };
 		87FDC755ECAF2D008E8E2FF1 /* juce_audio_devices */ /* juce_audio_devices */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_devices; path = ../../../Submodules/juce/modules/juce_audio_devices; sourceTree = SOURCE_ROOT; };
+		8835413CFB618790DBA422FD /* SliderControl.h */ /* SliderControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SliderControl.h; path = ../../Source/Interface/Controls/SliderControl.h; sourceTree = SOURCE_ROOT; };
 		887C3A1464606CAC6659DC00 /* AudioTrackListBox.h */ /* AudioTrackListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackListBox.h; path = ../../Source/Interface/Controls/AudioTrackListBox.h; sourceTree = SOURCE_ROOT; };
 		88B927322C42EE178FD07CEB /* AudioResourceData.h */ /* AudioResourceData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResourceData.h; path = ../../Source/Engine/Resource/AudioResourceData.h; sourceTree = SOURCE_ROOT; };
 		896AAB50C527149B9E3D5B35 /* AudioBusInterface.cpp */ /* AudioBusInterface.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioBusInterface.cpp; path = ../../Source/Engine/Playback/AudioBusInterface.cpp; sourceTree = SOURCE_ROOT; };
@@ -775,6 +776,7 @@
 		A60DF503B2F410F6DDB29C77 /* Controls */ = {
 			isa = PBXGroup;
 			children = (
+				8835413CFB618790DBA422FD,
 				AC2E93E31A964D3A67A696FE,
 				A40C7A7DFF271A4D4D530CB3,
 				2133E7BD10D0BFDBA72C207E,

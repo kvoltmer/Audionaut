@@ -197,15 +197,17 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
     }
 }
 
-void ChannelComponent::configureVolumeSlider(juce::Slider *slider)
+void ChannelComponent::configureVolumeSlider(juce::Slider *slider, double dbMax)
 {
-    slider->setSliderStyle(juce::Slider::LinearBar);
+    slider->setSliderStyle(juce::Slider::LinearBarVertical);
     slider->setColour(Slider::textBoxTextColourId, juce::Colours::white);
-    slider->setColour(Slider::trackColourId, juce::Colours::grey.withAlpha(0.5f));
+    slider->setColour(Slider::trackColourId, Colours::transparentBlack);
     
     slider->setTextValueSuffix (" dB");
     slider->setNumDecimalPlacesToDisplay(1);
     slider->setDoubleClickReturnValue(true, 0.0);
+    slider->setVelocityModeParameters(1.0, 1, 0.05);
+    slider->setVelocityBasedMode(true);
     
     auto scaled2UnscaledFunc = [](auto min, auto max, auto scaled) {
         return scale_linear(pow(scaled, 0.33333333), min, max);
@@ -213,7 +215,7 @@ void ChannelComponent::configureVolumeSlider(juce::Slider *slider)
     auto unscaled2ScaledFunc = [](auto min, auto max, auto unscaled) {
         return pow(reverse_linear(unscaled, min, max), 3.0);
     };
-    slider->setNormalisableRange(NormalisableRange<double>(-80.0, 6.0,
+    slider->setNormalisableRange(NormalisableRange<double>(-80.0, dbMax,
                                                            scaled2UnscaledFunc,
                                                            unscaled2ScaledFunc));
     

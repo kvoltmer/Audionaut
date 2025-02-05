@@ -78,7 +78,8 @@ public:
                                                      playListItem->getRegion(),
                                                      audioTrack->getColour(),
                                                      regionSelector,
-                                                     rowNumber);
+                                                     rowNumber,
+                                                     playListItem);
                 return component;
             }
             else

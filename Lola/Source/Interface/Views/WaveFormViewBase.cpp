@@ -28,7 +28,12 @@ void WaveFormViewBase::paint (juce::Graphics& g)
         
         if (channel >= 0 &&
             channel < audioResource->getNumAudioFileChannels()) {
-            audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, channel, verticalZoomFactor);
+            audioThumbnail->drawChannel(g,
+                                        thumbArea.toNearestInt(),
+                                        startSeconds,
+                                        endSeconds,
+                                        channel,
+                                        verticalZoomFactor * getClipGain());
         }
         else {
             std::cout << "error WaveFormViewBase channel mapping." << std::endl;

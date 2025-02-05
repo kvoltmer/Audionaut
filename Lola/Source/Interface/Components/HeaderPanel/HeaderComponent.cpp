@@ -160,6 +160,8 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     volumeSlider = std::make_unique<juce::Slider>("Master Volume Font 13");
     addAndMakeVisible(volumeSlider.get());
     ChannelComponent::configureVolumeSlider(volumeSlider.get());
+    volumeSlider->setColour (Slider::backgroundColourId, juce::Colours::grey);
+
     volumeSlider->onValueChange = [this] {
         auto gain = Decibels::decibelsToGain(volumeSlider->getValue());
         this->audiumEngine->getAudioTrackContainer()->setMasterGain(gain);

@@ -29,9 +29,13 @@ void AudioTrackComponent::refreshComponent (std::shared_ptr<AudioTrack> track, b
     audioTrack = track;
     
     if (mustRebuildComponents() ||
-        forceRebuildComponents)
-    {
+        forceRebuildComponents) {
         rebuildComponents();
+    }
+    else {
+        for (auto item : playListItemComponents) {
+            item->updateUI();
+        }
     }
     resized();
 }
@@ -82,18 +86,18 @@ void AudioTrackComponent::rebuildComponents()
     }
 }
 
+
 void AudioTrackComponent::resized()
 {
-    for (auto regionView : playListItemComponents)
-    {
-        auto playListItem = regionView->getPlayListItem();
+    for (auto item : playListItemComponents) {
+        auto playListItem = item->getPlayListItem();
         auto start = zoomHandler->clocksToX(playListItem->getAbsolutePosition(audium::clocks));
         auto width = zoomHandler->clocksToX(playListItem->getDurationTime(audium::clocks));
         juce::Rectangle<double> rect_tmp(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
         
-        regionView->setBounds(rect_tmp.toNearestInt());
+        item->setBounds(rect_tmp.toNearestInt());
         if (playListItem->isSelected())
-            regionView->toFront(false);
+            item->toFront(false);
     }
 }
 

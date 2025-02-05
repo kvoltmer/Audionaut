@@ -28,14 +28,20 @@ public:
                     std::shared_ptr<AudioRegion> audioRegion,
                     juce::Colour colour,
                     std::shared_ptr<RegionSelector> regionSelector,
-                    int rowNumber) :
-        WaveFormViewBase(parentComponent, audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber)
+                    int rowNumber,
+                    std::shared_ptr<PlayListItem> playListItem_) :
+        WaveFormViewBase(parentComponent, audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber),
+        playListItem(playListItem_)
     {
     }
     
     double getRegionStart(audium::TimeContextType context) const override;
     
+    double getClipGain() const override;
+    
 private:
+    
+    std::shared_ptr<PlayListItem> playListItem;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionView)
 };

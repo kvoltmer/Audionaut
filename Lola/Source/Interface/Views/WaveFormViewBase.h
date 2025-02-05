@@ -90,6 +90,8 @@ public:
     
     virtual double getRegionStart(audium::TimeContextType context) const = 0;
     
+    virtual double getClipGain() const { return 1.0; }
+    
     void paintBackground (juce::Graphics& g);
 
     void paintFileNameLabel (juce::Graphics& g);

@@ -28,7 +28,6 @@ class PlayListItemComponent;
  
  Display an audio track as part of AudioTrackListBoxModel (playlist items on timeline).
  
- The AudioTrackComponent contains multiple playlist items (regions) in the Timeline.
  */
 class AudioTrackComponent : public AudioTrackBaseComponent, public juce::DragAndDropTarget
 {

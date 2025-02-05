@@ -16,6 +16,9 @@
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/audium_AudioTransportSource.h"
+#include "Engine/AudioSources/AudiumTransportSource.h"
+
 
 PlayListItem::PlayListItem(const PlayListContainer &owner,
                            std::shared_ptr<AudioRegion> audioRegion,
@@ -24,8 +27,7 @@ PlayListItem::PlayListItem(const PlayListContainer &owner,
     owner(owner),
     audioRegion(audioRegion)
 {
-    for (const auto &resource : getRegion()->getAudioResources())
-    {
+    for (const auto &resource : getRegion()->getAudioResources()) {
         auto transportSource = owner.getAudioRegionContainer().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
         transportSources.push_back(transportSource);
     }
@@ -56,14 +58,10 @@ double PlayListItem::getDurationTime(audium::TimeContextType context) const
 
 double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 {
-    
-    if (context == audium::seconds)
-    {
-        auto tp = owner.getTempoProvider();
-        return tp->clocksToSeconds(absolutePositionClocks);
+    if (context == audium::seconds) {
+        return owner.getTempoProvider()->clocksToSeconds(absolutePositionClocks);
     }
-    else if (context == audium::clocks)
-    {
+    else if (context == audium::clocks) {
         return absolutePositionClocks;
     }
     jassertfalse;
@@ -72,17 +70,13 @@ double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 
 void PlayListItem::setAbsolutePosition(double newPosition, audium::TimeContextType context)
 {
-    if (context == audium::seconds)
-    {
-        auto tp = owner.getTempoProvider();
-        absolutePositionClocks = tp->secondsToClocks(newPosition);
+    if (context == audium::seconds) {
+        absolutePositionClocks = owner.getTempoProvider()->secondsToClocks(newPosition);
     }
-    else if (context == audium::clocks)
-    {
+    else if (context == audium::clocks) {
         absolutePositionClocks = newPosition;
     }
-    else
-    {
+    else {
         jassertfalse;
     }
 }
@@ -94,6 +88,7 @@ bool PlayListItem::writeToJson (json& output)
     output["position_clocks"] = absolutePositionClocks;
     output["selected"] = isSelected();
     output["track_id"] = getRegion()->getAudioTrack()->getId();
+    output["gain"] = gain;
     return true;
 }
 
@@ -112,14 +107,16 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
     if (input.contains("selected"))
         setSelected(input.at("selected").get<bool>());
 
-    if (input.contains("track_id"))
-    {
+    if (input.contains("track_id")) {
         auto track_id = input.at("track_id").get<int>();
-        if (track_id != getRegion()->getAudioTrack()->getId())
-        {
+        if (track_id != getRegion()->getAudioTrack()->getId()) {
             std::cout << "warning: track_id: " << track_id << " != " <<
                         getRegion()->getAudioTrack()->getId() << std::endl;
         }
+    }
+    
+    if (input.contains("gain")) {
+        setGain(input.at("gain").get<double>());
     }
         
     return true;
@@ -153,3 +150,35 @@ bool PlayListItem::validateData()
     
     return false;
 }
+
+void PlayListItem::setGain(double newGain, bool realtime)
+{
+    gain = newGain;
+    if (realtime) {
+        for (auto transportSource : transportSources) {
+            if (transportSource->isPlaying())
+                transportSource->getAudioTransportSource()->setGain(gain);
+        }
+    }
+}
+
+double PlayListItem::getGain() const
+{
+    return gain;
+}
+
+void PlayListItem::onDragStart()
+{
+    undoableAction = std::make_unique<audium::UndoableContainerAction>(audioRegion->getAudioTrack()->getAudioTrackContainer(), false);
+}
+
+void PlayListItem::onDragEnd()
+{
+    if (undoableAction != nullptr) {
+        undoableAction->storeNewState();
+        auto undoManager = audioRegion->getAudioTrack()->getAudioTrackContainer().getUndoManager();
+        undoManager->perform(undoableAction.release(), "Set Clip Gain");
+        undoManager->beginNewTransaction();
+    }
+}
+
