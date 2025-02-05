@@ -75,7 +75,7 @@ public:
     
     // sub group dragger controls
     std::vector<SubGroupDraggerControl*> subGroupDraggerControls;
-    
+        
 private:
     
     std::shared_ptr<audium::ListBox> owner;

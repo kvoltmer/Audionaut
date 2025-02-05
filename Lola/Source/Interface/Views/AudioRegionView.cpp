@@ -13,6 +13,7 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Interface/ColourIds.h"
+#include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -22,4 +23,9 @@ using namespace juce;
 double AudioRegionView::getRegionStart(audium::TimeContextType context) const
 {
     return audioRegion->getRegionData(audium::seconds).getStart();
+}
+
+double AudioRegionView::getClipGain() const
+{
+    return playListItem->getGain();
 }

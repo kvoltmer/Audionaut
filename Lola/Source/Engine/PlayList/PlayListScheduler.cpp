@@ -114,7 +114,7 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
                     
                     transportSource->schedulePosition(position, startSamples);
                     transportSource->scheduleDuration(duration, externalSampleRate);
-                    //transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clip_gain);
+                    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clip_gain);
                     transportSource->getAudioTransportSource()->start();
                     playback->startVoice(transportSource);
                     
@@ -145,23 +145,19 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
 {
     auto totalLength = totalLengthClocks.load();
 
-    if (context == audium::seconds)
-        totalLength = tempoProvider->clocksToSeconds(totalLength);
-    
     if (addOverhead) {
         // in case transport is ahead
-        totalLength = std::max(totalLength, getAbsolutePosition(context));
+        totalLength = std::max(totalLength, getAbsolutePosition(audium::clocks));
         
         // add overhead to fit entire arrangement arrangement
-        auto overhead = 8 * 96.0;
-        if (context == audium::seconds) {
-            overhead = tempoProvider->clocksToSeconds(overhead);
-        }
-        
+        auto overhead = tempoProvider->secondsToClocks(60.0);
         overhead = std::max(overhead, totalLength * 0.01);
         
         totalLength += overhead;
     }
+    
+    if (context == audium::seconds)
+        totalLength = tempoProvider->clocksToSeconds(totalLength);
     
     return totalLength;
 }

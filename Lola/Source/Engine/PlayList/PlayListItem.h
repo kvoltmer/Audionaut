@@ -21,6 +21,7 @@ using json = nlohmann::json;
 #include "Engine/PlayList/PositionableBase.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 class AudioRegion;
 class PlayListContainer;
@@ -58,13 +59,23 @@ public:
 
     const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
     
+    void setGain(double newGain, bool realtime = false);
+    double getGain() const;
+    
+    void onDragStart();
+    void onDragEnd();
+    
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
     std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
     
+    std::unique_ptr<audium::UndoableContainerAction> undoableAction;
+    
     // The absolute transport position
     double absolutePositionClocks = 0.0;
+    
+    double gain = 1.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItem)
 };

@@ -664,19 +664,13 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
     std::vector<DspClipData> result;
     DspClipData dspClipData;
     
-    if (arrangementMode)
-    {
+    if (arrangementMode) {
         // iterate playlist
-        for (const auto &item : getPlayListContainer()->getPlayListItems())
-        {
+        for (const auto &item : getPlayListContainer()->getPlayListItems()) {
             
-            for (const auto &transportSource : item->getTransportSources())
-            {
-                dspClipData.active = true;
-//                auto destChannel = transportSource->getAudioResource().getChannelMapping().getChannelPosition();
-//                if (audioChannelContainer->objectExistsAtIndex(destChannel))
-//                    dspClipData.gain = audioChannelContainer->objects[destChannel]->getGain();
-                
+            for (const auto &transportSource : item->getTransportSources()) {
+                dspClipData.active              = true;
+                dspClipData.clip_gain           = item->getGain();
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
                 
@@ -685,13 +679,10 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
             }
         }
     }
-    else
-    {
+    else {
         // iterate sub groups
-        for (const auto &subGroup : getAudioSubGroups())
-        {
-            for (const auto &transportSource : subGroup->getTransportSources())
-            {
+        for (const auto &subGroup : getAudioSubGroups()) {
+            for (const auto &transportSource : subGroup->getTransportSources()) {
                 dspClipData.clipData        = subGroup->getAudioClip()->data;
                 dspClipData.active          = true;
                 dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);

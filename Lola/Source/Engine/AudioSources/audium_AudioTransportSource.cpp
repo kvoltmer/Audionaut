@@ -171,11 +171,6 @@ bool AudioTransportSource::isLooping() const
     return positionableSource != nullptr && positionableSource->isLooping();
 }
 
-void AudioTransportSource::setGain (const float newGain) noexcept
-{
-    gain = newGain;
-}
-
 void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double newSampleRate)
 {
     isPrepared = false;
@@ -231,16 +226,27 @@ void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info
             stop();
         }
 
-        for (int i = info.buffer->getNumChannels(); --i >= 0;)
-            info.buffer->applyGainRamp (i, info.startSample, info.numSamples, lastGain, gain);
-
+        // clip gain
+        clipGain.setGainLinear(gain.load());
+        juce::dsp::AudioBlock<float> audioBlock (*info.buffer);
+        juce::dsp::ProcessContextReplacing<float> gainContext(audioBlock);
+        clipGain.process(gainContext);
     }
     else {
         info.clearActiveBufferRegion();
         stopped = true;
     }
 
-    lastGain.store(gain.load());
+}
+
+void AudioTransportSource::setGain (const float newGain) noexcept
+{
+    gain = newGain;
+}
+
+float AudioTransportSource::getGain() const noexcept
+{
+    return gain.load();
 }
 
 } // namespace audium
