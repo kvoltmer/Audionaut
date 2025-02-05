@@ -184,6 +184,12 @@ void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double ne
     if (resamplerSource != nullptr && sourceSampleRate > 0)
         resamplerSource->setResamplingRatio (sourceSampleRate / sampleRate);
 
+    juce::dsp::ProcessSpec spec;
+    spec.maximumBlockSize    = samplesPerBlockExpected;
+    spec.sampleRate          = newSampleRate;
+    clipGain.setRampDurationSeconds(0.01);
+    clipGain.prepare(spec);
+    
     isPrepared = true;
 }
 
