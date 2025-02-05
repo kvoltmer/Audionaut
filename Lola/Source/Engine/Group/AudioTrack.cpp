@@ -317,6 +317,32 @@ float AudioTrack::getPan(int channelNumber) const {
     return 0.0;
 }
 
+void AudioTrack::setMute(bool bMute, int channelNumber) {
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        channel->setMute(bMute);
+    }
+}
+
+bool AudioTrack::getMute(int channelNumber) const {
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        return channel->getMute();
+    }
+    return 0.0;
+}
+
+void AudioTrack::setSolo(bool bSolo, int channelNumber) {
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        channel->setSolo(bSolo);
+    }
+}
+
+bool AudioTrack::getSolo(int channelNumber) const {
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        return channel->getSolo();
+    }
+    return 0.0;
+}
+
 void AudioTrack::onDragStart()
 {
     undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);

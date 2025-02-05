@@ -108,6 +108,12 @@ public:
     
     void setPan(float pan, int channelNumber);
     float getPan(int channelNumber) const;
+   
+    void setMute(bool bMute, int channelNumber);
+    bool getMute(int channelNumber) const;
+    
+    void setSolo(bool bSolo, int channelNumber);
+    bool getSolo(int channelNumber) const;
     
     // undo for continious parameters:
     void onDragStart();

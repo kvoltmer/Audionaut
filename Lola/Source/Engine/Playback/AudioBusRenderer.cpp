@@ -69,6 +69,7 @@ void AudioBusRenderer<SampleType>::processAudioBlock(const juce::AudioSourceChan
             channelBuffer.copyFrom(0, busInfo.startSample, audioBus.getReadPointer(i), busInfo.numSamples);
             juce::dsp::AudioBlock<SampleType> in (channelBuffer);
             // process channel gain
+            
             juce::dsp::ProcessContextReplacing<SampleType> gainContext(in);
             gains[i].process(gainContext);
             

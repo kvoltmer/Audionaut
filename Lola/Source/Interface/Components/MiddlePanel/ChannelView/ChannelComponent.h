@@ -91,7 +91,9 @@ private:
     std::unique_ptr<juce::Slider> volumeSlider;
     std::unique_ptr<juce::Slider> panSlider;
     std::unique_ptr<juce::ImageButton> volumeScaleButton;
-
+    std::unique_ptr<juce::TextButton> muteButton;
+    std::unique_ptr<juce::TextButton> soloButton;
+    
     int rowNumber = 0;
     
     // used for timer updates
