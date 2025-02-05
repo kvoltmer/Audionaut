@@ -43,6 +43,12 @@ public:
     void setPan(const float new_pan);
     float getPan() const noexcept;
     
+    void setMute(bool bMute);
+    bool getMute() const noexcept;
+    
+    void setSolo(bool bSolo);
+    bool getSolo() const noexcept;
+    
     void commitChannelData();
 
     int getChannelNumber() const {

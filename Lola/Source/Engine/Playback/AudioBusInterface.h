@@ -31,6 +31,8 @@ public:
     
     void setPan(const int channelNumber, const float newPan);
     void setGain(const int channelNumber, const float newGain);
+    void setMute(const int channelNumber, const bool bMute);
+    void setSolo(const int channelNumber, const bool bSolo);
     
     void setMasterGain(const float newGain);
     
