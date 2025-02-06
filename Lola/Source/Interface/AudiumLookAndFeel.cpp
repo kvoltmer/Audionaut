@@ -40,7 +40,14 @@ void AudiumLookAndFeel::setupColours()
     setColour (secondaryBackgroundColourId,          Colours::darkgrey.darker());
     setColour (defaultTextColourId,                  Colour(Colours::lightgrey).brighter());
     
+    // Grid
     setColour (gridColourId,                         Colours::yellow.withAlpha(0.75f));
+    
+    // Mute -> orange-ish
+    setColour (muteColourId,                         Colours::orange.withAlpha(0.75f));
+    
+    // Solo -> yellow-ish
+    setColour (soloColourId,                         Colours::yellow.withAlpha(0.75f));
     
     setColour (defaultHighlightColourId,             Colour (Colours::lightgrey));
 

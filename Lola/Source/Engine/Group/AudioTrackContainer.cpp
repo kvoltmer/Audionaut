@@ -304,6 +304,17 @@ int AudioTrackContainer::getNumAudioTrackChannels() const
     return channels;
 }
 
+bool AudioTrackContainer::anyChannelSolo() const
+{
+    for (auto track : audioTracks) {
+        for (auto channel : track->audioChannelContainer->objects) {
+            if (channel->getSolo())
+                return true;
+        }
+    }
+    return false;
+}
+
 juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
 {
     auto newColour = audium::WaveFormColours::getNewWaveFormColour();

@@ -21,6 +21,8 @@ enum ColourIds
     defaultHighlightColourId          = 0x2340008,
     listBoxBackgroundColourId         = 0x2340009,
     gridColourId                      = 0x234000a,
+    soloColourId                      = 0x234000b,
+    muteColourId                      = 0x234000c,
 };
 
 // Waveform Colours:

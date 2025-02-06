@@ -77,11 +77,8 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
     // MUTE
     muteButton.reset (new juce::TextButton ("M"));
     addAndMakeVisible (muteButton.get());
-    
-    auto trackColour = audioTrack->getColour();
-    
     muteButton->setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
-    muteButton->setColour (juce::TextButton::buttonOnColourId, trackColour);
+    muteButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::muteColourId));
     muteButton->setClickingTogglesState(true);
     muteButton->onClick = [this, rowNumber] {
         audioTrack->onDragStart();
@@ -92,8 +89,8 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
     // SOLO
     soloButton.reset (new juce::TextButton ("S"));
     addAndMakeVisible (soloButton.get());
-    soloButton->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff7a7a7a));
-    soloButton->setColour (juce::TextButton::buttonOnColourId, juce::Colours::red);
+    soloButton->setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    soloButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::soloColourId));
     soloButton->setClickingTogglesState(true);
     soloButton->onClick = [this, rowNumber] {
         audioTrack->onDragStart();
@@ -120,10 +117,6 @@ void ChannelComponent::resized()
     auto buttonSize = 15;
     muteButton->setBounds(space + 30, 5, buttonSize, buttonSize);
     soloButton->setBounds(space + 53, 5, buttonSize, buttonSize);
-    
-
-//    auto y1 = proportionOfHeight (0.4f) - (sliderHeight / 2);
-//    auto y2 = proportionOfHeight (0.6f) - (sliderHeight / 2);
     
     volumeSlider->setBounds (space,
                              27,
@@ -180,8 +173,17 @@ void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_,
     volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)), dontSendNotification);
     panSlider->setValue(audioTrack->getPan(rowNumber), dontSendNotification);
     
-    muteButton->setToggleState(audioTrack->getMute(rowNumber), dontSendNotification);
-    soloButton->setToggleState(audioTrack->getSolo(rowNumber), dontSendNotification);
+    auto bMute = audioTrack->getMute(rowNumber);
+    auto bSolo = audioTrack->getSolo(rowNumber);
+    auto anySolo = audioTrack->getAudioTrackContainer().anyChannelSolo();
+    if (anySolo && !bSolo) {
+        bMute = true;
+    }
+    
+    muteButton->setEnabled(!anySolo);
+    
+    muteButton->setToggleState(bMute, dontSendNotification);
+    soloButton->setToggleState(bSolo, dontSendNotification);
     
     if (not isTimerRunning()) {
         startTimerHz(60);

@@ -98,6 +98,8 @@ public:
     
     int getNumAudioTrackChannels() const;
     
+    bool anyChannelSolo() const;
+    
     juce::Colour getNewAudioTrackColour() const;
     
     std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
