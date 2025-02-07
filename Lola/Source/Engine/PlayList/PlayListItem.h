@@ -59,11 +59,20 @@ public:
 
     const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
     
+    // linear value range
     void setGain(double newGain, bool realtime = false);
     double getGain() const;
     
     void onDragStart();
     void onDragEnd();
+    
+    // value range [0, 1]
+    void setFadeIn(double val);
+    double getFadeIn() const;
+    
+    // value range [0, 1]
+    void setFadeOut(double val);
+    double getFadeOut() const;
     
 private:
     const PlayListContainer &owner;
@@ -76,6 +85,8 @@ private:
     double absolutePositionClocks = 0.0;
     
     double gain = 1.0;
+    double fadeInClocks = 0.0;
+    double fadeOutClocks = 0.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItem)
 };
