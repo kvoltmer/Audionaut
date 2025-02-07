@@ -1,6 +1,7 @@
 
 #include <JuceHeader.h>
 #include "FadeInOutControl.h"
+#include "Interface/Controls/DraggerControl.h"
 
 void FadeInOutControl::paint (juce::Graphics& g)
 {
@@ -9,7 +10,7 @@ void FadeInOutControl::paint (juce::Graphics& g)
     g.setColour(isMouseOver() ? juce::Colours::orange : juce::Colours::white.withAlpha(0.5f));
     
     auto bounds = getLocalBounds();
-    auto visualSize = 10;
+    
     if (type == FadeIn) {
         bounds.setWidth(visualSize);
         bounds.setHeight(visualSize);
@@ -49,8 +50,8 @@ void FadeInOutControl::mouseDrag (const juce::MouseEvent& e)
         if (newBounds.getX() < 0)
             newBounds.setX(0);
         
-        if ((newBounds.getX() + originalBounds.getWidth())  > getParentWidth())
-            newBounds.setX(getParentWidth() - originalBounds.getWidth());
+        if ((newBounds.getX() + controlSize)  > getParentWidth())
+            newBounds.setX(getParentWidth() - controlSize);
         
         setBounds (newBounds);
         
@@ -83,7 +84,7 @@ void FadeInOutControl::mouseExit (const MouseEvent& e)
 
 double FadeInOutControl::getValue() const
 {
-    auto totalWidth = static_cast<double>(getParentWidth() - getWidth());
+    auto totalWidth = static_cast<double>(getParentWidth() - controlSize);
     auto xPos = getBounds().toDouble().getX();
     
     if (type == FadeIn) {
@@ -99,18 +100,17 @@ double FadeInOutControl::getValue() const
 void FadeInOutControl::setValue(double val)
 {
     juce::jlimit(0.0, 1.0, val);
-    auto totalWidth = static_cast<double>(getParentWidth() - getWidth());
-    
-    auto bounds = getLocalBounds();
+    auto totalWidth = static_cast<double>(getParentWidth() - controlSize);
     
     if (type == FadeIn) {
         auto x = static_cast<int>(totalWidth * val);
-        setBounds(x, bounds.getY(), bounds.getWidth(), bounds.getHeight());
+        setBounds(x, DraggerControl::draggerHeight, controlSize, controlSize);
     }
     else if (type == FadeOut) {
         auto x = static_cast<int>(totalWidth - (totalWidth * val));
-        setBounds(x, bounds.getY(), bounds.getWidth(), bounds.getHeight());
+        setBounds(x, DraggerControl::draggerHeight, controlSize, controlSize);
     }
     
-    jassert(getValue() == val);
+    auto check = getValue();
+    jassert(check == val);
 }

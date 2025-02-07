@@ -89,6 +89,8 @@ bool PlayListItem::writeToJson (json& output)
     output["selected"] = isSelected();
     output["track_id"] = getRegion()->getAudioTrack()->getId();
     output["gain"] = gain;
+    output["fade_in_clocks"] = fadeInClocks;
+    output["fade_out_clocks"] = fadeOutClocks;
     return true;
 }
 
@@ -117,6 +119,14 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
     
     if (input.contains("gain")) {
         setGain(input.at("gain").get<double>());
+    }
+    
+    if (input.contains("fade_in_clocks")) {
+        fadeInClocks = input.at("fade_in_clocks").get<double>();
+    }
+    
+    if (input.contains("fade_out_clocks")) {
+        fadeOutClocks = input.at("fade_out_clocks").get<double>();
     }
         
     return true;
@@ -180,5 +190,37 @@ void PlayListItem::onDragEnd()
         undoManager->perform(undoableAction.release(), "Set Clip Gain");
         undoManager->beginNewTransaction();
     }
+}
+
+void PlayListItem::setFadeIn(double val)
+{
+    auto length = audioRegion->getRegionData(audium::clocks).getLength();
+    fadeInClocks = length * val;
+    std::cout << "fade in: " << val << " " <<  fadeInClocks << std::endl;
+}
+
+double PlayListItem::getFadeIn() const
+{
+    auto length = audioRegion->getRegionData(audium::clocks).getLength();
+    if (length > 0.0)
+        return fadeInClocks / length;
+    
+    return 0.0;
+}
+
+void PlayListItem::setFadeOut(double val)
+{
+    auto length = audioRegion->getRegionData(audium::clocks).getLength();
+    fadeOutClocks = length * val;
+    std::cout << "fade out: " << val << " " <<  fadeOutClocks << std::endl;
+}
+
+double PlayListItem::getFadeOut() const
+{
+    auto length = audioRegion->getRegionData(audium::clocks).getLength();
+    if (length > 0.0)
+        return fadeOutClocks / length;
+    
+    return 0.0;
 }
 
