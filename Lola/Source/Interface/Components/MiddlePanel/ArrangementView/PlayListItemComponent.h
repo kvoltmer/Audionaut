@@ -21,6 +21,7 @@ class ZoomHandler;
 class RegionSelector;
 class AudiumEngine;
 class DraggerControl;
+class FadeInOutControl;
 
 //==============================================================================
 /*
@@ -48,6 +49,9 @@ public:
     
     void updateUI();
     
+    void mouseEnter (const MouseEvent& e) override;
+    void mouseExit (const MouseEvent& e) override;
+    
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<AudioTrack>     audioTrack;
@@ -57,7 +61,9 @@ private:
     std::unique_ptr<audium::ListBox> playListItemListBox;
     std::unique_ptr<PlayListItemArrangementModel> playListItemArrangementModel;
     std::unique_ptr<SliderControl> volumeSlider;
-    
+        
+    std::unique_ptr<FadeInOutControl> fadeInControl;
+    std::unique_ptr<FadeInOutControl> fadeOutControl;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)
 };

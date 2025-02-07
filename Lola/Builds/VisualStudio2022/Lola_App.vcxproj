@@ -202,6 +202,7 @@
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\SubGroupDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\DraggerControl.cpp"/>
@@ -3108,6 +3109,7 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DefaultLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AudiumLabel.h"/>

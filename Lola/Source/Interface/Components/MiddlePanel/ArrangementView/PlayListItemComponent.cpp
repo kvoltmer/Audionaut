@@ -17,6 +17,7 @@
 #include "Interface/Controls/PlayListItemDraggerControl.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Interface/Controls/LevelMeter.h"
+#include "Interface/Controls/FadeInOutControl.h"
 
 PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
                                              std::shared_ptr<AudioTrack> audioTrack,
@@ -58,7 +59,9 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     // transparent backgroud:
     playListItemListBox->setColour(audium::ListBox::backgroundColourId, juce::Colours::transparentBlack);
     
-
+    // note: list box is eating all mouse events
+    playListItemListBox->addMouseListener (this, true);
+    
     // volume slider
     volumeSlider = std::make_unique<SliderControl>(juce::String(), regionSelector);
     addAndMakeVisible(volumeSlider.get());
@@ -75,6 +78,29 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     volumeSlider->onDragEnd = [playListItem] {
         playListItem->onDragEnd();
     };
+    
+    fadeInControl = std::make_unique<FadeInOutControl>(FadeInOutControl::FadeIn,
+                                                       playListItem,
+                                                       regionSelector);
+    addAndMakeVisible(fadeInControl.get());
+    fadeInControl->setVisible(false);
+    fadeInControl->onValueChange = [this, playListItem] {
+        std::cout << "fade in: " << fadeInControl->getValue() << std::endl;
+    };
+    fadeInControl->onDragStart = [playListItem] { playListItem->onDragStart(); };
+    fadeInControl->onDragEnd = [playListItem] { playListItem->onDragEnd(); };
+    
+    
+    fadeOutControl = std::make_unique<FadeInOutControl>(FadeInOutControl::FadeOut,
+                                                       playListItem,
+                                                       regionSelector);
+    addAndMakeVisible(fadeOutControl.get());
+    fadeOutControl->setVisible(false);
+    fadeOutControl->onValueChange = [this, playListItem] {
+        std::cout << "fade out: " << fadeOutControl->getValue() << std::endl;
+    };
+    fadeOutControl->onDragStart = [playListItem] { playListItem->onDragStart(); };
+    fadeOutControl->onDragEnd = [playListItem] { playListItem->onDragEnd(); };
     
     updateUI();
 }
@@ -116,7 +142,11 @@ void PlayListItemComponent::resized()
     else {
         volumeSlider->setVisible(false);
     }
-
+    
+    auto draggerHeight = playListItemListBox->getHeaderComponent()->getHeight();
+    fadeInControl->setBounds(0, draggerHeight, 15, 15);
+    fadeOutControl->setBounds(getWidth() - 15, draggerHeight, 15, 15);
+    
 }
 
 void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)
@@ -134,3 +164,18 @@ void PlayListItemComponent::updateUI()
     volumeSlider->setValue(LevelMeter::gainToDecebel(playListItem->getGain()), dontSendNotification);
 }
 
+void PlayListItemComponent::mouseEnter (const MouseEvent& e)
+{
+    fadeInControl->setVisible(true);
+    fadeOutControl->setVisible(true);
+}
+
+void PlayListItemComponent::mouseExit (const MouseEvent& e)
+{
+    if (! isMouseOverOrDragging (true)) {
+        fadeInControl->setVisible(false);
+        fadeOutControl->setVisible(false);
+    }
+
+    
+}

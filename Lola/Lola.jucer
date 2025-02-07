@@ -362,6 +362,10 @@
                 resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="U33zDH" name="FadeInOutControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/FadeInOutControl.cpp"/>
+          <FILE id="TSCZRX" name="FadeInOutControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/FadeInOutControl.h"/>
           <FILE id="eBnkUW" name="SliderControl.h" compile="0" resource="0" file="Source/Interface/Controls/SliderControl.h"/>
           <FILE id="huzCxv" name="DefaultLabel.h" compile="0" resource="0" file="Source/Interface/Controls/DefaultLabel.h"/>
           <FILE id="c3NpvE" name="AudiumLabel.h" compile="0" resource="0" file="Source/Interface/Controls/AudiumLabel.h"/>

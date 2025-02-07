@@ -133,6 +133,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioTrackListBoxModel_e0f725e1.o \
   $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o \
   $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o \
+  $(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
   $(JUCE_OBJDIR)/SubGroupDraggerControl_b7bb6220.o \
   $(JUCE_OBJDIR)/DraggerControl_f198dea1.o \
@@ -481,6 +482,11 @@ $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o: ../../Source/Interface/Model
 $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o: ../../Source/Interface/Models/RegionTableListBoxModel.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling RegionTableListBoxModel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o: ../../Source/Interface/Controls/FadeInOutControl.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling FadeInOutControl.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o: ../../Source/Interface/Controls/PlayListItemDraggerControl.cpp

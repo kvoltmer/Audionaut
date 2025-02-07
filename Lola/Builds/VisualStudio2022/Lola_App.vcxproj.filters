@@ -982,6 +982,9 @@
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp">
+      <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp">
       <Filter>Lola\Source\Interface\Controls</Filter>
     </ClCompile>
@@ -4298,6 +4301,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h">
       <Filter>Lola\Source\Interface\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h">
+      <Filter>Lola\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h">
       <Filter>Lola\Source\Interface\Controls</Filter>

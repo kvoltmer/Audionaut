@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		01FCF8E069F1969BBE28FF26 /* BinaryData.cpp */ = {isa = PBXBuildFile; fileRef = 5E33714A13AF57F476201A73; };
+		03C02075BACDD77BAA3CEA0B /* FadeInOutControl.cpp */ = {isa = PBXBuildFile; fileRef = 2B63D05A72768F7263241FEF; };
 		03D80B405B1452F83F882B78 /* SnapToGridHandler.cpp */ = {isa = PBXBuildFile; fileRef = 23BCBB355881E118F4E39507; };
 		090A584AB0AC23AB9528BCCD /* EngineAccess.cpp */ = {isa = PBXBuildFile; fileRef = 15B08AD17A4543A6F9323602; };
 		09DA1E72737CDFF5EBF24565 /* include_juce_gui_basics.mm */ = {isa = PBXBuildFile; fileRef = 93967D9818A6F5B95C07B32B; };
@@ -157,6 +158,7 @@
 		25423A74B016191855679F72 /* include_juce_audio_processors.mm */ /* include_juce_audio_processors.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_processors.mm; path = ../../JuceLibraryCode/include_juce_audio_processors.mm; sourceTree = SOURCE_ROOT; };
 		2939FFF512D6CAC49E48AE7D /* PlayListTableListBoxModel.h */ /* PlayListTableListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListTableListBoxModel.h; path = ../../Source/Interface/Models/PlayListTableListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		2B3D46B4A25BB609791350BD /* TempoProvider.h */ /* TempoProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TempoProvider.h; path = ../../Source/Engine/Provider/TempoProvider.h; sourceTree = SOURCE_ROOT; };
+		2B63D05A72768F7263241FEF /* FadeInOutControl.cpp */ /* FadeInOutControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FadeInOutControl.cpp; path = ../../Source/Interface/Controls/FadeInOutControl.cpp; sourceTree = SOURCE_ROOT; };
 		2C15AD2795BD3DE0DE385A3D /* RegionContainerModel.cpp */ /* RegionContainerModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionContainerModel.cpp; path = ../../Source/Interface/Models/RegionContainerModel.cpp; sourceTree = SOURCE_ROOT; };
 		2C5C1EAFF66023F86D50E2F0 /* UIContext.h */ /* UIContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UIContext.h; path = ../../Source/Interface/UIContext.h; sourceTree = SOURCE_ROOT; };
 		2DBC2B906A322A93C6867BBE /* AudioTrack.h */ /* AudioTrack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrack.h; path = ../../Source/Engine/Group/AudioTrack.h; sourceTree = SOURCE_ROOT; };
@@ -350,6 +352,7 @@
 		DD3D293D5BE7C2DD00072E80 /* SampleTimer.h */ /* SampleTimer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SampleTimer.h; path = ../../Source/Engine/PlayList/SampleTimer.h; sourceTree = SOURCE_ROOT; };
 		DD7CC22CCB3663A8F34EAE1B /* PlayListContainerComponent.h */ /* PlayListContainerComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListContainerComponent.h; path = ../../Source/Interface/Components/RightPanel/PlayListContainerComponent.h; sourceTree = SOURCE_ROOT; };
 		E138ACDCC3A702D0B7A742EF /* include_juce_dsp.mm */ /* include_juce_dsp.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_dsp.mm; path = ../../JuceLibraryCode/include_juce_dsp.mm; sourceTree = SOURCE_ROOT; };
+		E23433D3E1A5019D20FA91F2 /* FadeInOutControl.h */ /* FadeInOutControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FadeInOutControl.h; path = ../../Source/Interface/Controls/FadeInOutControl.h; sourceTree = SOURCE_ROOT; };
 		E3BA2FC7B3B79BEDB0107D49 /* AudioResourceView.cpp */ /* AudioResourceView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioResourceView.cpp; path = ../../Source/Interface/Views/AudioResourceView.cpp; sourceTree = SOURCE_ROOT; };
 		E460A10ACA07926504BD4E72 /* ChannelComponent.cpp */ /* ChannelComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ChannelComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.cpp; sourceTree = SOURCE_ROOT; };
 		E7074F66C3DD69F43FBB467D /* AutoEditComponent.cpp */ /* AutoEditComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AutoEditComponent.cpp; path = ../../Source/Interface/Dialogs/AutoEditComponent.cpp; sourceTree = SOURCE_ROOT; };
@@ -776,6 +779,8 @@
 		A60DF503B2F410F6DDB29C77 /* Controls */ = {
 			isa = PBXGroup;
 			children = (
+				2B63D05A72768F7263241FEF,
+				E23433D3E1A5019D20FA91F2,
 				8835413CFB618790DBA422FD,
 				AC2E93E31A964D3A67A696FE,
 				A40C7A7DFF271A4D4D530CB3,
@@ -1144,6 +1149,7 @@
 				3775D900697B541067876134,
 				63AE7E83398F33BA6144FBD5,
 				3CC8732FBE5A8FEFD49D5D4B,
+				03C02075BACDD77BAA3CEA0B,
 				29290AF35AA2A743A46B3746,
 				8D05774AC9E5812212390299,
 				E920083CC268F888B5B80BF2,
