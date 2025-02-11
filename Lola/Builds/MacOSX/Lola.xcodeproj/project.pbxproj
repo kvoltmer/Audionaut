@@ -76,6 +76,7 @@
 		99F8B7CF1F50B336192CD3FA /* include_juce_analytics.cpp */ = {isa = PBXBuildFile; fileRef = 7F26B1EEC3E92CB4A2D3D156; };
 		9AA5ACB43D75D718D1D16B1E /* RegionSelector.cpp */ = {isa = PBXBuildFile; fileRef = BC912F2C45ABACEAA30761C1; };
 		9B6805B958805F7E9909F926 /* AudioResource.cpp */ = {isa = PBXBuildFile; fileRef = 71508ADE3ED7A1FDC3FD454B; };
+		9C83EA0161D1306ABB691184 /* FadeInOutView.cpp */ = {isa = PBXBuildFile; fileRef = F583F48D0FF83F50111B03E8; };
 		9D99CD2A2F0E3FFF17004F30 /* CoreMIDI.framework */ = {isa = PBXBuildFile; fileRef = 3F436BA69588E2039CDFB0F5; };
 		9F4FCDEC3DD6EE17883A88E3 /* include_juce_graphics_Sheenbidi.c */ = {isa = PBXBuildFile; fileRef = 97685BF53A801E7DFE09A038; };
 		A38FB613326B6E88B7042354 /* RegionsPerTrackComponent.cpp */ = {isa = PBXBuildFile; fileRef = 943C7C4CB6B7B1DF3E54C098; };
@@ -230,6 +231,7 @@
 		6DA263F7CDEFFDFAC0EB223E /* RegionSelector.h */ /* RegionSelector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionSelector.h; path = ../../Source/Interface/Controls/RegionSelector.h; sourceTree = SOURCE_ROOT; };
 		6E8033EA1E1FCCFBE1AF27F7 /* SelectionManager.h */ /* SelectionManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SelectionManager.h; path = ../../Source/Engine/Selection/SelectionManager.h; sourceTree = SOURCE_ROOT; };
 		6ED79F6C594EFFE31DB3C689 /* SelectableObjectContainer.h */ /* SelectableObjectContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SelectableObjectContainer.h; path = ../../Source/Engine/Selection/SelectableObjectContainer.h; sourceTree = SOURCE_ROOT; };
+		6F2675F2742A1F6F2D7F238E /* VolumeFade.h */ /* VolumeFade.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VolumeFade.h; path = ../../Source/Engine/AudioSources/VolumeFade.h; sourceTree = SOURCE_ROOT; };
 		6F75568B0D072582C1F4CE0A /* RegionTableListBox.h */ /* RegionTableListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionTableListBox.h; path = ../../Source/Interface/Controls/RegionTableListBox.h; sourceTree = SOURCE_ROOT; };
 		71508ADE3ED7A1FDC3FD454B /* AudioResource.cpp */ /* AudioResource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioResource.cpp; path = ../../Source/Engine/Resource/AudioResource.cpp; sourceTree = SOURCE_ROOT; };
 		72EF955B126DC0797C0BA924 /* DraggerControl.cpp */ /* DraggerControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DraggerControl.cpp; path = ../../Source/Interface/Controls/DraggerControl.cpp; sourceTree = SOURCE_ROOT; };
@@ -314,6 +316,7 @@
 		B68082B3B751BB87D6C198BD /* juce_analytics */ /* juce_analytics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_analytics; path = ../../../Submodules/juce/modules/juce_analytics; sourceTree = SOURCE_ROOT; };
 		B7346F39611AE01C1EAFEC0C /* Info-App.plist */ /* Info-App.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-App.plist"; path = "Info-App.plist"; sourceTree = SOURCE_ROOT; };
 		B8B95DEF1C6536F44482A856 /* AudioTrack.cpp */ /* AudioTrack.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrack.cpp; path = ../../Source/Engine/Group/AudioTrack.cpp; sourceTree = SOURCE_ROOT; };
+		B92AC1A1131ACB1EC5B0AFD0 /* FadeInOutView.h */ /* FadeInOutView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FadeInOutView.h; path = ../../Source/Interface/Views/FadeInOutView.h; sourceTree = SOURCE_ROOT; };
 		BA5C39ABAF055C323410DE14 /* PlayListTableListBoxItem.h */ /* PlayListTableListBoxItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListTableListBoxItem.h; path = ../../Source/Interface/Models/PlayListTableListBoxItem.h; sourceTree = SOURCE_ROOT; };
 		BADBB9D9AEAFBB0D593D7915 /* AudioBusInterface.h */ /* AudioBusInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioBusInterface.h; path = ../../Source/Engine/Playback/AudioBusInterface.h; sourceTree = SOURCE_ROOT; };
 		BC325BA600975DA123084DA3 /* AudioToolbox.framework */ /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -371,6 +374,7 @@
 		F2C3C13BF9EFDA97A3296E84 /* AudioClip.cpp */ /* AudioClip.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioClip.cpp; path = ../../Source/Engine/Group/AudioClip.cpp; sourceTree = SOURCE_ROOT; };
 		F3D057FCB74BF350042A73EE /* AudioTrackRegionEditComponent.cpp */ /* AudioTrackRegionEditComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrackRegionEditComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/EditView/AudioTrackRegionEditComponent.cpp; sourceTree = SOURCE_ROOT; };
 		F4CCD042003BA1D9CE67C800 /* AudioTrackListBoxModel.h */ /* AudioTrackListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackListBoxModel.h; path = ../../Source/Interface/Models/AudioTrackListBoxModel.h; sourceTree = SOURCE_ROOT; };
+		F583F48D0FF83F50111B03E8 /* FadeInOutView.cpp */ /* FadeInOutView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FadeInOutView.cpp; path = ../../Source/Interface/Views/FadeInOutView.cpp; sourceTree = SOURCE_ROOT; };
 		F5F7DEF8952E76FA005897ED /* CMakeLists.txt */ /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = CMakeLists.txt; path = ../../Catch2Tests/CMakeLists.txt; sourceTree = SOURCE_ROOT; };
 		F606AA824C91677FAABA4C90 /* juce_audio_utils */ /* juce_audio_utils */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_utils; path = ../../../Submodules/juce/modules/juce_audio_utils; sourceTree = SOURCE_ROOT; };
 		F62ECD7362B186DC805B431E /* NewRegionDialog.h */ /* NewRegionDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NewRegionDialog.h; path = ../../Source/Interface/Dialogs/NewRegionDialog.h; sourceTree = SOURCE_ROOT; };
@@ -733,6 +737,7 @@
 		92F42FF8411787223E37422D /* AudioSources */ = {
 			isa = PBXGroup;
 			children = (
+				6F2675F2742A1F6F2D7F238E,
 				AC56136A076FC15C2E904E25,
 				CAFD7E7A5EC218460C239503,
 				4D29270EED662FCEDECFF44A,
@@ -837,6 +842,8 @@
 		AFC9DC8F53530AC727AC6073 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F583F48D0FF83F50111B03E8,
+				B92AC1A1131ACB1EC5B0AFD0,
 				A1367AD7787D8F61E862A1E1,
 				ED4953391298A2F1212A2BDB,
 				CB19A935EF026FE60A0F874E,
@@ -1159,6 +1166,7 @@
 				9AA5ACB43D75D718D1D16B1E,
 				167269CB4D148F8798D9FE23,
 				F71B0F6265EE35A0F68DD83C,
+				9C83EA0161D1306ABB691184,
 				BDB04D599194CEC90685AC2F,
 				F687ABFD320ED8F7494336AB,
 				D600631B51AD273F6E2D7F92,

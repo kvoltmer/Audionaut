@@ -60,6 +60,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     // NOTE: workaround since list box is eating all mouse events
     playListItemListBox->addMouseListener (this, true);
     
+    
     // VOLUME
     volumeSlider = std::make_unique<SliderControl>(juce::String(), regionSelector);
     addAndMakeVisible(volumeSlider.get());
@@ -84,7 +85,10 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     addAndMakeVisible(fadeInControl.get());
     fadeInControl->setVisible(false);
     fadeInControl->onValueChange = [this, playListItem] {
-        playListItem->setFadeIn(fadeInControl->getValue());
+        if (playListItem->setFadeIn(fadeInControl->getValue()))
+            fadeOutControl->setValue(playListItem->getFadeOut());
+        
+        playListItemListBox->updateContent();
     };
     fadeInControl->onDragStart = [playListItem] { playListItem->onDragStart(); };
     fadeInControl->onDragEnd = [playListItem] { playListItem->onDragEnd(); };
@@ -96,7 +100,9 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     addAndMakeVisible(fadeOutControl.get());
     fadeOutControl->setVisible(false);
     fadeOutControl->onValueChange = [this, playListItem] {
-        playListItem->setFadeOut(fadeOutControl->getValue());
+        if (playListItem->setFadeOut(fadeOutControl->getValue()))
+            fadeInControl->setValue(playListItem->getFadeIn());
+        playListItemListBox->updateContent();
     };
     fadeOutControl->onDragStart = [playListItem] { playListItem->onDragStart(); };
     fadeOutControl->onDragEnd = [playListItem] { playListItem->onDragEnd(); };
@@ -139,7 +145,6 @@ void PlayListItemComponent::resized()
     else {
         volumeSlider->setVisible(false);
     }
-    
 
     updateUI();
 }

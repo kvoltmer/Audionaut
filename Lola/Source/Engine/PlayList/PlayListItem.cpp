@@ -192,11 +192,15 @@ void PlayListItem::onDragEnd()
     }
 }
 
-void PlayListItem::setFadeIn(double val)
+bool PlayListItem::setFadeIn(double val)
 {
     auto length = audioRegion->getRegionData(audium::clocks).getLength();
     fadeInClocks = length * val;
-    std::cout << "fade in: " << val << " " <<  fadeInClocks << std::endl;
+    if (fadeInClocks + fadeOutClocks > length) {
+        fadeOutClocks = length - fadeInClocks;
+        return true;
+    }
+    return false;
 }
 
 double PlayListItem::getFadeIn() const
@@ -208,11 +212,15 @@ double PlayListItem::getFadeIn() const
     return 0.0;
 }
 
-void PlayListItem::setFadeOut(double val)
+bool PlayListItem::setFadeOut(double val)
 {
     auto length = audioRegion->getRegionData(audium::clocks).getLength();
     fadeOutClocks = length * val;
-    std::cout << "fade out: " << val << " " <<  fadeOutClocks << std::endl;
+    if (fadeInClocks + fadeOutClocks > length) {
+        fadeInClocks = length - fadeOutClocks;
+        return true;
+    }
+    return false;
 }
 
 double PlayListItem::getFadeOut() const

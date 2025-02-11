@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 #include <memory>
 #include "WaveFormViewBase.h"
+#include "Interface/Views/FadeInOutView.h"
 
 class AudioResource;
 class ZoomHandler;
@@ -33,15 +34,22 @@ public:
         WaveFormViewBase(parentComponent, audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber),
         playListItem(playListItem_)
     {
+        // FADE IN OUT VIEW
+        fadeInOutView = std::make_unique<FadeInOutView>(playListItem_);
+        addAndMakeVisible(fadeInOutView.get());
     }
     
     double getRegionStart(audium::TimeContextType context) const override;
     
     double getClipGain() const override;
     
+    void resized() override;
+    
 private:
     
     std::shared_ptr<PlayListItem> playListItem;
+    
+    std::unique_ptr<FadeInOutView> fadeInOutView;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionView)
 };

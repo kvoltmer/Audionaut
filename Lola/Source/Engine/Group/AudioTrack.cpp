@@ -691,12 +691,13 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
     DspClipData dspClipData;
     
     if (arrangementMode) {
-        // iterate playlist
+        // iterate playlist items and it's transport sources
         for (const auto &item : getPlayListContainer()->getPlayListItems()) {
-            
             for (const auto &transportSource : item->getTransportSources()) {
                 dspClipData.active              = true;
-                dspClipData.clip_gain           = item->getGain();
+                dspClipData.clipGain            = item->getGain();
+                dspClipData.clipFadeInClocks    = item->getFadeInClocks();
+                dspClipData.clipFadeOutClocks   = item->getFadeOutClocks();
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
                 
@@ -706,7 +707,7 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
         }
     }
     else {
-        // iterate sub groups
+        // iterate sub groups and it's transport sources
         for (const auto &subGroup : getAudioSubGroups()) {
             for (const auto &transportSource : subGroup->getTransportSources()) {
                 dspClipData.clipData        = subGroup->getAudioClip()->data;

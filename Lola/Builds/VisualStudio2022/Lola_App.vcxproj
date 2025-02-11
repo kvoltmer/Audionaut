@@ -212,6 +212,7 @@
     <ClCompile Include="..\..\Source\Interface\Controls\RegionSelector.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\RegionTableListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\AudioTrackListBox.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\AudioRegionView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\AudioResourceView.cpp"/>
@@ -3010,6 +3011,7 @@
     <ClInclude Include="..\..\Source\Application\AudiumMainWindow.h"/>
     <ClInclude Include="..\..\Source\Util\EngineAccess.h"/>
     <ClInclude Include="..\..\Source\Util\Preferences.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.h"/>
@@ -3126,6 +3128,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\RegionTableListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\TransportPositionControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AudioTrackListBox.h"/>
+    <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\ArrangementOverview.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\WaveFormViewBase.h"/>

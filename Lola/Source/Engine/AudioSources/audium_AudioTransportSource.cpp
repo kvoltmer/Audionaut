@@ -187,8 +187,14 @@ void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double ne
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize    = samplesPerBlockExpected;
     spec.sampleRate          = newSampleRate;
-    clipGain.setRampDurationSeconds(0.01);
     clipGain.prepare(spec);
+    clipGain.setRampDurationSeconds(0.01);
+    
+    clipFadeIn.prepare(spec);
+    clipFadeIn.setRampDurationSeconds(0.0);
+    
+    clipFadeOut.prepare(spec);
+    clipFadeOut.setRampDurationSeconds(0.0);
     
     isPrepared = true;
 }
@@ -211,38 +217,39 @@ void AudioTransportSource::releaseResources()
 void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info)
 {
     if (masterSource != nullptr &&
-        isPrepared &&
-        (playing || stopped)) {
-        
-        
-        masterSource->getNextAudioBlock (info);
-
-        if (!playing && stopped)
-        {
-            // just stopped playing, so fade out the last block..
-            for (int i = info.buffer->getNumChannels(); --i >= 0;)
-                info.buffer->applyGainRamp (i, info.startSample, jmin (256, info.numSamples), 1.0f, 0.0f);
-
-            if (info.numSamples > 256)
-                 info.buffer->clear (info.startSample + 256, info.numSamples - 256);
+        isPrepared)
+    {
+        if (playing || stopped) {
             
+            masterSource->getNextAudioBlock (info);
+            
+            if (!playing && stopped) {
+                // just stopped playing, so fade out the last block..
+                for (int i = info.buffer->getNumChannels(); --i >= 0;)
+                    info.buffer->applyGainRamp (i, info.startSample, jmin (256, info.numSamples), 1.0f, 0.0f);
+                
+                if (info.numSamples > 256)
+                    info.buffer->clear (info.startSample + 256, info.numSamples - 256);
+                
+                stopped = true;
+            }
+            
+            if (hasStreamFinished())
+                stop();
+            
+            // clip gain
+            clipGain.setGainLinear(gain.load());
+            juce::dsp::AudioBlock<float> audioBlock (*info.buffer);
+            juce::dsp::ProcessContextReplacing<float> gainContext(audioBlock);
+            clipGain.process(gainContext);
+            clipFadeIn.process(gainContext);
+            clipFadeOut.process(gainContext);
+        }
+        else {
+            info.clearActiveBufferRegion();
             stopped = true;
         }
-        else if (hasStreamFinished()) {
-            stop();
-        }
-
-        // clip gain
-        clipGain.setGainLinear(gain.load());
-        juce::dsp::AudioBlock<float> audioBlock (*info.buffer);
-        juce::dsp::ProcessContextReplacing<float> gainContext(audioBlock);
-        clipGain.process(gainContext);
     }
-    else {
-        info.clearActiveBufferRegion();
-        stopped = true;
-    }
-
 }
 
 void AudioTransportSource::setGain (const float newGain) noexcept
@@ -253,6 +260,50 @@ void AudioTransportSource::setGain (const float newGain) noexcept
 float AudioTransportSource::getGain() const noexcept
 {
     return gain.load();
+}
+
+void AudioTransportSource::setFadeInSeconds(double fadeInSeconds, double offsetInSeconds, bool reset)
+{
+    auto fadeTime = fadeInSeconds;
+    auto initialGain = 0.0;
+    if (offsetInSeconds < 0.0) {
+        fadeTime = fadeInSeconds + offsetInSeconds;
+        if (fadeTime < 0.0)
+            fadeTime = 0.0;
+        
+        if (fadeInSeconds > 0.0)
+            initialGain = 1.0 - (fadeTime / fadeInSeconds);
+    }
+    
+    if (reset) {
+        clipFadeIn.setGainLinear(initialGain, true);
+    }
+    clipFadeIn.setRampDurationSeconds(fadeTime);
+    clipFadeIn.setGainLinear(1.0, false);
+}
+
+void AudioTransportSource::setFadeOutSeconds(double fadeOutSeconds, double duration, bool reset)
+{
+    auto fadeTime = fadeOutSeconds;
+    auto initialGain = 1.0;
+    if (fadeOutSeconds <= duration) {
+        // schedule
+        auto start = duration - fadeOutSeconds;
+        clipFadeOut.setSkipSamples(start * sampleRate);
+    }
+    else {
+        fadeTime = duration;
+        
+        if (fadeOutSeconds > 0.0)
+            initialGain = duration / fadeOutSeconds;
+    }
+    
+    if (reset)
+        clipFadeOut.setGainLinear(initialGain, true);
+    
+    std::cout << initialGain << " time: " << fadeTime << std::endl;
+    clipFadeOut.setRampDurationSeconds(fadeTime);
+    clipFadeOut.setGainLinear(0.0, false);
 }
 
 } // namespace audium
