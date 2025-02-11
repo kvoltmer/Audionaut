@@ -67,12 +67,22 @@ public:
     void onDragEnd();
     
     // value range [0, 1]
-    void setFadeIn(double val);
+    bool setFadeIn(double val);
     double getFadeIn() const;
     
     // value range [0, 1]
-    void setFadeOut(double val);
+    bool setFadeOut(double val);
     double getFadeOut() const;
+    
+    double getFadeInClocks() const
+    {
+        return fadeInClocks;
+    }
+    
+    double getFadeOutClocks() const
+    {
+        return fadeOutClocks;
+    }
     
 private:
     const PlayListContainer &owner;

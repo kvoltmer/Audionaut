@@ -29,3 +29,8 @@ double AudioRegionView::getClipGain() const
 {
     return playListItem->getGain();
 }
+
+void AudioRegionView::resized()
+{
+    fadeInOutView->setBounds(getLocalBounds());
+}

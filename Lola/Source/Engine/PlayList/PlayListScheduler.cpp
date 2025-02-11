@@ -114,7 +114,13 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
                     
                     transportSource->schedulePosition(position, startSamples);
                     transportSource->scheduleDuration(duration, externalSampleRate);
-                    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clip_gain);
+                    
+                    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
+                    auto fadeIn = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
+                    transportSource->getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
+                    auto fadeOut = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
+                    transportSource->getAudioTransportSource()->setFadeOutSeconds(fadeOut, duration, true);
+                    
                     transportSource->getAudioTransportSource()->start();
                     playback->startVoice(transportSource);
                     
@@ -124,7 +130,7 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
 //                std::cout << "offset: " << offset << " ";
 //                std::cout << "file-pos: " << position << " ";
 //                std::cout << "duration: " << duration << " ";
-//                std::cout << "gain: " << dspClip.dspClipData.clip_gain << " ";
+//                std::cout << "gain: " << dspClip.dspClipData.clipGain << " ";
 //                std::cout << std::endl;
 
 

@@ -1012,6 +1012,9 @@
     <ClCompile Include="..\..\Source\Interface\Controls\AudioTrackListBox.cpp">
       <Filter>Lola\Source\Interface\Controls</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp">
+      <Filter>Lola\Source\Interface\Views</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp">
       <Filter>Lola\Source\Interface\Views</Filter>
     </ClCompile>
@@ -4005,6 +4008,9 @@
     <ClInclude Include="..\..\Source\Util\Preferences.h">
       <Filter>Lola\Source\Util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h">
+      <Filter>Lola\Source\Engine\AudioSources</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h">
       <Filter>Lola\Source\Engine\AudioSources</Filter>
     </ClInclude>
@@ -4352,6 +4358,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\AudioTrackListBox.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h">
+      <Filter>Lola\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h">
       <Filter>Lola\Source\Interface\Views</Filter>

@@ -65,8 +65,9 @@ private:
 
     juce::Rectangle<int> originalBounds;
     
-    int visualSize = 10;
-    int controlSize = 15;
+    int visualSize      = 8;
+    int controlHeight   = 16;
+    int controlWidth    = 8;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FadeInOutControl)
 };

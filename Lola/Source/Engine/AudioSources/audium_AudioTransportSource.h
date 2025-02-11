@@ -2,6 +2,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "VolumeFade.h"
 
 using namespace juce;
 
@@ -100,6 +101,9 @@ public:
 
     void setGain (float newGain) noexcept;
     float getGain() const noexcept;
+    
+    void setFadeInSeconds(double fadeInSeconds, double offsetInSeconds, bool reset);
+    void setFadeOutSeconds(double fadeOutSeconds, double duration, bool reset);
 
     //==============================================================================
     /** Implementation of the AudioSource method. */
@@ -143,6 +147,9 @@ private:
     std::atomic<bool> isPrepared = false;
 
     juce::dsp::Gain<float> clipGain;
+    
+    audium::VolumeFade<float> clipFadeIn;
+    audium::VolumeFade<float> clipFadeOut;
     
     void releaseMasterResources();
 

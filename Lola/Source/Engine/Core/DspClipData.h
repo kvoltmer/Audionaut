@@ -12,7 +12,10 @@ struct DspClipData
     // Indicate if clip is active
     bool active = false;
     
-    float clip_gain = 1.f;
+    float clipGain = 1.f;
+    
+    double clipFadeInClocks = 0.0;
+    double clipFadeOutClocks = 0.0;
     
     int transportSourceIndex = -1;
     

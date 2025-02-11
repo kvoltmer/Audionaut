@@ -47,11 +47,14 @@ void FadeInOutControl::mouseDrag (const juce::MouseEvent& e)
     if (std::abs(distance.getX()) > 0) {
         auto newBounds = originalBounds + distance;
         
-        if (newBounds.getX() < 0)
-            newBounds.setX(0);
+        auto leftLimit = (type == FadeIn) ? 0 : controlWidth;
+        auto rightLimit = (type == FadeIn) ? (getParentWidth() - (controlWidth * 2)) : (getParentWidth() - controlWidth);
         
-        if ((newBounds.getX() + controlSize)  > getParentWidth())
-            newBounds.setX(getParentWidth() - controlSize);
+        if (newBounds.getX() < leftLimit)
+            newBounds.setX(leftLimit);
+        
+        if (newBounds.getX() > rightLimit)
+            newBounds.setX(rightLimit);
         
         setBounds (newBounds);
         
@@ -84,7 +87,7 @@ void FadeInOutControl::mouseExit (const MouseEvent& e)
 
 double FadeInOutControl::getValue() const
 {
-    auto totalWidth = static_cast<double>(getParentWidth() - controlSize);
+    auto totalWidth = static_cast<double>(getParentWidth() - controlWidth);
     auto xPos = getBounds().toDouble().getX();
     
     if (type == FadeIn) {
@@ -100,17 +103,14 @@ double FadeInOutControl::getValue() const
 void FadeInOutControl::setValue(double val)
 {
     juce::jlimit(0.0, 1.0, val);
-    auto totalWidth = static_cast<double>(getParentWidth() - controlSize);
+    auto totalWidth = static_cast<double>(getParentWidth() - controlWidth);
     
     if (type == FadeIn) {
         auto x = static_cast<int>(totalWidth * val);
-        setBounds(x, DraggerControl::draggerHeight, controlSize, controlSize);
+        setBounds(x, DraggerControl::draggerHeight + 1, controlWidth, controlHeight);
     }
     else if (type == FadeOut) {
         auto x = static_cast<int>(totalWidth - (totalWidth * val));
-        setBounds(x, DraggerControl::draggerHeight, controlSize, controlSize);
+        setBounds(x, DraggerControl::draggerHeight + 1, controlWidth, controlHeight);
     }
-    
-    auto check = getValue();
-    jassert(check == val);
 }
