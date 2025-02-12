@@ -145,6 +145,13 @@ void MainComponent::updateUI()
     rightPanelComponent->updateUI(ContentContext);
 
     updateWindowTitle();
+    
+    if (auto audiumLookAndFeel = dynamic_cast<AudiumLookAndFeel*>(&getLookAndFeel())) {
+        for (auto audioTrack : audiumEngine->getAudioTrackContainer()->getAudioTracks()) {
+            if (audioTrack->getId() < AudiumLookAndFeel::maxTrackColours)
+                audiumLookAndFeel->trackColours[audioTrack->getId()] = audioTrack->getColour();
+        }
+    }
 }
 
 void MainComponent::updateWindowTitle()

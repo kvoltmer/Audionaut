@@ -15,9 +15,8 @@
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Components/RightPanel/PlayListContainerComponent.h"
 #include "Interface/Components/RightPanel/RegionComponent.h"
-#include "Interface/Components/RightPanel/RegionsPerTrackContainerComponent.h"
+#include "Interface/Components/RightPanel/RegionContainerComponent.h"
 
-//==============================================================================
 RightPanelComponent::RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
@@ -26,13 +25,13 @@ RightPanelComponent::RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEng
     stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, false));
     playListContainerComponent.reset(new PlayListContainerComponent(audiumEngine));
     
-    regionsPerTrackContainer.reset(new RegionsPerTrackContainerComponent(audiumEngine));
+    regionContainerComponent.reset(new RegionContainerComponent(audiumEngine));
     
 
     addAndMakeVisible(regionComponent.get());
     addAndMakeVisible(stretchableLayoutResizerBar.get());
     addAndMakeVisible(playListContainerComponent.get());
-    addAndMakeVisible(regionsPerTrackContainer.get());
+    addAndMakeVisible(regionContainerComponent.get());
     
     stretchableLayoutManager->setItemLayout (0,          // for item 0
                                              25, -1.0,    // size must be between 0% and 100% of the available space
@@ -63,12 +62,12 @@ void RightPanelComponent::resized()
     auto isArrangement = audiumEngine->getPlayListScheduler()->isArrangementMode();
     
     playListContainerComponent->setVisible(isArrangement);
-    regionsPerTrackContainer->setVisible(isArrangement);
+    regionContainerComponent->setVisible(isArrangement);
     regionComponent->setVisible(!isArrangement);
     
     if (isArrangement) {
         // the list of components that we want to reposition
-        Component* comps[] = {  regionsPerTrackContainer.get(),
+        Component* comps[] = {  regionContainerComponent.get(),
             stretchableLayoutResizerBar.get(),
             playListContainerComponent.get() };
         
@@ -87,7 +86,7 @@ void RightPanelComponent::updateUI(UIContext context)
 {
     regionComponent->updateUI(context);
     playListContainerComponent->updateUI(context);
-    regionsPerTrackContainer->updateUI(context);
+    regionContainerComponent->updateUI(context);
     
     // obsolete?
     resized();
@@ -96,7 +95,6 @@ void RightPanelComponent::updateUI(UIContext context)
 
 void RightPanelComponent::clearSelection()
 {
-    /// TODO: implement
-    //regionsPerTrackContainer->clearSelection();
+    regionContainerComponent->clearSelection();
     regionComponent->clearSelection();
 }

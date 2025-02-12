@@ -56,6 +56,12 @@ public:
                                            float maxSliderPos,
                                            const juce::Slider::SliderStyle style, juce::Slider& slider) override;
     
+    // Table
+    void drawTableHeaderColumn (juce::Graphics& g, juce::TableHeaderComponent& header,
+                                                const juce::String& columnName, int /*columnId*/,
+                                                int width, int height, bool isMouseOver, bool isMouseDown,
+                                                int columnFlags) override;
+    
     // Various statics
     static const int channelsWidth = 100;
     static const int dragZoomControlHeight = 25;
@@ -63,6 +69,9 @@ public:
     static const int tableHeaderHeight = 25;
     static const float defaultFontSize;
     static const int extraSpaceAtBottom = 200;
+    static const int maxTrackColours = 256;
+    
+    static juce::Colour trackColours[maxTrackColours];
 private:
     void setupColours();
 };
