@@ -317,6 +317,10 @@
                   file="Source/Interface/Components/RightPanel/PlayListContainerComponent.h"/>
             <FILE id="MuXKoO" name="RegionComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/RightPanel/RegionComponent.h"/>
+            <FILE id="ZYUZLx" name="RegionContainerComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionContainerComponent.cpp"/>
+            <FILE id="hIzBnl" name="RegionContainerComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionContainerComponent.h"/>
             <FILE id="Myx1PD" name="RegionsPerTrackComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/RightPanel/RegionsPerTrackComponent.cpp"/>
             <FILE id="wB6LIx" name="RegionsPerTrackComponent.h" compile="0" resource="0"
@@ -335,6 +339,10 @@
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
+          <FILE id="FZbPhM" name="TrackRegionTableListBoxModel.cpp" compile="1"
+                resource="0" file="Source/Interface/Models/TrackRegionTableListBoxModel.cpp"/>
+          <FILE id="D6w5CK" name="TrackRegionTableListBoxModel.h" compile="0"
+                resource="0" file="Source/Interface/Models/TrackRegionTableListBoxModel.h"/>
           <FILE id="b5NBYW" name="RegionContainerModel.cpp" compile="1" resource="0"
                 file="Source/Interface/Models/RegionContainerModel.cpp"/>
           <FILE id="p5hkwc" name="RegionContainerModel.h" compile="0" resource="0"
@@ -363,6 +371,10 @@
                 resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="McvcCP" name="TableRegionLabel.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/TableRegionLabel.cpp"/>
+          <FILE id="dic52p" name="TableRegionLabel.h" compile="0" resource="0"
+                file="Source/Interface/Controls/TableRegionLabel.h"/>
           <FILE id="U33zDH" name="FadeInOutControl.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/FadeInOutControl.cpp"/>
           <FILE id="TSCZRX" name="FadeInOutControl.h" compile="0" resource="0"

@@ -125,14 +125,17 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/HeaderComponent_9265485e.o \
   $(JUCE_OBJDIR)/PlayListComponent_101ef568.o \
   $(JUCE_OBJDIR)/PlayListContainerComponent_413ee6bb.o \
+  $(JUCE_OBJDIR)/RegionContainerComponent_6eb1283d.o \
   $(JUCE_OBJDIR)/RegionsPerTrackComponent_e699d4dd.o \
   $(JUCE_OBJDIR)/RegionsPerTrackContainerComponent_b31f9ae6.o \
   $(JUCE_OBJDIR)/RightPanelComponent_683d1bd2.o \
   $(JUCE_OBJDIR)/MainComponent_892e8d2a.o \
+  $(JUCE_OBJDIR)/TrackRegionTableListBoxModel_9dc83d7b.o \
   $(JUCE_OBJDIR)/RegionContainerModel_2f57bfcc.o \
   $(JUCE_OBJDIR)/AudioTrackListBoxModel_e0f725e1.o \
   $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o \
   $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o \
+  $(JUCE_OBJDIR)/TableRegionLabel_60f1076.o \
   $(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
   $(JUCE_OBJDIR)/SubGroupDraggerControl_b7bb6220.o \
@@ -445,6 +448,11 @@ $(JUCE_OBJDIR)/PlayListContainerComponent_413ee6bb.o: ../../Source/Interface/Com
 	@echo "Compiling PlayListContainerComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/RegionContainerComponent_6eb1283d.o: ../../Source/Interface/Components/RightPanel/RegionContainerComponent.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling RegionContainerComponent.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/RegionsPerTrackComponent_e699d4dd.o: ../../Source/Interface/Components/RightPanel/RegionsPerTrackComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling RegionsPerTrackComponent.cpp"
@@ -465,6 +473,11 @@ $(JUCE_OBJDIR)/MainComponent_892e8d2a.o: ../../Source/Interface/Components/MainC
 	@echo "Compiling MainComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/TrackRegionTableListBoxModel_9dc83d7b.o: ../../Source/Interface/Models/TrackRegionTableListBoxModel.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling TrackRegionTableListBoxModel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/RegionContainerModel_2f57bfcc.o: ../../Source/Interface/Models/RegionContainerModel.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling RegionContainerModel.cpp"
@@ -483,6 +496,11 @@ $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o: ../../Source/Interface/Model
 $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o: ../../Source/Interface/Models/RegionTableListBoxModel.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling RegionTableListBoxModel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/TableRegionLabel_60f1076.o: ../../Source/Interface/Controls/TableRegionLabel.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling TableRegionLabel.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o: ../../Source/Interface/Controls/FadeInOutControl.cpp

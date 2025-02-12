@@ -958,6 +958,9 @@
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.cpp">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.cpp">
+      <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.cpp">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClCompile>
@@ -970,6 +973,9 @@
     <ClCompile Include="..\..\Source\Interface\Components\MainComponent.cpp">
       <Filter>Lola\Source\Interface\Components</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.cpp">
+      <Filter>Lola\Source\Interface\Models</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Models\RegionContainerModel.cpp">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClCompile>
@@ -981,6 +987,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp">
       <Filter>Lola\Source\Interface\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\TableRegionLabel.cpp">
+      <Filter>Lola\Source\Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp">
       <Filter>Lola\Source\Interface\Controls</Filter>
@@ -4269,6 +4278,9 @@
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionComponent.h">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.h">
+      <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.h">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
@@ -4280,6 +4292,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MainComponent.h">
       <Filter>Lola\Source\Interface\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.h">
+      <Filter>Lola\Source\Interface\Models</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\RegionContainerModel.h">
       <Filter>Lola\Source\Interface\Models</Filter>
@@ -4307,6 +4322,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h">
       <Filter>Lola\Source\Interface\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\TableRegionLabel.h">
+      <Filter>Lola\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
