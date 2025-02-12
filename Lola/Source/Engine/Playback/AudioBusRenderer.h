@@ -133,7 +133,7 @@ private:
     std::atomic<float> channelLevel[MAX_AUDIO_CHANNELS];
     std::atomic<float> masterLevel[2];
     
-    bool gainStates[MAX_AUDIO_CHANNELS];
+    SampleType gainStates[MAX_AUDIO_CHANNELS];
     bool muteStates[MAX_AUDIO_CHANNELS];
     bool soloStates[MAX_AUDIO_CHANNELS];
     
