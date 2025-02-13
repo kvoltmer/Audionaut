@@ -53,6 +53,8 @@ private:
     std::unique_ptr<StretchableLayoutManager> stretchableLayoutManager;
     std::unique_ptr<StretchableLayoutResizerBar> stretchableLayoutResizerBar;
 
+    bool rightPanelVisible = true;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
 

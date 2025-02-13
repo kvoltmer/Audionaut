@@ -8,9 +8,7 @@
 class AudiumEngine;
 
 class HeaderComponent  : public juce::Component,
-                         private juce::Timer,
-                         public juce::Button::Listener,
-                         public juce::Label::Listener
+                         private juce::Timer
 {
 public:
     HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine);
@@ -21,10 +19,10 @@ public:
 
     void paint (juce::Graphics& g) override;
     void resized() override;
-    void buttonClicked (juce::Button* buttonThatWasClicked) override;
-    void labelTextChanged (juce::Label* labelThatHasChanged) override;
 
     void updateUI();
+    
+    std::function<void()> onRightPanelButtonClick;
     
 private:
     
@@ -43,12 +41,18 @@ private:
     int lastClicksValue = 0;
     
     std::unique_ptr<juce::DrawableButton> playButton;
+    juce::DrawablePath playImage;
+    
     std::unique_ptr<juce::DrawableButton> stopButton;
     juce::DrawablePath stopImage;
-    juce::DrawablePath playImage;
+    
+    std::unique_ptr<juce::ShapeButton> rightPanelButton;
     
     std::unique_ptr<StereoMeter> stereoMeter;
     std::unique_ptr<juce::Slider> volumeSlider;
+    
+    
+    juce::Path getRightPanelButtonPath();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)
 };
