@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include "Interface/UIContext.h"
+#include "Interface/LookAndFeel/TrackColourLookAndFeel.h"
 
 class AudiumEngine;
 class TrackRegionTableListBoxModel;
@@ -30,6 +31,8 @@ public:
 private:
     
     std::shared_ptr<AudiumEngine> audiumEngine;
+    
+    TrackColourLookAndFeel lookAndFeel;
     
     std::shared_ptr<juce::TableListBox> regionTableListBox;
     std::unique_ptr<TrackRegionTableListBoxModel> regionTableListBoxModel;

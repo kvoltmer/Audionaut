@@ -16,7 +16,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 void RegionSelector::paint (Graphics& g)
 {

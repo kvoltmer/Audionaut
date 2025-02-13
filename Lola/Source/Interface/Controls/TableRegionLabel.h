@@ -21,7 +21,7 @@
 
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -36,6 +36,7 @@ public:
         rowNumber(rowNumber_),
         audioTrackContainer(audioTrackContainer_)
     {
+        setMinimumHorizontalScale(1.f);
         setEditable (false, true, false);
         update (columnId, rowNumber, false);
         setFont (juce::FontOptions (13.00f));

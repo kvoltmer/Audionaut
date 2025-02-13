@@ -12,15 +12,19 @@
 #include "PlayListTableListBoxModel.h"
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Controls/RegionLabel.h"
+#include "Interface/Controls/TableRegionLabel.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
+    if (dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
     
     if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
@@ -89,7 +93,8 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
             modified = true;
         }
     }
-    else if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    else if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
+             dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
     {
         playListModel->getAudioTrack()->dropSelectedAudioRegions(insertIndex);
         modified = true;
@@ -152,7 +157,7 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 
         g.setColour (selected ? groupHighlightColour : groupColour);
         g.setFont (13.0f);
-        g.drawText (text, 4, 0, getWidth() - 6, getHeight(), juce::Justification::centredLeft, true);
+        g.drawText (text, 4, 0, std::max(0, getWidth() - 6), getHeight(), juce::Justification::centredLeft, true);
         
         g.setColour(groupColour);
         if( insertAfter )

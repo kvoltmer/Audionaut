@@ -17,7 +17,7 @@
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"
 #include "Interface/Components/MiddlePanel/EditView/EditComponent.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 

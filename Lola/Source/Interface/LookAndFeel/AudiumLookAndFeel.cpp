@@ -263,12 +263,9 @@ void AudiumLookAndFeel::drawTableHeaderColumn (Graphics& g, TableHeaderComponent
         g.fillPath (sortArrow, sortArrow.getTransformToScaleToFit (area.removeFromRight (height / 2).reduced (2).toFloat(), true));
     }
 
-    // !!! set the text colour of the column
-    jassert(columnId > 0);
-    g.setColour (trackColours[columnId - 1]);
-    
+    g.setColour (header.findColour (TableHeaderComponent::textColourId));
     g.setFont (withDefaultMetrics (FontOptions ((float) height * 0.5f, Font::bold)));
-    g.drawFittedText (columnName, area, Justification::centredLeft, 1);
+    g.drawFittedText (columnName, area, Justification::centredLeft, 1, 1.f);
 }
 
 int AudiumLookAndFeel::getAlertWindowButtonHeight()    { return 20; }

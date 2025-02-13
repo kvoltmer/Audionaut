@@ -16,7 +16,7 @@
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*

@@ -16,7 +16,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/ActionMessages.h"
 
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Controls/AudiumLabel.h"
 
 class ChannelGroupHeaderComponent : public juce::Component,

@@ -204,6 +204,16 @@
               file="Source/Engine/ActionMessages.h"/>
       </GROUP>
       <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
+        <GROUP id="{69575DAF-FBC2-F140-D989-B3A8608F6F55}" name="LookAndFeel">
+          <FILE id="LkiqwE" name="AudiumLookAndFeel.cpp" compile="1" resource="0"
+                file="Source/Interface/LookAndFeel/AudiumLookAndFeel.cpp"/>
+          <FILE id="MtAxzj" name="AudiumLookAndFeel.h" compile="0" resource="0"
+                file="Source/Interface/LookAndFeel/AudiumLookAndFeel.h"/>
+          <FILE id="ua9v92" name="TrackColourLookAndFeel.cpp" compile="1" resource="0"
+                file="Source/Interface/LookAndFeel/TrackColourLookAndFeel.cpp"/>
+          <FILE id="mCqQLl" name="TrackColourLookAndFeel.h" compile="0" resource="0"
+                file="Source/Interface/LookAndFeel/TrackColourLookAndFeel.h"/>
+        </GROUP>
         <FILE id="Z0WoBP" name="UIContext.h" compile="0" resource="0" file="Source/Interface/UIContext.h"/>
         <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
           <FILE id="qxsUuR" name="AboutDialog.h" compile="0" resource="0" file="Source/Interface/Dialogs/AboutDialog.h"/>
@@ -224,10 +234,6 @@
           <FILE id="j5Dgzu" name="SettingsDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/SettingsDialog.h"/>
         </GROUP>
-        <FILE id="CYohEV" name="AudiumLookAndFeel.cpp" compile="1" resource="0"
-              file="Source/Interface/AudiumLookAndFeel.cpp"/>
-        <FILE id="HYtvw9" name="AudiumLookAndFeel.h" compile="0" resource="0"
-              file="Source/Interface/AudiumLookAndFeel.h"/>
         <FILE id="Jt0jme" name="ColourIds.cpp" compile="1" resource="0" file="Source/Interface/ColourIds.cpp"/>
         <FILE id="WxdqR9" name="ColourIds.h" compile="0" resource="0" file="Source/Interface/ColourIds.h"/>
         <GROUP id="{5B27ED8A-CA94-0C20-47D2-019C8929A810}" name="Widgets">
@@ -321,14 +327,6 @@
                   file="Source/Interface/Components/RightPanel/RegionContainerComponent.cpp"/>
             <FILE id="hIzBnl" name="RegionContainerComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/RightPanel/RegionContainerComponent.h"/>
-            <FILE id="Myx1PD" name="RegionsPerTrackComponent.cpp" compile="1" resource="0"
-                  file="Source/Interface/Components/RightPanel/RegionsPerTrackComponent.cpp"/>
-            <FILE id="wB6LIx" name="RegionsPerTrackComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/RightPanel/RegionsPerTrackComponent.h"/>
-            <FILE id="yQP4Ii" name="RegionsPerTrackContainerComponent.cpp" compile="1"
-                  resource="0" file="Source/Interface/Components/RightPanel/RegionsPerTrackContainerComponent.cpp"/>
-            <FILE id="YO8ym9" name="RegionsPerTrackContainerComponent.h" compile="0"
-                  resource="0" file="Source/Interface/Components/RightPanel/RegionsPerTrackContainerComponent.h"/>
             <FILE id="pUtSng" name="RightPanelComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/RightPanel/RightPanelComponent.cpp"/>
             <FILE id="BNndd2" name="RightPanelComponent.h" compile="0" resource="0"

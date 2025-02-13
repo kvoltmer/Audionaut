@@ -21,7 +21,7 @@
 #include "Interface/Controls/TransportPositionControl.h"
 #include "Interface/Controls/DragZoomControl.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Views/ArrangementOverview.h"
 #include "Interface/Views/GridView.h"
 

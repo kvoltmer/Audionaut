@@ -108,8 +108,9 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioResourceContainer_8bac313a.o \
   $(JUCE_OBJDIR)/ChannelMapping_6a0229a8.o \
   $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o \
+  $(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o \
+  $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o \
   $(JUCE_OBJDIR)/AutoEditComponent_2f86d78b.o \
-  $(JUCE_OBJDIR)/AudiumLookAndFeel_49c84718.o \
   $(JUCE_OBJDIR)/ColourIds_54ae2f37.o \
   $(JUCE_OBJDIR)/audium_AudioThumbnail_f5797f4f.o \
   $(JUCE_OBJDIR)/audium_ListBox_b1d2231e.o \
@@ -126,8 +127,6 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/PlayListComponent_101ef568.o \
   $(JUCE_OBJDIR)/PlayListContainerComponent_413ee6bb.o \
   $(JUCE_OBJDIR)/RegionContainerComponent_6eb1283d.o \
-  $(JUCE_OBJDIR)/RegionsPerTrackComponent_e699d4dd.o \
-  $(JUCE_OBJDIR)/RegionsPerTrackContainerComponent_b31f9ae6.o \
   $(JUCE_OBJDIR)/RightPanelComponent_683d1bd2.o \
   $(JUCE_OBJDIR)/MainComponent_892e8d2a.o \
   $(JUCE_OBJDIR)/TrackRegionTableListBoxModel_9dc83d7b.o \
@@ -363,14 +362,19 @@ $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o: ../../Source/Engine/AudiumEngine.cpp
 	@echo "Compiling AudiumEngine.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o: ../../Source/Interface/LookAndFeel/AudiumLookAndFeel.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AudiumLookAndFeel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o: ../../Source/Interface/LookAndFeel/TrackColourLookAndFeel.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling TrackColourLookAndFeel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/AutoEditComponent_2f86d78b.o: ../../Source/Interface/Dialogs/AutoEditComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AutoEditComponent.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/AudiumLookAndFeel_49c84718.o: ../../Source/Interface/AudiumLookAndFeel.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AudiumLookAndFeel.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/ColourIds_54ae2f37.o: ../../Source/Interface/ColourIds.cpp
@@ -451,16 +455,6 @@ $(JUCE_OBJDIR)/PlayListContainerComponent_413ee6bb.o: ../../Source/Interface/Com
 $(JUCE_OBJDIR)/RegionContainerComponent_6eb1283d.o: ../../Source/Interface/Components/RightPanel/RegionContainerComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling RegionContainerComponent.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/RegionsPerTrackComponent_e699d4dd.o: ../../Source/Interface/Components/RightPanel/RegionsPerTrackComponent.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling RegionsPerTrackComponent.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/RegionsPerTrackContainerComponent_b31f9ae6.o: ../../Source/Interface/Components/RightPanel/RegionsPerTrackContainerComponent.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling RegionsPerTrackContainerComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/RightPanelComponent_683d1bd2.o: ../../Source/Interface/Components/RightPanel/RightPanelComponent.cpp

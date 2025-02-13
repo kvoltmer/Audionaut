@@ -15,7 +15,7 @@
 #include "AudiumMainWindow.h"
 #include "AudiumMenuModel.h"
 #include "Application/AudiumCommandIDs.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class SettingsDialog;
 class AboutDialog;

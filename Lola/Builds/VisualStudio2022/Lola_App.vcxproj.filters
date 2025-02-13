@@ -59,6 +59,9 @@
     <Filter Include="Lola\Source\Engine">
       <UniqueIdentifier>{1686E461-1E93-E534-C8B2-39013F569C56}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lola\Source\Interface\LookAndFeel">
+      <UniqueIdentifier>{5F372094-7C07-0E89-D2E9-F5EA99DBBBB5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Lola\Source\Interface\Dialogs">
       <UniqueIdentifier>{4F903949-257B-04D4-5926-B4DF023239CE}</UniqueIdentifier>
     </Filter>
@@ -907,11 +910,14 @@
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp">
       <Filter>Lola\Source\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp">
+      <Filter>Lola\Source\Interface\LookAndFeel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp">
+      <Filter>Lola\Source\Interface\LookAndFeel</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Dialogs\AutoEditComponent.cpp">
       <Filter>Lola\Source\Interface\Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\AudiumLookAndFeel.cpp">
-      <Filter>Lola\Source\Interface</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\ColourIds.cpp">
       <Filter>Lola\Source\Interface</Filter>
@@ -959,12 +965,6 @@
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.cpp">
-      <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.cpp">
-      <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackContainerComponent.cpp">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.cpp">
@@ -4176,6 +4176,12 @@
     <ClInclude Include="..\..\Source\Engine\ActionMessages.h">
       <Filter>Lola\Source\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.h">
+      <Filter>Lola\Source\Interface\LookAndFeel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.h">
+      <Filter>Lola\Source\Interface\LookAndFeel</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\UIContext.h">
       <Filter>Lola\Source\Interface</Filter>
     </ClInclude>
@@ -4202,9 +4208,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SettingsDialog.h">
       <Filter>Lola\Source\Interface\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\AudiumLookAndFeel.h">
-      <Filter>Lola\Source\Interface</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\ColourIds.h">
       <Filter>Lola\Source\Interface</Filter>
@@ -4279,12 +4282,6 @@
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.h">
-      <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.h">
-      <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackContainerComponent.h">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.h">
