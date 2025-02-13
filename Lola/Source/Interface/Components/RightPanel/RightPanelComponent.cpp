@@ -92,9 +92,3 @@ void RightPanelComponent::updateUI(UIContext context)
     resized();
     
 }
-
-void RightPanelComponent::clearSelection()
-{
-    regionContainerComponent->clearSelection();
-    regionComponent->clearSelection();
-}

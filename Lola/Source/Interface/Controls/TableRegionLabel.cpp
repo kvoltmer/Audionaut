@@ -37,3 +37,30 @@ void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
     // update
     audioTrackContainer->sendActionMessage(updateSelection);
 }
+
+void TableRegionLabel::update(int column, int row, bool isRowSelected)
+{
+    columnId = column;
+    rowNumber = row;
+    
+    juce::String text = "n/a";
+
+    if (auto region = getRegion(columnId, rowNumber))
+    {
+        text = region->getName();
+        
+        auto textColour = region->getAudioTrack()->getColour();
+        
+        if (region->isSelected()) {
+            setColour (juce::Label::textColourId, textColour.brighter());
+            setColour (juce::Label::backgroundColourId,
+                       findColour(audium::listBoxBackgroundColourId));
+        }
+        else {
+            setColour (juce::Label::textColourId, textColour);
+            setColour (juce::Label::backgroundColourId,
+                       juce::Colours::transparentBlack);
+        }
+    }
+    setText (text, juce::dontSendNotification);
+}

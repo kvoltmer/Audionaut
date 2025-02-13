@@ -84,11 +84,6 @@ public:
         updateSelection();
         regionTableListBox->updateContent();
     }
-    
-    void clearSelection()
-    {
-        regionTableListBox->deselectAllRows();
-    }
 
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;
