@@ -18,7 +18,12 @@
 MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     audiumEngine(audiumEngine_)
 {
-    headerComponent.reset(new HeaderComponent(audiumEngine));
+    headerComponent = std::make_unique<HeaderComponent>(audiumEngine);
+    headerComponent->onRightPanelButtonClick = [this]() {
+        rightPanelVisible = !rightPanelVisible;
+        resized();
+    };
+    
     middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
     rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
@@ -69,17 +74,29 @@ void MainComponent::resized()
 {
     const auto headerHeight = headerComponent->getHeight();
     headerComponent->setBounds(0, 0, getWidth(), headerHeight);
-
-    // the list of components that we want to reposition
-    Component* comps[] = {  middlePanelComponent.get(),
-                            stretchableLayoutResizerBar.get(),
-                            rightPanelComponent.get() };
-
-    // this will position the 3 components, one above the other, to fit
-    // horizontically into the rectangle provided.
-    stretchableLayoutManager->layOutComponents (comps, 3,
-                               0, headerHeight, getWidth(), getHeight() - headerHeight,
-                               false, true);
+    
+    stretchableLayoutResizerBar->setVisible(rightPanelVisible);
+    rightPanelComponent->setVisible(rightPanelVisible);
+    
+    if (rightPanelVisible) {
+        
+        // the list of components that we want to reposition
+        Component* comps[] = {  middlePanelComponent.get(),
+            stretchableLayoutResizerBar.get(),
+            rightPanelComponent.get() };
+        
+        // this will position the 3 components, one above the other, to fit
+        // horizontically into the rectangle provided.
+        stretchableLayoutManager->layOutComponents (comps, 3,
+                                                    0, headerHeight, getWidth(), getHeight() - headerHeight,
+                                                    false, true);
+    }
+    else {
+        middlePanelComponent->setBounds(0,
+                                        headerHeight,
+                                        getWidth(),
+                                        getHeight() - headerHeight);
+    }
 }
 
 void MainComponent::actionListenerCallback (const juce::String& message)

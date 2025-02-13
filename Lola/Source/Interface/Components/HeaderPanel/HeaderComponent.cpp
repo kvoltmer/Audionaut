@@ -21,7 +21,6 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     // Link
     linkButton.reset (new juce::TextButton ("Link"));
     addAndMakeVisible (linkButton.get());
-    linkButton->addListener (this);
     linkButton->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff7a7a7a));
     linkButton->setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff12a4e2));
     linkButton->setClickingTogglesState(true);
@@ -152,6 +151,17 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     };
     stopButton->setColour(TextButton::buttonColourId, Colours::grey);
     
+    // RIGHT PANEL
+    rightPanelButton = std::make_unique<juce::ShapeButton>("Right Panel", Colours::transparentBlack, Colours::grey.withAlpha(0.25f), Colours::grey.withAlpha(0.25f));
+    rightPanelButton->setOutline(Colours::white.withAlpha(0.75f), 1.2f);
+    addAndMakeVisible(rightPanelButton.get());
+    auto path = getRightPanelButtonPath();
+    rightPanelButton->setShape(path, true, true, true);
+    rightPanelButton->onClick = [this]() {
+        NullCheckedInvocation::invoke(this->onRightPanelButtonClick);
+    };
+    
+    
     // master meter
     stereoMeter = std::make_unique<StereoMeter>();
     addAndMakeVisible(stereoMeter.get());
@@ -203,18 +213,8 @@ void HeaderComponent::resized()
     
     volumeSlider->setBounds(600, 10, 90, 20);
     stereoMeter->setBounds(700, 10, 110, 20);
-}
-
-void HeaderComponent::buttonClicked (juce::Button* buttonThatWasClicked)
-{
-    if (buttonThatWasClicked == linkButton.get())
-    {
-        auto state = linkButton->getToggleStateValue();
-    }
-}
-
-void HeaderComponent::labelTextChanged (juce::Label* labelThatHasChanged)
-{
+    
+    rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
 }
 
 void HeaderComponent::updateUI()
@@ -260,4 +260,30 @@ void HeaderComponent::configureSlider(juce::Slider* slider)
     slider->setDoubleClickReturnValue(true, 0.0);
     slider->setColour(Slider::trackColourId, juce::Colours::transparentBlack);
     slider->setColour (Slider::backgroundColourId, juce::Colours::grey);
+}
+
+juce::Path HeaderComponent::getRightPanelButtonPath()
+{
+    juce::Path rightPanelPath;
+    auto w = 30;
+    auto h = 20;
+    auto b = 19;
+    
+    rightPanelPath.addRoundedRectangle(0, 0, w, h, 2.f);
+    rightPanelPath.startNewSubPath(b, 0);
+    rightPanelPath.lineTo(b, h);
+    rightPanelPath.closeSubPath();
+    
+    
+    
+    auto y = 5.f;
+    auto s = 3.f;
+    for (auto i = 0; i < 3; i++) {
+        rightPanelPath.startNewSubPath(b+s, y);
+        rightPanelPath.lineTo(w-s, y);
+        rightPanelPath.closeSubPath();
+        y += 4.f;
+    }
+    
+    return rightPanelPath;
 }
