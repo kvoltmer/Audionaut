@@ -30,67 +30,47 @@ int TrackRegionTableListBoxModel::getNumRows()
     return result;
 }
 
-void TrackRegionTableListBoxModel::paintRowBackground (juce::Graphics& g,
-                                 int rowNumber,
-                                 int width, int height,
-                                 bool rowIsSelected)
+juce::Component* TrackRegionTableListBoxModel::refreshComponentForCell (int rowNumber,
+                                                                        int columnId,
+                                                                        bool isRowSelected,
+                                                                        juce::Component* existingComponentToUpdate)
 {
-    if (rowIsSelected)
-    {
-        g.fillAll (owner->findColour(audium::listBoxBackgroundColourId));
-    }
-}
-
-void TrackRegionTableListBoxModel::paintCell (juce::Graphics& g,
-                        int rowNumber,
-                        int columnId,
-                        int width, int height,
-                        bool rowIsSelected)
-{    
-}
-
-juce::Component* TrackRegionTableListBoxModel::refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
-                                            juce::Component* existingComponentToUpdate)
-{
-    auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(columnId - 1);
-    jassert(audioTrack);
-    auto region = audioTrack->getAudioRegionContainer()->getRegion(rowNumber);
+    auto region = getRegion(rowNumber, columnId);
     
-    if (existingComponentToUpdate == nullptr)
-    {
-        if (region != nullptr)
-        {
-            return new TableRegionLabel(audiumEngine->getAudioTrackContainer(),
-                                        columnId,
-                                        rowNumber);
-        }
-    }
-    else
-    {
-        auto component = dynamic_cast<TableRegionLabel*>(existingComponentToUpdate);
-        if (component != nullptr)
-        {
-            // update since row might have changed after delete
-            component->update(columnId, rowNumber, isRowSelected);
-            return component;
+    if (existingComponentToUpdate != nullptr) {
+        std::unique_ptr<TableRegionLabel> item(dynamic_cast<TableRegionLabel*>(existingComponentToUpdate));
+        if (item != nullptr && region != nullptr) {
+            item->update(columnId, rowNumber, isRowSelected);
+            return item.release();
         }
     }
     
+    if (region != nullptr) {
+        auto item = std::make_unique<TableRegionLabel>(audiumEngine->getAudioTrackContainer(),
+                                                       columnId,
+                                                       rowNumber);
+        return item.release();
+    }
+
     return nullptr;
 }
 
 void TrackRegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
-    auto selectedRows = owner->getSelectedRows();
-    
-    // TODO:
-    // audioTrack->getAudioRegionContainer()->setSelectedRows(selectedRows);
-    // audiumEngine->getAudioTrackContainer()->sendActionMessage(updateAll);
 }
 
 void TrackRegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)
 {
-    owner->deselectAllRows();
+    audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+}
+
+void TrackRegionTableListBoxModel::cellClicked (int rowNumber, int columnId, const juce::MouseEvent&)
+{
+    if (!getRegion(rowNumber, columnId)) {
+        audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+    }
 }
 
 void TrackRegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
@@ -101,5 +81,13 @@ void TrackRegionTableListBoxModel::deleteKeyPressed (int lastRowSelected)
 juce::var TrackRegionTableListBoxModel::getDragSourceDescription (const juce::SparseSet<int>& currentlySelectedRows)
 {
     return "region";
+}
+
+std::shared_ptr<AudioRegion> TrackRegionTableListBoxModel::getRegion(int rowNumber, int columnId) const
+{
+    if (auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(columnId - 1))
+        return audioTrack->getAudioRegionContainer()->getRegion(rowNumber);
+    
+    return nullptr;
 }
 

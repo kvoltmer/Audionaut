@@ -17,9 +17,6 @@ RegionContainerComponent::RegionContainerComponent(std::shared_ptr<AudiumEngine>
     regionTableListBox->setModel(regionTableListBoxModel.get());
     regionTableListBox->setMultipleSelectionEnabled(true);
     addAndMakeVisible(regionTableListBox.get());
-    
-//    regionTableListBox->getHeader().addColumn ("", 1, 250, 0, 800,
-//                                          juce::TableHeaderComponent::notResizableOrSortable);
     regionTableListBox->getHeader().setStretchToFitActive (true);
     
     regionTableListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
@@ -60,13 +57,4 @@ void RegionContainerComponent::updateUI(UIContext context)
         
     }
     regionTableListBox->updateContent();
-    
-    //regionListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, audioTrack->getColour());
-    //regionListBox->getHeader().setColumnName(1, audioTrack->getAudioTrackName());
-    
-}
-
-void RegionContainerComponent::clearSelection()
-{
-    
 }

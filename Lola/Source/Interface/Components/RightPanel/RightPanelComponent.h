@@ -30,8 +30,6 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void updateUI(UIContext context = ContentContext);
-    void clearSelection();
-
     
 private:
     std::shared_ptr<AudiumEngine> audiumEngine;

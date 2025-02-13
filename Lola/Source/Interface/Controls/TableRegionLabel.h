@@ -16,11 +16,12 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Undo/UndoableContainerAction.h"
 
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
-#include "Engine/PlayList/PlayListScheduler.h"
-#include "Engine/Undo/UndoableContainerAction.h"
+#include "Interface/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -54,25 +55,7 @@ public:
         return nullptr;
     }
     
-    void update(int columnId, int rowNumber, bool isSelected)
-    {
-        this->columnId = columnId;
-        this->rowNumber = rowNumber;
-        
-        juce::String text = "n/a";
-
-        if (auto r = getRegion(columnId, rowNumber))
-        {
-            text = r->getName();
-            
-            auto textColour = r->getAudioTrack()->getColour();
-            setColour (juce::Label::textColourId, isSelected ? textColour.brighter() : textColour);
-            
-        }
-        setText (text, juce::dontSendNotification);
-        
-
-    }
+    void update(int columnId, int rowNumber, bool isRowSelected);
     
     void mouseDown (const juce::MouseEvent& e) override;
     
