@@ -16,7 +16,7 @@
 
 #include "Interface/Models/PlayListTableListBoxModel.h"
 #include "Interface/Controls/PlayListTableListBox.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*

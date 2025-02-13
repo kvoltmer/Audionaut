@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class DefaultLabel  : public juce::Label
 {

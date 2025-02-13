@@ -177,8 +177,9 @@
     <ClCompile Include="..\..\Source\Engine\Resource\AudioResourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Resource\ChannelMapping.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Dialogs\AutoEditComponent.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\AudiumLookAndFeel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\ColourIds.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_AudioThumbnail.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_ListBox.cpp"/>
@@ -195,8 +196,6 @@
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackContainerComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MainComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.cpp"/>
@@ -3067,6 +3066,8 @@
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableContainerAction.h"/>
     <ClInclude Include="..\..\Source\Engine\AudiumEngine.h"/>
     <ClInclude Include="..\..\Source\Engine\ActionMessages.h"/>
+    <ClInclude Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.h"/>
+    <ClInclude Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\UIContext.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutWindowComponent.h"/>
@@ -3076,7 +3077,6 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\ExportAudioComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\NewRegionDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SettingsDialog.h"/>
-    <ClInclude Include="..\..\Source\Interface\AudiumLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\ColourIds.h"/>
     <ClInclude Include="..\..\Source\Interface\Widgets\audium_AudioThumbnail.h"/>
     <ClInclude Include="..\..\Source\Interface\Widgets\audium_ListBox.h"/>
@@ -3102,8 +3102,6 @@
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackContainerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MainComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.h"/>

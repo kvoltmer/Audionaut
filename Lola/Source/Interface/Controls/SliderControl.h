@@ -3,7 +3,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Controls/RegionSelector.h"
 
 class SliderControl  : public juce::Slider

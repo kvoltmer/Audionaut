@@ -6,7 +6,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
 #include "Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 int AudioTrackListBoxModel::getNumRows()
 {

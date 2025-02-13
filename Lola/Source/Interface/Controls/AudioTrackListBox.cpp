@@ -11,11 +11,12 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 
 #include "Interface/Handlers/SnapToGridHandler.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
 #include "Interface/Controls/DraggerControl.h"
 #include "Interface/Controls/RegionLabel.h"
+#include "Interface/Controls/TableRegionLabel.h"
 
 using namespace audium;
 
@@ -102,6 +103,9 @@ bool AudioTrackListBox::isInterestedInDragSource (const SourceDetails &dragSourc
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
     
+    if (dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
     return false;
 }
 
@@ -155,7 +159,8 @@ void AudioTrackListBox::itemDropped (const SourceDetails &dragSourceDetails)
     
     bool success = false;
     
-    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get())) {
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
+        dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
         auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
         setNewGroupColour(audioTrack);
         audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
@@ -189,7 +194,9 @@ void AudioTrackListBox::paint (juce::Graphics& g)
             height += getModel()->getRowHeight(r);
         }
         g.setColour(findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.5f));
-        g.fillRect(0, height, getWidth(), getHeight()-height);
+
+        // TODO: missing vertical offset?
+        g.fillRect(0, height, getWidth(), std::max(0, getHeight() - height));
     }
 
     

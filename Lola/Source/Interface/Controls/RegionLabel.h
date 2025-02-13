@@ -37,6 +37,7 @@ public:
         audioTrackContainer(audioTrackContainer_),
         audioRegionContainer(audioRegionContainer_)
     {
+        setMinimumHorizontalScale(1.f);
         setEditable (false, true, false);
         update (columnId, rowNumber, false);
         setFont (juce::FontOptions (13.00f));

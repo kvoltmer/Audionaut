@@ -2,6 +2,7 @@
 #include "PlayListComponent.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Controls/RegionLabel.h"
+#include "Interface/Controls/TableRegionLabel.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
 
@@ -10,6 +11,10 @@ bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget:
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
 
+    if (dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+
+    
     return false;
 }
 
@@ -17,8 +22,9 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
     auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
     
-    if (auto item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
+        dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
+        
         bool success = false;
         auto pos = 0.0;
         if (audioTrack->getPlayListContainer()->playListItems.objects.size() > 0) {
@@ -49,7 +55,8 @@ void PlayListComponent::updateInsertLines(const juce::DragAndDropTarget::SourceD
     
     auto after = dragSourceDetails.localPosition.y > height;
     
-    if (auto item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) &&
+    if ((dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
+         dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) &&
         after) {
         itemDrag = true;
     }

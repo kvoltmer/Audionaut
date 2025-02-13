@@ -2,7 +2,7 @@
 #include <JuceHeader.h>
 #include "RegionContainerComponent.h"
 #include "Interface/Models/TrackRegionTableListBoxModel.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -21,6 +21,7 @@ RegionContainerComponent::RegionContainerComponent(std::shared_ptr<AudiumEngine>
     
     regionTableListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
     regionTableListBox->setOutlineThickness (0);
+    regionTableListBox->setLookAndFeel(&lookAndFeel);
 }
 
 RegionContainerComponent::~RegionContainerComponent()
@@ -42,7 +43,6 @@ void RegionContainerComponent::resized()
 
 void RegionContainerComponent::updateUI(UIContext context)
 {
-    //updateSelection();
     
     if (context == RebuildContext) {
         regionTableListBox->getHeader().removeAllColumns();
@@ -54,7 +54,7 @@ void RegionContainerComponent::updateUI(UIContext context)
                                                        800,
                                                        juce::TableHeaderComponent::notResizableOrSortable);
         }
-        
     }
+    
     regionTableListBox->updateContent();
 }

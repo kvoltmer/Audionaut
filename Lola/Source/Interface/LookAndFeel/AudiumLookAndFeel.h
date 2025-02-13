@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ColourIds.h"
+#include "Interface/ColourIds.h"
 
 class AudiumLookAndFeel : public juce::LookAndFeel_V4
 {
@@ -57,7 +57,7 @@ public:
                                            const juce::Slider::SliderStyle style, juce::Slider& slider) override;
     
     // Table
-    void drawTableHeaderColumn (juce::Graphics& g, juce::TableHeaderComponent& header,
+    virtual void drawTableHeaderColumn (juce::Graphics& g, juce::TableHeaderComponent& header,
                                                 const juce::String& columnName, int /*columnId*/,
                                                 int width, int height, bool isMouseOver, bool isMouseDown,
                                                 int columnFlags) override;
