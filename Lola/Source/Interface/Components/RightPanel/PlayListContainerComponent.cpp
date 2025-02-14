@@ -17,6 +17,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
 PlayListContainerComponent::PlayListContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
@@ -89,27 +90,24 @@ void PlayListContainerComponent::paint (juce::Graphics&)
 
 void PlayListContainerComponent::resized()
 {
+    auto footerHeight = AudiumLookAndFeel::tableHeaderHeight;
+    auto bounds = getLocalBounds();
+    bounds.removeFromBottom(footerHeight);
+    
     juce::FlexBox fb;
     fb.flexDirection = juce::FlexBox::Direction::row;
-
-    for (auto playListComponent : playListComponents)
-    {
-
+    
+    for (auto playListComponent : playListComponents) {
         fb.items.add (juce::FlexItem (*playListComponent.get()).withFlex (0, 1, getWidth()));
     }
-
-    
-    auto headerHeight = 25;
-    auto bounds = getLocalBounds();
-    bounds.removeFromBottom(headerHeight);
     fb.performLayout (bounds);
     
     auto width = bounds.getWidth() / 2;
     
-    juce::Rectangle<int> totalLengthBounds(0, bounds.getHeight(), width, headerHeight);
+    juce::Rectangle<int> totalLengthBounds(0, bounds.getHeight(), width, footerHeight);
     totalLengthLabel->setBounds(totalLengthBounds);
     
-    juce::Rectangle<int> numVoiceBounds(bounds.getWidth() - width, bounds.getHeight(), width, headerHeight);
+    juce::Rectangle<int> numVoiceBounds(bounds.getWidth() - width, bounds.getHeight(), width, footerHeight);
     numVoicesLabel->setBounds(numVoiceBounds);
 
 }

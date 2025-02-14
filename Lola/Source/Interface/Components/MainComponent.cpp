@@ -42,7 +42,7 @@ MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
                                              -0.8);      // and its preferred size in % of the total available space
 
     stretchableLayoutManager->setItemLayout (1, // for item 1
-                                             2, 2, 2);
+                                             3, 3, 3);
 
     stretchableLayoutManager->setItemLayout (2,          // for item 2
                                              25, -1.0, // size must be between 25pix and 50% of the available space
@@ -82,8 +82,8 @@ void MainComponent::resized()
         
         // the list of components that we want to reposition
         Component* comps[] = {  middlePanelComponent.get(),
-            stretchableLayoutResizerBar.get(),
-            rightPanelComponent.get() };
+                                stretchableLayoutResizerBar.get(),
+                                rightPanelComponent.get() };
         
         // this will position the 3 components, one above the other, to fit
         // horizontically into the rectangle provided.

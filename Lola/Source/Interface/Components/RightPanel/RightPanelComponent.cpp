@@ -24,9 +24,7 @@ RightPanelComponent::RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEng
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
     stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, false));
     playListContainerComponent.reset(new PlayListContainerComponent(audiumEngine));
-    
     regionContainerComponent.reset(new RegionContainerComponent(audiumEngine));
-    
 
     addAndMakeVisible(regionComponent.get());
     addAndMakeVisible(stretchableLayoutResizerBar.get());
@@ -38,7 +36,7 @@ RightPanelComponent::RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEng
                                              -0.5);      // and its preferred size in % of the total available space
 
     stretchableLayoutManager->setItemLayout (1, // for item 1
-                                             2, 2, 2);
+                                             3, 3, 3);
 
     stretchableLayoutManager->setItemLayout (2,          // for item 2
                                              25, -1.0, // size must be between 0% and 50% of the available space
@@ -63,13 +61,14 @@ void RightPanelComponent::resized()
     
     playListContainerComponent->setVisible(isArrangement);
     regionContainerComponent->setVisible(isArrangement);
+    
     regionComponent->setVisible(!isArrangement);
     
     if (isArrangement) {
         // the list of components that we want to reposition
         Component* comps[] = {  regionContainerComponent.get(),
-            stretchableLayoutResizerBar.get(),
-            playListContainerComponent.get() };
+                                stretchableLayoutResizerBar.get(),
+                                playListContainerComponent.get() };
         
         // this will position the 3 components, one above the other, to fit
         // horizontically into the rectangle provided.
