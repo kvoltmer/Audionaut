@@ -153,7 +153,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     
     // RIGHT PANEL
     rightPanelButton = std::make_unique<juce::ShapeButton>("Right Panel", Colours::transparentBlack, Colours::grey.withAlpha(0.25f), Colours::grey.withAlpha(0.25f));
-    rightPanelButton->setOutline(Colours::white.withAlpha(0.75f), 1.2f);
+    rightPanelButton->setOutline(Colours::lightgrey.withAlpha(0.75f), 1.2f);
     addAndMakeVisible(rightPanelButton.get());
     auto path = getRightPanelButtonPath();
     rightPanelButton->setShape(path, true, true, true);
@@ -211,7 +211,7 @@ void HeaderComponent::resized()
     playButton->setBounds(450, 10, 35, 20);
     stopButton->setBounds(500, 10, 35, 20);
     
-    volumeSlider->setBounds(600, 10, 90, 20);
+    volumeSlider->setBounds(600, 10, 70, 20);
     stereoMeter->setBounds(700, 10, 110, 20);
     
     rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
