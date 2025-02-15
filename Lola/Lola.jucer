@@ -369,6 +369,10 @@
                 resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="Y7l77u" name="LoopDraggerControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/LoopDraggerControl.cpp"/>
+          <FILE id="nuQDk2" name="LoopDraggerControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/LoopDraggerControl.h"/>
           <FILE id="McvcCP" name="TableRegionLabel.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/TableRegionLabel.cpp"/>
           <FILE id="dic52p" name="TableRegionLabel.h" compile="0" resource="0"
@@ -402,8 +406,8 @@
           <FILE id="Fmpma7" name="LevelMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LevelMeter.cpp"/>
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
-          <FILE id="keLPLt" name="PlayPositionMarker.h" compile="0" resource="0"
-                file="Source/Interface/Controls/PlayPositionMarker.h"/>
+          <FILE id="keLPLt" name="PositionMarker.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PositionMarker.h"/>
           <FILE id="UGbQL4" name="RegionLabel.cpp" compile="1" resource="0" file="Source/Interface/Controls/RegionLabel.cpp"/>
           <FILE id="M14ssi" name="RegionLabel.h" compile="0" resource="0" file="Source/Interface/Controls/RegionLabel.h"/>
           <FILE id="kQnaR9" name="RegionSelector.cpp" compile="1" resource="0"
@@ -463,7 +467,7 @@
                appSandboxHomeDirRW="/Documents/&#10;/Desktop/">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Lola" headerPath="$(SRCROOT)/../../Source"
-                       customXcodeFlags="INSTALL_PATH=/Applications"/>
+                       customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="Lola" headerPath="$(SRCROOT)/../../Source"
                        customXcodeFlags="INSTALL_PATH=/Applications"/>
       </CONFIGURATIONS>

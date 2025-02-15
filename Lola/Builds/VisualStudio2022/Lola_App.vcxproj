@@ -203,6 +203,7 @@
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\TableRegionLabel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
@@ -3114,6 +3115,7 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\TableRegionLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h"/>
@@ -3126,7 +3128,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\RegionEditControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LevelMeter.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h"/>
-    <ClInclude Include="..\..\Source\Interface\Controls\PlayPositionMarker.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\PositionMarker.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionSelector.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionTableListBox.h"/>
