@@ -22,7 +22,7 @@ public:
     TransportView(std::shared_ptr<ZoomHandler> zoomHandler) :
         zoomHandler(zoomHandler)
     {
-        setInterceptsMouseClicks(false, true);
+        setInterceptsMouseClicks(false, false);
         setOpaque(true);
     }
 

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <JuceHeader.h>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -17,18 +18,40 @@ using json = nlohmann::json;
 //==============================================================================
 struct PlayListSchedulerData
 {
-    // Edit or Arrangement Mode
-    bool editMode = false;
+    // edit or arrangement mode
+    bool editMode                   = false;
     
-    bool followTransport = true;
+    // user interface follows transport
+    bool followTransport            = true;
     
-    bool loopPlayList = false;
+    // obsolete?
+    bool loopPlayList               = false;
     
     // transport position in 96th clocks
-    double transportPositionClocks = 0.0;
+    double transportPositionClocks  = 0.0;
     
-    double startPositionClocks = 0.0;
+    // transport start position
+    double startPositionClocks      = 0.0;
+    
+    // loop start
+    double loopStartPositionClocks  = 96.0;
+    
+    // loop end
+    double loopEndPositionClocks    = 288.0;
+    
+    // loop active
+    bool loopActive                 = true;
+    
+    
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayListSchedulerData, editMode, followTransport, loopPlayList, transportPositionClocks, startPositionClocks);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PlayListSchedulerData,
+                                                editMode,
+                                                followTransport,
+                                                loopPlayList,
+                                                transportPositionClocks,
+                                                startPositionClocks,
+                                                loopStartPositionClocks,
+                                                loopEndPositionClocks,
+                                                loopActive);
 

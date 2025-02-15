@@ -988,6 +988,9 @@
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp">
+      <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\TableRegionLabel.cpp">
       <Filter>Lola\Source\Interface\Controls</Filter>
     </ClCompile>
@@ -4320,6 +4323,9 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h">
+      <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\TableRegionLabel.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
     </ClInclude>
@@ -4356,7 +4362,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Controls\PlayPositionMarker.h">
+    <ClInclude Include="..\..\Source\Interface\Controls\PositionMarker.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionLabel.h">

@@ -63,6 +63,7 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/Selection/*.cpp
         
         ${SRC_PATH}/Interface/*.cpp
+        ${SRC_PATH}/Interface/LookAndFeel/*.cpp
         ${SRC_PATH}/Interface/Components/*.cpp
         ${SRC_PATH}/Interface/Components/HeaderPanel/*.cpp
         ${SRC_PATH}/Interface/Components/MiddlePanel/*.cpp

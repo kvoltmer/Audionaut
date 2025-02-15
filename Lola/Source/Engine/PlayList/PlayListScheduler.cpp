@@ -156,10 +156,8 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
         totalLength = std::max(totalLength, getAbsolutePosition(audium::clocks));
         
         // add overhead to fit entire arrangement arrangement
-        auto overhead = tempoProvider->secondsToClocks(60.0);
-        overhead = std::max(overhead, totalLength * 0.01);
-        
-        totalLength += overhead;
+        auto minimumLength = tempoProvider->secondsToClocks(60.0);
+        totalLength = std::max(minimumLength, totalLength * 1.01);
     }
     
     if (context == audium::seconds)
@@ -229,15 +227,58 @@ void PlayListScheduler::setAbsoluteStartPosition(double newPosition, audium::Tim
 
 double PlayListScheduler::getAbsoluteStartPosition(audium::TimeContextType context) const
 {
-    if (context == audium::clocks) {
+    if (context == audium::clocks)
         return data.startPositionClocks;
-    }
-    else if (context == audium::seconds) {
+    
+    if (context == audium::seconds)
         return getTempoProvider()->clocksToSeconds(data.startPositionClocks);
+    
+    return 0.0;
+}
+
+void PlayListScheduler::setLoopPositionRange(juce::Range<double> newRange, audium::TimeContextType context)
+{
+    if (newRange.getStart() >= 0.0 &&
+        newRange.getLength() >= 1.0) {
+        
+        // TODO: undo/redo
+        
+        if (context == audium::clocks) {
+            data.loopStartPositionClocks = newRange.getStart();
+            data.loopEndPositionClocks = newRange.getEnd();
+        }
+        else if (context == audium::seconds) {
+            data.loopStartPositionClocks = getTempoProvider()->secondsToClocks(newRange.getStart());
+            data.loopEndPositionClocks = getTempoProvider()->secondsToClocks(newRange.getEnd());
+        }
+    }
+    else {
+        std::cout << "setLoopPositionRange invalid range: " << newRange.getStart() << " " << newRange.getEnd() << std::endl;
     }
     
-    jassertfalse;
-    return 0.0;
+}
+
+juce::Range<double> PlayListScheduler::getLoopPositionRange(audium::TimeContextType context) const
+{
+    juce::Range<double> range(data.loopStartPositionClocks, data.loopEndPositionClocks);
+    if (context == audium::clocks) {
+        return range;
+    }
+    else if (context == audium::seconds) {
+        return getTempoProvider()->clocksToSeconds(range);
+    }
+    
+    return juce::Range<double>(0.0, 0.0);
+}
+
+bool PlayListScheduler::isLoopActive() const
+{
+    return data.loopActive;
+}
+
+void PlayListScheduler::setLoopActive(bool bActive)
+{
+    data.loopActive = bActive;
 }
 
 int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track)

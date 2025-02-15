@@ -91,6 +91,12 @@ public:
     void setAbsoluteStartPosition(double newPosition, audium::TimeContextType context);
     double getAbsoluteStartPosition(audium::TimeContextType context) const;
     double getAbsolutePosition(audium::TimeContextType context) const;
+
+    void setLoopPositionRange(juce::Range<double> newRange, audium::TimeContextType context);
+    juce::Range<double> getLoopPositionRange(audium::TimeContextType context) const;
+    
+    bool isLoopActive() const;
+    void setLoopActive(bool bActive);
     
     void tick(bool isPlaying, double beats, int numSamples);
     

@@ -12,11 +12,11 @@
 
 #include <JuceHeader.h>
 
-#include "Interface/Views/TransportView.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
-//==============================================================================
-/*
-*/
+#include "Interface/Views/TransportView.h"
+#include "Interface/Controls/LoopDraggerControl.h"
+
 class TransportPositionControl  :   public juce::Component,
                                     private juce::Timer
 {
@@ -31,23 +31,44 @@ public:
         audiumEngine(audiumEngine_)
     {
         setOpaque(true);
+  
+
+        auto gridColour = findColour (audium::gridColourId);
         
-        transportView.reset(new TransportView(zoomHandler));
+        transportView = std::make_unique<TransportView> (zoomHandler);
         addAndMakeVisible(transportView.get());
-        transportView->toBack();
+
+        loopRangeMarker.setFill(Colours::white.withAlpha(0.1f));
+        loopRangeMarker.setStrokeFill(Colours::white.withAlpha(0.85f));
+        loopRangeMarker.setStrokeThickness(1.f);
+
+        addAndMakeVisible(loopRangeMarker);
         
         startPositionMarker.setFill (Colours::red.withAlpha (0.85f));
         addAndMakeVisible (startPositionMarker);
         
-        mouseOverGridMarker.setFill(findColour (audium::gridColourId));
-//        const float myDashLength[] = { 6, 6 };
-//        mouseOverGridMarker.setDashLengths(myDashLength[0]);
-//        mouseOverGridMarker.setStrokeFill(findColour(audium::gridColourId));
-//        mouseOverGridMarker.setStrokeThickness(1.f);
-        
+        mouseOverGridMarker.setFill(gridColour);
         addAndMakeVisible(mouseOverGridMarker);
         
+
+        loopDraggerControl = std::make_unique<LoopDraggerControl>(nullptr,
+                                                                  audiumEngine,
+                                                                  zoomHandler,
+                                                                  gridColour,
+                                                                  regionSelector);
+        addAndMakeVisible(loopDraggerControl.get());
+        
+        loopDraggerControl->onDragEnd = [this] () {
+            if (auto playListScheduler = audiumEngine->getPlayListScheduler()) {
+                playListScheduler->setLoopPositionRange(loopDraggerControl->loopRangeInClocks, audium::clocks);
+                updateLoopView();
+            }
+        };
+        
+        
         startTimerHz (40);
+        
+        updateLoopView();
     }
 
     ~TransportPositionControl() override
@@ -62,6 +83,7 @@ public:
     void resized() override
     {
         transportView->setBounds(getLocalBounds());
+        updateLoopView();
     }
     
     void timerCallback() override
@@ -69,10 +91,32 @@ public:
         if (auto playListScheduler = audiumEngine->getPlayListScheduler()) {
             auto position = zoomHandler->clocksToX(playListScheduler->getAbsolutePosition(audium::clocks));
             auto start = zoomHandler->clocksToX(playListScheduler->getAbsoluteStartPosition(audium::clocks));
-        
-            startPositionMarker.setRectangle (Rectangle<float> (start - 0.75f, 0,
-                                                                  1.5f, (float) getHeight()));
+            auto height = static_cast<float>(getHeight());
+            startPositionMarker.setRectangle (Rectangle<float> (start - 0.75f, 0.f,
+                                                                  1.5f, height));
             startPositionMarker.setVisible(std::abs(position - start) > 0.0);
+            
+            loopRangeMarker.setVisible(playListScheduler->isLoopActive());
+        }
+            
+    }
+    
+    void updateLoopView()
+    {
+        if (auto playListScheduler = audiumEngine->getPlayListScheduler()) {
+            
+            if (playListScheduler->isLoopActive()) {
+            
+                auto height = static_cast<float>(getHeight());
+                auto loopRange = playListScheduler->getLoopPositionRange(audium::clocks);
+                auto loopX = zoomHandler->clocksToX(loopRange);
+                
+                Rectangle<float> loopRect (loopX.getStart(), 0.f, loopX.getLength(), height);
+                
+                loopRangeMarker.setRectangle(loopRect);
+                
+                loopDraggerControl->setBounds(loopRect.toNearestInt());
+            }
         }
     }
     
@@ -146,8 +190,10 @@ private:
     
     juce::DrawableRectangle startPositionMarker;
     juce::DrawableRectangle mouseOverGridMarker;
+    juce::DrawableRectangle loopRangeMarker;
     
     std::unique_ptr<TransportView> transportView;
+    std::unique_ptr<LoopDraggerControl> loopDraggerControl;
     
     int counter = 0;
     

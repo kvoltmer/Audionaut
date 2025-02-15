@@ -134,6 +134,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioTrackListBoxModel_e0f725e1.o \
   $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o \
   $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o \
+  $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o \
   $(JUCE_OBJDIR)/TableRegionLabel_60f1076.o \
   $(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
@@ -490,6 +491,11 @@ $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o: ../../Source/Interface/Model
 $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o: ../../Source/Interface/Models/RegionTableListBoxModel.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling RegionTableListBoxModel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o: ../../Source/Interface/Controls/LoopDraggerControl.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling LoopDraggerControl.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/TableRegionLabel_60f1076.o: ../../Source/Interface/Controls/TableRegionLabel.cpp

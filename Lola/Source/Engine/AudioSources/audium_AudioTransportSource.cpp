@@ -301,7 +301,7 @@ void AudioTransportSource::setFadeOutSeconds(double fadeOutSeconds, double durat
     if (reset)
         clipFadeOut.setGainLinear(initialGain, true);
     
-    std::cout << initialGain << " time: " << fadeTime << std::endl;
+    // std::cout << initialGain << " time: " << fadeTime << std::endl;
     clipFadeOut.setRampDurationSeconds(fadeTime);
     clipFadeOut.setGainLinear(0.0, false);
 }

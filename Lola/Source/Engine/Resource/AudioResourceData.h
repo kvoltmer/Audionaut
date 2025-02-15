@@ -25,5 +25,8 @@ struct AudioResourceData
     int channelPos;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AudioResourceData, url, gain, channelPos);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AudioResourceData,
+                                   url,
+                                   gain,
+                                   channelPos);
 
