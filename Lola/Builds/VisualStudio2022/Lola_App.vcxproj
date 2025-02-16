@@ -3050,6 +3050,7 @@
     <ClInclude Include="..\..\Source\Engine\Playback\Playback.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\PlaybackDefines.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\Voice.h"/>
+    <ClInclude Include="..\..\Source\Engine\PlayList\LoopData.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListSchedulerData.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PositionableBase.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\SampleTimer.h"/>

@@ -146,6 +146,7 @@
           <FILE id="LVBVN6" name="Voice.h" compile="0" resource="0" file="Source/Engine/Playback/Voice.h"/>
         </GROUP>
         <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
+          <FILE id="j9IFqc" name="LoopData.h" compile="0" resource="0" file="Source/Engine/PlayList/LoopData.h"/>
           <FILE id="sr2twv" name="PlayListSchedulerData.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListSchedulerData.h"/>
           <FILE id="iIqNIF" name="PositionableBase.cpp" compile="1" resource="0"

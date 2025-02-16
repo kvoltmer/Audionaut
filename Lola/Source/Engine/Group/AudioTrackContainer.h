@@ -16,6 +16,7 @@
 #include "Engine/Region/AudioRegionData.h"
 #include "Engine/Group/AudioRegionAdapter.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/PlayList/LoopData.h"
 
 class AudioTrack;
 class AudioResourceContainer;
@@ -105,6 +106,8 @@ public:
     std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
     
     std::vector<std::shared_ptr<AudioTrack>> audioTracks;
+    
+    LoopData loopData;
     
 private:
     std::shared_ptr<juce::UndoManager> undoManager;

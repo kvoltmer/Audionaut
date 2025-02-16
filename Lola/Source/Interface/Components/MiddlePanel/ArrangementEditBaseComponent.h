@@ -168,6 +168,8 @@ public:
         
         loopStartPositionMarker->setVisible(audiumEngine->getPlayListScheduler()->isLoopActive());
         loopEndPositionMarker->setVisible(audiumEngine->getPlayListScheduler()->isLoopActive());
+        
+        audioTrackListBox->getHeaderComponent()->resized();
     }
     
     void setContentWidth(int contentWidth)
@@ -245,8 +247,8 @@ protected:
     std::shared_ptr<AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
-    std::unique_ptr<GridView>                   gridView;
     
+    std::unique_ptr<GridView>                   gridView;
     std::shared_ptr<AudioTrackListBox>          audioTrackListBox;
     std::unique_ptr<AudioTrackListBoxModel>     audioTrackListBoxModel;
     std::unique_ptr<PositionMarker>             playPositionMarker;

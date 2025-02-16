@@ -318,6 +318,7 @@
 		B4F39B4C0CE67784DC3888B2 /* AudioChannel.h */ /* AudioChannel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioChannel.h; path = ../../Source/Engine/Channel/AudioChannel.h; sourceTree = SOURCE_ROOT; };
 		B4F404E01C5AA0BC3B80C095 /* SnapToGridHandler.h */ /* SnapToGridHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SnapToGridHandler.h; path = ../../Source/Interface/Handlers/SnapToGridHandler.h; sourceTree = SOURCE_ROOT; };
 		B68082B3B751BB87D6C198BD /* juce_analytics */ /* juce_analytics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_analytics; path = ../../../Submodules/juce/modules/juce_analytics; sourceTree = SOURCE_ROOT; };
+		B72AFF09DD93D50A2D8EE5E0 /* LoopData.h */ /* LoopData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LoopData.h; path = ../../Source/Engine/PlayList/LoopData.h; sourceTree = SOURCE_ROOT; };
 		B7346F39611AE01C1EAFEC0C /* Info-App.plist */ /* Info-App.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-App.plist"; path = "Info-App.plist"; sourceTree = SOURCE_ROOT; };
 		B8B95DEF1C6536F44482A856 /* AudioTrack.cpp */ /* AudioTrack.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrack.cpp; path = ../../Source/Engine/Group/AudioTrack.cpp; sourceTree = SOURCE_ROOT; };
 		B92AC1A1131ACB1EC5B0AFD0 /* FadeInOutView.h */ /* FadeInOutView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FadeInOutView.h; path = ../../Source/Interface/Views/FadeInOutView.h; sourceTree = SOURCE_ROOT; };
@@ -517,6 +518,7 @@
 		1553603921B6F3477E1E9060 /* PlayList */ = {
 			isa = PBXGroup;
 			children = (
+				B72AFF09DD93D50A2D8EE5E0,
 				7F9CC3D78FEEF3B3AD118953,
 				E7E2B0BB192B8377F4275BBE,
 				BDC989EF8839976F75651BC9,
