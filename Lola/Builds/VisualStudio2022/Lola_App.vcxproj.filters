@@ -4128,6 +4128,9 @@
     <ClInclude Include="..\..\Source\Engine\Playback\Voice.h">
       <Filter>Lola\Source\Engine\Playback</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\PlayList\LoopData.h">
+      <Filter>Lola\Source\Engine\PlayList</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListSchedulerData.h">
       <Filter>Lola\Source\Engine\PlayList</Filter>
     </ClInclude>

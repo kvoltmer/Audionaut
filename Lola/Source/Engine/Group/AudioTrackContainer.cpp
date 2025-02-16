@@ -193,6 +193,9 @@ bool AudioTrackContainer::writeToJson (json& output)
         output["audio_tracks"] += j;
     }
     output["master_gain"] = getMasterGain();
+    
+    output["loop_data"] = loopData;
+    
     return true;
 }
 
@@ -236,6 +239,11 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
         
         count++;
     }
+    
+    if (input.contains("loop_data")) {
+        loopData = input["loop_data"];
+    }
+    
     return true;
 }
 

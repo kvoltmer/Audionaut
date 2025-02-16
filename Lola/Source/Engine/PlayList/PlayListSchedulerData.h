@@ -32,17 +32,7 @@ struct PlayListSchedulerData
     
     // transport start position
     double startPositionClocks      = 0.0;
-    
-    // loop start
-    double loopStartPositionClocks  = 96.0;
-    
-    // loop end
-    double loopEndPositionClocks    = 288.0;
-    
-    // loop active
-    bool loopActive                 = true;
-    
-    
+
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PlayListSchedulerData,
@@ -50,8 +40,5 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PlayListSchedulerData,
                                                 followTransport,
                                                 loopPlayList,
                                                 transportPositionClocks,
-                                                startPositionClocks,
-                                                loopStartPositionClocks,
-                                                loopEndPositionClocks,
-                                                loopActive);
+                                                startPositionClocks);
 
