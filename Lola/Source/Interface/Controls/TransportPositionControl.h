@@ -97,6 +97,7 @@ public:
             startPositionMarker.setVisible(std::abs(position - start) > 0.0);
             
             loopRangeMarker.setVisible(playListScheduler->isLoopActive());
+            loopDraggerControl->setVisible(playListScheduler->isLoopActive());
         }
             
     }
@@ -104,8 +105,9 @@ public:
     void updateLoopView()
     {
         if (auto playListScheduler = audiumEngine->getPlayListScheduler()) {
+            auto loopActive = playListScheduler->isLoopActive();
             
-            if (playListScheduler->isLoopActive()) {
+            if (loopActive) {
             
                 auto height = static_cast<float>(getHeight());
                 auto loopRange = playListScheduler->getLoopPositionRange(audium::clocks);

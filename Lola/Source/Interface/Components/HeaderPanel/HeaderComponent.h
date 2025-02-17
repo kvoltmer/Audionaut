@@ -41,11 +41,8 @@ private:
     int lastClicksValue = 0;
     
     std::unique_ptr<juce::DrawableButton> playButton;
-    juce::DrawablePath playImage;
-    
     std::unique_ptr<juce::DrawableButton> stopButton;
-    juce::DrawablePath stopImage;
-    
+    std::unique_ptr<juce::DrawableButton> loopButton;
     std::unique_ptr<juce::ShapeButton> rightPanelButton;
     
     std::unique_ptr<StereoMeter> stereoMeter;
@@ -53,6 +50,7 @@ private:
     
     
     juce::Path getRightPanelButtonPath();
+    juce::Path getLoopButtonPath();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)
 };
