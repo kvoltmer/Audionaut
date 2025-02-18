@@ -28,7 +28,7 @@ struct LoopData
     double minimumLoopLengthClocks  = 1.0;
     
     // loop active
-    bool loopActive                 = true;
+    bool loopActive                 = false;
     
 };
 

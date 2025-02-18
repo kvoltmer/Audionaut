@@ -103,6 +103,8 @@ public:
     
     juce::Colour getNewAudioTrackColour() const;
     
+    void copySelectedChannelsToNewTrack();
+    
     std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
     
     std::vector<std::shared_ptr<AudioTrack>> audioTracks;
