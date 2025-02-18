@@ -334,3 +334,33 @@ juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
     
     return newColour;
 }
+
+void AudioTrackContainer::copySelectedChannelsToNewTrack()
+{
+        // undo
+        auto action = std::make_unique<audium::UndoableContainerAction>(*this);
+
+        auto selectedObjects = getSelectionManager()->getSelectedObjects();
+        if (selectedObjects.size() > 0) {
+            
+            // create new audio track
+            auto audioTrack = createNewAudioTrack(juce::String());
+            audioTrack->setColour(getNewAudioTrackColour());
+            
+            // copy selected channels
+            for (auto object : selectedObjects) {
+                
+                if (auto audioChannel = std::dynamic_pointer_cast<AudioChannel>(object)) {
+                    json j;
+                    audioChannel->getAudioTrack().writeChannelToJson(j, audioChannel.get());
+                    audioTrack->mergeChannelFromJson(j);
+                }
+            }
+        }
+        
+        // undo
+        action->storeNewState();
+        undoManager->perform(action.release(), "channel(s) copied");
+        undoManager->beginNewTransaction();
+}
+

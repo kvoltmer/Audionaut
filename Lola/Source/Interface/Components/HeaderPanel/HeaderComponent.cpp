@@ -124,6 +124,11 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     };
     clicksSlider->updateText();
     
+    // TODO: fix edit mode
+    barsSlider->setTextBoxIsEditable(false);
+    beatsSlider->setTextBoxIsEditable(false);
+    clicksSlider->setTextBoxIsEditable(false);
+    
 
     // PLAY
     playButton = std::make_unique<juce::DrawableButton>("Play", juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
@@ -135,8 +140,11 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     playImage.setFill (FillType(Colours::white));
     playButton->setImages(&playImage);
     playButton->onClick = [this, scheduler]() {
-        scheduler->startPlaying();
+        if (playButton->getToggleState())
+            scheduler->startPlaying();
     };
+    playButton->setClickingTogglesState(true);
+    playButton->setColour (TextButton::buttonOnColourId, Colour (0xff12a4e2));
     playButton->setColour(TextButton::buttonColourId, Colours::grey);
     
     // STOP
@@ -160,7 +168,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     juce::DrawablePath loopImage;
     loopImage.setPath(getLoopButtonPath());
     loopImage.setStrokeFill(FillType(Colours::white.withAlpha(0.8f)));
-    loopImage.setStrokeThickness(1.2f);
+    loopImage.setStrokeThickness(1.5f);
     loopImage.setFill (FillType(Colours::transparentBlack));
 
     loopButton->setImages(&loopImage);
@@ -249,6 +257,7 @@ void HeaderComponent::updateUI()
     volumeSlider->setValue(LevelMeter::gainToDecebel(gain), dontSendNotification);
     
     loopButton->setToggleState(audiumEngine->getPlayListScheduler()->isLoopActive(), dontSendNotification);
+    
 }
 
 void HeaderComponent::timerCallback()
@@ -279,6 +288,8 @@ void HeaderComponent::timerCallback()
     
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
+    
+    playButton->setToggleState(audiumEngine->getPlayListScheduler()->isPlaying(), dontSendNotification);
 }
 
 void HeaderComponent::configureSlider(juce::Slider* slider)
@@ -319,7 +330,7 @@ juce::Path HeaderComponent::getRightPanelButtonPath()
 juce::Path HeaderComponent::getLoopButtonPath()
 {
     auto w = 20.f;
-    auto h = 11.f;
+    auto h = 10.f;
     auto gap = 5.f;
     juce::Path loop;
     

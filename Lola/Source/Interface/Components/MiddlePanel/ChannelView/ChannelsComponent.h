@@ -66,6 +66,11 @@ public:
         audioChannelsListBox->getViewport()->getVerticalScrollBar().setCurrentRange(range, sendNotificationSync);
     }
     
+    double getVerticalScrollOffset() const
+    {
+        return audioChannelsListBox->getViewport()->getVerticalScrollBar().getCurrentRange().getStart();
+    }
+    
     bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
     void itemDragEnter (const SourceDetails &dragSourceDetails) override;
     void itemDragMove (const SourceDetails &dragSourceDetails) override;

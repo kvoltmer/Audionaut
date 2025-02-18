@@ -290,39 +290,38 @@ void ChannelComponent::configurePanSlider(juce::Slider *slider)
     slider->updateText();
 }
 
-//static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
-//{
-//    if (component != nullptr && result != 0)
-//    {
-//        switch (result) {
-//            case ChannelComponent::moveChannelToNewTrackId:
-//                component->getEngine()->getAudioTrackContainer()->moveSelectedChannelsToNewAudioTrack();
-//                break;
-//
-//            default:
-//                break;
-//        }
-//    }
-//}
+static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
+{
+    if (component != nullptr && result != 0)
+    {
+        switch (result) {
+            case ChannelComponent::moveChannelToNewTrackId:
+                component->getEngine()->getAudioTrackContainer()->copySelectedChannelsToNewTrack();
+                break;
+
+            default:
+                break;
+        }
+    }
+}
 
 void ChannelComponent::mouseDown (const juce::MouseEvent& e)
 {
     if (e.mods.isPopupMenu()) {
     
-// TODO: fix -> unstable
-//        PopupMenu m;
-//
-//        m.addItem (moveChannelToNewTrackId, TRANS ("Move channel(s) to new track"), true);
-//
-//        if (m.getNumItems() > 0)
-//        {
-//            m.setLookAndFeel (&getLookAndFeel());
-//
-//            m.showMenuAsync (PopupMenu::Options(),
-//                             ModalCallbackFunction::forComponent (channelMenuCallback, this, rowNumber));
-//        }
-    } else {
-        
+        PopupMenu m;
+
+        m.addItem (moveChannelToNewTrackId, TRANS ("Copy selected channel(s) to new track"), true);
+
+        if (m.getNumItems() > 0)
+        {
+            m.setLookAndFeel (&getLookAndFeel());
+
+            m.showMenuAsync (PopupMenu::Options(),
+                             ModalCallbackFunction::forComponent (channelMenuCallback, this, rowNumber));
+        }
+    }
+    else {
         audioTrack->getSelectionManager()->deselectAll();
         getParentComponent()->mouseDown(e);
         audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);

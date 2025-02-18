@@ -17,7 +17,10 @@ int ChannelsComponent::getListBoxHeight() const
     for (auto r = 0; r < audioChannelsListBoxModel->getNumRows(); r++) {
         height += audioChannelsListBoxModel->getRowHeight(r);
     }
-    return height;
+    
+    auto verticalOffset = static_cast<int>(getVerticalScrollOffset());
+
+    return height - verticalOffset;
 }
 
 void ChannelsComponent::itemDragEnter (const SourceDetails &dragSourceDetails)
@@ -47,33 +50,15 @@ void ChannelsComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
     if (dragSourceDetails.localPosition.y > getListBoxHeight()) {
         
-        // undo
         auto trackContainer = audiumEngine->getAudioTrackContainer();
-        auto action = std::make_unique<audium::UndoableContainerAction>(*trackContainer.get());
         
-        if (auto channelComponent = dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get())) {
-            
-            auto selectedObjects = trackContainer->getSelectionManager()->getSelectedObjects();
-            if (selectedObjects.size() > 0) {
-                
-                // create new audio track
-                auto audioTrack = trackContainer->createNewAudioTrack(juce::String());
-                audioTrack->setColour(trackContainer->getNewAudioTrackColour());
-                
-                // copy selected channels
-                for (auto object : selectedObjects) {
-                    
-                    if (auto audioChannel = std::dynamic_pointer_cast<AudioChannel>(object)) {
-                        json j;
-                        audioChannel->getAudioTrack().writeChannelToJson(j, audioChannel.get());
-                        audioTrack->mergeChannelFromJson(j);
-                    }
-                }
-            }
+        if (dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get())) {
+            trackContainer->copySelectedChannelsToNewTrack();
         }
         else if (auto channelGroupHeaderComponent = dynamic_cast<ChannelGroupHeaderComponent*>(dragSourceDetails.sourceComponent.get())) {
             
-            
+            // undo
+            auto action = std::make_unique<audium::UndoableContainerAction>(*trackContainer.get());
             auto currentIndex = channelGroupHeaderComponent->getAudioTrack()->getId();
             auto insertIndex = audiumEngine->getAudioTrackContainer()->audioTracks.size();
             std::cout << "ChannelGroupHeaderComponent::MoveItemBefore -> currentIndex: " << currentIndex << " indexOfItemToPlaceBefore " << insertIndex << std::endl;
@@ -81,14 +66,13 @@ void ChannelsComponent::itemDropped (const SourceDetails &dragSourceDetails)
             audium::MoveItemBefore(audiumEngine->getAudioTrackContainer()->audioTracks,
                                    currentIndex,
                                    insertIndex);
-            
+            // undo
+            action->storeNewState();
+            auto undoManager = audiumEngine->getUndoManager();
+            undoManager->perform(action.release(), "track dragged");
+            undoManager->beginNewTransaction();
+
         }
-        
-        // undo
-        action->storeNewState();
-        auto undoManager = audiumEngine->getUndoManager();
-        undoManager->perform(action.release(), "track dragged");
-        undoManager->beginNewTransaction();
     }
 
     itemDrag = false;
