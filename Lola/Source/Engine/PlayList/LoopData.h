@@ -15,7 +15,8 @@
 
 using json = nlohmann::json;
 
-//==============================================================================
+namespace audium {
+
 struct LoopData
 {
     // loop start
@@ -36,3 +37,5 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(LoopData,
                                                 loopStartPositionClocks,
                                                 loopEndPositionClocks,
                                                 loopActive);
+
+} // namespace audium

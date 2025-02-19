@@ -12,15 +12,17 @@
 
 #include <JuceHeader.h>
 
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/PlayList/TransportLoop.h"
+#include "Util/EngineAccess.h"
+
 #include "Interface/Models/AudioTrackListBoxModel.h"
 #include "Interface/Controls/AudioTrackListBox.h"
-#include "Util/EngineAccess.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Interface/Controls/PositionMarker.h"
 #include "Interface/Controls/TransportPositionControl.h"
 #include "Interface/Controls/DragZoomControl.h"
-#include "Engine/Group/AudioTrackContainer.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Views/ArrangementOverview.h"
 #include "Interface/Views/GridView.h"
@@ -89,19 +91,21 @@ public:
         gridView->toBack();
      
         // loop start postition view
+        auto transportLoop = audiumEngine->getPlayListScheduler()->getTransportLoop();
+        
         loopStartPositionMarker = std::make_unique<PositionMarker>(zoomHandler);
         addAndMakeVisible(loopStartPositionMarker.get());
         loopStartPositionMarker->setColour(Colours::white.withAlpha (0.5f));
-        loopStartPositionMarker->onUpdatePosition = [audiumEngine] (auto context) {
-            return audiumEngine->getPlayListScheduler()->getLoopPositionRange(context).getStart();
+        loopStartPositionMarker->onUpdatePosition = [transportLoop] (auto context) {
+            return transportLoop->getLoopPositionRange(context).getStart();
         };
         
         // loop end postition view
         loopEndPositionMarker = std::make_unique<PositionMarker>(zoomHandler);
         addAndMakeVisible(loopEndPositionMarker.get());
         loopEndPositionMarker->setColour(Colours::white.withAlpha (0.5f));
-        loopEndPositionMarker->onUpdatePosition = [audiumEngine] (auto context) {
-            return audiumEngine->getPlayListScheduler()->getLoopPositionRange(context).getEnd();
+        loopEndPositionMarker->onUpdatePosition = [transportLoop] (auto context) {
+            return transportLoop->getLoopPositionRange(context).getEnd();
         };
         
         // play postition view (on top)
@@ -166,8 +170,9 @@ public:
         arrangementOverview->updateFromEngine();
         dragZoomControl->updateFromEngine();
         
-        loopStartPositionMarker->setVisible(audiumEngine->getPlayListScheduler()->isLoopActive());
-        loopEndPositionMarker->setVisible(audiumEngine->getPlayListScheduler()->isLoopActive());
+        auto loopActive = audiumEngine->getPlayListScheduler()->getTransportLoop()->isLoopActive();
+        loopStartPositionMarker->setVisible(loopActive);
+        loopEndPositionMarker->setVisible(loopActive);
         
         audioTrackListBox->getHeaderComponent()->resized();
     }

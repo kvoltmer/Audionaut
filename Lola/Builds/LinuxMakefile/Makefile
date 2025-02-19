@@ -98,6 +98,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioBusRenderer_7f6f5a1d.o \
   $(JUCE_OBJDIR)/Playback_61ca68b.o \
   $(JUCE_OBJDIR)/Voice_f531b98c.o \
+  $(JUCE_OBJDIR)/TransportLoop_f6f3bb5e.o \
   $(JUCE_OBJDIR)/PositionableBase_8b3640ed.o \
   $(JUCE_OBJDIR)/PlayListContainer_29209da0.o \
   $(JUCE_OBJDIR)/PlayListItem_8cc1eb1e.o \
@@ -311,6 +312,11 @@ $(JUCE_OBJDIR)/Playback_61ca68b.o: ../../Source/Engine/Playback/Playback.cpp
 $(JUCE_OBJDIR)/Voice_f531b98c.o: ../../Source/Engine/Playback/Voice.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling Voice.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/TransportLoop_f6f3bb5e.o: ../../Source/Engine/PlayList/TransportLoop.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling TransportLoop.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/PositionableBase_8b3640ed.o: ../../Source/Engine/PlayList/PositionableBase.cpp

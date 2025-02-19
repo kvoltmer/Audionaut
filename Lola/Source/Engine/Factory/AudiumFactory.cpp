@@ -21,7 +21,7 @@
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/Playback/AudioBusInterface.h"
-
+#include "Engine/PlayList/TransportLoop.h"
 
 using namespace audium;
 
@@ -56,12 +56,16 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer);
     
+    auto transportLoop              = std::make_shared<TransportLoop>(undoManager,
+                                                                      tempoProvider);
+    
     auto audioTrackContainer        = std::make_shared<AudioTrackContainer>(undoManager,
                                                                             tempoProvider,
                                                                             audioResourceContainer,
                                                                             transportSourceContainer,
                                                                             selectionManager,
-                                                                            audioBusInterface);
+                                                                            audioBusInterface,
+                                                                            transportLoop);
     
     auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
     
@@ -74,7 +78,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                           audioClipContainer,
                                                                           transportSourceContainer,
                                                                           playback,
-                                                                          audioBusInterface);
+                                                                          audioBusInterface,
+                                                                          transportLoop);
     
     auto linkAudioDevice            = std::make_shared<LinkAudioDevice>(linkEngine,
                                                                         playListScheduler);
