@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/PlayList/TransportLoop.h"
 
 #include "Interface/Views/TransportView.h"
 #include "Interface/Controls/LoopDraggerControl.h"
@@ -59,10 +60,12 @@ public:
         addAndMakeVisible(loopDraggerControl.get());
         
         loopDraggerControl->onDragEnd = [this] () {
-            if (auto playListScheduler = audiumEngine->getPlayListScheduler()) {
-                playListScheduler->setLoopPositionRange(loopDraggerControl->loopRangeInClocks, audium::clocks);
-                updateLoopView();
-            }
+            auto transportLoop = audiumEngine->getPlayListScheduler()->getTransportLoop();
+            transportLoop->setLoopPositionRange(audiumEngine->getAudioTrackContainer(),
+                                                loopDraggerControl->loopRangeInClocks,
+                                                audium::clocks);
+            updateLoopView();
+            
         };
         
         
@@ -96,8 +99,9 @@ public:
                                                                   1.5f, height));
             startPositionMarker.setVisible(std::abs(position - start) > 0.0);
             
-            loopRangeMarker.setVisible(playListScheduler->isLoopActive());
-            loopDraggerControl->setVisible(playListScheduler->isLoopActive());
+            auto loopActive = playListScheduler->getTransportLoop()->isLoopActive();
+            loopRangeMarker.setVisible(loopActive);
+            loopDraggerControl->setVisible(loopActive);
         }
             
     }
@@ -105,12 +109,13 @@ public:
     void updateLoopView()
     {
         if (auto playListScheduler = audiumEngine->getPlayListScheduler()) {
-            auto loopActive = playListScheduler->isLoopActive();
             
+            auto loopActive = playListScheduler->getTransportLoop()->isLoopActive();
+
             if (loopActive) {
             
                 auto height = static_cast<float>(getHeight());
-                auto loopRange = playListScheduler->getLoopPositionRange(audium::clocks);
+                auto loopRange = playListScheduler->getTransportLoop()->getLoopPositionRange(audium::clocks);
                 auto loopX = zoomHandler->clocksToX(loopRange);
                 
                 Rectangle<float> loopRect (loopX.getStart(), 0.f, loopX.getLength(), height);

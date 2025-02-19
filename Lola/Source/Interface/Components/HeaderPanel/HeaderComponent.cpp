@@ -5,6 +5,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Link/LinkEngine.hpp"
+#include "Engine/PlayList/TransportLoop.h"
 
 #include "Interface/Controls/DefaultLabel.h"
 #include "Interface/ColourIds.h"
@@ -177,7 +178,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     loopButton->setColour(TextButton::buttonColourId, Colours::grey);
     
     loopButton->onClick = [this, scheduler]() {
-        scheduler->setLoopActive(loopButton->getToggleState());
+        scheduler->getTransportLoop()->setLoopActive(loopButton->getToggleState());
         audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
     };
     
@@ -255,8 +256,8 @@ void HeaderComponent::updateUI()
 {
     auto gain = audiumEngine->getAudioTrackContainer()->getMasterGain();
     volumeSlider->setValue(LevelMeter::gainToDecebel(gain), dontSendNotification);
-    
-    loopButton->setToggleState(audiumEngine->getPlayListScheduler()->isLoopActive(), dontSendNotification);
+    auto loopActive = audiumEngine->getPlayListScheduler()->getTransportLoop()->isLoopActive();
+    loopButton->setToggleState(loopActive, dontSendNotification);
     
 }
 

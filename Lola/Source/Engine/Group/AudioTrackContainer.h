@@ -16,7 +16,7 @@
 #include "Engine/Region/AudioRegionData.h"
 #include "Engine/Group/AudioRegionAdapter.h"
 #include "Engine/Selection/SelectionManager.h"
-#include "Engine/PlayList/LoopData.h"
+
 
 class AudioTrack;
 class AudioResourceContainer;
@@ -27,8 +27,10 @@ class AudioRegion;
 class TransportSourceContainer;
 class AudioResourceContainer;
 
+
 namespace audium {
     class AudioBusInterface;
+    class TransportLoop;
 }
 
 class AudioTrackContainer : public juce::ActionBroadcaster,
@@ -43,13 +45,15 @@ public:
                         std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                         std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                         std::shared_ptr<audium::SelectionManager> selectionManager,
-                        std::shared_ptr<audium::AudioBusInterface> audioBusInterface_) :
+                        std::shared_ptr<audium::AudioBusInterface> audioBusInterface_,
+                        std::shared_ptr<audium::TransportLoop> transportLoop_) :
         audioBusInterface(audioBusInterface_),
         undoManager(undoManager),
         tempoProvider(tempoProvider),
         audioResourceContainer(audioResourceContainer),
         transportSourceContainer(transportSourceContainer),
         selectionManager(selectionManager),
+        transportLoop(transportLoop_),
         audioRegionAdapter(*this)
     {
     }
@@ -109,7 +113,7 @@ public:
     
     std::vector<std::shared_ptr<AudioTrack>> audioTracks;
     
-    LoopData loopData;
+    
     
 private:
     std::shared_ptr<juce::UndoManager> undoManager;
@@ -117,6 +121,7 @@ private:
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::SelectionManager> selectionManager;
+    std::shared_ptr<audium::TransportLoop> transportLoop;
     
     int selectedGroup = 0;
     

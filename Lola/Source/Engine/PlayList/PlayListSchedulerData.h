@@ -24,9 +24,6 @@ struct PlayListSchedulerData
     // user interface follows transport
     bool followTransport            = true;
     
-    // obsolete?
-    bool loopPlayList               = false;
-    
     // transport position in 96th clocks
     double transportPositionClocks  = 0.0;
     
@@ -38,7 +35,6 @@ struct PlayListSchedulerData
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PlayListSchedulerData,
                                                 editMode,
                                                 followTransport,
-                                                loopPlayList,
                                                 transportPositionClocks,
                                                 startPositionClocks);
 

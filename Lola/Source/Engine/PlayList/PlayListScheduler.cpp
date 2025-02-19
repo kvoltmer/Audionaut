@@ -29,6 +29,7 @@
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Core/LockFreeContainer.h"
 #include "Engine/Core/LockFreeCommander.h"
+#include "Engine/PlayList/TransportLoop.h"
 
 using namespace::std::chrono;
 
@@ -42,30 +43,23 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
     transportSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
     playback->prepareToPlay(samplesPerBlockExpected, sampleRate);
     audioBusInterface->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    transportLoop->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void PlayListScheduler::tick(bool isPlaying,
                              double beats,
                              int numSamples)
 {
-    if (isPlaying) {
-        
-        //auto beats = sessionState->beatAtTime(beginHostTime, quantum);
-        if (beats >= 0.) {
-            
-            // assign absolute position
-            if (data.loopPlayList) {
-                data.transportPositionClocks = std::fmod(TempoProvider::beatsToClocks(beats), getTotalLength(audium::clocks));
-            }
-            else {
-                data.transportPositionClocks = TempoProvider::beatsToClocks(beats);
-            }
-            process(data.transportPositionClocks, numSamples);
-        }
+    if (isPlaying &&
+        beats >= 0.0) {
+        auto pos = TempoProvider::beatsToClocks(beats);
+        auto onLoop = transportLoop->processLoop(pos, numSamples);
+        data.transportPositionClocks = pos;
+        process(data.transportPositionClocks, numSamples, onLoop);
     }
 }
 
-void PlayListScheduler::process(double transportPositionClocks, int numSamples)
+void PlayListScheduler::process(double transportPositionClocks, int numSamples, bool onLoop)
 {
     // convert to seconds
     auto transportPosition = tempoProvider->clocksToSeconds(transportPositionClocks);
@@ -85,8 +79,10 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
             if (transportSource == nullptr)
                 continue;
             
-            if (not transportSource->getAudioTransportSource()->isPlaying() ||
-                clipsChanged) {
+            if (clipsChanged || onLoop)
+                transportSource->getAudioTransportSource()->stop();
+            
+            if (!transportSource->getAudioTransportSource()->isPlaying()) {
                 
                 auto absolute = dspClip.getAbsolutePosition(audium::seconds);
                 auto local = dspClip.getRegionData(audium::seconds).getStart();
@@ -110,21 +106,19 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples)
                 
                 jassert(position >= 0.0 && duration >= 0.0);
                 
-                if ( !transportSource->getAudioTransportSource()->isPlaying()) {
+                transportSource->schedulePosition(position, startSamples);
+                transportSource->scheduleDuration(duration, externalSampleRate);
+                
+                transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
+                auto fadeIn = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
+                transportSource->getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
+                auto fadeOut = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
+                transportSource->getAudioTransportSource()->setFadeOutSeconds(fadeOut, duration, true);
+                
+                transportSource->getAudioTransportSource()->start();
+                playback->startVoice(transportSource);
                     
-                    transportSource->schedulePosition(position, startSamples);
-                    transportSource->scheduleDuration(duration, externalSampleRate);
-                    
-                    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
-                    auto fadeIn = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
-                    transportSource->getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
-                    auto fadeOut = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
-                    transportSource->getAudioTransportSource()->setFadeOutSeconds(fadeOut, duration, true);
-                    
-                    transportSource->getAudioTransportSource()->start();
-                    playback->startVoice(transportSource);
-                    
-                }
+                
 //                std::cout << "transport-pos: " << transportPosition << " ";
 //                std::cout << "clip-pos: " <<  absolute << " ";
 //                std::cout << "offset: " << offset << " ";
@@ -172,6 +166,7 @@ void PlayListScheduler::startPlaying()
         commitPlayListData();
         linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
+        transportLoop->reset();
     }
 }
 
@@ -236,63 +231,6 @@ double PlayListScheduler::getAbsoluteStartPosition(audium::TimeContextType conte
     return 0.0;
 }
 
-void PlayListScheduler::setLoopPositionRange(juce::Range<double> newRange, audium::TimeContextType context)
-{
-    if (newRange.getStart() >= 0.0) {
-        
-        auto minLength = audioTrackContainer->loopData.minimumLoopLengthClocks;
-        if (context == audium::seconds)
-            minLength = getTempoProvider()->clocksToSeconds(audioTrackContainer->loopData.minimumLoopLengthClocks);
-        
-        if (newRange.getLength() >= minLength) {
-            
-            // undo
-            auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get(), false);
-            
-            if (context == audium::clocks) {
-                audioTrackContainer->loopData.loopStartPositionClocks = newRange.getStart();
-                audioTrackContainer->loopData.loopEndPositionClocks = newRange.getEnd();
-            }
-            else if (context == audium::seconds) {
-                audioTrackContainer->loopData.loopStartPositionClocks = getTempoProvider()->secondsToClocks(newRange.getStart());
-                audioTrackContainer->loopData.loopEndPositionClocks = getTempoProvider()->secondsToClocks(newRange.getEnd());
-            }
-            
-            // undo
-            action->storeNewState();
-            audioTrackContainer->getUndoManager()->perform(action.release(), "Change Loop");
-            audioTrackContainer->getUndoManager()->beginNewTransaction();
-        }
-    }
-    else {
-        std::cout << "setLoopPositionRange invalid range: " << newRange.getStart() << " " << newRange.getEnd() << std::endl;
-    }
-    
-}
-
-juce::Range<double> PlayListScheduler::getLoopPositionRange(audium::TimeContextType context) const
-{
-    juce::Range<double> range(audioTrackContainer->loopData.loopStartPositionClocks,
-                              audioTrackContainer->loopData.loopEndPositionClocks);
-    if (context == audium::clocks) {
-        return range;
-    }
-    else if (context == audium::seconds) {
-        return getTempoProvider()->clocksToSeconds(range);
-    }
-    
-    return juce::Range<double>(0.0, 0.0);
-}
-
-bool PlayListScheduler::isLoopActive() const
-{
-    return audioTrackContainer->loopData.loopActive;
-}
-
-void PlayListScheduler::setLoopActive(bool bActive)
-{
-    audioTrackContainer->loopData.loopActive = bActive;
-}
 
 int PlayListScheduler::getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track)
 {

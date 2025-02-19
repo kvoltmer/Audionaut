@@ -249,7 +249,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             mainComponent->updateUI();
             break;
         case CommandIDs::loopPlayList:
-            getEngine()->getPlayListScheduler()->setLoopPlayList(!getEngine()->getPlayListScheduler()->getLoopPlayList());
+            notImplemented();
             break;
         case CommandIDs::createRegion:
             if (newRegionDialog == nullptr)

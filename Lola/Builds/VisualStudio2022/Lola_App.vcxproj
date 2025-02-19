@@ -167,6 +167,7 @@
     <ClCompile Include="..\..\Source\Engine\Playback\AudioBusRenderer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\Playback.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\Voice.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\PlayList\TransportLoop.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PositionableBase.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListItem.cpp"/>
@@ -3050,6 +3051,7 @@
     <ClInclude Include="..\..\Source\Engine\Playback\Playback.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\PlaybackDefines.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\Voice.h"/>
+    <ClInclude Include="..\..\Source\Engine\PlayList\TransportLoop.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\LoopData.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListSchedulerData.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PositionableBase.h"/>

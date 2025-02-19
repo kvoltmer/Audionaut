@@ -43,7 +43,8 @@ public:
                       std::shared_ptr<audium::AudioClipContainer> audioClipContainer_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
-                      std::shared_ptr<audium::AudioBusInterface> audioBusInterface_) :
+                      std::shared_ptr<audium::AudioBusInterface> audioBusInterface_,
+                      std::shared_ptr<audium::TransportLoop> transportLoop_) :
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
         tempoProvider(tempoProvider_),
@@ -51,7 +52,8 @@ public:
         audioClipContainer(audioClipContainer_),
         transportSourceContainer(transportSourceContainer_),
         playback(playback_),
-        audioBusInterface(audioBusInterface_)
+        audioBusInterface(audioBusInterface_),
+        transportLoop(transportLoop_)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) {
             tick(isPlaying, beats, numSamples);
@@ -78,8 +80,6 @@ public:
     bool isPlaying() const;
     void setFollowTransport(bool enable) { data.followTransport = enable; }
     bool getFollowTransport() const { return data.followTransport; }
-    void setLoopPlayList(bool enable) { data.loopPlayList = enable; }
-    bool getLoopPlayList() const { return data.loopPlayList; }
     void setEditMode(bool bEditMode) { data.editMode = bEditMode; }
     bool isEditMode() const { return data.editMode; }
     bool isArrangementMode() const { return !data.editMode; }
@@ -92,11 +92,6 @@ public:
     double getAbsoluteStartPosition(audium::TimeContextType context) const;
     double getAbsolutePosition(audium::TimeContextType context) const;
 
-    void setLoopPositionRange(juce::Range<double> newRange, audium::TimeContextType context);
-    juce::Range<double> getLoopPositionRange(audium::TimeContextType context) const;
-    
-    bool isLoopActive() const;
-    void setLoopActive(bool bActive);
     
     void tick(bool isPlaying, double beats, int numSamples);
     
@@ -112,6 +107,7 @@ public:
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     std::shared_ptr<audium::Playback> getPlayback() const { return playback; }
     std::shared_ptr<audium::AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
+    std::shared_ptr<audium::TransportLoop> getTransportLoop() const { return transportLoop; }
     
     void commitPlayListData();
     
@@ -120,7 +116,7 @@ public:
 private:
     
     // process sequencing
-    void process(double absolutePosition, int numSamples);
+    void process(double absolutePosition, int numSamples, bool onLoop);
     
     
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;
@@ -131,7 +127,8 @@ private:
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::Playback> playback;
     std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
-    
+    std::shared_ptr<audium::TransportLoop> transportLoop;
+
     double externalSampleRate = 0.0;
     
     int bufferSize = 0;

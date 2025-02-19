@@ -22,6 +22,7 @@
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Resource/ChannelMapping.h"
+#include "Engine/PlayList/TransportLoop.h"
 
 #include "Interface/ColourIds.h"
 
@@ -194,7 +195,7 @@ bool AudioTrackContainer::writeToJson (json& output)
     }
     output["master_gain"] = getMasterGain();
     
-    output["loop_data"] = loopData;
+    output["loop_data"] = transportLoop->loopData;
     
     return true;
 }
@@ -241,7 +242,7 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     }
     
     if (input.contains("loop_data")) {
-        loopData = input["loop_data"];
+        transportLoop->loopData = input["loop_data"];
     }
     
     return true;
