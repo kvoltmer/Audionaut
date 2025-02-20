@@ -197,8 +197,7 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
 {
     json output;
     writeToJson(output);
-    if (input == output)
-    {
+    if (input == output) {
         std::cout << "skip AudioSubGroup::readFromJson" << std::endl;
         return true;
     }
@@ -212,52 +211,28 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     
     auto jsonResources = input["resources"];
     auto resources = getAudioResources();
-    if (!rebuild)
-    {
+    if (!rebuild) {
         jassert(resources.size() == jsonResources.size());
     }
     
     auto r = 0;
-    for (auto& jsonElement : jsonResources)
-    {
+    for (auto& jsonElement : jsonResources) {
         auto url = AudioResource::urlFromJson(jsonElement);
         AudioResource::testUrl(url);
         
         std::shared_ptr<AudioResource> resource = nullptr;
-        if (rebuild)
-        {
+        if (rebuild) {
             resource = addAudioResourceFromUrl(url);
-            
-//            auto audioFormatReader = getAudioTrack().getAudioResourceContainer().getAudioFormatReaderForUrl(url);
-//            resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url,
-//                                                                                    audioFormatReader,
-//                                                                                    track,
-//                                                                                    subGroup);
-//            if (resource != nullptr)
-//            {
-//                if (auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource))
-//                {
-//                    transportSources.push_back(transportSource);
-//                }
-//                else
-//                {
-//                    return false;
-//                }
-//            }
         }
-        else
-        {
+        else {
             resource = resources[r];
         }
         
-        if (resource == nullptr)
-        {
-            jassertfalse;
+        if (resource == nullptr) {
             return false;
         }
         
         resource->readFromJson(jsonElement, rebuild);
-        
         r++;
     }
     
@@ -268,18 +243,14 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     
     auto jsonRegions = input["regions"];
 
-    
-    for (auto& jsonElement : jsonRegions)
-    {
+    for (auto& jsonElement : jsonRegions) {
         AudioRegionData data = jsonElement;
         
         std::shared_ptr<AudioRegion> region = nullptr;
-        if (rebuild)
-        {
+        if (rebuild) {
             region = getAudioTrack().getAudioRegionContainer()->createRegion(track, subGroup);
         }
-        else
-        {
+        else {
             region = getAudioTrack().getAudioRegionContainer()->getRegion(data.region_id);
         }
         jassert(region);
@@ -289,14 +260,12 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
         // keep old id
         region->data.region_id = old_id;
     }
-    
     return true;
 }
 
 bool AudioSubGroup::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
-    if (audium::Streamable::readFromStream(inputStream))
-    {
+    if (audium::Streamable::readFromStream(inputStream)) {
         getAudioTrack().getAudioTrackContainer().sendActionMessage(updateAll);
         return true;
     }

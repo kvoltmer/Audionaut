@@ -118,4 +118,4 @@ void TransportLoop::reset()
     loopCount = 0;
 }
 
-}// namespace audium
+} // namespace audium
