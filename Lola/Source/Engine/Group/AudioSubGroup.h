@@ -65,7 +65,7 @@ public:
     std::vector<std::shared_ptr<AudioRegion>> getAudioRegions() const;
     
     int getNumChannels() const;
-    std::shared_ptr<AudioResource> getChannel(int rowNumber) const;
+    std::shared_ptr<AudioResource> getAudioResourceAtChannel(int channelNumber) const;
 
     AudioTrack& getAudioTrack() const { return audioTrack; }
     

@@ -59,10 +59,6 @@ public:
 
     const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
     
-    // linear value range
-    void setGain(double newGain, bool realtime = false);
-    double getGain() const;
-    
     void onDragStart();
     void onDragEnd();
     

@@ -83,14 +83,13 @@ void PlayListItem::setAbsolutePosition(double newPosition, audium::TimeContextTy
 
 bool PlayListItem::writeToJson (json& output)
 {
-    output["region_id"] = owner.getAudioRegionContainer().getRegionId(getRegion());
-    output["region_name"] = getRegion()->getName().toStdString();
-    output["position_clocks"] = absolutePositionClocks;
-    output["selected"] = isSelected();
-    output["track_id"] = getRegion()->getAudioTrack()->getId();
-    output["gain"] = gain;
-    output["fade_in_clocks"] = fadeInClocks;
-    output["fade_out_clocks"] = fadeOutClocks;
+    output["region_id"]         = owner.getAudioRegionContainer().getRegionId(getRegion());
+    output["region_name"]       = getRegion()->getName().toStdString();
+    output["position_clocks"]   = absolutePositionClocks;
+    output["selected"]          = isSelected();
+    output["track_id"]          = getRegion()->getAudioTrack()->getId();
+    output["fade_in_clocks"]    = fadeInClocks;
+    output["fade_out_clocks"]   = fadeOutClocks;
     return true;
 }
 
@@ -115,10 +114,6 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
             std::cout << "warning: track_id: " << track_id << " != " <<
                         getRegion()->getAudioTrack()->getId() << std::endl;
         }
-    }
-    
-    if (input.contains("gain")) {
-        setGain(input.at("gain").get<double>());
     }
     
     if (input.contains("fade_in_clocks")) {
@@ -159,22 +154,6 @@ bool PlayListItem::validateData()
     }
     
     return false;
-}
-
-void PlayListItem::setGain(double newGain, bool realtime)
-{
-    gain = newGain;
-    if (realtime) {
-        for (auto transportSource : transportSources) {
-            if (transportSource->isPlaying())
-                transportSource->getAudioTransportSource()->setGain(gain);
-        }
-    }
-}
-
-double PlayListItem::getGain() const
-{
-    return gain;
 }
 
 void PlayListItem::onDragStart()

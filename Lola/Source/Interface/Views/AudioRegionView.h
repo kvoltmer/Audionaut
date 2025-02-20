@@ -14,6 +14,9 @@
 #include <memory>
 #include "WaveFormViewBase.h"
 #include "Interface/Views/FadeInOutView.h"
+#include "Interface/Controls/SliderControl.h"
+#include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
+#include "Engine/PlayList/PlayListItem.h"
 
 class AudioResource;
 class ZoomHandler;
@@ -37,6 +40,25 @@ public:
         // FADE IN OUT VIEW
         fadeInOutView = std::make_unique<FadeInOutView>(playListItem_);
         addAndMakeVisible(fadeInOutView.get());
+        
+        // VOLUME
+        volumeSlider = std::make_unique<SliderControl>(juce::String(), regionSelector);
+        addAndMakeVisible(volumeSlider.get());
+        ChannelComponent::configureVolumeSlider(volumeSlider.get(), 36.0);
+        
+        volumeSlider->onValueChange = [this, audioRegion] {
+            audioRegion->setGain(channelNumber, Decibels::decibelsToGain(volumeSlider->getValue()), true);
+            this->audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        };
+        volumeSlider->onDragStart = [this] {
+            playListItem->onDragStart();
+        };
+        
+        volumeSlider->onDragEnd = [this] {
+            playListItem->onDragEnd();
+            
+        };
+        
     }
     
     double getRegionStart(audium::TimeContextType context) const override;
@@ -45,11 +67,15 @@ public:
     
     void resized() override;
     
+    void updateUI(int theChannel) override;
+    
 private:
     
     std::shared_ptr<PlayListItem> playListItem;
     
     std::unique_ptr<FadeInOutView> fadeInOutView;
+    
+    std::unique_ptr<SliderControl> volumeSlider;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionView)
 };

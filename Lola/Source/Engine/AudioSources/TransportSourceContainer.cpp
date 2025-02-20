@@ -31,6 +31,18 @@ bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTrans
     }) > 0;
 }
 
+std::vector<std::shared_ptr<AudiumTransportSource>> TransportSourceContainer::getTransportSourcesForResource(const AudioResource &resource) const
+{
+    std::vector<std::shared_ptr<AudiumTransportSource>> result;
+    
+    for (auto transportSource : audioTransportSources) {
+
+        if (&transportSource->getAudioResource() == &resource)
+            result.push_back(transportSource);
+    }
+    return result;
+}
+
 void TransportSourceContainer::cleanup()
 {
     playback->stopAllVoices();

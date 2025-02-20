@@ -40,6 +40,7 @@ public:
                                               juce::Range<double> position,
                                               std::shared_ptr<AudioTrack> track,
                                               std::shared_ptr<AudioSubGroup> subGroup,
+                                              std::shared_ptr<AudioRegion> otherRegion,
                                               audium::TimeContextType context);
     
     std::shared_ptr<AudioRegion> createRegion(std::shared_ptr<AudioTrack> track,

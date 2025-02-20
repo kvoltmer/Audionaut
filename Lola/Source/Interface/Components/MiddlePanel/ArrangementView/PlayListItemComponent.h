@@ -13,7 +13,6 @@
 #include <JuceHeader.h>
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Models/PlayListItemArrangementModel.h"
-#include "Interface/Controls/SliderControl.h"
 
 class AudioTrack;
 class PlayListItem;
@@ -60,7 +59,7 @@ private:
         
     std::unique_ptr<audium::ListBox> playListItemListBox;
     std::unique_ptr<PlayListItemArrangementModel> playListItemArrangementModel;
-    std::unique_ptr<SliderControl> volumeSlider;
+    
         
     std::unique_ptr<FadeInOutControl> fadeInControl;
     std::unique_ptr<FadeInOutControl> fadeOutControl;
