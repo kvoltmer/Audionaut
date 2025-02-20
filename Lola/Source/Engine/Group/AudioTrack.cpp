@@ -658,6 +658,7 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
                                                           defaultRange,
                                                           std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
                                                           subGroup,
+                                                          nullptr,
                                                           context);
     
     // create play list item
@@ -695,7 +696,8 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
         for (const auto &item : getPlayListContainer()->getPlayListItems()) {
             for (const auto &transportSource : item->getTransportSources()) {
                 dspClipData.active              = true;
-                dspClipData.clipGain            = item->getGain();
+                auto chan = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
+                dspClipData.clipGain            = item->getRegion()->getGain(chan);
                 dspClipData.clipFadeInClocks    = item->getFadeInClocks();
                 dspClipData.clipFadeOutClocks   = item->getFadeOutClocks();
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);

@@ -15,7 +15,6 @@
 
 #include "Interface/ColourIds.h"
 #include "Interface/Controls/PlayListItemDraggerControl.h"
-#include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Interface/Controls/LevelMeter.h"
 #include "Interface/Controls/FadeInOutControl.h"
 
@@ -60,23 +59,6 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
     // NOTE: workaround since list box is eating all mouse events
     playListItemListBox->addMouseListener (this, true);
     
-    
-    // VOLUME
-    volumeSlider = std::make_unique<SliderControl>(juce::String(), regionSelector);
-    addAndMakeVisible(volumeSlider.get());
-    ChannelComponent::configureVolumeSlider(volumeSlider.get(), 36.0);
-    
-    volumeSlider->onValueChange = [this, playListItem] {
-        playListItem->setGain(Decibels::decibelsToGain(volumeSlider->getValue()), true);
-        playListItemListBox->updateContent();
-    };
-    volumeSlider->onDragStart = [playListItem] {
-        playListItem->onDragStart();
-    };
-    
-    volumeSlider->onDragEnd = [playListItem] {
-        playListItem->onDragEnd();
-    };
     
     // FADE IN
     fadeInControl = std::make_unique<FadeInOutControl>(FadeInOutControl::FadeIn,
@@ -130,21 +112,6 @@ void PlayListItemComponent::resized()
 {
     playListItemListBox->setBounds(getLocalBounds());
     regionSelector->updateFromEngine();
-    
-    auto sliderWidth = 67;
-    auto sliderHeight = 15;
-    auto space = 5;
-    
-    if (getWidth() > sliderWidth + (space * 2)) {
-        volumeSlider->setVisible(true);
-        volumeSlider->setBounds (space,
-                                 getHeight() - sliderHeight - space,
-                                 sliderWidth,
-                                 sliderHeight);
-    }
-    else {
-        volumeSlider->setVisible(false);
-    }
 
     updateUI();
 }
@@ -161,7 +128,7 @@ DraggerControl* PlayListItemComponent::getDraggerControl() const
 
 void PlayListItemComponent::updateUI()
 {
-    volumeSlider->setValue(LevelMeter::gainToDecebel(playListItem->getGain()), dontSendNotification);
+    playListItemListBox->updateContent();
     fadeInControl->setValue(playListItem->getFadeIn());
     fadeOutControl->setValue(playListItem->getFadeOut());
 }

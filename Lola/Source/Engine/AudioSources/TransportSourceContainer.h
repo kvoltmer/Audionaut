@@ -36,6 +36,8 @@ public:
                                                                        std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
     
+    std::vector<std::shared_ptr<AudiumTransportSource>> getTransportSourcesForResource(const AudioResource &resource) const;
+    
     std::shared_ptr<AudiumTransportSource> getTransportSourceAtIndex(int index) const;
     int getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const;
      

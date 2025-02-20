@@ -109,7 +109,9 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples, 
                 transportSource->schedulePosition(position, startSamples);
                 transportSource->scheduleDuration(duration, externalSampleRate);
                 
-                transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
+                if (!onLoop) {
+                    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
+                }
                 auto fadeIn = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
                 transportSource->getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
                 auto fadeOut = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);

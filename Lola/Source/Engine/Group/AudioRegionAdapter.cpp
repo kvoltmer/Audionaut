@@ -131,6 +131,7 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
                                                                localRange,
                                                                track,
                                                                item->getRegion()->getAudioSubGroup(),
+                                                               item->getRegion(),
                                                                context);
             }
         }
@@ -142,6 +143,7 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
                                                                localRange,
                                                                track,
                                                                subGroup,
+                                                               nullptr,
                                                                context);
             }
         }
@@ -179,6 +181,7 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
                                                                         localRange,
                                                                         track,
                                                                         item->getRegion()->getAudioSubGroup(),
+                                                                        item->getRegion(),
                                                                         context);
                 track->getPlayListContainer()->createPlayListItemAtPositionUI(region, item->getAbsolutePosition(context), context);
                 success = true;
@@ -188,7 +191,12 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
             if (selectedRange.getLength() > 0.0) {
                 localRange = item->absoluteToLocalRange(selectedRange, context);
                 name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
-                region = track->getAudioRegionContainer()->createRegion(name, localRange, track, item->getRegion()->getAudioSubGroup(), context);
+                region = track->getAudioRegionContainer()->createRegion(name,
+                                                                        localRange,
+                                                                        track,
+                                                                        item->getRegion()->getAudioSubGroup(),
+                                                                        item->getRegion(),
+                                                                        context);
                 track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getStart(), context);
                 success = true;
             }
@@ -199,7 +207,12 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
                 absoluteRange = juce::Range<double>(selectedRange.getEnd(), itemRange.getEnd());
                 localRange = item->absoluteToLocalRange(absoluteRange, context);
                 name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
-                region = track->getAudioRegionContainer()->createRegion(name, localRange, track, item->getRegion()->getAudioSubGroup(), context);
+                region = track->getAudioRegionContainer()->createRegion(name,
+                                                                        localRange,
+                                                                        track,
+                                                                        item->getRegion()->getAudioSubGroup(),
+                                                                        item->getRegion(),
+                                                                        context);
                 track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getEnd(), context);
                 success = true;
             }

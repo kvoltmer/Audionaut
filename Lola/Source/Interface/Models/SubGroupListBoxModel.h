@@ -65,7 +65,7 @@ public:
                                                 juce::Component* existingComponentToUpdate) override
     {
     
-        auto audioResource = audioSubGroup->getChannel(rowNumber);
+        auto audioResource = audioSubGroup->getAudioResourceAtChannel(rowNumber);
         if (existingComponentToUpdate == nullptr)
         {
             if (audioResource != nullptr)
@@ -90,7 +90,7 @@ public:
             auto component = dynamic_cast<AudioResourceView*>(existingComponentToUpdate);
             if (component != nullptr)
             {
-                component->setRowNumber(rowNumber);
+                component->updateUI(rowNumber);
                 return component;
             }
             else

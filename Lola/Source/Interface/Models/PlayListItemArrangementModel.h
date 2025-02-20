@@ -61,10 +61,8 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-    
-        // TODO: fixme
         auto audioSubGroup = playListItem->getRegion()->getAudioSubGroup();
-        auto audioResource = audioSubGroup->getChannel(rowNumber);
+        auto audioResource = audioSubGroup->getAudioResourceAtChannel(rowNumber);
         
         if (existingComponentToUpdate == nullptr)
         {
@@ -92,7 +90,7 @@ public:
             auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate);
             if (component != nullptr)
             {
-                component->setRowNumber(rowNumber);
+                component->updateUI(rowNumber);
                 return component;
             }
             else

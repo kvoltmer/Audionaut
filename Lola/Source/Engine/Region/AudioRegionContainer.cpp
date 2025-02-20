@@ -55,6 +55,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
                                                                 juce::Range<double> position,
                                                                 std::shared_ptr<AudioTrack> track,
                                                                 std::shared_ptr<AudioSubGroup> subGroup,
+                                                                std::shared_ptr<AudioRegion> otherRegion,
                                                                 audium::TimeContextType context)
 {
     jassert(track != nullptr);
@@ -67,6 +68,8 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
     auto audioRegion = createRegion(track, subGroup);
     audioRegion->setRegionData(position, context);
     audioRegion->setName(regionName);
+    if (otherRegion != nullptr)
+        audioRegion->data.gain_vector = otherRegion->data.gain_vector;
     return audioRegion;
 }
 
@@ -97,8 +100,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
     // - create region
     if (newRegion == nullptr) {
         newRegion = createRegion(track, newSubGroup);
-        newRegion->setRegionData(otherRegion->getRegionData(context), context);
-        newRegion->setName(otherRegion->getName());
+        newRegion->data = otherRegion->data;
     }
     return newRegion;
 }

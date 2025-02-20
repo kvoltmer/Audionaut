@@ -292,11 +292,11 @@ int AudioSubGroup::getNumChannels() const
     return audioTrack.getNumAudioTrackChannels();
 }
 
-std::shared_ptr<AudioResource> AudioSubGroup::getChannel(int rowNumber) const
+std::shared_ptr<AudioResource> AudioSubGroup::getAudioResourceAtChannel(int channelNumber) const
 {
     for (auto resource : getAudioResources())
     {
-        if (resource->getChannelMapping().containsSourceChannelNumber(rowNumber))
+        if (resource->getChannelMapping().containsSourceChannelNumber(channelNumber))
             return resource;
     }
     return nullptr;

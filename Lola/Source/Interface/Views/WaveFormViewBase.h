@@ -37,7 +37,7 @@ public:
                      std::shared_ptr<AudioRegion> audioRegion,
                      juce::Colour colour,
                      std::shared_ptr<RegionSelector> regionSelector,
-                     int rowNumber) :
+                     int channelNumber_) :
         parentComponent(parentComponent),
         audiumEngine(audiumEngine),
         audioResource(audioResource),
@@ -45,7 +45,7 @@ public:
         audioRegion(audioRegion),
         colour(colour),
         regionSelector(regionSelector),
-        rowNumber(rowNumber)
+        channelNumber(channelNumber_)
     {
         // this component doesn't handle mouse events
         //setInterceptsMouseClicks(false, false);
@@ -100,8 +100,8 @@ public:
     // note: this is much faster than drawing the entire waveform
     juce::Rectangle<double> getClippedDrawingArea() const;
     
-    void setRowNumber(int theRowNumber) { rowNumber = theRowNumber; }
-
+    virtual void updateUI(int theChannel) { channelNumber = theChannel; }
+    
 protected:
     const juce::Component &parentComponent;
     std::shared_ptr<AudiumEngine> audiumEngine;
@@ -115,7 +115,7 @@ protected:
     
     static constexpr float verticalZoomFactor = 1.f;
     
-    int rowNumber = 0;
+    int channelNumber = 0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormViewBase)
 };
