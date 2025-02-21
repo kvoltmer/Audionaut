@@ -156,7 +156,7 @@ bool AudioRegion::deleteAssociatedItems()
     return getAudioTrack()->getPlayListContainer()->deleteAssociatedItems(this);
 }
 
-void AudioRegion::setGain(int channel, double newGain, bool realtime)
+void AudioRegion::setGain(int channel, double newGain, bool continous)
 {
     if (channel >= 0) {
         if (channel >= data.gain_vector.size()) {
@@ -164,7 +164,7 @@ void AudioRegion::setGain(int channel, double newGain, bool realtime)
         }
         data.gain_vector[channel] = newGain;
         
-        if (realtime) {
+        if (continous) {
 
             auto resource = getAudioSubGroup()->getAudioResourceAtChannel(channel);
             auto sources = audioTrack->getTransportSourceContainer()->getTransportSourcesForResource(*resource.get());

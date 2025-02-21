@@ -74,7 +74,7 @@ public:
     bool deleteAssociatedItems();
     
     // gain [linear value range]
-    void setGain(int channel, double newGain, bool realtime = false);
+    void setGain(int channel, double newGain, bool continous = false);
     double getGain(int channel) const;
     
     AudioRegionData data;
