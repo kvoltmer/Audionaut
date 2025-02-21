@@ -241,6 +241,13 @@ public:
         return audioTrackListBox->getViewport()->getVerticalScrollBar().getCurrentRange().getStart();
     }
     
+    void setVerticalScrollOffset(double offset)
+    {
+        // std::cout << "setVerticalScrollOffset " << offset << std::endl;
+        auto range = audioTrackListBox->getViewport()->getVerticalScrollBar().getCurrentRange().withStart(offset);
+        audioTrackListBox->getViewport()->getVerticalScrollBar().setCurrentRange(range, sendNotificationSync);
+    }
+    
     void onScrollContext()
     {
         regionSelector->updateFromEngine();
