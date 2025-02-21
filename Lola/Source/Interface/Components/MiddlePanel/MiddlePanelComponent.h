@@ -113,12 +113,14 @@ public:
         else if (context == ForceRebuildContext)
         {
             bool editMode = audiumEngine->getPlayListScheduler()->isEditMode();
+            auto scrollOffset = arrangementComponent->getVerticalScrollOffset();
             createComponents();
             
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
             editComponent->updateUI();
             
+            arrangementComponent->setVerticalScrollOffset(scrollOffset);
             showEditComponent(editMode);
             showArrangementComponent(!editMode);
             resized();
