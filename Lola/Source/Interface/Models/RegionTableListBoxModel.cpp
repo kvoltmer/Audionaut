@@ -61,7 +61,6 @@ juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber
         if (rowNumber < regions.size())
         {
             return new RegionLabel(audioTrackContainer,
-                                   nullptr,
                                    columnId,
                                    rowNumber);
         }

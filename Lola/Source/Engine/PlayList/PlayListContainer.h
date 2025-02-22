@@ -26,11 +26,11 @@ class PlayListContainer : public audium::Streamable
 {
     
 public:
-    PlayListContainer(const AudioRegionContainer &audioRegionContainer_,
+    PlayListContainer(const AudioTrack &audioTrack_,
                       std::shared_ptr<TempoProvider> tempoProvider_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                       std::shared_ptr<audium::SelectionManager> selectionManager_) :
-        audioRegionContainer(audioRegionContainer_),
+        audioTrack(audioTrack_),
         tempoProvider(tempoProvider_),
         transportSourceContainer(transportSourceContainer_),
         selectionManager(selectionManager_)
@@ -94,7 +94,10 @@ public:
     
     double getTotalLength(audium::TimeContextType context) const;
     
-    const AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
+    //const AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
+    
+    const AudioTrack &getAudioTrack() const { return audioTrack; }
+    
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
 
     std::vector<std::shared_ptr<PlayListItem>> getSelectedItems(bool global = false) const;
@@ -103,9 +106,10 @@ private:
     
     // called internally
     std::shared_ptr<PlayListItem> createPlayListItem(std::shared_ptr<AudioRegion> audioRegion, int insertIndex);
-    std::shared_ptr<PlayListItem> createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
+//    std::shared_ptr<PlayListItem> createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
         
-    const AudioRegionContainer &audioRegionContainer;
+    //const AudioRegionContainer &audioRegionContainer;
+    const AudioTrack &audioTrack;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::SelectionManager> selectionManager;

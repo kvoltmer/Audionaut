@@ -110,8 +110,7 @@ bool AudioTrackContainer::deleteAudioTrack(AudioTrack* track)
     });
     
     if (it != audioTracks.end()) {
-        track->getAudioRegionContainer()->cleanup();
-        track->getAudioResourceContainer().removeAudioResourcesForTrack(track);
+        track->cleanup();
         audioTracks.erase(it);
         return true;
     }
@@ -158,7 +157,9 @@ void AudioTrackContainer::deleteUnusedRegions()
     auto action = std::make_unique<audium::UndoableContainerAction>(*this);
 
     for (auto track : audioTracks) {
-        track->getAudioRegionContainer()->deleteUnusedRegions();
+        for (auto subGroup : track->getAudioSubGroups()) {
+            subGroup->getAudioRegionContainer()->deleteUnusedRegions();
+        }
         track->deleteUnusedSubGroups();
     }
     

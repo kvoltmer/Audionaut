@@ -23,11 +23,11 @@ TrackRegionTableListBoxModel::~TrackRegionTableListBoxModel()
 
 int TrackRegionTableListBoxModel::getNumRows()
 {
-    auto result = 0;
+    std::size_t result = 0;
     for (const auto &audioTrack : audiumEngine->getAudioTrackContainer()->getAudioTracks()) {
-        result = std::max(result, audioTrack->getAudioRegionContainer()->getNumRegions());
+        result = std::max(result, audioTrack->getRegions().size());
     }
-    return result;
+    return static_cast<int>(result);
 }
 
 juce::Component* TrackRegionTableListBoxModel::refreshComponentForCell (int rowNumber,
@@ -86,7 +86,7 @@ juce::var TrackRegionTableListBoxModel::getDragSourceDescription (const juce::Sp
 std::shared_ptr<AudioRegion> TrackRegionTableListBoxModel::getRegion(int rowNumber, int columnId) const
 {
     if (auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(columnId - 1))
-        return audioTrack->getAudioRegionContainer()->getRegion(rowNumber);
+        return audioTrack->getRegion(rowNumber);
     
     return nullptr;
 }

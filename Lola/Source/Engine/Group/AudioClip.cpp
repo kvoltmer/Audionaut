@@ -14,6 +14,7 @@
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Region/AudioRegion.h"
+#include "Engine/Region/AudioRegionContainer.h"
 
 double AudioClip::getAbsolutePosition(audium::TimeContextType context) const
 {
@@ -116,7 +117,7 @@ bool AudioClip::validateData()
         result |= true;
     }
     
-    for (auto region : audioSubGroup.getAudioRegions())
+    for (auto region : audioSubGroup.getAudioRegionContainer()->getObjects())
     {
         auto audioRegionData = region->getRegionData(audium::seconds);
         

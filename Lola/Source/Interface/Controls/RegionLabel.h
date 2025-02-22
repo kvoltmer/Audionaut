@@ -29,14 +29,12 @@ class RegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
     RegionLabel(std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
-                std::shared_ptr<AudioRegionContainer> audioRegionContainer_,
                 int columnId_,
                 int rowNumber_) :
         columnId(columnId_),
         rowNumber(rowNumber_),
-        audioTrackContainer(audioTrackContainer_),
-        audioRegionContainer(audioRegionContainer_)
-    {
+        audioTrackContainer(audioTrackContainer_)
+{
         setMinimumHorizontalScale(1.f);
         setEditable (false, true, false);
         update (columnId, rowNumber, false);
@@ -51,12 +49,7 @@ public:
         
     const std::shared_ptr<AudioRegion> getRegion(int rowNumber) const
     {
-        if (audioRegionContainer != nullptr) {
-            return audioRegionContainer->getRegion(rowNumber);
-        }
-        else {
-            return audioTrackContainer->getAudioRegionAdapter().getRegion(rowNumber);
-        }
+        return audioTrackContainer->getAudioRegionAdapter().getRegion(rowNumber);
     }
     
     void update(int columnId, int rowNumber, bool isSelected)
@@ -151,7 +144,6 @@ private:
     int rowNumber;
     
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionLabel)
 };

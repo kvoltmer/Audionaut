@@ -44,7 +44,7 @@ public:
     
     void resized() override
     {
-        const auto regions = audioSubGroup->getAudioRegions();
+        const auto regions = audioSubGroup->getAudioRegionContainer()->getObjects();
         auto count = 0;
         for (auto region : regions)
         {
@@ -76,7 +76,7 @@ public:
         }
         else
         {
-            const auto regions = audioSubGroup->getAudioRegions();
+            const auto regions = audioSubGroup->getAudioRegionContainer()->getObjects();
             jassert(regions.size() == regionEditControls.size());
             auto count = 0;
             for (auto regionEditControl : regionEditControls)
@@ -94,7 +94,7 @@ public:
 
     bool mustRebuildComponents() const
     {
-        const auto regions = audioSubGroup->getAudioRegions();
+        const auto regions = audioSubGroup->getAudioRegionContainer()->getObjects();
         if (regions.size() != regionEditControls.size())
         {
             return true;
@@ -110,7 +110,7 @@ public:
         removeAllChildren();
         regionEditControls.clear();
         
-        const auto regions = audioSubGroup->getAudioRegions();
+        const auto regions = audioSubGroup->getAudioRegionContainer()->getObjects();
         for (auto region : regions)
         {
             auto view = std::shared_ptr<RegionEditControl>(new RegionEditControl(region, zoomHandler, audiumEngine, regionSelector));

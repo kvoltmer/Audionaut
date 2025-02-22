@@ -50,12 +50,13 @@ private:
         for (auto track : engine->getAudioTrackContainer()->getAudioTracks()) {
             if (audiumEngine->getPlayListScheduler()->isArrangementMode()) {
                 if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
-                    name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                    auto subGroup = item->getRegion()->getAudioSubGroup();
+                    name =  subGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
                     break;
                 }
             } else {
                 if (auto subGroup = track->getSubGroupAtAbsoluteRange(selectedRange, context)) {
-                    name = track->getAudioRegionContainer()->getUniqueName(subGroup->getName());
+                    name = subGroup->getAudioRegionContainer()->getUniqueName(subGroup->getName());
                     break;
                 }
             }

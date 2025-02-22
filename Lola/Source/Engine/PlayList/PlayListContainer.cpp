@@ -14,6 +14,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Group/AudioRegionAdapter.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
@@ -55,12 +56,12 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(std::share
     
 }
 
-std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(int regionIndex, int insertIndex)
-{
-    auto region = audioRegionContainer.getRegion(regionIndex);
-    jassert(region != nullptr);
-    return createPlayListItem(region, insertIndex);
-}
+//std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(int regionIndex, int insertIndex)
+//{
+//    auto region = audioRegionContainer.getRegion(regionIndex);
+//    jassert(region != nullptr);
+//    return createPlayListItem(region, insertIndex);
+//}
 
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioRegion,
                                                                     int insertIndex)
@@ -130,9 +131,9 @@ void PlayListContainer::deletePlayListItem(int atIndex)
 bool PlayListContainer::deleteAssociatedItems(const AudioRegion* audioRegion)
 {
     bool success = false;
-    for (int i = static_cast<int>(playListItems.size() - 1); i >= 0; i--)
-    {
-        if (playListItems.getObjects()[i]->getRegion().get() == audioRegion)
+    for (int i = static_cast<int>(playListItems.size() - 1); i >= 0; i--) {
+        if (playListItems.getObjects()[i] != nullptr &&
+            playListItems.getObjects()[i]->getRegion().get() == audioRegion)
         {
             deletePlayListItem(i);
             success = true;
@@ -203,20 +204,20 @@ bool PlayListContainer::readFromJson (json& input, bool rebuild)
         std::shared_ptr<PlayListItem> playListItem = nullptr;
         if (rebuild) {
             playListItem = createPlayListItemFromJson(jsonElement);
-            playListItems.push_back(playListItem);
+            if (playListItem != nullptr) {
+                playListItems.push_back(playListItem);
+            }
+            else {
+                std::cout << "error: could not load play list item:" << std::endl;
+                std::cout << jsonElement.dump(4) << std::endl;
+            }
         }
-        else {
-            playListItem = playListItems.getObjects()[i];
+        else if (playListItems.objectExistsAtIndex(i)) {
+            
+            playListItem = playListItems.getObjects()[i++];
+            jassert(playListItem);
+            playListItem->readFromJson(jsonElement, rebuild);
         }
-        
-        if ( playListItem != nullptr) {
-            if (!playListItem->readFromJson(jsonElement, false))
-                return false;
-        }
-        else {
-            return false;
-        }
-        i++;
     }
     return true;
 }
@@ -252,18 +253,28 @@ bool PlayListContainer::playListItemExists(std::shared_ptr<PlayListItem> other) 
     return false;
 }
 
-std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (json& jsonElement)
+std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (json& input)
 {
-    auto regionIndex = jsonElement["region_id"].template get<int>();
-    auto audioRegion = audioRegionContainer.getRegion(regionIndex);
-    if (audioRegion != nullptr)
-    {
-        return std::shared_ptr<PlayListItem>(new PlayListItem(*this,
-                                                              audioRegion,
-                                                              audioRegion->getAudioTrack()->getSelectionManager()));
+    std::shared_ptr<PlayListItem> playListItem = nullptr;
+    
+    auto regionId = input["region_id"].template get<int>();
+    
+    auto subGroupId = 0;
+    if (input.contains("sub_group_id")) {
+        subGroupId = input["sub_group_id"].template get<int>();
+    }
+    if (audioTrack.audioSubGroupContainer->objectExistsAtIndex(subGroupId)) {
+        auto subGroup = audioTrack.audioSubGroupContainer->getObjects()[subGroupId];
+        jassert(subGroup);
+        if (auto audioRegion = subGroup->getAudioRegionContainer()->getRegion(regionId)) {
+            playListItem = std::shared_ptr<PlayListItem> (new PlayListItem(*this,
+                                                                        audioRegion,
+                                                                        audioTrack.getSelectionManager()));
+            playListItem->readFromJson(input, true);
+        }
     }
     
-    return nullptr;
+    return playListItem;
 }
 
 int PlayListContainer::getSizeInUnits()

@@ -75,6 +75,7 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
             juce::FileInputStream inputStream(file);
             if (inputStream.openedOk())
             {
+                std::cout << "loading: " << file.getFullPathName() << std::endl;
                 projectDirectory = file.getParentDirectory();
                 if (readFromStream(inputStream, true))
                 {

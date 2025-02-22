@@ -18,10 +18,12 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 
-AudioSubGroup::AudioSubGroup(AudioTrack& audioTrack,
-                             std::shared_ptr<audium::SelectionManager> selectionManager) :
-    audium::Selectable(selectionManager),
-    audioTrack(audioTrack)
+AudioSubGroup::AudioSubGroup(AudioTrack& audioTrack_,
+                             std::shared_ptr<AudioRegionContainer> audioRegionContainer_,
+                             std::shared_ptr<audium::SelectionManager> selectionManager_) :
+    audium::Selectable(selectionManager_),
+    audioTrack(audioTrack_),
+    audioRegionContainer(audioRegionContainer_)
 {
     audioClip = std::shared_ptr<AudioClip> (new AudioClip(*this));
 }
@@ -39,12 +41,7 @@ void AudioSubGroup::cleanup()
 
 void AudioSubGroup::cleanupAudioRegions()
 {
-    const auto audioRegions = getAudioRegions();
-    for (auto region : audioRegions)
-    {
-        getAudioTrack().getAudioRegionContainer()->deleteAudioRegion(region);
-    }
-    jassert(getAudioRegions().size() == 0);
+    audioRegionContainer->cleanup();
 }
 
 void AudioSubGroup::cleanupAudioResources()
@@ -91,13 +88,7 @@ bool AudioSubGroup::writeToJson (json& output)
         output["resources"] += j;
     }
     
-    for (auto region : getAudioRegions())
-    {
-        json r;
-        region->writeToJson(r);
-        output["regions"] += r;
-    }
-        
+    audioRegionContainer->writeToJson(output);        
     return true;
 }
 
@@ -113,9 +104,8 @@ bool AudioSubGroup::writeChannelToJson (json& output, AudioChannel* audioChannel
         }
     }
     
-    for (auto region : getAudioRegions()) {
-        output["regions"] += region->data;
-    }
+    audioRegionContainer->writeToJson(output);
+    
     return true;
 }
 
@@ -148,16 +138,6 @@ void AudioSubGroup::mergeFromJson(json& input, int destinationChannel)
         auto url = AudioResource::urlFromJson(jsonResource);
         AudioResource::testUrl(url);
         
-//        std::shared_ptr<AudioResource> resource = nullptr;
-//
-//        auto audioFormatReader = getAudioTrack().getAudioResourceContainer().getAudioFormatReaderForUrl(url);
-//        resource = getAudioTrack().getAudioResourceContainer().addAudioResource(url,
-//                                                                                    audioFormatReader,
-//                                                                                    track,
-//                                                                                    subGroup);
-//        if (auto transportSource = getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource)) {
-//            transportSources.push_back(transportSource);
-//        }
         if (auto resource = addAudioResourceFromUrl(url)) {
             resource->readFromJson(jsonResource, false);
             if (destinationChannel >= 0) {
@@ -169,23 +149,7 @@ void AudioSubGroup::mergeFromJson(json& input, int destinationChannel)
     
     audioClip->readFromJson(input["clip"], false);
 
-    auto jsonRegions = input["regions"];
-    
-    for (auto& jsonRegion : jsonRegions) {
-        AudioRegionData data = jsonRegion;
-        
-        auto region = track->getAudioRegionContainer()->getRegionWithData(data);
-        
-        if (region == nullptr)
-            region = getAudioTrack().getAudioRegionContainer()->createRegion(track, subGroup);
-        
-        jassert(region);
-        auto old_id = region->data.region_id;
-        // assign data
-        region->data = data;
-        // keep old id
-        region->data.region_id = old_id;
-    }
+    audioRegionContainer->mergeFromJson(input);
 }
 
 bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
@@ -238,28 +202,8 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     
     audioClip->readFromJson(input["clip"], rebuild);
 
-    if (rebuild)
-        cleanupAudioRegions();
-    
-    auto jsonRegions = input["regions"];
+    audioRegionContainer->readFromJson(input, rebuild);
 
-    for (auto& jsonElement : jsonRegions) {
-        AudioRegionData data = jsonElement;
-        
-        std::shared_ptr<AudioRegion> region = nullptr;
-        if (rebuild) {
-            region = getAudioTrack().getAudioRegionContainer()->createRegion(track, subGroup);
-        }
-        else {
-            region = getAudioTrack().getAudioRegionContainer()->getRegion(data.region_id);
-        }
-        jassert(region);
-        auto old_id = region->data.region_id;
-        // assign data
-        region->data = data;
-        // keep old id
-        region->data.region_id = old_id;
-    }
     return true;
 }
 
@@ -280,11 +224,6 @@ int AudioSubGroup::getSizeInUnits()
 std::vector<std::shared_ptr<AudioResource>> AudioSubGroup::getAudioResources() const
 {
     return audioTrack.getAudioResourceContainer().getAudioResourcesForSubGroup(this);
-}
-
-std::vector<std::shared_ptr<AudioRegion>> AudioSubGroup::getAudioRegions() const
-{
-    return audioTrack.getAudioRegionContainer()->getRegionsForSubGroup(this);
 }
 
 int AudioSubGroup::getNumChannels() const
@@ -309,4 +248,9 @@ const juce::String AudioSubGroup::getName() const
         return audioResources[0]->getFileNameWithoutExtension();
     
     return juce::String();
+}
+
+const int AudioSubGroup::getId() const
+{
+    return audioTrack.audioSubGroupContainer->getIndex(std::dynamic_pointer_cast<const AudioSubGroup>(getSharedPtr()));
 }

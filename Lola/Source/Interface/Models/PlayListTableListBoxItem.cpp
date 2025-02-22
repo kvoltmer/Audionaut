@@ -105,7 +105,7 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
         // Undo: store new state
         action->storeNewState();
         // oh dear
-        auto undoManager = playListModel->getPlayListContainer()->getAudioRegionContainer().getUndoManager();
+        auto undoManager = playListModel->getAudiumEngine()->getUndoManager();
         undoManager->perform(action.release(), "Playlist changed");
         undoManager->beginNewTransaction();
     }

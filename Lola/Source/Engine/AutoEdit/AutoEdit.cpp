@@ -129,7 +129,7 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
     {
         if (auto track = audioTrackContainer->getDefaultGroup())
         {
-            track->getAudioRegionContainer()->cleanup();
+            track->cleanup();
             
             int counter = 1;
             auto segdata = nlohmann::json::parse(segFile);
@@ -150,7 +150,7 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
                 jassert(subGroups.size() > 0);
                 if (subGroups.size() > 0)
                 {
-                    track->getAudioRegionContainer()->createRegion(regionName, position, track, subGroups[0], nullptr, audium::seconds);
+                    subGroups[0]->getAudioRegionContainer()->createRegion(regionName, position, track, subGroups[0], nullptr, audium::seconds);
                 }
             }
         }
@@ -182,7 +182,8 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
         {
             if (auto track = audioTrackContainer->getDefaultGroup())
             {
-                auto region = track->getAudioRegionContainer()->getRegion(elem["index"]);
+                auto subGroup = track->getAudioSubGroups()[0];
+                auto region = subGroup->getAudioRegionContainer()->getRegion(elem["index"]);
                 jassert(region != nullptr);
                 std::string filename = elem["file"];
                 jassert(juce::String(filename).contains(region->getName()));

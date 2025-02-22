@@ -51,7 +51,7 @@ public:
     const std::shared_ptr<AudioRegion> getRegion(int columnId, int rowNumber) const
     {
         if (auto audioTrack = audioTrackContainer->getAudioTrack(columnId - 1)) {
-            return audioTrack->getAudioRegionContainer()->getRegion(rowNumber);
+            return audioTrack->getRegion(rowNumber);
         }
         return nullptr;
     }

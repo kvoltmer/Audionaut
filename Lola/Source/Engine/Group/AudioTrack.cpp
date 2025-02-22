@@ -34,6 +34,7 @@ void AudioTrack::cleanup()
     audioSubGroupContainer->cleanup();
     audioChannelContainer->cleanup();
     playListContainer->playListItems.cleanup();
+    getAudioResourceContainer().removeAudioResourcesForTrack(this);
 }
 
 void AudioTrack::setAudioTrackName(const juce::String newName)
@@ -145,7 +146,8 @@ void AudioTrack::mergeChannelFromJson(json& input)
     for (auto& jsonSubGroup : jsonSubGroups) {
         
         // use temporary sub group to get the postion
-        AudioSubGroup tmp(*this, getSelectionManager());
+        AudioSubGroup tmp(*this, nullptr, getSelectionManager());
+        
         tmp.getAudioClip()->readFromJson(jsonSubGroup["clip"], true);
         auto subGroupPosition = tmp.getAbsolutePositionRange(context);
         
@@ -489,7 +491,7 @@ bool AudioTrack::deleteSelectedObject(std::shared_ptr<audium::Selectable> object
     }
     else if (AudioRegion* audioRegion = dynamic_cast<AudioRegion*>(object.get()))
     {
-        return audioRegionContainer->deleteAudioRegion(audioRegion);
+        return audioRegion->getAudioSubGroup()->getAudioRegionContainer()->deleteAudioRegion(audioRegion);
     }
     else if (PlayListItem* playListItem = dynamic_cast<PlayListItem*>(object.get()))
     {
@@ -541,7 +543,7 @@ void AudioTrack::deleteUnusedSubGroups()
 {
     std::vector<std::shared_ptr<AudioSubGroup>> subGroupsToDelete;
     for (auto subGroup : audioSubGroupContainer->getObjects()) {
-        if (subGroup->getAudioRegions().size() == 0) {
+        if (subGroup->getAudioRegionContainer()->getNumRegions() == 0) {
             subGroupsToDelete.push_back(subGroup);
         }
     }
@@ -654,12 +656,12 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
 {
     // create default region
     juce::Range<double> defaultRange(0.0, audioResource->getFileLength(context));
-    auto region = getAudioRegionContainer()->createRegion(audioResource->getFileNameWithoutExtension(),
-                                                          defaultRange,
-                                                          std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
-                                                          subGroup,
-                                                          nullptr,
-                                                          context);
+    auto region = subGroup->getAudioRegionContainer()->createRegion(  audioResource->getFileNameWithoutExtension(),
+                                                                      defaultRange,
+                                                                      std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
+                                                                      subGroup,
+                                                                      nullptr,
+                                                                      context);
     
     // create play list item
     getPlayListContainer()->createPlayListItemAtPositionUI(region, position, context);
@@ -725,36 +727,45 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
 
 void AudioTrack::dropSelectedAudioRegions(int insertIndex)
 {
-    auto selectedRegions = getAudioRegionContainer()->getSelectedRegions(true);
-    jassert(selectedRegions.size() > 0);
-    
-    for (auto region : selectedRegions) {
-        auto newRegion = region;
-        if (this != region->getAudioTrack().get()) {
-            // need to copy region
-            newRegion = getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()), region);
+    auto selectedObjects = getSelectionManager()->getSelectedObjects();
+       
+    for (auto object : selectedObjects) {
+        if (auto region = std::dynamic_pointer_cast<AudioRegion>(object)) {
+            
+            auto newRegion = region;
+            if (this != region->getAudioTrack().get()) {
+                // need to copy region
+                // TODO: need to copy sub group????
+                auto subGroup = region->getAudioSubGroup();
+                newRegion = subGroup->getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()), region);
+            }
+            
+            playListContainer->createPlayListItemUI(newRegion, insertIndex);
+            insertIndex++;
         }
-        
-        playListContainer->createPlayListItemUI(newRegion, insertIndex);
-        insertIndex++;
     }
 }
 
 void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType context)
 {
     // drop all selected regions
-    auto selectedRegions = getAudioRegionContainer()->getSelectedRegions(true);
-    for (auto region : selectedRegions) {
-        auto newRegion = region;
-        if (this != region->getAudioTrack().get()) {
-            // need to copy region
-            newRegion = getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()), region);
+    auto selectedObjects = getSelectionManager()->getSelectedObjects();
+       
+    for (auto object : selectedObjects) {
+        if (auto region = std::dynamic_pointer_cast<AudioRegion>(object)) {
+            
+            auto newRegion = region;
+            if (this != region->getAudioTrack().get()) {
+                // need to copy region
+                // TODO: need to copy sub group????
+                auto subGroup = region->getAudioSubGroup();
+                newRegion = subGroup->getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()), region);
+            }
+            
+            getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, pos, context);
+            pos += newRegion->getRegionData(context).getLength();
         }
-        
-        getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, pos, context);
-        pos += newRegion->getRegionData(context).getLength();
     }
-
 }
 
 void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos, audium::TimeContextType context)
@@ -762,7 +773,8 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos
     auto region = item->getRegion();
     // drag on different track -> create region and play list item
     if (this != region->getAudioTrack().get()) {
-        if (auto newRegion = getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()), region)) {
+        auto subGroup = region->getAudioSubGroup();
+        if (auto newRegion = subGroup->getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()), region)) {
             auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, pos, context);
             item->setSelected(false);
             newItem->setSelected(true);
@@ -782,4 +794,25 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos
             item->setAbsolutePosition(pos, context);
         }
     }
+}
+
+std::shared_ptr<AudioRegion> AudioTrack::getRegion(int rowNumber) const
+{
+    auto regions = getRegions();
+    if (rowNumber >= 0 && rowNumber < regions.size()) {
+        return regions[rowNumber];
+    }
+    return nullptr;
+}
+
+const std::vector<std::shared_ptr<AudioRegion>> AudioTrack::getRegions() const
+{
+    std::vector<std::shared_ptr<AudioRegion>> result;
+    
+    for (auto subGroup : audioSubGroupContainer->getObjects()) {
+        for (auto region : subGroup->getAudioRegionContainer()->getObjects()) {
+            result.push_back(region);
+        }
+    }
+    return result;
 }

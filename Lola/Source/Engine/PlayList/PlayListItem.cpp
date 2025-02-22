@@ -28,7 +28,7 @@ PlayListItem::PlayListItem(const PlayListContainer &owner,
     audioRegion(audioRegion)
 {
     for (const auto &resource : getRegion()->getAudioResources()) {
-        auto transportSource = owner.getAudioRegionContainer().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
+        auto transportSource = owner.getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
         transportSources.push_back(transportSource);
     }
 }
@@ -83,7 +83,8 @@ void PlayListItem::setAbsolutePosition(double newPosition, audium::TimeContextTy
 
 bool PlayListItem::writeToJson (json& output)
 {
-    output["region_id"]         = owner.getAudioRegionContainer().getRegionId(getRegion());
+    output["region_id"]         = audioRegion->getAudioSubGroup()->getAudioRegionContainer()->getRegionId(getRegion());
+    output["sub_group_id"]      = audioRegion->getAudioSubGroup()->getId();
     output["region_name"]       = getRegion()->getName().toStdString();
     output["position_clocks"]   = absolutePositionClocks;
     output["selected"]          = isSelected();
@@ -99,8 +100,13 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
     jassert(regionName == getRegion()->getName().toStdString());
 
     auto regionId = input["region_id"].template get<int>();
-    auto id = owner.getAudioRegionContainer().getRegionId(getRegion());
+    auto id = audioRegion->getAudioSubGroup()->getAudioRegionContainer()->getRegionId(getRegion());
     jassert(id == regionId);
+    
+    if (input.contains("sub_group_id")) {
+        auto subGroupId = input["sub_group_id"].template get<int>();
+        jassert(subGroupId == audioRegion->getAudioSubGroup()->getId());
+    }
     
     if (input.contains("position_clocks"))
         absolutePositionClocks = input.at("position_clocks").get<double>();
