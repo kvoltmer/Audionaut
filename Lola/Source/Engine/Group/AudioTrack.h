@@ -19,15 +19,15 @@
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Selection/SelectableObjectContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/PlayList/PlayListContainer.h"
+
 
 class AudioResourceContainer;
 class AudioResource;
 class PlayListItem;
-class PlayListContainer;
 class PlayListScheduler;
 class TransportSourceContainer;
 class AudioSubGroup;
-class AudioRegionContainer;
 class AudioChannel;
 class PositionableBase;
 class AudioTrackContainer;
@@ -41,8 +41,6 @@ class AudioTrack : public audium::Streamable, public audium::Selectable
 public:
     AudioTrack(AudioTrackContainer &owner,
                AudioResourceContainer &audioResourceContainer,
-               std::shared_ptr<AudioRegionContainer> audioRegionContainer,
-               std::shared_ptr<PlayListContainer> playListContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
                std::shared_ptr<audium::SelectionManager> selectionManager,
                std::shared_ptr<tAudioSubGroupContainer> subGroups,
@@ -51,14 +49,16 @@ public:
         audium::Selectable(selectionManager),
         owner(owner),
         audioResourceContainer(audioResourceContainer),
-        audioRegionContainer(audioRegionContainer),
-        playListContainer(playListContainer),
         transportSourceContainer(transportSourceContainer),
         selectionManager(selectionManager),
         audioSubGroupContainer(subGroups),
         audioChannelContainer(channels),
         name(nameString.toStdString())
     {
+        playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*this,
+                                                                                      owner.getTempoProvider(),
+                                                                                      transportSourceContainer,
+                                                                                      selectionManager));
     }
     
     virtual ~AudioTrack() override;
@@ -81,7 +81,6 @@ public:
     // pointer and references to other classes:
     AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
     AudioTrackContainer &getAudioTrackContainer() const { return owner; }
-    std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
     std::shared_ptr<audium::SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
@@ -168,10 +167,12 @@ public:
     
     std::vector<audium::DspClipData> getDspClipVector(bool arrangementMode) const;
     
+    std::shared_ptr<AudioRegion> getRegion(int rowNumber) const;
+    const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;
+    
 private:
     AudioTrackContainer &owner;
     AudioResourceContainer &audioResourceContainer;
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::SelectionManager> selectionManager;

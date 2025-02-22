@@ -27,6 +27,7 @@ class AudioRegion;
 class AudiumTransportSource;
 class AudioClip;
 class AudioChannel;
+class AudioRegionContainer;
 
 class AudioSubGroup :   public PositionableBase,
                         public audium::Selectable,
@@ -34,7 +35,9 @@ class AudioSubGroup :   public PositionableBase,
 {
         
 public:
-    AudioSubGroup(AudioTrack& audioTrack, std::shared_ptr<audium::SelectionManager> selectionManager);
+    AudioSubGroup(AudioTrack& audioTrack,
+                  std::shared_ptr<AudioRegionContainer> audioRegionContainer,
+                  std::shared_ptr<audium::SelectionManager> selectionManager);
     virtual ~AudioSubGroup() override;
     void cleanup() override;
     void cleanupAudioRegions();
@@ -61,9 +64,7 @@ public:
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     std::shared_ptr<AudioResource> addAudioResourceFromUrl(const juce::URL url);
-    
-    std::vector<std::shared_ptr<AudioRegion>> getAudioRegions() const;
-    
+        
     int getNumChannels() const;
     std::shared_ptr<AudioResource> getAudioResourceAtChannel(int channelNumber) const;
 
@@ -71,14 +72,20 @@ public:
     
     std::shared_ptr<AudioClip> getAudioClip() const { return audioClip; }
     
+    std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
+
     const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
 
     const juce::String getName() const;
+    
+    const int getId() const;
     
 private:
     std::shared_ptr<AudioClip> audioClip;
     
     AudioTrack& audioTrack;
+    
+    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
 
     std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
     

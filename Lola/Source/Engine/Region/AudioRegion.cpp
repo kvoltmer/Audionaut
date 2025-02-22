@@ -46,7 +46,7 @@ bool AudioRegion::writeToJson (json& output)
 {
     // make sure all id's are up to date
     auto shared_ptr = std::dynamic_pointer_cast<AudioRegion> (getSharedPtr());
-    data.region_id      = audioTrack->getAudioRegionContainer()->getRegionId(shared_ptr);
+    data.region_id      = audioSubGroup->getAudioRegionContainer()->getRegionId(shared_ptr);
     data.track_id       = audioTrack->getId();
     data.sub_group_id   = audioTrack->audioSubGroupContainer->getIndex(audioSubGroup);
      

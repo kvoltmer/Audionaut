@@ -57,8 +57,10 @@ public:
     }
     
     void cleanup() {
-        for (auto object : objects)
-            object->cleanup();
+        for (auto object : objects) {
+            if (object != nullptr)
+                object->cleanup();
+        }
         objects.clear();
     }
     

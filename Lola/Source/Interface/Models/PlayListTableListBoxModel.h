@@ -104,6 +104,7 @@ public:
     
     std::shared_ptr<PlayListTableListBox> listBox;
     
+    std::shared_ptr<AudiumEngine> getAudiumEngine() const { return audiumEngine; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioTrack); }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
     

@@ -334,5 +334,70 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::getRegionWithData(const Audio
     return nullptr;
 }
 
+bool AudioRegionContainer::writeToJson (json& output)
+{
+    for (auto region : audioRegions) {
+        json r;
+        region->writeToJson(r);
+        output["regions"] += r;
+    }
+    return true;
+}
 
+bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
+{
+    if (rebuild)
+        cleanup();
+    
+    auto jsonRegions = input["regions"];
+    
+    for (auto& jsonElement : jsonRegions) {
+        AudioRegionData regionData = jsonElement;
+        
+        if (auto track = audioTrackContainer.getAudioTrack(regionData.track_id)) {
+            if (track->audioSubGroupContainer->objectExistsAtIndex(regionData.sub_group_id)) {
+                auto subGroup = track->audioSubGroupContainer->getObjects()[regionData.sub_group_id];
+                
+                std::shared_ptr<AudioRegion> region = nullptr;
+                if (rebuild) {
+                    region = createRegion(track, subGroup);
+                    region->data = regionData;
+                }
+                else {
+                    region = getRegion(regionData.region_id);
+                }
+                
+                if (region->data.region_id != regionData.region_id) {
+                    std::cout << "warning region id " << regionData.region_id << std::endl;
+                    region->data.region_id = regionData.region_id;
+                }
+                
+                
+            }
+        }
+    }
+    return true;
+}
+
+void AudioRegionContainer::mergeFromJson(json& input)
+{
+    auto jsonRegions = input["regions"];
+    
+    for (auto& jsonRegion : jsonRegions) {
+        AudioRegionData data = jsonRegion;
+        
+        auto region = getRegionWithData(data);
+        
+        if (region == nullptr) {
+            if (auto track = audioTrackContainer.getAudioTrack(data.track_id)) {
+                if (track->audioSubGroupContainer->objectExistsAtIndex(data.sub_group_id)) {
+                    auto subGroup = track->audioSubGroupContainer->getObjects()[data.sub_group_id];
+                    region = createRegion(track, subGroup);
+                    region->data = data;
+                }
+            }
+        }
+        jassert(region);
+    }
+}
 

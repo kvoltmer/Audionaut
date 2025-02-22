@@ -25,23 +25,10 @@ public:
     static std::shared_ptr<AudioTrack> createAudioTrack(AudioTrackContainer &owner,
                                                         std::shared_ptr<AudioResourceContainer> audioResourceContainer)
     {
-        
-        auto audioRegionContainer       = std::shared_ptr<AudioRegionContainer>     (new AudioRegionContainer(*audioResourceContainer.get(),
-                                                                                                              owner,
-                                                                                                              owner.getTempoProvider(),
-                                                                                                              owner.getUndoManager()));
-        
-        auto playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*audioRegionContainer.get(),
-                                                                                           owner.getTempoProvider(),
-                                                                                           owner.getTransportSourceContainer(),
-                                                                                           owner.getSelectionManager()));
-        
         auto subGroups  = std::shared_ptr<tAudioSubGroupContainer> (new tAudioSubGroupContainer());
         auto channels   = std::shared_ptr<tAudioChannelContainer> (new tAudioChannelContainer());
         auto audioTrack = std::shared_ptr<AudioTrack>(new AudioTrack(owner,
                                                                      *audioResourceContainer.get(),
-                                                                     audioRegionContainer,
-                                                                     playListContainer,
                                                                      owner.getTransportSourceContainer(),
                                                                      owner.getSelectionManager(),
                                                                      subGroups,
@@ -50,8 +37,14 @@ public:
         return audioTrack;
     }
     
-    static std::shared_ptr<AudioSubGroup> createAudioSubGroup(AudioTrack &audioTrack)
+    static std::shared_ptr<AudioSubGroup> createAudioSubGroup(AudioTrack &track)
     {
-        return std::shared_ptr<AudioSubGroup>(new AudioSubGroup(audioTrack, audioTrack.getSelectionManager()));
+        auto regionContainer = std::shared_ptr<AudioRegionContainer> (new AudioRegionContainer(track.getAudioResourceContainer(),
+                                                                                               track.getAudioTrackContainer(),
+                                                                                               track.getAudioTrackContainer().getTempoProvider(),
+                                                                                               track.getAudioTrackContainer().getUndoManager()));
+        return std::shared_ptr<AudioSubGroup> (new AudioSubGroup(track,
+                                                                 regionContainer,
+                                                                 track.getSelectionManager()));
     }
 };

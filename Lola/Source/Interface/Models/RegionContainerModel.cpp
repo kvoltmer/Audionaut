@@ -34,7 +34,7 @@ RegionContainerModel::~RegionContainerModel()
 
 int RegionContainerModel::getNumRows()
 {
-    return audioTrack->getAudioRegionContainer()->getNumRegions();
+    return static_cast<int>(audioTrack->getRegions().size());
 }
 
 void RegionContainerModel::paintRowBackground (juce::Graphics& g,
@@ -59,13 +59,12 @@ void RegionContainerModel::paintCell (juce::Graphics& g,
 juce::Component* RegionContainerModel::refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
                                             juce::Component* existingComponentToUpdate)
 {
-    auto region = audioTrack->getAudioRegionContainer()->getRegion(rowNumber);
+    auto region = audioTrack->getRegion(rowNumber);
     if (existingComponentToUpdate == nullptr)
     {
         if (region != nullptr)
         {
             return new RegionLabel(audiumEngine->getAudioTrackContainer(),
-                                   audioTrack->getAudioRegionContainer(),
                                    columnId,
                                    rowNumber);
         }
@@ -88,7 +87,8 @@ void RegionContainerModel::selectedRowsChanged (int lastRowSelected)
 {
     auto selectedRows = owner->getSelectedRows();
     
-    audioTrack->getAudioRegionContainer()->setSelectedRows(selectedRows);
+    // TODO: selection
+    // audioTrack->getAudioRegionContainer()->setSelectedRows(selectedRows);
     audiumEngine->getAudioTrackContainer()->sendActionMessage(updateAll);
 }
 

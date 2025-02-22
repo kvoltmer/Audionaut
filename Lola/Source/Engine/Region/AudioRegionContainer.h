@@ -18,7 +18,7 @@ class AudioTrackContainer;
 class AudioTrack;
 class AudioSubGroup;
 
-class AudioRegionContainer
+class AudioRegionContainer : public audium::Streamable
 {
                                             
 public:
@@ -73,6 +73,15 @@ public:
     std::shared_ptr<juce::UndoManager> getUndoManager() const { return undoManager; }
     AudioTrackContainer& getAudioTrackContainer() const { return audioTrackContainer; }
     AudioResourceContainer& getAudioResourceContainer() const { return audioResourceContainer; }
+    
+    
+    bool writeToJson (json& output) override;
+    bool readFromJson (json& input, bool rebuild) override;
+    int getSizeInUnits() override { return static_cast<int>(audioRegions.size() * 2); }
+    void mergeFromJson(json& input);
+
+    const std::vector<std::shared_ptr<AudioRegion>> &getObjects() const { return audioRegions; }
+    
 private:
     
     AudioResourceContainer &audioResourceContainer;
