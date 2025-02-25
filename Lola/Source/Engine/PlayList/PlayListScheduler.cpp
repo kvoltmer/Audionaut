@@ -153,7 +153,7 @@ double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool a
         
         // add overhead to fit entire arrangement arrangement
         auto minimumLength = tempoProvider->secondsToClocks(60.0);
-        totalLength = std::max(minimumLength, totalLength * 1.01);
+        totalLength = std::max(minimumLength, totalLength * 1.25);
     }
     
     if (context == audium::seconds)

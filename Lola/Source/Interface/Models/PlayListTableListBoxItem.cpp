@@ -174,28 +174,36 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
 {
     auto track = playListModel->getAudioTrack();
-    
-    if (!e.mods.isAnyModifierKeyDown())
-    {
-        // items of other playlists might be selected
-        // deselect all objects except regions of this track
-        auto objects = track->getAudioTrackContainer().getSelectionManager()->getSelectedObjects();
-        for (auto object : objects) {
-            if (auto item = dynamic_cast<PlayListItem*>(object.get())) {
-                if (item->getRegion()->getAudioTrack() == track)
-                    continue;
-            }
-            object->setSelected(false);
+    auto container = track->getPlayListContainer();
+
+    if (auto item = container->getPlayListItem(rowNumber)) {
+        
+        if (!e.mods.isAnyModifierKeyDown() && !item->isSelected()) {
+            track->getAudioTrackContainer().getSelectionManager()->deselectAll();
         }
+        else {
+            auto objects = track->getAudioTrackContainer().getSelectionManager()->getSelectedObjects();
+            for (auto object : objects) {
+                if (auto item = dynamic_cast<PlayListItem*>(object.get())) {
+                    if (item->getRegion()->getAudioTrack() != track)
+                        object->setSelected(false);
+                }
+            }
+        }
+        
+        if (e.mods.isCommandDown() && item->isSelected()) {
+            item->setSelected(false);
+        }
+        else {
+            item->setSelected(true);
+        }
+        
     }
-    
-    // select this item
-    auto container = playListModel->getAudioTrack()->getPlayListContainer();
-    if (auto item = container->getPlayListItem(rowNumber))
-        item->setSelected(true);
     
     // pass on the event to the model
     getParentComponent()->mouseDown(e);
+        
+        
 
     // update
     track->getAudioTrackContainer().sendActionMessage(updateSelection);
