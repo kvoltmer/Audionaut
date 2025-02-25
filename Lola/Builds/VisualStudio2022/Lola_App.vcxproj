@@ -200,7 +200,6 @@
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MainComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Models\RegionContainerModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
@@ -3109,7 +3108,6 @@
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MainComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.h"/>
-    <ClInclude Include="..\..\Source\Interface\Models\RegionContainerModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\ChannelGroupListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\ChannelSubGroupListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.h"/>

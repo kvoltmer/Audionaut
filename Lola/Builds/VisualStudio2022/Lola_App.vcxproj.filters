@@ -979,9 +979,6 @@
     <ClCompile Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.cpp">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Models\RegionContainerModel.cpp">
-      <Filter>Lola\Source\Interface\Models</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClCompile>
@@ -4303,9 +4300,6 @@
       <Filter>Lola\Source\Interface\Components</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.h">
-      <Filter>Lola\Source\Interface\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Models\RegionContainerModel.h">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\ChannelGroupListBoxModel.h">

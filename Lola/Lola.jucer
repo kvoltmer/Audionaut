@@ -345,10 +345,6 @@
                 resource="0" file="Source/Interface/Models/TrackRegionTableListBoxModel.cpp"/>
           <FILE id="D6w5CK" name="TrackRegionTableListBoxModel.h" compile="0"
                 resource="0" file="Source/Interface/Models/TrackRegionTableListBoxModel.h"/>
-          <FILE id="b5NBYW" name="RegionContainerModel.cpp" compile="1" resource="0"
-                file="Source/Interface/Models/RegionContainerModel.cpp"/>
-          <FILE id="p5hkwc" name="RegionContainerModel.h" compile="0" resource="0"
-                file="Source/Interface/Models/RegionContainerModel.h"/>
           <FILE id="oZwTNT" name="ChannelGroupListBoxModel.h" compile="0" resource="0"
                 file="Source/Interface/Models/ChannelGroupListBoxModel.h"/>
           <FILE id="zizRO1" name="ChannelSubGroupListBoxModel.h" compile="0"
