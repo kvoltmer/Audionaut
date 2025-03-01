@@ -622,28 +622,30 @@ std::vector<std::shared_ptr<AudioResource>> AudioTrack::addAudioFile (std::share
     auto numResourcesLoaded = getAudioResources().size();
     auto url = URL (filename);
     auto chan = destChannel;
-    auto audioFormatReader = getAudioResourceContainer().getAudioFormatReaderForUrl(url);
-    for (auto sourceChannel = 0; sourceChannel < audioFormatReader->numChannels; sourceChannel++) {
-        auto audioResource = getAudioResourceContainer().addAudioResource(url,
-                                                                          audioFormatReader,
-                                                                          std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
-                                                                          subGroup,
-                                                                          destChannel,
-                                                                          sourceChannel);
-        if (audioResource != nullptr) {
-            auto transportSource = getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
-            if (transportSource != nullptr)
-                destChannel += 1;
-            
-            result.push_back(audioResource);
+    if (auto audioFormatReader = getAudioResourceContainer().getAudioFormatReaderForUrl(url)) {
+        for (auto sourceChannel = 0; sourceChannel < audioFormatReader->numChannels; sourceChannel++) {
+            auto audioResource = getAudioResourceContainer().addAudioResource(url,
+                                                                              audioFormatReader,
+                                                                              std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
+                                                                              subGroup,
+                                                                              destChannel,
+                                                                              sourceChannel);
+            if (audioResource != nullptr) {
+                auto transportSource = getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
+                if (transportSource != nullptr)
+                    destChannel += 1;
+                
+                result.push_back(audioResource);
+            }
         }
-    }
-    
-    // apply stereo pan
-    if (numResourcesLoaded == 0 &&
-        audioFormatReader->numChannels == 2) {
+        
+        
+        // apply stereo pan
+        if (numResourcesLoaded == 0 &&
+            audioFormatReader->numChannels == 2) {
             setPan(-1.f, chan);
             setPan(1.f, chan + 1);
+        }
     }
     
     return result;
