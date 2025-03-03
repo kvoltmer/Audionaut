@@ -217,7 +217,7 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
             }
             
             if (success) {
-                track->getPlayListContainer()->deletePlayListItem(item);
+                track->getPlayListContainer()->deletePlayListItem(item, true);
                 track->getPlayListContainer()->sortByPosition();
             }
         }

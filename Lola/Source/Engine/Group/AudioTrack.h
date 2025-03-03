@@ -124,10 +124,12 @@ public:
     void dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos, audium::TimeContextType context);
     
     // sub groups:
-    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition, audium::TimeContextType context);
+    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition,
+                                                          audium::TimeContextType context,
+                                                          bool arrangementMode);
     std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(juce::Range<double> transportPositionRange, audium::TimeContextType context);
     std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(const std::shared_ptr<AudioSubGroup> otherSubGroup);
-    std::shared_ptr<AudioSubGroup> findSubGroup(const std::shared_ptr<AudioSubGroup> otherSubGroup);
+    std::shared_ptr<AudioSubGroup> findSimilarSubGroup(const std::shared_ptr<AudioSubGroup> otherSubGroup);
     std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;
     std::vector<std::shared_ptr<AudioSubGroup>> getAudioSubGroups() const { return audioSubGroupContainer->getObjects(); }
     

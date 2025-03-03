@@ -41,6 +41,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     
     Preferences::init(getApplicationName());
     
+    recentFiles.setMaxNumberOfItems(20);
     if (Preferences::valueExists(PreferenceKeys::recentFiles)) {
         recentFiles.restoreFromString (Preferences::getValue (PreferenceKeys::recentFiles));
         recentFiles.removeNonExistentFiles();
@@ -496,6 +497,7 @@ void AudiumApplication::saveProjectAs(std::function<void (bool)> callback)
         saveProjectToFile(file, callback);
         RecentlyOpenedFilesList::registerRecentFileNatively (file);
         recentFiles.addFile (file);
+        updateSettings();
     });
 
 }
