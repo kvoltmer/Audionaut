@@ -49,7 +49,7 @@ public:
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
     void deletePlayListItem(int atIndex);
-    bool deletePlayListItem(PlayListItem* playListItem);
+    bool deletePlayListItem(PlayListItem* playListItem, bool deleteRegion);
 
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
     bool exitsInPlayList(const AudioRegion* audioRegion);
@@ -94,7 +94,6 @@ public:
     
     double getTotalLength(audium::TimeContextType context) const;
     
-    //const AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
     
     const AudioTrack &getAudioTrack() const { return audioTrack; }
     
@@ -106,9 +105,8 @@ private:
     
     // called internally
     std::shared_ptr<PlayListItem> createPlayListItem(std::shared_ptr<AudioRegion> audioRegion, int insertIndex);
-//    std::shared_ptr<PlayListItem> createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
+
         
-    //const AudioRegionContainer &audioRegionContainer;
     const AudioTrack &audioTrack;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;

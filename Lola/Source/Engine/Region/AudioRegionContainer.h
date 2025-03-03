@@ -44,6 +44,7 @@ public:
                                               audium::TimeContextType context);
     
     std::shared_ptr<AudioRegion> createRegion(std::shared_ptr<AudioTrack> track,
+                                              std::shared_ptr<AudioSubGroup> subGroup,
                                               const std::shared_ptr<AudioRegion> otherRegion);
     
     static std::string formatNumber(long num);
@@ -57,6 +58,8 @@ public:
     
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForSubGroup(const AudioSubGroup* subGroup) const;
     std::vector<std::shared_ptr<AudioRegion>> getSelectedRegions(bool global = false) const;
+    std::shared_ptr<AudioRegion> findSimilarRegion(std::shared_ptr<AudioRegion> otherRegion) const;
+    
     void deleteAudioRegion(std::shared_ptr<AudioRegion> region);
     bool deleteAudioRegion(AudioRegion* region);
     void deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup);

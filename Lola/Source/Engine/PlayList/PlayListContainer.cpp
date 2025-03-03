@@ -117,14 +117,21 @@ void PlayListContainer::movePlayListItemBefore(int currentIndex, int indexOfItem
                            indexOfItemToPlaceBefore);
 }
 
-bool PlayListContainer::deletePlayListItem(PlayListItem* playListItem) {
+bool PlayListContainer::deletePlayListItem(PlayListItem* playListItem, bool deleteRegion) {
+    
+    if (deleteRegion) {
+        for (auto subGroup : audioTrack.getAudioSubGroups()) {
+            subGroup->getAudioRegionContainer()->deleteAudioRegion(playListItem->getRegion());
+        }
+    }
+    
     return playListItems.deleteObject(playListItem);
 }
 
 void PlayListContainer::deletePlayListItem(int atIndex)
 {
     if (atIndex >= 0 && atIndex < playListItems.size()) {
-        deletePlayListItem(playListItems.getObjects()[atIndex].get());
+        deletePlayListItem(playListItems.getObjects()[atIndex].get(), false);
     }
 }
 
