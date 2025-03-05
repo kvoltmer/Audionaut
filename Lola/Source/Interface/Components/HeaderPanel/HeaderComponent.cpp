@@ -170,7 +170,8 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     loopImage.setPath(getLoopButtonPath());
     loopImage.setStrokeFill(FillType(Colours::white.withAlpha(0.8f)));
     loopImage.setStrokeThickness(1.5f);
-    loopImage.setFill (FillType(Colours::transparentBlack));
+    //loopImage.setFill (FillType(Colours::transparentBlack));
+    loopImage.setFill (Colours::white);
 
     loopButton->setImages(&loopImage);
     loopButton->setClickingTogglesState(true);
@@ -183,11 +184,9 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     };
     
     
-    
-    
     // RIGHT PANEL
     rightPanelButton = std::make_unique<juce::ShapeButton>("Right Panel", Colours::transparentBlack, Colours::grey.withAlpha(0.25f), Colours::grey.withAlpha(0.25f));
-    rightPanelButton->setOutline(Colours::lightgrey.withAlpha(0.75f), 1.2f);
+    rightPanelButton->setOutline(Colours::white.withAlpha(0.75f), 1.2f);
     addAndMakeVisible(rightPanelButton.get());
     auto path = getRightPanelButtonPath();
     rightPanelButton->setShape(path, true, true, true);
@@ -341,9 +340,16 @@ juce::Path HeaderComponent::getLoopButtonPath()
     loop.lineTo(w, 0.f);
     loop.lineTo(w, h);
     loop.lineTo(w - gap, h);
-    loop = loop.createPathWithRoundedCorners(4.f);
-
     
+    // go back
+    loop.lineTo(w, h);
+    loop.lineTo(w, 0.f);
+    loop.lineTo(0.f, 0.f);
+    loop.lineTo(0.f, h);
+    
+    loop = loop.createPathWithRoundedCorners(4.f);
+    
+    // arrow
     auto x = w-gap;
     auto y = h;
     auto arrowW = 5.f;
