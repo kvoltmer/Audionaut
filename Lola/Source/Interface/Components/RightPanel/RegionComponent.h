@@ -80,7 +80,7 @@ public:
     
     void updateUI(UIContext context)
     {
-        /// TODO: inplement UI context
+        /// TODO: implement UI context
         updateSelection();
         regionTableListBox->updateContent();
     }

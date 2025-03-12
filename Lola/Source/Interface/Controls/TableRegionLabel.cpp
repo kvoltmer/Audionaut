@@ -35,7 +35,8 @@ void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
         }
         
         /// pass on mouse events. unless row is not selected
-        getParentComponent()->mouseDown(e);
+        /// since this is a table we don't want the row but the cell to be selected
+        ///getParentComponent()->mouseDown(e);
         
         // update
         audioTrackContainer->sendActionMessage(updateSelection);

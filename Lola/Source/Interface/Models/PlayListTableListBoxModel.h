@@ -38,7 +38,8 @@ public:
     
     int getNumRows() override
     {
-        return audiumEngine->getPlayListContainer(audioTrack)->getNumItems();
+        auto num = audioTrack->getPlayListContainer()->getNumItems();
+        return num;
     }
 
     void paintRowBackground (juce::Graphics& g,
@@ -108,6 +109,7 @@ public:
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioTrack); }
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
     
+    void setAudioTrack(std::shared_ptr<AudioTrack> audioTrack_) { audioTrack = audioTrack_; }
     std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
     
 private:

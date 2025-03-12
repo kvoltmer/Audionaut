@@ -51,6 +51,7 @@ void AudioRegionView::resized()
 
 void AudioRegionView::updateUI(int theChannel)
 {
+    //std::cout << "AudioRegionView::updateUI " << theChannel << std::endl;
     channelNumber = theChannel;
         
     volumeSlider->setValue(LevelMeter::gainToDecebel(getClipGain()), dontSendNotification);

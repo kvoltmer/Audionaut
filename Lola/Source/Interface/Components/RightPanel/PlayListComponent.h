@@ -29,9 +29,7 @@ public:
         audioTrack(track)
     {
         playListTableListBox.reset(new PlayListTableListBox(this));
-        playListTableListBoxModel.reset(new PlayListTableListBoxModel(playListTableListBox, audiumEngine, track));
 
-        playListTableListBox->setModel(playListTableListBoxModel.get());
         playListTableListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(playListTableListBox.get());
         
@@ -42,6 +40,10 @@ public:
         playListTableListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
         playListTableListBox->setOutlineThickness (0);
         playListTableListBox->setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
+        
+        playListTableListBoxModel = std::make_unique<PlayListTableListBoxModel> (playListTableListBox, audiumEngine, track);
+        playListTableListBox->setModel(playListTableListBoxModel.get());
+        updateUI(track);
     }
 
     ~PlayListComponent() override
@@ -95,8 +97,11 @@ public:
         playListTableListBox->setSelectedRows(selectedRows, juce::dontSendNotification);
     }
     
-    void updateUI()
+    void updateUI(std::shared_ptr<AudioTrack> audioTrack_)
     {
+        audioTrack = audioTrack_;
+        playListTableListBoxModel->setAudioTrack(audioTrack_);
+        
         updateSelection();
         playListTableListBox->updateContent();
         

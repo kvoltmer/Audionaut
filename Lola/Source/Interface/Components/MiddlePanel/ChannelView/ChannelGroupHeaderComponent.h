@@ -37,11 +37,8 @@ public:
         audioTrackNameLabel->setJustificationType (juce::Justification::centredLeft);
         audioTrackNameLabel->setEditable (false, true, false);
     
-        // Label colours:
-        audioTrackNameLabel->setColour (juce::Label::textColourId, audioTrack->getColour());
+        // Label colours (also see updateFromEngine):
         audioTrackNameLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
-        audioTrackNameLabel->setColour (juce::TextEditor::textColourId, audioTrack->getColour());
-        audioTrackNameLabel->setColour (juce::Label::textWhenEditingColourId, audioTrack->getColour());
         audioTrackNameLabel->setColour (juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack);
         audioTrackNameLabel->setColour (juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
         
@@ -63,7 +60,7 @@ public:
         // 19 is the dragger height. center vertically -> 19 - 15 = 4 / 2 = 2
         channelSizeComboBox->setBounds (5, 2, 15, 15);
         
-        updateFromEngine();
+        updateFromEngine(audioTrack);
         
         addKeyListener(this);
     }
@@ -97,9 +94,13 @@ public:
         }
     }
     
-    void updateFromEngine()
+    void updateFromEngine(std::shared_ptr<AudioTrack> newAudioTrack)
     {
+        audioTrack = newAudioTrack;
         audioTrackNameLabel->setText(audioTrack->getAudioTrackName(), juce::dontSendNotification);
+        audioTrackNameLabel->setColour (juce::Label::textColourId, audioTrack->getColour());
+        audioTrackNameLabel->setColour (juce::TextEditor::textColourId, audioTrack->getColour());
+        audioTrackNameLabel->setColour (juce::Label::textWhenEditingColourId, audioTrack->getColour());
     }
     
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override

@@ -24,7 +24,7 @@ void WaveFormViewBase::paint (juce::Graphics& g)
         const auto thumbArea    = getClippedDrawingArea();
         const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
         const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
-        const auto channel      = audioResource->getChannelMapping().getSourceChannel(channelNumber);
+        const auto channel      = audioResource->getChannelMapping().getSourceChannel();
         
         if (channel >= 0 &&
             channel < audioResource->getNumAudioFileChannels()) {

@@ -114,7 +114,7 @@ void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
 void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arrangementMode)
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(owner);
+    auto action = std::make_unique<audium::UndoableContainerAction>(owner, false);
    
     auto context = audium::clocks;
     auto selectedRange = getSelectedRange(context);
@@ -156,7 +156,7 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
 void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
 {
     // Undo: store old state
-    auto action = withUndo ? std::make_unique<audium::UndoableContainerAction>(owner) : nullptr;
+    auto action = withUndo ? std::make_unique<audium::UndoableContainerAction>(owner, false) : nullptr;
     auto context = audium::clocks;
     auto selectedRange = getSelectedRange(context);
     juce::String name;

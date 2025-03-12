@@ -111,12 +111,10 @@ void AudiumTransportSource::applyChannelMapping()
     channelRemapping->clearAllMappings();
     
     auto channelOffset = getAudioResource().getAudioTrack()->getChannelOffset();
-    
-    auto mapping = getAudioResource().getChannelMapping().getData();
-    
-    auto numAudioFileChannels = audioResource.getNumAudioFileChannels();
-    
-    for (auto source = 0; source < std::min((int)numAudioFileChannels, mapping.size()); source++) {
-        channelRemapping->setOutputChannelMapping(source, mapping[source] + channelOffset);
-    }
+    auto srcChannel = getAudioResource().getChannelMapping().getSourceChannel();
+    auto dstChannel = getAudioResource().getChannelMapping().getDestinationChannel();
+    jassert(srcChannel < audioFileChannels);
+    jassert(dstChannel + channelOffset < totalChannels);
+    channelRemapping->setOutputChannelMapping(srcChannel,
+                                              dstChannel + channelOffset);
 }

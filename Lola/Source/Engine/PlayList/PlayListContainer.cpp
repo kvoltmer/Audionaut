@@ -200,11 +200,15 @@ bool PlayListContainer::writeToJson (json& output)
 
 bool PlayListContainer::readFromJson (json& input, bool rebuild)
 {
+    auto jsonPlayList = input["play_list"];
+    auto jsonPlayListItems = jsonPlayList["play_list_items"];
+    
+    if (!rebuild && jsonPlayListItems.size() != playListItems.size())
+        rebuild = true;
+    
     if (rebuild)
         playListItems.cleanup();
     
-    auto jsonPlayList = input["play_list"];
-    auto jsonPlayListItems = jsonPlayList["play_list_items"];
     auto i = 0;
     for (auto& jsonElement : jsonPlayListItems)
     {
@@ -236,14 +240,15 @@ void PlayListContainer::mergeFromJson(json& input)
 
     for (auto& jsonElement : jsonPlayListItems) {
         
-        auto playListItem = createPlayListItemFromJson(jsonElement);
-        jsonElement["track_id"] = playListItem->getRegion()->getAudioTrack()->getId();
-        if (playListItem->readFromJson(jsonElement, false)) {
-            
-            if (!playListItemExists(playListItem))
-                playListItems.push_back(playListItem);
-            else
-                std::cout << "playListItemExists" << std::endl;
+        if (auto playListItem = createPlayListItemFromJson(jsonElement)) {
+            jsonElement["track_id"] = playListItem->getRegion()->getAudioTrack()->getId();
+            if (playListItem->readFromJson(jsonElement, false)) {
+                
+                if (!playListItemExists(playListItem))
+                    playListItems.push_back(playListItem);
+                else
+                    std::cout << "playListItemExists" << std::endl;
+            }
         }
     }
 }
