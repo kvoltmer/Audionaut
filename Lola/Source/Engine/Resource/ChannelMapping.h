@@ -41,7 +41,7 @@ public:
     bool containsDestinationChannelNumber(int channelNumber) const;
 
     bool deleteChannel(int sourceChannelIndex);
-    void decrementChannelMapping(int startChannelNumber);
+    void decrementDestinationChannel(int startChannelNumber);
 
     bool writeToJson (json& output);
     bool readFromJson (json& input, bool rebuild);

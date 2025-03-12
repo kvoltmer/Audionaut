@@ -77,6 +77,8 @@ public:
     void setGain(int channel, double newGain, bool continous = false);
     double getGain(int channel) const;
     
+    void onDeleteChannel(int channel);
+    
     AudioRegionData data;
     
 private:

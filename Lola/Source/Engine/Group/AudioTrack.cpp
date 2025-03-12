@@ -537,10 +537,16 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
         audioResourceContainer.onDeleteChannel(this, channel);
         
         if (audioChannelContainer->deleteObject(channel)) {
-            // change mapping
+            // mapping changes for resources
             for (auto resource : getAudioResources()) {
-                
-                resource->getChannelMapping().decrementChannelMapping(channelNumber);
+                resource->getChannelMapping().decrementDestinationChannel(channelNumber);
+            }
+            
+            // volume vector changes for regions
+            for (auto subGroup : audioSubGroupContainer->getObjects()) {
+                for (auto region : subGroup->getAudioRegionContainer()->getObjects()) {
+                    region->onDeleteChannel(channelNumber);
+                }
             }
             
             // cleanup subgroups
