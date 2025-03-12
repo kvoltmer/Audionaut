@@ -189,6 +189,11 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     
     // Channels
     auto jsonChannels = input["channels"];
+
+    if (!rebuild && jsonChannels.size() != audioChannelContainer->size()) {
+        rebuild = true;
+        audioChannelContainer->cleanup();
+    }
     auto c = 0;
     for (auto& jsonElement : jsonChannels)
     {
@@ -210,6 +215,10 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     
     // SubGroups
     auto jsonSubGroups = input["sub_groups"];
+    if (!rebuild && jsonSubGroups.size() != audioSubGroupContainer->size()) {
+        rebuild = true;
+        audioSubGroupContainer->cleanup();
+    }
     auto i = 0;
     for (auto& jsonElement : jsonSubGroups)
     {
@@ -492,22 +501,26 @@ std::list<std::shared_ptr<PositionableBase>> AudioTrack::getPositionableItems(bo
     return result;
 }
 
-bool AudioTrack::deleteSelectedObject(std::shared_ptr<audium::Selectable> object)
+bool AudioTrack::deleteSelectedObject(std::shared_ptr<audium::Selectable> object, bool &rebuild)
 {
     if (AudioSubGroup* subGroup = dynamic_cast<AudioSubGroup*>(object.get()))
     {
+        rebuild = true;
         return audioSubGroupContainer->deleteObject(subGroup);
     }
     else if (AudioChannel* audioChannel = dynamic_cast<AudioChannel*>(object.get()))
     {
+        rebuild = true;
         return deleteChannel(audioChannel);
     }
     else if (AudioRegion* audioRegion = dynamic_cast<AudioRegion*>(object.get()))
     {
+        rebuild = false;
         return audioRegion->getAudioSubGroup()->getAudioRegionContainer()->deleteAudioRegion(audioRegion);
     }
     else if (PlayListItem* playListItem = dynamic_cast<PlayListItem*>(object.get()))
     {
+        rebuild = false;
         return playListContainer->deletePlayListItem(playListItem, false);
     }
     
@@ -520,13 +533,13 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
     bool result = false;
 
     if (audioChannelContainer->objectExists(channel)) {
-        auto channelNumber = channel->getChannelNumber();
-        
+        const auto channelNumber = channel->getChannelNumber();
         audioResourceContainer.onDeleteChannel(this, channel);
         
         if (audioChannelContainer->deleteObject(channel)) {
             // change mapping
             for (auto resource : getAudioResources()) {
+                
                 resource->getChannelMapping().decrementChannelMapping(channelNumber);
             }
             
@@ -766,6 +779,7 @@ void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType co
 {
     // drop all selected regions
     auto selectedObjects = getSelectionManager()->getSelectedObjects();
+    jassert(selectedObjects.size() > 0);
        
     for (auto object : selectedObjects) {
         if (auto region = std::dynamic_pointer_cast<AudioRegion>(object)) {

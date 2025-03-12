@@ -15,139 +15,86 @@ namespace audium
 
 void ChannelMapping::clear()
 {
-    remappedChannels.clear();
+    srcChannel = -1;
+    dstChannel = -1;
 }
 
-void ChannelMapping::setOutputChannelMapping (const int sourceChannel, const int destChannel)
+void ChannelMapping::setOutputChannelMapping (const int sourceChannel,
+                                              const int destinationChannel)
 {
-    auto source = getSourceChannel(destChannel);
-    if (source >= 0) {
-        // destination is already mapped!
-        remappedChannels.set (source, -1);
+    if (destinationChannel >= 0) {
+        std::cout << this << " mapping src:" << sourceChannel << " dst: " << destinationChannel << std::endl;
+        srcChannel = sourceChannel;
+        dstChannel = destinationChannel;
     }
-    
-    while (remappedChannels.size() < sourceChannel)
-        remappedChannels.add (-1);
-    
-    remappedChannels.set (sourceChannel, destChannel);
-}
-
-
-int ChannelMapping::getRemappedChannel (const int sourceChannelIndex) const
-{
-    if (sourceChannelIndex >= 0 && sourceChannelIndex < remappedChannels.size())
-        return remappedChannels.getUnchecked (sourceChannelIndex);
-    
-    return -1;
-}
-
-int ChannelMapping::getSourceChannel (const int destChannelIndex) const
-{
-    for (int sourceChannel = 0; sourceChannel < remappedChannels.size(); sourceChannel++)
-    {
-        if (remappedChannels.getUnchecked (sourceChannel) == destChannelIndex)
-            return sourceChannel;
-    }
-
-    return -1;
 }
 
 int ChannelMapping::getDestinationChannel() const
 {
-    if (remappedChannels.size() > 0) {
-        for (auto i = 0; i < remappedChannels.size(); i++) {
-            if (getRemappedChannel(i) >= 0) {
-                return getRemappedChannel(i);
-            }
-        }
-    }
-    return -1;
+    return dstChannel;
 }
 
 void ChannelMapping::setDestinationChannel(int newDestChannel)
 {
-    setOutputChannelMapping(getSourceChannel(), newDestChannel);
+    dstChannel = newDestChannel;
 }
 
 int ChannelMapping::getSourceChannel() const
 {
-    if (remappedChannels.size() > 0) {
-        for (auto i = 0; i < remappedChannels.size(); i++) {
-            if (getRemappedChannel(i) >= 0) {
-                return i;
-            }
-        }
-    }
-    return -1;
+    return srcChannel;
 }
 
+void ChannelMapping::setSourceChannel(int newSrcChannel)
+{
+    srcChannel = newSrcChannel;
+}
 
 bool ChannelMapping::containsSourceChannelNumber(int channelNumber) const
 {
-    return getSourceChannel(channelNumber) >= 0;
+    return (channelNumber == srcChannel);
 }
 
 bool ChannelMapping::containsDestinationChannelNumber(int channelNumber) const
 {
-    for (auto i = 0; i < remappedChannels.size(); i++) {
-        if (getRemappedChannel(i) == channelNumber)
-            return true;
-    }
-    
-    
-    return false;
-}
-
-bool ChannelMapping::anyOutputMapping() const
-{
-    if (remappedChannels.size() > 0) {
-        for (auto i = 0; i < remappedChannels.size(); i++) {
-            if (getRemappedChannel(i) >= 0)
-                return true;
-        }
-    }
-    
-    return false;
+    return (channelNumber == dstChannel);
 }
 
 bool ChannelMapping::deleteChannel(const int destIndex)
 {
-    auto sourceIndex = getSourceChannel(destIndex);
-    if (sourceIndex >= 0) {
-        setOutputChannelMapping(sourceIndex, -1);
+    if (containsDestinationChannelNumber(destIndex)) {
+        setDestinationChannel(-1);
+        return true;
     }
-    
-    // returns true in case there is no more mapping
-    return !anyOutputMapping();
-
+    return false;
 }
 
 void ChannelMapping::decrementChannelMapping(int startChannelNumber)
 {
-    for (auto i = 0; i < remappedChannels.size(); i++) {
-        auto dest = getRemappedChannel(i);
-        if (dest >= startChannelNumber) {
-            auto newDest = dest - 1;
-            jassert(newDest >= 0);
-            std::cout << "remapping " << i << " -> " << newDest << std::endl;
-            setOutputChannelMapping(i, newDest);
-        }
+    auto dest = getDestinationChannel();
+    if (dest >= startChannelNumber) {
+        auto newDest = dest - 1;
+        jassert(newDest >= 0);
+        std::cout << "remapping " << srcChannel << " -> " << newDest << std::endl;
+        setDestinationChannel(newDest);
     }
 }
 
 bool ChannelMapping::writeToJson (json& output)
 {
-    std::vector<int> mapping;
-    jassert(remappedChannels.size() >= 0);
-    for (auto i = 0; i < remappedChannels.size(); i++) {
-        mapping.push_back(getRemappedChannel(i));
-    }
-    output["channel_mapping"] = mapping;
+    output["destination_channel"] = dstChannel;
+    output["source_channel"] = srcChannel;
     return true;
 }
 
 bool ChannelMapping::readFromJson (json& input, bool rebuild)
 {
+    if (input.contains("source_channel"))
+        setSourceChannel(input.at("source_channel").get<int>());
+
+    if (input.contains("destination_channel"))
+        setDestinationChannel(input.at("destination_channel").get<int>());
+    
+    // legacy mapping
     if (input.contains("channel_mapping")) {
         clear();
         auto counter = 0;

@@ -31,17 +31,14 @@ public:
     void setOutputChannelMapping (int sourceChannel,
                                   int destChannel);
 
-    int getRemappedChannel (int sourceChannel) const;
-    int getSourceChannel (int destChannel) const;
-
-    // single channel mapping
     int getDestinationChannel() const;
     void setDestinationChannel(int newDestChannel);
+    
     int getSourceChannel() const;
+    void setSourceChannel(int newSrcChannel);
     
     bool containsSourceChannelNumber(int channelNumber) const;
     bool containsDestinationChannelNumber(int channelNumber) const;
-    bool anyOutputMapping() const;
 
     bool deleteChannel(int sourceChannelIndex);
     void decrementChannelMapping(int startChannelNumber);
@@ -49,11 +46,10 @@ public:
     bool writeToJson (json& output);
     bool readFromJson (json& input, bool rebuild);
 
-    const juce::Array<int> getData() const { return remappedChannels; }
-
 private:
-
-    juce::Array<int> remappedChannels;
+    
+    int srcChannel = -1;
+    int dstChannel = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelMapping)
 };

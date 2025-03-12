@@ -23,7 +23,7 @@
 PlayListContainerComponent::PlayListContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
-    updateUI();
+    createComponents();
     startTimer(50);
 }
 
@@ -34,21 +34,27 @@ PlayListContainerComponent::~PlayListContainerComponent()
 
 void PlayListContainerComponent::updateUI(UIContext context)
 {
-    if (context == RebuildContext)
-    {
+    auto tracks = audiumEngine->getAudioTrackContainer()->getAudioTracks();
+    
+    if (context == RebuildContext ||
+        tracks.size() != playListComponents.size()) {
         createComponents();
         resized();
     }
-    
-    for (auto playListComponent : playListComponents)
-    {
-        if (context == SelectionContext)
-        {
-            playListComponent->updateSelection();
-        }
-        else
-        {
-            playListComponent->updateUI();
+    else {
+        auto i = 0;
+        for (auto track : tracks) {
+            
+            if (i < playListComponents.size()) {
+                
+                if (context == SelectionContext) {
+                    playListComponents[i]->updateSelection();
+                }
+                else {
+                    playListComponents[i]->updateUI(track);
+                }
+            }
+            i++;
         }
     }
 }

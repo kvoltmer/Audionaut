@@ -22,15 +22,7 @@ class AudioRegionContainer : public audium::Streamable
 {
                                             
 public:
-    AudioRegionContainer(AudioResourceContainer &audioResourceContainer_,
-                         AudioTrackContainer &audioTrackContainer_,
-                         std::shared_ptr<TempoProvider> tempoProvider_,
-                         std::shared_ptr<juce::UndoManager> undoManager_) :
-        audioResourceContainer(audioResourceContainer_),
-        audioTrackContainer(audioTrackContainer_),
-        tempoProvider(tempoProvider_),
-        undoManager(undoManager_)
-    {}
+    AudioRegionContainer(AudioTrack &audioTrack_);
     
     std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioTrack> track);
     std::shared_ptr<AudioRegion> createRegion(std::shared_ptr<AudioTrack> track,
@@ -52,7 +44,7 @@ public:
     
     void cleanup();
     
-    int getNumRegions(const AudioTrack* track = nullptr) const;
+    int getNumRegions() const;
     std::shared_ptr<AudioRegion> getRegion(int index) const;
     int getRegionId(std::shared_ptr<AudioRegion> searchRegion) const;
     
@@ -87,6 +79,7 @@ public:
     
 private:
     
+    AudioTrack &audioTrack;
     AudioResourceContainer &audioResourceContainer;
     AudioTrackContainer &audioTrackContainer;
     std::shared_ptr<TempoProvider> tempoProvider;

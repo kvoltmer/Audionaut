@@ -39,10 +39,7 @@ public:
     
     static std::shared_ptr<AudioSubGroup> createAudioSubGroup(AudioTrack &track)
     {
-        auto regionContainer = std::shared_ptr<AudioRegionContainer> (new AudioRegionContainer(track.getAudioResourceContainer(),
-                                                                                               track.getAudioTrackContainer(),
-                                                                                               track.getAudioTrackContainer().getTempoProvider(),
-                                                                                               track.getAudioTrackContainer().getUndoManager()));
+        auto regionContainer = std::shared_ptr<AudioRegionContainer> (new AudioRegionContainer(track));
         return std::shared_ptr<AudioSubGroup> (new AudioSubGroup(track,
                                                                  regionContainer,
                                                                  track.getSelectionManager()));

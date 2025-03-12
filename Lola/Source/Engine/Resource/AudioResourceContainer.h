@@ -27,11 +27,13 @@ public:
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager_,
                            std::shared_ptr<juce::AudioFormatManager> formatManager_,
                            std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache_,
-                           std::shared_ptr<TempoProvider> tempoProvider_) :
+                           std::shared_ptr<TempoProvider> tempoProvider_,
+                           std::shared_ptr<TransportSourceContainer> transportSourceContainer_) :
         audioDeviceManager(audioDeviceManager_),
         formatManager(formatManager_),
         audioThumbnailCache(audioThumbnailCache_),
-        tempoProvider(tempoProvider_)
+        tempoProvider(tempoProvider_),
+        transportSourceContainer(transportSourceContainer_)
     {
         formatManager->registerBasicFormats();
         thread.startThread();
@@ -89,6 +91,7 @@ private:
     std::shared_ptr<juce::AudioFormatManager> formatManager;
     std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
     std::shared_ptr<TempoProvider> tempoProvider;
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     
     
     

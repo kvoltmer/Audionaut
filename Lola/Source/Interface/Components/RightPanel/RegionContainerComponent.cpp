@@ -43,17 +43,25 @@ void RegionContainerComponent::resized()
 
 void RegionContainerComponent::updateUI(UIContext context)
 {
+    auto tracks = audiumEngine->getAudioTrackContainer()->getAudioTracks();
+
     
-    if (context == RebuildContext) {
+    if (context == RebuildContext ||
+        tracks.size() != regionTableListBox->getHeader().getNumColumns(true)) {
         regionTableListBox->getHeader().removeAllColumns();
-        for (const auto &audioTrack : audiumEngine->getAudioTrackContainer()->getAudioTracks()) {
-            regionTableListBox->getHeader().addColumn (audioTrack->getAudioTrackName(),
-                                                       audioTrack->getId() + 1,
+        for (auto track : tracks) {
+            regionTableListBox->getHeader().addColumn (track->getAudioTrackName(),
+                                                       track->getId() + 1,
                                                        250,
                                                        0,
                                                        800,
                                                        juce::TableHeaderComponent::notResizableOrSortable);
         }
+    }
+    
+    for (auto track : tracks) {
+        regionTableListBox->getHeader().setColumnName(track->getId() + 1,
+                                                      track->getAudioTrackName());
     }
     
     regionTableListBox->updateContent();

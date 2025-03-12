@@ -20,6 +20,15 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+AudioRegionContainer::AudioRegionContainer(AudioTrack &audioTrack_) :
+    audioTrack(audioTrack_),
+    audioResourceContainer(audioTrack.getAudioResourceContainer()),
+    audioTrackContainer(audioTrack.getAudioTrackContainer()),
+    tempoProvider(audioTrackContainer.getTempoProvider()),
+    undoManager(audioTrackContainer.getUndoManager())
+{
+}
+
 std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioTrack> track)
 {
 //    jassert(getNumRegions(track.get()) == 0);
@@ -173,22 +182,9 @@ int AudioRegionContainer::getRegionId(std::shared_ptr<AudioRegion> searchRegion)
     return -1; // not found
 }
 
-int AudioRegionContainer::getNumRegions(const AudioTrack* track) const
+int AudioRegionContainer::getNumRegions() const
 {
-    if (track == nullptr)
-    {
-        return static_cast<int>(audioRegions.size());
-    }
-    else
-    {
-        int count = 0;
-        for (auto region : audioRegions)
-        {
-            if (region->getAudioTrack().get() == track)
-                count++;
-        }
-        return count;
-    }
+    return static_cast<int>(audioRegions.size());
 }
 
 std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSubGroup(const AudioSubGroup* subGroup) const
@@ -360,10 +356,13 @@ bool AudioRegionContainer::writeToJson (json& output)
 
 bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
 {
+    auto jsonRegions = input["regions"];
+    
+    if (!rebuild && jsonRegions.size() != getNumRegions())
+        rebuild = true;
+    
     if (rebuild)
         cleanup();
-    
-    auto jsonRegions = input["regions"];
     
     for (auto& jsonElement : jsonRegions) {
         AudioRegionData regionData = jsonElement;
@@ -385,8 +384,6 @@ bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
                     std::cout << "warning region id " << regionData.region_id << std::endl;
                     region->data.region_id = regionData.region_id;
                 }
-                
-                
             }
         }
     }
@@ -403,7 +400,7 @@ void AudioRegionContainer::mergeFromJson(json& input)
         auto region = getRegionWithData(data);
         
         if (region == nullptr) {
-            if (auto track = audioTrackContainer.getAudioTrack(data.track_id)) {
+            if (auto track = std::dynamic_pointer_cast<AudioTrack>(audioTrack.getSharedPtr())) {
                 if (track->audioSubGroupContainer->objectExistsAtIndex(data.sub_group_id)) {
                     auto subGroup = track->audioSubGroupContainer->getObjects()[data.sub_group_id];
                     region = createRegion(track, subGroup);
@@ -411,7 +408,7 @@ void AudioRegionContainer::mergeFromJson(json& input)
                 }
             }
         }
+        
         jassert(region);
     }
 }
-

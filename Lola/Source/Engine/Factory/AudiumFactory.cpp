@@ -41,16 +41,17 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto audioThumbnailCache        = std::make_shared<juce::AudioThumbnailCache>(64);
     
-    auto audioResourceContainer     = std::make_shared<AudioResourceContainer>(audioDeviceManager,
-                                                                               formatManager,
-                                                                               audioThumbnailCache,
-                                                                               tempoProvider);
-    
     auto playback                   = std::make_shared<audium::Playback>();
     
     auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback);
     
     auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback);
+    
+    auto audioResourceContainer     = std::make_shared<AudioResourceContainer>(audioDeviceManager,
+                                                                               formatManager,
+                                                                               audioThumbnailCache,
+                                                                               tempoProvider,
+                                                                               transportSourceContainer);
     
     auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
     

@@ -170,13 +170,15 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     std::shared_ptr<AudioTrack> track = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
     std::shared_ptr<AudioSubGroup> subGroup = std::dynamic_pointer_cast<AudioSubGroup> (getSharedPtr());
     
-    if (rebuild)
-        cleanup();
-    
     auto jsonResources = input["resources"];
     auto resources = getAudioResources();
-    if (!rebuild) {
-        jassert(resources.size() == jsonResources.size());
+    
+    if (!rebuild && resources.size() != jsonResources.size()) {
+        rebuild = true;
+    }
+    
+    if (rebuild) {
+        cleanup();
     }
     
     auto r = 0;
@@ -235,7 +237,7 @@ std::shared_ptr<AudioResource> AudioSubGroup::getAudioResourceAtChannel(int chan
 {
     for (auto resource : getAudioResources())
     {
-        if (resource->getChannelMapping().containsSourceChannelNumber(channelNumber))
+        if (resource->getChannelMapping().containsDestinationChannelNumber(channelNumber))
             return resource;
     }
     return nullptr;

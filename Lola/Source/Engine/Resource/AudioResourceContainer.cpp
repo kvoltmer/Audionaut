@@ -89,30 +89,25 @@ std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSo
 
 void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> resource)
 {
-    for (auto it = audioResources.begin(); it != audioResources.end();) {
+    for (auto it = audioResources.begin(); it != audioResources.end(); ++it) {
         if ((*it).second == resource) {
+            auto sources = transportSourceContainer->getTransportSourcesForResource(*resource.get());
+            for (auto source : sources) {
+                transportSourceContainer->removeTransportSource(source);
+            }
             audioResources.erase(it);
             break;
         }
-        ++it;
     }
 }
 
 void AudioResourceContainer::removeAudioResourcesForTrack (AudioTrack *track)
 {
     jassert(track != nullptr);
-    if (track != nullptr)
-    {        
-        for (auto it = audioResources.begin(); it != audioResources.end();)
-        {
+    if (track != nullptr) {
+        for (auto it = audioResources.begin(); it != audioResources.end(); it++) {
             if ((*it).first.get() == track)
-            {
                 audioResources.erase(it++);
-            }
-            else
-            {
-                ++it;
-            }
         }
     }
 }

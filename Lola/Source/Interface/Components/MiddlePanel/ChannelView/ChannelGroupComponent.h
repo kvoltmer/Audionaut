@@ -33,9 +33,6 @@ public:
         audiumEngine(audiumEngine)
     {
         channelsListBox.reset(new audium::ListBox());
-        channelsListBoxModel.reset(new ChannelSubGroupListBoxModel(*channelsListBox.get(), audiumEngine, audioTrack));
-        channelsListBox->setModel(channelsListBoxModel.get());
-        
         
         auto header = std::unique_ptr<ChannelGroupHeaderComponent>(new ChannelGroupHeaderComponent(audioTrack));
         channelsListBox->setHeaderComponent(std::move(header));
@@ -43,6 +40,9 @@ public:
         channelsListBox->setOutlineThickness(0);
         channelsListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(channelsListBox.get());
+        
+        channelsListBoxModel.reset(new ChannelSubGroupListBoxModel(*channelsListBox.get(), audiumEngine, audioTrack));
+        channelsListBox->setModel(channelsListBoxModel.get());
         
     }
 
@@ -73,7 +73,7 @@ public:
         // the audio track title
         auto headerComponent = dynamic_cast<ChannelGroupHeaderComponent*>( channelsListBox->getHeaderComponent() );
         if (headerComponent != nullptr)
-            headerComponent->updateFromEngine();
+            headerComponent->updateFromEngine(audioTrack);
     }
 
 private:

@@ -140,7 +140,7 @@ public:
     std::list<std::shared_ptr<PositionableBase>> getPositionableItems(bool arrangementMode) const;
     
     // objects:
-    bool deleteSelectedObject(std::shared_ptr<audium::Selectable> object);
+    bool deleteSelectedObject(std::shared_ptr<audium::Selectable> object, bool &rebuild);
     
     // channels:
     int getNumAudioTrackChannels() const;

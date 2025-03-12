@@ -127,7 +127,7 @@ void AudioTrackContainer::deleteSelectedObjects()
 {
     // Undo: store old state
     auto action = std::make_unique<audium::UndoableContainerAction>(*this);
-
+    auto rebuild = false;
     auto objects = selectionManager->getSelectedObjects();
     
     for (auto object : objects) {
@@ -135,9 +135,8 @@ void AudioTrackContainer::deleteSelectedObjects()
             deleteAudioTrack(track);
         }
         else {
-            for (auto g : audioTracks) {
-                if (g->deleteSelectedObject(object))
-                    continue;
+            for (auto track : audioTracks) {
+                track->deleteSelectedObject(object, rebuild);
             }
         }
     }
@@ -146,6 +145,7 @@ void AudioTrackContainer::deleteSelectedObjects()
     
     // Undo: store new state and perform
     action->storeNewState();
+    action->rebuild = rebuild;
     undoManager->perform(action.release(), "Delete Selected Objects(s)");
     undoManager->beginNewTransaction();
     
@@ -204,11 +204,21 @@ bool AudioTrackContainer::writeToJson (json& output)
 bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
 {
     //std::cout << "AudioTrackContainer::readFromJson " << rebuild << std::endl;
+    json jsonTracks;
+    if (input.contains("audio_tracks")) {
+        jsonTracks = input["audio_tracks"];
+    }
+    else if (input.contains("groups")) {
+        jsonTracks = input["groups"];
+    }
+    
+    // fallback to rebuild:
+    if (!rebuild && jsonTracks.size() != audioTracks.size())
+        rebuild = true;
     
     if (rebuild) {
         cleanup();
         jassert(audioTracks.size() == 0);
-        jassert(audioResourceContainer != nullptr);
     }
     
     if (input.contains("master_gain")) {
@@ -218,15 +228,9 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
         setMasterGain(1.f);
     }
     
-    json jsonGroups;
-    if (input.contains("audio_tracks")) {
-        jsonGroups = input["audio_tracks"];
-    }
-    else if (input.contains("groups")) {
-        jsonGroups = input["groups"];
-    }
+
     int count = 0;
-    for (auto& jsonElement : jsonGroups) {
+    for (auto& jsonElement : jsonTracks) {
         std::shared_ptr<AudioTrack> audioTrack = nullptr;
         if (rebuild) {
             audioTrack = AudioTrackFactory::createAudioTrack(*this, audioResourceContainer);
@@ -362,7 +366,7 @@ void AudioTrackContainer::copySelectedChannelsToNewTrack()
         
         // undo
         action->storeNewState();
-        undoManager->perform(action.release(), "channel(s) copied");
+        undoManager->perform(action.release(), "copy channel(s)");
         undoManager->beginNewTransaction();
 }
 

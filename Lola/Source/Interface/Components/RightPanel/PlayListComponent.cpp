@@ -20,7 +20,7 @@ bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget:
 
 void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
-    auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
     
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
         dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
