@@ -68,7 +68,7 @@ bool ChannelMapping::deleteChannel(const int destIndex)
     return false;
 }
 
-void ChannelMapping::decrementChannelMapping(int startChannelNumber)
+void ChannelMapping::decrementDestinationChannel(int startChannelNumber)
 {
     auto dest = getDestinationChannel();
     if (dest >= startChannelNumber) {

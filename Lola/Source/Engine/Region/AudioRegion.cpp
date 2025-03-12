@@ -184,3 +184,11 @@ double AudioRegion::getGain(int channel) const
     }
     return 1.0;
 }
+
+void AudioRegion::onDeleteChannel(int channel)
+{
+    for (auto i = channel; i < data.gain_vector.size(); i++) {
+        if (i + 1 < data.gain_vector.size())
+            data.gain_vector[i] = data.gain_vector[i + 1];
+    }
+}
