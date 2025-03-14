@@ -163,9 +163,9 @@ public:
 
     void updateUI()
     {
+        // will call -> audioTrackListBox->updateContent()
         setContentWidth(zoomHandler->getContentWidth());
         
-        audioTrackListBox->updateContent();
         regionSelector->updateFromEngine();
         arrangementOverview->updateFromEngine();
         dragZoomControl->updateFromEngine();
