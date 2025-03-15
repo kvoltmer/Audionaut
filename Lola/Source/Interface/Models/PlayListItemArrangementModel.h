@@ -64,38 +64,30 @@ public:
         auto audioSubGroup = playListItem->getRegion()->getAudioSubGroup();
         auto audioResource = audioSubGroup->getAudioResourceAtChannel(rowNumber);
         
-        if (existingComponentToUpdate == nullptr)
-        {
-            if (audioResource != nullptr)
-            {
-                
-                auto component = new AudioRegionView(*owner.getParentComponent(),
+        if (existingComponentToUpdate == nullptr) {
+            if (audioResource != nullptr) {
+                jassert(parentComponent);
+                jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
+                auto component = new AudioRegionView(parentComponent,
                                                      audiumEngine,
                                                      audioResource,
                                                      zoomHandler,
-                                                     playListItem->getRegion(),
                                                      audioTrack->getColour(),
                                                      regionSelector,
-                                                     rowNumber,
-                                                     playListItem);
+                                                     rowNumber);
+                component->setPlayListItem(playListItem);
                 return component;
             }
-            else
-            {
+            else {
                 return new juce::Component();
             }
         }
-        else
-        {
-            auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate);
-            if (component != nullptr)
-            {
+        else {
+            if (auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate)) {
+                component->setParentComponent(parentComponent);
+                component->setPlayListItem(playListItem);
                 component->updateUI(rowNumber);
                 return component;
-            }
-            else
-            {
-                return existingComponentToUpdate;
             }
         }
         
@@ -128,10 +120,14 @@ public:
     void selectedRowsChanged (int lastRowSelected) override
     {
     }
-        
+    
+    void setPlayListItem(std::shared_ptr<PlayListItem> playListItem_) { playListItem = playListItem_; }
+    void setParentComponent(juce::Component *comp) { parentComponent = comp; }
+    
 private:
     
     audium::ListBox& owner;
+    juce::Component *parentComponent = nullptr;
     std::shared_ptr<AudioTrack> audioTrack;
     std::shared_ptr<PlayListItem> playListItem;
     std::shared_ptr<AudiumEngine> audiumEngine;

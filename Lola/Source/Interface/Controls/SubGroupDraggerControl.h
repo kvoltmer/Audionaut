@@ -19,18 +19,15 @@ class SubGroupDraggerControl : public DraggerControl
 {
 public:
     
-    SubGroupDraggerControl(juce::Component* componentToDrag,
-                           std::shared_ptr<AudiumEngine> audiumEngine,
+    SubGroupDraggerControl(std::shared_ptr<AudiumEngine> audiumEngine,
                            std::shared_ptr<AudioSubGroup> audioSubGroup,
                            std::shared_ptr<ZoomHandler> zoomHandler,
                            juce::Colour colour,
                            std::shared_ptr<RegionSelector> regionSelector) :
-        DraggerControl(componentToDrag,
-                       audiumEngine,
+        DraggerControl(audiumEngine,
                        zoomHandler,
                        colour,
-                       regionSelector,
-                       std::static_pointer_cast<PositionableBase>(audioSubGroup)),
+                       regionSelector),
         audioSubGroup(audioSubGroup)
     {
         regionSelector->subGroupDraggerControls.push_back(this);

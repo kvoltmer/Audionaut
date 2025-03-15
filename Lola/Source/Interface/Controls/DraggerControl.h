@@ -29,18 +29,14 @@ class DraggerControl  : public juce::Component,
                         public juce::KeyListener
 {
 public:
-    DraggerControl(juce::Component* componentToDrag_,
-                   std::shared_ptr<AudiumEngine> audiumEngine_,
+    DraggerControl(std::shared_ptr<AudiumEngine> audiumEngine_,
                    std::shared_ptr<ZoomHandler> zoomHandler_,
                    juce::Colour colour_,
-                   std::shared_ptr<RegionSelector> regionSelector_,
-                   std::shared_ptr<PositionableBase> positionableObject_) :
-        componentToDrag(componentToDrag_),
+                   std::shared_ptr<RegionSelector> regionSelector_) :
         audiumEngine(audiumEngine_),
         zoomHandler(zoomHandler_),
         colour(colour_),
-        regionSelector(regionSelector_),
-        positionableObject(positionableObject_)
+        regionSelector(regionSelector_)
     {
         addKeyListener(this);
         setWantsKeyboardFocus(true);
@@ -138,6 +134,7 @@ public:
         // commit values to engine
     
         commitData(rangeInClocks, audium::clocks);
+        
     }
     
     void commitData(const juce::Range<double> newData, audium::TimeContextType context);
@@ -156,6 +153,10 @@ public:
     
     virtual bool validateData() = 0;
     
+    void setComponentToDrag(juce::Component* comp);
+    
+    void setPositionableObject(std::shared_ptr<PositionableBase> object);
+    
     static constexpr int draggerHeight = 19;
     
     juce::Point<float> mouseDownOffset;
@@ -164,7 +165,7 @@ public:
     
 protected:
     
-    juce::Component* componentToDrag;
+    juce::Component* componentToDrag = nullptr;
     
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;

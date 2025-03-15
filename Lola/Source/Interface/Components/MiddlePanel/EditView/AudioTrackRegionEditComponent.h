@@ -97,12 +97,13 @@ public:
             subGroupListView->setModel(subGroupListBoxModel.get());
             
             // create dragger as header of ListBox
-            auto dragger = std::unique_ptr<SubGroupDraggerControl>(new SubGroupDraggerControl(subGroupListView.get(),
-                                                                                              audiumEngine,
+            auto dragger = std::unique_ptr<SubGroupDraggerControl>(new SubGroupDraggerControl(audiumEngine,
                                                                                               subGroup,
                                                                                               zoomHandler,
                                                                                               audioTrack->getColour(),
                                                                                               regionSelector));
+            dragger->setComponentToDrag(subGroupListView.get());
+            dragger->setPositionableObject(subGroup);
             dragger->addChangeListener(this);
             subGroupListView->setHeaderComponent(std::move(dragger));
 

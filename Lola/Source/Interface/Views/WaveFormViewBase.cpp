@@ -94,9 +94,10 @@ juce::Rectangle<double> WaveFormViewBase::getClippedDrawingArea() const
     const auto visibleRange = zoomHandler->getVisibleRange();
     
     // clip to the area of its parent (owner)
-    const auto parentOffset = static_cast<double>(parentComponent.getBounds().getX());
-    //std::cout << parentComponent.getName().toStdString() << " offset: " << parentOffset << std::endl;
+    jassert(parentComponent);
+    const auto parentOffset = static_cast<double>(parentComponent->getBounds().getX());
     const auto scrollOffset = zoomHandler->getVisibleRange().getStart();
+    //std::cout << parentComponent.getName().toStdString() << " offset: " << parentOffset << " " << scrollOffset << std::endl;
     const auto startX = std::max(scrollOffset - parentOffset, 0.0);
     const auto lengthX = std::min(visibleRange.getLength(), static_cast<double>(thumbArea.getWidth()) - startX);
 

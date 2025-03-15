@@ -16,12 +16,18 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/RegionSelector.h"
 #include "Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"
+#include "Interface/Models/ArrangementModel.h"
 
 using namespace juce;
 
 class AudioTrack;
 class PlayListContainer;
 class PlayListItemComponent;
+
+
+
+
+
 
 //==============================================================================
 /*
@@ -39,10 +45,13 @@ public:
                                std::shared_ptr<RegionSelector> regionSelector) :
         AudioTrackBaseComponent(track, audiumEngine, zoomHandler, regionSelector)
     {
+        model.reset(new ArrangementModel(audiumEngine, track, regionSelector, zoomHandler));
         refreshComponent(track);
     }
     
     void refreshComponent (std::shared_ptr<AudioTrack> audioTrack, bool forceRebuildComponents = false) override;
+    
+    void updateContents();
     
     void resized() override;
     
@@ -55,13 +64,18 @@ public:
     void itemDropped (const SourceDetails &dragSourceDetails) override;
     bool shouldDrawDragImageWhenOver () override { return true; }
     
+    ArrangementModel* getModel() const { return model.get(); }
+    
 private:
+    class ItemComponent;
     
-    bool mustRebuildComponents() const;
-    void rebuildComponents();
     
-    std::vector<std::shared_ptr<PlayListItemComponent>> playListItemComponents;
+    std::unique_ptr<ArrangementModel> model;
+
+    std::vector<std::unique_ptr<juce::Component>> itemComponents;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackComponent)
     
 };
+
+

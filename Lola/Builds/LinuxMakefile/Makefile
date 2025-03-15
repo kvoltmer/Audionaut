@@ -130,6 +130,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/RegionContainerComponent_6eb1283d.o \
   $(JUCE_OBJDIR)/RightPanelComponent_683d1bd2.o \
   $(JUCE_OBJDIR)/MainComponent_892e8d2a.o \
+  $(JUCE_OBJDIR)/ArrangementModel_98e76acf.o \
   $(JUCE_OBJDIR)/TrackRegionTableListBoxModel_9dc83d7b.o \
   $(JUCE_OBJDIR)/AudioTrackListBoxModel_e0f725e1.o \
   $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o \
@@ -471,6 +472,11 @@ $(JUCE_OBJDIR)/RightPanelComponent_683d1bd2.o: ../../Source/Interface/Components
 $(JUCE_OBJDIR)/MainComponent_892e8d2a.o: ../../Source/Interface/Components/MainComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling MainComponent.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ArrangementModel_98e76acf.o: ../../Source/Interface/Models/ArrangementModel.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ArrangementModel.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/TrackRegionTableListBoxModel_9dc83d7b.o: ../../Source/Interface/Models/TrackRegionTableListBoxModel.cpp

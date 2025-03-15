@@ -14,18 +14,9 @@
 
 using namespace juce;
 
-//==============================================================================
-FadeInOutView::FadeInOutView(std::shared_ptr<PlayListItem> playListItem_) :
-    playListItem(playListItem_)
-{
-}
-
-FadeInOutView::~FadeInOutView()
-{
-}
-
 void FadeInOutView::paint (juce::Graphics& g)
 {
+    jassert(playListItem);
     auto fFadeInWidth   = playListItem->getFadeIn() * getWidth();
     auto iFadeInWidth   = static_cast<int>(fFadeInWidth);
     auto fFadeOutWidth  = playListItem->getFadeOut() * getWidth();
@@ -86,4 +77,9 @@ void FadeInOutView::paint (juce::Graphics& g)
 
 void FadeInOutView::resized()
 {
+}
+
+void FadeInOutView::setPlayListItem(std::shared_ptr<PlayListItem> item)
+{
+    playListItem = item;
 }

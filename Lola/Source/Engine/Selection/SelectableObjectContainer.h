@@ -103,6 +103,11 @@ public:
         return -1;
     }
     
+    void resize(std::size_t size)
+    {
+        objects.resize(size);
+    }
+    
     std::vector<std::shared_ptr<ElementType>> objects;
 };
 

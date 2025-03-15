@@ -57,6 +57,8 @@ public:
     double getValue() const;
     void setValue(double val);
     
+    void setPlayListItem(std::shared_ptr<PlayListItem> playListItem_) { playListItem = playListItem_; }
+    
 private:
     FadeType type;
     

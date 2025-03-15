@@ -40,7 +40,6 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(
     
     if (auto playListItem = createPlayListItem(audioRegion, insertIndex)) {
         playListItem->setAbsolutePosition(position, context);
-        sortByPosition();
         return playListItem;
     }
     
@@ -53,15 +52,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(std::share
     auto playListItem = createPlayListItem(region, insertIndex);
     movePlayListItemsPosition(insertIndex);
     return playListItem;
-    
 }
-
-//std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(int regionIndex, int insertIndex)
-//{
-//    auto region = audioRegionContainer.getRegion(regionIndex);
-//    jassert(region != nullptr);
-//    return createPlayListItem(region, insertIndex);
-//}
 
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(std::shared_ptr<AudioRegion> audioRegion,
                                                                     int insertIndex)
@@ -185,58 +176,62 @@ int PlayListContainer::getPlayListItemIndex(PlayListItem* item) const
 
 bool PlayListContainer::writeToJson (json& output)
 {
+    jassert(sortedByPosition());
     json playList;
     
     for (auto item : playListItems.getObjects())
     {
         json j;
         if (item->writeToJson(j))
-            playList["play_list_items"] += j;
+            output["play_list_vector"] += j;
     }
     
-    output["play_list"] = playList;
     return true;
 }
 
 bool PlayListContainer::readFromJson (json& input, bool rebuild)
 {
-    auto jsonPlayList = input["play_list"];
-    auto jsonPlayListItems = jsonPlayList["play_list_items"];
+    json jsonPlayListItems;
+    if (input.contains("play_list_vector")) {
+        jsonPlayListItems = input["play_list_vector"];
+    }
+    else {
+        // TODO: remove legacy code soon-ish
+        auto jsonPlayList = input["play_list"];
+        jsonPlayListItems = jsonPlayList["play_list_items"];
+    }
     
-    if (!rebuild && jsonPlayListItems.size() != playListItems.size())
-        rebuild = true;
-    
-    if (rebuild)
-        playListItems.cleanup();
-    
-    auto i = 0;
-    for (auto& jsonElement : jsonPlayListItems)
-    {
-        std::shared_ptr<PlayListItem> playListItem = nullptr;
-        if (rebuild) {
-            playListItem = createPlayListItemFromJson(jsonElement);
-            if (playListItem != nullptr) {
-                playListItems.push_back(playListItem);
-            }
-            else {
-                std::cout << "error: could not load play list item:" << std::endl;
-                std::cout << jsonElement.dump(4) << std::endl;
-            }
-        }
-        else if (playListItems.objectExistsAtIndex(i)) {
-            
-            playListItem = playListItems.getObjects()[i++];
-            jassert(playListItem);
-            playListItem->readFromJson(jsonElement, rebuild);
+    const auto numNeeded = jsonPlayListItems.size();
+    playListItems.resize (std::min (numNeeded, playListItems.size()));
+    while (numNeeded > playListItems.size()) {
+        playListItems.objects.emplace_back (std::make_shared<PlayListItem>(*this,
+                                                                           nullptr,
+                                                                           selectionManager));
+    }
+        
+    for (auto i = 0; i < playListItems.size(); ++i) {
+        auto &jsonElement = jsonPlayListItems[i];
+        if ( !playListItems.getObjects()[i]->readFromJson(jsonElement, rebuild)) {
+            std::cout << "error: could not load play list item:" << std::endl;
+            std::cout << jsonElement.dump(4) << std::endl;
         }
     }
+    
+    jassert(sortedByPosition());
     return true;
 }
 
 void PlayListContainer::mergeFromJson(json& input)
 {
-    auto jsonPlayList = input["play_list"];
-    auto jsonPlayListItems = jsonPlayList["play_list_items"];
+    json jsonPlayListItems;
+    if (input.contains("play_list_vector")) {
+        jsonPlayListItems = input["play_list_vector"];
+    }
+    else {
+        // TODO: remove legacy code soon-ish
+        auto jsonPlayList = input["play_list"];
+        jsonPlayListItems = jsonPlayList["play_list_items"];
+    }
 
     for (auto& jsonElement : jsonPlayListItems) {
         
@@ -251,6 +246,7 @@ void PlayListContainer::mergeFromJson(json& input)
             }
         }
     }
+    jassert(sortedByPosition());
 }
 
 
@@ -326,6 +322,21 @@ void PlayListContainer::sortByPosition()
     {
         return (i1->getAbsolutePosition(audium::clocks) < i2->getAbsolutePosition(audium::clocks));
     });
+    jassert(sortedByPosition());
+}
+
+bool PlayListContainer::sortedByPosition() const
+{
+    auto position = 0.0;
+    for (auto item : playListItems.getObjects()) {
+        auto itemPos = item->getAbsolutePosition(audium::clocks);
+        if (itemPos < position)
+            return false;
+        
+        position = itemPos;
+    }
+    
+    return true;
 }
 
 double PlayListContainer::findNextFreePosition(double position, audium::TimeContextType context) const

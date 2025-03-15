@@ -341,6 +341,10 @@
           <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
         </GROUP>
         <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
+          <FILE id="Fj7wA9" name="ArrangementModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/ArrangementModel.cpp"/>
+          <FILE id="RLDyfC" name="ArrangementModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/ArrangementModel.h"/>
           <FILE id="FZbPhM" name="TrackRegionTableListBoxModel.cpp" compile="1"
                 resource="0" file="Source/Interface/Models/TrackRegionTableListBoxModel.cpp"/>
           <FILE id="D6w5CK" name="TrackRegionTableListBoxModel.h" compile="0"

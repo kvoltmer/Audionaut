@@ -976,6 +976,9 @@
     <ClCompile Include="..\..\Source\Interface\Components\MainComponent.cpp">
       <Filter>Lola\Source\Interface\Components</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Models\ArrangementModel.cpp">
+      <Filter>Lola\Source\Interface\Models</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.cpp">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClCompile>
@@ -4298,6 +4301,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MainComponent.h">
       <Filter>Lola\Source\Interface\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Models\ArrangementModel.h">
+      <Filter>Lola\Source\Interface\Models</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.h">
       <Filter>Lola\Source\Interface\Models</Filter>

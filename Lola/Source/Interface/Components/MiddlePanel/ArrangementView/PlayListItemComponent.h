@@ -32,7 +32,6 @@ public:
     PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
                           std::shared_ptr<AudioTrack> audioTrack,
                           std::shared_ptr<PlayListContainer> playListContainer,
-                          std::shared_ptr<PlayListItem> playListItem,
                           std::shared_ptr<ZoomHandler> zoomHandler,
                           std::shared_ptr<RegionSelector> regionSelector);
     ~PlayListItemComponent() override;
@@ -43,10 +42,11 @@ public:
     void changeListenerCallback (ChangeBroadcaster* source) override;
     
     std::shared_ptr<PlayListItem> getPlayListItem() const { return playListItem; }
+    void setPlayListItem(std::shared_ptr<PlayListItem> item);
     
     DraggerControl* getDraggerControl() const;
     
-    void updateUI();
+    void updateUI(std::shared_ptr<PlayListItem> playListItem);
     
     void mouseEnter (const MouseEvent& e) override;
     void mouseExit (const MouseEvent& e) override;

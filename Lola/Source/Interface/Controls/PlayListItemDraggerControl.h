@@ -19,21 +19,16 @@ class PlayListItemDraggerControl : public DraggerControl
 {
 public:
     
-    PlayListItemDraggerControl(juce::Component* componentToDrag_,
-                               std::shared_ptr<AudiumEngine> audiumEngine_,
+    PlayListItemDraggerControl(std::shared_ptr<AudiumEngine> audiumEngine_,
                                std::shared_ptr<PlayListContainer> playListContainer_,
-                               std::shared_ptr<PlayListItem> playListItem_,
                                std::shared_ptr<ZoomHandler> zoomHandler_,
                                juce::Colour colour_,
                                std::shared_ptr<RegionSelector> regionSelector_) :
-        DraggerControl(componentToDrag_,
-                       audiumEngine_,
+        DraggerControl(audiumEngine_,
                        zoomHandler_,
                        colour_,
-                       regionSelector_,
-                       std::static_pointer_cast<PositionableBase>(playListItem_)),
-        playListContainer(playListContainer_),
-        playListItem(playListItem_)
+                       regionSelector_),
+        playListContainer(playListContainer_)
     {
         regionSelector->playListItemDraggerControls.push_back(this);
     }
@@ -68,6 +63,8 @@ public:
     }
     
     bool validateData() override;
+    
+    void setPlayListItem(std::shared_ptr<PlayListItem> playListItem_) { playListItem = playListItem_; }
     
 private:
     std::shared_ptr<PlayListContainer> playListContainer;
