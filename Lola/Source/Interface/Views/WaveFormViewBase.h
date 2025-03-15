@@ -30,11 +30,10 @@
 class WaveFormViewBase : public juce::Component, public juce::ChangeListener
 {
 public:
-    WaveFormViewBase(const juce::Component &parentComponent,
+    WaveFormViewBase(juce::Component *parentComponent,
                      std::shared_ptr<AudiumEngine> audiumEngine,
                      std::shared_ptr<AudioResource> audioResource,
                      std::shared_ptr<ZoomHandler> zoomHandler,
-                     std::shared_ptr<AudioRegion> audioRegion,
                      juce::Colour colour,
                      std::shared_ptr<RegionSelector> regionSelector,
                      int channelNumber_) :
@@ -42,7 +41,6 @@ public:
         audiumEngine(audiumEngine),
         audioResource(audioResource),
         zoomHandler(zoomHandler),
-        audioRegion(audioRegion),
         colour(colour),
         regionSelector(regionSelector),
         channelNumber(channelNumber_)
@@ -102,12 +100,14 @@ public:
     
     virtual void updateUI(int theChannel) { channelNumber = theChannel; }
     
+    void setParentComponent(juce::Component *comp) { parentComponent = comp; }
+    
 protected:
-    const juce::Component &parentComponent;
+    juce::Component *parentComponent;
     std::shared_ptr<AudiumEngine> audiumEngine;
     std::shared_ptr<AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::shared_ptr<AudioRegion> audioRegion;
+
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
     

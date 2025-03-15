@@ -25,20 +25,23 @@ class AudioRegion;
 class AudioRegionView : public WaveFormViewBase
 {
 public:
-    AudioRegionView(const juce::Component &parentComponent,
+    AudioRegionView(juce::Component *parentComponent,
                     std::shared_ptr<AudiumEngine> audiumEngine,
                     std::shared_ptr<AudioResource> audioResource,
                     std::shared_ptr<ZoomHandler> zoomHandler,
-                    std::shared_ptr<AudioRegion> audioRegion,
                     juce::Colour colour,
                     std::shared_ptr<RegionSelector> regionSelector,
-                    int rowNumber,
-                    std::shared_ptr<PlayListItem> playListItem_) :
-        WaveFormViewBase(parentComponent, audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber),
-        playListItem(playListItem_)
+                    int rowNumber) :
+        WaveFormViewBase(parentComponent,
+                         audiumEngine,
+                         audioResource,
+                         zoomHandler,
+                         colour,
+                         regionSelector,
+                         rowNumber)
     {
         // FADE IN OUT VIEW
-        fadeInOutView = std::make_unique<FadeInOutView>(playListItem_);
+        fadeInOutView = std::make_unique<FadeInOutView>();
         addAndMakeVisible(fadeInOutView.get());
         
         // VOLUME
@@ -46,18 +49,6 @@ public:
         addAndMakeVisible(volumeSlider.get());
         ChannelComponent::configureVolumeSlider(volumeSlider.get(), 36.0);
         
-        volumeSlider->onValueChange = [this, audioRegion] {
-            audioRegion->setGain(channelNumber, Decibels::decibelsToGain(volumeSlider->getValue()), true);
-            this->audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
-        };
-        volumeSlider->onDragStart = [this] {
-            playListItem->onDragStart();
-        };
-        
-        volumeSlider->onDragEnd = [this] {
-            playListItem->onDragEnd();
-            
-        };
         
     }
     
@@ -69,6 +60,8 @@ public:
     
     void updateUI(int theChannel) override;
     
+    void setPlayListItem(std::shared_ptr<PlayListItem> item);
+
 private:
     
     std::shared_ptr<PlayListItem> playListItem;

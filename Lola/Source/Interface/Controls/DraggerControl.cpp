@@ -193,3 +193,13 @@ bool DraggerControl::commitPositionData(const PositionableBase &positionableBase
     
     return false;
 }
+
+void DraggerControl::setComponentToDrag(juce::Component* comp)
+{
+    componentToDrag = comp;
+}
+
+void DraggerControl::setPositionableObject(std::shared_ptr<PositionableBase> object)
+{
+    positionableObject = object;
+}

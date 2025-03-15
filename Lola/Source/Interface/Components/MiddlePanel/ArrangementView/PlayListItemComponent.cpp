@@ -21,17 +21,15 @@
 PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
                                              std::shared_ptr<AudioTrack> audioTrack,
                                              std::shared_ptr<PlayListContainer> playListContainer,
-                                             std::shared_ptr<PlayListItem> playListItem,
                                              std::shared_ptr<ZoomHandler> zoomHandler,
                                              std::shared_ptr<RegionSelector> regionSelector) :
     audiumEngine(audiumEngine),
     audioTrack(audioTrack),
-    playListItem(playListItem),
     regionSelector(regionSelector)
 {
     
     // LISTBOX + MODEL
-    playListItemListBox.reset(new audium::ListBox());
+    playListItemListBox.reset(new audium::ListBox("PlayListItemListBox"));
     addAndMakeVisible(playListItemListBox.get());
     playListItemArrangementModel.reset(new PlayListItemArrangementModel(*playListItemListBox.get(),
                                                                         audioTrack,
@@ -39,17 +37,13 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
                                                                         audiumEngine,
                                                                         zoomHandler,
                                                                         regionSelector));
-
-    playListItemListBox->setModel(playListItemArrangementModel.get());
     
     // create dragger as header of ListBox
-    auto dragger = std::unique_ptr<PlayListItemDraggerControl>(new PlayListItemDraggerControl(  this,
-                                                                                                audiumEngine,
-                                                                                                playListContainer,
-                                                                                                playListItem,
-                                                                                                zoomHandler,
-                                                                                                audioTrack->getColour(),
-                                                                                                regionSelector));
+    auto dragger = std::unique_ptr<PlayListItemDraggerControl> (new PlayListItemDraggerControl(audiumEngine,
+                                                                                               playListContainer,
+                                                                                               zoomHandler,
+                                                                                               audioTrack->getColour(),
+                                                                                               regionSelector));
     dragger->addChangeListener(this);
     playListItemListBox->setHeaderComponent(std::move(dragger));
     playListItemListBox->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
@@ -66,14 +60,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
                                                        regionSelector);
     addAndMakeVisible(fadeInControl.get());
     fadeInControl->setVisible(false);
-    fadeInControl->onValueChange = [this, playListItem] {
-        if (playListItem->setFadeIn(fadeInControl->getValue()))
-            fadeOutControl->setValue(playListItem->getFadeOut());
-        
-        playListItemListBox->updateContent();
-    };
-    fadeInControl->onDragStart = [playListItem] { playListItem->onDragStart(); };
-    fadeInControl->onDragEnd = [playListItem] { playListItem->onDragEnd(); };
+
     
     // FADE OUT
     fadeOutControl = std::make_unique<FadeInOutControl>(FadeInOutControl::FadeOut,
@@ -81,13 +68,6 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiu
                                                        regionSelector);
     addAndMakeVisible(fadeOutControl.get());
     fadeOutControl->setVisible(false);
-    fadeOutControl->onValueChange = [this, playListItem] {
-        if (playListItem->setFadeOut(fadeOutControl->getValue()))
-            fadeInControl->setValue(playListItem->getFadeIn());
-        playListItemListBox->updateContent();
-    };
-    fadeOutControl->onDragStart = [playListItem] { playListItem->onDragStart(); };
-    fadeOutControl->onDragEnd = [playListItem] { playListItem->onDragEnd(); };
 }
 
 PlayListItemComponent::~PlayListItemComponent()
@@ -113,7 +93,7 @@ void PlayListItemComponent::resized()
     playListItemListBox->setBounds(getLocalBounds());
     regionSelector->updateFromEngine();
 
-    updateUI();
+    updateUI(playListItem);
 }
 
 void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)
@@ -126,9 +106,49 @@ DraggerControl* PlayListItemComponent::getDraggerControl() const
     return static_cast<DraggerControl*>(playListItemListBox->getHeaderComponent());
 }
 
-void PlayListItemComponent::updateUI()
+void PlayListItemComponent::setPlayListItem(std::shared_ptr<PlayListItem> item)
 {
+    playListItem = item;
+    
+    // function pointer setup:
+    fadeInControl->onValueChange = [this, item] {
+        if (item->setFadeIn(fadeInControl->getValue()))
+            fadeOutControl->setValue(playListItem->getFadeOut());
+        
+        playListItemListBox->updateContent();
+    };
+    fadeInControl->onDragStart = [item] { item->onDragStart(); };
+    fadeInControl->onDragEnd = [item] { item->onDragEnd(); };
+    
+    // function pointer setup:
+    fadeOutControl->onValueChange = [this, item] {
+        if (item->setFadeOut(fadeOutControl->getValue()))
+            fadeInControl->setValue(item->getFadeIn());
+        playListItemListBox->updateContent();
+    };
+    fadeOutControl->onDragStart = [item] { item->onDragStart(); };
+    fadeOutControl->onDragEnd = [item] { item->onDragEnd(); };
+}
+
+void PlayListItemComponent::updateUI(std::shared_ptr<PlayListItem> item)
+{
+    setPlayListItem(item);
+    if (auto dragger = dynamic_cast<PlayListItemDraggerControl*>(playListItemListBox->getHeaderComponent())) {
+        dragger->setPlayListItem(playListItem);
+        dragger->setComponentToDrag(getParentComponent());
+        dragger->setPositionableObject(playListItem);
+    }
+    
+    playListItemArrangementModel->setPlayListItem(playListItem);
+    playListItemArrangementModel->setParentComponent(getParentComponent());
+    if (playListItemListBox->getModel() == nullptr)
+        playListItemListBox->setModel(playListItemArrangementModel.get());
     playListItemListBox->updateContent();
+        
+
+    fadeInControl->setPlayListItem(playListItem);
+    fadeOutControl->setPlayListItem(playListItem);
+
     fadeInControl->setValue(playListItem->getFadeIn());
     fadeOutControl->setValue(playListItem->getFadeOut());
 }

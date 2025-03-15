@@ -21,7 +21,7 @@ using namespace juce;
 
 double AudioRegionView::getRegionStart(audium::TimeContextType context) const
 {
-    return audioRegion->getRegionData(audium::seconds).getStart();
+    return playListItem->getRegion()->getRegionData(audium::seconds).getStart();
 }
 
 double AudioRegionView::getClipGain() const
@@ -51,10 +51,31 @@ void AudioRegionView::resized()
 
 void AudioRegionView::updateUI(int theChannel)
 {
-    //std::cout << "AudioRegionView::updateUI " << theChannel << std::endl;
+    //std::cout << "AudioRegionView::updateUI " << playListItem->getRegion()->getName() << std::endl;
     channelNumber = theChannel;
         
     volumeSlider->setValue(LevelMeter::gainToDecebel(getClipGain()), dontSendNotification);
+}
+
+void AudioRegionView::setPlayListItem(std::shared_ptr<PlayListItem> item)
+{
+    playListItem = item;
+    
+    fadeInOutView->setPlayListItem(item);
+    
+    auto audioRegion = item->getRegion();
+    
+    volumeSlider->onValueChange = [this, audioRegion] {
+        audioRegion->setGain(channelNumber, Decibels::decibelsToGain(volumeSlider->getValue()), true);
+        this->audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+    };
+    volumeSlider->onDragStart = [this] {
+        playListItem->onDragStart();
+    };
+    
+    volumeSlider->onDragEnd = [this] {
+        playListItem->onDragEnd();
+    };
 }
 
 

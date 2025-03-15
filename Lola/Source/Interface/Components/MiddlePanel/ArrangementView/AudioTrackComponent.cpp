@@ -25,81 +25,89 @@
 
 using namespace audium;
 
+class AudioTrackComponent::ItemComponent  : public Component
+{
+public:
+    ItemComponent (AudioTrackComponent& owner_) : owner (owner_) {}
+
+    void update (const int newItem)
+    {
+        const auto rowHasChanged = (item != newItem);
+
+        if (rowHasChanged)
+        {
+            repaint();
+
+            if (rowHasChanged)
+                item = newItem;
+        }
+
+        if (auto* m = owner.getModel())
+        {
+            customComponent.reset (m->refreshComponentForItem (newItem, customComponent.release()));
+
+            if (customComponent != nullptr)
+            {
+                addAndMakeVisible (customComponent.get());
+                customComponent->setBounds (getLocalBounds());
+
+                setFocusContainerType (FocusContainerType::focusContainer);
+            }
+            else
+            {
+                setFocusContainerType (FocusContainerType::none);
+            }
+        }
+    }
+
+    AudioTrackComponent& owner;
+    std::unique_ptr<Component> customComponent;
+    int item = -1;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ItemComponent)
+};
+
 void AudioTrackComponent::refreshComponent (std::shared_ptr<AudioTrack> track, bool forceRebuildComponents)
 {
     audioTrack = track;
-    
-    if (mustRebuildComponents() ||
-        forceRebuildComponents) {
-        rebuildComponents();
-    }
-    else {
-        for (auto item : playListItemComponents) {
-            item->updateUI();
-        }
-    }
-    resized();
+    model->setAudioTrack(track);
+    updateContents();
 }
 
-bool AudioTrackComponent::mustRebuildComponents() const
-{
-    // compare play list items
-    auto playListContainer = audiumEngine->getPlayListContainer(audioTrack);
-    auto playListItems = playListContainer->getPlayListItems();
-    
-    if (playListItems.size() != playListItemComponents.size())
-    {
-        return true;
-    }
-    
-    for (auto i = 0; i < playListItems.size(); i++)
-    {
-        if (playListItems[i] != playListItemComponents[i]->getPlayListItem())
-        {
-            return true;
-        }
-    }
-    
-    return false;
-}
 
-void AudioTrackComponent::rebuildComponents()
+void AudioTrackComponent::updateContents()
 {
-    removeAllChildren();
-    playListItemComponents.clear();
-    
-    // get all play list items and create components
-    auto playListContainer = audiumEngine->getPlayListContainer(audioTrack);
-    jassert(playListContainer);
-    auto playListItems = playListContainer->getPlayListItems();
-    
-    for (auto playListItem : playListItems)
+    const size_t numNeeded = (model != nullptr) ? model->getNumRows() : 0;
+  
+    itemComponents.resize (jmin (numNeeded, itemComponents.size()));
+    while (numNeeded > itemComponents.size())
     {
-        auto groupRegion = std::shared_ptr<PlayListItemComponent>(new PlayListItemComponent(audiumEngine,
-                                                                                            audioTrack,
-                                                                                            playListContainer,
-                                                                                            playListItem,
-                                                                                            zoomHandler,
-                                                                                            regionSelector));
+        itemComponents.emplace_back (new ItemComponent (*this));
+        addAndMakeVisible (*itemComponents.back());
+    }
         
-        addAndMakeVisible(groupRegion.get());
-        playListItemComponents.push_back(groupRegion);
+    for (auto row = 0; row < itemComponents.size(); ++row) {
+        
+        // TODO: optimise -> if (auto* rowComp = getComponentForRowIfOnscreen (row))
+        
+        if (auto rowComp = dynamic_cast<ItemComponent*>(itemComponents[row].get())) {
+            
+            auto range = model->getRangeForItem(row);
+            juce::Rectangle<double> rect_tmp(range.getStart(),
+                                             getLocalBounds().getY(),
+                                             range.getLength(),
+                                             getLocalBounds().getHeight());
+            rowComp->setBounds(rect_tmp.toNearestInt());
+            
+            rowComp->update (row);
+            
+            rowComp->repaint();
+        }
     }
 }
-
 
 void AudioTrackComponent::resized()
 {
-    for (auto item : playListItemComponents) {
-        auto playListItem = item->getPlayListItem();
-        auto start = zoomHandler->clocksToX(playListItem->getAbsolutePosition(audium::clocks));
-        auto width = zoomHandler->clocksToX(playListItem->getDurationTime(audium::clocks));
-        juce::Rectangle<double> rect_tmp(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
-        
-        item->setBounds(rect_tmp.toNearestInt());
-        if (playListItem->isSelected())
-            item->toFront(false);
-    }
 }
 
 bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSourceDetails)

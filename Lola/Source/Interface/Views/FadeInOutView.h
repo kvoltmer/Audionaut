@@ -22,11 +22,13 @@ class PlayListItem;
 class FadeInOutView  : public juce::Component
 {
 public:
-    FadeInOutView(std::shared_ptr<PlayListItem> playListItem);
-    ~FadeInOutView() override;
+    FadeInOutView() = default;
+    ~FadeInOutView() override = default;
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    
+    void setPlayListItem(std::shared_ptr<PlayListItem> item);
 
 private:
     

@@ -70,11 +70,10 @@ public:
         {
             if (audioResource != nullptr)
             {
-                auto component = new AudioResourceView(*owner.get(),
+                auto component = new AudioResourceView(owner.get(),
                                                        audiumEngine,
                                                        audioResource,
                                                        zoomHandler,
-                                                       nullptr,
                                                        audioSubGroup->getAudioTrack().getColour(),
                                                        regionSelector,
                                                        rowNumber);

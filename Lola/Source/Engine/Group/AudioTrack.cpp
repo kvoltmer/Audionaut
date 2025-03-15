@@ -699,6 +699,7 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
     
     // create play list item
     getPlayListContainer()->createPlayListItemAtPositionUI(region, position, context);
+    getPlayListContainer()->sortByPosition();
 }
 
 double AudioTrack::getTotalLength(audium::TimeContextType context, bool arrangementMode) const
@@ -802,6 +803,7 @@ void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType co
             pos += region->getRegionData(context).getLength();
         }
     }
+    getPlayListContainer()->sortByPosition();
 }
 
 void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos, audium::TimeContextType context)
@@ -833,6 +835,7 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos
             item->setAbsolutePosition(pos, context);
         }
     }
+    getPlayListContainer()->sortByPosition();
 }
 
 std::shared_ptr<AudioRegion> AudioTrack::getRegion(int rowNumber) const

@@ -81,25 +81,26 @@ public:
     void forcePositionByOrder();
     
     void sortByPosition();
+    bool sortedByPosition() const;
     
     double findNextFreePosition(double position, audium::TimeContextType context) const;
     
     // move the absolute position of all playlist items by an amount
     void movePlayListItemsPosition(int startIndex);
-    
-    audium::SelectableObjectContainer<PlayListItem> playListItems;
             
     // selection:
     void selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region);
     
-    double getTotalLength(audium::TimeContextType context) const;
+    std::vector<std::shared_ptr<PlayListItem>> getSelectedItems(bool global = false) const;
     
+    double getTotalLength(audium::TimeContextType context) const;
     
     const AudioTrack &getAudioTrack() const { return audioTrack; }
     
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
-
-    std::vector<std::shared_ptr<PlayListItem>> getSelectedItems(bool global = false) const;
+    
+    // the container
+    audium::SelectableObjectContainer<PlayListItem> playListItems;
     
 private:
     

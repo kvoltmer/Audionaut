@@ -20,20 +20,35 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 
 
-PlayListItem::PlayListItem(const PlayListContainer &owner,
-                           std::shared_ptr<AudioRegion> audioRegion,
-                           std::shared_ptr<audium::SelectionManager> selectionManager) :
-    audium::Selectable(selectionManager),
-    owner(owner),
-    audioRegion(audioRegion)
+PlayListItem::PlayListItem(const PlayListContainer &owner_,
+                           std::shared_ptr<AudioRegion> audioRegion_,
+                           std::shared_ptr<audium::SelectionManager> selectionManager_) :
+    audium::Selectable(selectionManager_),
+    owner(owner_),
+    audioRegion(audioRegion_)
 {
-    for (const auto &resource : getRegion()->getAudioResources()) {
-        auto transportSource = owner.getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
-        transportSources.push_back(transportSource);
+    if (audioRegion != nullptr) {
+        init();
     }
 }
 
 PlayListItem::~PlayListItem()
+{
+    deinit();
+}
+
+void PlayListItem::init()
+{
+    if (transportSources.size() == 0) {
+        deinit();
+    }
+    for (const auto &resource : getRegion()->getAudioResources()) {
+        auto transportSource = owner.getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
+        transportSources.emplace_back(transportSource);
+    }
+}
+
+void PlayListItem::deinit()
 {
     for (auto transportSource : transportSources) {
         audioRegion->getAudioTrack()->getTransportSourceContainer()->removeTransportSource(transportSource);
@@ -89,48 +104,59 @@ bool PlayListItem::writeToJson (json& output)
     output["position_clocks"]   = absolutePositionClocks;
     output["selected"]          = isSelected();
     output["track_id"]          = getRegion()->getAudioTrack()->getId();
-    output["fade_in_clocks"]    = fadeInClocks;
-    output["fade_out_clocks"]   = fadeOutClocks;
+    
+    if (fadeInClocks > 0.0) {
+        output["fade_in_clocks"]    = fadeInClocks;
+    }
+    
+    if (fadeOutClocks > 0.0) {
+        output["fade_out_clocks"]   = fadeOutClocks;
+    }
     return true;
 }
 
 bool PlayListItem::readFromJson (json& input, bool rebuild)
 {
-    auto regionName = input["region_name"].template get<std::string>();
-    jassert(regionName == getRegion()->getName().toStdString());
-
-    auto regionId = input["region_id"].template get<int>();
-    auto id = audioRegion->getAudioSubGroup()->getAudioRegionContainer()->getRegionId(getRegion());
-    jassert(id == regionId);
-    
+    auto subGroupId = 0;
     if (input.contains("sub_group_id")) {
-        auto subGroupId = input["sub_group_id"].template get<int>();
-        jassert(subGroupId == audioRegion->getAudioSubGroup()->getId());
+        subGroupId = input["sub_group_id"].template get<int>();
     }
     
-    if (input.contains("position_clocks"))
-        absolutePositionClocks = input.at("position_clocks").get<double>();
-    
-    if (input.contains("selected"))
-        setSelected(input.at("selected").get<bool>());
-
-    if (input.contains("track_id")) {
-        auto track_id = input.at("track_id").get<int>();
-        if (track_id != getRegion()->getAudioTrack()->getId()) {
-            std::cout << "warning: track_id: " << track_id << " != " <<
-                        getRegion()->getAudioTrack()->getId() << std::endl;
-        }
-    }
-    
-    if (input.contains("fade_in_clocks")) {
-        fadeInClocks = input.at("fade_in_clocks").get<double>();
-    }
-    
-    if (input.contains("fade_out_clocks")) {
-        fadeOutClocks = input.at("fade_out_clocks").get<double>();
-    }
+    if (owner.getAudioTrack().audioSubGroupContainer->objectExistsAtIndex(subGroupId)) {
         
-    return true;
+        auto subGroup = owner.getAudioTrack().audioSubGroupContainer->getObjects()[subGroupId];
+        auto regionId = input["region_id"].template get<int>();
+        audioRegion = subGroup->getAudioRegionContainer()->getRegion(regionId);
+        if (audioRegion != nullptr) {
+            
+            init();
+            
+            if (input.contains("position_clocks"))
+                absolutePositionClocks = input.at("position_clocks").get<double>();
+            
+            if (input.contains("selected"))
+                setSelected(input.at("selected").get<bool>());
+
+            if (input.contains("track_id")) {
+                auto track_id = input.at("track_id").get<int>();
+                if (track_id != getRegion()->getAudioTrack()->getId()) {
+                    std::cout << "warning: track_id: " << track_id << " != " <<
+                                getRegion()->getAudioTrack()->getId() << std::endl;
+                }
+            }
+            
+            if (input.contains("fade_in_clocks")) {
+                fadeInClocks = input.at("fade_in_clocks").get<double>();
+            }
+            
+            if (input.contains("fade_out_clocks")) {
+                fadeOutClocks = input.at("fade_out_clocks").get<double>();
+            }
+        }
+        return true;
+    }
+    
+    return false;
 }
 
 bool PlayListItem::validateData()

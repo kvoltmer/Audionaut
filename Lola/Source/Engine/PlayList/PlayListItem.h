@@ -38,6 +38,9 @@ public:
     
     ~PlayListItem() override;
     
+    void init();
+    void deinit();
+    
     void cleanup() override {}
     
     std::shared_ptr<AudioRegion> getRegion() const { return audioRegion; }
