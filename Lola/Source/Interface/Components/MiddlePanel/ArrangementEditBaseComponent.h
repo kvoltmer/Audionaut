@@ -186,6 +186,8 @@ public:
         auto viewPortBounds = audioTrackListBox->getViewport()->getViewedComponent()->getLocalBounds();
         viewPortBounds.setWidth(std::max(contentWidth, viewPortBounds.getWidth()));
         gridView->setBounds(viewPortBounds);
+        
+        audioTrackListBox->getHeaderComponent()->resized();
     }
 
     void zoomIn()

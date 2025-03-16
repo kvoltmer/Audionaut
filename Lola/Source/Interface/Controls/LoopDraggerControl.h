@@ -38,17 +38,11 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        auto colour = Colours::white;
-        if (1)//isSelected())
-        {
+        if (paintMe) {
+            auto colour = Colours::white;
             g.setColour (colour.withAlpha(0.8f));
+            g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
         }
-        else
-        {
-            g.setColour (colour.withAlpha(0.3f));
-        }
-
-        g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
     }
 
     enum Edge
@@ -114,6 +108,8 @@ public:
     std::function<void()> onDragEnd;
     
     juce::Range<double> loopRangeInClocks;
+    
+    bool paintMe = false;
     
 protected:
     
