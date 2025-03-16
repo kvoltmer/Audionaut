@@ -86,22 +86,22 @@ void AudioTrackComponent::updateContents()
         addAndMakeVisible (*itemComponents.back());
     }
         
-    for (auto row = 0; row < itemComponents.size(); ++row) {
+    for (auto item = 0; item < itemComponents.size(); ++item) {
         
         // TODO: optimise -> if (auto* rowComp = getComponentForRowIfOnscreen (row))
         
-        if (auto rowComp = dynamic_cast<ItemComponent*>(itemComponents[row].get())) {
+        if (auto itemComp = dynamic_cast<ItemComponent*>(itemComponents[item].get())) {
             
-            auto range = model->getRangeForItem(row);
+            auto range = model->getRangeForItem(item);
             juce::Rectangle<double> rect_tmp(range.getStart(),
                                              getLocalBounds().getY(),
                                              range.getLength(),
                                              getLocalBounds().getHeight());
-            rowComp->setBounds(rect_tmp.toNearestInt());
+            itemComp->setBounds(rect_tmp.toNearestInt());
             
-            rowComp->update (row);
+            itemComp->update (item);
             
-            rowComp->repaint();
+            itemComp->repaint();
         }
     }
 }
