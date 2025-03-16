@@ -39,7 +39,7 @@ PlayListItem::~PlayListItem()
 
 void PlayListItem::init()
 {
-    if (transportSources.size() == 0) {
+    if (transportSources.size() > 0) {
         deinit();
     }
     for (const auto &resource : getRegion()->getAudioResources()) {
