@@ -51,7 +51,7 @@ void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mo
         auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
         setNewGroupColour(audioTrack);
                 
-        auto position = zoomHandler->xToClocks(mouseX);
+        auto position = zoomHandler->xToClocksWithOffset(mouseX);
         zoomHandler->snapToGrid(position);
         
         std::function<void (std::string)> callback = [this, audioTrack](std::string error) {
@@ -81,7 +81,7 @@ void AudioTrackListBox::fileDragEnter (const juce::StringArray& files, int x, in
 
 void AudioTrackListBox::fileDragMove (const StringArray& files, int x, int y)
 {
-    auto start = zoomHandler->xToClocks(x);
+    auto start = zoomHandler->xToClocksWithOffset(x);
     auto end = start + 0.01;
     Range<double> rangeInClocks(start, end);
     
