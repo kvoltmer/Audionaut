@@ -13,7 +13,7 @@ void LoopDraggerControl::mouseDown (const juce::MouseEvent& e)
     mouseDownOffset = getLocalPoint (this, e.position);
     
     autoScrollOffset = juce::Point<int>(0, 0);
-    
+    paintMe = true;
     repaint();
 }
 
@@ -29,6 +29,8 @@ void LoopDraggerControl::mouseUp (const juce::MouseEvent& e)
     }
 
     zoomHandler->getSnapToGridHandler()->clearRange();
+    paintMe = false;
+    repaint();
 }
 
 void LoopDraggerControl::mouseDrag (const juce::MouseEvent& e)

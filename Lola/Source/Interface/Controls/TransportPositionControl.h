@@ -58,6 +58,7 @@ public:
                                                                   gridColour,
                                                                   regionSelector);
         addAndMakeVisible(loopDraggerControl.get());
+        loopDraggerControl->toBack();
         
         loopDraggerControl->onDragEnd = [this] () {
             auto transportLoop = audiumEngine->getPlayListScheduler()->getTransportLoop();
@@ -80,7 +81,8 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-
+        // background
+        g.fillAll(findColour(audium::backgroundColourId));
     }
 
     void resized() override

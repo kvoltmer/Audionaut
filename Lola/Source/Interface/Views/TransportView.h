@@ -23,7 +23,6 @@ public:
         zoomHandler(zoomHandler)
     {
         setInterceptsMouseClicks(false, false);
-        setOpaque(true);
     }
 
     ~TransportView() override
@@ -79,8 +78,6 @@ public:
     
     void paint (juce::Graphics& g) override
     {
-        // background
-        g.fillAll(findColour(audium::backgroundColourId));
         
         auto bounds = getLocalBounds().toFloat();
         //std::cout << "TransportView: " << getLocalBounds().getWidth() << " " << getLocalBounds().getHeight() << std::endl;
