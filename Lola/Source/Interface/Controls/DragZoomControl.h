@@ -86,7 +86,7 @@ public:
         
         auto h = bounds.getHeight();
         
-        visibileRectangle->setRectangle(Rectangle<float>(x, y, w, h).reduced(1.f, 2.f));
+        visibileRectangle->setRectangle(juce::Rectangle<float>(x, y, w, h).reduced(1.f, 2.f));
     }
     
     

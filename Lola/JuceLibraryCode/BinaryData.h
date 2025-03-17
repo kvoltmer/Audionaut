@@ -15,7 +15,7 @@ namespace BinaryData
     const int            music1024sobelglow_pngSize = 186922;
 
     extern const char*   zoomin_svg;
-    const int            zoomin_svgSize = 579;
+    const int            zoomin_svgSize = 585;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
     const int namedResourceListSize = 3;

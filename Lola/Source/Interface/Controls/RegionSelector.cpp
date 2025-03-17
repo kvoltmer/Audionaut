@@ -146,7 +146,7 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
 bool RegionSelector::createRectangleAndSetBonds()
 {
     // create a rectange
-    auto rect = Rectangle<int> (dragStartPos, dragEndPos);
+    auto rect = juce::Rectangle<int> (dragStartPos, dragEndPos);
     if (rect.getWidth() > 1) {
         auto yOffset = owner->getVerticalScrollBar().getCurrentRangeStart();
         rect.setTop(owner->getBounds().getY() + AudiumLookAndFeel::transportPositionControlHeight);

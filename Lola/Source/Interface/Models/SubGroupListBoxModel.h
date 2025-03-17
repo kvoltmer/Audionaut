@@ -62,7 +62,7 @@ public:
             channel->isSelected())
         {
             g.setColour (owner->findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.9f));
-            g.fillRect(Rectangle<int>(0, 0, width, height));
+            g.fillRect(juce::Rectangle<int>(0, 0, width, height));
         }
         
     }

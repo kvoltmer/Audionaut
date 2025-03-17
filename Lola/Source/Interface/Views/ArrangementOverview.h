@@ -78,7 +78,7 @@ public:
                 auto x = bounds.getX() + (bounds.getWidth() * relativePos);
                 auto w = bounds.getWidth() * relativeLength;
                 
-                groupRectangles[i]->setRectangle(Rectangle<float>(x, y, w, h));
+                groupRectangles[i]->setRectangle(juce::Rectangle<float>(x, y, w, h));
                 
                 i++;
             }

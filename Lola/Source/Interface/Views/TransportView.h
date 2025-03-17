@@ -35,7 +35,7 @@ public:
     {
     }
 
-    void paintTimeLineInMinutesSeconds(juce::Graphics& g, Rectangle<float> rectangle)
+    void paintTimeLineInMinutesSeconds(juce::Graphics& g, juce::Rectangle<float> rectangle)
     {
         // draw the timeline in Min::Sec
         auto segmentResult = zoomHandler->segmentsForWidth(rectangle.getWidth(), ZoomHandler::seconds);
@@ -46,12 +46,12 @@ public:
         for (auto i = 0; i < segmentResult.numSegments; i++)
         {
             g.setColour (gridColour);
-            g.fillRect(Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
+            g.fillRect(juce::Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
             
             // draw text
             g.setColour (textColour);
             g.setFont (12.0f);
-            Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
+            juce::Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
             g.drawText (ZoomHandler::secondsToFormattedString(seconds), bonds, juce::Justification::centredLeft, true);
             
             x += segmentResult.itemWidth;
@@ -59,7 +59,7 @@ public:
         }
     }
     
-    void paintTimeLineInBars(juce::Graphics& g, Rectangle<float> rectangle)
+    void paintTimeLineInBars(juce::Graphics& g, juce::Rectangle<float> rectangle)
     {
         auto segmentResult = zoomHandler->segmentsForWidth(rectangle.getWidth(), ZoomHandler::bars);
         auto x = rectangle.getX();
@@ -69,12 +69,12 @@ public:
         for (auto i = 0; i < segmentResult.numSegments; i++)
         {
             g.setColour (gridColour);
-            g.fillRect(Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
+            g.fillRect(juce::Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
             
             // draw text
             g.setColour (textColour);
             g.setFont (12.0f);
-            Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
+            juce::Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
             g.drawText (String(bars), bonds, juce::Justification::centredLeft, true);
             
             x += segmentResult.itemWidth;

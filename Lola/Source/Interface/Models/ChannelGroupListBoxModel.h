@@ -56,7 +56,7 @@ public:
     {
         if (rowIsSelected)
         {
-            auto thumbArea = Rectangle<int>(0, 0, width, height);
+            auto thumbArea = juce::Rectangle<int>(0, 0, width, height);
             g.setColour (Colours::lightgrey);
             g.drawRoundedRectangle (thumbArea.toFloat(), 3.0f, 2.0f);
         }

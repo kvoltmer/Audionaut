@@ -87,7 +87,7 @@ private:
     int m_iSpace;
     
     std::unique_ptr<LevelComponent> m_pLevelComponent;
-    Rectangle<int> mRect;
+    juce::Rectangle<int> mRect;
     
 
     
