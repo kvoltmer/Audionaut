@@ -28,7 +28,7 @@ class DragZoomControl  : public juce::Component, public juce::ChangeBroadcaster
 {
 public:
     DragZoomControl(std::shared_ptr<AudioTrackListBox> audioTrackListBox,
-                    std::shared_ptr<AudiumEngine> audiumEngine,
+                    std::shared_ptr<audium::AudiumEngine> audiumEngine,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     bool arrangementMode) :
         audioTrackListBox(audioTrackListBox),
@@ -161,7 +161,7 @@ public:
 private:
     std::unique_ptr<juce::DrawableRectangle>    visibileRectangle;
     std::shared_ptr<AudioTrackListBox>          audioTrackListBox;
-    std::shared_ptr<AudiumEngine>               audiumEngine;
+    std::shared_ptr<audium::AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     bool                                        arrangementMode;
     

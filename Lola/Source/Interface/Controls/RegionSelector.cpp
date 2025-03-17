@@ -21,7 +21,6 @@
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 

@@ -28,8 +28,8 @@ class ChannelSubGroupListBoxModel  : public audium::ListBoxModel
 {
 public:
     ChannelSubGroupListBoxModel(audium::ListBox& owner,
-                                std::shared_ptr<AudiumEngine> audiumEngine,
-                                std::shared_ptr<AudioTrack> audioTrack) :
+                                std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                                std::shared_ptr<audium::AudioTrack> audioTrack) :
         owner(owner),
         audiumEngine(audiumEngine),
         audioTrack(audioTrack)
@@ -102,18 +102,18 @@ public:
     {
         auto selectedRows = owner.getSelectedRows();
         audioTrack->audioChannelContainer->setSelectedRows(selectedRows);
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
     }
     
-    void setAudioTrack(std::shared_ptr<AudioTrack> track)
+    void setAudioTrack(std::shared_ptr<audium::AudioTrack> track)
     {
         audioTrack = track;
     }
         
 private:
     audium::ListBox& owner;
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelSubGroupListBoxModel)

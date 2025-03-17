@@ -23,12 +23,10 @@
 
 using json = nlohmann::json;
 
-class AudiumEngine;
-
-namespace audium
-{
+namespace audium {
 
 class Selectable;
+class AudiumEngine;
 
 class SelectionManager
 {

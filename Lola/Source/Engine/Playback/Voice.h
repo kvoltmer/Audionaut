@@ -18,10 +18,10 @@
 
 #include <JuceHeader.h>
 
-class AudiumTransportSource;
-
 namespace audium
 {
+
+class AudiumTransportSource;
 
 class Voice
 {

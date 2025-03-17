@@ -19,14 +19,16 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
 
+namespace audium {
+
 AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource_,
-                      std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
-    audioResource(audioResource_),
-    audioFormatReaderSource(audioFormatReaderSource_)
+                                             std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
+audioResource(audioResource_),
+audioFormatReaderSource(audioFormatReaderSource_)
 {
     // the transport source
     audioTransportSource = std::make_shared<audium::AudioTransportSource>();
-
+    
     // source
     auto readAheadBufferSize = 48000;
     auto readAheadThread = audioResource.getContainer().getReadAheadThread();
@@ -36,7 +38,7 @@ AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource_,
         readAheadBufferSize = 0;
         readAheadThread = nullptr;
     }
-
+    
     audioTransportSource->setSource (audioFormatReaderSource.get(),
                                      readAheadBufferSize,
                                      readAheadThread,
@@ -124,3 +126,5 @@ void AudiumTransportSource::applyChannelMapping()
     channelRemapping->setOutputChannelMapping(srcChannel,
                                               dstChannel + channelOffset);
 }
+
+} // namespace audium

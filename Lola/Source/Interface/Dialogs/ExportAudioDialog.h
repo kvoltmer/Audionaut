@@ -31,7 +31,7 @@ class ExportAudioDialog
 {
     
 public:
-    ExportAudioDialog(std::shared_ptr<AudiumEngine> engine) :
+    ExportAudioDialog(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
     {
         exportAudioComponent.reset(new ExportAudioComponent(engine));
@@ -111,7 +111,7 @@ private:
                 config.fileName = result;
                 
                 // create the thread
-                auto thread = std::make_unique<AudioExportThread>(*audiumEngine.get(), config);
+                auto thread = std::make_unique<audium::AudioExportThread>(*audiumEngine.get(), config);
                 
                 // start the thread
                 if (thread->runThread())
@@ -129,7 +129,7 @@ private:
     std::unique_ptr<AlertWindow> asyncAlertWindow;
     std::unique_ptr<ExportAudioComponent> exportAudioComponent;
 
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
     
     std::unique_ptr<juce::FileChooser> chooser;

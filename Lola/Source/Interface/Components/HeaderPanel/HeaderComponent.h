@@ -20,13 +20,13 @@
 
 #include "Interface/Controls/LevelMeter.h"
 
-class AudiumEngine;
+#include "Engine/AudiumEngine.h"
 
 class HeaderComponent  : public juce::Component,
                          private juce::Timer
 {
 public:
-    HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine);
+    HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~HeaderComponent() override;
 
 
@@ -43,7 +43,7 @@ private:
     
     void configureSlider(juce::Slider* slider);
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
 
     std::unique_ptr<juce::TextButton> linkButton;
     std::unique_ptr<juce::Slider> tempoSlider;

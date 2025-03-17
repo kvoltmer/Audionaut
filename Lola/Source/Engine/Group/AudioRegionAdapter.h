@@ -20,6 +20,8 @@
 #include "Engine/TimeContext.h"
 #include "Engine/Region/AudioRegionData.h"
 
+namespace audium {
+
 class AudioTrackContainer;
 class AudioRegion;
 
@@ -46,7 +48,7 @@ public:
     void setSelectedRange(juce::Range<double> pos, audium::TimeContextType context);
     juce::Range<double> getSelectedRange(audium::TimeContextType context) const;
     bool anyRangeSelected() const;
-
+    
 private:
     AudioTrackContainer &owner;
     
@@ -54,3 +56,5 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionAdapter)
 };
+
+} // namespace audium

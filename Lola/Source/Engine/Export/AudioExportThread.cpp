@@ -19,22 +19,24 @@
 
 using namespace juce;
 
+namespace audium {
+
 std::string formatInteger(long num) {
     std::ostringstream oss;
     oss << std::setfill('0') << std::setw(2) << num;
     return oss.str();
 };
 
-void AudioExportThread::bounceToFile(audium::ExportAudioConfig &theConfiguration)
+void AudioExportThread::bounceToFile(ExportAudioConfig &theConfiguration)
 {
     config = theConfiguration;
     
     audiumEngine.setBypass(true);
     audiumEngine.getPlayListScheduler()->prepareToPlay(config.blockSize, config.sampleRate);
-        
+    
     TemporaryFile tempFile (config.fileName);
     std::unique_ptr<OutputStream> outStream (tempFile.getFile().createOutputStream());
-
+    
     if (outStream != nullptr) {
         const StringPairArray metadata;
         WavAudioFormat wav;
@@ -46,7 +48,7 @@ void AudioExportThread::bounceToFile(audium::ExportAudioConfig &theConfiguration
             audiumEngine.getPlayListScheduler()->bounceToFile(writer.get(), config, [this](void) {
                 setProgress(this->config.progress);
             });
-
+            
             writer.reset();
             tempFile.overwriteTargetFileWithTemporary();
         }
@@ -102,3 +104,5 @@ void AudioExportThread::bounceToFile(audium::ExportAudioConfig &theConfiguration
     }
     audiumEngine.setBypass(false);
 }
+
+} // namespace audium

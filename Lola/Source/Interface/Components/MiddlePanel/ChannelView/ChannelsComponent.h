@@ -27,7 +27,7 @@
 class ChannelsComponent  : public juce::Component, public juce::DragAndDropTarget
 {
 public:
-    ChannelsComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+    ChannelsComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
         audioChannelsListBox.reset(new audium::ListBox("Audio Group Listbox", nullptr));
@@ -91,7 +91,7 @@ private:
     
     int getListBoxHeight() const;
     
-    std::shared_ptr<AudiumEngine>               audiumEngine;
+    std::shared_ptr<audium::AudiumEngine>               audiumEngine;
     std::shared_ptr<audium::ListBox>            audioChannelsListBox;
     std::shared_ptr<ChannelGroupListBoxModel>  audioChannelsListBoxModel;
     

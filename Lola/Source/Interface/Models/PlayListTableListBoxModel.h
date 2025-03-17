@@ -34,8 +34,8 @@ class PlayListTableListBoxModel : public juce::TableListBoxModel {
     
 public:
     PlayListTableListBoxModel(std::shared_ptr<PlayListTableListBox> listBox,
-                              std::shared_ptr<AudiumEngine> engine,
-                              std::shared_ptr<AudioTrack> track) :
+                              std::shared_ptr<audium::AudiumEngine> engine,
+                              std::shared_ptr<audium::AudioTrack> track) :
         listBox(listBox),
         audiumEngine(engine),
         audioTrack(track)
@@ -105,23 +105,23 @@ public:
     {
         listBox->deselectAllRows();
         audioTrack->getPlayListContainer()->playListItems.selectAllObjects(false);
-        audioTrack->getAudioTrackContainer().sendActionMessage(updateAll);
+        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateAll);
     }
 
     
     std::shared_ptr<PlayListTableListBox> listBox;
     
-    std::shared_ptr<AudiumEngine> getAudiumEngine() const { return audiumEngine; }
-    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioTrack); }
-    std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
+    std::shared_ptr<audium::AudiumEngine> getAudiumEngine() const { return audiumEngine; }
+    std::shared_ptr<audium::PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioTrack); }
+    std::shared_ptr<audium::PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
     
-    void setAudioTrack(std::shared_ptr<AudioTrack> audioTrack_) { audioTrack = audioTrack_; }
-    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
+    void setAudioTrack(std::shared_ptr<audium::AudioTrack> audioTrack_) { audioTrack = audioTrack_; }
+    std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
     
 private:
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListTableListBoxModel)
 };

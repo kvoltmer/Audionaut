@@ -32,8 +32,8 @@ Contains all RegionEditControls
 class RegionEditComponent  : public juce::Component
 {
 public:
-    RegionEditComponent(std::shared_ptr<AudiumEngine> audiumEngine,
-                        std::shared_ptr<AudioSubGroup> audioSubGroup,
+    RegionEditComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                        std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector) :
         audiumEngine(audiumEngine),
@@ -66,7 +66,7 @@ public:
         }
     }
     
-    void updateFromEngine(std::shared_ptr<AudioSubGroup> subGroup)
+    void updateFromEngine(std::shared_ptr<audium::AudioSubGroup> subGroup)
     {
         //bool rebuild = false;
         if (audioSubGroup != subGroup)
@@ -128,13 +128,13 @@ public:
     void mouseDown (const juce::MouseEvent& e) override
     {
         audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().deselectAll();
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateSelection);
     }
     
 private:
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
     juce::Colour colour;

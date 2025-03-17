@@ -27,7 +27,7 @@
 class ExportAudioComponent  : public juce::Component, public juce::Label::Listener
 {
 public:
-    ExportAudioComponent(std::shared_ptr<AudiumEngine> engine) :
+    ExportAudioComponent(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
     {
         setSize(300, 100);
@@ -143,7 +143,7 @@ public:
     
 private:
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     const std::vector<double> availableSampleRates = {
         22050.0,

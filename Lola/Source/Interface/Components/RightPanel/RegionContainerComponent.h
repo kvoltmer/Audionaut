@@ -20,13 +20,14 @@
 #include "Interface/UIContext.h"
 #include "Interface/LookAndFeel/TrackColourLookAndFeel.h"
 
-class AudiumEngine;
+#include "Engine/AudiumEngine.h"
+
 class TrackRegionTableListBoxModel;
 
 class RegionContainerComponent  : public juce::Component
 {
 public:
-    RegionContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine);
+    RegionContainerComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~RegionContainerComponent() override;
 
     void paint (juce::Graphics&) override;
@@ -36,7 +37,7 @@ public:
     
 private:
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     TrackColourLookAndFeel lookAndFeel;
     

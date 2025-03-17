@@ -26,7 +26,7 @@ void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
         else {
             auto objects = audioTrackContainer->getSelectionManager()->getSelectedObjects();
             for (auto object : objects) {
-                if (auto item = dynamic_cast<AudioRegion*>(object.get())) {
+                if (auto item = dynamic_cast<audium::AudioRegion*>(object.get())) {
                     if (item->getAudioTrack() != region->getAudioTrack())
                         object->setSelected(false);
                 }
@@ -45,7 +45,7 @@ void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
         ///getParentComponent()->mouseDown(e);
         
         // update
-        audioTrackContainer->sendActionMessage(updateSelection);
+        audioTrackContainer->sendActionMessage(audium::updateSelection);
     }
 }
 

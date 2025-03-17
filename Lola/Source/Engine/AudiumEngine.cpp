@@ -28,6 +28,8 @@
 
 #include "Interface/ColourIds.h"
 
+namespace audium {
+
 const char* AudiumEngine::projectFileExtension = ".audium";
 juce::File AudiumEngine::projectDirectory = File();
 
@@ -123,14 +125,14 @@ void AudiumEngine::saveFile (const juce::File& file_, std::function<void (bool,s
         projectDirectory = file.getParentDirectory();
         
         juce::TemporaryFile temp (file);
-            
+        
         juce::FileOutputStream out (temp.getFile());
-
+        
         if (out.failedToOpen()) {
             NullCheckedInvocation::invoke (callback, false, out.getStatus().getErrorMessage().toStdString());
             return;
         }
-
+        
         if (writeToStream(out)) {
             if (temp.overwriteTargetFileWithTemporary()) {
                 currentFile = file;
@@ -172,7 +174,7 @@ bool AudiumEngine::readFromStream (juce::InputStream& inputStream, bool rebuild)
 bool AudiumEngine::writeToJson (json& output)
 {
     json jsonAudium;
-
+    
     audioTrackContainer->writeToJson(jsonAudium);
     
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
@@ -180,7 +182,7 @@ bool AudiumEngine::writeToJson (json& output)
     jsonAudium["ui_state"] = uiState;
     jsonAudium["scheduler"] = getPlayListScheduler()->data;
     output["audium"] = jsonAudium;
-
+    
     std::cout << std::setw(2) << output << std::endl;
     return true;
 }
@@ -219,11 +221,11 @@ int AudiumEngine::getSizeInUnits()
 void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> track)
 {
     jassertfalse;
-//    if (audioRegionContainer->getNumRegions(track.get()) == 0)
-//    {
-//        auto region = audioRegionContainer->createDefaultRegion(track);
-//        track->getPlayListContainer()->createPlayListItem(region);
-//    }
+    //    if (audioRegionContainer->getNumRegions(track.get()) == 0)
+    //    {
+    //        auto region = audioRegionContainer->createDefaultRegion(track);
+    //        track->getPlayListContainer()->createPlayListItem(region);
+    //    }
 }
 
 
@@ -242,7 +244,7 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     {
         // thread finished normally..
         config.bounceFileName = bounceConfig.fileName.getFullPathName().toStdString();
-      
+        
         std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioTrackContainer,
                                                         audioResourceContainer));
         if (autoEdit->invokeAutoEdit(config))
@@ -254,10 +256,12 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     {
         // user pressed the cancel button..
     }
-
+    
 }
 
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const
 {
     return track->getPlayListContainer();
 }
+
+} // namespace audium

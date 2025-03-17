@@ -20,28 +20,32 @@
 
 #include "Engine/AudiumEngine.h"
 
+namespace audium {
+
 class AudioExportThread  : public juce::ThreadWithProgressWindow
 {
 public:
     AudioExportThread(AudiumEngine &audiumEngine_,
-                      audium::ExportAudioConfig &config_) :
-        juce::ThreadWithProgressWindow ("exporting...", true, true),
-        audiumEngine(audiumEngine_),
-        config(config_)
+                      ExportAudioConfig &config_) :
+    juce::ThreadWithProgressWindow ("exporting...", true, true),
+    audiumEngine(audiumEngine_),
+    config(config_)
     {
     }
-
+    
     void run()
     {
         bounceToFile(config);
     }
     
     
-    void bounceToFile(audium::ExportAudioConfig &config);
-
+    void bounceToFile(ExportAudioConfig &config);
+    
 private:
     
     AudiumEngine &audiumEngine;
-    audium::ExportAudioConfig &config;
+    ExportAudioConfig &config;
 };
+
+} // namespace audium
 

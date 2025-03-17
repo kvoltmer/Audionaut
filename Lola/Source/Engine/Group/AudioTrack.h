@@ -27,6 +27,7 @@
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
+namespace audium {
 
 class AudioResourceContainer;
 class AudioResource;
@@ -48,18 +49,18 @@ public:
     AudioTrack(AudioTrackContainer &owner,
                AudioResourceContainer &audioResourceContainer,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer,
-               std::shared_ptr<audium::SelectionManager> selectionManager,
+               std::shared_ptr<SelectionManager> selectionManager,
                std::shared_ptr<tAudioSubGroupContainer> subGroups,
                std::shared_ptr<tAudioChannelContainer> channels,
                juce::String nameString) :
-        audium::Selectable(selectionManager),
-        owner(owner),
-        audioResourceContainer(audioResourceContainer),
-        transportSourceContainer(transportSourceContainer),
-        selectionManager(selectionManager),
-        audioSubGroupContainer(subGroups),
-        audioChannelContainer(channels),
-        name(nameString.toStdString())
+    audium::Selectable(selectionManager),
+    owner(owner),
+    audioResourceContainer(audioResourceContainer),
+    transportSourceContainer(transportSourceContainer),
+    selectionManager(selectionManager),
+    audioSubGroupContainer(subGroups),
+    audioChannelContainer(channels),
+    name(nameString.toStdString())
     {
         playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*this,
                                                                                       owner.getTempoProvider(),
@@ -89,13 +90,13 @@ public:
     AudioTrackContainer &getAudioTrackContainer() const { return owner; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
-    std::shared_ptr<audium::SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
+    std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     std::shared_ptr<AudioSubGroup> getSubGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     std::shared_ptr<AudioSubGroup> getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const;
     
-
+    
     // audium::Streamable overrides:
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
@@ -104,7 +105,7 @@ public:
     int getSizeInUnits() override;
     bool writeChannelToJson (json& output, AudioChannel* audioChannel);
     void mergeChannelFromJson(json& input);
-   
+    
     // audium::Selectable override:
     void setSelected(bool bSelected, bool selectChildren) override;
     
@@ -113,7 +114,7 @@ public:
     
     void setPan(float pan, int channelNumber);
     float getPan(int channelNumber) const;
-   
+    
     void setMute(bool bMute, int channelNumber);
     bool getMute(int channelNumber) const;
     
@@ -183,14 +184,14 @@ private:
     AudioResourceContainer &audioResourceContainer;
     std::shared_ptr<PlayListContainer> playListContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
-    std::shared_ptr<audium::SelectionManager> selectionManager;
-        
+    std::shared_ptr<SelectionManager> selectionManager;
+    
 public:
     std::shared_ptr<tAudioSubGroupContainer> audioSubGroupContainer;
     std::shared_ptr<tAudioChannelContainer> audioChannelContainer;
     
 private:
-
+    
     std::string name;
     
     juce::Colour groupColour = juce::Colours::pink;
@@ -198,5 +199,8 @@ private:
     std::unique_ptr<audium::UndoableContainerAction> undoableContainerAction;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)
-
+    
 };
+
+} // namespace audium
+

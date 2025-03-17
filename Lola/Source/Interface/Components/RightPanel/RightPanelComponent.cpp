@@ -24,7 +24,7 @@
 #include "Interface/Components/RightPanel/RegionComponent.h"
 #include "Interface/Components/RightPanel/RegionContainerComponent.h"
 
-RightPanelComponent::RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+RightPanelComponent::RightPanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
     regionComponent.reset(new RegionComponent(audiumEngine));

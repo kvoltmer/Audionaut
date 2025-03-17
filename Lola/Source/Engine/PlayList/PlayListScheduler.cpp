@@ -41,6 +41,8 @@ using namespace::std::chrono;
 
 using namespace::juce;
 
+namespace audium {
+
 void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
     externalSampleRate = sampleRate;
@@ -125,17 +127,17 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples, 
                 
                 transportSource->getAudioTransportSource()->start();
                 playback->startVoice(transportSource);
-                    
                 
-//                std::cout << "transport-pos: " << transportPosition << " ";
-//                std::cout << "clip-pos: " <<  absolute << " ";
-//                std::cout << "offset: " << offset << " ";
-//                std::cout << "file-pos: " << position << " ";
-//                std::cout << "duration: " << duration << " ";
-//                std::cout << "gain: " << dspClip.dspClipData.clipGain << " ";
-//                std::cout << std::endl;
-
-
+                
+                //                std::cout << "transport-pos: " << transportPosition << " ";
+                //                std::cout << "clip-pos: " <<  absolute << " ";
+                //                std::cout << "offset: " << offset << " ";
+                //                std::cout << "file-pos: " << position << " ";
+                //                std::cout << "duration: " << duration << " ";
+                //                std::cout << "gain: " << dspClip.dspClipData.clipGain << " ";
+                //                std::cout << std::endl;
+                
+                
             }
         }
     }
@@ -145,14 +147,14 @@ void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputI
 {
     // TODO: avoid allocations in the audio thread ;/
     audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
-
+    
     audioBusInterface->processAudio(outputInfo);
 }
 
 double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool addOverhead) const
 {
     auto totalLength = totalLengthClocks.load();
-
+    
     if (addOverhead) {
         // in case transport is ahead
         totalLength = std::max(totalLength, getAbsolutePosition(audium::clocks));
@@ -276,7 +278,7 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsoluteStartPosition(config.positionSeconds, audium::seconds);
-
+    
     startPlaying();
     
     jassert((int)config.sampleRate == (int)externalSampleRate);
@@ -301,7 +303,7 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
         
         buffer.clear();
         processAudio(info);
-
+        
         writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
         
         samplesWritten += info.numSamples;
@@ -341,7 +343,7 @@ void PlayListScheduler::commitPlayListData()
             audioClipContainer->push_back(clip);
         }
     }
-
+    
     // commit data
     audioClipContainer->commit();
     
@@ -356,3 +358,5 @@ void PlayListScheduler::commitPlayListData()
     totalLengthClocks = totalLength;
     
 }
+
+} // namespace audium

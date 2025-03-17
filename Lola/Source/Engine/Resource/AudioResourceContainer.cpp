@@ -26,6 +26,8 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 
+namespace audium {
+
 AudioResourceContainer::~AudioResourceContainer()
 {
     audioResources.clear();
@@ -35,7 +37,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::findResourceWithUrl(juce:
 {
     for (auto it = audioResources.begin(); it != audioResources.end(); ++it) {
         if ((*it).second->getUrl() == url) {
-//            std::cout << "found url: " << url.getFileName() << std::endl;
+            //            std::cout << "found url: " << url.getFileName() << std::endl;
             return (*it).second;
         }
     }
@@ -68,7 +70,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 {
     jassert(track != nullptr);
     jassert(subGroup != nullptr);
-            
+    
     auto audioResource = AudioResourceFactory::createAudioResource(url,
                                                                    audioFormatReader,
                                                                    *this,
@@ -202,7 +204,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     }
     
     return result;
-
+    
     
 }
 
@@ -255,4 +257,4 @@ void AudioResourceContainer::onDeleteChannel(AudioTrack* audioTrack, AudioChanne
     }
 }
 
-
+} // namespace audium

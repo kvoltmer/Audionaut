@@ -35,7 +35,7 @@ class DraggerControl  : public juce::Component,
                         public juce::KeyListener
 {
 public:
-    DraggerControl(std::shared_ptr<AudiumEngine> audiumEngine_,
+    DraggerControl(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
                    std::shared_ptr<ZoomHandler> zoomHandler_,
                    juce::Colour colour_,
                    std::shared_ptr<RegionSelector> regionSelector_) :
@@ -145,7 +145,7 @@ public:
     
     void commitData(const juce::Range<double> newData, audium::TimeContextType context);
     
-    bool commitPositionData(const PositionableBase &positionableBase,
+    bool commitPositionData(const audium::PositionableBase &positionableBase,
                             const juce::Range<double> newRange,
                             const audium::TimeContextType context);
     
@@ -161,7 +161,7 @@ public:
     
     void setComponentToDrag(juce::Component* comp);
     
-    void setPositionableObject(std::shared_ptr<PositionableBase> object);
+    void setPositionableObject(std::shared_ptr<audium::PositionableBase> object);
     
     static constexpr int draggerHeight = 19;
     
@@ -173,11 +173,11 @@ protected:
     
     juce::Component* componentToDrag = nullptr;
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
-    std::shared_ptr<PositionableBase> positionableObject;
+    std::shared_ptr<audium::PositionableBase> positionableObject;
     
     Edge currentDragMode = outsideEdge;
     

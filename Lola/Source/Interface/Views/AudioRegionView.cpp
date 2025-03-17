@@ -63,7 +63,7 @@ void AudioRegionView::updateUI(int theChannel)
     volumeSlider->setValue(LevelMeter::gainToDecebel(getClipGain()), dontSendNotification);
 }
 
-void AudioRegionView::setPlayListItem(std::shared_ptr<PlayListItem> item)
+void AudioRegionView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item)
 {
     playListItem = item;
     
@@ -73,7 +73,7 @@ void AudioRegionView::setPlayListItem(std::shared_ptr<PlayListItem> item)
     
     volumeSlider->onValueChange = [this, audioRegion] {
         audioRegion->setGain(channelNumber, Decibels::decibelsToGain(volumeSlider->getValue()), true);
-        this->audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        this->audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
     };
     volumeSlider->onDragStart = [this] {
         playListItem->onDragStart();

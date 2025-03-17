@@ -32,7 +32,7 @@ class ChannelGroupHeaderComponent : public juce::Component,
                                     public juce::DragAndDropTarget
 {
 public:
-    ChannelGroupHeaderComponent(std::shared_ptr<AudioTrack> audioTrack) :
+    ChannelGroupHeaderComponent(std::shared_ptr<audium::AudioTrack> audioTrack) :
         audioTrack(audioTrack)
     {
         audioTrackNameLabel.reset (new AudiumLabel ("track name",
@@ -100,7 +100,7 @@ public:
         }
     }
     
-    void updateFromEngine(std::shared_ptr<AudioTrack> newAudioTrack)
+    void updateFromEngine(std::shared_ptr<audium::AudioTrack> newAudioTrack)
     {
         audioTrack = newAudioTrack;
         audioTrackNameLabel->setText(audioTrack->getAudioTrackName(), juce::dontSendNotification);
@@ -164,7 +164,7 @@ public:
             audioTrack->getSelectionManager()->deselectAll();
         audioTrack->setSelected(bSelected, false);
         
-        audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
+        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
     }
 
     bool keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent) override
@@ -214,10 +214,10 @@ public:
     {
         return true;
     }
-    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
+    std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
 
 private:
-    std::shared_ptr<AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
     
     std::unique_ptr<AudiumLabel> audioTrackNameLabel;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;

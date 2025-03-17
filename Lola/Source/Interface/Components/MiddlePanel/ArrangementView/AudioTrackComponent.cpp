@@ -29,8 +29,6 @@
 #include "Interface/Controls/DraggerControl.h"
 #include "Interface/Models/PlayListTableListBoxItem.h"
 
-using namespace audium;
-
 class AudioTrackComponent::ItemComponent  : public Component
 {
 public:
@@ -73,7 +71,7 @@ public:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ItemComponent)
 };
 
-void AudioTrackComponent::refreshComponent (std::shared_ptr<AudioTrack> track, bool forceRebuildComponents)
+void AudioTrackComponent::refreshComponent (std::shared_ptr<audium::AudioTrack> track, bool forceRebuildComponents)
 {
     audioTrack = track;
     model->setAudioTrack(track);

@@ -22,6 +22,8 @@
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Region/AudioRegionContainer.h"
 
+namespace audium {
+
 double AudioClip::getAbsolutePosition(audium::TimeContextType context) const
 {
     if (context == audium::seconds)
@@ -86,7 +88,7 @@ void AudioClip::setRegionData(juce::Range<double> newRegionData, audium::TimeCon
     {
         data.regionData = getAudioTrack().getAudioTrackContainer().getTempoProvider()->clocksToSeconds(newRegionData);
     }
-
+    
     if (data.regionData.getStart() < 0.0)
     {
         data.regionData.setStart(0.0);
@@ -96,7 +98,7 @@ void AudioClip::setRegionData(juce::Range<double> newRegionData, audium::TimeCon
 bool AudioClip::validateData()
 {
     bool result = false;
- 
+    
     if (data.regionData.isEmpty()) {
         setRegionData(juce::Range<double>(0.0, getFileLength(audium::seconds)), audium::seconds);
     }
@@ -189,3 +191,5 @@ AudioTrack &AudioClip::getAudioTrack() const
 {
     return audioSubGroup.getAudioTrack();
 }
+
+} // namespace audium

@@ -31,7 +31,7 @@
 class PlayListComponent  : public juce::Component, public juce::DragAndDropTarget, public juce::AsyncUpdater
 {
 public:
-    PlayListComponent(std::shared_ptr<AudiumEngine> audiumEngine, std::shared_ptr<AudioTrack> track) :
+    PlayListComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine, std::shared_ptr<audium::AudioTrack> track) :
         audiumEngine(audiumEngine),
         audioTrack(track)
     {
@@ -104,7 +104,7 @@ public:
         playListTableListBox->setSelectedRows(selectedRows, juce::dontSendNotification);
     }
     
-    void updateUI(std::shared_ptr<AudioTrack> audioTrack_)
+    void updateUI(std::shared_ptr<audium::AudioTrack> audioTrack_)
     {
         audioTrack = audioTrack_;
         playListTableListBoxModel->setAudioTrack(audioTrack_);
@@ -116,12 +116,12 @@ public:
         playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, audioTrack->getColour());
     }
     
-    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
+    std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
 
 private:
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
     std::shared_ptr<PlayListTableListBox> playListTableListBox;
     std::unique_ptr<PlayListTableListBoxModel> playListTableListBoxModel;
     

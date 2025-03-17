@@ -20,6 +20,8 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Playback/Playback.h"
 
+namespace audium {
+
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(AudioResource& audioResource,
                                                                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
@@ -42,7 +44,7 @@ std::vector<std::shared_ptr<AudiumTransportSource>> TransportSourceContainer::ge
     std::vector<std::shared_ptr<AudiumTransportSource>> result;
     
     for (auto transportSource : audioTransportSources) {
-
+        
         if (&transportSource->getAudioResource() == &resource)
             result.push_back(transportSource);
     }
@@ -81,7 +83,7 @@ int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTran
     auto it = std::find(audioTransportSources.begin(), audioTransportSources.end(), searchObject);
     if (it != audioTransportSources.end())
         return static_cast<int>(std::distance(audioTransportSources.begin(), it));
-
+    
     return -1;
 }
 
@@ -92,3 +94,5 @@ void TransportSourceContainer::applyChannelMapping()
         transportSource->applyChannelMapping();
     }
 }
+
+} // namespace audium

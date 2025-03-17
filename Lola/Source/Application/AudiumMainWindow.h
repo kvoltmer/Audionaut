@@ -32,7 +32,7 @@ class ExportAudioDialog;
 class AudiumMainWindow    : public juce::DocumentWindow, public juce::ApplicationCommandTarget
 {
 public:
-    AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine);
+    AudiumMainWindow (juce::String name, std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~AudiumMainWindow() override;
 
     void closeButtonPressed() override;
@@ -44,7 +44,7 @@ public:
        subclass also calls the superclass's method.
     */
     
-    std::shared_ptr<AudiumEngine> getEngine() const { return audiumEngine; }
+    std::shared_ptr<audium::AudiumEngine> getEngine() const { return audiumEngine; }
     
     
     //==============================================================================
@@ -58,7 +58,7 @@ private:
     bool isSomethingSelected();
     bool canPaste();
         
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
     
     std::unique_ptr<NewRegionDialog> newRegionDialog;

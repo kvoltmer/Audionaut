@@ -18,6 +18,9 @@
 
 #include <memory>
 
+namespace audium {
+
+
 class AudioResourceContainer;
 class AudioRegionContainer;
 class PlayListContainer;
@@ -37,8 +40,8 @@ class AutoEdit {
 public:
     AutoEdit(std::shared_ptr<AudioTrackContainer> audioTrackContainer,
              std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
-        audioTrackContainer(audioTrackContainer),
-        audioResourceContainer(audioResourceContainer)
+    audioTrackContainer(audioTrackContainer),
+    audioResourceContainer(audioResourceContainer)
     {}
     
     bool invokeAutoEdit(const AutoEditConfig config);
@@ -58,3 +61,6 @@ private:
     const std::string getBaseName() const;
     const std::string getCountFromFile() const;
 };
+
+} // namespace audium
+

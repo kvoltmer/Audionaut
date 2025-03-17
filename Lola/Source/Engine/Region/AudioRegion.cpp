@@ -24,9 +24,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 
-AudioRegion::~AudioRegion()
-{
-}
+namespace audium {
 
 void AudioRegion::sendActionMessage (const juce::String& message) const
 {
@@ -55,7 +53,7 @@ bool AudioRegion::writeToJson (json& output)
     data.region_id      = audioSubGroup->getAudioRegionContainer()->getRegionId(shared_ptr);
     data.track_id       = audioTrack->getId();
     data.sub_group_id   = audioTrack->audioSubGroupContainer->getIndex(audioSubGroup);
-     
+    
     
     output = data;
     return true;
@@ -92,7 +90,7 @@ void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, aud
 {
     jassert(!newRegionData.isEmpty());
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
-
+    
     if (context == audium::seconds)
     {
         data.range = newRegionData;
@@ -171,10 +169,10 @@ void AudioRegion::setGain(int channel, double newGain, bool continous)
         data.gain_vector[channel] = newGain;
         
         if (continous) {
-
+            
             auto resource = getAudioSubGroup()->getAudioResourceAtChannel(channel);
             auto sources = audioTrack->getTransportSourceContainer()->getTransportSourcesForResource(*resource.get());
-
+            
             // TODO: this is not thread save
             for (auto source : sources)
                 if (source->isPlaying())
@@ -198,3 +196,6 @@ void AudioRegion::onDeleteChannel(int channel)
             data.gain_vector[i] = data.gain_vector[i + 1];
     }
 }
+
+} // namespace audium
+

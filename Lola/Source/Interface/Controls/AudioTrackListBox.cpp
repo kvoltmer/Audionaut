@@ -33,10 +33,7 @@
 #include "Interface/Controls/RegionLabel.h"
 #include "Interface/Controls/TableRegionLabel.h"
 
-using namespace audium;
-
-
-AudioTrackListBox::AudioTrackListBox (std::shared_ptr<AudiumEngine> audiumEngine,
+AudioTrackListBox::AudioTrackListBox (std::shared_ptr<audium::AudiumEngine> audiumEngine,
                                       std::shared_ptr<ZoomHandler> zoomHandler) :
     audium::ListBox("AudioTrackListBox", nullptr),
     audiumEngine(audiumEngine),
@@ -50,7 +47,7 @@ AudioTrackListBox::~AudioTrackListBox()
 {
 }
 
-void AudioTrackListBox::setNewGroupColour(std::shared_ptr<AudioTrack> audioTrack)
+void AudioTrackListBox::setNewGroupColour(std::shared_ptr<audium::AudioTrack> audioTrack)
 {
     if (audioTrack->getColour() == juce::Colours::pink)
     {

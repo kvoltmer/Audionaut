@@ -24,9 +24,6 @@
 namespace audium
 {
 
-/// Forward declarations
-class Playback;
-
 class Playback
 {
 public:

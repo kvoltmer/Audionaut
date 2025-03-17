@@ -37,8 +37,8 @@ class WaveFormViewBase : public juce::Component, public juce::ChangeListener
 {
 public:
     WaveFormViewBase(juce::Component *parentComponent,
-                     std::shared_ptr<AudiumEngine> audiumEngine,
-                     std::shared_ptr<AudioResource> audioResource,
+                     std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                     std::shared_ptr<audium::AudioResource> audioResource,
                      std::shared_ptr<ZoomHandler> zoomHandler,
                      juce::Colour colour,
                      std::shared_ptr<RegionSelector> regionSelector,
@@ -110,8 +110,8 @@ public:
     
 protected:
     juce::Component *parentComponent;
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioResource> audioResource;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
 
     juce::Colour colour;

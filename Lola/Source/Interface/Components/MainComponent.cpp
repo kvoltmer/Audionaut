@@ -30,7 +30,7 @@
 #include "MainComponent.h"
 
 //==============================================================================
-MainComponent::MainComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
+MainComponent::MainComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
     audiumEngine(audiumEngine_)
 {
     headerComponent = std::make_unique<HeaderComponent>(audiumEngine);
@@ -118,32 +118,32 @@ void MainComponent::actionListenerCallback (const juce::String& message)
 {
     //std::cout << "actionListenerCallback " << message.toStdString() << std::endl;
 
-    if (message == scrolledVertically)
+    if (message == audium::scrolledVertically)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::VerticalScrollContext);
     }
-    else if (message == rebuildAll)
+    else if (message == audium::rebuildAll)
     {
         rebuildUI();
         updateUI();
     }
-    else if (message == updateAll)
+    else if (message == audium::updateAll)
     {
         updateUI();
     }
-    else if (message == updateMiddlePanelAction)
+    else if (message == audium::updateMiddlePanelAction)
     {
         middlePanelComponent->updateUI();
     }
-    else if (message == updateRightPanelAction)
+    else if (message == audium::updateRightPanelAction)
     {
         rightPanelComponent->updateUI();
     }
-    else if (message == updateArrangementAction)
+    else if (message == audium::updateArrangementAction)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
     }
-    else if (message == updateSelection)
+    else if (message == audium::updateSelection)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
         rightPanelComponent->updateUI(SelectionContext);

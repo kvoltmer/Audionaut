@@ -23,6 +23,7 @@
 #include "Engine/Group/AudioRegionAdapter.h"
 #include "Engine/Selection/SelectionManager.h"
 
+namespace audium {
 
 class AudioTrack;
 class AudioResourceContainer;
@@ -32,35 +33,30 @@ class TempoProvider;
 class AudioRegion;
 class TransportSourceContainer;
 class AudioResourceContainer;
+class AudioBusInterface;
+class TransportLoop;
 
 
-namespace audium {
-    class AudioBusInterface;
-    class TransportLoop;
-}
-
-class AudioTrackContainer : public juce::ActionBroadcaster,
-                            public juce::ChangeBroadcaster,
-                            public audium::Streamable
+class AudioTrackContainer : public juce::ActionBroadcaster, public juce::ChangeBroadcaster, public Streamable
 {
-        
+    
 public:
     
     AudioTrackContainer(std::shared_ptr<juce::UndoManager> undoManager,
                         std::shared_ptr<TempoProvider> tempoProvider,
                         std::shared_ptr<AudioResourceContainer> audioResourceContainer,
                         std::shared_ptr<TransportSourceContainer> transportSourceContainer,
-                        std::shared_ptr<audium::SelectionManager> selectionManager,
-                        std::shared_ptr<audium::AudioBusInterface> audioBusInterface_,
-                        std::shared_ptr<audium::TransportLoop> transportLoop_) :
-        audioBusInterface(audioBusInterface_),
-        undoManager(undoManager),
-        tempoProvider(tempoProvider),
-        audioResourceContainer(audioResourceContainer),
-        transportSourceContainer(transportSourceContainer),
-        selectionManager(selectionManager),
-        transportLoop(transportLoop_),
-        audioRegionAdapter(*this)
+                        std::shared_ptr<SelectionManager> selectionManager,
+                        std::shared_ptr<AudioBusInterface> audioBusInterface_,
+                        std::shared_ptr<TransportLoop> transportLoop_) :
+    audioBusInterface(audioBusInterface_),
+    undoManager(undoManager),
+    tempoProvider(tempoProvider),
+    audioResourceContainer(audioResourceContainer),
+    transportSourceContainer(transportSourceContainer),
+    selectionManager(selectionManager),
+    transportLoop(transportLoop_),
+    audioRegionAdapter(*this)
     {
     }
     
@@ -70,7 +66,7 @@ public:
     const float getMasterGain() const noexcept;
     
     bool groupIdExists(const int groupId) const;
-        
+    
     std::shared_ptr<AudioTrack> createNewAudioTrack(const juce::String nameString);
     void cleanup();
     
@@ -95,15 +91,15 @@ public:
     std::shared_ptr<AudioTrack> getDefaultGroup() const;
     
     const std::vector<std::shared_ptr<AudioTrack>> &getAudioTracks() const { return audioTracks; }
-        
+    
     void selectAllGroups(bool bSelected, bool selectChildren);
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
-
+    
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const noexcept { return transportSourceContainer; }
-    std::shared_ptr<audium::SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
+    std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
@@ -115,7 +111,7 @@ public:
     
     void copySelectedChannelsToNewTrack();
     
-    std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
+    std::shared_ptr<AudioBusInterface> audioBusInterface;
     
     std::vector<std::shared_ptr<AudioTrack>> audioTracks;
     
@@ -126,16 +122,19 @@ private:
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
-    std::shared_ptr<audium::SelectionManager> selectionManager;
-    std::shared_ptr<audium::TransportLoop> transportLoop;
+    std::shared_ptr<SelectionManager> selectionManager;
+    std::shared_ptr<TransportLoop> transportLoop;
     
     int selectedGroup = 0;
     
     float masterGain = 1.f;
-
+    
     
     // Discuss: inject depenendency
     AudioRegionAdapter audioRegionAdapter;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackContainer)
 };
+
+} // namespace audium
+

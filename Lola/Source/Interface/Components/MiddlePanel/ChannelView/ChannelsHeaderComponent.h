@@ -24,7 +24,7 @@
 class ChannelsHeaderComponent  : public juce::Component
 {
 public:
-    ChannelsHeaderComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+    ChannelsHeaderComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
     }
@@ -46,7 +46,7 @@ public:
     
 
 private:
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelsHeaderComponent)

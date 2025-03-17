@@ -25,6 +25,9 @@
 #include "Engine/Selection/SelectableObjectContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 
+
+namespace audium {
+
 class AudioRegionContainer;
 class TransportSourceContainer;
 
@@ -35,11 +38,11 @@ public:
     PlayListContainer(const AudioTrack &audioTrack_,
                       std::shared_ptr<TempoProvider> tempoProvider_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
-                      std::shared_ptr<audium::SelectionManager> selectionManager_) :
-        audioTrack(audioTrack_),
-        tempoProvider(tempoProvider_),
-        transportSourceContainer(transportSourceContainer_),
-        selectionManager(selectionManager_)
+                      std::shared_ptr<SelectionManager> selectionManager_) :
+    audioTrack(audioTrack_),
+    tempoProvider(tempoProvider_),
+    transportSourceContainer(transportSourceContainer_),
+    selectionManager(selectionManager_)
     {
     }
     
@@ -51,12 +54,12 @@ public:
                                                                  audium::TimeContextType context);
     std::shared_ptr<PlayListItem> createPlayListItemUI(std::shared_ptr<AudioRegion> region,
                                                        int indexOfItemToPlaceBefore);
-
+    
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
     void deletePlayListItem(int atIndex);
     bool deletePlayListItem(PlayListItem* playListItem, bool deleteRegion);
-
+    
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
     bool exitsInPlayList(const AudioRegion* audioRegion);
     
@@ -72,10 +75,10 @@ public:
     int getSizeInUnits() override;
     
     
-
+    
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
     int getPlayListItemIndex(PlayListItem* item) const;
-        
+    
     PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
     PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
@@ -93,7 +96,7 @@ public:
     
     // move the absolute position of all playlist items by an amount
     void movePlayListItemsPosition(int startIndex);
-            
+    
     // selection:
     void selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region);
     
@@ -112,12 +115,14 @@ private:
     
     // called internally
     std::shared_ptr<PlayListItem> createPlayListItem(std::shared_ptr<AudioRegion> audioRegion, int insertIndex);
-
-        
+    
+    
     const AudioTrack &audioTrack;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
-    std::shared_ptr<audium::SelectionManager> selectionManager;
+    std::shared_ptr<SelectionManager> selectionManager;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListContainer)
 };
+
+} // namespace audium

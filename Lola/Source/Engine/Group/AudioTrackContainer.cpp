@@ -32,6 +32,8 @@
 
 #include "Interface/ColourIds.h"
 
+namespace audium {
+
 AudioTrackContainer::~AudioTrackContainer()
 {
     undoManager = nullptr;
@@ -120,7 +122,7 @@ bool AudioTrackContainer::deleteAudioTrack(AudioTrack* track)
         audioTracks.erase(it);
         return true;
     }
-
+    
     return false;
 }
 
@@ -161,7 +163,7 @@ void AudioTrackContainer::deleteUnusedRegions()
 {
     // Undo: store old state
     auto action = std::make_unique<audium::UndoableContainerAction>(*this);
-
+    
     for (auto track : audioTracks) {
         for (auto subGroup : track->getAudioSubGroups()) {
             subGroup->getAudioRegionContainer()->deleteUnusedRegions();
@@ -234,7 +236,7 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
         setMasterGain(1.f);
     }
     
-
+    
     int count = 0;
     for (auto& jsonElement : jsonTracks) {
         std::shared_ptr<AudioTrack> audioTrack = nullptr;
@@ -349,30 +351,32 @@ juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
 
 void AudioTrackContainer::copySelectedChannelsToNewTrack()
 {
-        // undo
-        auto action = std::make_unique<audium::UndoableContainerAction>(*this);
-
-        auto selectedObjects = getSelectionManager()->getSelectedObjects();
-        if (selectedObjects.size() > 0) {
+    // undo
+    auto action = std::make_unique<audium::UndoableContainerAction>(*this);
+    
+    auto selectedObjects = getSelectionManager()->getSelectedObjects();
+    if (selectedObjects.size() > 0) {
+        
+        // create new audio track
+        auto audioTrack = createNewAudioTrack(juce::String());
+        audioTrack->setColour(getNewAudioTrackColour());
+        
+        // copy selected channels
+        for (auto object : selectedObjects) {
             
-            // create new audio track
-            auto audioTrack = createNewAudioTrack(juce::String());
-            audioTrack->setColour(getNewAudioTrackColour());
-            
-            // copy selected channels
-            for (auto object : selectedObjects) {
-                
-                if (auto audioChannel = std::dynamic_pointer_cast<AudioChannel>(object)) {
-                    json j;
-                    audioChannel->getAudioTrack().writeChannelToJson(j, audioChannel.get());
-                    audioTrack->mergeChannelFromJson(j);
-                }
+            if (auto audioChannel = std::dynamic_pointer_cast<AudioChannel>(object)) {
+                json j;
+                audioChannel->getAudioTrack().writeChannelToJson(j, audioChannel.get());
+                audioTrack->mergeChannelFromJson(j);
             }
         }
-        
-        // undo
-        action->storeNewState();
-        undoManager->perform(action.release(), "copy channel(s)");
-        undoManager->beginNewTransaction();
+    }
+    
+    // undo
+    action->storeNewState();
+    undoManager->perform(action.release(), "copy channel(s)");
+    undoManager->beginNewTransaction();
 }
+
+} // namespace audium
 

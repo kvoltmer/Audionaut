@@ -29,6 +29,8 @@ using json = nlohmann::json;
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+namespace audium {
+
 class AudioRegion;
 class PlayListContainer;
 class AudiumTransportSource;
@@ -40,7 +42,7 @@ public:
     
     PlayListItem(const PlayListContainer &owner,
                  std::shared_ptr<AudioRegion> audioRegion,
-                 std::shared_ptr<audium::SelectionManager> selectionManager);
+                 std::shared_ptr<SelectionManager> selectionManager);
     
     ~PlayListItem() override;
     
@@ -55,17 +57,17 @@ public:
     void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
     
     double getDurationTime(audium::TimeContextType context) const;
-            
+    
     double getAbsolutePosition(audium::TimeContextType context) const override;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
-        
+    
     const PlayListContainer &getPlayListContainer() const { return owner; }
-
+    
     bool writeToJson (json& output);
     bool readFromJson (json& input, bool rebuild);
     
     bool validateData();
-
+    
     const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
     
     void onDragStart();
@@ -105,3 +107,5 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItem)
 };
+
+} // namespace audium

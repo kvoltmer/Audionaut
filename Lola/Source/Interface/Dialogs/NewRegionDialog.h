@@ -34,7 +34,7 @@ class NewRegionDialog
     
 public:
     
-    void createNewRegion(std::shared_ptr<AudiumEngine> engine)
+    void createNewRegion(std::shared_ptr<audium::AudiumEngine> engine)
     {
         createNewRegionInternal(engine);
     }
@@ -43,7 +43,7 @@ private:
     
     static String getClassNameFieldName()  { return "Region Name"; }
     
-    void createNewRegionInternal(std::shared_ptr<AudiumEngine> engine)
+    void createNewRegionInternal(std::shared_ptr<audium::AudiumEngine> engine)
     {
         audiumEngine = engine;
         asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Create New Region"),
@@ -110,7 +110,7 @@ private:
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;
 
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     JUCE_DECLARE_WEAK_REFERENCEABLE (NewRegionDialog)
 };

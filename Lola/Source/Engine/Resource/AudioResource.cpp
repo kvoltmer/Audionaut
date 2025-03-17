@@ -24,6 +24,8 @@
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
 
+namespace audium {
+
 AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
                              std::shared_ptr<AudioTrack> audioTrack_,
                              std::shared_ptr<AudioSubGroup> audioSubGroup_,
@@ -31,11 +33,11 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
                              std::shared_ptr<juce::AudioFormatReader> reader_,
                              int destChannel,
                              int sourceChannel) :
-    audioFormatReader(reader_),
-    owner(audioResourceContainer_),
-    audioTrack(audioTrack_),
-    audioSubGroup(audioSubGroup_),
-    url(url_)
+audioFormatReader(reader_),
+owner(audioResourceContainer_),
+audioTrack(audioTrack_),
+audioSubGroup(audioSubGroup_),
+url(url_)
 {
     jassert(audioFormatReader != nullptr);
     
@@ -115,7 +117,7 @@ unsigned int AudioResource::getNumAudioFileChannels() const
 double AudioResource::getFileLength(audium::TimeContextType context) const
 {
     auto length = lengthInSeconds;
- 
+    
     if (audioFormatReader != nullptr) {
         length = audioFormatReader->lengthInSamples / audioFormatReader->sampleRate;
     }
@@ -135,11 +137,11 @@ std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWith
 {
     std::vector<std::shared_ptr<AudioResource>> result;
     auto resources = owner.getAudioResourcesForSubGroup(audioSubGroup.get());
- 
+    
     for (auto resource : resources) {
         if (resource.get() == this)
             continue;
-    
+        
         result.push_back(resource);
     }
     return result;
@@ -153,7 +155,7 @@ bool AudioResource::containsAbsolutePosition(double position, audium::TimeContex
     if (absoluteRange.contains(position)) {
         return true;
     }
-
+    
     return false;
 }
 
@@ -174,7 +176,7 @@ void AudioResource::testUrl (const juce::URL& url)
     if (url.isLocalFile()) {
         juce::File file = url.getLocalFile();
         auto fin = std::make_unique<juce::FileInputStream> (file);
-
+        
         if (!fin->openedOk()) {
             throw std::runtime_error(file.getFullPathName().toStdString() + "\nError: " + fin->getStatus().getErrorMessage().toStdString());
         }
@@ -205,7 +207,7 @@ const juce::URL AudioResource::urlFromJson (json& input)
     
     std::cout << "error: absolute path does not exist: " << filePath << std::endl;
     throw std::runtime_error(file.getFullPathName().toStdString() + "\n\nError: File not found.");
-
+    
     return URL(File(filePath));
 }
 
@@ -225,3 +227,4 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     return true;
 }
 
+} // namespace audium

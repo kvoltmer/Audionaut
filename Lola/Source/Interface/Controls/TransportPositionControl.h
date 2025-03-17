@@ -31,7 +31,7 @@ public:
     TransportPositionControl(std::shared_ptr<audium::ListBox> lb,
                              std::shared_ptr<RegionSelector> regionSelector_,
                              std::shared_ptr<ZoomHandler> zoomHandler_,
-                             std::shared_ptr<AudiumEngine> audiumEngine_) :
+                             std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
         owner(lb),
         regionSelector(regionSelector_),
         zoomHandler(zoomHandler_),
@@ -201,7 +201,7 @@ private:
     std::shared_ptr<audium::ListBox> owner;
     std::shared_ptr<RegionSelector> regionSelector;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     juce::DrawableRectangle startPositionMarker;
     juce::DrawableRectangle mouseOverGridMarker;

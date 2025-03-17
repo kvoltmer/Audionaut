@@ -18,11 +18,8 @@
 
 #include <JuceHeader.h>
 #include "Interface/UIContext.h"
+#include "Engine/AudiumEngine.h"
 
-//==============================================================================
-/*
-*/
-class AudiumEngine;
 class PlayListContainerComponent;
 class RegionComponent;
 class RegionContainerComponent;
@@ -30,7 +27,7 @@ class RegionContainerComponent;
 class RightPanelComponent  : public juce::Component
 {
 public:
-    RightPanelComponent(std::shared_ptr<AudiumEngine> audiumEngine);
+    RightPanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~RightPanelComponent() override;
     
     void paint (juce::Graphics&) override;
@@ -38,7 +35,7 @@ public:
     void updateUI(UIContext context = ContentContext);
     
 private:
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
 
     std::unique_ptr<RegionComponent> regionComponent;
     std::unique_ptr<juce::StretchableLayoutManager> stretchableLayoutManager;

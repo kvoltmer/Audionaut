@@ -26,7 +26,7 @@
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
-PlayListContainerComponent::PlayListContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+PlayListContainerComponent::PlayListContainerComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
     createComponents();
@@ -127,7 +127,7 @@ void PlayListContainerComponent::resized()
 void PlayListContainerComponent::timerCallback()
 {
     auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
-    totalLengthLabel->setText(TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
+    totalLengthLabel->setText(audium::TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
     
     auto numVoices = audiumEngine->getPlayListScheduler()->getPlayback()->getNumVoices();
     numVoicesLabel->setText("Voices " + juce::String(numVoices), juce::dontSendNotification);

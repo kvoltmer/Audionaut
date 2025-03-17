@@ -25,6 +25,8 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+namespace audium {
+
 PlayListContainer::~PlayListContainer()
 {
     playListItems.cleanup();
@@ -103,11 +105,11 @@ void PlayListContainer::movePlayListItemsPosition(int startIndex)
 void PlayListContainer::movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore)
 {
     // TODO: swap position
-//    auto currentPos = getPlayListItem(currentIndex)->getAbsolutePosition(audium::clocks);
-//    auto beforePos = getPlayListItem(indexOfItemToPlaceBefore)->getAbsolutePosition(audium::clocks);
-//
-//    getPlayListItem(currentIndex)->setAbsolutePosition(beforePos, audium::clocks);
-//    getPlayListItem(indexOfItemToPlaceBefore)->setAbsolutePosition(currentPos, audium::clocks);
+    //    auto currentPos = getPlayListItem(currentIndex)->getAbsolutePosition(audium::clocks);
+    //    auto beforePos = getPlayListItem(indexOfItemToPlaceBefore)->getAbsolutePosition(audium::clocks);
+    //
+    //    getPlayListItem(currentIndex)->setAbsolutePosition(beforePos, audium::clocks);
+    //    getPlayListItem(indexOfItemToPlaceBefore)->setAbsolutePosition(currentPos, audium::clocks);
     
     audium::MoveItemBefore(playListItems.objects,
                            currentIndex,
@@ -143,7 +145,7 @@ bool PlayListContainer::deleteAssociatedItems(const AudioRegion* audioRegion)
             success = true;
         }
     }
-
+    
     return success;
 }
 
@@ -214,7 +216,7 @@ bool PlayListContainer::readFromJson (json& input, bool rebuild)
                                                                            nullptr,
                                                                            selectionManager));
     }
-        
+    
     for (auto i = 0; i < playListItems.size(); ++i) {
         auto &jsonElement = jsonPlayListItems[i];
         if ( !playListItems.getObjects()[i]->readFromJson(jsonElement, rebuild)) {
@@ -238,7 +240,7 @@ void PlayListContainer::mergeFromJson(json& input)
         auto jsonPlayList = input["play_list"];
         jsonPlayListItems = jsonPlayList["play_list_items"];
     }
-
+    
     for (auto& jsonElement : jsonPlayListItems) {
         
         if (auto playListItem = createPlayListItemFromJson(jsonElement)) {
@@ -282,8 +284,8 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (jso
         jassert(subGroup);
         if (auto audioRegion = subGroup->getAudioRegionContainer()->getRegion(regionId)) {
             playListItem = std::shared_ptr<PlayListItem> (new PlayListItem(*this,
-                                                                        audioRegion,
-                                                                        audioTrack.getSelectionManager()));
+                                                                           audioRegion,
+                                                                           audioTrack.getSelectionManager()));
             playListItem->readFromJson(input, true);
         }
     }
@@ -300,7 +302,7 @@ int PlayListContainer::getSizeInUnits()
 double PlayListContainer::getAbsolueStartTimeByOrder(const PlayListItem* playListItem, audium::TimeContextType context) const
 {
     double startTime = 0.0;
-        
+    
     for (auto item : playListItems.getObjects())
     {
         if (item.get() == playListItem)
@@ -325,7 +327,7 @@ void PlayListContainer::sortByPosition()
 {
     std::sort(playListItems.objects.begin(), playListItems.objects.end(),
               [](const std::shared_ptr<PlayListItem> i1, const std::shared_ptr<PlayListItem> i2)
-    {
+              {
         return (i1->getAbsolutePosition(audium::clocks) < i2->getAbsolutePosition(audium::clocks));
     });
     jassert(sortedByPosition());
@@ -440,3 +442,5 @@ std::vector<std::shared_ptr<PlayListItem>> PlayListContainer::getSelectedItems(b
     }
     return result;
 }
+
+} // namespace audium

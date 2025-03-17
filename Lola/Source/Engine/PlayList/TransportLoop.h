@@ -21,10 +21,10 @@
 #include "Engine/PlayList/LoopData.h"
 #include "Engine/TimeContext.h"
 
+namespace audium {
+
 class TempoProvider;
 class AudioTrackContainer;
-
-namespace audium {
 
 class TransportLoop {
     

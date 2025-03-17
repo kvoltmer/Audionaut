@@ -27,6 +27,8 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+namespace audium {
+
 const juce::String AutoEdit::getTempDirectory()
 {
     // Temp directory on is ~Library/Caches/AppAudium
@@ -39,7 +41,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
     // With XCode you must edit the scheme and set the environment variables
     // double check with:
     // system("env");
-        
+    
     // Path to python binary
     std::string python = "python3";
     
@@ -50,11 +52,11 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
         std::string commandString;
         commandString += "cd " + getTempDirectory().toStdString() + ";";
         commandString += python + " $HOME/dev/gaborgandalf/gaborgandalf/automain.py --verbose autoedit";
-//      commandString += " --assemble_mode " + config.mode;
+        //      commandString += " --assemble_mode " + config.mode;
         commandString += " --duration " + std::to_string(config.duration);
         commandString += " --numsegs " + std::to_string(config.numSegments);
-//        commandString += " --seglen_min " + std::to_string(config.minSegLength);
-//        commandString += " --seglen_max " + std::to_string(config.maxSegLength);
+        //        commandString += " --seglen_min " + std::to_string(config.minSegLength);
+        //        commandString += " --seglen_max " + std::to_string(config.maxSegLength);
         commandString += " --filenames " + config.bounceFileName;
         
         // execute
@@ -149,7 +151,7 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
                 
                 
                 // CREATE REGIONs:
-                    
+                
                 // use the first sub track
                 auto subGroups = track->getAudioSubGroups();
                 
@@ -207,7 +209,7 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
                 }
             }
         }
-    
+        
         songFile.close();
         return true;
     }
@@ -217,3 +219,5 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
         return false;
     }
 }
+
+} // namespace audium

@@ -33,8 +33,8 @@
 class ChannelGroupComponent  : public juce::Component
 {
 public:
-    ChannelGroupComponent(std::shared_ptr<AudioTrack> audioTrack,
-                          std::shared_ptr<AudiumEngine> audiumEngine) :
+    ChannelGroupComponent(std::shared_ptr<audium::AudioTrack> audioTrack,
+                          std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audioTrack(audioTrack),
         audiumEngine(audiumEngine)
     {
@@ -67,7 +67,7 @@ public:
         channelsListBox->setBounds(getLocalBounds());
     }
     
-    void refreshComponent(std::shared_ptr<AudioTrack> newAudioTrack)
+    void refreshComponent(std::shared_ptr<audium::AudioTrack> newAudioTrack)
     {
         if (audioTrack != newAudioTrack) {
             channelsListBoxModel->setAudioTrack(newAudioTrack);
@@ -84,8 +84,8 @@ public:
 
 private:
     
-    std::shared_ptr<AudioTrack> audioTrack;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     std::unique_ptr<audium::ListBox> channelsListBox;
     std::unique_ptr<ChannelSubGroupListBoxModel> channelsListBoxModel;

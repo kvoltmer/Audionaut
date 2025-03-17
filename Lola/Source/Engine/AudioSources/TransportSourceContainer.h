@@ -17,27 +17,27 @@
 #pragma once
 #include <JuceHeader.h>
 
+namespace audium {
+
 class AudioResourceContainer;
 class AudioTrack;
 class AudiumTransportSource;
 class AudioResource;
+class Playback;
 
-namespace audium {
-    class Playback;
-}
 
 class TransportSourceContainer
 {
 public:
     TransportSourceContainer(std::shared_ptr<audium::Playback> playback_) :
-        playback(playback_)
+    playback(playback_)
     {}
     ~TransportSourceContainer() = default;
     
     void prepareToPlay (int samplesPerBlockExpected,
                         double sampleRate);
     void cleanup();
-
+    
     std::shared_ptr<AudiumTransportSource> createAndAddTransportSource(AudioResource& audioResource,
                                                                        std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     bool removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource);
@@ -46,7 +46,7 @@ public:
     
     std::shared_ptr<AudiumTransportSource> getTransportSourceAtIndex(int index) const;
     int getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const;
-     
+    
     void applyChannelMapping();
     
 private:
@@ -57,3 +57,6 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)
 };
+
+} // namespace audium
+

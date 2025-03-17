@@ -23,6 +23,8 @@
 #include "Engine/TimeContext.h"
 #include "Engine/Export/ExportAudioConfig.h"
 
+namespace audium {
+
 class AudioTrackContainer;
 class AudioTrack;
 class PlayListContainer;
@@ -32,9 +34,8 @@ class TransportSourceContainer;
 class PlayListScheduler;
 struct AutoEditConfig;
 class LinkAudioDevice;
-namespace audium {
-    class AudioBusInterface;
-}
+class AudioBusInterface;
+
 
 /// The Audium engine
 class AudiumEngine : public audium::Streamable
@@ -47,14 +48,14 @@ public:
                  std::shared_ptr<PlayListScheduler> playListScheduler_,
                  std::shared_ptr<LinkAudioDevice> linkAudioDevice_,
                  std::shared_ptr<juce::UndoManager> undoManager_,
-                 std::shared_ptr<audium::AudioBusInterface> audioBusInterface_) :
-        audioDeviceManager(audioDeviceManager_),
-        audioTrackContainer(audioTrackContainer_),
-        audioResourceContainer(audioResourceContainer_),
-        playListScheduler(playListScheduler_),
-        linkAudioDevice(linkAudioDevice_),
-        undoManager(undoManager_),
-        audioBusInterface(audioBusInterface_)
+                 std::shared_ptr<AudioBusInterface> audioBusInterface_) :
+    audioDeviceManager(audioDeviceManager_),
+    audioTrackContainer(audioTrackContainer_),
+    audioResourceContainer(audioResourceContainer_),
+    playListScheduler(playListScheduler_),
+    linkAudioDevice(linkAudioDevice_),
+    undoManager(undoManager_),
+    audioBusInterface(audioBusInterface_)
     {
     }
     
@@ -88,7 +89,7 @@ public:
     std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const { return undoManager; }
     std::shared_ptr<juce::AudioDeviceManager> getAudioDeviceManager() const { return audioDeviceManager; }
-    std::shared_ptr<audium::AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
+    std::shared_ptr<AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
     
     void invokeAutoEdit(const AutoEditConfig config);
     
@@ -103,12 +104,14 @@ private:
     std::shared_ptr<PlayListScheduler> playListScheduler;
     std::shared_ptr<LinkAudioDevice> linkAudioDevice;
     std::shared_ptr<juce::UndoManager> undoManager;
-    std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
+    std::shared_ptr<AudioBusInterface> audioBusInterface;
     
     juce::File currentFile;
-
+    
     json uiState;
-
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumEngine)
 };
+
+} // namespace audium

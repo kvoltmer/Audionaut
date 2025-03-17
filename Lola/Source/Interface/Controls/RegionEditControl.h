@@ -17,10 +17,10 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Interface/Widgets/audium_ListBox.h"
+#include "Engine/AudiumEngine.h"
+#include "Engine/Region/AudioRegion.h"
 
 class ZoomHandler;
-class AudiumEngine;
-class AudioRegion;
 class RegionSelector;
 
 class RegionEditControl :   public juce::Component,
@@ -36,9 +36,9 @@ public:
         outsideEdge
     };
     
-    RegionEditControl (std::shared_ptr<AudioRegion> audioRegion,
+    RegionEditControl (std::shared_ptr<audium::AudioRegion> audioRegion,
                        std::shared_ptr<ZoomHandler> zoomHandler,
-                       std::shared_ptr<AudiumEngine> audiumEngine,
+                       std::shared_ptr<audium::AudiumEngine> audiumEngine,
                        std::shared_ptr<RegionSelector> regionSelector) :
         audioRegion(audioRegion),
         zoomHandler(zoomHandler),
@@ -71,16 +71,16 @@ public:
 
     const Edge getDragMode(int x) const;
     
-    void updateFromEngine(std::shared_ptr<AudioRegion> audioRegion);
+    void updateFromEngine(std::shared_ptr<audium::AudioRegion> audioRegion);
     
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override;
 
         
 private:
     
-    std::shared_ptr<AudioRegion> audioRegion;
+    std::shared_ptr<audium::AudioRegion> audioRegion;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<RegionSelector> regionSelector;
     
     const int borderSize = 10;

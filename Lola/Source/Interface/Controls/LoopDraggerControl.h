@@ -33,7 +33,7 @@ class LoopDraggerControl  : public juce::Component,
 {
 public:
     LoopDraggerControl(juce::Component* componentToDrag_,
-                       std::shared_ptr<AudiumEngine> audiumEngine_,
+                       std::shared_ptr<audium::AudiumEngine> audiumEngine_,
                        std::shared_ptr<ZoomHandler> zoomHandler_,
                        juce::Colour colour_,
                        std::shared_ptr<RegionSelector> regionSelector_) :
@@ -130,7 +130,7 @@ protected:
     
     juce::Component* componentToDrag = nullptr;
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;

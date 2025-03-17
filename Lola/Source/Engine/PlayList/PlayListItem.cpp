@@ -25,13 +25,14 @@
 #include "Engine/AudioSources/audium_AudioTransportSource.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 
+namespace audium {
 
 PlayListItem::PlayListItem(const PlayListContainer &owner_,
                            std::shared_ptr<AudioRegion> audioRegion_,
-                           std::shared_ptr<audium::SelectionManager> selectionManager_) :
-    audium::Selectable(selectionManager_),
-    owner(owner_),
-    audioRegion(audioRegion_)
+                           std::shared_ptr<SelectionManager> selectionManager_) :
+audium::Selectable(selectionManager_),
+owner(owner_),
+audioRegion(audioRegion_)
 {
     if (audioRegion != nullptr) {
         init();
@@ -142,12 +143,12 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
             
             if (input.contains("selected"))
                 setSelected(input.at("selected").get<bool>());
-
+            
             if (input.contains("track_id")) {
                 auto track_id = input.at("track_id").get<int>();
                 if (track_id != getRegion()->getAudioTrack()->getId()) {
                     std::cout << "warning: track_id: " << track_id << " != " <<
-                                getRegion()->getAudioTrack()->getId() << std::endl;
+                    getRegion()->getAudioTrack()->getId() << std::endl;
                 }
             }
             
@@ -249,3 +250,4 @@ double PlayListItem::getFadeOut() const
     return 0.0;
 }
 
+} // namespace audium

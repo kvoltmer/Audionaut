@@ -26,7 +26,7 @@
 #include "Interface/Dialogs/AutoEditDialog.h"
 #include "Interface/Dialogs/ExportAudioDialog.h"
 
-AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
+AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::AudiumEngine> audiumEngine)
     : DocumentWindow (name,
                       juce::Desktop::getInstance().getDefaultLookAndFeel()
                                                   .findColour (juce::ResizableWindow::backgroundColourId),

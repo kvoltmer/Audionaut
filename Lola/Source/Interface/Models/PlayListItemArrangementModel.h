@@ -33,9 +33,9 @@ class PlayListItemArrangementModel  : public audium::ListBoxModel
 {
 public:
     PlayListItemArrangementModel(audium::ListBox& owner,
-                                 std::shared_ptr<AudioTrack> audioTrack,
-                                 std::shared_ptr<PlayListItem> playListItem,
-                                 std::shared_ptr<AudiumEngine> audiumEngine,
+                                 std::shared_ptr<audium::AudioTrack> audioTrack,
+                                 std::shared_ptr<audium::PlayListItem> playListItem,
+                                 std::shared_ptr<audium::AudiumEngine> audiumEngine,
                                  std::shared_ptr<ZoomHandler> zoomHandler,
                                  std::shared_ptr<RegionSelector> regionSelector) :
         owner(owner),
@@ -127,16 +127,16 @@ public:
     {
     }
     
-    void setPlayListItem(std::shared_ptr<PlayListItem> playListItem_) { playListItem = playListItem_; }
+    void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_) { playListItem = playListItem_; }
     void setParentComponent(juce::Component *comp) { parentComponent = comp; }
     
 private:
     
     audium::ListBox& owner;
     juce::Component *parentComponent = nullptr;
-    std::shared_ptr<AudioTrack> audioTrack;
-    std::shared_ptr<PlayListItem> playListItem;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
+    std::shared_ptr<audium::PlayListItem> playListItem;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
 

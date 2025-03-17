@@ -190,7 +190,7 @@ void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
         else {
             auto objects = track->getAudioTrackContainer().getSelectionManager()->getSelectedObjects();
             for (auto object : objects) {
-                if (auto item = dynamic_cast<PlayListItem*>(object.get())) {
+                if (auto item = dynamic_cast<audium::PlayListItem*>(object.get())) {
                     if (item->getRegion()->getAudioTrack() != track)
                         object->setSelected(false);
                 }
@@ -212,7 +212,7 @@ void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
         
 
     // update
-    track->getAudioTrackContainer().sendActionMessage(updateSelection);
+    track->getAudioTrackContainer().sendActionMessage(audium::updateSelection);
 }
 
 void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)

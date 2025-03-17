@@ -90,19 +90,19 @@ void AudioTrackListBoxModel::backgroundClicked (const juce::MouseEvent&)
 {
     owner->deselectAllRows();
     audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateAll);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateAll);
 }
 
 void AudioTrackListBoxModel::listWasScrolled()
 {
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(scrolledVertically);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::scrolledVertically);
 }
 
 void AudioTrackListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
     auto selectedRows = owner->getSelectedRows();
     audiumEngine->getAudioTrackContainer()->setSelectedRows(selectedRows);
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateAll);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateAll);
 }
 
 int AudioTrackListBoxModel::getExtraSpaceAtBottom() const

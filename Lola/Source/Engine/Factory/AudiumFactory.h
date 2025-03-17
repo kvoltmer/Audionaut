@@ -22,7 +22,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 
-
+namespace audium {
 
 /// The Audium factory
 class AudiumFactory {
@@ -36,3 +36,5 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumFactory)
 };
+
+} // namespace audium

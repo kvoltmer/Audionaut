@@ -40,8 +40,8 @@ class AudioTrackRegionEditComponent  : public AudioTrackBaseComponent, public ju
 {
 public:
         
-    AudioTrackRegionEditComponent (std::shared_ptr<AudioTrack> track,
-                        std::shared_ptr<AudiumEngine> audiumEngine,
+    AudioTrackRegionEditComponent (std::shared_ptr<audium::AudioTrack> track,
+                        std::shared_ptr<audium::AudiumEngine> audiumEngine,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector) :
         AudioTrackBaseComponent(track, audiumEngine, zoomHandler, regionSelector)
@@ -49,7 +49,7 @@ public:
         refreshComponent(track);
     }    
     
-    void refreshComponent (std::shared_ptr<AudioTrack> track, bool forceRebuildComponents = false) override
+    void refreshComponent (std::shared_ptr<audium::AudioTrack> track, bool forceRebuildComponents = false) override
     {
         audioTrack = track;
         

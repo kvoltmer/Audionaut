@@ -19,6 +19,8 @@
 #include <JuceHeader.h>
 #include "Engine/TimeContext.h"
 
+namespace audium {
+
 class PositionableBase
 {
     
@@ -30,7 +32,7 @@ public:
     
     virtual juce::Range<double> getRegionData(audium::TimeContextType context) const = 0;
     virtual void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) = 0;
- 
+    
     virtual double getAbsolutePosition(audium::TimeContextType context) const = 0;
     virtual void setAbsolutePosition(double position, audium::TimeContextType context) = 0;
     
@@ -54,7 +56,7 @@ public:
         
         setAbsolutePosition(newStart, context);
     }
-        
+    
     // set the length of a positionalbe item
     void setLength(double newLength, audium::TimeContextType context)
     {
@@ -86,8 +88,10 @@ public:
     
     const double absoluteToLocalPosition(const double absolutePosition,
                                          audium::TimeContextType context) const;
-
+    
 private:
     
     JUCE_LEAK_DETECTOR (PositionableBase)
 };
+
+} // namespace audium 

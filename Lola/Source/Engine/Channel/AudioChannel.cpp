@@ -20,6 +20,9 @@
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
 
+namespace audium {
+
+
 void AudioChannel::setGain(const float newGain)
 {
     data.gain = newGain;
@@ -74,3 +77,7 @@ void AudioChannel::commitChannelData()
     setMute(data.mute);
     setSolo(data.solo);
 }
+
+} // namespace audium
+
+
