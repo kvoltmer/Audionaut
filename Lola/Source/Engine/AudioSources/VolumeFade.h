@@ -1,3 +1,18 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
@@ -12,7 +27,6 @@ class VolumeFade
 public:
     VolumeFade() noexcept = default;
     
-    //==============================================================================
     /** Applies a new gain as a linear value. */
     void setGainLinear (FloatType newGain, bool reset) noexcept { reset ? gain.setCurrentAndTargetValue(newGain) : gain.setTargetValue (newGain); }
     
@@ -40,7 +54,6 @@ public:
     /** Returns true if the current value is currently being interpolated. */
     bool isSmoothing() const noexcept                           { return gain.isSmoothing(); }
     
-    //==============================================================================
     /** Called before processing starts. */
     void prepare (const juce::dsp::ProcessSpec& spec) noexcept
     {
@@ -55,7 +68,6 @@ public:
             gain.reset (sampleRate, rampDurationSeconds);
     }
     
-    //==============================================================================
     /** Returns the result of processing a single sample. */
     template <typename SampleType>
     SampleType JUCE_VECTOR_CALLTYPE processSample (SampleType s) noexcept
@@ -125,7 +137,6 @@ public:
     }
     
 private:
-    //==============================================================================
     juce::SmoothedValue<FloatType> gain;
     double sampleRate = 0, rampDurationSeconds = 0;
     int skipSamples = 0;
