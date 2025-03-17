@@ -25,8 +25,8 @@ class PlayListItemDraggerControl : public DraggerControl
 {
 public:
     
-    PlayListItemDraggerControl(std::shared_ptr<AudiumEngine> audiumEngine_,
-                               std::shared_ptr<PlayListContainer> playListContainer_,
+    PlayListItemDraggerControl(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
+                               std::shared_ptr<audium::PlayListContainer> playListContainer_,
                                std::shared_ptr<ZoomHandler> zoomHandler_,
                                juce::Colour colour_,
                                std::shared_ptr<RegionSelector> regionSelector_) :
@@ -58,7 +58,7 @@ public:
             audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
         }
         playListItem->setSelected(bSelected);
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateSelection);
     }
     
     void shiftSelect() override;
@@ -70,10 +70,10 @@ public:
     
     bool validateData() override;
     
-    void setPlayListItem(std::shared_ptr<PlayListItem> playListItem_) { playListItem = playListItem_; }
+    void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_) { playListItem = playListItem_; }
     
 private:
-    std::shared_ptr<PlayListContainer> playListContainer;
-    std::shared_ptr<PlayListItem> playListItem;
+    std::shared_ptr<audium::PlayListContainer> playListContainer;
+    std::shared_ptr<audium::PlayListItem> playListItem;
     
 };

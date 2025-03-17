@@ -18,16 +18,15 @@
 
 #include <JuceHeader.h>
 #include "Interface/Widgets/audium_ListBox.h"
+#include "Engine/AudiumEngine.h"
+#include "Engine/Group/AudioTrack.h"
 
-class AudiumEngine;
 class ZoomHandler;
-class AudioTrack;
-
 
 class AudioTrackListBox  : public audium::ListBox, public juce::FileDragAndDropTarget, public juce::DragAndDropTarget
 {
 public:
-    AudioTrackListBox (std::shared_ptr<AudiumEngine> audiumEngine,
+    AudioTrackListBox (std::shared_ptr<audium::AudiumEngine> audiumEngine,
                        std::shared_ptr<ZoomHandler> zoomHandler);
     ~AudioTrackListBox() override;
     
@@ -46,12 +45,12 @@ public:
     void itemDropped (const SourceDetails &dragSourceDetails) override;
     bool shouldDrawDragImageWhenOver () override { return true; }
     
-    void setNewGroupColour(std::shared_ptr<AudioTrack> track);
+    void setNewGroupColour(std::shared_ptr<audium::AudioTrack> track);
         
     void paint (juce::Graphics& g) override;
     
 private:
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     
     bool externalDragAndDrop = false;

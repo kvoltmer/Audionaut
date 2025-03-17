@@ -19,11 +19,12 @@
 #include <JuceHeader.h>
 #include "PlaybackDefines.h"
 
-class AudioTrackContainer;
+
 
 namespace audium
 {
 
+class AudioTrackContainer;
 class Playback;
 
 template <class SampleType>

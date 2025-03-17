@@ -33,7 +33,7 @@ class AudioTrackListBoxModel : public audium::ListBoxModel {
 public:
     
     AudioTrackListBoxModel(std::shared_ptr<AudioTrackListBox> owner,
-                           std::shared_ptr<AudiumEngine> audiumEngine,
+                           std::shared_ptr<audium::AudiumEngine> audiumEngine,
                            std::shared_ptr<ZoomHandler> zoomHandler,
                            std::shared_ptr<RegionSelector> regionSelector,
                            bool arrangementMode = true) :
@@ -74,7 +74,7 @@ public:
         
 private:
     std::shared_ptr<AudioTrackListBox> owner;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
     

@@ -29,8 +29,8 @@ class SubGroupListBoxModel  : public audium::ListBoxModel
 {
 public:
     SubGroupListBoxModel(std::shared_ptr<audium::ListBox> owner,
-                         std::shared_ptr<AudioSubGroup> audioSubGroup,
-                         std::shared_ptr<AudiumEngine> audiumEngine,
+                         std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
+                         std::shared_ptr<audium::AudiumEngine> audiumEngine,
                          std::shared_ptr<ZoomHandler> zoomHandler,
                          std::shared_ptr<RegionSelector> regionSelector) :
         owner(owner),
@@ -136,7 +136,7 @@ public:
     {
     }
     
-    void setAudioSubGroup(std::shared_ptr<AudioSubGroup> subGroup)
+    void setAudioSubGroup(std::shared_ptr<audium::AudioSubGroup> subGroup)
     {
         audioSubGroup = subGroup;
     }
@@ -145,8 +145,8 @@ public:
 private:
     
     std::shared_ptr<audium::ListBox> owner;
-    std::shared_ptr<AudioSubGroup> audioSubGroup;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
 

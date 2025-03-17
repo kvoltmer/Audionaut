@@ -56,7 +56,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     initCommandManager();
     
     // create audium engine
-    audiumEngine = AudiumFactory::createAudiumEngine();
+    audiumEngine = audium::AudiumFactory::createAudiumEngine();
     audiumEngine->initialise();
 
 
@@ -461,7 +461,7 @@ void AudiumApplication::askUserToOpenFile()
         updateUI();
         
         // open chooser...
-        chooser = std::make_unique<juce::FileChooser> ("Open File", initialOpenDirectory, "*" + String(AudiumEngine::projectFileExtension));
+        chooser = std::make_unique<juce::FileChooser> ("Open File", initialOpenDirectory, "*" + String(audium::AudiumEngine::projectFileExtension));
         auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles;
 
         chooser->launchAsync (flags, [this] (const FileChooser& fc) {
@@ -492,7 +492,7 @@ void AudiumApplication::openFile(juce::File file)
 
 void AudiumApplication::saveProjectAs(std::function<void (bool)> callback)
 {
-    chooser = std::make_unique<FileChooser> (("Save As..."), initialSaveDirectory, "*" + String(AudiumEngine::projectFileExtension));
+    chooser = std::make_unique<FileChooser> (("Save As..."), initialSaveDirectory, "*" + String(audium::AudiumEngine::projectFileExtension));
     auto flags = FileBrowserComponent::saveMode
                | FileBrowserComponent::canSelectFiles
                | FileBrowserComponent::warnAboutOverwriting;

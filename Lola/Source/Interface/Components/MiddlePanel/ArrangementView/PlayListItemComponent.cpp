@@ -24,9 +24,9 @@
 #include "Interface/Controls/LevelMeter.h"
 #include "Interface/Controls/FadeInOutControl.h"
 
-PlayListItemComponent::PlayListItemComponent(std::shared_ptr<AudiumEngine> audiumEngine,
-                                             std::shared_ptr<AudioTrack> audioTrack,
-                                             std::shared_ptr<PlayListContainer> playListContainer,
+PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                                             std::shared_ptr<audium::AudioTrack> audioTrack,
+                                             std::shared_ptr<audium::PlayListContainer> playListContainer,
                                              std::shared_ptr<ZoomHandler> zoomHandler,
                                              std::shared_ptr<RegionSelector> regionSelector) :
     audiumEngine(audiumEngine),
@@ -112,7 +112,7 @@ DraggerControl* PlayListItemComponent::getDraggerControl() const
     return static_cast<DraggerControl*>(playListItemListBox->getHeaderComponent());
 }
 
-void PlayListItemComponent::setPlayListItem(std::shared_ptr<PlayListItem> item)
+void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem> item)
 {
     playListItem = item;
     
@@ -136,7 +136,7 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<PlayListItem> item)
     fadeOutControl->onDragEnd = [item] { item->onDragEnd(); };
 }
 
-void PlayListItemComponent::updateUI(std::shared_ptr<PlayListItem> item)
+void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
 {
     setPlayListItem(item);
     if (auto dragger = dynamic_cast<PlayListItemDraggerControl*>(playListItemListBox->getHeaderComponent())) {

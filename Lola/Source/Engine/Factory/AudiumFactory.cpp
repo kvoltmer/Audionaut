@@ -29,13 +29,13 @@
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/PlayList/TransportLoop.h"
 
-using namespace audium;
+namespace audium {
 
 std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {
     auto undoManager                = std::make_shared<juce::UndoManager>();
     
-    auto selectionManager           = std::make_shared<audium::SelectionManager>();
+    auto selectionManager           = std::make_shared<SelectionManager>();
     
     auto audioDeviceManager         = std::make_shared<juce::AudioDeviceManager>();
     
@@ -90,7 +90,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto linkAudioDevice            = std::make_shared<LinkAudioDevice>(linkEngine,
                                                                         playListScheduler);
-        
+    
     auto audiumEngine               = std::make_shared<AudiumEngine>(audioDeviceManager,
                                                                      audioTrackContainer,
                                                                      audioResourceContainer,
@@ -101,3 +101,4 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     return audiumEngine;
 }
 
+} // namespace audium

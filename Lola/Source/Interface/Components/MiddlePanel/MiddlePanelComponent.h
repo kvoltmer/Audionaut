@@ -27,12 +27,10 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 
-class AudiumEngine;
-
 class MiddlePanelComponent : public juce::Component
 {
 public:
-    MiddlePanelComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+    MiddlePanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
         snapToGridHandlers[arrangementType].reset(new SnapToGridHandler());
@@ -208,7 +206,7 @@ public:
     }
     
 private:
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     enum { arrangementType = 0, editType = 1, numTypes = 2 };
     

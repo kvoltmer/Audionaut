@@ -25,7 +25,7 @@
 class ArrangementOverview  : public juce::Component
 {
 public:
-    ArrangementOverview(std::shared_ptr<AudiumEngine> audiumEngine,
+    ArrangementOverview(std::shared_ptr<audium::AudiumEngine> audiumEngine,
                         bool arrangementMode) :
         audiumEngine(audiumEngine),
         arrangementMode(arrangementMode)
@@ -89,7 +89,7 @@ public:
 private:
     std::vector<std::unique_ptr<juce::DrawableRectangle>> groupRectangles;
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     bool arrangementMode;
     

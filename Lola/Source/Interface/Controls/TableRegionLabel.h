@@ -35,7 +35,7 @@
 class TableRegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
-    TableRegionLabel(std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
+    TableRegionLabel(std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer_,
                 int columnId_,
                 int rowNumber_) :
         columnId(columnId_),
@@ -54,7 +54,7 @@ public:
         removeListener(this);
     }
         
-    const std::shared_ptr<AudioRegion> getRegion(int columnId, int rowNumber) const
+    const std::shared_ptr<audium::AudioRegion> getRegion(int columnId, int rowNumber) const
     {
         if (auto audioTrack = audioTrackContainer->getAudioTrack(columnId - 1)) {
             return audioTrack->getRegion(rowNumber);
@@ -100,7 +100,7 @@ private:
     int columnId = 1;
     int rowNumber = 0;
     
-    std::shared_ptr<AudioTrackContainer> audioTrackContainer;
+    std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TableRegionLabel)
 };

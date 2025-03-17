@@ -23,12 +23,13 @@
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
 
+namespace audium {
+
 class AudioTrack;
 class AudioResource;
 class TempoProvider;
 class AudioSubGroup;
 
-//==============================================================================
 class AudioRegion : public audium::Streamable, public audium::Selectable
 {    
     
@@ -36,16 +37,16 @@ public:
     AudioRegion(std::shared_ptr<AudioTrack> audioTrack,
                 std::shared_ptr<AudioSubGroup> audioSubGroup,
                 std::shared_ptr<TempoProvider> tempoProvider,
-                std::shared_ptr<audium::SelectionManager> selectionManager) :
-        audium::Selectable(selectionManager),
-        audioTrack(audioTrack),
-        audioSubGroup(audioSubGroup),
-        tempoProvider(tempoProvider)
+                std::shared_ptr<SelectionManager> selectionManager) :
+    audium::Selectable(selectionManager),
+    audioTrack(audioTrack),
+    audioSubGroup(audioSubGroup),
+    tempoProvider(tempoProvider)
     {
         jassert(audioTrack != nullptr);
     }
     
-    ~AudioRegion();
+    ~AudioRegion() = default;
     
     void sendActionMessage (const juce::String& message) const;
     
@@ -96,3 +97,4 @@ private:
     JUCE_LEAK_DETECTOR (AudioRegion)
 };
 
+} // namespace audium

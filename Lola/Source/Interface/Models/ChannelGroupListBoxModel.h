@@ -34,7 +34,7 @@ class ChannelGroupListBoxModel : public audium::ListBoxModel {
 public:
     
     ChannelGroupListBoxModel(std::shared_ptr<audium::ListBox> owner,
-                              std::shared_ptr<AudiumEngine> audiumEngine) :
+                              std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         owner(owner),
         audiumEngine(audiumEngine)
     {
@@ -100,7 +100,7 @@ public:
     {
         audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
         owner->deselectAllRows();
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateMiddlePanelAction);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateMiddlePanelAction);
     }
     
     void listWasScrolled() override
@@ -118,6 +118,6 @@ public:
         
 private:
     std::shared_ptr<audium::ListBox> owner;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
 
 };

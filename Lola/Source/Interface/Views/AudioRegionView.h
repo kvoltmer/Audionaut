@@ -23,17 +23,17 @@
 #include "Interface/Controls/SliderControl.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/AudiumEngine.h"
+#include "Engine/Resource/AudioResource.h"
 
-class AudioResource;
 class ZoomHandler;
-class AudioRegion;
 
 class AudioRegionView : public WaveFormViewBase
 {
 public:
     AudioRegionView(juce::Component *parentComponent,
-                    std::shared_ptr<AudiumEngine> audiumEngine,
-                    std::shared_ptr<AudioResource> audioResource,
+                    std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                    std::shared_ptr<audium::AudioResource> audioResource,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     juce::Colour colour,
                     std::shared_ptr<RegionSelector> regionSelector,
@@ -66,11 +66,11 @@ public:
     
     void updateUI(int theChannel) override;
     
-    void setPlayListItem(std::shared_ptr<PlayListItem> item);
+    void setPlayListItem(std::shared_ptr<audium::PlayListItem> item);
 
 private:
     
-    std::shared_ptr<PlayListItem> playListItem;
+    std::shared_ptr<audium::PlayListItem> playListItem;
     
     std::unique_ptr<FadeInOutView> fadeInOutView;
     

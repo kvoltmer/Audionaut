@@ -20,6 +20,9 @@
 
 using json = nlohmann::json;
 
+namespace audium
+{
+
 //==============================================================================
 struct AudioChannelData
 {
@@ -33,11 +36,11 @@ struct AudioChannelData
 // custom to_json method will be automatically called by the json constructor
 inline void to_json(json& j, const AudioChannelData& data) {
     j = json{   {"height", data.height},
-                {"gain", data.gain},
-                {"pan", data.pan},
-                {"mute", data.mute},
-                {"solo", data.solo}
-            };
+        {"gain", data.gain},
+        {"pan", data.pan},
+        {"mute", data.mute},
+        {"solo", data.solo}
+    };
 }
 
 // custom from_json method will be automatically called by the json constructor
@@ -45,7 +48,7 @@ inline void from_json(const json& j, AudioChannelData& data) {
     
     if (j.contains("height"))
         data.height = j.at("height").get<int>();
-        
+    
     if (j.contains("gain"))
         data.gain = j.at("gain").get<float>();
     
@@ -60,3 +63,4 @@ inline void from_json(const json& j, AudioChannelData& data) {
     }
 }
 
+} // namespace audium

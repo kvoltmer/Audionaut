@@ -29,13 +29,13 @@ class ChannelComponent  :   public juce::Component,
                             public juce::DragAndDropTarget
 {
 public:
-    ChannelComponent (std::shared_ptr<AudioTrack> audioTrack,
-                      std::shared_ptr<AudiumEngine> engine,
+    ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTrack,
+                      std::shared_ptr<audium::AudiumEngine> engine,
                       int rowNumber);
     ~ChannelComponent() override;
 
 
-    void refreshComponent(std::shared_ptr<AudioTrack> audioTrack, int rowNumber, bool isRowSelected);
+    void refreshComponent(std::shared_ptr<audium::AudioTrack> audioTrack, int rowNumber, bool isRowSelected);
     void timerCallback() override;
     void stopTheTimer() { stopTimer(); }
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override;
@@ -93,15 +93,15 @@ public:
 
     enum { moveChannelToNewTrackId = 0xf836743, reservedId = 0xf836744 };
 
-    std::shared_ptr<AudiumEngine> getEngine() const { return engine; }
-    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
+    std::shared_ptr<audium::AudiumEngine> getEngine() const { return engine; }
+    std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
     
     static void configureVolumeSlider(juce::Slider *slider, double dbMax = 6.0);
     static void configurePanSlider(juce::Slider *slider);
     
 private:
-    std::shared_ptr<AudioTrack> audioTrack;
-    std::shared_ptr<AudiumEngine> engine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> engine;
     std::unique_ptr<LevelMeter> levelMeter;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;
     std::unique_ptr<juce::Slider> volumeSlider;

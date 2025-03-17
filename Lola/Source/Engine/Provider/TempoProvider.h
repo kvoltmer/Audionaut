@@ -20,13 +20,15 @@
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/ActionMessages.h"
 
+namespace audium {
+
 // Provide and store the current tempo
 class TempoProvider : public juce::ActionBroadcaster
 {
 public:
     
     TempoProvider(std::shared_ptr<audium::LinkEngine> linkEngine) :
-        linkEngine(linkEngine)
+    linkEngine(linkEngine)
     {
         linkEngine->getLink()->setTempoCallback([this](const double p) { onTempoChange(p); });
         linkEngine->getLink()->enable(false);
@@ -76,7 +78,7 @@ public:
     {
         return tempo * 0.4 * seconds;
     }
-
+    
     static double clocksToSeconds(double tempo, double clocks)
     {
         jassert(tempo > 0.0);
@@ -87,7 +89,7 @@ public:
     {
         return secondsToClocks(getTempo(), seconds);
     }
-
+    
     double clocksToSeconds(double clocks) const
     {
         return clocksToSeconds(getTempo(), clocks);
@@ -143,7 +145,7 @@ public:
     {
         return clocksToBeats(secondsToClocks(tempo, seconds));
     }
-
+    
     static double beatsToSeconds(double tempo, double beats)
     {
         jassert(tempo > 0.0);
@@ -154,31 +156,31 @@ public:
     {
         return secondsToBeats(getTempo(), seconds);
     }
-
+    
     double beatsToSeconds(double beats)
     {
         return beatsToSeconds(getTempo(), beats);
     }
-
+    
     static juce::String secondsToFormattedString(double timeSec)
     {
         int h = timeSec / (60 * 60);
         timeSec -= h * (60 * 60);
-
+        
         int m = timeSec / (60);
         timeSec -= m * (60);
-
+        
         int s = timeSec;
         timeSec -= s;
         
         std::ostringstream s1;
         s1 << std::setw(2) << std::setfill('0') << s;
         std::string ss1 = s1.str();
-
+        
         std::ostringstream m1;
         m1 << std::setw(2) << std::setfill('0') << m;
         std::string mm1 = m1.str();
-
+        
         juce::String timeFormated = "Total Length: " + juce::String(h) + ":" + mm1 + ":" + ss1;
         return timeFormated;
     }
@@ -194,3 +196,6 @@ private:
     int bufferSize = 0;
     
 };
+
+} // namespace audium
+

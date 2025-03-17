@@ -24,6 +24,8 @@
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 
+namespace audium {
+
 class AudioResourceFactory {
     
 public:
@@ -47,7 +49,7 @@ public:
     }
     
     static std::shared_ptr<juce::AudioFormatReader> createAudioFormatReader(juce::URL url,
-                                                                      juce::AudioFormatManager& formatManager)
+                                                                            juce::AudioFormatManager& formatManager)
     {
         if (auto audioFormat = formatManager.findFormatForFileExtension(url.getLocalFile().getFileExtension())) {
             
@@ -71,3 +73,5 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceFactory)
 };
+
+} // namespace audium

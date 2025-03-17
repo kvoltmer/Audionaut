@@ -44,7 +44,7 @@
 class ArrangementEditBaseComponent  : public juce::Component, public juce::ChangeListener
 {
 public:
-    ArrangementEditBaseComponent(std::shared_ptr<AudiumEngine> audiumEngine,
+    ArrangementEditBaseComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine,
                                  std::shared_ptr<ZoomHandler> zoomHandler,
                                  bool arrangementMode) :
         audiumEngine(audiumEngine),
@@ -264,7 +264,7 @@ public:
 
 protected:
     
-    std::shared_ptr<AudiumEngine>               audiumEngine;
+    std::shared_ptr<audium::AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
     

@@ -27,15 +27,16 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 
+
+namespace audium {
+
 class AudioPlayer;
 class AudiumTransportSource;
 class AudioSubGroup;
 class AudioRegion;
 class AudioChannel;
+class ChannelMapping;
 
-namespace audium {
-    class ChannelMapping;
-}
 
 class AudioResource : public audium::Streamable
 {
@@ -51,9 +52,9 @@ public:
                   );
     
     virtual ~AudioResource() override;
-
+    
     std::shared_ptr<AudiumTransportSource> createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
-
+    
     const juce::String getFileNameWithoutExtension() const;
     
     const juce::String getFullPathName() const;
@@ -84,14 +85,14 @@ public:
     
     std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
-        
+    
     audium::ChannelMapping &getChannelMapping() const { return *channelMapping.get();}
-
+    
     // shared between resources
     std::shared_ptr<juce::AudioFormatReader> audioFormatReader;
     
 private:
-
+    
     AudioResourceContainer& owner;
     
     std::shared_ptr<AudioTrack> audioTrack;
@@ -100,10 +101,10 @@ private:
     juce::URL url;
     
     
-
+    
     
     std::unique_ptr<audium::ChannelMapping> channelMapping;
-
+    
     double lengthInSeconds = 1.0;
     int numChannels = 1;
     
@@ -111,3 +112,5 @@ private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResource)
 };
+
+} // namespace audium

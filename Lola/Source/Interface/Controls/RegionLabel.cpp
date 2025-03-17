@@ -26,5 +26,5 @@ void RegionLabel::mouseDown (const juce::MouseEvent& e)
     getParentComponent()->mouseDown(e);
     
     // update
-    audioTrackContainer->sendActionMessage(updateSelection);
+    audioTrackContainer->sendActionMessage(audium::updateSelection);
 }

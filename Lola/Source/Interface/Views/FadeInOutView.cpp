@@ -16,7 +16,6 @@
 
 #include <JuceHeader.h>
 #include "FadeInOutView.h"
-#include "Engine/PlayList/PlayListItem.h"
 
 using namespace juce;
 
@@ -85,7 +84,7 @@ void FadeInOutView::resized()
 {
 }
 
-void FadeInOutView::setPlayListItem(std::shared_ptr<PlayListItem> item)
+void FadeInOutView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item)
 {
     playListItem = item;
 }

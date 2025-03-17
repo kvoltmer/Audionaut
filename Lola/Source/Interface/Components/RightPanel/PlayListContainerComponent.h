@@ -19,13 +19,14 @@
 #include <JuceHeader.h>
 #include "Interface/UIContext.h"
 
-class AudiumEngine;
+#include "Engine/AudiumEngine.h"
+
 class PlayListComponent;
 
 class PlayListContainerComponent  : public juce::Component, private juce::Timer
 {
 public:
-    PlayListContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine);
+    PlayListContainerComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~PlayListContainerComponent() override;
 
     void paint (juce::Graphics&) override;
@@ -39,7 +40,7 @@ private:
     
     void timerCallback() override;
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::vector<std::shared_ptr<PlayListComponent>> playListComponents;
     
     std::unique_ptr<juce::Label> totalLengthLabel;

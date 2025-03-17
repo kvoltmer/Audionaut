@@ -22,9 +22,9 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
-//==============================================================================
+
 RegionTableListBoxModel::RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
-                                                 std::shared_ptr<AudioTrackContainer> audioTrackContainer) :
+                                                 std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer) :
     owner(owner),
     audioTrackContainer(audioTrackContainer)
 {
@@ -89,7 +89,7 @@ void RegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
     auto selectedRows = owner->getSelectedRows();
     audioTrackContainer->getAudioRegionAdapter().setSelectedRows(selectedRows);
-    audioTrackContainer->sendActionMessage(updateAll);
+    audioTrackContainer->sendActionMessage(audium::updateAll);
 }
 
 void RegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)

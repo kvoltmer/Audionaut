@@ -17,10 +17,10 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/AudiumEngine.h"
 
 using namespace juce;
 
-class AudiumEngine;
 class MiddlePanelComponent;
 class RightPanelComponent;
 class HeaderComponent;
@@ -31,7 +31,7 @@ class MainComponent :   public juce::Component,
                         private juce::ChangeListener
 {
 public:
-    MainComponent (std::shared_ptr<AudiumEngine> audiumEngine);
+    MainComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~MainComponent() override;
 
     void actionListenerCallback (const String& message) override;
@@ -60,7 +60,7 @@ public:
 
 private:
 
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     std::unique_ptr<HeaderComponent> headerComponent;
     std::unique_ptr<MiddlePanelComponent> middlePanelComponent;

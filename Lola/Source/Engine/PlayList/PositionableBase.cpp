@@ -16,6 +16,7 @@
 
 #include "PositionableBase.h"
 
+namespace audium {
 
 const juce::Range<double> PositionableBase::absoluteToLocalRange(const juce::Range<double> absoluteRange,
                                                                  audium::TimeContextType context) const
@@ -30,5 +31,7 @@ const double PositionableBase::absoluteToLocalPosition(const double absolutePosi
 {
     return absolutePosition - getAbsolutePosition(context) + getRegionData(context).getStart();
 }
+
+} // namespace audium
 
 

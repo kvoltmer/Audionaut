@@ -20,8 +20,8 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/Group/AudioTrack.h"
 
-ArrangementModel::ArrangementModel(std::shared_ptr<AudiumEngine>   audiumEngine_,
-                                   std::shared_ptr<AudioTrack>     audioTrack_,
+ArrangementModel::ArrangementModel(std::shared_ptr<audium::AudiumEngine>   audiumEngine_,
+                                   std::shared_ptr<audium::AudioTrack>     audioTrack_,
                                    std::shared_ptr<RegionSelector> regionSelector_,
                                    std::shared_ptr<ZoomHandler>    zoomHandler_) :
     audiumEngine(audiumEngine_),

@@ -19,10 +19,12 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Provider/TempoProvider.h"
 
+namespace audium {
+
 LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
                                  std::shared_ptr<PlayListScheduler> playListScheduler) :
-    linkEngine(linkEngine),
-    playListScheduler(playListScheduler)
+linkEngine(linkEngine),
+playListScheduler(playListScheduler)
 {
 }
 
@@ -31,11 +33,11 @@ LinkAudioDevice::~LinkAudioDevice()
 }
 
 void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
-                                                          int totalNumInputChannels,
-                                                          float* const* outputChannelData,
-                                                          int totalNumOutputChannels,
-                                                          int numSamples,
-                                                          [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context)
+                                                        int totalNumInputChannels,
+                                                        float* const* outputChannelData,
+                                                        int totalNumOutputChannels,
+                                                        int numSamples,
+                                                        [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context)
 {
     
     // clear output
@@ -108,3 +110,5 @@ void LinkAudioDevice::setBypass(bool isByPass)
 {
     byPass.store(isByPass);
 }
+
+} // namespace audium

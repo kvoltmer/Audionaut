@@ -29,8 +29,7 @@
 #include <JuceHeader.h>
 
 #include "FadeInOutView.h"
-
-class PlayListItem;
+#include "Engine/PlayList/PlayListItem.h"
 
 
 class FadeInOutView  : public juce::Component
@@ -42,11 +41,11 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     
-    void setPlayListItem(std::shared_ptr<PlayListItem> item);
+    void setPlayListItem(std::shared_ptr<audium::PlayListItem> item);
 
 private:
     
-    std::shared_ptr<PlayListItem> playListItem;
+    std::shared_ptr<audium::PlayListItem> playListItem;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FadeInOutView)
 };

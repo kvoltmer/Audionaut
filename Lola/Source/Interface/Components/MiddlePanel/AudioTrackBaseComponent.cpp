@@ -30,10 +30,8 @@
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 
-using namespace audium;
-
-AudioTrackBaseComponent::AudioTrackBaseComponent (std::shared_ptr<AudioTrack> track,
-                                        std::shared_ptr<AudiumEngine> audiumEngine,
+AudioTrackBaseComponent::AudioTrackBaseComponent (std::shared_ptr<audium::AudioTrack> track,
+                                        std::shared_ptr<audium::AudiumEngine> audiumEngine,
                                         std::shared_ptr<ZoomHandler> zoomHandler,
                                         std::shared_ptr<RegionSelector> regionSelector) :
     audioTrack(track),

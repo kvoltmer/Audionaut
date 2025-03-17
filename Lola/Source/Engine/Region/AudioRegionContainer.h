@@ -19,6 +19,8 @@
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/ActionMessages.h"
 
+namespace audium {
+
 class AudioResourceContainer;
 class AudioTrackContainer;
 class AudioTrack;
@@ -26,7 +28,7 @@ class AudioSubGroup;
 
 class AudioRegionContainer : public audium::Streamable
 {
-                                            
+    
 public:
     AudioRegionContainer(AudioTrack &audioTrack_);
     
@@ -63,7 +65,7 @@ public:
     void deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup);
     void deleteUnusedRegions();
     void sortRegionIds();
-
+    
     std::vector<std::shared_ptr<AudioRegion>> getRegionsForResource(std::shared_ptr<AudioResource> audioResource) const;
     
     juce::SparseSet<int> getSelectedRows() const;
@@ -80,7 +82,7 @@ public:
     bool readFromJson (json& input, bool rebuild) override;
     int getSizeInUnits() override { return static_cast<int>(audioRegions.size() * 2); }
     void mergeFromJson(json& input);
-
+    
     const std::vector<std::shared_ptr<AudioRegion>> &getObjects() const { return audioRegions; }
     
 private:
@@ -90,10 +92,12 @@ private:
     AudioTrackContainer &audioTrackContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<juce::UndoManager> undoManager;
-
+    
     int selectedRowNumber = -1;
     
     std::vector<std::shared_ptr<AudioRegion>> audioRegions;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionContainer)
 };
+
+} // namespace audium

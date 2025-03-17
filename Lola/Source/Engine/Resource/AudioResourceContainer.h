@@ -24,6 +24,8 @@
 #include "Engine/Group/AudioSubGroup.h"
 #include "Engine/Provider/TempoProvider.h"
 
+namespace audium {
+
 class TransportSourceContainer;
 class AudiumEngine;
 
@@ -35,11 +37,11 @@ public:
                            std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache_,
                            std::shared_ptr<TempoProvider> tempoProvider_,
                            std::shared_ptr<TransportSourceContainer> transportSourceContainer_) :
-        audioDeviceManager(audioDeviceManager_),
-        formatManager(formatManager_),
-        audioThumbnailCache(audioThumbnailCache_),
-        tempoProvider(tempoProvider_),
-        transportSourceContainer(transportSourceContainer_)
+    audioDeviceManager(audioDeviceManager_),
+    formatManager(formatManager_),
+    audioThumbnailCache(audioThumbnailCache_),
+    tempoProvider(tempoProvider_),
+    transportSourceContainer(transportSourceContainer_)
     {
         formatManager->registerBasicFormats();
         thread.startThread();
@@ -77,9 +79,9 @@ public:
     std::shared_ptr<AudioTrack> getAudioTrackForResource(std::shared_ptr<AudioResource> resource) const;
     
     std::vector<std::shared_ptr<AudioTrack>> getAudioTracks() const;
-        
+    
     void onDeleteChannel(AudioTrack* audioTrack, AudioChannel* channel);
-        
+    
     std::shared_ptr<juce::AudioFormatManager> getAudioFormatManager() const { return formatManager; }
     std::shared_ptr<juce::AudioThumbnailCache> getAudioThumbnailCache() const { return audioThumbnailCache; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
@@ -88,7 +90,7 @@ public:
     typedef std::pair<std::shared_ptr<AudioTrack>, std::shared_ptr<AudioResource>> tAudioTrackPair;
     
     juce::TimeSliceThread *getReadAheadThread() { return &thread; }
-        
+    
 private:
     /// list of pairs. this enables sorting etc.. by AudioTrack
     std::list<tAudioTrackPair> audioResources;
@@ -106,3 +108,5 @@ private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceContainer)
 };
+
+} // namespace audium

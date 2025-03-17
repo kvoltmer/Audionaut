@@ -25,8 +25,8 @@ class SubGroupDraggerControl : public DraggerControl
 {
 public:
     
-    SubGroupDraggerControl(std::shared_ptr<AudiumEngine> audiumEngine,
-                           std::shared_ptr<AudioSubGroup> audioSubGroup,
+    SubGroupDraggerControl(std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                           std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
                            std::shared_ptr<ZoomHandler> zoomHandler,
                            juce::Colour colour,
                            std::shared_ptr<RegionSelector> regionSelector) :
@@ -68,5 +68,5 @@ public:
     bool validateData() override;
     
 private:
-    std::shared_ptr<AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
 };

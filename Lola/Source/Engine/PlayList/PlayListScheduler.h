@@ -27,15 +27,15 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Export/ExportAudioConfig.h"
 
+namespace audium {
+
 class PlayListContainer;
 class PlayListItem;
 class TransportSourceContainer;
 class AudioResourceContainer;
+class Playback;
+class AudioBusInterface;
 
-namespace audium {
-    class Playback;
-    class AudioBusInterface;
-}
 
 class PlayListScheduler : public juce::ChangeListener
 {
@@ -49,17 +49,17 @@ public:
                       std::shared_ptr<audium::AudioClipContainer> audioClipContainer_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
-                      std::shared_ptr<audium::AudioBusInterface> audioBusInterface_,
-                      std::shared_ptr<audium::TransportLoop> transportLoop_) :
-        audioTrackContainer(audioTrackContainer_),
-        audioResourceContainer(audioResourceContainer_),
-        tempoProvider(tempoProvider_),
-        linkEngine(linkEngine_),
-        audioClipContainer(audioClipContainer_),
-        transportSourceContainer(transportSourceContainer_),
-        playback(playback_),
-        audioBusInterface(audioBusInterface_),
-        transportLoop(transportLoop_)
+                      std::shared_ptr<AudioBusInterface> audioBusInterface_,
+                      std::shared_ptr<TransportLoop> transportLoop_) :
+    audioTrackContainer(audioTrackContainer_),
+    audioResourceContainer(audioResourceContainer_),
+    tempoProvider(tempoProvider_),
+    linkEngine(linkEngine_),
+    audioClipContainer(audioClipContainer_),
+    transportSourceContainer(transportSourceContainer_),
+    playback(playback_),
+    audioBusInterface(audioBusInterface_),
+    transportLoop(transportLoop_)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) {
             tick(isPlaying, beats, numSamples);
@@ -77,10 +77,10 @@ public:
     {
         commitPlayListData();
     }
-
+    
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     
-
+    
     void startPlaying();
     void stopPlaying();
     bool isPlaying() const;
@@ -89,7 +89,7 @@ public:
     void setEditMode(bool bEditMode) { data.editMode = bEditMode; }
     bool isEditMode() const { return data.editMode; }
     bool isArrangementMode() const { return !data.editMode; }
-        
+    
     void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioTrack> track, int playListItemIndex);
     int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track);
     double getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const;
@@ -97,7 +97,7 @@ public:
     void setAbsoluteStartPosition(double newPosition, audium::TimeContextType context);
     double getAbsoluteStartPosition(audium::TimeContextType context) const;
     double getAbsolutePosition(audium::TimeContextType context) const;
-
+    
     
     void tick(bool isPlaying, double beats, int numSamples);
     
@@ -112,13 +112,13 @@ public:
     std::shared_ptr<audium::LinkEngine> getLinkEngine() const { return linkEngine; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     std::shared_ptr<audium::Playback> getPlayback() const { return playback; }
-    std::shared_ptr<audium::AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
-    std::shared_ptr<audium::TransportLoop> getTransportLoop() const { return transportLoop; }
+    std::shared_ptr<AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
+    std::shared_ptr<TransportLoop> getTransportLoop() const { return transportLoop; }
     
     void commitPlayListData();
     
     PlayListSchedulerData data;
-
+    
 private:
     
     // process sequencing
@@ -132,16 +132,18 @@ private:
     std::shared_ptr<audium::AudioClipContainer> audioClipContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
     std::shared_ptr<audium::Playback> playback;
-    std::shared_ptr<audium::AudioBusInterface> audioBusInterface;
-    std::shared_ptr<audium::TransportLoop> transportLoop;
-
+    std::shared_ptr<AudioBusInterface> audioBusInterface;
+    std::shared_ptr<TransportLoop> transportLoop;
+    
     double externalSampleRate = 0.0;
     
     int bufferSize = 0;
     
     std::atomic<bool> forcePosition = false;
-        
+    
     std::atomic<double> totalLengthClocks = 0.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };
+
+} // namespace audium

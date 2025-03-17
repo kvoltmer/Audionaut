@@ -80,7 +80,7 @@ void RegionEditControl::mouseDown (const juce::MouseEvent& e)
     bool deselectOthers = !audioRegion->isSelected() && !e.mods.isAnyModifierKeyDown();
     audioRegion->setSelected(e.mods.isCommandDown() ? !audioRegion->isSelected() : true, deselectOthers);
     
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateSelection);
 
     currentDragMode = getDragMode(e.getPosition().getX());
     
@@ -146,7 +146,7 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
         auto startDiff = rangeInClocks.getStart() - audioRegion->getRegionData(audium::clocks).getStart();
         auto endDiff = rangeInClocks.getEnd() - audioRegion->getRegionData(audium::clocks).getEnd();
         for (auto item : selectedItems) {
-            if (auto region = dynamic_cast<AudioRegion*>(item.get())) {
+            if (auto region = dynamic_cast<audium::AudioRegion*>(item.get())) {
                 auto range = region->getRegionData(audium::clocks);
                 range.setStart(range.getStart() + startDiff);
                 range.setEnd(range.getEnd() + endDiff);
@@ -170,7 +170,7 @@ void RegionEditControl::mouseMove (const juce::MouseEvent& e)
     updateMouseZone (e);
 }
 
-void RegionEditControl::updateFromEngine(std::shared_ptr<AudioRegion> newRegion)
+void RegionEditControl::updateFromEngine(std::shared_ptr<audium::AudioRegion> newRegion)
 {
     jassert(newRegion != nullptr);
     if (newRegion != audioRegion)

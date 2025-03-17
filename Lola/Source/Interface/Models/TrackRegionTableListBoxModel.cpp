@@ -19,14 +19,11 @@
 #include "TrackRegionTableListBoxModel.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Controls/TableRegionLabel.h"
-#include "Engine/AudiumEngine.h"
-#include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
-
 TrackRegionTableListBoxModel::TrackRegionTableListBoxModel(std::shared_ptr<juce::TableListBox> owner_,
-                                                           std::shared_ptr<AudiumEngine> audiumEngine_) :
+                                                           std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
     owner(owner_),
     audiumEngine(audiumEngine_)
 {
@@ -77,14 +74,14 @@ void TrackRegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 void TrackRegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)
 {
     audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateSelection);
 }
 
 void TrackRegionTableListBoxModel::cellClicked (int rowNumber, int columnId, const juce::MouseEvent&)
 {
     if (!getRegion(rowNumber, columnId)) {
         audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateSelection);
     }
 }
 
@@ -98,7 +95,7 @@ juce::var TrackRegionTableListBoxModel::getDragSourceDescription (const juce::Sp
     return "region";
 }
 
-std::shared_ptr<AudioRegion> TrackRegionTableListBoxModel::getRegion(int rowNumber, int columnId) const
+std::shared_ptr<audium::AudioRegion> TrackRegionTableListBoxModel::getRegion(int rowNumber, int columnId) const
 {
     if (auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(columnId - 1))
         return audioTrack->getRegion(rowNumber);

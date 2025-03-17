@@ -17,9 +17,9 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Interface/Widgets/audium_ListBox.h"
+#include "Engine/AudiumEngine.h"
 
 class ZoomHandler;
-class AudiumEngine;
 class PlayListItemDraggerControl;
 class SubGroupDraggerControl;
 
@@ -38,7 +38,7 @@ public:
     
     RegionSelector (std::shared_ptr<audium::ListBox> lb,
                     std::shared_ptr<ZoomHandler> zoomHandler,
-                    std::shared_ptr<AudiumEngine> audiumEngine) :
+                    std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         owner (lb),
         zoomHandler(zoomHandler),
         audiumEngine(audiumEngine)
@@ -86,7 +86,7 @@ private:
     
     std::shared_ptr<audium::ListBox> owner;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     const int borderSize = 10;
     const int expandedWidth = 2;

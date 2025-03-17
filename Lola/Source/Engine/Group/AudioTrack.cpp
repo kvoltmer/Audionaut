@@ -28,7 +28,8 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Resource/ChannelMapping.h"
 
-using namespace audium;
+namespace audium {
+
 
 AudioTrack::~AudioTrack()
 {
@@ -109,7 +110,7 @@ bool AudioTrack::writeToJson (json& output)
     playListContainer->writeToJson(output);
     
     //std::cout << output.dump(4) << std::endl;
-
+    
     return true;
 }
 
@@ -129,7 +130,7 @@ bool AudioTrack::writeChannelToJson (json& output, AudioChannel* audioChannel)
     playListContainer->writeToJson(output);
     
     std::cout << output.dump(4) << std::endl;
-
+    
     return true;
 }
 
@@ -195,7 +196,7 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     
     // Channels
     auto jsonChannels = input["channels"];
-
+    
     if (!rebuild && jsonChannels.size() != audioChannelContainer->size()) {
         rebuild = true;
         audioChannelContainer->cleanup();
@@ -443,8 +444,8 @@ std::shared_ptr<AudioSubGroup> AudioTrack::findSimilarSubGroup(const std::shared
         {
             return subGroup;
         }
-
-
+        
+        
     }
     return  nullptr;
 }
@@ -468,7 +469,7 @@ void AudioTrack::setSelected(bool bSelected, bool selectChildren)
         audioSubGroupContainer->selectAllObjects(bSelected);
         getPlayListContainer()->playListItems.selectAllObjects(bSelected);
     }
-
+    
     audium::Selectable::setSelected(bSelected, selectChildren);
 }
 
@@ -537,7 +538,7 @@ bool AudioTrack::deleteSelectedObject(std::shared_ptr<audium::Selectable> object
 bool AudioTrack::deleteChannel(AudioChannel* channel) {
     
     bool result = false;
-
+    
     if (audioChannelContainer->objectExists(channel)) {
         const auto channelNumber = channel->getChannelNumber();
         audioResourceContainer.onDeleteChannel(this, channel);
@@ -697,11 +698,11 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
     // create default region
     juce::Range<double> defaultRange(0.0, audioResource->getFileLength(context));
     auto region = subGroup->getAudioRegionContainer()->createRegion(  audioResource->getFileNameWithoutExtension(),
-                                                                      defaultRange,
-                                                                      std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
-                                                                      subGroup,
-                                                                      nullptr,
-                                                                      context);
+                                                                    defaultRange,
+                                                                    std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
+                                                                    subGroup,
+                                                                    nullptr,
+                                                                    context);
     
     // create play list item
     getPlayListContainer()->createPlayListItemAtPositionUI(region, position, context);
@@ -724,7 +725,7 @@ double AudioTrack::getTotalLength(audium::TimeContextType context, bool arrangem
         }
         result1 = totalLength;
     }
-                           
+    
     return result1;
 }
 
@@ -769,7 +770,7 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
 void AudioTrack::dropSelectedAudioRegions(int insertIndex)
 {
     auto selectedObjects = getSelectionManager()->getSelectedObjects();
-       
+    
     for (auto object : selectedObjects) {
         if (auto region = std::dynamic_pointer_cast<AudioRegion>(object)) {
             
@@ -793,7 +794,7 @@ void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType co
     // drop all selected regions
     auto selectedObjects = getSelectionManager()->getSelectedObjects();
     jassert(selectedObjects.size() > 0);
-       
+    
     for (auto object : selectedObjects) {
         if (auto region = std::dynamic_pointer_cast<AudioRegion>(object)) {
             
@@ -864,3 +865,6 @@ const std::vector<std::shared_ptr<AudioRegion>> AudioTrack::getRegions() const
     }
     return result;
 }
+
+} // namespace audium
+

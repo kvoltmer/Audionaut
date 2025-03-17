@@ -18,13 +18,16 @@
 
 #include <JuceHeader.h>
 
-class AudiumEngine;
-class AudioRegion;
+#include "Engine/AudiumEngine.h"
+#include "Engine/Region/AudioRegion.h"
+#include "Engine/Region/AudioRegionContainer.h"
 
-class TrackRegionTableListBoxModel  : public juce::TableListBoxModel {
+
+class TrackRegionTableListBoxModel  : public juce::TableListBoxModel
+{
 public:
     TrackRegionTableListBoxModel(std::shared_ptr<juce::TableListBox> owner,
-                                 std::shared_ptr<AudiumEngine> audiumEngine);
+                                 std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~TrackRegionTableListBoxModel() override;
 
     int getNumRows() override;
@@ -59,11 +62,11 @@ public:
 
 private:
     
-    std::shared_ptr<AudioRegion> getRegion(int rowNumber, int columnId) const;
+    std::shared_ptr<audium::AudioRegion> getRegion(int rowNumber, int columnId) const;
     
     std::shared_ptr<juce::TableListBox> owner;
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TrackRegionTableListBoxModel)
 };

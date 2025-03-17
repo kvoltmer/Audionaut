@@ -26,8 +26,8 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Util/EngineAccess.h"
 
-ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
-                                    std::shared_ptr<AudiumEngine> engine_,
+ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTrack_,
+                                    std::shared_ptr<audium::AudiumEngine> engine_,
                                     int rowNumber) :
     audioTrack(audioTrack_),
     engine(engine_)
@@ -180,7 +180,7 @@ void ChannelComponent::paint (juce::Graphics& g)
 
 }
 
-void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_, int rowNumber_, bool isRowSelected)
+void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audioTrack_, int rowNumber_, bool isRowSelected)
 {
     audioTrack = audioTrack_;
     rowNumber = rowNumber_;
@@ -339,7 +339,7 @@ void ChannelComponent::mouseDown (const juce::MouseEvent& e)
     else {
         audioTrack->getSelectionManager()->deselectAll();
         getParentComponent()->mouseDown(e);
-        audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
+        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
     }
 }
 

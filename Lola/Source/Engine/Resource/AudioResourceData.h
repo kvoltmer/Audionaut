@@ -21,7 +21,8 @@
 
 using json = nlohmann::json;
 
-//==============================================================================
+namespace audium {
+
 struct AudioResourceData
 {
     typedef class juce::Range<double> tRange;
@@ -36,3 +37,4 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AudioResourceData,
                                    gain,
                                    channelPos);
 
+} // namespace audium

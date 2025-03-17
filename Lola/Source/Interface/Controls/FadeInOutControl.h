@@ -31,7 +31,7 @@ public:
     };
     
     FadeInOutControl(FadeType type_,
-                     std::shared_ptr<PlayListItem> playListItem_,
+                     std::shared_ptr<audium::PlayListItem> playListItem_,
                      std::shared_ptr<RegionSelector> regionSelector_) :
         type(type_),
         playListItem(playListItem_),
@@ -63,12 +63,12 @@ public:
     double getValue() const;
     void setValue(double val);
     
-    void setPlayListItem(std::shared_ptr<PlayListItem> playListItem_) { playListItem = playListItem_; }
+    void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_) { playListItem = playListItem_; }
     
 private:
     FadeType type;
     
-    std::shared_ptr<PlayListItem> playListItem;
+    std::shared_ptr<audium::PlayListItem> playListItem;
     std::shared_ptr<RegionSelector> regionSelector;    
 
     juce::Rectangle<int> originalBounds;

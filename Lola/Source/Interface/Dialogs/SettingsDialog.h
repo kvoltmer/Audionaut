@@ -25,7 +25,7 @@ class SettingsDialog
 {
     
 public:
-    SettingsDialog(std::shared_ptr<AudiumEngine> engine) :
+    SettingsDialog(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
     {
         audioDeviceSelectorComponent = std::make_unique<AudioDeviceSelectorComponent>(*engine->getAudioDeviceManager().get(),
@@ -79,7 +79,7 @@ private:
     std::unique_ptr<AlertWindow> asyncAlertWindow;
     std::unique_ptr<juce::AudioDeviceSelectorComponent> audioDeviceSelectorComponent;
 
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     juce::Component *mainComponent = nullptr;
     
     

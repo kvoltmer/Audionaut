@@ -23,6 +23,8 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Region/AudioRegionContainer.h"
 
+namespace audium {
+
 class AudioTrackFactory {
     
 public:
@@ -51,3 +53,5 @@ public:
                                                                  track.getSelectionManager()));
     }
 };
+
+} // namespace audium

@@ -21,7 +21,8 @@
 
 using json = nlohmann::json;
 
-//==============================================================================
+namespace audium {
+
 struct AudioRegionData
 {
     typedef class juce::Range<double> tRange;
@@ -43,12 +44,12 @@ struct AudioRegionData
 
 inline void to_json(json& j, const AudioRegionData& r) {
     j = json{   {"name", r.name},
-                {"start", r.range.getStart()},
-                {"end", r.range.getEnd()},
-                {"id", r.region_id},
-                {"track_id", r.track_id},
-                {"sub_group_id", r.sub_group_id},
-                {"gain_vector", r.gain_vector},
+        {"start", r.range.getStart()},
+        {"end", r.range.getEnd()},
+        {"id", r.region_id},
+        {"track_id", r.track_id},
+        {"sub_group_id", r.sub_group_id},
+        {"gain_vector", r.gain_vector},
     };
 }
 
@@ -69,3 +70,6 @@ inline void from_json(const json& j, AudioRegionData& r) {
     if (j.contains("gain_vector"))
         j.at("gain_vector").get_to(r.gain_vector);
 }
+
+} // namespace audium
+

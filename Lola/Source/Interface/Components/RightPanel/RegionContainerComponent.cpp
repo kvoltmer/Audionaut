@@ -23,7 +23,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
 
-RegionContainerComponent::RegionContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine_) :
+RegionContainerComponent::RegionContainerComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
     audiumEngine(audiumEngine_)
 {
     regionTableListBox.reset(new juce::TableListBox());

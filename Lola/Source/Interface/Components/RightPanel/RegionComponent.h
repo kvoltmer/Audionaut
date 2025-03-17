@@ -32,7 +32,7 @@
 class RegionComponent  : public juce::Component
 {
 public:
-    RegionComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+    RegionComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
         regionTableListBox.reset(new RegionTableListBox());
@@ -92,7 +92,7 @@ public:
     }
 
 private:
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<RegionTableListBox> regionTableListBox;
     std::unique_ptr<RegionTableListBoxModel> regionTableListBoxModel;
     

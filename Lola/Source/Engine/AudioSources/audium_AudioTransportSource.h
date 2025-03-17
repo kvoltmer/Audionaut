@@ -22,8 +22,7 @@
 
 using namespace juce;
 
-namespace audium
-{
+namespace audium {
 
 //==============================================================================
 /**

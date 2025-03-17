@@ -29,7 +29,7 @@
 using namespace juce;
 
 //==============================================================================
-HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
+HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
     audiumEngine(audiumEngine_)
 {
     auto scheduler = audiumEngine->getPlayListScheduler().get();
@@ -70,7 +70,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     barsSlider->onValueChange = [this, scheduler]() {
         auto barsDiff = static_cast<int>(barsSlider->getValue()) - lastBarsValue;
         if (abs(barsDiff) > 0) {
-            auto clocksDiff = TempoProvider::barsToClocks(barsDiff);
+            auto clocksDiff = audium::TempoProvider::barsToClocks(barsDiff);
             auto clocks = scheduler->getAbsoluteStartPosition(audium::clocks);
             scheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
             lastBarsValue = static_cast<int>(barsSlider->getValue());
@@ -97,7 +97,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     beatsSlider->onValueChange = [this, scheduler]() {
         auto beatsDiff = static_cast<int>(beatsSlider->getValue()) - lastBeatsValue;
         if (abs(beatsDiff) > 0) {
-            auto clocksDiff = TempoProvider::beatsToClocks(beatsDiff);
+            auto clocksDiff = audium::TempoProvider::beatsToClocks(beatsDiff);
             auto clocks = scheduler->getAbsoluteStartPosition(audium::clocks);
             scheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
             lastBeatsValue = static_cast<int>(beatsSlider->getValue());
@@ -125,7 +125,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     clicksSlider->onValueChange = [this, scheduler]() {
         auto clicksDiff = static_cast<int>(clicksSlider->getValue()) - lastClicksValue;
         if (abs(clicksDiff) > 0) {
-            auto clocksDiff = TempoProvider::clicksToClocks(clicksDiff);
+            auto clocksDiff = audium::TempoProvider::clicksToClocks(clicksDiff);
             auto clocks = scheduler->getAbsoluteStartPosition(audium::clocks);
             scheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
             lastClicksValue = static_cast<int>(clicksSlider->getValue());
@@ -195,7 +195,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     
     loopButton->onClick = [this, scheduler]() {
         scheduler->getTransportLoop()->setLoopActive(loopButton->getToggleState());
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
     };
     
     
@@ -297,9 +297,9 @@ void HeaderComponent::timerCallback()
 
     
     auto clocks = scheduler->getAbsolutePosition(audium::clocks);
-    barsSlider->setValue(TempoProvider::clocksToBars(clocks), juce::dontSendNotification);
-    beatsSlider->setValue(TempoProvider::clocksToBeats(clocks), juce::dontSendNotification);
-    clicksSlider->setValue(TempoProvider::clocksToClicks(clocks), juce::dontSendNotification);
+    barsSlider->setValue(audium::TempoProvider::clocksToBars(clocks), juce::dontSendNotification);
+    beatsSlider->setValue(audium::TempoProvider::clocksToBeats(clocks), juce::dontSendNotification);
+    clicksSlider->setValue(audium::TempoProvider::clocksToClicks(clocks), juce::dontSendNotification);
     
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));

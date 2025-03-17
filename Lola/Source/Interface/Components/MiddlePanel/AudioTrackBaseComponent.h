@@ -37,14 +37,14 @@ class PlayListItemComponent;
 class AudioTrackBaseComponent  : public juce::Component, public juce::FileDragAndDropTarget
 {
 public:
-    AudioTrackBaseComponent (std::shared_ptr<AudioTrack> audioTrack,
-                        std::shared_ptr<AudiumEngine> audiumEngine,
+    AudioTrackBaseComponent (std::shared_ptr<audium::AudioTrack> audioTrack,
+                        std::shared_ptr<audium::AudiumEngine> audiumEngine,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector);
     
     virtual ~AudioTrackBaseComponent() = default;
     
-    virtual void refreshComponent (std::shared_ptr<AudioTrack> audioTrack, bool forceRebuildComponents = false) = 0;
+    virtual void refreshComponent (std::shared_ptr<audium::AudioTrack> audioTrack, bool forceRebuildComponents = false) = 0;
 
     void paint (juce::Graphics&) override;
     
@@ -59,8 +59,8 @@ public:
     
 protected:
     
-    std::shared_ptr<AudioTrack> audioTrack;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
     

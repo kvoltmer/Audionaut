@@ -18,8 +18,7 @@
 
 #include <JuceHeader.h>
 
-namespace audium
-{
+namespace audium {
 
 struct ExportAudioConfig {
 

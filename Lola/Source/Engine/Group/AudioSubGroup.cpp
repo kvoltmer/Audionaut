@@ -24,12 +24,14 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 
+namespace audium {
+
 AudioSubGroup::AudioSubGroup(AudioTrack& audioTrack_,
                              std::shared_ptr<AudioRegionContainer> audioRegionContainer_,
-                             std::shared_ptr<audium::SelectionManager> selectionManager_) :
-    audium::Selectable(selectionManager_),
-    audioTrack(audioTrack_),
-    audioRegionContainer(audioRegionContainer_)
+                             std::shared_ptr<SelectionManager> selectionManager_) :
+audium::Selectable(selectionManager_),
+audioTrack(audioTrack_),
+audioRegionContainer(audioRegionContainer_)
 {
     audioClip = std::shared_ptr<AudioClip> (new AudioClip(*this));
 }
@@ -86,7 +88,7 @@ void AudioSubGroup::setRegionData(juce::Range<double> newRegionData, audium::Tim
 bool AudioSubGroup::writeToJson (json& output)
 {
     output["clip"] = audioClip->data;
-
+    
     for (auto resource : getAudioResources())
     {
         json j;
@@ -101,7 +103,7 @@ bool AudioSubGroup::writeToJson (json& output)
 bool AudioSubGroup::writeChannelToJson (json& output, AudioChannel* audioChannel)
 {
     output["clip"] = audioClip->data;
-
+    
     for (auto resource : getAudioResources()) {
         json j;
         if (resource->getChannelMapping().containsDestinationChannelNumber(audioChannel->getChannelNumber())) {
@@ -154,7 +156,7 @@ void AudioSubGroup::mergeFromJson(json& input, int destinationChannel)
     }
     
     audioClip->readFromJson(input["clip"], false);
-
+    
     audioRegionContainer->mergeFromJson(input);
 }
 
@@ -209,9 +211,9 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     }
     
     audioClip->readFromJson(input["clip"], rebuild);
-
+    
     audioRegionContainer->readFromJson(input, rebuild);
-
+    
     return true;
 }
 
@@ -262,3 +264,5 @@ const int AudioSubGroup::getId() const
 {
     return audioTrack.audioSubGroupContainer->getIndex(std::dynamic_pointer_cast<const AudioSubGroup>(getSharedPtr()));
 }
+
+} // namespace audium

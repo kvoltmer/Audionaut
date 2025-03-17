@@ -84,7 +84,7 @@ public:
 private:
 
     std::unique_ptr<AudiumMainWindow> mainWindow;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;

@@ -20,6 +20,7 @@
 #include "Engine/PlayList/SampleTimer.h"
 #include "Engine/AudioSources/audium_AudioTransportSource.h"
 
+namespace audium {
 
 #define MAX_AUDIO_FILE_CHANNELS 64
 
@@ -36,7 +37,7 @@ public:
     {
         audioTransportSource->setSource(nullptr);
     }
-
+    
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
     
     void releaseResources() override
@@ -44,7 +45,7 @@ public:
         if (mainSource != nullptr)
             mainSource->releaseResources();
     }
-
+    
     void schedulePosition (double newPosition, int startSample)
     {
         if (startSample == 0)
@@ -90,7 +91,7 @@ private:
     
     
     AudioResource& audioResource;
-        
+    
     // the sample position where the position change should happen
     std::atomic<int> scheduledStartSample = 0;
     // the scheduled position change
@@ -107,3 +108,5 @@ private:
     juce::AudioSource* mainSource = nullptr;
     
 };
+
+} // namespace audium 

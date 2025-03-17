@@ -21,7 +21,8 @@
 
 using json = nlohmann::json;
 
-//==============================================================================
+namespace audium {
+
 struct PlayListSchedulerData
 {
     // edit or arrangement mode
@@ -35,7 +36,7 @@ struct PlayListSchedulerData
     
     // transport start position
     double startPositionClocks      = 0.0;
-
+    
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PlayListSchedulerData,
@@ -43,4 +44,6 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PlayListSchedulerData,
                                                 followTransport,
                                                 transportPositionClocks,
                                                 startPositionClocks);
+
+}
 

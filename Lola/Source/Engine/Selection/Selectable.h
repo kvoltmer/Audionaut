@@ -55,7 +55,7 @@ public:
 private:
     bool selected = false;
         
-    std::shared_ptr<audium::SelectionManager> selectionManager;
+    std::shared_ptr<SelectionManager> selectionManager;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Selectable)
 };

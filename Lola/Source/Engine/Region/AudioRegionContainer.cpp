@@ -27,28 +27,30 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+namespace audium {
+
 AudioRegionContainer::AudioRegionContainer(AudioTrack &audioTrack_) :
-    audioTrack(audioTrack_),
-    audioResourceContainer(audioTrack.getAudioResourceContainer()),
-    audioTrackContainer(audioTrack.getAudioTrackContainer()),
-    tempoProvider(audioTrackContainer.getTempoProvider()),
-    undoManager(audioTrackContainer.getUndoManager())
+audioTrack(audioTrack_),
+audioResourceContainer(audioTrack.getAudioResourceContainer()),
+audioTrackContainer(audioTrack.getAudioTrackContainer()),
+tempoProvider(audioTrackContainer.getTempoProvider()),
+undoManager(audioTrackContainer.getUndoManager())
 {
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioTrack> track)
 {
-//    jassert(getNumRegions(track.get()) == 0);
-//    auto audioResources = audioResourceContainer->getAudioResourcesForGroup(track.get());
-//    auto name = (audioResources.size() > 0) ? audioResources[0]->getFileNameWithoutExtension() : "n/a";
-//    auto seconds = 0.0;
-//    for (auto resource : audioResources)
-//    {
-//        seconds = juce::jmax(seconds, resource->getAudioTransportSource()->getLengthInSeconds());
-//    }
-//    jassert(seconds > 0.0);
-//
-//    return createRegion(name, juce::Range(0.0, seconds), track);
+    //    jassert(getNumRegions(track.get()) == 0);
+    //    auto audioResources = audioResourceContainer->getAudioResourcesForGroup(track.get());
+    //    auto name = (audioResources.size() > 0) ? audioResources[0]->getFileNameWithoutExtension() : "n/a";
+    //    auto seconds = 0.0;
+    //    for (auto resource : audioResources)
+    //    {
+    //        seconds = juce::jmax(seconds, resource->getAudioTransportSource()->getLengthInSeconds());
+    //    }
+    //    jassert(seconds > 0.0);
+    //
+    //    return createRegion(name, juce::Range(0.0, seconds), track);
     jassertfalse;
     return nullptr;
 }
@@ -104,16 +106,16 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
     
     
     // - find existing region
-//    std::shared_ptr<AudioRegion> newRegion = nullptr;
-//    auto regions = getRegionsForSubGroup(otherRegion->getAudioSubGroup().get());
-//    for (auto region : regions) {
-//        // TODO: == operator for AudioRegion
-//        if (region->getRegionData(context) == otherRegion->getRegionData(context) &&
-//            region->getName() == otherRegion->getName()) {
-//            newRegion = region;
-//            break;
-//        }
-//    }
+    //    std::shared_ptr<AudioRegion> newRegion = nullptr;
+    //    auto regions = getRegionsForSubGroup(otherRegion->getAudioSubGroup().get());
+    //    for (auto region : regions) {
+    //        // TODO: == operator for AudioRegion
+    //        if (region->getRegionData(context) == otherRegion->getRegionData(context) &&
+    //            region->getName() == otherRegion->getName()) {
+    //            newRegion = region;
+    //            break;
+    //        }
+    //    }
     
     // - find similar region
     auto newRegion = findSimilarRegion(otherRegion);
@@ -268,7 +270,7 @@ bool AudioRegionContainer::deleteAudioRegion(AudioRegion* region) {
         return true;
     }
     
-
+    
     return false;
 }
 
@@ -326,8 +328,8 @@ juce::SparseSet<int> AudioRegionContainer::getSelectedRows() const {
 }
 
 void AudioRegionContainer::setSelectedRows(juce::SparseSet<int>& selectedRows) {
-
-
+    
+    
     for (auto region : audioRegions)
         region->setSelected(false);
     
@@ -419,3 +421,5 @@ void AudioRegionContainer::mergeFromJson(json& input)
         jassert(region);
     }
 }
+
+} // namespace audium
