@@ -1,3 +1,19 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #pragma once
 
 #include <JuceHeader.h>
@@ -7,27 +23,6 @@ using namespace juce;
 namespace audium
 {
 
-//==============================================================================
-/**
-    Makes it easy to quickly draw scaled views of the waveform shape of an
-    audio file.
-
-    To use this class, just create an AudioThumbnail class for the file you want
-    to draw, call setSource to tell it which file or resource to use, then call
-    drawChannel() to draw it.
-
-    The class will asynchronously scan the wavefile to create its scaled-down view,
-    so you should make your UI repaint itself as this data comes in. To do this, the
-    AudioThumbnail is a ChangeBroadcaster, and will broadcast a message when its
-    listeners should repaint themselves.
-
-    The thumbnail stores an internal low-res version of the wave data, and this can
-    be loaded and saved to avoid having to scan the file again.
-
-    @see AudioThumbnailCache, AudioThumbnailBase
-
-    @tags{Audio}
-*/
 class  AudioThumbnail    : public AudioThumbnailBase
 {
 public:
