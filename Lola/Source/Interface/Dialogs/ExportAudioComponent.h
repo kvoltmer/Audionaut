@@ -45,7 +45,7 @@ public:
     void resized() override
     {
                 
-        Rectangle<int> r (proportionOfWidth (0.5f), 20, proportionOfWidth (0.4f), 3000);
+        juce::Rectangle<int> r(proportionOfWidth(0.5f), 20, proportionOfWidth(0.4f), 3000);
         
         const int h = 23;
         const int space = h / 4;

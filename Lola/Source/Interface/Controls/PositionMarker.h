@@ -62,7 +62,7 @@ public:
                 
                 if (xPos >= 0.0) {
                     currentPositionMarker.setVisible(true);
-                    currentPositionMarker.setRectangle (Rectangle<float> (xPos - 0.75f, 0,
+                    currentPositionMarker.setRectangle (juce::Rectangle<float> (xPos - 0.75f, 0,
                                                                           1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
                 }
                 else {

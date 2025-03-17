@@ -38,7 +38,7 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::A
     setContentOwned (mainComponent.get(), true);
     
 #if ! JUCE_MAC
- setMenuBar (ProjucerApplication::getApp().getMenuModel());
+    setMenuBar (AudiumApplication::getApp().getMenuModel());
 #endif
     
     auto& commandManager = AudiumApplication::getCommandManager();

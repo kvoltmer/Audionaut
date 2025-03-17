@@ -103,7 +103,7 @@ public:
             auto position = zoomHandler->clocksToX(playListScheduler->getAbsolutePosition(audium::clocks));
             auto start = zoomHandler->clocksToX(playListScheduler->getAbsoluteStartPosition(audium::clocks));
             auto height = static_cast<float>(getHeight());
-            startPositionMarker.setRectangle (Rectangle<float> (start - 0.75f, 0.f,
+            startPositionMarker.setRectangle(juce::Rectangle<float>(start - 0.75f, 0.f,
                                                                   1.5f, height));
             startPositionMarker.setVisible(std::abs(position - start) > 0.0);
             
@@ -126,7 +126,7 @@ public:
                 auto loopRange = playListScheduler->getTransportLoop()->getLoopPositionRange(audium::clocks);
                 auto loopX = zoomHandler->clocksToX(loopRange);
                 
-                Rectangle<float> loopRect (loopX.getStart(), 0.f, loopX.getLength(), height);
+                juce::Rectangle<float> loopRect (loopX.getStart(), 0.f, loopX.getLength(), height);
                 
                 loopRangeMarker.setRectangle(loopRect);
                 
@@ -180,7 +180,7 @@ public:
     
             auto gridX = zoomHandler->clocksToX(clocks);
             
-            mouseOverGridMarker.setRectangle (Rectangle<float> (gridX - 0.75f, 0, 1.5f, (float) getHeight()));
+            mouseOverGridMarker.setRectangle (juce::Rectangle<float> (gridX - 0.75f, 0, 1.5f, (float) getHeight()));
         }
         else {
             mouseOverGridMarker.setVisible(false);

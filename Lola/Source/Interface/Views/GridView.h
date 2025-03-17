@@ -44,7 +44,7 @@ public:
         //std::cout << "GridView: " << getLocalBounds().getWidth() << " " << getLocalBounds().getHeight() << std::endl;
     }
     
-    void paintTimeLineInBeats(juce::Graphics& g, Rectangle<float> rectangle)
+    void paintTimeLineInBeats(juce::Graphics& g, juce::Rectangle<float> rectangle)
     {
         auto range = zoomHandler->clocksToX(currentRangeClocks);
         
@@ -53,7 +53,7 @@ public:
         auto x = rectangle.getX();
         for (auto i = 0; i < segmentResult.numSegments; i++)
         {
-            Rectangle<float> rect(x, rectangle.getY(), 1.f, rectangle.getHeight());
+            juce::Rectangle<float> rect(x, rectangle.getY(), 1.f, rectangle.getHeight());
             
             if (!range.isEmpty() &&
                 !juce::ModifierKeys::currentModifiers.isShiftDown() &&
