@@ -56,8 +56,8 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::A
     setResizable (true, true);
     
     String windowState;
-    if (windowPosProperty.isNotEmpty())
-        windowState = Preferences::getValue (windowPosProperty);
+    if (Preferences::valueExists (PreferenceKeys::mainWindowState))
+        windowState = Preferences::getValue (PreferenceKeys::mainWindowState);
 
     if (windowState.isNotEmpty()) {
         restoreWindowStateFromString (windowState);
@@ -73,7 +73,7 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::A
 
 AudiumMainWindow::~AudiumMainWindow()
 {
-    Preferences::setValue (windowPosProperty, getWindowStateAsString());
+    Preferences::setValue (PreferenceKeys::mainWindowState, getWindowStateAsString());
 #if ! JUCE_MAC
     setMenuBar (nullptr);
 #endif

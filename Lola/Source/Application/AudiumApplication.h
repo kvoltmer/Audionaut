@@ -36,7 +36,6 @@ public:
 
     void anotherInstanceStarted (const juce::String& commandLine) override;
 
-    //==============================================================================
     MenuBarModel* getMenuModel();
 
     void getAllCommands (juce::Array<CommandID>&) override;
@@ -89,7 +88,6 @@ private:
     
     void updateSettings();
 
-    //==============================================================================
    #if JUCE_MAC
     class AppleMenuRebuildListener  : private MenuBarModel::Listener
     {

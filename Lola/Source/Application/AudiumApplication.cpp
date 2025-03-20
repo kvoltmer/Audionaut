@@ -17,7 +17,6 @@
 #include "Interface/Dialogs/FloatingToolWindow.h"
 
 
-//==============================================================================
 AudiumApplication& AudiumApplication::getApp()
 {
     AudiumApplication* const app = dynamic_cast<AudiumApplication*> (JUCEApplication::getInstance());
@@ -312,7 +311,6 @@ void AudiumApplication::handleMainMenuCommand (int menuItemID)
     }
 }
 
-//==============================================================================
 void AudiumApplication::getAllCommands (Array <CommandID>& commands)
 {
     JUCEApplication::getAllCommands (commands);
