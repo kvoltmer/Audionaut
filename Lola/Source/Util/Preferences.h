@@ -24,6 +24,7 @@ class Preferences
 {
 public:
     Preferences() = default;
+    ~Preferences() = default;
     
     static String getRegPath();
     
@@ -48,8 +49,7 @@ public:
 
     static String s_RegistryName;
 
-    
-    JUCE_DECLARE_SINGLETON (Preferences, true);
+
 private:
     
     

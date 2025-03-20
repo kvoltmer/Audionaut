@@ -124,4 +124,3 @@ private:
     
 };
 
-Preferences &getGlobalProperties();

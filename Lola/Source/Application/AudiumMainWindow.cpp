@@ -7,6 +7,7 @@
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
+#include "Util/Preferences.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Selection/SelectionManager.h"
@@ -49,12 +50,22 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::A
     updateAppKeyMappings();
     
     
-   #if JUCE_IOS || JUCE_ANDROID
+#if JUCE_IOS || JUCE_ANDROID
     setFullScreen (true);
-   #else
+#else
     setResizable (true, true);
-    centreWithSize (getWidth(), getHeight());
-   #endif
+    
+    String windowState;
+    if (windowPosProperty.isNotEmpty())
+        windowState = Preferences::getValue (windowPosProperty);
+
+    if (windowState.isNotEmpty()) {
+        restoreWindowStateFromString (windowState);
+    }
+    else {
+        centreWithSize (getWidth(), getHeight());
+    }
+#endif
 
     mainComponent->updateUI();
     setVisible (true);
@@ -62,6 +73,7 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::A
 
 AudiumMainWindow::~AudiumMainWindow()
 {
+    Preferences::setValue (windowPosProperty, getWindowStateAsString());
 #if ! JUCE_MAC
     setMenuBar (nullptr);
 #endif
