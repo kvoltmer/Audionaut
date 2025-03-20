@@ -53,8 +53,6 @@ private:
     std::unique_ptr<NewRegionDialog> newRegionDialog;
     std::unique_ptr<AutoEditDialog> autoEditDialog;
     std::unique_ptr<ExportAudioDialog> exportAudioDialog;
-    
-    const juce::String windowPosProperty = "MainWondow";
-    
+        
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
 };

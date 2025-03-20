@@ -29,15 +29,35 @@ AudiumEngine::~AudiumEngine()
 
 void AudiumEngine::initialise()
 {
-    /** Resets everything to a default device setup, clearing any stored settings. */
-    auto result = audioDeviceManager->initialiseWithDefaultDevices (0, 2);
-    std::cout << result.toStdString() << std::endl;
+    auto numInputChannelsNeeded = 0;
+    auto numOutputChannelsNeeded = 2;
+    String result;
     
+    if (Preferences::valueExists(PreferenceKeys::audioDeviceSettings)) {
+        
+        juce::XmlDocument xml (Preferences::getValue(PreferenceKeys::audioDeviceSettings));
+        if (auto saveState = xml.getDocumentElement()) {
+            result = audioDeviceManager->initialise(numInputChannelsNeeded,
+                                                    numOutputChannelsNeeded,
+                                                    saveState.get(),
+                                                    true);
+        }
+    }
+    else {
+        result = audioDeviceManager->initialiseWithDefaultDevices (numInputChannelsNeeded,
+                                                                        numOutputChannelsNeeded);
+    }
+    std::cout << result.toStdString() << std::endl;
     audioDeviceManager->addAudioCallback(linkAudioDevice.get());
 }
 
 void AudiumEngine::uninitialise()
 {
+    
+    if (auto stateXml = audioDeviceManager->createStateXml()) {
+        Preferences::setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString());
+    }
+    
     undoManager->clearUndoHistory();
     audioDeviceManager->removeAudioCallback(linkAudioDevice.get());
     
