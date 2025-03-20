@@ -147,7 +147,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             break;
         case CommandIDs::autoEdit:
             result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
-            result.defaultKeypresses.add (KeyPress ('e', ModifierKeys::commandModifier, 0));
+            result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::bounceProject:
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
