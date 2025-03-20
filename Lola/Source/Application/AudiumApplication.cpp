@@ -260,8 +260,11 @@ PopupMenu AudiumApplication::createEditMenu()
     menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::splitRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::cleanupRegions);
+    
+#if AUTO_EDIT_ENABLED
     menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
+#endif
     //menu.addSeparator();
     //menu.addCommandItem(commandManager.get(), CommandIDs::loopPlayList);
     return menu;
@@ -340,7 +343,7 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
         break;
             
     case CommandIDs::defaultProject:
-        result.setInfo ("Save as Default", "Save this project as default", CommandCategories::general, 0);
+        result.setInfo ("Set current project as default", "Set current project as default", CommandCategories::general, 0);
         break;
             
     case CommandIDs::saveProject:
