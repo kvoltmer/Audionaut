@@ -41,7 +41,7 @@ private:
     void invokeInternal(juce::Component* component)
     {
         mainComponent = component;
-        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Device Settings"),
+        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Audio Device Settings"),
                                                           "",
                                                           MessageBoxIconType::NoIcon, mainComponent);
         asyncAlertWindow->addCustomComponent(audioDeviceSelectorComponent.get());

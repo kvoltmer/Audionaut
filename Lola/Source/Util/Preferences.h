@@ -48,6 +48,8 @@ public:
 
     static String s_RegistryName;
 
+    
+    JUCE_DECLARE_SINGLETON (Preferences, true);
 private:
     
     

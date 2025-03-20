@@ -14,6 +14,8 @@
 #include "AudiumMainWindow.h"
 #include "Interface/Dialogs/SettingsDialog.h"
 #include "Interface/Dialogs/AboutDialog.h"
+#include "Interface/Dialogs/FloatingToolWindow.h"
+
 
 //==============================================================================
 AudiumApplication& AudiumApplication::getApp()
@@ -534,10 +536,15 @@ void AudiumApplication::updateUI()
 }
 
 void AudiumApplication::showAboutWindow()
-{    
-    if (aboutDialog == nullptr)
-        aboutDialog = std::make_shared<AboutDialog>();
-    aboutDialog->invoke(mainWindow->getContentComponent());
+{
+    auto w = 600;
+    auto h = 400;
+    if (aboutWindow != nullptr)
+        aboutWindow->toFront (true);
+    else
+        new FloatingToolWindow ({}, {}, new AboutWindowComponent(),
+                                aboutWindow, false,
+                                w, h, w, h, w, h);
 }
 
 void AudiumApplication::showSettingsDialog()
@@ -561,4 +568,10 @@ void AudiumApplication::updateSettings()
     Preferences::setValue(PreferenceKeys::initialSaveDirectory, initialSaveDirectory.getFullPathName());
     Preferences::setValue(PreferenceKeys::recentFiles, recentFiles.toString());
     Preferences::synchronize();
+}
+
+Preferences &getGlobalProperties()
+{
+    auto* m = Preferences::getInstance();
+    return *m;
 }
