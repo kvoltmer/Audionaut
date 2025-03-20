@@ -13,15 +13,12 @@
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class SettingsDialog;
-class AboutDialog;
 class AudiumFactory;
+class Preferences;
 
-
-//==============================================================================
 class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
 {
 public:
-    //==============================================================================
     AudiumApplication() = default;
     
     static AudiumApplication& getApp();
@@ -79,7 +76,6 @@ private:
     std::unique_ptr<juce::FileChooser> chooser;
     std::unique_ptr<juce::Component> aboutWindow;
     std::shared_ptr<SettingsDialog> settingsDialog;
-    std::shared_ptr<AboutDialog> aboutDialog;
     
     juce::RecentlyOpenedFilesList recentFiles;
     
@@ -127,3 +123,5 @@ private:
    #endif
     
 };
+
+Preferences &getGlobalProperties();

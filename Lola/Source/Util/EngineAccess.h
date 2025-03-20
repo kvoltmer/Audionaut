@@ -6,6 +6,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Application/AudiumMainWindow.h"
+#include "Application/AudiumApplication.h"
 #include "Engine/AudiumEngine.h"
 
 void notImplemented();
