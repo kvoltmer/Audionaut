@@ -261,7 +261,6 @@ bool Preferences::setIntegerValue(const String& key, const uint64_t& value)
     
 }
 
-JUCE_IMPLEMENT_SINGLETON (Preferences)
 
 
 

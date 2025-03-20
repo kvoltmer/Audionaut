@@ -569,9 +569,3 @@ void AudiumApplication::updateSettings()
     Preferences::setValue(PreferenceKeys::recentFiles, recentFiles.toString());
     Preferences::synchronize();
 }
-
-Preferences &getGlobalProperties()
-{
-    auto* m = Preferences::getInstance();
-    return *m;
-}
