@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
+              bundleIdentifier="com.voltmer-systems.audionaut" version="1.0.0"
+              companyName="Klaus Voltmer" companyWebsite="www.voltmer-systems.com"
+              cppLanguageStandard="20" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0">
+  <MAINGROUP id="HQG80L" name="Audionaut">
+    <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
+      <FILE id="pY6hrq" name="README.txt" compile="0" resource="0" file="Catch2Tests/README.txt"/>
+      <FILE id="A4Cl9P" name="CMakeLists.txt" compile="0" resource="0" file="Catch2Tests/CMakeLists.txt"/>
+    </GROUP>
+    <GROUP id="{69119DF9-CC06-2A24-1C4A-CFAF02C4B8BB}" name="Source">
+      <GROUP id="{1D37A931-400E-3356-8013-12CBF3C1C146}" name="Application">
+        <FILE id="IsMeaZ" name="AudiumMenuModel.cpp" compile="1" resource="0"
+              file="Source/Application/AudiumMenuModel.cpp"/>
+        <FILE id="dWDQh6" name="AudiumMenuModel.h" compile="0" resource="0"
+              file="Source/Application/AudiumMenuModel.h"/>
+        <FILE id="b3jfES" name="AudiumCommandIDs.h" compile="0" resource="0"
+              file="Source/Application/AudiumCommandIDs.h"/>
+        <FILE id="w7HBCe" name="AudiumApplication.cpp" compile="1" resource="0"
+              file="Source/Application/AudiumApplication.cpp"/>
+        <FILE id="HVvYus" name="AudiumApplication.h" compile="0" resource="0"
+              file="Source/Application/AudiumApplication.h"/>
+        <FILE id="jQr6Jb" name="AudiumMainWindow.cpp" compile="1" resource="0"
+              file="Source/Application/AudiumMainWindow.cpp"/>
+        <FILE id="fEnXvH" name="AudiumMainWindow.h" compile="0" resource="0"
+              file="Source/Application/AudiumMainWindow.h"/>
+        <FILE id="aJEqT2" name="Main.cpp" compile="1" resource="0" file="Source/Application/Main.cpp"/>
+      </GROUP>
+      <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
+        <FILE id="DdTX0t" name="EngineAccess.cpp" compile="1" resource="0"
+              file="Source/Util/EngineAccess.cpp"/>
+        <FILE id="ynCVR0" name="EngineAccess.h" compile="0" resource="0" file="Source/Util/EngineAccess.h"/>
+        <FILE id="rysRho" name="Preferences.cpp" compile="1" resource="0" file="Source/Util/Preferences.cpp"/>
+        <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
+      </GROUP>
+      <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
+          <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
+          <FILE id="S0kUtq" name="AudiumTransportSource.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/AudiumTransportSource.cpp"/>
+          <FILE id="FrI8bp" name="AudiumTransportSource.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/AudiumTransportSource.h"/>
+          <FILE id="sc0j2q" name="TransportSourceContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/TransportSourceContainer.cpp"/>
+          <FILE id="BgDcMc" name="TransportSourceContainer.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/TransportSourceContainer.h"/>
+          <FILE id="pLvPaN" name="audium_AudioTransportSource.cpp" compile="1"
+                resource="0" file="Source/Engine/AudioSources/audium_AudioTransportSource.cpp"/>
+          <FILE id="tyX7Fa" name="audium_AudioTransportSource.h" compile="0"
+                resource="0" file="Source/Engine/AudioSources/audium_AudioTransportSource.h"/>
+        </GROUP>
+        <GROUP id="{6F75617E-7F56-58FA-1D3F-51D388D99F41}" name="Export">
+          <FILE id="QNyjxw" name="ExportAudioConfig.h" compile="0" resource="0"
+                file="Source/Engine/Export/ExportAudioConfig.h"/>
+          <FILE id="JiHzcv" name="AudioExportThread.cpp" compile="1" resource="0"
+                file="Source/Engine/Export/AudioExportThread.cpp"/>
+          <FILE id="duXPV9" name="AudioExportThread.h" compile="0" resource="0"
+                file="Source/Engine/Export/AudioExportThread.h"/>
+        </GROUP>
+        <GROUP id="{0AC7E64F-80C6-74C3-823D-493CC3105D80}" name="Selection">
+          <FILE id="N9t1dH" name="Selectable.h" compile="0" resource="0" file="Source/Engine/Selection/Selectable.h"/>
+          <FILE id="Hwzk6n" name="SelectableObjectContainer.h" compile="0" resource="0"
+                file="Source/Engine/Selection/SelectableObjectContainer.h"/>
+          <FILE id="ArsXhk" name="SelectionContext.h" compile="0" resource="0"
+                file="Source/Engine/Selection/SelectionContext.h"/>
+          <FILE id="eSQkn0" name="SelectionManager.cpp" compile="1" resource="0"
+                file="Source/Engine/Selection/SelectionManager.cpp"/>
+          <FILE id="LcQig6" name="SelectionManager.h" compile="0" resource="0"
+                file="Source/Engine/Selection/SelectionManager.h"/>
+        </GROUP>
+        <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
+          <FILE id="jX0IBu" name="LockFreeCommander.h" compile="0" resource="0"
+                file="Source/Engine/Core/LockFreeCommander.h"/>
+          <FILE id="wTx6z6" name="LockFreeContainer.h" compile="0" resource="0"
+                file="Source/Engine/Core/LockFreeContainer.h"/>
+          <FILE id="ScorpU" name="AudioClipContainer.h" compile="0" resource="0"
+                file="Source/Engine/Core/AudioClipContainer.h"/>
+          <FILE id="Ox6quG" name="DspClip.cpp" compile="1" resource="0" file="Source/Engine/Core/DspClip.cpp"/>
+          <FILE id="EVuaOX" name="DspClip.h" compile="0" resource="0" file="Source/Engine/Core/DspClip.h"/>
+          <FILE id="bNePQp" name="DspClipData.h" compile="0" resource="0" file="Source/Engine/Core/DspClipData.h"/>
+        </GROUP>
+        <FILE id="f3Gy4c" name="Streamable.h" compile="0" resource="0" file="Source/Engine/Streamable.h"/>
+        <FILE id="E21RCr" name="TimeContext.h" compile="0" resource="0" file="Source/Engine/TimeContext.h"/>
+        <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
+          <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
+          <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
+        </GROUP>
+        <GROUP id="{44EAE852-D94A-E010-D086-40CC86FE8C48}" name="Channel">
+          <FILE id="styheO" name="AudioChannel.cpp" compile="1" resource="0"
+                file="Source/Engine/Channel/AudioChannel.cpp"/>
+          <FILE id="DQADtm" name="AudioChannel.h" compile="0" resource="0" file="Source/Engine/Channel/AudioChannel.h"/>
+          <FILE id="yVxzet" name="AudioChannelData.h" compile="0" resource="0"
+                file="Source/Engine/Channel/AudioChannelData.h"/>
+        </GROUP>
+        <GROUP id="{38829D96-12DD-C636-0C91-D4606DFE0C72}" name="Factory">
+          <FILE id="jEBWMg" name="AudioTrackFactory.h" compile="0" resource="0"
+                file="Source/Engine/Factory/AudioTrackFactory.h"/>
+          <FILE id="VRfXqH" name="AudioResourceFactory.h" compile="0" resource="0"
+                file="Source/Engine/Factory/AudioResourceFactory.h"/>
+          <FILE id="M4fDCK" name="AudiumFactory.cpp" compile="1" resource="0"
+                file="Source/Engine/Factory/AudiumFactory.cpp"/>
+          <FILE id="ErnMCa" name="AudiumFactory.h" compile="0" resource="0" file="Source/Engine/Factory/AudiumFactory.h"/>
+        </GROUP>
+        <GROUP id="{AE3695CD-F0F3-4924-68C1-084658B86D39}" name="Group">
+          <FILE id="JFowSd" name="AudioTrack.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioTrack.cpp"/>
+          <FILE id="JxLaEn" name="AudioTrack.h" compile="0" resource="0" file="Source/Engine/Group/AudioTrack.h"/>
+          <FILE id="RFg3yf" name="AudioTrackContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioTrackContainer.cpp"/>
+          <FILE id="SIX9na" name="AudioTrackContainer.h" compile="0" resource="0"
+                file="Source/Engine/Group/AudioTrackContainer.h"/>
+          <FILE id="yXlj3o" name="AudioClip.cpp" compile="1" resource="0" file="Source/Engine/Group/AudioClip.cpp"/>
+          <FILE id="YWQQTo" name="AudioClip.h" compile="0" resource="0" file="Source/Engine/Group/AudioClip.h"/>
+          <FILE id="JW1CwN" name="AudioClipData.h" compile="0" resource="0" file="Source/Engine/Group/AudioClipData.h"/>
+          <FILE id="Xw6tEJ" name="AudioRegionAdapter.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioRegionAdapter.cpp"/>
+          <FILE id="otPqzW" name="AudioRegionAdapter.h" compile="0" resource="0"
+                file="Source/Engine/Group/AudioRegionAdapter.h"/>
+          <FILE id="zWymx0" name="AudioSubGroup.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioSubGroup.cpp"/>
+          <FILE id="xDIL18" name="AudioSubGroup.h" compile="0" resource="0" file="Source/Engine/Group/AudioSubGroup.h"/>
+        </GROUP>
+        <GROUP id="{72F2B5A0-7A8C-3648-A73C-97D66220C0AE}" name="Link">
+          <FILE id="el7wlW" name="LinkAudioDevice.cpp" compile="1" resource="0"
+                file="Source/Engine/Link/LinkAudioDevice.cpp"/>
+          <FILE id="oukIM3" name="LinkAudioDevice.h" compile="0" resource="0"
+                file="Source/Engine/Link/LinkAudioDevice.h"/>
+          <FILE id="CplGKz" name="LinkEngine.cpp" compile="1" resource="0" file="Source/Engine/Link/LinkEngine.cpp"/>
+          <FILE id="Rf1W4c" name="LinkEngine.hpp" compile="0" resource="0" file="Source/Engine/Link/LinkEngine.hpp"/>
+        </GROUP>
+        <GROUP id="{84F18645-3AA6-9931-BB2F-02E1E02A3A8A}" name="Playback">
+          <FILE id="kbi6z3" name="AudioBusInterface.cpp" compile="1" resource="0"
+                file="Source/Engine/Playback/AudioBusInterface.cpp"/>
+          <FILE id="hFhhDN" name="AudioBusInterface.h" compile="0" resource="0"
+                file="Source/Engine/Playback/AudioBusInterface.h"/>
+          <FILE id="isjbav" name="AudioBusRenderer.cpp" compile="1" resource="0"
+                file="Source/Engine/Playback/AudioBusRenderer.cpp"/>
+          <FILE id="JTNbDj" name="AudioBusRenderer.h" compile="0" resource="0"
+                file="Source/Engine/Playback/AudioBusRenderer.h"/>
+          <FILE id="kBDQRJ" name="Playback.cpp" compile="1" resource="0" file="Source/Engine/Playback/Playback.cpp"/>
+          <FILE id="TuWOT6" name="Playback.h" compile="0" resource="0" file="Source/Engine/Playback/Playback.h"/>
+          <FILE id="jQYb2Z" name="PlaybackDefines.h" compile="0" resource="0"
+                file="Source/Engine/Playback/PlaybackDefines.h"/>
+          <FILE id="mWPkuL" name="Voice.cpp" compile="1" resource="0" file="Source/Engine/Playback/Voice.cpp"/>
+          <FILE id="LVBVN6" name="Voice.h" compile="0" resource="0" file="Source/Engine/Playback/Voice.h"/>
+        </GROUP>
+        <GROUP id="{16353D6D-6E59-98DE-36E8-7EAB436B1542}" name="PlayList">
+          <FILE id="HCkmB9" name="TransportLoop.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/TransportLoop.cpp"/>
+          <FILE id="uM3vzt" name="TransportLoop.h" compile="0" resource="0" file="Source/Engine/PlayList/TransportLoop.h"/>
+          <FILE id="j9IFqc" name="LoopData.h" compile="0" resource="0" file="Source/Engine/PlayList/LoopData.h"/>
+          <FILE id="sr2twv" name="PlayListSchedulerData.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/PlayListSchedulerData.h"/>
+          <FILE id="iIqNIF" name="PositionableBase.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/PositionableBase.cpp"/>
+          <FILE id="iREjhA" name="PositionableBase.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/PositionableBase.h"/>
+          <FILE id="UTFjED" name="SampleTimer.h" compile="0" resource="0" file="Source/Engine/PlayList/SampleTimer.h"/>
+          <FILE id="kNVT0n" name="PlayListContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/PlayListContainer.cpp"/>
+          <FILE id="l4Sshh" name="PlayListContainer.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/PlayListContainer.h"/>
+          <FILE id="y8wZY3" name="PlayListItem.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/PlayListItem.cpp"/>
+          <FILE id="iSTHS0" name="PlayListItem.h" compile="0" resource="0" file="Source/Engine/PlayList/PlayListItem.h"/>
+          <FILE id="Y4jg8M" name="PlayListScheduler.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/PlayListScheduler.cpp"/>
+          <FILE id="ge1APd" name="PlayListScheduler.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/PlayListScheduler.h"/>
+        </GROUP>
+        <GROUP id="{56EAD069-5D2D-A940-D232-5DA7E979C834}" name="Provider">
+          <FILE id="mXYpiA" name="TempoProvider.h" compile="0" resource="0" file="Source/Engine/Provider/TempoProvider.h"/>
+        </GROUP>
+        <GROUP id="{62EC77E5-55A7-6DFB-4FDB-07C12DDF4B3C}" name="Region">
+          <FILE id="rYH3qA" name="AudioRegion.cpp" compile="1" resource="0" file="Source/Engine/Region/AudioRegion.cpp"/>
+          <FILE id="hYhyVJ" name="AudioRegion.h" compile="0" resource="0" file="Source/Engine/Region/AudioRegion.h"/>
+          <FILE id="ALK6K5" name="AudioRegionContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Region/AudioRegionContainer.cpp"/>
+          <FILE id="EJzPVe" name="AudioRegionContainer.h" compile="0" resource="0"
+                file="Source/Engine/Region/AudioRegionContainer.h"/>
+          <FILE id="fFl3aw" name="AudioRegionData.h" compile="0" resource="0"
+                file="Source/Engine/Region/AudioRegionData.h"/>
+        </GROUP>
+        <GROUP id="{27408FC8-AAF8-55C4-A1E1-787D504EC3DD}" name="Resource">
+          <FILE id="bpy86C" name="AudioResource.cpp" compile="1" resource="0"
+                file="Source/Engine/Resource/AudioResource.cpp"/>
+          <FILE id="H5Y3lS" name="AudioResource.h" compile="0" resource="0" file="Source/Engine/Resource/AudioResource.h"/>
+          <FILE id="wISlep" name="AudioResourceContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Resource/AudioResourceContainer.cpp"/>
+          <FILE id="W21ktc" name="AudioResourceContainer.h" compile="0" resource="0"
+                file="Source/Engine/Resource/AudioResourceContainer.h"/>
+          <FILE id="MR7guu" name="AudioResourceData.h" compile="0" resource="0"
+                file="Source/Engine/Resource/AudioResourceData.h"/>
+          <FILE id="h0LKN6" name="ChannelMapping.cpp" compile="1" resource="0"
+                file="Source/Engine/Resource/ChannelMapping.cpp"/>
+          <FILE id="BMWUaX" name="ChannelMapping.h" compile="0" resource="0"
+                file="Source/Engine/Resource/ChannelMapping.h"/>
+        </GROUP>
+        <GROUP id="{71D24ABD-A319-5DE9-E24C-2AE51F6F1A35}" name="Undo">
+          <FILE id="S8P8ar" name="UndoableContainerAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableContainerAction.h"/>
+        </GROUP>
+        <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
+              file="Source/Engine/AudiumEngine.cpp"/>
+        <FILE id="Oik4J0" name="AudiumEngine.h" compile="0" resource="0" file="Source/Engine/AudiumEngine.h"/>
+        <FILE id="ELbTXp" name="ActionMessages.h" compile="0" resource="0"
+              file="Source/Engine/ActionMessages.h"/>
+      </GROUP>
+      <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
+        <GROUP id="{69575DAF-FBC2-F140-D989-B3A8608F6F55}" name="LookAndFeel">
+          <FILE id="LkiqwE" name="AudiumLookAndFeel.cpp" compile="1" resource="0"
+                file="Source/Interface/LookAndFeel/AudiumLookAndFeel.cpp"/>
+          <FILE id="MtAxzj" name="AudiumLookAndFeel.h" compile="0" resource="0"
+                file="Source/Interface/LookAndFeel/AudiumLookAndFeel.h"/>
+          <FILE id="ua9v92" name="TrackColourLookAndFeel.cpp" compile="1" resource="0"
+                file="Source/Interface/LookAndFeel/TrackColourLookAndFeel.cpp"/>
+          <FILE id="mCqQLl" name="TrackColourLookAndFeel.h" compile="0" resource="0"
+                file="Source/Interface/LookAndFeel/TrackColourLookAndFeel.h"/>
+        </GROUP>
+        <FILE id="Z0WoBP" name="UIContext.h" compile="0" resource="0" file="Source/Interface/UIContext.h"/>
+        <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
+          <FILE id="qxsUuR" name="AboutDialog.h" compile="0" resource="0" file="Source/Interface/Dialogs/AboutDialog.h"/>
+          <FILE id="XUO0Mz" name="AboutWindowComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AboutWindowComponent.h"/>
+          <FILE id="HO4Dqt" name="AutoEditDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AutoEditDialog.h"/>
+          <FILE id="y2L75o" name="AutoEditComponent.cpp" compile="1" resource="0"
+                file="Source/Interface/Dialogs/AutoEditComponent.cpp"/>
+          <FILE id="rN8IxH" name="AutoEditComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AutoEditComponent.h"/>
+          <FILE id="oKVp3j" name="ExportAudioDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ExportAudioDialog.h"/>
+          <FILE id="f9OpEm" name="ExportAudioComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ExportAudioComponent.h"/>
+          <FILE id="sr4hwK" name="NewRegionDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/NewRegionDialog.h"/>
+          <FILE id="j5Dgzu" name="SettingsDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/SettingsDialog.h"/>
+        </GROUP>
+        <FILE id="Jt0jme" name="ColourIds.cpp" compile="1" resource="0" file="Source/Interface/ColourIds.cpp"/>
+        <FILE id="WxdqR9" name="ColourIds.h" compile="0" resource="0" file="Source/Interface/ColourIds.h"/>
+        <GROUP id="{5B27ED8A-CA94-0C20-47D2-019C8929A810}" name="Widgets">
+          <FILE id="WylrD8" name="audium_AudioThumbnail.cpp" compile="1" resource="0"
+                file="Source/Interface/Widgets/audium_AudioThumbnail.cpp"/>
+          <FILE id="iIxYr4" name="audium_AudioThumbnail.h" compile="0" resource="0"
+                file="Source/Interface/Widgets/audium_AudioThumbnail.h"/>
+          <FILE id="SSghHx" name="audium_ListBox.cpp" compile="1" resource="0"
+                file="Source/Interface/Widgets/audium_ListBox.cpp"/>
+          <FILE id="zmkbt8" name="audium_ListBox.h" compile="0" resource="0"
+                file="Source/Interface/Widgets/audium_ListBox.h"/>
+        </GROUP>
+        <GROUP id="{4C550296-51BB-D3A6-E49C-7CC8B0E75CC8}" name="Handlers">
+          <FILE id="sgxIk3" name="SnapToGridHandler.cpp" compile="1" resource="0"
+                file="Source/Interface/Handlers/SnapToGridHandler.cpp"/>
+          <FILE id="NvsbFd" name="SnapToGridHandler.h" compile="0" resource="0"
+                file="Source/Interface/Handlers/SnapToGridHandler.h"/>
+          <FILE id="R9tlys" name="ZoomHandler.cpp" compile="1" resource="0" file="Source/Interface/Handlers/ZoomHandler.cpp"/>
+          <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
+        </GROUP>
+        <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
+          <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
+            <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
+            <GROUP id="{A0B6750B-2394-A03B-7D3F-87C4EFC39BE3}" name="ChannelView">
+              <FILE id="CpLcdw" name="ChannelComponent.cpp" compile="1" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.cpp"/>
+              <FILE id="RU4eS4" name="ChannelComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"/>
+              <FILE id="pJGRxg" name="ChannelGroupComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupComponent.h"/>
+              <FILE id="IcgMq4" name="ChannelGroupHeaderComponent.cpp" compile="1"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.cpp"/>
+              <FILE id="Kr5S34" name="ChannelGroupHeaderComponent.h" compile="0"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h"/>
+              <FILE id="o83xsI" name="ChannelsComponent.cpp" compile="1" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.cpp"/>
+              <FILE id="ip9GrQ" name="ChannelsComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"/>
+              <FILE id="kb3Lop" name="ChannelsHeaderComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ChannelView/ChannelsHeaderComponent.h"/>
+            </GROUP>
+            <GROUP id="{B76B0D36-C9A9-6C1E-B42A-40EF5EABF872}" name="EditView">
+              <FILE id="yEfxaX" name="EditComponent.h" compile="0" resource="0" file="Source/Interface/Components/MiddlePanel/EditView/EditComponent.h"/>
+              <FILE id="fbcAlm" name="AudioTrackRegionEditComponent.cpp" compile="1"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/EditView/AudioTrackRegionEditComponent.cpp"/>
+              <FILE id="b3SGrh" name="AudioTrackRegionEditComponent.h" compile="0"
+                    resource="0" file="Source/Interface/Components/MiddlePanel/EditView/AudioTrackRegionEditComponent.h"/>
+              <FILE id="CYmTQU" name="RegionEditComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/EditView/RegionEditComponent.h"/>
+              <FILE id="s1QcPt" name="SubGroupListBox.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/EditView/SubGroupListBox.h"/>
+            </GROUP>
+            <GROUP id="{E58A07C4-B58F-25CE-C91A-E093F52645A1}" name="ArrangementView">
+              <FILE id="peKTnY" name="ArrangementComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"/>
+              <FILE id="Ws25ey" name="AudioTrackComponent.cpp" compile="1" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.cpp"/>
+              <FILE id="AZJ9Ow" name="AudioTrackComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.h"/>
+              <FILE id="k5fw3k" name="PlayListItemComponent.cpp" compile="1" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.cpp"/>
+              <FILE id="MSH6BQ" name="PlayListItemComponent.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"/>
+            </GROUP>
+            <FILE id="nZ2YVn" name="ArrangementEditBaseComponent.h" compile="0"
+                  resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"/>
+            <FILE id="TrmNCI" name="AudioTrackBaseComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/AudioTrackBaseComponent.cpp"/>
+            <FILE id="RMeAIj" name="AudioTrackBaseComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"/>
+          </GROUP>
+          <GROUP id="{03CC010F-0C39-7C47-7C64-039A8E0AD17F}" name="HeaderPanel">
+            <FILE id="DJ2fXt" name="HeaderComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/HeaderPanel/HeaderComponent.cpp"/>
+            <FILE id="QXxRcH" name="HeaderComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
+          </GROUP>
+          <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
+            <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/RightPanel/PlayListComponent.cpp"/>
+            <FILE id="VwCjGU" name="PlayListComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/PlayListComponent.h"/>
+            <FILE id="OOOPVx" name="PlayListContainerComponent.cpp" compile="1"
+                  resource="0" file="Source/Interface/Components/RightPanel/PlayListContainerComponent.cpp"/>
+            <FILE id="yvpmz1" name="PlayListContainerComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/PlayListContainerComponent.h"/>
+            <FILE id="MuXKoO" name="RegionComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionComponent.h"/>
+            <FILE id="ZYUZLx" name="RegionContainerComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionContainerComponent.cpp"/>
+            <FILE id="hIzBnl" name="RegionContainerComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/RegionContainerComponent.h"/>
+            <FILE id="pUtSng" name="RightPanelComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/RightPanel/RightPanelComponent.cpp"/>
+            <FILE id="BNndd2" name="RightPanelComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/RightPanelComponent.h"/>
+          </GROUP>
+          <FILE id="uZah0s" name="MainComponent.cpp" compile="1" resource="0"
+                file="Source/Interface/Components/MainComponent.cpp"/>
+          <FILE id="oC94gO" name="MainComponent.h" compile="0" resource="0" file="Source/Interface/Components/MainComponent.h"/>
+        </GROUP>
+        <GROUP id="{50304CD1-7CC0-3947-9359-7D7BAF26648A}" name="Models">
+          <FILE id="Fj7wA9" name="ArrangementModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/ArrangementModel.cpp"/>
+          <FILE id="RLDyfC" name="ArrangementModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/ArrangementModel.h"/>
+          <FILE id="FZbPhM" name="TrackRegionTableListBoxModel.cpp" compile="1"
+                resource="0" file="Source/Interface/Models/TrackRegionTableListBoxModel.cpp"/>
+          <FILE id="D6w5CK" name="TrackRegionTableListBoxModel.h" compile="0"
+                resource="0" file="Source/Interface/Models/TrackRegionTableListBoxModel.h"/>
+          <FILE id="oZwTNT" name="ChannelGroupListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/ChannelGroupListBoxModel.h"/>
+          <FILE id="zizRO1" name="ChannelSubGroupListBoxModel.h" compile="0"
+                resource="0" file="Source/Interface/Models/ChannelSubGroupListBoxModel.h"/>
+          <FILE id="cpmXGN" name="AudioTrackListBoxModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/AudioTrackListBoxModel.cpp"/>
+          <FILE id="eYSeuv" name="AudioTrackListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/AudioTrackListBoxModel.h"/>
+          <FILE id="JhbMbX" name="SubGroupListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/SubGroupListBoxModel.h"/>
+          <FILE id="eE3Tt0" name="PlayListTableListBoxItem.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/PlayListTableListBoxItem.cpp"/>
+          <FILE id="gXfKLs" name="PlayListTableListBoxItem.h" compile="0" resource="0"
+                file="Source/Interface/Models/PlayListTableListBoxItem.h"/>
+          <FILE id="C4FINa" name="PlayListTableListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/PlayListTableListBoxModel.h"/>
+          <FILE id="wVfIgI" name="RegionTableListBoxModel.cpp" compile="1" resource="0"
+                file="Source/Interface/Models/RegionTableListBoxModel.cpp"/>
+          <FILE id="XJwywE" name="RegionTableListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/RegionTableListBoxModel.h"/>
+          <FILE id="dd0598" name="PlayListItemArrangementModel.h" compile="0"
+                resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
+        </GROUP>
+        <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="Y7l77u" name="LoopDraggerControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/LoopDraggerControl.cpp"/>
+          <FILE id="nuQDk2" name="LoopDraggerControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/LoopDraggerControl.h"/>
+          <FILE id="McvcCP" name="TableRegionLabel.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/TableRegionLabel.cpp"/>
+          <FILE id="dic52p" name="TableRegionLabel.h" compile="0" resource="0"
+                file="Source/Interface/Controls/TableRegionLabel.h"/>
+          <FILE id="U33zDH" name="FadeInOutControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/FadeInOutControl.cpp"/>
+          <FILE id="TSCZRX" name="FadeInOutControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/FadeInOutControl.h"/>
+          <FILE id="eBnkUW" name="SliderControl.h" compile="0" resource="0" file="Source/Interface/Controls/SliderControl.h"/>
+          <FILE id="huzCxv" name="DefaultLabel.h" compile="0" resource="0" file="Source/Interface/Controls/DefaultLabel.h"/>
+          <FILE id="c3NpvE" name="AudiumLabel.h" compile="0" resource="0" file="Source/Interface/Controls/AudiumLabel.h"/>
+          <FILE id="pX9JqX" name="DragZoomControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/DragZoomControl.h"/>
+          <FILE id="chr3Xl" name="PlayListItemDraggerControl.cpp" compile="1"
+                resource="0" file="Source/Interface/Controls/PlayListItemDraggerControl.cpp"/>
+          <FILE id="tIrkcV" name="PlayListItemDraggerControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PlayListItemDraggerControl.h"/>
+          <FILE id="ARrh5G" name="SubGroupDraggerControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/SubGroupDraggerControl.cpp"/>
+          <FILE id="N579q1" name="SubGroupDraggerControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/SubGroupDraggerControl.h"/>
+          <FILE id="OBwQux" name="DraggerControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/DraggerControl.cpp"/>
+          <FILE id="s7vYjW" name="DraggerControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/DraggerControl.h"/>
+          <FILE id="CIIORu" name="RegionEditControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/RegionEditControl.cpp"/>
+          <FILE id="przUwD" name="RegionEditControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/RegionEditControl.h"/>
+          <FILE id="i5qX4Q" name="LevelMeter.h" compile="0" resource="0" file="Source/Interface/Controls/LevelMeter.h"/>
+          <FILE id="Fmpma7" name="LevelMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LevelMeter.cpp"/>
+          <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PlayListTableListBox.h"/>
+          <FILE id="keLPLt" name="PositionMarker.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PositionMarker.h"/>
+          <FILE id="UGbQL4" name="RegionLabel.cpp" compile="1" resource="0" file="Source/Interface/Controls/RegionLabel.cpp"/>
+          <FILE id="M14ssi" name="RegionLabel.h" compile="0" resource="0" file="Source/Interface/Controls/RegionLabel.h"/>
+          <FILE id="kQnaR9" name="RegionSelector.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/RegionSelector.cpp"/>
+          <FILE id="RfQeV6" name="RegionSelector.h" compile="0" resource="0"
+                file="Source/Interface/Controls/RegionSelector.h"/>
+          <FILE id="SZYJrj" name="RegionTableListBox.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/RegionTableListBox.cpp"/>
+          <FILE id="rVsr42" name="RegionTableListBox.h" compile="0" resource="0"
+                file="Source/Interface/Controls/RegionTableListBox.h"/>
+          <FILE id="t9n5bB" name="TransportPositionControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/TransportPositionControl.h"/>
+          <FILE id="sKgt7C" name="AudioTrackListBox.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/AudioTrackListBox.cpp"/>
+          <FILE id="rUFHxk" name="AudioTrackListBox.h" compile="0" resource="0"
+                file="Source/Interface/Controls/AudioTrackListBox.h"/>
+        </GROUP>
+        <GROUP id="{251C6FB2-3F49-498C-8DDC-157FCCAC8565}" name="Views">
+          <FILE id="aCyjt9" name="FadeInOutView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/FadeInOutView.cpp"/>
+          <FILE id="FdmpTf" name="FadeInOutView.h" compile="0" resource="0" file="Source/Interface/Views/FadeInOutView.h"/>
+          <FILE id="hpKHS1" name="GridView.h" compile="0" resource="0" file="Source/Interface/Views/GridView.h"/>
+          <FILE id="Fx8wUZ" name="ArrangementOverview.h" compile="0" resource="0"
+                file="Source/Interface/Views/ArrangementOverview.h"/>
+          <FILE id="kEIzFq" name="WaveFormViewBase.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/WaveFormViewBase.cpp"/>
+          <FILE id="nZmqga" name="WaveFormViewBase.h" compile="0" resource="0"
+                file="Source/Interface/Views/WaveFormViewBase.h"/>
+          <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AudioRegionView.cpp"/>
+          <FILE id="D4QJ9Q" name="AudioRegionView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AudioRegionView.h"/>
+          <FILE id="u3MBPo" name="AudioResourceView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AudioResourceView.cpp"/>
+          <FILE id="yWJ5P4" name="AudioResourceView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AudioResourceView.h"/>
+          <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
+        </GROUP>
+        <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">
+          <FILE id="jVWC1N" name="music-512-sobel-glow.png" compile="0" resource="1"
+                file="Resources/music-512-sobel-glow.png"/>
+          <FILE id="MCuy9V" name="music-1024-sobel-glow.png" compile="0" resource="1"
+                file="Resources/music-1024-sobel-glow.png"/>
+          <FILE id="zKjXO3" name="zoomin.svg" compile="0" resource="1" file="Resources/zoomin.svg"/>
+        </GROUP>
+      </GROUP>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
+               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
+               smallIcon="jVWC1N" bigIcon="MCuy9V" appSandboxInheritance="1"
+               appSandboxOptions="com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write"
+               customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
+               xcodeValidArchs="arm64,arm64e,x86_64" documentExtensions="audium, lola, wav, aiff"
+               appSandboxHomeDirRW="/Documents/&#10;/Desktop/" iosDevelopmentTeamID="Q89CZBX79G"
+               buildNumber="1">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
+                       customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
+                       customXcodeFlags="INSTALL_PATH=/Applications"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_events" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_core" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_dsp" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug"/>
+        <CONFIGURATION isDebug="0" name="Release"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_core" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_dsp" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_events" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
+      </MODULEPATHS>
+    </LINUX_MAKE>
+    <VS2022 targetFolder="Builds/VisualStudio2022" extraDefs="LINK_PLATFORM_WINDOWS=1">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source" targetName="Audionaut"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source" targetName="Audionaut"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_core" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_dsp" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_events" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
+      </MODULEPATHS>
+    </VS2022>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_analytics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+  </MODULES>
+</JUCERPROJECT>

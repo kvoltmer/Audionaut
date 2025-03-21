@@ -88,7 +88,7 @@ public:
     }
 
 private:
-    Label   titleLabel { "title", "Lola" },
+    Label   titleLabel { "title", ProjectInfo::projectName },
             versionLabel { "version" },
             librariesLabel { "otherVersion" },
             copyrightLabel { "copy" };
