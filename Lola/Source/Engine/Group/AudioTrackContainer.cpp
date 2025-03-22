@@ -367,5 +367,19 @@ void AudioTrackContainer::copySelectedChannelsToNewTrack()
     undoManager->beginNewTransaction();
 }
 
+bool AudioTrackContainer::addAudioFiles(const juce::StringArray& filenames,
+                               double position,
+                               bool arrangementMode,
+                               std::function<void (std::string)> callback)
+{
+    auto audioTrack = createNewAudioTrack(juce::String());
+    audioTrack->setColour(getNewAudioTrackColour());
+    if (!audioTrack->addAudioFiles(filenames, position, arrangementMode, callback)) {
+        deleteAudioTrack(audioTrack.get());
+        return false;
+    }
+    return true;
+}
+
 } // namespace audium
 

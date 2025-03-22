@@ -100,6 +100,11 @@ public:
     
     void copySelectedChannelsToNewTrack();
     
+    bool addAudioFiles(const juce::StringArray& filenames,
+                       double positionClocks,
+                       bool arrangementMode,
+                       std::function<void (std::string)> callback);
+    
     std::shared_ptr<AudioBusInterface> audioBusInterface;
     
     std::vector<std::shared_ptr<AudioTrack>> audioTracks;

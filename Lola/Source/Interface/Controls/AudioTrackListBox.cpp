@@ -47,28 +47,19 @@ void AudioTrackListBox::setNewGroupColour(std::shared_ptr<audium::AudioTrack> au
 void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
 {
     if ( !filenames.isEmpty()) {
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
-        
-        auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
-        setNewGroupColour(audioTrack);
                 
         auto position = zoomHandler->xToClocksWithOffset(mouseX);
         zoomHandler->snapToGrid(position);
         
-        std::function<void (std::string)> callback = [this, audioTrack](std::string error) {
-            audiumEngine->getAudioTrackContainer()->deleteAudioTrack(audioTrack);
-            
+        std::function<void (std::string)> callback = [this](std::string error) {
             juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
                                                         "Failed to open File.",
                                                         "Failed to open: " + juce::String(error));
         };
         
         bool arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
-        if (audioTrack->addAudioFiles(filenames, position, arrangementMode, callback)) {
-            action->storeNewState();
-            audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
-            audiumEngine->getUndoManager()->beginNewTransaction();
-        }
+        audiumEngine->getAudioTrackContainer()->addAudioFiles(filenames, position, arrangementMode, callback);
+
     }
     externalDragAndDrop = false;
     repaint();

@@ -86,16 +86,12 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
 {
     try
     {
-        if (file.exists() &&
-            file.hasFileExtension (projectFileExtension))
-        {
+        if (file.hasFileExtension (projectFileExtension)) {
             juce::FileInputStream inputStream(file);
-            if (inputStream.openedOk())
-            {
+            if (inputStream.openedOk()) {
                 std::cout << "loading: " << file.getFullPathName() << std::endl;
                 projectDirectory = file.getParentDirectory();
-                if (readFromStream(inputStream, true))
-                {
+                if (readFromStream(inputStream, true)){
                     currentFile = file;
                     undoManager->clearUndoHistory();
                     playListScheduler->commitPlayListData();
@@ -103,12 +99,27 @@ void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,st
                     return;
                 }
             }
-            
-            // we failed to read :(
-            cleanup();
-            NullCheckedInvocation::invoke (callback, false, "unknown error");
+        }
+        else if (getAudioResourceContainer()->getAudioFormatManager()->findFormatForFileExtension(file.getFileExtension())) {
+                                
+            auto position = 0.0;
+            bool arrangementMode = getPlayListScheduler()->isArrangementMode();
+            juce::StringArray filenames;
+            filenames.add(file.getFullPathName());
+            std::function<void (std::string)> failedCallback = [](std::string error) {
+                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                            "Failed to open File.",
+                                                            "Failed to open: " + juce::String(error));
+            };
+            getAudioTrackContainer()->addAudioFiles(filenames, position, arrangementMode, failedCallback);
+        
+            NullCheckedInvocation::invoke (callback, true, "");
+            return;
             
         }
+        
+        // we failed to read :(
+        NullCheckedInvocation::invoke (callback, false, "unknown error");
     }
     catch (std::exception &e)
     {
@@ -198,9 +209,9 @@ bool AudiumEngine::writeToJson (json& output)
 
 bool AudiumEngine::readFromJson (json& input, bool rebuild)
 {
-    cleanup();
-    
     auto jsonAudium = input["audium"];
+    
+    cleanup(); // clear everything
     
     const auto tempo = jsonAudium["tempo"].template get<double>();
     if (jsonAudium.contains("file_version"))

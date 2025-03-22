@@ -11,9 +11,9 @@
 
 
 #if JUCE_WINDOWS
-    static String regPath = "HKEY_CURRENT_USER\\Software\\Voltmer\\";
+    static String regPath = "HKEY_CURRENT_USER\\Software\\Voltmer-Systems\\";
 #else
-    static String regPath = "com.voltmer.";
+    static String regPath = "com.voltmer-systems.";
 #endif
 
 String Preferences::s_RegistryName = "";

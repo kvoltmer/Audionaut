@@ -50,7 +50,14 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     audiumEngine->initialise();
 
 
-    initialOpenDirectory = initialSaveDirectory = File::getSpecialLocation (File::userDocumentsDirectory);
+    initialOpenDirectory = File::getSpecialLocation (File::userMusicDirectory);
+    initialSaveDirectory = File(File::getSpecialLocation (File::userMusicDirectory).getFullPathName() +
+                                File::getSeparatorString() +
+                                getApplicationName());
+    if (initialSaveDirectory.exists() == false) {
+        initialSaveDirectory.createDirectory();
+    }
+        
     
     if (Preferences::valueExists(PreferenceKeys::initialOpenDirectory))
         initialOpenDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialOpenDirectory));
@@ -449,11 +456,11 @@ void AudiumApplication::askUserToOpenFile()
 {
     askToSaveIfDirtyAndInvoke([this](void) {
     
-        audiumEngine->cleanup(); // clear old project
-        updateUI();
-        
         // open chooser...
-        chooser = std::make_unique<juce::FileChooser> ("Open File", initialOpenDirectory, "*" + String(audium::AudiumEngine::projectFileExtension));
+        
+        auto wildcard = "*" + String(audium::AudiumEngine::projectFileExtension) + ";";
+        wildcard += audiumEngine->getAudioResourceContainer()->getAudioFormatManager()->getWildcardForAllFormats();
+        chooser = std::make_unique<juce::FileChooser> ("Open File", initialOpenDirectory, wildcard);
         auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles;
 
         chooser->launchAsync (flags, [this] (const FileChooser& fc) {
@@ -484,18 +491,47 @@ void AudiumApplication::openFile(juce::File file)
 
 void AudiumApplication::saveProjectAs(std::function<void (bool)> callback)
 {
-    chooser = std::make_unique<FileChooser> (("Save As..."), initialSaveDirectory, "*" + String(audium::AudiumEngine::projectFileExtension));
+    // TODO: suggest a file name
+    auto suggestedDirectory = initialSaveDirectory;
+    if (initialSaveDirectory.getParentDirectory().findChildFiles(File::findDirectories, false, "Untitled").size() == 0)
+        suggestedDirectory = File(initialSaveDirectory.getFullPathName() + File::getSeparatorString() + "Untitled");
+    
+    chooser = std::make_unique<FileChooser> (("Save As..."),
+                                             suggestedDirectory);
     auto flags = FileBrowserComponent::saveMode
-               | FileBrowserComponent::canSelectFiles
+               | FileBrowserComponent::canSelectDirectories
                | FileBrowserComponent::warnAboutOverwriting;
 
     chooser->launchAsync (flags, [this, callback] (const FileChooser& fc)
     {
         auto file = fc.getResult();
-        saveProjectToFile(file, callback);
-        RecentlyOpenedFilesList::registerRecentFileNatively (file);
-        recentFiles.addFile (file);
-        updateSettings();
+        std::cout << "Save As: " << file.getFullPathName() << std::endl;
+        if (file != File()) {
+            if (!File(file).hasWriteAccess()) {
+                NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                      "Error",
+                                                      "Failed to save " + file.getFileName() +"\n\n" + "No write access to directory");
+                NullCheckedInvocation::invoke (callback, false);
+                return;
+            }
+            
+            if (file.existsAsFile()) {
+                saveProjectToFile(file, callback);
+            }
+            else {
+                
+                auto projectDirectory = file.getParentDirectory().getFullPathName() +
+                File::getSeparatorString() +
+                file.getFileNameWithoutExtension();
+                if (!File(projectDirectory).exists()) {
+                    
+                    File(projectDirectory).createDirectory();
+                }
+                auto newFile = File(projectDirectory + File::getSeparatorString() + file.getFileNameWithoutExtension() + audium::AudiumEngine::projectFileExtension);
+                saveProjectToFile(newFile, callback);
+            }
+
+        }
     });
 
 }
@@ -505,6 +541,9 @@ void AudiumApplication::saveProjectToFile(juce::File file, std::function<void (b
     audiumEngine->saveFile(file, [this, file, callback] (bool success, std::string error) {
         if (success) {
             initialSaveDirectory = file.getParentDirectory();
+            RecentlyOpenedFilesList::registerRecentFileNatively (file);
+            recentFiles.addFile (file);
+            updateSettings();
             NullCheckedInvocation::invoke (callback, true);
         }
         else {

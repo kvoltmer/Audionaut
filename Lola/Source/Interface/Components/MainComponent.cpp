@@ -33,8 +33,7 @@ MainComponent::MainComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
     stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, true));
 
-
-    setSize (1200, 800);
+    setSize (1280, 800);
 
     addAndMakeVisible(headerComponent.get());
     addAndMakeVisible(middlePanelComponent.get());
