@@ -586,6 +586,9 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
                                bool arrangementMode,
                                std::function<void (std::string)> callback)
 {
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer());
+    
     int destChannel = 0;
     std::shared_ptr<AudioSubGroup> subGroup = nullptr;
     
@@ -638,8 +641,10 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     
     subGroup->getAudioClip()->validateData();
     
-    return (resources.size() > 0);
-    
+    action->storeNewState();
+    getAudioTrackContainer().getUndoManager()->perform(action.release(), "File(s) added");
+    getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+    return resources.size() > 0;
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioTrack::addAudioFile (std::shared_ptr<AudioSubGroup> subGroup,

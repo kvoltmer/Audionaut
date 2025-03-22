@@ -48,11 +48,7 @@ void AudioTrackBaseComponent::paint (juce::Graphics& g)
 
 void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
-    if ( !filenames.isEmpty())
-    {
-        // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
-                
+    if ( !filenames.isEmpty()) {
         auto position = zoomHandler->xToClocks(x);
         zoomHandler->snapToGrid(position);
         
@@ -63,12 +59,8 @@ void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x,
         };
         
         auto arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
-        if (audioTrack->addAudioFiles(filenames, position, arrangementMode, callback))
-        {
-            action->storeNewState();
-            audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
-            audiumEngine->getUndoManager()->beginNewTransaction();
-        }
+        audioTrack->addAudioFiles(filenames, position, arrangementMode, callback);
+ 
     }
     
     
