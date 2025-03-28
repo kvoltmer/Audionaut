@@ -20,6 +20,7 @@
 namespace audium {
 
 const char* AudiumEngine::projectFileExtension = ".audium";
+const char* AudiumEngine::projectFileName = "Project.json";
 juce::File AudiumEngine::projectDirectory = File();
 
 AudiumEngine::~AudiumEngine()
@@ -68,7 +69,7 @@ void AudiumEngine::cleanup()
     audioTrackContainer->cleanup();
     audioResourceContainer->cleanup();
     undoManager->clearUndoHistory();
-    currentFile = File();
+    currentProjectFile = File();
 }
 
 void AudiumEngine::createNewProject()
@@ -82,62 +83,93 @@ void AudiumEngine::createNewProject()
     }
 }
 
-void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,std::string)> callback)
+bool AudiumEngine::isJsonProjectFile(const juce::File &file)
+{
+    return (file.existsAsFile() &&
+            (file.hasFileExtension(projectFileExtension) ||
+             file.hasFileExtension(".json")));
+}
+
+bool AudiumEngine::isValidProjectStructure(const juce::File &file)
+{
+    return (file.isDirectory() &&
+            file.getFileName().endsWith(projectFileExtension) &&
+            File(file.getFullPathName() + File::getSeparatorString() + projectFileName).existsAsFile());
+}
+
+bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)> callback)
 {
     try
     {
-        if (file.hasFileExtension (projectFileExtension)) {
-            juce::FileInputStream inputStream(file);
-            if (inputStream.openedOk()) {
-                std::cout << "loading: " << file.getFullPathName() << std::endl;
-                projectDirectory = file.getParentDirectory();
-                if (readFromStream(inputStream, true)){
-                    currentFile = file;
-                    undoManager->clearUndoHistory();
-                    playListScheduler->commitPlayListData();
-                    NullCheckedInvocation::invoke (callback, true, "");
-                    return;
+        if (inFile == File()) {
+            // empty file means: user canceled -> do nothing
+            return true;
+        }
+        else if (getAudioResourceContainer()->getAudioFormatManager()->findFormatForFileExtension(inFile.getFileExtension())) {
+            // try to open an audio file
+            getAudioTrackContainer()->addAudioFiles({inFile.getFullPathName()},
+                                                    0.0,
+                                                    getPlayListScheduler()->isArrangementMode(),
+                                                    callback);
+            return true;
+        }
+        else {
+            
+            auto legacyStructure = isJsonProjectFile(inFile);
+            auto newStructure = isValidProjectStructure(inFile);
+            
+            if (legacyStructure ||
+                newStructure)
+            {
+                if (newStructure)
+                    inFile = File(inFile.getFullPathName() + File::getSeparatorString() + projectFileName);
+                
+                juce::FileInputStream inputStream(inFile);
+                if (inputStream.openedOk()) {
+                    std::cout << "loading: " << inFile.getFullPathName() << std::endl;
+                    projectDirectory = inFile.getParentDirectory();
+                    if (readFromStream(inputStream, true)){
+                        currentProjectFile = inFile;
+                        undoManager->clearUndoHistory();
+                        playListScheduler->commitPlayListData();
+                        return true;
+                    }
                 }
             }
         }
-        else if (getAudioResourceContainer()->getAudioFormatManager()->findFormatForFileExtension(file.getFileExtension())) {
-                                
-            auto position = 0.0;
-            bool arrangementMode = getPlayListScheduler()->isArrangementMode();
-            juce::StringArray filenames;
-            filenames.add(file.getFullPathName());
-            std::function<void (std::string)> failedCallback = [](std::string error) {
-                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                            "Failed to open File.",
-                                                            "Failed to open: " + juce::String(error));
-            };
-            getAudioTrackContainer()->addAudioFiles(filenames, position, arrangementMode, failedCallback);
-        
-            NullCheckedInvocation::invoke (callback, true, "");
-            return;
-            
-        }
+
         
         // we failed to read :(
-        NullCheckedInvocation::invoke (callback, false, "unknown error");
+        NullCheckedInvocation::invoke (callback, "unknown error");
     }
     catch (std::exception &e)
     {
-        cleanup();
         std::cout << e.what() << std::endl;
-        NullCheckedInvocation::invoke (callback, false, e.what());
+        NullCheckedInvocation::invoke (callback, e.what());
     }
+    
+    cleanup();
+    createNewProject();
+    
+    return false;
     
 }
 
-void AudiumEngine::saveFile (const juce::File& file_, std::function<void (bool,std::string)> callback)
+bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::string)> callback)
 {
     try
     {
         auto file = file_;
         
-        if (! file.hasFileExtension (projectFileExtension))
-            file = juce::File(file.getFullPathName() + projectFileExtension);
+        if (!File(file).hasWriteAccess()) {
+            std::string errorString = "No write access. Please select a different location.";
+#if JUCE_MAC
+            errorString += "\n\n";
+            errorString += "As a 'Sandboxed App' you are only allowed to save files in the Music folder.";
+#endif
+            NullCheckedInvocation::invoke (callback, errorString);
+            return false;
+        }
         
         if (! file.exists())
             file.create();
@@ -149,27 +181,27 @@ void AudiumEngine::saveFile (const juce::File& file_, std::function<void (bool,s
         juce::FileOutputStream out (temp.getFile());
         
         if (out.failedToOpen()) {
-            NullCheckedInvocation::invoke (callback, false, out.getStatus().getErrorMessage().toStdString());
-            return;
+            NullCheckedInvocation::invoke (callback, out.getStatus().getErrorMessage().toStdString());
+            return false;
         }
         
         if (writeToStream(out)) {
             if (temp.overwriteTargetFileWithTemporary()) {
-                currentFile = file;
+                currentProjectFile = file;
                 undoManager->clearUndoHistory();
-                NullCheckedInvocation::invoke (callback, true, "");
-                return;
+                return true;
             }
         }
         
         jassertfalse;
-        NullCheckedInvocation::invoke (callback, false, "unknown error");
+        NullCheckedInvocation::invoke (callback, "unknown error");
     }
     catch (std::exception &e)
     {
         std::cout << e.what() << std::endl;
-        NullCheckedInvocation::invoke (callback, false, e.what());
+        NullCheckedInvocation::invoke (callback, e.what());
     }
+    return false;
 }
 
 void AudiumEngine::setBypass(bool bypass)
