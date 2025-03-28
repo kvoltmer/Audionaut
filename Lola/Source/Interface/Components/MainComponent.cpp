@@ -18,6 +18,8 @@
 
 #include "MainComponent.h"
 
+using namespace audium;
+
 //==============================================================================
 MainComponent::MainComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
     audiumEngine(audiumEngine_)
@@ -179,15 +181,19 @@ void MainComponent::updateWindowTitle()
 #if !defined(CATCH2_TESTS)
     if (getParentComponent() != nullptr)
     {
-        auto fileName = audiumEngine->getCurrentFile().getFileNameWithoutExtension();
-        if (fileName.isEmpty())
-            fileName = "Untitled";
-
+        auto projectName = audiumEngine->getCurrentProjectFile().getFileName();
+        if (projectName.isEmpty()) {
+            projectName = "Untitled";
+        }
+        else {
+            if (AudiumEngine::isValidProjectStructure(audiumEngine->getCurrentProjectFile().getParentDirectory())) {
+                projectName = audiumEngine->getCurrentProjectFile().getParentDirectory().getFileName();
+            }
+        }
         if (audiumEngine->getUndoManager()->canUndo())
-            fileName += " *";
+            projectName += " - Edited";
 
-        auto appName = AudiumApplication::getApp().getApplicationName();
-        getParentComponent()->setName(fileName + " - " + appName);
+        getParentComponent()->setName(projectName);
     }
 #endif
 }

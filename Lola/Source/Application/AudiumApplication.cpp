@@ -87,7 +87,7 @@ void AudiumApplication::handleAsyncUpdate()
         openFile(juce::File(Preferences::getValue(PreferenceKeys::defaultFile)));
     }
     
-    if (!audiumEngine->getCurrentFile().exists()) {
+    if (!audiumEngine->getCurrentProjectFile().exists()) {
         audiumEngine->createNewProject();
     }
     updateUI();
@@ -120,13 +120,13 @@ void AudiumApplication::askToSaveIfDirtyAndInvoke(std::function<void ()> callbac
     
     if (!audiumEngine->getUndoManager()->canUndo())
     {
-        callback();
+        NullCheckedInvocation::invoke(callback);
     }
     else
     {
         juce::String docName = "Untitled";
-        if (audiumEngine->getCurrentFile().existsAsFile())
-            docName = audiumEngine->getCurrentFile().getFileName();
+        if (audiumEngine->getCurrentProjectFile().existsAsFile())
+            docName = audiumEngine->getCurrentProjectFile().getFileName();
         
 
         auto options = MessageBoxOptions::makeOptionsYesNoCancel (MessageBoxIconType::QuestionIcon,
@@ -138,24 +138,19 @@ void AudiumApplication::askToSaveIfDirtyAndInvoke(std::function<void ()> callbac
                                                                   TRANS ("Cancel"));
         
         // -> std::function<void (int)> callback
-        juce::NativeMessageBox::showAsync(options, [this, callback] (int result)
-        {
-            if (result == 0)
-            {
-                if (audiumEngine->getCurrentFile().existsAsFile())
-                {
-                    // pass on the callback [capture]
-                    saveProject([callback](bool success){ if (success) callback();});
+        juce::NativeMessageBox::showAsync(options, [this, callback] (int result) {
+            if (result == 0) {
+                if (audiumEngine->getCurrentProjectFile().existsAsFile()) {
+                    if (saveProject())
+                        NullCheckedInvocation::invoke(callback);
                 }
-                else
-                {
-                    // pass on the callback [capture]
-                    saveProjectAs([callback](bool success){ if (success) callback();});
+                else {
+                    if (saveProjectAs())
+                        NullCheckedInvocation::invoke(callback);
                 }
             }
-            else if (result == 1)
-            {
-                callback();
+            else if (result == 1) {
+                NullCheckedInvocation::invoke(callback);
             }
         });
     }
@@ -395,23 +390,23 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             askUserToOpenFile();
             break;
         case CommandIDs::defaultProject:
-            if (audiumEngine->getCurrentFile() != File()) {
-                Preferences::setValue(PreferenceKeys::defaultFile, audiumEngine->getCurrentFile().getFullPathName());
+            if (audiumEngine->getCurrentProjectFile() != File()) {
+                Preferences::setValue(PreferenceKeys::defaultFile, audiumEngine->getCurrentProjectFile().getFullPathName());
             }
             else {
                 Preferences::removeKey(PreferenceKeys::defaultFile);
             }
             break;
         case CommandIDs::saveProject:
-            if (audiumEngine->getCurrentFile() == File()) {
-                saveProjectAs(nullptr);
+            if (audiumEngine->getCurrentProjectFile() == File()) {
+                saveProjectAs();
             }
             else {
-                saveProject(nullptr);
+                saveProject();
             }
             break;
         case CommandIDs::saveProjectAs:
-            saveProjectAs(nullptr);
+            saveProjectAs();
             break;
         case CommandIDs::showAboutWindow:
             showAboutWindow();
@@ -460,8 +455,8 @@ void AudiumApplication::askUserToOpenFile()
         
         auto wildcard = "*" + String(audium::AudiumEngine::projectFileExtension) + ";";
         wildcard += audiumEngine->getAudioResourceContainer()->getAudioFormatManager()->getWildcardForAllFormats();
-        chooser = std::make_unique<juce::FileChooser> ("Open File", initialOpenDirectory, wildcard);
-        auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles;
+        chooser = std::make_unique<FileChooser> ("Open File", initialOpenDirectory, wildcard);
+        auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles | FileBrowserComponent::canSelectDirectories;
 
         chooser->launchAsync (flags, [this] (const FileChooser& fc) {
             openFile(fc.getResult());
@@ -472,95 +467,89 @@ void AudiumApplication::askUserToOpenFile()
 
 void AudiumApplication::openFile(juce::File file)
 {
-    audiumEngine->openFile(file, [this, file](bool success, std::string error) {
-        if (success) {
-            updateUI();
-            initialOpenDirectory = file.getParentDirectory();
-            
-            RecentlyOpenedFilesList::registerRecentFileNatively (file);
-            recentFiles.addFile (file);
-            updateSettings();
-        }
-        else {
-            NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                  "Error",
-                                                  "Failed to open " + file.getFileName() +"\n\n" + String(error));
-        }
+    auto success = audiumEngine->openFile(file, [this, file](std::string error) {
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                              "Error",
+                                              "Failed to open " + file.getFileName() +"\n\n" + String(error));
+        
     });
+    
+    if (success) {
+        
+        initialOpenDirectory = file.getParentDirectory();
+        std::cout << "initialOpenDirectory = " << initialOpenDirectory.getFullPathName() << std::endl;
+        RecentlyOpenedFilesList::registerRecentFileNatively (file);
+        recentFiles.addFile (file);
+        updateSettings();
+    }
+    
+    updateUI();
+    
 }
 
-void AudiumApplication::saveProjectAs(std::function<void (bool)> callback)
+const File createProjectDirectory(const File &inFile)
 {
-    // TODO: suggest a file name
-    auto suggestedDirectory = initialSaveDirectory;
-    if (initialSaveDirectory.getParentDirectory().findChildFiles(File::findDirectories, false, "Untitled").size() == 0)
-        suggestedDirectory = File(initialSaveDirectory.getFullPathName() + File::getSeparatorString() + "Untitled");
+    auto projectDir =   inFile.getParentDirectory().getFullPathName() +
+                        File::getSeparatorString() +
+                        inFile.getFileNameWithoutExtension() +
+                        audium::AudiumEngine::projectFileExtension;
     
-    chooser = std::make_unique<FileChooser> (("Save As..."),
-                                             suggestedDirectory);
-    auto flags = FileBrowserComponent::saveMode
-               | FileBrowserComponent::canSelectDirectories
-               | FileBrowserComponent::warnAboutOverwriting;
+    if (!File(projectDir).exists()) {
+        File(projectDir).createDirectory();
+    }
+    return File(projectDir + File::getSeparatorString() + audium::AudiumEngine::projectFileName);
+}
 
-    chooser->launchAsync (flags, [this, callback] (const FileChooser& fc)
+bool AudiumApplication::saveProjectAs()
+{
+    chooser = std::make_unique<FileChooser> (("Save As..."),
+                                             initialSaveDirectory);
+    auto flags =    FileBrowserComponent::saveMode |
+                    FileBrowserComponent::canSelectFiles |
+                    FileBrowserComponent::canSelectDirectories |
+                    FileBrowserComponent::warnAboutOverwriting;
+
+    chooser->launchAsync (flags, [this] (const FileChooser& fc)
     {
         auto file = fc.getResult();
         std::cout << "Save As: " << file.getFullPathName() << std::endl;
         if (file != File()) {
-            if (!File(file).hasWriteAccess()) {
-                NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                      "Error",
-                                                      "Failed to save " + file.getFileName() +"\n\n" + "No write access to directory");
-                NullCheckedInvocation::invoke (callback, false);
-                return;
-            }
-            
-            if (file.existsAsFile()) {
-                saveProjectToFile(file, callback);
-            }
-            else {
-                
-                auto projectDirectory = file.getParentDirectory().getFullPathName() +
-                File::getSeparatorString() +
-                file.getFileNameWithoutExtension();
-                if (!File(projectDirectory).exists()) {
-                    
-                    File(projectDirectory).createDirectory();
-                }
-                auto newFile = File(projectDirectory + File::getSeparatorString() + file.getFileNameWithoutExtension() + audium::AudiumEngine::projectFileExtension);
-                saveProjectToFile(newFile, callback);
-            }
-
+            if (file.existsAsFile())
+                return saveProjectToFile(file);
+            else
+                return saveProjectToFile(createProjectDirectory(file));
         }
+        return false;
     });
-
+    
+    return false;
 }
 
-void AudiumApplication::saveProjectToFile(juce::File file, std::function<void (bool)> callback)
+bool AudiumApplication::saveProjectToFile(juce::File file)
 {
-    audiumEngine->saveFile(file, [this, file, callback] (bool success, std::string error) {
-        if (success) {
-            initialSaveDirectory = file.getParentDirectory();
-            RecentlyOpenedFilesList::registerRecentFileNatively (file);
-            recentFiles.addFile (file);
-            updateSettings();
-            NullCheckedInvocation::invoke (callback, true);
-        }
-        else {
-            NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                  "Error",
-                                                  "Failed to save " + file.getFileName() +"\n\n" + String(error));
-            NullCheckedInvocation::invoke (callback, false);
-        }
+    auto success = audiumEngine->saveFile(file, [this, file] (std::string error) {
+
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                              "Error",
+                                              "Failed to save " + file.getFullPathName() +"\n\n" + String(error));
     });
+    
+    if (success) {
+        // foo.audium/Project.json -> ../../
+        initialSaveDirectory = file.getParentDirectory().getParentDirectory();
+        std::cout << "file saved: " << file.getFullPathName() << std::endl;
+        std::cout << "initialSaveDirectory: " << initialSaveDirectory.getFullPathName() << std::endl;
+        RecentlyOpenedFilesList::registerRecentFileNatively (file);
+        recentFiles.addFile (file);
+        updateSettings();
+    }
+    return success;
 }
 
-void AudiumApplication::saveProject(std::function<void (bool)> callback)
+bool AudiumApplication::saveProject()
 {
-    saveProjectToFile(audiumEngine->getCurrentFile(), callback);
+    return saveProjectToFile(audiumEngine->getCurrentProjectFile());
 }
-
-
 
 void AudiumApplication::updateUI()
 {

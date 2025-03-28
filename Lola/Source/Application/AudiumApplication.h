@@ -51,15 +51,18 @@ public:
     void handleMainMenuCommand (int menuItemID);
     PopupMenu createExtraAppleMenuItems();
     
-    void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
+    
     void createNewProject();
+    
     void askUserToOpenFile();
     void openFile(juce::File file);
-    void saveProjectAs(std::function<void (bool)> callback);
-    void saveProject(std::function<void (bool)> callback);
-    void saveProjectToFile(juce::File file, std::function<void (bool)> callback);
-    void updateUI();
     
+    bool saveProjectAs();
+    bool saveProject();
+    bool saveProjectToFile(juce::File file);
+    void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
+    
+    void updateUI();
     
     AudiumLookAndFeel lookAndFeel;
     

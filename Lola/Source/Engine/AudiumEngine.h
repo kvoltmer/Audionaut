@@ -55,8 +55,8 @@ public:
     void cleanup();
     void createNewProject();
     
-    void openFile (const juce::File& file, std::function<void (bool,std::string)> callback);
-    void saveFile (const juce::File& file, std::function<void (bool,std::string)> callback);
+    bool openFile (juce::File file, std::function<void (std::string)> callback);
+    bool saveFile (const juce::File& file, std::function<void (std::string)> callback);
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
@@ -67,10 +67,18 @@ public:
     void createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> track);
     
     static const char* projectFileExtension;
+    static const char* projectFileName;
     
     static juce::File projectDirectory;
     
-    const juce::File getCurrentFile() const { return currentFile; }
+    const juce::File getCurrentProjectFile() const { return currentProjectFile; }
+    
+    // returns true if file is plain json file or legacy .audium file
+    static bool isJsonProjectFile (const juce::File &file);
+    
+    // valid project structure means: a document package (directory named .audium) that contains the project file
+    static bool isValidProjectStructure(const juce::File &file);
+
     
     std::shared_ptr<AudioTrackContainer> getAudioTrackContainer() const { return audioTrackContainer; }
     std::shared_ptr<AudioResourceContainer> getAudioResourceContainer() const { return audioResourceContainer; }
@@ -95,7 +103,7 @@ private:
     std::shared_ptr<juce::UndoManager> undoManager;
     std::shared_ptr<AudioBusInterface> audioBusInterface;
     
-    juce::File currentFile;
+    juce::File currentProjectFile;
     
     json uiState;
         

@@ -35,9 +35,6 @@
         <key>CFBundleTypeExtensions</key>
         <array>
           <string>audium</string>
-          <string>lola</string>
-          <string>wav</string>
-          <string>aiff</string>
         </array>
         <key>CFBundleTypeName</key>
         <string>audium</string>
@@ -49,6 +46,8 @@
         <string>XML</string>
         <key>LSHandlerRank</key>
         <string>Default</string>
+        <key>LSTypeIsPackage</key>
+        <true/>
       </dict>
     </array>
   </dict>
