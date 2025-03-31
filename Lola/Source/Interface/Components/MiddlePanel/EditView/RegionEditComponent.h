@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    RegionEditComponent.h
-    Created: 9 Dec 2023 3:17:46pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -26,8 +21,8 @@ Contains all RegionEditControls
 class RegionEditComponent  : public juce::Component
 {
 public:
-    RegionEditComponent(std::shared_ptr<AudiumEngine> audiumEngine,
-                        std::shared_ptr<AudioSubGroup> audioSubGroup,
+    RegionEditComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                        std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector) :
         audiumEngine(audiumEngine),
@@ -44,7 +39,7 @@ public:
     
     void resized() override
     {
-        const auto regions = audioSubGroup->getAudioRegions();
+        const auto regions = audioSubGroup->getAudioRegionContainer()->getObjects();
         auto count = 0;
         for (auto region : regions)
         {
@@ -60,7 +55,7 @@ public:
         }
     }
     
-    void updateFromEngine(std::shared_ptr<AudioSubGroup> subGroup)
+    void updateFromEngine(std::shared_ptr<audium::AudioSubGroup> subGroup)
     {
         //bool rebuild = false;
         if (audioSubGroup != subGroup)
@@ -76,7 +71,7 @@ public:
         }
         else
         {
-            const auto regions = audioSubGroup->getAudioRegions();
+            const auto regions = audioSubGroup->getAudioRegionContainer()->getObjects();
             jassert(regions.size() == regionEditControls.size());
             auto count = 0;
             for (auto regionEditControl : regionEditControls)
@@ -94,7 +89,7 @@ public:
 
     bool mustRebuildComponents() const
     {
-        const auto regions = audioSubGroup->getAudioRegions();
+        const auto regions = audioSubGroup->getAudioRegionContainer()->getObjects();
         if (regions.size() != regionEditControls.size())
         {
             return true;
@@ -110,7 +105,7 @@ public:
         removeAllChildren();
         regionEditControls.clear();
         
-        const auto regions = audioSubGroup->getAudioRegions();
+        const auto regions = audioSubGroup->getAudioRegionContainer()->getObjects();
         for (auto region : regions)
         {
             auto view = std::shared_ptr<RegionEditControl>(new RegionEditControl(region, zoomHandler, audiumEngine, regionSelector));
@@ -122,13 +117,13 @@ public:
     void mouseDown (const juce::MouseEvent& e) override
     {
         audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().deselectAll();
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateSelection);
     }
     
 private:
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
     juce::Colour colour;

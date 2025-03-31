@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    PlayListItemDraggerControl.h
-    Created: 27 Dec 2023 4:52:45pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -19,21 +14,16 @@ class PlayListItemDraggerControl : public DraggerControl
 {
 public:
     
-    PlayListItemDraggerControl(juce::Component* componentToDrag_,
-                               std::shared_ptr<AudiumEngine> audiumEngine_,
-                               std::shared_ptr<PlayListContainer> playListContainer_,
-                               std::shared_ptr<PlayListItem> playListItem_,
+    PlayListItemDraggerControl(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
+                               std::shared_ptr<audium::PlayListContainer> playListContainer_,
                                std::shared_ptr<ZoomHandler> zoomHandler_,
                                juce::Colour colour_,
                                std::shared_ptr<RegionSelector> regionSelector_) :
-        DraggerControl(componentToDrag_,
-                       audiumEngine_,
+        DraggerControl(audiumEngine_,
                        zoomHandler_,
                        colour_,
-                       regionSelector_,
-                       std::static_pointer_cast<PositionableBase>(playListItem_)),
-        playListContainer(playListContainer_),
-        playListItem(playListItem_)
+                       regionSelector_),
+        playListContainer(playListContainer_)
     {
         regionSelector->playListItemDraggerControls.push_back(this);
     }
@@ -57,7 +47,7 @@ public:
             audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
         }
         playListItem->setSelected(bSelected);
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateSelection);
     }
     
     void shiftSelect() override;
@@ -69,8 +59,10 @@ public:
     
     bool validateData() override;
     
+    void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_) { playListItem = playListItem_; }
+    
 private:
-    std::shared_ptr<PlayListContainer> playListContainer;
-    std::shared_ptr<PlayListItem> playListItem;
+    std::shared_ptr<audium::PlayListContainer> playListContainer;
+    std::shared_ptr<audium::PlayListItem> playListItem;
     
 };

@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    ChannelGroupComponent.h
-    Created: 24 Dec 2023 11:19:56am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -27,15 +22,12 @@
 class ChannelGroupComponent  : public juce::Component
 {
 public:
-    ChannelGroupComponent(std::shared_ptr<AudioTrack> audioTrack,
-                          std::shared_ptr<AudiumEngine> audiumEngine) :
+    ChannelGroupComponent(std::shared_ptr<audium::AudioTrack> audioTrack,
+                          std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audioTrack(audioTrack),
         audiumEngine(audiumEngine)
     {
         channelsListBox.reset(new audium::ListBox());
-        channelsListBoxModel.reset(new ChannelSubGroupListBoxModel(*channelsListBox.get(), audiumEngine, audioTrack));
-        channelsListBox->setModel(channelsListBoxModel.get());
-        
         
         auto header = std::unique_ptr<ChannelGroupHeaderComponent>(new ChannelGroupHeaderComponent(audioTrack));
         channelsListBox->setHeaderComponent(std::move(header));
@@ -43,6 +35,9 @@ public:
         channelsListBox->setOutlineThickness(0);
         channelsListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(channelsListBox.get());
+        
+        channelsListBoxModel.reset(new ChannelSubGroupListBoxModel(*channelsListBox.get(), audiumEngine, audioTrack));
+        channelsListBox->setModel(channelsListBoxModel.get());
         
     }
 
@@ -61,25 +56,25 @@ public:
         channelsListBox->setBounds(getLocalBounds());
     }
     
-    void refreshComponent(std::shared_ptr<AudioTrack> audioTrack)
+    void refreshComponent(std::shared_ptr<audium::AudioTrack> newAudioTrack)
     {
-        if (this->audioTrack != audioTrack)
-        {
-            channelsListBoxModel->setAudioTrack(audioTrack);
-            this->audioTrack = audioTrack;
+        if (audioTrack != newAudioTrack) {
+            channelsListBoxModel->setAudioTrack(newAudioTrack);
+            audioTrack = newAudioTrack;
         }
         channelsListBox->updateContent();
         channelsListBox->setSelectedRows(audioTrack->audioChannelContainer->getSelectedRows(), dontSendNotification);
         
+        // the audio track title
         auto headerComponent = dynamic_cast<ChannelGroupHeaderComponent*>( channelsListBox->getHeaderComponent() );
         if (headerComponent != nullptr)
-            headerComponent->updateFromEngine();
+            headerComponent->updateFromEngine(audioTrack);
     }
 
 private:
     
-    std::shared_ptr<AudioTrack> audioTrack;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     std::unique_ptr<audium::ListBox> channelsListBox;
     std::unique_ptr<ChannelSubGroupListBoxModel> channelsListBoxModel;

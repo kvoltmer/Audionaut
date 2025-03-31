@@ -8,6 +8,8 @@
 #include "Engine/Export/AudioExportThread.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
+using namespace audium;
+
 SCENARIO("region split/create scenario", "[engine][region]")
 {
     juce::MessageManager::getInstance();
@@ -28,9 +30,9 @@ SCENARIO("region split/create scenario", "[engine][region]")
             {
                 auto regions = engine->getAudioTrackContainer()->getAudioRegionAdapter().getAudioRegions();
                 
-                REQUIRE (regions[1]->getName() == "120-funk-export-01");
-                REQUIRE (regions[2]->getName() == "120-funk-export-02");
-                REQUIRE (regions[3]->getName() == "120-funk-export-03");
+                REQUIRE (regions[0]->getName() == "120-funk-export-01");
+                REQUIRE (regions[1]->getName() == "120-funk-export-02");
+                REQUIRE (regions[2]->getName() == "120-funk-export-03");
 
                 auto playList = engine->getAudioTrackContainer()->getAudioTracks()[0]->getPlayListContainer();
                 auto items = playList->getPlayListItems();

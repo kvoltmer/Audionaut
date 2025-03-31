@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    Selectable.h
-    Created: 1 Oct 2024 2:06:03pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -49,7 +44,7 @@ public:
 private:
     bool selected = false;
         
-    std::shared_ptr<audium::SelectionManager> selectionManager;
+    std::shared_ptr<SelectionManager> selectionManager;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Selectable)
 };

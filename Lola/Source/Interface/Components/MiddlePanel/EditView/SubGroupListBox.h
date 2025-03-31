@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    SubGroupListBox.h
-    Created: 23 Dec 2023 12:24:41pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -15,18 +10,18 @@
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Components/MiddlePanel/EditView/RegionEditComponent.h"
 
+#include "Engine/AudiumEngine.h"
+#include "Engine/Resource/AudioResource.h"
+#include "Engine/Group/AudioSubGroup.h"
 
-class AudiumEngine;
-class AudioResource;
 class ZoomHandler;
 class RegionSelector;
-class AudioSubGroup;
 
 class SubGroupListBox  : public audium::ListBox
 {
 public:
-    SubGroupListBox(std::shared_ptr<AudiumEngine> audiumEngine,
-                    std::shared_ptr<AudioSubGroup> audioSubGroup,
+    SubGroupListBox(std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                    std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     std::shared_ptr<RegionSelector> regionSelector) :
         audium::ListBox("SubGroupListBox", nullptr),
@@ -54,7 +49,7 @@ public:
         regionEditComponent->setBounds(getLocalBounds());
     }
     
-    void updateFromEngine(std::shared_ptr<AudioSubGroup> subGroup)
+    void updateFromEngine(std::shared_ptr<audium::AudioSubGroup> subGroup)
     {
         audioSubGroup = subGroup;
         regionEditComponent->updateFromEngine(audioSubGroup);
@@ -62,7 +57,7 @@ public:
     }
 
 private:
-    std::shared_ptr<AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
     
     std::unique_ptr<RegionEditComponent> regionEditComponent;
     

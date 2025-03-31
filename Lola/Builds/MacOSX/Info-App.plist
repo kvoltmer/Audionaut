@@ -10,19 +10,19 @@
     <key>CFBundleIconFile</key>
     <string>Icon.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>com.voltmer-systems.lola</string>
+    <string>com.voltmer-systems.audionaut</string>
     <key>CFBundleName</key>
-    <string>Lola</string>
+    <string>Audionaut</string>
     <key>CFBundleDisplayName</key>
-    <string>Lola</string>
+    <string>Audionaut</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.9.3</string>
+    <string>1.0.0</string>
     <key>CFBundleVersion</key>
-    <string>0.9.3</string>
+    <string>1</string>
     <key>NSHumanReadableCopyright</key>
     <string></string>
     <key>NSHighResolutionCapable</key>
@@ -35,9 +35,6 @@
         <key>CFBundleTypeExtensions</key>
         <array>
           <string>audium</string>
-          <string>lola</string>
-          <string>wav</string>
-          <string>aiff</string>
         </array>
         <key>CFBundleTypeName</key>
         <string>audium</string>
@@ -49,6 +46,8 @@
         <string>XML</string>
         <key>LSHandlerRank</key>
         <string>Default</string>
+        <key>LSTypeIsPackage</key>
+        <true/>
       </dict>
     </array>
   </dict>

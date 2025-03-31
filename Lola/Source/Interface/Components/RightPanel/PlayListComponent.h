@@ -1,12 +1,8 @@
-/*
-  ==============================================================================
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
-    PlayListComponent.h
-    Created: 27 Jun 2023 2:05:00pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
 
 #pragma once
 
@@ -16,7 +12,7 @@
 
 #include "Interface/Models/PlayListTableListBoxModel.h"
 #include "Interface/Controls/PlayListTableListBox.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -24,14 +20,12 @@
 class PlayListComponent  : public juce::Component, public juce::DragAndDropTarget, public juce::AsyncUpdater
 {
 public:
-    PlayListComponent(std::shared_ptr<AudiumEngine> audiumEngine, std::shared_ptr<AudioTrack> track) :
+    PlayListComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine, std::shared_ptr<audium::AudioTrack> track) :
         audiumEngine(audiumEngine),
         audioTrack(track)
     {
         playListTableListBox.reset(new PlayListTableListBox(this));
-        playListTableListBoxModel.reset(new PlayListTableListBoxModel(playListTableListBox, audiumEngine, track));
 
-        playListTableListBox->setModel(playListTableListBoxModel.get());
         playListTableListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(playListTableListBox.get());
         
@@ -41,6 +35,11 @@ public:
         
         playListTableListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
         playListTableListBox->setOutlineThickness (0);
+        playListTableListBox->setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
+        
+        playListTableListBoxModel = std::make_unique<PlayListTableListBoxModel> (playListTableListBox, audiumEngine, track);
+        playListTableListBox->setModel(playListTableListBoxModel.get());
+        updateUI(track);
     }
 
     ~PlayListComponent() override
@@ -50,9 +49,7 @@ public:
         playListTableListBoxModel = nullptr;
     }
 
-    void paint (juce::Graphics& g) override
-    {
-    }
+    void paint (juce::Graphics& g) override;
 
     void resized() override
     {
@@ -64,20 +61,23 @@ public:
         playListTableListBox->updateContent();
     }
     
+    void updateInsertLines(const SourceDetails &dragSourceDetails);
+
     bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
     void itemDragEnter (const SourceDetails &dragSourceDetails) override
     {
-        //updateInsertLines(dragSourceDetails);
+        updateInsertLines(dragSourceDetails);
     }
     
     void itemDragMove (const SourceDetails &dragSourceDetails) override
     {
-        //updateInsertLines(dragSourceDetails);
+        updateInsertLines(dragSourceDetails);
     }
     
     void itemDragExit (const SourceDetails &dragSourceDetails) override
     {
-        //hideInsertLines();
+        itemDrag = false;
+        repaint();
     }
     
     void itemDropped (const SourceDetails &dragSourceDetails) override;
@@ -93,8 +93,11 @@ public:
         playListTableListBox->setSelectedRows(selectedRows, juce::dontSendNotification);
     }
     
-    void updateUI()
+    void updateUI(std::shared_ptr<audium::AudioTrack> audioTrack_)
     {
+        audioTrack = audioTrack_;
+        playListTableListBoxModel->setAudioTrack(audioTrack_);
+        
         updateSelection();
         playListTableListBox->updateContent();
         
@@ -102,14 +105,16 @@ public:
         playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, audioTrack->getColour());
     }
     
-    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
+    std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
 
 private:
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
     std::shared_ptr<PlayListTableListBox> playListTableListBox;
     std::unique_ptr<PlayListTableListBoxModel> playListTableListBoxModel;
+    
+    bool itemDrag = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListComponent)
 };

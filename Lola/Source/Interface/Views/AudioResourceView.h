@@ -1,37 +1,37 @@
-/*
-  ==============================================================================
-
-    AudioResourceView.h
-    Created: 27 Nov 2023 3:58:42pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
 #include <JuceHeader.h>
 #include "Interface/Views/WaveFormViewBase.h"
+#include "Engine/AudiumEngine.h"
+#include "Engine/Resource/AudioResource.h"
 
-class AudioResource;
 class ZoomHandler;
-class AudioRegion;
 class RegionSelector;
 class RegionEditControl;
-class AudiumEngine;
+
 
 class AudioResourceView  : public WaveFormViewBase
 {
 public:
-    AudioResourceView(const juce::Component &parentComponent,
-                      std::shared_ptr<AudiumEngine> audiumEngine,
-                      std::shared_ptr<AudioResource> audioResource,
+    AudioResourceView(juce::Component *parentComponent,
+                      std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                      std::shared_ptr<audium::AudioResource> audioResource,
                       std::shared_ptr<ZoomHandler> zoomHandler,
-                      std::shared_ptr<AudioRegion> audioRegion,
                       juce::Colour colour,
                       std::shared_ptr<RegionSelector> regionSelector,
                       int rowNumber) :
-        WaveFormViewBase(parentComponent, audiumEngine, audioResource, zoomHandler, audioRegion, colour, regionSelector, rowNumber)
+        WaveFormViewBase(parentComponent,
+                         audiumEngine,
+                         audioResource,
+                         zoomHandler,
+                         colour,
+                         regionSelector,
+                         rowNumber)
     {
     }
     

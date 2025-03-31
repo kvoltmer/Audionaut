@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    ColourIds.h
-    Created: 7 Jun 2023 3:46:18pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -21,6 +16,8 @@ enum ColourIds
     defaultHighlightColourId          = 0x2340008,
     listBoxBackgroundColourId         = 0x2340009,
     gridColourId                      = 0x234000a,
+    soloColourId                      = 0x234000b,
+    muteColourId                      = 0x234000c,
 };
 
 // Waveform Colours:

@@ -59,6 +59,9 @@
     <Filter Include="Lola\Source\Engine">
       <UniqueIdentifier>{1686E461-1E93-E534-C8B2-39013F569C56}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lola\Source\Interface\LookAndFeel">
+      <UniqueIdentifier>{5F372094-7C07-0E89-D2E9-F5EA99DBBBB5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Lola\Source\Interface\Dialogs">
       <UniqueIdentifier>{4F903949-257B-04D4-5926-B4DF023239CE}</UniqueIdentifier>
     </Filter>
@@ -877,6 +880,9 @@
     <ClCompile Include="..\..\Source\Engine\Playback\Voice.cpp">
       <Filter>Lola\Source\Engine\Playback</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\PlayList\TransportLoop.cpp">
+      <Filter>Lola\Source\Engine\PlayList</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\PlayList\PositionableBase.cpp">
       <Filter>Lola\Source\Engine\PlayList</Filter>
     </ClCompile>
@@ -907,11 +913,14 @@
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp">
       <Filter>Lola\Source\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp">
+      <Filter>Lola\Source\Interface\LookAndFeel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp">
+      <Filter>Lola\Source\Interface\LookAndFeel</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Dialogs\AutoEditComponent.cpp">
       <Filter>Lola\Source\Interface\Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\AudiumLookAndFeel.cpp">
-      <Filter>Lola\Source\Interface</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\ColourIds.cpp">
       <Filter>Lola\Source\Interface</Filter>
@@ -929,6 +938,12 @@
       <Filter>Lola\Source\Interface\Handlers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelComponent.cpp">
+      <Filter>Lola\Source\Interface\Components\MiddlePanel\ChannelView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelGroupHeaderComponent.cpp">
+      <Filter>Lola\Source\Interface\Components\MiddlePanel\ChannelView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelsComponent.cpp">
       <Filter>Lola\Source\Interface\Components\MiddlePanel\ChannelView</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\EditView\AudioTrackRegionEditComponent.cpp">
@@ -952,10 +967,7 @@
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.cpp">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.cpp">
-      <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackContainerComponent.cpp">
+    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.cpp">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.cpp">
@@ -964,7 +976,10 @@
     <ClCompile Include="..\..\Source\Interface\Components\MainComponent.cpp">
       <Filter>Lola\Source\Interface\Components</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Models\RegionContainerModel.cpp">
+    <ClCompile Include="..\..\Source\Interface\Models\ArrangementModel.cpp">
+      <Filter>Lola\Source\Interface\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.cpp">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp">
@@ -975,6 +990,15 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp">
       <Filter>Lola\Source\Interface\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp">
+      <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\TableRegionLabel.cpp">
+      <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp">
+      <Filter>Lola\Source\Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp">
       <Filter>Lola\Source\Interface\Controls</Filter>
@@ -1002,6 +1026,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\AudioTrackListBox.cpp">
       <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp">
+      <Filter>Lola\Source\Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp">
       <Filter>Lola\Source\Interface\Views</Filter>
@@ -3996,6 +4023,9 @@
     <ClInclude Include="..\..\Source\Util\Preferences.h">
       <Filter>Lola\Source\Util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h">
+      <Filter>Lola\Source\Engine\AudioSources</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h">
       <Filter>Lola\Source\Engine\AudioSources</Filter>
     </ClInclude>
@@ -4101,6 +4131,12 @@
     <ClInclude Include="..\..\Source\Engine\Playback\Voice.h">
       <Filter>Lola\Source\Engine\Playback</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\PlayList\TransportLoop.h">
+      <Filter>Lola\Source\Engine\PlayList</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\PlayList\LoopData.h">
+      <Filter>Lola\Source\Engine\PlayList</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListSchedulerData.h">
       <Filter>Lola\Source\Engine\PlayList</Filter>
     </ClInclude>
@@ -4152,6 +4188,12 @@
     <ClInclude Include="..\..\Source\Engine\ActionMessages.h">
       <Filter>Lola\Source\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.h">
+      <Filter>Lola\Source\Interface\LookAndFeel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.h">
+      <Filter>Lola\Source\Interface\LookAndFeel</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\UIContext.h">
       <Filter>Lola\Source\Interface</Filter>
     </ClInclude>
@@ -4178,9 +4220,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SettingsDialog.h">
       <Filter>Lola\Source\Interface\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\AudiumLookAndFeel.h">
-      <Filter>Lola\Source\Interface</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\ColourIds.h">
       <Filter>Lola\Source\Interface</Filter>
@@ -4254,10 +4293,7 @@
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionComponent.h">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.h">
-      <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackContainerComponent.h">
+    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.h">
       <Filter>Lola\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.h">
@@ -4266,7 +4302,10 @@
     <ClInclude Include="..\..\Source\Interface\Components\MainComponent.h">
       <Filter>Lola\Source\Interface\Components</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Models\RegionContainerModel.h">
+    <ClInclude Include="..\..\Source\Interface\Models\ArrangementModel.h">
+      <Filter>Lola\Source\Interface\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.h">
       <Filter>Lola\Source\Interface\Models</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\ChannelGroupListBoxModel.h">
@@ -4292,6 +4331,18 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h">
       <Filter>Lola\Source\Interface\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h">
+      <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\TableRegionLabel.h">
+      <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h">
+      <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h">
+      <Filter>Lola\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\DefaultLabel.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
@@ -4320,7 +4371,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Controls\PlayPositionMarker.h">
+    <ClInclude Include="..\..\Source\Interface\Controls\PositionMarker.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionLabel.h">
@@ -4337,6 +4388,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\AudioTrackListBox.h">
       <Filter>Lola\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h">
+      <Filter>Lola\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h">
       <Filter>Lola\Source\Interface\Views</Filter>

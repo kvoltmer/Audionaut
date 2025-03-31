@@ -1,18 +1,12 @@
-/*
-  ==============================================================================
-
-    ZoomHandler.cpp
-    Created: 17 Mar 2023 11:14:43am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "ZoomHandler.h"
-#include "Engine/PlayList/PlayListScheduler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 
-ZoomHandler::ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler,
+ZoomHandler::ZoomHandler(std::shared_ptr<audium::PlayListScheduler> playListScheduler,
                          std::shared_ptr<SnapToGridHandler> snapToGridHandler) :
     playListScheduler(playListScheduler),
     snapToGridHandler(snapToGridHandler)
@@ -67,7 +61,7 @@ double ZoomHandler::getContentWidth() const
 {
     // get arrangement length from the playlist
     const auto clocks = playListScheduler->getTotalLength(audium::clocks, true);
-    const auto arrangementBars = TempoProvider::clocksToBars(clocks);
+    const auto arrangementBars = audium::TempoProvider::clocksToBars(clocks);
     
     return arrangementBars * pixelsPerBar * zoomFactor;
 }
@@ -352,14 +346,14 @@ bool ZoomHandler::snapToGrid(double &clocks)
     if (!juce::ModifierKeys::currentModifiers.isShiftDown()) {
         
         auto segmentResult  = segmentsForWidth(getContentWidth(), ZoomHandler::beats);
-        auto beats          = TempoProvider::clocksToBeats(clocks);
+        auto beats          = audium::TempoProvider::clocksToBeats(clocks);
         auto tolerance      = xToBeats(10.0);
         auto inc            = 0.0;
         
         for (auto i = 0; i < segmentResult.numSegments; i++) {
             if (std::abs(inc - std::max(beats, 0.0)) < tolerance) {
                 //std::cout << "snap to: " << inc << std::endl;
-                clocks = TempoProvider::beatsToClocks(inc);
+                clocks = audium::TempoProvider::beatsToClocks(inc);
                 return true;
             }
             inc += segmentResult.grid;

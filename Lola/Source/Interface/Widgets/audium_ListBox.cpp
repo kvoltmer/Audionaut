@@ -1,4 +1,7 @@
-
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "audium_ListBox.h"
 
@@ -47,15 +50,6 @@ static AccessibilityActions getListRowAccessibilityActions (RowComponentType& ro
 
 void ListBox::checkModelPtrIsValid() const
 {
-   #if ! JUCE_DISABLE_ASSERTIONS
-    // If this is hit, the model was destroyed while the ListBox was still using it.
-    // You should ensure that the model remains alive for as long as the ListBox holds a pointer to it.
-    // If this assertion is hit in the destructor of a ListBox instance, do one of the following:
-    // - Adjust the order in which your destructors run, so that the ListBox destructor runs
-    //   before the destructor of your ListBoxModel, or
-    // - Call ListBox::setModel (nullptr) before destroying your ListBoxModel.
-    jassert ((model == nullptr) == (weakModelPtr.lock() == nullptr));
-   #endif
 }
 
 class ListBox::RowComponent  : public Component,
@@ -579,10 +573,6 @@ ListBox::~ListBox()
 void ListBox::assignModelPtr (ListBoxModel* const newModel)
 {
     model = newModel;
-
-   #if ! JUCE_DISABLE_ASSERTIONS
-    weakModelPtr = model != nullptr ? model->sharedState : nullptr;
-   #endif
 }
 
 void ListBox::setModel (ListBoxModel* const newModel)

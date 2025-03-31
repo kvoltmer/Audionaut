@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    DragZoomControl.h
-    Created: 6 Jan 2024 12:26:46pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -22,7 +17,7 @@ class DragZoomControl  : public juce::Component, public juce::ChangeBroadcaster
 {
 public:
     DragZoomControl(std::shared_ptr<AudioTrackListBox> audioTrackListBox,
-                    std::shared_ptr<AudiumEngine> audiumEngine,
+                    std::shared_ptr<audium::AudiumEngine> audiumEngine,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     bool arrangementMode) :
         audioTrackListBox(audioTrackListBox),
@@ -80,7 +75,7 @@ public:
         
         auto h = bounds.getHeight();
         
-        visibileRectangle->setRectangle(Rectangle<float>(x, y, w, h).reduced(1.f, 2.f));
+        visibileRectangle->setRectangle(juce::Rectangle<float>(x, y, w, h).reduced(1.f, 2.f));
     }
     
     
@@ -155,7 +150,7 @@ public:
 private:
     std::unique_ptr<juce::DrawableRectangle>    visibileRectangle;
     std::shared_ptr<AudioTrackListBox>          audioTrackListBox;
-    std::shared_ptr<AudiumEngine>               audiumEngine;
+    std::shared_ptr<audium::AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     bool                                        arrangementMode;
     

@@ -1,25 +1,9 @@
-/*
-  ==============================================================================
-
-    EngineAccess.cpp
-    Created: 1 Feb 2023 4:46:46pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Util/EngineAccess.h"
-
-#if 0
-std::shared_ptr<AudiumEngine> getAudiumEngine(juce::Component* component)
-{
-    auto topLevelComponent = component->getTopLevelComponent();
-    jassert(topLevelComponent);
-    auto mainWindow = dynamic_cast<AudiumMainWindow*>(topLevelComponent);
-    jassert(mainWindow);
-    return mainWindow->getEngine();
-}
-#endif
 
 void notImplemented()
 {

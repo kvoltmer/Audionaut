@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioClip.h
-    Created: 8 Feb 2024 4:27:13pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -15,15 +10,17 @@
 #include "Engine/Streamable.h"
 #include "Engine/PlayList/PositionableBase.h"
 
+namespace audium {
+
 class AudioClip : public audium::Streamable
 {
     
 public:
     AudioClip(AudioSubGroup &audioSubGroup) :
-        audioSubGroup(audioSubGroup)
+    audioSubGroup(audioSubGroup)
     {
     }
-        
+    
     double getAbsolutePosition(audium::TimeContextType context) const;
     void setAbsolutePosition(double position, audium::TimeContextType context);
     
@@ -43,7 +40,7 @@ public:
     AudioTrack &getAudioTrack() const;
     
     double getFileLength(audium::TimeContextType context) const;
-
+    
     AudioClipData data;
     
 private:
@@ -52,3 +49,5 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioClip)
     
 };
+
+} // namespace audium

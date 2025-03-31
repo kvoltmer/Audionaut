@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioResource.h
-    Created: 29 Jan 2023 12:55:52pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -21,15 +16,16 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 
+
+namespace audium {
+
 class AudioPlayer;
 class AudiumTransportSource;
 class AudioSubGroup;
 class AudioRegion;
 class AudioChannel;
+class ChannelMapping;
 
-namespace audium {
-    class ChannelMapping;
-}
 
 class AudioResource : public audium::Streamable
 {
@@ -39,18 +35,21 @@ public:
                   std::shared_ptr<AudioTrack> audioTrack,
                   std::shared_ptr<AudioSubGroup> audioSubGroup,
                   juce::URL url,
-                  int channelPosition,
-                  std::shared_ptr<juce::AudioFormatReader> reader);
+                  std::shared_ptr<juce::AudioFormatReader> reader,
+                  int destChannel,
+                  int sourceChannel
+                  );
     
     virtual ~AudioResource() override;
-
+    
     std::shared_ptr<AudiumTransportSource> createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
-
+    
     const juce::String getFileNameWithoutExtension() const;
     
     const juce::String getFullPathName() const;
     
     const juce::URL getUrl() const { return url; }
+    void setUrl(const juce::URL newUrl) { url = newUrl; }
     
     // Returns a string version of the URL.
     const juce::String getUrlAsString() const;
@@ -60,7 +59,7 @@ public:
     AudioResourceContainer& getContainer() const { return owner; }
     
     double getSampleRate() const;
-    unsigned int getNumChannels() const;
+    unsigned int getNumAudioFileChannels() const;
     
     double getFileLength(audium::TimeContextType context) const;
     
@@ -76,14 +75,14 @@ public:
     
     std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
     std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
-        
+    
     audium::ChannelMapping &getChannelMapping() const { return *channelMapping.get();}
-
+    
     // shared between resources
     std::shared_ptr<juce::AudioFormatReader> audioFormatReader;
     
 private:
-
+    
     AudioResourceContainer& owner;
     
     std::shared_ptr<AudioTrack> audioTrack;
@@ -92,10 +91,10 @@ private:
     juce::URL url;
     
     
-
+    
     
     std::unique_ptr<audium::ChannelMapping> channelMapping;
-
+    
     double lengthInSeconds = 1.0;
     int numChannels = 1;
     
@@ -103,3 +102,5 @@ private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResource)
 };
+
+} // namespace audium

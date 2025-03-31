@@ -9,17 +9,17 @@
 #include <windows.h>
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION  0,9,3,0
+FILEVERSION  1,0,0,0
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
     BLOCK "040904E4"
     BEGIN
-      VALUE "CompanyName",  "Voltmer Systems\0"
-      VALUE "FileDescription",  "Lola\0"
-      VALUE "FileVersion",  "0.9.3\0"
-      VALUE "ProductName",  "Lola\0"
-      VALUE "ProductVersion",  "0.9.3\0"
+      VALUE "CompanyName",  "Klaus Voltmer\0"
+      VALUE "FileDescription",  "Audionaut\0"
+      VALUE "FileVersion",  "1.0.0\0"
+      VALUE "ProductName",  "Audionaut\0"
+      VALUE "ProductVersion",  "1.0.0\0"
     END
   END
 

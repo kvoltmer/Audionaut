@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    TimeContext.h
-    Created: 30 Dec 2023 9:50:13am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 

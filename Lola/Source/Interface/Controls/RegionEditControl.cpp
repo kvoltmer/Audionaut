@@ -1,12 +1,8 @@
-/*
-  ==============================================================================
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
-    RegionEditControl.cpp
-    Created: 29 Nov 2023 2:09:00pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
 #include <iostream>
 
 #include "RegionEditControl.h"
@@ -69,12 +65,11 @@ void RegionEditControl::mouseDown (const juce::MouseEvent& e)
     // std::cout << "RegionEditControl::mouseDown" << std::endl;
     regionSelector->setEnabled(false);
     
-    if(!e.mods.isCommandDown())
-    {
-        audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().deselectAll();
-    }
-    audioRegion->setSelected(e.mods.isCommandDown() ? !audioRegion->isSelected() : true);
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateSelection);
+    // TODO: shiftSelect
+    bool deselectOthers = !audioRegion->isSelected() && !e.mods.isAnyModifierKeyDown();
+    audioRegion->setSelected(e.mods.isCommandDown() ? !audioRegion->isSelected() : true, deselectOthers);
+    
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateSelection);
 
     currentDragMode = getDragMode(e.getPosition().getX());
     
@@ -135,6 +130,18 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
         rangeInClocks += audioRegion->getAudioResourceStart(audium::clocks);
         
         audioRegion->validateData(rangeInClocks, audium::clocks);
+        // apply to selected regions
+        auto selectedItems = audiumEngine->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects();
+        auto startDiff = rangeInClocks.getStart() - audioRegion->getRegionData(audium::clocks).getStart();
+        auto endDiff = rangeInClocks.getEnd() - audioRegion->getRegionData(audium::clocks).getEnd();
+        for (auto item : selectedItems) {
+            if (auto region = dynamic_cast<audium::AudioRegion*>(item.get())) {
+                auto range = region->getRegionData(audium::clocks);
+                range.setStart(range.getStart() + startDiff);
+                range.setEnd(range.getEnd() + endDiff);
+                region->setRegionData(range, audium::clocks);
+            }
+        }
         audioRegion->setRegionData(rangeInClocks, audium::clocks);
         
         zoomHandler->getSnapToGridHandler()->clearRange();
@@ -152,7 +159,7 @@ void RegionEditControl::mouseMove (const juce::MouseEvent& e)
     updateMouseZone (e);
 }
 
-void RegionEditControl::updateFromEngine(std::shared_ptr<AudioRegion> newRegion)
+void RegionEditControl::updateFromEngine(std::shared_ptr<audium::AudioRegion> newRegion)
 {
     jassert(newRegion != nullptr);
     if (newRegion != audioRegion)

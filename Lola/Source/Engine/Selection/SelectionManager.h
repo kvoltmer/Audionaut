@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    SelectionManager.h
-    Created: 1 Oct 2024 2:06:18pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -17,12 +12,10 @@
 
 using json = nlohmann::json;
 
-class AudiumEngine;
-
-namespace audium
-{
+namespace audium {
 
 class Selectable;
+class AudiumEngine;
 
 class SelectionManager
 {

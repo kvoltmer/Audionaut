@@ -1,3 +1,7 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 #include <vector>
@@ -11,7 +15,7 @@
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Controls/AudioTrackListBox.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelGroupComponent.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
 class ChannelGroupListBoxModel : public audium::ListBoxModel {
@@ -19,7 +23,7 @@ class ChannelGroupListBoxModel : public audium::ListBoxModel {
 public:
     
     ChannelGroupListBoxModel(std::shared_ptr<audium::ListBox> owner,
-                              std::shared_ptr<AudiumEngine> audiumEngine) :
+                              std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         owner(owner),
         audiumEngine(audiumEngine)
     {
@@ -41,7 +45,7 @@ public:
     {
         if (rowIsSelected)
         {
-            auto thumbArea = Rectangle<int>(0, 0, width, height);
+            auto thumbArea = juce::Rectangle<int>(0, 0, width, height);
             g.setColour (Colours::lightgrey);
             g.drawRoundedRectangle (thumbArea.toFloat(), 3.0f, 2.0f);
         }
@@ -50,28 +54,19 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(rowNumber);
-        if (existingComponentToUpdate == nullptr)
-        {
-            if (audioTrack != nullptr)
-            {
+        if (auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(rowNumber)) {
+            
+            if (existingComponentToUpdate == nullptr) {
                 return new ChannelGroupComponent(audioTrack, audiumEngine);
             }
-        }
-        else
-        {
-            auto component = dynamic_cast<ChannelGroupComponent*>(existingComponentToUpdate);
-            jassert(component);
-        
-            if (audioTrack != nullptr)
-            {
+            else {
+                auto component = dynamic_cast<ChannelGroupComponent*>(existingComponentToUpdate);
+                jassert(component);
                 // update of audioTrack since row might have changed after delete
                 component->refreshComponent(audioTrack);
+                return component;
             }
-            return component;
         }
-        
-        
         return nullptr;
     }
 
@@ -94,7 +89,7 @@ public:
     {
         audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
         owner->deselectAllRows();
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateMiddlePanelAction);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateMiddlePanelAction);
     }
     
     void listWasScrolled() override
@@ -112,6 +107,6 @@ public:
         
 private:
     std::shared_ptr<audium::ListBox> owner;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
 
 };

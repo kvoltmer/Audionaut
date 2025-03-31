@@ -1,12 +1,8 @@
-/*
-  ==============================================================================
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
-    AudioRegionContainer.cpp
-    Created: 30 May 2023 10:16:35am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
 #include <iostream>
 
 #include "AudioRegionContainer.h"
@@ -20,19 +16,30 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+namespace audium {
+
+AudioRegionContainer::AudioRegionContainer(AudioTrack &audioTrack_) :
+audioTrack(audioTrack_),
+audioResourceContainer(audioTrack.getAudioResourceContainer()),
+audioTrackContainer(audioTrack.getAudioTrackContainer()),
+tempoProvider(audioTrackContainer.getTempoProvider()),
+undoManager(audioTrackContainer.getUndoManager())
+{
+}
+
 std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioTrack> track)
 {
-//    jassert(getNumRegions(track.get()) == 0);
-//    auto audioResources = audioResourceContainer->getAudioResourcesForGroup(track.get());
-//    auto name = (audioResources.size() > 0) ? audioResources[0]->getFileNameWithoutExtension() : "n/a";
-//    auto seconds = 0.0;
-//    for (auto resource : audioResources)
-//    {
-//        seconds = juce::jmax(seconds, resource->getAudioTransportSource()->getLengthInSeconds());
-//    }
-//    jassert(seconds > 0.0);
-//
-//    return createRegion(name, juce::Range(0.0, seconds), track);
+    //    jassert(getNumRegions(track.get()) == 0);
+    //    auto audioResources = audioResourceContainer->getAudioResourcesForGroup(track.get());
+    //    auto name = (audioResources.size() > 0) ? audioResources[0]->getFileNameWithoutExtension() : "n/a";
+    //    auto seconds = 0.0;
+    //    for (auto resource : audioResources)
+    //    {
+    //        seconds = juce::jmax(seconds, resource->getAudioTransportSource()->getLengthInSeconds());
+    //    }
+    //    jassert(seconds > 0.0);
+    //
+    //    return createRegion(name, juce::Range(0.0, seconds), track);
     jassertfalse;
     return nullptr;
 }
@@ -55,6 +62,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
                                                                 juce::Range<double> position,
                                                                 std::shared_ptr<AudioTrack> track,
                                                                 std::shared_ptr<AudioSubGroup> subGroup,
+                                                                std::shared_ptr<AudioRegion> otherRegion,
                                                                 audium::TimeContextType context)
 {
     jassert(track != nullptr);
@@ -67,7 +75,46 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
     auto audioRegion = createRegion(track, subGroup);
     audioRegion->setRegionData(position, context);
     audioRegion->setName(regionName);
+    if (otherRegion != nullptr)
+        audioRegion->data.gain_vector = otherRegion->data.gain_vector;
     return audioRegion;
+}
+
+std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<AudioTrack> track,
+                                                                std::shared_ptr<AudioSubGroup> subGroup,
+                                                                const std::shared_ptr<AudioRegion> otherRegion)
+{
+    auto context = audium::clocks;
+    
+    // - create channels if needed
+    if (track->getNumAudioTrackChannels() < otherRegion->getAudioTrack()->getNumAudioTrackChannels())
+        track->ensureNumChannels(otherRegion->getAudioTrack()->getNumAudioTrackChannels());
+    
+    // - similar subgroup must exist
+    jassert(track->findSimilarSubGroup(otherRegion->getAudioSubGroup()));
+    
+    
+    // - find existing region
+    //    std::shared_ptr<AudioRegion> newRegion = nullptr;
+    //    auto regions = getRegionsForSubGroup(otherRegion->getAudioSubGroup().get());
+    //    for (auto region : regions) {
+    //        // TODO: == operator for AudioRegion
+    //        if (region->getRegionData(context) == otherRegion->getRegionData(context) &&
+    //            region->getName() == otherRegion->getName()) {
+    //            newRegion = region;
+    //            break;
+    //        }
+    //    }
+    
+    // - find similar region
+    auto newRegion = findSimilarRegion(otherRegion);
+    
+    // - create region
+    if (newRegion == nullptr) {
+        newRegion = createRegion(track, subGroup);
+        newRegion->data = otherRegion->data;
+    }
+    return newRegion;
 }
 
 std::string AudioRegionContainer::formatNumber(long num)
@@ -111,12 +158,11 @@ void AudioRegionContainer::cleanup()
     audioRegions.clear();
 }
 
-std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) const
+std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int regionId) const
 {
-    if (rowNumber >= 0 && rowNumber < audioRegions.size())
-    {
-        jassert(audioRegions[rowNumber]->data.region_id == rowNumber);
-        return audioRegions[rowNumber];
+    if (regionId >= 0 && regionId < audioRegions.size()) {
+        //jassert(audioRegions[regionId]->data.region_id == regionId);
+        return audioRegions[regionId];
     }
     return nullptr;
 }
@@ -133,22 +179,9 @@ int AudioRegionContainer::getRegionId(std::shared_ptr<AudioRegion> searchRegion)
     return -1; // not found
 }
 
-int AudioRegionContainer::getNumRegions(const AudioTrack* track) const
+int AudioRegionContainer::getNumRegions() const
 {
-    if (track == nullptr)
-    {
-        return static_cast<int>(audioRegions.size());
-    }
-    else
-    {
-        int count = 0;
-        for (auto region : audioRegions)
-        {
-            if (region->getAudioTrack().get() == track)
-                count++;
-        }
-        return count;
-    }
+    return static_cast<int>(audioRegions.size());
 }
 
 std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSubGroup(const AudioSubGroup* subGroup) const
@@ -162,15 +195,40 @@ std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSub
     return regions;
 }
 
-std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getSelectedRegions() const
+std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getSelectedRegions(bool global) const
 {
-    std::vector<std::shared_ptr<AudioRegion>> regions;
-    for (auto region : audioRegions)
-    {
-        if (region->isSelected())
-            regions.push_back(region);
+    std::vector<std::shared_ptr<AudioRegion>> result;
+    
+    if (global) {
+        auto selectedObjects = audioTrackContainer.getSelectionManager()->getSelectedObjects();
+        
+        for (auto object : selectedObjects) {
+            if (auto region = std::dynamic_pointer_cast<AudioRegion>(object)) {
+                jassert(region->isSelected());
+                result.push_back(region);
+            }
+        }
     }
-    return regions;
+    else {
+        for (auto r : audioRegions) {
+            if (r->isSelected()) {
+                result.push_back(r);
+            }
+        }
+    }
+    return result;
+}
+
+std::shared_ptr<AudioRegion> AudioRegionContainer::findSimilarRegion(std::shared_ptr<AudioRegion> otherRegion) const
+{
+    auto context = audium::seconds;
+    for (auto region : audioRegions) {
+        if (region->getRegionData(context) == otherRegion->getRegionData(context) &&
+            region->getName() == otherRegion->getName()) {
+            return region;
+        }
+    }
+    return nullptr;
 }
 
 void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup)
@@ -200,7 +258,7 @@ bool AudioRegionContainer::deleteAudioRegion(AudioRegion* region) {
         return true;
     }
     
-
+    
     return false;
 }
 
@@ -258,8 +316,8 @@ juce::SparseSet<int> AudioRegionContainer::getSelectedRows() const {
 }
 
 void AudioRegionContainer::setSelectedRows(juce::SparseSet<int>& selectedRows) {
-
-
+    
+    
     for (auto region : audioRegions)
         region->setSelected(false);
     
@@ -272,3 +330,84 @@ void AudioRegionContainer::setSelectedRows(juce::SparseSet<int>& selectedRows) {
     }
 }
 
+std::shared_ptr<AudioRegion> AudioRegionContainer::getRegionWithData(const AudioRegionData &data) const
+{
+    for (auto region : audioRegions) {
+        if (region->data.range == data.range &&
+            region->data.name == data.name) {
+            return region;
+        }
+    }
+    return nullptr;
+}
+
+bool AudioRegionContainer::writeToJson (json& output)
+{
+    for (auto region : audioRegions) {
+        json r;
+        region->writeToJson(r);
+        output["regions"] += r;
+    }
+    return true;
+}
+
+bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
+{
+    auto jsonRegions = input["regions"];
+    
+    if (!rebuild && jsonRegions.size() != getNumRegions())
+        rebuild = true;
+    
+    if (rebuild)
+        cleanup();
+    
+    for (auto& jsonElement : jsonRegions) {
+        AudioRegionData regionData = jsonElement;
+        
+        if (auto track = audioTrackContainer.getAudioTrack(regionData.track_id)) {
+            if (track->audioSubGroupContainer->objectExistsAtIndex(regionData.sub_group_id)) {
+                auto subGroup = track->audioSubGroupContainer->getObjects()[regionData.sub_group_id];
+                
+                std::shared_ptr<AudioRegion> region = nullptr;
+                if (rebuild) {
+                    region = createRegion(track, subGroup);
+                    region->data = regionData;
+                }
+                else {
+                    region = getRegion(regionData.region_id);
+                }
+                
+                if (region->data.region_id != regionData.region_id) {
+                    std::cout << "warning region id " << regionData.region_id << std::endl;
+                    region->data.region_id = regionData.region_id;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+void AudioRegionContainer::mergeFromJson(json& input)
+{
+    auto jsonRegions = input["regions"];
+    
+    for (auto& jsonRegion : jsonRegions) {
+        AudioRegionData data = jsonRegion;
+        
+        auto region = getRegionWithData(data);
+        
+        if (region == nullptr) {
+            if (auto track = std::dynamic_pointer_cast<AudioTrack>(audioTrack.getSharedPtr())) {
+                if (track->audioSubGroupContainer->objectExistsAtIndex(data.sub_group_id)) {
+                    auto subGroup = track->audioSubGroupContainer->getObjects()[data.sub_group_id];
+                    region = createRegion(track, subGroup);
+                    region->data = data;
+                }
+            }
+        }
+        
+        jassert(region);
+    }
+}
+
+} // namespace audium

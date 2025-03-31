@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    UndoableContainerAction.h
-    Created: 1 Feb 2024 1:46:34pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -47,15 +42,27 @@ struct UndoableContainerAction final : public juce::UndoableAction
     
     bool perform() override
     {
-        juce::MemoryInputStream inputStream(newMemoryBlock, false);
-        container.readFromStream(inputStream, rebuild);
+        try {
+            juce::MemoryInputStream inputStream(newMemoryBlock, false);
+            container.readFromStream(inputStream, rebuild);
+        }
+        catch (std::exception &e) {
+            std::cout << "UndoableContainerAction::perform -> " << e.what() << std::endl;
+            return false;
+        }
         return true;
     }
     
     bool undo() override
     {
-        juce::MemoryInputStream inputStream(oldMemoryBlock, false);
-        container.readFromStream(inputStream, rebuild);
+        try {
+            juce::MemoryInputStream inputStream(oldMemoryBlock, false);
+            container.readFromStream(inputStream, rebuild);
+        }
+        catch (std::exception &e) {
+            std::cout << "UndoableContainerAction::undo -> " << e.what() << std::endl;
+            return false;
+        }
         return true;
     }
     

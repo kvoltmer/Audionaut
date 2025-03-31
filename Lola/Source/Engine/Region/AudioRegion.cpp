@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioRegion.cpp
-    Created: 30 May 2023 10:16:15am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioRegion.h"
 #include "Engine/Group/AudioTrack.h"
@@ -18,9 +13,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 
-AudioRegion::~AudioRegion()
-{
-}
+namespace audium {
 
 void AudioRegion::sendActionMessage (const juce::String& message) const
 {
@@ -46,10 +39,10 @@ bool AudioRegion::writeToJson (json& output)
 {
     // make sure all id's are up to date
     auto shared_ptr = std::dynamic_pointer_cast<AudioRegion> (getSharedPtr());
-    data.region_id      = audioTrack->getAudioRegionContainer()->getRegionId(shared_ptr);
+    data.region_id      = audioSubGroup->getAudioRegionContainer()->getRegionId(shared_ptr);
     data.track_id       = audioTrack->getId();
     data.sub_group_id   = audioTrack->audioSubGroupContainer->getIndex(audioSubGroup);
-     
+    
     
     output = data;
     return true;
@@ -86,7 +79,7 @@ void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, aud
 {
     jassert(!newRegionData.isEmpty());
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
-
+    
     if (context == audium::seconds)
     {
         data.range = newRegionData;
@@ -155,3 +148,43 @@ bool AudioRegion::deleteAssociatedItems()
 {
     return getAudioTrack()->getPlayListContainer()->deleteAssociatedItems(this);
 }
+
+void AudioRegion::setGain(int channel, double newGain, bool continous)
+{
+    if (channel >= 0) {
+        if (channel >= data.gain_vector.size()) {
+            data.gain_vector.resize(channel + 1, 1.0);
+        }
+        data.gain_vector[channel] = newGain;
+        
+        if (continous) {
+            
+            auto resource = getAudioSubGroup()->getAudioResourceAtChannel(channel);
+            auto sources = audioTrack->getTransportSourceContainer()->getTransportSourcesForResource(*resource.get());
+            
+            // TODO: this is not thread save
+            for (auto source : sources)
+                if (source->isPlaying())
+                    source->getAudioTransportSource()->setGain(newGain);
+        }
+    }
+}
+
+double AudioRegion::getGain(int channel) const
+{
+    if (channel >= 0 && channel < data.gain_vector.size()) {
+        return data.gain_vector[channel];
+    }
+    return 1.0;
+}
+
+void AudioRegion::onDeleteChannel(int channel)
+{
+    for (auto i = channel; i < data.gain_vector.size(); i++) {
+        if (i + 1 < data.gain_vector.size())
+            data.gain_vector[i] = data.gain_vector[i + 1];
+    }
+}
+
+} // namespace audium
+

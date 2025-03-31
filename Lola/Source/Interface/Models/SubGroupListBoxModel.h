@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    SubGroupListBoxModel.h
-    Created: 23 Oct 2023 3:14:04pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -23,8 +18,8 @@ class SubGroupListBoxModel  : public audium::ListBoxModel
 {
 public:
     SubGroupListBoxModel(std::shared_ptr<audium::ListBox> owner,
-                         std::shared_ptr<AudioSubGroup> audioSubGroup,
-                         std::shared_ptr<AudiumEngine> audiumEngine,
+                         std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
+                         std::shared_ptr<audium::AudiumEngine> audiumEngine,
                          std::shared_ptr<ZoomHandler> zoomHandler,
                          std::shared_ptr<RegionSelector> regionSelector) :
         owner(owner),
@@ -56,7 +51,7 @@ public:
             channel->isSelected())
         {
             g.setColour (owner->findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.9f));
-            g.fillRect(Rectangle<int>(0, 0, width, height));
+            g.fillRect(juce::Rectangle<int>(0, 0, width, height));
         }
         
     }
@@ -65,16 +60,15 @@ public:
                                                 juce::Component* existingComponentToUpdate) override
     {
     
-        auto audioResource = audioSubGroup->getChannel(rowNumber);
+        auto audioResource = audioSubGroup->getAudioResourceAtChannel(rowNumber);
         if (existingComponentToUpdate == nullptr)
         {
             if (audioResource != nullptr)
             {
-                auto component = new AudioResourceView(*owner.get(),
+                auto component = new AudioResourceView(owner.get(),
                                                        audiumEngine,
                                                        audioResource,
                                                        zoomHandler,
-                                                       nullptr,
                                                        audioSubGroup->getAudioTrack().getColour(),
                                                        regionSelector,
                                                        rowNumber);
@@ -90,7 +84,7 @@ public:
             auto component = dynamic_cast<AudioResourceView*>(existingComponentToUpdate);
             if (component != nullptr)
             {
-                component->setRowNumber(rowNumber);
+                component->updateUI(rowNumber);
                 return component;
             }
             else
@@ -131,7 +125,7 @@ public:
     {
     }
     
-    void setAudioSubGroup(std::shared_ptr<AudioSubGroup> subGroup)
+    void setAudioSubGroup(std::shared_ptr<audium::AudioSubGroup> subGroup)
     {
         audioSubGroup = subGroup;
     }
@@ -140,8 +134,8 @@ public:
 private:
     
     std::shared_ptr<audium::ListBox> owner;
-    std::shared_ptr<AudioSubGroup> audioSubGroup;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
 

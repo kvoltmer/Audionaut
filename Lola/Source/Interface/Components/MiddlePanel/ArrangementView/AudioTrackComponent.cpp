@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioTrackComponent.cpp
-    Created: 27 Nov 2022 3:25:58pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include <JuceHeader.h>
 #include "AudioTrackComponent.h"
@@ -19,100 +14,125 @@
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/Controls/RegionLabel.h"
+#include "Interface/Controls/TableRegionLabel.h"
 #include "Interface/Controls/DraggerControl.h"
+#include "Interface/Models/PlayListTableListBoxItem.h"
 
-using namespace audium;
-
-void AudioTrackComponent::refreshComponent (std::shared_ptr<AudioTrack> track, bool forceRebuildComponents)
+class AudioTrackComponent::ItemComponent  : public Component
 {
-    audioTrack = track;
-    
-    if (mustRebuildComponents() ||
-        forceRebuildComponents)
-    {
-        rebuildComponents();
-    }
-    resized();
-}
+public:
+    ItemComponent (AudioTrackComponent& owner_) : owner (owner_) {}
 
-bool AudioTrackComponent::mustRebuildComponents() const
-{
-    // compare play list items
-    auto playListContainer = audiumEngine->getPlayListContainer(audioTrack);
-    auto playListItems = playListContainer->getPlayListItems();
-    
-    if (playListItems.size() != playListItemComponents.size())
+    void update (const int newItem)
     {
-        return true;
-    }
-    
-    for (auto i = 0; i < playListItems.size(); i++)
-    {
-        if (playListItems[i] != playListItemComponents[i]->getPlayListItem())
+        const auto rowHasChanged = (item != newItem);
+
+        if (rowHasChanged)
         {
-            return true;
+            repaint();
+
+            if (rowHasChanged)
+                item = newItem;
+        }
+
+        if (auto* m = owner.getModel())
+        {
+            customComponent.reset (m->refreshComponentForItem (newItem, customComponent.release()));
+
+            if (customComponent != nullptr)
+            {
+                addAndMakeVisible (customComponent.get());
+                customComponent->setBounds (getLocalBounds());
+
+                setFocusContainerType (FocusContainerType::focusContainer);
+            }
+            else
+            {
+                setFocusContainerType (FocusContainerType::none);
+            }
         }
     }
-    
-    return false;
+
+    AudioTrackComponent& owner;
+    std::unique_ptr<Component> customComponent;
+    int item = -1;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ItemComponent)
+};
+
+void AudioTrackComponent::refreshComponent (std::shared_ptr<audium::AudioTrack> track, bool forceRebuildComponents)
+{
+    audioTrack = track;
+    model->setAudioTrack(track);
+    updateContents();
 }
 
-void AudioTrackComponent::rebuildComponents()
+
+void AudioTrackComponent::updateContents()
 {
-    removeAllChildren();
-    playListItemComponents.clear();
-    
-    // get all play list items and create components
-    auto playListContainer = audiumEngine->getPlayListContainer(audioTrack);
-    jassert(playListContainer);
-    auto playListItems = playListContainer->getPlayListItems();
-    
-    for (auto playListItem : playListItems)
+    const size_t numNeeded = (model != nullptr) ? model->getNumRows() : 0;
+  
+    itemComponents.resize (jmin (numNeeded, itemComponents.size()));
+    while (numNeeded > itemComponents.size())
     {
-        auto groupRegion = std::shared_ptr<PlayListItemComponent>(new PlayListItemComponent(audiumEngine,
-                                                                                            audioTrack,
-                                                                                            playListContainer,
-                                                                                            playListItem,
-                                                                                            zoomHandler,
-                                                                                            regionSelector));
+        itemComponents.emplace_back (new ItemComponent (*this));
+        addAndMakeVisible (*itemComponents.back());
+    }
         
-        addAndMakeVisible(groupRegion.get());
-        playListItemComponents.push_back(groupRegion);
+    for (auto item = 0; item < itemComponents.size(); ++item) {
+        
+        // TODO: optimise -> if (auto* rowComp = getComponentForRowIfOnscreen (row))
+        
+        if (auto itemComp = dynamic_cast<ItemComponent*>(itemComponents[item].get())) {
+            
+            auto range = model->getRangeForItem(item);
+            juce::Rectangle<double> rect_tmp(range.getStart(),
+                                             getLocalBounds().getY(),
+                                             range.getLength(),
+                                             getLocalBounds().getHeight());
+            itemComp->setBounds(rect_tmp.toNearestInt());
+            
+            itemComp->update (item);
+            
+            itemComp->repaint();
+        }
     }
 }
 
 void AudioTrackComponent::resized()
 {
-    for (auto regionView : playListItemComponents)
-    {
-        auto playListItem = regionView->getPlayListItem();
-        auto start = zoomHandler->clocksToX(playListItem->getAbsolutePosition(audium::clocks));
-        auto width = zoomHandler->clocksToX(playListItem->getDurationTime(audium::clocks));
-        juce::Rectangle<double> rect_tmp(start, getLocalBounds().getY(), width, getLocalBounds().getHeight());
-        
-        regionView->setBounds(rect_tmp.toNearestInt());
-        if (playListItem->isSelected())
-            regionView->toFront(false);
-    }
 }
 
 bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSourceDetails)
 {
-    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        if (regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == audioTrack)
-        {
-            return true; // source details match this track
-        }
-    }
-    else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
+    if (dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
+    if (dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
+    return false;
+}
+
+void AudioTrackComponent::itemDragEnter (const SourceDetails &dragSourceDetails)
+{
+    if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
     {
         if (playListItemComponent->getPlayListItem()->getRegion()->getAudioTrack() == audioTrack)
         {
-            return true; // source details match this track
+            externalDragAndDrop = false; // source details match this track -> no highlight!
+        }
+        else
+        {
+            externalDragAndDrop = true;
         }
     }
-    return false;
+    else {
+        externalDragAndDrop = true;
+    }
 }
 
 void AudioTrackComponent::itemDragMove (const SourceDetails &dragSourceDetails)
@@ -139,12 +159,13 @@ void AudioTrackComponent::itemDragMove (const SourceDetails &dragSourceDetails)
 void AudioTrackComponent::itemDragExit (const SourceDetails &dragSourceDetails)
 {
     zoomHandler->getSnapToGridHandler()->clearRange();
+    externalDragAndDrop = false;
     repaint();
 }
 
 void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
-    // undo
+    // undo 
     auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
     
     auto x = dragSourceDetails.localPosition.x;
@@ -157,38 +178,25 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
     zoomHandler->snapToGrid(pos);
     
     bool success = false;
-    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        // drop all selected regions
-        auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
-        for (auto region : selectedRegions)
-        {
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
-                success = true;
-            
-            pos += region->getRegionData(audium::clocks).getLength();
-        }
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
+        dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
+        audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
+        success = true;
     }
-    else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
-    {
-        if (auto region = playListItemComponent->getPlayListItem()->getRegion())
-        {
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
-                success = true;
-        }
+    else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get())) {
+        audioTrack->dropPlayListItem(playListItemComponent->getPlayListItem(), pos, audium::clocks);
+        success = true;
     }
     
-    if (success)
-    {
+    if (success) {
         action->storeNewState();
         auto undoManager = audioTrack->getAudioTrackContainer().getUndoManager();
         undoManager->perform(action.release(), "item dropped");
         undoManager->beginNewTransaction();
     }
-    
-    
-    
+
     zoomHandler->getSnapToGridHandler()->clearRange();
+    externalDragAndDrop = false;
     repaint();
 }
 

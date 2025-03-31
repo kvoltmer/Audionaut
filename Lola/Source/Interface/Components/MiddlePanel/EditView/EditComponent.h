@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    EditComponent.h
-    Created: 26 Nov 2023 5:37:41pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -17,7 +12,7 @@ class EditComponent : public ArrangementEditBaseComponent
 {
 public:
         
-    EditComponent(std::shared_ptr<AudiumEngine> audiumEngine, std::shared_ptr<ZoomHandler> zoomHandler) :
+    EditComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine, std::shared_ptr<ZoomHandler> zoomHandler) :
         ArrangementEditBaseComponent(audiumEngine, zoomHandler, false)
     {
     }

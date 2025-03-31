@@ -1,24 +1,17 @@
-/*
-  ==============================================================================
-
-    WaveFormViewBase.cpp
-    Created: 4 Dec 2024 10:26:54am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "WaveFormViewBase.h"
 
 void WaveFormViewBase::paint (juce::Graphics& g)
 {
-    
     paintBackground(g);
     
     jassert(audioResource != nullptr);
     
-    if (audioThumbnail->getTotalLength() > 0.0)
-    {
+    if (audioThumbnail->getTotalLength() > 0.0) {
         // the waveform colour
         g.setColour (colour);
                 
@@ -26,14 +19,18 @@ void WaveFormViewBase::paint (juce::Graphics& g)
         const auto thumbArea    = getClippedDrawingArea();
         const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
         const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
-        const auto channel      = audioResource->getChannelMapping().getSourceChannel(rowNumber);
+        const auto channel      = audioResource->getChannelMapping().getSourceChannel();
         
-        if (channel >= 0 && channel < audioResource->getNumChannels())
-        {
-            audioThumbnail->drawChannel(g, thumbArea.toNearestInt(), startSeconds, endSeconds, channel, verticalZoomFactor);
+        if (channel >= 0 &&
+            channel < audioResource->getNumAudioFileChannels()) {
+            audioThumbnail->drawChannel(g,
+                                        thumbArea.toNearestInt(),
+                                        startSeconds,
+                                        endSeconds,
+                                        channel,
+                                        verticalZoomFactor * getClipGain());
         }
-        else
-        {
+        else {
             std::cout << "error WaveFormViewBase channel mapping." << std::endl;
         }
     }
@@ -92,9 +89,10 @@ juce::Rectangle<double> WaveFormViewBase::getClippedDrawingArea() const
     const auto visibleRange = zoomHandler->getVisibleRange();
     
     // clip to the area of its parent (owner)
-    const auto parentOffset = static_cast<double>(parentComponent.getBounds().getX());
-    //std::cout << parentComponent.getName().toStdString() << " offset: " << parentOffset << std::endl;
+    jassert(parentComponent);
+    const auto parentOffset = static_cast<double>(parentComponent->getBounds().getX());
     const auto scrollOffset = zoomHandler->getVisibleRange().getStart();
+    //std::cout << parentComponent.getName().toStdString() << " offset: " << parentOffset << " " << scrollOffset << std::endl;
     const auto startX = std::max(scrollOffset - parentOffset, 0.0);
     const auto lengthX = std::min(visibleRange.getLength(), static_cast<double>(thumbArea.getWidth()) - startX);
 

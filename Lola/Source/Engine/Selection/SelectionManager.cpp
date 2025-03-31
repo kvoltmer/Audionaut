@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    SelectionManager.cpp
-    Created: 6 Oct 2024 11:59:59am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "SelectionManager.h"
 #include "Selectable.h"
@@ -175,8 +170,8 @@ void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEn
                                 std::string name;
                                 if (jsonRegion.contains("name"))
                                     name = jsonRegion.at("name").get<std::string>();
-                                auto newName = audioTrack->getAudioRegionContainer()->getUniqueName(name);
-                                auto region = audioTrack->getAudioRegionContainer()->createRegion(audioTrack, subGroup);
+                                auto newName = subGroup->getAudioRegionContainer()->getUniqueName(name);
+                                auto region = subGroup->getAudioRegionContainer()->createRegion(audioTrack, subGroup);
                                 region->readFromJson(jsonRegion, false);
                                 region->setName(newName);
                             }
@@ -204,9 +199,9 @@ void SelectionManager::pastePlayListItems(const json &input,
     deselectAll();
     
     auto jsonPlayListItems = input["play_list_items"];
-    auto pos = audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::clocks);
     
-    // TODO: multiple objects not supported at this time
+    
+    // TODO: paste multiple objects
     auto& jsonElement = jsonPlayListItems.front();
     if (jsonElement.contains("track_id")) {
         
@@ -215,13 +210,17 @@ void SelectionManager::pastePlayListItems(const json &input,
         
         if (playListContainer != nullptr) {
             if (auto playListItem = playListContainer->createPlayListItemFromJson(jsonElement)) {
-                if (duplicateAction) {
-                    auto end = playListItem->getAbsolutePositionRange(audium::clocks).getEnd();
-                    playListItem->setAbsolutePosition(end, audium::clocks);
-                } else {
-                    // TODO: check if item exists at this position
-                    playListItem->setAbsolutePosition(pos, audium::clocks);
-                }
+                playListContainer->playListItems.push_back(playListItem);
+                
+                // adapt position
+                auto newPos = audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::clocks);
+                if (duplicateAction)
+                    newPos = playListItem->getAbsolutePositionRange(audium::clocks).getEnd();
+  
+                newPos = playListContainer->findNextFreePosition(newPos, audium::clocks);
+                
+                playListItem->setAbsolutePosition(newPos, audium::clocks);
+                
                 playListItem->setSelected(true);
             }
             

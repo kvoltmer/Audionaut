@@ -8,6 +8,8 @@
 #include "Engine/Export/AudioExportThread.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
+using namespace audium;
+
 SCENARIO("tranport source scenario", "[engine][dsp][transport]")
 {
     juce::MessageManager::getInstance();

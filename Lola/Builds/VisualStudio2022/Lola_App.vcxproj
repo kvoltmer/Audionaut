@@ -63,8 +63,8 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\juce\modules;$(SRCROOT)/../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x80004;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;JUCER_VS2022_78A503E=1;JUCE_APP_VERSION=0.9.3;JUCE_APP_VERSION_HEX=0x903;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\juce\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x80004;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;JUCER_VS2022_78A503E=1;JUCE_APP_VERSION=1.0.0;JUCE_APP_VERSION_HEX=0x10000;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -77,8 +77,8 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\juce\modules;$(SRCROOT)/../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x80004;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;JUCER_VS2022_78A503E=1;JUCE_APP_VERSION=0.9.3;JUCE_APP_VERSION_HEX=0x903;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\juce\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x80004;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;JUCER_VS2022_78A503E=1;JUCE_APP_VERSION=1.0.0;JUCE_APP_VERSION_HEX=0x10000;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <OutputFile>$(OutDir)\Lola.exe</OutputFile>
@@ -105,8 +105,8 @@
     </Midl>
     <ClCompile>
       <Optimization>Full</Optimization>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\juce\modules;$(SRCROOT)/../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x80004;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;JUCER_VS2022_78A503E=1;JUCE_APP_VERSION=0.9.3;JUCE_APP_VERSION_HEX=0x903;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\juce\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x80004;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;JUCER_VS2022_78A503E=1;JUCE_APP_VERSION=1.0.0;JUCE_APP_VERSION_HEX=0x10000;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -119,8 +119,8 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\juce\modules;$(SRCROOT)/../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x80004;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;JUCER_VS2022_78A503E=1;JUCE_APP_VERSION=0.9.3;JUCE_APP_VERSION_HEX=0x903;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\juce\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x80004;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;JUCER_VS2022_78A503E=1;JUCE_APP_VERSION=1.0.0;JUCE_APP_VERSION_HEX=0x10000;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <OutputFile>$(OutDir)\Lola.exe</OutputFile>
@@ -167,6 +167,7 @@
     <ClCompile Include="..\..\Source\Engine\Playback\AudioBusRenderer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\Playback.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\Voice.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\PlayList\TransportLoop.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PositionableBase.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListItem.cpp"/>
@@ -177,14 +178,17 @@
     <ClCompile Include="..\..\Source\Engine\Resource\AudioResourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Resource\ChannelMapping.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Dialogs\AutoEditComponent.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\AudiumLookAndFeel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\ColourIds.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_AudioThumbnail.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_ListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Handlers\SnapToGridHandler.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Handlers\ZoomHandler.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelComponent.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelGroupHeaderComponent.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelsComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\EditView\AudioTrackRegionEditComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\AudioTrackComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\PlayListItemComponent.cpp"/>
@@ -192,14 +196,17 @@
     <ClCompile Include="..\..\Source\Interface\Components\HeaderPanel\HeaderComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackContainerComponent.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MainComponent.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Models\RegionContainerModel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Models\ArrangementModel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\TableRegionLabel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\SubGroupDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\DraggerControl.cpp"/>
@@ -209,6 +216,7 @@
     <ClCompile Include="..\..\Source\Interface\Controls\RegionSelector.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\RegionTableListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\AudioTrackListBox.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\AudioRegionView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\AudioResourceView.cpp"/>
@@ -3007,6 +3015,7 @@
     <ClInclude Include="..\..\Source\Application\AudiumMainWindow.h"/>
     <ClInclude Include="..\..\Source\Util\EngineAccess.h"/>
     <ClInclude Include="..\..\Source\Util\Preferences.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.h"/>
@@ -3042,6 +3051,8 @@
     <ClInclude Include="..\..\Source\Engine\Playback\Playback.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\PlaybackDefines.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\Voice.h"/>
+    <ClInclude Include="..\..\Source\Engine\PlayList\TransportLoop.h"/>
+    <ClInclude Include="..\..\Source\Engine\PlayList\LoopData.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListSchedulerData.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PositionableBase.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\SampleTimer.h"/>
@@ -3059,6 +3070,8 @@
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableContainerAction.h"/>
     <ClInclude Include="..\..\Source\Engine\AudiumEngine.h"/>
     <ClInclude Include="..\..\Source\Engine\ActionMessages.h"/>
+    <ClInclude Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.h"/>
+    <ClInclude Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\UIContext.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutWindowComponent.h"/>
@@ -3068,7 +3081,6 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\ExportAudioComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\NewRegionDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SettingsDialog.h"/>
-    <ClInclude Include="..\..\Source\Interface\AudiumLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\ColourIds.h"/>
     <ClInclude Include="..\..\Source\Interface\Widgets\audium_AudioThumbnail.h"/>
     <ClInclude Include="..\..\Source\Interface\Widgets\audium_ListBox.h"/>
@@ -3093,11 +3105,11 @@
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionsPerTrackContainerComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MainComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Models\RegionContainerModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Models\ArrangementModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\ChannelGroupListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\ChannelSubGroupListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.h"/>
@@ -3106,6 +3118,10 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\TableRegionLabel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DefaultLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AudiumLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DragZoomControl.h"/>
@@ -3115,12 +3131,13 @@
     <ClInclude Include="..\..\Source\Interface\Controls\RegionEditControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LevelMeter.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h"/>
-    <ClInclude Include="..\..\Source\Interface\Controls\PlayPositionMarker.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\PositionMarker.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionSelector.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionTableListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\TransportPositionControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AudioTrackListBox.h"/>
+    <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\ArrangementOverview.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\WaveFormViewBase.h"/>

@@ -1,24 +1,19 @@
-/*
-  ==============================================================================
-
-    ZoomHandler.h
-    Created: 17 Mar 2023 11:14:43am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 #include <memory>
 #include <JuceHeader.h>
+#include "Engine/PlayList/PlayListScheduler.h"
 
-class PlayListScheduler;
 class SnapToGridHandler;
 
 class ZoomHandler : private juce::Timer {
     
 public:
-    ZoomHandler(std::shared_ptr<PlayListScheduler> playListScheduler,
+    ZoomHandler(std::shared_ptr<audium::PlayListScheduler> playListScheduler,
                 std::shared_ptr<SnapToGridHandler> snapToGridHandler);
     ~ZoomHandler() override;
     
@@ -96,7 +91,7 @@ public:
     
     void timerCallback() override;
     
-    std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
+    std::shared_ptr<audium::PlayListScheduler> getPlayListScheduler() const { return playListScheduler; }
     
     std::shared_ptr<SnapToGridHandler> getSnapToGridHandler() const { return snapToGridHandler; }
     
@@ -117,7 +112,7 @@ public:
     
 private:
         
-    std::shared_ptr<PlayListScheduler> playListScheduler;
+    std::shared_ptr<audium::PlayListScheduler> playListScheduler;
     
     std::shared_ptr<SnapToGridHandler> snapToGridHandler;
 

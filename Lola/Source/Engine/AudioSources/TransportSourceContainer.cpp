@@ -1,18 +1,15 @@
-/*
-  ==============================================================================
-
-    TransportSourceContainer.cpp
-    Created: 14 Jun 2023 6:12:34pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "TransportSourceContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Playback/Playback.h"
+
+namespace audium {
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(AudioResource& audioResource,
                                                                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
@@ -29,6 +26,18 @@ bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTrans
     return std::erase_if(audioTransportSources, [audioTransportSource](const auto& item) {
         return item == audioTransportSource;
     }) > 0;
+}
+
+std::vector<std::shared_ptr<AudiumTransportSource>> TransportSourceContainer::getTransportSourcesForResource(const AudioResource &resource) const
+{
+    std::vector<std::shared_ptr<AudiumTransportSource>> result;
+    
+    for (auto transportSource : audioTransportSources) {
+        
+        if (&transportSource->getAudioResource() == &resource)
+            result.push_back(transportSource);
+    }
+    return result;
 }
 
 void TransportSourceContainer::cleanup()
@@ -63,7 +72,7 @@ int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTran
     auto it = std::find(audioTransportSources.begin(), audioTransportSources.end(), searchObject);
     if (it != audioTransportSources.end())
         return static_cast<int>(std::distance(audioTransportSources.begin(), it));
-
+    
     return -1;
 }
 
@@ -74,3 +83,5 @@ void TransportSourceContainer::applyChannelMapping()
         transportSource->applyChannelMapping();
     }
 }
+
+} // namespace audium

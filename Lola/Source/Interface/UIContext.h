@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    UIContext.h
-    Created: 27 Oct 2024 9:47:54am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 

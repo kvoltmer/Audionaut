@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    ExportAudioComponent.h
-    Created: 28 Oct 2024 12:02:03pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -21,7 +16,7 @@
 class ExportAudioComponent  : public juce::Component, public juce::Label::Listener
 {
 public:
-    ExportAudioComponent(std::shared_ptr<AudiumEngine> engine) :
+    ExportAudioComponent(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
     {
         setSize(300, 100);
@@ -39,7 +34,7 @@ public:
     void resized() override
     {
                 
-        Rectangle<int> r (proportionOfWidth (0.5f), 20, proportionOfWidth (0.4f), 3000);
+        juce::Rectangle<int> r(proportionOfWidth(0.5f), 20, proportionOfWidth(0.4f), 3000);
         
         const int h = 23;
         const int space = h / 4;
@@ -137,7 +132,7 @@ public:
     
 private:
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     const std::vector<double> availableSampleRates = {
         22050.0,

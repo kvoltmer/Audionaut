@@ -1,11 +1,16 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
+
 #pragma once
 
 #include <JuceHeader.h>
 
-class AudiumTransportSource;
-
 namespace audium
 {
+
+class AudiumTransportSource;
 
 class Voice
 {

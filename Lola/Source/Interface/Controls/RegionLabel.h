@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    RegionNameTextEditor.h
-    Created: 8 Jun 2023 5:45:45pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -28,15 +23,14 @@
 class RegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
-    RegionLabel(std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
-                std::shared_ptr<AudioRegionContainer> audioRegionContainer_,
+    RegionLabel(std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer_,
                 int columnId_,
                 int rowNumber_) :
         columnId(columnId_),
         rowNumber(rowNumber_),
-        audioTrackContainer(audioTrackContainer_),
-        audioRegionContainer(audioRegionContainer_)
-    {
+        audioTrackContainer(audioTrackContainer_)
+{
+        setMinimumHorizontalScale(1.f);
         setEditable (false, true, false);
         update (columnId, rowNumber, false);
         setFont (juce::FontOptions (13.00f));
@@ -48,14 +42,9 @@ public:
         removeListener(this);
     }
         
-    const std::shared_ptr<AudioRegion> getRegion(int rowNumber) const
+    const std::shared_ptr<audium::AudioRegion> getRegion(int rowNumber) const
     {
-        if (audioRegionContainer != nullptr) {
-            return audioRegionContainer->getRegion(rowNumber);
-        }
-        else {
-            return audioTrackContainer->getAudioRegionAdapter().getRegion(rowNumber);
-        }
+        return audioTrackContainer->getAudioRegionAdapter().getRegion(rowNumber);
     }
     
     void update(int columnId, int rowNumber, bool isSelected)
@@ -149,8 +138,7 @@ private:
     int columnId;
     int rowNumber;
     
-    std::shared_ptr<AudioTrackContainer> audioTrackContainer;
-    std::shared_ptr<AudioRegionContainer> audioRegionContainer;
+    std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RegionLabel)
 };

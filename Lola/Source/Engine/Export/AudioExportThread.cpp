@@ -1,17 +1,14 @@
-/*
-  ==============================================================================
-
-    AudioExportThread.cpp
-    Created: 31 Oct 2024 9:40:47am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioExportThread.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace juce;
+
+namespace audium {
 
 std::string formatInteger(long num) {
     std::ostringstream oss;
@@ -19,16 +16,16 @@ std::string formatInteger(long num) {
     return oss.str();
 };
 
-void AudioExportThread::bounceToFile(audium::ExportAudioConfig &theConfiguration)
+void AudioExportThread::bounceToFile(ExportAudioConfig &theConfiguration)
 {
     config = theConfiguration;
     
     audiumEngine.setBypass(true);
     audiumEngine.getPlayListScheduler()->prepareToPlay(config.blockSize, config.sampleRate);
-        
+    
     TemporaryFile tempFile (config.fileName);
     std::unique_ptr<OutputStream> outStream (tempFile.getFile().createOutputStream());
-
+    
     if (outStream != nullptr) {
         const StringPairArray metadata;
         WavAudioFormat wav;
@@ -40,7 +37,7 @@ void AudioExportThread::bounceToFile(audium::ExportAudioConfig &theConfiguration
             audiumEngine.getPlayListScheduler()->bounceToFile(writer.get(), config, [this](void) {
                 setProgress(this->config.progress);
             });
-
+            
             writer.reset();
             tempFile.overwriteTargetFileWithTemporary();
         }
@@ -96,3 +93,5 @@ void AudioExportThread::bounceToFile(audium::ExportAudioConfig &theConfiguration
     }
     audiumEngine.setBypass(false);
 }
+
+} // namespace audium

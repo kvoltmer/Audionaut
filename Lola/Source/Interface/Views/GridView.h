@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    GridView.h
-    Created: 5 Mar 2024 10:59:47am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -14,7 +9,7 @@
 
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -38,7 +33,7 @@ public:
         //std::cout << "GridView: " << getLocalBounds().getWidth() << " " << getLocalBounds().getHeight() << std::endl;
     }
     
-    void paintTimeLineInBeats(juce::Graphics& g, Rectangle<float> rectangle)
+    void paintTimeLineInBeats(juce::Graphics& g, juce::Rectangle<float> rectangle)
     {
         auto range = zoomHandler->clocksToX(currentRangeClocks);
         
@@ -47,7 +42,7 @@ public:
         auto x = rectangle.getX();
         for (auto i = 0; i < segmentResult.numSegments; i++)
         {
-            Rectangle<float> rect(x, rectangle.getY(), 1.f, rectangle.getHeight());
+            juce::Rectangle<float> rect(x, rectangle.getY(), 1.f, rectangle.getHeight());
             
             if (!range.isEmpty() &&
                 !juce::ModifierKeys::currentModifiers.isShiftDown() &&

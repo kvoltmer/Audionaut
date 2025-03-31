@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    SelectableObjectContainer.h
-    Created: 6 Oct 2024 10:54:16am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -57,8 +52,10 @@ public:
     }
     
     void cleanup() {
-        for (auto object : objects)
-            object->cleanup();
+        for (auto object : objects) {
+            if (object != nullptr)
+                object->cleanup();
+        }
         objects.clear();
     }
     
@@ -101,7 +98,36 @@ public:
         return -1;
     }
     
+    void resize(std::size_t size)
+    {
+        objects.resize(size);
+    }
+    
     std::vector<std::shared_ptr<ElementType>> objects;
 };
+
+
+
+template<typename C>
+void MoveItemBefore(C& container, size_t currentIndex, size_t indexOfItemToPlaceBefore)
+{
+    if( currentIndex == indexOfItemToPlaceBefore ) return;
+    
+    jassert( juce::isPositiveAndBelow((int)currentIndex, (int)container.size() ));
+    jassert( juce::isPositiveAndBelow((int)indexOfItemToPlaceBefore, (int)container.size() + 1 ));
+    
+    if (currentIndex < indexOfItemToPlaceBefore)
+    {
+        std::rotate(container.begin() + currentIndex,
+                    container.begin() + currentIndex + 1,
+                    container.begin() + indexOfItemToPlaceBefore);
+    }
+    else
+    {
+        std::rotate(container.begin() + indexOfItemToPlaceBefore,
+                    container.begin() + currentIndex,
+                    container.begin() + currentIndex + 1);
+    }
+}
 
 } // namespace audium

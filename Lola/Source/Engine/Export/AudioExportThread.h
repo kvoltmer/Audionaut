@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioExportThread.h
-    Created: 31 Oct 2024 9:40:47am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -14,28 +9,32 @@
 
 #include "Engine/AudiumEngine.h"
 
+namespace audium {
+
 class AudioExportThread  : public juce::ThreadWithProgressWindow
 {
 public:
     AudioExportThread(AudiumEngine &audiumEngine_,
-                      audium::ExportAudioConfig &config_) :
-        juce::ThreadWithProgressWindow ("exporting...", true, true),
-        audiumEngine(audiumEngine_),
-        config(config_)
+                      ExportAudioConfig &config_) :
+    juce::ThreadWithProgressWindow ("exporting...", true, true),
+    audiumEngine(audiumEngine_),
+    config(config_)
     {
     }
-
+    
     void run()
     {
         bounceToFile(config);
     }
     
     
-    void bounceToFile(audium::ExportAudioConfig &config);
-
+    void bounceToFile(ExportAudioConfig &config);
+    
 private:
     
     AudiumEngine &audiumEngine;
-    audium::ExportAudioConfig &config;
+    ExportAudioConfig &config;
 };
+
+} // namespace audium
 

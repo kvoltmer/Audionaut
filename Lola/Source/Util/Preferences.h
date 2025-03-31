@@ -1,4 +1,7 @@
-
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -10,6 +13,7 @@ class Preferences
 {
 public:
     Preferences() = default;
+    ~Preferences() = default;
     
     static String getRegPath();
     
@@ -34,6 +38,7 @@ public:
 
     static String s_RegistryName;
 
+
 private:
     
     
@@ -45,4 +50,7 @@ namespace PreferenceKeys
     static const char* const initialOpenDirectory = "InitialOpenDirectory";
     static const char* const initialSaveDirectory = "InitialSaveDirectory";
     static const char* const recentFiles = "RecentProjectFiles";
+    static const char* const audioDeviceSettings = "AudioDeviceSettings";
+    static const char* const mainWindowState = "MainWindowState";
+
 }

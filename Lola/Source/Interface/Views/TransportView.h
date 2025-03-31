@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    TransportView.h
-    Created: 23 Jun 2023 4:07:39pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -22,15 +17,14 @@ public:
     TransportView(std::shared_ptr<ZoomHandler> zoomHandler) :
         zoomHandler(zoomHandler)
     {
-        setInterceptsMouseClicks(false, true);
-        setOpaque(true);
+        setInterceptsMouseClicks(false, false);
     }
 
     ~TransportView() override
     {
     }
 
-    void paintTimeLineInMinutesSeconds(juce::Graphics& g, Rectangle<float> rectangle)
+    void paintTimeLineInMinutesSeconds(juce::Graphics& g, juce::Rectangle<float> rectangle)
     {
         // draw the timeline in Min::Sec
         auto segmentResult = zoomHandler->segmentsForWidth(rectangle.getWidth(), ZoomHandler::seconds);
@@ -41,12 +35,12 @@ public:
         for (auto i = 0; i < segmentResult.numSegments; i++)
         {
             g.setColour (gridColour);
-            g.fillRect(Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
+            g.fillRect(juce::Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
             
             // draw text
             g.setColour (textColour);
             g.setFont (12.0f);
-            Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
+            juce::Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
             g.drawText (ZoomHandler::secondsToFormattedString(seconds), bonds, juce::Justification::centredLeft, true);
             
             x += segmentResult.itemWidth;
@@ -54,7 +48,7 @@ public:
         }
     }
     
-    void paintTimeLineInBars(juce::Graphics& g, Rectangle<float> rectangle)
+    void paintTimeLineInBars(juce::Graphics& g, juce::Rectangle<float> rectangle)
     {
         auto segmentResult = zoomHandler->segmentsForWidth(rectangle.getWidth(), ZoomHandler::bars);
         auto x = rectangle.getX();
@@ -64,12 +58,12 @@ public:
         for (auto i = 0; i < segmentResult.numSegments; i++)
         {
             g.setColour (gridColour);
-            g.fillRect(Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
+            g.fillRect(juce::Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
             
             // draw text
             g.setColour (textColour);
             g.setFont (12.0f);
-            Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
+            juce::Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
             g.drawText (String(bars), bonds, juce::Justification::centredLeft, true);
             
             x += segmentResult.itemWidth;
@@ -79,8 +73,6 @@ public:
     
     void paint (juce::Graphics& g) override
     {
-        // background
-        g.fillAll(findColour(audium::backgroundColourId));
         
         auto bounds = getLocalBounds().toFloat();
         //std::cout << "TransportView: " << getLocalBounds().getWidth() << " " << getLocalBounds().getHeight() << std::endl;

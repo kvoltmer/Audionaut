@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    PlayListTableListBoxModel.h
-    Created: 28 Jun 2023 1:57:11pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -28,8 +23,8 @@ class PlayListTableListBoxModel : public juce::TableListBoxModel {
     
 public:
     PlayListTableListBoxModel(std::shared_ptr<PlayListTableListBox> listBox,
-                              std::shared_ptr<AudiumEngine> engine,
-                              std::shared_ptr<AudioTrack> track) :
+                              std::shared_ptr<audium::AudiumEngine> engine,
+                              std::shared_ptr<audium::AudioTrack> track) :
         listBox(listBox),
         audiumEngine(engine),
         audioTrack(track)
@@ -38,7 +33,8 @@ public:
     
     int getNumRows() override
     {
-        return audiumEngine->getPlayListContainer(audioTrack)->getNumItems();
+        auto num = audioTrack->getPlayListContainer()->getNumItems();
+        return num;
     }
 
     void paintRowBackground (juce::Graphics& g,
@@ -63,19 +59,13 @@ public:
     juce::Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        if (existingComponentToUpdate == nullptr)
-        {
-//            auto items = audiumEngine->getPlayListContainer(audioTrack)->getPlayListItems();
-//            const PlayListItem* const p = items[rowNumber].get();
-            {
-                return new PlayListTableListBoxItem(this, columnId, rowNumber);
-            }
+        if (existingComponentToUpdate == nullptr) {
+            return new PlayListTableListBoxItem(this, columnId, rowNumber);
+            
         }
-        else
-        {
+        else {
             auto component = dynamic_cast<PlayListTableListBoxItem*>(existingComponentToUpdate);
-            if (component != nullptr)
-            {
+            if (component != nullptr) {
                 component->update(columnId, rowNumber, isRowSelected);
                 return component;
             }
@@ -104,21 +94,23 @@ public:
     {
         listBox->deselectAllRows();
         audioTrack->getPlayListContainer()->playListItems.selectAllObjects(false);
-        audioTrack->getAudioTrackContainer().sendActionMessage(updateAll);
+        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateAll);
     }
 
     
     std::shared_ptr<PlayListTableListBox> listBox;
     
-    std::shared_ptr<PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioTrack); }
-    std::shared_ptr<PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
+    std::shared_ptr<audium::AudiumEngine> getAudiumEngine() const { return audiumEngine; }
+    std::shared_ptr<audium::PlayListContainer> getPlayListContainer() const { return audiumEngine->getPlayListContainer(audioTrack); }
+    std::shared_ptr<audium::PlayListScheduler> getPlayListScheduler() const { return audiumEngine->getPlayListScheduler(); }
     
-    std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
+    void setAudioTrack(std::shared_ptr<audium::AudioTrack> audioTrack_) { audioTrack = audioTrack_; }
+    std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
     
 private:
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListTableListBoxModel)
 };

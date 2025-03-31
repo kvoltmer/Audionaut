@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudiumFactory.h
-    Created: 27 Jun 2023 10:41:00am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -18,28 +13,32 @@
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 
+namespace audium {
+
 class AudioResourceFactory {
     
 public:
     AudioResourceFactory() = default;
     
     static std::shared_ptr<AudioResource> createAudioResource(juce::URL url,
+                                                              std::shared_ptr<juce::AudioFormatReader> reader,
                                                               AudioResourceContainer& audioResourceContainer,
                                                               std::shared_ptr<AudioTrack> track,
                                                               std::shared_ptr<AudioSubGroup> subGroup,
-                                                              int channelPosition,
-                                                              std::shared_ptr<juce::AudioFormatReader> reader)
+                                                              int destChannel,
+                                                              int sourceChannel)
     {
         return std::make_shared<AudioResource>(audioResourceContainer,
                                                track,
                                                subGroup,
                                                url,
-                                               channelPosition,
-                                               reader);
+                                               reader,
+                                               destChannel,
+                                               sourceChannel);
     }
     
     static std::shared_ptr<juce::AudioFormatReader> createAudioFormatReader(juce::URL url,
-                                                                      juce::AudioFormatManager& formatManager)
+                                                                            juce::AudioFormatManager& formatManager)
     {
         if (auto audioFormat = formatManager.findFormatForFileExtension(url.getLocalFile().getFileExtension())) {
             
@@ -63,3 +62,5 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceFactory)
 };
+
+} // namespace audium

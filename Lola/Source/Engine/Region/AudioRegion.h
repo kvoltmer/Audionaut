@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioRegion.h
-    Created: 30 May 2023 10:16:15am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 #include <JuceHeader.h>
@@ -17,12 +12,13 @@
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
 
+namespace audium {
+
 class AudioTrack;
 class AudioResource;
 class TempoProvider;
 class AudioSubGroup;
 
-//==============================================================================
 class AudioRegion : public audium::Streamable, public audium::Selectable
 {    
     
@@ -30,16 +26,16 @@ public:
     AudioRegion(std::shared_ptr<AudioTrack> audioTrack,
                 std::shared_ptr<AudioSubGroup> audioSubGroup,
                 std::shared_ptr<TempoProvider> tempoProvider,
-                std::shared_ptr<audium::SelectionManager> selectionManager) :
-        audium::Selectable(selectionManager),
-        audioTrack(audioTrack),
-        audioSubGroup(audioSubGroup),
-        tempoProvider(tempoProvider)
+                std::shared_ptr<SelectionManager> selectionManager) :
+    audium::Selectable(selectionManager),
+    audioTrack(audioTrack),
+    audioSubGroup(audioSubGroup),
+    tempoProvider(tempoProvider)
     {
         jassert(audioTrack != nullptr);
     }
     
-    ~AudioRegion();
+    ~AudioRegion() = default;
     
     void sendActionMessage (const juce::String& message) const;
     
@@ -73,6 +69,12 @@ public:
     
     bool deleteAssociatedItems();
     
+    // gain [linear value range]
+    void setGain(int channel, double newGain, bool continous = false);
+    double getGain(int channel) const;
+    
+    void onDeleteChannel(int channel);
+    
     AudioRegionData data;
     
 private:
@@ -84,3 +86,4 @@ private:
     JUCE_LEAK_DETECTOR (AudioRegion)
 };
 
+} // namespace audium

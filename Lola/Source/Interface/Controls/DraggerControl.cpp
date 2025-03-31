@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    DraggerControl.cpp
-    Created: 28 Nov 2024 4:11:04pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Interface/Controls/DraggerControl.h"
 
@@ -53,19 +48,20 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
 
 void DraggerControl::mouseDrag (const juce::MouseEvent& e)
 {
-
+    auto container = juce::DragAndDropContainer::findParentDragContainerFor(componentToDrag);
+    auto dragActive = (container != nullptr && container->isDragAndDropActive());
+    auto dragVertrically = (std::abs(e.getDistanceFromDragStartY()) > 20 && std::abs(e.getDistanceFromDragStartX()) < 20);
+    
     beginDragAutoRepeat(40);
     autoScrollOffset += zoomHandler->autoScroll(e);
 
-    
-    if (e.mods.isAltDown())
-    {
-        if (juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(componentToDrag))
-        {
+    if (e.mods.isAltDown() ||
+        dragVertrically) {
+
+        if (container != nullptr)
             container->startDragging("DraggerControl", componentToDrag);
-        }
     }
-    else
+    else if (!dragActive)
     {
         auto distance = e.getOffsetFromDragStart() + autoScrollOffset;
         
@@ -125,7 +121,7 @@ bool DraggerControl::keyPressed (const KeyPress& key, Component* originatingComp
     else
     {
         // send update to redraw
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
         return false;
     }
 }
@@ -141,7 +137,7 @@ void DraggerControl::commitData(const juce::Range<double> newData, audium::TimeC
     commitPositionData(*positionableObject.get(), newData, context);
 }
 
-bool DraggerControl::commitPositionData(const PositionableBase &positionableBase,
+bool DraggerControl::commitPositionData(const audium::PositionableBase &positionableBase,
                                         const juce::Range<double> newRange,
                                         const audium::TimeContextType context)
 {
@@ -155,7 +151,7 @@ bool DraggerControl::commitPositionData(const PositionableBase &positionableBase
             diff = newRange.getStart() - positionableBase.getAbsolutePosition(context);
             if (std::abs(diff) > 0.0) {
                 for (auto item : selectedItems) {
-                    if (auto pItem = dynamic_cast<PositionableBase*>(item.get()))
+                    if (auto pItem = dynamic_cast<audium::PositionableBase*>(item.get()))
                         pItem->moveAbsoluteStartPosition(diff, context);
                 }
             }
@@ -165,7 +161,7 @@ bool DraggerControl::commitPositionData(const PositionableBase &positionableBase
             diff = newRange.getLength() - positionableBase.getRegionData(context).getLength();
             if (std::abs(diff) > 0.0) {
                 for (auto item : selectedItems) {
-                    if (auto pItem = dynamic_cast<PositionableBase*>(item.get()))
+                    if (auto pItem = dynamic_cast<audium::PositionableBase*>(item.get()))
                         pItem->moveLength(diff, context);
                 }
             }
@@ -175,7 +171,7 @@ bool DraggerControl::commitPositionData(const PositionableBase &positionableBase
             diff = newRange.getStart() - positionableBase.getAbsolutePosition(context);
             if (std::abs(diff) > 0.0) {
                 for (auto item : selectedItems) {
-                    if (auto pItem = dynamic_cast<PositionableBase*>(item.get()))
+                    if (auto pItem = dynamic_cast<audium::PositionableBase*>(item.get()))
                         pItem->moveAbsolutePosition(diff, context);
                 }
             }
@@ -186,9 +182,19 @@ bool DraggerControl::commitPositionData(const PositionableBase &positionableBase
     
     if (std::abs(diff) > 0.0)
     {
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
         return true;
     }
     
     return false;
+}
+
+void DraggerControl::setComponentToDrag(juce::Component* comp)
+{
+    componentToDrag = comp;
+}
+
+void DraggerControl::setPositionableObject(std::shared_ptr<audium::PositionableBase> object)
+{
+    positionableObject = object;
 }

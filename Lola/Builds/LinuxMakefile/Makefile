@@ -39,9 +39,9 @@ ifeq ($(CONFIG),Debug)
     TARGET_ARCH := 
   endif
 
-  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DDEBUG=1" "-D_DEBUG=1" "-DJUCE_PROJUCER_VERSION=0x80004" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=0.9.3" "-DJUCE_APP_VERSION_HEX=0x903" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/juce/modules -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
+  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DDEBUG=1" "-D_DEBUG=1" "-DJUCE_PROJUCER_VERSION=0x80004" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.0.0" "-DJUCE_APP_VERSION_HEX=0x10000" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/juce/modules -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=0" "-DJucePlugin_Build_Unity=0" "-DJucePlugin_Build_LV2=0"
-  JUCE_TARGET_APP := Lola
+  JUCE_TARGET_APP := Audionaut
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -g -ggdb -O0 $(CFLAGS)
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++20 $(CXXFLAGS)
@@ -60,9 +60,9 @@ ifeq ($(CONFIG),Release)
     TARGET_ARCH := 
   endif
 
-  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DNDEBUG=1" "-DJUCE_PROJUCER_VERSION=0x80004" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=0.9.3" "-DJUCE_APP_VERSION_HEX=0x903" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/juce/modules -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
+  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DNDEBUG=1" "-DJUCE_PROJUCER_VERSION=0x80004" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.0.0" "-DJUCE_APP_VERSION_HEX=0x10000" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/juce/modules -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=0" "-DJucePlugin_Build_Unity=0" "-DJucePlugin_Build_LV2=0"
-  JUCE_TARGET_APP := Lola
+  JUCE_TARGET_APP := Audionaut
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -O3 $(CFLAGS)
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++20 $(CXXFLAGS)
@@ -98,6 +98,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioBusRenderer_7f6f5a1d.o \
   $(JUCE_OBJDIR)/Playback_61ca68b.o \
   $(JUCE_OBJDIR)/Voice_f531b98c.o \
+  $(JUCE_OBJDIR)/TransportLoop_f6f3bb5e.o \
   $(JUCE_OBJDIR)/PositionableBase_8b3640ed.o \
   $(JUCE_OBJDIR)/PlayListContainer_29209da0.o \
   $(JUCE_OBJDIR)/PlayListItem_8cc1eb1e.o \
@@ -108,14 +109,17 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioResourceContainer_8bac313a.o \
   $(JUCE_OBJDIR)/ChannelMapping_6a0229a8.o \
   $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o \
+  $(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o \
+  $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o \
   $(JUCE_OBJDIR)/AutoEditComponent_2f86d78b.o \
-  $(JUCE_OBJDIR)/AudiumLookAndFeel_49c84718.o \
   $(JUCE_OBJDIR)/ColourIds_54ae2f37.o \
   $(JUCE_OBJDIR)/audium_AudioThumbnail_f5797f4f.o \
   $(JUCE_OBJDIR)/audium_ListBox_b1d2231e.o \
   $(JUCE_OBJDIR)/SnapToGridHandler_51ca2978.o \
   $(JUCE_OBJDIR)/ZoomHandler_aafc8870.o \
   $(JUCE_OBJDIR)/ChannelComponent_2fdebb65.o \
+  $(JUCE_OBJDIR)/ChannelGroupHeaderComponent_57dc7e93.o \
+  $(JUCE_OBJDIR)/ChannelsComponent_c4a4038c.o \
   $(JUCE_OBJDIR)/AudioTrackRegionEditComponent_9d9cc7ae.o \
   $(JUCE_OBJDIR)/AudioTrackComponent_e9b51eee.o \
   $(JUCE_OBJDIR)/PlayListItemComponent_669a79e.o \
@@ -123,14 +127,17 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/HeaderComponent_9265485e.o \
   $(JUCE_OBJDIR)/PlayListComponent_101ef568.o \
   $(JUCE_OBJDIR)/PlayListContainerComponent_413ee6bb.o \
-  $(JUCE_OBJDIR)/RegionsPerTrackComponent_e699d4dd.o \
-  $(JUCE_OBJDIR)/RegionsPerTrackContainerComponent_b31f9ae6.o \
+  $(JUCE_OBJDIR)/RegionContainerComponent_6eb1283d.o \
   $(JUCE_OBJDIR)/RightPanelComponent_683d1bd2.o \
   $(JUCE_OBJDIR)/MainComponent_892e8d2a.o \
-  $(JUCE_OBJDIR)/RegionContainerModel_2f57bfcc.o \
+  $(JUCE_OBJDIR)/ArrangementModel_98e76acf.o \
+  $(JUCE_OBJDIR)/TrackRegionTableListBoxModel_9dc83d7b.o \
   $(JUCE_OBJDIR)/AudioTrackListBoxModel_e0f725e1.o \
   $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o \
   $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o \
+  $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o \
+  $(JUCE_OBJDIR)/TableRegionLabel_60f1076.o \
+  $(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
   $(JUCE_OBJDIR)/SubGroupDraggerControl_b7bb6220.o \
   $(JUCE_OBJDIR)/DraggerControl_f198dea1.o \
@@ -140,6 +147,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/RegionSelector_50640af7.o \
   $(JUCE_OBJDIR)/RegionTableListBox_80e14e37.o \
   $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o \
+  $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o \
   $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o \
   $(JUCE_OBJDIR)/AudioRegionView_e0200259.o \
   $(JUCE_OBJDIR)/AudioResourceView_821376b3.o \
@@ -170,7 +178,7 @@ all : $(JUCE_OUTDIR)/$(JUCE_TARGET_APP)
 $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) : $(OBJECTS_APP) $(JUCE_OBJDIR)/execinfo.cmd $(RESOURCES)
 	@command -v $(PKG_CONFIG) >/dev/null 2>&1 || { echo >&2 "pkg-config not installed. Please, install it."; exit 1; }
 	@$(PKG_CONFIG) --print-errors alsa freetype2 fontconfig libcurl
-	@echo Linking "Lola - App"
+	@echo Linking "Audionaut - App"
 	-$(V_AT)mkdir -p $(JUCE_BINDIR)
 	-$(V_AT)mkdir -p $(JUCE_LIBDIR)
 	-$(V_AT)mkdir -p $(JUCE_OUTDIR)
@@ -306,6 +314,11 @@ $(JUCE_OBJDIR)/Voice_f531b98c.o: ../../Source/Engine/Playback/Voice.cpp
 	@echo "Compiling Voice.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/TransportLoop_f6f3bb5e.o: ../../Source/Engine/PlayList/TransportLoop.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling TransportLoop.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/PositionableBase_8b3640ed.o: ../../Source/Engine/PlayList/PositionableBase.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling PositionableBase.cpp"
@@ -356,14 +369,19 @@ $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o: ../../Source/Engine/AudiumEngine.cpp
 	@echo "Compiling AudiumEngine.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o: ../../Source/Interface/LookAndFeel/AudiumLookAndFeel.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AudiumLookAndFeel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o: ../../Source/Interface/LookAndFeel/TrackColourLookAndFeel.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling TrackColourLookAndFeel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/AutoEditComponent_2f86d78b.o: ../../Source/Interface/Dialogs/AutoEditComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AutoEditComponent.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/AudiumLookAndFeel_49c84718.o: ../../Source/Interface/AudiumLookAndFeel.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AudiumLookAndFeel.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/ColourIds_54ae2f37.o: ../../Source/Interface/ColourIds.cpp
@@ -394,6 +412,16 @@ $(JUCE_OBJDIR)/ZoomHandler_aafc8870.o: ../../Source/Interface/Handlers/ZoomHandl
 $(JUCE_OBJDIR)/ChannelComponent_2fdebb65.o: ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling ChannelComponent.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ChannelGroupHeaderComponent_57dc7e93.o: ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ChannelGroupHeaderComponent.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ChannelsComponent_c4a4038c.o: ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ChannelsComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudioTrackRegionEditComponent_9d9cc7ae.o: ../../Source/Interface/Components/MiddlePanel/EditView/AudioTrackRegionEditComponent.cpp
@@ -431,14 +459,9 @@ $(JUCE_OBJDIR)/PlayListContainerComponent_413ee6bb.o: ../../Source/Interface/Com
 	@echo "Compiling PlayListContainerComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/RegionsPerTrackComponent_e699d4dd.o: ../../Source/Interface/Components/RightPanel/RegionsPerTrackComponent.cpp
+$(JUCE_OBJDIR)/RegionContainerComponent_6eb1283d.o: ../../Source/Interface/Components/RightPanel/RegionContainerComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling RegionsPerTrackComponent.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/RegionsPerTrackContainerComponent_b31f9ae6.o: ../../Source/Interface/Components/RightPanel/RegionsPerTrackContainerComponent.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling RegionsPerTrackContainerComponent.cpp"
+	@echo "Compiling RegionContainerComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/RightPanelComponent_683d1bd2.o: ../../Source/Interface/Components/RightPanel/RightPanelComponent.cpp
@@ -451,9 +474,14 @@ $(JUCE_OBJDIR)/MainComponent_892e8d2a.o: ../../Source/Interface/Components/MainC
 	@echo "Compiling MainComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/RegionContainerModel_2f57bfcc.o: ../../Source/Interface/Models/RegionContainerModel.cpp
+$(JUCE_OBJDIR)/ArrangementModel_98e76acf.o: ../../Source/Interface/Models/ArrangementModel.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling RegionContainerModel.cpp"
+	@echo "Compiling ArrangementModel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/TrackRegionTableListBoxModel_9dc83d7b.o: ../../Source/Interface/Models/TrackRegionTableListBoxModel.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling TrackRegionTableListBoxModel.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudioTrackListBoxModel_e0f725e1.o: ../../Source/Interface/Models/AudioTrackListBoxModel.cpp
@@ -469,6 +497,21 @@ $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o: ../../Source/Interface/Model
 $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o: ../../Source/Interface/Models/RegionTableListBoxModel.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling RegionTableListBoxModel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o: ../../Source/Interface/Controls/LoopDraggerControl.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling LoopDraggerControl.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/TableRegionLabel_60f1076.o: ../../Source/Interface/Controls/TableRegionLabel.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling TableRegionLabel.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o: ../../Source/Interface/Controls/FadeInOutControl.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling FadeInOutControl.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o: ../../Source/Interface/Controls/PlayListItemDraggerControl.cpp
@@ -514,6 +557,11 @@ $(JUCE_OBJDIR)/RegionTableListBox_80e14e37.o: ../../Source/Interface/Controls/Re
 $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o: ../../Source/Interface/Controls/AudioTrackListBox.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AudioTrackListBox.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o: ../../Source/Interface/Views/FadeInOutView.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling FadeInOutView.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o: ../../Source/Interface/Views/WaveFormViewBase.cpp
@@ -637,11 +685,11 @@ $(JUCE_OBJDIR)/cxxfs.cmd:
 	$(V_AT)printf "int main() { return 0; }" | $(CXX) -x c++ -o $(@D)/cxxfs.x -lstdc++fs - >/dev/null 2>&1 && printf -- "-lstdc++fs" > "$@" || touch "$@"
 
 clean:
-	@echo Cleaning Lola
+	@echo Cleaning Audionaut
 	$(V_AT)$(CLEANCMD)
 
 strip:
-	@echo Stripping Lola
+	@echo Stripping Audionaut
 	-$(V_AT)$(STRIP) --strip-unneeded $(JUCE_OUTDIR)/$(JUCE_TARGET_APP)
 
 -include $(OBJECTS_APP:%.o=%.d)

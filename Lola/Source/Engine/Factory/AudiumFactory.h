@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudiumFactory.h
-    Created: 27 Jun 2023 10:41:00am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -16,7 +11,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 
-
+namespace audium {
 
 /// The Audium factory
 class AudiumFactory {
@@ -30,3 +25,5 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumFactory)
 };
+
+} // namespace audium

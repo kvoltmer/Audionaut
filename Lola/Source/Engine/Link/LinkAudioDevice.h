@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    LinkAudioDevice.h
-    Created: 25 Oct 2023 5:14:38pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -18,13 +13,14 @@
 #include <ableton/link/HostTimeFilter.hpp>
 #include "LinkEngine.hpp"
 
+namespace audium {
 
 class PlayListScheduler;
 class AudioResourceContainer;
 class TransportSourceContainer;
 
 class LinkAudioDevice : public juce::AudioIODeviceCallback {
-        
+    
 public:
     LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
                     std::shared_ptr<PlayListScheduler> playListScheduler);
@@ -36,7 +32,7 @@ public:
                                            int totalNumOutputChannels,
                                            int numSamples,
                                            const juce::AudioIODeviceCallbackContext& context) override;
-
+    
     
     void audioDeviceAboutToStart (juce::AudioIODevice* device) override;
     void audioDeviceStopped() override;
@@ -45,7 +41,7 @@ public:
     void stopPlaying();
     
     void setBypass(bool isByPass);
-            
+    
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
     
 private:
@@ -59,3 +55,5 @@ private:
     std::atomic<bool> byPass;
     
 };
+
+} // namespace audium

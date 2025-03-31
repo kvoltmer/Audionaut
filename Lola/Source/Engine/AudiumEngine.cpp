@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudiumEngine.cpp
-    Created: 29 Jan 2023 12:31:48pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
@@ -22,7 +17,10 @@
 
 #include "Interface/ColourIds.h"
 
+namespace audium {
+
 const char* AudiumEngine::projectFileExtension = ".audium";
+const char* AudiumEngine::projectFileName = "Project.json";
 juce::File AudiumEngine::projectDirectory = File();
 
 AudiumEngine::~AudiumEngine()
@@ -32,15 +30,35 @@ AudiumEngine::~AudiumEngine()
 
 void AudiumEngine::initialise()
 {
-    /** Resets everything to a default device setup, clearing any stored settings. */
-    auto result = audioDeviceManager->initialiseWithDefaultDevices (0, 2);
-    std::cout << result.toStdString() << std::endl;
+    auto numInputChannelsNeeded = 0;
+    auto numOutputChannelsNeeded = 2;
+    String result;
     
+    if (Preferences::valueExists(PreferenceKeys::audioDeviceSettings)) {
+        
+        juce::XmlDocument xml (Preferences::getValue(PreferenceKeys::audioDeviceSettings));
+        if (auto saveState = xml.getDocumentElement()) {
+            result = audioDeviceManager->initialise(numInputChannelsNeeded,
+                                                    numOutputChannelsNeeded,
+                                                    saveState.get(),
+                                                    true);
+        }
+    }
+    else {
+        result = audioDeviceManager->initialiseWithDefaultDevices (numInputChannelsNeeded,
+                                                                        numOutputChannelsNeeded);
+    }
+    std::cout << result.toStdString() << std::endl;
     audioDeviceManager->addAudioCallback(linkAudioDevice.get());
 }
 
 void AudiumEngine::uninitialise()
 {
+    
+    if (auto stateXml = audioDeviceManager->createStateXml()) {
+        Preferences::setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString());
+    }
+    
     undoManager->clearUndoHistory();
     audioDeviceManager->removeAudioCallback(linkAudioDevice.get());
     
@@ -51,11 +69,19 @@ void AudiumEngine::cleanup()
     audioTrackContainer->cleanup();
     audioResourceContainer->cleanup();
     undoManager->clearUndoHistory();
-    currentFile = File();
+    
+    currentProjectFile = File();
 }
 
 void AudiumEngine::createNewProject()
 {
+    // remove temp files
+    if (projectDirectory.isAChildOf(File::getSpecialLocation(File::tempDirectory))) {
+        projectDirectory.deleteRecursively();
+    }
+    projectDirectory = File();
+    AudioResourceContainer::createTemporaryProjectDirectory();
+    
     audium::WaveFormColours::resetWaveFormColour();
     for (auto i = 0; i < 1; i++) {
         auto track = audioTrackContainer->createNewAudioTrack("Track " + String(i+1));
@@ -65,82 +91,132 @@ void AudiumEngine::createNewProject()
     }
 }
 
-void AudiumEngine::openFile (const juce::File& file, std::function<void (bool,std::string)> callback)
+bool AudiumEngine::isJsonProjectFile(const juce::File &file)
+{
+    return (file.existsAsFile() &&
+            (file.hasFileExtension(projectFileExtension) ||
+             file.hasFileExtension(".json")));
+}
+
+bool AudiumEngine::isValidProjectStructure(const juce::File &file)
+{
+    return (file.isDirectory() &&
+            file.getFileName().endsWith(projectFileExtension) &&
+            File(file.getFullPathName() + File::getSeparatorString() + projectFileName).existsAsFile());
+}
+
+bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)> callback)
 {
     try
     {
-        if (file.exists() &&
-            file.hasFileExtension (projectFileExtension))
-        {
-            juce::FileInputStream inputStream(file);
-            if (inputStream.openedOk())
+        if (inFile == File()) {
+            // empty file means: user canceled -> do nothing
+            return true;
+        }
+        else if (getAudioResourceContainer()->getAudioFormatManager()->findFormatForFileExtension(inFile.getFileExtension())) {
+            // try to open an audio file
+            getAudioTrackContainer()->addAudioFiles({inFile.getFullPathName()},
+                                                    0.0,
+                                                    getPlayListScheduler()->isArrangementMode(),
+                                                    callback);
+            return true;
+        }
+        else {
+            
+            auto legacyStructure = isJsonProjectFile(inFile);
+            auto newStructure = isValidProjectStructure(inFile);
+            
+            if (legacyStructure ||
+                newStructure)
             {
-                projectDirectory = file.getParentDirectory();
-                if (readFromStream(inputStream, true))
-                {
-                    currentFile = file;
-                    undoManager->clearUndoHistory();
-                    playListScheduler->commitPlayListData();
-                    NullCheckedInvocation::invoke (callback, true, "");
-                    return;
+                if (newStructure)
+                    inFile = File(inFile.getFullPathName() + File::getSeparatorString() + projectFileName);
+                
+                juce::FileInputStream inputStream(inFile);
+                if (inputStream.openedOk()) {
+                    std::cout << "loading: " << inFile.getFullPathName() << std::endl;
+                    projectDirectory = inFile.getParentDirectory();
+                    if (readFromStream(inputStream, true)){
+                        currentProjectFile = inFile;
+                        undoManager->clearUndoHistory();
+                        playListScheduler->commitPlayListData();
+                        return true;
+                    }
                 }
             }
-            
-            // we failed to read :(
-            cleanup();
-            NullCheckedInvocation::invoke (callback, false, "unknown error");
-            
         }
+
+        
+        // we failed to read :(
+        NullCheckedInvocation::invoke (callback, "unknown error");
     }
     catch (std::exception &e)
     {
-        cleanup();
         std::cout << e.what() << std::endl;
-        NullCheckedInvocation::invoke (callback, false, e.what());
+        NullCheckedInvocation::invoke (callback, e.what());
     }
+    
+    cleanup();
+    createNewProject();
+    
+    return false;
     
 }
 
-void AudiumEngine::saveFile (const juce::File& file_, std::function<void (bool,std::string)> callback)
+bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::string)> callback)
 {
     try
     {
         auto file = file_;
         
-        if (! file.hasFileExtension (projectFileExtension))
-            file = juce::File(file.getFullPathName() + projectFileExtension);
+        if (!File(file).hasWriteAccess()) {
+            std::string errorString = "No write access. Please select a different location.";
+#if JUCE_MAC
+            errorString += "\n\n";
+            errorString += "As a 'Sandboxed App' you are only allowed to save files in the Music folder.";
+#endif
+            NullCheckedInvocation::invoke (callback, errorString);
+            return false;
+        }
         
         if (! file.exists())
             file.create();
         
+        // need to copy or move audio files?
+        auto sourceDirectory = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
+        jassert(sourceDirectory.exists());
+        auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(file.getParentDirectory());
+        if (sourceDirectory != destinationDirectory) {
+            AudioResourceContainer::copyOrMoveAudioFiles(sourceDirectory, destinationDirectory);
+            audioResourceContainer->changeAudioFilePaths(projectDirectory, file.getParentDirectory());
+        }
+        // assign new project directory
         projectDirectory = file.getParentDirectory();
         
         juce::TemporaryFile temp (file);
-            
         juce::FileOutputStream out (temp.getFile());
-
         if (out.failedToOpen()) {
-            NullCheckedInvocation::invoke (callback, false, out.getStatus().getErrorMessage().toStdString());
-            return;
+            NullCheckedInvocation::invoke (callback, out.getStatus().getErrorMessage().toStdString());
+            return false;
         }
-
+        
         if (writeToStream(out)) {
             if (temp.overwriteTargetFileWithTemporary()) {
-                currentFile = file;
+                currentProjectFile = file;
                 undoManager->clearUndoHistory();
-                NullCheckedInvocation::invoke (callback, true, "");
-                return;
+                return true;
             }
         }
         
         jassertfalse;
-        NullCheckedInvocation::invoke (callback, false, "unknown error");
+        NullCheckedInvocation::invoke (callback, "unknown error");
     }
     catch (std::exception &e)
     {
         std::cout << e.what() << std::endl;
-        NullCheckedInvocation::invoke (callback, false, e.what());
+        NullCheckedInvocation::invoke (callback, e.what());
     }
+    return false;
 }
 
 void AudiumEngine::setBypass(bool bypass)
@@ -165,7 +241,7 @@ bool AudiumEngine::readFromStream (juce::InputStream& inputStream, bool rebuild)
 bool AudiumEngine::writeToJson (json& output)
 {
     json jsonAudium;
-
+    
     audioTrackContainer->writeToJson(jsonAudium);
     
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
@@ -173,16 +249,17 @@ bool AudiumEngine::writeToJson (json& output)
     jsonAudium["ui_state"] = uiState;
     jsonAudium["scheduler"] = getPlayListScheduler()->data;
     output["audium"] = jsonAudium;
-
-    std::cout << std::setw(2) << output << std::endl;
+    
+    // std::cout << std::setw(2) << output << std::endl;
     return true;
 }
 
 bool AudiumEngine::readFromJson (json& input, bool rebuild)
 {
-    cleanup();
-    
+    // std::cout << std::setw(2) << input << std::endl;
     auto jsonAudium = input["audium"];
+    
+    cleanup(); // clear everything
     
     const auto tempo = jsonAudium["tempo"].template get<double>();
     if (jsonAudium.contains("file_version"))
@@ -212,11 +289,11 @@ int AudiumEngine::getSizeInUnits()
 void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> track)
 {
     jassertfalse;
-//    if (audioRegionContainer->getNumRegions(track.get()) == 0)
-//    {
-//        auto region = audioRegionContainer->createDefaultRegion(track);
-//        track->getPlayListContainer()->createPlayListItem(region);
-//    }
+    //    if (audioRegionContainer->getNumRegions(track.get()) == 0)
+    //    {
+    //        auto region = audioRegionContainer->createDefaultRegion(track);
+    //        track->getPlayListContainer()->createPlayListItem(region);
+    //    }
 }
 
 
@@ -235,7 +312,7 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     {
         // thread finished normally..
         config.bounceFileName = bounceConfig.fileName.getFullPathName().toStdString();
-      
+        
         std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioTrackContainer,
                                                         audioResourceContainer));
         if (autoEdit->invokeAutoEdit(config))
@@ -247,10 +324,12 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     {
         // user pressed the cancel button..
     }
-
+    
 }
 
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const
 {
     return track->getPlayListContainer();
 }
+
+} // namespace audium

@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudiumTransportSource.h
-    Created: 6 Oct 2023 11:38:55am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 #include <JuceHeader.h>
@@ -14,6 +9,7 @@
 #include "Engine/PlayList/SampleTimer.h"
 #include "Engine/AudioSources/audium_AudioTransportSource.h"
 
+namespace audium {
 
 #define MAX_AUDIO_FILE_CHANNELS 64
 
@@ -30,7 +26,7 @@ public:
     {
         audioTransportSource->setSource(nullptr);
     }
-
+    
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
     
     void releaseResources() override
@@ -38,7 +34,7 @@ public:
         if (mainSource != nullptr)
             mainSource->releaseResources();
     }
-
+    
     void schedulePosition (double newPosition, int startSample)
     {
         if (startSample == 0)
@@ -84,7 +80,7 @@ private:
     
     
     AudioResource& audioResource;
-        
+    
     // the sample position where the position change should happen
     std::atomic<int> scheduledStartSample = 0;
     // the scheduled position change
@@ -101,3 +97,5 @@ private:
     juce::AudioSource* mainSource = nullptr;
     
 };
+
+} // namespace audium 

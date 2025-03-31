@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    PlayListContainerComponent.cpp
-    Created: 10 Oct 2023 10:33:05am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
@@ -17,12 +12,13 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
-PlayListContainerComponent::PlayListContainerComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+PlayListContainerComponent::PlayListContainerComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
-    updateUI();
+    createComponents();
     startTimer(50);
 }
 
@@ -33,21 +29,27 @@ PlayListContainerComponent::~PlayListContainerComponent()
 
 void PlayListContainerComponent::updateUI(UIContext context)
 {
-    if (context == RebuildContext)
-    {
+    auto tracks = audiumEngine->getAudioTrackContainer()->getAudioTracks();
+    
+    if (context == RebuildContext ||
+        tracks.size() != playListComponents.size()) {
         createComponents();
         resized();
     }
-    
-    for (auto playListComponent : playListComponents)
-    {
-        if (context == SelectionContext)
-        {
-            playListComponent->updateSelection();
-        }
-        else
-        {
-            playListComponent->updateUI();
+    else {
+        auto i = 0;
+        for (auto track : tracks) {
+            
+            if (i < playListComponents.size()) {
+                
+                if (context == SelectionContext) {
+                    playListComponents[i]->updateSelection();
+                }
+                else {
+                    playListComponents[i]->updateUI(track);
+                }
+            }
+            i++;
         }
     }
 }
@@ -89,27 +91,24 @@ void PlayListContainerComponent::paint (juce::Graphics&)
 
 void PlayListContainerComponent::resized()
 {
+    auto footerHeight = AudiumLookAndFeel::tableHeaderHeight;
+    auto bounds = getLocalBounds();
+    bounds.removeFromBottom(footerHeight);
+    
     juce::FlexBox fb;
     fb.flexDirection = juce::FlexBox::Direction::row;
-
-    for (auto playListComponent : playListComponents)
-    {
-
+    
+    for (auto playListComponent : playListComponents) {
         fb.items.add (juce::FlexItem (*playListComponent.get()).withFlex (0, 1, getWidth()));
     }
-
-    
-    auto headerHeight = 25;
-    auto bounds = getLocalBounds();
-    bounds.removeFromBottom(headerHeight);
     fb.performLayout (bounds);
     
     auto width = bounds.getWidth() / 2;
     
-    juce::Rectangle<int> totalLengthBounds(0, bounds.getHeight(), width, headerHeight);
+    juce::Rectangle<int> totalLengthBounds(0, bounds.getHeight(), width, footerHeight);
     totalLengthLabel->setBounds(totalLengthBounds);
     
-    juce::Rectangle<int> numVoiceBounds(bounds.getWidth() - width, bounds.getHeight(), width, headerHeight);
+    juce::Rectangle<int> numVoiceBounds(bounds.getWidth() - width, bounds.getHeight(), width, footerHeight);
     numVoicesLabel->setBounds(numVoiceBounds);
 
 }
@@ -117,7 +116,7 @@ void PlayListContainerComponent::resized()
 void PlayListContainerComponent::timerCallback()
 {
     auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
-    totalLengthLabel->setText(TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
+    totalLengthLabel->setText(audium::TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
     
     auto numVoices = audiumEngine->getPlayListScheduler()->getPlayback()->getNumVoices();
     numVoicesLabel->setText("Voices " + juce::String(numVoices), juce::dontSendNotification);

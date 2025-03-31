@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioTrackBaseComponent.cpp
-    Created: 27 Nov 2023 12:23:48pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioTrackBaseComponent.h"
 
@@ -24,11 +19,8 @@
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 
-using namespace audium;
-
-
-AudioTrackBaseComponent::AudioTrackBaseComponent (std::shared_ptr<AudioTrack> track,
-                                        std::shared_ptr<AudiumEngine> audiumEngine,
+AudioTrackBaseComponent::AudioTrackBaseComponent (std::shared_ptr<audium::AudioTrack> track,
+                                        std::shared_ptr<audium::AudiumEngine> audiumEngine,
                                         std::shared_ptr<ZoomHandler> zoomHandler,
                                         std::shared_ptr<RegionSelector> regionSelector) :
     audioTrack(track),
@@ -40,14 +32,13 @@ AudioTrackBaseComponent::AudioTrackBaseComponent (std::shared_ptr<AudioTrack> tr
 
 void AudioTrackBaseComponent::paint (juce::Graphics& g)
 {
-    auto colour = findColour(audium::secondaryBackgroundColourId).brighter();
-    if (externalDragAndDrop)
-    {
+    
+    if (externalDragAndDrop) {
+        auto colour = findColour(audium::secondaryBackgroundColourId).brighter();
         g.fillAll (colour.withAlpha(0.5f));
     }
     
-    if (audioTrack->isSelected())
-    {
+    if (audioTrack->isSelected()) {
         g.setColour (juce::Colours::white.withAlpha(0.5f));
         g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 1.0f);
         
@@ -57,11 +48,7 @@ void AudioTrackBaseComponent::paint (juce::Graphics& g)
 
 void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
-    if ( !filenames.isEmpty())
-    {
-        // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
-                
+    if ( !filenames.isEmpty()) {
         auto position = zoomHandler->xToClocks(x);
         zoomHandler->snapToGrid(position);
         
@@ -72,12 +59,8 @@ void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x,
         };
         
         auto arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
-        if (audioTrack->addAudioFiles(filenames, position, arrangementMode, callback))
-        {
-            action->storeNewState();
-            audiumEngine->getUndoManager()->perform(action.release(), "File(s) dropped");
-            audiumEngine->getUndoManager()->beginNewTransaction();
-        }
+        audioTrack->addAudioFiles(filenames, position, arrangementMode, callback);
+ 
     }
     
     

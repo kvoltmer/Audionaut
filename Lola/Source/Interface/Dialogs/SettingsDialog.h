@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    SettingsDialog.h
-    Created: 1 Nov 2024 3:14:22pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 #include <iostream>
@@ -19,7 +14,7 @@ class SettingsDialog
 {
     
 public:
-    SettingsDialog(std::shared_ptr<AudiumEngine> engine) :
+    SettingsDialog(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
     {
         audioDeviceSelectorComponent = std::make_unique<AudioDeviceSelectorComponent>(*engine->getAudioDeviceManager().get(),
@@ -46,7 +41,7 @@ private:
     void invokeInternal(juce::Component* component)
     {
         mainComponent = component;
-        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Device Settings"),
+        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Audio Device Settings"),
                                                           "",
                                                           MessageBoxIconType::NoIcon, mainComponent);
         asyncAlertWindow->addCustomComponent(audioDeviceSelectorComponent.get());
@@ -73,7 +68,7 @@ private:
     std::unique_ptr<AlertWindow> asyncAlertWindow;
     std::unique_ptr<juce::AudioDeviceSelectorComponent> audioDeviceSelectorComponent;
 
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     juce::Component *mainComponent = nullptr;
     
     

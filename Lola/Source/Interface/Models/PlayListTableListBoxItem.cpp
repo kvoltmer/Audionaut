@@ -1,35 +1,28 @@
-/*
-  ==============================================================================
-
-    PlayListTableListBoxItem.cpp
-    Created: 30 Jun 2023 12:58:40pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "PlayListTableListBoxItem.h"
 #include "PlayListTableListBoxModel.h"
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Controls/RegionLabel.h"
+#include "Interface/Controls/TableRegionLabel.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
-    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        if (regionLabel->getRegion(regionLabel->getRowNumber()) &&
-            regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == playListModel->getAudioTrack())
-        {
-            // return true if source details match this track
-            return true;
-        }
-    }
-    else if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
+    if (dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
+    if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
     {
         if (item->getPlayListModel() == playListModel)
         {
@@ -95,22 +88,10 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
             modified = true;
         }
     }
-    else if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
+    else if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
+             dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
     {
-        auto selectedRegions = playListModel->getAudioTrack()->getAudioRegionContainer()->getSelectedRegions();
-        if (selectedRegions.size() == 0) {
-            jassertfalse;
-        }
-        if (selectedRegions.size() == 1) {
-            auto rowNumber = regionLabel->getRowNumber();
-            auto region = playListModel->getAudioTrack()->getAudioRegionContainer()->getRegion(rowNumber);
-            playListContainer->createPlayListItemUI(region, insertIndex);
-        }
-        else {
-            // multiple selection
-            playListContainer->createPlayListItemsUI(selectedRegions, insertIndex);
-        }
-        
+        playListModel->getAudioTrack()->dropSelectedAudioRegions(insertIndex);
         modified = true;
     }
     
@@ -119,7 +100,7 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
         // Undo: store new state
         action->storeNewState();
         // oh dear
-        auto undoManager = playListModel->getPlayListContainer()->getAudioRegionContainer().getUndoManager();
+        auto undoManager = playListModel->getAudiumEngine()->getUndoManager();
         undoManager->perform(action.release(), "Playlist changed");
         undoManager->beginNewTransaction();
     }
@@ -171,7 +152,7 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 
         g.setColour (selected ? groupHighlightColour : groupColour);
         g.setFont (13.0f);
-        g.drawText (text, 4, 0, getWidth() - 6, getHeight(), juce::Justification::centredLeft, true);
+        g.drawText (text, 4, 0, std::max(0, getWidth() - 6), getHeight(), juce::Justification::centredLeft, true);
         
         g.setColour(groupColour);
         if( insertAfter )
@@ -188,31 +169,39 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
 void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
 {
     auto track = playListModel->getAudioTrack();
-    
-    if (!e.mods.isAnyModifierKeyDown())
-    {
-        // items of other playlists might be selected
-        // deselect all objects except regions of this track
-        auto objects = track->getAudioTrackContainer().getSelectionManager()->getSelectedObjects();
-        for (auto object : objects) {
-            if (auto item = dynamic_cast<PlayListItem*>(object.get())) {
-                if (item->getRegion()->getAudioTrack() == track)
-                    continue;
-            }
-            object->setSelected(false);
+    auto container = track->getPlayListContainer();
+
+    if (auto item = container->getPlayListItem(rowNumber)) {
+        
+        if (!e.mods.isAnyModifierKeyDown() && !item->isSelected()) {
+            track->getAudioTrackContainer().getSelectionManager()->deselectAll();
         }
+        else {
+            auto objects = track->getAudioTrackContainer().getSelectionManager()->getSelectedObjects();
+            for (auto object : objects) {
+                if (auto item = dynamic_cast<audium::PlayListItem*>(object.get())) {
+                    if (item->getRegion()->getAudioTrack() != track)
+                        object->setSelected(false);
+                }
+            }
+        }
+        
+        if (e.mods.isCommandDown() && item->isSelected()) {
+            item->setSelected(false);
+        }
+        else {
+            item->setSelected(true);
+        }
+        
     }
-    
-    // select this item
-    auto container = playListModel->getAudioTrack()->getPlayListContainer();
-    if (auto item = container->getPlayListItem(rowNumber))
-        item->setSelected(true);
     
     // pass on the event to the model
     getParentComponent()->mouseDown(e);
+        
+        
 
     // update
-    track->getAudioTrackContainer().sendActionMessage(updateSelection);
+    track->getAudioTrackContainer().sendActionMessage(audium::updateSelection);
 }
 
 void PlayListTableListBoxItem::mouseDoubleClick (const juce::MouseEvent&)

@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    ArrangementOverview.h
-    Created: 8 Jan 2024 10:40:52am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -19,7 +14,7 @@
 class ArrangementOverview  : public juce::Component
 {
 public:
-    ArrangementOverview(std::shared_ptr<AudiumEngine> audiumEngine,
+    ArrangementOverview(std::shared_ptr<audium::AudiumEngine> audiumEngine,
                         bool arrangementMode) :
         audiumEngine(audiumEngine),
         arrangementMode(arrangementMode)
@@ -72,7 +67,7 @@ public:
                 auto x = bounds.getX() + (bounds.getWidth() * relativePos);
                 auto w = bounds.getWidth() * relativeLength;
                 
-                groupRectangles[i]->setRectangle(Rectangle<float>(x, y, w, h));
+                groupRectangles[i]->setRectangle(juce::Rectangle<float>(x, y, w, h));
                 
                 i++;
             }
@@ -83,7 +78,7 @@ public:
 private:
     std::vector<std::unique_ptr<juce::DrawableRectangle>> groupRectangles;
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     bool arrangementMode;
     
