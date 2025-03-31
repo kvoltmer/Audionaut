@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    PlayListContainer.h
-    Created: 28 Jun 2023 11:50:56am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -19,42 +14,24 @@
 #include "Engine/Selection/SelectableObjectContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 
+
+namespace audium {
+
 class AudioRegionContainer;
 class TransportSourceContainer;
-
-
-template<typename C>
-void MoveItemBefore(C& container, size_t currentIndex, size_t indexOfItemToPlaceBefore)
-{
-    if( currentIndex == indexOfItemToPlaceBefore ) return;
-    
-    jassert( juce::isPositiveAndBelow((int)currentIndex, (int)container.size() ));
-    jassert( juce::isPositiveAndBelow((int)indexOfItemToPlaceBefore, (int)container.size() + 1 ));
-    
-    if (currentIndex < indexOfItemToPlaceBefore)
-    {
-        std::rotate(container.begin() + currentIndex,
-                    container.begin() + currentIndex + 1,
-                    container.begin() + indexOfItemToPlaceBefore);
-    }
-    else
-    {
-        std::rotate(container.begin() + indexOfItemToPlaceBefore,
-                    container.begin() + currentIndex,
-                    container.begin() + currentIndex + 1);
-    }
-}
 
 class PlayListContainer : public audium::Streamable
 {
     
 public:
-    PlayListContainer(const AudioRegionContainer &audioRegionContainer,
-                      std::shared_ptr<TempoProvider> tempoProvider,
-                      std::shared_ptr<TransportSourceContainer> transportSourceContainer) :
-        audioRegionContainer(audioRegionContainer),
-        tempoProvider(tempoProvider),
-        transportSourceContainer(transportSourceContainer)
+    PlayListContainer(const AudioTrack &audioTrack_,
+                      std::shared_ptr<TempoProvider> tempoProvider_,
+                      std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                      std::shared_ptr<SelectionManager> selectionManager_) :
+    audioTrack(audioTrack_),
+    tempoProvider(tempoProvider_),
+    transportSourceContainer(transportSourceContainer_),
+    selectionManager(selectionManager_)
     {
     }
     
@@ -66,14 +43,12 @@ public:
                                                                  audium::TimeContextType context);
     std::shared_ptr<PlayListItem> createPlayListItemUI(std::shared_ptr<AudioRegion> region,
                                                        int indexOfItemToPlaceBefore);
-    std::shared_ptr<PlayListItem> createPlayListItemsUI(std::vector<std::shared_ptr<AudioRegion>> regions,
-                                                       int indexOfItemToPlaceBefore);
-
+    
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
     void deletePlayListItem(int atIndex);
-    bool deletePlayListItem(PlayListItem* playListItem);
-
+    bool deletePlayListItem(PlayListItem* playListItem, bool deleteRegion);
+    
     bool deleteAssociatedItems(const AudioRegion* audioRegion);
     bool exitsInPlayList(const AudioRegion* audioRegion);
     
@@ -82,15 +57,17 @@ public:
     
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
+    void mergeFromJson(json& input);
+    bool playListItemExists(std::shared_ptr<PlayListItem> item) const;
     std::shared_ptr<PlayListItem> createPlayListItemFromJson (json& jsonItem);
     
     int getSizeInUnits() override;
     
     
-
+    
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;
     int getPlayListItemIndex(PlayListItem* item) const;
-        
+    
     PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
     PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     
@@ -102,29 +79,39 @@ public:
     void forcePositionByOrder();
     
     void sortByPosition();
+    bool sortedByPosition() const;
+    
+    double findNextFreePosition(double position, audium::TimeContextType context) const;
     
     // move the absolute position of all playlist items by an amount
     void movePlayListItemsPosition(int startIndex);
     
-    audium::SelectableObjectContainer<PlayListItem> playListItems;
-            
     // selection:
     void selectPlayListItemWithRegion(std::shared_ptr<AudioRegion> region);
     
+    std::vector<std::shared_ptr<PlayListItem>> getSelectedItems(bool global = false) const;
+    
     double getTotalLength(audium::TimeContextType context) const;
     
-    const AudioRegionContainer &getAudioRegionContainer() const { return audioRegionContainer; }
+    const AudioTrack &getAudioTrack() const { return audioTrack; }
+    
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
-
+    
+    // the container
+    audium::SelectableObjectContainer<PlayListItem> playListItems;
+    
 private:
     
     // called internally
     std::shared_ptr<PlayListItem> createPlayListItem(std::shared_ptr<AudioRegion> audioRegion, int insertIndex);
-    std::shared_ptr<PlayListItem> createPlayListItem(int regionIndex, int indexOfItemToPlaceBefore);
-        
-    const AudioRegionContainer &audioRegionContainer;
+    
+    
+    const AudioTrack &audioTrack;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<SelectionManager> selectionManager;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListContainer)
 };
+
+} // namespace audium

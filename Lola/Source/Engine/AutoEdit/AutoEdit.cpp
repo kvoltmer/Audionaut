@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AutoEdit.cpp
-    Created: 14 Sep 2023 3:13:12pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include <iostream>
 #include <fstream>
@@ -21,6 +16,8 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+namespace audium {
+
 const juce::String AutoEdit::getTempDirectory()
 {
     // Temp directory on is ~Library/Caches/AppAudium
@@ -33,7 +30,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
     // With XCode you must edit the scheme and set the environment variables
     // double check with:
     // system("env");
-        
+    
     // Path to python binary
     std::string python = "python3";
     
@@ -44,11 +41,11 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
         std::string commandString;
         commandString += "cd " + getTempDirectory().toStdString() + ";";
         commandString += python + " $HOME/dev/gaborgandalf/gaborgandalf/automain.py --verbose autoedit";
-//      commandString += " --assemble_mode " + config.mode;
+        //      commandString += " --assemble_mode " + config.mode;
         commandString += " --duration " + std::to_string(config.duration);
         commandString += " --numsegs " + std::to_string(config.numSegments);
-//        commandString += " --seglen_min " + std::to_string(config.minSegLength);
-//        commandString += " --seglen_max " + std::to_string(config.maxSegLength);
+        //        commandString += " --seglen_min " + std::to_string(config.minSegLength);
+        //        commandString += " --seglen_max " + std::to_string(config.maxSegLength);
         commandString += " --filenames " + config.bounceFileName;
         
         // execute
@@ -129,7 +126,7 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
     {
         if (auto track = audioTrackContainer->getDefaultGroup())
         {
-            track->getAudioRegionContainer()->cleanup();
+            track->cleanup();
             
             int counter = 1;
             auto segdata = nlohmann::json::parse(segFile);
@@ -143,14 +140,14 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
                 
                 
                 // CREATE REGIONs:
-                    
+                
                 // use the first sub track
                 auto subGroups = track->getAudioSubGroups();
                 
                 jassert(subGroups.size() > 0);
                 if (subGroups.size() > 0)
                 {
-                    track->getAudioRegionContainer()->createRegion(regionName, position, track, subGroups[0], audium::seconds);
+                    subGroups[0]->getAudioRegionContainer()->createRegion(regionName, position, track, subGroups[0], nullptr, audium::seconds);
                 }
             }
         }
@@ -182,7 +179,8 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
         {
             if (auto track = audioTrackContainer->getDefaultGroup())
             {
-                auto region = track->getAudioRegionContainer()->getRegion(elem["index"]);
+                auto subGroup = track->getAudioSubGroups()[0];
+                auto region = subGroup->getAudioRegionContainer()->getRegion(elem["index"]);
                 jassert(region != nullptr);
                 std::string filename = elem["file"];
                 jassert(juce::String(filename).contains(region->getName()));
@@ -200,7 +198,7 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
                 }
             }
         }
-    
+        
         songFile.close();
         return true;
     }
@@ -210,3 +208,5 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
         return false;
     }
 }
+
+} // namespace audium

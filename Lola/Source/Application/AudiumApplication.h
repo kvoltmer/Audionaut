@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudiumApplication.h
-    Created: 24 Mar 2023 10:48:29am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 #include <memory>
@@ -15,18 +10,15 @@
 #include "AudiumMainWindow.h"
 #include "AudiumMenuModel.h"
 #include "Application/AudiumCommandIDs.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class SettingsDialog;
-class AboutDialog;
 class AudiumFactory;
+class Preferences;
 
-
-//==============================================================================
 class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
 {
 public:
-    //==============================================================================
     AudiumApplication() = default;
     
     static AudiumApplication& getApp();
@@ -44,7 +36,6 @@ public:
 
     void anotherInstanceStarted (const juce::String& commandLine) override;
 
-    //==============================================================================
     MenuBarModel* getMenuModel();
 
     void getAllCommands (juce::Array<CommandID>&) override;
@@ -60,15 +51,18 @@ public:
     void handleMainMenuCommand (int menuItemID);
     PopupMenu createExtraAppleMenuItems();
     
-    void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
+    
     void createNewProject();
+    
     void askUserToOpenFile();
     void openFile(juce::File file);
-    void saveProjectAs(std::function<void (bool)> callback);
-    void saveProject(std::function<void (bool)> callback);
-    void saveProjectToFile(juce::File file, std::function<void (bool)> callback);
-    void updateUI();
     
+    bool saveProjectAs();
+    bool saveProject();
+    bool saveProjectToFile(juce::File file);
+    void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
+    
+    void updateUI();
     
     AudiumLookAndFeel lookAndFeel;
     
@@ -78,13 +72,12 @@ public:
 private:
 
     std::unique_ptr<AudiumMainWindow> mainWindow;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
     std::unique_ptr<juce::Component> aboutWindow;
     std::shared_ptr<SettingsDialog> settingsDialog;
-    std::shared_ptr<AboutDialog> aboutDialog;
     
     juce::RecentlyOpenedFilesList recentFiles;
     
@@ -98,7 +91,6 @@ private:
     
     void updateSettings();
 
-    //==============================================================================
    #if JUCE_MAC
     class AppleMenuRebuildListener  : private MenuBarModel::Listener
     {
@@ -132,3 +124,4 @@ private:
    #endif
     
 };
+

@@ -1,26 +1,23 @@
-/*
-  ==============================================================================
-
-    AudiumTransportSource.cpp
-    Created: 3 Nov 2024 11:26:27am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumTransportSource.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
 
+namespace audium {
+
 AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource_,
-                      std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
-    audioResource(audioResource_),
-    audioFormatReaderSource(audioFormatReaderSource_)
+                                             std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
+audioResource(audioResource_),
+audioFormatReaderSource(audioFormatReaderSource_)
 {
     // the transport source
     audioTransportSource = std::make_shared<audium::AudioTransportSource>();
-
+    
     // source
     auto readAheadBufferSize = 48000;
     auto readAheadThread = audioResource.getContainer().getReadAheadThread();
@@ -30,7 +27,7 @@ AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource_,
         readAheadBufferSize = 0;
         readAheadThread = nullptr;
     }
-
+    
     audioTransportSource->setSource (audioFormatReaderSource.get(),
                                      readAheadBufferSize,
                                      readAheadThread,
@@ -102,7 +99,7 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
 void AudiumTransportSource::applyChannelMapping()
 {
     auto totalChannels = audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels();
-    auto audioFileChannels = static_cast<int>(audioResource.getNumChannels());
+    auto audioFileChannels = static_cast<int>(audioResource.getNumAudioFileChannels());
     if (audioFileChannels > totalChannels)
         totalChannels = audioFileChannels;
     
@@ -111,12 +108,12 @@ void AudiumTransportSource::applyChannelMapping()
     channelRemapping->clearAllMappings();
     
     auto channelOffset = getAudioResource().getAudioTrack()->getChannelOffset();
-    
-    auto mapping = getAudioResource().getChannelMapping().getData();
-    
-    auto numAudioFileChannels = audioResource.getNumChannels();
-    
-    for (auto source = 0; source < std::min((int)numAudioFileChannels, mapping.size()); source++) {
-        channelRemapping->setOutputChannelMapping(source, mapping[source] + channelOffset);
-    }
+    auto srcChannel = getAudioResource().getChannelMapping().getSourceChannel();
+    auto dstChannel = getAudioResource().getChannelMapping().getDestinationChannel();
+    jassert(srcChannel < audioFileChannels);
+    jassert(dstChannel + channelOffset < totalChannels);
+    channelRemapping->setOutputChannelMapping(srcChannel,
+                                              dstChannel + channelOffset);
 }
+
+} // namespace audium

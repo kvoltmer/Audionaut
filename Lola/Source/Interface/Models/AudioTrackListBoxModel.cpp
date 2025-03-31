@@ -1,3 +1,7 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include <iostream>
 
@@ -6,7 +10,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
 #include "Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 int AudioTrackListBoxModel::getNumRows()
 {
@@ -75,19 +79,19 @@ void AudioTrackListBoxModel::backgroundClicked (const juce::MouseEvent&)
 {
     owner->deselectAllRows();
     audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateAll);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateAll);
 }
 
 void AudioTrackListBoxModel::listWasScrolled()
 {
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(scrolledVertically);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::scrolledVertically);
 }
 
 void AudioTrackListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
     auto selectedRows = owner->getSelectedRows();
     audiumEngine->getAudioTrackContainer()->setSelectedRows(selectedRows);
-    audiumEngine->getAudioTrackContainer()->sendActionMessage(updateAll);
+    audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateAll);
 }
 
 int AudioTrackListBoxModel::getExtraSpaceAtBottom() const

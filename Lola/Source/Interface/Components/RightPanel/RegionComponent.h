@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    RegionComponent.h
-    Created: 27 Jun 2023 2:33:20pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -16,7 +11,7 @@
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -26,7 +21,7 @@
 class RegionComponent  : public juce::Component
 {
 public:
-    RegionComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+    RegionComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
         regionTableListBox.reset(new RegionTableListBox());
@@ -80,18 +75,13 @@ public:
     
     void updateUI(UIContext context)
     {
-        /// TODO: inplement UI context
+        /// TODO: implement UI context
         updateSelection();
         regionTableListBox->updateContent();
     }
-    
-    void clearSelection()
-    {
-        regionTableListBox->deselectAllRows();
-    }
 
 private:
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<RegionTableListBox> regionTableListBox;
     std::unique_ptr<RegionTableListBoxModel> regionTableListBoxModel;
     

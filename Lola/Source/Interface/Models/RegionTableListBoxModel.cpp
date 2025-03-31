@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    RegionTableListBoxModel.cpp
-    Created: 7 Jun 2023 2:01:04pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include <JuceHeader.h>
 #include "RegionTableListBoxModel.h"
@@ -16,9 +11,9 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 
-//==============================================================================
+
 RegionTableListBoxModel::RegionTableListBoxModel(std::shared_ptr<RegionTableListBox> owner,
-                                                 std::shared_ptr<AudioTrackContainer> audioTrackContainer) :
+                                                 std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer) :
     owner(owner),
     audioTrackContainer(audioTrackContainer)
 {
@@ -61,7 +56,6 @@ juce::Component* RegionTableListBoxModel::refreshComponentForCell (int rowNumber
         if (rowNumber < regions.size())
         {
             return new RegionLabel(audioTrackContainer,
-                                   nullptr,
                                    columnId,
                                    rowNumber);
         }
@@ -84,7 +78,7 @@ void RegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
     auto selectedRows = owner->getSelectedRows();
     audioTrackContainer->getAudioRegionAdapter().setSelectedRows(selectedRows);
-    audioTrackContainer->sendActionMessage(updateAll);
+    audioTrackContainer->sendActionMessage(audium::updateAll);
 }
 
 void RegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)

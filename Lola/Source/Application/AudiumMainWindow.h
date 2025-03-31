@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudiumMainWindow.h
-    Created: 24 Mar 2023 10:51:48am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -26,7 +21,7 @@ class ExportAudioDialog;
 class AudiumMainWindow    : public juce::DocumentWindow, public juce::ApplicationCommandTarget
 {
 public:
-    AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine);
+    AudiumMainWindow (juce::String name, std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~AudiumMainWindow() override;
 
     void closeButtonPressed() override;
@@ -38,7 +33,7 @@ public:
        subclass also calls the superclass's method.
     */
     
-    std::shared_ptr<AudiumEngine> getEngine() const { return audiumEngine; }
+    std::shared_ptr<audium::AudiumEngine> getEngine() const { return audiumEngine; }
     
     
     //==============================================================================
@@ -52,12 +47,12 @@ private:
     bool isSomethingSelected();
     bool canPaste();
         
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
     
     std::unique_ptr<NewRegionDialog> newRegionDialog;
     std::unique_ptr<AutoEditDialog> autoEditDialog;
     std::unique_ptr<ExportAudioDialog> exportAudioDialog;
-    
+        
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
 };

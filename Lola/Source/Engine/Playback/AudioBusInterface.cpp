@@ -1,4 +1,9 @@
 
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
+
 #include "AudioBusInterface.h"
 
 namespace audium
@@ -34,6 +39,22 @@ void AudioBusInterface::setGain(const int channelNumber, const float newGain)
     auto ptr = audioBusRenderer.get();
     lockFreeCommander->fifo.push([ptr, channelNumber, newGain] {
         ptr->setGain(channelNumber, newGain);
+    });
+}
+
+void AudioBusInterface::setMute(const int channelNumber, const bool bMute)
+{
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push([ptr, channelNumber, bMute] {
+        ptr->setMute(channelNumber, bMute);
+    });
+}
+
+void AudioBusInterface::setSolo(const int channelNumber, const bool bSolo)
+{
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push([ptr, channelNumber, bSolo] {
+        ptr->setSolo(channelNumber, bSolo);
     });
 }
 

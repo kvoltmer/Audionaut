@@ -1,17 +1,13 @@
-/*
-  ==============================================================================
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
-    DefaultLabel.h
-    Created: 1 Nov 2024 10:34:59am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
 
 #pragma once
 
 #include <JuceHeader.h>
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class DefaultLabel  : public juce::Label
 {

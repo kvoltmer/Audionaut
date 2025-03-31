@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioBusRenderer.cpp
-    Created: 9 Jan 2025 12:19:36pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioBusRenderer.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -69,6 +64,7 @@ void AudioBusRenderer<SampleType>::processAudioBlock(const juce::AudioSourceChan
             channelBuffer.copyFrom(0, busInfo.startSample, audioBus.getReadPointer(i), busInfo.numSamples);
             juce::dsp::AudioBlock<SampleType> in (channelBuffer);
             // process channel gain
+            
             juce::dsp::ProcessContextReplacing<SampleType> gainContext(in);
             gains[i].process(gainContext);
             

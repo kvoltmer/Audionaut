@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioResourceData.h
-    Created: 23 Feb 2024 3:49:15pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -15,7 +10,8 @@
 
 using json = nlohmann::json;
 
-//==============================================================================
+namespace audium {
+
 struct AudioResourceData
 {
     typedef class juce::Range<double> tRange;
@@ -25,5 +21,9 @@ struct AudioResourceData
     int channelPos;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AudioResourceData, url, gain, channelPos);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AudioResourceData,
+                                   url,
+                                   gain,
+                                   channelPos);
 
+} // namespace audium

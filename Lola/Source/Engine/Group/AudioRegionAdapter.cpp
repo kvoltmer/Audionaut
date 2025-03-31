@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioRegionAdapter.cpp
-    Created: 15 Apr 2024 11:05:43am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioRegionAdapter.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -20,8 +15,10 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
+namespace audium {
+
 AudioRegionAdapter::AudioRegionAdapter(AudioTrackContainer &owner_) :
-    owner(owner_)
+owner(owner_)
 {
 }
 
@@ -29,12 +26,9 @@ const std::vector<std::shared_ptr<AudioRegion>> AudioRegionAdapter::getAudioRegi
 {
     std::vector<std::shared_ptr<AudioRegion>> result;
     
-    for (auto g = 0; g < owner.getNumItems(); g++)
-    {
-        auto track = owner.getAudioTrack(g);
-        for (auto i = 0; i < track->getAudioRegionContainer()->getNumRegions() ; i++)
-        {
-            result.push_back(track->getAudioRegionContainer()->getRegion(i));
+    for (auto track : owner.getAudioTracks()) {
+        for (auto region : track->getRegions()) {
+            result.push_back(region);
         }
     }
     
@@ -117,8 +111,8 @@ void AudioRegionAdapter::setSelectedRows(juce::SparseSet<int>& selectedRows)
 void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arrangementMode)
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(owner);
-   
+    auto action = std::make_unique<audium::UndoableContainerAction>(owner, false);
+    
     auto context = audium::clocks;
     auto selectedRange = getSelectedRange(context);
     
@@ -127,22 +121,25 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
             auto context = audium::clocks;
             if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
                 auto localRange = item->absoluteToLocalRange(selectedRange, context);
-                track->getAudioRegionContainer()->createRegion(name,
-                                                               localRange,
-                                                               track,
-                                                               item->getRegion()->getAudioSubGroup(),
-                                                               context);
+                auto subGroup = item->getRegion()->getAudioSubGroup();
+                subGroup->getAudioRegionContainer()->createRegion(name,
+                                                                  localRange,
+                                                                  track,
+                                                                  subGroup,
+                                                                  item->getRegion(),
+                                                                  context);
             }
         }
         else
         {
             if (auto subGroup = track->getSubGroupAtAbsoluteRange(selectedRange, context)) {
                 auto localRange = subGroup->absoluteToLocalRange(selectedRange, context);
-                track->getAudioRegionContainer()->createRegion(name,
-                                                               localRange,
-                                                               track,
-                                                               subGroup,
-                                                               context);
+                subGroup->getAudioRegionContainer()->createRegion(name,
+                                                                  localRange,
+                                                                  track,
+                                                                  subGroup,
+                                                                  nullptr,
+                                                                  context);
             }
         }
     }
@@ -156,7 +153,7 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
 void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
 {
     // Undo: store old state
-    auto action = withUndo ? std::make_unique<audium::UndoableContainerAction>(owner) : nullptr;
+    auto action = withUndo ? std::make_unique<audium::UndoableContainerAction>(owner, false) : nullptr;
     auto context = audium::clocks;
     auto selectedRange = getSelectedRange(context);
     juce::String name;
@@ -165,21 +162,23 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
     
     for (auto track : owner.getAudioTracks()) {
         if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
-            
+            auto subGroup = item->getRegion()->getAudioSubGroup();
             bool success = false;
             auto itemRange = item->getAbsolutePositionRange(context);
-        
+            
             // - region of possible start (left of selection)
             if (selectedRange.getStart() - itemRange.getStart() > 0.0) {
                 
                 absoluteRange = juce::Range<double>(itemRange.getStart(), selectedRange.getStart());
                 localRange = item->absoluteToLocalRange(absoluteRange, context);
-                name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
-                region = track->getAudioRegionContainer()->createRegion(name,
-                                                                        localRange,
-                                                                        track,
-                                                                        item->getRegion()->getAudioSubGroup(),
-                                                                        context);
+                
+                name = subGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                region = subGroup->getAudioRegionContainer()->createRegion(name,
+                                                                           localRange,
+                                                                           track,
+                                                                           subGroup,
+                                                                           item->getRegion(),
+                                                                           context);
                 track->getPlayListContainer()->createPlayListItemAtPositionUI(region, item->getAbsolutePosition(context), context);
                 success = true;
             }
@@ -187,8 +186,13 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
             // - region of selection
             if (selectedRange.getLength() > 0.0) {
                 localRange = item->absoluteToLocalRange(selectedRange, context);
-                name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
-                region = track->getAudioRegionContainer()->createRegion(name, localRange, track, item->getRegion()->getAudioSubGroup(), context);
+                name = subGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                region = subGroup->getAudioRegionContainer()->createRegion(name,
+                                                                           localRange,
+                                                                           track,
+                                                                           subGroup,
+                                                                           item->getRegion(),
+                                                                           context);
                 track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getStart(), context);
                 success = true;
             }
@@ -198,14 +202,19 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
                 
                 absoluteRange = juce::Range<double>(selectedRange.getEnd(), itemRange.getEnd());
                 localRange = item->absoluteToLocalRange(absoluteRange, context);
-                name = track->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
-                region = track->getAudioRegionContainer()->createRegion(name, localRange, track, item->getRegion()->getAudioSubGroup(), context);
+                name = subGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                region = subGroup->getAudioRegionContainer()->createRegion(name,
+                                                                           localRange,
+                                                                           track,
+                                                                           subGroup,
+                                                                           item->getRegion(),
+                                                                           context);
                 track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getEnd(), context);
                 success = true;
             }
             
             if (success) {
-                track->getPlayListContainer()->deletePlayListItem(item);
+                track->getPlayListContainer()->deletePlayListItem(item, true);
                 track->getPlayListContainer()->sortByPosition();
             }
         }
@@ -245,7 +254,7 @@ juce::Range<double> AudioRegionAdapter::getSelectedRange(audium::TimeContextType
     {
         return selectedPositionClocks;
     }
-
+    
     jassertfalse;
     return juce::Range<double>();
 }
@@ -254,3 +263,5 @@ bool AudioRegionAdapter::anyRangeSelected() const
 {
     return !selectedPositionClocks.isEmpty();
 }
+
+} // namespace audium

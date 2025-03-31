@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(Lola_Tests VERSION 0.0.1)
+project(Audionaut_Tests VERSION 0.0.1)
 
-set(APP_NAME "LolaTests")
+set(APP_NAME "AudionautTests")
 message(STATUS "Name: ${APP_NAME}")
 
 set(SUBMODULES_PATH "../../Submodules")
@@ -63,6 +63,7 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/Selection/*.cpp
         
         ${SRC_PATH}/Interface/*.cpp
+        ${SRC_PATH}/Interface/LookAndFeel/*.cpp
         ${SRC_PATH}/Interface/Components/*.cpp
         ${SRC_PATH}/Interface/Components/HeaderPanel/*.cpp
         ${SRC_PATH}/Interface/Components/MiddlePanel/*.cpp
@@ -82,10 +83,6 @@ file(GLOB SRC_AUDIUM
         )
         
 file(GLOB SRC_TESTS
-        #JuceTest.cpp
-        #FactorialTest.cpp
-        ZoomHandlerTests.cpp
-        ResourceContainerTests.cpp
         Tests/*.cpp
         )
 
@@ -156,3 +153,7 @@ target_link_libraries(${APP_NAME}
         juce::juce_recommended_warning_flags)
 
 
+set_target_properties(${APP_NAME}
+                      PROPERTIES
+                      XCODE_ATTRIBUTE_DEVELOPMENT_TEAM Q89CZBX79G)
+                    

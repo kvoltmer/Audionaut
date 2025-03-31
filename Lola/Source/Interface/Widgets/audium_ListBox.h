@@ -1,3 +1,7 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -8,14 +12,6 @@ using namespace juce;
 namespace audium
 {
 
-//==============================================================================
-/**
-    A subclass of this is used to drive a ListBox.
-
-    @see ListBox
-
-    @tags{GUI}
-*/
 class ListBoxModel
 {
 public:
@@ -155,11 +151,7 @@ public:
     virtual int getExtraSpaceAtBottom() const;
 
 private:
-   #if ! JUCE_DISABLE_ASSERTIONS
-    friend class ListBox;
-    struct Empty {};
-    std::shared_ptr<Empty> sharedState = std::make_shared<Empty>();
-   #endif
+
 };
 
 //==============================================================================
@@ -208,10 +200,6 @@ public:
     /** Returns the current list model. */
     ListBoxModel* getModel() const noexcept
     {
-       #if ! JUCE_DISABLE_ASSERTIONS
-        checkModelPtrIsValid();
-       #endif
-
         return model;
     }
 
@@ -428,7 +416,7 @@ public:
         This may be off-screen, and the range of the row number that is passed-in is
         not checked to see if it's a valid row.
     */
-    Rectangle<int> getRowPosition (int rowNumber,
+    juce::Rectangle<int> getRowPosition (int rowNumber,
                                    bool relativeToComponentTopLeft) const noexcept;
 
     /** Finds the row component for a given row in the list.
@@ -614,10 +602,6 @@ private:
     int outlineThickness = 0;
     int lastRowSelected = -1;
     bool multipleSelection = false, alwaysFlipSelection = false, hasDoneInitialUpdate = false, selectOnMouseDown = true;
-
-   #if ! JUCE_DISABLE_ASSERTIONS
-    std::weak_ptr<ListBoxModel::Empty> weakModelPtr;
-   #endif
 
     void assignModelPtr (ListBoxModel*);
     void checkModelPtrIsValid() const;

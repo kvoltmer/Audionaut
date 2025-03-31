@@ -1,37 +1,34 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "PlayListComponent.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Controls/RegionLabel.h"
+#include "Interface/Controls/TableRegionLabel.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
 
 bool PlayListComponent::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
-    if (auto regionLabel = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
-        if (regionLabel->getRegion(regionLabel->getRowNumber()) &&
-            regionLabel->getRegion(regionLabel->getRowNumber())->getAudioTrack() == audioTrack)
-        {
-            // return true if source details match this track
-            return true;
-        }
-    }
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+
+    if (dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+
+    
     return false;
 }
 
 void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 {
-    auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer());
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
     
-    auto insertIndex = static_cast<int>(audioTrack->getPlayListContainer()->playListItems.size());
-    
-    if ( PlayListTableListBoxItem* item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
-    {
-        audioTrack->getPlayListContainer()->movePlayListItemBefore(item->rowNumber,
-                                                                   insertIndex);
-    }
-    else if ( RegionLabel* item = dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()))
-    {
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
+        dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
+        
         bool success = false;
         auto pos = 0.0;
         if (audioTrack->getPlayListContainer()->playListItems.objects.size() > 0) {
@@ -39,17 +36,8 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
             pos = last->getAbsolutePositionRange(audium::clocks).getEnd();
         }
         
-        // drop all selected regions
-        auto selectedRegions = audioTrack->getAudioRegionContainer()->getSelectedRegions();
-        for (auto region : selectedRegions)
-        {
-            if (audioTrack->getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, audium::clocks) != nullptr)
-                success = true;
-            
-            pos += region->getRegionData(audium::clocks).getLength();
-        }
-        jassert(success);
-        
+        audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
+        success = true;
     }
     
     action->storeNewState();
@@ -61,4 +49,32 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
     triggerAsyncUpdate();
     
     //hideInsertLines();
+}
+
+
+void PlayListComponent::updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    auto height = playListTableListBox->getHeaderHeight();
+    height += playListTableListBox->getRowHeight() * playListTableListBoxModel->getNumRows();
+    
+    auto after = dragSourceDetails.localPosition.y > height;
+    
+    if ((dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
+         dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) &&
+        after) {
+        itemDrag = true;
+    }
+
+    repaint();
+}
+
+void PlayListComponent::paint(juce::Graphics &g)
+{
+    if (itemDrag) {
+        g.setColour(audioTrack->getColour());
+        auto height = playListTableListBox->getHeaderHeight();
+        height += playListTableListBox->getRowHeight() * playListTableListBoxModel->getNumRows();
+        g.fillRect(0, height, getWidth(), 3);
+    }
+
 }

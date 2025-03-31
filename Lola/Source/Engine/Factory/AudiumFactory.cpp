@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudiumFactory.cpp
-    Created: 27 Jun 2023 10:41:00am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumFactory.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
@@ -21,15 +16,15 @@
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/Playback/AudioBusInterface.h"
+#include "Engine/PlayList/TransportLoop.h"
 
-
-using namespace audium;
+namespace audium {
 
 std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
 {
     auto undoManager                = std::make_shared<juce::UndoManager>();
     
-    auto selectionManager           = std::make_shared<audium::SelectionManager>();
+    auto selectionManager           = std::make_shared<SelectionManager>();
     
     auto audioDeviceManager         = std::make_shared<juce::AudioDeviceManager>();
     
@@ -41,27 +36,32 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto audioThumbnailCache        = std::make_shared<juce::AudioThumbnailCache>(64);
     
-    auto audioResourceContainer     = std::make_shared<AudioResourceContainer>(audioDeviceManager,
-                                                                               formatManager,
-                                                                               audioThumbnailCache,
-                                                                               tempoProvider);
-    
     auto playback                   = std::make_shared<audium::Playback>();
     
     auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback);
     
     auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback);
     
+    auto audioResourceContainer     = std::make_shared<AudioResourceContainer>(audioDeviceManager,
+                                                                               formatManager,
+                                                                               audioThumbnailCache,
+                                                                               tempoProvider,
+                                                                               transportSourceContainer);
+    
     auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
     
     auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer);
+    
+    auto transportLoop              = std::make_shared<TransportLoop>(undoManager,
+                                                                      tempoProvider);
     
     auto audioTrackContainer        = std::make_shared<AudioTrackContainer>(undoManager,
                                                                             tempoProvider,
                                                                             audioResourceContainer,
                                                                             transportSourceContainer,
                                                                             selectionManager,
-                                                                            audioBusInterface);
+                                                                            audioBusInterface,
+                                                                            transportLoop);
     
     auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
     
@@ -74,11 +74,12 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                           audioClipContainer,
                                                                           transportSourceContainer,
                                                                           playback,
-                                                                          audioBusInterface);
+                                                                          audioBusInterface,
+                                                                          transportLoop);
     
     auto linkAudioDevice            = std::make_shared<LinkAudioDevice>(linkEngine,
                                                                         playListScheduler);
-        
+    
     auto audiumEngine               = std::make_shared<AudiumEngine>(audioDeviceManager,
                                                                      audioTrackContainer,
                                                                      audioResourceContainer,
@@ -86,6 +87,10 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                      linkAudioDevice,
                                                                      undoManager,
                                                                      audioBusInterface);
+    
+    AudioResourceContainer::createTemporaryProjectDirectory();
+    
     return audiumEngine;
 }
 
+} // namespace audium

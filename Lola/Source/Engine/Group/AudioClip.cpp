@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioClip.cpp
-    Created: 8 Feb 2024 4:36:53pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioClip.h"
 #include "Engine/Group/AudioTrack.h"
@@ -14,6 +9,9 @@
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Region/AudioRegion.h"
+#include "Engine/Region/AudioRegionContainer.h"
+
+namespace audium {
 
 double AudioClip::getAbsolutePosition(audium::TimeContextType context) const
 {
@@ -79,7 +77,7 @@ void AudioClip::setRegionData(juce::Range<double> newRegionData, audium::TimeCon
     {
         data.regionData = getAudioTrack().getAudioTrackContainer().getTempoProvider()->clocksToSeconds(newRegionData);
     }
-
+    
     if (data.regionData.getStart() < 0.0)
     {
         data.regionData.setStart(0.0);
@@ -89,57 +87,49 @@ void AudioClip::setRegionData(juce::Range<double> newRegionData, audium::TimeCon
 bool AudioClip::validateData()
 {
     bool result = false;
- 
-    if (data.regionData.isEmpty())
-    {
+    
+    if (data.regionData.isEmpty()) {
         setRegionData(juce::Range<double>(0.0, getFileLength(audium::seconds)), audium::seconds);
     }
     
-    if (getAbsolutePosition(audium::clocks) < 0.0)
-    {
+    if (getAbsolutePosition(audium::clocks) < 0.0) {
         setAbsolutePosition(0.0, audium::clocks);
         result |= true;
     }
     
-    if (getFileLength(audium::seconds) > 0.0)
-    {
-        if (data.regionData.getLength() + data.regionData.getStart() > getFileLength(audium::seconds))
-        {
+    if (getFileLength(audium::seconds) > 0.0) {
+        if (data.regionData.getLength() + data.regionData.getStart() > getFileLength(audium::seconds)) {
             data.regionData.setLength(getFileLength(audium::seconds) - data.regionData.getStart());
             result |= true;
         }
     }
     
-    if (data.regionData.getLength() <= 0.0)
-    {
+    if (data.regionData.getLength() <= 0.0) {
         data.regionData.setLength(0.1);
         result |= true;
     }
     
-    for (auto region : audioSubGroup.getAudioRegions())
-    {
-        auto audioRegionData = region->getRegionData(audium::seconds);
+    if (audioSubGroup.getAudioRegionContainer() != nullptr) {
         
-        if (!data.regionData.intersects(audioRegionData))
-        {
-            std::cout << "region does not intersect!" << std::endl;
-        }
-        else
-        {
-            if (data.regionData.getStart() > audioRegionData.getStart())
-            {
-                std::cout << "region->setRegionStart: " << data.regionData.getStart() << std::endl;
-                region->setRegionStart(data.regionData.getStart(), audium::seconds);
-            }
+        for (auto region : audioSubGroup.getAudioRegionContainer()->getObjects()) {
+            auto audioRegionData = region->getRegionData(audium::seconds);
             
-            if (data.regionData.getEnd() < audioRegionData.getEnd())
-            {
-                std::cout << "region->setRegionEnd: " << data.regionData.getEnd() << std::endl;
-                region->setRegionEnd(data.regionData.getEnd(), audium::seconds);
+            if (!data.regionData.intersects(audioRegionData)) {
+                std::cout << "region does not intersect!" << std::endl;
+            }
+            else {
+                if (data.regionData.getStart() > audioRegionData.getStart()) {
+                    std::cout << "region->setRegionStart: " << data.regionData.getStart() << std::endl;
+                    region->setRegionStart(data.regionData.getStart(), audium::seconds);
+                }
+                
+                if (data.regionData.getEnd() < audioRegionData.getEnd()) {
+                    std::cout << "region->setRegionEnd: " << data.regionData.getEnd() << std::endl;
+                    region->setRegionEnd(data.regionData.getEnd(), audium::seconds);
+                }
             }
         }
     }
-    
     
     return result;
 }
@@ -190,3 +180,5 @@ AudioTrack &AudioClip::getAudioTrack() const
 {
     return audioSubGroup.getAudioTrack();
 }
+
+} // namespace audium

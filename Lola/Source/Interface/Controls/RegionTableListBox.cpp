@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    RegionTableListBox.cpp
-    Created: 7 Jun 2023 2:03:54pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include <JuceHeader.h>
 #include "RegionTableListBox.h"

@@ -1,3 +1,7 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "ChannelComponent.h"
 
@@ -6,11 +10,13 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Engine/Playback/AudioBusInterface.h"
+#include "Engine/Resource/ChannelMapping.h"
+#include "Util/EngineAccess.h"
 
-ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
-                                    std::shared_ptr<AudiumEngine> engine_,
+ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTrack_,
+                                    std::shared_ptr<audium::AudiumEngine> engine_,
                                     int rowNumber) :
     audioTrack(audioTrack_),
     engine(engine_)
@@ -22,8 +28,6 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
     volumeScaleButton.reset (new juce::ImageButton ("volume scale"));
     addAndMakeVisible (volumeScaleButton.get());
     volumeScaleButton->setButtonText (TRANS ("new button"));
-    volumeScaleButton->addListener (this);
-
     volumeScaleButton->setImages (false, true, false,
                                   juce::ImageCache::getFromMemory (channelScale_png, channelScale_pngSize), 1.000f, juce::Colour (0x00000000),
                                   juce::Image(), 1.000f, juce::Colour (0x00000000),
@@ -73,6 +77,31 @@ ChannelComponent::ChannelComponent (std::shared_ptr<AudioTrack> audioTrack_,
     panSlider->onDragEnd = [this] {
         audioTrack->onDragEnd();
     };
+    
+    // MUTE
+    muteButton.reset (new juce::TextButton ("M"));
+    addAndMakeVisible (muteButton.get());
+    muteButton->setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    muteButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::muteColourId));
+    muteButton->setClickingTogglesState(true);
+    muteButton->onClick = [this, rowNumber] {
+        audioTrack->onDragStart();
+        audioTrack->setMute(muteButton->getToggleState(), rowNumber);
+        audioTrack->onDragEnd();
+    };
+    
+    // SOLO
+    soloButton.reset (new juce::TextButton ("S"));
+    addAndMakeVisible (soloButton.get());
+    soloButton->setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    soloButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::soloColourId));
+    soloButton->setClickingTogglesState(true);
+    soloButton->onClick = [this, rowNumber] {
+        audioTrack->onDragStart();
+        audioTrack->setSolo(soloButton->getToggleState(), rowNumber);
+        audioTrack->onDragEnd();
+    };
+    
 
     setSize (AudiumLookAndFeel::channelsWidth, 100);
     
@@ -89,9 +118,9 @@ void ChannelComponent::resized()
     
     channelSizeComboBox->setBounds (space, 5, 15, 15);
     
-
-//    auto y1 = proportionOfHeight (0.4f) - (sliderHeight / 2);
-//    auto y2 = proportionOfHeight (0.6f) - (sliderHeight / 2);
+    auto buttonSize = 15;
+    muteButton->setBounds(space + 30, 5, buttonSize, buttonSize);
+    soloButton->setBounds(space + 53, 5, buttonSize, buttonSize);
     
     volumeSlider->setBounds (space,
                              27,
@@ -127,16 +156,38 @@ void ChannelComponent::paint (juce::Graphics& g)
         g.setColour (juce::Colours::black.withAlpha(0.50f));
     }
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
+    
+    g.setColour(audioTrack->getColour());
+    if( insertAfter )
+    {
+        g.fillRect(0, getHeight()-3, getWidth(), 3);
+    }
+    else if( insertBefore )
+    {
+        g.fillRect(0, 0, getWidth(), 3);
+    }
 
 }
 
-void ChannelComponent::refreshComponent(std::shared_ptr<AudioTrack> audioTrack_, int rowNumber_, bool isRowSelected)
+void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audioTrack_, int rowNumber_, bool isRowSelected)
 {
     audioTrack = audioTrack_;
     rowNumber = rowNumber_;
     
     volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)), dontSendNotification);
     panSlider->setValue(audioTrack->getPan(rowNumber), dontSendNotification);
+    
+    auto bMute = audioTrack->getMute(rowNumber);
+    auto bSolo = audioTrack->getSolo(rowNumber);
+    auto anySolo = audioTrack->getAudioTrackContainer().anyChannelSolo();
+    if (anySolo && !bSolo) {
+        bMute = true;
+    }
+    
+    muteButton->setEnabled(!anySolo);
+    
+    muteButton->setToggleState(bMute, dontSendNotification);
+    soloButton->setToggleState(bSolo, dontSendNotification);
     
     if (not isTimerRunning()) {
         startTimerHz(60);
@@ -187,15 +238,17 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
     }
 }
 
-void ChannelComponent::configureVolumeSlider(juce::Slider *slider)
+void ChannelComponent::configureVolumeSlider(juce::Slider *slider, double dbMax)
 {
-    slider->setSliderStyle(juce::Slider::LinearBar);
+    slider->setSliderStyle(juce::Slider::LinearBarVertical);
     slider->setColour(Slider::textBoxTextColourId, juce::Colours::white);
-    slider->setColour(Slider::trackColourId, juce::Colours::grey.withAlpha(0.5f));
+    slider->setColour(Slider::trackColourId, Colours::transparentBlack);
     
     slider->setTextValueSuffix (" dB");
     slider->setNumDecimalPlacesToDisplay(1);
     slider->setDoubleClickReturnValue(true, 0.0);
+    slider->setVelocityModeParameters(1.0, 1, 0.05);
+    slider->setVelocityBasedMode(true);
     
     auto scaled2UnscaledFunc = [](auto min, auto max, auto scaled) {
         return scale_linear(pow(scaled, 0.33333333), min, max);
@@ -203,7 +256,7 @@ void ChannelComponent::configureVolumeSlider(juce::Slider *slider)
     auto unscaled2ScaledFunc = [](auto min, auto max, auto unscaled) {
         return pow(reverse_linear(unscaled, min, max), 3.0);
     };
-    slider->setNormalisableRange(NormalisableRange<double>(-80.0, 6.0,
+    slider->setNormalisableRange(NormalisableRange<double>(-80.0, dbMax,
                                                            scaled2UnscaledFunc,
                                                            unscaled2ScaledFunc));
     
@@ -241,53 +294,41 @@ void ChannelComponent::configurePanSlider(juce::Slider *slider)
     slider->updateText();
 }
 
-void ChannelComponent::buttonClicked (juce::Button* buttonThatWasClicked)
+static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
 {
-    if (buttonThatWasClicked == volumeScaleButton.get())
+    if (component != nullptr && result != 0)
     {
+        switch (result) {
+            case ChannelComponent::moveChannelToNewTrackId:
+                component->getEngine()->getAudioTrackContainer()->copySelectedChannelsToNewTrack();
+                break;
+
+            default:
+                break;
+        }
     }
 }
-
-void ChannelComponent::labelTextChanged (juce::Label* labelThatHasChanged)
-{
-}
-
-//static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
-//{
-//    if (component != nullptr && result != 0)
-//    {
-//        switch (result) {
-//            case ChannelComponent::moveChannelToNewTrackId:
-//                component->getEngine()->getAudioTrackContainer()->moveSelectedChannelsToNewAudioTrack();
-//                break;
-//
-//            default:
-//                break;
-//        }
-//    }
-//}
 
 void ChannelComponent::mouseDown (const juce::MouseEvent& e)
 {
     if (e.mods.isPopupMenu()) {
     
-// TODO: fix -> unstable
-//        PopupMenu m;
-//
-//        m.addItem (moveChannelToNewTrackId, TRANS ("Move channel(s) to new track"), true);
-//
-//        if (m.getNumItems() > 0)
-//        {
-//            m.setLookAndFeel (&getLookAndFeel());
-//
-//            m.showMenuAsync (PopupMenu::Options(),
-//                             ModalCallbackFunction::forComponent (channelMenuCallback, this, rowNumber));
-//        }
-    } else {
-        
+        PopupMenu m;
+
+        m.addItem (moveChannelToNewTrackId, TRANS ("Copy selected channel(s) to new track"), true);
+
+        if (m.getNumItems() > 0)
+        {
+            m.setLookAndFeel (&getLookAndFeel());
+
+            m.showMenuAsync (PopupMenu::Options(),
+                             ModalCallbackFunction::forComponent (channelMenuCallback, this, rowNumber));
+        }
+    }
+    else {
         audioTrack->getSelectionManager()->deselectAll();
         getParentComponent()->mouseDown(e);
-        audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
+        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
     }
 }
 
@@ -299,6 +340,106 @@ void ChannelComponent::mouseUp (const juce::MouseEvent& e)
 bool ChannelComponent::keyPressed (const juce::KeyPress& key)
 {
     return false;  // Return true if your handler uses this key event, or false to allow it to be passed-on.
+}
+
+bool ChannelComponent::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    if (auto item = dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get())) {
+        //if (item->getPlayListModel() == playListModel)
+        {
+            // return true if source details match this model
+            return true;
+        }
+    }
+    return false;
+}
+
+void ChannelComponent::updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    if (auto channelComponent = dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get())) {
+        
+        auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
+        auto insertIndex = rowNumber + (before ? 0 : 1);
+                    
+        if (getAudioTrack() == channelComponent->getAudioTrack() &&
+            (rowNumber == channelComponent->rowNumber ||
+             insertIndex == channelComponent->rowNumber)) {
+            hideInsertLines();
+            return;
+        }
+        
+        if (before) {
+            insertBefore = true;
+            insertAfter = false;
+        }
+        else {
+            insertAfter = true;
+            insertBefore = false;
+        }
+    }
+    repaint();
+}
+
+void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
+{
+    if (auto channelComponent = dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get())) {
+        
+        auto before = dragSourceDetails.localPosition.y < getHeight() / 2;
+        auto insertIndex = rowNumber + (before ? 0 : 1);
+        if (getAudioTrack() == channelComponent->getAudioTrack() &&
+            (rowNumber == channelComponent->rowNumber ||
+             insertIndex == channelComponent->rowNumber)) {
+            hideInsertLines();
+            return;
+        }
+        
+        
+        
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(getAudioTrack()->getAudioTrackContainer());
+        
+        if (getAudioTrack() == channelComponent->getAudioTrack()) {
+        
+            std::cout << "MoveItemBefore -> currentIndex: " << channelComponent->rowNumber << " indexOfItemToPlaceBefore " << insertIndex << std::endl;
+            
+            // remember old channel mapping
+            std::vector<int> channelNumbers;
+            for (auto channel : getAudioTrack()->audioChannelContainer->objects)
+                channelNumbers.push_back(channel->getChannelNumber());
+            
+            audium::MoveItemBefore(getAudioTrack()->audioChannelContainer->objects,
+                                   channelComponent->rowNumber,
+                                   insertIndex);
+            
+            audium::MoveItemBefore(channelNumbers,
+                                   channelComponent->rowNumber,
+                                   insertIndex);
+    
+            
+            // re-mapping destination channels
+            for (auto resource : getAudioTrack()->getAudioResources()) {
+                auto dst = resource->getChannelMapping().getDestinationChannel();
+                auto it = std::find(channelNumbers.begin(), channelNumbers.end(), dst);
+                if (it != channelNumbers.end()) {
+                    auto newDst = static_cast<int>(std::distance(channelNumbers.begin(), it));
+                    resource->getChannelMapping().setDestinationChannel(newDst);
+                }
+            }
+            
+        }
+        else {
+            // TODO: implement
+            notImplemented();
+        }
+        
+        // Undo: store new state
+        action->storeNewState();
+        auto undoManager = engine->getUndoManager();
+        engine->getUndoManager()->perform(action.release(), "Channels changed");
+        engine->getUndoManager()->beginNewTransaction();
+        
+    }
+    hideInsertLines();
 }
 
 //==============================================================================

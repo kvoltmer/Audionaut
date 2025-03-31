@@ -1,19 +1,13 @@
-/*
-  ==============================================================================
-
-    ExportAudioConfig.h
-    Created: 28 Oct 2024 10:59:19am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
 #include <JuceHeader.h>
 
-namespace audium
-{
+namespace audium {
 
 struct ExportAudioConfig {
 

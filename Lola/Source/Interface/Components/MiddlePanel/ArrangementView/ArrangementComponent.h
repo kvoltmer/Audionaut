@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    ArrangementComponent.h
-    Created: 23 Oct 2023 12:01:31pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -20,7 +15,7 @@ public:
     
     typedef ArrangementEditBaseComponent tBase;
     
-    ArrangementComponent(std::shared_ptr<AudiumEngine> audiumEngine, std::shared_ptr<ZoomHandler> zoomHandler) :
+    ArrangementComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine, std::shared_ptr<ZoomHandler> zoomHandler) :
         tBase(audiumEngine, zoomHandler, true)
     {
     }

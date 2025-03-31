@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudiumMenuModel.cpp
-    Created: 11 May 2023 4:57:44pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumMenuModel.h"
 #include "Application/AudiumApplication.h"

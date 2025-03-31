@@ -1,22 +1,19 @@
-/*
-  ==============================================================================
-
-    LinkAudioDevice.cpp
-    Created: 25 Oct 2023 5:14:38pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "LinkAudioDevice.h"
 #include "LinkEngine.hpp"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Provider/TempoProvider.h"
 
+namespace audium {
+
 LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
                                  std::shared_ptr<PlayListScheduler> playListScheduler) :
-    linkEngine(linkEngine),
-    playListScheduler(playListScheduler)
+linkEngine(linkEngine),
+playListScheduler(playListScheduler)
 {
 }
 
@@ -25,11 +22,11 @@ LinkAudioDevice::~LinkAudioDevice()
 }
 
 void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
-                                                          int totalNumInputChannels,
-                                                          float* const* outputChannelData,
-                                                          int totalNumOutputChannels,
-                                                          int numSamples,
-                                                          [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context)
+                                                        int totalNumInputChannels,
+                                                        float* const* outputChannelData,
+                                                        int totalNumOutputChannels,
+                                                        int numSamples,
+                                                        [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context)
 {
     
     // clear output
@@ -102,3 +99,5 @@ void LinkAudioDevice::setBypass(bool isByPass)
 {
     byPass.store(isByPass);
 }
+
+} // namespace audium

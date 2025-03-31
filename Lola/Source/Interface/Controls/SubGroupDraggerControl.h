@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    SubGroupDraggerControl.h
-    Created: 27 Dec 2023 4:52:45pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -19,18 +14,15 @@ class SubGroupDraggerControl : public DraggerControl
 {
 public:
     
-    SubGroupDraggerControl(juce::Component* componentToDrag,
-                           std::shared_ptr<AudiumEngine> audiumEngine,
-                           std::shared_ptr<AudioSubGroup> audioSubGroup,
+    SubGroupDraggerControl(std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                           std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
                            std::shared_ptr<ZoomHandler> zoomHandler,
                            juce::Colour colour,
                            std::shared_ptr<RegionSelector> regionSelector) :
-        DraggerControl(componentToDrag,
-                       audiumEngine,
+        DraggerControl(audiumEngine,
                        zoomHandler,
                        colour,
-                       regionSelector,
-                       std::static_pointer_cast<PositionableBase>(audioSubGroup)),
+                       regionSelector),
         audioSubGroup(audioSubGroup)
     {
         regionSelector->subGroupDraggerControls.push_back(this);
@@ -65,5 +57,5 @@ public:
     bool validateData() override;
     
 private:
-    std::shared_ptr<AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
 };

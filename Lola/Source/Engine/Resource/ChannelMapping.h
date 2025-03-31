@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    ChannelMapping.h
-    Created: 11 Nov 2024 11:46:03am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -28,32 +23,28 @@ public:
     
     void clear();
     
-    void setOutputChannelMapping (int sourceChannelIndex,
-                                  int destChannelIndex);
+    void setOutputChannelMapping (int sourceChannel,
+                                  int destChannel);
 
-    int getRemappedChannel (int sourceChannelIndex) const;
-    int getSourceChannel (int destChannelIndex) const;
-
+    int getDestinationChannel() const;
+    void setDestinationChannel(int newDestChannel);
+    
+    int getSourceChannel() const;
+    void setSourceChannel(int newSrcChannel);
+    
     bool containsSourceChannelNumber(int channelNumber) const;
     bool containsDestinationChannelNumber(int channelNumber) const;
-    bool anyOutputMapping() const;
 
     bool deleteChannel(int sourceChannelIndex);
-    void decrementChannelMapping(int startChannelNumber);
+    void decrementDestinationChannel(int startChannelNumber);
 
     bool writeToJson (json& output);
     bool readFromJson (json& input, bool rebuild);
 
-    // TODO: remove me
-    int getChannelPosition() const;
-    void setChannelPosition(int startChannel, int numChannels);
-
-
-    const juce::Array<int> getData() const { return remappedChannels; }
-
 private:
-
-    juce::Array<int> remappedChannels;
+    
+    int srcChannel = -1;
+    int dstChannel = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelMapping)
 };

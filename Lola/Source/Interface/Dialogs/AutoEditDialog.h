@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AutoEditDialog.h
-    Created: 1 Jun 2023 4:23:13pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -28,7 +23,7 @@ public:
         autoEditComponent.reset(new AutoEditComponent());
     }
     
-    void invokeAutoEdit(std::shared_ptr<AudiumEngine> engine, std::shared_ptr<MainComponent> component)
+    void invokeAutoEdit(std::shared_ptr<audium::AudiumEngine> engine, std::shared_ptr<MainComponent> component)
     {
         invokeAutoEditInternal(engine, component);
     }
@@ -37,7 +32,7 @@ private:
     
     static String getClassNameFieldName()  { return "Auto Edit Name"; }
     
-    void invokeAutoEditInternal(std::shared_ptr<AudiumEngine> engine,
+    void invokeAutoEditInternal(std::shared_ptr<audium::AudiumEngine> engine,
                                 std::shared_ptr<MainComponent> component)
     {
         audiumEngine = engine;
@@ -67,7 +62,7 @@ private:
                 return;
             
             auto mode = autoEditComponent->getEditMode().toString().getIntValue();
-            AutoEditConfig config;
+            audium::AutoEditConfig config;
             switch (mode) {
                 case 1:
                     config.mode = "random";
@@ -94,7 +89,7 @@ private:
             editor->toFront(true);
     }
     
-    void autoEdit(const AutoEditConfig config)
+    void autoEdit(const audium::AutoEditConfig config)
     {
         audiumEngine->invokeAutoEdit(config);
     }
@@ -102,7 +97,7 @@ private:
     std::unique_ptr<AlertWindow> asyncAlertWindow;
     std::unique_ptr<AutoEditComponent> autoEditComponent;
 
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
     
     JUCE_DECLARE_WEAK_REFERENCEABLE (AutoEditDialog)

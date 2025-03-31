@@ -1,3 +1,7 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "LinkEngine.hpp"
 
@@ -71,10 +75,6 @@ void LinkEngine::setQuantum(double quantum)
     mSharedEngineData.quantum = quantum;
 }
 
-//double LinkEngine::getStartPlayingTime() const
-//{
-//    return mSharedEngineData.beatAtStartPlayingTime;
-//}
 void LinkEngine::setStartPlayingTime(double beats)
 {
     std::lock_guard<std::mutex> lock(mEngineDataGuard);

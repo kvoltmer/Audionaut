@@ -1,36 +1,17 @@
-/*
-  ==============================================================================
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
-  This is an automatically generated GUI class created by the Projucer!
-
-  Be careful when adding custom code to these files, as only the code within
-  the "//[xyz]" and "//[/xyz]" sections will be retained when the file is loaded
-  and re-saved.
-
-  Created with Projucer version: 7.0.8
-
-  ------------------------------------------------------------------------------
-
-  The Projucer is part of the JUCE library.
-  Copyright (c) 2020 - Raw Material Software Limited.
-
-  ==============================================================================
-*/
-
-//[Headers] You can add your own extra header files here...
-//[/Headers]
 
 #include "AutoEditComponent.h"
 
 
-//[MiscUserDefs] You can add your own user definitions and misc code here...
-//[/MiscUserDefs]
 
 //==============================================================================
 AutoEditComponent::AutoEditComponent ()
 {
-    //[Constructor_pre] You can add your own custom stuff here..
-    //[/Constructor_pre]
+
 
     juce__label.reset (new juce::Label ("new label",
                                         TRANS ("Assemble Duration (Seconds)")));
@@ -149,21 +130,13 @@ AutoEditComponent::AutoEditComponent ()
     juce__label5->setBounds (0, 5, 150, 24);
 
 
-    //[UserPreSize]
-    //[/UserPreSize]
-
     setSize (305, 170);
 
 
-    //[Constructor] You can add your own custom stuff here..
-    //[/Constructor]
 }
 
 AutoEditComponent::~AutoEditComponent()
 {
-    //[Destructor_pre]. You can add your own custom destruction code here..
-    //[/Destructor_pre]
-
     juce__label = nullptr;
     juce__label2 = nullptr;
     juce__label3 = nullptr;
@@ -175,12 +148,8 @@ AutoEditComponent::~AutoEditComponent()
     mode = nullptr;
     juce__label5 = nullptr;
 
-
-    //[Destructor]. You can add your own custom destruction code here..
-    //[/Destructor]
 }
 
-//==============================================================================
 void AutoEditComponent::paint (juce::Graphics& g)
 {
 }
@@ -191,91 +160,11 @@ void AutoEditComponent::resized()
 
 void AutoEditComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
 {
-    //[UsercomboBoxChanged_Pre]
-    //[/UsercomboBoxChanged_Pre]
-
     if (comboBoxThatHasChanged == mode.get())
     {
-        //[UserComboBoxCode_mode] -- add your combo box handling code here..
-        //[/UserComboBoxCode_mode]
+
     }
 
-    //[UsercomboBoxChanged_Post]
-    //[/UsercomboBoxChanged_Post]
 }
 
-
-
-//[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
-//[/MiscUserCode]
-
-
-//==============================================================================
-#if 0
-/*  -- Projucer information section --
-
-    This is where the Projucer stores the metadata that describe this GUI layout, so
-    make changes in here at your peril!
-
-BEGIN_JUCER_METADATA
-
-<JUCER_COMPONENT documentType="Component" className="AutoEditComponent" componentName=""
-                 parentClasses="public juce::Component" constructorParams="" variableInitialisers=""
-                 snapPixels="8" snapActive="1" snapShown="1" overlayOpacity="0.330"
-                 fixedSize="0" initialWidth="305" initialHeight="170">
-  <BACKGROUND backgroundColour="ff323e44"/>
-  <LABEL name="new label" id="a73452a0976e835a" memberName="juce__label"
-         virtualName="" explicitFocusOrder="0" pos="0 39 150 24" edTextCol="ff000000"
-         edBkgCol="0" labelText="Assemble Duration" editableSingleClick="0"
-         editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="33"/>
-  <LABEL name="new label" id="6bc485c36516d34f" memberName="juce__label2"
-         virtualName="" explicitFocusOrder="0" pos="0 73 150 24" edTextCol="ff000000"
-         edBkgCol="0" labelText="Number of Segments" editableSingleClick="0"
-         editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="33"/>
-  <LABEL name="new label" id="583f3ad8314ea0e2" memberName="juce__label3"
-         virtualName="" explicitFocusOrder="0" pos="0 107 150 24" edTextCol="ff000000"
-         edBkgCol="0" labelText="Min. Segment Length" editableSingleClick="0"
-         editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="33"/>
-  <LABEL name="new label" id="b0e5864f96bdc71e" memberName="juce__label4"
-         virtualName="" explicitFocusOrder="0" pos="0 141 150 24" edTextCol="ff000000"
-         edBkgCol="0" labelText="Max. Segment Length" editableSingleClick="0"
-         editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="33"/>
-  <TEXTEDITOR name="duration" id="b471f82b6e65e3fa" memberName="duration" virtualName=""
-              explicitFocusOrder="0" pos="149 39 150 24" initialText="180"
-              multiline="0" retKeyStartsLine="0" readonly="0" scrollbars="1"
-              caret="1" popupmenu="1"/>
-  <TEXTEDITOR name="new text editor" id="5e98bc81b03d3f15" memberName="numSegments"
-              virtualName="" explicitFocusOrder="0" pos="149 73 150 24" initialText="20"
-              multiline="0" retKeyStartsLine="0" readonly="0" scrollbars="1"
-              caret="1" popupmenu="1"/>
-  <TEXTEDITOR name="new text editor" id="da24932cb30eca0a" memberName="segmentMin"
-              virtualName="" explicitFocusOrder="0" pos="149 107 150 24" initialText="2.0"
-              multiline="0" retKeyStartsLine="0" readonly="1" scrollbars="1"
-              caret="0" popupmenu="1"/>
-  <TEXTEDITOR name="new text editor" id="875d6e05d72f63e1" memberName="segmentMax"
-              virtualName="" explicitFocusOrder="0" pos="149 141 150 24" initialText="60.0"
-              multiline="0" retKeyStartsLine="0" readonly="1" scrollbars="1"
-              caret="0" popupmenu="1"/>
-  <COMBOBOX name="new combo box" id="fd2cbbc090aecc0" memberName="mode" virtualName=""
-            explicitFocusOrder="0" pos="150 5 150 24" editable="0" layout="33"
-            items="Random&#10;Sequential&#10;" textWhenNonSelected="Random"
-            textWhenNoItems="(no choices)"/>
-  <LABEL name="new label" id="825a8c9d0b9c9ab4" memberName="juce__label5"
-         virtualName="" explicitFocusOrder="0" pos="0 5 150 24" edTextCol="ff000000"
-         edBkgCol="0" labelText="Assemble Mode" editableSingleClick="0"
-         editableDoubleClick="0" focusDiscardsChanges="0" fontname="Default font"
-         fontsize="15.0" kerning="0.0" bold="0" italic="0" justification="33"/>
-</JUCER_COMPONENT>
-
-END_JUCER_METADATA
-*/
-#endif
-
-
-//[EndFile] You can add extra defines here...
-//[/EndFile]
 

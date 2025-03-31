@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    ChannelSubGroupListBoxModel.h
-    Created: 23 Oct 2023 3:14:04pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -22,8 +17,8 @@ class ChannelSubGroupListBoxModel  : public audium::ListBoxModel
 {
 public:
     ChannelSubGroupListBoxModel(audium::ListBox& owner,
-                                std::shared_ptr<AudiumEngine> audiumEngine,
-                                std::shared_ptr<AudioTrack> audioTrack) :
+                                std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                                std::shared_ptr<audium::AudioTrack> audioTrack) :
         owner(owner),
         audiumEngine(audiumEngine),
         audioTrack(audioTrack)
@@ -49,16 +44,11 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        auto channel = audioTrack->getChannel(rowNumber);
-        if (channel != nullptr)
-        {
-            if (existingComponentToUpdate == nullptr)
-            {
+        if (auto channel = audioTrack->getChannel(rowNumber)) {
+            if (existingComponentToUpdate == nullptr) {
                 return new ChannelComponent(audioTrack, audiumEngine, rowNumber);
-                
             }
-            else
-            {
+            else {
                 auto component = dynamic_cast<ChannelComponent*>(existingComponentToUpdate);
                 jassert(component);
                 
@@ -101,18 +91,18 @@ public:
     {
         auto selectedRows = owner.getSelectedRows();
         audioTrack->audioChannelContainer->setSelectedRows(selectedRows);
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(updateArrangementAction);
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
     }
     
-    void setAudioTrack(std::shared_ptr<AudioTrack> track)
+    void setAudioTrack(std::shared_ptr<audium::AudioTrack> track)
     {
         audioTrack = track;
     }
         
 private:
     audium::ListBox& owner;
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelSubGroupListBoxModel)

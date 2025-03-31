@@ -1,3 +1,7 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #if __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
@@ -7,9 +11,9 @@
 
 
 #if JUCE_WINDOWS
-    static String regPath = "HKEY_CURRENT_USER\\Software\\Voltmer\\";
+    static String regPath = "HKEY_CURRENT_USER\\Software\\Voltmer-Systems\\";
 #else
-    static String regPath = "com.voltmer.";
+    static String regPath = "com.voltmer-systems.";
 #endif
 
 String Preferences::s_RegistryName = "";
@@ -245,3 +249,7 @@ bool Preferences::setIntegerValue(const String& key, const uint64_t& value)
 #endif
     
 }
+
+
+
+

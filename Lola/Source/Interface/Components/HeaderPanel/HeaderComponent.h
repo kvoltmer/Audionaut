@@ -1,3 +1,7 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -5,15 +9,13 @@
 
 #include "Interface/Controls/LevelMeter.h"
 
-class AudiumEngine;
+#include "Engine/AudiumEngine.h"
 
 class HeaderComponent  : public juce::Component,
-                         private juce::Timer,
-                         public juce::Button::Listener,
-                         public juce::Label::Listener
+                         private juce::Timer
 {
 public:
-    HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine);
+    HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~HeaderComponent() override;
 
 
@@ -21,16 +23,16 @@ public:
 
     void paint (juce::Graphics& g) override;
     void resized() override;
-    void buttonClicked (juce::Button* buttonThatWasClicked) override;
-    void labelTextChanged (juce::Label* labelThatHasChanged) override;
 
     void updateUI();
+    
+    std::function<void()> onRightPanelButtonClick;
     
 private:
     
     void configureSlider(juce::Slider* slider);
     
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
 
     std::unique_ptr<juce::TextButton> linkButton;
     std::unique_ptr<juce::Slider> tempoSlider;
@@ -44,11 +46,15 @@ private:
     
     std::unique_ptr<juce::DrawableButton> playButton;
     std::unique_ptr<juce::DrawableButton> stopButton;
-    juce::DrawablePath stopImage;
-    juce::DrawablePath playImage;
+    std::unique_ptr<juce::DrawableButton> loopButton;
+    std::unique_ptr<juce::ShapeButton> rightPanelButton;
     
     std::unique_ptr<StereoMeter> stereoMeter;
     std::unique_ptr<juce::Slider> volumeSlider;
+    
+    
+    juce::Path getRightPanelButtonPath();
+    juce::Path getLoopButtonPath();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)
 };

@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    ChannelsComponent.h
-    Created: 23 Oct 2023 12:02:02pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -18,10 +13,10 @@
 #include "Util/EngineAccess.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
-class ChannelsComponent  : public juce::Component
+class ChannelsComponent  : public juce::Component, public juce::DragAndDropTarget
 {
 public:
-    ChannelsComponent(std::shared_ptr<AudiumEngine> audiumEngine) :
+    ChannelsComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
         audioChannelsListBox.reset(new audium::ListBox("Audio Group Listbox", nullptr));
@@ -38,6 +33,7 @@ public:
         // hide scrollbars
         audioChannelsListBox->getViewport()->setScrollBarsShown(false, false);
         addAndMakeVisible(audioChannelsListBox.get());
+        audioChannelsListBox->setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
     }
 
     ~ChannelsComponent() override
@@ -46,10 +42,8 @@ public:
         audioChannelsListBox->setHeaderComponent(nullptr);
     }
 
-    void paint (juce::Graphics& ) override
-    {
-    }
-
+    void paint (juce::Graphics& ) override;
+    
     void resized() override
     {
         audioChannelsListBox->setBounds(getLocalBounds());
@@ -66,12 +60,31 @@ public:
         auto range = audioChannelsListBox->getViewport()->getVerticalScrollBar().getCurrentRange().withStart(offset);
         audioChannelsListBox->getViewport()->getVerticalScrollBar().setCurrentRange(range, sendNotificationSync);
     }
+    
+    double getVerticalScrollOffset() const
+    {
+        return audioChannelsListBox->getViewport()->getVerticalScrollBar().getCurrentRange().getStart();
+    }
+    
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
+    void itemDragEnter (const SourceDetails &dragSourceDetails) override;
+    void itemDragMove (const SourceDetails &dragSourceDetails) override;
+    void itemDragExit (const SourceDetails &dragSourceDetails) override;
+    void itemDropped (const SourceDetails &dragSourceDetails) override;
+    bool shouldDrawDragImageWhenOver () override
+    {
+        return true;
+    }
 
 private:
-    std::shared_ptr<AudiumEngine>               audiumEngine;
+    
+    int getListBoxHeight() const;
+    
+    std::shared_ptr<audium::AudiumEngine>               audiumEngine;
     std::shared_ptr<audium::ListBox>            audioChannelsListBox;
     std::shared_ptr<ChannelGroupListBoxModel>  audioChannelsListBoxModel;
     
+    bool itemDrag = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelsComponent)
 };

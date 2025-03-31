@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    PlayListItemArrangementModel.h
-    Created: 23 Oct 2023 3:14:04pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -27,9 +22,9 @@ class PlayListItemArrangementModel  : public audium::ListBoxModel
 {
 public:
     PlayListItemArrangementModel(audium::ListBox& owner,
-                                 std::shared_ptr<AudioTrack> audioTrack,
-                                 std::shared_ptr<PlayListItem> playListItem,
-                                 std::shared_ptr<AudiumEngine> audiumEngine,
+                                 std::shared_ptr<audium::AudioTrack> audioTrack,
+                                 std::shared_ptr<audium::PlayListItem> playListItem,
+                                 std::shared_ptr<audium::AudiumEngine> audiumEngine,
                                  std::shared_ptr<ZoomHandler> zoomHandler,
                                  std::shared_ptr<RegionSelector> regionSelector) :
         owner(owner),
@@ -61,42 +56,33 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-    
-        // TODO: fixme
         auto audioSubGroup = playListItem->getRegion()->getAudioSubGroup();
-        auto audioResource = audioSubGroup->getChannel(rowNumber);
+        auto audioResource = audioSubGroup->getAudioResourceAtChannel(rowNumber);
         
-        if (existingComponentToUpdate == nullptr)
-        {
-            if (audioResource != nullptr)
-            {
-                
-                auto component = new AudioRegionView(*owner.getParentComponent(),
+        if (existingComponentToUpdate == nullptr) {
+            if (audioResource != nullptr) {
+                jassert(parentComponent);
+                jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
+                auto component = new AudioRegionView(parentComponent,
                                                      audiumEngine,
                                                      audioResource,
                                                      zoomHandler,
-                                                     playListItem->getRegion(),
                                                      audioTrack->getColour(),
                                                      regionSelector,
                                                      rowNumber);
+                component->setPlayListItem(playListItem);
                 return component;
             }
-            else
-            {
+            else {
                 return new juce::Component();
             }
         }
-        else
-        {
-            auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate);
-            if (component != nullptr)
-            {
-                component->setRowNumber(rowNumber);
+        else {
+            if (auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate)) {
+                component->setParentComponent(parentComponent);
+                component->setPlayListItem(playListItem);
+                component->updateUI(rowNumber);
                 return component;
-            }
-            else
-            {
-                return existingComponentToUpdate;
             }
         }
         
@@ -129,13 +115,17 @@ public:
     void selectedRowsChanged (int lastRowSelected) override
     {
     }
-        
+    
+    void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_) { playListItem = playListItem_; }
+    void setParentComponent(juce::Component *comp) { parentComponent = comp; }
+    
 private:
     
     audium::ListBox& owner;
-    std::shared_ptr<AudioTrack> audioTrack;
-    std::shared_ptr<PlayListItem> playListItem;
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    juce::Component *parentComponent = nullptr;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
+    std::shared_ptr<audium::PlayListItem> playListItem;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;
 

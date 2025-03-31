@@ -1,17 +1,13 @@
-/*
-  ==============================================================================
-
-    AudiumMainWindow.cpp
-    Created: 24 Mar 2023 10:51:48am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumMainWindow.h"
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
+#include "Util/Preferences.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Selection/SelectionManager.h"
@@ -20,7 +16,7 @@
 #include "Interface/Dialogs/AutoEditDialog.h"
 #include "Interface/Dialogs/ExportAudioDialog.h"
 
-AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEngine> audiumEngine)
+AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::AudiumEngine> audiumEngine)
     : DocumentWindow (name,
                       juce::Desktop::getInstance().getDefaultLookAndFeel()
                                                   .findColour (juce::ResizableWindow::backgroundColourId),
@@ -32,7 +28,7 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEng
     setContentOwned (mainComponent.get(), true);
     
 #if ! JUCE_MAC
- setMenuBar (ProjucerApplication::getApp().getMenuModel());
+    setMenuBar (AudiumApplication::getApp().getMenuModel());
 #endif
     
     auto& commandManager = AudiumApplication::getCommandManager();
@@ -54,12 +50,22 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEng
     updateAppKeyMappings();
     
     
-   #if JUCE_IOS || JUCE_ANDROID
+#if JUCE_IOS || JUCE_ANDROID
     setFullScreen (true);
-   #else
+#else
     setResizable (true, true);
-    centreWithSize (getWidth(), getHeight());
-   #endif
+    
+    String windowState;
+    if (Preferences::valueExists (PreferenceKeys::mainWindowState))
+        windowState = Preferences::getValue (PreferenceKeys::mainWindowState);
+
+    if (windowState.isNotEmpty()) {
+        restoreWindowStateFromString (windowState);
+    }
+    else {
+        centreWithSize (getWidth(), getHeight());
+    }
+#endif
 
     mainComponent->updateUI();
     setVisible (true);
@@ -67,6 +73,7 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<AudiumEng
 
 AudiumMainWindow::~AudiumMainWindow()
 {
+    Preferences::setValue (PreferenceKeys::mainWindowState, getWindowStateAsString());
 #if ! JUCE_MAC
     setMenuBar (nullptr);
 #endif
@@ -152,7 +159,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             break;
         case CommandIDs::autoEdit:
             result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
-            result.defaultKeypresses.add (KeyPress ('e', ModifierKeys::commandModifier, 0));
+            result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::bounceProject:
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
@@ -249,7 +256,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             mainComponent->updateUI();
             break;
         case CommandIDs::loopPlayList:
-            getEngine()->getPlayListScheduler()->setLoopPlayList(!getEngine()->getPlayListScheduler()->getLoopPlayList());
+            notImplemented();
             break;
         case CommandIDs::createRegion:
             if (newRegionDialog == nullptr)

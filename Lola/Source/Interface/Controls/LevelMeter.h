@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    LevelMeter.h
-    Created: 14 Jan 2015 4:11:51pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #ifndef VOLUMEMETER_H_INCLUDED
 #define VOLUMEMETER_H_INCLUDED
@@ -81,7 +76,7 @@ private:
     int m_iSpace;
     
     std::unique_ptr<LevelComponent> m_pLevelComponent;
-    Rectangle<int> mRect;
+    juce::Rectangle<int> mRect;
     
 
     

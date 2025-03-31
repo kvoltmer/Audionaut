@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    WaveFormViewBase.h
-    Created: 27 Nov 2023 4:15:50pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -30,22 +25,20 @@
 class WaveFormViewBase : public juce::Component, public juce::ChangeListener
 {
 public:
-    WaveFormViewBase(const juce::Component &parentComponent,
-                     std::shared_ptr<AudiumEngine> audiumEngine,
-                     std::shared_ptr<AudioResource> audioResource,
+    WaveFormViewBase(juce::Component *parentComponent,
+                     std::shared_ptr<audium::AudiumEngine> audiumEngine,
+                     std::shared_ptr<audium::AudioResource> audioResource,
                      std::shared_ptr<ZoomHandler> zoomHandler,
-                     std::shared_ptr<AudioRegion> audioRegion,
                      juce::Colour colour,
                      std::shared_ptr<RegionSelector> regionSelector,
-                     int rowNumber) :
+                     int channelNumber_) :
         parentComponent(parentComponent),
         audiumEngine(audiumEngine),
         audioResource(audioResource),
         zoomHandler(zoomHandler),
-        audioRegion(audioRegion),
         colour(colour),
         regionSelector(regionSelector),
-        rowNumber(rowNumber)
+        channelNumber(channelNumber_)
     {
         // this component doesn't handle mouse events
         //setInterceptsMouseClicks(false, false);
@@ -90,6 +83,8 @@ public:
     
     virtual double getRegionStart(audium::TimeContextType context) const = 0;
     
+    virtual double getClipGain() const { return 1.0; }
+    
     void paintBackground (juce::Graphics& g);
 
     void paintFileNameLabel (juce::Graphics& g);
@@ -98,14 +93,16 @@ public:
     // note: this is much faster than drawing the entire waveform
     juce::Rectangle<double> getClippedDrawingArea() const;
     
-    void setRowNumber(int theRowNumber) { rowNumber = theRowNumber; }
-
+    virtual void updateUI(int theChannel) { channelNumber = theChannel; }
+    
+    void setParentComponent(juce::Component *comp) { parentComponent = comp; }
+    
 protected:
-    const juce::Component &parentComponent;
-    std::shared_ptr<AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioResource> audioResource;
+    juce::Component *parentComponent;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioResource> audioResource;
     std::shared_ptr<ZoomHandler> zoomHandler;
-    std::shared_ptr<AudioRegion> audioRegion;
+
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
     
@@ -113,7 +110,7 @@ protected:
     
     static constexpr float verticalZoomFactor = 1.f;
     
-    int rowNumber = 0;
+    int channelNumber = 0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormViewBase)
 };

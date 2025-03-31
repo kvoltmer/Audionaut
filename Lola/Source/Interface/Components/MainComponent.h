@@ -1,10 +1,15 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
+
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/AudiumEngine.h"
 
 using namespace juce;
 
-class AudiumEngine;
 class MiddlePanelComponent;
 class RightPanelComponent;
 class HeaderComponent;
@@ -15,7 +20,7 @@ class MainComponent :   public juce::Component,
                         private juce::ChangeListener
 {
 public:
-    MainComponent (std::shared_ptr<AudiumEngine> audiumEngine);
+    MainComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~MainComponent() override;
 
     void actionListenerCallback (const String& message) override;
@@ -44,7 +49,7 @@ public:
 
 private:
 
-    std::shared_ptr<AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     std::unique_ptr<HeaderComponent> headerComponent;
     std::unique_ptr<MiddlePanelComponent> middlePanelComponent;
@@ -53,6 +58,8 @@ private:
     std::unique_ptr<StretchableLayoutManager> stretchableLayoutManager;
     std::unique_ptr<StretchableLayoutResizerBar> stretchableLayoutResizerBar;
 
+    bool rightPanelVisible = true;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
 

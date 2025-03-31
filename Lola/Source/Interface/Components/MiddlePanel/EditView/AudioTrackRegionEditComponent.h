@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    AudioTrackRegionEditComponent.h
-    Created: 27 Nov 2023 12:11:36pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -34,8 +29,8 @@ class AudioTrackRegionEditComponent  : public AudioTrackBaseComponent, public ju
 {
 public:
         
-    AudioTrackRegionEditComponent (std::shared_ptr<AudioTrack> track,
-                        std::shared_ptr<AudiumEngine> audiumEngine,
+    AudioTrackRegionEditComponent (std::shared_ptr<audium::AudioTrack> track,
+                        std::shared_ptr<audium::AudiumEngine> audiumEngine,
                         std::shared_ptr<ZoomHandler> zoomHandler,
                         std::shared_ptr<RegionSelector> regionSelector) :
         AudioTrackBaseComponent(track, audiumEngine, zoomHandler, regionSelector)
@@ -43,7 +38,7 @@ public:
         refreshComponent(track);
     }    
     
-    void refreshComponent (std::shared_ptr<AudioTrack> track, bool forceRebuildComponents = false) override
+    void refreshComponent (std::shared_ptr<audium::AudioTrack> track, bool forceRebuildComponents = false) override
     {
         audioTrack = track;
         
@@ -97,12 +92,13 @@ public:
             subGroupListView->setModel(subGroupListBoxModel.get());
             
             // create dragger as header of ListBox
-            auto dragger = std::unique_ptr<SubGroupDraggerControl>(new SubGroupDraggerControl(subGroupListView.get(),
-                                                                                              audiumEngine,
+            auto dragger = std::unique_ptr<SubGroupDraggerControl>(new SubGroupDraggerControl(audiumEngine,
                                                                                               subGroup,
                                                                                               zoomHandler,
                                                                                               audioTrack->getColour(),
                                                                                               regionSelector));
+            dragger->setComponentToDrag(subGroupListView.get());
+            dragger->setPositionableObject(subGroup);
             dragger->addChangeListener(this);
             subGroupListView->setHeaderComponent(std::move(dragger));
 

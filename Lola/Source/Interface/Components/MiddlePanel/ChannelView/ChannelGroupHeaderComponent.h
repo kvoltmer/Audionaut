@@ -1,12 +1,7 @@
-/*
-  ==============================================================================
-
-    ChannelGroupHeaderComponent.h
-    Created: 15 Dec 2023 11:00:09am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
@@ -14,16 +9,19 @@
 
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Engine/ActionMessages.h"
+
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Controls/AudiumLabel.h"
 
 class ChannelGroupHeaderComponent : public juce::Component,
                                     public juce::Label::Listener,
                                     public juce::ComboBox::Listener,
-                                    public juce::KeyListener
+                                    public juce::KeyListener,
+                                    public juce::DragAndDropTarget
 {
 public:
-    ChannelGroupHeaderComponent(std::shared_ptr<AudioTrack> audioTrack) :
+    ChannelGroupHeaderComponent(std::shared_ptr<audium::AudioTrack> audioTrack) :
         audioTrack(audioTrack)
     {
         audioTrackNameLabel.reset (new AudiumLabel ("track name",
@@ -34,11 +32,8 @@ public:
         audioTrackNameLabel->setJustificationType (juce::Justification::centredLeft);
         audioTrackNameLabel->setEditable (false, true, false);
     
-        // Label colours:
-        audioTrackNameLabel->setColour (juce::Label::textColourId, audioTrack->getColour());
+        // Label colours (also see updateFromEngine):
         audioTrackNameLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
-        audioTrackNameLabel->setColour (juce::TextEditor::textColourId, audioTrack->getColour());
-        audioTrackNameLabel->setColour (juce::Label::textWhenEditingColourId, audioTrack->getColour());
         audioTrackNameLabel->setColour (juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack);
         audioTrackNameLabel->setColour (juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
         
@@ -60,7 +55,7 @@ public:
         // 19 is the dragger height. center vertically -> 19 - 15 = 4 / 2 = 2
         channelSizeComboBox->setBounds (5, 2, 15, 15);
         
-        updateFromEngine();
+        updateFromEngine(audioTrack);
         
         addKeyListener(this);
     }
@@ -94,9 +89,13 @@ public:
         }
     }
     
-    void updateFromEngine()
+    void updateFromEngine(std::shared_ptr<audium::AudioTrack> newAudioTrack)
     {
-        audioTrackNameLabel->setText(audioTrack->getAudioTrackName(), dontSendNotification);
+        audioTrack = newAudioTrack;
+        audioTrackNameLabel->setText(audioTrack->getAudioTrackName(), juce::dontSendNotification);
+        audioTrackNameLabel->setColour (juce::Label::textColourId, audioTrack->getColour());
+        audioTrackNameLabel->setColour (juce::TextEditor::textColourId, audioTrack->getColour());
+        audioTrackNameLabel->setColour (juce::Label::textWhenEditingColourId, audioTrack->getColour());
     }
     
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override
@@ -121,7 +120,7 @@ public:
                     break;
             }
 
-            channelSizeComboBox->setText("", dontSendNotification);
+            channelSizeComboBox->setText("", juce::dontSendNotification);
 
             // undo
             auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
@@ -136,17 +135,7 @@ public:
     }
     
     
-    void paint (juce::Graphics& g) override
-    {
-        if (audioTrack->isSelected())
-        {
-            auto colour = findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.3f);
-            g.fillAll (colour);
-        }
-        
-        g.setColour (Colours::black);
-        g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-    }
+    void paint (juce::Graphics& g) override;
     
     void mouseDown (const juce::MouseEvent& e) override
     {
@@ -164,26 +153,65 @@ public:
             audioTrack->getSelectionManager()->deselectAll();
         audioTrack->setSelected(bSelected, false);
         
-        audioTrack->getAudioTrackContainer().sendActionMessage(updateMiddlePanelAction);
+        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
     }
 
-    bool keyPressed (const KeyPress& key, Component* originatingComponent) override
+    bool keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent) override
     {
-        if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
-        {
-            
+        if (key.isKeyCode (juce::KeyPress::deleteKey) || key.isKeyCode (juce::KeyPress::backspaceKey)) {
             audioTrack->getAudioTrackContainer().deleteSelectedObjects();
             return true;
         }
-        
         return false;
     }
     
+    void mouseDrag(const juce::MouseEvent& e) override
+    {
+        if (juce::DragAndDropContainer* container = juce::DragAndDropContainer::findParentDragContainerFor(this)) {
+            container->startDragging("ChannelGroupHeaderComponent", this);
+        }
+    }
+        
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override;
+    
+    void updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails);
+    
+    void hideInsertLines()
+    {
+        insertBefore = false;
+        
+        repaint();
+    }
+    void itemDragEnter (const SourceDetails &dragSourceDetails) override
+    {
+        updateInsertLines(dragSourceDetails);
+    }
+    
+    void itemDragMove (const SourceDetails &dragSourceDetails) override
+    {
+        updateInsertLines(dragSourceDetails);
+    }
+    
+    void itemDragExit (const SourceDetails &dragSourceDetails) override
+    {
+        hideInsertLines();
+    }
+    
+    void itemDropped (const SourceDetails &dragSourceDetails) override;
+    
+    bool shouldDrawDragImageWhenOver () override
+    {
+        return true;
+    }
+    std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
+
 private:
-    std::shared_ptr<AudioTrack> audioTrack;
+    std::shared_ptr<audium::AudioTrack> audioTrack;
     
     std::unique_ptr<AudiumLabel> audioTrackNameLabel;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;
+    
+    bool insertBefore = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelGroupHeaderComponent)
 };

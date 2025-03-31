@@ -1,16 +1,14 @@
-/*
-  ==============================================================================
-
-    AutoEdit.h
-    Created: 14 Sep 2023 3:13:12pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
 #include <memory>
+
+namespace audium {
+
 
 class AudioResourceContainer;
 class AudioRegionContainer;
@@ -31,8 +29,8 @@ class AutoEdit {
 public:
     AutoEdit(std::shared_ptr<AudioTrackContainer> audioTrackContainer,
              std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
-        audioTrackContainer(audioTrackContainer),
-        audioResourceContainer(audioResourceContainer)
+    audioTrackContainer(audioTrackContainer),
+    audioResourceContainer(audioResourceContainer)
     {}
     
     bool invokeAutoEdit(const AutoEditConfig config);
@@ -52,3 +50,6 @@ private:
     const std::string getBaseName() const;
     const std::string getCountFromFile() const;
 };
+
+} // namespace audium
+

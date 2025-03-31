@@ -1,12 +1,8 @@
-/*
-  ==============================================================================
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
-    RegionSelector.cpp
-    Created: 25 May 2023 12:37:00pm
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
 #include <iostream>
 
 #include "RegionSelector.h"
@@ -14,9 +10,8 @@
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-#include "Interface/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 void RegionSelector::paint (Graphics& g)
 {
@@ -140,7 +135,7 @@ void RegionSelector::mouseDrag (const juce::MouseEvent& e)
 bool RegionSelector::createRectangleAndSetBonds()
 {
     // create a rectange
-    auto rect = Rectangle<int> (dragStartPos, dragEndPos);
+    auto rect = juce::Rectangle<int> (dragStartPos, dragEndPos);
     if (rect.getWidth() > 1) {
         auto yOffset = owner->getVerticalScrollBar().getCurrentRangeStart();
         rect.setTop(owner->getBounds().getY() + AudiumLookAndFeel::transportPositionControlHeight);

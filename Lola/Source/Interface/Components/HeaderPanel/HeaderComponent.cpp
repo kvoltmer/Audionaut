@@ -1,3 +1,7 @@
+//    Lola - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "HeaderComponent.h"
 
@@ -5,6 +9,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Link/LinkEngine.hpp"
+#include "Engine/PlayList/TransportLoop.h"
 
 #include "Interface/Controls/DefaultLabel.h"
 #include "Interface/ColourIds.h"
@@ -13,7 +18,7 @@
 using namespace juce;
 
 //==============================================================================
-HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
+HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
     audiumEngine(audiumEngine_)
 {
     auto scheduler = audiumEngine->getPlayListScheduler().get();
@@ -21,7 +26,6 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     // Link
     linkButton.reset (new juce::TextButton ("Link"));
     addAndMakeVisible (linkButton.get());
-    linkButton->addListener (this);
     linkButton->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff7a7a7a));
     linkButton->setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff12a4e2));
     linkButton->setClickingTogglesState(true);
@@ -55,7 +59,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     barsSlider->onValueChange = [this, scheduler]() {
         auto barsDiff = static_cast<int>(barsSlider->getValue()) - lastBarsValue;
         if (abs(barsDiff) > 0) {
-            auto clocksDiff = TempoProvider::barsToClocks(barsDiff);
+            auto clocksDiff = audium::TempoProvider::barsToClocks(barsDiff);
             auto clocks = scheduler->getAbsoluteStartPosition(audium::clocks);
             scheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
             lastBarsValue = static_cast<int>(barsSlider->getValue());
@@ -82,7 +86,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     beatsSlider->onValueChange = [this, scheduler]() {
         auto beatsDiff = static_cast<int>(beatsSlider->getValue()) - lastBeatsValue;
         if (abs(beatsDiff) > 0) {
-            auto clocksDiff = TempoProvider::beatsToClocks(beatsDiff);
+            auto clocksDiff = audium::TempoProvider::beatsToClocks(beatsDiff);
             auto clocks = scheduler->getAbsoluteStartPosition(audium::clocks);
             scheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
             lastBeatsValue = static_cast<int>(beatsSlider->getValue());
@@ -110,7 +114,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     clicksSlider->onValueChange = [this, scheduler]() {
         auto clicksDiff = static_cast<int>(clicksSlider->getValue()) - lastClicksValue;
         if (abs(clicksDiff) > 0) {
-            auto clocksDiff = TempoProvider::clicksToClocks(clicksDiff);
+            auto clocksDiff = audium::TempoProvider::clicksToClocks(clicksDiff);
             auto clocks = scheduler->getAbsoluteStartPosition(audium::clocks);
             scheduler->setAbsoluteStartPosition(clocks + clocksDiff, audium::clocks);
             lastClicksValue = static_cast<int>(clicksSlider->getValue());
@@ -125,18 +129,27 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     };
     clicksSlider->updateText();
     
+    // TODO: fix edit mode
+    barsSlider->setTextBoxIsEditable(false);
+    beatsSlider->setTextBoxIsEditable(false);
+    clicksSlider->setTextBoxIsEditable(false);
+    
 
     // PLAY
     playButton = std::make_unique<juce::DrawableButton>("Play", juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
     addAndMakeVisible(playButton.get());
     juce::Path play;
     play.addTriangle(0, 0, 0, 10, 10, 5);
+    juce::DrawablePath playImage;
     playImage.setPath(play);
     playImage.setFill (FillType(Colours::white));
     playButton->setImages(&playImage);
     playButton->onClick = [this, scheduler]() {
-        scheduler->startPlaying();
+        if (playButton->getToggleState())
+            scheduler->startPlaying();
     };
+    playButton->setClickingTogglesState(true);
+    playButton->setColour (TextButton::buttonOnColourId, Colour (0xff12a4e2));
     playButton->setColour(TextButton::buttonColourId, Colours::grey);
     
     // STOP
@@ -144,6 +157,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     addAndMakeVisible(stopButton.get());
     juce::Path stop;
     stop.addRoundedRectangle(0, 0, 10, 10, 2.f);
+    juce::DrawablePath stopImage;
     stopImage.setPath(stop);
     stopImage.setFill (FillType(Colours::white));
     stopButton->setImages(&stopImage);
@@ -151,6 +165,39 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
         scheduler->stopPlaying();
     };
     stopButton->setColour(TextButton::buttonColourId, Colours::grey);
+    
+    // LOOP
+    loopButton = std::make_unique<DrawableButton>("Loop",
+                                                        DrawableButton::ButtonStyle::ImageOnButtonBackgroundOriginalSize);
+    addAndMakeVisible(loopButton.get());
+    juce::DrawablePath loopImage;
+    loopImage.setPath(getLoopButtonPath());
+    loopImage.setStrokeFill(FillType(Colours::white.withAlpha(0.8f)));
+    loopImage.setStrokeThickness(1.5f);
+    //loopImage.setFill (FillType(Colours::transparentBlack));
+    loopImage.setFill (Colours::white);
+
+    loopButton->setImages(&loopImage);
+    loopButton->setClickingTogglesState(true);
+    loopButton->setColour (TextButton::buttonOnColourId, Colour (0xff12a4e2));
+    loopButton->setColour(TextButton::buttonColourId, Colours::grey);
+    
+    loopButton->onClick = [this, scheduler]() {
+        scheduler->getTransportLoop()->setLoopActive(loopButton->getToggleState());
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
+    };
+    
+    
+    // RIGHT PANEL
+    rightPanelButton = std::make_unique<juce::ShapeButton>("Right Panel", Colours::transparentBlack, Colours::grey.withAlpha(0.25f), Colours::grey.withAlpha(0.25f));
+    rightPanelButton->setOutline(Colours::white.withAlpha(0.75f), 1.2f);
+    addAndMakeVisible(rightPanelButton.get());
+    auto path = getRightPanelButtonPath();
+    rightPanelButton->setShape(path, true, true, true);
+    rightPanelButton->onClick = [this]() {
+        NullCheckedInvocation::invoke(this->onRightPanelButtonClick);
+    };
+    
     
     // master meter
     stereoMeter = std::make_unique<StereoMeter>();
@@ -160,6 +207,8 @@ HeaderComponent::HeaderComponent (std::shared_ptr<AudiumEngine> audiumEngine_) :
     volumeSlider = std::make_unique<juce::Slider>("Master Volume Font 13");
     addAndMakeVisible(volumeSlider.get());
     ChannelComponent::configureVolumeSlider(volumeSlider.get());
+    volumeSlider->setColour (Slider::backgroundColourId, juce::Colours::grey);
+
     volumeSlider->onValueChange = [this] {
         auto gain = Decibels::decibelsToGain(volumeSlider->getValue());
         this->audiumEngine->getAudioTrackContainer()->setMasterGain(gain);
@@ -198,27 +247,21 @@ void HeaderComponent::resized()
     
     playButton->setBounds(450, 10, 35, 20);
     stopButton->setBounds(500, 10, 35, 20);
+    loopButton->setBounds(550, 10, 35, 20);
     
-    volumeSlider->setBounds(600, 10, 90, 20);
+    volumeSlider->setBounds(600, 10, 70, 20);
     stereoMeter->setBounds(700, 10, 110, 20);
-}
-
-void HeaderComponent::buttonClicked (juce::Button* buttonThatWasClicked)
-{
-    if (buttonThatWasClicked == linkButton.get())
-    {
-        auto state = linkButton->getToggleStateValue();
-    }
-}
-
-void HeaderComponent::labelTextChanged (juce::Label* labelThatHasChanged)
-{
+    
+    rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
 }
 
 void HeaderComponent::updateUI()
 {
     auto gain = audiumEngine->getAudioTrackContainer()->getMasterGain();
     volumeSlider->setValue(LevelMeter::gainToDecebel(gain), dontSendNotification);
+    auto loopActive = audiumEngine->getPlayListScheduler()->getTransportLoop()->isLoopActive();
+    loopButton->setToggleState(loopActive, dontSendNotification);
+    
 }
 
 void HeaderComponent::timerCallback()
@@ -243,12 +286,14 @@ void HeaderComponent::timerCallback()
 
     
     auto clocks = scheduler->getAbsolutePosition(audium::clocks);
-    barsSlider->setValue(TempoProvider::clocksToBars(clocks), juce::dontSendNotification);
-    beatsSlider->setValue(TempoProvider::clocksToBeats(clocks), juce::dontSendNotification);
-    clicksSlider->setValue(TempoProvider::clocksToClicks(clocks), juce::dontSendNotification);
+    barsSlider->setValue(audium::TempoProvider::clocksToBars(clocks), juce::dontSendNotification);
+    beatsSlider->setValue(audium::TempoProvider::clocksToBeats(clocks), juce::dontSendNotification);
+    clicksSlider->setValue(audium::TempoProvider::clocksToClicks(clocks), juce::dontSendNotification);
     
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
+    
+    playButton->setToggleState(audiumEngine->getPlayListScheduler()->isPlaying(), dontSendNotification);
 }
 
 void HeaderComponent::configureSlider(juce::Slider* slider)
@@ -258,4 +303,62 @@ void HeaderComponent::configureSlider(juce::Slider* slider)
     slider->setDoubleClickReturnValue(true, 0.0);
     slider->setColour(Slider::trackColourId, juce::Colours::transparentBlack);
     slider->setColour (Slider::backgroundColourId, juce::Colours::grey);
+}
+
+juce::Path HeaderComponent::getRightPanelButtonPath()
+{
+    juce::Path rightPanelPath;
+    auto w = 30;
+    auto h = 20;
+    auto b = 19;
+    
+    rightPanelPath.addRoundedRectangle(0, 0, w, h, 2.f);
+    rightPanelPath.startNewSubPath(b, 0);
+    rightPanelPath.lineTo(b, h);
+    rightPanelPath.closeSubPath();
+    
+    
+    
+    auto y = 5.f;
+    auto s = 3.f;
+    for (auto i = 0; i < 3; i++) {
+        rightPanelPath.startNewSubPath(b+s, y);
+        rightPanelPath.lineTo(w-s, y);
+        rightPanelPath.closeSubPath();
+        y += 4.f;
+    }
+    
+    return rightPanelPath;
+}
+
+juce::Path HeaderComponent::getLoopButtonPath()
+{
+    auto w = 20.f;
+    auto h = 10.f;
+    auto gap = 5.f;
+    juce::Path loop;
+    
+    loop.startNewSubPath ({gap, h});
+    loop.lineTo(0.f, h);
+    loop.lineTo(0.f, 0.f);
+    loop.lineTo(w, 0.f);
+    loop.lineTo(w, h);
+    loop.lineTo(w - gap, h);
+    
+    // go back
+    loop.lineTo(w, h);
+    loop.lineTo(w, 0.f);
+    loop.lineTo(0.f, 0.f);
+    loop.lineTo(0.f, h);
+    
+    loop = loop.createPathWithRoundedCorners(4.f);
+    
+    // arrow
+    auto x = w-gap;
+    auto y = h;
+    auto arrowW = 5.f;
+    auto arrowH = 2.f;
+    loop.addTriangle(x-arrowW, y, x, y - arrowH, x, y + arrowH);
+    
+    return loop;
 }
