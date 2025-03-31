@@ -38,8 +38,26 @@ public:
     
     ~AudioResourceContainer();
     
+    static bool createTemporaryProjectDirectory();
+    
+    // returns the directory of the audio file directory
+    // example: Foo.audium/Media/Audio
+    static const juce::File getAudioFileDirectory(const juce::File projectRoot);
+    
+    static const juce::File getAudioFileDirectory();
+    
+    // copy or move audio files
+    static void copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory);
+    
+    void changeAudioFilePaths(const juce::File sourceDirectory, const juce::File destinationDirectory);
+    
+    // returns the url of the newly copied audio file or the input url in case no copy is needed
+    static const juce::URL copyToAudioFileDirectoryIfNeeded(juce::URL url);
+    
     std::shared_ptr<AudioResource> findResourceWithUrl(juce::URL url) const;
-    std::shared_ptr<juce::AudioFormatReader> getAudioFormatReaderForUrl(juce::URL url);
+    
+    // returns a AudioFormatReader. Note: this method may change the url
+    std::shared_ptr<juce::AudioFormatReader> getAudioFormatReaderForUrl(juce::URL &url);
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      std::shared_ptr<juce::AudioFormatReader> audioFormatReader,
                                                      std::shared_ptr<AudioTrack> track,
@@ -89,7 +107,6 @@ private:
     std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
-    
     
     
     juce::TimeSliceThread thread  { "read ahead thread" };

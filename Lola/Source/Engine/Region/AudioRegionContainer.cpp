@@ -158,12 +158,11 @@ void AudioRegionContainer::cleanup()
     audioRegions.clear();
 }
 
-std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int rowNumber) const
+std::shared_ptr<AudioRegion> AudioRegionContainer::getRegion(int regionId) const
 {
-    if (rowNumber >= 0 && rowNumber < audioRegions.size())
-    {
-        jassert(audioRegions[rowNumber]->data.region_id == rowNumber);
-        return audioRegions[rowNumber];
+    if (regionId >= 0 && regionId < audioRegions.size()) {
+        //jassert(audioRegions[regionId]->data.region_id == regionId);
+        return audioRegions[regionId];
     }
     return nullptr;
 }

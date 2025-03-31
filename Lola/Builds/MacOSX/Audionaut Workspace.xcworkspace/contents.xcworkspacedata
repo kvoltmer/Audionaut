@@ -2,9 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:Lola.xcodeproj">
+      location = "group:Audionaut.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:../../Catch2Tests/_build/Lola_Tests.xcodeproj">
+      location = "group:../../Catch2Tests/_build/Audionaut_Tests.xcodeproj">
    </FileRef>
 </Workspace>

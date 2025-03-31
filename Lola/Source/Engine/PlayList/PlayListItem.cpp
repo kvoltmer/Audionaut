@@ -54,7 +54,11 @@ void PlayListItem::deinit()
 
 juce::Range<double> PlayListItem::getRegionData(audium::TimeContextType context) const
 {
-    return audioRegion->getRegionData(context);
+    if (audioRegion != nullptr)
+        return audioRegion->getRegionData(context);
+    
+    jassertfalse;
+    return juce::Range<double>(0.0, 0.0);
 }
 
 void PlayListItem::setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context)

@@ -69,11 +69,19 @@ void AudiumEngine::cleanup()
     audioTrackContainer->cleanup();
     audioResourceContainer->cleanup();
     undoManager->clearUndoHistory();
+    
     currentProjectFile = File();
 }
 
 void AudiumEngine::createNewProject()
 {
+    // remove temp files
+    if (projectDirectory.isAChildOf(File::getSpecialLocation(File::tempDirectory))) {
+        projectDirectory.deleteRecursively();
+    }
+    projectDirectory = File();
+    AudioResourceContainer::createTemporaryProjectDirectory();
+    
     audium::WaveFormColours::resetWaveFormColour();
     for (auto i = 0; i < 1; i++) {
         auto track = audioTrackContainer->createNewAudioTrack("Track " + String(i+1));
@@ -174,12 +182,19 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         if (! file.exists())
             file.create();
         
+        // need to copy or move audio files?
+        auto sourceDirectory = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
+        jassert(sourceDirectory.exists());
+        auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(file.getParentDirectory());
+        if (sourceDirectory != destinationDirectory) {
+            AudioResourceContainer::copyOrMoveAudioFiles(sourceDirectory, destinationDirectory);
+            audioResourceContainer->changeAudioFilePaths(projectDirectory, file.getParentDirectory());
+        }
+        // assign new project directory
         projectDirectory = file.getParentDirectory();
         
         juce::TemporaryFile temp (file);
-        
         juce::FileOutputStream out (temp.getFile());
-        
         if (out.failedToOpen()) {
             NullCheckedInvocation::invoke (callback, out.getStatus().getErrorMessage().toStdString());
             return false;
@@ -235,12 +250,13 @@ bool AudiumEngine::writeToJson (json& output)
     jsonAudium["scheduler"] = getPlayListScheduler()->data;
     output["audium"] = jsonAudium;
     
-    std::cout << std::setw(2) << output << std::endl;
+    // std::cout << std::setw(2) << output << std::endl;
     return true;
 }
 
 bool AudiumEngine::readFromJson (json& input, bool rebuild)
 {
+    // std::cout << std::setw(2) << input << std::endl;
     auto jsonAudium = input["audium"];
     
     cleanup(); // clear everything
