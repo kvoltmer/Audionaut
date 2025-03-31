@@ -49,6 +49,7 @@ public:
     const juce::String getFullPathName() const;
     
     const juce::URL getUrl() const { return url; }
+    void setUrl(const juce::URL newUrl) { url = newUrl; }
     
     // Returns a string version of the URL.
     const juce::String getUrlAsString() const;

@@ -8,6 +8,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace Catch;
+using namespace audium;
 
 /// TODO: more testing 
 TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {

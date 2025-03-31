@@ -60,7 +60,7 @@ public:
     int getSizeInUnits() override;
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
-    std::shared_ptr<AudioResource> addAudioResourceFromUrl(const juce::URL url);
+    std::shared_ptr<AudioResource> addAudioResourceFromUrl(juce::URL url);
     
     int getNumChannels() const;
     std::shared_ptr<AudioResource> getAudioResourceAtChannel(int channelNumber) const;

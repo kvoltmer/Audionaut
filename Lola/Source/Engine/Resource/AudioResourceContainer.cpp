@@ -15,11 +15,127 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 
+using namespace juce;
+
 namespace audium {
 
 AudioResourceContainer::~AudioResourceContainer()
 {
     audioResources.clear();
+}
+
+const juce::File AudioResourceContainer::getAudioFileDirectory(const juce::File projectRoot)
+{
+    return juce::File(projectRoot.getFullPathName() + File::getSeparatorString() +
+                      "Media" + File::getSeparatorString() +
+                      "Audio" + File::getSeparatorString());
+}
+
+const juce::File AudioResourceContainer::getAudioFileDirectory()
+{
+    return getAudioFileDirectory(AudiumEngine::projectDirectory);
+}
+
+bool AudioResourceContainer::createTemporaryProjectDirectory()
+{
+    if (!AudiumEngine::projectDirectory.exists() ||
+        !AudiumEngine::projectDirectory.getFileName().endsWith(AudiumEngine::projectFileExtension)) {
+        // use a unique directory within the temp location
+        // example: ~/Library/Containers/com.voltmer-systems.audionaut/Data/Library/Caches/Audionaut/temp-50a181e5/Media/Audio
+        auto uniqueName = "temp-" + String::toHexString (Random::getSystemRandom().nextInt()) + AudiumEngine::projectFileExtension;
+        AudiumEngine::projectDirectory = File(File::getSpecialLocation(File::tempDirectory).getFullPathName() +
+                                                    File::getSeparatorString() +
+                                                    uniqueName);
+        // make sure the directory is unique!
+        jassert(!AudiumEngine::projectDirectory.exists());
+    }
+    
+    auto audioDirectory = getAudioFileDirectory(AudiumEngine::projectDirectory);
+    
+    if (!audioDirectory.exists()) {
+        auto success = audioDirectory.createDirectory();
+        std::cout << "create: " << audioDirectory.getFullPathName() << std::endl;
+        if (!success) {
+            jassertfalse;
+            return false;
+        }
+    }
+    return true;
+}
+
+void AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory)
+{
+    bool success;
+    if (sourceDirectory != destinationDirectory) {
+        if (!destinationDirectory.exists()) {
+            success = destinationDirectory.createDirectory();
+            jassert(success);
+        }
+        for (auto& found : sourceDirectory.findChildFiles (File::findFiles, false, "*")) {
+            auto destinationFile = File(destinationDirectory.getFullPathName() + File::getSeparatorString() + found.getFileName());
+            if (!destinationFile.existsAsFile()) {
+                
+                if (found.isAChildOf(File::getSpecialLocation(File::tempDirectory))) {
+                    success = found.moveFileTo(destinationFile);
+                    std::cout << "moved to: " << destinationFile.getFullPathName() << std::endl;
+                }
+                else {
+                    success = found.copyFileTo(destinationFile);
+                    std::cout << "copied to: " << destinationFile.getFullPathName() << std::endl;
+                }
+                jassert(success);
+            }
+        }        
+    }
+}
+
+void AudioResourceContainer::changeAudioFilePaths(const juce::File sourceDirectory, const juce::File destinationDirectory)
+{
+    for (auto &itr : audioResources) {
+        auto resource = itr.second;
+        auto relPath = resource->getRelativePath(sourceDirectory);
+        auto newFile = destinationDirectory.getChildFile(relPath);
+        jassert(newFile.existsAsFile());
+        resource->setUrl(URL(newFile));
+    }
+}
+
+const juce::URL AudioResourceContainer::copyToAudioFileDirectoryIfNeeded(juce::URL url)
+{
+    auto externalFile = url.getLocalFile();
+    jassert(externalFile.existsAsFile());
+    auto audioDir = getAudioFileDirectory();
+    if ( !audioDir.exists())
+        audioDir.createDirectory();
+    
+    if ( !externalFile.isAChildOf(audioDir)) {
+        
+        auto audioFile = File(audioDir.getFullPathName() + File::getSeparatorString() + url.getLocalFile().getFileName());
+        if ( !audioFile.existsAsFile()) {
+            // !!! copy audio file !!!
+            bool success = externalFile.copyFileTo(audioFile);
+            jassert(success);
+            std::cout << "file copied to: " << audioFile.getFullPathName() << std::endl;
+            return juce::URL(audioFile);
+        }
+        else {
+            
+            for (auto& found : audioDir.findChildFiles (File::findFiles, false, externalFile.getFileNameWithoutExtension() + "*")) {
+                if (found.hasIdenticalContentTo(externalFile)) {
+                    // duplicate with identical content was found
+                    return URL(found);
+                }
+            }
+            // the file already exists (in terms of file name) but they aren't the same file in terms of content...
+            // copy the imported file but with different name:
+            auto newAudioFile = audioFile.getNonexistentSibling();
+            bool success = externalFile.copyFileTo(newAudioFile);
+            jassert(success);
+            std::cout << "file copied to: " << newAudioFile.getFullPathName() << std::endl;
+            return juce::URL(newAudioFile);
+        }
+    }
+    return url;
 }
 
 std::shared_ptr<AudioResource> AudioResourceContainer::findResourceWithUrl(juce::URL url) const
@@ -33,11 +149,12 @@ std::shared_ptr<AudioResource> AudioResourceContainer::findResourceWithUrl(juce:
     return nullptr;
 }
 
-std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::getAudioFormatReaderForUrl(juce::URL url)
+std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::getAudioFormatReaderForUrl(juce::URL &url)
 {
-    auto audioFormat = formatManager->findFormatForFileExtension(url.getLocalFile().getFileExtension());
-    
-    if (audioFormat != nullptr) {
+    if (formatManager->findFormatForFileExtension(url.getLocalFile().getFileExtension()) != nullptr) {
+        
+        // url is changed if the audio file was copied to our Media/Audio directory
+        url = copyToAudioFileDirectoryIfNeeded(url);
         
         if (auto existingResource = findResourceWithUrl(url)) {
             return existingResource->audioFormatReader;
@@ -48,6 +165,8 @@ std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::getAudioFormatR
     }
     return nullptr;
 }
+
+
 
 
 std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,

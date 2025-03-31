@@ -539,8 +539,15 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
         initialSaveDirectory = file.getParentDirectory().getParentDirectory();
         std::cout << "file saved: " << file.getFullPathName() << std::endl;
         std::cout << "initialSaveDirectory: " << initialSaveDirectory.getFullPathName() << std::endl;
-        RecentlyOpenedFilesList::registerRecentFileNatively (file);
-        recentFiles.addFile (file);
+        
+        if (file.getFileName() == audium::AudiumEngine::projectFileName)
+            file = file.getParentDirectory();
+        
+        if (file.getFileName().contains(audium::AudiumEngine::projectFileExtension)) {
+            // only save .audium in recent list
+            RecentlyOpenedFilesList::registerRecentFileNatively (file);
+            recentFiles.addFile (file);
+        }
         updateSettings();
     }
     return success;

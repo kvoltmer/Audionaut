@@ -18,7 +18,7 @@ void ChannelMapping::setOutputChannelMapping (const int sourceChannel,
                                               const int destinationChannel)
 {
     if (destinationChannel >= 0) {
-        std::cout << this << " mapping src:" << sourceChannel << " dst: " << destinationChannel << std::endl;
+        // std::cout << this << " mapping src:" << sourceChannel << " dst: " << destinationChannel << std::endl;
         srcChannel = sourceChannel;
         dstChannel = destinationChannel;
     }

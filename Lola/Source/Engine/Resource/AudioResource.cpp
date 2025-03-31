@@ -22,11 +22,11 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
                              std::shared_ptr<juce::AudioFormatReader> reader_,
                              int destChannel,
                              int sourceChannel) :
-audioFormatReader(reader_),
-owner(audioResourceContainer_),
-audioTrack(audioTrack_),
-audioSubGroup(audioSubGroup_),
-url(url_)
+    audioFormatReader(reader_),
+    owner(audioResourceContainer_),
+    audioTrack(audioTrack_),
+    audioSubGroup(audioSubGroup_),
+    url(url_)
 {
     jassert(audioFormatReader != nullptr);
     
@@ -107,7 +107,8 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
 {
     auto length = lengthInSeconds;
     
-    if (audioFormatReader != nullptr) {
+    if (audioFormatReader != nullptr &&
+        audioFormatReader->sampleRate > 0.0) {
         length = audioFormatReader->lengthInSamples / audioFormatReader->sampleRate;
     }
     
@@ -150,7 +151,6 @@ bool AudioResource::containsAbsolutePosition(double position, audium::TimeContex
 
 bool AudioResource::writeToJson (json& output)
 {
-    output["absolute_file_path"]    = getUrlAsString().toStdString();
     output["relative_file_path"]    = getRelativePath(AudiumEngine::projectDirectory).toStdString();
     output["number_of_channels"]    = getNumAudioFileChannels();
     output["length_in_seconds"]     = getFileLength(audium::seconds);
@@ -175,7 +175,6 @@ void AudioResource::testUrl (const juce::URL& url)
 const juce::URL AudioResource::urlFromJson (json& input)
 {
     juce::String filePath;
-    juce::File file;
     
     // relative path is always a local file
     if (input.contains("relative_file_path")) {
@@ -189,13 +188,15 @@ const juce::URL AudioResource::urlFromJson (json& input)
     
     if (input.contains("absolute_file_path")) {
         filePath = input["absolute_file_path"].template get<std::string>();
-        file = juce::File::createFileWithoutCheckingPath(filePath);
-        if (file.existsAsFile())
-            return URL(file);
+        
+        juce::URL absolute_url(filePath);
+        if (absolute_url.getLocalFile().existsAsFile()) {
+            return absolute_url;
+        }
     }
     
     std::cout << "error: absolute path does not exist: " << filePath << std::endl;
-    throw std::runtime_error(file.getFullPathName().toStdString() + "\n\nError: File not found.");
+    throw std::runtime_error(filePath.toStdString() + "Error: File not found.");
     
     return URL(File(filePath));
 }
@@ -212,7 +213,9 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     if (! channelMapping->readFromJson(input, rebuild)) {
         return false;
     }
-    jassert(this->url == urlFromJson(input));
+    if (url != urlFromJson(input)) {
+        std::cout << "warning: " << url.getLocalFile().getFullPathName() << " != " << urlFromJson(input).getLocalFile().getFullPathName() << std::endl;
+    }
     return true;
 }
 

@@ -118,7 +118,7 @@ bool AudioTrack::writeChannelToJson (json& output, AudioChannel* audioChannel)
     
     playListContainer->writeToJson(output);
     
-    std::cout << output.dump(4) << std::endl;
+    // std::cout << output.dump(4) << std::endl;
     
     return true;
 }

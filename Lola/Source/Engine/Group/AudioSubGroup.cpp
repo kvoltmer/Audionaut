@@ -106,7 +106,7 @@ bool AudioSubGroup::writeChannelToJson (json& output, AudioChannel* audioChannel
     return true;
 }
 
-std::shared_ptr<AudioResource> AudioSubGroup::addAudioResourceFromUrl(const juce::URL url)
+std::shared_ptr<AudioResource> AudioSubGroup::addAudioResourceFromUrl(juce::URL url)
 {
     std::shared_ptr<AudioTrack> track       = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
     std::shared_ptr<AudioSubGroup> subGroup = std::dynamic_pointer_cast<AudioSubGroup> (getSharedPtr());
