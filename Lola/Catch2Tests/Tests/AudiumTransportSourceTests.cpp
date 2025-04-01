@@ -97,6 +97,9 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                 }
                 
             }
+            
+            if (bounceConfig.fileName.existsAsFile())
+                bounceConfig.fileName.deleteFile();
         }
         
         engine = nullptr;
