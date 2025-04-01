@@ -22,6 +22,8 @@ namespace audium {
 AudioResourceContainer::~AudioResourceContainer()
 {
     audioResources.clear();
+    if (AudiumEngine::tempDirectory.exists())
+        AudiumEngine::tempDirectory.deleteRecursively();
 }
 
 const juce::File AudioResourceContainer::getAudioFileDirectory(const juce::File projectRoot)
