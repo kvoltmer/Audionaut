@@ -38,7 +38,7 @@ public:
     
     ~AudioResourceContainer();
     
-    static bool createTemporaryProjectDirectory();
+    static bool createTemporaryProjectDirectory(bool reset);
     
     // returns the directory of the audio file directory
     // example: Foo.audium/Media/Audio
@@ -49,7 +49,7 @@ public:
     // copy or move audio files
     static void copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory);
     
-    void changeAudioFilePaths(const juce::File sourceDirectory, const juce::File destinationDirectory);
+    void changeAudioFilePaths(const juce::File newPath);
     
     // returns the url of the newly copied audio file or the input url in case no copy is needed
     static const juce::URL copyToAudioFileDirectoryIfNeeded(juce::URL url);

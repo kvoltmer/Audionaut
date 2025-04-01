@@ -88,8 +88,6 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                      undoManager,
                                                                      audioBusInterface);
     
-    AudioResourceContainer::createTemporaryProjectDirectory();
-    
     return audiumEngine;
 }
 

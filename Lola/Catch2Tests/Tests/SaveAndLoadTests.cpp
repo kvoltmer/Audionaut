@@ -6,13 +6,13 @@
 
 using namespace audium;
 
-SCENARIO("load and save scenario", "[engine][load][save]")
+SCENARIO("create new session, load audio file and save", "[engine][load][save]")
 {
-    juce::MessageManager::getInstance();
-    juce::MessageManagerLock mmLock(Thread::getCurrentThread());
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine     = AudiumFactory::createAudiumEngine();
     
-    auto testFilesDirectory = std::string("../../../TestFiles/");
+    auto testFilesDirectory = String("../../../TestFiles/");
     auto inFile = File(testFilesDirectory + "silence-fade.aiff");
     
     auto outProjectFile = File(testFilesDirectory + "Sessions/testing.audium/" + AudiumEngine::projectFileName);
@@ -41,8 +41,74 @@ SCENARIO("load and save scenario", "[engine][load][save]")
     outProjectFile.getParentDirectory().deleteRecursively();
     
     engine = nullptr;
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
 }
 
+
+SCENARIO("load legacy project and save", "[engine][load][save][leagacy]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    auto engine = AudiumFactory::createAudiumEngine();
+    
+    auto testFilesDirectory = String("../../../TestFiles/Sessions/");
+    auto inProject = File(testFilesDirectory + "120-funk-export.audium");
+    auto outProject = File(testFilesDirectory + "legacy-test.audium/" + AudiumEngine::projectFileName);
+    
+    GIVEN("open legacy project") {
+    
+        engine->openFile(inProject, nullptr);
+        
+        WHEN("save project") {
+            REQUIRE(engine->saveFile(outProject, nullptr));
+
+            THEN("examine project") {
+                REQUIRE(outProject.exists());
+                
+                auto audioFileDir = AudioResourceContainer::getAudioFileDirectory();
+                REQUIRE(audioFileDir.exists());
+            }
+        }
+    }
+    // cleanup ... comment out in case you need to isolate an issue
+    outProject.getParentDirectory().deleteRecursively();
+    
+    engine = nullptr;
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("load project and save", "[engine][load][save][new]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    auto engine = AudiumFactory::createAudiumEngine();
+    
+    auto testFilesDirectory = String("../../../TestFiles/Sessions/");
+    auto inProject = File(testFilesDirectory + "simple-sine.audium/Project.json");
+    auto outProject = File(testFilesDirectory + "out-test.audium/" + AudiumEngine::projectFileName);
+    
+    GIVEN("open project") {
+    
+        engine->openFile(inProject, nullptr);
+        
+        WHEN("save project") {
+            REQUIRE(engine->saveFile(outProject, nullptr));
+
+            THEN("examine project") {
+                REQUIRE(outProject.exists());
+                
+                auto audioFileDir = AudioResourceContainer::getAudioFileDirectory();
+                REQUIRE(audioFileDir.exists());
+            }
+        }
+    }
+    // cleanup ... comment out in case you need to isolate an issue
+    outProject.getParentDirectory().deleteRecursively();
+    
+    engine = nullptr;
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
 

@@ -22,6 +22,7 @@ namespace audium {
 const char* AudiumEngine::projectFileExtension = ".audium";
 const char* AudiumEngine::projectFileName = "Project.json";
 juce::File AudiumEngine::projectDirectory = File();
+juce::File AudiumEngine::tempDirectory = File();
 
 AudiumEngine::~AudiumEngine()
 {
@@ -75,12 +76,7 @@ void AudiumEngine::cleanup()
 
 void AudiumEngine::createNewProject()
 {
-    // remove temp files
-    if (projectDirectory.isAChildOf(File::getSpecialLocation(File::tempDirectory))) {
-        projectDirectory.deleteRecursively();
-    }
-    projectDirectory = File();
-    AudioResourceContainer::createTemporaryProjectDirectory();
+    AudioResourceContainer::createTemporaryProjectDirectory(true);
     
     audium::WaveFormColours::resetWaveFormColour();
     for (auto i = 0; i < 1; i++) {
@@ -93,6 +89,10 @@ void AudiumEngine::createNewProject()
 
 bool AudiumEngine::isJsonProjectFile(const juce::File &file)
 {
+    // returns true for an explicit project file:
+    // foo.json
+    // or legacy -> foo.audium
+    
     return (file.existsAsFile() &&
             (file.hasFileExtension(projectFileExtension) ||
              file.hasFileExtension(".json")));
@@ -100,6 +100,10 @@ bool AudiumEngine::isJsonProjectFile(const juce::File &file)
 
 bool AudiumEngine::isValidProjectStructure(const juce::File &file)
 {
+    // expected structure for foo is:
+    // foo.audium/
+    // foo.audium/Project.json
+    
     return (file.isDirectory() &&
             file.getFileName().endsWith(projectFileExtension) &&
             File(file.getFullPathName() + File::getSeparatorString() + projectFileName).existsAsFile());
@@ -122,28 +126,24 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
             return true;
         }
         else {
+        
+            if (isValidProjectStructure(inFile))
+                inFile = File(inFile.getFullPathName() + File::getSeparatorString() + projectFileName);
             
-            auto legacyStructure = isJsonProjectFile(inFile);
-            auto newStructure = isValidProjectStructure(inFile);
-            
-            if (legacyStructure ||
-                newStructure)
-            {
-                if (newStructure)
-                    inFile = File(inFile.getFullPathName() + File::getSeparatorString() + projectFileName);
+            juce::FileInputStream inputStream(inFile);
+            if (inputStream.openedOk()) {
+                std::cout << "loading: " << inFile.getFullPathName() << std::endl;
+                AudioResourceContainer::createTemporaryProjectDirectory(true);
                 
-                juce::FileInputStream inputStream(inFile);
-                if (inputStream.openedOk()) {
-                    std::cout << "loading: " << inFile.getFullPathName() << std::endl;
-                    projectDirectory = inFile.getParentDirectory();
-                    if (readFromStream(inputStream, true)){
-                        currentProjectFile = inFile;
-                        undoManager->clearUndoHistory();
-                        playListScheduler->commitPlayListData();
-                        return true;
-                    }
+                projectDirectory = inFile.getParentDirectory();
+                if (readFromStream(inputStream, true)){
+                    currentProjectFile = inFile;
+                    undoManager->clearUndoHistory();
+                    playListScheduler->commitPlayListData();
+                    return true;
                 }
             }
+            
         }
 
         
@@ -184,11 +184,14 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         
         // need to copy or move audio files?
         auto sourceDirectory = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
-        jassert(sourceDirectory.exists());
+        if (!sourceDirectory.exists()) {
+            sourceDirectory = AudioResourceContainer::getAudioFileDirectory(tempDirectory);
+            jassert(sourceDirectory.exists());
+        }
         auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(file.getParentDirectory());
         if (sourceDirectory != destinationDirectory) {
             AudioResourceContainer::copyOrMoveAudioFiles(sourceDirectory, destinationDirectory);
-            audioResourceContainer->changeAudioFilePaths(projectDirectory, file.getParentDirectory());
+            audioResourceContainer->changeAudioFilePaths(destinationDirectory);
         }
         // assign new project directory
         projectDirectory = file.getParentDirectory();
