@@ -36,21 +36,26 @@ const juce::File AudioResourceContainer::getAudioFileDirectory()
     return getAudioFileDirectory(AudiumEngine::projectDirectory);
 }
 
-bool AudioResourceContainer::createTemporaryProjectDirectory()
+bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
 {
-    if (!AudiumEngine::projectDirectory.exists() ||
-        !AudiumEngine::projectDirectory.getFileName().endsWith(AudiumEngine::projectFileExtension)) {
+    if (reset) {
+        if (AudiumEngine::tempDirectory.exists())
+            AudiumEngine::tempDirectory.deleteRecursively();
+        AudiumEngine::tempDirectory = File();
+    }
+    
+    if (!AudiumEngine::tempDirectory.exists()) {
         // use a unique directory within the temp location
         // example: ~/Library/Containers/com.voltmer-systems.audionaut/Data/Library/Caches/Audionaut/temp-50a181e5/Media/Audio
         auto uniqueName = "temp-" + String::toHexString (Random::getSystemRandom().nextInt()) + AudiumEngine::projectFileExtension;
-        AudiumEngine::projectDirectory = File(File::getSpecialLocation(File::tempDirectory).getFullPathName() +
+        AudiumEngine::tempDirectory = File(File::getSpecialLocation(File::tempDirectory).getFullPathName() +
                                                     File::getSeparatorString() +
                                                     uniqueName);
         // make sure the directory is unique!
-        jassert(!AudiumEngine::projectDirectory.exists());
+        jassert(!AudiumEngine::tempDirectory.exists());
     }
     
-    auto audioDirectory = getAudioFileDirectory(AudiumEngine::projectDirectory);
+    auto audioDirectory = getAudioFileDirectory(AudiumEngine::tempDirectory);
     
     if (!audioDirectory.exists()) {
         auto success = audioDirectory.createDirectory();
@@ -89,12 +94,12 @@ void AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirecto
     }
 }
 
-void AudioResourceContainer::changeAudioFilePaths(const juce::File sourceDirectory, const juce::File destinationDirectory)
+void AudioResourceContainer::changeAudioFilePaths(const juce::File newPath)
 {
     for (auto &itr : audioResources) {
         auto resource = itr.second;
-        auto relPath = resource->getRelativePath(sourceDirectory);
-        auto newFile = destinationDirectory.getChildFile(relPath);
+        auto fileName = resource->getUrl().getLocalFile().getFileName();
+        auto newFile = File(newPath.getFullPathName() + File::getSeparatorString() + fileName);
         jassert(newFile.existsAsFile());
         resource->setUrl(URL(newFile));
     }
@@ -104,9 +109,16 @@ const juce::URL AudioResourceContainer::copyToAudioFileDirectoryIfNeeded(juce::U
 {
     auto externalFile = url.getLocalFile();
     jassert(externalFile.existsAsFile());
-    auto audioDir = getAudioFileDirectory();
-    if ( !audioDir.exists())
-        audioDir.createDirectory();
+    // try to use project directory
+    auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+    if ( !audioDir.exists()) {
+        
+        // use temp dir
+        createTemporaryProjectDirectory(false);
+        
+        audioDir = getAudioFileDirectory(AudiumEngine::tempDirectory);
+        jassert(audioDir.exists());
+    }
     
     if ( !externalFile.isAChildOf(audioDir)) {
         

@@ -213,9 +213,6 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     if (! channelMapping->readFromJson(input, rebuild)) {
         return false;
     }
-    if (url != urlFromJson(input)) {
-        std::cout << "warning: " << url.getLocalFile().getFullPathName() << " != " << urlFromJson(input).getLocalFile().getFullPathName() << std::endl;
-    }
     return true;
 }
 

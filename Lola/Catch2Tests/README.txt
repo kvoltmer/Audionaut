@@ -21,6 +21,4 @@ note:
 you can use find_package(Catch2) in case catch2 is installed
 
 XCode arguments:
--r console
-[Filter]
--d yes
+-r console [Filter] -d yes

@@ -70,6 +70,7 @@ public:
     static const char* projectFileName;
     
     static juce::File projectDirectory;
+    static juce::File tempDirectory;
     
     const juce::File getCurrentProjectFile() const { return currentProjectFile; }
     
