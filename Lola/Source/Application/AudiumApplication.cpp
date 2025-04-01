@@ -500,6 +500,25 @@ const File createProjectDirectory(const File &inFile)
     return File(projectDir + File::getSeparatorString() + audium::AudiumEngine::projectFileName);
 }
 
+juce::MessageBoxOptions getAskToOverwriteFileOptions (const File& newFile)
+{
+    return MessageBoxOptions::makeOptionsOkCancel (MessageBoxIconType::WarningIcon,
+                                                   TRANS ("File already exists"),
+                                                   TRANS ("There's already a file called: FLNM")
+                                                           .replace ("FLNM", newFile.getFullPathName())
+                                                       + "\n\n"
+                                                       + TRANS ("Are you sure you want to overwrite it?"),
+                                                   TRANS ("Overwrite"),
+                                                   TRANS ("Cancel"));
+}
+
+bool askToOverwriteFileSync (const File& newFile)
+{
+    auto result = NativeMessageBox::show (getAskToOverwriteFileOptions (newFile));
+    return (result == 0);
+}
+
+
 bool AudiumApplication::saveProjectAs()
 {
     chooser = std::make_unique<FileChooser> (("Save As..."),
@@ -512,8 +531,15 @@ bool AudiumApplication::saveProjectAs()
     chooser->launchAsync (flags, [this] (const FileChooser& fc)
     {
         auto file = fc.getResult();
-        std::cout << "Save As: " << file.getFullPathName() << std::endl;
         if (file != File()) {
+            
+            // warn overwrite: special case where user selects an existing project (without the .audium extension)
+            auto existingProject = File(file.getFullPathName() + audium::AudiumEngine::projectFileExtension);
+            if (existingProject.exists()) {
+                if (!askToOverwriteFileSync(existingProject))
+                    return false;
+            }
+            
             if (file.existsAsFile())
                 return saveProjectToFile(file);
             else
