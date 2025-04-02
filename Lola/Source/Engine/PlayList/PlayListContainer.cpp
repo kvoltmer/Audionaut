@@ -47,7 +47,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemUI(std::share
 {
     jassert(region);
     auto playListItem = createPlayListItem(region, insertIndex);
-    movePlayListItemsPosition(insertIndex);
+    movePlayListItemsPosition(getPlayListItemIndex(playListItem.get()));
     return playListItem;
 }
 
@@ -57,15 +57,25 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(std::shared_
     jassert( insertIndex >= 0);
     jassert( insertIndex <= playListItems.size());
     
-    auto itemBefore = getPlayListItem(insertIndex - 1);
+    auto itemBefore = getPlayListItem(insertIndex);
     
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this,
                                                                        audioRegion,
                                                                        audioRegion->getAudioTrack()->getSelectionManager()));
     playListItems.objects.insert(playListItems.objects.begin() + insertIndex, playListItem);
     
-    auto pos = itemBefore ? itemBefore->getAbsolutePositionRange(audium::clocks).getEnd() : 0.0;
+    auto pos = itemBefore ? itemBefore->getAbsolutePositionRange(audium::clocks).getStart() : 0.0;
+    
+    // in case we insert at begin
+    if (insertIndex == 0) {
+        auto length = playListItem->getAbsolutePositionRange(audium::clocks).getLength();
+        if (pos - length >= 0.0)
+            pos -= length;
+    }
+    
     playListItem->setAbsolutePosition(pos, audium::clocks);
+    
+    sortByPosition();
     
     return playListItem;
 }
@@ -82,6 +92,7 @@ void PlayListContainer::movePlayListItemsPosition(int startIndex)
         for (auto iter = playListItems.objects.begin() + startIndex + 1; iter != playListItems.objects.end(); iter++) {
             if ((*iter)->getAbsolutePositionRange(context).intersects(range)) {
                 (*iter)->moveAbsolutePosition(length, context);
+                std::cout << "moveAbsolutePosition: " << getPlayListItemIndex((*iter).get()) << " " << length << std::endl;
                 range = (*iter)->getAbsolutePositionRange(context);
             }
             else {
@@ -89,20 +100,43 @@ void PlayListContainer::movePlayListItemsPosition(int startIndex)
             }
         }
     }
+    jassert(sortedByPosition());
 }
 
 void PlayListContainer::movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore)
 {
-    // TODO: swap position
-    //    auto currentPos = getPlayListItem(currentIndex)->getAbsolutePosition(audium::clocks);
-    //    auto beforePos = getPlayListItem(indexOfItemToPlaceBefore)->getAbsolutePosition(audium::clocks);
-    //
-    //    getPlayListItem(currentIndex)->setAbsolutePosition(beforePos, audium::clocks);
-    //    getPlayListItem(indexOfItemToPlaceBefore)->setAbsolutePosition(currentPos, audium::clocks);
+    auto context = audium::clocks;
+    
+    jassert(getPlayListItem(currentIndex));
+    
+    auto currentItem = getPlayListItem(currentIndex);
+    auto beforeItem = getPlayListItem(indexOfItemToPlaceBefore);
+
+    auto newPos = 0.0;
+    if (beforeItem != nullptr)
+        newPos = beforeItem->getAbsolutePosition(context);
+    else
+        newPos = playListItems.objects.back()->getAbsolutePositionRange(context).getEnd();
     
     audium::MoveItemBefore(playListItems.objects,
                            currentIndex,
                            indexOfItemToPlaceBefore);
+    
+
+    // set the new position of the dragged (current) item:
+    currentItem->setAbsolutePosition(newPos, context);
+    
+
+    // move all other items to the right by duration of current item
+    if (beforeItem != nullptr) {
+        auto startIndex = getPlayListItemIndex(beforeItem.get());
+        for (auto iter = playListItems.objects.begin() + startIndex; iter != playListItems.objects.end(); iter++) {
+            (*iter)->moveAbsolutePosition(currentItem->getDurationTime(context), context);
+        }
+    }
+    
+    sortByPosition();
+    
 }
 
 bool PlayListContainer::deletePlayListItem(PlayListItem* playListItem, bool deleteRegion) {

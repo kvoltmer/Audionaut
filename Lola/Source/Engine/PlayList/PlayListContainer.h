@@ -83,7 +83,7 @@ public:
     
     double findNextFreePosition(double position, audium::TimeContextType context) const;
     
-    // move the absolute position of all playlist items by an amount
+    // move all playlist items at start index
     void movePlayListItemsPosition(int startIndex);
     
     // selection:
