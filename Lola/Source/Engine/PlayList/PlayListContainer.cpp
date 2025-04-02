@@ -58,13 +58,20 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(std::shared_
     jassert( insertIndex <= playListItems.size());
     
     auto itemBefore = getPlayListItem(insertIndex);
+    auto thisIsTheEnd = playListItems.objects.back()->getAbsolutePositionRange(audium::clocks).getEnd();
     
     auto playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*this,
                                                                        audioRegion,
                                                                        audioRegion->getAudioTrack()->getSelectionManager()));
     playListItems.objects.insert(playListItems.objects.begin() + insertIndex, playListItem);
     
-    auto pos = itemBefore ? itemBefore->getAbsolutePositionRange(audium::clocks).getStart() : 0.0;
+    auto pos = 0.0;
+    
+    if (itemBefore != nullptr)
+        pos = itemBefore->getAbsolutePositionRange(audium::clocks).getStart();
+    else
+        pos = thisIsTheEnd;
+    
     
     // in case we insert at begin
     if (insertIndex == 0) {
