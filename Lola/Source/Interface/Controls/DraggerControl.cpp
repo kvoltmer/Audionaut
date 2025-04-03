@@ -4,6 +4,7 @@
 //    Lola uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Interface/Controls/DraggerControl.h"
+#include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
 
 void DraggerControl::mouseDown (const juce::MouseEvent& e)
 {
@@ -58,8 +59,16 @@ void DraggerControl::mouseDrag (const juce::MouseEvent& e)
     if (e.mods.isAltDown() ||
         dragVertrically) {
 
-        if (container != nullptr)
-            container->startDragging("DraggerControl", componentToDrag);
+        if (container != nullptr) {
+            // componentToDrag has PlayListItemComponent as a child.
+            // see: dragger->setComponentToDrag(getParentComponent());
+            for (auto* child : componentToDrag->getChildren()) {
+                if (auto playListComp = dynamic_cast<PlayListItemComponent*> (child)) {
+                    container->startDragging("DraggerControl", playListComp);
+                    break;
+                }
+            }
+        }
     }
     else if (!dragActive)
     {
