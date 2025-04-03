@@ -14,9 +14,6 @@
 #include "Interface/Controls/PlayListTableListBox.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
-//==============================================================================
-/*
-*/
 class PlayListComponent  : public juce::Component, public juce::DragAndDropTarget, public juce::AsyncUpdater
 {
 public:
@@ -101,7 +98,8 @@ public:
         updateSelection();
         playListTableListBox->updateContent();
         
-        playListTableListBox->getHeader().setColumnName(1, audioTrack->getAudioTrackName());
+        auto columnName = audioTrack->getAudioTrackName() + " - Playlist";
+        playListTableListBox->getHeader().setColumnName(1, columnName);
         playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, audioTrack->getColour());
     }
     
