@@ -48,6 +48,11 @@ public:
     void mouseEnter (const MouseEvent& e) override;
     void mouseExit (const MouseEvent& e) override;
     
+    int getNumAudioTrackChannels() const
+    {
+        return audioTrack->getNumAudioTrackChannels();
+    }
+    
 private:
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<audium::AudioTrack>     audioTrack;
