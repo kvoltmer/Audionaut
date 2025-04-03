@@ -103,12 +103,18 @@ bool AudioTrackListBox::isInterestedInDragSource (const SourceDetails &dragSourc
 
 void AudioTrackListBox::itemDragEnter (const SourceDetails &dragSourceDetails)
 {
+    if (dragSourceDetails.localPosition.y < AudiumLookAndFeel::transportPositionControlHeight)
+        return;
+    
     externalDragAndDrop = true;
     repaint();
 }
 
 void AudioTrackListBox::itemDragMove (const SourceDetails &dragSourceDetails)
 {
+    if (dragSourceDetails.localPosition.y < AudiumLookAndFeel::transportPositionControlHeight)
+        return;
+    
     auto x = dragSourceDetails.localPosition.x;
     auto length = 0.01;
     if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
@@ -137,6 +143,9 @@ void AudioTrackListBox::itemDragExit (const SourceDetails &dragSourceDetails)
 
 void AudioTrackListBox::itemDropped (const SourceDetails &dragSourceDetails)
 {
+    if (dragSourceDetails.localPosition.y < AudiumLookAndFeel::transportPositionControlHeight)
+        return;
+    
     // undo
     auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
     

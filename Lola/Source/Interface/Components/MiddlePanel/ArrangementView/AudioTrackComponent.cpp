@@ -105,8 +105,9 @@ void AudioTrackComponent::resized()
 
 bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSourceDetails)
 {
-    if (dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+    if (auto playListItemComp = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get())) {
         return true;
+    }
 
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
@@ -119,20 +120,18 @@ bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSou
 
 void AudioTrackComponent::itemDragEnter (const SourceDetails &dragSourceDetails)
 {
-    if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get()))
-    {
-        if (playListItemComponent->getPlayListItem()->getRegion()->getAudioTrack() == audioTrack)
-        {
+    if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get())) {
+        if (playListItemComponent->getPlayListItem()->getRegion()->getAudioTrack() == audioTrack) {
             externalDragAndDrop = false; // source details match this track -> no highlight!
         }
-        else
-        {
+        else {
             externalDragAndDrop = true;
         }
     }
     else {
         externalDragAndDrop = true;
     }
+    
 }
 
 void AudioTrackComponent::itemDragMove (const SourceDetails &dragSourceDetails)
