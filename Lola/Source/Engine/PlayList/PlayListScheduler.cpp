@@ -69,12 +69,11 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples, 
     for (auto clipData : dspClips) {
         
         const audium::DspClip dspClip(getTempoProvider(), clipData);
+        const auto transportSource = transportSourceContainer->getTransportSourceAtIndex(dspClip.dspClipData.transportSourceIndex);
+        if (transportSource == nullptr)
+            continue;
         
         if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange)) {
-            
-            const auto transportSource = transportSourceContainer->getTransportSourceAtIndex(dspClip.dspClipData.transportSourceIndex);
-            if (transportSource == nullptr)
-                continue;
             
             if (clipsChanged || onLoop)
                 transportSource->getAudioTransportSource()->stop();
@@ -128,6 +127,11 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples, 
                 
                 
             }
+        }
+        else if (onLoop) {
+            // stop at loop end
+            transportSource->getAudioTransportSource()->stop();
+            
         }
     }
 }
