@@ -54,7 +54,8 @@ void RegionContainerComponent::updateUI(UIContext context)
         tracks.size() != regionTableListBox->getHeader().getNumColumns(true)) {
         regionTableListBox->getHeader().removeAllColumns();
         for (auto track : tracks) {
-            regionTableListBox->getHeader().addColumn (track->getAudioTrackName(),
+            auto columnName = track->getAudioTrackName() + " - Regions";
+            regionTableListBox->getHeader().addColumn (columnName,
                                                        track->getId() + 1,
                                                        250,
                                                        0,
@@ -64,8 +65,9 @@ void RegionContainerComponent::updateUI(UIContext context)
     }
     
     for (auto track : tracks) {
+        auto columnName = track->getAudioTrackName() + " - Regions";
         regionTableListBox->getHeader().setColumnName(track->getId() + 1,
-                                                      track->getAudioTrackName());
+                                                      columnName);
     }
     
     regionTableListBox->updateContent();
