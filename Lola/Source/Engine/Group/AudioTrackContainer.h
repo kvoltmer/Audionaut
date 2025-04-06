@@ -98,7 +98,7 @@ public:
     
     juce::Colour getNewAudioTrackColour() const;
     
-    void copySelectedChannelsToNewTrack();
+    void copySelectedChannelsToNewTrack(bool copyChannels = true);
     
     bool addAudioFiles(const juce::StringArray& filenames,
                        double positionClocks,

@@ -56,7 +56,7 @@ void ChannelsComponent::itemDropped (const SourceDetails &dragSourceDetails)
         auto trackContainer = audiumEngine->getAudioTrackContainer();
         
         if (dynamic_cast<ChannelComponent*>(dragSourceDetails.sourceComponent.get())) {
-            trackContainer->copySelectedChannelsToNewTrack();
+            trackContainer->copySelectedChannelsToNewTrack(juce::ModifierKeys::currentModifiers.isAltDown());
         }
         else if (auto channelGroupHeaderComponent = dynamic_cast<ChannelGroupHeaderComponent*>(dragSourceDetails.sourceComponent.get())) {
             

@@ -338,7 +338,7 @@ juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
     return newColour;
 }
 
-void AudioTrackContainer::copySelectedChannelsToNewTrack()
+void AudioTrackContainer::copySelectedChannelsToNewTrack(bool copyChannels)
 {
     // undo
     auto action = std::make_unique<audium::UndoableContainerAction>(*this);
@@ -355,11 +355,15 @@ void AudioTrackContainer::copySelectedChannelsToNewTrack()
             
             if (auto audioChannel = std::dynamic_pointer_cast<AudioChannel>(object)) {
                 json j;
-                audioChannel->getAudioTrack().writeChannelToJson(j, audioChannel.get());
+                auto track = &audioChannel->getAudioTrack();
+                track->writeChannelToJson(j, audioChannel.get());
                 audioTrack->mergeChannelFromJson(j);
+                if (!copyChannels)
+                    track->deleteChannel(audioChannel.get());
             }
         }
     }
+    
     
     // undo
     action->storeNewState();
