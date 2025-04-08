@@ -170,7 +170,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::commandModifier | ModifierKeys::ctrlModifier, 0));
             break;
         case CommandIDs::toggleEditArrangement:
-            result.setInfo ("Toggle Edit/Arrangement View", "Toggle Edit/Arrangement View", CommandCategories::view, 0);
+            result.setInfo ("Toggle Region / Arrangement View", "Toggle Region / Arrangement View", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress (KeyPress::tabKey, ModifierKeys::noModifiers, 0));
             break;
         case CommandIDs::zoomIn:
