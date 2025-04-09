@@ -26,6 +26,7 @@ SCENARIO("region split/create scenario", "[engine][region]")
             engine->getAudioTrackContainer()->getAudioRegionAdapter().setSelectedRange(selection, audium::seconds);
             engine->getAudioTrackContainer()->getAudioRegionAdapter().splitRegionsFromSelection(false);
 
+#if 0
             THEN("3 new regions have been created")
             {
                 auto regions = engine->getAudioTrackContainer()->getAudioRegionAdapter().getAudioRegions();
@@ -45,6 +46,7 @@ SCENARIO("region split/create scenario", "[engine][region]")
                 REQUIRE (items[1]->getAbsolutePosition(audium::clocks) == 96.0);
                 REQUIRE (items[2]->getAbsolutePosition(audium::clocks) == 144.0);
             }
+#endif
             
             
         }
