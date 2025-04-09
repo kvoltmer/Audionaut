@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(Audionaut_Tests VERSION 0.0.1)
+include(CTest)
 
 set(APP_NAME "AudionautTests")
 message(STATUS "Name: ${APP_NAME}")
@@ -152,6 +153,9 @@ target_link_libraries(${APP_NAME}
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
 
+
+add_test(NAME ${APP_NAME}
+         COMMAND ${APP_NAME})
 
 set_target_properties(${APP_NAME}
                       PROPERTIES
