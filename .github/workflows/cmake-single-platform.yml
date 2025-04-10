@@ -4,9 +4,9 @@ name: Build and run Catch2 tests on macos
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main, develop" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main, develop" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
