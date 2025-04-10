@@ -18,18 +18,20 @@ SCENARIO("region split/create scenario", "[engine][region]")
     GIVEN("Load session file")
     {
         auto engine     = AudiumFactory::createAudiumEngine();
-        engine->openFile(juce::File("../../../TestFiles/Sessions/120-funk-export-5-seconds.audium"), nullptr);
-
+        auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/120-funk-export-5-seconds.audium"));
+        REQUIRE(fileUnderTest.existsAsFile());
+        auto ok = engine->openFile(fileUnderTest, nullptr);
+        REQUIRE(ok);
         WHEN("split at selected range")
         {
             auto selection = juce::Range<double>(2.0, 3.0);
             engine->getAudioTrackContainer()->getAudioRegionAdapter().setSelectedRange(selection, audium::seconds);
             engine->getAudioTrackContainer()->getAudioRegionAdapter().splitRegionsFromSelection(false);
 
-#if 0
             THEN("3 new regions have been created")
             {
                 auto regions = engine->getAudioTrackContainer()->getAudioRegionAdapter().getAudioRegions();
+                REQUIRE (regions.size() == 3);
                 
                 REQUIRE (regions[0]->getName() == "120-funk-export-01");
                 REQUIRE (regions[1]->getName() == "120-funk-export-02");
@@ -46,7 +48,6 @@ SCENARIO("region split/create scenario", "[engine][region]")
                 REQUIRE (items[1]->getAbsolutePosition(audium::clocks) == 96.0);
                 REQUIRE (items[2]->getAbsolutePosition(audium::clocks) == 144.0);
             }
-#endif
             
             
         }

@@ -16,8 +16,8 @@ class TempoProvider : public juce::ActionBroadcaster
 {
 public:
     
-    TempoProvider(std::shared_ptr<audium::LinkEngine> linkEngine) :
-    linkEngine(linkEngine)
+    TempoProvider(std::shared_ptr<audium::LinkEngine> linkEngine_) :
+        linkEngine(linkEngine_)
     {
         linkEngine->getLink()->setTempoCallback([this](const double p) { onTempoChange(p); });
         linkEngine->getLink()->enable(false);
@@ -153,13 +153,13 @@ public:
     
     static juce::String secondsToFormattedString(double timeSec)
     {
-        int h = timeSec / (60 * 60);
+        int h = static_cast<int>(timeSec / (60.0 * 60.0));
         timeSec -= h * (60 * 60);
         
-        int m = timeSec / (60);
+        int m = static_cast<int>(timeSec / (60.0));
         timeSec -= m * (60);
         
-        int s = timeSec;
+        int s = static_cast<int>(timeSec);
         timeSec -= s;
         
         std::ostringstream s1;

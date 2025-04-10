@@ -35,21 +35,21 @@ class AudioTrack : public audium::Streamable, public audium::Selectable
 {
     
 public:
-    AudioTrack(AudioTrackContainer &owner,
-               AudioResourceContainer &audioResourceContainer,
-               std::shared_ptr<TransportSourceContainer> transportSourceContainer,
-               std::shared_ptr<SelectionManager> selectionManager,
-               std::shared_ptr<tAudioSubGroupContainer> subGroups,
-               std::shared_ptr<tAudioChannelContainer> channels,
-               juce::String nameString) :
-    audium::Selectable(selectionManager),
-    owner(owner),
-    audioResourceContainer(audioResourceContainer),
-    transportSourceContainer(transportSourceContainer),
-    selectionManager(selectionManager),
-    audioSubGroupContainer(subGroups),
-    audioChannelContainer(channels),
-    name(nameString.toStdString())
+    AudioTrack(AudioTrackContainer &owner_,
+               AudioResourceContainer &audioResourceContainer_,
+               std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+               std::shared_ptr<SelectionManager> selectionManager_,
+               std::shared_ptr<tAudioSubGroupContainer> subGroups_,
+               std::shared_ptr<tAudioChannelContainer> channels_,
+               juce::String nameString_) :
+    audium::Selectable(selectionManager_),
+    owner(owner_),
+    audioResourceContainer(audioResourceContainer_),
+    transportSourceContainer(transportSourceContainer_),
+    selectionManager(selectionManager_),
+    audioSubGroupContainer(subGroups_),
+    audioChannelContainer(channels_),
+    name(nameString_.toStdString())
     {
         playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*this,
                                                                                       owner.getTempoProvider(),

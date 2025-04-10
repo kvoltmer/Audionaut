@@ -39,8 +39,8 @@ public:
         return readFromJson(json, rebuild);
     }
 
-    virtual bool writeToJson (json& output) { return false; }
-    virtual bool readFromJson (json& input, bool rebuild) { return false; }
+    virtual bool writeToJson (json& /*output*/) { return false; }
+    virtual bool readFromJson (json& /*input*/, bool /*rebuild*/) { return false; }
 
     
     virtual int getSizeInUnits() = 0;

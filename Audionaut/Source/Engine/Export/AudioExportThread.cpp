@@ -14,7 +14,7 @@ std::string formatInteger(long num) {
     std::ostringstream oss;
     oss << std::setfill('0') << std::setw(2) << num;
     return oss.str();
-};
+}
 
 void AudioExportThread::bounceToFile(ExportAudioConfig &theConfiguration)
 {
@@ -54,16 +54,16 @@ void AudioExportThread::bounceToFile(ExportAudioConfig &theConfiguration)
             AudioBuffer<float> buf((int)reader->numChannels, (int)reader->lengthInSamples);
             reader->read(&buf, 0, (int)reader->lengthInSamples, 0, true, true);
             
-            for (auto c = 0; c < reader->numChannels; c++) {
+            for (auto c = 0; c < (int)reader->numChannels; c++) {
                 auto trackNumber = formatInteger(c + 1);
                 auto siblingName = config.fileName.getFileNameWithoutExtension() + "-" + String(trackNumber) + ".wav";
                 
                 TemporaryFile temp (config.fileName.getSiblingFile(siblingName));
-                std::unique_ptr<OutputStream> outStream (temp.getFile().createOutputStream());
-                if (outStream != nullptr) {
+                std::unique_ptr<OutputStream> out (temp.getFile().createOutputStream());
+                if (out != nullptr) {
                     const StringPairArray metadata;
                     WavAudioFormat wav;
-                    std::unique_ptr<AudioFormatWriter> writer (wav.createWriterFor (outStream.release(), config.sampleRate,
+                    std::unique_ptr<AudioFormatWriter> writer (wav.createWriterFor (out.release(), config.sampleRate,
                                                                                     1,
                                                                                     config.bitDepth,
                                                                                     metadata, 0));
