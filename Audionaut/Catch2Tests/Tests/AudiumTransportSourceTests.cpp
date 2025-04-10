@@ -10,17 +10,26 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace audium;
+using namespace juce;
 
 SCENARIO("tranport source scenario", "[engine][dsp][transport]")
 {
-    juce::MessageManager::getInstance();
-    juce::MessageManagerLock mmLock(Thread::getCurrentThread());
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    
+    
+    auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/120-funk-export.audium"));
+    REQUIRE(fileUnderTest.existsAsFile());
+    
 
     GIVEN("Load session file (audio file starts: at second 1 with 1 second duration)")
     {
         auto engine     = AudiumFactory::createAudiumEngine();
-        engine->openFile(juce::File("../../../TestFiles/Sessions/120-funk-export.audium"), nullptr);
-
+        
+        
+        auto ok = engine->openFile(fileUnderTest, nullptr);
+        REQUIRE(ok);
+        
         WHEN("bouncing session")
         {
                         
@@ -42,6 +51,7 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
 
             THEN("examine bounced audio file")
             {
+                auto mag = 0.0;
                 AudioFormatManager formatManager;
                 formatManager.registerBasicFormats();
                 std::unique_ptr<AudioFormatReader> reader;
@@ -51,17 +61,23 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                 {
                     AudioBuffer<float> buffer((int)reader->numChannels, (int)reader->lengthInSamples);
                     
-                    reader->read(   &buffer,
-                                    0,
-                                    (int)reader->lengthInSamples,
-                                    0,
-                                    true,
-                                    true);
+                    auto success = reader->read(&buffer,
+                                                0,
+                                                (int)reader->lengthInSamples,
+                                                0,
+                                                true,
+                                                true);
+                    // read should be successful
+                    REQUIRE(success);
+                    mag = buffer.getMagnitude(0, buffer.getNumSamples());
+                    // bounced audio file should not be empty
+                    REQUIRE(mag > 0.0);
+                    
                     
                     auto sessionStart = 1.0; // the 1st clip starts at second 1
                     
                     auto samplesUntilStart = static_cast<int>(bounceConfig.sampleRate * (sessionStart - bounceConfig.positionSeconds));
-                    auto mag = 0.0;
+                    
                     if (samplesUntilStart > 0) {
                         // magnitue of 1st part is 0.0
                         mag = buffer.getMagnitude(0, samplesUntilStart - 1);
@@ -73,11 +89,7 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                         samplesUntilStart = 0;
                     mag = buffer.getMagnitude(samplesUntilStart, 1);
                     
-                    // TODO: check if this is correct
-                    // REQUIRE(mag > 0.0);
-                    
-
-                    
+                    REQUIRE(mag > 0.0);
                     
                     auto sessionStart2 = 3.0; // the 2nd clip starts at second 3
                     auto samplesUntilStart2 = static_cast<int>(bounceConfig.sampleRate * (sessionStart2 - bounceConfig.positionSeconds));
@@ -91,8 +103,7 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                     if (samplesUntilStart < 0)
                         samplesUntilStart = 0;
                     mag = buffer.getMagnitude(samplesUntilStart2, 1);
-                    // TODO: check if this is correct
-                    //REQUIRE(mag > 0.0);
+                    REQUIRE(mag > 0.0);
                     
                     
                     // total length

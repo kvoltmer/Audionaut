@@ -326,8 +326,6 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
 
 void PlayListScheduler::commitPlayListData()
 {
-    std::cout << "PlayListScheduler::commitPlayListData" << std::endl;
-    
     audioClipContainer->clear();
     
     for (auto track : audioTrackContainer->getAudioTracks()) {
@@ -349,7 +347,7 @@ void PlayListScheduler::commitPlayListData()
         totalLength = juce::jmax(totalLength, track->getTotalLength(audium::clocks, isArrangementMode()));
     }
     totalLengthClocks = totalLength;
-    
+    std::cout << "PlayListScheduler::commitPlayListData -> totalLengthClocks: " << totalLengthClocks << std::endl;
 }
 
 } // namespace audium

@@ -31,25 +31,25 @@ class AudioTrackContainer : public juce::ActionBroadcaster, public juce::ChangeB
     
 public:
     
-    AudioTrackContainer(std::shared_ptr<juce::UndoManager> undoManager,
-                        std::shared_ptr<TempoProvider> tempoProvider,
-                        std::shared_ptr<AudioResourceContainer> audioResourceContainer,
-                        std::shared_ptr<TransportSourceContainer> transportSourceContainer,
-                        std::shared_ptr<SelectionManager> selectionManager,
+    AudioTrackContainer(std::shared_ptr<juce::UndoManager> undoManager_,
+                        std::shared_ptr<TempoProvider> tempoProvider_,
+                        std::shared_ptr<AudioResourceContainer> audioResourceContainer_,
+                        std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                        std::shared_ptr<SelectionManager> selectionManager_,
                         std::shared_ptr<AudioBusInterface> audioBusInterface_,
                         std::shared_ptr<TransportLoop> transportLoop_) :
-    audioBusInterface(audioBusInterface_),
-    undoManager(undoManager),
-    tempoProvider(tempoProvider),
-    audioResourceContainer(audioResourceContainer),
-    transportSourceContainer(transportSourceContainer),
-    selectionManager(selectionManager),
-    transportLoop(transportLoop_),
-    audioRegionAdapter(*this)
+        audioBusInterface(audioBusInterface_),
+        undoManager(undoManager_),
+        tempoProvider(tempoProvider_),
+        audioResourceContainer(audioResourceContainer_),
+        transportSourceContainer(transportSourceContainer_),
+        selectionManager(selectionManager_),
+        transportLoop(transportLoop_),
+        audioRegionAdapter(*this)
     {
     }
     
-    ~AudioTrackContainer();
+    ~AudioTrackContainer() override;
     
     void setMasterGain(const float newGain);
     const float getMasterGain() const noexcept;
@@ -119,7 +119,7 @@ private:
     std::shared_ptr<SelectionManager> selectionManager;
     std::shared_ptr<TransportLoop> transportLoop;
     
-    int selectedGroup = 0;
+    std::size_t selectedGroup = 0;
     
     float masterGain = 1.f;
     

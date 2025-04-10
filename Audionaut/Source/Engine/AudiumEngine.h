@@ -48,7 +48,7 @@ public:
     {
     }
     
-    ~AudiumEngine();
+    ~AudiumEngine() override;
     
     void initialise();
     void uninitialise();

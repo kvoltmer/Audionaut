@@ -14,14 +14,14 @@ namespace audium
 
 struct UndoableContainerAction final : public juce::UndoableAction
 {
-    UndoableContainerAction (AudioTrackContainer &container, bool rebuild = true) noexcept :
-        container (container),
-        rebuild (rebuild)
+    UndoableContainerAction (AudioTrackContainer &container_, bool rebuild_ = true) noexcept :
+        container (container_),
+        rebuild (rebuild_)
     {
         storeOldState();
     }
     
-    ~UndoableContainerAction()
+    ~UndoableContainerAction() override
     {
         //std::cout << "~UndoableContainerAction" << std::endl;
     }

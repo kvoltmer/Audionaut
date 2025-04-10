@@ -1,14 +1,15 @@
 
 tests using catch2
 
-build using cmake:
-cmake -B my-build
-cmake --build my-build
+build using cmake (run from the source root folder):
+
+cmake -B build -S Audionaut/Catch2Tests
+cmake --build build
 
 run:
-./my-build/AudiumTests_artefacts/AudiumTests
+./build/AudionautTests_artefacts/AudionautTests
 
-update Xcode project:
+update Xcode project (creates a xcode project in the "_build" folder):
 cmake -G Xcode -H. -B_build
 
 if you run into this linker error:

@@ -6,14 +6,16 @@
 
 using namespace audium;
 
+auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
+
 SCENARIO("create new session, load audio file and save", "[engine][load][save]")
 {
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine     = AudiumFactory::createAudiumEngine();
-    
-    auto testFilesDirectory = String("../../../TestFiles/");
+        
     auto inFile = File(testFilesDirectory + "silence-fade.aiff");
+    REQUIRE(inFile.existsAsFile());
     
     auto outProjectFile = File(testFilesDirectory + "Sessions/testing.audium/" + AudiumEngine::projectFileName);
     
@@ -32,8 +34,7 @@ SCENARIO("create new session, load audio file and save", "[engine][load][save]")
                 REQUIRE(audioFileDir.exists());
                 
                 auto audioFile = File(audioFileDir.getFullPathName() + File::getSeparatorString() + inFile.getFileName());
-// TODO: activate requirement!!!!
-//                REQUIRE(audioFile.existsAsFile());
+                REQUIRE(audioFile.existsAsFile());
             }
         }
     }
@@ -53,9 +54,10 @@ SCENARIO("load legacy project and save", "[engine][load][save][leagacy]")
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
     
-    auto testFilesDirectory = String("../../../TestFiles/Sessions/");
-    auto inProject = File(testFilesDirectory + "120-funk-export.audium");
-    auto outProject = File(testFilesDirectory + "legacy-test.audium/" + AudiumEngine::projectFileName);
+    
+    auto inProject = File(testFilesDirectory + "/Sessions/120-funk-export.audium");
+    REQUIRE(inProject.existsAsFile());
+    auto outProject = File(testFilesDirectory + "/Sessions/legacy-test.audium/" + AudiumEngine::projectFileName);
     
     GIVEN("open legacy project") {
     
@@ -86,9 +88,9 @@ SCENARIO("load project and save", "[engine][load][save][new]")
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
     
-    auto testFilesDirectory = String("../../../TestFiles/Sessions/");
-    auto inProject = File(testFilesDirectory + "simple-sine.audium/Project.json");
-    auto outProject = File(testFilesDirectory + "out-test.audium/" + AudiumEngine::projectFileName);
+    
+    auto inProject = File(testFilesDirectory + "/Sessions/simple-sine.audium/Project.json");
+    auto outProject = File(testFilesDirectory + "/Sessions/out-test.audium/" + AudiumEngine::projectFileName);
     
     GIVEN("open project") {
     
