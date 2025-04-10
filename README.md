@@ -1,4 +1,4 @@
-# Audium
+# Audionaut
 
 Make sure to clone with submodules:
 ```
