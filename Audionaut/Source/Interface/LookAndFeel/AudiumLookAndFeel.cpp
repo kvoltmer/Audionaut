@@ -119,7 +119,7 @@ void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
         g.fillRoundedRectangle (bounds, cornerSize);
 
         //g.setColour (button.findColour (ComboBox::outlineColourId));
-        g.setColour (Colours::white.withAlpha(0.1f));
+        g.setColour (Colours::white.withAlpha(0.4f));
         g.drawRoundedRectangle (bounds, cornerSize, 1.0f);
     }
 }
