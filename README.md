@@ -5,20 +5,41 @@
 Audionaut is a tool for sound designers, sound engineers, and musicians who need to cut audio files quickly and efficiently.
 
 ### Key features:
-    - Arrange audio on a timeline and playlist in pararallel.
-    - Cut multi-channel audio perfectly in phase. 
-    - Open project format in json.  
+    - Arrange audio in a playlist and on a timeline in pararallel (it's not perfekt yet and - no suprise - more complicated that you might think).
+    - Edit multi-channel audio perfectly in phase (drag multiple audio files on a new track and edit them all together).
+    - Transparent project format in json (in case i get run over by a bus you can still somehow easily transfer your work to another app).  
 
 ## WHY
 
-The motivation behind Audionaut is mostly personal. We record our music sessions with a digtal mixer and end up with a stereo mix and all the individual mono audio files for each channel. Editing these individual files in order to remix can be a very tedious task. Some DAWs even allow grouping of audio clips, but it feels like a workaround to me. I was also missing an audio editor that supports the old Sound Desinger 2 workflow of creating regions and simply dragging and dropping them to playlist. Last but not least, I really enjoy coding audio applications. Let's hope this software will be useful for others as well.
+The motivation behind Audionaut is mostly personal. I enjoy coding audio apps and was missing an audio editor that supports the old Sound Desinger 2 workflow of creating regions and simply dragging and dropping them to a playlist. So why not create one myself? Well, 3 years later, here we are and i really hope this software can be useful for you too.
+
+With much gratitude to all my friends that tried to talk me out of this :D.
  
 
 ## BUILD
 
 Make sure to clone with submodules:
 ```
-git clone --recursive git@github.com:kvoltmer/Audium.git
+git clone --recursive git@github.com:kvoltmer/Audionaut.git
 ```
+or
+```
+git submodule update --init --recursive
+```
+
+### Build with Xcode
+
+Open the project in Xcode located in `Audionaut/Audionaut.xcodeproj`
+
+### Build with Visual Studio 2022
+
+Open the solution in Visual Studio located in `Audionaut/Audionaut.sln`
+
+### Build with Linux
+
+Please be patient. I am working on this.
+
+
+
 
 
