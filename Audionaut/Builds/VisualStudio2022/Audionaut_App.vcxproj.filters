@@ -8423,10 +8423,10 @@
     <None Include="..\..\Catch2Tests\CMakeLists.txt">
       <Filter>Audionaut\Catch2Tests</Filter>
     </None>
-    <None Include="..\..\Resources\music-512-sobel-glow.png">
+    <None Include="..\..\Resources\audionaut-icon-512.png">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
     </None>
-    <None Include="..\..\Resources\music-1024-sobel-glow.png">
+    <None Include="..\..\Resources\audionaut-icon-1024.png">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
     </None>
     <None Include="..\..\Resources\zoomin.svg">
@@ -8500,6 +8500,9 @@
     </None>
     <None Include="..\..\..\Submodules\juce\modules\juce_graphics\unicode\sheenbidi\JUCE_CHANGES.txt">
       <Filter>JUCE Modules\juce_graphics\unicode\sheenbidi</Filter>
+    </None>
+    <None Include=".\icon.ico">
+      <Filter>JUCE Library Code</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
