@@ -8,11 +8,11 @@
 
 namespace BinaryData
 {
-    extern const char*   music512sobelglow_png;
-    const int            music512sobelglow_pngSize = 77275;
+    extern const char*   audionauticon512_png;
+    const int            audionauticon512_pngSize = 221293;
 
-    extern const char*   music1024sobelglow_png;
-    const int            music1024sobelglow_pngSize = 186922;
+    extern const char*   audionauticon1024_png;
+    const int            audionauticon1024_pngSize = 164884;
 
     extern const char*   zoomin_svg;
     const int            zoomin_svgSize = 579;

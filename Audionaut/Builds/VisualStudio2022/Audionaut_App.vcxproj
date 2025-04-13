@@ -4483,8 +4483,8 @@
   <ItemGroup>
     <None Include="..\..\Catch2Tests\README.txt"/>
     <None Include="..\..\Catch2Tests\CMakeLists.txt"/>
-    <None Include="..\..\Resources\music-512-sobel-glow.png"/>
-    <None Include="..\..\Resources\music-1024-sobel-glow.png"/>
+    <None Include="..\..\Resources\audionaut-icon-512.png"/>
+    <None Include="..\..\Resources\audionaut-icon-1024.png"/>
     <None Include="..\..\Resources\zoomin.svg"/>
     <None Include="..\..\..\Submodules\juce\modules\juce_audio_devices\native\oboe\src\common\README.md"/>
     <None Include="..\..\..\Submodules\juce\modules\juce_audio_devices\native\oboe\src\flowgraph\resampler\README.md"/>
@@ -4509,6 +4509,7 @@
     <None Include="..\..\..\Submodules\juce\modules\juce_graphics\image_formats\jpglib\changes to libjpeg for JUCE.txt"/>
     <None Include="..\..\..\Submodules\juce\modules\juce_graphics\image_formats\pnglib\libpng_readme.txt"/>
     <None Include="..\..\..\Submodules\juce\modules\juce_graphics\unicode\sheenbidi\JUCE_CHANGES.txt"/>
+    <None Include=".\icon.ico"/>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include=".\resources.rc"/>

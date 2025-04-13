@@ -129,7 +129,6 @@
 		00B0848F45E53B0B0D3D8AFB /* RegionTableListBox.cpp */ /* RegionTableListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionTableListBox.cpp; path = ../../Source/Interface/Controls/RegionTableListBox.cpp; sourceTree = SOURCE_ROOT; };
 		00B802315C2CFF208A616E1D /* TransportLoop.h */ /* TransportLoop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TransportLoop.h; path = ../../Source/Engine/PlayList/TransportLoop.h; sourceTree = SOURCE_ROOT; };
 		03DF3A11364360FFACBE47A6 /* PlayListComponent.h */ /* PlayListComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListComponent.h; path = ../../Source/Interface/Components/RightPanel/PlayListComponent.h; sourceTree = SOURCE_ROOT; };
-		04BF35AA6E3058FD68483871 /* music-512-sobel-glow.png */ /* music-512-sobel-glow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "music-512-sobel-glow.png"; path = "../../Resources/music-512-sobel-glow.png"; sourceTree = SOURCE_ROOT; };
 		05B46617E562A6E50F8D63E8 /* ZoomHandler.h */ /* ZoomHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ZoomHandler.h; path = ../../Source/Interface/Handlers/ZoomHandler.h; sourceTree = SOURCE_ROOT; };
 		068707BEEF91E3C5815141F9 /* AudioResourceFactory.h */ /* AudioResourceFactory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResourceFactory.h; path = ../../Source/Engine/Factory/AudioResourceFactory.h; sourceTree = SOURCE_ROOT; };
 		0850DA0A9D93EDCFB3AEF06D /* AudioRegionAdapter.cpp */ /* AudioRegionAdapter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegionAdapter.cpp; path = ../../Source/Engine/Group/AudioRegionAdapter.cpp; sourceTree = SOURCE_ROOT; };
@@ -178,7 +177,6 @@
 		381C16B10EEBED549FB2BBD2 /* juce_data_structures */ /* juce_data_structures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_data_structures; path = ../../../Submodules/juce/modules/juce_data_structures; sourceTree = SOURCE_ROOT; };
 		3A82F0A264C8847AB3096637 /* Streamable.h */ /* Streamable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Streamable.h; path = ../../Source/Engine/Streamable.h; sourceTree = SOURCE_ROOT; };
 		3AF4EE7AF9EAFD08F56B5F84 /* AudioRegionView.h */ /* AudioRegionView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegionView.h; path = ../../Source/Interface/Views/AudioRegionView.h; sourceTree = SOURCE_ROOT; };
-		3B2E8229A8E3B92550A22EAE /* music-1024-sobel-glow.png */ /* music-1024-sobel-glow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "music-1024-sobel-glow.png"; path = "../../Resources/music-1024-sobel-glow.png"; sourceTree = SOURCE_ROOT; };
 		3B45C1B587B072E12D0C8FD8 /* PlayListScheduler.h */ /* PlayListScheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListScheduler.h; path = ../../Source/Engine/PlayList/PlayListScheduler.h; sourceTree = SOURCE_ROOT; };
 		3C22B432B568A08F505A5486 /* DspClip.h */ /* DspClip.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DspClip.h; path = ../../Source/Engine/Core/DspClip.h; sourceTree = SOURCE_ROOT; };
 		3EAF65124DEAE2090689ABBB /* RegionComponent.h */ /* RegionComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionComponent.h; path = ../../Source/Interface/Components/RightPanel/RegionComponent.h; sourceTree = SOURCE_ROOT; };
@@ -329,6 +327,7 @@
 		BC325BA600975DA123084DA3 /* AudioToolbox.framework */ /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		BC912F2C45ABACEAA30761C1 /* RegionSelector.cpp */ /* RegionSelector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionSelector.cpp; path = ../../Source/Interface/Controls/RegionSelector.cpp; sourceTree = SOURCE_ROOT; };
 		BCC2B6A9AAC816A403A24E63 /* RightPanelComponent.cpp */ /* RightPanelComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RightPanelComponent.cpp; path = ../../Source/Interface/Components/RightPanel/RightPanelComponent.cpp; sourceTree = SOURCE_ROOT; };
+		BCE7C634586B7CCDECC68726 /* audionaut-icon-1024.png */ /* audionaut-icon-1024.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "audionaut-icon-1024.png"; path = "../../Resources/audionaut-icon-1024.png"; sourceTree = SOURCE_ROOT; };
 		BD120C92EBF0312BF1D4DBB1 /* QuartzCore.framework */ /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		BD317E4F3A130A3FD8EDC934 /* RegionLabel.h */ /* RegionLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionLabel.h; path = ../../Source/Interface/Controls/RegionLabel.h; sourceTree = SOURCE_ROOT; };
 		BDC989EF8839976F75651BC9 /* PositionableBase.h */ /* PositionableBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PositionableBase.h; path = ../../Source/Engine/PlayList/PositionableBase.h; sourceTree = SOURCE_ROOT; };
@@ -342,6 +341,7 @@
 		C7202C377D3DE8D18030C3B9 /* README.txt */ /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = README.txt; path = ../../Catch2Tests/README.txt; sourceTree = SOURCE_ROOT; };
 		C7A2C992729CBEC1D5A5E03F /* ChannelGroupHeaderComponent.cpp */ /* ChannelGroupHeaderComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ChannelGroupHeaderComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.cpp; sourceTree = SOURCE_ROOT; };
 		C850B3C5C5A02130F40F4025 /* AudiumLookAndFeel.cpp */ /* AudiumLookAndFeel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumLookAndFeel.cpp; path = ../../Source/Interface/LookAndFeel/AudiumLookAndFeel.cpp; sourceTree = SOURCE_ROOT; };
+		C967CDDE75C68F16863A530E /* audionaut-icon-512.png */ /* audionaut-icon-512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "audionaut-icon-512.png"; path = "../../Resources/audionaut-icon-512.png"; sourceTree = SOURCE_ROOT; };
 		CA39B6E9F9CE7E4D8C8168A4 /* TransportPositionControl.h */ /* TransportPositionControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TransportPositionControl.h; path = ../../Source/Interface/Controls/TransportPositionControl.h; sourceTree = SOURCE_ROOT; };
 		CAFD7E7A5EC218460C239503 /* AudiumTransportSource.h */ /* AudiumTransportSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumTransportSource.h; path = ../../Source/Engine/AudioSources/AudiumTransportSource.h; sourceTree = SOURCE_ROOT; };
 		CB19A935EF026FE60A0F874E /* WaveFormViewBase.cpp */ /* WaveFormViewBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = WaveFormViewBase.cpp; path = ../../Source/Interface/Views/WaveFormViewBase.cpp; sourceTree = SOURCE_ROOT; };
@@ -891,8 +891,8 @@
 		B31E3680D6A49693251B06BE /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				04BF35AA6E3058FD68483871,
-				3B2E8229A8E3B92550A22EAE,
+				C967CDDE75C68F16863A530E,
+				BCE7C634586B7CCDECC68726,
 				96AC39DC12BE49CADA52A77D,
 			);
 			name = Resources;
