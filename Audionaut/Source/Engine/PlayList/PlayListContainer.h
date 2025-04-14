@@ -20,6 +20,13 @@ namespace audium {
 class AudioRegionContainer;
 class TransportSourceContainer;
 
+/**
+ * \class PlayListContainer
+ * \brief Manages a collection of playlist items for an audio track.
+ *
+ * This class provides functionality to create, delete, move, and manage playlist items
+ * associated with an audio track. It also supports serialization to and from JSON.
+ */
 class PlayListContainer : public audium::Streamable
 {
     

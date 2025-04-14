@@ -10,6 +10,14 @@
 
 namespace audium {
 
+/**
+ * \class PositionableBase
+ * \brief Base class for objects that can be positioned and resized in a time-based context.
+ *
+ * This class provides an interface for managing the position and size of objects
+ * in a time-based context. It includes methods for retrieving and modifying
+ * position and size, as well as utility functions for range conversions.
+ */
 class PositionableBase
 {
     
