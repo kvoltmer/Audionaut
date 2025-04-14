@@ -10,12 +10,16 @@ namespace audium
 
 //==============================================================================
 /**
-    This enum is used in various classes to indicate the time context.
-*/
+ * @enum TimeContextType
+ * @brief Represents different time contexts used in the application.
+ *
+ * The `TimeContextType` enum is used in various classes to indicate whether
+ * time is represented in seconds or musical clocks.
+ */
 enum TimeContextType
 {
-    seconds = 0,    /**< time in seconds. */
-    clocks = 1,     /**< time in clocks (musical time). */
+    seconds = 0,    /**< Time in seconds. */
+    clocks = 1,     /**< Time in clocks (musical time). */
 };
 
 } // namespace audium

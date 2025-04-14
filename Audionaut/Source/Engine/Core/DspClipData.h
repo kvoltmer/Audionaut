@@ -9,21 +9,59 @@
 
 namespace audium {
 
+/**
+ * @struct DspClipData
+ * @brief Represents the data associated with a DSP clip.
+ *
+ * The `DspClipData` struct contains information about an audio clip, including
+ * its gain, fade-in/out durations, and transport source index. It is used to
+ * manage DSP-related properties of audio clips in the Audionaut application.
+ */
 struct DspClipData
 {
-    // The audio clip data
+    /**
+     * @brief The audio clip data.
+     *
+     * Contains the core audio data and metadata for the clip.
+     */
     AudioClipData clipData;
     
-    // Indicate if clip is active
+    /**
+     * @brief Indicates whether the clip is active.
+     *
+     * A boolean flag that determines if the clip is currently active.
+     */
     bool active = false;
     
+    /**
+     * @brief The gain applied to the clip.
+     *
+     * A floating-point value representing the gain multiplier for the clip.
+     * Default is 1.0 (no gain adjustment).
+     */
     float clipGain = 1.f;
     
+    /**
+     * @brief The fade-in duration of the clip in clock units.
+     *
+     * A double value representing the duration of the fade-in effect.
+     */
     double clipFadeInClocks = 0.0;
+    
+    /**
+     * @brief The fade-out duration of the clip in clock units.
+     *
+     * A double value representing the duration of the fade-out effect.
+     */
     double clipFadeOutClocks = 0.0;
     
+    /**
+     * @brief The transport source index for the clip.
+     *
+     * An integer representing the index of the transport source associated
+     * with the clip. Default is -1 (no source assigned).
+     */
     int transportSourceIndex = -1;
-    
 };
 
 } // namespace audium
