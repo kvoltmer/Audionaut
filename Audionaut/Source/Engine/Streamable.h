@@ -13,23 +13,50 @@ using json = nlohmann::json;
 namespace audium
 {
 
+/**
+ * @class Streamable
+ * @brief An interface for objects that can be serialized to and deserialized from streams or JSON.
+ *
+ * The `Streamable` class provides a mechanism for objects to be written to and read from
+ * JUCE streams or JSON objects. It includes default implementations for stream-based
+ * serialization using JSON as the intermediate format.
+ */
 class Streamable
 {
-
 public:
+    /**
+     * @brief Virtual destructor.
+     */
     virtual ~Streamable() = default;
-    
-    // json used as default implementation
-    virtual bool writeToStream (juce::OutputStream& outputStream)
+
+    /**
+     * @brief Writes the object to a JUCE output stream.
+     *
+     * This method uses JSON as the default implementation for serialization.
+     *
+     * @param outputStream The output stream to write to.
+     * @return True if the operation was successful, false otherwise.
+     */
+    virtual bool writeToStream(juce::OutputStream& outputStream)
     {
         json jout;
         auto result = writeToJson(jout);
         outputStream.writeString(jout.dump(2));
         return result;
     }
-    
-    // json used as default implementation
-    virtual bool readFromStream (juce::InputStream& inputStream, bool rebuild = true)
+
+
+    /**
+     * @brief Reads the object from a JUCE input stream.
+     *
+     * This method uses JSON as the default implementation for deserialization.
+     *
+     * @param inputStream The input stream to read from.
+     * @param rebuild Whether to rebuild the object during deserialization.
+     * @return True if the operation was successful, false otherwise.
+     * @throws std::runtime_error If the input string is empty or invalid.
+     */
+    virtual bool readFromStream(juce::InputStream& inputStream, bool rebuild = true)
     {
         auto inputString = inputStream.readString().toStdString();
         if (inputString.empty())
@@ -39,12 +66,45 @@ public:
         return readFromJson(json, rebuild);
     }
 
+    /**
+     * @brief Writes the object to a JSON object.
+     *
+     * This method should be overridden by derived classes to provide custom
+     * JSON serialization logic.
+     *
+     * @param output The JSON object to write to.
+     * @return True if the operation was successful, false otherwise.
+     */
     virtual bool writeToJson (json& /*output*/) { return false; }
-    virtual bool readFromJson (json& /*input*/, bool /*rebuild*/) { return false; }
 
+    /**
+     * @brief Reads the object from a JSON object.
+     *
+     * This method should be overridden by derived classes to provide custom
+     * JSON deserialization logic.
+     *
+     * @param input The JSON object to read from.
+     * @param rebuild Whether to rebuild the object during deserialization.
+     * @return True if the operation was successful, false otherwise.
+     */
+    virtual bool readFromJson (json& /*input*/, bool /*rebuild*/) { return false; }
     
+    /**
+     * @brief Gets the size of the object in units.
+     *
+     * This method must be implemented by derived classes to return the size
+     * of the object in application-specific units.
+     *
+     * @return The size of the object in units.
+     */
     virtual int getSizeInUnits() = 0;
-    
+
+    /**
+     * @brief The file version for serialization.
+     *
+     * This constant represents the version of the file format used for
+     * serialization and deserialization.
+     */
     const int fileVersion = 1;
 };
 
