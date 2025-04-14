@@ -25,7 +25,16 @@ class AudioResourceContainer;
 class Playback;
 class AudioBusInterface;
 
-
+/**
+ * \class PlayListScheduler
+ * \brief Manages the scheduling and playback of playlist items in an audio application.
+ *
+ * The `PlayListScheduler` class is responsible for handling the sequencing, playback,
+ * and management of playlist items across multiple audio tracks. It integrates with
+ * various components such as tempo providers, transport sources, and playback engines
+ * to ensure synchronized audio playback. The class also supports editing modes,
+ * transport following, and exporting audio to files.
+ */
 class PlayListScheduler : public juce::ChangeListener
 {
     

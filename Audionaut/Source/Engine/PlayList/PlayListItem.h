@@ -24,6 +24,14 @@ class AudioRegion;
 class PlayListContainer;
 class AudiumTransportSource;
 
+/**
+ * \class PlayListItem
+ * \brief Represents an item in a playlist, managing its position, region, and associated data.
+ *
+ * The `PlayListItem` class is responsible for handling individual items in a playlist.
+ * It provides functionality for managing the item's position, associated audio region,
+ * fades, and transport sources. It also supports serialization to and from JSON.
+ */
 class PlayListItem : public PositionableBase, public audium::Selectable
 {
     

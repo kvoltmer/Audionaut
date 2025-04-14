@@ -11,6 +11,14 @@
 namespace audium
 {
 
+/**
+ * \class SampleTimer
+ * \brief A utility class for managing sample-based timing in audio processing.
+ *
+ * The `SampleTimer` class provides functionality to schedule and process
+ * sample-based timers, which are commonly used in audio applications to
+ * trigger events after a specified number of samples.
+ */
 class SampleTimer {
     
 public:
