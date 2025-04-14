@@ -31,10 +31,28 @@ class AudioTrackContainer;
 typedef audium::SelectableObjectContainer<ResourceGroup> tResourceGroupContainer;
 typedef audium::SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
 
+/**
+ * @class AudioTrack
+ * @brief Represents an audio track in the application.
+ *
+ * The `AudioTrack` class provides functionality for managing audio resources, channels,
+ * playlists, and other track-related operations. It supports undoable actions, selection,
+ * and serialization.
+ */
 class AudioTrack : public audium::Streamable, public audium::Selectable
 {
     
 public:
+    /**
+     * @brief Constructs an `AudioTrack` instance.
+     * @param owner_ Reference to the owning `AudioTrackContainer`.
+     * @param audioResourceContainer_ Reference to the container holding audio resources.
+     * @param transportSourceContainer_ Shared pointer to the transport source container.
+     * @param selectionManager_ Shared pointer to the selection manager.
+     * @param resourceGroups_ Shared pointer to the resource group container.
+     * @param channels_ Shared pointer to the audio channel container.
+     * @param nameString_ The name of the audio track.
+     */
     AudioTrack(AudioTrackContainer &owner_,
                AudioResourceContainer &audioResourceContainer_,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
@@ -57,21 +75,51 @@ public:
                                                                                       selectionManager));
     }
     
+    /**
+     * @brief Destructor for `AudioTrack`.
+     */
     virtual ~AudioTrack() override;
     
+    /**
+     * @brief Cleans up resources associated with the audio track.
+     */
     void cleanup() override;
     
+    /**
+     * @brief Gets the name of the audio track.
+     * @return The name of the audio track.
+     */
     const juce::String getAudioTrackName() const { return name; }
+    
+    /**
+     * @brief Sets the name of the audio track.
+     * @param newName The new name for the audio track.
+     */
     void setAudioTrackName(const juce::String newName);
     
-    // track colour:
+    /**
+     * @brief Sets the color of the audio track.
+     * @param colour The new color.
+     */
     void setColour(juce::Colour colour);
+    
+    /**
+     * @brief Gets the color of the audio track.
+     * @return The current color.
+     */
+
     juce::Colour getColour() const { return groupColour; }
     
-    // returns the index within the container's array
+    /**
+     * @brief Gets the index of the audio track within its container.
+     * @return The index of the track.
+     */
     const int getId() const;
     
-    // returns the audio track's channel offset
+    /**
+     * @brief Gets the channel offset of the audio track.
+     * @return The channel offset.
+     */
     const int getChannelOffset() const;
     
     // pointer and references to other classes:
@@ -81,8 +129,26 @@ public:
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
     std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     
+    /**
+     * @brief Gets all audio resources associated with the track.
+     * @return A vector of shared pointers to `AudioResource` instances.
+     */
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
+    
+    /**
+     * @brief Finds a resource group at a specific range.
+     * @param range The range to search within.
+     * @param context The time context type.
+     * @return Shared pointer to the found `ResourceGroup`, or `nullptr` if not found.
+     */
     std::shared_ptr<ResourceGroup> getResourceGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
+    
+    /**
+     * @brief Finds a resource group at a specific position.
+     * @param position The position to search at.
+     * @param context The time context type.
+     * @return Shared pointer to the found `ResourceGroup`, or `nullptr` if not found.
+     */
     std::shared_ptr<ResourceGroup> getResourceGroupAtAbsolutePosition(double position, audium::TimeContextType context) const;
     
     
@@ -119,7 +185,7 @@ public:
     void dropSelectedAudioRegions(double pos, audium::TimeContextType context);
     void dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos, audium::TimeContextType context);
     
-    // sub groups:
+    // resource groups:
     std::shared_ptr<ResourceGroup> createNewResourceGroup(double transportPosition,
                                                           audium::TimeContextType context,
                                                           bool arrangementMode);
@@ -169,23 +235,20 @@ public:
     const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;
     
 private:
-    AudioTrackContainer &owner;
-    AudioResourceContainer &audioResourceContainer;
-    std::shared_ptr<PlayListContainer> playListContainer;
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
-    std::shared_ptr<SelectionManager> selectionManager;
-    
+    AudioTrackContainer &owner; ///< Reference to the owning container.
+    AudioResourceContainer &audioResourceContainer; ///< Reference to the audio resource container.
+    std::shared_ptr<PlayListContainer> playListContainer; ///< Shared pointer to the playlist container.
+    std::shared_ptr<TransportSourceContainer> transportSourceContainer; ///< Shared pointer to the transport source container.
+    std::shared_ptr<SelectionManager> selectionManager; ///< Shared pointer to the selection manager.
+
 public:
-    std::shared_ptr<tResourceGroupContainer> resourceGroupContainer;
-    std::shared_ptr<tAudioChannelContainer> audioChannelContainer;
-    
+    std::shared_ptr<tResourceGroupContainer> resourceGroupContainer; ///< Shared pointer to the resource group container.
+    std::shared_ptr<tAudioChannelContainer> audioChannelContainer; ///< Shared pointer to the audio channel container.
+
 private:
-    
-    std::string name;
-    
-    juce::Colour groupColour = juce::Colours::pink;
-    
-    std::unique_ptr<audium::UndoableContainerAction> undoableContainerAction;
+    std::string name; ///< Name of the audio track.
+    juce::Colour groupColour = juce::Colours::pink; ///< Color of the audio track.
+    std::unique_ptr<audium::UndoableContainerAction> undoableContainerAction; ///< Undoable action container.
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)
     

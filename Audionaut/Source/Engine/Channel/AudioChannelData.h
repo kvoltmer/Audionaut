@@ -12,17 +12,27 @@ using json = nlohmann::json;
 namespace audium
 {
 
-//==============================================================================
+/**
+ * @struct AudioChannelData
+ * @brief Represents the data for an audio channel, including visual and audio properties.
+ *
+ * This structure holds information about an audio channel's height, gain, pan, mute, and solo states.
+ * It also provides serialization and deserialization methods for JSON conversion.
+ */
 struct AudioChannelData
 {
-    int height  = 100;
-    float gain  = 1.0f;
-    float pan   = 0.f;
-    bool mute   = false;
-    bool solo   = false;
+    int height  = 100;   ///< The height of the audio channel in pixels.
+    float gain  = 1.0f;  ///< The gain level of the audio channel (default is 1.0f).
+    float pan   = 0.f;   ///< The pan position of the audio channel (-1.0f for left, 1.0f for right).
+    bool mute   = false; ///< Indicates whether the audio channel is muted.
+    bool solo   = false; ///< Indicates whether the audio channel is in solo mode.
 };
 
-// custom to_json method will be automatically called by the json constructor
+/**
+ * @brief Serializes an AudioChannelData object to JSON.
+ * @param j The JSON object to populate.
+ * @param data The AudioChannelData object to serialize.
+ */
 inline void to_json(json& j, const AudioChannelData& data) {
     j = json{   {"height", data.height},
         {"gain", data.gain},
@@ -32,15 +42,19 @@ inline void to_json(json& j, const AudioChannelData& data) {
     };
 }
 
-// custom from_json method will be automatically called by the json constructor
+/**
+ * @brief Deserializes a JSON object to an AudioChannelData object.
+ * @param j The JSON object to deserialize.
+ * @param data The AudioChannelData object to populate.
+ */
 inline void from_json(const json& j, AudioChannelData& data) {
     
     if (j.contains("height"))
         data.height = j.at("height").get<int>();
     
     if (j.contains("gain"))
-        data.gain = j.at("gain").get<float>();
     
+        data.gain = j.at("gain").get<float>();
     if (j.contains("pan"))
         data.pan = j.at("pan").get<float>();
     
