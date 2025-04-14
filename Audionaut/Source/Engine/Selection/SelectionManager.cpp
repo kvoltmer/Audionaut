@@ -33,7 +33,7 @@ const SelectionContextType SelectionManager::getSelectionContext() const {
         if (AudioTrack* track = dynamic_cast<AudioTrack*>(object.get())) {
             return audio_track;
         }
-        if (AudioSubGroup* subgroup = dynamic_cast<AudioSubGroup*>(object.get())) {
+        if (ResourceGroup* subgroup = dynamic_cast<ResourceGroup*>(object.get())) {
             return sub_group;
         }
         else if (AudioChannel* channel = dynamic_cast<AudioChannel*>(object.get())) {
@@ -56,7 +56,7 @@ void SelectionManager::copySelectedToClipboard() {
         
     json jout, json_lola;
     
-//        if (AudioSubGroup* subgroup = dynamic_cast<AudioSubGroup*>(object.get())) {
+//        if (ResourceGroup* subgroup = dynamic_cast<ResourceGroup*>(object.get())) {
 //        if (AudioChannel* channel = dynamic_cast<AudioChannel*>(object.get())) {
     
     switch (auto context = getSelectionContext()) {
@@ -158,20 +158,20 @@ void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEn
                 
                 for (auto& jsonRegion : jsonRegions) {
                     if (jsonRegion.contains("track_id") &&
-                        jsonRegion.contains("sub_group_id")) {
+                        jsonRegion.contains("resource_group_id")) {
                         auto track_id = jsonRegion.at("track_id").get<int>();
                         auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(track_id);
                         jassert(audioTrack);
                         if (audioTrack != nullptr) {
-                            auto sub_group_id = jsonRegion.at("sub_group_id").get<int>();
-                            auto subGroup = audioTrack->audioSubGroupContainer->getObjects()[sub_group_id];
-                            jassert(subGroup);
-                            if (subGroup != nullptr) {
+                            auto resourceGroupId = jsonRegion.at("resource_group_id").get<int>();
+                            auto resourceGroup = audioTrack->resourceGroupContainer->getObjects()[resourceGroupId];
+                            jassert(resourceGroup);
+                            if (resourceGroup != nullptr) {
                                 std::string name;
                                 if (jsonRegion.contains("name"))
                                     name = jsonRegion.at("name").get<std::string>();
-                                auto newName = subGroup->getAudioRegionContainer()->getUniqueName(name);
-                                auto region = subGroup->getAudioRegionContainer()->createRegion(audioTrack, subGroup);
+                                auto newName = resourceGroup->getAudioRegionContainer()->getUniqueName(name);
+                                auto region = resourceGroup->getAudioRegionContainer()->createRegion(audioTrack, resourceGroup);
                                 region->readFromJson(jsonRegion, false);
                                 region->setName(newName);
                             }

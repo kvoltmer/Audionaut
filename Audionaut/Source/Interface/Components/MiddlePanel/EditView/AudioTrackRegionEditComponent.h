@@ -21,7 +21,7 @@
 //==============================================================================
 /*
  
-Display AudioSubGroups -> Timeline
+Display ResourceGroups -> Timeline
  
  */
 
@@ -57,7 +57,7 @@ public:
     
     bool mustRebuildComponents() const
     {
-        if (audioTrack->getAudioSubGroups().size() != subGroupListViews.size())
+        if (audioTrack->getResourceGroups().size() != subGroupListViews.size())
         {
             return true;
         }
@@ -75,16 +75,16 @@ public:
         subGroupListModels.clear();
         
         // create a ListBox and ListBoxModel for each sub track
-        auto subGroups = audioTrack->getAudioSubGroups();
-        for (auto subGroup : subGroups)
+        auto resourceGroups = audioTrack->getResourceGroups();
+        for (auto resourceGroup : resourceGroups)
         {
             auto subGroupListView = std::shared_ptr<SubGroupListBox>(new SubGroupListBox(audiumEngine,
-                                                                                         subGroup,
+                                                                                         resourceGroup,
                                                                                          zoomHandler,
                                                                                          regionSelector));
             
             auto subGroupListBoxModel = std::shared_ptr<SubGroupListBoxModel>(new SubGroupListBoxModel(subGroupListView,
-                                                                                                       subGroup,
+                                                                                                       resourceGroup,
                                                                                                        audiumEngine,
                                                                                                        zoomHandler,
                                                                                                        regionSelector));
@@ -93,12 +93,12 @@ public:
             
             // create dragger as header of ListBox
             auto dragger = std::unique_ptr<SubGroupDraggerControl>(new SubGroupDraggerControl(audiumEngine,
-                                                                                              subGroup,
+                                                                                              resourceGroup,
                                                                                               zoomHandler,
                                                                                               audioTrack->getColour(),
                                                                                               regionSelector));
             dragger->setComponentToDrag(subGroupListView.get());
-            dragger->setPositionableObject(subGroup);
+            dragger->setPositionableObject(resourceGroup);
             dragger->addChangeListener(this);
             subGroupListView->setHeaderComponent(std::move(dragger));
 
@@ -120,13 +120,13 @@ public:
     
     void updateFromEngine()
     {
-        const auto subGroups = audioTrack->getAudioSubGroups();
-        jassert(subGroups.size() == subGroupListViews.size());
+        const auto resourceGroups = audioTrack->getResourceGroups();
+        jassert(resourceGroups.size() == subGroupListViews.size());
         int counter = 0;
-        for (auto subGroup : subGroups)
+        for (auto resourceGroup : resourceGroups)
         {
-            subGroupListModels[counter]->setAudioSubGroup(subGroup);
-            subGroupListViews[counter]->updateFromEngine(subGroup);
+            subGroupListModels[counter]->setResourceGroup(resourceGroup);
+            subGroupListViews[counter]->updateFromEngine(resourceGroup);
             counter++;
         }
     }
@@ -135,12 +135,12 @@ public:
     {
         
         // set size and position of subgroups on timeline
-        auto subGroups = audioTrack->getAudioSubGroups();
-        //jassert(subGroups.size() == subGroupListViews.size());
+        auto resourceGroups = audioTrack->getResourceGroups();
+        //jassert(resourceGroups.size() == subGroupListViews.size());
         int counter = 0;
-        for (auto subGroup : subGroups)
+        for (auto resourceGroup : resourceGroups)
         {
-            auto posRange = subGroup->getAbsolutePositionRange(audium::clocks);
+            auto posRange = resourceGroup->getAbsolutePositionRange(audium::clocks);
             auto pos = zoomHandler->clocksToX(posRange.getStart());
             auto width = zoomHandler->clocksToX(posRange.getLength());
             

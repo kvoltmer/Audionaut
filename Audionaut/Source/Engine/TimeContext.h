@@ -10,7 +10,7 @@ namespace audium
 
 //==============================================================================
 /**
-    These enums are used in various classes to indicate the time context.
+    This enum is used in various classes to indicate the time context.
 */
 enum TimeContextType
 {

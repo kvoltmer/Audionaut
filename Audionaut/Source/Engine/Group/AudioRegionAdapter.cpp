@@ -121,23 +121,23 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
             auto context = audium::clocks;
             if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
                 auto localRange = item->absoluteToLocalRange(selectedRange, context);
-                auto subGroup = item->getRegion()->getAudioSubGroup();
-                subGroup->getAudioRegionContainer()->createRegion(name,
+                auto resourceGroup = item->getRegion()->getResourceGroup();
+                resourceGroup->getAudioRegionContainer()->createRegion(name,
                                                                   localRange,
                                                                   track,
-                                                                  subGroup,
+                                                                  resourceGroup,
                                                                   item->getRegion(),
                                                                   context);
             }
         }
         else
         {
-            if (auto subGroup = track->getSubGroupAtAbsoluteRange(selectedRange, context)) {
-                auto localRange = subGroup->absoluteToLocalRange(selectedRange, context);
-                subGroup->getAudioRegionContainer()->createRegion(name,
+            if (auto resourceGroup = track->getResourceGroupAtAbsoluteRange(selectedRange, context)) {
+                auto localRange = resourceGroup->absoluteToLocalRange(selectedRange, context);
+                resourceGroup->getAudioRegionContainer()->createRegion(name,
                                                                   localRange,
                                                                   track,
-                                                                  subGroup,
+                                                                  resourceGroup,
                                                                   nullptr,
                                                                   context);
             }
@@ -162,7 +162,7 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
     
     for (auto track : owner.getAudioTracks()) {
         if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
-            auto subGroup = item->getRegion()->getAudioSubGroup();
+            auto resourceGroup = item->getRegion()->getResourceGroup();
             bool success = false;
             auto itemRange = item->getAbsolutePositionRange(context);
             
@@ -172,11 +172,11 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
                 absoluteRange = juce::Range<double>(itemRange.getStart(), selectedRange.getStart());
                 localRange = item->absoluteToLocalRange(absoluteRange, context);
                 
-                name = subGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
-                region = subGroup->getAudioRegionContainer()->createRegion(name,
+                name = resourceGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                region = resourceGroup->getAudioRegionContainer()->createRegion(name,
                                                                            localRange,
                                                                            track,
-                                                                           subGroup,
+                                                                           resourceGroup,
                                                                            item->getRegion(),
                                                                            context);
                 track->getPlayListContainer()->createPlayListItemAtPositionUI(region, item->getAbsolutePosition(context), context);
@@ -186,11 +186,11 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
             // - region of selection
             if (selectedRange.getLength() > 0.0) {
                 localRange = item->absoluteToLocalRange(selectedRange, context);
-                name = subGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
-                region = subGroup->getAudioRegionContainer()->createRegion(name,
+                name = resourceGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                region = resourceGroup->getAudioRegionContainer()->createRegion(name,
                                                                            localRange,
                                                                            track,
-                                                                           subGroup,
+                                                                           resourceGroup,
                                                                            item->getRegion(),
                                                                            context);
                 track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getStart(), context);
@@ -202,11 +202,11 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
                 
                 absoluteRange = juce::Range<double>(selectedRange.getEnd(), itemRange.getEnd());
                 localRange = item->absoluteToLocalRange(absoluteRange, context);
-                name = subGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
-                region = subGroup->getAudioRegionContainer()->createRegion(name,
+                name = resourceGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                region = resourceGroup->getAudioRegionContainer()->createRegion(name,
                                                                            localRange,
                                                                            track,
-                                                                           subGroup,
+                                                                           resourceGroup,
                                                                            item->getRegion(),
                                                                            context);
                 track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getEnd(), context);

@@ -154,10 +154,10 @@ void AudioTrackContainer::deleteUnusedRegions()
     auto action = std::make_unique<audium::UndoableContainerAction>(*this);
     
     for (auto track : audioTracks) {
-        for (auto subGroup : track->getAudioSubGroups()) {
-            subGroup->getAudioRegionContainer()->deleteUnusedRegions();
+        for (auto resourceGroup : track->getResourceGroups()) {
+            resourceGroup->getAudioRegionContainer()->deleteUnusedRegions();
         }
-        track->deleteUnusedSubGroups();
+        track->deleteUnusedResourceGroups();
     }
     
     // Undo: store new state and perform

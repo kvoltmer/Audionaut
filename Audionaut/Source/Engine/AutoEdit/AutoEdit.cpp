@@ -142,12 +142,12 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
                 // CREATE REGIONs:
                 
                 // use the first sub track
-                auto subGroups = track->getAudioSubGroups();
+                auto resourceGroups = track->getResourceGroups();
                 
-                jassert(subGroups.size() > 0);
-                if (subGroups.size() > 0)
+                jassert(resourceGroups.size() > 0);
+                if (resourceGroups.size() > 0)
                 {
-                    subGroups[0]->getAudioRegionContainer()->createRegion(regionName, position, track, subGroups[0], nullptr, audium::seconds);
+                    resourceGroups[0]->getAudioRegionContainer()->createRegion(regionName, position, track, resourceGroups[0], nullptr, audium::seconds);
                 }
             }
         }
@@ -179,8 +179,8 @@ bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
         {
             if (auto track = audioTrackContainer->getDefaultGroup())
             {
-                auto subGroup = track->getAudioSubGroups()[0];
-                auto region = subGroup->getAudioRegionContainer()->getRegion(elem["index"]);
+                auto resourceGroup = track->getResourceGroups()[0];
+                auto region = resourceGroup->getAudioRegionContainer()->getRegion(elem["index"]);
                 jassert(region != nullptr);
                 std::string filename = elem["file"];
                 jassert(juce::String(filename).contains(region->getName()));

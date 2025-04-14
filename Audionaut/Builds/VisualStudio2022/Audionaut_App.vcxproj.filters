@@ -859,7 +859,7 @@
     <ClCompile Include="..\..\Source\Engine\Group\AudioRegionAdapter.cpp">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\Group\AudioSubGroup.cpp">
+    <ClCompile Include="..\..\Source\Engine\Group\ResourceGroup.cpp">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Link\LinkAudioDevice.cpp">
@@ -4107,7 +4107,7 @@
     <ClInclude Include="..\..\Source\Engine\Group\AudioRegionAdapter.h">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\Group\AudioSubGroup.h">
+    <ClInclude Include="..\..\Source\Engine\Group\ResourceGroup.h">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Link\LinkAudioDevice.h">

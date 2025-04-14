@@ -17,19 +17,19 @@ namespace audium {
 class AudioTrack;
 class AudioResource;
 class TempoProvider;
-class AudioSubGroup;
+class ResourceGroup;
 
 class AudioRegion : public audium::Streamable, public audium::Selectable
 {    
     
 public:
     AudioRegion(std::shared_ptr<AudioTrack> audioTrack,
-                std::shared_ptr<AudioSubGroup> audioSubGroup,
+                std::shared_ptr<ResourceGroup> resourceGroup,
                 std::shared_ptr<TempoProvider> tempoProvider,
                 std::shared_ptr<SelectionManager> selectionManager) :
     audium::Selectable(selectionManager),
     audioTrack(audioTrack),
-    audioSubGroup(audioSubGroup),
+    resourceGroup(resourceGroup),
     tempoProvider(tempoProvider)
     {
         jassert(audioTrack != nullptr);
@@ -48,7 +48,7 @@ public:
     int getSizeInUnits() override;
     
     std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
-    std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
+    std::shared_ptr<ResourceGroup> getResourceGroup() const { return resourceGroup; }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     
@@ -80,7 +80,7 @@ public:
 private:
     
     std::shared_ptr<AudioTrack> audioTrack;
-    std::shared_ptr<AudioSubGroup> audioSubGroup;
+    std::shared_ptr<ResourceGroup> resourceGroup;
     std::shared_ptr<TempoProvider> tempoProvider;
     
     JUCE_LEAK_DETECTOR (AudioRegion)

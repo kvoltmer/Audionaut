@@ -24,13 +24,13 @@ public:
                                                               std::shared_ptr<juce::AudioFormatReader> reader,
                                                               AudioResourceContainer& audioResourceContainer,
                                                               std::shared_ptr<AudioTrack> track,
-                                                              std::shared_ptr<AudioSubGroup> subGroup,
+                                                              std::shared_ptr<ResourceGroup> resourceGroup,
                                                               int destChannel,
                                                               int sourceChannel)
     {
         return std::make_shared<AudioResource>(audioResourceContainer,
                                                track,
-                                               subGroup,
+                                               resourceGroup,
                                                url,
                                                reader,
                                                destChannel,

@@ -91,7 +91,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioTrackContainer_546eaa98.o \
   $(JUCE_OBJDIR)/AudioClip_d08305b2.o \
   $(JUCE_OBJDIR)/AudioRegionAdapter_714661e3.o \
-  $(JUCE_OBJDIR)/AudioSubGroup_8caaf481.o \
+  $(JUCE_OBJDIR)/ResourceGroup_483fb77d.o \
   $(JUCE_OBJDIR)/LinkAudioDevice_ad84cc6b.o \
   $(JUCE_OBJDIR)/LinkEngine_c7ee2fcd.o \
   $(JUCE_OBJDIR)/AudioBusInterface_816dcfe9.o \
@@ -279,9 +279,9 @@ $(JUCE_OBJDIR)/AudioRegionAdapter_714661e3.o: ../../Source/Engine/Group/AudioReg
 	@echo "Compiling AudioRegionAdapter.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/AudioSubGroup_8caaf481.o: ../../Source/Engine/Group/AudioSubGroup.cpp
+$(JUCE_OBJDIR)/ResourceGroup_483fb77d.o: ../../Source/Engine/Group/ResourceGroup.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AudioSubGroup.cpp"
+	@echo "Compiling ResourceGroup.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/LinkAudioDevice_ad84cc6b.o: ../../Source/Engine/Link/LinkAudioDevice.cpp

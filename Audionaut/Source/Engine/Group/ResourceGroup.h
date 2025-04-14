@@ -26,26 +26,26 @@ class AudioClip;
 class AudioChannel;
 class AudioRegionContainer;
 
-class AudioSubGroup :   public PositionableBase,
-public audium::Selectable,
-public audium::Streamable
+class ResourceGroup :   public PositionableBase,
+                        public Selectable,
+                        public Streamable
 {
     
 public:
-    AudioSubGroup(AudioTrack& audioTrack,
+    ResourceGroup(AudioTrack& audioTrack,
                   std::shared_ptr<AudioRegionContainer> audioRegionContainer,
                   std::shared_ptr<SelectionManager> selectionManager);
-    virtual ~AudioSubGroup() override;
+    virtual ~ResourceGroup() override;
     void cleanup() override;
     void cleanupAudioRegions();
     void cleanupAudioResources();
     void cleanupTransportSources();
     
     // PositionableBase overrides
-    double getAbsolutePosition(audium::TimeContextType context) const override;
-    void setAbsolutePosition(double position, audium::TimeContextType context) override;
-    juce::Range<double> getRegionData(audium::TimeContextType context) const override;
-    void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
+    double getAbsolutePosition(TimeContextType context) const override;
+    void setAbsolutePosition(double position, TimeContextType context) override;
+    juce::Range<double> getRegionData(TimeContextType context) const override;
+    void setRegionData(juce::Range<double> newRegionData, TimeContextType context) override;
     
     bool writeToStream (juce::OutputStream& outputStream) override;
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
@@ -87,7 +87,7 @@ private:
     std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
     
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioSubGroup)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResourceGroup)
     
 };
 

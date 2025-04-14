@@ -98,35 +98,43 @@ void PlayListItem::setAbsolutePosition(double newPosition, audium::TimeContextTy
 
 bool PlayListItem::writeToJson (json& output)
 {
-    output["region_id"]         = audioRegion->getAudioSubGroup()->getAudioRegionContainer()->getRegionId(getRegion());
-    output["sub_group_id"]      = audioRegion->getAudioSubGroup()->getId();
-    output["region_name"]       = getRegion()->getName().toStdString();
-    output["position_clocks"]   = absolutePositionClocks;
-    output["selected"]          = isSelected();
-    output["track_id"]          = getRegion()->getAudioTrack()->getId();
-    
-    if (fadeInClocks > 0.0) {
-        output["fade_in_clocks"]    = fadeInClocks;
+    if (audioRegion != nullptr) {
+        
+        output["region_id"]         = audioRegion->getResourceGroup()->getAudioRegionContainer()->getRegionId(getRegion());
+        output["resource_group_id"] = audioRegion->getResourceGroup()->getId();
+        output["region_name"]       = getRegion()->getName().toStdString();
+        output["position_clocks"]   = absolutePositionClocks;
+        output["selected"]          = isSelected();
+        output["track_id"]          = getRegion()->getAudioTrack()->getId();
+        
+        if (fadeInClocks > 0.0) {
+            output["fade_in_clocks"]    = fadeInClocks;
+        }
+        
+        if (fadeOutClocks > 0.0) {
+            output["fade_out_clocks"]   = fadeOutClocks;
+        }
+        return true;
     }
-    
-    if (fadeOutClocks > 0.0) {
-        output["fade_out_clocks"]   = fadeOutClocks;
-    }
-    return true;
+    jassertfalse; // no audio region
+    return false;
 }
 
 bool PlayListItem::readFromJson (json& input, bool rebuild)
 {
-    auto subGroupId = 0;
+    auto resourceGroupId = 0;
     if (input.contains("sub_group_id")) {
-        subGroupId = input["sub_group_id"].template get<int>();
+        resourceGroupId = input["sub_group_id"].template get<int>(); // lecacy
+    }
+    else if (input.contains("resource_group_id")) {
+        resourceGroupId = input["resource_group_id"].template get<int>();
     }
     
-    if (owner.getAudioTrack().audioSubGroupContainer->objectExistsAtIndex(subGroupId)) {
+    if (owner.getAudioTrack().resourceGroupContainer->objectExistsAtIndex(resourceGroupId)) {
         
-        auto subGroup = owner.getAudioTrack().audioSubGroupContainer->getObjects()[subGroupId];
+        auto resourceGroup = owner.getAudioTrack().resourceGroupContainer->getObjects()[resourceGroupId];
         auto regionId = input["region_id"].template get<int>();
-        audioRegion = subGroup->getAudioRegionContainer()->getRegion(regionId);
+        audioRegion = resourceGroup->getAudioRegionContainer()->getRegion(regionId);
         if (audioRegion != nullptr) {
             
             init();

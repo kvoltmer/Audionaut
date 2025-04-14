@@ -23,12 +23,12 @@ class AudioResource;
 class PlayListItem;
 class PlayListScheduler;
 class TransportSourceContainer;
-class AudioSubGroup;
+class ResourceGroup;
 class AudioChannel;
 class PositionableBase;
 class AudioTrackContainer;
 
-typedef audium::SelectableObjectContainer<AudioSubGroup> tAudioSubGroupContainer;
+typedef audium::SelectableObjectContainer<ResourceGroup> tResourceGroupContainer;
 typedef audium::SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
 
 class AudioTrack : public audium::Streamable, public audium::Selectable
@@ -39,7 +39,7 @@ public:
                AudioResourceContainer &audioResourceContainer_,
                std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                std::shared_ptr<SelectionManager> selectionManager_,
-               std::shared_ptr<tAudioSubGroupContainer> subGroups_,
+               std::shared_ptr<tResourceGroupContainer> resourceGroups_,
                std::shared_ptr<tAudioChannelContainer> channels_,
                juce::String nameString_) :
     audium::Selectable(selectionManager_),
@@ -47,7 +47,7 @@ public:
     audioResourceContainer(audioResourceContainer_),
     transportSourceContainer(transportSourceContainer_),
     selectionManager(selectionManager_),
-    audioSubGroupContainer(subGroups_),
+    resourceGroupContainer(resourceGroups_),
     audioChannelContainer(channels_),
     name(nameString_.toStdString())
     {
@@ -82,8 +82,8 @@ public:
     std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
-    std::shared_ptr<AudioSubGroup> getSubGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
-    std::shared_ptr<AudioSubGroup> getSubGroupAtAbsolutePosition(double position, audium::TimeContextType context) const;
+    std::shared_ptr<ResourceGroup> getResourceGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
+    std::shared_ptr<ResourceGroup> getResourceGroupAtAbsolutePosition(double position, audium::TimeContextType context) const;
     
     
     // audium::Streamable overrides:
@@ -120,14 +120,14 @@ public:
     void dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos, audium::TimeContextType context);
     
     // sub groups:
-    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(double transportPosition,
+    std::shared_ptr<ResourceGroup> createNewResourceGroup(double transportPosition,
                                                           audium::TimeContextType context,
                                                           bool arrangementMode);
-    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(juce::Range<double> transportPositionRange, audium::TimeContextType context);
-    std::shared_ptr<AudioSubGroup> createNewAudioSubGroup(const std::shared_ptr<AudioSubGroup> otherSubGroup);
-    std::shared_ptr<AudioSubGroup> findSimilarSubGroup(const std::shared_ptr<AudioSubGroup> otherSubGroup);
-    std::shared_ptr<AudioSubGroup> getDefaultSubGroup() const;
-    std::vector<std::shared_ptr<AudioSubGroup>> getAudioSubGroups() const { return audioSubGroupContainer->getObjects(); }
+    std::shared_ptr<ResourceGroup> createNewResourceGroup(juce::Range<double> transportPositionRange, audium::TimeContextType context);
+    std::shared_ptr<ResourceGroup> createNewResourceGroup(const std::shared_ptr<ResourceGroup> otherSubGroup);
+    std::shared_ptr<ResourceGroup> findSimilarSubGroup(const std::shared_ptr<ResourceGroup> otherSubGroup);
+    std::shared_ptr<ResourceGroup> getDefaultSubGroup() const;
+    std::vector<std::shared_ptr<ResourceGroup>> getResourceGroups() const { return resourceGroupContainer->getObjects(); }
     
     // channel height:
     int getTotalHeight() const;
@@ -144,20 +144,20 @@ public:
     std::shared_ptr<AudioChannel> addChannel();
     std::shared_ptr<AudioChannel> getChannel(int channelNumber) const;
     bool deleteChannel(AudioChannel* channel);
-    void deleteEmptySubGroups();
-    void deleteUnusedSubGroups();
+    void deleteEmptyResourceGroups();
+    void deleteUnusedResourceGroups();
     
     bool addAudioFiles(const juce::StringArray& filenames,
                        double positionClocks,
                        bool arrangementMode,
                        std::function<void (std::string)> callback);
     
-    std::vector<std::shared_ptr<AudioResource>> addAudioFile (std::shared_ptr<AudioSubGroup> subGroup,
+    std::vector<std::shared_ptr<AudioResource>> addAudioFile (std::shared_ptr<ResourceGroup> resourceGroup,
                                                               const juce::File filename,
                                                               int &destChannel);
     
     void createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
-                                   std::shared_ptr<AudioSubGroup> subGroup,
+                                   std::shared_ptr<ResourceGroup> resourceGroup,
                                    double position,
                                    audium::TimeContextType context);
     
@@ -176,7 +176,7 @@ private:
     std::shared_ptr<SelectionManager> selectionManager;
     
 public:
-    std::shared_ptr<tAudioSubGroupContainer> audioSubGroupContainer;
+    std::shared_ptr<tResourceGroupContainer> resourceGroupContainer;
     std::shared_ptr<tAudioChannelContainer> audioChannelContainer;
     
 private:

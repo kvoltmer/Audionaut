@@ -15,7 +15,7 @@ class SubGroupDraggerControl : public DraggerControl
 public:
     
     SubGroupDraggerControl(std::shared_ptr<audium::AudiumEngine> audiumEngine,
-                           std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
+                           std::shared_ptr<audium::ResourceGroup> resourceGroup,
                            std::shared_ptr<ZoomHandler> zoomHandler,
                            juce::Colour colour,
                            std::shared_ptr<RegionSelector> regionSelector) :
@@ -23,7 +23,7 @@ public:
                        zoomHandler,
                        colour,
                        regionSelector),
-        audioSubGroup(audioSubGroup)
+        resourceGroup(resourceGroup)
     {
         regionSelector->subGroupDraggerControls.push_back(this);
     }
@@ -37,25 +37,25 @@ public:
         
     bool isSelected() const override
     {
-        return audioSubGroup->isSelected();
+        return resourceGroup->isSelected();
     }
     
     void setSelected(bool bSelected, bool deselectOthers) override
     {
         if (deselectOthers)
-            audioSubGroup->getAudioTrack().getSelectionManager()->deselectAll();
-        audioSubGroup->setSelected(bSelected, false);
+            resourceGroup->getAudioTrack().getSelectionManager()->deselectAll();
+        resourceGroup->setSelected(bSelected, false);
     }
     
     void shiftSelect() override;
     
     const juce::String getLabelString() const override
     {
-        return audioSubGroup->getName();
+        return resourceGroup->getName();
     }
     
     bool validateData() override;
     
 private:
-    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::ResourceGroup> resourceGroup;
 };

@@ -186,18 +186,18 @@ std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::getAudioFormatR
 std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::URL url,
                                                                          std::shared_ptr<juce::AudioFormatReader> audioFormatReader,
                                                                          std::shared_ptr<AudioTrack> track,
-                                                                         std::shared_ptr<AudioSubGroup> subGroup,
+                                                                         std::shared_ptr<ResourceGroup> resourceGroup,
                                                                          int destChannel,
                                                                          int sourceChannel)
 {
     jassert(track != nullptr);
-    jassert(subGroup != nullptr);
+    jassert(resourceGroup != nullptr);
     
     auto audioResource = AudioResourceFactory::createAudioResource(url,
                                                                    audioFormatReader,
                                                                    *this,
                                                                    track,
-                                                                   subGroup,
+                                                                   resourceGroup,
                                                                    destChannel,
                                                                    sourceChannel);
     if (audioResource->audioFormatReader != nullptr) {
@@ -280,14 +280,14 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForSubGroup(const AudioSubGroup *subGroup) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForSubGroup(const ResourceGroup *resourceGroup) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
     {
-        if (itr->second->getAudioSubGroup().get() == subGroup)
+        if (itr->second->getResourceGroup().get() == resourceGroup)
         {
-            jassert(itr->first.get() == &subGroup->getAudioTrack());
+            jassert(itr->first.get() == &resourceGroup->getAudioTrack());
             result.push_back(itr->second);
         }
     }

@@ -160,7 +160,7 @@
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrackContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioClip.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioRegionAdapter.cpp"/>
-    <ClCompile Include="..\..\Source\Engine\Group\AudioSubGroup.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Group\ResourceGroup.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Link\LinkAudioDevice.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Link\LinkEngine.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\AudioBusInterface.cpp"/>
@@ -3043,7 +3043,7 @@
     <ClInclude Include="..\..\Source\Engine\Group\AudioClip.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\AudioClipData.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\AudioRegionAdapter.h"/>
-    <ClInclude Include="..\..\Source\Engine\Group\AudioSubGroup.h"/>
+    <ClInclude Include="..\..\Source\Engine\Group\ResourceGroup.h"/>
     <ClInclude Include="..\..\Source\Engine\Link\LinkAudioDevice.h"/>
     <ClInclude Include="..\..\Source\Engine\Link\LinkEngine.hpp"/>
     <ClInclude Include="..\..\Source\Engine\Playback\AudioBusInterface.h"/>

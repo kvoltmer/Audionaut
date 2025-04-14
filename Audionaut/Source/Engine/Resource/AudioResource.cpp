@@ -17,7 +17,7 @@ namespace audium {
 
 AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
                              std::shared_ptr<AudioTrack> audioTrack_,
-                             std::shared_ptr<AudioSubGroup> audioSubGroup_,
+                             std::shared_ptr<ResourceGroup> resourceGroup_,
                              juce::URL url_,
                              std::shared_ptr<juce::AudioFormatReader> reader_,
                              int destChannel,
@@ -25,7 +25,7 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
     audioFormatReader(reader_),
     owner(audioResourceContainer_),
     audioTrack(audioTrack_),
-    audioSubGroup(audioSubGroup_),
+    resourceGroup(resourceGroup_),
     url(url_)
 {
     jassert(audioFormatReader != nullptr);
@@ -126,7 +126,7 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
 std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWithinSubGroup() const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
-    auto resources = owner.getAudioResourcesForSubGroup(audioSubGroup.get());
+    auto resources = owner.getAudioResourcesForSubGroup(resourceGroup.get());
     
     for (auto resource : resources) {
         if (resource.get() == this)
@@ -139,8 +139,8 @@ std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWith
 
 bool AudioResource::containsAbsolutePosition(double position, audium::TimeContextType context) const
 {
-    auto startTime = getAudioSubGroup()->getAbsolutePosition(context);
-    auto endTime = startTime + getAudioSubGroup()->getRegionData(context).getLength();
+    auto startTime = getResourceGroup()->getAbsolutePosition(context);
+    auto endTime = startTime + getResourceGroup()->getRegionData(context).getLength();
     juce::Range<double> absoluteRange(startTime, endTime);
     if (absoluteRange.contains(position)) {
         return true;

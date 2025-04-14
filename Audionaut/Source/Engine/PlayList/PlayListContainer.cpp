@@ -9,7 +9,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/ResourceGroup.h"
 #include "Engine/Group/AudioRegionAdapter.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
@@ -149,8 +149,8 @@ void PlayListContainer::movePlayListItemBefore(int currentIndex, int indexOfItem
 bool PlayListContainer::deletePlayListItem(PlayListItem* playListItem, bool deleteRegion) {
     
     if (deleteRegion) {
-        for (auto subGroup : audioTrack.getAudioSubGroups()) {
-            subGroup->getAudioRegionContainer()->deleteAudioRegion(playListItem->getRegion());
+        for (auto resourceGroup : audioTrack.getResourceGroups()) {
+            resourceGroup->getAudioRegionContainer()->deleteAudioRegion(playListItem->getRegion());
         }
     }
     
@@ -305,14 +305,18 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (jso
     
     auto regionId = input["region_id"].template get<int>();
     
-    auto subGroupId = 0;
+    auto resourceGroupId = 0;
     if (input.contains("sub_group_id")) {
-        subGroupId = input["sub_group_id"].template get<int>();
+        resourceGroupId = input["sub_group_id"].template get<int>(); // lecacy
     }
-    if (audioTrack.audioSubGroupContainer->objectExistsAtIndex(subGroupId)) {
-        auto subGroup = audioTrack.audioSubGroupContainer->getObjects()[subGroupId];
-        jassert(subGroup);
-        if (auto audioRegion = subGroup->getAudioRegionContainer()->getRegion(regionId)) {
+    else if (input.contains("resource_group_id")) {
+        resourceGroupId = input["resource_group_id"].template get<int>();
+    }
+    
+    if (audioTrack.resourceGroupContainer->objectExistsAtIndex(resourceGroupId)) {
+        auto resourceGroup = audioTrack.resourceGroupContainer->getObjects()[resourceGroupId];
+        jassert(resourceGroup);
+        if (auto audioRegion = resourceGroup->getAudioRegionContainer()->getRegion(regionId)) {
             playListItem = std::shared_ptr<PlayListItem> (new PlayListItem(*this,
                                                                            audioRegion,
                                                                            audioTrack.getSelectionManager()));
