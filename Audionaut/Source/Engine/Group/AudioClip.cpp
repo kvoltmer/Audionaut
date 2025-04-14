@@ -109,9 +109,9 @@ bool AudioClip::validateData()
         result |= true;
     }
     
-    if (audioSubGroup.getAudioRegionContainer() != nullptr) {
+    if (resourceGroup.getAudioRegionContainer() != nullptr) {
         
-        for (auto region : audioSubGroup.getAudioRegionContainer()->getObjects()) {
+        for (auto region : resourceGroup.getAudioRegionContainer()->getObjects()) {
             auto audioRegionData = region->getRegionData(audium::seconds);
             
             if (!data.regionData.intersects(audioRegionData)) {
@@ -164,11 +164,11 @@ bool AudioClip::readFromJson (json& input, bool rebuild)
 
 double AudioClip::getFileLength(audium::TimeContextType context) const
 {
-    if (audioSubGroup.getAudioResources().size() == 0)
-        std::cout << "AudioClip::getFileLength -> audioSubGroup.getAudioResources().size() == 0" << std::endl;
+    if (resourceGroup.getAudioResources().size() == 0)
+        std::cout << "AudioClip::getFileLength -> resourceGroup.getAudioResources().size() == 0" << std::endl;
     
     auto maxLength = 0.0;
-    for (auto res : audioSubGroup.getAudioResources())
+    for (auto res : resourceGroup.getAudioResources())
     {
         maxLength = std::max(maxLength, res->getFileLength(context));
     }
@@ -178,7 +178,7 @@ double AudioClip::getFileLength(audium::TimeContextType context) const
 
 AudioTrack &AudioClip::getAudioTrack() const
 {
-    return audioSubGroup.getAudioTrack();
+    return resourceGroup.getAudioTrack();
 }
 
 } // namespace audium

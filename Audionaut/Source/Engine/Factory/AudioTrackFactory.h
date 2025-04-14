@@ -7,7 +7,7 @@
 
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
-#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/ResourceGroup.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Region/AudioRegionContainer.h"
@@ -22,22 +22,22 @@ public:
     static std::shared_ptr<AudioTrack> createAudioTrack(AudioTrackContainer &owner,
                                                         std::shared_ptr<AudioResourceContainer> audioResourceContainer)
     {
-        auto subGroups  = std::shared_ptr<tAudioSubGroupContainer> (new tAudioSubGroupContainer());
+        auto resourceGroups  = std::shared_ptr<tResourceGroupContainer> (new tResourceGroupContainer());
         auto channels   = std::shared_ptr<tAudioChannelContainer> (new tAudioChannelContainer());
         auto audioTrack = std::shared_ptr<AudioTrack>(new AudioTrack(owner,
                                                                      *audioResourceContainer.get(),
                                                                      owner.getTransportSourceContainer(),
                                                                      owner.getSelectionManager(),
-                                                                     subGroups,
+                                                                     resourceGroups,
                                                                      channels,
                                                                      std::string()));
         return audioTrack;
     }
     
-    static std::shared_ptr<AudioSubGroup> createAudioSubGroup(AudioTrack &track)
+    static std::shared_ptr<ResourceGroup> createResourceGroup(AudioTrack &track)
     {
         auto regionContainer = std::shared_ptr<AudioRegionContainer> (new AudioRegionContainer(track));
-        return std::shared_ptr<AudioSubGroup> (new AudioSubGroup(track,
+        return std::shared_ptr<ResourceGroup> (new ResourceGroup(track,
                                                                  regionContainer,
                                                                  track.getSelectionManager()));
     }

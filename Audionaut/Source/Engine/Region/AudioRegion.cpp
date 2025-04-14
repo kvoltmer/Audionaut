@@ -27,8 +27,7 @@ bool AudioRegion::writeToStream (juce::OutputStream& outputStream)
 
 bool AudioRegion::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
-    if (audium::Streamable::readFromStream(inputStream))
-    {
+    if (audium::Streamable::readFromStream(inputStream)) {
         sendActionMessage(updateAll);
         return true;
     }
@@ -38,10 +37,10 @@ bool AudioRegion::readFromStream (juce::InputStream& inputStream, bool rebuild)
 bool AudioRegion::writeToJson (json& output)
 {
     // make sure all id's are up to date
-    auto shared_ptr = std::dynamic_pointer_cast<AudioRegion> (getSharedPtr());
-    data.region_id      = audioSubGroup->getAudioRegionContainer()->getRegionId(shared_ptr);
+    auto shared_ptr     = std::dynamic_pointer_cast<AudioRegion> (getSharedPtr());
+    data.region_id      = resourceGroup->getAudioRegionContainer()->getRegionId(shared_ptr);
     data.track_id       = audioTrack->getId();
-    data.sub_group_id   = audioTrack->audioSubGroupContainer->getIndex(audioSubGroup);
+    data.resource_group_id   = audioTrack->resourceGroupContainer->getIndex(resourceGroup);
     
     
     output = data;
@@ -62,12 +61,10 @@ int AudioRegion::getSizeInUnits()
 
 const AudioRegionData::tRange AudioRegion::getRegionData(audium::TimeContextType context) const
 {
-    if (context == audium::seconds)
-    {
+    if (context == audium::seconds) {
         return data.range;
     }
-    else if (context == audium::clocks)
-    {
+    else if (context == audium::clocks) {
         return tempoProvider->secondsToClocks(data.range);
     }
     
@@ -80,12 +77,10 @@ void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, aud
     jassert(!newRegionData.isEmpty());
     jassert(newRegionData.getStart() <= newRegionData.getEnd());
     
-    if (context == audium::seconds)
-    {
+    if (context == audium::seconds) {
         data.range = newRegionData;
     }
-    else if (context == audium::clocks)
-    {
+    else if (context == audium::clocks) {
         data.range = tempoProvider->clocksToSeconds(newRegionData);
     }
 }
@@ -94,14 +89,12 @@ bool AudioRegion::validateData(AudioRegionData::tRange& newData, audium::TimeCon
 {
     bool result = false;
     
-    if (newData.getStart() < getAudioResourceStart(context))
-    {
+    if (newData.getStart() < getAudioResourceStart(context)) {
         newData = newData.movedToStartAt(getAudioResourceStart(context));
         result |= true;
     }
     
-    if (newData.getEnd() > getAudioResourceEnd(context))
-    {
+    if (newData.getEnd() > getAudioResourceEnd(context)) {
         newData = newData.movedToEndAt(getAudioResourceEnd(context));
         result |= true;
     }
@@ -110,26 +103,24 @@ bool AudioRegion::validateData(AudioRegionData::tRange& newData, audium::TimeCon
 
 double AudioRegion::getAudioResourceStart(audium::TimeContextType context) const
 {
-    return audioSubGroup->getRegionData(context).getStart();
+    return resourceGroup->getRegionData(context).getStart();
 }
 
 double AudioRegion::getAudioResourceEnd(audium::TimeContextType context) const
 {
-    return audioSubGroup->getRegionData(context).getEnd();
+    return resourceGroup->getRegionData(context).getEnd();
 }
 
 void AudioRegion::setRegionStart(double newStart, audium::TimeContextType context)
 {
-    if (newStart <=  getRegionData(context).getEnd())
-    {
+    if (newStart <=  getRegionData(context).getEnd()) {
         setRegionData(AudioRegionData::tRange(newStart, getRegionData(context).getEnd()), context);
     }
 }
 
 void AudioRegion::setRegionEnd(double newEnd, audium::TimeContextType context)
 {
-    if (newEnd >=  getRegionData(context).getStart())
-    {
+    if (newEnd >=  getRegionData(context).getStart()) {
         setRegionData(AudioRegionData::tRange(getRegionData(context).getStart(), newEnd), context);
     }
 }
@@ -141,7 +132,7 @@ void AudioRegion::setRegionLength(double newLength, audium::TimeContextType cont
 
 std::vector<std::shared_ptr<AudioResource>> AudioRegion::getAudioResources() const
 {
-    return audioTrack->getAudioResourceContainer().getAudioResourcesForSubGroup(audioSubGroup.get());
+    return audioTrack->getAudioResourceContainer().getAudioResourcesForSubGroup(resourceGroup.get());
 }
 
 bool AudioRegion::deleteAssociatedItems()
@@ -159,7 +150,7 @@ void AudioRegion::setGain(int channel, double newGain, bool continous)
         
         if (continous) {
             
-            auto resource = getAudioSubGroup()->getAudioResourceAtChannel(channel);
+            auto resource = getResourceGroup()->getAudioResourceAtChannel(channel);
             auto sources = audioTrack->getTransportSourceContainer()->getTransportSourcesForResource(*resource.get());
             
             // TODO: this is not thread save

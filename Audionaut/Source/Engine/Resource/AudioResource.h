@@ -21,7 +21,7 @@ namespace audium {
 
 class AudioPlayer;
 class AudiumTransportSource;
-class AudioSubGroup;
+class ResourceGroup;
 class AudioRegion;
 class AudioChannel;
 class ChannelMapping;
@@ -33,7 +33,7 @@ class AudioResource : public audium::Streamable
 public:
     AudioResource(AudioResourceContainer& audioResourceContainer,
                   std::shared_ptr<AudioTrack> audioTrack,
-                  std::shared_ptr<AudioSubGroup> audioSubGroup,
+                  std::shared_ptr<ResourceGroup> resourceGroup,
                   juce::URL url,
                   std::shared_ptr<juce::AudioFormatReader> reader,
                   int destChannel,
@@ -74,7 +74,7 @@ public:
     static void testUrl (const juce::URL& url);
     
     std::shared_ptr<AudioTrack> getAudioTrack() const { return audioTrack; }
-    std::shared_ptr<AudioSubGroup> getAudioSubGroup() const { return audioSubGroup; }
+    std::shared_ptr<ResourceGroup> getResourceGroup() const { return resourceGroup; }
     
     audium::ChannelMapping &getChannelMapping() const { return *channelMapping.get();}
     
@@ -86,7 +86,7 @@ private:
     AudioResourceContainer& owner;
     
     std::shared_ptr<AudioTrack> audioTrack;
-    std::shared_ptr<AudioSubGroup> audioSubGroup;
+    std::shared_ptr<ResourceGroup> resourceGroup;
     
     juce::URL url;
     

@@ -45,12 +45,12 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shar
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<AudioTrack> track,
-                                                                std::shared_ptr<AudioSubGroup> subGroup)
+                                                                std::shared_ptr<ResourceGroup> resourceGroup)
 {
     jassert(track != nullptr);
-    jassert(subGroup != nullptr);
+    jassert(resourceGroup != nullptr);
     auto audioRegion = std::shared_ptr<AudioRegion>(new AudioRegion(track,
-                                                                    subGroup,
+                                                                    resourceGroup,
                                                                     tempoProvider,
                                                                     track->getSelectionManager()));
     audioRegion->data.region_id = static_cast<int>(audioRegions.size());
@@ -61,18 +61,18 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
 std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String regionName,
                                                                 juce::Range<double> position,
                                                                 std::shared_ptr<AudioTrack> track,
-                                                                std::shared_ptr<AudioSubGroup> subGroup,
+                                                                std::shared_ptr<ResourceGroup> resourceGroup,
                                                                 std::shared_ptr<AudioRegion> otherRegion,
                                                                 audium::TimeContextType context)
 {
     jassert(track != nullptr);
     
-    if (subGroup == nullptr)
+    if (resourceGroup == nullptr)
     {
-        subGroup = track->getDefaultSubGroup();
+        resourceGroup = track->getDefaultSubGroup();
     }
     
-    auto audioRegion = createRegion(track, subGroup);
+    auto audioRegion = createRegion(track, resourceGroup);
     audioRegion->setRegionData(position, context);
     audioRegion->setName(regionName);
     if (otherRegion != nullptr)
@@ -81,7 +81,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
 }
 
 std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<AudioTrack> track,
-                                                                std::shared_ptr<AudioSubGroup> subGroup,
+                                                                std::shared_ptr<ResourceGroup> resourceGroup,
                                                                 const std::shared_ptr<AudioRegion> otherRegion)
 {
     auto context = audium::clocks;
@@ -91,12 +91,12 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
         track->ensureNumChannels(otherRegion->getAudioTrack()->getNumAudioTrackChannels());
     
     // - similar subgroup must exist
-    jassert(track->findSimilarSubGroup(otherRegion->getAudioSubGroup()));
+    jassert(track->findSimilarSubGroup(otherRegion->getResourceGroup()));
     
     
     // - find existing region
     //    std::shared_ptr<AudioRegion> newRegion = nullptr;
-    //    auto regions = getRegionsForSubGroup(otherRegion->getAudioSubGroup().get());
+    //    auto regions = getRegionsForSubGroup(otherRegion->getResourceGroup().get());
     //    for (auto region : regions) {
     //        // TODO: == operator for AudioRegion
     //        if (region->getRegionData(context) == otherRegion->getRegionData(context) &&
@@ -111,7 +111,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
     
     // - create region
     if (newRegion == nullptr) {
-        newRegion = createRegion(track, subGroup);
+        newRegion = createRegion(track, resourceGroup);
         newRegion->data = otherRegion->data;
     }
     return newRegion;
@@ -184,12 +184,12 @@ int AudioRegionContainer::getNumRegions() const
     return static_cast<int>(audioRegions.size());
 }
 
-std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSubGroup(const AudioSubGroup* subGroup) const
+std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSubGroup(const ResourceGroup* resourceGroup) const
 {
     std::vector<std::shared_ptr<AudioRegion>> regions;
     for (auto region : audioRegions)
     {
-        if (region->getAudioSubGroup().get() == subGroup)
+        if (region->getResourceGroup().get() == resourceGroup)
             regions.push_back(region);
     }
     return regions;
@@ -231,9 +231,9 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::findSimilarRegion(std::shared
     return nullptr;
 }
 
-void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<AudioSubGroup> audioSubGroup)
+void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<ResourceGroup> resourceGroup)
 {
-    auto regions = getRegionsForSubGroup(audioSubGroup.get());
+    auto regions = getRegionsForSubGroup(resourceGroup.get());
     
     for (auto region : regions)
     {
@@ -365,12 +365,12 @@ bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
         AudioRegionData regionData = jsonElement;
         
         if (auto track = audioTrackContainer.getAudioTrack(regionData.track_id)) {
-            if (track->audioSubGroupContainer->objectExistsAtIndex(regionData.sub_group_id)) {
-                auto subGroup = track->audioSubGroupContainer->getObjects()[regionData.sub_group_id];
+            if (track->resourceGroupContainer->objectExistsAtIndex(regionData.resource_group_id)) {
+                auto resourceGroup = track->resourceGroupContainer->getObjects()[regionData.resource_group_id];
                 
                 std::shared_ptr<AudioRegion> region = nullptr;
                 if (rebuild) {
-                    region = createRegion(track, subGroup);
+                    region = createRegion(track, resourceGroup);
                     region->data = regionData;
                 }
                 else {
@@ -398,9 +398,9 @@ void AudioRegionContainer::mergeFromJson(json& input)
         
         if (region == nullptr) {
             if (auto track = std::dynamic_pointer_cast<AudioTrack>(audioTrack.getSharedPtr())) {
-                if (track->audioSubGroupContainer->objectExistsAtIndex(data.sub_group_id)) {
-                    auto subGroup = track->audioSubGroupContainer->getObjects()[data.sub_group_id];
-                    region = createRegion(track, subGroup);
+                if (track->resourceGroupContainer->objectExistsAtIndex(data.resource_group_id)) {
+                    auto resourceGroup = track->resourceGroupContainer->getObjects()[data.resource_group_id];
+                    region = createRegion(track, resourceGroup);
                     region->data = data;
                 }
             }

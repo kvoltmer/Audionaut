@@ -11,7 +11,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/ResourceGroup.h"
 #include "Engine/Channel/AudioChannel.h"
 
 #include "Interface/Widgets/audium_ListBox.h"
@@ -42,8 +42,8 @@ public:
     
     int getNumRows() override
     {
-        auto subGroup = playListItem->getRegion()->getAudioSubGroup();
-        return subGroup->getNumChannels();
+        auto resourceGroup = playListItem->getRegion()->getResourceGroup();
+        return resourceGroup->getNumChannels();
     }
 
     void paintListBoxItem ( int rowNumber,
@@ -56,8 +56,8 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        auto audioSubGroup = playListItem->getRegion()->getAudioSubGroup();
-        auto audioResource = audioSubGroup->getAudioResourceAtChannel(rowNumber);
+        auto resourceGroup = playListItem->getRegion()->getResourceGroup();
+        auto audioResource = resourceGroup->getAudioResourceAtChannel(rowNumber);
         
         if (existingComponentToUpdate == nullptr) {
             if (audioResource != nullptr) {

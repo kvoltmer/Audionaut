@@ -11,19 +11,19 @@
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/ResourceGroup.h"
 #include "Engine/Channel/AudioChannel.h"
 
 class SubGroupListBoxModel  : public audium::ListBoxModel
 {
 public:
     SubGroupListBoxModel(std::shared_ptr<audium::ListBox> owner,
-                         std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
+                         std::shared_ptr<audium::ResourceGroup> resourceGroup,
                          std::shared_ptr<audium::AudiumEngine> audiumEngine,
                          std::shared_ptr<ZoomHandler> zoomHandler,
                          std::shared_ptr<RegionSelector> regionSelector) :
         owner(owner),
-        audioSubGroup(audioSubGroup),
+        resourceGroup(resourceGroup),
         audiumEngine(audiumEngine),
         zoomHandler(zoomHandler),
         regionSelector(regionSelector)
@@ -36,8 +36,8 @@ public:
     
     int getNumRows() override
     {
-        // std::cout << audioSubGroup->getNumChannels() << std::endl;
-        return audioSubGroup->getNumChannels();
+        // std::cout << resourceGroup->getNumChannels() << std::endl;
+        return resourceGroup->getNumChannels();
     }
 
     void paintListBoxItem ( int rowNumber,
@@ -45,7 +45,7 @@ public:
                             int width, int height,
                             bool rowIsSelected) override
     {
-        auto channel = audioSubGroup->getAudioTrack().getChannel(rowNumber);
+        auto channel = resourceGroup->getAudioTrack().getChannel(rowNumber);
         
         if (channel != nullptr &&
             channel->isSelected())
@@ -60,7 +60,7 @@ public:
                                                 juce::Component* existingComponentToUpdate) override
     {
     
-        auto audioResource = audioSubGroup->getAudioResourceAtChannel(rowNumber);
+        auto audioResource = resourceGroup->getAudioResourceAtChannel(rowNumber);
         if (existingComponentToUpdate == nullptr)
         {
             if (audioResource != nullptr)
@@ -69,7 +69,7 @@ public:
                                                        audiumEngine,
                                                        audioResource,
                                                        zoomHandler,
-                                                       audioSubGroup->getAudioTrack().getColour(),
+                                                       resourceGroup->getAudioTrack().getColour(),
                                                        regionSelector,
                                                        rowNumber);
                 return component;
@@ -99,7 +99,7 @@ public:
     
     int getRowHeight (int rowNumber) const override
     {
-        auto channel = audioSubGroup->getAudioTrack().getChannel(rowNumber);
+        auto channel = resourceGroup->getAudioTrack().getChannel(rowNumber);
         if (channel != nullptr)
         {
             return channel->getChannelHeight();
@@ -125,16 +125,16 @@ public:
     {
     }
     
-    void setAudioSubGroup(std::shared_ptr<audium::AudioSubGroup> subGroup)
+    void setResourceGroup(std::shared_ptr<audium::ResourceGroup> resourceGroup)
     {
-        audioSubGroup = subGroup;
+        resourceGroup = resourceGroup;
     }
     
         
 private:
     
     std::shared_ptr<audium::ListBox> owner;
-    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::ResourceGroup> resourceGroup;
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<RegionSelector> regionSelector;

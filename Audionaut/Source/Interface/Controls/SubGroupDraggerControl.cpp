@@ -7,7 +7,7 @@
 
 bool SubGroupDraggerControl::validateData()
 {
-    return audioSubGroup->getAudioClip()->validateData();
+    return resourceGroup->getAudioClip()->validateData();
 }
 
 void SubGroupDraggerControl::shiftSelect()

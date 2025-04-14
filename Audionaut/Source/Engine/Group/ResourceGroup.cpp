@@ -3,7 +3,7 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-#include "AudioSubGroup.h"
+#include "ResourceGroup.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
@@ -15,33 +15,33 @@
 
 namespace audium {
 
-AudioSubGroup::AudioSubGroup(AudioTrack& audioTrack_,
+ResourceGroup::ResourceGroup(AudioTrack& audioTrack_,
                              std::shared_ptr<AudioRegionContainer> audioRegionContainer_,
                              std::shared_ptr<SelectionManager> selectionManager_) :
-audium::Selectable(selectionManager_),
+Selectable(selectionManager_),
 audioTrack(audioTrack_),
 audioRegionContainer(audioRegionContainer_)
 {
     audioClip = std::shared_ptr<AudioClip> (new AudioClip(*this));
 }
 
-AudioSubGroup::~AudioSubGroup()
+ResourceGroup::~ResourceGroup()
 {
 }
 
-void AudioSubGroup::cleanup()
+void ResourceGroup::cleanup()
 {
     cleanupTransportSources();
     cleanupAudioRegions();
     cleanupAudioResources();
 }
 
-void AudioSubGroup::cleanupAudioRegions()
+void ResourceGroup::cleanupAudioRegions()
 {
     audioRegionContainer->cleanup();
 }
 
-void AudioSubGroup::cleanupAudioResources()
+void ResourceGroup::cleanupAudioResources()
 {
     const auto audioResources = getAudioResources();
     for (auto resource : audioResources)
@@ -51,35 +51,33 @@ void AudioSubGroup::cleanupAudioResources()
     jassert(getAudioResources().size() == 0);
 }
 
-void AudioSubGroup::cleanupTransportSources()
+void ResourceGroup::cleanupTransportSources()
 {
-    for (auto transportSource : transportSources)
-    {
+    for (auto transportSource : transportSources) {
         audioTrack.getTransportSourceContainer()->removeTransportSource(transportSource);
     }
 }
 
-double AudioSubGroup::getAbsolutePosition(audium::TimeContextType context) const  {
+double ResourceGroup::getAbsolutePosition(TimeContextType context) const  {
     return audioClip->getAbsolutePosition(context);
 }
-void AudioSubGroup::setAbsolutePosition(double position, audium::TimeContextType context)  {
+void ResourceGroup::setAbsolutePosition(double position, TimeContextType context)  {
     audioClip->setAbsolutePosition(position, context);
 }
 
-juce::Range<double> AudioSubGroup::getRegionData(audium::TimeContextType context) const  {
+juce::Range<double> ResourceGroup::getRegionData(TimeContextType context) const  {
     return audioClip->getRegionData(context);
 }
-void AudioSubGroup::setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context)  {
+void ResourceGroup::setRegionData(juce::Range<double> newRegionData, TimeContextType context)  {
     audioClip->setRegionData(newRegionData, context);
 }
 
 
-bool AudioSubGroup::writeToJson (json& output)
+bool ResourceGroup::writeToJson (json& output)
 {
     output["clip"] = audioClip->data;
     
-    for (auto resource : getAudioResources())
-    {
+    for (auto resource : getAudioResources()) {
         json j;
         resource->writeToJson(j);
         output["resources"] += j;
@@ -89,7 +87,7 @@ bool AudioSubGroup::writeToJson (json& output)
     return true;
 }
 
-bool AudioSubGroup::writeChannelToJson (json& output, AudioChannel* audioChannel)
+bool ResourceGroup::writeChannelToJson (json& output, AudioChannel* audioChannel)
 {
     output["clip"] = audioClip->data;
     
@@ -106,27 +104,27 @@ bool AudioSubGroup::writeChannelToJson (json& output, AudioChannel* audioChannel
     return true;
 }
 
-std::shared_ptr<AudioResource> AudioSubGroup::addAudioResourceFromUrl(juce::URL url)
+std::shared_ptr<AudioResource> ResourceGroup::addAudioResourceFromUrl(juce::URL url)
 {
     std::shared_ptr<AudioTrack> track       = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
-    std::shared_ptr<AudioSubGroup> subGroup = std::dynamic_pointer_cast<AudioSubGroup> (getSharedPtr());
+    std::shared_ptr<ResourceGroup> resourceGroup = std::dynamic_pointer_cast<ResourceGroup> (getSharedPtr());
     
     auto audioFormatReader  = track->getAudioResourceContainer().getAudioFormatReaderForUrl(url);
     auto resource           = track->getAudioResourceContainer().addAudioResource(url,
                                                                                   audioFormatReader,
                                                                                   track,
-                                                                                  subGroup);
+                                                                                  resourceGroup);
     if (auto transportSource = track->getAudioResourceContainer().createTransportSourceForAudioResource(resource)) {
         transportSources.push_back(transportSource);
     }
     return resource;
 }
 
-void AudioSubGroup::mergeFromJson(json& input, int destinationChannel)
+void ResourceGroup::mergeFromJson(json& input, int destinationChannel)
 {
     // we use the shared_ptr
     std::shared_ptr<AudioTrack> track = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
-    std::shared_ptr<AudioSubGroup> subGroup = std::dynamic_pointer_cast<AudioSubGroup> (getSharedPtr());
+    std::shared_ptr<ResourceGroup> resourceGroup = std::dynamic_pointer_cast<ResourceGroup> (getSharedPtr());
     
     auto jsonResources = input["resources"];
     auto resources = getAudioResources();
@@ -149,23 +147,23 @@ void AudioSubGroup::mergeFromJson(json& input, int destinationChannel)
     audioRegionContainer->mergeFromJson(input);
 }
 
-bool AudioSubGroup::writeToStream (juce::OutputStream& outputStream)
+bool ResourceGroup::writeToStream (juce::OutputStream& outputStream)
 {
-    return audium::Streamable::writeToStream(outputStream);
+    return Streamable::writeToStream(outputStream);
 }
 
-bool AudioSubGroup::readFromJson (json& input, bool rebuild)
+bool ResourceGroup::readFromJson (json& input, bool rebuild)
 {
     json output;
     writeToJson(output);
     if (input == output) {
-        std::cout << "skip AudioSubGroup::readFromJson" << std::endl;
+        std::cout << "skip ResourceGroup::readFromJson" << std::endl;
         return true;
     }
     
     // we use the shared_ptr
     std::shared_ptr<AudioTrack> track = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
-    std::shared_ptr<AudioSubGroup> subGroup = std::dynamic_pointer_cast<AudioSubGroup> (getSharedPtr());
+    std::shared_ptr<ResourceGroup> resourceGroup = std::dynamic_pointer_cast<ResourceGroup> (getSharedPtr());
     
     auto jsonResources = input["resources"];
     auto resources = getAudioResources();
@@ -206,31 +204,31 @@ bool AudioSubGroup::readFromJson (json& input, bool rebuild)
     return true;
 }
 
-bool AudioSubGroup::readFromStream (juce::InputStream& inputStream, bool rebuild)
+bool ResourceGroup::readFromStream (juce::InputStream& inputStream, bool rebuild)
 {
-    if (audium::Streamable::readFromStream(inputStream)) {
+    if (Streamable::readFromStream(inputStream)) {
         getAudioTrack().getAudioTrackContainer().sendActionMessage(updateAll);
         return true;
     }
     return false;
 }
 
-int AudioSubGroup::getSizeInUnits()
+int ResourceGroup::getSizeInUnits()
 {
     return (int)getAudioResources().size() * 4;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioSubGroup::getAudioResources() const
+std::vector<std::shared_ptr<AudioResource>> ResourceGroup::getAudioResources() const
 {
     return audioTrack.getAudioResourceContainer().getAudioResourcesForSubGroup(this);
 }
 
-int AudioSubGroup::getNumChannels() const
+int ResourceGroup::getNumChannels() const
 {
     return audioTrack.getNumAudioTrackChannels();
 }
 
-std::shared_ptr<AudioResource> AudioSubGroup::getAudioResourceAtChannel(int channelNumber) const
+std::shared_ptr<AudioResource> ResourceGroup::getAudioResourceAtChannel(int channelNumber) const
 {
     for (auto resource : getAudioResources())
     {
@@ -240,7 +238,7 @@ std::shared_ptr<AudioResource> AudioSubGroup::getAudioResourceAtChannel(int chan
     return nullptr;
 }
 
-const juce::String AudioSubGroup::getName() const
+const juce::String ResourceGroup::getName() const
 {
     const auto audioResources = getAudioResources();
     if (audioResources.size() > 0)
@@ -249,9 +247,10 @@ const juce::String AudioSubGroup::getName() const
     return juce::String();
 }
 
-const int AudioSubGroup::getId() const
+const int ResourceGroup::getId() const
 {
-    return audioTrack.audioSubGroupContainer->getIndex(std::dynamic_pointer_cast<const AudioSubGroup>(getSharedPtr()));
+    auto resourceGroup = std::dynamic_pointer_cast<const ResourceGroup>(getSharedPtr());
+    return audioTrack.resourceGroupContainer->getIndex(resourceGroup);
 }
 
 } // namespace audium

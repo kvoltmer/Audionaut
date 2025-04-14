@@ -10,7 +10,7 @@
 
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/ResourceGroup.h"
 #include "Engine/Provider/TempoProvider.h"
 
 namespace audium {
@@ -61,7 +61,7 @@ public:
     std::shared_ptr<AudioResource> addAudioResource (juce::URL url,
                                                      std::shared_ptr<juce::AudioFormatReader> audioFormatReader,
                                                      std::shared_ptr<AudioTrack> track,
-                                                     std::shared_ptr<AudioSubGroup> subGroup,
+                                                     std::shared_ptr<ResourceGroup> resourceGroup,
                                                      int destChannel = -1,
                                                      int sourceChannel = -1);
     
@@ -79,7 +79,7 @@ public:
     void cleanup();
     
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForTrack(AudioTrack *track) const;
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForSubGroup(const AudioSubGroup *subGroup) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForSubGroup(const ResourceGroup *resourceGroup) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForTrackAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const;
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForChannel(const AudioChannel *channel) const;
     

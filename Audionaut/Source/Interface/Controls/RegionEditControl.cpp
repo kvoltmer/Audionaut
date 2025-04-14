@@ -13,7 +13,7 @@
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/ResourceGroup.h"
 #include "Engine/Group/AudioClip.h"
 
 #include "Interface/Handlers/ZoomHandler.h"
@@ -102,7 +102,7 @@ void RegionEditControl::mouseDrag (const juce::MouseEvent& e)
     
     setBounds (bounds);
     
-    auto audioClipStart = audioRegion->getAudioSubGroup()->getAbsolutePosition(audium::clocks);
+    auto audioClipStart = audioRegion->getResourceGroup()->getAbsolutePosition(audium::clocks);
     auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange()) + audioClipStart;
     zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
     repaint();
@@ -120,7 +120,7 @@ void RegionEditControl::mouseUp (const juce::MouseEvent& e)
         
         auto rangeInClocks =   zoomHandler->xToClocks(getBounds().toDouble().getHorizontalRange());
         
-        auto audioClipStart = audioRegion->getAudioSubGroup()->getAbsolutePosition(audium::clocks);
+        auto audioClipStart = audioRegion->getResourceGroup()->getAbsolutePosition(audium::clocks);
 
         rangeInClocks += audioClipStart;
         zoomHandler->snapToGrid(rangeInClocks);

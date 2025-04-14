@@ -12,5 +12,5 @@
 
 double AudioResourceView::getRegionStart(audium::TimeContextType context) const
 {
-    return audioResource->getAudioSubGroup()->getRegionData(context).getStart();
+    return audioResource->getResourceGroup()->getRegionData(context).getStart();
 }

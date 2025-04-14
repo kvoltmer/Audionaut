@@ -6,7 +6,7 @@
 #pragma once
 
 #include "Engine/Group/AudioClipData.h"
-#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/ResourceGroup.h"
 #include "Engine/Streamable.h"
 #include "Engine/PlayList/PositionableBase.h"
 
@@ -16,8 +16,8 @@ class AudioClip : public audium::Streamable
 {
     
 public:
-    AudioClip(AudioSubGroup &audioSubGroup) :
-    audioSubGroup(audioSubGroup)
+    AudioClip(ResourceGroup &resourceGroup) :
+    resourceGroup(resourceGroup)
     {
     }
     
@@ -44,7 +44,7 @@ public:
     AudioClipData data;
     
 private:
-    AudioSubGroup &audioSubGroup;
+    ResourceGroup &resourceGroup;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioClip)
     

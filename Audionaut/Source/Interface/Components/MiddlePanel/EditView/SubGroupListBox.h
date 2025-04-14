@@ -12,7 +12,7 @@
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/Resource/AudioResource.h"
-#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/ResourceGroup.h"
 
 class ZoomHandler;
 class RegionSelector;
@@ -21,11 +21,11 @@ class SubGroupListBox  : public audium::ListBox
 {
 public:
     SubGroupListBox(std::shared_ptr<audium::AudiumEngine> audiumEngine,
-                    std::shared_ptr<audium::AudioSubGroup> audioSubGroup,
+                    std::shared_ptr<audium::ResourceGroup> resourceGroup,
                     std::shared_ptr<ZoomHandler> zoomHandler,
                     std::shared_ptr<RegionSelector> regionSelector) :
         audium::ListBox("SubGroupListBox", nullptr),
-        audioSubGroup(audioSubGroup)
+        resourceGroup(resourceGroup)
     {
         // transparent backgroud:
         setColour(audium::ListBox::backgroundColourId, juce::Colours::transparentBlack);
@@ -33,7 +33,7 @@ public:
         
         // region edit component
         regionEditComponent.reset(new RegionEditComponent(audiumEngine,
-                                                          audioSubGroup,
+                                                          resourceGroup,
                                                           zoomHandler,
                                                           regionSelector));
         addAndMakeVisible(regionEditComponent.get());
@@ -49,15 +49,15 @@ public:
         regionEditComponent->setBounds(getLocalBounds());
     }
     
-    void updateFromEngine(std::shared_ptr<audium::AudioSubGroup> subGroup)
+    void updateFromEngine(std::shared_ptr<audium::ResourceGroup> resourceGroup)
     {
-        audioSubGroup = subGroup;
-        regionEditComponent->updateFromEngine(audioSubGroup);
+        resourceGroup = resourceGroup;
+        regionEditComponent->updateFromEngine(resourceGroup);
         updateContent();
     }
 
 private:
-    std::shared_ptr<audium::AudioSubGroup> audioSubGroup;
+    std::shared_ptr<audium::ResourceGroup> resourceGroup;
     
     std::unique_ptr<RegionEditComponent> regionEditComponent;
     

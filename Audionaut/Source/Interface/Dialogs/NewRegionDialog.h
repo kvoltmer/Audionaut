@@ -14,7 +14,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Interface/Components/MainComponent.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioSubGroup.h"
+#include "Engine/Group/ResourceGroup.h"
 
 using namespace juce;
 
@@ -45,13 +45,13 @@ private:
         for (auto track : engine->getAudioTrackContainer()->getAudioTracks()) {
             if (audiumEngine->getPlayListScheduler()->isArrangementMode()) {
                 if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
-                    auto subGroup = item->getRegion()->getAudioSubGroup();
-                    name =  subGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
+                    auto resourceGroup = item->getRegion()->getResourceGroup();
+                    name =  resourceGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
                     break;
                 }
             } else {
-                if (auto subGroup = track->getSubGroupAtAbsoluteRange(selectedRange, context)) {
-                    name = subGroup->getAudioRegionContainer()->getUniqueName(subGroup->getName());
+                if (auto resourceGroup = track->getResourceGroupAtAbsoluteRange(selectedRange, context)) {
+                    name = resourceGroup->getAudioRegionContainer()->getUniqueName(resourceGroup->getName());
                     break;
                 }
             }

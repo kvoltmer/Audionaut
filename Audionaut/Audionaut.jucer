@@ -117,9 +117,9 @@
                 file="Source/Engine/Group/AudioRegionAdapter.cpp"/>
           <FILE id="otPqzW" name="AudioRegionAdapter.h" compile="0" resource="0"
                 file="Source/Engine/Group/AudioRegionAdapter.h"/>
-          <FILE id="zWymx0" name="AudioSubGroup.cpp" compile="1" resource="0"
-                file="Source/Engine/Group/AudioSubGroup.cpp"/>
-          <FILE id="xDIL18" name="AudioSubGroup.h" compile="0" resource="0" file="Source/Engine/Group/AudioSubGroup.h"/>
+          <FILE id="L1oVjp" name="ResourceGroup.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/ResourceGroup.cpp"/>
+          <FILE id="bqmXaq" name="ResourceGroup.h" compile="0" resource="0" file="Source/Engine/Group/ResourceGroup.h"/>
         </GROUP>
         <GROUP id="{72F2B5A0-7A8C-3648-A73C-97D66220C0AE}" name="Link">
           <FILE id="el7wlW" name="LinkAudioDevice.cpp" compile="1" resource="0"
