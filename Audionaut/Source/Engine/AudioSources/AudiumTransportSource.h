@@ -16,25 +16,56 @@ namespace audium {
 class AudioTrack;
 class AudioResource;
 
+/**
+ * @class AudiumTransportSource
+ * @brief A wrapper around `juce::AudioSource` for managing audio playback with additional features.
+ *
+ * This class provides functionality for scheduling playback positions, managing playback states,
+ * and applying channel mappings. It wraps around `juce::AudioSource` and integrates with
+ * `AudioResource` and `AudioTransportSource` for advanced audio playback control.
+ */
 class AudiumTransportSource : public juce::AudioSource
 {
 public:
+    /**
+     * @brief Constructs an AudiumTransportSource instance.
+     * @param audioResource Reference to the associated audio resource.
+     * @param audioFormatReaderSource Shared pointer to the audio format reader source.
+     */
     AudiumTransportSource(AudioResource& audioResource,
                           std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     
+    /**
+     * @brief Destructor for AudiumTransportSource.
+     *
+     * Ensures that the audio transport source is properly released.
+     */
     ~AudiumTransportSource() override
     {
         audioTransportSource->setSource(nullptr);
     }
     
+    /**
+     * @brief Prepares the audio source for playback.
+     * @param samplesPerBlockExpected The expected number of samples per block.
+     * @param sampleRate The sample rate of the audio playback.
+     */
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
     
+    /**
+     * @brief Releases resources used by the audio source.
+     */
     void releaseResources() override
     {
         if (mainSource != nullptr)
             mainSource->releaseResources();
     }
     
+    /**
+     * @brief Schedules a position change during playback.
+     * @param newPosition The new playback position in seconds.
+     * @param startSample The sample position where the change should occur.
+     */
     void schedulePosition (double newPosition, int startSample)
     {
         if (startSample == 0)
@@ -77,24 +108,14 @@ public:
 #endif
     
 private:
-    
-    
-    AudioResource& audioResource;
-    
-    // the sample position where the position change should happen
-    std::atomic<int> scheduledStartSample = 0;
-    // the scheduled position change
-    std::atomic<double> scheduledPosition = 0.0;
-    
-    audium::SampleTimer durationTimer;
-    
-    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
-    
-    std::shared_ptr<audium::AudioTransportSource> audioTransportSource;
-    
-    std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping;
-    
-    juce::AudioSource* mainSource = nullptr;
+    AudioResource& audioResource; ///< Reference to the associated audio resource.
+    std::atomic<int> scheduledStartSample = 0; ///< The sample position for a scheduled position change.
+    std::atomic<double> scheduledPosition = 0.0; ///< The scheduled playback position in seconds.
+    audium::SampleTimer durationTimer; ///< Timer for managing playback duration.
+    std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
+    std::shared_ptr<audium::AudioTransportSource> audioTransportSource; ///< Underlying audio transport source.
+    std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping; ///< Channel remapping audio source.
+    juce::AudioSource* mainSource = nullptr; ///< Pointer to the main audio source.
     
 };
 

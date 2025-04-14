@@ -84,7 +84,6 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
                                                                 std::shared_ptr<ResourceGroup> resourceGroup,
                                                                 const std::shared_ptr<AudioRegion> otherRegion)
 {
-    auto context = audium::clocks;
     
     // - create channels if needed
     if (track->getNumAudioTrackChannels() < otherRegion->getAudioTrack()->getNumAudioTrackChannels())
@@ -93,18 +92,6 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
     // - similar subgroup must exist
     jassert(track->findSimilarSubGroup(otherRegion->getResourceGroup()));
     
-    
-    // - find existing region
-    //    std::shared_ptr<AudioRegion> newRegion = nullptr;
-    //    auto regions = getRegionsForSubGroup(otherRegion->getResourceGroup().get());
-    //    for (auto region : regions) {
-    //        // TODO: == operator for AudioRegion
-    //        if (region->getRegionData(context) == otherRegion->getRegionData(context) &&
-    //            region->getName() == otherRegion->getName()) {
-    //            newRegion = region;
-    //            break;
-    //        }
-    //    }
     
     // - find similar region
     auto newRegion = findSimilarRegion(otherRegion);

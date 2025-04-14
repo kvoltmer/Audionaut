@@ -15,42 +15,93 @@ namespace audium {
 class TempoProvider;
 class AudioTrackContainer;
 
+/**
+ * @class TransportLoop
+ * @brief Manages loop playback functionality within the transport system.
+ *
+ * The `TransportLoop` class provides methods to configure and control loop playback,
+ * including setting loop ranges, activating or deactivating loops, and processing
+ * looped playback. It integrates with the undo system and tempo provider for
+ * seamless audio editing and playback.
+ */
 class TransportLoop {
-    
 public:
+    /**
+     * @brief Constructs a `TransportLoop` instance.
+     * @param undoManager_ Shared pointer to the `juce::UndoManager` for managing undo/redo operations.
+     */
     TransportLoop(std::shared_ptr<juce::UndoManager> undoManager_,
                   std::shared_ptr<TempoProvider> tempoProvider_) :
-        undoManager(undoManager_),
-        tempoProvider(tempoProvider_)
-    {
-    }
+         undoManager(undoManager_),
+         tempoProvider(tempoProvider_)
+     {
+     }
+
+    /**
+     * @brief Default destructor for `TransportLoop`.
+     */
     ~TransportLoop() = default;
-    
-    void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
-    
+
+    /**
+     * @brief Prepares the transport loop for audio playback.
+     * @param samplesPerBlockExpected The expected number of samples per block.
+     * @param sampleRate The sample rate for audio processing.
+     */
+    void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
+
+    /**
+     * @brief Sets the loop position range.
+     * @param audioTrackContainer Shared pointer to the `AudioTrackContainer` for track data.
+     * @param newRange The new loop range as a `juce::Range<double>`.
+     * @param context The time context type for the loop range.
+     */
     void setLoopPositionRange(std::shared_ptr<AudioTrackContainer> audioTrackContainer,
                               juce::Range<double> newRange,
                               audium::TimeContextType context);
+
+    /**
+     * @brief Gets the current loop position range.
+     * @param context The time context type for the loop range.
+     * @return The current loop range as a `juce::Range<double>`.
+     */
     juce::Range<double> getLoopPositionRange(audium::TimeContextType context) const;
-    
+
+    /**
+     * @brief Checks if the loop is currently active.
+     * @return True if the loop is active, false otherwise.
+     */
     bool isLoopActive() const;
+
+    /**
+     * @brief Activates or deactivates the loop.
+     * @param bActive True to activate the loop, false to deactivate.
+     */
     void setLoopActive(bool bActive);
-    
+
+    /**
+     * @brief Processes the loop during playback.
+     * @param thePosition Reference to the current playback position.
+     * @param numSamples The number of samples to process.
+     * @return True if the loop was processed, false otherwise.
+     */
     bool processLoop(double &thePosition, int numSamples);
+
+    /**
+     * @brief Resets the loop state to its default configuration.
+     */
     void reset();
-    
-    LoopData loopData;
-    
+
+    LoopData loopData; ///< Data structure for storing loop-related information.
+
 private:
-    
-    std::shared_ptr<juce::UndoManager> undoManager;
-    std::shared_ptr<TempoProvider> tempoProvider;
-    
-    double externalSampleRate = 44100.0;
-    int loopCount = 0;
-    bool withinLoop = false;
-    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportLoop)
+    std::shared_ptr<juce::UndoManager> undoManager; ///< Undo manager for loop-related operations.
+    std::shared_ptr<TempoProvider> tempoProvider; ///< Tempo provider for tempo-based calculations.
+
+    double externalSampleRate = 44100.0; ///< The external sample rate for playback.
+    int loopCount = 0; ///< Counter for the number of loop iterations.
+    bool withinLoop = false; ///< Flag indicating whether playback is within the loop range.
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportLoop)
 };
 
 } // namespace audium

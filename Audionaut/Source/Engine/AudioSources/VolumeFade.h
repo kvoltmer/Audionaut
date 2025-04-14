@@ -9,7 +9,16 @@
 
 namespace audium
 {
-
+/**
+ * @class VolumeFade
+ * @brief A utility class for applying smooth volume fades to audio signals.
+ *
+ * This template class provides functionality to apply gain adjustments with
+ * optional smoothing (ramping) to avoid abrupt changes in volume. It supports
+ * both single-sample and block-based processing.
+ *
+ * @tparam FloatType The floating-point type used for audio processing (e.g., float or double).
+ */
 template <typename FloatType>
 class VolumeFade
 {
@@ -32,6 +41,14 @@ public:
         }
     }
     
+    /**
+     * @brief Sets the number of samples to skip before applying gain changes.
+     *
+     * This method allows you to specify a number of samples to skip during processing.
+     * While skipping, the gain changes will not be applied to the audio signal.
+     *
+     * @param numSamples The number of samples to skip.
+     */
     void setSkipSamples(int numSamples) noexcept
     {
         skipSamples = numSamples;

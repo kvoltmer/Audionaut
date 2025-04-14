@@ -14,11 +14,27 @@
 
 namespace audium {
 
+/**
+ * @class AudioTrackFactory
+ * @brief Factory class for creating audio tracks and associated resource groups.
+ *
+ * This class provides static methods to create instances of `AudioTrack` and `ResourceGroup`.
+ * It centralizes the creation logic to ensure consistency and simplify object management.
+ */
 class AudioTrackFactory {
     
 public:
+    /**
+     * @brief Default constructor for `AudioTrackFactory`.
+     */
     AudioTrackFactory() = default;
     
+    /**
+     * @brief Creates a new audio track.
+     * @param owner Reference to the `AudioTrackContainer` that owns the track.
+     * @param audioResourceContainer Shared pointer to the container holding audio resources.
+     * @return A shared pointer to the created `AudioTrack` instance.
+     */
     static std::shared_ptr<AudioTrack> createAudioTrack(AudioTrackContainer &owner,
                                                         std::shared_ptr<AudioResourceContainer> audioResourceContainer)
     {
@@ -34,6 +50,11 @@ public:
         return audioTrack;
     }
     
+    /**
+     * @brief Creates a new resource group for an audio track.
+     * @param track Reference to the `AudioTrack` for which the resource group is created.
+     * @return A shared pointer to the created `ResourceGroup` instance.
+     */
     static std::shared_ptr<ResourceGroup> createResourceGroup(AudioTrack &track)
     {
         auto regionContainer = std::shared_ptr<AudioRegionContainer> (new AudioRegionContainer(track));

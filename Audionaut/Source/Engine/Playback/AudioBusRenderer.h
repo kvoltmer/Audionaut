@@ -16,6 +16,16 @@ namespace audium
 class AudioTrackContainer;
 class Playback;
 
+/**
+ * @class AudioBusRenderer
+ * @brief Handles audio bus processing, including channel management, panning, gain, and playback.
+ *
+ * The `AudioBusRenderer` class is responsible for managing audio channels, applying panning and gain,
+ * and processing audio blocks for playback. It integrates with the `Playback` system to ensure
+ * efficient audio rendering.
+ *
+ * @tparam SampleType The type of audio sample (e.g., float or double).
+ */
 template <class SampleType>
 class AudioBusRenderer {
     
