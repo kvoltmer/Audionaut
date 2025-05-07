@@ -4483,8 +4483,8 @@
   <ItemGroup>
     <None Include="..\..\Catch2Tests\README.txt"/>
     <None Include="..\..\Catch2Tests\CMakeLists.txt"/>
-    <None Include="..\..\Resources\audionaut-icon-512.png"/>
-    <None Include="..\..\Resources\audionaut-icon-1024.png"/>
+    <None Include="..\..\Resources\audionaut_logo_512x512.png"/>
+    <None Include="..\..\Resources\audionaut_logo_1024x1024.png"/>
     <None Include="..\..\Resources\zoomin.svg"/>
     <None Include="..\..\..\Submodules\juce\modules\juce_audio_devices\native\oboe\src\common\README.md"/>
     <None Include="..\..\..\Submodules\juce\modules\juce_audio_devices\native\oboe\src\flowgraph\resampler\README.md"/>

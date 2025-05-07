@@ -8423,10 +8423,10 @@
     <None Include="..\..\Catch2Tests\CMakeLists.txt">
       <Filter>Audionaut\Catch2Tests</Filter>
     </None>
-    <None Include="..\..\Resources\audionaut-icon-512.png">
+    <None Include="..\..\Resources\audionaut_logo_512x512.png">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
     </None>
-    <None Include="..\..\Resources\audionaut-icon-1024.png">
+    <None Include="..\..\Resources\audionaut_logo_1024x1024.png">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
     </None>
     <None Include="..\..\Resources\zoomin.svg">
