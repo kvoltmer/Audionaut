@@ -46,7 +46,7 @@ public:
     
     void refreshComponent (std::shared_ptr<audium::AudioTrack> audioTrack, bool forceRebuildComponents = false) override;
     
-    void updateContents();
+    void updateContents(bool forceRebuildComponents = false);
     
     void resized() override;
     

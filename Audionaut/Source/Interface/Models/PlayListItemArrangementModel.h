@@ -79,6 +79,7 @@ public:
         }
         else {
             if (auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate)) {
+                jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
                 component->setParentComponent(parentComponent);
                 component->setPlayListItem(playListItem);
                 component->updateUI(rowNumber);
@@ -116,8 +117,15 @@ public:
     {
     }
     
-    void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_) { playListItem = playListItem_; }
-    void setParentComponent(juce::Component *comp) { parentComponent = comp; }
+    void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_)
+    {
+        playListItem = playListItem_;
+    }
+    
+    void setParentComponent(juce::Component *comp)
+    {
+        parentComponent = comp;
+    }
     
 private:
     
