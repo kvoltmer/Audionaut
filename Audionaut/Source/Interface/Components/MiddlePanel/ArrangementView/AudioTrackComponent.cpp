@@ -62,16 +62,24 @@ public:
 
 void AudioTrackComponent::refreshComponent (std::shared_ptr<audium::AudioTrack> track, bool forceRebuildComponents)
 {
-    audioTrack = track;
-    model->setAudioTrack(track);
-    updateContents();
+    if (audioTrack != track) {
+        audioTrack = track;
+        model->setAudioTrack(track);
+        forceRebuildComponents = true;
+    }
+    
+    updateContents(forceRebuildComponents);
 }
 
 
-void AudioTrackComponent::updateContents()
+void AudioTrackComponent::updateContents(bool forceRebuildComponents)
 {
+    if (forceRebuildComponents) {
+        itemComponents.clear();
+        removeAllChildren();
+    }
+    
     const size_t numNeeded = (model != nullptr) ? model->getNumRows() : 0;
-  
     itemComponents.resize (jmin (numNeeded, itemComponents.size()));
     while (numNeeded > itemComponents.size())
     {
