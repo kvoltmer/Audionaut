@@ -90,14 +90,25 @@ private:
                    | FileBrowserComponent::canSelectFiles
                    | FileBrowserComponent::warnAboutOverwriting;
 
-        chooser->launchAsync (flags, [this] (const FileChooser& fc)
-        {
-            const auto result = fc.getResult();
+        chooser->launchAsync (flags, [this] (const FileChooser& fc) {
+            const auto file = fc.getResult();
             
-            if (result != File{})
-            {
+            if (file != File{}) {
+                
+                if (!file.hasWriteAccess()) {
+                    std::string errorString = "No write access. Please select a different location.";
+        #if JUCE_MAC
+                    errorString += "\n\n";
+                    errorString += "As a 'Sandboxed App' you are only allowed to save files in the Music folder.";
+        #endif
+                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                          "Error",
+                                                          "Failed to save " + file.getFullPathName() +"\n\n" + String(errorString));
+                    return;
+                }
+                
                 // assign the choosen filename
-                config.fileName = result;
+                config.fileName = file;
                 
                 // create the thread
                 auto thread = std::make_unique<audium::AudioExportThread>(*audiumEngine.get(), config);
