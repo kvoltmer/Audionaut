@@ -48,7 +48,8 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
     
     triggerAsyncUpdate();
     
-    //hideInsertLines();
+    itemDrag = false;
+    repaint();
 }
 
 
