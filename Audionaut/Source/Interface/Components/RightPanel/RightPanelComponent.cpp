@@ -92,4 +92,6 @@ void RightPanelComponent::updateUI(UIContext context)
     else {
         regionComponent->updateUI(context);
     }
+    
+    resized();
 }

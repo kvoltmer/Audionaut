@@ -326,7 +326,14 @@ void ChannelComponent::mouseDown (const juce::MouseEvent& e)
         }
     }
     else {
-        audioTrack->getSelectionManager()->deselectAll();
+        
+        if (audioTrack->getChannel(rowNumber)->isSelected()) {
+            return;
+        }
+        
+        if (!e.mods.isAnyModifierKeyDown()) {
+            audioTrack->getSelectionManager()->deselectAll();
+        }
         getParentComponent()->mouseDown(e);
         audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
     }
