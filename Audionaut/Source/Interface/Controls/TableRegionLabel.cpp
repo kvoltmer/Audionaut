@@ -7,6 +7,7 @@
 
 void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
 {
+        
     if (auto region = getRegion(columnId, rowNumber)) {
         
         if (!e.mods.isAnyModifierKeyDown() && !region->isSelected()) {
@@ -22,16 +23,51 @@ void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
             }
         }
         
-        if (e.mods.isCommandDown() && region->isSelected()) {
-            region->setSelected(false);
+        // hier
+        
+        if (e.mods.isCommandDown()) {
+            // toggle selection
+            region->setSelected(!region->isSelected());
+            if (region->isSelected())
+                region->getAudioTrack()->lastRegionSelected = rowNumber;
+        }
+        else if (e.mods.isShiftDown()) {
+            
+            auto regions = region->getAudioTrack()->getRegions();
+            
+            // select range
+            auto lastRow = region->getAudioTrack()->lastRegionSelected;
+            auto firstRow = rowNumber;
+            
+            
+            const int numRows = static_cast<int>(region->getAudioTrack()->getRegions().size());
+            firstRow = juce::jlimit (0, juce::jmax (0, numRows), firstRow);
+            lastRow  = juce::jlimit (0, juce::jmax (0, numRows), lastRow);
+            
+            juce::SparseSet<int> selected;
+            selected.addRange ({ juce::jmin (firstRow, lastRow),
+                                 juce::jmax (firstRow, lastRow) + 1 });
+
+            // deselect all regions in the track
+            
+            for (auto r : regions)
+                r->setSelected(false);
+            
+            
+            // select regions in the range
+            for (auto i = 0; i < selected.size(); i++) {
+                if (auto r = getRegion(columnId, selected[i])) {
+                    r->setSelected(true);
+                    region->getAudioTrack()->lastRegionSelected = selected[i];
+                }
+            }
+            
+            
         }
         else {
             region->setSelected(true);
+            region->getAudioTrack()->lastRegionSelected = rowNumber;
         }
-        
-        /// pass on mouse events. unless row is not selected
-        /// since this is a table we don't want the row but the cell to be selected
-        ///getParentComponent()->mouseDown(e);
         
         // update
         audioTrackContainer->sendActionMessage(audium::updateSelection);

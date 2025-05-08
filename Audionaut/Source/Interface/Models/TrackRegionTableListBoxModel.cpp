@@ -58,6 +58,9 @@ juce::Component* TrackRegionTableListBoxModel::refreshComponentForCell (int rowN
 
 void TrackRegionTableListBoxModel::selectedRowsChanged (int lastRowSelected)
 {
+    auto selectedRows = owner->getSelectedRows();
+    
+    // selection is handled by TableRegionLabel
 }
 
 void TrackRegionTableListBoxModel::backgroundClicked (const juce::MouseEvent&)
