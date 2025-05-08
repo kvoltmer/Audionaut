@@ -56,6 +56,8 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
+        bool volumeControlVisible = owner.isMouseOverOrDragging (true);
+        
         auto resourceGroup = playListItem->getRegion()->getResourceGroup();
         auto audioResource = resourceGroup->getAudioResourceAtChannel(rowNumber);
         
@@ -70,7 +72,7 @@ public:
                                                      audioTrack->getColour(),
                                                      regionSelector,
                                                      rowNumber);
-                component->setPlayListItem(playListItem);
+                component->setPlayListItem(playListItem, volumeControlVisible);
                 return component;
             }
             else {
@@ -81,7 +83,7 @@ public:
             if (auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate)) {
                 jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
                 component->setParentComponent(parentComponent);
-                component->setPlayListItem(playListItem);
+                component->setPlayListItem(playListItem, volumeControlVisible);
                 component->updateUI(rowNumber);
                 return component;
             }

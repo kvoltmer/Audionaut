@@ -55,7 +55,7 @@ public:
     
     void updateUI(int theChannel) override;
     
-    void setPlayListItem(std::shared_ptr<audium::PlayListItem> item);
+    void setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible);
 
 private:
     

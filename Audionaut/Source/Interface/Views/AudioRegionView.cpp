@@ -52,7 +52,7 @@ void AudioRegionView::updateUI(int theChannel)
     volumeSlider->setValue(LevelMeter::gainToDecebel(getClipGain()), dontSendNotification);
 }
 
-void AudioRegionView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item)
+void AudioRegionView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible)
 {
     playListItem = item;
     
@@ -71,6 +71,8 @@ void AudioRegionView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item
     volumeSlider->onDragEnd = [this] {
         playListItem->onDragEnd();
     };
+    
+    volumeSlider->setVisible(volumeControlVisible);
 }
 
 
