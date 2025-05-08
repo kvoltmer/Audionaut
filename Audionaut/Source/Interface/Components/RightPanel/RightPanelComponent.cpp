@@ -79,11 +79,17 @@ void RightPanelComponent::resized()
 
 void RightPanelComponent::updateUI(UIContext context)
 {
-    regionComponent->updateUI(context);
-    playListContainerComponent->updateUI(context);
-    regionContainerComponent->updateUI(context);
+    auto isArrangement = audiumEngine->getPlayListScheduler()->isArrangementMode();
     
-    // obsolete?
-    resized();
+    playListContainerComponent->setVisible(isArrangement);
+    regionContainerComponent->setVisible(isArrangement);
+    regionComponent->setVisible(!isArrangement);
     
+    if (isArrangement) {
+        regionContainerComponent->updateUI(context);
+        playListContainerComponent->updateUI(context);
+    }
+    else {
+        regionComponent->updateUI(context);
+    }
 }
