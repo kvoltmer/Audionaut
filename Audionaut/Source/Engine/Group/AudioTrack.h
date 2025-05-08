@@ -233,6 +233,7 @@ public:
     
     std::shared_ptr<AudioRegion> getRegion(int rowNumber) const;
     const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;
+    int getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const;
     int lastRegionSelected = -1; ///< Index of the last region selected.
     
 private:
