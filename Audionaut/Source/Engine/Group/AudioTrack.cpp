@@ -806,21 +806,32 @@ void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType co
     auto selectedObjects = getSelectionManager()->getSelectedObjects();
     jassert(selectedObjects.size() > 0);
     
+    std::vector<std::shared_ptr<AudioRegion>> selectedRegions;
     for (auto object : selectedObjects) {
         if (auto region = std::dynamic_pointer_cast<AudioRegion>(object)) {
-            
-            if (this != region->getAudioTrack().get()) {
-                // create new sub group
-                auto resourceGroup = createNewResourceGroup(region->getResourceGroup());
-                region = resourceGroup->getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
-                                                                           resourceGroup,
-                                                                           region);
-            }
-            
-            getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context);
-            pos += region->getRegionData(context).getLength();
+            selectedRegions.push_back(region);
         }
     }
+    // sort selected regions by id
+    std::sort(selectedRegions.begin(), selectedRegions.end(),
+              [this](const std::shared_ptr<AudioRegion> i1, const std::shared_ptr<AudioRegion> i2)
+              {
+        return (getAudioRegionId(i1) < getAudioRegionId(i2));
+    });
+    
+    for (auto region : selectedRegions) {
+        if (this != region->getAudioTrack().get()) {
+            // create new sub group
+            auto resourceGroup = createNewResourceGroup(region->getResourceGroup());
+            region = resourceGroup->getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
+                                                                       resourceGroup,
+                                                                       region);
+        }
+        
+        getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context);
+        pos += region->getRegionData(context).getLength();
+    }
+    
     getPlayListContainer()->sortByPosition();
 }
 
@@ -875,6 +886,16 @@ const std::vector<std::shared_ptr<AudioRegion>> AudioTrack::getRegions() const
         }
     }
     return result;
+}
+
+int AudioTrack::getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const
+{
+    auto regions = getRegions();
+    auto it = std::find(regions.begin(), regions.end(), searchRegion);
+    if (it != regions.end())
+        return static_cast<int>(std::distance(regions.begin(), it));
+    
+    return -1; // not found
 }
 
 } // namespace audium

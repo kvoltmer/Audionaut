@@ -49,7 +49,6 @@ void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
                                  juce::jmax (firstRow, lastRow) + 1 });
 
             // deselect all regions in the track
-            
             for (auto r : regions)
                 r->setSelected(false);
             
@@ -61,8 +60,6 @@ void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
                     region->getAudioTrack()->lastRegionSelected = selected[i];
                 }
             }
-            
-            
         }
         else {
             region->setSelected(true);
