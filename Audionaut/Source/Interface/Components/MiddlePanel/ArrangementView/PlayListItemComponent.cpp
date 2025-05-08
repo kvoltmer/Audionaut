@@ -152,6 +152,7 @@ void PlayListItemComponent::mouseEnter (const MouseEvent& e)
 {
     fadeInControl->setVisible(true);
     fadeOutControl->setVisible(true);
+    playListItemListBox->updateContent();
 }
 
 void PlayListItemComponent::mouseExit (const MouseEvent& e)
@@ -159,6 +160,7 @@ void PlayListItemComponent::mouseExit (const MouseEvent& e)
     if (! isMouseOverOrDragging (true)) {
         fadeInControl->setVisible(false);
         fadeOutControl->setVisible(false);
+        playListItemListBox->updateContent();
     }
 
     
