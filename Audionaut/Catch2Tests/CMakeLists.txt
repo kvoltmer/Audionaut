@@ -6,12 +6,11 @@ include(CTest)
 set(APP_NAME "AudionautTests")
 message(STATUS "Name: ${APP_NAME}")
 
-set(SUBMODULES_PATH "../../Submodules")
+set(SUBMODULES_PATH "${CMAKE_CURRENT_LIST_DIR}/../../Submodules")
 message(STATUS "Submodules at: ${SUBMODULES_PATH}")
 
-set(SRC_PATH "../Source")
+set(SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/../Source")
 message(STATUS "source file root at: ${SRC_PATH}")
-
 
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
@@ -91,8 +90,8 @@ target_sources(${APP_NAME}
         ${SRC_TESTS}
         ${SRC_PATH}/../JuceLibraryCode/BinaryData.cpp)
         
-source_group(TREE ${SRC_PATH} PREFIX "Source Files" FILES ${SRC_AUDIUM})
-        
+# The source_group function creates a group in the IDE project for the files passed as arguments.
+source_group(TREE "${SRC_PATH}" PREFIX "Source Files" FILES ${SRC_AUDIUM})
 
 
 target_include_directories(${APP_NAME}
