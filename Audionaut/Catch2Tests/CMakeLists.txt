@@ -79,8 +79,6 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Interface/Views/*.cpp
         ${SRC_PATH}/Interface/Widgets/*.cpp
         ${SRC_PATH}/Util/*.cpp
-        
-        ${SRC_PATH}/../JuceLibraryCode/BinaryData.cpp
         )
         
 file(GLOB SRC_TESTS
@@ -90,9 +88,13 @@ file(GLOB SRC_TESTS
 target_sources(${APP_NAME}
         PRIVATE
         ${SRC_AUDIUM}
-        ${SRC_TESTS})
+        ${SRC_TESTS}
+        ${SRC_PATH}/../JuceLibraryCode/BinaryData.cpp)
         
+source_group(TREE ${SRC_PATH} PREFIX "Source Files" FILES ${SRC_AUDIUM})
         
+
+
 target_include_directories(${APP_NAME}
                         PUBLIC ../Source/
                         PUBLIC ../../Submodules/json/include
