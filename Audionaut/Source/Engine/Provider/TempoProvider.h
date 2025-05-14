@@ -283,7 +283,6 @@ public:
         timeSec -= m * (60);
         
         int s = static_cast<int>(timeSec);
-        timeSec -= s;
         
         std::ostringstream s1;
         s1 << std::setw(2) << std::setfill('0') << s;
