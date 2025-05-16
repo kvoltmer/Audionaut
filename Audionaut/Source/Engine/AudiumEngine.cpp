@@ -190,7 +190,10 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         }
         auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(file.getParentDirectory());
         if (sourceDirectory != destinationDirectory) {
-            AudioResourceContainer::copyOrMoveAudioFiles(sourceDirectory, destinationDirectory);
+            if (!audioResourceContainer->copyOrMoveAudioFiles(sourceDirectory, destinationDirectory)) {
+                NullCheckedInvocation::invoke (callback, "Error copying audio files.");
+                return false;
+            }
             audioResourceContainer->changeAudioFilePaths(destinationDirectory);
         }
         // assign new project directory
@@ -207,6 +210,28 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
             if (temp.overwriteTargetFileWithTemporary()) {
                 currentProjectFile = file;
                 undoManager->clearUndoHistory();
+                
+                
+                // consitency check
+                std::vector<juce::File> redundantFiles;
+                for (auto& found : destinationDirectory.findChildFiles (File::findFiles, false, "*")) {
+                    if (!audioResourceContainer->isAudioFileCurrentlyLoaded(found)) {
+                        redundantFiles.push_back(found);
+                    }
+                }
+                
+                // delete redundant files
+                if (redundantFiles.size() > 0) {
+                    auto result = NativeMessageBox::showOkCancelBox(MessageBoxIconType::WarningIcon,
+                                                                    "Redundant files found",
+                                                                    "Some audio files are not used in the project anymore.\n\n" +
+                                                                    String(redundantFiles.size()) + " files will be deleted.");
+                    if (result) {
+                        for (auto& file : redundantFiles)
+                            file.deleteFile();
+                    }
+                }
+                
                 return true;
             }
         }

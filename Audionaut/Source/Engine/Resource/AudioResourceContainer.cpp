@@ -70,30 +70,47 @@ bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
     return true;
 }
 
-void AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory)
+bool AudioResourceContainer::isAudioFileCurrentlyLoaded(const juce::File audioFile) const
 {
-    bool success;
+    for (auto& iter : audioResources) {
+        if (iter.second->getUrl().getLocalFile() == audioFile) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory)
+{
     if (sourceDirectory != destinationDirectory) {
         if (!destinationDirectory.exists()) {
-            success = destinationDirectory.createDirectory();
-            jassert(success);
+            if (!destinationDirectory.createDirectory())
+                return false;
         }
         for (auto& found : sourceDirectory.findChildFiles (File::findFiles, false, "*")) {
+            
+            if (!isAudioFileCurrentlyLoaded(found)) {
+                std::cout << "SKIP : " << found.getFileName() << std::endl;
+                continue;
+            }
+            
             auto destinationFile = File(destinationDirectory.getFullPathName() + File::getSeparatorString() + found.getFileName());
             if (!destinationFile.existsAsFile()) {
                 
                 if (found.isAChildOf(File::getSpecialLocation(File::tempDirectory))) {
-                    success = found.moveFileTo(destinationFile);
+                    if (!found.moveFileTo(destinationFile))
+                        return false;
                     std::cout << "moved to: " << destinationFile.getFullPathName() << std::endl;
                 }
                 else {
-                    success = found.copyFileTo(destinationFile);
+                    if (!found.copyFileTo(destinationFile))
+                        return false;
                     std::cout << "copied to: " << destinationFile.getFullPathName() << std::endl;
                 }
-                jassert(success);
             }
         }        
     }
+    return true;
 }
 
 void AudioResourceContainer::changeAudioFilePaths(const juce::File newPath)
