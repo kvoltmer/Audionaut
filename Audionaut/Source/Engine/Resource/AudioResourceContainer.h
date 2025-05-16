@@ -78,12 +78,15 @@ public:
      */
     static const juce::File getAudioFileDirectory();
 
+    
+    bool isAudioFileCurrentlyLoaded(const juce::File audioFile) const;
+    
     /**
      * @brief Copies or moves audio files between directories.
      * @param sourceDirectory The source directory.
      * @param destinationDirectory The destination directory.
      */
-    static void copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory);
+    bool copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory);
 
     /**
      * @brief Changes the paths of audio files to a new directory.
