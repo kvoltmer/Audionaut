@@ -83,8 +83,8 @@ public:
             if (auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate)) {
                 jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
                 component->setParentComponent(parentComponent);
-                component->setPlayListItem(playListItem, volumeControlVisible);
                 component->updateUI(rowNumber);
+                component->setPlayListItem(playListItem, volumeControlVisible);
                 return component;
             }
         }

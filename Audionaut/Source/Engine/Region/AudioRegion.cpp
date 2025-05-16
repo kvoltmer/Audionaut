@@ -143,8 +143,8 @@ bool AudioRegion::deleteAssociatedItems()
 void AudioRegion::setGain(int channel, double newGain, bool continous)
 {
     if (channel >= 0) {
-        if (channel >= data.gain_vector.size()) {
-            data.gain_vector.resize(channel + 1, 1.0);
+        while (channel >= data.gain_vector.size()) {
+            data.gain_vector.push_back(1.0);
         }
         data.gain_vector[channel] = newGain;
         
