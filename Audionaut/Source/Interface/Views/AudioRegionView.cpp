@@ -54,23 +54,26 @@ void AudioRegionView::updateUI(int theChannel)
 
 void AudioRegionView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible)
 {
-    playListItem = item;
-    
-    fadeInOutView->setPlayListItem(item);
-    
-    auto audioRegion = item->getRegion();
-    
-    volumeSlider->onValueChange = [this, audioRegion] {
-        audioRegion->setGain(channelNumber, Decibels::decibelsToGain(volumeSlider->getValue()), true);
-        this->audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
-    };
-    volumeSlider->onDragStart = [this] {
-        playListItem->onDragStart();
-    };
-    
-    volumeSlider->onDragEnd = [this] {
-        playListItem->onDragEnd();
-    };
+    if (playListItem != item) {
+        
+        playListItem = item;
+        
+        fadeInOutView->setPlayListItem(item);
+        
+        auto audioRegion = item->getRegion();
+        
+        volumeSlider->onValueChange = [this, audioRegion] {
+            audioRegion->setGain(channelNumber, Decibels::decibelsToGain(volumeSlider->getValue()), true);
+            this->audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
+        };
+        volumeSlider->onDragStart = [this] {
+            playListItem->onDragStart();
+        };
+        
+        volumeSlider->onDragEnd = [this] {
+            playListItem->onDragEnd();
+        };
+    }
     
     volumeSlider->setVisible(volumeControlVisible);
 }
