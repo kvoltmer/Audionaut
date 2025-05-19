@@ -14,6 +14,7 @@ class AudioResourceContainer;
 class AudioTrackContainer;
 class AudioTrack;
 class ResourceGroup;
+class AudioChannel;
 
 /**
     * @class AudioRegionContainer
@@ -214,6 +215,14 @@ public:
      * @return True if the operation was successful, false otherwise.
      */
     bool writeToJson(json& output) override;
+    
+    /**
+    * @brief Serializes a specific audio channel to a JSON object.
+    * @param output The JSON object to write to.
+    * @param audioChannel The `AudioChannel`context.
+    * @return True if the operation was successful, false otherwise.
+    */
+    bool writeChannelToJson(json& output, AudioChannel* audioChannel);
 
     /**
      * @brief Deserializes the container from a JSON object.
@@ -233,7 +242,7 @@ public:
      * @brief Merges data from a JSON object into the container.
      * @param input The JSON object to merge from.
      */
-    void mergeFromJson(json& input);
+    void mergeFromJson(json& input, int destinationChannel);
 
     /**
      * @brief Retrieves all audio regions in the container.

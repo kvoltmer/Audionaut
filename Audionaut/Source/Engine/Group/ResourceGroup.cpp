@@ -99,7 +99,7 @@ bool ResourceGroup::writeChannelToJson (json& output, AudioChannel* audioChannel
         }
     }
     
-    audioRegionContainer->writeToJson(output);
+    audioRegionContainer->writeChannelToJson(output, audioChannel);
     
     return true;
 }
@@ -144,7 +144,7 @@ void ResourceGroup::mergeFromJson(json& input, int destinationChannel)
     
     audioClip->readFromJson(input["clip"], false);
     
-    audioRegionContainer->mergeFromJson(input);
+    audioRegionContainer->mergeFromJson(input, destinationChannel);
 }
 
 bool ResourceGroup::writeToStream (juce::OutputStream& outputStream)
