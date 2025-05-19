@@ -118,7 +118,7 @@ bool AudioTrack::writeChannelToJson (json& output, AudioChannel* audioChannel)
     
     playListContainer->writeToJson(output);
     
-    // std::cout << output.dump(4) << std::endl;
+    //std::cout << output.dump(4) << std::endl;
     
     return true;
 }
@@ -129,13 +129,15 @@ void AudioTrack::mergeChannelFromJson(json& input)
     
     // merge channels
     auto jsonChannels = input["channels"];
-    auto destChannel = 0;
+    
+    auto destChannel = -1;
     for (auto& jsonElement : jsonChannels) {
         auto channel = addChannel();
         destChannel = channel->getChannelNumber();
         channel->data = jsonElement;
         channel->commitChannelData();
     }
+    jassert(destChannel != -1);
     
     // merge sub groups
     json jsonResourceGroups;

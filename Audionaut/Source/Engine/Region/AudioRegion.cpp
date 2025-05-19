@@ -171,10 +171,10 @@ double AudioRegion::getGain(int channel) const
 
 void AudioRegion::onDeleteChannel(int channel)
 {
-    for (auto i = channel; i < data.gain_vector.size(); i++) {
-        if (i + 1 < data.gain_vector.size())
-            data.gain_vector[i] = data.gain_vector[i + 1];
-    }
+    if (channel < 0 || channel >= data.gain_vector.size())
+        return;
+    // remove channel from gain vector
+    data.gain_vector.erase(data.gain_vector.begin() + static_cast<size_t>(channel));
 }
 
 } // namespace audium

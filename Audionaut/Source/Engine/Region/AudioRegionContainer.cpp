@@ -15,6 +15,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Channel/AudioChannel.h"
 
 namespace audium {
 
@@ -338,6 +339,29 @@ bool AudioRegionContainer::writeToJson (json& output)
     return true;
 }
 
+bool AudioRegionContainer::writeChannelToJson(json& output, AudioChannel* audioChannel)
+{
+    auto channelNumber = audioChannel->getChannelNumber();
+    for (auto region : audioRegions) {
+        json r;
+        region->writeToJson(r);
+        
+        // erase gain_vector
+        r.erase("gain_vector");
+        
+        // write gain_vector for channel
+        if (channelNumber >= 0 && channelNumber < region->data.gain_vector.size()) {
+            std::vector<double> gain;
+            gain.push_back(region->data.gain_vector[static_cast<std::size_t>(channelNumber)]);
+            r["gain_vector"] = gain;
+        }
+        //std::cout << "writeToJson region " << r.dump(2) << std::endl;
+        
+        output["regions"] += r;
+    }
+    return true;
+}
+
 bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
 {
     auto jsonRegions = input["regions"];
@@ -374,7 +398,7 @@ bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
     return true;
 }
 
-void AudioRegionContainer::mergeFromJson(json& input)
+void AudioRegionContainer::mergeFromJson(json& input, int destinationChannel)
 {
     auto jsonRegions = input["regions"];
     
@@ -382,6 +406,8 @@ void AudioRegionContainer::mergeFromJson(json& input)
         AudioRegionData data = jsonRegion;
         
         auto region = getRegionWithData(data);
+        
+        auto clipGain = data.gain_vector.size() > 0 ? data.gain_vector[0] : 1.0;
         
         if (region == nullptr) {
             if (auto track = std::dynamic_pointer_cast<AudioTrack>(audioTrack.getSharedPtr())) {
@@ -394,6 +420,9 @@ void AudioRegionContainer::mergeFromJson(json& input)
         }
         
         jassert(region);
+        
+        region->setGain(destinationChannel, clipGain);
+        
     }
 }
 
