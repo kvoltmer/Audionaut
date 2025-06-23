@@ -408,7 +408,18 @@ PlayListItem* PlayListContainer::itemAtAbsolutePosition(double position, audium:
     return nullptr;
 }
 
-PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const
+PlayListItem* PlayListContainer::itemIntersectingRange(juce::Range<double> range, audium::TimeContextType context) const
+{
+    for (auto item : playListItems.getObjects()) {
+        auto absoluteRange = item->getAbsolutePositionRange(context);
+        if (absoluteRange.intersects(range))
+            return item.get();
+    }
+    
+    return nullptr;
+}
+
+PlayListItem* PlayListContainer::itemContainingRange(juce::Range<double> range, audium::TimeContextType context) const
 {
     for (auto item : playListItems.getObjects()) {
         auto absoluteRange = item->getAbsolutePositionRange(context);
@@ -418,6 +429,7 @@ PlayListItem* PlayListContainer::itemAtAbsoluteRange(juce::Range<double> range, 
     
     return nullptr;
 }
+
 
 const std::vector<PlayListItem*> PlayListContainer::itemsAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const
 {

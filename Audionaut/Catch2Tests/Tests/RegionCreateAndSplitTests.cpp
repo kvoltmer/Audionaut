@@ -22,20 +22,23 @@ SCENARIO("region split/create scenario", "[engine][region]")
         REQUIRE(fileUnderTest.existsAsFile());
         auto ok = engine->openFile(fileUnderTest, nullptr);
         REQUIRE(ok);
+        
+        
         WHEN("split at selected range")
         {
             auto selection = juce::Range<double>(2.0, 3.0);
             engine->getAudioTrackContainer()->getAudioRegionAdapter().setSelectedRange(selection, audium::seconds);
-            engine->getAudioTrackContainer()->getAudioRegionAdapter().splitRegionsFromSelection(false);
+            engine->getAudioTrackContainer()->getAudioRegionAdapter().splitRegions(0.0, audium::seconds);
 
             THEN("3 new regions have been created")
             {
                 auto regions = engine->getAudioTrackContainer()->getAudioRegionAdapter().getAudioRegions();
-                REQUIRE (regions.size() == 3);
+                REQUIRE (regions.size() == 4);
                 
-                REQUIRE (regions[0]->getName() == "120-funk-export-01");
-                REQUIRE (regions[1]->getName() == "120-funk-export-02");
-                REQUIRE (regions[2]->getName() == "120-funk-export-03");
+                REQUIRE (regions[0]->getName() == "120-funk-export");
+                REQUIRE (regions[1]->getName() == "120-funk-export-01");
+                REQUIRE (regions[2]->getName() == "120-funk-export-02");
+                REQUIRE (regions[3]->getName() == "120-funk-export-03");
 
                 auto playList = engine->getAudioTrackContainer()->getAudioTracks()[0]->getPlayListContainer();
                 auto items = playList->getPlayListItems();
@@ -48,8 +51,33 @@ SCENARIO("region split/create scenario", "[engine][region]")
                 REQUIRE (items[1]->getAbsolutePosition(audium::clocks) == 96.0);
                 REQUIRE (items[2]->getAbsolutePosition(audium::clocks) == 144.0);
             }
-            
-            
+        }
+        
+        WHEN("split at position")
+        {
+            // reset selection
+            engine->getAudioTrackContainer()->getAudioRegionAdapter().setSelectedRange(juce::Range<double>(), audium::seconds);
+            // split at 2.0 seconds
+            engine->getAudioTrackContainer()->getAudioRegionAdapter().splitRegions(2.0, audium::seconds);
+
+            THEN("2 new regions have been created")
+            {
+                auto regions = engine->getAudioTrackContainer()->getAudioRegionAdapter().getAudioRegions();
+                REQUIRE (regions.size() == 3);
+                
+                REQUIRE (regions[0]->getName() == "120-funk-export");
+                REQUIRE (regions[1]->getName() == "120-funk-export-01");
+                REQUIRE (regions[2]->getName() == "120-funk-export-02");
+
+                auto playList = engine->getAudioTrackContainer()->getAudioTracks()[0]->getPlayListContainer();
+                auto items = playList->getPlayListItems();
+                
+                REQUIRE (items[0]->getRegion()->getName() == "120-funk-export-01");
+                REQUIRE (items[1]->getRegion()->getName() == "120-funk-export-02");
+                
+                REQUIRE (items[0]->getAbsolutePosition(audium::clocks) == 48.0);
+                REQUIRE (items[1]->getAbsolutePosition(audium::clocks) == 96.0);
+            }
         }
         
 //        engine->saveFile(juce::File("../../../TestFiles/Sessions/120-funk-export-5-seconds-out.audium"));

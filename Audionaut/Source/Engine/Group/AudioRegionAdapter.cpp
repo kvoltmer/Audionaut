@@ -118,8 +118,7 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
     
     for (auto track : owner.getAudioTracks()) {
         if (arrangementMode) {
-            auto context = audium::clocks;
-            if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
+            if (auto item = track->getPlayListContainer()->itemContainingRange(selectedRange, context)) {
                 auto localRange = item->absoluteToLocalRange(selectedRange, context);
                 auto resourceGroup = item->getRegion()->getResourceGroup();
                 resourceGroup->getAudioRegionContainer()->createRegion(name,
@@ -150,18 +149,25 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
     owner.getUndoManager()->beginNewTransaction();
 }
 
-void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
+void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType context)
 {
     // Undo: store old state
-    auto action = withUndo ? std::make_unique<audium::UndoableContainerAction>(owner, false) : nullptr;
-    auto context = audium::clocks;
+    auto action = std::make_unique<audium::UndoableContainerAction>(owner, false);
     auto selectedRange = getSelectedRange(context);
+    
+    // split at start position if no range is selected
+    if (selectedRange.isEmpty()) {
+        selectedRange = juce::Range<double>(pos, pos);
+    }
+    
     juce::String name;
     juce::Range<double> absoluteRange, localRange;
     std::shared_ptr<AudioRegion> region;
     
+    bool anySuccess = false;
+    
     for (auto track : owner.getAudioTracks()) {
-        if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
+        if (auto item = track->getPlayListContainer()->itemIntersectingRange(selectedRange, context)) {
             auto resourceGroup = item->getRegion()->getResourceGroup();
             bool success = false;
             auto itemRange = item->getAbsolutePositionRange(context);
@@ -214,14 +220,16 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
             }
             
             if (success) {
-                track->getPlayListContainer()->deletePlayListItem(item, true);
+                track->getPlayListContainer()->deletePlayListItem(item, false);
                 track->getPlayListContainer()->sortByPosition();
+                anySuccess = true;
             }
         }
     }
     
     // Undo: store new state
-    if (action != nullptr) {
+    if (anySuccess) {
+        jassert(action);
         action->storeNewState();
         owner.getUndoManager()->perform(action.release(), "Split Region(s)");
         owner.getUndoManager()->beginNewTransaction();
@@ -230,28 +238,23 @@ void AudioRegionAdapter::splitRegionsFromSelection(bool withUndo)
 
 void AudioRegionAdapter::setSelectedRange(juce::Range<double> pos, audium::TimeContextType context)
 {
-    if (context == audium::seconds)
-    {
+    if (context == audium::seconds) {
         selectedPositionClocks = owner.getTempoProvider()->secondsToClocks(pos);
     }
-    else if (context == audium::clocks)
-    {
+    else if (context == audium::clocks) {
         selectedPositionClocks = pos;
     }
-    else
-    {
+    else {
         jassertfalse;
     }
 }
 
 juce::Range<double> AudioRegionAdapter::getSelectedRange(audium::TimeContextType context) const
 {
-    if (context == audium::seconds)
-    {
+    if (context == audium::seconds) {
         return owner.getTempoProvider()->clocksToSeconds(selectedPositionClocks);
     }
-    else if (context == audium::clocks)
-    {
+    else if (context == audium::clocks) {
         return selectedPositionClocks;
     }
     
@@ -259,9 +262,36 @@ juce::Range<double> AudioRegionAdapter::getSelectedRange(audium::TimeContextType
     return juce::Range<double>();
 }
 
+bool AudioRegionAdapter::canCreateRegion() const
+{
+    if (anyRangeSelected()) {
+        for (auto track : owner.getAudioTracks()) {
+            if (auto item = track->getPlayListContainer()->itemContainingRange(selectedPositionClocks, audium::clocks)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool AudioRegionAdapter::anyRangeSelected() const
 {
     return !selectedPositionClocks.isEmpty();
 }
+
+bool AudioRegionAdapter::canSplitAnyRegionAtPosition(double pos, audium::TimeContextType context) const
+{
+    for (auto track : owner.getAudioTracks()) {
+        if (auto item = track->getPlayListContainer()->itemAtAbsolutePosition(pos, context)) {
+            if (item->getAbsolutePositionRange(context).getStart() < pos &&
+                item->getAbsolutePositionRange(context).getEnd() > pos) {
+                return true;
+            }
+        }
+    }
+        
+    return false;
+}
+
 
 } // namespace audium
