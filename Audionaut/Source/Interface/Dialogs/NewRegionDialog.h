@@ -44,7 +44,7 @@ private:
         auto selectedRange = audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getSelectedRange(context);
         for (auto track : engine->getAudioTrackContainer()->getAudioTracks()) {
             if (audiumEngine->getPlayListScheduler()->isArrangementMode()) {
-                if (auto item = track->getPlayListContainer()->itemAtAbsoluteRange(selectedRange, context)) {
+                if (auto item = track->getPlayListContainer()->itemContainingRange(selectedRange, context)) {
                     auto resourceGroup = item->getRegion()->getResourceGroup();
                     name =  resourceGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
                     break;
