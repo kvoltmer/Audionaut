@@ -208,6 +208,10 @@
               file="Source/Engine/ActionMessages.h"/>
       </GROUP>
       <GROUP id="{744E1F4F-2D8F-31FE-0087-A2E6AC160CCB}" name="Interface">
+        <GROUP id="{D7A55DBA-57BE-B874-B2D9-6F3F79479569}" name="DragAndDrop">
+          <FILE id="sqBOif" name="DragAndDropContainer.h" compile="0" resource="0"
+                file="Source/Interface/DragAndDrop/DragAndDropContainer.h"/>
+        </GROUP>
         <GROUP id="{69575DAF-FBC2-F140-D989-B3A8608F6F55}" name="LookAndFeel">
           <FILE id="LkiqwE" name="AudiumLookAndFeel.cpp" compile="1" resource="0"
                 file="Source/Interface/LookAndFeel/AudiumLookAndFeel.cpp"/>

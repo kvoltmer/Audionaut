@@ -3070,6 +3070,7 @@
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableContainerAction.h"/>
     <ClInclude Include="..\..\Source\Engine\AudiumEngine.h"/>
     <ClInclude Include="..\..\Source\Engine\ActionMessages.h"/>
+    <ClInclude Include="..\..\Source\Interface\DragAndDrop\DragAndDropContainer.h"/>
     <ClInclude Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\UIContext.h"/>
