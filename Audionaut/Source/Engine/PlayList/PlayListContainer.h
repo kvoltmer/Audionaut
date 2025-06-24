@@ -76,7 +76,8 @@ public:
     int getPlayListItemIndex(PlayListItem* item) const;
     
     PlayListItem* itemAtAbsolutePosition(double position, audium::TimeContextType context) const;
-    PlayListItem* itemAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
+    PlayListItem* itemIntersectingRange(juce::Range<double> range, audium::TimeContextType context) const;
+    PlayListItem* itemContainingRange(juce::Range<double> range, audium::TimeContextType context) const;
     
     const std::vector<PlayListItem*> itemsAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const;
     

@@ -59,6 +59,9 @@
     <Filter Include="Audionaut\Source\Engine">
       <UniqueIdentifier>{34AD0A31-F181-518D-26C9-55F68C1CA49E}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Interface\DragAndDrop">
+      <UniqueIdentifier>{C77D11C0-F298-E3CA-CA04-8E42C07E9002}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Interface\LookAndFeel">
       <UniqueIdentifier>{8EAE4790-6AEC-4244-A624-4D8F81039677}</UniqueIdentifier>
     </Filter>
@@ -4187,6 +4190,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\ActionMessages.h">
       <Filter>Audionaut\Source\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\DragAndDrop\DragAndDropContainer.h">
+      <Filter>Audionaut\Source\Interface\DragAndDrop</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.h">
       <Filter>Audionaut\Source\Interface\LookAndFeel</Filter>

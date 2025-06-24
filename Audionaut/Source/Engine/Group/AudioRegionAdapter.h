@@ -81,10 +81,9 @@ public:
     void createRegionsFromSelection(juce::String name, bool arrangementMode);
 
     /**
-     * @brief Splits the current selection into separate regions.
-     * @param withUndo Whether to enable undo functionality for the operation.
+     * @brief Splits existing regions into separate regions.
      */
-    void splitRegionsFromSelection(bool withUndo = true);
+    void splitRegions(double pos, audium::TimeContextType context);
 
     /**
      * @brief Sets the selected range in the adapter.
@@ -100,11 +99,16 @@ public:
      */
     juce::Range<double> getSelectedRange(audium::TimeContextType context) const;
 
+
+    bool canCreateRegion() const;
+    
     /**
      * @brief Checks if any range is currently selected.
      * @return True if a range is selected, false otherwise.
      */
     bool anyRangeSelected() const;
+    
+    bool canSplitAnyRegionAtPosition(double pos, audium::TimeContextType context) const;
 
 private:
     AudioTrackContainer &owner; ///< Reference to the owning `AudioTrackContainer`.
