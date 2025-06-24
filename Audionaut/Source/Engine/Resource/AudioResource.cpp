@@ -196,7 +196,7 @@ const juce::URL AudioResource::urlFromJson (json& input)
     }
     
     std::cout << "error: absolute path does not exist: " << filePath << std::endl;
-    throw std::runtime_error(filePath.toStdString() + "Error: File not found.");
+    throw std::runtime_error(filePath.toStdString() + "\n\nError: File not found.");
     
     return URL(File(filePath));
 }

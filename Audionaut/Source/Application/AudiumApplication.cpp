@@ -68,6 +68,28 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
     
+    // try to load project from command line
+    if (! commandLine.trim().startsWithChar ('-')) {
+        ArgumentList list ({}, commandLine);
+
+        for (auto& arg : list.arguments) {
+            std::cout << "YO: " << arg.resolveAsFile().getFullPathName() << std::endl;
+            openFile (arg.resolveAsFile());
+        }
+    }
+    
+    // try to load default project from prefs
+    if (!audiumEngine->getCurrentProjectFile().exists()) {
+        if (Preferences::valueExists(PreferenceKeys::defaultFile)) {
+            const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
+            openFile(juce::File(Preferences::getValue(PreferenceKeys::defaultFile)));
+        }
+    }
+
+    // still nothing loaded? -> create new project
+    if (!audiumEngine->getCurrentProjectFile().exists()) {
+        audiumEngine->createNewProject();
+    }
     
     // do further initialisation in a moment when the message loop has started
     triggerAsyncUpdate();
@@ -75,21 +97,13 @@ void AudiumApplication::initialise (const juce::String& commandLine)
 
 void AudiumApplication::handleAsyncUpdate()
 {
-    menuModel.reset (new AudiumMenuModel());
+    menuModel = std::make_unique<AudiumMenuModel>();
     
 #if JUCE_MAC
     rebuildAppleMenu();
     appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
 #endif
     
-    if (Preferences::valueExists(PreferenceKeys::defaultFile)) {
-        const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
-        openFile(juce::File(Preferences::getValue(PreferenceKeys::defaultFile)));
-    }
-    
-    if (!audiumEngine->getCurrentProjectFile().exists()) {
-        audiumEngine->createNewProject();
-    }
     updateUI();
     
 }
@@ -168,9 +182,19 @@ void AudiumApplication::systemRequestedQuit()
 
 void AudiumApplication::anotherInstanceStarted (const juce::String& commandLine)
 {
-    // When another instance of the app is launched while this one is running,
-    // this method is invoked, and the commandLine parameter tells you what
-    // the other instance's command-line arguments were.
+    if (! commandLine.trim().startsWithChar ('-')) {
+        ArgumentList list ({}, commandLine);
+
+        for (auto& arg : list.arguments) {
+            auto file = arg.resolveAsFile();
+            askToSaveIfDirtyAndInvoke([this, file](void) {
+                openFile (file);
+            
+                // will update the open recent menu
+                commandManager->commandStatusChanged();
+            });
+        }
+    }
 }
 
 void AudiumApplication::initCommandManager()
