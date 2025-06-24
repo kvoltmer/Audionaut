@@ -93,7 +93,7 @@ private:
             librariesLabel { "otherVersion" },
             copyrightLabel { "copy" };
 
-    HyperlinkButton aboutButton { "About Us", URL ("http://www.voltmer-systems.com") };
+    HyperlinkButton aboutButton { "About Us", URL ("https://audionaut.pro") };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AboutWindowComponent)
 };

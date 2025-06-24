@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Interface/DragAndDrop/DragAndDropContainer.h"
 
 using namespace juce;
 
@@ -15,7 +16,7 @@ class RightPanelComponent;
 class HeaderComponent;
 
 class MainComponent :   public juce::Component,
-                        public juce::DragAndDropContainer,
+                        public audium::DragAndDropContainer,
                         private juce::ActionListener,
                         private juce::ChangeListener
 {

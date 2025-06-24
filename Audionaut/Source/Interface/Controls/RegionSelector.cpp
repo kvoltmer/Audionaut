@@ -12,6 +12,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Application/AudiumApplication.h"
 
 void RegionSelector::paint (Graphics& g)
 {
@@ -165,6 +166,11 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
         
         zoomHandler->getSnapToGridHandler()->clearRange();
     }
+    
+#ifndef CATCH2_TESTS
+    // notify the command manager
+    AudiumApplication::getCommandManager().commandStatusChanged();
+#endif
 }
 
 void RegionSelector::mouseMove (const juce::MouseEvent& e)
