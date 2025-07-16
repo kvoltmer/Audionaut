@@ -249,6 +249,10 @@ void PlayListScheduler::setCurrentPositionAtPlayListItemIndex(std::shared_ptr<Au
     const auto item = track->getPlayListContainer()->getPlayListItem(playListItemIndex);
     if (item != nullptr) {
         data.startPositionClocks = item->getAbsolutePosition(audium::clocks);
+        
+        if (!isPlaying()) {
+            data.transportPositionClocks = data.startPositionClocks;
+        }
     }
 }
 
