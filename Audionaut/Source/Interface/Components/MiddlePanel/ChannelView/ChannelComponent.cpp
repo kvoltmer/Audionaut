@@ -52,7 +52,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     // volume slider
     volumeSlider = std::make_unique<juce::Slider>();
     addAndMakeVisible(volumeSlider.get());
-    configureVolumeSlider(volumeSlider.get());
+    configureVolumeSlider(volumeSlider.get(), 12.0);
     volumeSlider->onValueChange = [this, rowNumber] {
         audioTrack->setGain(Decibels::decibelsToGain(volumeSlider->getValue()), rowNumber);
     };

@@ -56,7 +56,8 @@ public:
     juce::Component* refreshComponentForRow (   int rowNumber, bool isRowSelected,
                                                 juce::Component* existingComponentToUpdate) override
     {
-        bool volumeControlVisible = owner.isMouseOverOrDragging (true);
+        bool volumeControlVisible = owner.isMouseOverOrDragging (true) &&
+                                    playListItem->isSelected();
         
         auto resourceGroup = playListItem->getRegion()->getResourceGroup();
         auto audioResource = resourceGroup->getAudioResourceAtChannel(rowNumber);

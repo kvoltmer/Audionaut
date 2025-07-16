@@ -119,6 +119,7 @@ bool TransportLoop::processLoop(double &thePosition, int numSamples)
 void TransportLoop::reset()
 {
     loopCount = 0;
+    withinLoop = false;
 }
 
 } // namespace audium
