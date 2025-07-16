@@ -146,12 +146,16 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
 
     fadeInControl->setValue(playListItem->getFadeIn());
     fadeOutControl->setValue(playListItem->getFadeOut());
+    
+    fadeInControl->setVisible(playListItem->isSelected());
+    fadeOutControl->setVisible(playListItem->isSelected());
 }
 
 void PlayListItemComponent::mouseEnter (const MouseEvent& e)
 {
-    fadeInControl->setVisible(true);
-    fadeOutControl->setVisible(true);
+    fadeInControl->setVisible(playListItem->isSelected());
+    fadeOutControl->setVisible(playListItem->isSelected());
+    
     playListItemListBox->updateContent();
 }
 
