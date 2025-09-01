@@ -183,11 +183,11 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             break;
         case CommandIDs::zoomIn:
             result.setInfo ("Zoom In", "Zoom in", CommandCategories::view, 0);
-            result.defaultKeypresses.add (KeyPress ('+', ModifierKeys::ctrlModifier, 0));
+            result.defaultKeypresses.add (KeyPress ('+', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::zoomOut:
             result.setInfo ("Zoom Out", "Zoom out", CommandCategories::view, 0);
-            result.defaultKeypresses.add (KeyPress ('-', ModifierKeys::ctrlModifier, 0));
+            result.defaultKeypresses.add (KeyPress ('-', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::pageLeft:
             result.setInfo ("Page Left", "Scroll one page feft", CommandCategories::view, 0);
