@@ -5,9 +5,36 @@
 
 #include "Interface/Controls/DraggerControl.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
+#include "Application/AudiumCommandIDs.h"
+
+static void contextMenuCallback (int result, DraggerControl* component)
+{
+    if (component != nullptr &&
+        result != 0) {
+        switch (result) {
+            case CommandIDs::exportSelectedItemsId:
+                std::cout << "export..." << std::endl;
+                break;
+            default:
+                break;
+        }
+    }
+}
 
 void DraggerControl::mouseDown (const juce::MouseEvent& e)
 {
+    if (e.mods.isPopupMenu()) {
+    
+        PopupMenu m;
+        m.addItem (CommandIDs::exportSelectedItemsId, TRANS ("Export selected item(s)..."), true);
+
+        if (m.getNumItems() > 0) {
+            m.setLookAndFeel (&getLookAndFeel());
+            m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::standardItemHeight),
+                             ModalCallbackFunction::forComponent (contextMenuCallback, this));
+        }
+    }
+    
     currentDragMode = getDragMode(e.getPosition().getX());
     
     originalBounds = componentToDrag->getBounds();

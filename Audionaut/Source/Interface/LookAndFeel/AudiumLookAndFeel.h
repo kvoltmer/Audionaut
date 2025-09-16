@@ -59,9 +59,10 @@ public:
     
     // Various statics
     static const int channelsWidth = 100;
-    static const int dragZoomControlHeight = 25;
-    static const int transportPositionControlHeight = 25;
-    static const int tableHeaderHeight = 25;
+    static const int standardItemHeight = 25;
+    static const int dragZoomControlHeight = standardItemHeight;
+    static const int transportPositionControlHeight = standardItemHeight;
+    static const int tableHeaderHeight = standardItemHeight;
     static const float defaultFontSize;
     static const int extraSpaceAtBottom = 200;
     static const int maxTrackColours = 256;

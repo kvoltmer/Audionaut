@@ -58,7 +58,7 @@ public:
      * @brief Checks if any object is currently selected.
      * @return True if at least one object is selected, false otherwise.
      */
-    bool isSomethingSelected() const { return selectedObjects.size() > 0; }
+    bool anythingSelected() const { return selectedObjects.size() > 0; }
 
     /**
      * @brief Gets the list of currently selected objects.

@@ -216,13 +216,13 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
 
         case StandardApplicationCommandIDs::cut:
             result.setInfo (TRANS ("Cut"), String(), "Editing", 0);
-            result.setActive (isSomethingSelected());
+            result.setActive (anythingSelected());
             result.defaultKeypresses.add (KeyPress ('x', cmd, 0));
             break;
 
         case StandardApplicationCommandIDs::copy:
             result.setInfo (TRANS ("Copy"), String(), "Editing", 0);
-            result.setActive (isSomethingSelected());
+            result.setActive (anythingSelected());
             result.defaultKeypresses.add (KeyPress ('c', cmd, 0));
             break;
 
@@ -235,7 +235,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case StandardApplicationCommandIDs::del:
             result.setInfo (TRANS ("Delete"), String(), "Editing", 0);
             result.defaultKeypresses.add (KeyPress (KeyPress::deleteKey, ModifierKeys::noModifiers, 0));
-            result.setActive (isSomethingSelected());
+            result.setActive (anythingSelected());
             break;
 
         case StandardApplicationCommandIDs::selectAll:
@@ -347,9 +347,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     return true;
 }
 
-bool AudiumMainWindow::isSomethingSelected()
+bool AudiumMainWindow::anythingSelected()
 {
-    return getEngine()->getAudioTrackContainer()->getSelectionManager()->isSomethingSelected();
+    return getEngine()->getAudioTrackContainer()->getSelectionManager()->anythingSelected();
 }
 
 bool AudiumMainWindow::canPaste()
