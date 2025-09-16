@@ -338,7 +338,7 @@ juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
     return newColour;
 }
 
-void AudioTrackContainer::copySelectedChannelsToNewTrack(bool copyChannels)
+bool AudioTrackContainer::copySelectedChannelsToNewTrack(bool copyChannels)
 {
     // undo
     auto action = std::make_unique<audium::UndoableContainerAction>(*this);
@@ -363,12 +363,14 @@ void AudioTrackContainer::copySelectedChannelsToNewTrack(bool copyChannels)
             }
         }
     }
+    else return false;
     
     
     // undo
     action->storeNewState();
     undoManager->perform(action.release(), "copy channel(s)");
     undoManager->beginNewTransaction();
+    return true;
 }
 
 bool AudioTrackContainer::addAudioFiles(const juce::StringArray& filenames,

@@ -208,7 +208,7 @@ public:
      * @brief Copies selected channels to a new track.
      * @param copyChannels Whether to copy the channels.
      */
-    void copySelectedChannelsToNewTrack(bool copyChannels = true);
+    bool copySelectedChannelsToNewTrack(bool copyChannels = true);
 
     /**
      * @brief Adds audio files to the container.

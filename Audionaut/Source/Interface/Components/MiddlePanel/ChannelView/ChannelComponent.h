@@ -80,8 +80,6 @@ public:
     static const char* channelScale_png;
     static const int channelScale_pngSize;
 
-    enum { moveChannelToNewTrackId = 0xf836743, reservedId = 0xf836744 };
-
     std::shared_ptr<audium::AudiumEngine> getEngine() const { return engine; }
     std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
     
