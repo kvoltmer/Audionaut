@@ -412,15 +412,15 @@ std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(juce::Range<do
     return resourceGroup;
 }
 
-std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(const std::shared_ptr<ResourceGroup> otherSubGroup)
+std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup)
 {
-    auto resourceGroup = findSimilarSubGroup(otherSubGroup);
+    auto resourceGroup = findSimilarResourceGroup(otherResourceGroup);
     
     if (resourceGroup == nullptr) {
         resourceGroup = AudioTrackFactory::createResourceGroup(*this);
         
         // clone all resources
-        auto otherResources = otherSubGroup->getAudioResources();
+        auto otherResources = otherResourceGroup->getAudioResources();
         for (auto resource : otherResources) {
             
             auto newResource = resourceGroup->addAudioResourceFromUrl(resource->getUrl());
@@ -442,13 +442,13 @@ std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(const std::sha
     return resourceGroup;
 }
 
-std::shared_ptr<ResourceGroup> AudioTrack::findSimilarSubGroup(const std::shared_ptr<ResourceGroup> otherSubGroup)
+std::shared_ptr<ResourceGroup> AudioTrack::findSimilarResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup)
 {
     auto context = audium::clocks;
     for (auto resourceGroup : resourceGroupContainer->getObjects()) {
-        if (resourceGroup->getRegionData(context) == otherSubGroup->getRegionData(context) &&
-            resourceGroup->getName() == otherSubGroup->getName() &&
-            resourceGroup->getAudioResources().size() == otherSubGroup->getAudioResources().size())
+        if (resourceGroup->getRegionData(context) == otherResourceGroup->getRegionData(context) &&
+            resourceGroup->getName() == otherResourceGroup->getName() &&
+            resourceGroup->getAudioResources().size() == otherResourceGroup->getAudioResources().size())
         {
             return resourceGroup;
         }
@@ -458,7 +458,7 @@ std::shared_ptr<ResourceGroup> AudioTrack::findSimilarSubGroup(const std::shared
     return  nullptr;
 }
 
-std::shared_ptr<ResourceGroup> AudioTrack::getDefaultSubGroup() const
+std::shared_ptr<ResourceGroup> AudioTrack::getDefaultResourceGroup() const
 {
     if (resourceGroupContainer->getObjects().size() > 0)
     {

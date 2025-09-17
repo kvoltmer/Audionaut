@@ -181,7 +181,7 @@ public:
      * @param resourceGroup A pointer to the `ResourceGroup`.
      * @return A vector of shared pointers to `AudioResource` objects.
      */
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForSubGroup(const ResourceGroup *resourceGroup) const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForResourceGroup(const ResourceGroup *resourceGroup) const;
 
     /**
      * @brief Retrieves audio resources for a track within a specified range.

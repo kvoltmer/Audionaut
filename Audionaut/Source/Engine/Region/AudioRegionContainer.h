@@ -120,7 +120,7 @@ public:
      * @param resourceGroup A pointer to the `ResourceGroup`.
      * @return A vector of shared pointers to `AudioRegion` objects.
      */
-    std::vector<std::shared_ptr<AudioRegion>> getRegionsForSubGroup(const ResourceGroup* resourceGroup) const;
+    std::vector<std::shared_ptr<AudioRegion>> getRegionsForResourceGroup(const ResourceGroup* resourceGroup) const;
 
     /**
      * @brief Retrieves selected regions.
@@ -153,7 +153,7 @@ public:
      * @brief Deletes all regions associated with a specific resource group.
      * @param resourceGroup A shared pointer to the `ResourceGroup`.
      */
-    void deleteAudioRegionsForSubGroup(std::shared_ptr<ResourceGroup> resourceGroup);
+    void deleteAudioRegionsForResourceGroup(std::shared_ptr<ResourceGroup> resourceGroup);
 
     /**
      * @brief Deletes unused regions.

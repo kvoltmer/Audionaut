@@ -190,9 +190,9 @@ public:
                                                           TimeContextType context,
                                                           bool arrangementMode);
     std::shared_ptr<ResourceGroup> createNewResourceGroup(juce::Range<double> transportPositionRange, TimeContextType context);
-    std::shared_ptr<ResourceGroup> createNewResourceGroup(const std::shared_ptr<ResourceGroup> otherSubGroup);
-    std::shared_ptr<ResourceGroup> findSimilarSubGroup(const std::shared_ptr<ResourceGroup> otherSubGroup);
-    std::shared_ptr<ResourceGroup> getDefaultSubGroup() const;
+    std::shared_ptr<ResourceGroup> createNewResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup);
+    std::shared_ptr<ResourceGroup> findSimilarResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup);
+    std::shared_ptr<ResourceGroup> getDefaultResourceGroup() const;
     std::vector<std::shared_ptr<ResourceGroup>> getResourceGroups() const { return resourceGroupContainer->getObjects(); }
     
     // channel height:

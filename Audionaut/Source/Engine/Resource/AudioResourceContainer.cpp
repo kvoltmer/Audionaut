@@ -297,7 +297,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
     return result;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForSubGroup(const ResourceGroup *resourceGroup) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForResourceGroup(const ResourceGroup *resourceGroup) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
     for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
