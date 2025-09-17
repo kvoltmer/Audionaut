@@ -269,32 +269,32 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> tr
 }
 
 void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
-                                     audium::ExportAudioConfig &config,
+                                     std::shared_ptr<ExportAudioConfig> config,
                                      std::function<void ()> callback)
 {
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
-    setAbsoluteStartPosition(config.positionSeconds, audium::seconds);
+    setAbsoluteStartPosition(config->positionSeconds, audium::seconds);
     
     startPlaying();
     
-    jassert((int)config.sampleRate == (int)externalSampleRate);
+    jassert((int)config->sampleRate == (int)externalSampleRate);
     
-    auto totalSamples   = static_cast<int64>((getTotalLength(audium::seconds) - config.positionSeconds) * externalSampleRate);
-    auto iterations     = static_cast<int64>(totalSamples) / config.blockSize;
-    auto remainder      = totalSamples - (iterations * config.blockSize);
-    jassert(remainder < config.blockSize);
+    auto totalSamples   = static_cast<int64>((getTotalLength(audium::seconds) - config->positionSeconds) * externalSampleRate);
+    auto iterations     = static_cast<int64>(totalSamples) / config->blockSize;
+    auto remainder      = totalSamples - (iterations * config->blockSize);
+    jassert(remainder < config->blockSize);
     
     auto positionBeats = TempoProvider::clocksToBeats(getAbsolutePosition(audium::clocks));
     
-    AudioBuffer<float> buffer(config.numChannels, config.blockSize);
-    AudioSourceChannelInfo info (&buffer, 0, config.blockSize);
+    AudioBuffer<float> buffer(config->numChannels, config->blockSize);
+    AudioSourceChannelInfo info (&buffer, 0, config->blockSize);
     int64 samplesWritten = 0;
     for (auto i = 0; i < iterations; ++i) {
-        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config.blockSize) / externalSampleRate);
+        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
-        tick(true, positionBeats, config.blockSize);
+        tick(true, positionBeats, config->blockSize);
         positionBeats += beatsThisBuffer;
         
         
@@ -305,22 +305,28 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
         
         samplesWritten += info.numSamples;
         
-        config.progress = i / (double)iterations;
+        config->progress = i / (double)iterations;
         
         if (callback)
             callback();
+        
+        if (config->userCanceled)
+            break;
     }
     
-    // process remaining samples
-    if (remainder > 0) {
-        buffer.clear();
-        info.numSamples = static_cast<int>(remainder);
-        processAudio(info);
-        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
-        samplesWritten += info.numSamples;
+    if (!config->userCanceled) {
+        
+        // process remaining samples
+        if (remainder > 0) {
+            buffer.clear();
+            info.numSamples = static_cast<int>(remainder);
+            processAudio(info);
+            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            samplesWritten += info.numSamples;
+        }
+        
+        jassert(samplesWritten == totalSamples);
     }
-    
-    jassert(samplesWritten == totalSamples);
     
     
     setAbsoluteStartPosition(lastPosition, audium::seconds);

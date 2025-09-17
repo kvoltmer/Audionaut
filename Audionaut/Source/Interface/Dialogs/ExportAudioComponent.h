@@ -115,9 +115,15 @@ public:
             outputChanDropDown->onChange = nullptr;
         }
         
+        int totalChannels = audiumEngine->getAudioTrackContainer()->getNumAudioTrackChannels();
+        
         int i = 1;
         for (auto chan : availableOutputChans)
         {
+            if (chan == "multi-mono") {
+                chan += " (" + std::to_string(totalChannels) + " files)";
+            }
+                
             outputChanDropDown->addItem (chan, i++);
         }
 
@@ -151,7 +157,7 @@ private:
         "mono",
         "stereo",
         "multi-channel",
-        "multi-mono (individual mono file per channel)"
+        "multi-mono"
     };
     
 

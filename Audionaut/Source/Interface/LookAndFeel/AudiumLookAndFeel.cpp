@@ -192,15 +192,10 @@ Label * AudiumLookAndFeel::createComboBoxTextBox (ComboBox & combo)
 
 PopupMenu::Options AudiumLookAndFeel::getOptionsForComboBoxPopupMenu (ComboBox& box, Label& label)
 {
-//    return PopupMenu::Options();
     return PopupMenu::Options().withItemThatMustBeVisible (box.getSelectedId())
-                               .withInitiallySelectedItem (box.getSelectedId());
-//                               .withMinimumWidth (box.getWidth())
-//                               .withMaximumNumColumns (1)
-//                               .withStandardItemHeight (label.getHeight());
+                               .withInitiallySelectedItem (box.getSelectedId())
+                               .withStandardItemHeight (label.getHeight());
 }
-
-
 
 Font AudiumLookAndFeel::getPopupMenuFont()
 {
