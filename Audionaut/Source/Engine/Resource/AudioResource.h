@@ -134,7 +134,7 @@ public:
      * @brief Retrieves all audio resources within the same subgroup.
      * @return A vector of shared pointers to `AudioResource` objects.
      */
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinSubGroup() const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinResourceGroup() const;
     
     /**
      * @brief Checks if the resource contains the specified absolute position.

@@ -220,7 +220,7 @@ int ResourceGroup::getSizeInUnits()
 
 std::vector<std::shared_ptr<AudioResource>> ResourceGroup::getAudioResources() const
 {
-    return audioTrack.getAudioResourceContainer().getAudioResourcesForSubGroup(this);
+    return audioTrack.getAudioResourceContainer().getAudioResourcesForResourceGroup(this);
 }
 
 int ResourceGroup::getNumChannels() const

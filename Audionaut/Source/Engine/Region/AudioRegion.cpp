@@ -132,7 +132,7 @@ void AudioRegion::setRegionLength(double newLength, audium::TimeContextType cont
 
 std::vector<std::shared_ptr<AudioResource>> AudioRegion::getAudioResources() const
 {
-    return audioTrack->getAudioResourceContainer().getAudioResourcesForSubGroup(resourceGroup.get());
+    return audioTrack->getAudioResourceContainer().getAudioResourcesForResourceGroup(resourceGroup.get());
 }
 
 bool AudioRegion::deleteAssociatedItems()
