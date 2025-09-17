@@ -33,19 +33,21 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
         WHEN("bouncing session")
         {
                         
-            audium::ExportAudioConfig bounceConfig;
-            bounceConfig.fileName = juce::File::createTempFile(".wav");
-            bounceConfig.sampleRate = 44100.0;
-            //bounceConfig.positionSeconds = 1.5;
-            bounceConfig.positionSeconds = 0.0;
+            
+            auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+            
+            bounceConfig->fileName = juce::File::createTempFile(".wav");
+            bounceConfig->sampleRate = 44100.0;
+            //bounceConfig->positionSeconds = 1.5;
+            bounceConfig->positionSeconds = 0.0;
             
             auto totalLength = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
-            totalLength -= bounceConfig.positionSeconds;
+            totalLength -= bounceConfig->positionSeconds;
             
             // bounce to file
             auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
-            exporter->bounceToFile(bounceConfig);
-            std::cout << "bounceToFile -> " << bounceConfig.fileName.getFullPathName() << std::endl;
+            exporter->bounceToFile();
+            std::cout << "bounceToFile -> " << bounceConfig->fileName.getFullPathName() << std::endl;
             exporter = nullptr;
             
 
@@ -55,7 +57,7 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                 AudioFormatManager formatManager;
                 formatManager.registerBasicFormats();
                 std::unique_ptr<AudioFormatReader> reader;
-                reader.reset(formatManager.createReaderFor(bounceConfig.fileName));
+                reader.reset(formatManager.createReaderFor(bounceConfig->fileName));
 
                 if (reader != nullptr)
                 {
@@ -76,7 +78,7 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                     
                     auto sessionStart = 1.0; // the 1st clip starts at second 1
                     
-                    auto samplesUntilStart = static_cast<int>(bounceConfig.sampleRate * (sessionStart - bounceConfig.positionSeconds));
+                    auto samplesUntilStart = static_cast<int>(bounceConfig->sampleRate * (sessionStart - bounceConfig->positionSeconds));
                     
                     if (samplesUntilStart > 0) {
                         // magnitue of 1st part is 0.0
@@ -92,9 +94,9 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                     REQUIRE(mag > 0.0);
                     
                     auto sessionStart2 = 3.0; // the 2nd clip starts at second 3
-                    auto samplesUntilStart2 = static_cast<int>(bounceConfig.sampleRate * (sessionStart2 - bounceConfig.positionSeconds));
+                    auto samplesUntilStart2 = static_cast<int>(bounceConfig->sampleRate * (sessionStart2 - bounceConfig->positionSeconds));
                     auto durationGap = 1.0;
-                    auto durationGapSamples = static_cast<int>(bounceConfig.sampleRate * durationGap);
+                    auto durationGapSamples = static_cast<int>(bounceConfig->sampleRate * durationGap);
                     
                     
                     mag = buffer.getMagnitude(samplesUntilStart2 - durationGapSamples, durationGapSamples - 1);
@@ -107,14 +109,14 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                     
                     
                     // total length
-                    REQUIRE(reader->lengthInSamples == static_cast<unsigned int>(bounceConfig.sampleRate * totalLength));
+                    REQUIRE(reader->lengthInSamples == static_cast<unsigned int>(bounceConfig->sampleRate * totalLength));
                     
                 }
                 
             }
             
-            if (bounceConfig.fileName.existsAsFile())
-                bounceConfig.fileName.deleteFile();
+            if (bounceConfig->fileName.existsAsFile())
+                bounceConfig->fileName.deleteFile();
         }
         
         engine = nullptr;
