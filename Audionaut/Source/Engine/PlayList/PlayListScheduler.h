@@ -104,7 +104,7 @@ public:
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
     void bounceToFile(juce::AudioFormatWriter* writer,
-                      audium::ExportAudioConfig &config,
+                      std::shared_ptr<ExportAudioConfig> config,
                       std::function<void ()> callback);
     
     std::shared_ptr<audium::LinkEngine> getLinkEngine() const { return linkEngine; }

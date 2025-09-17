@@ -61,17 +61,20 @@ private:
             
             // get the sample rate
             auto sr = exportAudioComponent->getSampleRate().toString().getIntValue();
-            safeThis->config.sampleRate = (double) sr;
+            
+            safeThis->config = std::make_shared<audium::ExportAudioConfig>();
+            
+            safeThis->config->sampleRate = (double) sr;
             
             // get the number of output channels
             auto chans = exportAudioComponent->getOutputChannels().toString().getIntValue();
             if (chans == 3 || chans == 4) {
                 if (chans == 4) {
-                    safeThis->config.multiMono = true;
+                    safeThis->config->multiMono = true;
                 }
                 chans = audiumEngine->getAudioTrackContainer()->getNumAudioTrackChannels();
             }
-            safeThis->config.numChannels = chans;
+            safeThis->config->numChannels = chans;
             
 
             
@@ -108,7 +111,8 @@ private:
                 }
                 
                 // assign the choosen filename
-                config.fileName = file;
+                jassert(config != nullptr);
+                config->fileName = file;
                 
                 // create the thread
                 auto thread = std::make_unique<audium::AudioExportThread>(*audiumEngine.get(), config);
@@ -136,7 +140,7 @@ private:
     
     
 public:
-    audium::ExportAudioConfig config;
+    std::shared_ptr<audium::ExportAudioConfig> config;
     
 private:
     JUCE_DECLARE_WEAK_REFERENCEABLE (ExportAudioDialog)

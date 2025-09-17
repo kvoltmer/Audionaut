@@ -328,9 +328,10 @@ void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> tr
 void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
 {
     // first bounce the mix
-    audium::ExportAudioConfig bounceConfig;
-    bounceConfig.fileName = juce::File::createTempFile(".wav");
-    bounceConfig.sampleRate = 48000.0;
+    auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+    
+    bounceConfig->fileName = juce::File::createTempFile(".wav");
+    bounceConfig->sampleRate = 48000.0;
     
     // create the thread
     auto thread = std::make_unique<AudioExportThread>(*this, bounceConfig);
@@ -339,13 +340,13 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     if (thread->runThread())
     {
         // thread finished normally..
-        config.bounceFileName = bounceConfig.fileName.getFullPathName().toStdString();
+        config.bounceFileName = bounceConfig->fileName.getFullPathName().toStdString();
         
         std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioTrackContainer,
                                                         audioResourceContainer));
         if (autoEdit->invokeAutoEdit(config))
         {
-            autoEdit->applyAutoEditResult(bounceConfig.sampleRate);
+            autoEdit->applyAutoEditResult(bounceConfig->sampleRate);
         }
     }
     else
