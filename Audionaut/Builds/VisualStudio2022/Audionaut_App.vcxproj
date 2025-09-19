@@ -150,6 +150,7 @@
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Export\PlayListItemExport.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Export\AudioExportThread.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Selection\SelectionManager.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Core\DspClip.cpp"/>
@@ -3019,6 +3020,8 @@
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.h"/>
+    <ClInclude Include="..\..\Source\Engine\Export\ExportUtil.h"/>
+    <ClInclude Include="..\..\Source\Engine\Export\PlayListItemExport.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\ExportAudioConfig.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\AudioExportThread.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\Selectable.h"/>

@@ -329,7 +329,7 @@ void ChannelComponent::mouseDown (const juce::MouseEvent& e)
 
         if (m.getNumItems() > 0) {
             m.setLookAndFeel (&getLookAndFeel());
-            m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::standardItemHeight),
+            m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight),
                              ModalCallbackFunction::forComponent (channelMenuCallback, this));
         }
     }

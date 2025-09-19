@@ -81,6 +81,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o \
   $(JUCE_OBJDIR)/TransportSourceContainer_8c0ec2a6.o \
   $(JUCE_OBJDIR)/audium_AudioTransportSource_b27fe79d.o \
+  $(JUCE_OBJDIR)/PlayListItemExport_8b6443f0.o \
   $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o \
   $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o \
   $(JUCE_OBJDIR)/DspClip_7236184f.o \
@@ -227,6 +228,11 @@ $(JUCE_OBJDIR)/TransportSourceContainer_8c0ec2a6.o: ../../Source/Engine/AudioSou
 $(JUCE_OBJDIR)/audium_AudioTransportSource_b27fe79d.o: ../../Source/Engine/AudioSources/audium_AudioTransportSource.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling audium_AudioTransportSource.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/PlayListItemExport_8b6443f0.o: ../../Source/Engine/Export/PlayListItemExport.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling PlayListItemExport.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o: ../../Source/Engine/Export/AudioExportThread.cpp

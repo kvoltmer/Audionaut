@@ -94,8 +94,7 @@ void AudioExportThread::bounceToFile()
     
     
     // change back to device settings
-    if (auto device = audiumEngine.getAudioDeviceManager()->getCurrentAudioDevice())
-    {
+    if (auto device = audiumEngine.getAudioDeviceManager()->getCurrentAudioDevice()) {
         auto numSamples = device->getCurrentBufferSizeSamples();
         auto sampleRate = device->getCurrentSampleRate();
         audiumEngine.getPlayListScheduler()->prepareToPlay(numSamples, sampleRate);

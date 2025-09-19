@@ -52,6 +52,11 @@
                 resource="0" file="Source/Engine/AudioSources/audium_AudioTransportSource.h"/>
         </GROUP>
         <GROUP id="{6F75617E-7F56-58FA-1D3F-51D388D99F41}" name="Export">
+          <FILE id="nFV8qJ" name="ExportUtil.h" compile="0" resource="0" file="Source/Engine/Export/ExportUtil.h"/>
+          <FILE id="h66PQE" name="PlayListItemExport.cpp" compile="1" resource="0"
+                file="Source/Engine/Export/PlayListItemExport.cpp"/>
+          <FILE id="KLLVQi" name="PlayListItemExport.h" compile="0" resource="0"
+                file="Source/Engine/Export/PlayListItemExport.h"/>
           <FILE id="QNyjxw" name="ExportAudioConfig.h" compile="0" resource="0"
                 file="Source/Engine/Export/ExportAudioConfig.h"/>
           <FILE id="JiHzcv" name="AudioExportThread.cpp" compile="1" resource="0"
