@@ -832,6 +832,9 @@
     <ClCompile Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Export\PlayListItemExport.cpp">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Export\AudioExportThread.cpp">
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClCompile>
@@ -4037,6 +4040,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Export\ExportUtil.h">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Export\PlayListItemExport.h">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Export\ExportAudioConfig.h">
       <Filter>Audionaut\Source\Engine\Export</Filter>

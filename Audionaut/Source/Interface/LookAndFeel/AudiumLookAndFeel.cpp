@@ -194,7 +194,7 @@ PopupMenu::Options AudiumLookAndFeel::getOptionsForComboBoxPopupMenu (ComboBox& 
 {
     return PopupMenu::Options().withItemThatMustBeVisible (box.getSelectedId())
                                .withInitiallySelectedItem (box.getSelectedId())
-                               .withStandardItemHeight (label.getHeight());
+                               .withStandardItemHeight (popupMenuItemHeight);
 }
 
 Font AudiumLookAndFeel::getPopupMenuFont()

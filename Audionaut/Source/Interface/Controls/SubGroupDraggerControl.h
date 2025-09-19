@@ -55,7 +55,7 @@ public:
     }
     
     bool validateData() override;
-    
+        
 private:
     std::shared_ptr<audium::ResourceGroup> resourceGroup;
 };

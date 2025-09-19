@@ -35,10 +35,10 @@ public:
                       std::shared_ptr<TempoProvider> tempoProvider_,
                       std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                       std::shared_ptr<SelectionManager> selectionManager_) :
-    audioTrack(audioTrack_),
-    tempoProvider(tempoProvider_),
-    transportSourceContainer(transportSourceContainer_),
-    selectionManager(selectionManager_)
+        audioTrack(audioTrack_),
+        tempoProvider(tempoProvider_),
+        transportSourceContainer(transportSourceContainer_),
+        selectionManager(selectionManager_)
     {
     }
     

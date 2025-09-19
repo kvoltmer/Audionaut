@@ -9,6 +9,7 @@
 
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/Export/PlayListItemExport.h"
 
 class PlayListItemDraggerControl : public DraggerControl
 {
@@ -61,8 +62,14 @@ public:
     
     void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_) { playListItem = playListItem_; }
     
+    void mouseDown (const juce::MouseEvent& e) override;
+    
+    void exportSelectedPlayListItems();
+
 private:
     std::shared_ptr<audium::PlayListContainer> playListContainer;
     std::shared_ptr<audium::PlayListItem> playListItem;
+    
+    std::unique_ptr<audium::PlayListItemExport> exporter;
     
 };
