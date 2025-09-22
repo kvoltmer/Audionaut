@@ -116,4 +116,23 @@ void AudiumTransportSource::applyChannelMapping()
                                               dstChannel + channelOffset);
 }
 
+
+void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item,
+                                              std::shared_ptr<TempoProvider> tempoProvider)
+{
+    // Gain:
+    auto channel    = getAudioResource().getChannelMapping().getDestinationChannel();
+    auto gain       = item->getRegion()->getGain(channel);
+    getAudioTransportSource()->setGain(gain);
+    
+    // Fade-in
+    auto fadeIn = tempoProvider->clocksToSeconds(item->getFadeInClocks());
+    auto offset = 0;
+    getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
+    
+    // Fade-out
+    auto fadeOut = tempoProvider->clocksToSeconds(item->getFadeOutClocks());
+    getAudioTransportSource()->setFadeOutSeconds(fadeOut, item->getRegionData(audium::seconds).getLength(), true);
+}
+
 } // namespace audium

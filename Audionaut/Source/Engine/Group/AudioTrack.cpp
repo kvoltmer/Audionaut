@@ -753,8 +753,8 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
         for (const auto &item : getPlayListContainer()->getPlayListItems()) {
             for (const auto &transportSource : item->getTransportSources()) {
                 dspClipData.active              = true;
-                auto chan = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
-                dspClipData.clipGain            = item->getRegion()->getGain(chan);
+                auto channel = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
+                dspClipData.clipGain            = item->getRegion()->getGain(channel);
                 dspClipData.clipFadeInClocks    = item->getFadeInClocks();
                 dspClipData.clipFadeOutClocks   = item->getFadeOutClocks();
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);

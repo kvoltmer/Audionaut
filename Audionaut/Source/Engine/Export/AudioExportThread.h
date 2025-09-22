@@ -42,14 +42,14 @@ public:
      */
     void run()
     {
-        bounceToFile();
+        bounce();
     }
     
     /**
      * @brief Exports audio to a file based on the provided configuration.
      * @param config Reference to the ExportAudioConfig containing export settings.
      */
-    void bounceToFile();
+    void bounce();
     
 private:
     AudiumEngine &audiumEngine; ///< Reference to the AudiumEngine instance.

@@ -47,7 +47,8 @@ juce::Component* TrackRegionTableListBoxModel::refreshComponentForCell (int rowN
     }
     
     if (region != nullptr) {
-        auto item = std::make_unique<TableRegionLabel>(audiumEngine->getAudioTrackContainer(),
+        auto item = std::make_unique<TableRegionLabel>(audiumEngine,
+                                                       audiumEngine->getAudioTrackContainer(),
                                                        columnId,
                                                        rowNumber);
         return item.release();

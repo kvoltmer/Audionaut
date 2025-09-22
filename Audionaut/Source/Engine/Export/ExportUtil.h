@@ -62,8 +62,12 @@ public:
                 else {
                     // user pressed the cancel button..
                 }
+  
                 
+#if !defined(CATCH2_TESTS)
                 AudiumApplication::getApp().initialSaveDirectory = file.getParentDirectory();
+#endif
+                
 
             }
         });

@@ -46,7 +46,7 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
             
             // bounce to file
             auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
-            exporter->bounceToFile();
+            exporter->bounce();
             std::cout << "bounceToFile -> " << bounceConfig->fileName.getFullPathName() << std::endl;
             exporter = nullptr;
             

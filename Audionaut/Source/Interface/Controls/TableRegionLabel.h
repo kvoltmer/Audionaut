@@ -13,6 +13,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Export/PlayListItemExport.h"
 
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
@@ -24,12 +25,14 @@
 class TableRegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
-    TableRegionLabel(std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer_,
-                int columnId_,
-                int rowNumber_) :
+    TableRegionLabel(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
+                     std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer_,
+                     int columnId_,
+                     int rowNumber_) :
+        audiumEngine(audiumEngine_),
+        audioTrackContainer(audioTrackContainer_),
         columnId(columnId_),
-        rowNumber(rowNumber_),
-        audioTrackContainer(audioTrackContainer_)
+        rowNumber(rowNumber_)
     {
         setMinimumHorizontalScale(1.f);
         setEditable (false, true, false);
@@ -84,12 +87,16 @@ public:
     {
         return rowNumber;
     }
+    
+    void exportSelectedRegion();
 
 private:
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer;
+    std::unique_ptr<audium::PlayListItemExport> exporter;
+    
     int columnId = 1;
     int rowNumber = 0;
-    
-    std::shared_ptr<audium::AudioTrackContainer> audioTrackContainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TableRegionLabel)
 };

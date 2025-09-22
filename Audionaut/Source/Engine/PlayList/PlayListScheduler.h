@@ -103,13 +103,17 @@ public:
     
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
-    void bounceToFile(juce::AudioFormatWriter* writer,
+    void bouncePlayListItem(juce::AudioFormatWriter* writer,
+                            std::shared_ptr<ExportAudioConfig> config,
+                            std::function<void ()> callback);
+    
+    void bounceProject(juce::AudioFormatWriter* writer,
                       std::shared_ptr<ExportAudioConfig> config,
                       std::function<void ()> callback);
     
     std::shared_ptr<audium::LinkEngine> getLinkEngine() const { return linkEngine; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
-    std::shared_ptr<audium::Playback> getPlayback() const { return playback; }
+    std::shared_ptr<Playback> getPlayback() const { return playback; }
     std::shared_ptr<AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
     std::shared_ptr<TransportLoop> getTransportLoop() const { return transportLoop; }
     
@@ -126,10 +130,10 @@ private:
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
-    std::shared_ptr<audium::LinkEngine> linkEngine;
-    std::shared_ptr<audium::AudioClipContainer> audioClipContainer;
+    std::shared_ptr<LinkEngine> linkEngine;
+    std::shared_ptr<AudioClipContainer> audioClipContainer;
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
-    std::shared_ptr<audium::Playback> playback;
+    std::shared_ptr<Playback> playback;
     std::shared_ptr<AudioBusInterface> audioBusInterface;
     std::shared_ptr<TransportLoop> transportLoop;
     

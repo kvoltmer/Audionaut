@@ -177,5 +177,25 @@ void AudioRegion::onDeleteChannel(int channel)
     data.gain_vector.erase(data.gain_vector.begin() + static_cast<size_t>(channel));
 }
 
+double AudioRegion::getResourcesMaxSampleRate() const
+{
+    auto sr = 0.0;
+    for (auto res : getAudioResources()) {
+        sr = std::max(sr, res->getSampleRate());
+    }
+    jassert(sr > 0.0);
+    return sr;
+}
+
+int AudioRegion::getResourcesMaxBitDepth() const
+{
+    unsigned int bitDepth = 0;
+    for (auto res : getAudioResources()) {
+        bitDepth = std::max(bitDepth, res->getBitDepth());
+    }
+    jassert(bitDepth > 0.0);
+    return bitDepth;
+}
+
 } // namespace audium
 

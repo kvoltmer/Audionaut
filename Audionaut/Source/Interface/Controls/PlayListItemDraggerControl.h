@@ -64,12 +64,11 @@ public:
     
     void mouseDown (const juce::MouseEvent& e) override;
     
-    void exportSelectedPlayListItems();
+    void exportSelectedPlayListItem();
 
 private:
     std::shared_ptr<audium::PlayListContainer> playListContainer;
     std::shared_ptr<audium::PlayListItem> playListItem;
-    
     std::unique_ptr<audium::PlayListItemExport> exporter;
     
 };

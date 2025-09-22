@@ -210,6 +210,18 @@ public:
      * @param channel The channel index to delete.
      */
     void onDeleteChannel(int channel);
+    
+    /**
+     * @brief Retrieves the maximum sample rate of the audio resources.
+     * @return The sample rate.
+     */
+    double getResourcesMaxSampleRate() const;
+    
+    /**
+     * @brief Retrieves the maximum bit depth of the audio resources.
+     * @return The bit depth.
+     */
+    int getResourcesMaxBitDepth() const;
 
     /// The region's data.
     AudioRegionData data;
