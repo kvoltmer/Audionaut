@@ -15,7 +15,8 @@ namespace audium {
 
 class AudioTrack;
 class AudioResource;
-
+class PlayListItem;
+class TempoProvider;
 /**
  * @class AudiumTransportSource
  * @brief A wrapper around `juce::AudioSource` for managing audio playback with additional features.
@@ -102,6 +103,10 @@ public:
     void applyChannelMapping();
     
     std::shared_ptr<audium::AudioTransportSource> getAudioTransportSource() const { return audioTransportSource; }
+    
+    /// < configure gain, fade-in, fade-out
+    void configureDynamics(std::shared_ptr<PlayListItem> item,
+                           std::shared_ptr<TempoProvider> tempoProvider);
     
 #if CATCH2_TESTS
     int64 samplesProcessed = 0;

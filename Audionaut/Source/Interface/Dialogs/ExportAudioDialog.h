@@ -73,9 +73,15 @@ private:
             }
             safeThis->config->numChannels = chans;
             
-            auto dir = AudiumApplication::getApp().initialSaveDirectory;
+            safeThis->config->bitDepth = exportAudioComponent->getBitDepth().toString().getIntValue();
+            juce::File dir;
+        #if !defined(CATCH2_TESTS)
+            dir = AudiumApplication::getApp().initialSaveDirectory;
+        #endif
             safeThis->chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
             audium::ExportUtil::exportAudio(safeThis->chooser, audiumEngine, safeThis->config);
+
+
         };
 
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);

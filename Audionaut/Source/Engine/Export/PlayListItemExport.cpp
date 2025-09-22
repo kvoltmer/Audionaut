@@ -12,18 +12,32 @@
 #include "Engine/Export/AudioExportThread.h"
 #include "Application/AudiumApplication.h"
 #include "Engine/Export/ExportUtil.h"
+#include "Engine/Group/AudioTrack.h"
 
 namespace audium {
 
-void PlayListItemExport::exportSelectedPlayListItems()
+void PlayListItemExport::exportItem()
 {
-
     auto config = std::make_shared<audium::ExportAudioConfig>();
+        
     
-    config->sampleRate = 48000.0;
-    config->numChannels = 2; // TODO
+    config->playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*playListContainer,
+                                                                  audioRegion,
+                                                                  audioRegion->getAudioTrack()->getSelectionManager()));
     
-    auto dir = AudiumApplication::getApp().initialSaveDirectory;
+    // the number of audio channels
+    config->numChannels = audioRegion->getAudioTrack()->getNumAudioTrackChannels();
+    
+    // use the maximum sample rate
+    config->sampleRate = audioRegion->getResourcesMaxSampleRate();
+    
+    // use the maximum bit depth
+    config->bitDepth = audioRegion->getResourcesMaxBitDepth();
+
+    juce::File dir;
+#if !defined(CATCH2_TESTS)
+    dir = AudiumApplication::getApp().initialSaveDirectory;
+#endif
     chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
     ExportUtil::exportAudio(chooser, audiumEngine, config);
 

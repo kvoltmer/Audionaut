@@ -16,9 +16,8 @@ std::string formatInteger(long num) {
     return oss.str();
 }
 
-void AudioExportThread::bounceToFile()
+void AudioExportThread::bounce()
 {
-    
     audiumEngine.setBypass(true);
     audiumEngine.getPlayListScheduler()->prepareToPlay(config->blockSize, config->sampleRate);
     
@@ -29,17 +28,27 @@ void AudioExportThread::bounceToFile()
         const StringPairArray metadata;
         WavAudioFormat wav;
         std::unique_ptr<AudioFormatWriter> writer (wav.createWriterFor (outStream.release(), config->sampleRate,
-                                                                        (unsigned int)config->numChannels,
+                                                                        static_cast<unsigned int>(config->numChannels),
                                                                         config->bitDepth,
                                                                         metadata, 0));
         if (writer != nullptr) {
-            audiumEngine.getPlayListScheduler()->bounceToFile(writer.get(), config, [this](void) {
-                setProgress(config->progress);
-                
-                if (threadShouldExit() || !isThreadRunning())
-                    config->userCanceled = true;
-                
-            });
+            
+            if (config->playListItem != nullptr) {
+                audiumEngine.getPlayListScheduler()->bouncePlayListItem(writer.get(), config, [this](void) {
+                    setProgress(config->progress);
+                    if (threadShouldExit() || !isThreadRunning())
+                        config->userCanceled = true;
+                    
+                });
+            }
+            else {
+                audiumEngine.getPlayListScheduler()->bounceProject(writer.get(), config, [this](void) {
+                    setProgress(config->progress);
+                    if (threadShouldExit() || !isThreadRunning())
+                        config->userCanceled = true;
+                    
+                });
+            }
             
             writer.reset();
             

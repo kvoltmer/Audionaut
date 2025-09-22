@@ -48,6 +48,11 @@ public:
             outputChanDropDown->setBounds (r.removeFromTop (h));
             r.removeFromTop (space);
         }
+        
+        if (bitDepthDropDown != nullptr) {
+            bitDepthDropDown->setBounds (r.removeFromTop (h));
+            r.removeFromTop (space);
+        }
     }
     
     void labelTextChanged (Label* labelThatHasChanged) override
@@ -57,19 +62,18 @@ public:
     
     void update()
     {
-        if (auto* currentDevice = audiumEngine->getAudioDeviceManager()->getCurrentAudioDevice())
-        {
+        if (auto* currentDevice = audiumEngine->getAudioDeviceManager()->getCurrentAudioDevice()) {
             updateSampleRateComboBox(currentDevice);
         }
         updateOutputChanComboBox();
+        updateBitDepthComboBox();
         
         resized();
     }
     
     void updateSampleRateComboBox (AudioIODevice* currentDevice)
     {
-        if (sampleRateDropDown == nullptr)
-        {
+        if (sampleRateDropDown == nullptr) {
             sampleRateDropDown = std::make_unique<ComboBox>();
             addAndMakeVisible (sampleRateDropDown.get());
 
@@ -77,16 +81,13 @@ public:
             sampleRateLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
             sampleRateLabel->attachToComponent (sampleRateDropDown.get(), true);
         }
-        else
-        {
+        else {
             sampleRateDropDown->clear();
-            sampleRateDropDown->onChange = nullptr;
         }
         
         const auto getFrequencyString = [] (int rate) { return String (rate) + " Hz"; };
 
-        for (auto rate : availableSampleRates)
-        {
+        for (auto rate : availableSampleRates) {
             const auto intRate = roundToInt (rate);
             sampleRateDropDown->addItem (getFrequencyString (intRate), intRate);
         }
@@ -94,14 +95,11 @@ public:
         // default is the sample rate of the device
         const auto intRate = roundToInt (currentDevice->getCurrentSampleRate());
         sampleRateDropDown->setText (getFrequencyString (intRate), dontSendNotification);
-
-        //sampleRateDropDown->onChange = [this] { updateConfig (false, false, true, false); };
     }
     
     void updateOutputChanComboBox ()
     {
-        if (outputChanDropDown == nullptr)
-        {
+        if (outputChanDropDown == nullptr) {
             outputChanDropDown = std::make_unique<ComboBox>();
             addAndMakeVisible (outputChanDropDown.get());
 
@@ -109,17 +107,14 @@ public:
             outputChanLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
             outputChanLabel->attachToComponent (outputChanDropDown.get(), true);
         }
-        else
-        {
+        else {
             outputChanDropDown->clear();
-            outputChanDropDown->onChange = nullptr;
         }
         
         int totalChannels = audiumEngine->getAudioTrackContainer()->getNumAudioTrackChannels();
         
         int i = 1;
-        for (auto chan : availableOutputChans)
-        {
+        for (auto chan : availableOutputChans) {
             if (chan == "multi-mono") {
                 chan += " (" + std::to_string(totalChannels) + " files)";
             }
@@ -127,14 +122,39 @@ public:
             outputChanDropDown->addItem (chan, i++);
         }
 
-        // default
+        // default is stereo
         outputChanDropDown->setText (availableOutputChans[1], dontSendNotification);
 
+    }
+    
+    void updateBitDepthComboBox ()
+    {
+        if (bitDepthDropDown == nullptr) {
+            bitDepthDropDown = std::make_unique<ComboBox>();
+            addAndMakeVisible (bitDepthDropDown.get());
+
+            bitDepthLabel = std::make_unique<juce::Label> (String{}, TRANS ("Bit depth:"));
+            bitDepthLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+            bitDepthLabel->attachToComponent (bitDepthDropDown.get(), true);
+        }
+        else {
+            bitDepthDropDown->clear();
+        }
+        
+        const auto getBitDepthString = [] (int depth) { return String (depth) + " Bits"; };
+
+        for (auto bits : availableBitDepths) {
+            bitDepthDropDown->addItem (getBitDepthString (bits), bits);
+        }
+
+        // default is 24 bits
+        bitDepthDropDown->setText (getBitDepthString (24), dontSendNotification);
     }
 
     
     juce::Value& getSampleRate() const { return sampleRateDropDown->getSelectedIdAsValue(); }
     juce::Value& getOutputChannels() const { return outputChanDropDown->getSelectedIdAsValue(); }
+    juce::Value& getBitDepth() const { return bitDepthDropDown->getSelectedIdAsValue(); }
     
 private:
     
@@ -160,10 +180,15 @@ private:
         "multi-mono"
     };
     
+    const std::vector<unsigned int> availableBitDepths = {
+        16,
+        24,
+        32
+    };
 
     
-    std::unique_ptr<juce::Label> sampleRateLabel, outputChanLabel;
-    std::unique_ptr<ComboBox> sampleRateDropDown, outputChanDropDown;
+    std::unique_ptr<juce::Label> sampleRateLabel, outputChanLabel, bitDepthLabel;
+    std::unique_ptr<ComboBox> sampleRateDropDown, outputChanDropDown, bitDepthDropDown;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ExportAudioComponent)
 };

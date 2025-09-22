@@ -103,6 +103,15 @@ unsigned int AudioResource::getNumAudioFileChannels() const
     return numChannels;
 }
 
+unsigned int AudioResource::getBitDepth() const
+{
+    if (audioFormatReader != nullptr) {
+        return audioFormatReader->bitsPerSample;
+    }
+    return 24;
+}
+
+
 double AudioResource::getFileLength(audium::TimeContextType context) const
 {
     auto length = lengthInSeconds;

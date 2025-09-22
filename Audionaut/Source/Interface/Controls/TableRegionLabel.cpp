@@ -4,10 +4,35 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "TableRegionLabel.h"
+#include "Application/AudiumCommandIDs.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
+using namespace juce;
+
+static void contextMenuCallback (int result, TableRegionLabel* component)
+{
+    if (component != nullptr &&
+        result != 0) {
+        switch (result) {
+            case CommandIDs::exportSelectedItemsId:
+                component->exportSelectedRegion();
+                break;
+            default:
+                break;
+        }
+    }
+}
+    
 void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
 {
-        
+    if (e.mods.isPopupMenu()) {
+        PopupMenu m;
+        m.addItem (CommandIDs::exportSelectedItemsId, TRANS ("Export..."), true);
+        m.setLookAndFeel (&getLookAndFeel());
+        m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight),
+                         ModalCallbackFunction::forComponent (contextMenuCallback, this));
+    }
+    
     if (auto region = getRegion(columnId, rowNumber)) {
         
         if (!e.mods.isAnyModifierKeyDown() && !region->isSelected()) {
@@ -96,4 +121,13 @@ void TableRegionLabel::update(int column, int row, bool isRowSelected)
         }
     }
     setText (text, juce::dontSendNotification);
+}
+
+void TableRegionLabel::exportSelectedRegion()
+{
+    if (auto audioRegion = getRegion(columnId, rowNumber)) {
+        exporter = std::make_unique<audium::PlayListItemExport>(audiumEngine,
+                                                                audioRegion,
+                                                                audioRegion->getAudioTrack()->getPlayListContainer());
+    }
 }

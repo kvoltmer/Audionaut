@@ -124,6 +124,12 @@ public:
     unsigned int getNumAudioFileChannels() const;
     
     /**
+     * @brief Retrieves the bit depth of the audio file.
+     * @return The bit depth as an unsigned integer.
+     */
+    unsigned int getBitDepth() const;
+    
+    /**
      * @brief Retrieves the length of the audio file in the specified time context.
      * @param context The time context to use.
      * @return The length of the file as a `double`.

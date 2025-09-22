@@ -6,6 +6,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/PlayList/PlayListItem.h"
 
 namespace audium {
 
@@ -27,6 +28,8 @@ struct ExportAudioConfig {
     bool multiMono = false;          ///< Whether to export as multiple mono files.
     double positionSeconds = 0.0;    ///< The starting position for the export in seconds.
     juce::File fileName;             ///< The file to which the audio will be exported.
+    
+    std::shared_ptr<audium::PlayListItem> playListItem = nullptr;
 
     double progress = 0.0;           ///< The progress of the export process (0.0 to 1.0).
     std::string progressMessage;     ///< A message describing the current progress state.
