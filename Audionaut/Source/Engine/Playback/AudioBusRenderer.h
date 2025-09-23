@@ -80,7 +80,7 @@ public:
             soloStates[channelNumber] = bSolo;
 
             auto anySolo = false;
-            for (auto c = 0; c < MAX_AUDIO_CHANNELS; ++c) {
+            for (auto c = 0; c < audioBus.getNumChannels(); ++c) {
                 if (soloStates[c]) {
                     anySolo = true;
                     break;
