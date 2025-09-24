@@ -96,7 +96,7 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
 #endif
 }
 
-void AudiumTransportSource::applyChannelMapping()
+void AudiumTransportSource::applyChannelMapping(bool withChannelOffset)
 {
     auto totalChannels = audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels();
     auto audioFileChannels = static_cast<int>(audioResource.getNumAudioFileChannels());
@@ -107,7 +107,7 @@ void AudiumTransportSource::applyChannelMapping()
     
     channelRemapping->clearAllMappings();
     
-    auto channelOffset = getAudioResource().getAudioTrack()->getChannelOffset();
+    auto channelOffset = withChannelOffset ? getAudioResource().getAudioTrack()->getChannelOffset() : 0;
     auto srcChannel = getAudioResource().getChannelMapping().getSourceChannel();
     auto dstChannel = getAudioResource().getChannelMapping().getDestinationChannel();
     jassert(srcChannel < audioFileChannels);
