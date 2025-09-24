@@ -100,7 +100,7 @@ public:
     
     AudioResource& getAudioResource() const { return audioResource; }
     
-    void applyChannelMapping();
+    void applyChannelMapping(bool withChannelOffset = true);
     
     std::shared_ptr<audium::AudioTransportSource> getAudioTransportSource() const { return audioTransportSource; }
     

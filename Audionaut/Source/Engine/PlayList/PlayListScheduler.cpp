@@ -297,6 +297,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
         source->schedulePosition(config->playListItem->getRegionData(seconds).getStart(), 0);
         source->scheduleDuration(config->playListItem->getRegionData(seconds).getLength(), config->sampleRate);
         source->configureDynamics(config->playListItem, tempoProvider);
+        source->applyChannelMapping(false);
         source->getAudioTransportSource()->start();
     }
     
