@@ -331,9 +331,17 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
         if (remainder > 0) {
             buffer.clear();
             info.numSamples = static_cast<int>(remainder);
+            info.clearActiveBufferRegion();
             
-            // TODO: impl
-            //processAudio(info);
+            audioBusInfo.numSamples = static_cast<int>(remainder);
+            audioBusInfo.clearActiveBufferRegion();
+            for (auto source : config->playListItem->getTransportSources()) {
+                source->getNextAudioBlock(audioBusInfo);
+                for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
+                    info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
+                }
+            }
+            
             writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             samplesWritten += info.numSamples;
         }
