@@ -16,13 +16,17 @@
 RightPanelComponent::RightPanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
+#if HAS_REGION_EDIT_VIEW
     regionComponent.reset(new RegionComponent(audiumEngine));
+#endif
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
     stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, false));
     playListContainerComponent.reset(new PlayListContainerComponent(audiumEngine));
     regionContainerComponent.reset(new RegionContainerComponent(audiumEngine));
 
-    addAndMakeVisible(regionComponent.get());
+    if (regionComponent != nullptr)
+        addAndMakeVisible(regionComponent.get());
+    
     addAndMakeVisible(stretchableLayoutResizerBar.get());
     addAndMakeVisible(playListContainerComponent.get());
     addAndMakeVisible(regionContainerComponent.get());
@@ -58,7 +62,8 @@ void RightPanelComponent::resized()
     playListContainerComponent->setVisible(isArrangement);
     regionContainerComponent->setVisible(isArrangement);
     
-    regionComponent->setVisible(!isArrangement);
+    if (regionComponent != nullptr)
+        regionComponent->setVisible(!isArrangement);
     
     if (isArrangement) {
         // the list of components that we want to reposition
@@ -73,24 +78,33 @@ void RightPanelComponent::resized()
                                                     true, true);
     }
     else {
-        regionComponent->setBounds (getLocalBounds());
+        if (regionComponent != nullptr)
+            regionComponent->setBounds (getLocalBounds());
     }
 }
 
 void RightPanelComponent::updateUI(UIContext context)
 {
+    // hier
     auto isArrangement = audiumEngine->getPlayListScheduler()->isArrangementMode();
+
+#if !defined(HAS_REGION_EDIT_VIEW)
+    isArrangement = true;
+#endif
     
     playListContainerComponent->setVisible(isArrangement);
     regionContainerComponent->setVisible(isArrangement);
-    regionComponent->setVisible(!isArrangement);
+    
+    if (regionComponent != nullptr)
+        regionComponent->setVisible(!isArrangement);
     
     if (isArrangement) {
         regionContainerComponent->updateUI(context);
         playListContainerComponent->updateUI(context);
     }
     else {
-        regionComponent->updateUI(context);
+        if (regionComponent != nullptr)
+            regionComponent->updateUI(context);
     }
     
     resized();

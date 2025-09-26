@@ -38,9 +38,15 @@ public:
     void createComponents()
     {
         auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
-        auto zoom = editMode ? zoomHandler[editType] : zoomHandler[arrangementType];
-        const auto visibleRange = zoom->getVisibleRange();
         
+#if !defined(HAS_REGION_EDIT_VIEW)
+        if (editMode) {
+            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                        "The region edit view was discontinued.",
+                                                        "We will now display the arrangement view.");
+            audiumEngine->getPlayListScheduler()->setEditMode(false);
+        }
+#endif
         removeAllChildren();
         
         channelsComponent.reset(new ChannelsComponent(audiumEngine));
@@ -48,12 +54,18 @@ public:
         
         arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler[arrangementType]));
         addAndMakeVisible(arrangementComponent.get());
-        
+
+#if HAS_REGION_EDIT_VIEW
         editComponent.reset(new EditComponent(audiumEngine, zoomHandler[editType]));
         addAndMakeVisible(editComponent.get());
-        
         editComponent->setVisible(editMode);
-        arrangementComponent->setVisible(!editMode);
+        auto zoom = editMode ? zoomHandler[editType] : zoomHandler[arrangementType];
+#endif
+        auto zoom = zoomHandler[arrangementType];
+        const auto visibleRange = zoom->getVisibleRange();
+        
+        
+        arrangementComponent->setVisible(true);
         
         zoom->setVisibleRange(visibleRange, sendNotificationSync);
     }
@@ -79,39 +91,40 @@ public:
         channelsComponent->setBounds(channelBounds);
         
         arrangementComponent->setBounds(localBounds);
-        editComponent->setBounds(localBounds);
+        if (editComponent != nullptr)
+            editComponent->setBounds(localBounds);
     }
     
     void updateUI(UIContext context = EntireContext)
     {
-        if (context == EntireContext)
-        {
+        if (context == EntireContext) {
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
-            editComponent->updateUI();
+            if (editComponent != nullptr)
+                editComponent->updateUI();
         }
-        else if(context == VerticalScrollContext)
-        {
-            getVisibleComponent()->onScrollContext();
-            if (editComponent->isVisible())
-            {
+        else if(context == VerticalScrollContext) {
+            
+            if (editComponent != nullptr &&
+                editComponent->isVisible()) {
+                editComponent->onScrollContext();
                 channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
             }
-            else if (arrangementComponent->isVisible())
-            {
+            else if (arrangementComponent->isVisible()) {
+                arrangementComponent->onScrollContext();
                 channelsComponent->setVerticalScrollOffset(arrangementComponent->getVerticalScrollOffset());
             }
-    
         }
-        else if (context == ForceRebuildContext)
-        {
+        else if (context == ForceRebuildContext) {
             bool editMode = audiumEngine->getPlayListScheduler()->isEditMode();
             auto scrollOffset = arrangementComponent->getVerticalScrollOffset();
             createComponents();
             
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
-            editComponent->updateUI();
+            
+            if (editComponent != nullptr)
+                editComponent->updateUI();
             
             arrangementComponent->setVerticalScrollOffset(scrollOffset);
             showEditComponent(editMode);
@@ -123,7 +136,8 @@ public:
             if (arrangementComponent->isVisible()) {
                 arrangementComponent->updateUI();
             }
-            else if (editComponent->isVisible()) {
+            else if (editComponent != nullptr &&
+                     editComponent->isVisible()) {
                 editComponent->updateUI();
             }
             else {
@@ -172,26 +186,35 @@ public:
     
     void showEditComponent(bool visible)
     {
-        editComponent->setVisible(visible);
-        if (visible)
-        {
-            editComponent->resized();
-            editComponent->updateUI();
-            channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
+        if (editComponent != nullptr) {
+            editComponent->setVisible(visible);
+            if (visible)
+            {
+                editComponent->resized();
+                editComponent->updateUI();
+                channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
+            }
         }
     }
     
     bool editComponentVisible() const
     {
-        return editComponent->isVisible();
+        if (editComponent != nullptr)
+            return editComponent->isVisible();
+        else
+            return false;
     }
     
     ArrangementEditBaseComponent* getVisibleComponent() const
     {
         if (arrangementComponent->isVisible())
             return arrangementComponent.get();
-        else
+        else if (editComponent != nullptr)
             return editComponent.get();
+        else {
+            jassertfalse;
+            return nullptr;
+        }
     }
     
 private:
