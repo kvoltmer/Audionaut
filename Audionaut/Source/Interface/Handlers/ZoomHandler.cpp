@@ -78,7 +78,8 @@ juce::Range<double> ZoomHandler::getVisibleRange() const noexcept
 
 void ZoomHandler::setVisibleRange(juce::Range<double> newRange, juce::NotificationType notification)
 {
-    viewPort->getHorizontalScrollBar().setCurrentRange(newRange, notification);
+    if (viewPort != nullptr)
+        viewPort->getHorizontalScrollBar().setCurrentRange(newRange, notification);
 }
 
 juce::Range<double> ZoomHandler::getVisibleRangeInSeconds() const noexcept

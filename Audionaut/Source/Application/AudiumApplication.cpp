@@ -302,8 +302,10 @@ PopupMenu AudiumApplication::createViewMenu()
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::toggleFullScreen);
     menu.addSeparator();
+#if HAS_REGION_EDIT_VIEW
     menu.addCommandItem (commandManager.get(), CommandIDs::toggleEditArrangement);
     menu.addSeparator();
+#endif
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomIn);
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomOut);
     menu.addCommandItem (commandManager.get(), CommandIDs::pageLeft);

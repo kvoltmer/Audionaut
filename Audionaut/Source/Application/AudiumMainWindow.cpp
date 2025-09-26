@@ -110,7 +110,9 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::pageLeft,
         CommandIDs::pageRight,
         CommandIDs::followTransport,
+#if HAS_REGION_EDIT_VIEW
         CommandIDs::toggleEditArrangement,
+#endif
         CommandIDs::toggleFullScreen,
         StandardApplicationCommandIDs::undo,
         StandardApplicationCommandIDs::redo,
@@ -177,10 +179,12 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Full Screen", "Enter full screen", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::commandModifier | ModifierKeys::ctrlModifier, 0));
             break;
+#if HAS_REGION_EDIT_VIEW
         case CommandIDs::toggleEditArrangement:
             result.setInfo ("Toggle Region / Arrangement View", "Toggle Region / Arrangement View", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress (KeyPress::tabKey, ModifierKeys::noModifiers, 0));
             break;
+#endif
         case CommandIDs::zoomIn:
             result.setInfo ("Zoom In", "Zoom in", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('+', ModifierKeys::commandModifier, 0));
