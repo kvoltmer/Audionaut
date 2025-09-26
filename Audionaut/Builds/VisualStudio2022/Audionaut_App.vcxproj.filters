@@ -4299,6 +4299,9 @@
     <ClInclude Include="..\..\Source\Interface\Components\HeaderPanel\HeaderComponent.h">
       <Filter>Audionaut\Source\Interface\Components\HeaderPanel</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\FooterComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.h">
       <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>

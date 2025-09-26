@@ -22,7 +22,7 @@
 //==============================================================================
 /*
 */
-class TableRegionLabel  : public juce::Label, juce::Label::Listener
+class [[deprecated]] TableRegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
     TableRegionLabel(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
