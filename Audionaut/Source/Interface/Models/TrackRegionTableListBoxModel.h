@@ -12,7 +12,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 
 
-class TrackRegionTableListBoxModel  : public juce::TableListBoxModel
+class [[deprecated]] TrackRegionTableListBoxModel  : public juce::TableListBoxModel
 {
 public:
     TrackRegionTableListBoxModel(std::shared_ptr<juce::TableListBox> owner,

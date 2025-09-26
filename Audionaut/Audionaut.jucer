@@ -326,6 +326,8 @@
                   file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
           </GROUP>
           <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
+            <FILE id="RBPpet" name="FooterComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/RightPanel/FooterComponent.h"/>
             <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/RightPanel/PlayListComponent.cpp"/>
             <FILE id="VwCjGU" name="PlayListComponent.h" compile="0" resource="0"

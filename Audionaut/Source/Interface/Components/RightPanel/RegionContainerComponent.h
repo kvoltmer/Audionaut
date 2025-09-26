@@ -13,7 +13,7 @@
 
 class TrackRegionTableListBoxModel;
 
-class RegionContainerComponent  : public juce::Component
+class [[deprecated]] RegionContainerComponent  : public juce::Component
 {
 public:
     RegionContainerComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine);

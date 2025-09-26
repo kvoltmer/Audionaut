@@ -3106,6 +3106,7 @@
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementEditBaseComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\AudioTrackBaseComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\HeaderPanel\HeaderComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\FooterComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionComponent.h"/>
