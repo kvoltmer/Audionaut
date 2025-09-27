@@ -48,8 +48,6 @@ void TableRegionLabel::mouseDown (const juce::MouseEvent& e)
             }
         }
         
-        // hier
-        
         if (e.mods.isCommandDown()) {
             // toggle selection
             region->setSelected(!region->isSelected());
