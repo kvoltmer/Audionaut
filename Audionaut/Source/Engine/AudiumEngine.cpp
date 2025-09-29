@@ -222,13 +222,29 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
                 
                 // delete redundant files
                 if (redundantFiles.size() > 0) {
+                    
+                    String redundantFilesString;
+                    for (auto str : redundantFiles) {
+                        redundantFilesString += str.getFullPathName() + "\n";
+                    }
+                    
+                    
                     auto result = NativeMessageBox::showOkCancelBox(MessageBoxIconType::WarningIcon,
-                                                                    "Redundant files found",
-                                                                    "Some audio files are not used in the project anymore.\n\n" +
-                                                                    String(redundantFiles.size()) + " files will be deleted.");
+                                                                    "Redundant files found. Move files to trash?",
+                                                                    "The following audio files are not used in the project anymore:\n\n" +
+                                                                    redundantFilesString +
+                                                                    "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
                     if (result) {
-                        for (auto& file : redundantFiles)
-                            file.deleteFile();
+                        bool success = true;
+                        for (auto& file : redundantFiles) {
+                            if (!file.moveToTrash()) {
+                                success = false;
+                                break;
+                            }
+                        }
+                        if (!success) {
+                            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
+                        }
                     }
                 }
                 
