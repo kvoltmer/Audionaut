@@ -11,6 +11,7 @@
 #include "Engine/ActionMessages.h"
 #include "Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Interface/Controls/DraggerControl.h"
 
 int AudioTrackListBoxModel::getNumRows()
 {
@@ -28,33 +29,20 @@ juce::Component* AudioTrackListBoxModel::refreshComponentForRow (int rowNumber, 
                                                                      juce::Component* existingComponentToUpdate)
 {
     auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(rowNumber);
-    if (existingComponentToUpdate == nullptr)
-    {
+    if (existingComponentToUpdate == nullptr) {
         if (audioTrack != nullptr)
-        {
-            if (arrangementMode)
-            {
-                return new AudioTrackComponent(audioTrack, audiumEngine, zoomHandler, regionSelector);
-            }
-            else
-            {
-                return new AudioTrackRegionEditComponent(audioTrack, audiumEngine, zoomHandler, regionSelector);
-            }
-        }
+            return new AudioTrackComponent(audioTrack, audiumEngine, zoomHandler, regionSelector);
     }
-    else
-    {
+    else {
         auto component = dynamic_cast<AudioTrackBaseComponent*>(existingComponentToUpdate);
         jassert(component);
     
-        if (audioTrack != nullptr)
-        {
+        if (audioTrack != nullptr) {
             // update of audioTrack since row might have changed after delete
             component->refreshComponent(audioTrack);
         }
         return component;
     }
-    
     
     return nullptr;
 }

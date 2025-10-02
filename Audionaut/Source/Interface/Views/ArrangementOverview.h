@@ -53,7 +53,7 @@ public:
         int i = 0;
         for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks())
         {
-            for (auto item : track->getPositionableItems(arrangementMode))
+            for (auto item : track->getPositionableItems())
             {
                 groupRectangles.push_back(std::make_unique<juce::DrawableRectangle>());
                 addAndMakeVisible(groupRectangles[i].get());

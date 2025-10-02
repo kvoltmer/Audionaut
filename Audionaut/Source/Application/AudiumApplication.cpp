@@ -417,7 +417,13 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             break;
         case CommandIDs::defaultProject:
             if (audiumEngine->getCurrentProjectFile() != File()) {
-                Preferences::setValue(PreferenceKeys::defaultFile, audiumEngine->getCurrentProjectFile().getFullPathName());
+                auto projectFile = audiumEngine->getCurrentProjectFile();
+                if (!audium::AudiumEngine::isValidProjectStructure(projectFile)) {
+                    // projectFile.audium/Project.json -> ../
+                    projectFile = projectFile.getParentDirectory();
+                }
+                jassert(audium::AudiumEngine::isValidProjectStructure(projectFile));
+                Preferences::setValue(PreferenceKeys::defaultFile, projectFile.getFullPathName());
             }
             else {
                 Preferences::removeKey(PreferenceKeys::defaultFile);
@@ -496,7 +502,7 @@ void AudiumApplication::openFile(juce::File file)
     auto success = audiumEngine->openFile(file, [this, file](std::string error) {
         NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
                                               "Error",
-                                              "Failed to open " + file.getFileName() +"\n\n" + String(error));
+                                              "Failed to open:\n" + file.getFullPathName() + "\n\n" + String(error));
         
     });
     

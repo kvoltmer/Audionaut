@@ -159,7 +159,6 @@
     <ClCompile Include="..\..\Source\Engine\Factory\AudiumFactory.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrack.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrackContainer.cpp"/>
-    <ClCompile Include="..\..\Source\Engine\Group\AudioClip.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioRegionAdapter.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\ResourceGroup.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Link\LinkAudioDevice.cpp"/>
@@ -190,28 +189,22 @@
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelGroupHeaderComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelsComponent.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\EditView\AudioTrackRegionEditComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\AudioTrackComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\PlayListItemComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\AudioTrackBaseComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\HeaderPanel\HeaderComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MainComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\ArrangementModel.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Controls\TableRegionLabel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Controls\SubGroupDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\DraggerControl.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Controls\RegionEditControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\LevelMeter.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\RegionLabel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\RegionSelector.cpp"/>
@@ -220,7 +213,6 @@
     <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\AudioRegionView.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Views\AudioResourceView.cpp"/>
     <ClCompile Include="..\..\..\Submodules\juce\modules\juce_analytics\analytics\juce_Analytics.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
@@ -3041,10 +3033,9 @@
     <ClInclude Include="..\..\Source\Engine\Factory\AudioTrackFactory.h"/>
     <ClInclude Include="..\..\Source\Engine\Factory\AudioResourceFactory.h"/>
     <ClInclude Include="..\..\Source\Engine\Factory\AudiumFactory.h"/>
+    <ClInclude Include="..\..\Source\Engine\Group\AudioClipData.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\AudioTrack.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\AudioTrackContainer.h"/>
-    <ClInclude Include="..\..\Source\Engine\Group\AudioClip.h"/>
-    <ClInclude Include="..\..\Source\Engine\Group\AudioClipData.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\AudioRegionAdapter.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\ResourceGroup.h"/>
     <ClInclude Include="..\..\Source\Engine\Link\LinkAudioDevice.h"/>
@@ -3096,10 +3087,6 @@
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelGroupHeaderComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelsHeaderComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\EditView\EditComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\EditView\AudioTrackRegionEditComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\EditView\RegionEditComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\EditView\SubGroupListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\ArrangementComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\AudioTrackComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\PlayListItemComponent.h"/>
@@ -3110,11 +3097,9 @@
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MainComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\ArrangementModel.h"/>
-    <ClInclude Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\ChannelGroupListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\ChannelSubGroupListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.h"/>
@@ -3124,16 +3109,13 @@
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h"/>
-    <ClInclude Include="..\..\Source\Interface\Controls\TableRegionLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DefaultLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AudiumLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DragZoomControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.h"/>
-    <ClInclude Include="..\..\Source\Interface\Controls\SubGroupDraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DraggerControl.h"/>
-    <ClInclude Include="..\..\Source\Interface\Controls\RegionEditControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LevelMeter.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PositionMarker.h"/>
@@ -3147,7 +3129,6 @@
     <ClInclude Include="..\..\Source\Interface\Views\ArrangementOverview.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\WaveFormViewBase.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\AudioRegionView.h"/>
-    <ClInclude Include="..\..\Source\Interface\Views\AudioResourceView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\TransportView.h"/>
     <ClInclude Include="..\..\..\Submodules\juce\modules\juce_analytics\analytics\juce_Analytics.h"/>
     <ClInclude Include="..\..\..\Submodules\juce\modules\juce_analytics\analytics\juce_ButtonTracker.h"/>

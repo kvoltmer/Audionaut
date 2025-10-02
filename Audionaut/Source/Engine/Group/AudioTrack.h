@@ -135,22 +135,6 @@ public:
      */
     std::vector<std::shared_ptr<AudioResource>> getAudioResources() const;
     
-    /**
-     * @brief Finds a resource group at a specific range.
-     * @param range The range to search within.
-     * @param context The time context type.
-     * @return Shared pointer to the found `ResourceGroup`, or `nullptr` if not found.
-     */
-    std::shared_ptr<ResourceGroup> getResourceGroupAtAbsoluteRange(juce::Range<double> range, TimeContextType context) const;
-    
-    /**
-     * @brief Finds a resource group at a specific position.
-     * @param position The position to search at.
-     * @param context The time context type.
-     * @return Shared pointer to the found `ResourceGroup`, or `nullptr` if not found.
-     */
-    std::shared_ptr<ResourceGroup> getResourceGroupAtAbsolutePosition(double position, TimeContextType context) const;
-    
     
     // Streamable overrides:
     bool writeToStream (juce::OutputStream& outputStream) override;
@@ -186,10 +170,7 @@ public:
     void dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos, TimeContextType context);
     
     // resource groups:
-    std::shared_ptr<ResourceGroup> createNewResourceGroup(double transportPosition,
-                                                          TimeContextType context,
-                                                          bool arrangementMode);
-    std::shared_ptr<ResourceGroup> createNewResourceGroup(juce::Range<double> transportPositionRange, TimeContextType context);
+    std::shared_ptr<ResourceGroup> createNewResourceGroup();
     std::shared_ptr<ResourceGroup> createNewResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup);
     std::shared_ptr<ResourceGroup> findSimilarResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup);
     std::shared_ptr<ResourceGroup> getDefaultResourceGroup() const;
@@ -199,7 +180,7 @@ public:
     int getTotalHeight() const;
     void setChannelHeight(int height);
     
-    std::list<std::shared_ptr<PositionableBase>> getPositionableItems(bool arrangementMode) const;
+    std::list<std::shared_ptr<PositionableBase>> getPositionableItems() const;
     
     // objects:
     bool deleteSelectedObject(std::shared_ptr<Selectable> object, bool &rebuild);
@@ -227,7 +208,7 @@ public:
                                    double position,
                                    TimeContextType context);
     
-    double getTotalLength(TimeContextType context, bool arrangementMode) const;
+    double getTotalLength(TimeContextType context) const;
     
     std::vector<DspClipData> getDspClipVector(bool arrangementMode) const;
     

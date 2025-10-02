@@ -11,7 +11,6 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -439,7 +438,7 @@ void PlayListScheduler::commitPlayListData()
     // calc total length
     double totalLength = 0.0;
     for (auto track : audioTrackContainer->getAudioTracks()) {
-        totalLength = juce::jmax(totalLength, track->getTotalLength(audium::clocks, isArrangementMode()));
+        totalLength = juce::jmax(totalLength, track->getTotalLength(audium::clocks));
     }
     totalLengthClocks = totalLength;
     std::cout << "PlayListScheduler::commitPlayListData -> totalLengthClocks: " << totalLengthClocks << std::endl;

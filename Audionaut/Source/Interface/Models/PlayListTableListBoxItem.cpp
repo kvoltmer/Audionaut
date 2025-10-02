@@ -15,7 +15,6 @@
 
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Controls/RegionLabel.h"
-#include "Interface/Controls/TableRegionLabel.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
@@ -24,9 +23,6 @@ using namespace juce;
 bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
-        return true;
-    
-    if (dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
     
     if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
@@ -95,8 +91,7 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
             modified = true;
         }
     }
-    else if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
-             dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+    else if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
     {
         playListModel->getAudioTrack()->dropSelectedAudioRegions(insertIndex);
         modified = true;

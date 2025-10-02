@@ -11,7 +11,6 @@
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Components/RightPanel/PlayListContainerComponent.h"
 #include "Interface/Components/RightPanel/RegionComponent.h"
-#include "Interface/Components/RightPanel/RegionContainerComponent.h"
 #include "Interface/Components/RightPanel/FooterComponent.h"
 
 RightPanelComponent::RightPanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :

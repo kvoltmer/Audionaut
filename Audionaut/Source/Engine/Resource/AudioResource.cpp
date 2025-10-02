@@ -9,7 +9,6 @@
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Channel/AudioChannel.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
 
@@ -148,8 +147,8 @@ std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWith
 
 bool AudioResource::containsAbsolutePosition(double position, audium::TimeContextType context) const
 {
-    auto startTime = getResourceGroup()->getAbsolutePosition(context);
-    auto endTime = startTime + getResourceGroup()->getRegionData(context).getLength();
+    auto startTime = 0.0;
+    auto endTime = getResourceGroup()->getMaxLength(context);
     juce::Range<double> absoluteRange(startTime, endTime);
     if (absoluteRange.contains(position)) {
         return true;

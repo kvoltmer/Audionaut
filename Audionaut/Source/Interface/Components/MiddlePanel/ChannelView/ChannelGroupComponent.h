@@ -10,7 +10,7 @@
 #include "Interface/Widgets/audium_ListBox.h"
 #include "Interface/Models/ChannelSubGroupListBoxModel.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h"
-
+#include "Interface/Controls/DraggerControl.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrack.h"
 
