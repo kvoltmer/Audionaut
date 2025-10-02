@@ -59,6 +59,11 @@ public:
     ~AudioResourceContainer();
 
     /**
+     * @brief Deletes the temporary project directory.
+     */
+    static void deleteTemporaryProjectDirectory();
+    
+    /**
      * @brief Creates a temporary project directory.
      * @param reset Whether to reset the directory if it already exists.
      * @return True if the directory was successfully created, false otherwise.
@@ -86,7 +91,8 @@ public:
      * @param sourceDirectory The source directory.
      * @param destinationDirectory The destination directory.
      */
-    bool copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory);
+    bool copyOrMoveAudioFiles(const juce::File sourceDirectory,
+                              const juce::File destinationDirectory);
 
     /**
      * @brief Changes the paths of audio files to a new directory.

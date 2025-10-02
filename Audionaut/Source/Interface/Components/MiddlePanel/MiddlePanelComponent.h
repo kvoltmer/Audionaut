@@ -11,7 +11,6 @@
 
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"
-#include "Interface/Components/MiddlePanel/EditView/EditComponent.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
@@ -39,14 +38,13 @@ public:
     {
         auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
         
-#if !defined(HAS_REGION_EDIT_VIEW)
         if (editMode) {
             juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
                                                         "The region edit view was discontinued.",
                                                         "We will now display the arrangement view.");
             audiumEngine->getPlayListScheduler()->setEditMode(false);
         }
-#endif
+
         removeAllChildren();
         
         channelsComponent.reset(new ChannelsComponent(audiumEngine));
@@ -55,12 +53,7 @@ public:
         arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler[arrangementType]));
         addAndMakeVisible(arrangementComponent.get());
 
-#if HAS_REGION_EDIT_VIEW
-        editComponent.reset(new EditComponent(audiumEngine, zoomHandler[editType]));
-        addAndMakeVisible(editComponent.get());
-        editComponent->setVisible(editMode);
-        auto zoom = editMode ? zoomHandler[editType] : zoomHandler[arrangementType];
-#endif
+
         auto zoom = zoomHandler[arrangementType];
         const auto visibleRange = zoom->getVisibleRange();
         
@@ -89,10 +82,7 @@ public:
         auto channelBounds = localBounds.removeFromLeft(AudiumLookAndFeel::channelsWidth);
         channelBounds.removeFromTop(AudiumLookAndFeel::dragZoomControlHeight);
         channelsComponent->setBounds(channelBounds);
-        
         arrangementComponent->setBounds(localBounds);
-        if (editComponent != nullptr)
-            editComponent->setBounds(localBounds);
     }
     
     void updateUI(UIContext context = EntireContext)
@@ -100,17 +90,9 @@ public:
         if (context == EntireContext) {
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
-            if (editComponent != nullptr)
-                editComponent->updateUI();
         }
         else if(context == VerticalScrollContext) {
-            
-            if (editComponent != nullptr &&
-                editComponent->isVisible()) {
-                editComponent->onScrollContext();
-                channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
-            }
-            else if (arrangementComponent->isVisible()) {
+            if (arrangementComponent->isVisible()) {
                 arrangementComponent->onScrollContext();
                 channelsComponent->setVerticalScrollOffset(arrangementComponent->getVerticalScrollOffset());
             }
@@ -123,27 +105,17 @@ public:
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
             
-            if (editComponent != nullptr)
-                editComponent->updateUI();
-            
             arrangementComponent->setVerticalScrollOffset(scrollOffset);
-            showEditComponent(editMode);
             showArrangementComponent(!editMode);
             resized();
         }
-        else if (context == ArrangementContext)
-        {
+        else if (context == ArrangementContext) {
             if (arrangementComponent->isVisible()) {
                 arrangementComponent->updateUI();
-            }
-            else if (editComponent != nullptr &&
-                     editComponent->isVisible()) {
-                editComponent->updateUI();
             }
             else {
                 jassertfalse;
             }
-            
         }
     }
     
@@ -183,34 +155,15 @@ public:
         return arrangementComponent->isVisible();
     }
     
-    
-    void showEditComponent(bool visible)
-    {
-        if (editComponent != nullptr) {
-            editComponent->setVisible(visible);
-            if (visible)
-            {
-                editComponent->resized();
-                editComponent->updateUI();
-                channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
-            }
-        }
-    }
-    
     bool editComponentVisible() const
     {
-        if (editComponent != nullptr)
-            return editComponent->isVisible();
-        else
-            return false;
+        return false;
     }
     
     ArrangementEditBaseComponent* getVisibleComponent() const
     {
         if (arrangementComponent->isVisible())
             return arrangementComponent.get();
-        else if (editComponent != nullptr)
-            return editComponent.get();
         else {
             jassertfalse;
             return nullptr;
@@ -227,9 +180,6 @@ private:
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;
-    std::unique_ptr<EditComponent> editComponent;
-    
-    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MiddlePanelComponent)
 };

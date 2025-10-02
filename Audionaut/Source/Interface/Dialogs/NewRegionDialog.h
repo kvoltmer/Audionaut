@@ -49,11 +49,6 @@ private:
                     name =  resourceGroup->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
                     break;
                 }
-            } else {
-                if (auto resourceGroup = track->getResourceGroupAtAbsoluteRange(selectedRange, context)) {
-                    name = resourceGroup->getAudioRegionContainer()->getUniqueName(resourceGroup->getName());
-                    break;
-                }
             }
         }
         

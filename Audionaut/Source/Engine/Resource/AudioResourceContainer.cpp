@@ -11,7 +11,6 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 
@@ -22,8 +21,7 @@ namespace audium {
 AudioResourceContainer::~AudioResourceContainer()
 {
     audioResources.clear();
-    if (AudiumEngine::tempDirectory.exists())
-        AudiumEngine::tempDirectory.deleteRecursively();
+    deleteTemporaryProjectDirectory();
 }
 
 const juce::File AudioResourceContainer::getAudioFileDirectory(const juce::File projectRoot)
@@ -38,13 +36,17 @@ const juce::File AudioResourceContainer::getAudioFileDirectory()
     return getAudioFileDirectory(AudiumEngine::projectDirectory);
 }
 
+void AudioResourceContainer::deleteTemporaryProjectDirectory()
+{
+    if (AudiumEngine::tempDirectory.exists())
+        AudiumEngine::tempDirectory.deleteRecursively();
+    AudiumEngine::tempDirectory = File();
+}
+
 bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
 {
-    if (reset) {
-        if (AudiumEngine::tempDirectory.exists())
-            AudiumEngine::tempDirectory.deleteRecursively();
-        AudiumEngine::tempDirectory = File();
-    }
+    if (reset)
+        deleteTemporaryProjectDirectory();
     
     if (!AudiumEngine::tempDirectory.exists()) {
         // use a unique directory within the temp location
@@ -80,9 +82,12 @@ bool AudioResourceContainer::isAudioFileCurrentlyLoaded(const juce::File audioFi
     return false;
 }
 
-bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory)
+bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirectory,
+                                                  const juce::File destinationDirectory)
 {
+    juce::String debugString;
     if (sourceDirectory != destinationDirectory) {
+            
         if (!destinationDirectory.exists()) {
             if (!destinationDirectory.createDirectory())
                 return false;
@@ -100,16 +105,26 @@ bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirecto
                 if (found.isAChildOf(File::getSpecialLocation(File::tempDirectory))) {
                     if (!found.moveFileTo(destinationFile))
                         return false;
-                    std::cout << "moved to: " << destinationFile.getFullPathName() << std::endl;
+                    debugString += "moved to: " + destinationFile.getFileName() + "\n";
                 }
                 else {
                     if (!found.copyFileTo(destinationFile))
                         return false;
-                    std::cout << "copied to: " << destinationFile.getFullPathName() << std::endl;
+                    debugString += "copied to: " + destinationFile.getFileName() + "\n";
                 }
             }
         }        
     }
+#if _DEBUG
+    if (debugString.isNotEmpty()) {
+        
+        auto messageString = "Destination: " + destinationDirectory.getFullPathName() + "\n\n";
+        messageString += debugString;
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                              "copyOrMoveAudioFiles",
+                                              messageString);
+    }
+#endif
     return true;
 }
 

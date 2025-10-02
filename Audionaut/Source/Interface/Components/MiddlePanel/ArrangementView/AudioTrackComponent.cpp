@@ -14,7 +14,6 @@
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/Controls/RegionLabel.h"
-#include "Interface/Controls/TableRegionLabel.h"
 #include "Interface/Controls/DraggerControl.h"
 #include "Interface/Models/PlayListTableListBoxItem.h"
 
@@ -120,9 +119,6 @@ bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSou
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
     
-    if (dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
-        return true;
-    
     return false;
 }
 
@@ -185,8 +181,7 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
     zoomHandler->snapToGrid(pos);
     
     bool success = false;
-    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
-        dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
+    if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
         audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
         success = true;
     }

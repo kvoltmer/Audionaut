@@ -76,6 +76,9 @@ void AudiumEngine::cleanup()
 
 void AudiumEngine::createNewProject()
 {
+    // reset current project dir
+    projectDirectory = File();
+    
     AudioResourceContainer::createTemporaryProjectDirectory(true);
     
     audium::WaveFormColours::resetWaveFormColour();
@@ -191,9 +194,10 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(file.getParentDirectory());
         if (sourceDirectory != destinationDirectory) {
             if (!audioResourceContainer->copyOrMoveAudioFiles(sourceDirectory, destinationDirectory)) {
-                NullCheckedInvocation::invoke (callback, "Error copying audio files.");
+                NullCheckedInvocation::invoke (callback, "Failed to copy audio files.");
                 return false;
             }
+            
             audioResourceContainer->changeAudioFilePaths(destinationDirectory);
         }
         // assign new project directory
@@ -224,8 +228,14 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
                 if (redundantFiles.size() > 0) {
                     
                     String redundantFilesString;
-                    for (auto str : redundantFiles) {
-                        redundantFilesString += str.getFullPathName() + "\n";
+                    for (auto i = 0; i < redundantFiles.size(); i++) {
+                        redundantFilesString += redundantFiles[i].getFullPathName() + "\n";
+                        
+                        // don't display more than 10 Files
+                        if (i > 10) {
+                            redundantFilesString += "etc...";
+                            break;
+                        }
                     }
                     
                     

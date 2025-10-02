@@ -12,6 +12,7 @@
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Channel/AudioChannel.h"
 
 class ChannelSubGroupListBoxModel  : public audium::ListBoxModel
 {

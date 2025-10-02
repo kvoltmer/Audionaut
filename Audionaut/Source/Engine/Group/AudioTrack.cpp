@@ -5,7 +5,6 @@
 
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Resource/AudioResource.h"
@@ -41,26 +40,6 @@ void AudioTrack::setAudioTrackName(const juce::String newName)
 std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResources() const
 {
     return audioResourceContainer.getAudioResourcesForTrack(const_cast<AudioTrack*>(this));
-}
-
-std::shared_ptr<ResourceGroup> AudioTrack::getResourceGroupAtAbsoluteRange(juce::Range<double> range, audium::TimeContextType context) const
-{
-    for (auto resourceGroup : resourceGroupContainer->getObjects()) {
-        auto absoluteRange = resourceGroup->getAbsolutePositionRange(context);
-        if (absoluteRange.contains(range))
-            return resourceGroup;
-    }
-    return nullptr;
-}
-
-std::shared_ptr<ResourceGroup> AudioTrack::getResourceGroupAtAbsolutePosition(double position, audium::TimeContextType context) const
-{
-    for (auto resourceGroup : resourceGroupContainer->getObjects()) {
-        auto absoluteRange = resourceGroup->getAbsolutePositionRange(context);
-        if (absoluteRange.contains(position))
-            return resourceGroup;
-    }
-    return nullptr;
 }
 
 void AudioTrack::setColour(juce::Colour colour)
@@ -152,17 +131,7 @@ void AudioTrack::mergeChannelFromJson(json& input)
     }
     
     for (auto& jsonResourceGroup : jsonResourceGroups) {
-        
-        // use temporary sub group to get the postion
-        ResourceGroup tmp(*this, nullptr, getSelectionManager());
-        
-        tmp.getAudioClip()->readFromJson(jsonResourceGroup["clip"], true);
-        auto subGroupPosition = tmp.getAbsolutePositionRange(context);
-        
-        auto resourceGroup = getResourceGroupAtAbsoluteRange(subGroupPosition, context);
-        if (resourceGroup == nullptr) {
-            resourceGroup = createNewResourceGroup(subGroupPosition, context);
-        }
+        auto resourceGroup = createNewResourceGroup();
         resourceGroup->mergeFromJson(jsonResourceGroup, destChannel);
     }
     // merge playlist
@@ -384,30 +353,9 @@ void AudioTrack::onDragEnd()
     }
 }
 
-std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(double transportPosition,
-                                                                  audium::TimeContextType context,
-                                                                  bool arrangementMode)
+std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup()
 {
     auto resourceGroup = AudioTrackFactory::createResourceGroup(*this);
-    
-    if (arrangementMode) {
-        // reset position of new sub group
-        transportPosition = 0.0;
-        for (auto sub : resourceGroupContainer->getObjects()) {
-            transportPosition = std::max(transportPosition, sub->getAbsolutePositionRange(context).getEnd());
-        }
-    }
-    
-    resourceGroup->setAbsolutePosition(transportPosition, context);
-    resourceGroupContainer->push_back(resourceGroup);
-    return resourceGroup;
-}
-
-std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(juce::Range<double> transportPositionRange, audium::TimeContextType context)
-{
-    auto resourceGroup = AudioTrackFactory::createResourceGroup(*this);
-    resourceGroup->setAbsolutePosition(transportPositionRange.getStart(), context);
-    resourceGroup->setLength(transportPositionRange.getLength(), context);
     resourceGroupContainer->push_back(resourceGroup);
     return resourceGroup;
 }
@@ -429,13 +377,6 @@ std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(const std::sha
             newResource->getChannelMapping().setOutputChannelMapping(srcChannel, dstChannel);
         }
         
-        // position of new sub group
-        auto transportPosition = 0.0;
-        auto context = audium::clocks;
-        for (auto sub : resourceGroupContainer->getObjects()) {
-            transportPosition = std::max(transportPosition, sub->getAbsolutePositionRange(context).getEnd());
-        }
-        resourceGroup->setAbsolutePosition(transportPosition, context);
         resourceGroupContainer->push_back(resourceGroup);
     }
     
@@ -444,16 +385,12 @@ std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(const std::sha
 
 std::shared_ptr<ResourceGroup> AudioTrack::findSimilarResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup)
 {
-    auto context = audium::clocks;
     for (auto resourceGroup : resourceGroupContainer->getObjects()) {
-        if (resourceGroup->getRegionData(context) == otherResourceGroup->getRegionData(context) &&
-            resourceGroup->getName() == otherResourceGroup->getName() &&
+        if (resourceGroup->getName() == otherResourceGroup->getName() &&
             resourceGroup->getAudioResources().size() == otherResourceGroup->getAudioResources().size())
         {
             return resourceGroup;
         }
-        
-        
     }
     return  nullptr;
 }
@@ -490,24 +427,15 @@ void AudioTrack::setChannelHeight(int height)
     }
 }
 
-std::list<std::shared_ptr<PositionableBase>> AudioTrack::getPositionableItems(bool arrangementMode) const
+std::list<std::shared_ptr<PositionableBase>> AudioTrack::getPositionableItems() const
 {
     // returns all positionable items
-    // note: depending on the arrangement or edit mode
     
     std::list<std::shared_ptr<PositionableBase>> result;
-    if (arrangementMode)
-    {
-        auto playListItems = getPlayListContainer()->getPlayListItems();
-        for (auto playListItem : playListItems)
-            result.push_back(playListItem);
-    }
-    else
-    {
-        for (auto resourceGroup : getResourceGroups())
-            result.push_back(resourceGroup);
-    }
     
+    auto playListItems = getPlayListContainer()->getPlayListItems();
+    for (auto playListItem : playListItems)
+        result.push_back(playListItem);
     
     result.sort( []( const std::shared_ptr<PositionableBase> a, const std::shared_ptr<PositionableBase> b ) {
         return a->getAbsolutePositionRange(audium::clocks).getEnd() < b->getAbsolutePositionRange(audium::clocks).getEnd();
@@ -618,16 +546,12 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
             resourceGroup = playListItem->getRegion()->getResourceGroup();
         }
     }
-    else {
-        resourceGroup = getResourceGroupAtAbsolutePosition(position, audium::clocks);
-    }
     
     if (resourceGroup == nullptr) {
-        resourceGroup = createNewResourceGroup(position, audium::clocks, arrangementMode);
+        resourceGroup = createNewResourceGroup();
         subGroupCreated = true;
     }
     else {
-        position = resourceGroup->getAbsolutePosition(audium::clocks);
         destChannel = getNumAudioTrackChannels();
     }
     
@@ -657,9 +581,7 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     {
         createDefaultPlayListItem(resources.front(), resourceGroup, position, audium::clocks);
     }
-    
-    resourceGroup->getAudioClip()->validateData();
-    
+        
     action->storeNewState();
     getAudioTrackContainer().getUndoManager()->perform(action.release(), "File(s) added");
     getAudioTrackContainer().getUndoManager()->beginNewTransaction();
@@ -722,24 +644,9 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
     getPlayListContainer()->sortByPosition();
 }
 
-double AudioTrack::getTotalLength(audium::TimeContextType context, bool arrangementMode) const
+double AudioTrack::getTotalLength(audium::TimeContextType context) const
 {
-    auto result1 = 0.0;
-    if (arrangementMode)
-    {
-        result1 = getPlayListContainer()->getTotalLength(context);
-    }
-    else
-    {
-        double totalLength = 0.0;
-        for (auto resourceGroup : resourceGroupContainer->getObjects())
-        {
-            totalLength = std::max(totalLength, resourceGroup->getAbsolutePositionRange(context).getEnd());
-        }
-        result1 = totalLength;
-    }
-    
-    return result1;
+    return getPlayListContainer()->getTotalLength(context);
 }
 
 
@@ -748,35 +655,22 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
     std::vector<DspClipData> result;
     DspClipData dspClipData;
     
-    if (arrangementMode) {
-        // iterate playlist items and it's transport sources
-        for (const auto &item : getPlayListContainer()->getPlayListItems()) {
-            for (const auto &transportSource : item->getTransportSources()) {
-                dspClipData.active              = true;
-                auto channel = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
-                dspClipData.clipGain            = item->getRegion()->getGain(channel);
-                dspClipData.clipFadeInClocks    = item->getFadeInClocks();
-                dspClipData.clipFadeOutClocks   = item->getFadeOutClocks();
-                dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
-                dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
-                
-                dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);
-                result.push_back(dspClipData);
-            }
+    // iterate playlist items and it's transport sources
+    for (const auto &item : getPlayListContainer()->getPlayListItems()) {
+        for (const auto &transportSource : item->getTransportSources()) {
+            dspClipData.active              = true;
+            auto channel = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
+            dspClipData.clipGain            = item->getRegion()->getGain(channel);
+            dspClipData.clipFadeInClocks    = item->getFadeInClocks();
+            dspClipData.clipFadeOutClocks   = item->getFadeOutClocks();
+            dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
+            dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
+            
+            dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);
+            result.push_back(dspClipData);
         }
     }
-    else {
-        // iterate sub groups and it's transport sources
-        for (const auto &resourceGroup : getResourceGroups()) {
-            for (const auto &transportSource : resourceGroup->getTransportSources()) {
-                dspClipData.clipData        = resourceGroup->getAudioClip()->data;
-                dspClipData.active          = true;
-                dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);
-                result.push_back(dspClipData);
-            }
-        }
-    }
-    
+
     return result;
 }
 
