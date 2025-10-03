@@ -90,7 +90,9 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
         track->ensureNumChannels(otherRegion->getAudioTrack()->getNumAudioTrackChannels());
     
     // - similar subgroup must exist
-    jassert(track->findSimilarResourceGroup(otherRegion->getResourceGroup()));
+    json otherGroup;
+    otherRegion->getResourceGroup()->writeToJson(otherGroup);
+    jassert(track->findExistingResourceGroup(otherGroup));
     
     
     // - find similar region
