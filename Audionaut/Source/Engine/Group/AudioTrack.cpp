@@ -104,8 +104,6 @@ bool AudioTrack::writeChannelToJson (json& output, AudioChannel* audioChannel)
 
 void AudioTrack::mergeChannelFromJson(json& input)
 {
-    auto context = audium::clocks;
-    
     // merge channels
     auto jsonChannels = input["channels"];
     
@@ -118,7 +116,7 @@ void AudioTrack::mergeChannelFromJson(json& input)
     }
     jassert(destChannel != -1);
     
-    // merge sub groups
+    // merge resource groups
     json jsonResourceGroups;
     if (input.contains("resource_groups")) {
         jsonResourceGroups = input["resource_groups"];
@@ -131,7 +129,10 @@ void AudioTrack::mergeChannelFromJson(json& input)
     }
     
     for (auto& jsonResourceGroup : jsonResourceGroups) {
-        auto resourceGroup = createNewResourceGroup();
+        auto resourceGroup = findExistingResourceGroup(jsonResourceGroup);
+        if (resourceGroup == nullptr) {
+            resourceGroup = createNewResourceGroup();
+        }
         resourceGroup->mergeFromJson(jsonResourceGroup, destChannel);
     }
     // merge playlist
@@ -393,6 +394,43 @@ std::shared_ptr<ResourceGroup> AudioTrack::findSimilarResourceGroup(const std::s
         }
     }
     return  nullptr;
+}
+
+std::shared_ptr<ResourceGroup> AudioTrack::findExistingResourceGroup(json jsonResourceGroup)
+{
+    // iterate over resource groups and compare it's regions by name, start and end
+    for (auto resourceGroup : resourceGroupContainer->getObjects()) {
+        auto regionContainer = resourceGroup->getAudioRegionContainer();
+        auto otherRegions = jsonResourceGroup["regions"];
+        
+        if (static_cast<size_t>(regionContainer->getNumRegions()) == otherRegions.size()) {
+            
+            bool success = true;
+            // check name, start, end
+            for (auto i = 0; i < static_cast<size_t>(regionContainer->getNumRegions()); ++i) {
+                auto r = regionContainer->getRegion(i);
+                if (r->getName().toStdString() != otherRegions[i].at("name")) {
+                    success = false;
+                    break;
+                }
+                
+                if (abs(otherRegions[i].at("start").get<double>() - r->getRegionData(audium::seconds).getStart()) > 0.0) {
+                    success = false;
+                    break;
+                }
+
+                if (abs(otherRegions[i].at("end").get<double>() - r->getRegionData(audium::seconds).getEnd()) > 0.0) {
+                    success = false;
+                    break;
+                }
+            }
+            
+            if (success) {
+                return resourceGroup;
+            }
+        }
+    }
+    return nullptr;
 }
 
 std::shared_ptr<ResourceGroup> AudioTrack::getDefaultResourceGroup() const
