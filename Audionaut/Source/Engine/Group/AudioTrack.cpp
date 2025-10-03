@@ -363,7 +363,9 @@ std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup()
 
 std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup)
 {
-    auto resourceGroup = findSimilarResourceGroup(otherResourceGroup);
+    json otherGroupJson;
+    otherResourceGroup->writeToJson(otherGroupJson);
+    auto resourceGroup = findExistingResourceGroup(otherGroupJson);
     
     if (resourceGroup == nullptr) {
         resourceGroup = AudioTrackFactory::createResourceGroup(*this);
@@ -382,18 +384,6 @@ std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup(const std::sha
     }
     
     return resourceGroup;
-}
-
-std::shared_ptr<ResourceGroup> AudioTrack::findSimilarResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup)
-{
-    for (auto resourceGroup : resourceGroupContainer->getObjects()) {
-        if (resourceGroup->getName() == otherResourceGroup->getName() &&
-            resourceGroup->getAudioResources().size() == otherResourceGroup->getAudioResources().size())
-        {
-            return resourceGroup;
-        }
-    }
-    return  nullptr;
 }
 
 std::shared_ptr<ResourceGroup> AudioTrack::findExistingResourceGroup(json jsonResourceGroup)

@@ -172,7 +172,6 @@ public:
     // resource groups:
     std::shared_ptr<ResourceGroup> createNewResourceGroup();
     std::shared_ptr<ResourceGroup> createNewResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup);
-    std::shared_ptr<ResourceGroup> findSimilarResourceGroup(const std::shared_ptr<ResourceGroup> otherResourceGroup);
     std::shared_ptr<ResourceGroup> findExistingResourceGroup(json jsonResourceGroup);
     std::shared_ptr<ResourceGroup> getDefaultResourceGroup() const;
     std::vector<std::shared_ptr<ResourceGroup>> getResourceGroups() const { return resourceGroupContainer->getObjects(); }
