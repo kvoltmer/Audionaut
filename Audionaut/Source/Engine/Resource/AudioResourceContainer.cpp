@@ -116,6 +116,7 @@ bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirecto
         }        
     }
 #if _DEBUG
+#if !defined(CATCH2_TESTS)
     if (debugString.isNotEmpty()) {
         
         auto messageString = "Destination: " + destinationDirectory.getFullPathName() + "\n\n";
@@ -124,6 +125,7 @@ bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirecto
                                               "copyOrMoveAudioFiles",
                                               messageString);
     }
+#endif
 #endif
     return true;
 }

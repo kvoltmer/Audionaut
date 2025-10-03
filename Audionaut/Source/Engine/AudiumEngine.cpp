@@ -146,6 +146,12 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
                     return true;
                 }
             }
+            else {
+                NullCheckedInvocation::invoke (callback,
+                                               inputStream.getStatus().getErrorMessage().toStdString());
+                return false;
+                
+            }
             
         }
 
