@@ -392,14 +392,14 @@ std::shared_ptr<ResourceGroup> AudioTrack::findExistingResourceGroup(json jsonRe
     for (auto resourceGroup : resourceGroupContainer->getObjects()) {
         auto regionContainer = resourceGroup->getAudioRegionContainer();
         auto otherRegions = jsonResourceGroup["regions"];
-        
-        if (static_cast<size_t>(regionContainer->getNumRegions()) == otherRegions.size()) {
+        auto numRegions = static_cast<size_t>(regionContainer->getNumRegions());
+        if (numRegions == otherRegions.size()) {
             
             bool success = true;
             // check name, start, end
-            for (auto i = 0; i < static_cast<size_t>(regionContainer->getNumRegions()); ++i) {
-                auto r = regionContainer->getRegion(i);
-                if (r->getName().toStdString() != otherRegions[i].at("name")) {
+            for (size_t i = 0; i < numRegions; ++i) {
+                auto r = regionContainer->getRegion((int)i);
+                if (r->getName().toStdString() != otherRegions[i].at("name").get<std::string>()) {
                     success = false;
                     break;
                 }
