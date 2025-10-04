@@ -18,10 +18,10 @@
 #include "Interface/Views/AudioRegionView.h"
 
 
-class PlayListItemArrangementModel  : public audium::ListBoxModel
+class PlayListItemListBoxModel  : public audium::ListBoxModel
 {
 public:
-    PlayListItemArrangementModel(audium::ListBox& owner,
+    PlayListItemListBoxModel(audium::ListBox& owner,
                                  std::shared_ptr<audium::AudioTrack> audioTrack,
                                  std::shared_ptr<audium::PlayListItem> playListItem,
                                  std::shared_ptr<audium::AudiumEngine> audiumEngine,
@@ -36,7 +36,7 @@ public:
     {
     }
     
-    ~PlayListItemArrangementModel() override
+    ~PlayListItemListBoxModel() override
     {
     }
     
@@ -140,5 +140,5 @@ private:
     std::shared_ptr<RegionSelector> regionSelector;
 
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemArrangementModel)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemListBoxModel)
 };

@@ -3107,7 +3107,7 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h"/>
-    <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h"/>

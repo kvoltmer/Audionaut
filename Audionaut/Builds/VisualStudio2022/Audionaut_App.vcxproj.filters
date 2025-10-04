@@ -4299,7 +4299,7 @@
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h">
+    <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h">
