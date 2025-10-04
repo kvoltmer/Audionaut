@@ -136,9 +136,8 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
     
     playListItemArrangementModel->setPlayListItem(playListItem);
     playListItemArrangementModel->setParentComponent(getParentComponent());
-    if (playListItemListBox->getModel() == nullptr)
-        playListItemListBox->setModel(playListItemArrangementModel.get());
-    playListItemListBox->updateContent();
+    playListItemListBox->setModel(playListItemArrangementModel.get());
+    //playListItemListBox->updateContent();
         
 
     fadeInControl->setPlayListItem(playListItem);
