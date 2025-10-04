@@ -21,11 +21,8 @@ public:
     MiddlePanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
-        snapToGridHandlers[arrangementType].reset(new SnapToGridHandler());
-        zoomHandler[arrangementType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler(), snapToGridHandlers[arrangementType]));
-        
-        snapToGridHandlers[editType].reset(new SnapToGridHandler());
-        zoomHandler[editType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler(), snapToGridHandlers[editType]));
+        snapToGridHandler.reset(new SnapToGridHandler());
+        zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler(), snapToGridHandler));
 
         createComponents();
     }
@@ -50,17 +47,14 @@ public:
         channelsComponent.reset(new ChannelsComponent(audiumEngine));
         addAndMakeVisible(channelsComponent.get());
         
-        arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler[arrangementType]));
+        arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler));
         addAndMakeVisible(arrangementComponent.get());
 
-
-        auto zoom = zoomHandler[arrangementType];
-        const auto visibleRange = zoom->getVisibleRange();
-        
-        
+        const auto visibleRange = zoomHandler->getVisibleRange();
+    
         arrangementComponent->setVisible(true);
         
-        zoom->setVisibleRange(visibleRange, sendNotificationSync);
+        zoomHandler->setVisibleRange(visibleRange, sendNotificationSync);
     }
     
     enum UIContext {
@@ -173,10 +167,8 @@ public:
 private:
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
-    enum { arrangementType = 0, editType = 1, numTypes = 2 };
-    
-    std::shared_ptr<ZoomHandler> zoomHandler[numTypes];
-    std::shared_ptr<SnapToGridHandler> snapToGridHandlers[numTypes];
+    std::shared_ptr<ZoomHandler> zoomHandler;
+    std::shared_ptr<SnapToGridHandler> snapToGridHandler;
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;
