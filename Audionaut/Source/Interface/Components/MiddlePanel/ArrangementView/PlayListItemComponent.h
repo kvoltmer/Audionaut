@@ -7,7 +7,7 @@
 
 #include <JuceHeader.h>
 #include "Interface/Widgets/audium_ListBox.h"
-#include "Interface/Models/PlayListItemArrangementModel.h"
+#include "Interface/Models/PlayListItemListBoxModel.h"
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListContainer.h"
@@ -60,7 +60,7 @@ private:
     std::shared_ptr<RegionSelector> regionSelector;
         
     std::unique_ptr<audium::ListBox> playListItemListBox;
-    std::unique_ptr<PlayListItemArrangementModel> playListItemArrangementModel;
+    std::unique_ptr<PlayListItemListBoxModel> playListItemListBoxModel;
     
         
     std::unique_ptr<FadeInOutControl> fadeInControl;

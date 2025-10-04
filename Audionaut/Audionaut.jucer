@@ -359,8 +359,8 @@
                 file="Source/Interface/Models/RegionTableListBoxModel.cpp"/>
           <FILE id="XJwywE" name="RegionTableListBoxModel.h" compile="0" resource="0"
                 file="Source/Interface/Models/RegionTableListBoxModel.h"/>
-          <FILE id="dd0598" name="PlayListItemArrangementModel.h" compile="0"
-                resource="0" file="Source/Interface/Models/PlayListItemArrangementModel.h"/>
+          <FILE id="dd0598" name="PlayListItemListBoxModel.h" compile="0" resource="0"
+                file="Source/Interface/Models/PlayListItemListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
           <FILE id="Y7l77u" name="LoopDraggerControl.cpp" compile="1" resource="0"

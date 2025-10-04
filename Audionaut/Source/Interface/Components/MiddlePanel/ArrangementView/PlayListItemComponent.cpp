@@ -26,7 +26,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngin
     // LISTBOX + MODEL
     playListItemListBox.reset(new audium::ListBox("PlayListItemListBox"));
     addAndMakeVisible(playListItemListBox.get());
-    playListItemArrangementModel.reset(new PlayListItemArrangementModel(*playListItemListBox.get(),
+    playListItemListBoxModel.reset(new PlayListItemListBoxModel(*playListItemListBox.get(),
                                                                         audioTrack,
                                                                         playListItem,
                                                                         audiumEngine,
@@ -134,9 +134,9 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
         dragger->setPositionableObject(playListItem);
     }
     
-    playListItemArrangementModel->setPlayListItem(playListItem);
-    playListItemArrangementModel->setParentComponent(getParentComponent());
-    playListItemListBox->setModel(playListItemArrangementModel.get());
+    playListItemListBoxModel->setPlayListItem(playListItem);
+    playListItemListBoxModel->setParentComponent(getParentComponent());
+    playListItemListBox->setModel(playListItemListBoxModel.get());
     //playListItemListBox->updateContent();
         
 
