@@ -128,10 +128,8 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples, 
                 
             }
         }
-        else if (onLoop) {
-            // stop at loop end
-            transportSource->getAudioTransportSource()->stop();
-            
+        else {
+            playback->stopVoice(transportSource);
         }
     }
 }
