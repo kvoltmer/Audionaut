@@ -167,7 +167,10 @@ public:
     // drag & drop:
     void dropSelectedAudioRegions(int insertIndex);
     void dropSelectedAudioRegions(double pos, TimeContextType context);
-    void dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos, TimeContextType context);
+    void dropPlayListItem(std::shared_ptr<PlayListItem> item,
+                          double pos,
+                          TimeContextType context,
+                          bool newPlayListItem = false);
     
     // resource groups:
     std::shared_ptr<ResourceGroup> createNewResourceGroup();

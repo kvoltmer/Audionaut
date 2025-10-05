@@ -20,6 +20,7 @@
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
 #include "Interface/Controls/DraggerControl.h"
 #include "Interface/Controls/RegionLabel.h"
+#include "Interface/Models/PlayListTableListBoxItem.h"
 
 AudioTrackListBox::AudioTrackListBox (std::shared_ptr<audium::AudiumEngine> audiumEngine,
                                       std::shared_ptr<ZoomHandler> zoomHandler) :
@@ -94,6 +95,11 @@ bool AudioTrackListBox::isInterestedInDragSource (const SourceDetails &dragSourc
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
     
+    if (dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
+    
+    
     return false;
 }
 
@@ -166,6 +172,12 @@ void AudioTrackListBox::itemDropped (const SourceDetails &dragSourceDetails)
         auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
         setNewGroupColour(audioTrack);
         audioTrack->dropPlayListItem(playListItemComponent->getPlayListItem(), pos, audium::clocks);
+        success = true;
+    }
+    else if (auto playListTableListBoxItem = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get())) {
+        auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
+        setNewGroupColour(audioTrack);
+        audioTrack->dropPlayListItem(playListTableListBoxItem->getPlayListItem(), pos, audium::clocks);
         success = true;
     }
     

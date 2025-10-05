@@ -119,6 +119,9 @@ bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSou
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
     
+    if (dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
     return false;
 }
 
@@ -189,6 +192,12 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
         audioTrack->dropPlayListItem(playListItemComponent->getPlayListItem(), pos, audium::clocks);
         success = true;
     }
+    else if (auto playListTableListBoxItem = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get())) {
+        audioTrack->dropPlayListItem(playListTableListBoxItem->getPlayListItem(), pos, audium::clocks, true);
+        success = true;
+    }
+    
+    
     
     if (success) {
         action->storeNewState();

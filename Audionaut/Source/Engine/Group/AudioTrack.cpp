@@ -759,11 +759,17 @@ void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType co
     getPlayListContainer()->sortByPosition();
 }
 
-void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item, double pos, audium::TimeContextType context)
+void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
+                                  double pos,
+                                  audium::TimeContextType context,
+                                  bool newPlayListItem)
 {
     auto region = item->getRegion();
-    // drag on different track -> create region and play list item
-    if (this != region->getAudioTrack().get()) {
+    
+    if (newPlayListItem) {
+        getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context);
+    }
+    else if (this != region->getAudioTrack().get()) { // drag on different track -> create region and play list item
         // create new sub group
         auto resourceGroup = createNewResourceGroup(region->getResourceGroup());
         if (auto newRegion = resourceGroup->getAudioRegionContainer()->createRegion(std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),

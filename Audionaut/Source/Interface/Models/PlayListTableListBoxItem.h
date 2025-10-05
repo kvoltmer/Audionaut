@@ -86,6 +86,8 @@ public:
     
     void exportSelectedPlayListItem();
     
+    std::shared_ptr<audium::PlayListItem> getPlayListItem() const;
+    
 private:
     
     bool insertAfter = false;
