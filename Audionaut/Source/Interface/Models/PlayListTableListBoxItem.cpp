@@ -273,3 +273,8 @@ void PlayListTableListBoxItem::exportSelectedPlayListItem()
                                                                 container);
     }
 }
+
+std::shared_ptr<audium::PlayListItem> PlayListTableListBoxItem::getPlayListItem() const
+{
+    return playListModel->getAudioTrack()->getPlayListContainer()->getPlayListItem(rowNumber);
+}
