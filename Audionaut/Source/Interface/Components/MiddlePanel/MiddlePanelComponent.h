@@ -92,15 +92,15 @@ public:
             }
         }
         else if (context == ForceRebuildContext) {
-            bool editMode = audiumEngine->getPlayListScheduler()->isEditMode();
-            auto scrollOffset = arrangementComponent->getVerticalScrollOffset();
+            auto verticalScrollOffset = arrangementComponent->getVerticalScrollOffset();
+            auto horizontalScrollOffset = arrangementComponent->getHorizontalScrollOffset();
             createComponents();
             
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
             
-            arrangementComponent->setVerticalScrollOffset(scrollOffset);
-            showArrangementComponent(!editMode);
+            arrangementComponent->setVerticalScrollOffset(verticalScrollOffset);
+            arrangementComponent->setHorizontalScrollOffset(horizontalScrollOffset);
             resized();
         }
         else if (context == ArrangementContext) {

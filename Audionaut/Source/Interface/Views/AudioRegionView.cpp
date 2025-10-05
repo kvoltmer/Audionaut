@@ -53,7 +53,7 @@ void AudioRegionView::updateUI(std::shared_ptr<audium::AudioResource> audioResou
         createThumbnailCache();
     }
     else {
-        std::cout << "AudioRegionView::updateUI " << this << " null" << std::endl;
+        //std::cout << "AudioRegionView::updateUI " << this << " null" << std::endl;
     }
         
     volumeSlider->setValue(LevelMeter::gainToDecebel(getClipGain()), dontSendNotification);
