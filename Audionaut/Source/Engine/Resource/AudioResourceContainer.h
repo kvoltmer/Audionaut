@@ -103,9 +103,8 @@ public:
     /**
      * @brief Copies an audio file to the audio file directory if needed.
      * @param url The URL of the audio file.
-     * @return The URL of the copied file or the original URL if no copy was needed.
      */
-    static const juce::URL copyToAudioFileDirectoryIfNeeded(juce::URL url);
+    bool copyToAudioFileDirectoryIfNeeded(juce::URL &url);
 
     /**
      * @brief Finds an audio resource with the specified URL.
@@ -164,16 +163,14 @@ public:
     int getNumAudioResources() const;
 
     /**
-     * @brief Retrieves audio resources at the specified absolute position.
-     * @param positionInSeconds The position in seconds.
-     * @return A vector of shared pointers to `AudioResource` objects.
-     */
-    std::vector<std::shared_ptr<AudioResource>> resourcesAtAbsolutePosition(double positionInSeconds) const;
-
-    /**
      * @brief Cleans up the container by removing unused resources.
      */
     void cleanup();
+    
+    
+    void deleteObsoleteAudioFiles(const json &json);
+    
+    juce::File getCurrentAudioFileDirectory();
 
     /**
      * @brief Retrieves audio resources associated with the specified track.
@@ -188,14 +185,6 @@ public:
      * @return A vector of shared pointers to `AudioResource` objects.
      */
     std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForResourceGroup(const ResourceGroup *resourceGroup) const;
-
-    /**
-     * @brief Retrieves audio resources for a track within a specified range.
-     * @param track A pointer to the `AudioTrack`.
-     * @param rangeInSeconds The range in seconds.
-     * @return A vector of shared pointers to `AudioResource` objects.
-     */
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesForTrackAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const;
 
     /**
      * @brief Retrieves audio resources for the specified channel.

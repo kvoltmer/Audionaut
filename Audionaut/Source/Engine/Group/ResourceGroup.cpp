@@ -80,6 +80,8 @@ std::shared_ptr<AudioResource> ResourceGroup::addAudioResourceFromUrl(juce::URL 
     std::shared_ptr<AudioTrack> track       = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
     std::shared_ptr<ResourceGroup> resourceGroup = std::dynamic_pointer_cast<ResourceGroup> (getSharedPtr());
     
+    // url is changed if the audio file was copied to our Media/Audio directory
+    track->getAudioResourceContainer().copyToAudioFileDirectoryIfNeeded(url);
     auto audioFormatReader  = track->getAudioResourceContainer().getAudioFormatReaderForUrl(url);
     auto resource           = track->getAudioResourceContainer().addAudioResource(url,
                                                                                   audioFormatReader,

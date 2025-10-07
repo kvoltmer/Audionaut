@@ -72,6 +72,7 @@ void AudiumEngine::cleanup()
     undoManager->clearUndoHistory();
     
     currentProjectFile = File();
+    currentJson.clear();
 }
 
 void AudiumEngine::createNewProject()
@@ -220,8 +221,7 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
             if (temp.overwriteTargetFileWithTemporary()) {
                 currentProjectFile = file;
                 undoManager->clearUndoHistory();
-                
-                
+                                
                 // consitency check
                 std::vector<juce::File> redundantFiles;
                 for (auto& found : destinationDirectory.findChildFiles (File::findFiles, false, "*")) {
@@ -300,8 +300,8 @@ bool AudiumEngine::readFromStream (juce::InputStream& inputStream, bool rebuild)
 
 bool AudiumEngine::writeToJson (json& output)
 {
-    json jsonAudium;
     
+    json jsonAudium;
     audioTrackContainer->writeToJson(jsonAudium);
     
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
@@ -309,7 +309,7 @@ bool AudiumEngine::writeToJson (json& output)
     jsonAudium["ui_state"] = uiState;
     jsonAudium["scheduler"] = getPlayListScheduler()->data;
     output["audium"] = jsonAudium;
-    
+    currentJson = output;
     // std::cout << std::setw(2) << output << std::endl;
     return true;
 }
@@ -338,7 +338,11 @@ bool AudiumEngine::readFromJson (json& input, bool rebuild)
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
         playListScheduler->getTempoProvider()->setTempo(tempo);
     
-    return audioTrackContainer->readFromJson(jsonAudium, rebuild);
+    if (audioTrackContainer->readFromJson(jsonAudium, rebuild)) {
+        currentJson = input;
+        return true;
+    }
+    return false;
 }
 
 int AudiumEngine::getSizeInUnits()
@@ -391,6 +395,12 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const
 {
     return track->getPlayListContainer();
+}
+
+void AudiumEngine::deleteObsoleteAudioFiles()
+{
+    std::cout << "AudiumEngine::deleteObsoleteAudioFiles" << std::endl;
+    audioResourceContainer->deleteObsoleteAudioFiles(currentJson);
 }
 
 } // namespace audium
