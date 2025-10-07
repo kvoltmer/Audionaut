@@ -624,6 +624,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioTrack::addAudioFile (std::share
     auto numResourcesLoaded = getAudioResources().size();
     auto url = URL (filename);
     auto chan = destChannel;
+    getAudioResourceContainer().copyToAudioFileDirectoryIfNeeded(url);
     if (auto audioFormatReader = getAudioResourceContainer().getAudioFormatReaderForUrl(url)) {
         for (auto sourceChannel = 0; sourceChannel < audioFormatReader->numChannels; sourceChannel++) {
             auto audioResource = getAudioResourceContainer().addAudioResource(url,

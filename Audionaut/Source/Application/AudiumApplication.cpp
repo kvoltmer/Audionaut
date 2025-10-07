@@ -164,6 +164,7 @@ void AudiumApplication::askToSaveIfDirtyAndInvoke(std::function<void ()> callbac
                 }
             }
             else if (result == 1) {
+                audiumEngine->deleteObsoleteAudioFiles();
                 NullCheckedInvocation::invoke(callback);
             }
         });
@@ -472,7 +473,7 @@ bool AudiumApplication::perform (const InvocationInfo& info)
 
 void AudiumApplication::createNewProject()
 {
-    askToSaveIfDirtyAndInvoke([this](void){
+    askToSaveIfDirtyAndInvoke([this](void) {
         audiumEngine->cleanup();
         audiumEngine->createNewProject();
         updateUI();
@@ -596,6 +597,7 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
         // foo.audium/Project.json -> ../../
         initialSaveDirectory = file.getParentDirectory().getParentDirectory();
         std::cout << "file saved: " << file.getFullPathName() << std::endl;
+        audiumEngine->deleteObsoleteAudioFiles();
         std::cout << "initialSaveDirectory: " << initialSaveDirectory.getFullPathName() << std::endl;
         
         if (file.getFileName() == audium::AudiumEngine::projectFileName)
@@ -607,6 +609,7 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
             recentFiles.addFile (file);
         }
         updateSettings();
+
     }
     return success;
 }
