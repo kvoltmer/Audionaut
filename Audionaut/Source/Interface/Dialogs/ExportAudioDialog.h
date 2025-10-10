@@ -13,6 +13,7 @@
 #include "Interface/Dialogs/ExportAudioComponent.h"
 #include "Application/AudiumApplication.h"
 #include "Engine/Export/AudioExportThread.h"
+#include "Engine/Export/ExportUtil.h"
 
 using namespace juce;
 
@@ -32,8 +33,6 @@ public:
     }
     
 private:
-    
-    static String getClassNameFieldName()  { return "Auto Edit Name"; }
     
     void invokeInternal(std::shared_ptr<MainComponent> component)
     {
@@ -59,71 +58,33 @@ private:
             if (result == 0)
                 return;
             
+            safeThis->config = std::make_shared<audium::ExportAudioConfig>();
+            
             // get the sample rate
-            auto sr = exportAudioComponent->getSampleRate().toString().getIntValue();
-            safeThis->config.sampleRate = (double) sr;
+            safeThis->config->sampleRate = exportAudioComponent->getSampleRate().toString().getDoubleValue();
             
             // get the number of output channels
             auto chans = exportAudioComponent->getOutputChannels().toString().getIntValue();
             if (chans == 3 || chans == 4) {
                 if (chans == 4) {
-                    safeThis->config.multiMono = true;
+                    safeThis->config->multiMono = true;
                 }
                 chans = audiumEngine->getAudioTrackContainer()->getNumAudioTrackChannels();
             }
-            safeThis->config.numChannels = chans;
+            safeThis->config->numChannels = chans;
             
+            safeThis->config->bitDepth = exportAudioComponent->getBitDepth().toString().getIntValue();
+            juce::File dir;
+        #if !defined(CATCH2_TESTS)
+            dir = AudiumApplication::getApp().initialSaveDirectory;
+        #endif
+            safeThis->chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
+            audium::ExportUtil::exportAudio(safeThis->chooser, audiumEngine, safeThis->config);
 
-            
-            safeThis->exportAudio();
+
         };
 
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);
-    }
-    
-    void exportAudio()
-    {
-        auto dir = AudiumApplication::getApp().initialSaveDirectory;
-        
-        chooser = std::make_unique<FileChooser> (("Export As Wav File. Choose a filename..."), dir, "*.wav");
-        auto flags = FileBrowserComponent::saveMode
-                   | FileBrowserComponent::canSelectFiles
-                   | FileBrowserComponent::warnAboutOverwriting;
-
-        chooser->launchAsync (flags, [this] (const FileChooser& fc) {
-            const auto file = fc.getResult();
-            
-            if (file != File{}) {
-                
-                if (!file.hasWriteAccess()) {
-                    std::string errorString = "No write access. Please select a different location.";
-        #if JUCE_MAC
-                    errorString += "\n\n";
-                    errorString += "As a 'Sandboxed App' you are only allowed to save files in the Music folder.";
-        #endif
-                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                          "Error",
-                                                          "Failed to save " + file.getFullPathName() +"\n\n" + String(errorString));
-                    return;
-                }
-                
-                // assign the choosen filename
-                config.fileName = file;
-                
-                // create the thread
-                auto thread = std::make_unique<audium::AudioExportThread>(*audiumEngine.get(), config);
-                
-                // start the thread
-                if (thread->runThread())
-                {
-                    // thread finished normally..
-                }
-                else
-                {
-                    // user pressed the cancel button..
-                }
-            }
-        });
     }
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;
@@ -132,11 +93,11 @@ private:
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
     
-    std::unique_ptr<juce::FileChooser> chooser;
+    std::shared_ptr<juce::FileChooser> chooser;
     
     
 public:
-    audium::ExportAudioConfig config;
+    std::shared_ptr<audium::ExportAudioConfig> config;
     
 private:
     JUCE_DECLARE_WEAK_REFERENCEABLE (ExportAudioDialog)

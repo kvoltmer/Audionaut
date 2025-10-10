@@ -11,21 +11,24 @@
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Components/RightPanel/PlayListContainerComponent.h"
 #include "Interface/Components/RightPanel/RegionComponent.h"
-#include "Interface/Components/RightPanel/RegionContainerComponent.h"
+#include "Interface/Components/RightPanel/FooterComponent.h"
 
 RightPanelComponent::RightPanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
+
+    playListContainerComponent.reset(new PlayListContainerComponent(audiumEngine));
     regionComponent.reset(new RegionComponent(audiumEngine));
     stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
     stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, false));
-    playListContainerComponent.reset(new PlayListContainerComponent(audiumEngine));
-    regionContainerComponent.reset(new RegionContainerComponent(audiumEngine));
-
+    footerComponent.reset(new FooterComponent(audiumEngine));
+    
     addAndMakeVisible(regionComponent.get());
     addAndMakeVisible(stretchableLayoutResizerBar.get());
     addAndMakeVisible(playListContainerComponent.get());
-    addAndMakeVisible(regionContainerComponent.get());
+    addAndMakeVisible(footerComponent.get());
+    
+    auto footerHeight = AudiumLookAndFeel::tableHeaderHeight;
     
     stretchableLayoutManager->setItemLayout (0,          // for item 0
                                              25, -1.0,    // size must be between 0% and 100% of the available space
@@ -37,6 +40,9 @@ RightPanelComponent::RightPanelComponent(std::shared_ptr<audium::AudiumEngine> a
     stretchableLayoutManager->setItemLayout (2,          // for item 2
                                              25, -1.0, // size must be between 0% and 50% of the available space
                                              -0.5);        // its preferred size in pixels
+    
+    stretchableLayoutManager->setItemLayout (3, // for item 3
+                                             footerHeight, footerHeight, footerHeight);
 
     resized();
 }
@@ -53,45 +59,26 @@ void RightPanelComponent::paint (juce::Graphics& g)
 
 void RightPanelComponent::resized()
 {
-    auto isArrangement = audiumEngine->getPlayListScheduler()->isArrangementMode();
-    
-    playListContainerComponent->setVisible(isArrangement);
-    regionContainerComponent->setVisible(isArrangement);
-    
-    regionComponent->setVisible(!isArrangement);
-    
-    if (isArrangement) {
-        // the list of components that we want to reposition
-        Component* comps[] = {  regionContainerComponent.get(),
-                                stretchableLayoutResizerBar.get(),
-                                playListContainerComponent.get() };
-        
-        // this will position the 3 components, one above the other, to fit
-        // horizontically into the rectangle provided.
-        stretchableLayoutManager->layOutComponents (comps, 3,
-                                                    0, 0, getWidth(), getHeight(),
-                                                    true, true);
-    }
-    else {
-        regionComponent->setBounds (getLocalBounds());
-    }
+
+    // the list of components that we want to reposition
+    Component* comps[] = {  playListContainerComponent.get(),
+                            stretchableLayoutResizerBar.get(),
+                            regionComponent.get(),
+                            footerComponent.get()
+                             };
+
+    // this will position the 3 components, one above the other, to fit
+    // horizontically into the rectangle provided.
+    stretchableLayoutManager->layOutComponents (comps, 4,
+                                                0, 0, getWidth(), getHeight(),
+                                                true, true);
+
 }
 
 void RightPanelComponent::updateUI(UIContext context)
 {
-    auto isArrangement = audiumEngine->getPlayListScheduler()->isArrangementMode();
-    
-    playListContainerComponent->setVisible(isArrangement);
-    regionContainerComponent->setVisible(isArrangement);
-    regionComponent->setVisible(!isArrangement);
-    
-    if (isArrangement) {
-        regionContainerComponent->updateUI(context);
-        playListContainerComponent->updateUI(context);
-    }
-    else {
-        regionComponent->updateUI(context);
-    }
+    playListContainerComponent->updateUI(context);
+    regionComponent->updateUI(context);
     
     resized();
 }

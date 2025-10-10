@@ -14,6 +14,7 @@
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Util/EngineAccess.h"
+#include "Application/AudiumCommandIDs.h"
 
 ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTrack_,
                                     std::shared_ptr<audium::AudiumEngine> engine_,
@@ -294,13 +295,17 @@ void ChannelComponent::configurePanSlider(juce::Slider *slider)
     slider->updateText();
 }
 
-static void channelMenuCallback (int result, ChannelComponent* component, int rowIdClicked)
+static void channelMenuCallback (int result, ChannelComponent* component)
 {
-    if (component != nullptr && result != 0)
-    {
+    if (component != nullptr
+        && result != 0) {
         switch (result) {
-            case ChannelComponent::moveChannelToNewTrackId:
-                component->getEngine()->getAudioTrackContainer()->copySelectedChannelsToNewTrack();
+            case CommandIDs::copyChansToNewTrackId:
+                if (!component->getEngine()->getAudioTrackContainer()->copySelectedChannelsToNewTrack()) {
+                    NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                          "Error",
+                                                          "no channel selected.");
+                }
                 break;
 
             default:
@@ -311,32 +316,25 @@ static void channelMenuCallback (int result, ChannelComponent* component, int ro
 
 void ChannelComponent::mouseDown (const juce::MouseEvent& e)
 {
+    if (!e.mods.isAnyModifierKeyDown()) {
+        audioTrack->getSelectionManager()->deselectAll();
+    }
+    
+    getParentComponent()->mouseDown(e);
+    
     if (e.mods.isPopupMenu()) {
     
         PopupMenu m;
+        m.addItem (CommandIDs::copyChansToNewTrackId, TRANS ("Copy selected channel(s) to new track"), true);
 
-        m.addItem (moveChannelToNewTrackId, TRANS ("Copy selected channel(s) to new track"), true);
-
-        if (m.getNumItems() > 0)
-        {
+        if (m.getNumItems() > 0) {
             m.setLookAndFeel (&getLookAndFeel());
-
-            m.showMenuAsync (PopupMenu::Options(),
-                             ModalCallbackFunction::forComponent (channelMenuCallback, this, rowNumber));
+            m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight),
+                             ModalCallbackFunction::forComponent (channelMenuCallback, this));
         }
     }
-    else {
-        
-        if (audioTrack->getChannel(rowNumber)->isSelected()) {
-            return;
-        }
-        
-        if (!e.mods.isAnyModifierKeyDown()) {
-            audioTrack->getSelectionManager()->deselectAll();
-        }
-        getParentComponent()->mouseDown(e);
-        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
-    }
+    
+    audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
 }
 
 void ChannelComponent::mouseUp (const juce::MouseEvent& e)

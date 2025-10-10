@@ -46,35 +46,13 @@ public:
         // use buffered image
         // setBufferedToImage(true);
         
-        // create thumbnail
-        auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
-        auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
-        auto sourceSamplesPerThumbnailSample = 64;
-        //auto sourceSamplesPerThumbnailSample = 256;
-        //auto sourceSamplesPerThumbnailSample = 4096*4;
-        audioThumbnail.reset(new audium::AudioThumbnail(sourceSamplesPerThumbnailSample, *formatManager, *thumbnailCache));
-        audioThumbnail->setColour(colour);
-        if (audioResource->audioFormatReader != nullptr) {
-            
-            // reuse shared_ptr if the file is memory mapped
-            if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
-                auto hashCode = audioResource->getUrl().toString(true).hashCode64();
-                audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
-            }
-            else {
-            
-                // create a new input source
-                if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
-                    audioThumbnail->setSource(inputSource.release());
-                }
-            }
-        }
-        audioThumbnail->addChangeListener(this);
+        createThumbnailCache();
     }
 
     ~WaveFormViewBase() override
     {
-        audioThumbnail->removeChangeListener(this);
+        if (audioThumbnail != nullptr)
+            audioThumbnail->removeChangeListener(this);
     }
     
     void paint (juce::Graphics& g) override;
@@ -93,7 +71,8 @@ public:
     // note: this is much faster than drawing the entire waveform
     juce::Rectangle<double> getClippedDrawingArea() const;
     
-    virtual void updateUI(int theChannel) { channelNumber = theChannel; }
+    virtual void updateUI(std::shared_ptr<audium::AudioResource> audioResource,
+                          int theChannel) = 0;
     
     void setParentComponent(juce::Component *comp) { parentComponent = comp; }
     
@@ -111,6 +90,8 @@ protected:
     static constexpr float verticalZoomFactor = 1.f;
     
     int channelNumber = 0;
+    
+    void createThumbnailCache();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveFormViewBase)
 };

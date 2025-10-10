@@ -8,7 +8,6 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
@@ -18,11 +17,10 @@ namespace audium {
 ResourceGroup::ResourceGroup(AudioTrack& audioTrack_,
                              std::shared_ptr<AudioRegionContainer> audioRegionContainer_,
                              std::shared_ptr<SelectionManager> selectionManager_) :
-Selectable(selectionManager_),
-audioTrack(audioTrack_),
-audioRegionContainer(audioRegionContainer_)
+    Selectable(selectionManager_),
+    audioTrack(audioTrack_),
+    audioRegionContainer(audioRegionContainer_)
 {
-    audioClip = std::shared_ptr<AudioClip> (new AudioClip(*this));
 }
 
 ResourceGroup::~ResourceGroup()
@@ -31,7 +29,6 @@ ResourceGroup::~ResourceGroup()
 
 void ResourceGroup::cleanup()
 {
-    cleanupTransportSources();
     cleanupAudioRegions();
     cleanupAudioResources();
 }
@@ -51,32 +48,8 @@ void ResourceGroup::cleanupAudioResources()
     jassert(getAudioResources().size() == 0);
 }
 
-void ResourceGroup::cleanupTransportSources()
-{
-    for (auto transportSource : transportSources) {
-        audioTrack.getTransportSourceContainer()->removeTransportSource(transportSource);
-    }
-}
-
-double ResourceGroup::getAbsolutePosition(TimeContextType context) const  {
-    return audioClip->getAbsolutePosition(context);
-}
-void ResourceGroup::setAbsolutePosition(double position, TimeContextType context)  {
-    audioClip->setAbsolutePosition(position, context);
-}
-
-juce::Range<double> ResourceGroup::getRegionData(TimeContextType context) const  {
-    return audioClip->getRegionData(context);
-}
-void ResourceGroup::setRegionData(juce::Range<double> newRegionData, TimeContextType context)  {
-    audioClip->setRegionData(newRegionData, context);
-}
-
-
 bool ResourceGroup::writeToJson (json& output)
 {
-    output["clip"] = audioClip->data;
-    
     for (auto resource : getAudioResources()) {
         json j;
         resource->writeToJson(j);
@@ -89,8 +62,6 @@ bool ResourceGroup::writeToJson (json& output)
 
 bool ResourceGroup::writeChannelToJson (json& output, AudioChannel* audioChannel)
 {
-    output["clip"] = audioClip->data;
-    
     for (auto resource : getAudioResources()) {
         json j;
         if (resource->getChannelMapping().containsDestinationChannelNumber(audioChannel->getChannelNumber())) {
@@ -109,14 +80,13 @@ std::shared_ptr<AudioResource> ResourceGroup::addAudioResourceFromUrl(juce::URL 
     std::shared_ptr<AudioTrack> track       = std::dynamic_pointer_cast<AudioTrack> (getAudioTrack().getSharedPtr());
     std::shared_ptr<ResourceGroup> resourceGroup = std::dynamic_pointer_cast<ResourceGroup> (getSharedPtr());
     
+    // url is changed if the audio file was copied to our Media/Audio directory
+    track->getAudioResourceContainer().copyToAudioFileDirectoryIfNeeded(url);
     auto audioFormatReader  = track->getAudioResourceContainer().getAudioFormatReaderForUrl(url);
     auto resource           = track->getAudioResourceContainer().addAudioResource(url,
                                                                                   audioFormatReader,
                                                                                   track,
                                                                                   resourceGroup);
-    if (auto transportSource = track->getAudioResourceContainer().createTransportSourceForAudioResource(resource)) {
-        transportSources.push_back(transportSource);
-    }
     return resource;
 }
 
@@ -141,9 +111,7 @@ void ResourceGroup::mergeFromJson(json& input, int destinationChannel)
             }
         }
     }
-    
-    audioClip->readFromJson(input["clip"], false);
-    
+        
     audioRegionContainer->mergeFromJson(input, destinationChannel);
 }
 
@@ -196,9 +164,7 @@ bool ResourceGroup::readFromJson (json& input, bool rebuild)
         resource->readFromJson(jsonElement, rebuild);
         r++;
     }
-    
-    audioClip->readFromJson(input["clip"], rebuild);
-    
+        
     audioRegionContainer->readFromJson(input, rebuild);
     
     return true;
@@ -220,7 +186,7 @@ int ResourceGroup::getSizeInUnits()
 
 std::vector<std::shared_ptr<AudioResource>> ResourceGroup::getAudioResources() const
 {
-    return audioTrack.getAudioResourceContainer().getAudioResourcesForSubGroup(this);
+    return audioTrack.getAudioResourceContainer().getAudioResourcesForResourceGroup(this);
 }
 
 int ResourceGroup::getNumChannels() const
@@ -251,6 +217,19 @@ const int ResourceGroup::getId() const
 {
     auto resourceGroup = std::dynamic_pointer_cast<const ResourceGroup>(getSharedPtr());
     return audioTrack.resourceGroupContainer->getIndex(resourceGroup);
+}
+
+double ResourceGroup::getMaxLength(audium::TimeContextType context) const
+{
+    if (getAudioResources().size() == 0)
+        std::cout << "ResourceGroup::getMaxLength -> getAudioResources().size() == 0" << std::endl;
+    
+    auto maxLength = 0.0;
+    for (auto res : getAudioResources()) {
+        maxLength = std::max(maxLength, res->getFileLength(context));
+    }
+    
+    return maxLength;
 }
 
 } // namespace audium

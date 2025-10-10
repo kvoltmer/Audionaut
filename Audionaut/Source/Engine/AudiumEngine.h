@@ -252,6 +252,10 @@ public:
      */
     void setBypass(bool bypass);
     
+    /**
+     * @brief Deletes obsolete audio files from the project's audio file dir.
+     */
+    void deleteObsoleteAudioFiles();
     
     // static const members for project file handling
     static const char* projectFileExtension;
@@ -301,6 +305,11 @@ private:
      * @brief The current project file.
      */
     juce::File currentProjectFile;
+    
+    /**
+     * @brief The current json object.
+     */
+    json currentJson;
 
     /**
      * @brief The UI state as a JSON object.

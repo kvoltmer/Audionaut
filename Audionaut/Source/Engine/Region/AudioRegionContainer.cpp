@@ -9,7 +9,6 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -70,7 +69,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
     
     if (resourceGroup == nullptr)
     {
-        resourceGroup = track->getDefaultSubGroup();
+        resourceGroup = track->getDefaultResourceGroup();
     }
     
     auto audioRegion = createRegion(track, resourceGroup);
@@ -90,9 +89,13 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<
     if (track->getNumAudioTrackChannels() < otherRegion->getAudioTrack()->getNumAudioTrackChannels())
         track->ensureNumChannels(otherRegion->getAudioTrack()->getNumAudioTrackChannels());
     
-    // - similar subgroup must exist
-    jassert(track->findSimilarSubGroup(otherRegion->getResourceGroup()));
-    
+    // TODO: not sure if this assertion still makes sense
+#if 0
+    // - similar resource group must exist
+    json otherGroup;
+    otherRegion->getResourceGroup()->writeToJson(otherGroup);
+    jassert(track->findExistingResourceGroup(otherGroup));
+#endif
     
     // - find similar region
     auto newRegion = findSimilarRegion(otherRegion);
@@ -172,7 +175,7 @@ int AudioRegionContainer::getNumRegions() const
     return static_cast<int>(audioRegions.size());
 }
 
-std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForSubGroup(const ResourceGroup* resourceGroup) const
+std::vector<std::shared_ptr<AudioRegion>> AudioRegionContainer::getRegionsForResourceGroup(const ResourceGroup* resourceGroup) const
 {
     std::vector<std::shared_ptr<AudioRegion>> regions;
     for (auto region : audioRegions)
@@ -219,9 +222,9 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::findSimilarRegion(std::shared
     return nullptr;
 }
 
-void AudioRegionContainer::deleteAudioRegionsForSubGroup(std::shared_ptr<ResourceGroup> resourceGroup)
+void AudioRegionContainer::deleteAudioRegionsForResourceGroup(std::shared_ptr<ResourceGroup> resourceGroup)
 {
-    auto regions = getRegionsForSubGroup(resourceGroup.get());
+    auto regions = getRegionsForResourceGroup(resourceGroup.get());
     
     for (auto region : regions)
     {

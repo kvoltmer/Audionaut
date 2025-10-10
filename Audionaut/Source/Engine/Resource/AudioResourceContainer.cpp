@@ -11,7 +11,6 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 
@@ -22,8 +21,7 @@ namespace audium {
 AudioResourceContainer::~AudioResourceContainer()
 {
     audioResources.clear();
-    if (AudiumEngine::tempDirectory.exists())
-        AudiumEngine::tempDirectory.deleteRecursively();
+    deleteTemporaryProjectDirectory();
 }
 
 const juce::File AudioResourceContainer::getAudioFileDirectory(const juce::File projectRoot)
@@ -38,13 +36,17 @@ const juce::File AudioResourceContainer::getAudioFileDirectory()
     return getAudioFileDirectory(AudiumEngine::projectDirectory);
 }
 
+void AudioResourceContainer::deleteTemporaryProjectDirectory()
+{
+    if (AudiumEngine::tempDirectory.exists())
+        AudiumEngine::tempDirectory.deleteRecursively();
+    AudiumEngine::tempDirectory = File();
+}
+
 bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
 {
-    if (reset) {
-        if (AudiumEngine::tempDirectory.exists())
-            AudiumEngine::tempDirectory.deleteRecursively();
-        AudiumEngine::tempDirectory = File();
-    }
+    if (reset)
+        deleteTemporaryProjectDirectory();
     
     if (!AudiumEngine::tempDirectory.exists()) {
         // use a unique directory within the temp location
@@ -67,6 +69,7 @@ bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
             return false;
         }
     }
+    
     return true;
 }
 
@@ -80,9 +83,12 @@ bool AudioResourceContainer::isAudioFileCurrentlyLoaded(const juce::File audioFi
     return false;
 }
 
-bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirectory, const juce::File destinationDirectory)
+bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirectory,
+                                                  const juce::File destinationDirectory)
 {
+    juce::String debugString;
     if (sourceDirectory != destinationDirectory) {
+            
         if (!destinationDirectory.exists()) {
             if (!destinationDirectory.createDirectory())
                 return false;
@@ -100,16 +106,28 @@ bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirecto
                 if (found.isAChildOf(File::getSpecialLocation(File::tempDirectory))) {
                     if (!found.moveFileTo(destinationFile))
                         return false;
-                    std::cout << "moved to: " << destinationFile.getFullPathName() << std::endl;
+                    debugString += "moved to: " + destinationFile.getFileName() + "\n";
                 }
                 else {
                     if (!found.copyFileTo(destinationFile))
                         return false;
-                    std::cout << "copied to: " << destinationFile.getFullPathName() << std::endl;
+                    debugString += "copied to: " + destinationFile.getFileName() + "\n";
                 }
             }
         }        
     }
+#if _DEBUG
+#if !defined(CATCH2_TESTS)
+    if (debugString.isNotEmpty()) {
+        
+        auto messageString = "Destination: " + destinationDirectory.getFullPathName() + "\n\n";
+        messageString += debugString;
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                              "copyOrMoveAudioFiles",
+                                              messageString);
+    }
+#endif
+#endif
     return true;
 }
 
@@ -124,10 +142,8 @@ void AudioResourceContainer::changeAudioFilePaths(const juce::File newPath)
     }
 }
 
-const juce::URL AudioResourceContainer::copyToAudioFileDirectoryIfNeeded(juce::URL url)
+juce::File AudioResourceContainer::getCurrentAudioFileDirectory()
 {
-    auto externalFile = url.getLocalFile();
-    jassert(externalFile.existsAsFile());
     // try to use project directory
     auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
     if ( !audioDir.exists()) {
@@ -139,34 +155,57 @@ const juce::URL AudioResourceContainer::copyToAudioFileDirectoryIfNeeded(juce::U
         jassert(audioDir.exists());
     }
     
-    if ( !externalFile.isAChildOf(audioDir)) {
+    return audioDir;
+}
+
+
+bool AudioResourceContainer::copyToAudioFileDirectoryIfNeeded(juce::URL &url)
+{
+    if (formatManager->findFormatForFileExtension(url.getLocalFile().getFileExtension()) != nullptr) {
         
-        auto audioFile = File(audioDir.getFullPathName() + File::getSeparatorString() + url.getLocalFile().getFileName());
-        if ( !audioFile.existsAsFile()) {
-            // !!! copy audio file !!!
-            bool success = externalFile.copyFileTo(audioFile);
-            jassert(success);
-            std::cout << "file copied to: " << audioFile.getFullPathName() << std::endl;
-            return juce::URL(audioFile);
-        }
-        else {
+        auto externalFile = url.getLocalFile();
+        jassert(externalFile.existsAsFile());
+        
+        auto audioDir = getCurrentAudioFileDirectory();
+        
+        if ( !externalFile.isAChildOf(audioDir)) {
             
-            for (auto& found : audioDir.findChildFiles (File::findFiles, false, externalFile.getFileNameWithoutExtension() + "*")) {
-                if (found.hasIdenticalContentTo(externalFile)) {
-                    // duplicate with identical content was found
-                    return URL(found);
-                }
+            auto audioFile = File(audioDir.getFullPathName() + File::getSeparatorString() + url.getLocalFile().getFileName());
+            if ( !audioFile.existsAsFile()) {
+                // !!! copy audio file !!!
+                bool success = externalFile.copyFileTo(audioFile);
+                jassert(success);
+                std::cout << "file copied to: " << audioFile.getFullPathName() << std::endl;
+                url = juce::URL(audioFile);
+                return true;
             }
-            // the file already exists (in terms of file name) but they aren't the same file in terms of content...
-            // copy the imported file but with different name:
-            auto newAudioFile = audioFile.getNonexistentSibling();
-            bool success = externalFile.copyFileTo(newAudioFile);
-            jassert(success);
-            std::cout << "file copied to: " << newAudioFile.getFullPathName() << std::endl;
-            return juce::URL(newAudioFile);
+            else {
+                
+                for (auto& found : audioDir.findChildFiles (File::findFiles, false, externalFile.getFileNameWithoutExtension() + "*")) {
+                    if (found.hasIdenticalContentTo(externalFile)) {
+                        // duplicate with identical content was found
+                        url = URL(found);
+                        if (isAudioFileCurrentlyLoaded(found)) {
+                            return false;
+                        }
+                        else {
+                            // pretend the file was copied.
+                            return true;
+                        }
+                    }
+                }
+                // the file already exists (in terms of file name) but they aren't the same file in terms of content...
+                // copy the imported file but with different name:
+                auto newAudioFile = audioFile.getNonexistentSibling();
+                bool success = externalFile.copyFileTo(newAudioFile);
+                jassert(success);
+                std::cout << "file copied to: " << newAudioFile.getFullPathName() << std::endl;
+                url = juce::URL(newAudioFile);
+                return true;
+            }
         }
     }
-    return url;
+    return false;
 }
 
 std::shared_ptr<AudioResource> AudioResourceContainer::findResourceWithUrl(juce::URL url) const
@@ -184,8 +223,10 @@ std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::getAudioFormatR
 {
     if (formatManager->findFormatForFileExtension(url.getLocalFile().getFileExtension()) != nullptr) {
         
-        // url is changed if the audio file was copied to our Media/Audio directory
-        url = copyToAudioFileDirectoryIfNeeded(url);
+        // file must be a child of our Media/Audio directory
+        // see: copyToAudioFileDirectoryIfNeeded(url)
+        auto audioDir = getCurrentAudioFileDirectory();
+        jassert(url.getLocalFile().isAChildOf(audioDir));
         
         if (auto existingResource = findResourceWithUrl(url)) {
             return existingResource->audioFormatReader;
@@ -264,63 +305,64 @@ int AudioResourceContainer::getNumAudioResources() const
     return static_cast<int>(audioResources.size());
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::resourcesAtAbsolutePosition(double positionInSeconds) const
-{
-    std::vector<std::shared_ptr<AudioResource>> resources;
-    
-    for (auto resource : audioResources)
-    {
-        if (resource.second->containsAbsolutePosition(positionInSeconds, audium::seconds))
-        {
-            resources.push_back(resource.second);
-        }
-    }
-    
-    return resources;
-}
-
 void AudioResourceContainer::cleanup()
 {
     audioResources.clear();
 }
 
+void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
+{
+    
+    std::vector<std::string> jsonPaths;
+    
+    if (!json.empty()) {
+        // std::cout << std::setw(2) << json << std::endl;
+        
+        if (json.contains("audium")) {
+            for (auto track : json["audium"]["audio_tracks"]) {
+                for (auto resGroup : track["resource_groups"]) {
+                    for (auto res : resGroup["resources"]) {
+                        if (res.contains("relative_file_path")) {
+                            auto relPath = res["relative_file_path"].template get<std::string>();
+                            jsonPaths.push_back(relPath);
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (jsonPaths.size() > 0) {
+            auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+            for (auto& found : audioDir.findChildFiles (File::findFiles, false, "*")) {
+                
+                auto relPath = found.getRelativePathFrom(AudiumEngine::projectDirectory);
+                if (std::find(jsonPaths.begin(), jsonPaths.end(), relPath) == jsonPaths.end()) {
+                    if (found.deleteFile()) {
+                        std::cout << "obsolete file deleted: " << found.getFullPathName() << std::endl;
+                    }
+                }
+            }
+        }
+    }
+}
+
 std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForTrack(AudioTrack *track) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
-    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
-    {
-        if (itr->first.get() == track)
-        {
+    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++) {
+        if (itr->first.get() == track) {
             result.push_back(itr->second);
         }
     }
     return result;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForSubGroup(const ResourceGroup *resourceGroup) const
+std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForResourceGroup(const ResourceGroup *resourceGroup) const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
-    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
-    {
-        if (itr->second->getResourceGroup().get() == resourceGroup)
-        {
+    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++) {
+        if (itr->second->getResourceGroup().get() == resourceGroup) {
             jassert(itr->first.get() == &resourceGroup->getAudioTrack());
-            result.push_back(itr->second);
-        }
-    }
-    return result;
-}
-
-std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioResourcesForTrackAtAbsoluteRange(AudioTrack *track, juce::Range<double> rangeInSeconds) const
-{
-    
-    std::vector<std::shared_ptr<AudioResource>> result;
-    for (auto itr = audioResources.begin(); itr != audioResources.end(); itr++)
-    {
-        /// TODO: also check on end
-        if (itr->first.get() == track &&
-            itr->second->containsAbsolutePosition(rangeInSeconds.getStart(), audium::seconds))
-        {
             result.push_back(itr->second);
         }
     }
@@ -339,14 +381,10 @@ std::vector<std::shared_ptr<AudioResource>> AudioResourceContainer::getAudioReso
                 result.push_back(resource);
             }
         }
-        
     }
     
     return result;
-    
-    
 }
-
 
 std::shared_ptr<AudioTrack> AudioResourceContainer::getAudioTrackForResource(std::shared_ptr<AudioResource> resource) const
 {

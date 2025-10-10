@@ -8,6 +8,7 @@
 
 void DraggerControl::mouseDown (const juce::MouseEvent& e)
 {
+    
     currentDragMode = getDragMode(e.getPosition().getX());
     
     originalBounds = componentToDrag->getBounds();

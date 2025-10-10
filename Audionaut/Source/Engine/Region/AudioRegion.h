@@ -150,20 +150,6 @@ public:
     bool validateData(AudioRegionData::tRange& data, audium::TimeContextType context);
 
     /**
-     * @brief Retrieves the start time of the audio resource in a specific time context.
-     * @param context The time context type.
-     * @return The start time in seconds.
-     */
-    double getAudioResourceStart(audium::TimeContextType context) const;
-
-    /**
-     * @brief Retrieves the end time of the audio resource in a specific time context.
-     * @param context The time context type.
-     * @return The end time in seconds.
-     */
-    double getAudioResourceEnd(audium::TimeContextType context) const;
-
-    /**
      * @brief Sets the start time of the region in a specific time context.
      * @param newStart The new start time in seconds.
      * @param context The time context type.
@@ -210,6 +196,18 @@ public:
      * @param channel The channel index to delete.
      */
     void onDeleteChannel(int channel);
+    
+    /**
+     * @brief Retrieves the maximum sample rate of the audio resources.
+     * @return The sample rate.
+     */
+    double getResourcesMaxSampleRate() const;
+    
+    /**
+     * @brief Retrieves the maximum bit depth of the audio resources.
+     * @return The bit depth.
+     */
+    int getResourcesMaxBitDepth() const;
 
     /// The region's data.
     AudioRegionData data;

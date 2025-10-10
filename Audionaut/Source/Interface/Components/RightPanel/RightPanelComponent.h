@@ -12,6 +12,7 @@
 class PlayListContainerComponent;
 class RegionComponent;
 class RegionContainerComponent;
+class FooterComponent;
 
 class RightPanelComponent  : public juce::Component
 {
@@ -30,7 +31,7 @@ private:
     std::unique_ptr<juce::StretchableLayoutManager> stretchableLayoutManager;
     std::unique_ptr<juce::StretchableLayoutResizerBar> stretchableLayoutResizerBar;
     std::unique_ptr<PlayListContainerComponent> playListContainerComponent;
-    std::unique_ptr<RegionContainerComponent> regionContainerComponent;
+    std::unique_ptr<FooterComponent> footerComponent;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RightPanelComponent)
 };

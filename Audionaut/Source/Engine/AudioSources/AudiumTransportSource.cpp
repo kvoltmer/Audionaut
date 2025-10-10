@@ -96,7 +96,7 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
 #endif
 }
 
-void AudiumTransportSource::applyChannelMapping()
+void AudiumTransportSource::applyChannelMapping(bool withChannelOffset)
 {
     auto totalChannels = audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels();
     auto audioFileChannels = static_cast<int>(audioResource.getNumAudioFileChannels());
@@ -107,13 +107,32 @@ void AudiumTransportSource::applyChannelMapping()
     
     channelRemapping->clearAllMappings();
     
-    auto channelOffset = getAudioResource().getAudioTrack()->getChannelOffset();
+    auto channelOffset = withChannelOffset ? getAudioResource().getAudioTrack()->getChannelOffset() : 0;
     auto srcChannel = getAudioResource().getChannelMapping().getSourceChannel();
     auto dstChannel = getAudioResource().getChannelMapping().getDestinationChannel();
     jassert(srcChannel < audioFileChannels);
     jassert(dstChannel + channelOffset < totalChannels);
     channelRemapping->setOutputChannelMapping(srcChannel,
                                               dstChannel + channelOffset);
+}
+
+
+void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item,
+                                              std::shared_ptr<TempoProvider> tempoProvider)
+{
+    // Gain:
+    auto channel    = getAudioResource().getChannelMapping().getDestinationChannel();
+    auto gain       = item->getRegion()->getGain(channel);
+    getAudioTransportSource()->setGain(gain);
+    
+    // Fade-in
+    auto fadeIn = tempoProvider->clocksToSeconds(item->getFadeInClocks());
+    auto offset = 0;
+    getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
+    
+    // Fade-out
+    auto fadeOut = tempoProvider->clocksToSeconds(item->getFadeOutClocks());
+    getAudioTransportSource()->setFadeOutSeconds(fadeOut, item->getRegionData(audium::seconds).getLength(), true);
 }
 
 } // namespace audium

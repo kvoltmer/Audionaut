@@ -77,9 +77,6 @@
     <Filter Include="Audionaut\Source\Interface\Components\MiddlePanel\ChannelView">
       <UniqueIdentifier>{3282F91C-8681-4BCC-7362-8D7AF9C276F2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Audionaut\Source\Interface\Components\MiddlePanel\EditView">
-      <UniqueIdentifier>{3C4A1F27-3B2C-A9B6-A347-60366FF47791}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Audionaut\Source\Interface\Components\MiddlePanel\ArrangementView">
       <UniqueIdentifier>{CFDC93A9-6E38-F6B2-472A-EB3A7A74A44A}</UniqueIdentifier>
     </Filter>
@@ -832,6 +829,9 @@
     <ClCompile Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Export\PlayListItemExport.cpp">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Export\AudioExportThread.cpp">
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClCompile>
@@ -854,9 +854,6 @@
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrackContainer.cpp">
-      <Filter>Audionaut\Source\Engine\Group</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\Group\AudioClip.cpp">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Group\AudioRegionAdapter.cpp">
@@ -949,9 +946,6 @@
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelsComponent.cpp">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ChannelView</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\EditView\AudioTrackRegionEditComponent.cpp">
-      <Filter>Audionaut\Source\Interface\Components\MiddlePanel\EditView</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\AudioTrackComponent.cpp">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ArrangementView</Filter>
     </ClCompile>
@@ -970,9 +964,6 @@
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.cpp">
       <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.cpp">
-      <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.cpp">
       <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
     </ClCompile>
@@ -980,9 +971,6 @@
       <Filter>Audionaut\Source\Interface\Components</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Models\ArrangementModel.cpp">
-      <Filter>Audionaut\Source\Interface\Models</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.cpp">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp">
@@ -997,22 +985,13 @@
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Controls\TableRegionLabel.cpp">
-      <Filter>Audionaut\Source\Interface\Controls</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Controls\SubGroupDraggerControl.cpp">
-      <Filter>Audionaut\Source\Interface\Controls</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\DraggerControl.cpp">
-      <Filter>Audionaut\Source\Interface\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Controls\RegionEditControl.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\LevelMeter.cpp">
@@ -1037,9 +1016,6 @@
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Views\AudioRegionView.cpp">
-      <Filter>Audionaut\Source\Interface\Views</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Views\AudioResourceView.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Submodules\juce\modules\juce_analytics\analytics\juce_Analytics.cpp">
@@ -4038,6 +4014,12 @@
     <ClInclude Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Export\ExportUtil.h">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Export\PlayListItemExport.h">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Export\ExportAudioConfig.h">
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClInclude>
@@ -4095,16 +4077,13 @@
     <ClInclude Include="..\..\Source\Engine\Factory\AudiumFactory.h">
       <Filter>Audionaut\Source\Engine\Factory</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Group\AudioClipData.h">
+      <Filter>Audionaut\Source\Engine\Group</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Group\AudioTrack.h">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Group\AudioTrackContainer.h">
-      <Filter>Audionaut\Source\Engine\Group</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\Group\AudioClip.h">
-      <Filter>Audionaut\Source\Engine\Group</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\Group\AudioClipData.h">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Group\AudioRegionAdapter.h">
@@ -4260,18 +4239,6 @@
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelsHeaderComponent.h">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ChannelView</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\EditView\EditComponent.h">
-      <Filter>Audionaut\Source\Interface\Components\MiddlePanel\EditView</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\EditView\AudioTrackRegionEditComponent.h">
-      <Filter>Audionaut\Source\Interface\Components\MiddlePanel\EditView</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\EditView\RegionEditComponent.h">
-      <Filter>Audionaut\Source\Interface\Components\MiddlePanel\EditView</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\EditView\SubGroupListBox.h">
-      <Filter>Audionaut\Source\Interface\Components\MiddlePanel\EditView</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\ArrangementComponent.h">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ArrangementView</Filter>
     </ClInclude>
@@ -4290,6 +4257,9 @@
     <ClInclude Include="..\..\Source\Interface\Components\HeaderPanel\HeaderComponent.h">
       <Filter>Audionaut\Source\Interface\Components\HeaderPanel</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\FooterComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.h">
       <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
@@ -4299,9 +4269,6 @@
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionComponent.h">
       <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionContainerComponent.h">
-      <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RightPanelComponent.h">
       <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
@@ -4309,9 +4276,6 @@
       <Filter>Audionaut\Source\Interface\Components</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\ArrangementModel.h">
-      <Filter>Audionaut\Source\Interface\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Models\TrackRegionTableListBoxModel.h">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\ChannelGroupListBoxModel.h">
@@ -4335,13 +4299,10 @@
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Models\PlayListItemArrangementModel.h">
+    <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h">
-      <Filter>Audionaut\Source\Interface\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Controls\TableRegionLabel.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h">
@@ -4362,13 +4323,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Controls\SubGroupDraggerControl.h">
-      <Filter>Audionaut\Source\Interface\Controls</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\DraggerControl.h">
-      <Filter>Audionaut\Source\Interface\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Controls\RegionEditControl.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\LevelMeter.h">
@@ -4408,9 +4363,6 @@
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\AudioRegionView.h">
-      <Filter>Audionaut\Source\Interface\Views</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Views\AudioResourceView.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\TransportView.h">

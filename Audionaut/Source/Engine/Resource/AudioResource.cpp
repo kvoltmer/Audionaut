@@ -9,7 +9,6 @@
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Channel/AudioChannel.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
 
@@ -103,6 +102,15 @@ unsigned int AudioResource::getNumAudioFileChannels() const
     return numChannels;
 }
 
+unsigned int AudioResource::getBitDepth() const
+{
+    if (audioFormatReader != nullptr) {
+        return audioFormatReader->bitsPerSample;
+    }
+    return 24;
+}
+
+
 double AudioResource::getFileLength(audium::TimeContextType context) const
 {
     auto length = lengthInSeconds;
@@ -123,10 +131,10 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
     return 0.0;
 }
 
-std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWithinSubGroup() const
+std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWithinResourceGroup() const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
-    auto resources = owner.getAudioResourcesForSubGroup(resourceGroup.get());
+    auto resources = owner.getAudioResourcesForResourceGroup(resourceGroup.get());
     
     for (auto resource : resources) {
         if (resource.get() == this)
@@ -139,8 +147,8 @@ std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWith
 
 bool AudioResource::containsAbsolutePosition(double position, audium::TimeContextType context) const
 {
-    auto startTime = getResourceGroup()->getAbsolutePosition(context);
-    auto endTime = startTime + getResourceGroup()->getRegionData(context).getLength();
+    auto startTime = 0.0;
+    auto endTime = getResourceGroup()->getMaxLength(context);
     juce::Range<double> absoluteRange(startTime, endTime);
     if (absoluteRange.contains(position)) {
         return true;

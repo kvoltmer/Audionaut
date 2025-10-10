@@ -34,8 +34,7 @@ class AudioRegionContainer;
  * associated with an audio track. It provides functionality for serialization,
  * deserialization, and cleanup of resources.
  */
-class ResourceGroup : public PositionableBase,
-                      public Selectable,
+class ResourceGroup : public Selectable,
                       public Streamable
 {
 public:
@@ -68,40 +67,6 @@ public:
      * @brief Cleans up all audio resources in the resource group.
      */
     void cleanupAudioResources();
-
-    /**
-     * @brief Cleans up all transport sources in the resource group.
-     */
-    void cleanupTransportSources();
-
-    // PositionableBase overrides
-    /**
-     * @brief Gets the absolute position of the resource group.
-     * @param context The time context type.
-     * @return The absolute position of the resource group.
-     */
-    double getAbsolutePosition(TimeContextType context) const override;
-
-    /**
-     * @brief Sets the absolute position of the resource group.
-     * @param position The new absolute position.
-     * @param context The time context type.
-     */
-    void setAbsolutePosition(double position, TimeContextType context) override;
-
-    /**
-     * @brief Gets the region data of the resource group.
-     * @param context The time context type.
-     * @return The region data as a range.
-     */
-    juce::Range<double> getRegionData(TimeContextType context) const override;
-
-    /**
-     * @brief Sets the region data of the resource group.
-     * @param newRegionData The new region data as a range.
-     * @param context The time context type.
-     */
-    void setRegionData(juce::Range<double> newRegionData, TimeContextType context) override;
 
     /**
      * @brief Writes the resource group data to a stream.
@@ -186,12 +151,9 @@ public:
      */
     AudioTrack& getAudioTrack() const { return audioTrack; }
     
-    std::shared_ptr<AudioClip> getAudioClip() const { return audioClip; }
     
     std::shared_ptr<AudioRegionContainer> getAudioRegionContainer() const { return audioRegionContainer; }
-    
-    const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
-    
+        
     /**
      * @brief Gets the name of the resource group.
      * @return The name of the resource group.
@@ -203,12 +165,13 @@ public:
      * @return The ID of the resource group.
      */
     const int getId() const;
+    
+    
+    double getMaxLength(audium::TimeContextType context) const;
 
 private:
-    std::shared_ptr<AudioClip> audioClip; ///< Shared pointer to the associated audio clip.
     AudioTrack& audioTrack; ///< Reference to the associated audio track.
     std::shared_ptr<AudioRegionContainer> audioRegionContainer; ///< Shared pointer to the audio region container.
-    std::vector<std::shared_ptr<AudiumTransportSource>> transportSources; ///< Vector of transport sources.
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResourceGroup)
     

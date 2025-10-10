@@ -11,7 +11,6 @@
 
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"
-#include "Interface/Components/MiddlePanel/EditView/EditComponent.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
@@ -22,11 +21,8 @@ public:
     MiddlePanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
         audiumEngine(audiumEngine)
     {
-        snapToGridHandlers[arrangementType].reset(new SnapToGridHandler());
-        zoomHandler[arrangementType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler(), snapToGridHandlers[arrangementType]));
-        
-        snapToGridHandlers[editType].reset(new SnapToGridHandler());
-        zoomHandler[editType].reset(new ZoomHandler(audiumEngine->getPlayListScheduler(), snapToGridHandlers[editType]));
+        snapToGridHandler.reset(new SnapToGridHandler());
+        zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler(), snapToGridHandler));
 
         createComponents();
     }
@@ -38,24 +34,27 @@ public:
     void createComponents()
     {
         auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
-        auto zoom = editMode ? zoomHandler[editType] : zoomHandler[arrangementType];
-        const auto visibleRange = zoom->getVisibleRange();
         
+        if (editMode) {
+            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                        "The region edit view was discontinued.",
+                                                        "We will now display the arrangement view.");
+            audiumEngine->getPlayListScheduler()->setEditMode(false);
+        }
+
         removeAllChildren();
         
         channelsComponent.reset(new ChannelsComponent(audiumEngine));
         addAndMakeVisible(channelsComponent.get());
         
-        arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler[arrangementType]));
+        arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler));
         addAndMakeVisible(arrangementComponent.get());
+
+        const auto visibleRange = zoomHandler->getVisibleRange();
+    
+        arrangementComponent->setVisible(true);
         
-        editComponent.reset(new EditComponent(audiumEngine, zoomHandler[editType]));
-        addAndMakeVisible(editComponent.get());
-        
-        editComponent->setVisible(editMode);
-        arrangementComponent->setVisible(!editMode);
-        
-        zoom->setVisibleRange(visibleRange, sendNotificationSync);
+        zoomHandler->setVisibleRange(visibleRange, sendNotificationSync);
     }
     
     enum UIContext {
@@ -77,59 +76,40 @@ public:
         auto channelBounds = localBounds.removeFromLeft(AudiumLookAndFeel::channelsWidth);
         channelBounds.removeFromTop(AudiumLookAndFeel::dragZoomControlHeight);
         channelsComponent->setBounds(channelBounds);
-        
         arrangementComponent->setBounds(localBounds);
-        editComponent->setBounds(localBounds);
     }
     
     void updateUI(UIContext context = EntireContext)
     {
-        if (context == EntireContext)
-        {
+        if (context == EntireContext) {
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
-            editComponent->updateUI();
         }
-        else if(context == VerticalScrollContext)
-        {
-            getVisibleComponent()->onScrollContext();
-            if (editComponent->isVisible())
-            {
-                channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
-            }
-            else if (arrangementComponent->isVisible())
-            {
+        else if(context == VerticalScrollContext) {
+            if (arrangementComponent->isVisible()) {
+                arrangementComponent->onScrollContext();
                 channelsComponent->setVerticalScrollOffset(arrangementComponent->getVerticalScrollOffset());
             }
-    
         }
-        else if (context == ForceRebuildContext)
-        {
-            bool editMode = audiumEngine->getPlayListScheduler()->isEditMode();
-            auto scrollOffset = arrangementComponent->getVerticalScrollOffset();
+        else if (context == ForceRebuildContext) {
+            auto verticalScrollOffset = arrangementComponent->getVerticalScrollOffset();
+            auto horizontalScrollOffset = arrangementComponent->getHorizontalScrollOffset();
             createComponents();
             
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
-            editComponent->updateUI();
             
-            arrangementComponent->setVerticalScrollOffset(scrollOffset);
-            showEditComponent(editMode);
-            showArrangementComponent(!editMode);
+            arrangementComponent->setVerticalScrollOffset(verticalScrollOffset);
+            arrangementComponent->setHorizontalScrollOffset(horizontalScrollOffset);
             resized();
         }
-        else if (context == ArrangementContext)
-        {
+        else if (context == ArrangementContext) {
             if (arrangementComponent->isVisible()) {
                 arrangementComponent->updateUI();
-            }
-            else if (editComponent->isVisible()) {
-                editComponent->updateUI();
             }
             else {
                 jassertfalse;
             }
-            
         }
     }
     
@@ -169,44 +149,29 @@ public:
         return arrangementComponent->isVisible();
     }
     
-    
-    void showEditComponent(bool visible)
-    {
-        editComponent->setVisible(visible);
-        if (visible)
-        {
-            editComponent->resized();
-            editComponent->updateUI();
-            channelsComponent->setVerticalScrollOffset(editComponent->getVerticalScrollOffset());
-        }
-    }
-    
     bool editComponentVisible() const
     {
-        return editComponent->isVisible();
+        return false;
     }
     
     ArrangementEditBaseComponent* getVisibleComponent() const
     {
         if (arrangementComponent->isVisible())
             return arrangementComponent.get();
-        else
-            return editComponent.get();
+        else {
+            jassertfalse;
+            return nullptr;
+        }
     }
     
 private:
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
-    enum { arrangementType = 0, editType = 1, numTypes = 2 };
-    
-    std::shared_ptr<ZoomHandler> zoomHandler[numTypes];
-    std::shared_ptr<SnapToGridHandler> snapToGridHandlers[numTypes];
+    std::shared_ptr<ZoomHandler> zoomHandler;
+    std::shared_ptr<SnapToGridHandler> snapToGridHandler;
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;
-    std::unique_ptr<EditComponent> editComponent;
-    
-    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MiddlePanelComponent)
 };

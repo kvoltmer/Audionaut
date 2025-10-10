@@ -44,10 +44,17 @@ void AudioRegionView::resized()
     }
 }
 
-void AudioRegionView::updateUI(int theChannel)
+void AudioRegionView::updateUI(std::shared_ptr<audium::AudioResource> audioResource_, int theChannel)
 {
     //std::cout << "AudioRegionView::updateUI " << playListItem->getRegion()->getName() << std::endl;
     channelNumber = theChannel;
+    if (audioResource != audioResource_) {
+        audioResource = audioResource_;
+        createThumbnailCache();
+    }
+    else {
+        //std::cout << "AudioRegionView::updateUI " << this << " null" << std::endl;
+    }
         
     volumeSlider->setValue(LevelMeter::gainToDecebel(getClipGain()), dontSendNotification);
 }

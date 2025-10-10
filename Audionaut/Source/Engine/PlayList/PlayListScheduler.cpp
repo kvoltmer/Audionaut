@@ -11,7 +11,6 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -25,6 +24,7 @@
 #include "Engine/Core/LockFreeContainer.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/PlayList/TransportLoop.h"
+#include "Engine/Resource/ChannelMapping.h"
 
 using namespace::std::chrono;
 
@@ -128,10 +128,8 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples, 
                 
             }
         }
-        else if (onLoop) {
-            // stop at loop end
-            transportSource->getAudioTransportSource()->stop();
-            
+        else {
+            playback->stopVoice(transportSource);
         }
     }
 }
@@ -268,33 +266,117 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> tr
     return 0.0;
 }
 
-void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
-                                     audium::ExportAudioConfig &config,
+void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
+                                           std::shared_ptr<ExportAudioConfig> config,
+                                           std::function<void ()> callback)
+{
+    jassert(config->playListItem != nullptr);
+    jassert((int)config->sampleRate == (int)externalSampleRate);
+    
+    config->numChannels = config->playListItem->getPlayListContainer().getAudioTrack().getNumAudioTrackChannels();
+    std::cout << "bounce channels: " << config->numChannels << std::endl;
+    
+    auto totalSamples   = static_cast<int64>((config->playListItem->getRegionData(audium::seconds).getLength()) * externalSampleRate);
+    auto iterations     = static_cast<int64>(totalSamples) / config->blockSize;
+    auto remainder      = totalSamples - (iterations * config->blockSize);
+    jassert(remainder < config->blockSize);
+    
+    AudioBuffer<float> buffer(config->numChannels, config->blockSize);
+    AudioSourceChannelInfo info (&buffer, 0, config->blockSize);
+    
+    AudioBuffer<float> audioBusBuffer(config->numChannels, config->blockSize);
+    juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
+    
+    auto item = config->playListItem;
+    
+    for (auto source : config->playListItem->getTransportSources()) {
+        source->prepareToPlay(config->blockSize, config->sampleRate);
+        source->schedulePosition(config->playListItem->getRegionData(seconds).getStart(), 0);
+        source->scheduleDuration(config->playListItem->getRegionData(seconds).getLength(), config->sampleRate);
+        source->configureDynamics(config->playListItem, tempoProvider);
+        source->applyChannelMapping(false);
+        source->getAudioTransportSource()->start();
+    }
+    
+    int64 samplesWritten = 0;
+    for (auto i = 0; i < iterations; ++i) {
+        info.clearActiveBufferRegion();
+        audioBusInfo.clearActiveBufferRegion();
+        for (auto source : config->playListItem->getTransportSources()) {
+            source->getNextAudioBlock(audioBusInfo);
+            for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
+                info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
+            }
+        }
+    
+        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+        
+        samplesWritten += info.numSamples;
+        
+        config->progress = i / (double)iterations;
+        
+        if (callback)
+            callback();
+        
+        if (config->userCanceled)
+            break;
+    }
+    
+    if (!config->userCanceled) {
+        
+        // process remaining samples
+        if (remainder > 0) {
+            buffer.clear();
+            info.numSamples = static_cast<int>(remainder);
+            info.clearActiveBufferRegion();
+            
+            audioBusInfo.numSamples = static_cast<int>(remainder);
+            audioBusInfo.clearActiveBufferRegion();
+            for (auto source : config->playListItem->getTransportSources()) {
+                source->getNextAudioBlock(audioBusInfo);
+                for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
+                    info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
+                }
+            }
+            
+            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            samplesWritten += info.numSamples;
+        }
+        
+        jassert(samplesWritten == totalSamples);
+    }
+    
+}
+
+void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
+                                     std::shared_ptr<ExportAudioConfig> config,
                                      std::function<void ()> callback)
 {
+    jassert(config->playListItem == nullptr);
+    
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
-    setAbsoluteStartPosition(config.positionSeconds, audium::seconds);
+    setAbsoluteStartPosition(config->positionSeconds, audium::seconds);
     
     startPlaying();
     
-    jassert((int)config.sampleRate == (int)externalSampleRate);
+    jassert((int)config->sampleRate == (int)externalSampleRate);
     
-    auto totalSamples   = static_cast<int64>((getTotalLength(audium::seconds) - config.positionSeconds) * externalSampleRate);
-    auto iterations     = static_cast<int64>(totalSamples) / config.blockSize;
-    auto remainder      = totalSamples - (iterations * config.blockSize);
-    jassert(remainder < config.blockSize);
+    auto totalSamples   = static_cast<int64>((getTotalLength(audium::seconds) - config->positionSeconds) * externalSampleRate);
+    auto iterations     = static_cast<int64>(totalSamples) / config->blockSize;
+    auto remainder      = totalSamples - (iterations * config->blockSize);
+    jassert(remainder < config->blockSize);
     
     auto positionBeats = TempoProvider::clocksToBeats(getAbsolutePosition(audium::clocks));
     
-    AudioBuffer<float> buffer(config.numChannels, config.blockSize);
-    AudioSourceChannelInfo info (&buffer, 0, config.blockSize);
+    AudioBuffer<float> buffer(config->numChannels, config->blockSize);
+    AudioSourceChannelInfo info (&buffer, 0, config->blockSize);
     int64 samplesWritten = 0;
     for (auto i = 0; i < iterations; ++i) {
-        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config.blockSize) / externalSampleRate);
+        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
-        tick(true, positionBeats, config.blockSize);
+        tick(true, positionBeats, config->blockSize);
         positionBeats += beatsThisBuffer;
         
         
@@ -305,22 +387,28 @@ void PlayListScheduler::bounceToFile(juce::AudioFormatWriter* writer,
         
         samplesWritten += info.numSamples;
         
-        config.progress = i / (double)iterations;
+        config->progress = i / (double)iterations;
         
         if (callback)
             callback();
+        
+        if (config->userCanceled)
+            break;
     }
     
-    // process remaining samples
-    if (remainder > 0) {
-        buffer.clear();
-        info.numSamples = static_cast<int>(remainder);
-        processAudio(info);
-        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
-        samplesWritten += info.numSamples;
+    if (!config->userCanceled) {
+        
+        // process remaining samples
+        if (remainder > 0) {
+            buffer.clear();
+            info.numSamples = static_cast<int>(remainder);
+            processAudio(info);
+            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            samplesWritten += info.numSamples;
+        }
+        
+        jassert(samplesWritten == totalSamples);
     }
-    
-    jassert(samplesWritten == totalSamples);
     
     
     setAbsoluteStartPosition(lastPosition, audium::seconds);
@@ -348,7 +436,7 @@ void PlayListScheduler::commitPlayListData()
     // calc total length
     double totalLength = 0.0;
     for (auto track : audioTrackContainer->getAudioTracks()) {
-        totalLength = juce::jmax(totalLength, track->getTotalLength(audium::clocks, isArrangementMode()));
+        totalLength = juce::jmax(totalLength, track->getTotalLength(audium::clocks));
     }
     totalLengthClocks = totalLength;
     std::cout << "PlayListScheduler::commitPlayListData -> totalLengthClocks: " << totalLengthClocks << std::endl;

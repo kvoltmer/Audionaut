@@ -18,10 +18,10 @@
 #include "Interface/Views/AudioRegionView.h"
 
 
-class PlayListItemArrangementModel  : public audium::ListBoxModel
+class PlayListItemListBoxModel  : public audium::ListBoxModel
 {
 public:
-    PlayListItemArrangementModel(audium::ListBox& owner,
+    PlayListItemListBoxModel(audium::ListBox& owner,
                                  std::shared_ptr<audium::AudioTrack> audioTrack,
                                  std::shared_ptr<audium::PlayListItem> playListItem,
                                  std::shared_ptr<audium::AudiumEngine> audiumEngine,
@@ -36,7 +36,7 @@ public:
     {
     }
     
-    ~PlayListItemArrangementModel() override
+    ~PlayListItemListBoxModel() override
     {
     }
     
@@ -63,29 +63,26 @@ public:
         auto audioResource = resourceGroup->getAudioResourceAtChannel(rowNumber);
         
         if (existingComponentToUpdate == nullptr) {
-            if (audioResource != nullptr) {
-                jassert(parentComponent);
-                jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
-                auto component = new AudioRegionView(parentComponent,
-                                                     audiumEngine,
-                                                     audioResource,
-                                                     zoomHandler,
-                                                     audioTrack->getColour(),
-                                                     regionSelector,
-                                                     rowNumber);
-                component->setPlayListItem(playListItem, volumeControlVisible);
-                return component;
-            }
-            else {
-                return new juce::Component();
-            }
+            jassert(parentComponent);
+            jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
+            auto component = new AudioRegionView(parentComponent,
+                                                 audiumEngine,
+                                                 audioResource,
+                                                 zoomHandler,
+                                                 audioTrack->getColour(),
+                                                 regionSelector,
+                                                 rowNumber);
+            component->setPlayListItem(playListItem, volumeControlVisible);
+            return component;
+            
         }
         else {
-            if (auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate)) {
+            auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate);
+            if (component != nullptr) {
                 jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
                 component->setParentComponent(parentComponent);
-                component->updateUI(rowNumber);
                 component->setPlayListItem(playListItem, volumeControlVisible);
+                component->updateUI(audioResource, rowNumber);
                 return component;
             }
         }
@@ -122,7 +119,9 @@ public:
     
     void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_)
     {
-        playListItem = playListItem_;
+        if (playListItem != playListItem_) {
+            playListItem = playListItem_;
+        }
     }
     
     void setParentComponent(juce::Component *comp)
@@ -141,5 +140,5 @@ private:
     std::shared_ptr<RegionSelector> regionSelector;
 
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemArrangementModel)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemListBoxModel)
 };

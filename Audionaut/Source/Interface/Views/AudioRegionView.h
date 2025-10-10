@@ -53,7 +53,7 @@ public:
     
     void resized() override;
     
-    void updateUI(int theChannel) override;
+    void updateUI(std::shared_ptr<audium::AudioResource> audioResource, int theChannel) override;
     
     void setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible);
 

@@ -72,10 +72,14 @@ void AudiumEngine::cleanup()
     undoManager->clearUndoHistory();
     
     currentProjectFile = File();
+    currentJson.clear();
 }
 
 void AudiumEngine::createNewProject()
 {
+    // reset current project dir
+    projectDirectory = File();
+    
     AudioResourceContainer::createTemporaryProjectDirectory(true);
     
     audium::WaveFormColours::resetWaveFormColour();
@@ -143,6 +147,12 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
                     return true;
                 }
             }
+            else {
+                NullCheckedInvocation::invoke (callback,
+                                               inputStream.getStatus().getErrorMessage().toStdString());
+                return false;
+                
+            }
             
         }
 
@@ -191,9 +201,10 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(file.getParentDirectory());
         if (sourceDirectory != destinationDirectory) {
             if (!audioResourceContainer->copyOrMoveAudioFiles(sourceDirectory, destinationDirectory)) {
-                NullCheckedInvocation::invoke (callback, "Error copying audio files.");
+                NullCheckedInvocation::invoke (callback, "Failed to copy audio files.");
                 return false;
             }
+            
             audioResourceContainer->changeAudioFilePaths(destinationDirectory);
         }
         // assign new project directory
@@ -210,8 +221,7 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
             if (temp.overwriteTargetFileWithTemporary()) {
                 currentProjectFile = file;
                 undoManager->clearUndoHistory();
-                
-                
+                                
                 // consitency check
                 std::vector<juce::File> redundantFiles;
                 for (auto& found : destinationDirectory.findChildFiles (File::findFiles, false, "*")) {
@@ -222,13 +232,35 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
                 
                 // delete redundant files
                 if (redundantFiles.size() > 0) {
+                    
+                    String redundantFilesString;
+                    for (auto i = 0; i < redundantFiles.size(); i++) {
+                        redundantFilesString += redundantFiles[i].getFullPathName() + "\n";
+                        
+                        // don't display more than 10 Files
+                        if (i > 10) {
+                            redundantFilesString += "etc...";
+                            break;
+                        }
+                    }
+                    
+                    
                     auto result = NativeMessageBox::showOkCancelBox(MessageBoxIconType::WarningIcon,
-                                                                    "Redundant files found",
-                                                                    "Some audio files are not used in the project anymore.\n\n" +
-                                                                    String(redundantFiles.size()) + " files will be deleted.");
+                                                                    "Redundant files found. Move files to trash?",
+                                                                    "The following audio files are not used in the project anymore:\n\n" +
+                                                                    redundantFilesString +
+                                                                    "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
                     if (result) {
-                        for (auto& file : redundantFiles)
-                            file.deleteFile();
+                        bool success = true;
+                        for (auto& file : redundantFiles) {
+                            if (!file.moveToTrash()) {
+                                success = false;
+                                break;
+                            }
+                        }
+                        if (!success) {
+                            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
+                        }
                     }
                 }
                 
@@ -268,8 +300,8 @@ bool AudiumEngine::readFromStream (juce::InputStream& inputStream, bool rebuild)
 
 bool AudiumEngine::writeToJson (json& output)
 {
-    json jsonAudium;
     
+    json jsonAudium;
     audioTrackContainer->writeToJson(jsonAudium);
     
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
@@ -277,7 +309,7 @@ bool AudiumEngine::writeToJson (json& output)
     jsonAudium["ui_state"] = uiState;
     jsonAudium["scheduler"] = getPlayListScheduler()->data;
     output["audium"] = jsonAudium;
-    
+    currentJson = output;
     // std::cout << std::setw(2) << output << std::endl;
     return true;
 }
@@ -306,7 +338,11 @@ bool AudiumEngine::readFromJson (json& input, bool rebuild)
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
         playListScheduler->getTempoProvider()->setTempo(tempo);
     
-    return audioTrackContainer->readFromJson(jsonAudium, rebuild);
+    if (audioTrackContainer->readFromJson(jsonAudium, rebuild)) {
+        currentJson = input;
+        return true;
+    }
+    return false;
 }
 
 int AudiumEngine::getSizeInUnits()
@@ -328,9 +364,10 @@ void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> tr
 void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
 {
     // first bounce the mix
-    audium::ExportAudioConfig bounceConfig;
-    bounceConfig.fileName = juce::File::createTempFile(".wav");
-    bounceConfig.sampleRate = 48000.0;
+    auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+    
+    bounceConfig->fileName = juce::File::createTempFile(".wav");
+    bounceConfig->sampleRate = 48000.0;
     
     // create the thread
     auto thread = std::make_unique<AudioExportThread>(*this, bounceConfig);
@@ -339,13 +376,13 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
     if (thread->runThread())
     {
         // thread finished normally..
-        config.bounceFileName = bounceConfig.fileName.getFullPathName().toStdString();
+        config.bounceFileName = bounceConfig->fileName.getFullPathName().toStdString();
         
         std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioTrackContainer,
                                                         audioResourceContainer));
         if (autoEdit->invokeAutoEdit(config))
         {
-            autoEdit->applyAutoEditResult(bounceConfig.sampleRate);
+            autoEdit->applyAutoEditResult(bounceConfig->sampleRate);
         }
     }
     else
@@ -358,6 +395,12 @@ void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const
 {
     return track->getPlayListContainer();
+}
+
+void AudiumEngine::deleteObsoleteAudioFiles()
+{
+    std::cout << "AudiumEngine::deleteObsoleteAudioFiles" << std::endl;
+    audioResourceContainer->deleteObsoleteAudioFiles(currentJson);
 }
 
 } // namespace audium
