@@ -7,7 +7,10 @@
 
 void RegionLabel::mouseDown (const juce::MouseEvent& e)
 {
-    if (!e.mods.isAnyModifierKeyDown()) {
+    auto region = getRegion(rowNumber);
+    bool isSelected = region != nullptr && region->isSelected();
+    
+    if (!e.mods.isAnyModifierKeyDown() && !isSelected) {
         audioTrackContainer->getSelectionManager()->deselectAll();
     }
     

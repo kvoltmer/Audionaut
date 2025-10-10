@@ -50,11 +50,14 @@ namespace CommandIDs
         toggleFullScreen        = 0x300077,
         pageLeft                = 0x300078,
         pageRight               = 0x300079,
-        
+       
+        exportSelectedItemsId   = 0xf836743,
+        copyChansToNewTrackId   = 0xf836744,
 
         lastCommandIDEntry
     };
 }
+
 
 namespace CommandCategories
 {

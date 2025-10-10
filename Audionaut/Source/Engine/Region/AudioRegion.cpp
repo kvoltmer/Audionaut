@@ -6,7 +6,6 @@
 #include "AudioRegion.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -89,38 +88,28 @@ bool AudioRegion::validateData(AudioRegionData::tRange& newData, audium::TimeCon
 {
     bool result = false;
     
-    if (newData.getStart() < getAudioResourceStart(context)) {
-        newData = newData.movedToStartAt(getAudioResourceStart(context));
+    if (newData.getStart() < 0.0) {
+        newData = newData.movedToStartAt(0.0);
         result |= true;
     }
     
-    if (newData.getEnd() > getAudioResourceEnd(context)) {
-        newData = newData.movedToEndAt(getAudioResourceEnd(context));
+    if (newData.getEnd() > resourceGroup->getMaxLength(context)) {
+        newData = newData.movedToEndAt(resourceGroup->getMaxLength(context));
         result |= true;
     }
     return result;
 }
 
-double AudioRegion::getAudioResourceStart(audium::TimeContextType context) const
-{
-    return resourceGroup->getRegionData(context).getStart();
-}
-
-double AudioRegion::getAudioResourceEnd(audium::TimeContextType context) const
-{
-    return resourceGroup->getRegionData(context).getEnd();
-}
-
 void AudioRegion::setRegionStart(double newStart, audium::TimeContextType context)
 {
-    if (newStart <=  getRegionData(context).getEnd()) {
+    if (newStart <= getRegionData(context).getEnd()) {
         setRegionData(AudioRegionData::tRange(newStart, getRegionData(context).getEnd()), context);
     }
 }
 
 void AudioRegion::setRegionEnd(double newEnd, audium::TimeContextType context)
 {
-    if (newEnd >=  getRegionData(context).getStart()) {
+    if (newEnd >= getRegionData(context).getStart()) {
         setRegionData(AudioRegionData::tRange(getRegionData(context).getStart(), newEnd), context);
     }
 }
@@ -132,7 +121,7 @@ void AudioRegion::setRegionLength(double newLength, audium::TimeContextType cont
 
 std::vector<std::shared_ptr<AudioResource>> AudioRegion::getAudioResources() const
 {
-    return audioTrack->getAudioResourceContainer().getAudioResourcesForSubGroup(resourceGroup.get());
+    return audioTrack->getAudioResourceContainer().getAudioResourcesForResourceGroup(resourceGroup.get());
 }
 
 bool AudioRegion::deleteAssociatedItems()
@@ -175,6 +164,26 @@ void AudioRegion::onDeleteChannel(int channel)
         return;
     // remove channel from gain vector
     data.gain_vector.erase(data.gain_vector.begin() + static_cast<size_t>(channel));
+}
+
+double AudioRegion::getResourcesMaxSampleRate() const
+{
+    auto sr = 0.0;
+    for (auto res : getAudioResources()) {
+        sr = std::max(sr, res->getSampleRate());
+    }
+    jassert(sr > 0.0);
+    return sr;
+}
+
+int AudioRegion::getResourcesMaxBitDepth() const
+{
+    unsigned int bitDepth = 0;
+    for (auto res : getAudioResources()) {
+        bitDepth = std::max(bitDepth, res->getBitDepth());
+    }
+    jassert(bitDepth > 0.0);
+    return bitDepth;
 }
 
 } // namespace audium

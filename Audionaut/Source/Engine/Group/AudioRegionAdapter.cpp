@@ -8,7 +8,6 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -117,29 +116,15 @@ void AudioRegionAdapter::createRegionsFromSelection(juce::String name, bool arra
     auto selectedRange = getSelectedRange(context);
     
     for (auto track : owner.getAudioTracks()) {
-        if (arrangementMode) {
-            if (auto item = track->getPlayListContainer()->itemContainingRange(selectedRange, context)) {
-                auto localRange = item->absoluteToLocalRange(selectedRange, context);
-                auto resourceGroup = item->getRegion()->getResourceGroup();
-                resourceGroup->getAudioRegionContainer()->createRegion(name,
-                                                                  localRange,
-                                                                  track,
-                                                                  resourceGroup,
-                                                                  item->getRegion(),
-                                                                  context);
-            }
-        }
-        else
-        {
-            if (auto resourceGroup = track->getResourceGroupAtAbsoluteRange(selectedRange, context)) {
-                auto localRange = resourceGroup->absoluteToLocalRange(selectedRange, context);
-                resourceGroup->getAudioRegionContainer()->createRegion(name,
-                                                                  localRange,
-                                                                  track,
-                                                                  resourceGroup,
-                                                                  nullptr,
-                                                                  context);
-            }
+        if (auto item = track->getPlayListContainer()->itemContainingRange(selectedRange, context)) {
+            auto localRange = item->absoluteToLocalRange(selectedRange, context);
+            auto resourceGroup = item->getRegion()->getResourceGroup();
+            resourceGroup->getAudioRegionContainer()->createRegion(name,
+                                                              localRange,
+                                                              track,
+                                                              resourceGroup,
+                                                              item->getRegion(),
+                                                              context);
         }
     }
     

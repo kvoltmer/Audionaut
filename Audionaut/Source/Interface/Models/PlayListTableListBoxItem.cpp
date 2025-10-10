@@ -5,21 +5,24 @@
 
 #include "PlayListTableListBoxItem.h"
 #include "PlayListTableListBoxModel.h"
-#include "Interface/Components/RightPanel/PlayListComponent.h"
-#include "Interface/Controls/RegionLabel.h"
-#include "Interface/Controls/TableRegionLabel.h"
+
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
-#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+
+#include "Application/AudiumCommandIDs.h"
+
+#include "Interface/Components/RightPanel/PlayListComponent.h"
+#include "Interface/Controls/RegionLabel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+
+using namespace juce;
 
 bool PlayListTableListBoxItem::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
-        return true;
-    
-    if (dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
     
     if (auto item = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()))
@@ -88,8 +91,7 @@ void PlayListTableListBoxItem::itemDropped (const SourceDetails &dragSourceDetai
             modified = true;
         }
     }
-    else if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr ||
-             dynamic_cast<TableRegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+    else if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr)
     {
         playListModel->getAudioTrack()->dropSelectedAudioRegions(insertIndex);
         modified = true;
@@ -129,21 +131,19 @@ void PlayListTableListBoxItem::drawLinearProgress (juce::Graphics& g, double pro
 
 void PlayListTableListBoxItem::paint(juce::Graphics& g)
 {
-    if (columnNumber == 1)
-    {
+    if (columnNumber == 1) {
         drawLinearProgress(g, progress);
     }
     
     auto container = playListModel->getAudioTrack()->getPlayListContainer();
-    if (auto r = container->getPlayListItem(rowNumber))
-    {
+    if (auto item = container->getPlayListItem(rowNumber)) {
         juce::String text;
-        auto groupColour = r->getRegion()->getAudioTrack()->getColour();
+        auto groupColour = item->getRegion()->getAudioTrack()->getColour();
         auto groupHighlightColour = groupColour.brighter().brighter();
 
         if (columnNumber == 1)
         {
-            text = r->getRegion()->getName();
+            text = item->getRegion()->getName();
         }
         else if (columnNumber == 2)
         {
@@ -166,8 +166,30 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
     }
 }
 
+static void contextMenuCallback (int result, PlayListTableListBoxItem* component)
+{
+    if (component != nullptr &&
+        result != 0) {
+        switch (result) {
+            case CommandIDs::exportSelectedItemsId:
+                component->exportSelectedPlayListItem();
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 void PlayListTableListBoxItem::mouseDown (const juce::MouseEvent& e)
 {
+    if (e.mods.isPopupMenu()) {
+        PopupMenu m;
+        m.addItem (CommandIDs::exportSelectedItemsId, TRANS ("Export..."), true);
+        m.setLookAndFeel (&getLookAndFeel());
+        m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight),
+                         ModalCallbackFunction::forComponent (contextMenuCallback, this));
+    }
+    
     auto track = playListModel->getAudioTrack();
     auto container = track->getPlayListContainer();
 
@@ -240,4 +262,19 @@ void PlayListTableListBoxItem::update(int columnId, int rowNumber, bool isSelect
     
     
     repaint();
+}
+
+void PlayListTableListBoxItem::exportSelectedPlayListItem()
+{
+    auto container = playListModel->getAudioTrack()->getPlayListContainer();
+    if (auto playListItem = container->getPlayListItem(rowNumber)) {
+        exporter = std::make_unique<audium::PlayListItemExport>(getPlayListModel()->getAudiumEngine(),
+                                                                playListItem->getRegion(),
+                                                                container);
+    }
+}
+
+std::shared_ptr<audium::PlayListItem> PlayListTableListBoxItem::getPlayListItem() const
+{
+    return playListModel->getAudioTrack()->getPlayListContainer()->getPlayListItem(rowNumber);
 }

@@ -15,7 +15,6 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 

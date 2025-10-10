@@ -6,6 +6,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/Export/PlayListItemExport.h"
 
 class PlayListTableListBoxModel;
 
@@ -83,6 +84,10 @@ public:
     
     const PlayListTableListBoxModel* getPlayListModel() const { return playListModel; }
     
+    void exportSelectedPlayListItem();
+    
+    std::shared_ptr<audium::PlayListItem> getPlayListItem() const;
+    
 private:
     
     bool insertAfter = false;
@@ -93,4 +98,7 @@ private:
     
     bool selected = false;
     double progress = 0.0;
+    
+    std::unique_ptr<audium::PlayListItemExport> exporter;
+
 };

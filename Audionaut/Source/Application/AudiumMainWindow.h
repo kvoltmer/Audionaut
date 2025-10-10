@@ -44,7 +44,7 @@ public:
     
 private:
     
-    bool isSomethingSelected();
+    bool anythingSelected();
     bool canPaste();
         
     std::shared_ptr<audium::AudiumEngine> audiumEngine;

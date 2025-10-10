@@ -124,6 +124,12 @@ public:
     unsigned int getNumAudioFileChannels() const;
     
     /**
+     * @brief Retrieves the bit depth of the audio file.
+     * @return The bit depth as an unsigned integer.
+     */
+    unsigned int getBitDepth() const;
+    
+    /**
      * @brief Retrieves the length of the audio file in the specified time context.
      * @param context The time context to use.
      * @return The length of the file as a `double`.
@@ -134,7 +140,7 @@ public:
      * @brief Retrieves all audio resources within the same subgroup.
      * @return A vector of shared pointers to `AudioResource` objects.
      */
-    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinSubGroup() const;
+    std::vector<std::shared_ptr<AudioResource>> getAudioResourcesWithinResourceGroup() const;
     
     /**
      * @brief Checks if the resource contains the specified absolute position.

@@ -5,7 +5,6 @@
 
 #include "AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
-#include "Engine/Group/AudioClip.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
@@ -338,7 +337,7 @@ juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
     return newColour;
 }
 
-void AudioTrackContainer::copySelectedChannelsToNewTrack(bool copyChannels)
+bool AudioTrackContainer::copySelectedChannelsToNewTrack(bool copyChannels)
 {
     // undo
     auto action = std::make_unique<audium::UndoableContainerAction>(*this);
@@ -363,12 +362,14 @@ void AudioTrackContainer::copySelectedChannelsToNewTrack(bool copyChannels)
             }
         }
     }
+    else return false;
     
     
     // undo
     action->storeNewState();
     undoManager->perform(action.release(), "copy channel(s)");
     undoManager->beginNewTransaction();
+    return true;
 }
 
 bool AudioTrackContainer::addAudioFiles(const juce::StringArray& filenames,

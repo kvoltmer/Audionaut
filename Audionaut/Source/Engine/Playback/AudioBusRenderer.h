@@ -58,7 +58,10 @@ public:
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             // std::cout << "setGain " << channelNumber << " " << newGain << std::endl;
-            gains[channelNumber].setGainLinear(newGain);
+            if (soloStates[channelNumber])
+                gains[channelNumber].setGainLinear(newGain);
+            else if (!muteStates[channelNumber])
+                gains[channelNumber].setGainLinear(newGain);
             gainStates[channelNumber] = newGain;
         }
     }
@@ -80,7 +83,7 @@ public:
             soloStates[channelNumber] = bSolo;
 
             auto anySolo = false;
-            for (auto c = 0; c < MAX_AUDIO_CHANNELS; ++c) {
+            for (auto c = 0; c < audioBus.getNumChannels(); ++c) {
                 if (soloStates[c]) {
                     anySolo = true;
                     break;

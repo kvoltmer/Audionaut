@@ -28,7 +28,7 @@ public:
      * @param config_ Reference to the ExportAudioConfig containing export settings.
      */
     AudioExportThread(AudiumEngine &audiumEngine_,
-                      ExportAudioConfig &config_) :
+                      std::shared_ptr<ExportAudioConfig> config_) :
         juce::ThreadWithProgressWindow ("exporting...", true, true),
         audiumEngine(audiumEngine_),
         config(config_)
@@ -42,18 +42,19 @@ public:
      */
     void run()
     {
-        bounceToFile(config);
+        bounce();
     }
     
     /**
      * @brief Exports audio to a file based on the provided configuration.
      * @param config Reference to the ExportAudioConfig containing export settings.
      */
-    void bounceToFile(ExportAudioConfig &config);
+    void bounce();
     
 private:
     AudiumEngine &audiumEngine; ///< Reference to the AudiumEngine instance.
-    ExportAudioConfig &config;  ///< Reference to the export configuration.
+    
+    std::shared_ptr<ExportAudioConfig> config;  ///< The export configuration.
 };
 
 } // namespace audium

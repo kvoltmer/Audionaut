@@ -161,7 +161,6 @@ void MainComponent::updateUI()
     headerComponent->updateUI();
     auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
     middlePanelComponent->showArrangementComponent(!editMode);
-    middlePanelComponent->showEditComponent(editMode);
 
     middlePanelComponent->updateUI();
     rightPanelComponent->updateUI(ContentContext);

@@ -110,7 +110,9 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::pageLeft,
         CommandIDs::pageRight,
         CommandIDs::followTransport,
+#if HAS_REGION_EDIT_VIEW
         CommandIDs::toggleEditArrangement,
+#endif
         CommandIDs::toggleFullScreen,
         StandardApplicationCommandIDs::undo,
         StandardApplicationCommandIDs::redo,
@@ -177,17 +179,19 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Full Screen", "Enter full screen", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::commandModifier | ModifierKeys::ctrlModifier, 0));
             break;
+#if HAS_REGION_EDIT_VIEW
         case CommandIDs::toggleEditArrangement:
             result.setInfo ("Toggle Region / Arrangement View", "Toggle Region / Arrangement View", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress (KeyPress::tabKey, ModifierKeys::noModifiers, 0));
             break;
+#endif
         case CommandIDs::zoomIn:
             result.setInfo ("Zoom In", "Zoom in", CommandCategories::view, 0);
-            result.defaultKeypresses.add (KeyPress ('+', ModifierKeys::ctrlModifier, 0));
+            result.defaultKeypresses.add (KeyPress ('+', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::zoomOut:
             result.setInfo ("Zoom Out", "Zoom out", CommandCategories::view, 0);
-            result.defaultKeypresses.add (KeyPress ('-', ModifierKeys::ctrlModifier, 0));
+            result.defaultKeypresses.add (KeyPress ('-', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::pageLeft:
             result.setInfo ("Page Left", "Scroll one page feft", CommandCategories::view, 0);
@@ -216,13 +220,13 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
 
         case StandardApplicationCommandIDs::cut:
             result.setInfo (TRANS ("Cut"), String(), "Editing", 0);
-            result.setActive (isSomethingSelected());
+            result.setActive (anythingSelected());
             result.defaultKeypresses.add (KeyPress ('x', cmd, 0));
             break;
 
         case StandardApplicationCommandIDs::copy:
             result.setInfo (TRANS ("Copy"), String(), "Editing", 0);
-            result.setActive (isSomethingSelected());
+            result.setActive (anythingSelected());
             result.defaultKeypresses.add (KeyPress ('c', cmd, 0));
             break;
 
@@ -235,7 +239,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case StandardApplicationCommandIDs::del:
             result.setInfo (TRANS ("Delete"), String(), "Editing", 0);
             result.defaultKeypresses.add (KeyPress (KeyPress::deleteKey, ModifierKeys::noModifiers, 0));
-            result.setActive (isSomethingSelected());
+            result.setActive (anythingSelected());
             break;
 
         case StandardApplicationCommandIDs::selectAll:
@@ -347,9 +351,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
     return true;
 }
 
-bool AudiumMainWindow::isSomethingSelected()
+bool AudiumMainWindow::anythingSelected()
 {
-    return getEngine()->getAudioTrackContainer()->getSelectionManager()->isSomethingSelected();
+    return getEngine()->getAudioTrackContainer()->getSelectionManager()->anythingSelected();
 }
 
 bool AudiumMainWindow::canPaste()

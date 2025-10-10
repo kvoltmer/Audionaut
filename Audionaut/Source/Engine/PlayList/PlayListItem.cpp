@@ -178,7 +178,7 @@ bool PlayListItem::validateData()
     }
     
     // End must NOT exeed file length
-    auto totalLength = audioRegion->getAudioResourceEnd(context);
+    auto totalLength = audioRegion->getResourceGroup()->getMaxLength(context);
     auto regionData = getRegionData(context);
     if (regionData.getEnd() > totalLength) {
         regionData.setEnd(totalLength);

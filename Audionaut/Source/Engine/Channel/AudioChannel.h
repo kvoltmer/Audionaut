@@ -23,7 +23,7 @@ namespace audium
  * such as height, gain, pan, mute, and solo states. It also integrates with the
  * selection system and audio bus interface for advanced audio processing.
  */
-class AudioChannel : public audium::Selectable
+class AudioChannel : public Selectable
 {
     
 public:
@@ -36,9 +36,9 @@ public:
     AudioChannel(AudioTrack &audioTrack_,
                  std::shared_ptr<SelectionManager> selectionManager_,
                  std::shared_ptr<AudioBusInterface> audioBusInterface_) :
-    audium::Selectable(selectionManager_),
-    audioTrack(audioTrack_),
-    audioBusInterface(audioBusInterface_)
+        Selectable(selectionManager_),
+        audioTrack(audioTrack_),
+        audioBusInterface(audioBusInterface_)
     {
     }
 

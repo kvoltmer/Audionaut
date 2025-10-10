@@ -1,0 +1,44 @@
+/*
+  ==============================================================================
+
+    PlayListItemExport.h
+    Created: 18 Sep 2025 4:05:58pm
+    Author:  Klaus Voltmer
+
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+
+#include "Engine/AudiumEngine.h"
+#include "Engine/PlayList/PlayListContainer.h"
+
+namespace audium {
+
+class PlayListItemExport {
+    
+    
+public:
+    PlayListItemExport(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
+                       std::shared_ptr<AudioRegion> audioRegion_,
+                       std::shared_ptr<audium::PlayListContainer> playListContainer_) :
+        audiumEngine(audiumEngine_),
+        audioRegion(audioRegion_),
+        playListContainer(playListContainer_)
+    {
+        exportItem();
+    }
+
+private:
+    
+    void exportItem();
+
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<AudioRegion> audioRegion;
+    std::shared_ptr<audium::PlayListContainer> playListContainer;
+    std::shared_ptr<juce::FileChooser> chooser;
+};
+
+}// namespace audium
