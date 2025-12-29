@@ -73,14 +73,17 @@ const AudioRegionData::tRange AudioRegion::getRegionData(audium::TimeContextType
 
 void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, audium::TimeContextType context)
 {
-    jassert(!newRegionData.isEmpty());
-    jassert(newRegionData.getStart() <= newRegionData.getEnd());
-    
-    if (context == audium::seconds) {
-        data.range = newRegionData;
+    if (!newRegionData.isEmpty() &&
+        newRegionData.getStart() <= newRegionData.getEnd()) {
+        if (context == audium::seconds) {
+            data.range = newRegionData;
+        }
+        else if (context == audium::clocks) {
+            data.range = tempoProvider->clocksToSeconds(newRegionData);
+        }
     }
-    else if (context == audium::clocks) {
-        data.range = tempoProvider->clocksToSeconds(newRegionData);
+    else {
+        std::cout << "AudioRegion::setRegionData invalid range\n" << std::endl;
     }
 }
 

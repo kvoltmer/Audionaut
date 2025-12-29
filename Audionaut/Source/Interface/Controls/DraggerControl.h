@@ -110,11 +110,19 @@ public:
 
     const Edge getDragMode(int x) const
     {
-        if (x < borderSize)
+        auto w = getWidth();
+        
+        // edge case if width is very small
+        if (w < 5)
+            return middleEdge;
+    
+        auto border = std::min(getWidth() / 3, borderSize);
+        
+        if (x < border)
         {
             return leftEdge;
         }
-        else if (getWidth() - x < borderSize)
+        else if (getWidth() - x < border)
         {
             return rightEdge;
         }
