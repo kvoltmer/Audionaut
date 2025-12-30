@@ -94,11 +94,14 @@ void AudioTrackBaseComponent::fileDragExit (const juce::StringArray& files)
 }
 
 
-void AudioTrackBaseComponent::mouseDown (const MouseEvent& event)
+void AudioTrackBaseComponent::mouseDown (const MouseEvent& e)
 {
-    // deselect
-    audioTrack->getSelectionManager()->deselectAll();
+    bool isSelected = audioTrack->isSelected();
+    
+    if (!e.mods.isAnyModifierKeyDown() && !isSelected) {
+        audioTrack->getSelectionManager()->deselectAll();
+    }
     
     // pass on mouse events. unless row is not selected
-    getParentComponent()->mouseDown(event);
+    getParentComponent()->mouseDown(e);
 }

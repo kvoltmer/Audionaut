@@ -139,7 +139,11 @@ public:
     
     void mouseDown (const juce::MouseEvent& e) override
     {
-        setSelected(e.mods.isCommandDown() ? !isSelected() : true, !e.mods.isCommandDown());
+        if (!e.mods.isAnyModifierKeyDown() && !isSelected()) {
+            audioTrack->getSelectionManager()->deselectAll();
+        }
+        
+        setSelected(e.mods.isCommandDown() ? !isSelected() : true);
     }
     
     bool isSelected() const
@@ -147,10 +151,8 @@ public:
         return audioTrack->isSelected();
     }
     
-    void setSelected(bool bSelected, bool deselectOthers)
+    void setSelected(bool bSelected)
     {
-        if (deselectOthers)
-            audioTrack->getSelectionManager()->deselectAll();
         audioTrack->setSelected(bSelected, false);
         
         audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
