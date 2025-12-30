@@ -21,11 +21,9 @@ public:
     {
     }
     
-    
-    
-    /// pass on mouse events. unless row is not selected
     void mouseDown (const juce::MouseEvent& e) override
     {
+        /// pass on mouse events. unless row is not selected
         getParentComponent()->mouseDown(e);
     }
     

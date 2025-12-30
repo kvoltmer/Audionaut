@@ -143,19 +143,29 @@ ChannelComponent::~ChannelComponent()
     audioTrack = nullptr;
 }
 
+bool ChannelComponent::isChannelSelected() const
+{
+    if (audioTrack->getChannel(rowNumber) != nullptr &&
+        audioTrack->getChannel(rowNumber)->isSelected()) {
+        return true;
+    }
+    return false;
+}
+
+
 void ChannelComponent::paint (juce::Graphics& g)
 {
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    if (audioTrack->getChannel(rowNumber) != nullptr &&
-        audioTrack->getChannel(rowNumber)->isSelected())
-    {
-        g.setColour (juce::Colours::white.withAlpha(0.25f));
+    
+    // background
+    auto bgColour = getLookAndFeel().findColour (audium::secondaryBackgroundColourId);
+    if (isChannelSelected()) {
+        bgColour = bgColour.brighter().withAlpha(0.25f);
     }
-    else
-    {
-        g.setColour (juce::Colours::black.withAlpha(0.50f));
-    }
+    g.fillAll (bgColour);
+    
+    // border
+    auto borderColour = juce::Colours::black.withAlpha(0.50f);
+    g.setColour(borderColour);
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
     
     g.setColour(audioTrack->getColour());
@@ -316,10 +326,13 @@ static void channelMenuCallback (int result, ChannelComponent* component)
 
 void ChannelComponent::mouseDown (const juce::MouseEvent& e)
 {
-    if (!e.mods.isAnyModifierKeyDown()) {
+    bool isSelected = isChannelSelected();
+    
+    if (!e.mods.isAnyModifierKeyDown() && !isSelected) {
         audioTrack->getSelectionManager()->deselectAll();
     }
     
+    /// pass on mouse events. unless row is not selected
     getParentComponent()->mouseDown(e);
     
     if (e.mods.isPopupMenu()) {
