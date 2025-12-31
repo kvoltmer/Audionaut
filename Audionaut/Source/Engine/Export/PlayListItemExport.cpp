@@ -34,10 +34,14 @@ void PlayListItemExport::exportItem()
     // use the maximum bit depth
     config->bitDepth = audioRegion->getResourcesMaxBitDepth();
 
-    juce::File dir;
+    
+    String defaultFileName;
 #if !defined(CATCH2_TESTS)
-    dir = AudiumApplication::getApp().initialSaveDirectory;
+    defaultFileName = AudiumApplication::getApp().initialSaveDirectory.getFullPathName();
+    defaultFileName += File::getSeparatorString() + audioRegion->getName();
+    
 #endif
+    juce::File dir(defaultFileName);
     chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
     ExportUtil::exportAudio(chooser, audiumEngine, config);
 
