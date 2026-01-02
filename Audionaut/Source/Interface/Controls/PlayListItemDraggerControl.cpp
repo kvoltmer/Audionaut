@@ -69,6 +69,7 @@ void PlayListItemDraggerControl::mouseDown (const juce::MouseEvent& e)
 void PlayListItemDraggerControl::exportSelectedPlayListItem()
 {
     exporter = std::make_unique<audium::PlayListItemExport>(audiumEngine,
-                                                            playListItem->getRegion(),
-                                                            playListContainer);
+                                                            playListItem,
+                                                            true);
+    exporter->exportItem();
 }
