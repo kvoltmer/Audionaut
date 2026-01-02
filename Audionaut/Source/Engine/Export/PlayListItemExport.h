@@ -22,23 +22,25 @@ class PlayListItemExport {
     
 public:
     PlayListItemExport(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
-                       std::shared_ptr<AudioRegion> audioRegion_,
-                       std::shared_ptr<audium::PlayListContainer> playListContainer_) :
+                       std::shared_ptr<PlayListItem> playListItem_,
+                       bool useFileChooser_) :
         audiumEngine(audiumEngine_),
-        audioRegion(audioRegion_),
-        playListContainer(playListContainer_)
+        playListItem(playListItem_),
+        useFileChooser(useFileChooser_)
     {
-        exportItem();
     }
 
-private:
+    bool exportItem();
     
-    void exportItem();
+private:
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
-    std::shared_ptr<AudioRegion> audioRegion;
-    std::shared_ptr<audium::PlayListContainer> playListContainer;
+    std::shared_ptr<PlayListItem> playListItem;
     std::shared_ptr<juce::FileChooser> chooser;
+    bool useFileChooser;
+    
+public:
+    std::shared_ptr<audium::ExportAudioConfig> config;
 };
 
 }// namespace audium

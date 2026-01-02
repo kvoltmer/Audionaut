@@ -16,14 +16,14 @@
 
 namespace audium {
 
-void PlayListItemExport::exportItem()
+bool PlayListItemExport::exportItem()
 {
-    auto config = std::make_shared<audium::ExportAudioConfig>();
+    config = std::make_shared<audium::ExportAudioConfig>();
         
-    
-    config->playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(*playListContainer,
-                                                                  audioRegion,
-                                                                  audioRegion->getAudioTrack()->getSelectionManager()));
+    auto audioRegion = playListItem->getRegion();
+    config->playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(playListItem->getPlayListContainer(),
+                                                                          audioRegion,
+                                                                          audioRegion->getAudioTrack()->getSelectionManager()));
     
     // the number of audio channels
     config->numChannels = audioRegion->getAudioTrack()->getNumAudioTrackChannels();
@@ -34,17 +34,35 @@ void PlayListItemExport::exportItem()
     // use the maximum bit depth
     config->bitDepth = audioRegion->getResourcesMaxBitDepth();
 
-    
-    String defaultFileName;
+    if (useFileChooser) {
+        
+        String defaultFileName;
 #if !defined(CATCH2_TESTS)
-    defaultFileName = AudiumApplication::getApp().initialSaveDirectory.getFullPathName();
-    defaultFileName += File::getSeparatorString() + audioRegion->getName();
-    
+        defaultFileName = AudiumApplication::getApp().initialSaveDirectory.getFullPathName();
+        defaultFileName += File::getSeparatorString() + audioRegion->getName() + ".wav";
+        
 #endif
-    juce::File dir(defaultFileName);
-    chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
-    ExportUtil::exportAudio(chooser, audiumEngine, config);
-
+        juce::File dir(defaultFileName);
+        chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
+        return ExportUtil::exportAudio(chooser, audiumEngine, config);
+    }
+    else {
+        config->fileName = File(AudiumEngine::tempDirectory.getFullPathName() + File::getSeparatorString() + audioRegion->getName() + ".wav");
+        // create the thread
+        auto thread = std::make_unique<audium::AudioExportThread>(*audiumEngine.get(), config);
+        
+        // start the thread
+        if (thread->runThread()) {
+            // thread finished normally..
+            return true;
+        }
+        else {
+            // user pressed the cancel button..
+            return false;
+        }
+    }
+    
+    return false;
 }
 
 } // namespace audium

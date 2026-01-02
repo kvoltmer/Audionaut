@@ -269,8 +269,8 @@ void PlayListTableListBoxItem::exportSelectedPlayListItem()
     auto container = playListModel->getAudioTrack()->getPlayListContainer();
     if (auto playListItem = container->getPlayListItem(rowNumber)) {
         exporter = std::make_unique<audium::PlayListItemExport>(getPlayListModel()->getAudiumEngine(),
-                                                                playListItem->getRegion(),
-                                                                container);
+                                                                playListItem, true);
+        exporter->exportItem();
     }
 }
 
