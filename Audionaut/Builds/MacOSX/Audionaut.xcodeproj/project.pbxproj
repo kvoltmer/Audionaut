@@ -195,6 +195,7 @@
 		53F6687D1EC597959EF528D2 /* ExportAudioComponent.h */ /* ExportAudioComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ExportAudioComponent.h; path = ../../Source/Interface/Dialogs/ExportAudioComponent.h; sourceTree = SOURCE_ROOT; };
 		54BC936418EEB155207FA796 /* juce_dsp */ /* juce_dsp */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_dsp; path = ../../../Submodules/juce/modules/juce_dsp; sourceTree = SOURCE_ROOT; };
 		55AF32834EF1E5E8AC38AEB8 /* ArrangementComponent.h */ /* ArrangementComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ArrangementComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h; sourceTree = SOURCE_ROOT; };
+		55C811DC380D6688996F27F4 /* NewAudioTrackDialog.h */ /* NewAudioTrackDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NewAudioTrackDialog.h; path = ../../Source/Interface/Dialogs/NewAudioTrackDialog.h; sourceTree = SOURCE_ROOT; };
 		56369103B83A1EC2994DF929 /* juce_audio_processors */ /* juce_audio_processors */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_processors; path = ../../../Submodules/juce/modules/juce_audio_processors; sourceTree = SOURCE_ROOT; };
 		57022B94A9C351DA0F12B4CF /* AudioBusRenderer.cpp */ /* AudioBusRenderer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioBusRenderer.cpp; path = ../../Source/Engine/Playback/AudioBusRenderer.cpp; sourceTree = SOURCE_ROOT; };
 		57548F766A379B66DB3C67F7 /* RecentFilesMenuTemplate.nib */ /* RecentFilesMenuTemplate.nib */ = {isa = PBXFileReference; lastKnownFileType = file.nib; name = RecentFilesMenuTemplate.nib; path = RecentFilesMenuTemplate.nib; sourceTree = SOURCE_ROOT; };
@@ -750,6 +751,7 @@
 		9BE2411EEC9E2E92208463DB /* Dialogs */ = {
 			isa = PBXGroup;
 			children = (
+				55C811DC380D6688996F27F4,
 				2237408C511E2EAA07849583,
 				401ADB784677352C68E0DA29,
 				CD915B059555AF45DF4EB0A9,
