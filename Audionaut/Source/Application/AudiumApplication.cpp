@@ -211,7 +211,7 @@ MenuBarModel* AudiumApplication::getMenuModel()
 
 StringArray AudiumApplication::getMenuNames()
 {
-    StringArray currentMenuNames { "File", "Edit", "View"};
+    StringArray currentMenuNames { "File", "Edit", "Create", "View"};
     return currentMenuNames;
 }
 
@@ -222,6 +222,9 @@ PopupMenu AudiumApplication::createMenu (const String& menuName)
 
     if (menuName == "Edit")
         return createEditMenu();
+    
+    if (menuName == "Create")
+        return createCreateMenu();
 
     if (menuName == "View")
         return createViewMenu();
@@ -285,7 +288,6 @@ PopupMenu AudiumApplication::createEditMenu()
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::del);
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::selectAll);
     menu.addSeparator();
-    menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::splitRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::cleanupRegions);
     
@@ -295,6 +297,15 @@ PopupMenu AudiumApplication::createEditMenu()
 #endif
     //menu.addSeparator();
     //menu.addCommandItem(commandManager.get(), CommandIDs::loopPlayList);
+    return menu;
+}
+
+PopupMenu AudiumApplication::createCreateMenu()
+{
+    PopupMenu menu;
+    menu.addCommandItem (commandManager.get(), CommandIDs::createAudioTrack);
+    menu.addSeparator();
+    menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
     return menu;
 }
 

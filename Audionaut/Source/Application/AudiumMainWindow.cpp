@@ -15,6 +15,7 @@
 #include "Interface/Dialogs/NewRegionDialog.h"
 #include "Interface/Dialogs/AutoEditDialog.h"
 #include "Interface/Dialogs/ExportAudioDialog.h"
+#include "Interface/Dialogs/NewAudioTrackDialog.h"
 
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::AudiumEngine> audiumEngine)
     : DocumentWindow (name,
@@ -105,6 +106,9 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::autoEdit,
         CommandIDs::bounceProject,
         CommandIDs::duplicate,
+        
+        CommandIDs::createAudioTrack,
+        
         CommandIDs::zoomIn,
         CommandIDs::zoomOut,
         CommandIDs::pageLeft,
@@ -144,7 +148,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress ('l', ModifierKeys::ctrlModifier, 0));
             break;
         case CommandIDs::createRegion:
-            result.setInfo ("Create Region", "Creates a new region", CommandCategories::editing, 0);
+            result.setInfo ("Create Region...", "Creates a new region", CommandCategories::create, 0);
             result.setActive (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().canCreateRegion());
             result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::commandModifier, 0));
             break;
@@ -175,6 +179,12 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
             result.defaultKeypresses.add ({ 'b', ModifierKeys::commandModifier | ModifierKeys::altModifier, 0 });
             break;
+        
+        case CommandIDs::createAudioTrack:
+            result.setInfo ("Create Audio Track...", "Create a new audio track", CommandCategories::create, 0);
+            result.defaultKeypresses.add ({ 'n', ModifierKeys::commandModifier | ModifierKeys::shiftModifier, 0 });
+            break;
+        
         case CommandIDs::toggleFullScreen:
             result.setInfo ("Full Screen", "Enter full screen", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::commandModifier | ModifierKeys::ctrlModifier, 0));
@@ -335,15 +345,17 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
         case StandardApplicationCommandIDs::del:
             getEngine()->getAudioTrackContainer()->deleteSelectedObjects();
             break;
-
         case StandardApplicationCommandIDs::selectAll:
             mainComponent->selectAll();
             break;
-
         case CommandIDs::duplicate:
             mainComponent->duplicate();
             break;
-            
+        case CommandIDs::createAudioTrack:
+            if (newAudioTrackDialog == nullptr)
+                newAudioTrackDialog = std::make_unique<NewAudioTrackDialog>();
+            newAudioTrackDialog->createNewAudioTrack(getEngine());
+            break;
         default:
             return false;
     }

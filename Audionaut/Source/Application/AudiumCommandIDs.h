@@ -50,6 +50,8 @@ namespace CommandIDs
         toggleFullScreen        = 0x300077,
         pageLeft                = 0x300078,
         pageRight               = 0x300079,
+        
+        createAudioTrack     = 0x300085,
        
         exportSelectedItemsId   = 0xf836743,
         copyChansToNewTrackId   = 0xf836744,
@@ -63,6 +65,7 @@ namespace CommandCategories
 {
     static const char* const general       = "General";
     static const char* const editing       = "Editing";
+    static const char* const create        = "Create";
     static const char* const view          = "View";
     static const char* const windows       = "Windows";
     static const char* const transport     = "Transport";
