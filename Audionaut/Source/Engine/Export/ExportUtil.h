@@ -21,17 +21,17 @@ class ExportUtil {
     
 public:
     
-    static void exportAudio(std::shared_ptr<juce::FileChooser> chooser,
+    static bool exportAudio(std::shared_ptr<juce::FileChooser> chooser,
                             std::shared_ptr<audium::AudiumEngine> audiumEngine,
                             std::shared_ptr<audium::ExportAudioConfig> config)
     {
-        
+        auto result = false;
         jassert(chooser);
         auto flags = FileBrowserComponent::saveMode
                    | FileBrowserComponent::canSelectFiles
                    | FileBrowserComponent::warnAboutOverwriting;
 
-        chooser->launchAsync (flags, [audiumEngine, config] (const FileChooser& fc) {
+        chooser->launchAsync (flags, [audiumEngine, config, &result] (const FileChooser& fc) {
             const auto file = fc.getResult();
             
             if (file != File{}) {
@@ -58,9 +58,12 @@ public:
                 // start the thread
                 if (thread->runThread()) {
                     // thread finished normally..
+                    result = true;
+                    
                 }
                 else {
                     // user pressed the cancel button..
+                    result = false;
                 }
   
                 
@@ -71,6 +74,7 @@ public:
 
             }
         });
+        return result;
     }
 };
 

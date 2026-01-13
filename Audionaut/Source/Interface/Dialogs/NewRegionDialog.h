@@ -53,8 +53,8 @@ private:
         }
         
         asyncAlertWindow->addTextEditor (getClassNameFieldName(), name, String(), false);
-        asyncAlertWindow->addButton (TRANS ("Create Region"),  1, KeyPress (KeyPress::returnKey));
-        asyncAlertWindow->addButton (TRANS ("Cancel"),        0, KeyPress (KeyPress::escapeKey));
+        asyncAlertWindow->addButton (TRANS ("Create"), 1, KeyPress (KeyPress::returnKey));
+        asyncAlertWindow->addButton (TRANS ("Cancel"), 0, KeyPress (KeyPress::escapeKey));
 
         auto resultCallback = [safeThis = WeakReference<NewRegionDialog> { this }, this] (int result)
         {

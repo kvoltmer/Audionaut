@@ -6,10 +6,10 @@
 #include "ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 
-ZoomHandler::ZoomHandler(std::shared_ptr<audium::PlayListScheduler> playListScheduler,
-                         std::shared_ptr<SnapToGridHandler> snapToGridHandler) :
-    playListScheduler(playListScheduler),
-    snapToGridHandler(snapToGridHandler)
+ZoomHandler::ZoomHandler(std::shared_ptr<audium::PlayListScheduler> playListScheduler_,
+                         std::shared_ptr<SnapToGridHandler> snapToGridHandler_) :
+    playListScheduler(playListScheduler_),
+    snapToGridHandler(snapToGridHandler_)
 {
     // the default zoom factor
     zoomFactor = 1.0;
@@ -182,7 +182,6 @@ double ZoomHandler::xToClocksWithOffset (const double x) const
     return std::max (0.0, xToClocks (x + offset));
 }
 
-
 juce::String ZoomHandler::secondsToFormattedString(const int seconds)
 {
     int min = (seconds > 0.0) ? (seconds / 60) : 0;
@@ -190,201 +189,15 @@ juce::String ZoomHandler::secondsToFormattedString(const int seconds)
     return juce::String::formatted("%d:%.2d\n", min, sec);
 }
 
-int roundSecondsToGrid(int x)
-{
-    if (x < 1)
-    {
-        return 1;
-    }
-    else if (x < 5)
-    {
-        return 5;
-    }
-    else if (x < 15)
-    {
-        return 15;
-    }
-    else
-    {
-        return x + 30 - x % 30;
-    }
-}
-
-int ZoomHandler::numSegmentsForWidthInSeconds(const float width, int& seconds)
-{
-    jassert(width > 0);
-    
-    if (width > 0)
-    {
-        auto pixelsPerSec = width / static_cast<float>(xToSeconds(width));
-        assert(pixelsPerSec > 0);
-        // the duration for 100 pixels
-        auto duration = int(100 / pixelsPerSec);
-        // round to grid and assign the seconds parameter
-        seconds = roundSecondsToGrid(duration);
-        int itemWidth = secondsToX(seconds);
-        return (width / itemWidth) + 1;
-    }
-    
-    return 0;
-}
-
-int roundBarsToGrid(int x)
-{
-    if (x < 1)
-    {
-        return 1;
-    }
-    else if (x < 4)
-    {
-        return 4;
-    }
-    else if (x < 16)
-    {
-        return 16;
-    }
-    else
-    {
-        return x + 32 - x % 32;
-    }
-}
-
-int ZoomHandler::numSegmentsForWidthInBars(const float width, int& bars)
-{
-    jassert(width > 0);
-    
-    if (width > 0)
-    {
-        auto pixelsPerBar = width / xToBars(width);
-        assert(pixelsPerBar > 0);
-        // the duration for 50 pixels
-        auto duration = int(50 / pixelsPerBar);
-        // round to grid and assign the seconds parameter
-        bars = roundBarsToGrid(duration);
-        int itemWidth = barsToX(bars);
-        return (width / itemWidth) + 1;
-    }
-    
-    return 0;
-}
-
-int roundBeatsToGrid(int x)
-{
-    if (x < 1)
-    {
-        return 1;
-    }
-    else if (x < 4)
-    {
-        return 4;
-    }
-    else if (x < 16)
-    {
-        return 16;
-    }
-    else
-    {
-        return x + 32 - x % 32;
-    }
-}
-
-int ZoomHandler::numSegmentsForWidthInBeats(const float width, int& beats)
-{
-    jassert(width > 0);
-    
-    if (width > 0)
-    {
-        auto pixelsPerBeat = width / (xToBeats(width));
-        assert(pixelsPerBeat > 0);
-        // the duration in pixels
-        auto duration = int(25.0 / pixelsPerBeat);
-        // round to grid 
-        beats = roundBeatsToGrid(duration);
-        int itemWidth = beatsToX(beats);
-        return (width / itemWidth) + 1;
-    }
-    
-    return 0;
-}
-
-const ZoomHandler::SegmentResult ZoomHandler::segmentsForWidth(const float totalWidth, ZoomHandler::SegmentType type)
-{
-    jassert(totalWidth > 0);
-    SegmentResult result;
-   
-    double pixelsPerSegment = 0.0;
-    int duration = 0;
-    
-    switch (type) {
-        case seconds:
-            pixelsPerSegment = totalWidth / static_cast<float>(xToSeconds(totalWidth));
-            duration = int(100.0 / pixelsPerSegment);
-            result.grid = roundSecondsToGrid(duration);
-            result.itemWidth = secondsToX(result.grid);
-            break;
-        case beats:
-            pixelsPerSegment = totalWidth / static_cast<float>(xToBeats(totalWidth));
-            duration = int(25.0 / pixelsPerSegment);
-            result.grid = roundBeatsToGrid(duration);
-            result.itemWidth = beatsToX(result.grid);
-            break;
-        case bars:
-            pixelsPerSegment = totalWidth / static_cast<float>(xToBars(totalWidth));
-            duration = int(50.0 / pixelsPerSegment);
-            result.grid = roundBarsToGrid(duration);
-            result.itemWidth = barsToX(result.grid);
-            break;
-        default:
-            break;
-    }
-    
-    result.numSegments = (totalWidth / result.itemWidth) + 1;
-    return result;
-}
-
 bool ZoomHandler::snapToGrid(double &clocks)
 {
-    if (!juce::ModifierKeys::currentModifiers.isShiftDown()) {
-        
-        auto segmentResult  = segmentsForWidth(getContentWidth(), ZoomHandler::beats);
-        auto beats          = audium::TempoProvider::clocksToBeats(clocks);
-        auto tolerance      = xToBeats(10.0);
-        auto inc            = 0.0;
-        
-        for (auto i = 0; i < segmentResult.numSegments; i++) {
-            if (std::abs(inc - std::max(beats, 0.0)) < tolerance) {
-                //std::cout << "snap to: " << inc << std::endl;
-                clocks = audium::TempoProvider::beatsToClocks(inc);
-                return true;
-            }
-            inc += segmentResult.grid;
-        }
-    }
-    
-    return false;
+    return getSnapToGridHandler()->snapToGrid(*this, clocks);
 }
 
 bool ZoomHandler::snapToGrid(juce::Range<double> &clocks)
 {
-    double start = clocks.getStart();
-    double end = clocks.getEnd();
-    
-    bool snapStart = snapToGrid(start);
-    bool snapEnd = snapToGrid(end);
-        
-    if (snapStart && snapEnd) {
-        clocks = juce::Range<double>(start, end);
-    }
-    else if (snapStart && !snapEnd) {
-        clocks = clocks.withStart(start);
-    }
-    else if (!snapStart && snapEnd) {
-        clocks = clocks.withEnd(end);
-    }
- 
-    return (snapStart || snapEnd);
+    return getSnapToGridHandler()->snapToGrid(*this, clocks);
 }
-
 
 void ZoomHandler::focusViewOnPlayPosition()
 {

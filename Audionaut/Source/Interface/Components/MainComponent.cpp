@@ -16,6 +16,9 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
+#include "Engine/Export/PlayListItemExport.h"
+#include "Interface/Models/PlayListTableListBoxItem.h"
+
 #include "MainComponent.h"
 
 using namespace audium;
@@ -249,4 +252,35 @@ void MainComponent::duplicate()
 {
     audiumEngine->getAudioTrackContainer()->getSelectionManager()->copySelectedToClipboard();
     audiumEngine->getAudioTrackContainer()->getSelectionManager()->pasteFromClipboard(audiumEngine, true);
+}
+
+bool MainComponent::shouldDropFilesWhenDraggedExternally (const juce::DragAndDropTarget::SourceDetails& sourceDetails,
+                                           juce::StringArray& files,
+                                           bool& canMoveFiles)
+{
+    // only PlayListTableListBoxItem is supported
+    if (dynamic_cast<PlayListTableListBoxItem*>(sourceDetails.sourceComponent.get())) {
+        
+        
+        /// make sure the temp project directory exists
+        AudioResourceContainer::createTemporaryProjectDirectory(false);
+        
+        auto selectionManager = audiumEngine->getAudioTrackContainer()->getSelectionManager();
+        
+        auto selectedObjects = selectionManager->getSelectedObjects();
+        for (auto object : selectedObjects) {
+            if (auto playListItem = std::dynamic_pointer_cast<PlayListItem>(object)) {
+                jassert(playListItem->isSelected());
+                auto exporter = std::make_unique<audium::PlayListItemExport>(audiumEngine,
+                                                                             playListItem,
+                                                                             false);
+                if (exporter->exportItem()) {
+                    files.add(exporter->config->fileName.getFullPathName());
+                }
+            }
+        }
+        canMoveFiles = true;
+        
+    }
+    return files.size() > 0;
 }

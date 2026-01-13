@@ -24,7 +24,7 @@ void LevelComponent::paint(Graphics& g)
     
     LevelMeter* parent = dynamic_cast<LevelMeter*>(getParentComponent());
     jassert(parent);
-    if(parent == NULL) return;
+    if (parent == nullptr) return;
     
     const float level = parent->getDisplayLevel();
     const bool bVertical = parent->getVertical();
@@ -204,13 +204,14 @@ void LevelComponent::drawLevels(Graphics& g)
 LevelMeter::LevelMeter(bool bVertical, bool bInverted) :
     m_bVertical(bVertical),
     m_bInverted(bInverted),
-    m_fMindB(-60.f),
-    m_dMaxdB(6.f),
+    m_fMindB(-65.f),
+    m_fMaxdB(6.f),
     m_fLeveldB(m_fMindB),
     m_fPeakLeveldB(m_fMindB),
+    m_fDecrementdB(1.f),
+    m_fLastLeveldB(m_fMindB),
     m_iPeakHoldDuration(50*4),
     m_iPeakHold(0),
-    m_fLastLevel(0.f),
     m_iSpace(1)
 {
     m_pLevelComponent.reset (new LevelComponent());
@@ -226,8 +227,8 @@ LevelMeter::~LevelMeter()
 //==============================================================================
 const float LevelMeter::getDecibelScaled(const float db)
 {
-    return powf(reverse_linear(db, m_fMindB, m_dMaxdB), 2.f);
-    //return reverse_linear(db, m_fMindB, m_dMaxdB);
+    return powf(reverse_linear(db, m_fMindB, m_fMaxdB), 2.f);
+    //return reverse_linear(db, m_fMindB, m_fMaxdB);
 }
 
 //==============================================================================
@@ -253,20 +254,18 @@ void LevelMeter::paint(Graphics& g)
 //==============================================================================
 float LevelMeter::getDisplayLevel()
 {
-    float level = getDecibelScaled(m_fLeveldB);
-    level = jlimit(0.f, 1.f, level);
+    float level = m_fLeveldB;
+    level = jlimit(m_fMindB, m_fMaxdB, level);
     
-    if (level >= (m_fLastLevel - 0.02f)) // threshold
-    {
-        m_fLastLevel = level;
+    if (level > m_fLastLeveldB) {
+        m_fLastLeveldB = level;
     }
-    else
-    {
-        m_fLastLevel -= 0.02f; // decrement
-        level = m_fLastLevel;
+    else {
+        m_fLastLeveldB -= m_fDecrementdB; // decrement
+        level = m_fLastLeveldB;
     }
     
-    return level;
+    return getDecibelScaled(level);
 }
 
 //==============================================================================
@@ -338,7 +337,7 @@ void LevelMeter::setDbMin(float dbMin)
 //==============================================================================
 void LevelMeter::setDbMax(float dbMax)
 {
-    m_dMaxdB = dbMax;
+    m_fMaxdB = dbMax;
     m_pLevelComponent->redrawLevels();
 }
 
