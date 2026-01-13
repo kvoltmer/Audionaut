@@ -416,6 +416,21 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     
 }
 
+std::vector<std::shared_ptr<PlayListItem>> PlayListScheduler::getPlayListItems(bool excludeSelectedItems) const
+{
+    std::vector<std::shared_ptr<PlayListItem>> result;
+    for (auto track : audioTrackContainer->getAudioTracks()) {
+        
+        for (const auto &item : track->getPlayListContainer()->getPlayListItems()) {
+            if (excludeSelectedItems && item->isSelected())
+                continue;
+            
+            result.push_back(item);
+        }
+    }
+    return result;
+}
+
 void PlayListScheduler::commitPlayListData()
 {
     audioClipContainer->clear();
@@ -439,7 +454,7 @@ void PlayListScheduler::commitPlayListData()
         totalLength = juce::jmax(totalLength, track->getTotalLength(audium::clocks));
     }
     totalLengthClocks = totalLength;
-    std::cout << "PlayListScheduler::commitPlayListData -> totalLengthClocks: " << totalLengthClocks << std::endl;
+    // std::cout << "PlayListScheduler::commitPlayListData -> totalLengthClocks: " << totalLengthClocks << std::endl;
 }
 
 } // namespace audium

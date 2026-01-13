@@ -117,6 +117,8 @@ public:
     std::shared_ptr<AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
     std::shared_ptr<TransportLoop> getTransportLoop() const { return transportLoop; }
     
+    std::vector<std::shared_ptr<PlayListItem>> getPlayListItems(bool excludeSelectedItems = true) const;
+    
     void commitPlayListData();
     
     PlayListSchedulerData data;

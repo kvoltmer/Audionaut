@@ -18,11 +18,12 @@
 class MiddlePanelComponent : public juce::Component
 {
 public:
-    MiddlePanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
-        audiumEngine(audiumEngine)
+    MiddlePanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
+        audiumEngine(audiumEngine_)
     {
-        snapToGridHandler.reset(new SnapToGridHandler());
-        zoomHandler.reset(new ZoomHandler(audiumEngine->getPlayListScheduler(), snapToGridHandler));
+        auto playListScheduler = audiumEngine->getPlayListScheduler();
+        snapToGridHandler.reset(new SnapToGridHandler(playListScheduler));
+        zoomHandler.reset(new ZoomHandler(playListScheduler, snapToGridHandler));
 
         createComponents();
     }
