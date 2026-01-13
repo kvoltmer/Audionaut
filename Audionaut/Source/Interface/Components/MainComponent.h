@@ -46,10 +46,13 @@ public:
     void paint (juce::Graphics& g) override;
     void resized() override;
 
-
+    /// DragAndDropContainer override
+    bool shouldDropFilesWhenDraggedExternally (const juce::DragAndDropTarget::SourceDetails& sourceDetails,
+                                               juce::StringArray& files,
+                                               bool& canMoveFiles) override;
 
 private:
-
+    
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     std::unique_ptr<HeaderComponent> headerComponent;

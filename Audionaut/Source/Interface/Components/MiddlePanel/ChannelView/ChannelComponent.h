@@ -75,6 +75,8 @@ public:
         return true;
     }
     
+    bool isChannelSelected() const;
+    
 
     // Binary resources:
     static const char* channelScale_png;

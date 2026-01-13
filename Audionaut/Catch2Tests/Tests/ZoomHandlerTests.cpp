@@ -17,7 +17,8 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     juce::MessageManagerLock mmLock(Thread::getCurrentThread());
     
     auto engine      = AudiumFactory::createAudiumEngine();
-    auto snap = std::shared_ptr<SnapToGridHandler>(new SnapToGridHandler());
+    auto playListScheduler = engine->getPlayListScheduler();
+    auto snap = std::shared_ptr<SnapToGridHandler>(new SnapToGridHandler(playListScheduler));
     auto zoomHandler = std::shared_ptr<ZoomHandler>(new ZoomHandler(engine->getPlayListScheduler(), snap));
     REQUIRE( zoomHandler != nullptr );
     
@@ -67,7 +68,8 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     auto regionPosition = juce::Range<double>(2.0, 3.0);
 
     
-    
+    snap = nullptr;
+    playListScheduler = nullptr;
     zoomHandler = nullptr;
     engine = nullptr;
     

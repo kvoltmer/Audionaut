@@ -28,42 +28,50 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        paintTimeLineInBeats(g, getLocalBounds().toFloat());
+        paintGridInBeats(g, getLocalBounds().toFloat());
         
         //std::cout << "GridView: " << getLocalBounds().getWidth() << " " << getLocalBounds().getHeight() << std::endl;
     }
     
-    void paintTimeLineInBeats(juce::Graphics& g, juce::Rectangle<float> rectangle)
+    void paintGridInBeats(juce::Graphics& g, juce::Rectangle<float> drawingArea)
     {
         auto range = zoomHandler->clocksToX(currentRangeClocks);
-        
-        auto segmentResult = zoomHandler->segmentsForWidth(rectangle.getWidth(), ZoomHandler::beats);
-        
-        auto x = rectangle.getX();
-        for (auto i = 0; i < segmentResult.numSegments; i++)
-        {
-            juce::Rectangle<float> rect(x, rectangle.getY(), 1.f, rectangle.getHeight());
-            
+        auto lengthInBeats = zoomHandler->xToBeats(drawingArea.getWidth());
+        auto snapToGridHandler = zoomHandler->getSnapToGridHandler();
+        auto includePlayListItems = !range.isEmpty();
+        auto segmentList = snapToGridHandler->getGridInSegments(drawingArea.getWidth(),
+                                                                lengthInBeats,
+                                                                SnapToGridHandler::beats,
+                                                                includePlayListItems);
+
+        for (auto seg : segmentList) {
+            auto x = zoomHandler->beatsToX(seg.position);
+            juce::Rectangle<float> gridLine(x, drawingArea.getY(), 1.f, drawingArea.getHeight());
+
             if (!range.isEmpty() &&
                 !juce::ModifierKeys::currentModifiers.isShiftDown() &&
                 (std::abs(static_cast<double>(x) - std::max(range.getStart(), 0.0)) < 10.0 ||
-                 std::abs(static_cast<double>(x) - range.getEnd()) < 10.0))
-            {
+                 std::abs(static_cast<double>(x) - range.getEnd()) < 10.0)) {
+                
+                auto gridColour = findColour (audium::gridColourId);
+                if (seg.isPlayListItem)
+                    g.setColour (gridColour.withAlpha(1.f).brighter());
+                else
+                    g.setColour (gridColour.withAlpha(0.2f));
+                
+                g.setColour (seg.isPlayListItem ? gridColour.withAlpha(1.f).brighter() : gridColour);
+                
                 // draw dashed line
-                g.setColour (findColour (audium::gridColourId));
-                juce::Line<float> line(rect.getTopLeft(), rect.getBottomLeft());
+                juce::Line<float> line(gridLine.getTopLeft(), gridLine.getBottomLeft());
                 const float myDashLength[] = { 6, 6 };
                 g.drawDashedLine(line, &myDashLength[0], 2);
             }
-            else
-            {
+            else {
                 // draw regular grid line
                 g.setColour (juce::Colours::black.withAlpha(0.5f));
-                rect.setHeight(rect.getHeight() - AudiumLookAndFeel::extraSpaceAtBottom);
-                g.fillRect(rect);
+                gridLine.setHeight(gridLine.getHeight() - AudiumLookAndFeel::extraSpaceAtBottom);
+                g.fillRect(gridLine);
             }
-            
-            x += segmentResult.itemWidth;
         }
     }
     

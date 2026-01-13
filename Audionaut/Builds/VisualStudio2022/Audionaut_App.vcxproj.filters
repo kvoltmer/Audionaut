@@ -4182,6 +4182,9 @@
     <ClInclude Include="..\..\Source\Interface\UIContext.h">
       <Filter>Audionaut\Source\Interface</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\NewAudioTrackDialog.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutDialog.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>

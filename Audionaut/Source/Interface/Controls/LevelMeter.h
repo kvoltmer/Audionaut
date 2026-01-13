@@ -64,15 +64,14 @@ private:
     bool m_bInverted;
     
     float m_fMindB;
-    float m_dMaxdB;
+    float m_fMaxdB;
     float m_fLeveldB;
     float m_fPeakLeveldB;
+    float m_fDecrementdB;
+    float m_fLastLeveldB;
     
     int	m_iPeakHoldDuration;
     int	m_iPeakHold;
-    
-    float m_fLastLevel;
-    
     int m_iSpace;
     
     std::unique_ptr<LevelComponent> m_pLevelComponent;

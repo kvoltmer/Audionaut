@@ -12,6 +12,7 @@
 class NewRegionDialog;
 class AutoEditDialog;
 class ExportAudioDialog;
+class NewAudioTrackDialog;
 
 //==============================================================================
 /*
@@ -53,6 +54,7 @@ private:
     std::unique_ptr<NewRegionDialog> newRegionDialog;
     std::unique_ptr<AutoEditDialog> autoEditDialog;
     std::unique_ptr<ExportAudioDialog> exportAudioDialog;
+    std::unique_ptr<NewAudioTrackDialog> newAudioTrackDialog;
         
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
 };

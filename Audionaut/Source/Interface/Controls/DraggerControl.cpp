@@ -21,7 +21,7 @@ void DraggerControl::mouseDown (const juce::MouseEvent& e)
         setSelected(e.mods.isCommandDown() ? !isSelected() : true, deselectOthers);
     }
     auto rangeInClocks = zoomHandler->xToClocks(componentToDrag->getBounds().toDouble().getHorizontalRange());
-    zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
+    zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks, true);
     
     mouseDownOffset = getLocalPoint (this, e.position);
     
@@ -98,7 +98,7 @@ void DraggerControl::mouseDrag (const juce::MouseEvent& e)
             componentToDrag->setBounds (bounds);
             
             auto rangeInClocks = zoomHandler->xToClocks(componentToDrag->getBounds().toDouble().getHorizontalRange());
-            zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks);
+            zoomHandler->getSnapToGridHandler()->publishRange(rangeInClocks, true);
             commitRangeToEngine(rangeInClocks);
         }
     }

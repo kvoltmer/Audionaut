@@ -389,6 +389,12 @@ bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
                 }
                 else {
                     region = getRegion(regionData.region_id);
+                    if (region != nullptr) {
+                        region->data = regionData;
+                    }
+                    else {
+                        jassertfalse;
+                    }
                 }
                 
                 if (region->data.region_id != regionData.region_id) {
