@@ -56,30 +56,7 @@ public:
     
     // returns a String in the format Min:Sec
     static juce::String secondsToFormattedString(const int seconds);
-    
-    // returns the number of time segments for a given width. (1 second is the smallest possible grid)
-    int numSegmentsForWidthInSeconds(const float width, int& seconds);
-    
-    // returns the number of time segments for a given width. (1 bar is the smallest possible grid)
-    int numSegmentsForWidthInBars(const float width, int& bars);
-    
-    // returns the number of time segments for a given width. (1 beat is the smallest possible grid)
-    int numSegmentsForWidthInBeats(const float width, int& beats);
-    
-    struct SegmentResult {
-        int numSegments = 0;
-        double itemWidth = 0.0;
-        int grid = 0;
-    };
 
-    enum SegmentType {
-        seconds = 0,
-        bars = 1,
-        beats = 2
-    };
-    
-    const SegmentResult segmentsForWidth(const float totalWidth, SegmentType type);
-    
     bool snapToGrid(double &clocks);
     bool snapToGrid(juce::Range<double> &clocks);
     

@@ -14,8 +14,8 @@
 class TransportView  : public juce::Component
 {
 public:
-    TransportView(std::shared_ptr<ZoomHandler> zoomHandler) :
-        zoomHandler(zoomHandler)
+    TransportView(std::shared_ptr<ZoomHandler> zoomHandler_) :
+        zoomHandler(zoomHandler_)
     {
         setInterceptsMouseClicks(false, false);
     }
@@ -27,47 +27,66 @@ public:
     void paintTimeLineInMinutesSeconds(juce::Graphics& g, juce::Rectangle<float> rectangle)
     {
         // draw the timeline in Min::Sec
-        auto segmentResult = zoomHandler->segmentsForWidth(rectangle.getWidth(), ZoomHandler::seconds);
-        auto x = rectangle.getX();
-        auto seconds = 0;
+        auto lengthInSeconds = zoomHandler->xToSeconds(rectangle.getWidth());
+        auto snapToGridHandler = zoomHandler->getSnapToGridHandler();
+        auto segmentList = snapToGridHandler->getGridInSegments(rectangle.getWidth(),
+                                                                lengthInSeconds,
+                                                                SnapToGridHandler::seconds);
+        
         auto textColour = findColour(audium::defaultTextColourId);
         auto gridColour = juce::Colours::black;
-        for (auto i = 0; i < segmentResult.numSegments; i++)
-        {
-            g.setColour (gridColour);
-            g.fillRect(juce::Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
+        
+        for (auto seg : segmentList) {
             
-            // draw text
+            auto seconds = seg.position;
+            auto x = zoomHandler->secondsToX(seconds);
+            auto itemWidth = zoomHandler->secondsToX(seg.grid);
+            g.setColour (gridColour);
+            g.fillRect(juce::Rectangle<float>(x,
+                                              rectangle.getY(),
+                                              1.f,
+                                              rectangle.getHeight()));
+            
+            // draw text Min::Sec
             g.setColour (textColour);
             g.setFont (12.0f);
-            juce::Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
-            g.drawText (ZoomHandler::secondsToFormattedString(seconds), bonds, juce::Justification::centredLeft, true);
-            
-            x += segmentResult.itemWidth;
-            seconds += segmentResult.grid;
+            juce::Rectangle<float> bonds(x + 5.f,
+                                         rectangle.getY(),
+                                         itemWidth,
+                                         rectangle.getHeight());
+            g.drawText (ZoomHandler::secondsToFormattedString(seconds),
+                        bonds,
+                        juce::Justification::centredLeft,
+                        true);
+
         }
     }
     
     void paintTimeLineInBars(juce::Graphics& g, juce::Rectangle<float> rectangle)
     {
-        auto segmentResult = zoomHandler->segmentsForWidth(rectangle.getWidth(), ZoomHandler::bars);
-        auto x = rectangle.getX();
-        auto bars = 1;
+        auto lengthInBars = zoomHandler->xToBars(rectangle.getWidth());
+        auto snapToGridHandler = zoomHandler->getSnapToGridHandler();
+        auto segmentList = snapToGridHandler->getGridInSegments(rectangle.getWidth(),
+                                                                lengthInBars,
+                                                                SnapToGridHandler::bars);
+        
         auto textColour = findColour(audium::defaultTextColourId);
         auto gridColour = juce::Colours::black;
-        for (auto i = 0; i < segmentResult.numSegments; i++)
-        {
+        
+        for (auto seg : segmentList) {
+            
+            auto bars = seg.position;
+            auto x = zoomHandler->barsToX(bars);
+            auto itemWidth = zoomHandler->barsToX(seg.grid);
+
             g.setColour (gridColour);
             g.fillRect(juce::Rectangle<float>(x, rectangle.getY(), 1.f, rectangle.getHeight()));
             
             // draw text
             g.setColour (textColour);
             g.setFont (12.0f);
-            juce::Rectangle<float> bonds(x + 5.f, rectangle.getY(), segmentResult.itemWidth, rectangle.getHeight());
-            g.drawText (String(bars), bonds, juce::Justification::centredLeft, true);
-            
-            x += segmentResult.itemWidth;
-            bars += segmentResult.grid;
+            juce::Rectangle<float> bonds(x + 5.f, rectangle.getY(), itemWidth, rectangle.getHeight());
+            g.drawText (String(bars + 1), bonds, juce::Justification::centredLeft, true);
         }
     }
     

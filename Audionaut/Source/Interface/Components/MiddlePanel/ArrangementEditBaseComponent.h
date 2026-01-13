@@ -106,7 +106,7 @@ public:
         // play postition view (on top)
         playPositionMarker = std::make_unique<PositionMarker>(zoomHandler);
         addAndMakeVisible(playPositionMarker.get());
-        playPositionMarker->setColour(Colours::white.withAlpha (0.85f));
+        playPositionMarker->setColour(Colours::white.withAlpha (0.5f));
         playPositionMarker->onUpdatePosition = [audiumEngine] (auto context) {
             return audiumEngine->getPlayListScheduler()->getAbsolutePosition(context);
         };
