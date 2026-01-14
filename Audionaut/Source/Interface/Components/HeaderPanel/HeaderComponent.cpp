@@ -285,10 +285,18 @@ void HeaderComponent::timerCallback()
     tempoSlider->setValue(tempo, dontSendNotification);
 
     
-    auto clocks = scheduler->getAbsolutePosition(audium::clocks);
-    barsSlider->setValue(audium::TempoProvider::clocksToBars(clocks), juce::dontSendNotification);
-    beatsSlider->setValue(audium::TempoProvider::clocksToBeats(clocks), juce::dontSendNotification);
-    clicksSlider->setValue(audium::TempoProvider::clocksToClicks(clocks), juce::dontSendNotification);
+    auto positionInClocks = scheduler->getAbsolutePosition(audium::clocks);
+    
+    auto bars = std::floor(audium::TempoProvider::clocksToBars(positionInClocks));
+    barsSlider->setValue(bars, juce::dontSendNotification);
+    
+    positionInClocks -= audium::TempoProvider::barsToClocks(bars);
+    auto beats = std::floor(audium::TempoProvider::clocksToBeats(positionInClocks));
+    beatsSlider->setValue(beats, juce::dontSendNotification);
+                            
+    positionInClocks -= audium::TempoProvider::beatsToClocks(beats);
+    auto clicks = std::floor(audium::TempoProvider::clocksToClicks(positionInClocks));
+    clicksSlider->setValue(clicks, juce::dontSendNotification);
     
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
