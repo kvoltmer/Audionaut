@@ -3091,6 +3091,7 @@
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\ArrangementComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\AudioTrackComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\PlayListItemComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\RecordingThumbnail.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementEditBaseComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\AudioTrackBaseComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\HeaderPanel\HeaderComponent.h"/>

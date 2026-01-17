@@ -7,14 +7,12 @@
 
 #include <JuceHeader.h>
 #include "PlaybackDefines.h"
-
-
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Playback/Playback.h"
 
 namespace audium
 {
 
-class AudioTrackContainer;
-class Playback;
 
 /**
  * @class AudioBusRenderer
@@ -43,8 +41,83 @@ public:
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     
     void setNumAudioBusChannels(int numChannels);
-    
-    void processAudioBlock(const juce::AudioSourceChannelInfo& outputInfo);
+        
+    template <typename ProcessContext>
+    void process (const ProcessContext& context) noexcept
+    {
+        auto& outputBlock = context.getOutputBlock();
+        outputBlock.clear();
+        auto outputChannels = outputBlock.getNumChannels();
+
+        auto& inputBlock = context.getInputBlock();
+        auto inputChannels = inputBlock.getNumChannels();
+        
+        juce::dsp::AudioBlock<SampleType> audioBusBlock(audioBus);
+        auto totalChannels = audioBus.getNumChannels();
+        
+        auto numSamples = outputBlock.getNumSamples();
+        
+        if (totalChannels > 0) {
+            
+            // render the entire bus (all channels)
+            audioBus.clear();
+            juce::AudioSourceChannelInfo busInfo (&audioBus, 0, static_cast<int>(numSamples));
+            playback->processAudioBlock(busInfo);
+            
+            // process gain for each audio bus channel
+            for (auto i = 0; i < totalChannels; i++) {
+                auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
+                juce::dsp::ProcessContextReplacing<SampleType> gainContext( channelBlock );
+                gains[i].process(gainContext);
+                channelLevel[i].store(audioBus.getMagnitude(i,
+                                                            0,
+                                                            static_cast<int>(numSamples)));
+            }
+            
+            // mono output
+            if (outputChannels == 1) {
+                for (auto i = 0; i < totalChannels; i++) {
+                    // add from audio bus to mono output
+                    outputBlock.getSingleChannelBlock(0).add( audioBusBlock.getSingleChannelBlock(i) );
+                }
+                
+            } // stereo
+            else if (outputChannels == 2) {
+                for (auto i = 0; i < totalChannels; i++) {
+
+                    stereoBuffer.clear();
+                    juce::dsp::AudioBlock<SampleType> stereoBlock (stereoBuffer);
+                    auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
+                    
+                    // process stereo pan
+                    juce::dsp::ProcessContextNonReplacing<SampleType> panContext(channelBlock,
+                                                                                 stereoBlock);
+                    panners[i].process(panContext);
+                    
+                    // mix output
+                    for (auto c = 0; c < outputChannels; c++) {
+                        outputBlock.getSingleChannelBlock(c).add( stereoBlock.getSingleChannelBlock(c) );
+                    }
+                }
+                
+                // master gain
+                juce::dsp::ProcessContextReplacing<SampleType> gainContext(outputBlock);
+                masterGain.process(gainContext);
+                
+                // master level
+                for (auto m = 0; m < outputChannels; ++m) {
+                    auto minmax = outputBlock.getSingleChannelBlock(m).findMinAndMax();
+                    masterLevel[m].store( minmax.getEnd() );
+                }
+            }
+            else { // multichannel output
+                jassert(outputChannels == totalChannels);
+                for (auto c = 0; c < std::min((int)outputChannels, totalChannels); c++) {
+                    outputBlock.getSingleChannelBlock(c).add( audioBusBlock.getSingleChannelBlock(c) );
+                }
+            }
+        }
+    }
     
     void setPan(const int channelNumber, const SampleType newPan)
     {
@@ -141,7 +214,6 @@ private:
     std::shared_ptr<audium::Playback> playback;
     
     juce::AudioBuffer<SampleType> audioBus;
-    juce::AudioBuffer<SampleType> channelBuffer;
     juce::AudioBuffer<SampleType> stereoBuffer;
         
     juce::dsp::Panner<SampleType> panners[MAX_AUDIO_CHANNELS];

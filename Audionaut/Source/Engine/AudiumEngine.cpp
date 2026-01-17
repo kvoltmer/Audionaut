@@ -14,6 +14,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Export/AudioExportThread.h"
+#include "Playback/PlaybackDefines.h"
 
 #include "Interface/ColourIds.h"
 
@@ -31,12 +32,14 @@ AudiumEngine::~AudiumEngine()
 
 void AudiumEngine::initialise()
 {
-    auto numInputChannelsNeeded = 0;
-    auto numOutputChannelsNeeded = 2;
+    jassert(RuntimePermissions::isGranted (RuntimePermissions::recordAudio));
+    
+    auto numInputChannelsNeeded = MAX_AUDIO_CHANNELS;
+    auto numOutputChannelsNeeded = MAX_AUDIO_CHANNELS;
     String result;
+
     
     if (Preferences::valueExists(PreferenceKeys::audioDeviceSettings)) {
-        
         juce::XmlDocument xml (Preferences::getValue(PreferenceKeys::audioDeviceSettings));
         if (auto saveState = xml.getDocumentElement()) {
             result = audioDeviceManager->initialise(numInputChannelsNeeded,
@@ -125,7 +128,7 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
             // try to open an audio file
             getAudioTrackContainer()->addAudioFiles({inFile.getFullPathName()},
                                                     0.0,
-                                                    getPlayListScheduler()->isArrangementMode(),
+                                                    true,
                                                     callback);
             return true;
         }

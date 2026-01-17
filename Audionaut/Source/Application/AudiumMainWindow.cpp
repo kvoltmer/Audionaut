@@ -154,17 +154,16 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             break;
         case CommandIDs::splitRegion:
             result.setInfo ("Split Region", "Splits a region", CommandCategories::editing, 0);
-            if (getEngine()->getPlayListScheduler()->isArrangementMode()) {
-                if (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().anyRangeSelected()) {
-                    if (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().canCreateRegion())
-                        bActive = true;
-                }
-                else {
-                    auto pos = getEngine()->getPlayListScheduler()->getAbsoluteStartPosition(audium::clocks);
-                    if (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().canSplitAnyRegionAtPosition(pos, audium::clocks))
-                        bActive = true;
-                }
+            if (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().anyRangeSelected()) {
+                if (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().canCreateRegion())
+                    bActive = true;
             }
+            else {
+                auto pos = getEngine()->getPlayListScheduler()->getAbsoluteStartPosition(audium::clocks);
+                if (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().canSplitAnyRegionAtPosition(pos,audium::clocks))
+                    bActive = true;
+            }
+            
             result.setActive (bActive);
             result.defaultKeypresses.add (KeyPress ('e', ModifierKeys::commandModifier, 0));
             break;

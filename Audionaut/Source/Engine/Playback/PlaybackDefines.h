@@ -13,7 +13,7 @@ namespace audium
 #endif
 
 #ifndef MAX_AUDIO_CHANNELS
-    #define MAX_AUDIO_CHANNELS 64
+    #define MAX_AUDIO_CHANNELS 128
 #endif
 
 } // namespace audium

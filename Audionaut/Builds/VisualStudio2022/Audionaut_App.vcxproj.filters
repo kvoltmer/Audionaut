@@ -4251,6 +4251,9 @@
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\PlayListItemComponent.h">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ArrangementView</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\RecordingThumbnail.h">
+      <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ArrangementView</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementEditBaseComponent.h">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel</Filter>
     </ClInclude>

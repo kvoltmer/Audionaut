@@ -14,13 +14,6 @@ void AudioBusInterface::prepareToPlay (int samplesPerBlockExpected, double sampl
     audioBusRenderer->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
-void AudioBusInterface::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
-{
-    lockFreeCommander->invoke();
-
-    audioBusRenderer->processAudioBlock(outputInfo);
-}
-
 void AudioBusInterface::setNumAudioBusChannels(int numChannels)
 {
     audioBusRenderer->setNumAudioBusChannels(numChannels);
