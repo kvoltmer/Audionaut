@@ -3042,6 +3042,7 @@
     <ClInclude Include="..\..\Source\Engine\Link\LinkEngine.hpp"/>
     <ClInclude Include="..\..\Source\Engine\Playback\AudioBusInterface.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\AudioBusRenderer.h"/>
+    <ClInclude Include="..\..\Source\Engine\Playback\AudioChannelState.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\Playback.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\PlaybackDefines.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\Voice.h"/>
