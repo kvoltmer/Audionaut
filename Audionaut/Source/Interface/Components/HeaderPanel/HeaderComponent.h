@@ -46,6 +46,8 @@ private:
     
     std::unique_ptr<juce::DrawableButton> playButton;
     std::unique_ptr<juce::DrawableButton> stopButton;
+    std::unique_ptr<juce::DrawableButton> recordButton;
+    
     std::unique_ptr<juce::DrawableButton> loopButton;
     std::unique_ptr<juce::ShapeButton> rightPanelButton;
     

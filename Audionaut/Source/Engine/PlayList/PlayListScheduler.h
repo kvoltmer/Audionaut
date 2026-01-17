@@ -15,6 +15,7 @@
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Export/ExportAudioConfig.h"
+#include "Engine/Playback/AudioBusInterface.h"
 
 namespace audium {
 
@@ -23,7 +24,6 @@ class PlayListItem;
 class TransportSourceContainer;
 class AudioResourceContainer;
 class Playback;
-class AudioBusInterface;
 
 /**
  * \class PlayListScheduler
@@ -84,9 +84,18 @@ public:
     bool isPlaying() const;
     void setFollowTransport(bool enable) { data.followTransport = enable; }
     bool getFollowTransport() const { return data.followTransport; }
+    
+    [[deprecated]]
     void setEditMode(bool bEditMode) { data.editMode = bEditMode; }
+    
+    [[deprecated]]
     bool isEditMode() const { return data.editMode; }
+    
+    [[deprecated]]
     bool isArrangementMode() const { return !data.editMode; }
+    
+    bool isRecordingArmed() const noexcept { return data.isRecordingArmed; }
+    void setRecordingArmed(bool bArmed) { data.isRecordingArmed = bArmed; }
     
     void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioTrack> track, int playListItemIndex);
     int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track);
@@ -99,8 +108,14 @@ public:
     
     void tick(bool isPlaying, double beats, int numSamples);
     
-    void processAudio (const juce::AudioSourceChannelInfo& info);
-    
+    template <typename ProcessContext>
+    void process (const ProcessContext& context) noexcept
+    {
+        // TODO: avoid allocations in the audio thread ;/
+        audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
+        audioBusInterface->process(context);
+    }
+        
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
     void bouncePlayListItem(juce::AudioFormatWriter* writer,
@@ -116,6 +131,7 @@ public:
     std::shared_ptr<Playback> getPlayback() const { return playback; }
     std::shared_ptr<AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
     std::shared_ptr<TransportLoop> getTransportLoop() const { return transportLoop; }
+    std::shared_ptr<AudioTrackContainer> getAudioTrackContainer() const { return audioTrackContainer; } 
     
     std::vector<std::shared_ptr<PlayListItem>> getPlayListItems(bool excludeSelectedItems = true) const;
     

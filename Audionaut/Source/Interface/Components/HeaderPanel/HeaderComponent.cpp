@@ -166,6 +166,23 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     };
     stopButton->setColour(TextButton::buttonColourId, Colours::grey);
     
+    // RECORD
+    recordButton = std::make_unique<juce::DrawableButton>("Record", juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
+    addAndMakeVisible(recordButton.get());
+    juce::Path rec;
+    rec.addEllipse(0, 0, 10, 10);
+    juce::DrawablePath recImage;
+    recImage.setPath(rec);
+    recImage.setFill (FillType(Colours::red.darker().darker()));
+    recordButton->setImages(&recImage);
+    recordButton->onClick = [this, scheduler]() {
+        scheduler->setRecordingArmed(recordButton->getToggleState());
+    };
+    recordButton->setClickingTogglesState(true);
+    recordButton->setColour (TextButton::buttonOnColourId, Colours::red.brighter().withAlpha(0.8f));
+    recordButton->setColour(TextButton::buttonColourId, Colours::grey);
+    
+    
     // LOOP
     loopButton = std::make_unique<DrawableButton>("Loop",
                                                         DrawableButton::ButtonStyle::ImageOnButtonBackgroundOriginalSize);
@@ -245,12 +262,19 @@ void HeaderComponent::resized()
     beatsSlider->setBounds (308, 10, 35, 20);
     clicksSlider->setBounds (346, 10, 35, 20);
     
-    playButton->setBounds(450, 10, 35, 20);
-    stopButton->setBounds(500, 10, 35, 20);
-    loopButton->setBounds(550, 10, 35, 20);
+    auto x = 400;
+    stopButton->setBounds(x, 10, 35, 20);
+    x += 38;
+    playButton->setBounds(x, 10, 35, 20);
+    x += 38;
+    recordButton->setBounds(x, 10, 35, 20);
+    x += 50;
+    loopButton->setBounds(x, 10, 35, 20);
     
-    volumeSlider->setBounds(600, 10, 70, 20);
-    stereoMeter->setBounds(700, 10, 110, 20);
+    x += 100;
+    volumeSlider->setBounds(x, 10, 70, 20);
+    x += 100;
+    stereoMeter->setBounds(x, 10, 110, 20);
     
     rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
 }
@@ -301,7 +325,11 @@ void HeaderComponent::timerCallback()
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
     
-    playButton->setToggleState(audiumEngine->getPlayListScheduler()->isPlaying(), dontSendNotification);
+    playButton->setToggleState(audiumEngine->getPlayListScheduler()->isPlaying(),
+                               dontSendNotification);
+    
+    recordButton->setToggleState(audiumEngine->getPlayListScheduler()->isRecordingArmed(),
+                                 dontSendNotification);
 }
 
 void HeaderComponent::configureSlider(juce::Slider* slider)

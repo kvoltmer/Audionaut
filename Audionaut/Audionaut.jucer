@@ -300,6 +300,8 @@
                     file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.cpp"/>
               <FILE id="MSH6BQ" name="PlayListItemComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"/>
+              <FILE id="jFDrFY" name="RecordingThumbnail.h" compile="0" resource="0"
+                    file="Source/Interface/Components/MiddlePanel/ArrangementView/RecordingThumbnail.h"/>
             </GROUP>
             <FILE id="nZ2YVn" name="ArrangementEditBaseComponent.h" compile="0"
                   resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"/>
@@ -441,10 +443,10 @@
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
                extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
                smallIcon="qhU3Rr" bigIcon="gdiYPG" appSandboxInheritance="1"
-               appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write"
+               appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write"
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
                xcodeValidArchs="arm64,arm64e,x86_64" documentExtensions="audium"
-               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="10">
+               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="10" microphonePermissionNeeded="1">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
                        customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"/>

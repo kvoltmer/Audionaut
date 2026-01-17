@@ -20,7 +20,6 @@
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
-#include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Core/LockFreeContainer.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/PlayList/TransportLoop.h"
@@ -134,14 +133,6 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples, 
     }
 }
 
-void PlayListScheduler::processAudio(const juce::AudioSourceChannelInfo& outputInfo)
-{
-    // TODO: avoid allocations in the audio thread ;/
-    audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
-    
-    audioBusInterface->processAudio(outputInfo);
-}
-
 double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool addOverhead) const
 {
     auto totalLength = totalLengthClocks.load();
@@ -176,6 +167,8 @@ void PlayListScheduler::stopPlaying()
     if (linkEngine != nullptr) {
         linkEngine->stopPlaying();
     }
+    setRecordingArmed(false);
+    
     playback->stopAllVoices();
 }
 
@@ -371,6 +364,9 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     
     AudioBuffer<float> buffer(config->numChannels, config->blockSize);
     AudioSourceChannelInfo info (&buffer, 0, config->blockSize);
+    
+    juce::dsp::AudioBlock<float> outBlock (buffer);
+    
     int64 samplesWritten = 0;
     for (auto i = 0; i < iterations; ++i) {
         const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
@@ -379,9 +375,9 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         tick(true, positionBeats, config->blockSize);
         positionBeats += beatsThisBuffer;
         
-        
-        buffer.clear();
-        processAudio(info);
+        juce::dsp::ProcessContextReplacing<float> context (outBlock);
+        outBlock.clear();
+        process(context);
         
         writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
         
@@ -400,9 +396,11 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         
         // process remaining samples
         if (remainder > 0) {
-            buffer.clear();
+            outBlock.clear();
             info.numSamples = static_cast<int>(remainder);
-            processAudio(info);
+            juce::dsp::ProcessContextReplacing<float> context (outBlock);
+            
+            process(context);
             writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             samplesWritten += info.numSamples;
         }
