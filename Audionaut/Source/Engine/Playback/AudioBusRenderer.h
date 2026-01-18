@@ -9,7 +9,7 @@
 #include "PlaybackDefines.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Playback/Playback.h"
-#include "Engine/Playback/AudioChannelState.h"
+#include "Engine/Channel/AudioChannelData.h"
 
 namespace audium
 {
@@ -34,7 +34,6 @@ public:
         playback(playback_)
     {
         setMasterGain(1.f);
-        reset();
     }
     
     ~AudioBusRenderer() = default;
@@ -71,9 +70,7 @@ public:
                 auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
                 juce::dsp::ProcessContextReplacing<SampleType> gainContext( channelBlock );
                 gains[i].process(gainContext);
-                audioChannelStates[i].channelLevel = audioBus.getMagnitude(i,
-                                                                           0,
-                                                                           static_cast<int>(numSamples));
+                channelLevel[i] = audioBus.getMagnitude(i, 0, static_cast<int>(numSamples));
             }
             
             // mono output
@@ -133,11 +130,11 @@ public:
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             // std::cout << "setGain " << channelNumber << " " << newGain << std::endl;
-            if (audioChannelStates[channelNumber].solo)
+            if (audioChannelData[channelNumber].solo)
                 gains[channelNumber].setGainLinear(newGain);
-            else if (!audioChannelStates[channelNumber].mute)
+            else if (!audioChannelData[channelNumber].mute)
                 gains[channelNumber].setGainLinear(newGain);
-            audioChannelStates[channelNumber].gain = newGain;
+            audioChannelData[channelNumber].gain = newGain;
         }
     }
     
@@ -145,9 +142,9 @@ public:
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             //std::cout << "setMute " << channelNumber << " " << bMute << std::endl;
-            audioChannelStates[channelNumber].mute = bMute;
-            if (!audioChannelStates[channelNumber].solo)
-                gains[channelNumber].setGainLinear(bMute ? 0.f : audioChannelStates[channelNumber].gain);
+            audioChannelData[channelNumber].mute = bMute;
+            if (!audioChannelData[channelNumber].solo)
+                gains[channelNumber].setGainLinear(bMute ? 0.f : audioChannelData[channelNumber].gain);
         }
     }
 
@@ -155,11 +152,11 @@ public:
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             //std::cout << "setSolo " << channelNumber << " " << bSolo << std::endl;
-            audioChannelStates[channelNumber].solo = bSolo;
+            audioChannelData[channelNumber].solo = bSolo;
 
             auto anySolo = false;
             for (auto c = 0; c < audioBus.getNumChannels(); ++c) {
-                if (audioChannelStates[c].solo) {
+                if (audioChannelData[c].solo) {
                     anySolo = true;
                     break;
                 }
@@ -167,16 +164,30 @@ public:
             
             for (auto c = 0; c < MAX_AUDIO_CHANNELS; ++c) {
                 if (anySolo) {
-                    if (audioChannelStates[c].solo)
-                        gains[c].setGainLinear(audioChannelStates[c].gain);
+                    if (audioChannelData[c].solo)
+                        gains[c].setGainLinear(audioChannelData[c].gain);
                     else
                         gains[c].setGainLinear(0.f);
                 }
                 else {
                     // mute stats apply
-                    gains[c].setGainLinear(audioChannelStates[c].mute ? 0.f : audioChannelStates[c].gain);
+                    gains[c].setGainLinear(audioChannelData[c].mute ? 0.f : audioChannelData[c].gain);
                 }
             }
+        }
+    }
+    
+    void setChannelData(const int channelNumber, const AudioChannelData data)
+    {
+        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
+            
+            // TODO: discuss solo and mute states
+            setPan(channelNumber, data.pan);
+            setMute(channelNumber, data.mute);
+            setSolo(channelNumber, data.solo);
+            setGain(channelNumber, data.gain);
+            
+            audioChannelData[channelNumber] = data;
         }
     }
     
@@ -188,7 +199,7 @@ public:
     const float getChannelLevel(const int channelNumber) const
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
-            return audioChannelStates[channelNumber].channelLevel.load();
+            return channelLevel[channelNumber].load();
         
         return 0.f;
     }
@@ -199,13 +210,6 @@ public:
             return masterLevel[channelNumber].load();
         
         return 0.f;
-    }
-    
-    void reset()
-    {
-        for (auto c = 0; c < MAX_AUDIO_CHANNELS; ++c) {
-            audioChannelStates[c].reset();
-        }
     }
     
 private:
@@ -220,8 +224,9 @@ private:
     juce::dsp::Gain<SampleType> masterGain;
     
     std::atomic<float> masterLevel[2];
+    std::atomic<float> channelLevel[MAX_AUDIO_CHANNELS];
     
-    AudioChannelState audioChannelStates[MAX_AUDIO_CHANNELS];
+    AudioChannelData audioChannelData[MAX_AUDIO_CHANNELS];
     
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioBusRenderer)

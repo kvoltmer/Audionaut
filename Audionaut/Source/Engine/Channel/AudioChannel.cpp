@@ -15,8 +15,7 @@ namespace audium {
 void AudioChannel::setGain(const float newGain)
 {
     data.gain = newGain;
-    audioBusInterface->setGain(getChannelNumber() + audioTrack.getChannelOffset(),
-                               newGain);
+    commitChannelData();
 }
 
 float AudioChannel::getGain() const noexcept
@@ -27,8 +26,7 @@ float AudioChannel::getGain() const noexcept
 void AudioChannel::setPan(const float newPan)
 {
     data.pan = newPan;
-    audioBusInterface->setPan(getChannelNumber() + audioTrack.getChannelOffset(),
-                              newPan);
+    commitChannelData();
 }
 
 float AudioChannel::getPan() const noexcept
@@ -39,8 +37,7 @@ float AudioChannel::getPan() const noexcept
 void AudioChannel::setMute(bool bMute)
 {
     data.mute = bMute;
-    audioBusInterface->setMute(getChannelNumber() + audioTrack.getChannelOffset(),
-                               bMute);
+    commitChannelData();
 }
 bool AudioChannel::getMute() const noexcept
 {
@@ -50,8 +47,7 @@ bool AudioChannel::getMute() const noexcept
 void AudioChannel::setSolo(bool bSolo)
 {
     data.solo = bSolo;
-    audioBusInterface->setSolo(getChannelNumber() + audioTrack.getChannelOffset(),
-                               bSolo);
+    commitChannelData();
 }
 
 bool AudioChannel::getSolo() const noexcept
@@ -61,10 +57,7 @@ bool AudioChannel::getSolo() const noexcept
 
 void AudioChannel::commitChannelData()
 {
-    setGain(data.gain);
-    setPan(data.pan);
-    setMute(data.mute);
-    setSolo(data.solo);
+    audioBusInterface->setChannelData(getChannelNumber() + audioTrack.getChannelOffset(), data);
 }
 
 } // namespace audium

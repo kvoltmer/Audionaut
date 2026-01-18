@@ -138,7 +138,6 @@
 		15B08AD17A4543A6F9323602 /* EngineAccess.cpp */ /* EngineAccess.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = EngineAccess.cpp; path = ../../Source/Util/EngineAccess.cpp; sourceTree = SOURCE_ROOT; };
 		165654E9D1DC2FF03045843C /* AudiumEngine.h */ /* AudiumEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumEngine.h; path = ../../Source/Engine/AudiumEngine.h; sourceTree = SOURCE_ROOT; };
 		1759C02F6B3B9F8E2D69CAD7 /* audium_AudioThumbnail.cpp */ /* audium_AudioThumbnail.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_AudioThumbnail.cpp; path = ../../Source/Interface/Widgets/audium_AudioThumbnail.cpp; sourceTree = SOURCE_ROOT; };
-		1820DEB946619B467B850D57 /* AudioChannelState.h */ /* AudioChannelState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioChannelState.h; path = ../../Source/Engine/Playback/AudioChannelState.h; sourceTree = SOURCE_ROOT; };
 		185CB895C357DC866B5C866E /* ColourIds.cpp */ /* ColourIds.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ColourIds.cpp; path = ../../Source/Interface/ColourIds.cpp; sourceTree = SOURCE_ROOT; };
 		193E557D0B5F362A035F0D6D /* ResourceGroup.h */ /* ResourceGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ResourceGroup.h; path = ../../Source/Engine/Group/ResourceGroup.h; sourceTree = SOURCE_ROOT; };
 		1C5AA2629EC03E71756CAB35 /* TransportLoop.cpp */ /* TransportLoop.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TransportLoop.cpp; path = ../../Source/Engine/PlayList/TransportLoop.cpp; sourceTree = SOURCE_ROOT; };
@@ -815,7 +814,6 @@
 				BADBB9D9AEAFBB0D593D7915,
 				57022B94A9C351DA0F12B4CF,
 				F98594A24820592F045D6479,
-				1820DEB946619B467B850D57,
 				9EB1079AF95DA79E5F159630,
 				43E55625169B10927C91EC7C,
 				588BC50DED1E5F4ADFB3B53B,

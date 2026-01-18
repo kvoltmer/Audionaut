@@ -4104,9 +4104,6 @@
     <ClInclude Include="..\..\Source\Engine\Playback\AudioBusRenderer.h">
       <Filter>Audionaut\Source\Engine\Playback</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\Playback\AudioChannelState.h">
-      <Filter>Audionaut\Source\Engine\Playback</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Playback\Playback.h">
       <Filter>Audionaut\Source\Engine\Playback</Filter>
     </ClInclude>

@@ -19,35 +19,11 @@ void AudioBusInterface::setNumAudioBusChannels(int numChannels)
     audioBusRenderer->setNumAudioBusChannels(numChannels);
 }
 
-void AudioBusInterface::setPan(const int channelNumber, const float newPan)
+void AudioBusInterface::setChannelData(const int channelNumber, const AudioChannelData data)
 {
     auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, channelNumber, newPan] {
-        ptr->setPan(channelNumber, newPan);
-    });
-}
-
-void AudioBusInterface::setGain(const int channelNumber, const float newGain)
-{
-    auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, channelNumber, newGain] {
-        ptr->setGain(channelNumber, newGain);
-    });
-}
-
-void AudioBusInterface::setMute(const int channelNumber, const bool bMute)
-{
-    auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, channelNumber, bMute] {
-        ptr->setMute(channelNumber, bMute);
-    });
-}
-
-void AudioBusInterface::setSolo(const int channelNumber, const bool bSolo)
-{
-    auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, channelNumber, bSolo] {
-        ptr->setSolo(channelNumber, bSolo);
+    lockFreeCommander->fifo.push([ptr, channelNumber, data] {
+        ptr->setChannelData(channelNumber, data);
     });
 }
 
