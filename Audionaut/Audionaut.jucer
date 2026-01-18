@@ -141,8 +141,6 @@
                 file="Source/Engine/Playback/AudioBusRenderer.cpp"/>
           <FILE id="JTNbDj" name="AudioBusRenderer.h" compile="0" resource="0"
                 file="Source/Engine/Playback/AudioBusRenderer.h"/>
-          <FILE id="mBQdWy" name="AudioChannelState.h" compile="0" resource="0"
-                file="Source/Engine/Playback/AudioChannelState.h"/>
           <FILE id="kBDQRJ" name="Playback.cpp" compile="1" resource="0" file="Source/Engine/Playback/Playback.cpp"/>
           <FILE id="TuWOT6" name="Playback.h" compile="0" resource="0" file="Source/Engine/Playback/Playback.h"/>
           <FILE id="jQYb2Z" name="PlaybackDefines.h" compile="0" resource="0"

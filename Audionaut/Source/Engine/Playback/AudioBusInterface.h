@@ -9,6 +9,7 @@
 
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
+#include "Engine/Channel/AudioChannelData.h"
 
 namespace audium
 {
@@ -60,33 +61,10 @@ public:
     void setNumAudioBusChannels(int numChannels);
 
     /**
-    * @brief Sets the pan value for a specific channel.
-    * @param channelNumber The channel index.
-    * @param newPan The new pan value (-1.0 for full left, 1.0 for full right).
+    * @brief Sets the channel data for a specific channel.
     */
-    void setPan(const int channelNumber, const float newPan);
-
-    /**
-    * @brief Sets the gain value for a specific channel.
-    * @param channelNumber The channel index.
-    * @param newGain The new gain value.
-    */
-    void setGain(const int channelNumber, const float newGain);
-
-    /**
-    * @brief Mutes or unmutes a specific channel.
-    * @param channelNumber The channel index.
-    * @param bMute True to mute the channel, false to unmute.
-    */
-    void setMute(const int channelNumber, const bool bMute);
-
-    /**
-    * @brief Solos or unsolos a specific channel.
-    * @param channelNumber The channel index.
-    * @param bSolo True to solo the channel, false to unsolo.
-    */
-    void setSolo(const int channelNumber, const bool bSolo);
-
+    void setChannelData(const int channelNumber, const AudioChannelData data);
+    
     /**
     * @brief Sets the master gain for the audio bus.
     * @param newGain The new master gain value.
