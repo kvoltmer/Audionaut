@@ -98,6 +98,8 @@ private:
     std::unique_ptr<juce::ImageButton> volumeScaleButton;
     std::unique_ptr<juce::TextButton> muteButton;
     std::unique_ptr<juce::TextButton> soloButton;
+    std::unique_ptr<juce::TextButton> recordButton;
+    std::unique_ptr<juce::TextButton> monitorButton;
     
     int rowNumber = 0;
     

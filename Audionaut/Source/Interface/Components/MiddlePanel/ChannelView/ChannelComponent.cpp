@@ -103,6 +103,33 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
         audioTrack->onDragEnd();
     };
     
+    // RECORD
+    recordButton.reset (new juce::TextButton ("R"));
+    addAndMakeVisible (recordButton.get());
+    recordButton->setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    recordButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::soloColourId));
+    recordButton->setClickingTogglesState(true);
+    recordButton->onClick = [this, rowNumber] {
+        audioTrack->onDragStart();
+        auto data = audioTrack->getChannelData(rowNumber);
+        data.record = recordButton->getToggleState();
+        audioTrack->setChannelData(rowNumber, data);
+        audioTrack->onDragEnd();
+    };
+    
+    // MONITOR
+    monitorButton.reset (new juce::TextButton ("I"));
+    addAndMakeVisible (monitorButton.get());
+    monitorButton->setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    monitorButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::soloColourId));
+    monitorButton->setClickingTogglesState(true);
+    monitorButton->onClick = [this, rowNumber] {
+        audioTrack->onDragStart();
+        auto data = audioTrack->getChannelData(rowNumber);
+        data.monitor = monitorButton->getToggleState();
+        audioTrack->setChannelData(rowNumber, data);
+        audioTrack->onDragEnd();
+    };
 
     setSize (AudiumLookAndFeel::channelsWidth, 100);
     
@@ -113,15 +140,21 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
 
 void ChannelComponent::resized()
 {
-    auto sliderWidth = 67;
+    auto sliderWidth = 67 + 39;
     auto sliderHeight = 15;
     auto space = 7;
     
     channelSizeComboBox->setBounds (space, 5, 15, 15);
     
     auto buttonSize = 15;
-    muteButton->setBounds(space + 30, 5, buttonSize, buttonSize);
-    soloButton->setBounds(space + 53, 5, buttonSize, buttonSize);
+    auto x = space + 24;
+    recordButton->setBounds(x, 5, buttonSize, buttonSize);
+    x += (buttonSize + space);
+    monitorButton->setBounds(x, 5, buttonSize, buttonSize);
+    x += (buttonSize + space);
+    muteButton->setBounds(x, 5, buttonSize, buttonSize);
+    x += (buttonSize + space);
+    soloButton->setBounds(x, 5, buttonSize, buttonSize);
     
     volumeSlider->setBounds (space,
                              27,
@@ -185,11 +218,14 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     audioTrack = audioTrack_;
     rowNumber = rowNumber_;
     
-    volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)), dontSendNotification);
-    panSlider->setValue(audioTrack->getPan(rowNumber), dontSendNotification);
+    auto channelData = audioTrack->getChannelData(rowNumber);
     
-    auto bMute = audioTrack->getMute(rowNumber);
-    auto bSolo = audioTrack->getSolo(rowNumber);
+    volumeSlider->setValue(LevelMeter::gainToDecebel(channelData.gain), dontSendNotification);
+    panSlider->setValue(channelData.pan, dontSendNotification);
+    
+    auto bMute = channelData.mute;
+    auto bSolo = channelData.solo;
+    
     auto anySolo = audioTrack->getAudioTrackContainer().anyChannelSolo();
     if (anySolo && !bSolo) {
         bMute = true;
@@ -199,6 +235,9 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     
     muteButton->setToggleState(bMute, dontSendNotification);
     soloButton->setToggleState(bSolo, dontSendNotification);
+    
+    monitorButton->setToggleState(channelData.monitor, dontSendNotification);
+    recordButton->setToggleState(channelData.record, dontSendNotification);
     
     if (not isTimerRunning()) {
         startTimerHz(60);

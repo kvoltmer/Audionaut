@@ -68,11 +68,31 @@ public:
     bool isPlaying(const std::shared_ptr<AudiumTransportSource> source);
 
     /**
-     * @brief Processes an audio block for playback.
-     * @param info The `juce::AudioSourceChannelInfo` containing the buffer to process.
+     * @brief Process audio playback.
      */
-    void processAudioBlock (const juce::AudioSourceChannelInfo& info);
-
+    template <typename ProcessContext>
+    void process (const ProcessContext& context) noexcept
+    {
+        auto& outputBlock = context.getOutputBlock();
+        auto numSamples = static_cast<int>(outputBlock.getNumSamples());
+        auto numChannels = std::min(static_cast<int>(outputBlock.getNumChannels()),
+                                    MAX_AUDIO_CHANNELS);
+        
+        // TODO: avoid reallocating in the audio thread
+        processingBuffer.setSize(numChannels, numSamples, false, false, true);
+        processingBuffer.clear();
+        
+        juce::dsp::AudioBlock<float> processingBlock(processingBuffer);
+        
+        for (auto i = 0; i < MAX_VOICES; ++i) {
+            if (voices[i].processing.load()) {
+                juce::AudioSourceChannelInfo info (&processingBuffer, 0, numSamples);
+                voices[i].processAudioBlock(info);
+                outputBlock.add ( processingBlock );
+            }
+        }
+    }
+        
     /**
      * @brief Gets the number of available voices.
      * @return The number of voices.
@@ -99,7 +119,7 @@ private:
      */
     int getNumberOfVoices() const;
 
-    juce::AudioBuffer<float> audioBusBuffer; ///< Buffer for audio bus processing.
+    juce::AudioBuffer<float> processingBuffer; ///< Buffer for audio bus processing.
 
     Voice voices[MAX_VOICES]; ///< Array of voices for playback.
 
