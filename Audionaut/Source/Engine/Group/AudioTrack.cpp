@@ -339,6 +339,22 @@ bool AudioTrack::getSolo(int channelNumber) const {
     return 0.0;
 }
 
+void AudioTrack::setChannelData(const int channelNumber, const AudioChannelData data)
+{
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        channel->data = data;
+        channel->commitChannelData();
+    }
+}
+
+const AudioChannelData AudioTrack::getChannelData(const int channelNumber) const
+{
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        return channel->data;
+    }
+    return AudioChannelData();
+}
+
 void AudioTrack::onDragStart()
 {
     undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);

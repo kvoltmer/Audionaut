@@ -58,7 +58,7 @@ public:
                                                 int columnFlags) override;
     
     // Various statics
-    static const int channelsWidth = 100;
+    static const int channelsWidth = 140;
     static const int standardItemHeight = 25;
     static const int popupMenuItemHeight = 20;
     static const int dragZoomControlHeight = standardItemHeight;

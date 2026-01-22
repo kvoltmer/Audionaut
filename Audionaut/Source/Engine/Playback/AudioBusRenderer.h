@@ -54,35 +54,44 @@ public:
         jassert(inputChannels > 0);
         
         juce::dsp::AudioBlock<SampleType> audioBusBlock(audioBus);
-        auto totalChannels = audioBus.getNumChannels();
-        
-        auto numSamples = outputBlock.getNumSamples();
-        
-        if (totalChannels > 0) {
+        auto audioBusChannels = audioBus.getNumChannels();
+                
+        if (audioBusChannels > 0) {
             
             // render the entire bus (all channels)
             audioBus.clear();
-            juce::AudioSourceChannelInfo busInfo (&audioBus, 0, static_cast<int>(numSamples));
-            playback->processAudioBlock(busInfo);
+            
+            // process playback
+            juce::dsp::ProcessContextReplacing<SampleType> audioBusContext(audioBusBlock);
+            playback->process(audioBusContext);
+            
+            // add input to audio bus
+            for (auto i = 0; i < inputChannels; i++) {
+                if (audioChannelData[i].monitor) {
+                    if (i < audioBusChannels) {
+                        audioBusBlock.getSingleChannelBlock(i).add( inputBlock.getSingleChannelBlock(i) );
+                    }
+                }
+            }
             
             // process gain for each audio bus channel
-            for (auto i = 0; i < totalChannels; i++) {
+            for (auto i = 0; i < audioBusChannels; i++) {
                 auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
                 juce::dsp::ProcessContextReplacing<SampleType> gainContext( channelBlock );
                 gains[i].process(gainContext);
-                channelLevel[i] = audioBus.getMagnitude(i, 0, static_cast<int>(numSamples));
+                channelLevel[i] = channelBlock.findMinAndMax().getEnd();
             }
             
             // mono output
             if (outputChannels == 1) {
-                for (auto i = 0; i < totalChannels; i++) {
+                for (auto i = 0; i < audioBusChannels; i++) {
                     // add from audio bus to mono output
                     outputBlock.getSingleChannelBlock(0).add( audioBusBlock.getSingleChannelBlock(i) );
                 }
                 
             } // stereo
             else if (outputChannels == 2) {
-                for (auto i = 0; i < totalChannels; i++) {
+                for (auto i = 0; i < audioBusChannels; i++) {
 
                     stereoBuffer.clear();
                     juce::dsp::AudioBlock<SampleType> stereoBlock (stereoBuffer);
@@ -110,8 +119,8 @@ public:
                 }
             }
             else { // multichannel output
-                jassert(outputChannels == totalChannels);
-                for (auto c = 0; c < std::min((int)outputChannels, totalChannels); c++) {
+                jassert(outputChannels == audioBusChannels);
+                for (auto c = 0; c < std::min((int)outputChannels, audioBusChannels); c++) {
                     outputBlock.getSingleChannelBlock(c).add( audioBusBlock.getSingleChannelBlock(c) );
                 }
             }
@@ -180,14 +189,11 @@ public:
     void setChannelData(const int channelNumber, const AudioChannelData data)
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
-            
-            // TODO: discuss solo and mute states
+            audioChannelData[channelNumber] = data;
             setPan(channelNumber, data.pan);
             setMute(channelNumber, data.mute);
             setSolo(channelNumber, data.solo);
             setGain(channelNumber, data.gain);
-            
-            audioChannelData[channelNumber] = data;
         }
     }
     

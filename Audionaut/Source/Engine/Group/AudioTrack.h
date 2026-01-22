@@ -27,6 +27,7 @@ class ResourceGroup;
 class AudioChannel;
 class PositionableBase;
 class AudioTrackContainer;
+class AudioChannelData;
 
 typedef SelectableObjectContainer<ResourceGroup> tResourceGroupContainer;
 typedef SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
@@ -159,6 +160,9 @@ public:
     
     void setSolo(bool bSolo, int channelNumber);
     bool getSolo(int channelNumber) const;
+    
+    void setChannelData(const int channelNumber, const AudioChannelData data);
+    const AudioChannelData getChannelData(const int channelNumber) const;
     
     // undo for continious parameters:
     void onDragStart();
