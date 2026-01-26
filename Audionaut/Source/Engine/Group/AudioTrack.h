@@ -164,6 +164,8 @@ public:
     void setChannelData(const int channelNumber, const AudioChannelData data);
     const AudioChannelData getChannelData(const int channelNumber) const;
     
+    void setRecordEnabled(const int channelNumber, bool bEnabled, std::shared_ptr<juce::AudioThumbnail> thumbnail);
+    
     // undo for continious parameters:
     void onDragStart();
     void onDragEnd();

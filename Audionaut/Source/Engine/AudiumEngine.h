@@ -264,6 +264,7 @@ public:
     // static helpers to get project file paths
     static juce::File projectDirectory;
     static juce::File tempDirectory;
+    static int recordingCounter;
     
 private:
     /**

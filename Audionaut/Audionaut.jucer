@@ -185,6 +185,13 @@
           <FILE id="fFl3aw" name="AudioRegionData.h" compile="0" resource="0"
                 file="Source/Engine/Region/AudioRegionData.h"/>
         </GROUP>
+        <GROUP id="{111A3789-3471-D94A-74A8-E5F7DEB8B4E6}" name="Recording">
+          <FILE id="xwMMIq" name="AudioRecorder.cpp" compile="1" resource="0"
+                file="Source/Engine/Recording/AudioRecorder.cpp"/>
+          <FILE id="yfMXHA" name="AudioRecorder.h" compile="0" resource="0" file="Source/Engine/Recording/AudioRecorder.h"/>
+          <FILE id="VCTx1m" name="RecordingThumbnail.h" compile="0" resource="0"
+                file="Source/Engine/Recording/RecordingThumbnail.h"/>
+        </GROUP>
         <GROUP id="{27408FC8-AAF8-55C4-A1E1-787D504EC3DD}" name="Resource">
           <FILE id="bpy86C" name="AudioResource.cpp" compile="1" resource="0"
                 file="Source/Engine/Resource/AudioResource.cpp"/>

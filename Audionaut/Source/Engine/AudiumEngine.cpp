@@ -24,6 +24,7 @@ const char* AudiumEngine::projectFileExtension = ".audium";
 const char* AudiumEngine::projectFileName = "Project.json";
 juce::File AudiumEngine::projectDirectory = File();
 juce::File AudiumEngine::tempDirectory = File();
+int AudiumEngine::recordingCounter = 0;
 
 AudiumEngine::~AudiumEngine()
 {

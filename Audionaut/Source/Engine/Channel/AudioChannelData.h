@@ -30,6 +30,8 @@ public:
     bool solo   = false; ///< Indicates whether the audio channel is in solo mode.
     bool record = false; ///< Indicates whether the audio channel is in record mode.
     bool monitor = false; ///< Indicates whether the audio channel is in monitor mode.
+    int channelNumber = -1; /// The  channel number of the audio track.
+    int trackId = -1; /// The audio track id.
 };
 
 /**

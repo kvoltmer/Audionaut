@@ -82,6 +82,10 @@ public:
      * @return The audio file directory as a `juce::File`.
      */
     static const juce::File getAudioFileDirectory();
+    
+    
+    static const juce::File getAudioRecordingFile(const int take,
+                                                  const int channel);
 
     
     bool isAudioFileCurrentlyLoaded(const juce::File audioFile) const;

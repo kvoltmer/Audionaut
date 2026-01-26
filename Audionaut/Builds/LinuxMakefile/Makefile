@@ -105,6 +105,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/PlayListScheduler_18e264da.o \
   $(JUCE_OBJDIR)/AudioRegion_38bb0c1d.o \
   $(JUCE_OBJDIR)/AudioRegionContainer_52a1322e.o \
+  $(JUCE_OBJDIR)/AudioRecorder_f4310912.o \
   $(JUCE_OBJDIR)/AudioResource_bb5eaf91.o \
   $(JUCE_OBJDIR)/AudioResourceContainer_8bac313a.o \
   $(JUCE_OBJDIR)/ChannelMapping_6a0229a8.o \
@@ -340,6 +341,11 @@ $(JUCE_OBJDIR)/AudioRegion_38bb0c1d.o: ../../Source/Engine/Region/AudioRegion.cp
 $(JUCE_OBJDIR)/AudioRegionContainer_52a1322e.o: ../../Source/Engine/Region/AudioRegionContainer.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AudioRegionContainer.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AudioRecorder_f4310912.o: ../../Source/Engine/Recording/AudioRecorder.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AudioRecorder.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudioResource_bb5eaf91.o: ../../Source/Engine/Resource/AudioResource.cpp

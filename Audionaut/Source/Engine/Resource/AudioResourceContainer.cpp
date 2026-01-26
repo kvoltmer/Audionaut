@@ -36,6 +36,27 @@ const juce::File AudioResourceContainer::getAudioFileDirectory()
     return getAudioFileDirectory(AudiumEngine::projectDirectory);
 }
 
+const juce::File AudioResourceContainer::getAudioRecordingFile(const int take,
+                                                               const int channel)
+{
+    auto projectDir = getAudioFileDirectory();
+    jassert(projectDir.exists());
+    
+    auto now = juce::Time::getCurrentTime();
+
+    // Format as [Year-Month-Day Hour-Minute-Second]
+    auto formattedStr = now.formatted ("[%Y-%m-%d_%H-%M-%S]");
+    
+    auto takeString = juce::String(AudioRegionContainer::formatNumber(take + 1));
+    auto channelString = juce::String(AudioRegionContainer::formatNumber(channel + 1));
+    
+    auto fileName = "take" + takeString + "-chan" + channelString + "-" + formattedStr +".wav";
+    
+    auto uniqueFile = juce::File(projectDir.getFullPathName() + File::getSeparatorString() + fileName);
+    return uniqueFile;
+    
+}
+
 void AudioResourceContainer::deleteTemporaryProjectDirectory()
 {
     if (AudiumEngine::tempDirectory.exists())

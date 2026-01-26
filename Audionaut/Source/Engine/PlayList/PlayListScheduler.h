@@ -49,15 +49,15 @@ public:
                       std::shared_ptr<audium::Playback> playback_,
                       std::shared_ptr<AudioBusInterface> audioBusInterface_,
                       std::shared_ptr<TransportLoop> transportLoop_) :
-    audioTrackContainer(audioTrackContainer_),
-    audioResourceContainer(audioResourceContainer_),
-    tempoProvider(tempoProvider_),
-    linkEngine(linkEngine_),
-    audioClipContainer(audioClipContainer_),
-    transportSourceContainer(transportSourceContainer_),
-    playback(playback_),
-    audioBusInterface(audioBusInterface_),
-    transportLoop(transportLoop_)
+        audioTrackContainer(audioTrackContainer_),
+        audioResourceContainer(audioResourceContainer_),
+        tempoProvider(tempoProvider_),
+        linkEngine(linkEngine_),
+        audioClipContainer(audioClipContainer_),
+        transportSourceContainer(transportSourceContainer_),
+        playback(playback_),
+        audioBusInterface(audioBusInterface_),
+        transportLoop(transportLoop_)
     {
         linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) {
             tick(isPlaying, beats, numSamples);

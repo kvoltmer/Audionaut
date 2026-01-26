@@ -55,8 +55,19 @@ bool AudioChannel::getSolo() const noexcept
     return data.solo;
 }
 
+void AudioChannel::setRecordEnabled(bool bEnabled, std::shared_ptr<juce::AudioThumbnail> thumbnail)
+{
+    data.record = bEnabled;
+    audioBusInterface->setRecordEnabled(getChannelNumber() + audioTrack.getChannelOffset(),
+                                        bEnabled,
+                                        thumbnail);
+    
+}
+
 void AudioChannel::commitChannelData()
 {
+    data.channelNumber = getChannelNumber();
+    data.trackId = audioTrack.getId();
     audioBusInterface->setChannelData(getChannelNumber() + audioTrack.getChannelOffset(), data);
 }
 

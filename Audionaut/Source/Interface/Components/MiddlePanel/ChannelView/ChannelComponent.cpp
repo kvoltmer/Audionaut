@@ -111,9 +111,9 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     recordButton->setClickingTogglesState(true);
     recordButton->onClick = [this, rowNumber] {
         audioTrack->onDragStart();
-        auto data = audioTrack->getChannelData(rowNumber);
-        data.record = recordButton->getToggleState();
-        audioTrack->setChannelData(rowNumber, data);
+        audioTrack->setRecordEnabled(rowNumber,
+                                     recordButton->getToggleState(),
+                                     nullptr);
         audioTrack->onDragEnd();
     };
     
