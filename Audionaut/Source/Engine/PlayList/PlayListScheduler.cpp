@@ -159,6 +159,10 @@ void PlayListScheduler::startPlaying()
         linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
         transportLoop->reset();
+        
+        if (isRecordingArmed()) {
+            audioBusInterface->record(true);
+        }
     }
 }
 
@@ -168,6 +172,7 @@ void PlayListScheduler::stopPlaying()
         linkEngine->stopPlaying();
     }
     setRecordingArmed(false);
+    audioBusInterface->record(false);
     
     playback->stopAllVoices();
 }

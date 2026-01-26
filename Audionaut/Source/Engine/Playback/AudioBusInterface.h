@@ -65,6 +65,12 @@ public:
     */
     void setChannelData(const int channelNumber, const AudioChannelData data);
     
+    void setRecordEnabled(const int channelNumber,
+                          bool bEnabled,
+                          std::shared_ptr<juce::AudioThumbnail> thumbnail);
+    
+    void record(bool start);
+    
     /**
     * @brief Sets the master gain for the audio bus.
     * @param newGain The new master gain value.

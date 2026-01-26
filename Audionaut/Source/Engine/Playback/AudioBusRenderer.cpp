@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioBusRenderer.h"
-
+#include "Engine/AudiumEngine.h"
 
 namespace audium
 {
@@ -18,8 +18,9 @@ void AudioBusRenderer<SampleType>::setNumAudioBusChannels(int numChannels)
 }
 
 template <class SampleType>
-void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
+void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, double sampleRate_)
 {
+    sampleRate = sampleRate_;
     audioBus.setSize(audioBus.getNumChannels(), samplesPerBlockExpected);
     
     stereoBuffer.setSize(2, samplesPerBlockExpected);
@@ -37,10 +38,60 @@ void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, d
     }
 }
 
-// TODO: only float supported at this time
-template class AudioBusRenderer<float>;
+template <class SampleType>
+void AudioBusRenderer<SampleType>::setChannelData(const int channelNumber, const AudioChannelData data)
+{
+    if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
+        audioChannelData[channelNumber] = data;
+        setPan(channelNumber, data.pan);
+        setMute(channelNumber, data.mute);
+        setSolo(channelNumber, data.solo);
+        setGain(channelNumber, data.gain);
+    }
+}
 
-// TODO: juce::AudioSourceChannelInfo must support double
-//template class AudioBusRenderer<double>;
+template <class SampleType>
+void AudioBusRenderer<SampleType>::setRecordEnabled(const int channelNumber, bool bEnabled, std::shared_ptr<AudioRecorder> recorder)
+{
+
+    if (bEnabled) {
+        if (recorders.find(channelNumber) == recorders.end()) {
+            //auto recorder = std::make_shared<AudioRecorder>(nullptr);
+            recorders.insert(std::make_pair(channelNumber, recorder));
+        }
+    }
+    else {
+        // erase recorder if exists at channel number
+        if (recorders.find(channelNumber) != recorders.end()) {
+            recorders.erase(channelNumber);
+        }
+    }
+    
+    audioChannelData[channelNumber].record = bEnabled;
+    
+    std::cout << "All recorders:\n";
+    for (const auto& rec : recorders) {
+        std::cout << rec.second << std::endl;
+    }
+}
+
+template <class SampleType>
+void AudioBusRenderer<SampleType>::record(bool start)
+{
+    auto take = AudiumEngine::recordingCounter;
+    if (start)
+        AudiumEngine::recordingCounter++;
+    
+    for (const auto& rec : recorders) {
+        if (start)
+            rec.second->startRecording(take, rec.first, sampleRate);
+        else
+            rec.second->stop();
+    }
+}
+
+
+template class AudioBusRenderer<float>;
+template class AudioBusRenderer<double>;
 
 } // namespace audium

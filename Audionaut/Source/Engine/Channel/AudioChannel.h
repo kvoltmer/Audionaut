@@ -105,11 +105,13 @@ public:
     * @return True if the channel is in solo mode, false otherwise.
     */
    bool getSolo() const noexcept;
-
-   /**
+    
+    void setRecordEnabled(bool bEnabled, std::shared_ptr<juce::AudioThumbnail> thumbnail);
+    
+    /**
     * @brief Commits the current channel data to the associated track.
     */
-   void commitChannelData();
+    void commitChannelData();
     
     int getChannelNumber() const {
         auto channel = std::dynamic_pointer_cast<const AudioChannel>(getSharedPtr());

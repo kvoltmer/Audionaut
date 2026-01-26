@@ -10,6 +10,9 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Channel/AudioChannelData.h"
+#include "Engine/Recording/AudioRecorder.h"
+
+using namespace juce::dsp;
 
 namespace audium
 {
@@ -53,31 +56,45 @@ public:
         auto inputChannels = inputBlock.getNumChannels();
         jassert(inputChannels > 0);
         
-        juce::dsp::AudioBlock<SampleType> audioBusBlock(audioBus);
+        AudioBlock<SampleType> audioBusBlock(audioBus);
         auto audioBusChannels = audioBus.getNumChannels();
                 
         if (audioBusChannels > 0) {
             
             // render the entire bus (all channels)
-            audioBus.clear();
+            audioBusBlock.clear();
             
-            // process playback
-            juce::dsp::ProcessContextReplacing<SampleType> audioBusContext(audioBusBlock);
-            playback->process(audioBusContext);
+
             
             // add input to audio bus
             for (auto i = 0; i < inputChannels; i++) {
-                if (audioChannelData[i].monitor) {
-                    if (i < audioBusChannels) {
-                        audioBusBlock.getSingleChannelBlock(i).add( inputBlock.getSingleChannelBlock(i) );
+                for (auto k = 0; k < audioBusChannels; k++) {
+                    if (audioChannelData[k].monitor &&
+                        audioChannelData[k].channelNumber == i) {
+                        audioBusBlock.getSingleChannelBlock(k).add( inputBlock.getSingleChannelBlock(i) );
                     }
+
+                    if (audioChannelData[k].record &&
+                        audioChannelData[k].channelNumber == i) {
+                        if (recorders.find(k) != recorders.end()) {
+                            auto input = inputBlock.getSingleChannelBlock(i);
+                            auto output = audioBusBlock.getSingleChannelBlock(i);
+                            ProcessContextNonReplacing<SampleType> recContext(input, output);
+                            recorders[k]->process( recContext );
+                        }
+                    }
+                    
                 }
             }
+            
+            // process playback, don't overwrite input -> ProcessContextNonReplacing
+            ProcessContextNonReplacing<SampleType> audioBusContext(inputBlock, audioBusBlock);
+            playback->process(audioBusContext);
             
             // process gain for each audio bus channel
             for (auto i = 0; i < audioBusChannels; i++) {
                 auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
-                juce::dsp::ProcessContextReplacing<SampleType> gainContext( channelBlock );
+                ProcessContextReplacing<SampleType> gainContext( channelBlock );
                 gains[i].process(gainContext);
                 channelLevel[i] = channelBlock.findMinAndMax().getEnd();
             }
@@ -94,11 +111,11 @@ public:
                 for (auto i = 0; i < audioBusChannels; i++) {
 
                     stereoBuffer.clear();
-                    juce::dsp::AudioBlock<SampleType> stereoBlock (stereoBuffer);
+                    AudioBlock<SampleType> stereoBlock (stereoBuffer);
                     auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
                     
                     // process stereo pan
-                    juce::dsp::ProcessContextNonReplacing<SampleType> panContext(channelBlock,
+                    ProcessContextNonReplacing<SampleType> panContext(channelBlock,
                                                                                  stereoBlock);
                     panners[i].process(panContext);
                     
@@ -109,7 +126,7 @@ public:
                 }
                 
                 // master gain
-                juce::dsp::ProcessContextReplacing<SampleType> gainContext(outputBlock);
+                ProcessContextReplacing<SampleType> gainContext(outputBlock);
                 masterGain.process(gainContext);
                 
                 // master level
@@ -186,17 +203,12 @@ public:
         }
     }
     
-    void setChannelData(const int channelNumber, const AudioChannelData data)
-    {
-        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
-            audioChannelData[channelNumber] = data;
-            setPan(channelNumber, data.pan);
-            setMute(channelNumber, data.mute);
-            setSolo(channelNumber, data.solo);
-            setGain(channelNumber, data.gain);
-        }
-    }
+    void setChannelData(const int channelNumber, const AudioChannelData data);
     
+    void setRecordEnabled(const int channelNumber, bool bEnabled, std::shared_ptr<AudioRecorder> recorder);
+    
+    void record(bool start);
+
     void setMasterGain(const float newGain)
     {
         masterGain.setGainLinear(newGain);
@@ -225,15 +237,18 @@ private:
     juce::AudioBuffer<SampleType> audioBus;
     juce::AudioBuffer<SampleType> stereoBuffer;
         
-    juce::dsp::Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
-    juce::dsp::Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
-    juce::dsp::Gain<SampleType> masterGain;
+    Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
+    Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
+    Gain<SampleType> masterGain;
     
     std::atomic<float> masterLevel[2];
     std::atomic<float> channelLevel[MAX_AUDIO_CHANNELS];
     
     AudioChannelData audioChannelData[MAX_AUDIO_CHANNELS];
     
+    std::map<int, std::shared_ptr<AudioRecorder>> recorders;
+    
+    double sampleRate = 0.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioBusRenderer)
 

@@ -355,6 +355,13 @@ const AudioChannelData AudioTrack::getChannelData(const int channelNumber) const
     return AudioChannelData();
 }
 
+void AudioTrack::setRecordEnabled(const int channelNumber, bool bEnabled, std::shared_ptr<juce::AudioThumbnail> thumbnail)
+{
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        channel->setRecordEnabled(bEnabled, thumbnail);
+    }
+}
+
 void AudioTrack::onDragStart()
 {
     undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);

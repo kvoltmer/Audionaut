@@ -50,6 +50,9 @@
     <Filter Include="Audionaut\Source\Engine\Region">
       <UniqueIdentifier>{E11AC5F2-38A8-8E1F-7EA9-50B54987E51B}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Engine\Recording">
+      <UniqueIdentifier>{C8ADD71A-5D69-0963-A248-23336B833C87}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Engine\Resource">
       <UniqueIdentifier>{024C5D5A-AF12-70A4-9A0F-F4FE7DBBBB65}</UniqueIdentifier>
     </Filter>
@@ -900,6 +903,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Region\AudioRegionContainer.cpp">
       <Filter>Audionaut\Source\Engine\Region</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Recording\AudioRecorder.cpp">
+      <Filter>Audionaut\Source\Engine\Recording</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Resource\AudioResource.cpp">
       <Filter>Audionaut\Source\Engine\Resource</Filter>
@@ -4148,6 +4154,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Region\AudioRegionData.h">
       <Filter>Audionaut\Source\Engine\Region</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Recording\AudioRecorder.h">
+      <Filter>Audionaut\Source\Engine\Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Recording\RecordingThumbnail.h">
+      <Filter>Audionaut\Source\Engine\Recording</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Resource\AudioResource.h">
       <Filter>Audionaut\Source\Engine\Resource</Filter>

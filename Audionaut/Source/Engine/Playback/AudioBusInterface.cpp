@@ -27,6 +27,23 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
     });
 }
 
+void AudioBusInterface::setRecordEnabled(const int channelNumber,
+                                         bool bEnabled,
+                                         std::shared_ptr<juce::AudioThumbnail> thumbnail)
+{
+    auto recorder = bEnabled ? std::make_shared<AudioRecorder>(thumbnail) : nullptr;
+    
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push([ptr, channelNumber, bEnabled, recorder] {
+        ptr->setRecordEnabled(channelNumber, bEnabled, recorder);
+    });
+}
+
+void AudioBusInterface::record(bool start)
+{
+    audioBusRenderer->record(start);
+}
+
 void AudioBusInterface::setMasterGain(const float newGain)
 {
     auto ptr = audioBusRenderer.get();
