@@ -14,7 +14,7 @@ void AudioRecorder::startRecording(const int take,
     if (sampleRate > 0) {
         recordedFile = AudioResourceContainer::getAudioRecordingFile(take, channelNumber);
         jassert(!recordedFile.existsAsFile());
-        std::cout << "startRecording " << recordedFile.getFullPathName() << std::endl;
+        // std::cout << "startRecording " << recordedFile.getFullPathName() << std::endl;
         
         if (auto fileStream = std::unique_ptr<juce::FileOutputStream> (recordedFile.createOutputStream())) {
             juce::WavAudioFormat wavFormat;

@@ -94,6 +94,8 @@ public:
     * @return The current master level of the channel.
     */
     const float getMasterLevel(const int channelNumber) const;
+    
+    void reset();
 
  private:
      std::shared_ptr<audium::LockFreeCommander> lockFreeCommander; ///< Thread-safe command manager.

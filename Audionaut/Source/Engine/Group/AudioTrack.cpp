@@ -174,19 +174,17 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         audioChannelContainer->cleanup();
     }
     auto c = 0;
-    for (auto& jsonElement : jsonChannels)
-    {
+    for (auto& jsonElement : jsonChannels) {
         std::shared_ptr<AudioChannel> channel = nullptr;
-        if (rebuild)
-        {
+        if (rebuild) {
             channel = addChannel();
         }
-        else
-        {
+        else {
             channel = audioChannelContainer->getObjects()[c];
         }
         if (channel != nullptr) {
             channel->data = jsonElement;
+            channel->setRecordEnabled(channel->data.record);
             channel->commitChannelData();
         }
         c++;
@@ -730,7 +728,7 @@ double AudioTrack::getTotalLength(audium::TimeContextType context) const
 }
 
 
-std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) const
+std::vector<DspClipData> AudioTrack::getDspClipVector() const
 {
     std::vector<DspClipData> result;
     DspClipData dspClipData;
