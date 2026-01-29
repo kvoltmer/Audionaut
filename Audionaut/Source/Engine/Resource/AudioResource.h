@@ -137,6 +137,16 @@ public:
     double getFileLength(audium::TimeContextType context) const;
     
     /**
+     * @brief Update the length of the recording.
+     */
+    void updateRecordingLength(double length, audium::TimeContextType context);
+    
+    /**
+     * @brief Load the recorded audio file. Called once recording is finished.
+     */
+    bool loadRecordedAudioFile();
+    
+    /**
      * @brief Retrieves all audio resources within the same subgroup.
      * @return A vector of shared pointers to `AudioResource` objects.
      */
@@ -236,7 +246,7 @@ private:
     /**
      * @brief The length of the audio file in seconds.
      */
-    double lengthInSeconds = 1.0;
+    double lengthInSeconds = 0.1;
 
     /**
      * @brief The number of channels in the audio file.

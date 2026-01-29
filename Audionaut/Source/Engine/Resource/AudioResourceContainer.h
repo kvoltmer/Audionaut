@@ -253,6 +253,10 @@ public:
      */
     juce::TimeSliceThread *getReadAheadThread() { return &thread; }
     
+    void updateRecordingLength(double length, audium::TimeContextType context);
+    
+    void onRecordingFinished();
+    
 private:
     /// List of pairs of audio tracks and resources.
     std::list<tAudioTrackPair> audioResources;

@@ -29,6 +29,9 @@ struct PlayListSchedulerData
     // armed for recording or not
     bool isRecordingArmed = false;
     
+    // the position where the recording was started
+    double recordingStartPositionClocks = 0.0;
+    
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PlayListSchedulerData,

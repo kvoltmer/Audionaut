@@ -19,11 +19,11 @@
 namespace audium {
 
 AudioRegionContainer::AudioRegionContainer(AudioTrack &audioTrack_) :
-audioTrack(audioTrack_),
-audioResourceContainer(audioTrack.getAudioResourceContainer()),
-audioTrackContainer(audioTrack.getAudioTrackContainer()),
-tempoProvider(audioTrackContainer.getTempoProvider()),
-undoManager(audioTrackContainer.getUndoManager())
+    audioTrack(audioTrack_),
+    audioResourceContainer(audioTrack.getAudioResourceContainer()),
+    audioTrackContainer(audioTrack.getAudioTrackContainer()),
+    tempoProvider(audioTrackContainer.getTempoProvider()),
+    undoManager(audioTrackContainer.getUndoManager())
 {
 }
 

@@ -38,9 +38,16 @@ void PlayListItem::init()
     if (transportSources.size() > 0) {
         deinit();
     }
+
+    createTransportSources();
+}
+
+void PlayListItem::createTransportSources()
+{
     for (const auto &resource : getRegion()->getAudioResources()) {
         auto transportSource = owner.getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
-        transportSources.emplace_back(transportSource);
+        if (transportSource != nullptr)
+            transportSources.emplace_back(transportSource);
     }
 }
 

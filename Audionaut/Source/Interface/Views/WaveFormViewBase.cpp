@@ -109,9 +109,8 @@ void WaveFormViewBase::createThumbnailCache()
         audioThumbnail->removeChangeListener(this);
     }
 
-    if (audioResource != nullptr &&
-        audioResource->audioFormatReader != nullptr) {
-    
+    if (audioResource != nullptr) {
+        
         // create thumbnail
         auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
         auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
@@ -120,19 +119,31 @@ void WaveFormViewBase::createThumbnailCache()
         //auto sourceSamplesPerThumbnailSample = 4096*4;
         audioThumbnail.reset(new audium::AudioThumbnail(sourceSamplesPerThumbnailSample, *formatManager, *thumbnailCache));
         audioThumbnail->setColour(colour);
-
-        // reuse shared_ptr if the file is memory mapped
-        if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
-            auto hashCode = audioResource->getUrl().toString(true).hashCode64();
-            audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
+        
+        if (audioResource->audioFormatReader != nullptr) {
+            
+            // reuse shared_ptr if the file is memory mapped
+            if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
+                auto hashCode = audioResource->getUrl().toString(true).hashCode64();
+                audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
+            }
+            else {
+                // create a new input source
+                if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
+                    audioThumbnail->setSource(inputSource.release());
+                }
+            }
+            audioThumbnail->addChangeListener(this);
         }
         else {
-            // create a new input source
-            if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
-                audioThumbnail->setSource(inputSource.release());
-            }
+            auto sr = audiumEngine->getAudioDeviceManager()->getCurrentAudioDevice()->getCurrentSampleRate();
+            audioThumbnail->reset(1, sr);
+            audioThumbnail->addChangeListener(this);
+            auto busChan = channelNumber + audioResource->getAudioTrack()->getChannelOffset();
+            audiumEngine->getAudioBusInterface()->setRecordingThumbnail(audioThumbnail.get(), busChan);
+            
         }
-        audioThumbnail->addChangeListener(this);
+        
     }
     else {
         audioThumbnail = nullptr;

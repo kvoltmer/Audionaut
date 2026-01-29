@@ -189,8 +189,6 @@
           <FILE id="xwMMIq" name="AudioRecorder.cpp" compile="1" resource="0"
                 file="Source/Engine/Recording/AudioRecorder.cpp"/>
           <FILE id="yfMXHA" name="AudioRecorder.h" compile="0" resource="0" file="Source/Engine/Recording/AudioRecorder.h"/>
-          <FILE id="VCTx1m" name="RecordingThumbnail.h" compile="0" resource="0"
-                file="Source/Engine/Recording/RecordingThumbnail.h"/>
         </GROUP>
         <GROUP id="{27408FC8-AAF8-55C4-A1E1-787D504EC3DD}" name="Resource">
           <FILE id="bpy86C" name="AudioResource.cpp" compile="1" resource="0"
@@ -307,8 +305,6 @@
                     file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.cpp"/>
               <FILE id="MSH6BQ" name="PlayListItemComponent.h" compile="0" resource="0"
                     file="Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"/>
-              <FILE id="jFDrFY" name="RecordingThumbnail.h" compile="0" resource="0"
-                    file="Source/Interface/Components/MiddlePanel/ArrangementView/RecordingThumbnail.h"/>
             </GROUP>
             <FILE id="nZ2YVn" name="ArrangementEditBaseComponent.h" compile="0"
                   resource="0" file="Source/Interface/Components/MiddlePanel/ArrangementEditBaseComponent.h"/>

@@ -39,12 +39,14 @@ const juce::File AudioResourceContainer::getAudioFileDirectory()
 const juce::File AudioResourceContainer::getAudioRecordingFile(const int take,
                                                                const int channel)
 {
-    auto projectDir = getAudioFileDirectory();
-    jassert(projectDir.exists());
+    auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+    if (!audioDir.exists()) {
+        audioDir = getAudioFileDirectory(AudiumEngine::tempDirectory);
+    }
+    jassert(audioDir.exists());
     
-    auto now = juce::Time::getCurrentTime();
-
     // Format as [Year-Month-Day Hour-Minute-Second]
+    auto now = juce::Time::getCurrentTime();
     auto formattedStr = now.formatted ("[%Y-%m-%d_%H-%M-%S]");
     
     auto takeString = juce::String(AudioRegionContainer::formatNumber(take + 1));
@@ -52,7 +54,7 @@ const juce::File AudioResourceContainer::getAudioRecordingFile(const int take,
     
     auto fileName = "take" + takeString + "-chan" + channelString + "-" + formattedStr +".wav";
     
-    auto uniqueFile = juce::File(projectDir.getFullPathName() + File::getSeparatorString() + fileName);
+    auto uniqueFile = juce::File(audioDir.getFullPathName() + File::getSeparatorString() + fileName);
     return uniqueFile;
     
 }
@@ -234,7 +236,8 @@ std::shared_ptr<AudioResource> AudioResourceContainer::findResourceWithUrl(juce:
     for (auto it = audioResources.begin(); it != audioResources.end(); ++it) {
         if ((*it).second->getUrl() == url) {
             //            std::cout << "found url: " << url.getFileName() << std::endl;
-            return (*it).second;
+            if ((*it).second->audioFormatReader != nullptr)
+                return (*it).second;
         }
     }
     return nullptr;
@@ -279,7 +282,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                    resourceGroup,
                                                                    destChannel,
                                                                    sourceChannel);
-    if (audioResource->audioFormatReader != nullptr) {
+    if (audioResource != nullptr) {
         audioResources.push_back({track, audioResource});
         return audioResource;
     }
@@ -289,9 +292,11 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 
 std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
 {
-    auto source = std::make_shared<AudioFormatReaderSource>(audioResource->audioFormatReader.get(), false);
-    if (source != nullptr && source->getAudioFormatReader() != nullptr) {
-        return audioResource->createNewTransportSource(source);
+    if (audioResource->audioFormatReader != nullptr) {
+        auto source = std::make_shared<AudioFormatReaderSource>(audioResource->audioFormatReader.get(), false);
+        if (source != nullptr && source->getAudioFormatReader() != nullptr) {
+            return audioResource->createNewTransportSource(source);
+        }
     }
     return nullptr;
 }
@@ -452,6 +457,20 @@ void AudioResourceContainer::onDeleteChannel(AudioTrack* audioTrack, AudioChanne
     for (auto resource : resourcesToRemove)
     {
         removeAudioResource(resource);
+    }
+}
+
+void AudioResourceContainer::updateRecordingLength(double length, audium::TimeContextType context)
+{
+    for (auto &itr : audioResources)
+        itr.second->updateRecordingLength(length, context);
+}
+
+void AudioResourceContainer::onRecordingFinished()
+{
+    // load recorded audio files
+    for (auto &itr : audioResources) {
+        itr.second->loadRecordedAudioFile();
     }
 }
 

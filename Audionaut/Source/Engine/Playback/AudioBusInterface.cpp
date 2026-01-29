@@ -28,10 +28,9 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
 }
 
 void AudioBusInterface::setRecordEnabled(const int channelNumber,
-                                         bool bEnabled,
-                                         std::shared_ptr<juce::AudioThumbnail> thumbnail)
+                                         bool bEnabled)
 {
-    auto recorder = bEnabled ? std::make_shared<AudioRecorder>(thumbnail) : nullptr;
+    auto recorder = bEnabled ? std::make_shared<AudioRecorder>() : nullptr;
     
     auto ptr = audioBusRenderer.get();
     lockFreeCommander->fifo.push([ptr, channelNumber, bEnabled, recorder] {
@@ -39,9 +38,23 @@ void AudioBusInterface::setRecordEnabled(const int channelNumber,
     });
 }
 
+void AudioBusInterface::setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber)
+{
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push([ptr, channelNumber, audioThumbnail] {
+        ptr->setRecordingThumbnail(audioThumbnail, channelNumber);
+    });
+    
+}
+
 void AudioBusInterface::record(bool start)
 {
     audioBusRenderer->record(start);
+}
+
+const juce::File AudioBusInterface::getRecordedAudioFile(int channelNumber)
+{
+    return audioBusRenderer->getAudioRecorder(channelNumber)->getRecordedFile();
 }
 
 void AudioBusInterface::setMasterGain(const float newGain)

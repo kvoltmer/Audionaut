@@ -24,6 +24,7 @@
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Resource/ChannelMapping.h"
+#include "Engine/Channel/AudioChannel.h"
 
 using namespace::std::chrono;
 
@@ -161,7 +162,7 @@ void PlayListScheduler::startPlaying()
         transportLoop->reset();
         
         if (isRecordingArmed()) {
-            audioBusInterface->record(true);
+            startRecording();
         }
     }
 }
@@ -171,8 +172,10 @@ void PlayListScheduler::stopPlaying()
     if (linkEngine != nullptr) {
         linkEngine->stopPlaying();
     }
-    setRecordingArmed(false);
-    audioBusInterface->record(false);
+    
+    if (isRecordingArmed()) {
+        stopRecording();
+    }
     
     playback->stopAllVoices();
 }
@@ -458,6 +461,97 @@ void PlayListScheduler::commitPlayListData()
     }
     totalLengthClocks = totalLength;
     // std::cout << "PlayListScheduler::commitPlayListData -> totalLengthClocks: " << totalLengthClocks << std::endl;
+}
+
+
+void PlayListScheduler::startRecording()
+{
+    // Undo: store old state
+    auto action = std::make_unique<audium::UndoableContainerAction>(*getAudioTrackContainer(), false);
+    
+    data.recordingStartPositionClocks = data.startPositionClocks;
+    audioBusInterface->record(true);
+    
+    
+    for (auto track : getAudioTrackContainer()->getAudioTracks()) {
+        
+        if (track->isRecordEnabled()) {
+            
+            auto resourceGroup = track->createNewResourceGroup();
+            std::vector<std::shared_ptr<AudioResource>> resources;
+
+            for (auto chan : track->audioChannelContainer->objects) {
+                if (chan->isRecordEnabled()) {
+                    auto destChannel = chan->getChannelNumber();
+                    auto url = URL (juce::File());
+                    auto audioResource = track->getAudioResourceContainer().addAudioResource(url,
+                                                                                      nullptr,
+                                                                                      track,
+                                                                                      resourceGroup,
+                                                                                      destChannel,
+                                                                                      0);
+                    resources.push_back(audioResource);
+                }
+            }
+            
+            auto position = getAbsoluteStartPosition(audium::clocks);
+            track->createDefaultPlayListItem(resources.front(),
+                                             resourceGroup,
+                                             position,
+                                             audium::clocks);
+            
+        }
+    }
+    
+    // Undo: store new state
+    action->storeNewState();
+    getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
+    getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
+}
+
+void PlayListScheduler::stopRecording()
+{
+    setRecordingArmed(false);
+    audioBusInterface->record(false);
+    
+    // tigger async message to load recorded audio files and create tranport sources
+    audioTrackContainer->sendActionMessage(audium::recordingFinishedAction);
+    
+    
+}
+
+double PlayListScheduler::getRecordingLength(audium::TimeContextType context) const
+{
+    auto length = data.transportPositionClocks - data.recordingStartPositionClocks;
+    
+    if (context == audium::seconds)
+        length = tempoProvider->clocksToSeconds(length);
+    
+    return length;
+}
+
+bool PlayListScheduler::isRecording() const noexcept
+{
+    return data.isRecordingArmed && isPlaying();
+}
+
+void PlayListScheduler::updateRecordingLength()
+{
+    auto recordingLength = getRecordingLength(audium::seconds);
+    audioResourceContainer->updateRecordingLength(recordingLength, audium::seconds);
+    audioTrackContainer->sendActionMessage(audium::updateArrangementAction);
+}
+
+void PlayListScheduler::onRecordingFinished()
+{
+    audioResourceContainer->onRecordingFinished();
+
+    const auto playListItems = getPlayListItems(false);
+    for (auto playListItem : playListItems) {
+        if (playListItem->getTransportSources().size() == 0) {
+            playListItem->createTransportSources();
+        }
+    }
 }
 
 } // namespace audium

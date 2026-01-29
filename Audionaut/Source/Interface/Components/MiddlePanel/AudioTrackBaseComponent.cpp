@@ -47,7 +47,7 @@ void AudioTrackBaseComponent::paint (juce::Graphics& g)
 
 void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
-    if ( !filenames.isEmpty()) {
+    if ( !filenames.isEmpty() ) {
         auto position = zoomHandler->xToClocks(x);
         zoomHandler->snapToGrid(position);
         
@@ -57,8 +57,7 @@ void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x,
                                                         "Failed to open: " + juce::String(error));
         };
         
-        auto arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
-        audioTrack->addAudioFiles(filenames, position, arrangementMode, callback);
+        audioTrack->addAudioFiles(filenames, position, callback);
  
     }
     
