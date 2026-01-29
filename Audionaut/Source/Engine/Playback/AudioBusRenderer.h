@@ -213,6 +213,8 @@ public:
     
     std::shared_ptr<AudioRecorder> getAudioRecorder(int channelNumber);
 
+    void clearRecorders();
+    
     void setMasterGain(const float newGain)
     {
         masterGain.setGainLinear(newGain);

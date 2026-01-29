@@ -442,7 +442,7 @@ void PlayListScheduler::commitPlayListData()
     audioClipContainer->clear();
     
     for (auto track : audioTrackContainer->getAudioTracks()) {
-        auto clips = track->getDspClipVector(isArrangementMode());
+        auto clips = track->getDspClipVector();
         for (auto clip : clips) {
             audioClipContainer->push_back(clip);
         }

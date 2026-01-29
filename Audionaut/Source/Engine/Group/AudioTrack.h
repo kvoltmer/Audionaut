@@ -219,7 +219,7 @@ public:
     
     double getTotalLength(TimeContextType context) const;
     
-    std::vector<DspClipData> getDspClipVector(bool arrangementMode) const;
+    std::vector<DspClipData> getDspClipVector() const;
     
     std::shared_ptr<AudioRegion> getRegion(int rowNumber) const;
     const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;

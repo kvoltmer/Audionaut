@@ -76,4 +76,14 @@ const float AudioBusInterface::getMasterLevel(const int channelNumber) const
     return audioBusRenderer->getMasterLevel(channelNumber);
 }
 
+
+void AudioBusInterface::reset()
+{
+    // delete all recorders
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push([ptr] {
+        ptr->clearRecorders();
+    });
+}
+
 } // namespace audium
