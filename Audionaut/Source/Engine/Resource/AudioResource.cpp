@@ -11,6 +11,8 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
+#include "Engine/Region/AudioRegionContainer.h"
+
 
 namespace audium {
 
@@ -27,7 +29,7 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
     resourceGroup(resourceGroup_),
     url(url_)
 {
-    jassert(audioFormatReader != nullptr);
+    //jassert(audioFormatReader != nullptr);
     
     channelMapping = std::make_unique<audium::ChannelMapping>();
     
@@ -65,7 +67,7 @@ const juce::String AudioResource::getFileNameWithoutExtension() const
     if (url.isLocalFile())
         return url.getLocalFile().getFileNameWithoutExtension();
     
-    return "n/a";
+    return "";
 }
 
 const juce::String AudioResource::getFullPathName() const
@@ -83,7 +85,10 @@ const juce::String AudioResource::getUrlAsString() const
 
 const juce::String AudioResource::getRelativePath(const juce::File &directoryToBeRelativeTo) const
 {
-    return url.getLocalFile().getRelativePathFrom(directoryToBeRelativeTo);
+    if (url.isLocalFile())
+        return url.getLocalFile().getRelativePathFrom(directoryToBeRelativeTo);
+    else
+        return url.toString(false);
 }
 
 double AudioResource::getSampleRate() const
@@ -129,6 +134,48 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
     
     jassertfalse;
     return 0.0;
+}
+
+
+void AudioResource::updateRecordingLength(double length, audium::TimeContextType context)
+{
+    // audio resrouce without audioFormatReader -> recording
+    if (audioFormatReader == nullptr) {
+        if (context == audium::seconds) {
+            lengthInSeconds = length;
+        }
+        else if (context == audium::clocks) {
+            lengthInSeconds = owner.getTempoProvider()->clocksToSeconds(length);
+        }
+        
+        for (auto region : getResourceGroup()->getAudioRegionContainer()->getObjects()) {
+            // std::cout << "updateRecordingLength " << length << std::endl;
+            region->setRegionLength(lengthInSeconds, audium::seconds);
+        }
+    }
+}
+
+bool AudioResource::loadRecordedAudioFile()
+{
+    // audio resrouce without audioFormatReader -> recording
+    if (audioFormatReader == nullptr) {
+        
+        auto channelOffset = getAudioTrack()->getChannelOffset();
+        auto dstChannel = getChannelMapping().getDestinationChannel();
+        auto audioBusChannel = dstChannel + channelOffset;
+        
+        auto file = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedAudioFile(audioBusChannel);
+        
+        if (file.existsAsFile()) {
+            // std::cout << file.getFullPathName() << std::endl;
+            juce::URL theUrl(file);
+            setUrl(theUrl);
+            audioFormatReader = getAudioTrack()->getAudioResourceContainer().getAudioFormatReaderForUrl(theUrl);
+            jassert(audioFormatReader);
+            return (audioFormatReader != nullptr);
+        }
+    }
+    return false;
 }
 
 std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWithinResourceGroup() const

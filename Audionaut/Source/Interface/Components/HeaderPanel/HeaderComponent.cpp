@@ -330,6 +330,10 @@ void HeaderComponent::timerCallback()
     
     recordButton->setToggleState(audiumEngine->getPlayListScheduler()->isRecordingArmed(),
                                  dontSendNotification);
+    
+    if (audiumEngine->getPlayListScheduler()->isRecording()) {
+        audiumEngine->getPlayListScheduler()->updateRecordingLength();
+    }
 }
 
 void HeaderComponent::configureSlider(juce::Slider* slider)

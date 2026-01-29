@@ -13,6 +13,7 @@
 
 namespace audium
 {
+    class AudioThumbnail;
 
 /**
  * @brief Constructs an `AudioBusInterface` instance.
@@ -66,10 +67,13 @@ public:
     void setChannelData(const int channelNumber, const AudioChannelData data);
     
     void setRecordEnabled(const int channelNumber,
-                          bool bEnabled,
-                          std::shared_ptr<juce::AudioThumbnail> thumbnail);
+                          bool bEnabled);
+    
+    void setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber);
     
     void record(bool start);
+    
+    const juce::File getRecordedAudioFile(int channelNumber);
     
     /**
     * @brief Sets the master gain for the audio bus.

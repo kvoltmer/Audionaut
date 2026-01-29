@@ -16,7 +16,7 @@ using namespace juce::dsp;
 
 namespace audium
 {
-
+class AudioThumbnail;
 
 /**
  * @class AudioBusRenderer
@@ -208,6 +208,10 @@ public:
     void setRecordEnabled(const int channelNumber, bool bEnabled, std::shared_ptr<AudioRecorder> recorder);
     
     void record(bool start);
+    
+    void setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber);
+    
+    std::shared_ptr<AudioRecorder> getAudioRecorder(int channelNumber);
 
     void setMasterGain(const float newGain)
     {

@@ -90,6 +90,23 @@ void AudioBusRenderer<SampleType>::record(bool start)
     }
 }
 
+template <class SampleType>
+void AudioBusRenderer<SampleType>::setRecordingThumbnail(AudioThumbnail *audioThumbnail,
+                                                         int channelNumber)
+{
+    if (recorders.find(channelNumber) != recorders.end()) {
+        recorders[channelNumber]->setAudioThumbnail(audioThumbnail);
+    }
+}
+
+template <class SampleType>
+std::shared_ptr<AudioRecorder> AudioBusRenderer<SampleType>::getAudioRecorder(int channelNumber)
+{
+    if (recorders.find(channelNumber) != recorders.end()) {
+        return recorders[channelNumber];
+    }
+    return nullptr;
+}
 
 template class AudioBusRenderer<float>;
 template class AudioBusRenderer<double>;

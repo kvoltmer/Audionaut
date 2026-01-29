@@ -7,15 +7,14 @@
 
 #include <JuceHeader.h>
 
-#include "RecordingThumbnail.h"
+#include "Interface/Widgets/audium_AudioThumbnail.h"
 
 namespace audium {
 
 class AudioRecorder
 {
 public:
-    AudioRecorder (std::shared_ptr<juce::AudioThumbnail> thumbnail_) :
-        thumbnail (thumbnail_)
+    AudioRecorder ()
     {
         backgroundThread.startThread();
     }
@@ -35,6 +34,7 @@ public:
         {
             const juce::ScopedLock sl (writerLock);
             activeWriter = nullptr;
+            thumbnail = nullptr;
         }
         
         // Now we can delete the writer object. It's done in this order because the deletion could
@@ -69,16 +69,20 @@ public:
             
             activeWriter.load()->write (buffer.getArrayOfReadPointers(), numSamples);
             
-            if (thumbnail != nullptr)
+            if (thumbnail != nullptr) {
                 thumbnail->addBlock (nextSampleNum, buffer, 0, numSamples);
-            
-            nextSampleNum += numSamples;
+                nextSampleNum += numSamples;
+            }
         }
     }
     
+    void setAudioThumbnail(AudioThumbnail *thumbnail_) { thumbnail = thumbnail_; }
+    
+    const juce::File getRecordedFile() const { return recordedFile; }
+    
 private:
     
-    std::shared_ptr<juce::AudioThumbnail> thumbnail = nullptr;
+    AudioThumbnail *thumbnail = nullptr;
     
     juce::TimeSliceThread backgroundThread { "Audio Recorder Thread" }; // the thread that will write our audio data to disk
     std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> threadedWriter; // the FIFO used to buffer the incoming data
@@ -86,7 +90,10 @@ private:
     juce::int64 nextSampleNum = 0;
     
     juce::CriticalSection writerLock;
+    
     std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter { nullptr };
+    
+    juce::File recordedFile;
 };
 
 } // namespace audium

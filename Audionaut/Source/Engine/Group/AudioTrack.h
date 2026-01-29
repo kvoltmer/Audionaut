@@ -164,7 +164,8 @@ public:
     void setChannelData(const int channelNumber, const AudioChannelData data);
     const AudioChannelData getChannelData(const int channelNumber) const;
     
-    void setRecordEnabled(const int channelNumber, bool bEnabled, std::shared_ptr<juce::AudioThumbnail> thumbnail);
+    void setRecordEnabled(const int channelNumber, bool bEnabled);
+    bool isRecordEnabled(const int channelNumber = -1);
     
     // undo for continious parameters:
     void onDragStart();
@@ -205,7 +206,6 @@ public:
     
     bool addAudioFiles(const juce::StringArray& filenames,
                        double positionClocks,
-                       bool arrangementMode,
                        std::function<void (std::string)> callback);
     
     std::vector<std::shared_ptr<AudioResource>> addAudioFile (std::shared_ptr<ResourceGroup> resourceGroup,
@@ -224,7 +224,6 @@ public:
     std::shared_ptr<AudioRegion> getRegion(int rowNumber) const;
     const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;
     int getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const;
-    int lastRegionSelected = -1; ///< Index of the last region selected.
     
 private:
     AudioTrackContainer &owner; ///< Reference to the owning container.

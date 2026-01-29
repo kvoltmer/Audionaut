@@ -106,7 +106,9 @@ public:
     */
    bool getSolo() const noexcept;
     
-    void setRecordEnabled(bool bEnabled, std::shared_ptr<juce::AudioThumbnail> thumbnail);
+    void setRecordEnabled(bool bEnabled);
+    
+    bool isRecordEnabled() const noexcept;
     
     /**
     * @brief Commits the current channel data to the associated track.

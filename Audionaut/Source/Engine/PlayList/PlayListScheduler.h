@@ -94,9 +94,6 @@ public:
     [[deprecated]]
     bool isArrangementMode() const { return !data.editMode; }
     
-    bool isRecordingArmed() const noexcept { return data.isRecordingArmed; }
-    void setRecordingArmed(bool bArmed) { data.isRecordingArmed = bArmed; }
-    
     void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioTrack> track, int playListItemIndex);
     int getPlayListItemIndexAtCurrentPosition(std::shared_ptr<AudioTrack> track);
     double getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const;
@@ -136,6 +133,16 @@ public:
     std::vector<std::shared_ptr<PlayListItem>> getPlayListItems(bool excludeSelectedItems = true) const;
     
     void commitPlayListData();
+    
+    // recording
+    void startRecording();
+    void stopRecording();
+    bool isRecordingArmed() const noexcept { return data.isRecordingArmed; }
+    void setRecordingArmed(bool bArmed) { data.isRecordingArmed = bArmed; }
+    double getRecordingLength(audium::TimeContextType context) const;
+    bool isRecording() const noexcept;
+    void updateRecordingLength();
+    void onRecordingFinished();
     
     PlayListSchedulerData data;
     

@@ -112,8 +112,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     recordButton->onClick = [this, rowNumber] {
         audioTrack->onDragStart();
         audioTrack->setRecordEnabled(rowNumber,
-                                     recordButton->getToggleState(),
-                                     nullptr);
+                                     recordButton->getToggleState());
         audioTrack->onDragEnd();
     };
     

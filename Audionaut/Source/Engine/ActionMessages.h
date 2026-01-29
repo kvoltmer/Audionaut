@@ -47,5 +47,10 @@ const char* const updateRightPanelAction = "update right panel";
  */
 const char* const updateArrangementAction = "update arrangement";
 
+/**
+ * @brief Action message to indicate that the recording is finished.
+ */
+const char* const recordingFinishedAction = "recording finished";
+
 } // namespace audium
 

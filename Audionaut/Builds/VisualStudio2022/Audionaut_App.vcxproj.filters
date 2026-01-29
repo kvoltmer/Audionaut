@@ -4158,9 +4158,6 @@
     <ClInclude Include="..\..\Source\Engine\Recording\AudioRecorder.h">
       <Filter>Audionaut\Source\Engine\Recording</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\Recording\RecordingThumbnail.h">
-      <Filter>Audionaut\Source\Engine\Recording</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Resource\AudioResource.h">
       <Filter>Audionaut\Source\Engine\Resource</Filter>
     </ClInclude>
@@ -4261,9 +4258,6 @@
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ArrangementView</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\PlayListItemComponent.h">
-      <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ArrangementView</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementView\RecordingThumbnail.h">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ArrangementView</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementEditBaseComponent.h">

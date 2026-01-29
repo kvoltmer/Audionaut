@@ -379,7 +379,7 @@ bool AudioTrackContainer::addAudioFiles(const juce::StringArray& filenames,
 {
     auto audioTrack = createNewAudioTrack(juce::String());
     audioTrack->setColour(getNewAudioTrackColour());
-    if (!audioTrack->addAudioFiles(filenames, position, arrangementMode, callback)) {
+    if (!audioTrack->addAudioFiles(filenames, position, callback)) {
         deleteAudioTrack(audioTrack.get());
         return false;
     }

@@ -141,6 +141,10 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
         rightPanelComponent->updateUI(SelectionContext);
     }
+    else if (message == audium::recordingFinishedAction) {
+        audiumEngine->getPlayListScheduler()->onRecordingFinished();
+        updateUI();
+    }
     else // update everything (eg. region deleted)
     {
         updateUI();
@@ -162,9 +166,6 @@ void MainComponent::rebuildUI()
 void MainComponent::updateUI()
 {
     headerComponent->updateUI();
-    auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
-    middlePanelComponent->showArrangementComponent(!editMode);
-
     middlePanelComponent->updateUI();
     rightPanelComponent->updateUI(ContentContext);
 
