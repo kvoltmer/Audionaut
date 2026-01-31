@@ -73,6 +73,11 @@ public:
                         audioChannelData[k].channelNumber == i) {
                         audioBusBlock.getSingleChannelBlock(k).add( inputBlock.getSingleChannelBlock(i) );
                     }
+                    
+                    if (audioChannelData[k].record &&
+                        audioChannelData[k].channelNumber == i) {
+                        recordingLevel[i] = inputBlock.getSingleChannelBlock(i).findMinAndMax().getEnd();
+                    }
 
                     if (audioChannelData[k].record &&
                         audioChannelData[k].channelNumber == i) {
@@ -205,6 +210,8 @@ public:
     
     void setChannelData(const int channelNumber, const AudioChannelData data);
     
+    const AudioChannelData getChannelData(const int channelNumber) const;
+    
     void setRecordEnabled(const int channelNumber, bool bEnabled, std::shared_ptr<AudioRecorder> recorder);
     
     void record(bool start);
@@ -249,6 +256,7 @@ private:
     
     std::atomic<float> masterLevel[2];
     std::atomic<float> channelLevel[MAX_AUDIO_CHANNELS];
+    std::atomic<float> recordingLevel[MAX_AUDIO_CHANNELS];
     
     AudioChannelData audioChannelData[MAX_AUDIO_CHANNELS];
     

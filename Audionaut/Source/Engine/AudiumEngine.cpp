@@ -148,6 +148,9 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
                     currentProjectFile = inFile;
                     undoManager->clearUndoHistory();
                     playListScheduler->commitPlayListData();
+                    
+                    auto audioDir = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
+                    audioResourceContainer->deleteOboleteAudioFiles(audioDir);
                     return true;
                 }
             }
@@ -226,48 +229,6 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
                 currentProjectFile = file;
                 undoManager->clearUndoHistory();
                                 
-                // consitency check
-                std::vector<juce::File> redundantFiles;
-                for (auto& found : destinationDirectory.findChildFiles (File::findFiles, false, "*")) {
-                    if (!audioResourceContainer->isAudioFileCurrentlyLoaded(found)) {
-                        redundantFiles.push_back(found);
-                    }
-                }
-                
-                // delete redundant files
-                if (redundantFiles.size() > 0) {
-                    
-                    String redundantFilesString;
-                    for (auto i = 0; i < redundantFiles.size(); i++) {
-                        redundantFilesString += redundantFiles[i].getFullPathName() + "\n";
-                        
-                        // don't display more than 10 Files
-                        if (i > 10) {
-                            redundantFilesString += "etc...";
-                            break;
-                        }
-                    }
-                    
-                    
-                    auto result = NativeMessageBox::showOkCancelBox(MessageBoxIconType::WarningIcon,
-                                                                    "Redundant files found. Move files to trash?",
-                                                                    "The following audio files are not used in the project anymore:\n\n" +
-                                                                    redundantFilesString +
-                                                                    "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
-                    if (result) {
-                        bool success = true;
-                        for (auto& file : redundantFiles) {
-                            if (!file.moveToTrash()) {
-                                success = false;
-                                break;
-                            }
-                        }
-                        if (!success) {
-                            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
-                        }
-                    }
-                }
-                
                 return true;
             }
         }
@@ -403,7 +364,6 @@ std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::share
 
 void AudiumEngine::deleteObsoleteAudioFiles()
 {
-    std::cout << "AudiumEngine::deleteObsoleteAudioFiles" << std::endl;
     audioResourceContainer->deleteObsoleteAudioFiles(currentJson);
 }
 

@@ -171,8 +171,12 @@ public:
      */
     void cleanup();
     
-    
+    // delete obsolete files based on json
     void deleteObsoleteAudioFiles(const json &json);
+    
+    // delete obsolete files which are not currently loaded
+    void deleteOboleteAudioFiles(const juce::File projectDirectory);
+
     
     juce::File getCurrentAudioFileDirectory();
 

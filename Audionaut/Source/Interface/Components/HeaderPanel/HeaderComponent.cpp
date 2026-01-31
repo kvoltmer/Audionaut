@@ -145,8 +145,21 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     playImage.setFill (FillType(Colours::white));
     playButton->setImages(&playImage);
     playButton->onClick = [this, scheduler]() {
-        if (playButton->getToggleState())
+        if (playButton->getToggleState()) {
+            
+            if (scheduler->isRecordingArmed()) {
+                if (scheduler->anyTrackRecordEnabled())
+                    scheduler->startRecording();
+                else {
+                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                          "Error",
+                                                          "No channels are record enabled.");
+                    return;
+                }
+                    
+            }
             scheduler->startPlaying();
+        }
     };
     playButton->setClickingTogglesState(true);
     playButton->setColour (TextButton::buttonOnColourId, Colour (0xff12a4e2));

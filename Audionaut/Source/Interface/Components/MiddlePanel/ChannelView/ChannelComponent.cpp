@@ -103,18 +103,28 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
         audioTrack->onDragEnd();
     };
     
+
     // RECORD
-    recordButton.reset (new juce::TextButton ("R"));
-    addAndMakeVisible (recordButton.get());
-    recordButton->setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
-    recordButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::soloColourId));
-    recordButton->setClickingTogglesState(true);
+    recordButton = std::make_unique<juce::DrawableButton>("Record", juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
+    addAndMakeVisible(recordButton.get());
+    juce::Path rec;
+    rec.addEllipse(0, 0, 5, 5);
+    juce::DrawablePath recImage;
+    recImage.setPath(rec);
+    recImage.setFill (FillType(Colours::red.darker().darker()));
+    recordButton->setImages(&recImage);
+
     recordButton->onClick = [this, rowNumber] {
         audioTrack->onDragStart();
         audioTrack->setRecordEnabled(rowNumber,
                                      recordButton->getToggleState());
         audioTrack->onDragEnd();
     };
+    
+    recordButton->setClickingTogglesState(true);
+    recordButton->setColour (TextButton::buttonOnColourId, Colours::red.brighter().withAlpha(0.8f));
+    recordButton->setColour(TextButton::buttonColourId, Colours::grey);
+
     
     // MONITOR
     monitorButton.reset (new juce::TextButton ("I"));
@@ -151,9 +161,10 @@ void ChannelComponent::resized()
     x += (buttonSize + space);
     monitorButton->setBounds(x, 5, buttonSize, buttonSize);
     x += (buttonSize + space);
-    muteButton->setBounds(x, 5, buttonSize, buttonSize);
-    x += (buttonSize + space);
     soloButton->setBounds(x, 5, buttonSize, buttonSize);
+    x += (buttonSize + space);
+    muteButton->setBounds(x, 5, buttonSize, buttonSize);
+    
     
     volumeSlider->setBounds (space,
                              27,
