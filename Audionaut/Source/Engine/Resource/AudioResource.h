@@ -246,7 +246,7 @@ private:
     /**
      * @brief The length of the audio file in seconds.
      */
-    double lengthInSeconds = 0.1;
+    double lengthInSeconds = 0.0;
 
     /**
      * @brief The number of channels in the audio file.

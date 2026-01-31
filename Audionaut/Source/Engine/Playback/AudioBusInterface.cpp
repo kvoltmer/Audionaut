@@ -27,6 +27,11 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
     });
 }
 
+const AudioChannelData AudioBusInterface::getChannelData(const int channelNumber) const
+{
+    return audioBusRenderer->getChannelData(channelNumber);
+}
+
 void AudioBusInterface::setRecordEnabled(const int channelNumber,
                                          bool bEnabled)
 {
@@ -54,7 +59,11 @@ void AudioBusInterface::record(bool start)
 
 const juce::File AudioBusInterface::getRecordedAudioFile(int channelNumber)
 {
-    return audioBusRenderer->getAudioRecorder(channelNumber)->getRecordedFile();
+    auto recorder = audioBusRenderer->getAudioRecorder(channelNumber);
+    if (recorder != nullptr)
+        return recorder->getRecordedFile();
+    else
+        return juce::File();
 }
 
 void AudioBusInterface::setMasterGain(const float newGain)
@@ -74,16 +83,6 @@ const float AudioBusInterface::getChannelLevel(const int channelNumber) const
 const float AudioBusInterface::getMasterLevel(const int channelNumber) const
 {
     return audioBusRenderer->getMasterLevel(channelNumber);
-}
-
-
-void AudioBusInterface::reset()
-{
-    // delete all recorders
-    auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr] {
-        ptr->clearRecorders();
-    });
 }
 
 } // namespace audium

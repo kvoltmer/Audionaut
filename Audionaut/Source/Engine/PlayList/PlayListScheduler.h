@@ -135,6 +135,7 @@ public:
     void commitPlayListData();
     
     // recording
+    bool anyTrackRecordEnabled() const;
     void startRecording();
     void stopRecording();
     bool isRecordingArmed() const noexcept { return data.isRecordingArmed; }

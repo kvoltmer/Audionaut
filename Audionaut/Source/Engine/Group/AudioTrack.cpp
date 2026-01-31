@@ -524,7 +524,9 @@ bool AudioTrack::deleteSelectedObject(std::shared_ptr<audium::Selectable> object
     else if (AudioRegion* audioRegion = dynamic_cast<AudioRegion*>(object.get()))
     {
         rebuild = false;
-        return audioRegion->getResourceGroup()->getAudioRegionContainer()->deleteAudioRegion(audioRegion);
+        auto result = audioRegion->getResourceGroup()->getAudioRegionContainer()->deleteAudioRegion(audioRegion);
+        deleteUnusedResourceGroups();
+        return result;
     }
     else if (PlayListItem* playListItem = dynamic_cast<PlayListItem*>(object.get()))
     {

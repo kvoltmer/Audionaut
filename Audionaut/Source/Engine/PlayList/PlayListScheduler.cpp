@@ -160,10 +160,6 @@ void PlayListScheduler::startPlaying()
         linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
         transportLoop->reset();
-        
-        if (isRecordingArmed()) {
-            startRecording();
-        }
     }
 }
 
@@ -463,6 +459,14 @@ void PlayListScheduler::commitPlayListData()
     // std::cout << "PlayListScheduler::commitPlayListData -> totalLengthClocks: " << totalLengthClocks << std::endl;
 }
 
+bool PlayListScheduler::anyTrackRecordEnabled() const
+{
+    for (auto track : getAudioTrackContainer()->getAudioTracks())
+        if (track->isRecordEnabled())
+            return true;
+        
+    return false;
+}
 
 void PlayListScheduler::startRecording()
 {

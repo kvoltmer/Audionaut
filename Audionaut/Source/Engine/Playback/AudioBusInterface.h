@@ -66,6 +66,9 @@ public:
     */
     void setChannelData(const int channelNumber, const AudioChannelData data);
     
+    const AudioChannelData getChannelData(const int channelNumber) const;
+
+    
     void setRecordEnabled(const int channelNumber,
                           bool bEnabled);
     
@@ -95,8 +98,6 @@ public:
     */
     const float getMasterLevel(const int channelNumber) const;
     
-    void reset();
-
  private:
      std::shared_ptr<audium::LockFreeCommander> lockFreeCommander; ///< Thread-safe command manager.
      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer; ///< Renderer for audio bus processing.

@@ -51,6 +51,15 @@ void AudioBusRenderer<SampleType>::setChannelData(const int channelNumber, const
 }
 
 template <class SampleType>
+const AudioChannelData AudioBusRenderer<SampleType>::getChannelData(const int channelNumber) const
+{
+    if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
+        return audioChannelData[channelNumber];
+    }
+    return AudioChannelData();
+}
+
+template <class SampleType>
 void AudioBusRenderer<SampleType>::setRecordEnabled(const int channelNumber, bool bEnabled, std::shared_ptr<AudioRecorder> recorder)
 {
 
@@ -68,10 +77,10 @@ void AudioBusRenderer<SampleType>::setRecordEnabled(const int channelNumber, boo
     
     audioChannelData[channelNumber].record = bEnabled;
     
-//    std::cout << "All recorders:\n";
-//    for (const auto& rec : recorders) {
-//        std::cout << rec.first << " " <<  rec.second << std::endl;
-//    }
+    std::cout << "All recorders:\n";
+    for (const auto& rec : recorders) {
+        std::cout << rec.first << " " <<  rec.second << std::endl;
+    }
 }
 
 template <class SampleType>
@@ -109,7 +118,8 @@ std::shared_ptr<AudioRecorder> AudioBusRenderer<SampleType>::getAudioRecorder(in
 
 template <class SampleType>
 void AudioBusRenderer<SampleType>::clearRecorders()
-{
+{    
+    std::cout << "clearRecorders" << std::endl;
     recorders.clear();
 }
 

@@ -225,6 +225,7 @@ public:
     const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;
     int getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const;
     
+    
 private:
     AudioTrackContainer &owner; ///< Reference to the owning container.
     AudioResourceContainer &audioResourceContainer; ///< Reference to the audio resource container.
