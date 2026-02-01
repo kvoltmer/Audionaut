@@ -5,14 +5,12 @@
 
 #include "LevelMeter.h"
 
-//==============================================================================
 
 static Colour GreenLevel = Colour (0xff23a101);         // green < 20dB
 static Colour GreenLightLevel = Colour (0xff61ff02);    // green light > 20dB
 static Colour OrangeLevel = Colour (0xfffbb203);        // orange > 6dB
 static Colour RedLevel = Colour(0xffff0000);            // red > 0dB
 
-//==============================================================================
 void LevelComponent::paint(Graphics& g)
 {
     /* background
@@ -100,13 +98,11 @@ void LevelComponent::paint(Graphics& g)
     }
 }
 
-//==============================================================================
 void LevelComponent::resized()
 {
     redrawLevels();
 }
 
-//==============================================================================
 void LevelComponent::redrawLevels()
 {
     mImage = Image(Image::ARGB, getWidth(), getHeight(), true);
@@ -114,7 +110,14 @@ void LevelComponent::redrawLevels()
     drawLevels(g);
 }
 
-//==============================================================================
+void LevelComponent::setGrayscale(bool bGrayscale)
+{
+    if (m_bGrayscale != bGrayscale) {
+        m_bGrayscale = bGrayscale;
+        redrawLevels();
+    }
+}
+
 void LevelComponent::drawLevels(Graphics& g)
 {
     LevelMeter* parent = dynamic_cast<LevelMeter*>(getParentComponent());
@@ -136,34 +139,40 @@ void LevelComponent::drawLevels(Graphics& g)
     const int height0Db = roundToInt(static_cast<float>(getHeight()) * db0);
     const int width0Db = roundToInt(static_cast<float>(getWidth()) * db0);
     
+    auto grey = juce::Colours::grey;
+    auto greenLevel = m_bGrayscale ? grey : GreenLevel;
+    auto greenLightLevel = m_bGrayscale ? grey.brighter() : GreenLightLevel;
+    auto orangeLevel = m_bGrayscale ? grey.brighter().brighter() : OrangeLevel;
+    auto redLevel = RedLevel;
+    
     if(bVertical)
     {
         if(bInverted)
         {
-            g.setColour(GreenLevel);
+            g.setColour(greenLevel);
             g.fillRect(0, 0, getWidth(), height20Db);
             
-            g.setColour(GreenLightLevel);
+            g.setColour(greenLightLevel);
             g.fillRect(0, height20Db , getWidth(), height6Db - height20Db);
             
-            g.setColour(OrangeLevel);
+            g.setColour(orangeLevel);
             g.fillRect(0, height6Db, getWidth(), height0Db - height6Db);
             
-            g.setColour(RedLevel);
+            g.setColour(redLevel);
             g.fillRect(0, height0Db, getWidth(), getHeight() - height0Db);
         }
         else
         {
-            g.setColour(GreenLevel);
+            g.setColour(greenLevel);
             g.fillRect(0, getHeight() - height20Db, getWidth(), height20Db);
             
-            g.setColour(GreenLightLevel);
+            g.setColour(greenLightLevel);
             g.fillRect(0, getHeight() - height6Db , getWidth(), height6Db - height20Db);
             
-            g.setColour(OrangeLevel);
+            g.setColour(orangeLevel);
             g.fillRect(0, getHeight() - height0Db , getWidth(), height0Db - height6Db);
             
-            g.setColour(RedLevel);
+            g.setColour(redLevel);
             g.fillRect(0, 0, getWidth(), getHeight() - height0Db);
         }
     }
@@ -171,36 +180,35 @@ void LevelComponent::drawLevels(Graphics& g)
     {
         if(bInverted)
         {
-            g.setColour(GreenLevel);
+            g.setColour(greenLevel);
             g.fillRect(getWidth() - width20Db, 0, width20Db, getHeight());
             
-            g.setColour(GreenLightLevel);
+            g.setColour(greenLightLevel);
             g.fillRect(getWidth() - width6Db, 0, width6Db - width20Db, getHeight());
             
-            g.setColour(OrangeLevel);
+            g.setColour(orangeLevel);
             g.fillRect(getWidth() - width0Db, 0, width0Db - width6Db, getHeight());
             
-            g.setColour(RedLevel);
+            g.setColour(redLevel);
             g.fillRect(0, 0, getWidth() - width0Db, getHeight());
         }
         else
         {
-            g.setColour(GreenLevel);
+            g.setColour(greenLevel);
             g.fillRect(0, 0, width20Db, getHeight());
-            
-            g.setColour(GreenLightLevel);
+        
+            g.setColour(greenLightLevel);
             g.fillRect(width20Db, 0, width6Db - width20Db, getHeight());
             
-            g.setColour(OrangeLevel);
+            g.setColour(orangeLevel);
             g.fillRect(width6Db, 0, width0Db - width6Db, getHeight());
             
-            g.setColour(RedLevel);
+            g.setColour(redLevel);
             g.fillRect(width0Db, 0, getWidth() - width0Db, getHeight());
         }
     }
 }
 
-//==============================================================================
 LevelMeter::LevelMeter(bool bVertical, bool bInverted) :
     m_bVertical(bVertical),
     m_bInverted(bInverted),
@@ -219,26 +227,22 @@ LevelMeter::LevelMeter(bool bVertical, bool bInverted) :
     setInterceptsMouseClicks(false, false);
 }
 
-//==============================================================================
 LevelMeter::~LevelMeter()
 {
 }
 
-//==============================================================================
 const float LevelMeter::getDecibelScaled(const float db)
 {
     return powf(reverse_linear(db, m_fMindB, m_fMaxdB), 2.f);
     //return reverse_linear(db, m_fMindB, m_fMaxdB);
 }
 
-//==============================================================================
 void LevelMeter::resized()
 {
     mRect.setBounds(m_iSpace, m_iSpace, getWidth() - (2 * m_iSpace), std::max(getHeight() - (2 * m_iSpace), 1));
     m_pLevelComponent->setBounds(mRect);
 }
 
-//==============================================================================
 void LevelMeter::paint(Graphics& g)
 {
     Path indent;
@@ -251,7 +255,6 @@ void LevelMeter::paint(Graphics& g)
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
 }
 
-//==============================================================================
 float LevelMeter::getDisplayLevel()
 {
     float level = m_fLeveldB;
@@ -268,14 +271,12 @@ float LevelMeter::getDisplayLevel()
     return getDecibelScaled(level);
 }
 
-//==============================================================================
 float LevelMeter::getDisplayPeak()
 {
     float peak = getDecibelScaled(m_fPeakLeveldB);
     return jlimit(0.f, 1.f, peak);
 }
 
-//==============================================================================
 void LevelMeter::setLevel(float level)
 {
     if (level < decebelToGain(m_fMindB))
@@ -306,44 +307,42 @@ void LevelMeter::setLevel(float level)
     repaint();
 }
 
-//==============================================================================
 void LevelMeter::setPeakLevel(float level)
 {
     m_fPeakLeveldB = gainToDecebel(level);
     m_iPeakHold = m_iPeakHoldDuration;
 }
 
-//==============================================================================
 void LevelMeter::setInverted(bool bInverted)
 {
     m_bInverted = bInverted;
     m_pLevelComponent->redrawLevels();
 }
 
-//==============================================================================
 void LevelMeter::setVertical(bool bVertical)
 {
     m_bVertical = bVertical;
     m_pLevelComponent->redrawLevels();
 }
 
-//==============================================================================
 void LevelMeter::setDbMin(float dbMin)
 {
     m_fMindB = dbMin;
     m_pLevelComponent->redrawLevels();
 }
 
-//==============================================================================
 void LevelMeter::setDbMax(float dbMax)
 {
     m_fMaxdB = dbMax;
     m_pLevelComponent->redrawLevels();
 }
 
-//==============================================================================
+void LevelMeter::setGrayscale(bool bGrayscale)
+{
+    m_pLevelComponent->setGrayscale(bGrayscale);
+}
 
-//==============================================================================
+
 StereoMeter::StereoMeter() :
     m_bVertical(false),
     m_bInverted(false)
@@ -354,20 +353,17 @@ StereoMeter::StereoMeter() :
     addAndMakeVisible(m_pLevelMeter[1].get());
 }
 
-//==============================================================================
 StereoMeter::~StereoMeter()
 {
 }
 
 /*
-//==============================================================================
 void StereoMeter::paint(Graphics& g)
 {
     g.fillAll (Colours::black);
 }
 */
 
-//==============================================================================
 void StereoMeter::resized()
 {
     if(m_bVertical)
@@ -384,14 +380,12 @@ void StereoMeter::resized()
     }
 }
 
-//==============================================================================
 void StereoMeter::setLevel(int channel, float level)
 {
     jassert(channel >= 0 && channel < numChannels);
     m_pLevelMeter[channel]->setLevel(level);
 }
 
-//==============================================================================
 void StereoMeter::setInverted(bool bInverted)
 {
     m_bInverted = bInverted;
@@ -401,7 +395,6 @@ void StereoMeter::setInverted(bool bInverted)
     }
 }
 
-//==============================================================================
 void StereoMeter::setVertical(bool bVertical)
 {
     m_bVertical = bVertical;
@@ -411,7 +404,6 @@ void StereoMeter::setVertical(bool bVertical)
     }
 }
 
-//==============================================================================
 void StereoMeter::setDbMin(float dbMin)
 {
     for (int i = 0; i < numChannels; i++)
@@ -420,7 +412,6 @@ void StereoMeter::setDbMin(float dbMin)
     }
 }
 
-//==============================================================================
 void StereoMeter::setDbMax(float dbMax)
 {
     for (int i = 0; i < numChannels; i++)

@@ -258,7 +258,17 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
 
 void ChannelComponent::timerCallback()
 {
-    auto lvl = engine->getAudioBusInterface()->getChannelLevel(channelNumber);
+    auto lvl = 0.f;
+    
+    auto data = audioTrack->getChannelData(rowNumber);
+    auto displayRecordingLevel = (data.record && !data.monitor);
+    if (displayRecordingLevel) {
+        lvl = engine->getAudioBusInterface()->getRecordingLevel(channelNumber);
+    }
+    else {
+        lvl = engine->getAudioBusInterface()->getChannelLevel(channelNumber);
+    }
+    levelMeter->setGrayscale(displayRecordingLevel);
     levelMeter->setLevel(lvl);
 }
 

@@ -10,7 +10,6 @@
 
 using namespace juce;
 
-//==============================================================================
 class LevelComponent  : public Component
 {
 public:
@@ -19,16 +18,18 @@ public:
     void paint(Graphics& g) override;
     void resized() override;
     void redrawLevels();
+    void setGrayscale(bool bGrayscale);
 private:
     
     void drawLevels(Graphics& g);
     
     Image mImage; // image with all levels
     
+    bool m_bGrayscale = false;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LevelComponent)
 };
 
-//==============================================================================
 class LevelMeter : public Component
 {
 public:
@@ -58,6 +59,8 @@ public:
     
     void setDbMin(float dbMin);
     void setDbMax(float dbMax);
+    
+    void setGrayscale(bool bGrayscale);
     
 private:
     bool m_bVertical;
@@ -101,8 +104,6 @@ private:
     
 };
 
-
-//==============================================================================
 
 const int numChannels = 2;
 
