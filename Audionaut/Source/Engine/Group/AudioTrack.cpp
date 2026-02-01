@@ -356,8 +356,19 @@ const AudioChannelData AudioTrack::getChannelData(const int channelNumber) const
 
 void AudioTrack::setRecordEnabled(const int channelNumber, bool bEnabled)
 {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
-        channel->setRecordEnabled(bEnabled);
+    auto currentDevice = getAudioResourceContainer().getAudioDeviceManager()->getCurrentAudioDevice();
+    
+    if (currentDevice != nullptr &&
+        channelNumber < currentDevice->getActiveInputChannels().toInteger()) {
+        
+        if (auto channel = audioChannelContainer->objects[channelNumber]) {
+            channel->setRecordEnabled(bEnabled);
+        }
+    }
+    else {
+        juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                    "No audio input available at this channel.",
+                                                    "Please check: Settings ... -> Audio Device Settings");
     }
 }
 
