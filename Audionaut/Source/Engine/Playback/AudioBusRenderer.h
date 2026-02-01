@@ -54,7 +54,6 @@ public:
 
         auto& inputBlock = context.getInputBlock();
         auto inputChannels = inputBlock.getNumChannels();
-        jassert(inputChannels > 0);
         
         AudioBlock<SampleType> audioBusBlock(audioBus);
         auto audioBusChannels = audioBus.getNumChannels();

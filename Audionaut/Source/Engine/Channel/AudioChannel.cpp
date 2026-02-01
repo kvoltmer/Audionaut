@@ -57,9 +57,17 @@ bool AudioChannel::getSolo() const noexcept
 
 void AudioChannel::setRecordEnabled(bool bEnabled)
 {
-    data.record = bEnabled;
-    audioBusInterface->setRecordEnabled(getChannelNumber() + audioTrack.getChannelOffset(),
-                                        bEnabled);
+    auto currentDevice = getAudioTrack().getAudioResourceContainer().getAudioDeviceManager()->getCurrentAudioDevice();
+    
+    if (currentDevice != nullptr &&
+        getChannelNumber() < currentDevice->getActiveInputChannels().toInteger()) {
+        data.record = bEnabled;
+        audioBusInterface->setRecordEnabled(getChannelNumber() + audioTrack.getChannelOffset(),
+                                            bEnabled);
+    }
+    else {
+        std::cout << "Error, no input mapped at channel " << getChannelNumber() << std::endl;
+    }
 }
 
 bool AudioChannel::isRecordEnabled() const noexcept
