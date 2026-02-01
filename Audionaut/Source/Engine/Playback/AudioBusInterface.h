@@ -92,6 +92,13 @@ public:
     const float getChannelLevel(const int channelNumber) const;
 
     /**
+    * @brief Gets the current level of a recording enabled channel.
+    * @param channelNumber The channel index.
+    * @return The current level of the channel.
+    */
+    const float getRecordingLevel(const int channelNumber) const;
+    
+    /**
     * @brief Gets the current master level for a specific channel.
     * @param channelNumber The channel index.
     * @return The current master level of the channel.

@@ -74,10 +74,14 @@ void AudioBusInterface::setMasterGain(const float newGain)
     });
 }
 
-
 const float AudioBusInterface::getChannelLevel(const int channelNumber) const
 {
     return audioBusRenderer->getChannelLevel(channelNumber);
+}
+
+const float AudioBusInterface::getRecordingLevel(const int channelNumber) const
+{
+    return audioBusRenderer->getRecordingLevel(channelNumber);
 }
 
 const float AudioBusInterface::getMasterLevel(const int channelNumber) const

@@ -76,7 +76,7 @@ public:
                     
                     if (audioChannelData[k].record &&
                         audioChannelData[k].channelNumber == i) {
-                        recordingLevel[i] = inputBlock.getSingleChannelBlock(i).findMinAndMax().getEnd();
+                        recordingLevel[k] = inputBlock.getSingleChannelBlock(i).findMinAndMax().getEnd();
                     }
 
                     if (audioChannelData[k].record &&
@@ -231,6 +231,14 @@ public:
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
             return channelLevel[channelNumber].load();
+        
+        return 0.f;
+    }
+
+    const float getRecordingLevel(const int channelNumber) const
+    {
+        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
+            return recordingLevel[channelNumber].load();
         
         return 0.f;
     }
