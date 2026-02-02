@@ -80,6 +80,8 @@ public:
     
     const juce::File getRecordedFile() const { return recordedFile; }
     
+    const double getTotalLength() const;
+    
 private:
     
     AudioThumbnail *thumbnail = nullptr;

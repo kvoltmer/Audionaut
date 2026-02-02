@@ -15,6 +15,7 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Util/EngineAccess.h"
 #include "Application/AudiumCommandIDs.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTrack_,
                                     std::shared_ptr<audium::AudiumEngine> engine_,
@@ -115,10 +116,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     recordButton->setImages(&recImage);
 
     recordButton->onClick = [this, rowNumber] {
-        audioTrack->onDragStart();
-        audioTrack->setRecordEnabled(rowNumber,
-                                     recordButton->getToggleState());
-        audioTrack->onDragEnd();
+        setRecordEnabled(rowNumber, recordButton->getToggleState());
     };
     
     recordButton->setClickingTogglesState(true);
@@ -517,6 +515,56 @@ void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
         
     }
     hideInsertLines();
+}
+
+bool ChannelComponent::recordingAllowed(int channelNumber)
+{
+    auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
+
+    if (currentDevice != nullptr &&
+        channelNumber < currentDevice->getActiveInputChannels().toInteger()) {
+        return true;
+    }
+    return false;
+}
+
+void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
+{
+
+
+    if (recordingAllowed(channelNumber)) {
+
+        audioTrack->onDragStart();
+        if (ModifierKeys::currentModifiers.isShiftDown())
+            channelNumber = -1;
+        audioTrack->setRecordEnabled(channelNumber, bEnabled);
+        
+        auto scheduler = engine->getPlayListScheduler();
+        
+        if (bEnabled) {
+            if (scheduler->isPlaying() &&
+                scheduler->isRecordingArmed() &&
+                not scheduler->isRecording()) {
+                
+                // start recording on the fly
+                scheduler->startRecording();
+            }
+            else if (scheduler->isRecording()) {
+                scheduler->stopRecording();
+                
+            }
+        }
+        
+        audioTrack->onDragEnd();
+    }
+    else {
+        juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                    "No audio input available at this channel.",
+                                                    "Please check: Settings ... -> Audio Device Settings");
+    }
+
+    
+    
 }
 
 //==============================================================================

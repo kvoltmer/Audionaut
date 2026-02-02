@@ -356,19 +356,16 @@ const AudioChannelData AudioTrack::getChannelData(const int channelNumber) const
 
 void AudioTrack::setRecordEnabled(const int channelNumber, bool bEnabled)
 {
-    auto currentDevice = getAudioResourceContainer().getAudioDeviceManager()->getCurrentAudioDevice();
-    
-    if (currentDevice != nullptr &&
-        channelNumber < currentDevice->getActiveInputChannels().toInteger()) {
-        
+    if (channelNumber >= 0) {
         if (auto channel = audioChannelContainer->objects[channelNumber]) {
             channel->setRecordEnabled(bEnabled);
         }
     }
     else {
-        juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                    "No audio input available at this channel.",
-                                                    "Please check: Settings ... -> Audio Device Settings");
+        // all channels
+        for (auto channel : audioChannelContainer->objects) {
+            channel->setRecordEnabled(bEnabled);
+        }
     }
 }
 
@@ -708,6 +705,8 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
 {
     // create default region
     juce::Range<double> defaultRange(0.0, audioResource->getFileLength(context));
+    if (defaultRange.getLength() <= 0.0)
+        defaultRange.setLength(0.1);
     auto region = resourceGroup->getAudioRegionContainer()->createRegion(  audioResource->getFileNameWithoutExtension(),
                                                                     defaultRange,
                                                                     std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),

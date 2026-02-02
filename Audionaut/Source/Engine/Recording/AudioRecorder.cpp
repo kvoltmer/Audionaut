@@ -14,7 +14,7 @@ void AudioRecorder::startRecording(const int take,
     if (sampleRate > 0) {
         recordedFile = AudioResourceContainer::getAudioRecordingFile(take, channelNumber);
         jassert(!recordedFile.existsAsFile());
-        // std::cout << "startRecording " << recordedFile.getFullPathName() << std::endl;
+        // std::cout << "startRecording " << recordedFile.getFileName() << std::endl;
         
         if (auto fileStream = std::unique_ptr<juce::FileOutputStream> (recordedFile.createOutputStream())) {
             juce::WavAudioFormat wavFormat;
@@ -24,6 +24,7 @@ void AudioRecorder::startRecording(const int take,
                 // (passes responsibility for deleting the stream to the writer object that is now using it)
                 fileStream.release();
                 
+
                 threadedWriter.reset (new juce::AudioFormatWriter::ThreadedWriter (writer, backgroundThread, 32768));
                 
                 nextSampleNum = 0;
@@ -33,6 +34,14 @@ void AudioRecorder::startRecording(const int take,
             }
         }
     }
+}
+
+const double AudioRecorder::getTotalLength() const
+{
+    if (thumbnail != nullptr)
+        return thumbnail->getTotalLength();
+    
+    return 0.0;
 }
 
 } // namespace audium

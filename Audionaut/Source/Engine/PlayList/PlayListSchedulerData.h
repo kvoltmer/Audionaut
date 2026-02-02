@@ -29,6 +29,9 @@ struct PlayListSchedulerData
     // armed for recording or not
     bool isRecordingArmed = false;
     
+    // recording or not
+    bool isRecording = false;
+    
     // the position where the recording was started
     double recordingStartPositionClocks = 0.0;
     

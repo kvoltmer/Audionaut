@@ -105,6 +105,9 @@ void AudioBusRenderer<SampleType>::setRecordingThumbnail(AudioThumbnail *audioTh
     if (recorders.find(channelNumber) != recorders.end()) {
         recorders[channelNumber]->setAudioThumbnail(audioThumbnail);
     }
+    else {
+        jassertfalse;
+    }
 }
 
 template <class SampleType>

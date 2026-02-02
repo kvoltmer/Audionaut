@@ -258,4 +258,13 @@ double PlayListItem::getFadeOut() const
     return 0.0;
 }
 
+bool PlayListItem::isRecording() const
+{
+    for (auto resource : audioRegion->getAudioResources()) {
+        if (resource->isRecording())
+            return true;
+    }
+    return false;
+}
+
 } // namespace audium

@@ -257,7 +257,7 @@ public:
      */
     juce::TimeSliceThread *getReadAheadThread() { return &thread; }
     
-    void updateRecordingLength(double length, audium::TimeContextType context);
+    void updateRecordingLength();
     
     void onRecordingFinished();
     

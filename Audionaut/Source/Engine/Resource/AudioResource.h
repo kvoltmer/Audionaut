@@ -139,7 +139,7 @@ public:
     /**
      * @brief Update the length of the recording.
      */
-    void updateRecordingLength(double length, audium::TimeContextType context);
+    void updateRecordingLength();
     
     /**
      * @brief Load the recorded audio file. Called once recording is finished.
@@ -216,6 +216,9 @@ public:
      * @brief A shared pointer to the `AudioFormatReader` for the audio file.
      */
     std::shared_ptr<juce::AudioFormatReader> audioFormatReader;
+    
+    
+    bool isRecording() const { return audioFormatReader == nullptr; }
     
 private:
     /**
