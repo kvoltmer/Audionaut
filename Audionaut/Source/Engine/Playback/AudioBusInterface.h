@@ -78,6 +78,8 @@ public:
     
     const juce::File getRecordedAudioFile(int channelNumber);
     
+    const double getRecordedLength(int channelNumber) const;
+    
     /**
     * @brief Sets the master gain for the audio bus.
     * @param newGain The new master gain value.

@@ -535,10 +535,10 @@ void AudioResourceContainer::onDeleteChannel(AudioTrack* audioTrack, AudioChanne
     }
 }
 
-void AudioResourceContainer::updateRecordingLength(double length, audium::TimeContextType context)
+void AudioResourceContainer::updateRecordingLength()
 {
     for (auto &itr : audioResources)
-        itr.second->updateRecordingLength(length, context);
+        itr.second->updateRecordingLength();
 }
 
 void AudioResourceContainer::onRecordingFinished()

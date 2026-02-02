@@ -148,15 +148,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
         if (playButton->getToggleState()) {
             
             if (scheduler->isRecordingArmed()) {
-                if (scheduler->anyTrackRecordEnabled())
-                    scheduler->startRecording();
-                else {
-                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                          "Error",
-                                                          "No channels are record enabled.");
-                    return;
-                }
-                    
+                scheduler->startRecording();
             }
             scheduler->startPlaying();
         }

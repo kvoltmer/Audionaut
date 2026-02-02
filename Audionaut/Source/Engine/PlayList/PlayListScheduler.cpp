@@ -254,7 +254,8 @@ void PlayListScheduler::setCurrentPositionAtPlayListItemIndex(std::shared_ptr<Au
 double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> track, int playListItemIndex) const
 {
     const auto item = track->getPlayListContainer()->getPlayListItem(playListItemIndex);
-    if (item != nullptr) {
+    if (item != nullptr &&
+        not item->isRecording()) {
         auto context = audium::clocks;
         auto localPosition = item->absoluteToLocalPosition(getAbsolutePosition(context), context);
         auto progress = ((localPosition - item->getRegionData(context).getStart()) / item->getRegionData(context).getLength());
@@ -470,51 +471,64 @@ bool PlayListScheduler::anyTrackRecordEnabled() const
 
 void PlayListScheduler::startRecording()
 {
-    // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(*getAudioTrackContainer(), false);
-    
-    data.recordingStartPositionClocks = data.startPositionClocks;
-    audioBusInterface->record(true);
-    
-    
-    for (auto track : getAudioTrackContainer()->getAudioTracks()) {
+    // only start recording one of the tracks is record-enabled
+    if (anyTrackRecordEnabled()) {
         
-        if (track->isRecordEnabled()) {
-            
-            auto resourceGroup = track->createNewResourceGroup();
-            std::vector<std::shared_ptr<AudioResource>> resources;
-
-            for (auto chan : track->audioChannelContainer->objects) {
-                if (chan->isRecordEnabled()) {
-                    auto destChannel = chan->getChannelNumber();
-                    auto url = URL (juce::File());
-                    auto audioResource = track->getAudioResourceContainer().addAudioResource(url,
-                                                                                      nullptr,
-                                                                                      track,
-                                                                                      resourceGroup,
-                                                                                      destChannel,
-                                                                                      0);
-                    resources.push_back(audioResource);
-                }
-            }
-            
-            auto position = getAbsoluteStartPosition(audium::clocks);
-            track->createDefaultPlayListItem(resources.front(),
-                                             resourceGroup,
-                                             position,
-                                             audium::clocks);
-            
+        // Undo: store old state
+        auto action = std::make_unique<audium::UndoableContainerAction>(*getAudioTrackContainer(), false);
+        
+        if (not isPlaying()) {
+            // record from start position
+            data.recordingStartPositionClocks = data.startPositionClocks;
         }
+        else {
+            // record on the fly so use the current transport position
+            data.recordingStartPositionClocks = data.transportPositionClocks;
+        }
+        
+        audioBusInterface->record(true);
+        
+        for (auto track : getAudioTrackContainer()->getAudioTracks()) {
+            
+            if (track->isRecordEnabled()) {
+                
+                auto resourceGroup = track->createNewResourceGroup();
+                std::vector<std::shared_ptr<AudioResource>> resources;
+                
+                for (auto chan : track->audioChannelContainer->objects) {
+                    if (chan->isRecordEnabled()) {
+                        auto destChannel = chan->getChannelNumber();
+                        auto url = URL (juce::File());
+                        auto audioResource = track->getAudioResourceContainer().addAudioResource(url,
+                                                                                                 nullptr,
+                                                                                                 track,
+                                                                                                 resourceGroup,
+                                                                                                 destChannel,
+                                                                                                 0);
+                        resources.push_back(audioResource);
+                    }
+                }
+                
+                track->createDefaultPlayListItem(resources.front(),
+                                                 resourceGroup,
+                                                 data.recordingStartPositionClocks,
+                                                 audium::clocks);
+                
+            }
+        }
+        
+        data.isRecording = true;
+        
+        // Undo: store new state
+        action->storeNewState();
+        getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
+        getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
     }
-    
-    // Undo: store new state
-    action->storeNewState();
-    getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
-    getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
 }
 
 void PlayListScheduler::stopRecording()
 {
+    data.isRecording = false;
     setRecordingArmed(false);
     audioBusInterface->record(false);
     
@@ -536,13 +550,12 @@ double PlayListScheduler::getRecordingLength(audium::TimeContextType context) co
 
 bool PlayListScheduler::isRecording() const noexcept
 {
-    return data.isRecordingArmed && isPlaying();
+    return data.isRecording;
 }
 
 void PlayListScheduler::updateRecordingLength()
 {
-    auto recordingLength = getRecordingLength(audium::seconds);
-    audioResourceContainer->updateRecordingLength(recordingLength, audium::seconds);
+    audioResourceContainer->updateRecordingLength();
     audioTrackContainer->sendActionMessage(audium::updateArrangementAction);
 }
 

@@ -137,16 +137,19 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
 }
 
 
-void AudioResource::updateRecordingLength(double length, audium::TimeContextType context)
+void AudioResource::updateRecordingLength()
 {
     // audio resrouce without audioFormatReader -> recording
     if (audioFormatReader == nullptr) {
-        if (context == audium::seconds) {
-            lengthInSeconds = length;
-        }
-        else if (context == audium::clocks) {
-            lengthInSeconds = owner.getTempoProvider()->clocksToSeconds(length);
-        }
+        
+        auto channelOffset = getAudioTrack()->getChannelOffset();
+        auto dstChannel = getChannelMapping().getDestinationChannel();
+        auto audioBusChannel = dstChannel + channelOffset;
+        
+        lengthInSeconds = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedLength(audioBusChannel);
+        
+        if (lengthInSeconds <= 0)
+            lengthInSeconds = 0.1;
         
         for (auto region : getResourceGroup()->getAudioRegionContainer()->getObjects()) {
             // std::cout << "updateRecordingLength " << length << std::endl;
@@ -173,6 +176,10 @@ bool AudioResource::loadRecordedAudioFile()
             audioFormatReader = getAudioTrack()->getAudioResourceContainer().getAudioFormatReaderForUrl(theUrl);
             jassert(audioFormatReader);
             return (audioFormatReader != nullptr);
+        }
+        else {
+            // hu?
+            jassertfalse;
         }
     }
     return false;

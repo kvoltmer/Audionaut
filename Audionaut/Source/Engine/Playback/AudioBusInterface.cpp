@@ -37,10 +37,24 @@ void AudioBusInterface::setRecordEnabled(const int channelNumber,
 {
     auto recorder = bEnabled ? std::make_shared<AudioRecorder>() : nullptr;
     
+    // async!!!
     auto ptr = audioBusRenderer.get();
     lockFreeCommander->fifo.push([ptr, channelNumber, bEnabled, recorder] {
         ptr->setRecordEnabled(channelNumber, bEnabled, recorder);
     });
+    
+    // in case we record on the fly we have to wait until the recorder exists.
+    // see: synchronous call AudioBusInterface::record
+    // using a sleepCounter so we don't hang forever :D
+    if (bEnabled) {
+        auto sleepCounter = 0;
+        while (sleepCounter < 10 &&
+               audioBusRenderer->getAudioRecorder(channelNumber) == nullptr) {
+            juce::Thread::sleep (5);
+            sleepCounter++;
+            // std::cout << "setRecordEnabled sleep " << sleepCounter << std::endl;
+        }
+    }
 }
 
 void AudioBusInterface::setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber)
@@ -65,6 +79,16 @@ const juce::File AudioBusInterface::getRecordedAudioFile(int channelNumber)
     else
         return juce::File();
 }
+
+const double AudioBusInterface::getRecordedLength(int channelNumber) const
+{
+    auto recorder = audioBusRenderer->getAudioRecorder(channelNumber);
+    if (recorder != nullptr)
+        return recorder->getTotalLength();
+    else
+        return 0.1;
+}
+
 
 void AudioBusInterface::setMasterGain(const float newGain)
 {

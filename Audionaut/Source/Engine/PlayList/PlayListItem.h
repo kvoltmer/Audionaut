@@ -89,6 +89,8 @@ public:
         return fadeOutClocks;
     }
     
+    bool isRecording() const;
+    
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
