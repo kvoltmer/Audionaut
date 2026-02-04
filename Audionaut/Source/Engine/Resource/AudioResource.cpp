@@ -153,7 +153,8 @@ void AudioResource::updateRecordingLength()
         
         for (auto region : getResourceGroup()->getAudioRegionContainer()->getObjects()) {
             // std::cout << "updateRecordingLength " << length << std::endl;
-            region->setRegionLength(lengthInSeconds, audium::seconds);
+            if (region->getRegionData(seconds).getLength() < lengthInSeconds)
+                region->setRegionLength(lengthInSeconds, audium::seconds);
         }
     }
 }

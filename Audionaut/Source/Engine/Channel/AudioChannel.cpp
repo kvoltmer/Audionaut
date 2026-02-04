@@ -70,6 +70,11 @@ void AudioChannel::setRecordEnabled(bool bEnabled)
     }
 }
 
+bool AudioChannel::isRecording() const
+{
+    return audioBusInterface->isRecording(getChannelNumber() + audioTrack.getChannelOffset());
+}
+
 bool AudioChannel::isRecordEnabled() const noexcept
 {
     return data.record;

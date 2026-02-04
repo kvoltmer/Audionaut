@@ -110,6 +110,8 @@ public:
     
     bool isRecordEnabled() const noexcept;
     
+    bool isRecording() const;
+    
     /**
     * @brief Commits the current channel data to the associated track.
     */

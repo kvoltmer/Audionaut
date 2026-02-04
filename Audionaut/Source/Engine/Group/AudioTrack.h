@@ -166,6 +166,7 @@ public:
     
     void setRecordEnabled(const int channelNumber, bool bEnabled);
     bool isRecordEnabled(const int channelNumber = -1);
+    bool isRecording(const int channelNumber = -1) const;
     
     // undo for continious parameters:
     void onDragStart();

@@ -5,14 +5,14 @@
 
 namespace audium {
 
-void AudioRecorder::startRecording(const int take,
-                                   const int channelNumber,
-                                   const double sampleRate)
+const juce::File AudioRecorder::startRecording(const int take,
+                                               const int channelNumber,
+                                               const double sampleRate)
 {
     stop();
     
     if (sampleRate > 0) {
-        recordedFile = AudioResourceContainer::getAudioRecordingFile(take, channelNumber);
+        auto recordedFile = AudioResourceContainer::getAudioRecordingFile(take, channelNumber);
         jassert(!recordedFile.existsAsFile());
         // std::cout << "startRecording " << recordedFile.getFileName() << std::endl;
         
@@ -33,7 +33,9 @@ void AudioRecorder::startRecording(const int take,
                 activeWriter = threadedWriter.get();
             }
         }
+        return recordedFile;
     }
+    return juce::File();
 }
 
 const double AudioRecorder::getTotalLength() const

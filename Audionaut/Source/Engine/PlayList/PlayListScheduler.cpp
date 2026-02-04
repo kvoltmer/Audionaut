@@ -486,11 +486,10 @@ void PlayListScheduler::startRecording()
             data.recordingStartPositionClocks = data.transportPositionClocks;
         }
         
-        audioBusInterface->record(true);
-        
         for (auto track : getAudioTrackContainer()->getAudioTracks()) {
             
-            if (track->isRecordEnabled()) {
+            if (track->isRecordEnabled() &&
+                not track->isRecording()) {
                 
                 auto resourceGroup = track->createNewResourceGroup();
                 std::vector<std::shared_ptr<AudioResource>> resources;
@@ -518,6 +517,7 @@ void PlayListScheduler::startRecording()
         }
         
         data.isRecording = true;
+        audioBusInterface->record(true);
         
         // Undo: store new state
         action->storeNewState();
