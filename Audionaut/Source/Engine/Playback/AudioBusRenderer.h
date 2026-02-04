@@ -218,8 +218,6 @@ public:
     void setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber);
     
     std::shared_ptr<AudioRecorder> getAudioRecorder(int channelNumber);
-
-    void clearRecorders();
     
     void setMasterGain(const float newGain)
     {
@@ -250,6 +248,14 @@ public:
         return 0.f;
     }
     
+    const juce::File getRecordedFile(const int channelNumber) const
+    {
+        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
+            return recordedFile[channelNumber];
+        
+        return juce::File();
+    }
+    
 private:
     
     std::shared_ptr<audium::Playback> playback;
@@ -268,6 +274,7 @@ private:
     AudioChannelData audioChannelData[MAX_AUDIO_CHANNELS];
     
     std::map<int, std::shared_ptr<AudioRecorder>> recorders;
+    juce::File recordedFile[MAX_AUDIO_CHANNELS];
     
     double sampleRate = 0.0;
     

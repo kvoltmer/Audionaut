@@ -182,6 +182,8 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     recordButton->setImages(&recImage);
     recordButton->onClick = [this, scheduler]() {
         scheduler->setRecordingArmed(recordButton->getToggleState());
+        if (scheduler->isPlaying())
+            scheduler->startRecording();
     };
     recordButton->setClickingTogglesState(true);
     recordButton->setColour (TextButton::buttonOnColourId, Colours::red.brighter().withAlpha(0.8f));

@@ -517,7 +517,7 @@ void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
     hideInsertLines();
 }
 
-bool ChannelComponent::recordingAllowed(int channelNumber)
+bool ChannelComponent::audioInputAvailable(int channelNumber)
 {
     auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
 
@@ -530,9 +530,7 @@ bool ChannelComponent::recordingAllowed(int channelNumber)
 
 void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
 {
-
-
-    if (recordingAllowed(channelNumber)) {
+    if (audioInputAvailable(channelNumber)) {
 
         audioTrack->onDragStart();
         if (ModifierKeys::currentModifiers.isShiftDown())
@@ -543,17 +541,13 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
         
         if (bEnabled) {
             if (scheduler->isPlaying() &&
-                scheduler->isRecordingArmed() &&
-                not scheduler->isRecording()) {
+                scheduler->isRecordingArmed()) {
                 
                 // start recording on the fly
                 scheduler->startRecording();
             }
-            else if (scheduler->isRecording()) {
-                scheduler->stopRecording();
-                
-            }
         }
+
         
         audioTrack->onDragEnd();
     }

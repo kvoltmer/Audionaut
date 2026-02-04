@@ -384,6 +384,21 @@ bool AudioTrack::isRecordEnabled(const int channelNumber)
     }
 }
 
+bool AudioTrack::isRecording(const int channelNumber) const
+{
+    if (channelNumber > 0 && channelNumber < audioChannelContainer->objects.size()) {
+        return audioChannelContainer->objects[channelNumber]->isRecording();
+    }
+    else {
+        for (auto chan : audioChannelContainer->objects) {
+            if (chan->isRecording())
+                return true;
+        }
+        
+        return false;
+    }
+}
+
 void AudioTrack::onDragStart()
 {
     undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);

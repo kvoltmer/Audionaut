@@ -73,11 +73,9 @@ void AudioBusInterface::record(bool start)
 
 const juce::File AudioBusInterface::getRecordedAudioFile(int channelNumber)
 {
-    auto recorder = audioBusRenderer->getAudioRecorder(channelNumber);
-    if (recorder != nullptr)
-        return recorder->getRecordedFile();
-    else
-        return juce::File();
+    auto file = audioBusRenderer->getRecordedFile(channelNumber);
+    jassert(file.existsAsFile());
+    return file;
 }
 
 const double AudioBusInterface::getRecordedLength(int channelNumber) const
@@ -89,6 +87,14 @@ const double AudioBusInterface::getRecordedLength(int channelNumber) const
         return 0.1;
 }
 
+bool AudioBusInterface::isRecording(int channelNumber) const
+{
+    auto recorder = audioBusRenderer->getAudioRecorder(channelNumber);
+    if (recorder != nullptr)
+        return recorder->isRecording();
+    else
+        return false;
+}
 
 void AudioBusInterface::setMasterGain(const float newGain)
 {

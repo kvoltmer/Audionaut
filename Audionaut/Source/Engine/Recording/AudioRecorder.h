@@ -24,9 +24,9 @@ public:
         stop();
     }
     
-    void startRecording(const int take,
-                        const int channelNumber,
-                        const double sampleRate);
+    const juce::File startRecording(const int take,
+                                    const int channelNumber,
+                                    const double sampleRate);
     
     void stop()
     {
@@ -77,9 +77,7 @@ public:
     }
     
     void setAudioThumbnail(AudioThumbnail *thumbnail_) { thumbnail = thumbnail_; }
-    
-    const juce::File getRecordedFile() const { return recordedFile; }
-    
+        
     const double getTotalLength() const;
     
 private:
@@ -95,7 +93,6 @@ private:
     
     std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter { nullptr };
     
-    juce::File recordedFile;
 };
 
 } // namespace audium

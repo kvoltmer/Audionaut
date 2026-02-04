@@ -88,7 +88,7 @@ public:
     static void configureVolumeSlider(juce::Slider *slider, double dbMax = 6.0);
     static void configurePanSlider(juce::Slider *slider);
     
-    bool recordingAllowed(int channelNumber);
+    bool audioInputAvailable(int channelNumber);
     void setRecordEnabled(int channelNumber, bool bEnabled);
     
 private:

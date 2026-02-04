@@ -77,10 +77,10 @@ void AudioBusRenderer<SampleType>::setRecordEnabled(const int channelNumber, boo
     
     audioChannelData[channelNumber].record = bEnabled;
     
-    std::cout << "All recorders:\n";
-    for (const auto& rec : recorders) {
-        std::cout << rec.first << " " <<  rec.second << std::endl;
-    }
+//    std::cout << "All recorders:\n";
+//    for (const auto& rec : recorders) {
+//        std::cout << rec.first << " " <<  rec.second << std::endl;
+//    }
 }
 
 template <class SampleType>
@@ -92,7 +92,7 @@ void AudioBusRenderer<SampleType>::record(bool start)
     
     for (const auto& rec : recorders) {
         if (start)
-            rec.second->startRecording(take, rec.first, sampleRate);
+            recordedFile[rec.first] = rec.second->startRecording(take, rec.first, sampleRate);
         else
             rec.second->stop();
     }
@@ -117,13 +117,6 @@ std::shared_ptr<AudioRecorder> AudioBusRenderer<SampleType>::getAudioRecorder(in
         return recorders[channelNumber];
     }
     return nullptr;
-}
-
-template <class SampleType>
-void AudioBusRenderer<SampleType>::clearRecorders()
-{    
-    std::cout << "clearRecorders" << std::endl;
-    recorders.clear();
 }
 
 template class AudioBusRenderer<float>;
