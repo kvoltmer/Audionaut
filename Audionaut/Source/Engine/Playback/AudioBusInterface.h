@@ -74,13 +74,15 @@ public:
     
     void setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber);
     
-    void record(bool start);
+    void record(bool start, const int channelNumber = -1);
     
     const juce::File getRecordedAudioFile(int channelNumber);
     
     const double getRecordedLength(int channelNumber) const;
     
     bool isRecording(int channelNumber) const;
+    
+    bool anyChannelRecording() const;
     
     /**
     * @brief Sets the master gain for the audio bus.

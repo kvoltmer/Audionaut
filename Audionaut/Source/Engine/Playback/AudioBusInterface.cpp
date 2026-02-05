@@ -5,6 +5,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioBusInterface.h"
+#include "Engine/AudiumEngine.h"
 
 namespace audium
 {
@@ -55,6 +56,49 @@ void AudioBusInterface::setRecordEnabled(const int channelNumber,
             // std::cout << "setRecordEnabled sleep " << sleepCounter << std::endl;
         }
     }
+
+}
+
+void AudioBusInterface::record(bool start, const int channelNumber)
+{
+    auto take = AudiumEngine::recordingCounter;
+    if (start)
+        AudiumEngine::recordingCounter++;
+    
+    if (channelNumber < 0) {
+        
+        for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
+            if (auto recorder = audioBusRenderer->getAudioRecorder(i)) {
+                if (start) {
+                    auto file = recorder->prepareRecording(take, i, audioBusRenderer->getSampleRate());
+                    audioBusRenderer->setRecordedFile(i, file);
+                    recorder->start();
+                }
+                else {
+                    recorder->stop();
+                }
+            }
+        }
+    }
+    else {
+        if (auto recorder = audioBusRenderer->getAudioRecorder(channelNumber)) {
+            if (start) {
+                auto file = recorder->prepareRecording(take,
+                                                       channelNumber,
+                                                       audioBusRenderer->getSampleRate());
+                audioBusRenderer->setRecordedFile(channelNumber,
+                                                  file);
+                recorder->start();
+            }
+            else {
+                recorder->stop();
+            }
+        }
+        else {
+            // hu?
+            jassertfalse;
+        }
+    }
 }
 
 void AudioBusInterface::setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber)
@@ -64,11 +108,6 @@ void AudioBusInterface::setRecordingThumbnail(AudioThumbnail *audioThumbnail, in
         ptr->setRecordingThumbnail(audioThumbnail, channelNumber);
     });
     
-}
-
-void AudioBusInterface::record(bool start)
-{
-    audioBusRenderer->record(start);
 }
 
 const juce::File AudioBusInterface::getRecordedAudioFile(int channelNumber)
@@ -94,6 +133,17 @@ bool AudioBusInterface::isRecording(int channelNumber) const
         return recorder->isRecording();
     else
         return false;
+}
+
+bool AudioBusInterface::anyChannelRecording() const
+{
+    for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
+        if (auto recorder = audioBusRenderer->getAudioRecorder(i)) {
+            if (recorder->isRecording())
+                return true;
+        }
+    }
+    return false;
 }
 
 void AudioBusInterface::setMasterGain(const float newGain)

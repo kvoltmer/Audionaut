@@ -469,7 +469,7 @@ bool PlayListScheduler::anyTrackRecordEnabled() const
     return false;
 }
 
-void PlayListScheduler::startRecording()
+void PlayListScheduler::startRecording(const int channelNumber)
 {
     // only start recording one of the tracks is record-enabled
     if (anyTrackRecordEnabled()) {
@@ -517,7 +517,7 @@ void PlayListScheduler::startRecording()
         }
         
         data.isRecording = true;
-        audioBusInterface->record(true);
+        audioBusInterface->record(true, channelNumber);
         
         // Undo: store new state
         action->storeNewState();
@@ -526,11 +526,19 @@ void PlayListScheduler::startRecording()
     }
 }
 
-void PlayListScheduler::stopRecording()
+void PlayListScheduler::stopRecording(const int channelNumber)
 {
-    data.isRecording = false;
-    setRecordingArmed(false);
-    audioBusInterface->record(false);
+    if (channelNumber < 0) {
+        data.isRecording = false;
+        setRecordingArmed(false);
+        audioBusInterface->record(false);
+    }
+    else {
+        audioBusInterface->record(false, channelNumber);
+        if (not audioBusInterface->anyChannelRecording()) {
+            data.isRecording = false;
+        }
+    }
     
     // tigger async message to load recorded audio files and create tranport sources
     audioTrackContainer->sendActionMessage(audium::recordingFinishedAction);
