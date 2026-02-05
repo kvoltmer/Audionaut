@@ -24,9 +24,13 @@ public:
         stop();
     }
     
-    const juce::File startRecording(const int take,
-                                    const int channelNumber,
-                                    const double sampleRate);
+    bool createThreadedWriter(const double sampleRate, const juce::File recordedFile);
+    
+    const juce::File prepareRecording(const int take,
+                                      const int channelNumber,
+                                      const double sampleRate);
+    
+    void start();
     
     void stop()
     {

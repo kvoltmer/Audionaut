@@ -60,8 +60,11 @@ const AudioChannelData AudioBusRenderer<SampleType>::getChannelData(const int ch
 }
 
 template <class SampleType>
-void AudioBusRenderer<SampleType>::setRecordEnabled(const int channelNumber, bool bEnabled, std::shared_ptr<AudioRecorder> recorder)
+void AudioBusRenderer<SampleType>::setRecordEnabled(const int channelNumber,
+                                                    bool bEnabled,
+                                                    std::shared_ptr<AudioRecorder> recorder)
 {
+    std::cout << "setRecordEnabled " << bEnabled << std::endl;
 
     if (bEnabled) {
         if (recorders.find(channelNumber) == recorders.end()) {
@@ -76,23 +79,16 @@ void AudioBusRenderer<SampleType>::setRecordEnabled(const int channelNumber, boo
     }
     
     audioChannelData[channelNumber].record = bEnabled;
-    
-//    std::cout << "All recorders:\n";
-//    for (const auto& rec : recorders) {
-//        std::cout << rec.first << " " <<  rec.second << std::endl;
-//    }
 }
 
 template <class SampleType>
 void AudioBusRenderer<SampleType>::record(bool start)
 {
-    auto take = AudiumEngine::recordingCounter;
-    if (start)
-        AudiumEngine::recordingCounter++;
+    std::cout << "record -> " << start << std::endl;
     
     for (const auto& rec : recorders) {
         if (start)
-            recordedFile[rec.first] = rec.second->startRecording(take, rec.first, sampleRate);
+            rec.second->start();
         else
             rec.second->stop();
     }

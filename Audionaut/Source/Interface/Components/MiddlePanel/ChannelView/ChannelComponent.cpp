@@ -539,14 +539,17 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
         
         auto scheduler = engine->getPlayListScheduler();
         
-        if (bEnabled) {
-            if (scheduler->isPlaying() &&
-                scheduler->isRecordingArmed()) {
-                
-                // start recording on the fly
-                scheduler->startRecording();
-            }
+        // start recording on the fly ?
+        if (scheduler->isPlaying() &&
+            scheduler->isRecordingArmed()) {
+            
+            if (bEnabled)
+                scheduler->startRecording(channelNumber + audioTrack->getChannelOffset());
+            else
+                scheduler->stopRecording(channelNumber + audioTrack->getChannelOffset());
         }
+        
+
 
         
         audioTrack->onDragEnd();

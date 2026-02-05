@@ -161,12 +161,13 @@ void AudioResource::updateRecordingLength()
 
 bool AudioResource::loadRecordedAudioFile()
 {
+    auto channelOffset = getAudioTrack()->getChannelOffset();
+    auto dstChannel = getChannelMapping().getDestinationChannel();
+    auto audioBusChannel = dstChannel + channelOffset;
+    
     // audio resrouce without audioFormatReader -> recording
-    if (audioFormatReader == nullptr) {
-        
-        auto channelOffset = getAudioTrack()->getChannelOffset();
-        auto dstChannel = getChannelMapping().getDestinationChannel();
-        auto audioBusChannel = dstChannel + channelOffset;
+    if (audioFormatReader == nullptr &&
+        not getAudioTrack()->getAudioTrackContainer().audioBusInterface->isRecording(audioBusChannel)) {
         
         auto file = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedAudioFile(audioBusChannel);
         
