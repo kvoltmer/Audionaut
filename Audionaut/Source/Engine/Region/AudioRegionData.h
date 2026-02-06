@@ -56,6 +56,11 @@ struct AudioRegionData
      * @brief The gain values for each channel.
      */
     std::vector<double> gain_vector;
+    
+    /**
+     * @brief if region is in recording state or not. helps to recover the region length in case of undo/redo/cash
+     */
+    bool recording = false;
 };
 
 /**
@@ -72,6 +77,7 @@ inline void to_json(json& j, const AudioRegionData& r) {
         {"track_id", r.track_id},
         {"resource_group_id", r.resource_group_id},
         {"gain_vector", r.gain_vector},
+        {"recording", r.recording},
     };
 }
 
@@ -99,6 +105,9 @@ inline void from_json(const json& j, AudioRegionData& r) {
 
     if (j.contains("gain_vector"))
         j.at("gain_vector").get_to(r.gain_vector);
+    
+    if (j.contains("recording"))
+        j.at("recording").get_to(r.recording);
 }
 
 } // namespace audium

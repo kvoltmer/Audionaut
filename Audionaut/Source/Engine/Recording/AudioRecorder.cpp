@@ -52,8 +52,8 @@ void AudioRecorder::start()
 
 const double AudioRecorder::getTotalLength() const
 {
-    if (thumbnail != nullptr)
-        return thumbnail->getTotalLength();
+    if (thumbnail.load() != nullptr)
+        return thumbnail.load()->getTotalLength();
     
     return 0.0;
 }

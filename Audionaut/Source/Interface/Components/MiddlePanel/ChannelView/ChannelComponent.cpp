@@ -544,7 +544,7 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
             scheduler->isRecordingArmed()) {
             
             if (bEnabled)
-                scheduler->startRecording(channelNumber + audioTrack->getChannelOffset());
+                scheduler->startRecording(channelNumber + audioTrack->getChannelOffset(), false);
             else
                 scheduler->stopRecording(channelNumber + audioTrack->getChannelOffset());
         }

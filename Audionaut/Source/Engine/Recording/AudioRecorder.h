@@ -73,8 +73,8 @@ public:
             
             activeWriter.load()->write (buffer.getArrayOfReadPointers(), numSamples);
             
-            if (thumbnail != nullptr) {
-                thumbnail->addBlock (nextSampleNum, buffer, 0, numSamples);
+            if (thumbnail.load() != nullptr) {
+                thumbnail.load()->addBlock (nextSampleNum, buffer, 0, numSamples);
                 nextSampleNum += numSamples;
             }
         }
@@ -86,8 +86,6 @@ public:
     
 private:
     
-    AudioThumbnail *thumbnail = nullptr;
-    
     juce::TimeSliceThread backgroundThread { "Audio Recorder Thread" }; // the thread that will write our audio data to disk
     std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> threadedWriter; // the FIFO used to buffer the incoming data
     
@@ -96,6 +94,8 @@ private:
     juce::CriticalSection writerLock;
     
     std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter { nullptr };
+    
+    std::atomic<AudioThumbnail*> thumbnail { nullptr };
     
 };
 

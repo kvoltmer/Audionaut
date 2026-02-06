@@ -85,7 +85,12 @@ const juce::String AudioResource::getUrlAsString() const
 
 const juce::String AudioResource::getRelativePath(const juce::File &directoryToBeRelativeTo) const
 {
-    if (url.isLocalFile())
+    if (url.isEmpty() && isRecording()) {
+        auto outChannel = getOutputChannelNumber();
+        auto file = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedAudioFile(outChannel);
+        return file.getRelativePathFrom(directoryToBeRelativeTo);
+    }
+    else if (url.isLocalFile())
         return url.getLocalFile().getRelativePathFrom(directoryToBeRelativeTo);
     else
         return url.toString(false);
@@ -95,6 +100,9 @@ double AudioResource::getSampleRate() const
 {
     if (audioFormatReader != nullptr) {
         return audioFormatReader->sampleRate;
+    }
+    else if (auto device = getContainer().getAudioDeviceManager()->getCurrentAudioDevice()) {
+        return device->getCurrentSampleRate();
     }
     return 44100.0;
 }
@@ -159,11 +167,16 @@ void AudioResource::updateRecordingLength()
     }
 }
 
-bool AudioResource::loadRecordedAudioFile()
+int AudioResource::getOutputChannelNumber() const
 {
     auto channelOffset = getAudioTrack()->getChannelOffset();
     auto dstChannel = getChannelMapping().getDestinationChannel();
-    auto audioBusChannel = dstChannel + channelOffset;
+    return dstChannel + channelOffset;
+}
+
+bool AudioResource::loadRecordedAudioFile()
+{
+    auto audioBusChannel = getOutputChannelNumber();
     
     // audio resrouce without audioFormatReader -> recording
     if (audioFormatReader == nullptr &&
@@ -217,7 +230,8 @@ bool AudioResource::writeToJson (json& output)
 {
     output["relative_file_path"]    = getRelativePath(AudiumEngine::projectDirectory).toStdString();
     output["number_of_channels"]    = getNumAudioFileChannels();
-    output["length_in_seconds"]     = getFileLength(audium::seconds);
+    if (not isRecording())
+        output["length_in_seconds"]     = getFileLength(audium::seconds);
     
     channelMapping->writeToJson(output);
     
@@ -272,8 +286,10 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     
     if (input.contains("length_in_seconds"))
         lengthInSeconds = input["length_in_seconds"].template get<double>();
-    
-    
+    else {
+        lengthInSeconds = getFileLength(audium::seconds);
+        std::cout << "readFromJson length " << lengthInSeconds << std::endl;
+    }
     if (! channelMapping->readFromJson(input, rebuild)) {
         return false;
     }

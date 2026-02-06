@@ -142,6 +142,11 @@ public:
     void updateRecordingLength();
     
     /**
+     * @brief The output channel number.
+     */
+    int getOutputChannelNumber() const;
+
+    /**
      * @brief Load the recorded audio file. Called once recording is finished.
      */
     bool loadRecordedAudioFile();

@@ -397,6 +397,16 @@ bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
                     }
                 }
                 
+                // in case the region was in recording state we must assume the file length as region length
+                if (region->data.recording) {
+                    // region start should be 0.0 since we start recording at 0.0
+                    jassert(region->getRegionData(audium::seconds).getStart() >= 0.0);
+                    auto newLength = region->getResourceGroup()->getMaxLength(audium::seconds);
+                    region->setRegionEnd(newLength, audium::seconds);
+                    std::cout << "AudioRegionContainer::readFromJson region length corrected to " << newLength << std::endl;
+                    
+                }
+                
                 if (region->data.region_id != regionData.region_id) {
                     std::cout << "warning region id " << regionData.region_id << std::endl;
                     region->data.region_id = regionData.region_id;
