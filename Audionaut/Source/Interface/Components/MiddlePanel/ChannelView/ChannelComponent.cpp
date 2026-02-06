@@ -268,6 +268,9 @@ void ChannelComponent::timerCallback()
     }
     levelMeter->setGrayscale(displayRecordingLevel);
     levelMeter->setLevel(lvl);
+    
+    recordButton->setToggleState(data.record, dontSendNotification);
+
 }
 
 void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
@@ -555,9 +558,13 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
         audioTrack->onDragEnd();
     }
     else {
-        juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                    "No audio input available at this channel.",
-                                                    "Please check: Settings ... -> Audio Device Settings");
+        if (bEnabled) {
+            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                        "No audio input available at this channel.",
+                                                        "Please check: Settings ... -> Audio Device Settings");
+        }
+        
+        
     }
 
     
