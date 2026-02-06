@@ -82,13 +82,6 @@ public:
     */
     bool writeToJson(json& output) override;
 
-    /**
-    * @brief Deserializes the region data from a JSON object.
-    * @param input The JSON object to read from.
-    * @param rebuild Whether to rebuild the region after reading.
-    * @return True if the operation was successful, false otherwise.
-    */
-    bool readFromJson(json& input, bool rebuild) override;
 
     /**
     * @brief Retrieves the size of the region in units.
@@ -208,6 +201,13 @@ public:
      * @return The bit depth.
      */
     int getResourcesMaxBitDepth() const;
+    
+    
+    /**
+     * @brief Retrieves the recording state.
+     * @return The recording state.
+     */
+    bool isRecording() const;
 
     /// The region's data.
     AudioRegionData data;

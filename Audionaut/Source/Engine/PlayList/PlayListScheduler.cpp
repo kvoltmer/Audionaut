@@ -469,7 +469,7 @@ bool PlayListScheduler::anyTrackRecordEnabled() const
     return false;
 }
 
-void PlayListScheduler::startRecording(const int channelNumber)
+void PlayListScheduler::startRecording(const int channelNumber, bool beginNewTransaction)
 {
     // only start recording one of the tracks is record-enabled
     if (anyTrackRecordEnabled()) {
@@ -522,7 +522,8 @@ void PlayListScheduler::startRecording(const int channelNumber)
         // Undo: store new state
         action->storeNewState();
         getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
-        getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
+        if (beginNewTransaction)
+            getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
     }
 }
 

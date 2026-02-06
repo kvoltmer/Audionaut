@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Playback/AudioBusInterface.h"
 
 namespace audium
 {
@@ -86,6 +87,10 @@ struct UndoableContainerAction final : public juce::UndoableAction
     bool undo() override
     {
         try {
+            
+            if (container.audioBusInterface->anyChannelRecording())
+                container.audioBusInterface->record(false);
+            
             juce::MemoryInputStream inputStream(oldMemoryBlock, false);
             container.readFromStream(inputStream, rebuild);
         }

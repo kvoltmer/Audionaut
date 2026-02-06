@@ -720,8 +720,9 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
 {
     // create default region
     juce::Range<double> defaultRange(0.0, audioResource->getFileLength(context));
-    if (defaultRange.getLength() <= 0.0)
+    if (defaultRange.getLength() <= 0.0) {
         defaultRange.setLength(0.1);
+    }
     auto region = resourceGroup->getAudioRegionContainer()->createRegion(  audioResource->getFileNameWithoutExtension(),
                                                                     defaultRange,
                                                                     std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
@@ -731,6 +732,7 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
     
     // an empty name indicates a recording
     if (region->getName().isEmpty()) {
+        jassert(audioResource->isRecording());
         auto take = AudiumEngine::recordingCounter;
         auto takeString = juce::String(AudioRegionContainer::formatNumber(take + 1));
         
@@ -740,7 +742,6 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
         
         auto name = "take " + takeString + " " + formattedStr;
         region->setName(name);
-        
     }
     
     
