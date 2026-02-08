@@ -907,6 +907,9 @@
     <ClCompile Include="..\..\Source\Engine\Recording\AudioRecorder.cpp">
       <Filter>Audionaut\Source\Engine\Recording</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Recording\Recording.cpp">
+      <Filter>Audionaut\Source\Engine\Recording</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Resource\AudioResource.cpp">
       <Filter>Audionaut\Source\Engine\Resource</Filter>
     </ClCompile>
@@ -4156,6 +4159,9 @@
       <Filter>Audionaut\Source\Engine\Region</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Recording\AudioRecorder.h">
+      <Filter>Audionaut\Source\Engine\Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Recording\Recording.h">
       <Filter>Audionaut\Source\Engine\Recording</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Resource\AudioResource.h">

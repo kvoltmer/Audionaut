@@ -175,6 +175,7 @@
     <ClCompile Include="..\..\Source\Engine\Region\AudioRegion.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Region\AudioRegionContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Recording\AudioRecorder.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Recording\Recording.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Resource\AudioResource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Resource\AudioResourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Resource\ChannelMapping.cpp"/>
@@ -3059,6 +3060,7 @@
     <ClInclude Include="..\..\Source\Engine\Region\AudioRegionContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Region\AudioRegionData.h"/>
     <ClInclude Include="..\..\Source\Engine\Recording\AudioRecorder.h"/>
+    <ClInclude Include="..\..\Source\Engine\Recording\Recording.h"/>
     <ClInclude Include="..\..\Source\Engine\Resource\AudioResource.h"/>
     <ClInclude Include="..\..\Source\Engine\Resource\AudioResourceContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Resource\AudioResourceData.h"/>

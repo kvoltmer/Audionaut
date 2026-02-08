@@ -184,7 +184,6 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         }
         if (channel != nullptr) {
             channel->data = jsonElement;
-            channel->setRecordEnabled(channel->data.record);
             channel->commitChannelData();
         }
         c++;

@@ -17,6 +17,8 @@
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/PlayList/TransportLoop.h"
+#include "Engine/Recording/Recording.h"
+
 
 namespace audium {
 
@@ -38,7 +40,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto playback                   = std::make_shared<audium::Playback>();
     
-    auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback);
+    auto recording                  = std::make_shared<audium::Recording>();
+    
+    auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording);
     
     auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback);
     

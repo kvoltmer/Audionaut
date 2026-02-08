@@ -537,8 +537,9 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
 
         audioTrack->onDragStart();
         if (ModifierKeys::currentModifiers.isShiftDown())
-            channelNumber = -1;
-        audioTrack->setRecordEnabled(channelNumber, bEnabled);
+            audioTrack->setRecordEnabled(-1, bEnabled);
+        else
+            audioTrack->setRecordEnabled(channelNumber, bEnabled);
         
         auto scheduler = engine->getPlayListScheduler();
         

@@ -22,6 +22,10 @@ void AudioBusInterface::setNumAudioBusChannels(int numChannels)
 
 void AudioBusInterface::setChannelData(const int channelNumber, const AudioChannelData data)
 {
+    if (audioBusRenderer->getChannelData(channelNumber).record != data.record) {
+        setRecordEnabled(channelNumber, data.record);
+    }
+    
     auto ptr = audioBusRenderer.get();
     lockFreeCommander->fifo.push([ptr, channelNumber, data] {
         ptr->setChannelData(channelNumber, data);
@@ -41,7 +45,8 @@ void AudioBusInterface::setRecordEnabled(const int channelNumber,
     // async!!!
     auto ptr = audioBusRenderer.get();
     lockFreeCommander->fifo.push([ptr, channelNumber, bEnabled, recorder] {
-        ptr->setRecordEnabled(channelNumber, bEnabled, recorder);
+        ptr->setRecordEnabled(channelNumber, bEnabled);
+        ptr->getRecording()->setRecordEnabled(channelNumber, bEnabled, recorder);
     });
     
     // in case we record on the fly we have to wait until the recorder exists.
@@ -50,10 +55,9 @@ void AudioBusInterface::setRecordEnabled(const int channelNumber,
     if (bEnabled) {
         auto sleepCounter = 0;
         while (sleepCounter < 10 &&
-               audioBusRenderer->getAudioRecorder(channelNumber) == nullptr) {
+               audioBusRenderer->getRecording()->getAudioRecorder(channelNumber) == nullptr) {
             juce::Thread::sleep (5);
             sleepCounter++;
-            // std::cout << "setRecordEnabled sleep " << sleepCounter << std::endl;
         }
     }
 
@@ -61,65 +65,28 @@ void AudioBusInterface::setRecordEnabled(const int channelNumber,
 
 void AudioBusInterface::record(bool start, const int channelNumber)
 {
-    auto take = AudiumEngine::recordingCounter;
-    if (start)
-        AudiumEngine::recordingCounter++;
-    
-    if (channelNumber < 0) {
-        
-        for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
-            if (auto recorder = audioBusRenderer->getAudioRecorder(i)) {
-                if (start) {
-                    auto file = recorder->prepareRecording(take, i, audioBusRenderer->getSampleRate());
-                    audioBusRenderer->setRecordedFile(i, file);
-                    recorder->start();
-                }
-                else {
-                    recorder->stop();
-                }
-            }
-        }
-    }
-    else {
-        if (auto recorder = audioBusRenderer->getAudioRecorder(channelNumber)) {
-            if (start) {
-                auto file = recorder->prepareRecording(take,
-                                                       channelNumber,
-                                                       audioBusRenderer->getSampleRate());
-                audioBusRenderer->setRecordedFile(channelNumber,
-                                                  file);
-                recorder->start();
-            }
-            else {
-                recorder->stop();
-            }
-        }
-        else {
-            // hu?
-            jassertfalse;
-        }
-    }
+    audioBusRenderer->getRecording()->record(start, channelNumber);
 }
 
 void AudioBusInterface::setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber)
 {
     auto ptr = audioBusRenderer.get();
     lockFreeCommander->fifo.push([ptr, channelNumber, audioThumbnail] {
-        ptr->setRecordingThumbnail(audioThumbnail, channelNumber);
+        ptr->getRecording()->setRecordingThumbnail(audioThumbnail, channelNumber);
     });
     
 }
 
 const juce::File AudioBusInterface::getRecordedAudioFile(int channelNumber)
 {
-    auto file = audioBusRenderer->getRecordedFile(channelNumber);
+    auto file = audioBusRenderer->getRecording()->getRecordedFile(channelNumber);
     jassert(file.existsAsFile());
     return file;
 }
 
 const double AudioBusInterface::getRecordedLength(int channelNumber) const
 {
-    auto recorder = audioBusRenderer->getAudioRecorder(channelNumber);
+    auto recorder = audioBusRenderer->getRecording()->getAudioRecorder(channelNumber);
     if (recorder != nullptr)
         return recorder->getTotalLength();
     else
@@ -128,7 +95,7 @@ const double AudioBusInterface::getRecordedLength(int channelNumber) const
 
 bool AudioBusInterface::isRecording(int channelNumber) const
 {
-    auto recorder = audioBusRenderer->getAudioRecorder(channelNumber);
+    auto recorder = audioBusRenderer->getRecording()->getAudioRecorder(channelNumber);
     if (recorder != nullptr)
         return recorder->isRecording();
     else
@@ -138,7 +105,7 @@ bool AudioBusInterface::isRecording(int channelNumber) const
 bool AudioBusInterface::anyChannelRecording() const
 {
     for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
-        if (auto recorder = audioBusRenderer->getAudioRecorder(i)) {
+        if (auto recorder = audioBusRenderer->getRecording()->getAudioRecorder(i)) {
             if (recorder->isRecording())
                 return true;
         }

@@ -97,6 +97,8 @@ private:
     
     std::atomic<AudioThumbnail*> thumbnail { nullptr };
     
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRecorder)
+
 };
 
 } // namespace audium

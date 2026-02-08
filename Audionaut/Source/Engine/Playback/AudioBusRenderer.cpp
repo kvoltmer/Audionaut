@@ -21,6 +21,7 @@ template <class SampleType>
 void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, double sampleRate_)
 {
     sampleRate = sampleRate_;
+    recording->setSampleRate(sampleRate);
     audioBus.setSize(audioBus.getNumChannels(), samplesPerBlockExpected);
     
     stereoBuffer.setSize(2, samplesPerBlockExpected);
@@ -59,61 +60,7 @@ const AudioChannelData AudioBusRenderer<SampleType>::getChannelData(const int ch
     return AudioChannelData();
 }
 
-template <class SampleType>
-void AudioBusRenderer<SampleType>::setRecordEnabled(const int channelNumber,
-                                                    bool bEnabled,
-                                                    std::shared_ptr<AudioRecorder> recorder)
-{
-    std::cout << "setRecordEnabled " << bEnabled << std::endl;
 
-    if (bEnabled) {
-        if (recorders.find(channelNumber) == recorders.end()) {
-            recorders.insert(std::make_pair(channelNumber, recorder));
-        }
-    }
-    else {
-        // erase recorder if exists at channel number
-        if (recorders.find(channelNumber) != recorders.end()) {
-            recorders.erase(channelNumber);
-        }
-    }
-    
-    audioChannelData[channelNumber].record = bEnabled;
-}
-
-template <class SampleType>
-void AudioBusRenderer<SampleType>::record(bool start)
-{
-    std::cout << "record -> " << start << std::endl;
-    
-    for (const auto& rec : recorders) {
-        if (start)
-            rec.second->start();
-        else
-            rec.second->stop();
-    }
-}
-
-template <class SampleType>
-void AudioBusRenderer<SampleType>::setRecordingThumbnail(AudioThumbnail *audioThumbnail,
-                                                         int channelNumber)
-{
-    if (recorders.find(channelNumber) != recorders.end()) {
-        recorders[channelNumber]->setAudioThumbnail(audioThumbnail);
-    }
-    else {
-        jassertfalse;
-    }
-}
-
-template <class SampleType>
-std::shared_ptr<AudioRecorder> AudioBusRenderer<SampleType>::getAudioRecorder(int channelNumber)
-{
-    if (recorders.find(channelNumber) != recorders.end()) {
-        return recorders[channelNumber];
-    }
-    return nullptr;
-}
 
 template class AudioBusRenderer<float>;
 template class AudioBusRenderer<double>;
