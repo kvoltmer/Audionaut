@@ -10,6 +10,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Channel/AudioChannelData.h"
+#include "Engine/Recording/Recording.h"
 #include "Engine/Recording/AudioRecorder.h"
 
 using namespace juce::dsp;
@@ -33,8 +34,10 @@ class AudioBusRenderer {
     
     
 public:
-    AudioBusRenderer(std::shared_ptr<audium::Playback> playback_) :
-        playback(playback_)
+    AudioBusRenderer(std::shared_ptr<audium::Playback> playback_,
+                     std::shared_ptr<Recording> recording_) :
+        playback(playback_),
+        recording(recording_)
     {
         setMasterGain(1.f);
     }
@@ -80,11 +83,11 @@ public:
 
                     if (audioChannelData[k].record &&
                         audioChannelData[k].channelNumber == i) {
-                        if (recorders.find(k) != recorders.end()) {
+                        if (recording->recorders.find(k) != recording->recorders.end()) {
                             auto input = inputBlock.getSingleChannelBlock(i);
                             auto output = audioBusBlock.getSingleChannelBlock(i);
                             ProcessContextNonReplacing<SampleType> recContext(input, output);
-                            recorders[k]->process( recContext );
+                            recording->recorders[k]->process( recContext );
                         }
                     }
                     
@@ -211,16 +214,6 @@ public:
     
     const AudioChannelData getChannelData(const int channelNumber) const;
     
-    void setRecordEnabled(const int channelNumber,
-                          bool bEnabled,
-                          std::shared_ptr<AudioRecorder> recorder);
-    
-    void record(bool start);
-    
-    void setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber);
-    
-    std::shared_ptr<AudioRecorder> getAudioRecorder(int channelNumber);
-    
     void setMasterGain(const float newGain)
     {
         masterGain.setGainLinear(newGain);
@@ -250,25 +243,15 @@ public:
         return 0.f;
     }
     
-    const juce::File getRecordedFile(const int channelNumber) const
-    {
-        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
-            return recordedFiles[channelNumber];
-        
-        return juce::File();
-    }
-
-    void setRecordedFile(const int channelNumber, const juce::File file)
-    {
-        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
-            recordedFiles[channelNumber] = file;
-    }
+    std::shared_ptr<Recording> getRecording() const { return recording; }
     
-    double getSampleRate() const noexcept { return sampleRate; }
+    void setRecordEnabled(int channelNumber, bool bEnabled) { audioChannelData[channelNumber].record = bEnabled; }
     
 private:
     
     std::shared_ptr<audium::Playback> playback;
+    
+    std::shared_ptr<Recording> recording;
     
     juce::AudioBuffer<SampleType> audioBus;
     juce::AudioBuffer<SampleType> stereoBuffer;
@@ -282,9 +265,6 @@ private:
     std::atomic<float> recordingLevel[MAX_AUDIO_CHANNELS];
     
     AudioChannelData audioChannelData[MAX_AUDIO_CHANNELS];
-    
-    std::map<int, std::shared_ptr<AudioRecorder>> recorders;
-    juce::File recordedFiles[MAX_AUDIO_CHANNELS];
     
     double sampleRate = 0.0;
     

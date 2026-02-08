@@ -13,7 +13,11 @@ namespace audium
 #endif
 
 #ifndef MAX_AUDIO_CHANNELS
-    #define MAX_AUDIO_CHANNELS 128
+    #if JUCE_DEBUG
+        #define MAX_AUDIO_CHANNELS 16 // improve compile time
+    #else
+        #define MAX_AUDIO_CHANNELS 128
+    #endif
 #endif
 
 } // namespace audium
