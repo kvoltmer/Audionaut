@@ -535,7 +535,9 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
 {
     if (audioInputAvailable(channelNumber)) {
 
-        audioTrack->onDragStart();
+        // Undo: store old state
+        auto action = bEnabled ? std::make_unique<audium::UndoableContainerAction>(*engine->getAudioTrackContainer(), false) : nullptr;
+        
         if (ModifierKeys::currentModifiers.isShiftDown())
             audioTrack->setRecordEnabled(-1, bEnabled);
         else
@@ -553,10 +555,12 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
                 scheduler->stopRecording(channelNumber + audioTrack->getChannelOffset());
         }
         
-
-
-        
-        audioTrack->onDragEnd();
+        // Undo: store new state
+        if (action != nullptr) {
+            action->storeNewState();
+            engine->getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
+            engine->getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
+        }
     }
     else {
         if (bEnabled) {
@@ -564,12 +568,7 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
                                                         "No audio input available at this channel.",
                                                         "Please check: Settings ... -> Audio Device Settings");
         }
-        
-        
     }
-
-    
-    
 }
 
 //==============================================================================

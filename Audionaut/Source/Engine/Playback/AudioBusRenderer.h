@@ -83,11 +83,11 @@ public:
 
                     if (audioChannelData[k].record &&
                         audioChannelData[k].channelNumber == i) {
-                        if (recording->recorders.find(k) != recording->recorders.end()) {
+                        if (auto recorder = recording->getAudioRecorder(k)) {
                             auto input = inputBlock.getSingleChannelBlock(i);
                             auto output = audioBusBlock.getSingleChannelBlock(i);
                             ProcessContextNonReplacing<SampleType> recContext(input, output);
-                            recording->recorders[k]->process( recContext );
+                            recorder->process( recContext );
                         }
                     }
                     

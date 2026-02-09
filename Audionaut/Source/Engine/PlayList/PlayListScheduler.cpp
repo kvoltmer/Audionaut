@@ -474,9 +474,6 @@ void PlayListScheduler::startRecording(const int channelNumber, bool beginNewTra
     // only start recording one of the tracks is record-enabled
     if (anyTrackRecordEnabled()) {
         
-        // Undo: store old state
-        auto action = std::make_unique<audium::UndoableContainerAction>(*getAudioTrackContainer(), false);
-        
         if (not isPlaying()) {
             // record from start position
             data.recordingStartPositionClocks = data.startPositionClocks;
@@ -518,12 +515,6 @@ void PlayListScheduler::startRecording(const int channelNumber, bool beginNewTra
         
         data.isRecording = true;
         audioBusInterface->record(true, channelNumber);
-        
-        // Undo: store new state
-        action->storeNewState();
-        getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
-        if (beginNewTransaction)
-            getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
     }
 }
 

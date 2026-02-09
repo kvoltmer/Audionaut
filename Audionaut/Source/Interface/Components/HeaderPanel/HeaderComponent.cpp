@@ -148,7 +148,13 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
         if (playButton->getToggleState()) {
             
             if (scheduler->isRecordingArmed()) {
+                // Undo: store old state
+                auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
                 scheduler->startRecording();
+                // Undo: store new state
+                action->storeNewState();
+                audiumEngine->getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
+                audiumEngine->getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
             }
             scheduler->startPlaying();
         }
