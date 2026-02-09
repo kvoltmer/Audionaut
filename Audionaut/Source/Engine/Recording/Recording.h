@@ -42,12 +42,10 @@ public:
     }
     
     void setSampleRate(double sampleRate_) { sampleRate = sampleRate_; }
-    
-    double getSampleRate() const noexcept { return sampleRate; }
+        
+private:
     
     std::map<int, std::shared_ptr<AudioRecorder>> recorders;
-    
-private:
     
     juce::File recordedFiles[MAX_AUDIO_CHANNELS];
     

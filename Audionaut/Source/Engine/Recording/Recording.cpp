@@ -19,7 +19,7 @@ void Recording::record(bool start, const int channelNumber)
         for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
             if (auto recorder = getAudioRecorder(i)) {
                 if (start) {
-                    auto file = recorder->prepareRecording(take, i, getSampleRate());
+                    auto file = recorder->prepareRecording(take, i, sampleRate);
                     setRecordedFile(i, file);
                     recorder->start();
                 }
@@ -34,7 +34,7 @@ void Recording::record(bool start, const int channelNumber)
             if (start) {
                 auto file = recorder->prepareRecording(take,
                                                        channelNumber,
-                                                       getSampleRate());
+                                                       sampleRate);
                 setRecordedFile(channelNumber, file);
                 recorder->start();
             }

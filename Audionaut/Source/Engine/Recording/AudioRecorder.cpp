@@ -42,6 +42,7 @@ const juce::File AudioRecorder::prepareRecording(const int take,
 
 void AudioRecorder::start()
 {
+    thumbnail = nullptr;
     nextSampleNum = 0;
 
     const juce::ScopedLock sl (writerLock);
