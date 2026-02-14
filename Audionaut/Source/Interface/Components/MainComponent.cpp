@@ -147,6 +147,8 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     }
     else if (message == audium::transportLoopAction) {
         std::cout << "audium::transportLoopAction" << std::endl;
+        audiumEngine->getPlayListScheduler()->onLoopAction();
+        updateUI();
     }
     else if (message == audium::transportLoopEntered) {
         std::cout << "audium::transportLoopEntered" << std::endl;
