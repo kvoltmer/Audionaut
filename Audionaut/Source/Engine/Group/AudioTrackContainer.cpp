@@ -386,5 +386,45 @@ bool AudioTrackContainer::addAudioFiles(const juce::StringArray& filenames,
     return true;
 }
 
+void AudioTrackContainer::updateRecordingLength()
+{
+    bool needToUpdate = false;
+    auto context = audium::clocks;
+    
+    for (auto track : audioTracks) {
+        for (auto item : track->getPlayListContainer()->getPlayListItems()) {
+            if (item->getNeedsLengthUpdate()) {
+                
+                // length is the recorded length less the region start
+                auto length = item->getRecordedLength(context) - item->getRegionData(context).getStart();
+                auto itemRange = item->getAbsolutePositionRange(context);
+                
+                //std::cout << "getRecordedLength " << item << " " << length << std::endl;
+            
+                if (itemRange.getLength() < length) {
+                    itemRange.setLength(length);
+                    
+                    // length must not exceed loop end
+                    if (getTransportLoop()->isLoopActive()) {
+                        auto loopRange = getTransportLoop()->getLoopPositionRange(context);
+                        if (itemRange.intersects(loopRange)) {
+                            if (itemRange.getEnd() > loopRange.getEnd()) {
+                                itemRange.setEnd(loopRange.getEnd());
+                            }
+                        }
+                    }
+                    
+                    item->getRegion()->setRegionLength(itemRange.getLength(), context);
+                    
+                    needToUpdate = true;
+                }
+            }
+        }
+    }
+    
+    if (needToUpdate)
+        sendActionMessage(audium::updateArrangementAction);
+}
+
 } // namespace audium
 

@@ -213,7 +213,7 @@ public:
                                                               const juce::File filename,
                                                               int &destChannel);
     
-    void createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
+    std::shared_ptr<PlayListItem> createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
                                    std::shared_ptr<ResourceGroup> resourceGroup,
                                    double position,
                                    TimeContextType context);

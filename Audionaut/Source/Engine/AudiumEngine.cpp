@@ -150,7 +150,7 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
                     playListScheduler->commitPlayListData();
                     
                     auto audioDir = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
-                    audioResourceContainer->deleteOboleteAudioFiles(audioDir);
+                    audioResourceContainer->deleteObsoleteAudioFiles(audioDir);
                     return true;
                 }
             }

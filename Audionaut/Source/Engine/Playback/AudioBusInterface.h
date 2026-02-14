@@ -71,8 +71,8 @@ public:
     
     void setRecordEnabled(const int channelNumber,
                           bool bEnabled);
-    
-    void setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber);
+        
+    std::shared_ptr<audium::AudioThumbnail> getRecordingThumbnail(int channelNumber) const;
     
     void record(bool start, const int channelNumber = -1);
     

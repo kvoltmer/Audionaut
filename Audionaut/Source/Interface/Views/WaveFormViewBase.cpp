@@ -111,17 +111,14 @@ void WaveFormViewBase::createThumbnailCache()
 
     if (audioResource != nullptr) {
         
-        // create thumbnail
-        auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
-        auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
-        auto sourceSamplesPerThumbnailSample = 64;
-        //auto sourceSamplesPerThumbnailSample = 256;
-        //auto sourceSamplesPerThumbnailSample = 4096*4;
-        audioThumbnail.reset(new audium::AudioThumbnail(sourceSamplesPerThumbnailSample, *formatManager, *thumbnailCache));
-        audioThumbnail->setColour(colour);
-        
         if (audioResource->audioFormatReader != nullptr) {
-            
+            // create thumbnail
+            auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
+            auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
+            auto sourceSamplesPerThumbnailSample = 64;
+            audioThumbnail = std::make_shared<audium::AudioThumbnail>(sourceSamplesPerThumbnailSample,
+                                                                      *formatManager,
+                                                                      *thumbnailCache);
             // reuse shared_ptr if the file is memory mapped
             if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
                 auto hashCode = audioResource->getUrl().toString(true).hashCode64();
@@ -133,16 +130,16 @@ void WaveFormViewBase::createThumbnailCache()
                     audioThumbnail->setSource(inputSource.release());
                 }
             }
-            audioThumbnail->addChangeListener(this);
-        }
-        else {
-            auto sr = audiumEngine->getAudioDeviceManager()->getCurrentAudioDevice()->getCurrentSampleRate();
-            audioThumbnail->reset(1, sr);
-            audioThumbnail->addChangeListener(this);
-            auto busChan = channelNumber + audioResource->getAudioTrack()->getChannelOffset();
-            audiumEngine->getAudioBusInterface()->setRecordingThumbnail(audioThumbnail.get(), busChan);
             
         }
+        else {
+            // get the thumbnail from the recorder
+            auto busChan = channelNumber + audioResource->getAudioTrack()->getChannelOffset();
+            audioThumbnail = audiumEngine->getAudioBusInterface()->getRecordingThumbnail(busChan);
+        }
+        jassert(audioThumbnail);
+        audioThumbnail->addChangeListener(this);
+        audioThumbnail->setColour(colour);
         
     }
     else {

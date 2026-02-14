@@ -144,27 +144,23 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
     return 0.0;
 }
 
-
-void AudioResource::updateRecordingLength()
+double AudioResource::getRecordedLength(audium::TimeContextType context) const
 {
-    // audio resrouce without audioFormatReader -> recording
-    if (audioFormatReader == nullptr) {
-        
-        auto channelOffset = getAudioTrack()->getChannelOffset();
-        auto dstChannel = getChannelMapping().getDestinationChannel();
-        auto audioBusChannel = dstChannel + channelOffset;
-        
-        lengthInSeconds = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedLength(audioBusChannel);
-        
-        if (lengthInSeconds <= 0)
-            lengthInSeconds = 0.1;
-        
-        for (auto region : getResourceGroup()->getAudioRegionContainer()->getObjects()) {
-            // std::cout << "updateRecordingLength " << length << std::endl;
-            if (region->getRegionData(seconds).getLength() < lengthInSeconds)
-                region->setRegionLength(lengthInSeconds, audium::seconds);
-        }
+    auto length = -1.0;
+    if (isRecording()) {
+        auto outChannel = getOutputChannelNumber();
+        length = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedLength(outChannel);
     }
+    
+    if (context == audium::seconds) {
+        return length;
+    }
+    else if (context == audium::clocks) {
+        return owner.getTempoProvider()->secondsToClocks(length);
+    }
+
+    jassertfalse;
+    return length;
 }
 
 int AudioResource::getOutputChannelNumber() const
@@ -288,7 +284,7 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
         lengthInSeconds = input["length_in_seconds"].template get<double>();
     else {
         lengthInSeconds = getFileLength(audium::seconds);
-        std::cout << "readFromJson length " << lengthInSeconds << std::endl;
+//        std::cout << "readFromJson length " << lengthInSeconds << std::endl;
     }
     if (! channelMapping->readFromJson(input, rebuild)) {
         return false;

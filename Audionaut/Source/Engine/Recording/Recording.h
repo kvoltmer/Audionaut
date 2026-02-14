@@ -15,16 +15,15 @@ namespace audium {
 class Recording {
     
 public:
-    Recording() = default;
+    Recording();
+    ~Recording();
     
     void record(bool start, const int channelNumber);
     
     void setRecordEnabled(const int channelNumber,
                           bool bEnabled,
                           std::shared_ptr<AudioRecorder> recorder);
-        
-    void setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber);
-    
+            
     std::shared_ptr<AudioRecorder> getAudioRecorder(int channelNumber);
     
     const juce::File getRecordedFile(const int channelNumber) const
@@ -50,6 +49,11 @@ private:
     juce::File recordedFiles[MAX_AUDIO_CHANNELS];
     
     double sampleRate = 0.0;
+    
+    
+    juce::AudioFormatManager formatManager;
+
+    juce::AudioThumbnailCache audioThumbnailCache;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Recording)
 };

@@ -91,6 +91,12 @@ public:
     
     bool isRecording() const;
     
+    bool getNeedsLengthUpdate() const { return needsLenghtUpdate; }
+    
+    void setNeedsLengthUpdate(bool needsUpdate) { needsLenghtUpdate = needsUpdate; }
+    
+    const double getRecordedLength(audium::TimeContextType context) const;
+    
 private:
     const PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
@@ -104,6 +110,9 @@ private:
     double gain = 1.0;
     double fadeInClocks = 0.0;
     double fadeOutClocks = 0.0;
+    
+    // Recording helper to indicate that the length is changing
+    bool needsLenghtUpdate = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItem)
 };

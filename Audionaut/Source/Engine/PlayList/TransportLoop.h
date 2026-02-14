@@ -90,6 +90,8 @@ public:
      * @brief Resets the loop state to its default configuration.
      */
     void reset();
+    
+    void setAbsoluteStartPosition(double newPosition, audium::TimeContextType context);
 
     LoopData loopData; ///< Data structure for storing loop-related information.
 

@@ -149,7 +149,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
             
             if (scheduler->isRecordingArmed()) {
                 // Undo: store old state
-                auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
+                auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer(), false);
                 scheduler->startRecording();
                 // Undo: store new state
                 action->storeNewState();
@@ -345,7 +345,7 @@ void HeaderComponent::timerCallback()
                                  dontSendNotification);
     
     if (audiumEngine->getPlayListScheduler()->isRecording()) {
-        audiumEngine->getPlayListScheduler()->updateRecordingLength();
+        audiumEngine->getAudioTrackContainer()->updateRecordingLength();
     }
 }
 

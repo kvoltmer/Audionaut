@@ -402,7 +402,7 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
     }
 }
 
-void AudioResourceContainer::deleteOboleteAudioFiles(const juce::File projectDirectory)
+void AudioResourceContainer::deleteObsoleteAudioFiles(const juce::File projectDirectory)
 {
     // consitency check
     std::vector<juce::File> redundantFiles;
@@ -533,12 +533,6 @@ void AudioResourceContainer::onDeleteChannel(AudioTrack* audioTrack, AudioChanne
     {
         removeAudioResource(resource);
     }
-}
-
-void AudioResourceContainer::updateRecordingLength()
-{
-    for (auto &itr : audioResources)
-        itr.second->updateRecordingLength();
 }
 
 void AudioResourceContainer::onRecordingFinished()

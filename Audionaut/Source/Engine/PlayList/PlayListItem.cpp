@@ -267,4 +267,13 @@ bool PlayListItem::isRecording() const
     return false;
 }
 
+const double PlayListItem::getRecordedLength(audium::TimeContextType context) const
+{
+    auto length = 0.0;
+    for (auto res : getRegion()->getAudioResources()) {
+        length = std::max(res->getRecordedLength(context), length);
+    }
+    return length;
+}
+
 } // namespace audium

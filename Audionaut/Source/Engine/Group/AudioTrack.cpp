@@ -712,7 +712,7 @@ std::vector<std::shared_ptr<AudioResource>> AudioTrack::addAudioFile (std::share
     return result;
 }
 
-void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
+std::shared_ptr<PlayListItem> AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
                                            std::shared_ptr<ResourceGroup> resourceGroup,
                                            double position,
                                            audium::TimeContextType context)
@@ -745,8 +745,9 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
     
     
     // create play list item
-    getPlayListContainer()->createPlayListItemAtPositionUI(region, position, context);
+    auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(region, position, context);
     getPlayListContainer()->sortByPosition();
+    return newItem;
 }
 
 double AudioTrack::getTotalLength(audium::TimeContextType context) const

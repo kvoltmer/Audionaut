@@ -175,7 +175,7 @@ public:
     void deleteObsoleteAudioFiles(const json &json);
     
     // delete obsolete files which are not currently loaded
-    void deleteOboleteAudioFiles(const juce::File projectDirectory);
+    void deleteObsoleteAudioFiles(const juce::File projectDirectory);
 
     
     juce::File getCurrentAudioFileDirectory();
@@ -257,7 +257,6 @@ public:
      */
     juce::TimeSliceThread *getReadAheadThread() { return &thread; }
     
-    void updateRecordingLength();
     
     void onRecordingFinished();
     
