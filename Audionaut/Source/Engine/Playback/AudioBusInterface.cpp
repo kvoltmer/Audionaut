@@ -68,13 +68,13 @@ void AudioBusInterface::record(bool start, const int channelNumber)
     audioBusRenderer->getRecording()->record(start, channelNumber);
 }
 
-void AudioBusInterface::setRecordingThumbnail(AudioThumbnail *audioThumbnail, int channelNumber)
+std::shared_ptr<audium::AudioThumbnail> AudioBusInterface::getRecordingThumbnail(int channelNumber) const
 {
-    auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, channelNumber, audioThumbnail] {
-        ptr->getRecording()->setRecordingThumbnail(audioThumbnail, channelNumber);
-    });
+    auto recorder = audioBusRenderer->getRecording()->getAudioRecorder(channelNumber);
+    if (recorder != nullptr)
+        return recorder->getRecordingThumbnail();
     
+    return nullptr;
 }
 
 const juce::File AudioBusInterface::getRecordedAudioFile(int channelNumber)

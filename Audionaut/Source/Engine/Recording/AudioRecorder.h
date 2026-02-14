@@ -26,6 +26,9 @@ public:
     
     bool createThreadedWriter(const double sampleRate, const juce::File recordedFile);
     
+    void createRecordingThumbnail(juce::AudioFormatManager &formatManager,
+                                  juce::AudioThumbnailCache &thumbnailCache);
+    
     const juce::File prepareRecording(const int take,
                                       const int channelNumber,
                                       const double sampleRate);
@@ -38,7 +41,6 @@ public:
         {
             const juce::ScopedLock sl (writerLock);
             activeWriter = nullptr;
-            thumbnail = nullptr;
         }
         
         // Now we can delete the writer object. It's done in this order because the deletion could
@@ -72,15 +74,15 @@ public:
                                              numSamples);
             
             activeWriter.load()->write (buffer.getArrayOfReadPointers(), numSamples);
+            samplesWritten += numSamples;
             
-            if (thumbnail.load() != nullptr) {
-                thumbnail.load()->addBlock (nextSampleNum, buffer, 0, numSamples);
-                nextSampleNum += numSamples;
-            }
+            jassert(recordingThumbnail);
+            recordingThumbnail->addBlock (nextSampleNum, buffer, 0, numSamples);
+            nextSampleNum += numSamples;
         }
     }
-    
-    void setAudioThumbnail(AudioThumbnail *thumbnail_) { thumbnail = thumbnail_; }
+        
+    std::shared_ptr<audium::AudioThumbnail> getRecordingThumbnail() const;
         
     const double getTotalLength() const;
     
@@ -91,11 +93,15 @@ private:
     
     juce::int64 nextSampleNum = 0;
     
+    juce::int64 samplesWritten = 0;
+    
+    double sampleRate = 0.0;
+    
     juce::CriticalSection writerLock;
     
-    std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter { nullptr };
-    
-    std::atomic<AudioThumbnail*> thumbnail { nullptr };
+    std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter = nullptr;
+        
+    std::shared_ptr<audium::AudioThumbnail> recordingThumbnail = nullptr;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRecorder)
 

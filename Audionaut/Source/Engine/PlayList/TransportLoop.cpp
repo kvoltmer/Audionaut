@@ -103,7 +103,10 @@ bool TransportLoop::processLoop(double &thePosition, int numSamples)
             loopResult = true;
         }
         else if (loopRange.contains(thePosition)) {
-            withinLoop = true;
+            if (not withinLoop) {
+                withinLoop = true;
+                tempoProvider->sendActionMessage(audium::transportLoopEntered);
+            }
         }
         else {
             withinLoop = false;
@@ -113,6 +116,11 @@ bool TransportLoop::processLoop(double &thePosition, int numSamples)
         withinLoop = false;
     }
     
+    if (loopResult) {
+        // async message
+        tempoProvider->sendActionMessage(audium::transportLoopAction);
+    }
+    
     return loopResult;
 }
 
@@ -120,6 +128,24 @@ void TransportLoop::reset()
 {
     loopCount = 0;
     withinLoop = false;
+}
+
+void TransportLoop::setAbsoluteStartPosition(double newPosition, audium::TimeContextType context)
+{
+    auto positionClocks = 0.0;
+    if (context == audium::clocks) {
+        positionClocks = newPosition;
+    }
+    else if (context == audium::seconds) {
+        positionClocks = tempoProvider->secondsToClocks(newPosition);
+    }
+    
+    auto loopRange = getLoopPositionRange(audium::clocks);
+    
+    if (loopRange.contains(positionClocks)) {
+        withinLoop = true;
+    }
+    
 }
 
 } // namespace audium

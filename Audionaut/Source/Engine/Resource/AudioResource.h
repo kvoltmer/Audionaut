@@ -137,11 +137,6 @@ public:
     double getFileLength(audium::TimeContextType context) const;
     
     /**
-     * @brief Update the length of the recording.
-     */
-    void updateRecordingLength();
-    
-    /**
      * @brief The output channel number.
      */
     int getOutputChannelNumber() const;
@@ -224,6 +219,8 @@ public:
     
     
     bool isRecording() const { return audioFormatReader == nullptr; }
+    
+    double getRecordedLength(audium::TimeContextType context) const;
     
 private:
     /**

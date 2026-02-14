@@ -51,8 +51,9 @@ public:
 
     ~WaveFormViewBase() override
     {
-        if (audioThumbnail != nullptr)
+        if (audioThumbnail != nullptr) {
             audioThumbnail->removeChangeListener(this);
+        }
     }
     
     void paint (juce::Graphics& g) override;
@@ -85,7 +86,7 @@ protected:
     juce::Colour colour;
     std::shared_ptr<RegionSelector> regionSelector;
     
-    std::unique_ptr<audium::AudioThumbnail> audioThumbnail;
+    std::shared_ptr<audium::AudioThumbnail> audioThumbnail;
     
     static constexpr float verticalZoomFactor = 1.f;
     

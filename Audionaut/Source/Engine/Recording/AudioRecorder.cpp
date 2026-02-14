@@ -25,11 +25,24 @@ bool AudioRecorder::createThreadedWriter(const double sampleRate, const juce::Fi
     return false;
 }
 
+void AudioRecorder::createRecordingThumbnail(juce::AudioFormatManager &formatManager,
+                                             juce::AudioThumbnailCache &thumbnailCache)
+{
+    // create thumbnail
+    auto sourceSamplesPerThumbnailSample = 64;
+    recordingThumbnail = std::make_shared<audium::AudioThumbnail>(sourceSamplesPerThumbnailSample,
+                                                                  formatManager,
+                                                                  thumbnailCache);
+    jassert(sampleRate > 0.0);
+    recordingThumbnail->reset(1, sampleRate);
+}
+
 const juce::File AudioRecorder::prepareRecording(const int take,
                                                  const int channelNumber,
-                                                 const double sampleRate)
+                                                 const double sampleRate_)
 {
     stop();
+    sampleRate = sampleRate_;
     
     if (sampleRate > 0) {
         auto recordedFile = AudioResourceContainer::getAudioRecordingFile(take, channelNumber);
@@ -42,8 +55,8 @@ const juce::File AudioRecorder::prepareRecording(const int take,
 
 void AudioRecorder::start()
 {
-    thumbnail = nullptr;
     nextSampleNum = 0;
+    samplesWritten = 0;
 
     const juce::ScopedLock sl (writerLock);
     activeWriter = threadedWriter.get();
@@ -53,10 +66,17 @@ void AudioRecorder::start()
 
 const double AudioRecorder::getTotalLength() const
 {
-    if (thumbnail.load() != nullptr)
-        return thumbnail.load()->getTotalLength();
+    if (sampleRate > 0.0) {
+        return samplesWritten / sampleRate;
+    }
     
     return 0.0;
 }
+
+std::shared_ptr<audium::AudioThumbnail> AudioRecorder::getRecordingThumbnail() const
+{
+    return recordingThumbnail;
+}
+
 
 } // namespace audium

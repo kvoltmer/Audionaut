@@ -145,6 +145,15 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         audiumEngine->getPlayListScheduler()->onRecordingFinished();
         updateUI();
     }
+    else if (message == audium::transportLoopAction) {
+        std::cout << "audium::transportLoopAction" << std::endl;
+    }
+    else if (message == audium::transportLoopEntered) {
+        std::cout << "audium::transportLoopEntered" << std::endl;
+        audiumEngine->getPlayListScheduler()->onLoopEntered();
+        updateUI();
+    }
+    
     else // update everything (eg. region deleted)
     {
         updateUI();

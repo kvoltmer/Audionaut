@@ -1,12 +1,23 @@
 //    Audionaut - Audio editing application for multitrack recordings.
 //    Copyright (C) 2025 Klaus Voltmer
 //
-//    Audionaut xuses a GPL/commercial licence - see LICENCE.md for details.
+//    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Recording.h"
 #include "Engine/AudiumEngine.h"
 
 namespace audium {
+
+Recording::Recording() :
+    audioThumbnailCache(64)
+{
+    formatManager.registerBasicFormats();
+}
+
+Recording::~Recording()
+{
+    recorders.clear();
+}
 
 void Recording::record(bool start, const int channelNumber)
 {
@@ -21,6 +32,7 @@ void Recording::record(bool start, const int channelNumber)
                 if (start) {
                     auto file = recorder->prepareRecording(take, i, sampleRate);
                     setRecordedFile(i, file);
+                    recorder->createRecordingThumbnail(formatManager, audioThumbnailCache);
                     recorder->start();
                 }
                 else {
@@ -65,17 +77,6 @@ void Recording::setRecordEnabled(const int channelNumber,
         if (recorders.find(channelNumber) != recorders.end()) {
             recorders.erase(channelNumber);
         }
-    }
-}
-
-void Recording::setRecordingThumbnail(AudioThumbnail *audioThumbnail,
-                                                         int channelNumber)
-{
-    if (recorders.find(channelNumber) != recorders.end()) {
-        recorders[channelNumber]->setAudioThumbnail(audioThumbnail);
-    }
-    else {
-        jassertfalse;
     }
 }
 

@@ -25,6 +25,8 @@
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/Region/AudioRegionContainer.h"
+
 
 using namespace::std::chrono;
 
@@ -160,6 +162,7 @@ void PlayListScheduler::startPlaying()
         linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
         transportLoop->reset();
+        transportLoop->setAbsoluteStartPosition(data.startPositionClocks, audium::clocks);
     }
 }
 
@@ -215,6 +218,8 @@ void PlayListScheduler::setAbsoluteStartPosition(double newPosition, audium::Tim
     
     if (!isPlaying()) {
         data.transportPositionClocks = positionClocks;
+        
+        transportLoop->setAbsoluteStartPosition(newPosition, context);
     }
 }
 
@@ -505,10 +510,11 @@ void PlayListScheduler::startRecording(const int channelNumber, bool beginNewTra
                     }
                 }
                 
-                track->createDefaultPlayListItem(resources.front(),
+                auto newItem = track->createDefaultPlayListItem(resources.front(),
                                                  resourceGroup,
                                                  data.recordingStartPositionClocks,
                                                  audium::clocks);
+                newItem->setNeedsLengthUpdate(true);
                 
             }
         }
@@ -532,10 +538,8 @@ void PlayListScheduler::stopRecording(const int channelNumber)
         }
     }
     
-    // tigger async message to load recorded audio files and create tranport sources
+    // tigger async message to load recorded audio files and create transport sources
     audioTrackContainer->sendActionMessage(audium::recordingFinishedAction);
-    
-    
 }
 
 double PlayListScheduler::getRecordingLength(audium::TimeContextType context) const
@@ -553,12 +557,6 @@ bool PlayListScheduler::isRecording() const noexcept
     return data.isRecording;
 }
 
-void PlayListScheduler::updateRecordingLength()
-{
-    audioResourceContainer->updateRecordingLength();
-    audioTrackContainer->sendActionMessage(audium::updateArrangementAction);
-}
-
 void PlayListScheduler::onRecordingFinished()
 {
     audioResourceContainer->onRecordingFinished();
@@ -568,6 +566,53 @@ void PlayListScheduler::onRecordingFinished()
         if (playListItem->getTransportSources().size() == 0) {
             playListItem->createTransportSources();
         }
+        playListItem->setNeedsLengthUpdate(false);
+    }
+}
+
+
+
+void PlayListScheduler::onLoopEntered()
+{
+    auto context = clocks;
+    
+    if (isRecording()) {
+        
+        const auto playListItems = getPlayListItems(false);
+        for (auto item : playListItems) {
+            if (item->isRecording()) {
+                auto track = item->getRegion()->getAudioTrack();
+                
+                auto loopRange = getTransportLoop()->getLoopPositionRange(context);
+                auto absoluteRange = item->getAbsolutePositionRange(context);
+                absoluteRange.setEnd(loopRange.getStart()); // correct
+                auto localRange = item->absoluteToLocalRange(absoluteRange, context);
+                
+                auto regionContainer = item->getRegion()->getResourceGroup()->getAudioRegionContainer();
+                auto resourceGroup = item->getRegion()->getResourceGroup();
+                auto name = regionContainer->getUniqueName(item->getRegion()->getName());
+                auto newRegion = regionContainer->createRegion(name,
+                                                       localRange,
+                                                       track,
+                                                       resourceGroup,
+                                                       item->getRegion(),
+                                                       context);
+                auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, absoluteRange.getStart(), context);
+                newItem->setNeedsLengthUpdate(false);
+                
+                // keep current item
+                item->setAbsoluteStartPosition(loopRange.getStart(), context);
+                item->getRegion()->setRegionStart(localRange.getEnd(), context);
+                item->getRegion()->setRegionLength(0.1, context);
+                item->setNeedsLengthUpdate(true);
+            }
+        }
+        
+        for (auto track : getAudioTrackContainer()->getAudioTracks()) {
+            if (track->isRecording()) {
+            }
+        }
+        
     }
 }
 
