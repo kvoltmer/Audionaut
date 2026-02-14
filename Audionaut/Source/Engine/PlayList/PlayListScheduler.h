@@ -144,6 +144,7 @@ public:
     bool isRecording() const noexcept;
     void onRecordingFinished();
     void onLoopEntered();
+    void onLoopAction();
     
     PlayListSchedulerData data;
     
