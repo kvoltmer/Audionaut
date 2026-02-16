@@ -142,9 +142,6 @@ public:
     void setRecordingArmed(bool bArmed) { data.isRecordingArmed = bArmed; }
     double getRecordingLength(audium::TimeContextType context) const;
     bool isRecording() const noexcept;
-    void onRecordingFinished();
-    void onLoopEntered();
-    void onLoopAction();
     
     PlayListSchedulerData data;
     

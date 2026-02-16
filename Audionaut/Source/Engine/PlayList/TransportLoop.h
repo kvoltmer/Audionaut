@@ -92,6 +92,10 @@ public:
     void reset();
     
     void setAbsoluteStartPosition(double newPosition, audium::TimeContextType context);
+    
+    int getLoopCount() const noexcept { return loopCount; }
+    
+    double getCurrentPosition(audium::TimeContextType context) const noexcept;
 
     LoopData loopData; ///< Data structure for storing loop-related information.
 
@@ -102,6 +106,7 @@ private:
     double externalSampleRate = 44100.0; ///< The external sample rate for playback.
     int loopCount = 0; ///< Counter for the number of loop iterations.
     bool withinLoop = false; ///< Flag indicating whether playback is within the loop range.
+    double currentPosition = 0.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportLoop)
 };

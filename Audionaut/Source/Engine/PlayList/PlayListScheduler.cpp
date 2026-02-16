@@ -514,7 +514,7 @@ void PlayListScheduler::startRecording(const int channelNumber, bool beginNewTra
                                                  resourceGroup,
                                                  data.recordingStartPositionClocks,
                                                  audium::clocks);
-                newItem->setNeedsLengthUpdate(true);
+                newItem->needsLengthUpdate = true;
                 
             }
         }
@@ -555,63 +555,6 @@ double PlayListScheduler::getRecordingLength(audium::TimeContextType context) co
 bool PlayListScheduler::isRecording() const noexcept
 {
     return data.isRecording;
-}
-
-void PlayListScheduler::onRecordingFinished()
-{
-    audioResourceContainer->onRecordingFinished();
-
-    const auto playListItems = getPlayListItems(false);
-    for (auto playListItem : playListItems) {
-        if (playListItem->getTransportSources().size() == 0) {
-            playListItem->createTransportSources();
-        }
-        playListItem->setNeedsLengthUpdate(false);
-    }
-}
-
-
-
-void PlayListScheduler::onLoopEntered()
-{
-    auto context = clocks;
-    
-    if (isRecording()) {
-        
-        const auto playListItems = getPlayListItems(false);
-        for (auto item : playListItems) {
-            if (item->isRecording()) {
-
-                item->setNeedsLengthUpdate(false);
-                auto loopRange = getTransportLoop()->getLoopPositionRange(context);
-                item->setAbsoluteEndPosition(loopRange.getStart(), context);
-                
-                auto regionContainer = item->getRegion()->getResourceGroup()->getAudioRegionContainer();
-                auto name = item->getRegion()->getResourceGroup()->getAudioRegionContainer()->getUniqueName(item->getRegion()->getName());
-                
-                auto regionStart = item->getAbsolutePositionRange(context).getLength();
-                juce::Range<double> newRange(regionStart, regionStart + 0.1);
-                auto track = item->getRegion()->getAudioTrack();
-                auto newRegion = regionContainer->createRegion(name,
-                                                               newRange,
-                                                               track,
-                                                               item->getRegion()->getResourceGroup(),
-                                                               item->getRegion(),
-                                                               context);
-
-                
-                auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, loopRange.getStart(), context);
-                track->getPlayListContainer()->sortByPosition();
-                newItem->setNeedsLengthUpdate(true);
-                
-            }
-        }
-    }
-}
-
-void PlayListScheduler::onLoopAction()
-{
-    
 }
 
 } // namespace audium

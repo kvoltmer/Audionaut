@@ -138,8 +138,10 @@ void WaveFormViewBase::createThumbnailCache()
             audioThumbnail = audiumEngine->getAudioBusInterface()->getRecordingThumbnail(busChan);
         }
         jassert(audioThumbnail);
-        audioThumbnail->addChangeListener(this);
-        audioThumbnail->setColour(colour);
+        if (audioThumbnail != nullptr) {
+            audioThumbnail->addChangeListener(this);
+            audioThumbnail->setColour(colour);
+        }
         
     }
     else {

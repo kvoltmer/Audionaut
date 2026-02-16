@@ -3,21 +3,22 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-
-#include "Interface/Components/HeaderPanel/HeaderComponent.h"
-#include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
-#include "Interface/Components/RightPanel/RightPanelComponent.h"
-
-#include "Application/AudiumApplication.h"
-
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-
 #include "Engine/Export/PlayListItemExport.h"
+#include "Engine/Recording/RecordingActionHandler.h"
+
+#include "Interface/Components/HeaderPanel/HeaderComponent.h"
+#include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
+#include "Interface/Components/RightPanel/RightPanelComponent.h"
 #include "Interface/Models/PlayListTableListBoxItem.h"
+
+#include "Application/AudiumApplication.h"
+
+
 
 #include "MainComponent.h"
 
@@ -142,18 +143,20 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         rightPanelComponent->updateUI(SelectionContext);
     }
     else if (message == audium::recordingFinishedAction) {
-        audiumEngine->getPlayListScheduler()->onRecordingFinished();
+        audiumEngine->getRecordingActionHandler()->onRecordingFinished();
         updateUI();
     }
     else if (message == audium::transportLoopAction) {
-        std::cout << "audium::transportLoopAction" << std::endl;
-        audiumEngine->getPlayListScheduler()->onLoopAction();
-        updateUI();
+        if (audiumEngine->getPlayListScheduler()->isRecording()) {
+            audiumEngine->getRecordingActionHandler()->onLoopAction();
+            updateUI();
+        }
     }
     else if (message == audium::transportLoopEntered) {
-        std::cout << "audium::transportLoopEntered" << std::endl;
-        audiumEngine->getPlayListScheduler()->onLoopEntered();
-        updateUI();
+        if (audiumEngine->getPlayListScheduler()->isRecording()) {
+            audiumEngine->getRecordingActionHandler()->onLoopEntered();
+            updateUI();
+        }
     }
     
     else // update everything (eg. region deleted)

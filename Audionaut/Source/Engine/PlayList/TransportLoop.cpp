@@ -120,7 +120,7 @@ bool TransportLoop::processLoop(double &thePosition, int numSamples)
         // async message
         tempoProvider->sendActionMessage(audium::transportLoopAction);
     }
-    
+    currentPosition = thePosition;
     return loopResult;
 }
 
@@ -146,6 +146,18 @@ void TransportLoop::setAbsoluteStartPosition(double newPosition, audium::TimeCon
         withinLoop = true;
     }
     
+}
+
+double TransportLoop::getCurrentPosition(audium::TimeContextType context) const noexcept
+{
+    if (context == audium::clocks) {
+        return currentPosition;
+    }
+    else if (context == audium::seconds) {
+        return tempoProvider->secondsToClocks(currentPosition);
+    }
+    jassertfalse;
+    return 0.0;
 }
 
 } // namespace audium

@@ -191,6 +191,10 @@
           <FILE id="yfMXHA" name="AudioRecorder.h" compile="0" resource="0" file="Source/Engine/Recording/AudioRecorder.h"/>
           <FILE id="FxX97M" name="Recording.cpp" compile="1" resource="0" file="Source/Engine/Recording/Recording.cpp"/>
           <FILE id="UQtOwn" name="Recording.h" compile="0" resource="0" file="Source/Engine/Recording/Recording.h"/>
+          <FILE id="ODEQLK" name="RecordingActionHandler.cpp" compile="1" resource="0"
+                file="Source/Engine/Recording/RecordingActionHandler.cpp"/>
+          <FILE id="jzGTlj" name="RecordingActionHandler.h" compile="0" resource="0"
+                file="Source/Engine/Recording/RecordingActionHandler.h"/>
         </GROUP>
         <GROUP id="{27408FC8-AAF8-55C4-A1E1-787D504EC3DD}" name="Resource">
           <FILE id="bpy86C" name="AudioResource.cpp" compile="1" resource="0"

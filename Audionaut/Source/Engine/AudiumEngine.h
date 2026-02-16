@@ -24,7 +24,7 @@ class PlayListScheduler;
 struct AutoEditConfig;
 class LinkAudioDevice;
 class AudioBusInterface;
-
+class RecordingActionHandler;
 
 /**
  * @class AudiumEngine
@@ -53,14 +53,16 @@ public:
                  std::shared_ptr<PlayListScheduler> playListScheduler_,
                  std::shared_ptr<LinkAudioDevice> linkAudioDevice_,
                  std::shared_ptr<juce::UndoManager> undoManager_,
-                 std::shared_ptr<AudioBusInterface> audioBusInterface_) :
+                 std::shared_ptr<AudioBusInterface> audioBusInterface_,
+                 std::shared_ptr<RecordingActionHandler> recordingActionHandler_) :
         audioDeviceManager(audioDeviceManager_),
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
         playListScheduler(playListScheduler_),
         linkAudioDevice(linkAudioDevice_),
         undoManager(undoManager_),
-        audioBusInterface(audioBusInterface_)
+        audioBusInterface(audioBusInterface_),
+        recordingActionHandler(recordingActionHandler_)
     {
     }
 
@@ -231,6 +233,12 @@ public:
         return audioBusInterface;
     }
     
+    std::shared_ptr<RecordingActionHandler> getRecordingActionHandler() const
+    {
+        return recordingActionHandler;
+    }
+
+    
     /**
      * @brief Invokes the auto-edit functionality with the given configuration.
      * @param config The `AutoEditConfig` to use for the auto-edit operation.
@@ -301,6 +309,11 @@ private:
      * @brief A shared pointer to the `AudioBusInterface` for audio bus management.
      */
     std::shared_ptr<AudioBusInterface> audioBusInterface;
+    
+    /**
+     * @brief A shared pointer to the `RecordingActionHandler` for recording action management.
+     */
+    std::shared_ptr<RecordingActionHandler> recordingActionHandler;
 
     /**
      * @brief The current project file.
