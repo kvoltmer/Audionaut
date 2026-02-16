@@ -18,7 +18,7 @@
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Recording/Recording.h"
-
+#include "Engine/Recording/RecordingActionHandler.h"
 
 namespace audium {
 
@@ -69,7 +69,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
     
-    
+    auto recordingActionHandler     = std::make_shared<RecordingActionHandler>(audioTrackContainer,
+                                                                               audioResourceContainer,
+                                                                               transportLoop);
     
     auto playListScheduler          = std::make_shared<PlayListScheduler>(audioTrackContainer,
                                                                           audioResourceContainer,
@@ -90,7 +92,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                      playListScheduler,
                                                                      linkAudioDevice,
                                                                      undoManager,
-                                                                     audioBusInterface);
+                                                                     audioBusInterface,
+                                                                     recordingActionHandler);
     
     return audiumEngine;
 }

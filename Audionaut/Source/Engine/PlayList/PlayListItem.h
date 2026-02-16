@@ -91,11 +91,12 @@ public:
     
     bool isRecording() const;
     
-    bool getNeedsLengthUpdate() const { return needsLenghtUpdate; }
-    
-    void setNeedsLengthUpdate(bool needsUpdate) { needsLenghtUpdate = needsUpdate; }
-    
     const double getRecordedLength(audium::TimeContextType context) const;
+    
+    // Recording helpers:
+    bool needsLengthUpdate = false;
+    bool isFirstPartInLoop = false;
+    bool isSecondPartInLoop = false;
     
 private:
     const PlayListContainer &owner;
@@ -110,9 +111,6 @@ private:
     double gain = 1.0;
     double fadeInClocks = 0.0;
     double fadeOutClocks = 0.0;
-    
-    // Recording helper to indicate that the length is changing
-    bool needsLenghtUpdate = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItem)
 };

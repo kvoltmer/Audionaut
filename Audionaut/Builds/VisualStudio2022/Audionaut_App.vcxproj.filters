@@ -910,6 +910,9 @@
     <ClCompile Include="..\..\Source\Engine\Recording\Recording.cpp">
       <Filter>Audionaut\Source\Engine\Recording</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Recording\RecordingActionHandler.cpp">
+      <Filter>Audionaut\Source\Engine\Recording</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Resource\AudioResource.cpp">
       <Filter>Audionaut\Source\Engine\Resource</Filter>
     </ClCompile>
@@ -4162,6 +4165,9 @@
       <Filter>Audionaut\Source\Engine\Recording</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Recording\Recording.h">
+      <Filter>Audionaut\Source\Engine\Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Recording\RecordingActionHandler.h">
       <Filter>Audionaut\Source\Engine\Recording</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Resource\AudioResource.h">

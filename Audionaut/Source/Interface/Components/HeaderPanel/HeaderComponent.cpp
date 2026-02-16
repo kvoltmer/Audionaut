@@ -10,6 +10,7 @@
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/PlayList/TransportLoop.h"
+#include "Engine/Recording/RecordingActionHandler.h"
 
 #include "Interface/Controls/DefaultLabel.h"
 #include "Interface/ColourIds.h"
@@ -345,7 +346,7 @@ void HeaderComponent::timerCallback()
                                  dontSendNotification);
     
     if (audiumEngine->getPlayListScheduler()->isRecording()) {
-        audiumEngine->getAudioTrackContainer()->updateRecordingLength();
+        audiumEngine->getRecordingActionHandler()->onTimerUpdate();
     }
 }
 

@@ -224,8 +224,6 @@ public:
                        bool arrangementMode,
                        std::function<void (std::string)> callback);
     
-    void updateRecordingLength();
-
     std::shared_ptr<AudioBusInterface> audioBusInterface; ///< Shared pointer to the audio bus interface.
     std::vector<std::shared_ptr<AudioTrack>> audioTracks; ///< Vector of shared pointers to audio tracks.
     
