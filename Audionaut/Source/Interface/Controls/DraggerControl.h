@@ -135,9 +135,7 @@ public:
     void commitRangeToEngine(juce::Range<double> rangeInClocks)
     {
         // commit values to engine
-    
         commitData(rangeInClocks, audium::clocks);
-        
     }
     
     void commitData(const juce::Range<double> newData, audium::TimeContextType context);
