@@ -57,6 +57,7 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/Provider/*.cpp
         ${SRC_PATH}/Engine/Region/*.cpp
         ${SRC_PATH}/Engine/Resource/*.cpp
+        ${SRC_PATH}/Engine/Recording/*.cpp
         ${SRC_PATH}/Engine/Undo/*.cpp
         ${SRC_PATH}/Engine/AudioSources/*.cpp
         ${SRC_PATH}/Engine/Export/*.cpp

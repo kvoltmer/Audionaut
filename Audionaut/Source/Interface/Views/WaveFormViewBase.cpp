@@ -130,14 +130,15 @@ void WaveFormViewBase::createThumbnailCache()
                     audioThumbnail->setSource(inputSource.release());
                 }
             }
-            
+            jassert(audioThumbnail);
         }
         else {
             // get the thumbnail from the recorder
             auto busChan = channelNumber + audioResource->getAudioTrack()->getChannelOffset();
             audioThumbnail = audiumEngine->getAudioBusInterface()->getRecordingThumbnail(busChan);
+            jassert(audioThumbnail);
         }
-        jassert(audioThumbnail);
+        
         if (audioThumbnail != nullptr) {
             audioThumbnail->addChangeListener(this);
             audioThumbnail->setColour(colour);

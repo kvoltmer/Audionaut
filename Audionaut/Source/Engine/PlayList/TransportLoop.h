@@ -95,6 +95,10 @@ public:
     
     int getLoopCount() const noexcept { return loopCount; }
     
+    double getLoopPhaseForPosition(double startPosition,
+                                double length,
+                                audium::TimeContextType context) const;
+    
     double getCurrentPosition(audium::TimeContextType context) const noexcept;
 
     LoopData loopData; ///< Data structure for storing loop-related information.
@@ -107,6 +111,7 @@ private:
     int loopCount = 0; ///< Counter for the number of loop iterations.
     bool withinLoop = false; ///< Flag indicating whether playback is within the loop range.
     double currentPosition = 0.0;
+    double virtualPosition = 0.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportLoop)
 };

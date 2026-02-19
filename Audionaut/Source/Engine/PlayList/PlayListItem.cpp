@@ -276,4 +276,27 @@ const double PlayListItem::getRecordedLength(audium::TimeContextType context) co
     return length;
 }
 
+const double PlayListItem::getRecordingStartPosition(audium::TimeContextType context) const
+{
+    auto audioBusInterface = audioRegion->getAudioTrack()->getAudioTrackContainer().audioBusInterface;
+    auto resources = getRegion()->getAudioResources();
+    if (resources.size() > 0) {
+        auto outChannel = resources[0]->getOutputChannelNumber();
+        auto pos = audioBusInterface->getRecordingStartPosition(outChannel);
+        
+        
+        
+        if (context == audium::seconds) {
+            return owner.getTempoProvider()->clocksToSeconds(pos);
+        }
+        else if (context == audium::clocks) {
+            return pos;
+        }
+        
+    }
+    jassertfalse;
+    return 0.0;
+}
+
+
 } // namespace audium

@@ -74,11 +74,13 @@ public:
         
     std::shared_ptr<audium::AudioThumbnail> getRecordingThumbnail(int channelNumber) const;
     
-    void record(bool start, const int channelNumber = -1);
+    void record(bool start, const int channelNumber = -1, const double positionClocks = -1.0);
     
     const juce::File getRecordedAudioFile(int channelNumber);
     
     const double getRecordedLength(int channelNumber) const;
+    
+    const double getRecordingStartPosition(int channelNumber) const;
     
     bool isRecording(int channelNumber) const;
     
