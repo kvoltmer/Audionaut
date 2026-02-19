@@ -144,6 +144,7 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     }
     else if (message == audium::recordingFinishedAction) {
         audiumEngine->getRecordingActionHandler()->onRecordingFinished();
+        audiumEngine->getPlayListScheduler()->commitPlayListData();
         updateUI();
     }
     else if (message == audium::transportLoopAction) {

@@ -461,7 +461,7 @@ void PlayListScheduler::commitPlayListData()
         totalLength = juce::jmax(totalLength, track->getTotalLength(audium::clocks));
     }
     totalLengthClocks = totalLength;
-    // std::cout << "PlayListScheduler::commitPlayListData -> totalLengthClocks: " << totalLengthClocks << std::endl;
+    //std::cout << "PlayListScheduler::commitPlayListData -> totalLengthClocks: " << totalLengthClocks << std::endl;
 }
 
 bool PlayListScheduler::anyTrackRecordEnabled() const
