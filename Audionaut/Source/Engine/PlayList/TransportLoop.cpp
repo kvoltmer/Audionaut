@@ -168,29 +168,20 @@ double TransportLoop::getCurrentPosition(audium::TimeContextType context) const 
 }
 
 double TransportLoop::getLoopPhaseForPosition(double startPosition,
-                                              double length,
+                                              double duration,
                                               audium::TimeContextType context) const
 {
     if (context == audium::seconds) {
         startPosition = tempoProvider->secondsToClocks(startPosition);
-        length = tempoProvider->secondsToClocks(length);
+        duration = tempoProvider->secondsToClocks(duration);
     }
     auto loopRange = getLoopPositionRange(context);
-    auto loopLength = loopRange.getLength();
-    auto loopStart = loopRange.getStart();
-
-//    if (startPosition > loopStart)
-//        startPosition += (loopLength - loopStart);
-//    else
-//        startPosition -= loopStart;
-//
-//    auto count = (startPosition + length) / loopLength;
-    
-    auto durationInLoop = startPosition + length - loopStart;
-    auto phase = durationInLoop / loopLength;
-    
-    std::cout << "getLoopPhaseForPosition " << phase << std::endl;
-    return phase;
+    if (loopRange.getLength() > 0.0) {
+        auto durationInLoop = startPosition + duration - loopRange.getStart();
+        return durationInLoop / loopRange.getLength();
+    }
+    jassertfalse;
+    return 0.0;
 }
 
 } // namespace audium

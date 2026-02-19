@@ -141,9 +141,7 @@ void RecordingActionHandler::onTimerUpdate()
                     
                     needToUpdate = true;
                 }
-                
-                //std::cout << "getRecordedLength " << item << " " << length << std::endl;
-                
+                                
                 if (transportLoop->isLoopActive()) {
                     auto currPos = transportLoop->getCurrentPosition(context);
                     // std::cout << "loop " << loopRange.getStart() << " " << currPos << " " << loopRange.getEnd() << std::endl;
@@ -158,10 +156,7 @@ void RecordingActionHandler::onTimerUpdate()
                     else if (item->isSecondPartInLoop) {
                         item->setAbsoluteStartPosition(currPos, context);
                     }
-
                 }
-                
-
             }
         }
     }

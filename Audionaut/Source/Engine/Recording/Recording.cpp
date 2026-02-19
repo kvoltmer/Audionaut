@@ -35,7 +35,7 @@ void Recording::record(bool start,
         if (auto recorder = getAudioRecorder(channelNumber)) {
             if (start) {
                 recordingStartPositionClocks[channelNumber] = positionClocks;
-                std::cout << "start rec " << channelNumber << " pos " << positionClocks << std::endl;
+                // std::cout << "start rec " << channelNumber << " pos " << positionClocks << std::endl;
                 setRecordedFile(channelNumber, recorder->prepareRecording(AudiumEngine::recordingCounter,
                                                                           channelNumber,
                                                                           sampleRate));
