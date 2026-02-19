@@ -15,13 +15,16 @@ void RecordingActionHandler::onRecordingFinished()
 
     for (auto track : audioTrackContainer->getAudioTracks()) {
         for (auto playListItem : track->getPlayListContainer()->getPlayListItems()) {
-            if (playListItem->getTransportSources().size() == 0) {
-                playListItem->createTransportSources();
+            if (not playListItem->isRecording()) {
+                if (playListItem->getTransportSources().size() == 0) {
+                    playListItem->createTransportSources();
+                }
+                playListItem->needsLengthUpdate = false;
             }
-            playListItem->needsLengthUpdate = false;
         }
     }
 }
+
 void RecordingActionHandler::onLoopEntered()
 {
     auto context = audium::clocks;
@@ -61,10 +64,20 @@ void RecordingActionHandler::onLoopAction()
         
     for (auto track : audioTrackContainer->getAudioTracks()) {
         for (auto item : track->getPlayListContainer()->getPlayListItems()) {
-            if (item->isRecording() && item->needsLengthUpdate) {
+            if (item != nullptr &&
+                item->isRecording() &&
+                item->needsLengthUpdate) {
+                
+                // calc loop count based on recording start pos and recorded length (duration)
+                auto loop = audioTrackContainer->getTransportLoop();
+                auto phase = loop->getLoopPhaseForPosition(item->getRecordingStartPosition(context),
+                                                           item->getRecordedLength(context),
+                                                           context);
+                // timing is a bit off so we need to add 0.1 to the phase (0.9947 + 0.1 = 1)
+                auto count = static_cast<int>(phase + 0.1);
                 
                 // if we hit the loop the first time, we split the current item into 2
-                if (transportLoop->getLoopCount() == 1) {
+                if (count == 1) {
                     
                     // clone is FIRST part in the loop
                     auto clone = track->getPlayListContainer()->clonePlayListItem(item);
@@ -84,13 +97,12 @@ void RecordingActionHandler::onLoopAction()
                     
                     track->getPlayListContainer()->sortByPosition();
                 }
-                
-                // for all other loop events we simply move the region start by the loop length
-                // TODO: better store the absolute position of the recording start and calc the accurate region start (% loop length)
-                if (transportLoop->getLoopCount() > 1) {
+                else if (count > 1) {
+                    // for all other loop events we simply move the region start by the loop length
                     if (item->isFirstPartInLoop ||
                         item->isSecondPartInLoop) {
                         auto regionData = item->getRegionData(context);
+                        // TODO: better store the absolute position of the recording start and calc the accurate region start (% loop length)
                         regionData = regionData.movedToStartAt(regionData.getStart() + loopRange.getLength());
                         item->setRegionData(regionData, context);
                     }

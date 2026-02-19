@@ -63,9 +63,11 @@ void AudioBusInterface::setRecordEnabled(const int channelNumber,
 
 }
 
-void AudioBusInterface::record(bool start, const int channelNumber)
+void AudioBusInterface::record(bool start, const int channelNumber, const double positionClocks)
 {
-    audioBusRenderer->getRecording()->record(start, channelNumber);
+    if (start)
+        AudiumEngine::recordingCounter++;
+    audioBusRenderer->getRecording()->record(start, channelNumber, positionClocks);
 }
 
 std::shared_ptr<audium::AudioThumbnail> AudioBusInterface::getRecordingThumbnail(int channelNumber) const
@@ -91,6 +93,11 @@ const double AudioBusInterface::getRecordedLength(int channelNumber) const
         return recorder->getTotalLength();
     else
         return 0.1;
+}
+
+const double AudioBusInterface::getRecordingStartPosition(int channelNumber) const
+{
+    return audioBusRenderer->getRecording()->getRecordingStartPosition(channelNumber);
 }
 
 bool AudioBusInterface::isRecording(int channelNumber) const

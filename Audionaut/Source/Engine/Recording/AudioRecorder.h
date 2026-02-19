@@ -76,9 +76,10 @@ public:
             activeWriter.load()->write (buffer.getArrayOfReadPointers(), numSamples);
             samplesWritten += numSamples;
             
-            jassert(recordingThumbnail);
-            recordingThumbnail->addBlock (nextSampleNum, buffer, 0, numSamples);
-            nextSampleNum += numSamples;
+            if (recordingThumbnail != nullptr) {
+                recordingThumbnail->addBlock (nextSampleNum, buffer, 0, numSamples);
+                nextSampleNum += numSamples;
+            }
         }
     }
         

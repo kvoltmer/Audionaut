@@ -136,11 +136,12 @@ public:
     
     // recording
     bool anyTrackRecordEnabled() const;
-    void startRecording(const int channelNumber = -1, bool beginNewTransaction = true);
+    void startRecording(const int channelNumber = -1);
     void stopRecording(const int channelNumber = -1);
     bool isRecordingArmed() const noexcept { return data.isRecordingArmed; }
     void setRecordingArmed(bool bArmed) { data.isRecordingArmed = bArmed; }
     double getRecordingLength(audium::TimeContextType context) const;
+    
     bool isRecording() const noexcept;
     
     PlayListSchedulerData data;

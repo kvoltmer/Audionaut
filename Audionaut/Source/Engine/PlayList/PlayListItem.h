@@ -93,6 +93,8 @@ public:
     
     const double getRecordedLength(audium::TimeContextType context) const;
     
+    const double getRecordingStartPosition(audium::TimeContextType context) const;
+    
     // Recording helpers:
     bool needsLengthUpdate = false;
     bool isFirstPartInLoop = false;

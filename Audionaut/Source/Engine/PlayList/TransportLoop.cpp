@@ -27,7 +27,9 @@ void TransportLoop::setLoopPositionRange(std::shared_ptr<AudioTrackContainer> au
         if (newRange.getLength() >= minLength) {
             
             // undo
-            auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get(), false);
+            std::unique_ptr<UndoableContainerAction> action = nullptr;
+            if (audioTrackContainer != nullptr)
+                action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get(), false);
             
             if (context == audium::seconds)
                 newRange = tempoProvider->secondsToClocks(newRange);
@@ -44,9 +46,12 @@ void TransportLoop::setLoopPositionRange(std::shared_ptr<AudioTrackContainer> au
             
             
             // undo
-            action->storeNewState();
-            undoManager->perform(action.release(), "Change Loop");
-            undoManager->beginNewTransaction();
+            if (action != nullptr &&
+                undoManager != nullptr) {
+                action->storeNewState();
+                undoManager->perform(action.release(), "Change Loop");
+                undoManager->beginNewTransaction();
+            }
         }
     }
     else {
@@ -79,13 +84,15 @@ void TransportLoop::setLoopActive(bool bActive)
     loopData.loopActive = bActive;
 }
 
-
 bool TransportLoop::processLoop(double &thePosition, int numSamples)
 {
-    auto loopResult = false;
+    virtualPosition = thePosition;
+    
+    auto loopEvent = false;
     
     auto loopRange = getLoopPositionRange(audium::clocks);
     
+    jassert(externalSampleRate > 0.0);
     auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(numSamples) / externalSampleRate);
     
     // subtract previous loops
@@ -100,7 +107,7 @@ bool TransportLoop::processLoop(double &thePosition, int numSamples)
             
             thePosition -= loopRange.getLength();
             loopCount++;
-            loopResult = true;
+            loopEvent = true;
         }
         else if (loopRange.contains(thePosition)) {
             if (not withinLoop) {
@@ -116,12 +123,12 @@ bool TransportLoop::processLoop(double &thePosition, int numSamples)
         withinLoop = false;
     }
     
-    if (loopResult) {
+    if (loopEvent) {
         // async message
         tempoProvider->sendActionMessage(audium::transportLoopAction);
     }
     currentPosition = thePosition;
-    return loopResult;
+    return loopEvent;
 }
 
 void TransportLoop::reset()
@@ -158,6 +165,32 @@ double TransportLoop::getCurrentPosition(audium::TimeContextType context) const 
     }
     jassertfalse;
     return 0.0;
+}
+
+double TransportLoop::getLoopPhaseForPosition(double startPosition,
+                                              double length,
+                                              audium::TimeContextType context) const
+{
+    if (context == audium::seconds) {
+        startPosition = tempoProvider->secondsToClocks(startPosition);
+        length = tempoProvider->secondsToClocks(length);
+    }
+    auto loopRange = getLoopPositionRange(context);
+    auto loopLength = loopRange.getLength();
+    auto loopStart = loopRange.getStart();
+
+//    if (startPosition > loopStart)
+//        startPosition += (loopLength - loopStart);
+//    else
+//        startPosition -= loopStart;
+//
+//    auto count = (startPosition + length) / loopLength;
+    
+    auto durationInLoop = startPosition + length - loopStart;
+    auto phase = durationInLoop / loopLength;
+    
+    std::cout << "getLoopPhaseForPosition " << phase << std::endl;
+    return phase;
 }
 
 } // namespace audium

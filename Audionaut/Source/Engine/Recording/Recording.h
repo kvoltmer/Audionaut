@@ -18,7 +18,7 @@ public:
     Recording();
     ~Recording();
     
-    void record(bool start, const int channelNumber);
+    void record(bool start, const int channelNumber, const double positionClocks);
     
     void setRecordEnabled(const int channelNumber,
                           bool bEnabled,
@@ -42,11 +42,15 @@ public:
     
     void setSampleRate(double sampleRate_) { sampleRate = sampleRate_; }
         
+    const double getRecordingStartPosition(int c) const { return recordingStartPositionClocks[c]; }
+    
 private:
     
     std::map<int, std::shared_ptr<AudioRecorder>> recorders;
     
     juce::File recordedFiles[MAX_AUDIO_CHANNELS];
+    
+    double recordingStartPositionClocks[MAX_AUDIO_CHANNELS];
     
     double sampleRate = 0.0;
     

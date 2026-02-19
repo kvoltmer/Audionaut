@@ -38,7 +38,6 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
 {
     externalSampleRate = sampleRate;
     bufferSize = samplesPerBlockExpected;
-    tempoProvider->prepareToPlay(samplesPerBlockExpected, sampleRate);
     transportSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
     playback->prepareToPlay(samplesPerBlockExpected, sampleRate);
     audioBusInterface->prepareToPlay(samplesPerBlockExpected, sampleRate);
@@ -474,7 +473,7 @@ bool PlayListScheduler::anyTrackRecordEnabled() const
     return false;
 }
 
-void PlayListScheduler::startRecording(const int channelNumber, bool beginNewTransaction)
+void PlayListScheduler::startRecording(const int channelNumber)
 {
     // only start recording one of the tracks is record-enabled
     if (anyTrackRecordEnabled()) {
@@ -520,7 +519,9 @@ void PlayListScheduler::startRecording(const int channelNumber, bool beginNewTra
         }
         
         data.isRecording = true;
-        audioBusInterface->record(true, channelNumber);
+        audioBusInterface->record(true,
+                                  channelNumber,
+                                  data.recordingStartPositionClocks);
     }
 }
 
@@ -540,6 +541,7 @@ void PlayListScheduler::stopRecording(const int channelNumber)
     
     // tigger async message to load recorded audio files and create transport sources
     audioTrackContainer->sendActionMessage(audium::recordingFinishedAction);
+
 }
 
 double PlayListScheduler::getRecordingLength(audium::TimeContextType context) const

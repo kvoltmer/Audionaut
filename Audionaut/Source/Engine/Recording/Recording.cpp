@@ -19,35 +19,27 @@ Recording::~Recording()
     recorders.clear();
 }
 
-void Recording::record(bool start, const int channelNumber)
+void Recording::record(bool start,
+                       const int channelNumber,
+                       const double positionClocks)
 {
-    auto take = AudiumEngine::recordingCounter;
-    if (start)
-        AudiumEngine::recordingCounter++;
-    
     if (channelNumber < 0) {
         
         for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
             if (auto recorder = getAudioRecorder(i)) {
-                if (start) {
-                    auto file = recorder->prepareRecording(take, i, sampleRate);
-                    setRecordedFile(i, file);
-                    recorder->createRecordingThumbnail(formatManager, audioThumbnailCache);
-                    recorder->start();
-                }
-                else {
-                    recorder->stop();
-                }
+                record(start, i, positionClocks); // recursion
             }
         }
     }
     else {
         if (auto recorder = getAudioRecorder(channelNumber)) {
             if (start) {
-                auto file = recorder->prepareRecording(take,
-                                                       channelNumber,
-                                                       sampleRate);
-                setRecordedFile(channelNumber, file);
+                recordingStartPositionClocks[channelNumber] = positionClocks;
+                std::cout << "start rec " << channelNumber << " pos " << positionClocks << std::endl;
+                setRecordedFile(channelNumber, recorder->prepareRecording(AudiumEngine::recordingCounter,
+                                                                          channelNumber,
+                                                                          sampleRate));
+                recorder->createRecordingThumbnail(formatManager, audioThumbnailCache);
                 recorder->start();
             }
             else {
@@ -65,7 +57,7 @@ void Recording::setRecordEnabled(const int channelNumber,
                                  bool bEnabled,
                                  std::shared_ptr<AudioRecorder> recorder)
 {
-    std::cout << "setRecordEnabled " << channelNumber << " " << bEnabled << std::endl;
+    //std::cout << "setRecordEnabled " << channelNumber << " " << bEnabled << std::endl;
 
     if (bEnabled) {
         if (recorders.find(channelNumber) == recorders.end()) {

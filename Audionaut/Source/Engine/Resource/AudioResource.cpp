@@ -173,12 +173,13 @@ int AudioResource::getOutputChannelNumber() const
 bool AudioResource::loadRecordedAudioFile()
 {
     auto audioBusChannel = getOutputChannelNumber();
+    auto audioBusInterface = getAudioTrack()->getAudioTrackContainer().audioBusInterface;
     
     // audio resrouce without audioFormatReader -> recording
     if (audioFormatReader == nullptr &&
-        not getAudioTrack()->getAudioTrackContainer().audioBusInterface->isRecording(audioBusChannel)) {
-        
-        auto file = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedAudioFile(audioBusChannel);
+        not audioBusInterface->isRecording(audioBusChannel)) {
+        // std::cout << "load rec file at channel " << audioBusChannel << std::endl;
+        auto file = audioBusInterface->getRecordedAudioFile(audioBusChannel);
         
         if (file.existsAsFile()) {
             // std::cout << file.getFullPathName() << std::endl;

@@ -380,12 +380,14 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
                     break;
                 }
             }
-
-            auto result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
+            auto result = true;
+#if !defined(CATCH2_TESTS)
+            result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
                                                             "Redundant files found. Move files to trash?",
                                                             "The following audio files are not used in the project anymore:\n\n" +
                                                             redundantFilesString +
                                                             "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
+#endif
             if (result) {
                 bool success = true;
                 for (auto& file : redundantFiles) {
@@ -426,12 +428,14 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const juce::File projectDi
             }
         }
         
-        
-        auto result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
+        auto result = true;
+#if !defined(CATCH2_TESTS)
+        result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
                                                         "Redundant files found. Move files to trash?",
                                                         "The following audio files are not used in the project anymore:\n\n" +
                                                         redundantFilesString +
                                                         "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
+#endif
         if (result) {
             bool success = true;
             for (auto& file : redundantFiles) {
