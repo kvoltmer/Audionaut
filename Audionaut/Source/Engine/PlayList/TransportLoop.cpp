@@ -84,11 +84,9 @@ void TransportLoop::setLoopActive(bool bActive)
     loopData.loopActive = bActive;
 }
 
-bool TransportLoop::processLoop(double &thePosition, int numSamples)
+const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition, int numSamples)
 {
-    virtualPosition = thePosition;
-    
-    auto loopEvent = false;
+    TransportLoop::LoopResult result;
     
     auto loopRange = getLoopPositionRange(audium::clocks);
     
@@ -107,7 +105,7 @@ bool TransportLoop::processLoop(double &thePosition, int numSamples)
             
             thePosition -= loopRange.getLength();
             loopCount++;
-            loopEvent = true;
+            result.loopEvent = true;
         }
         else if (loopRange.contains(thePosition)) {
             if (not withinLoop) {
@@ -123,12 +121,15 @@ bool TransportLoop::processLoop(double &thePosition, int numSamples)
         withinLoop = false;
     }
     
-    if (loopEvent) {
+    if (result.loopEvent) {
         // async message
         tempoProvider->sendActionMessage(audium::transportLoopAction);
     }
     currentPosition = thePosition;
-    return loopEvent;
+    
+    result.positionResult = thePosition;
+    
+    return result;
 }
 
 void TransportLoop::reset()
