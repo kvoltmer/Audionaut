@@ -44,8 +44,11 @@ void AudioExportThread::bounce()
             else {
                 audiumEngine.getPlayListScheduler()->bounceProject(writer.get(), config, [this](void) {
                     setProgress(config->progress);
+
+#if !defined(CATCH2_TESTS)
                     if (threadShouldExit() || !isThreadRunning())
                         config->userCanceled = true;
+#endif
                     
                 });
             }

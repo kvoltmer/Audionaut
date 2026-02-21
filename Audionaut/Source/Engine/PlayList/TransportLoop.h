@@ -78,13 +78,19 @@ public:
      */
     void setLoopActive(bool bActive);
 
+    struct LoopResult {
+        double positionResult = 0.0;
+        bool loopEvent = false;
+        int numSamplesUntilLoop = 0;
+    };
+    
     /**
      * @brief Processes the loop during playback.
      * @param thePosition Reference to the current playback position.
      * @param numSamples The number of samples to process.
      * @return True if the loop was processed, false otherwise.
      */
-    bool processLoop(double &thePosition, int numSamples);
+    const LoopResult processLoop(double thePosition, int numSamples);
 
     /**
      * @brief Resets the loop state to its default configuration.
@@ -111,7 +117,6 @@ private:
     int loopCount = 0; ///< Counter for the number of loop iterations.
     bool withinLoop = false; ///< Flag indicating whether playback is within the loop range.
     double currentPosition = 0.0;
-    double virtualPosition = 0.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportLoop)
 };

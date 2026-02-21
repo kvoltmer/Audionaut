@@ -7,6 +7,8 @@
     <false/>
     <key>NSMicrophoneUsageDescription</key>
     <string>This app requires audio input. If you do not have an audio interface connected it will use the built-in microphone.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>This app requires access to the local network to function correctly.</string>
     <key>CFBundleExecutable</key>
     <string>${EXECUTABLE_NAME}</string>
     <key>CFBundleIconFile</key>
@@ -48,8 +50,6 @@
         <string>XML</string>
         <key>LSHandlerRank</key>
         <string>Default</string>
-        <key>LSTypeIsPackage</key>
-        <true/>
       </dict>
     </array>
   </dict>

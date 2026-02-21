@@ -300,6 +300,8 @@ void HeaderComponent::updateUI()
     auto loopActive = audiumEngine->getPlayListScheduler()->getTransportLoop()->isLoopActive();
     loopButton->setToggleState(loopActive, dontSendNotification);
     
+    linkButton->setToggleState(audiumEngine->getPlayListScheduler()->getLinkEngine()->isEnabled(), dontSendNotification);
+    
 }
 
 void HeaderComponent::timerCallback()
