@@ -69,12 +69,11 @@ public:
     void renderMetronomeIntoBuffer(double quantum,
                                    std::chrono::microseconds beginHostTime,
                                    std::size_t numSamples);
-
-    void triggerScheduler(const double quantum,
-                          const std::chrono::microseconds beginHostTime,
-                          const std::size_t numSamples);
     
-    void audioCallback(const std::chrono::microseconds hostTime, std::size_t numSamples);
+    double beatAtTime(std::chrono::microseconds time,
+                      double quantum) const;
+    
+    bool audioCallback(const std::chrono::microseconds hostTime, std::size_t numSamples);
 
     
     double mSampleRate;
@@ -87,8 +86,6 @@ public:
     std::mutex mEngineDataGuard;
 
     static constexpr double beat_length = 1.;
-
-    std::function<void(bool, double, int)> tickCallback;
     
 private:
     

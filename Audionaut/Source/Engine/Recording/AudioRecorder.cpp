@@ -5,14 +5,20 @@
 
 namespace audium {
 
-bool AudioRecorder::createThreadedWriter(const double sampleRate, const juce::File recordedFile)
+bool AudioRecorder::createThreadedWriter(const double sampleRate_, const juce::File recordedFile)
 {
     jassert(!recordedFile.existsAsFile());
     
     if (auto fileStream = std::unique_ptr<juce::FileOutputStream> (recordedFile.createOutputStream())) {
         juce::WavAudioFormat wavFormat;
         
-        if (auto writer = wavFormat.createWriterFor (fileStream.get(), sampleRate, 1, 24, {}, 0))
+// TODO: 
+//        auto opt = AudioFormatWriter::Options{}.withSampleRate (sampleRate)
+//                                               .withNumChannels (1)
+//                                               .withBitsPerSample (24);
+//        auto writer = wavFormat.createWriterFor (fileStream, opt);
+        
+        if (auto writer = wavFormat.createWriterFor (fileStream.get(), sampleRate_, 1, 24, {}, 0))
         {
             // (passes responsibility for deleting the stream to the writer object that is now using it)
             fileStream.release();

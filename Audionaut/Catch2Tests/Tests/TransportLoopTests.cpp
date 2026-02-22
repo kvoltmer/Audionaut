@@ -80,42 +80,88 @@ SCENARIO("transport loop scenario", "[engine][transport][loop]")
     juce::MessageManager::deleteInstance();
 }
 
+static const File createTestFile()
+{
+    auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/slow-saw.wav"));
+    TemporaryFile tempFile (targetFile);
+    
+    std::unique_ptr<OutputStream> stream (tempFile.getFile().createOutputStream());
+    jassert(stream);
+    if (stream != nullptr) {
+        WavAudioFormat wav;
+        auto opt = AudioFormatWriter::Options{}.withSampleRate (44100.0)
+            .withNumChannels (1)
+            .withBitsPerSample (32)
+            .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
+        auto writer = wav.createWriterFor (stream, opt);
+        jassert(writer);
+        if (writer != nullptr) {
+            
+            auto blockSize = 44100;
+            auto totalSamples = 44100 * 3; // 3 seconds
+            auto iterations     = totalSamples / blockSize;
+            
+            AudioBuffer<float> buffer(1, blockSize);
+            AudioSourceChannelInfo info (&buffer, 0, blockSize);
+            
+            for (auto i = 0; i < iterations; ++i) {
+                // generate a saw [-1, +1] for each iteration
+                auto buf = info.buffer->getWritePointer(0);
+                for (auto s = 0; s < blockSize; s++) {
+                    auto val = static_cast<float>(s) / static_cast<float>(blockSize-1);
+                    val = (val * 2.f) - 1.f; // [-1, +1]
+                    buf[s] = val;
+                }
+//                std::cout << buf[blockSize-1] << std::endl;
+                writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            }
+            writer.reset();
+            tempFile.overwriteTargetFileWithTemporary();
+            return tempFile.getTargetFile();
+        }
+    }
+    return File();
+}
+
 
 SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
 {
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     
+    auto audioFile = createTestFile();
+    jassert(audioFile.existsAsFile());
     
-    
-    auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/simple-sine-loop.audium"));
-    REQUIRE(fileUnderTest.exists());
+    auto outFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/out-slow-saw.wav"));
     
     GIVEN("Load session file (audio file starts: at second 1 with 1 second duration)")
     {
-        auto engine     = AudiumFactory::createAudiumEngine();
-        auto ok = engine->openFile(fileUnderTest, nullptr);
+        auto engine = AudiumFactory::createAudiumEngine();
+        auto ok = engine->openFile(audioFile, nullptr);
         REQUIRE(ok);
+        engine->getPlayListScheduler()->commitPlayListData();
+        auto loop = engine->getPlayListScheduler()->getTransportLoop();
+        loop->setLoopActive(true);
+        loop->setLoopPositionRange(nullptr, {1.0, 2.0}, audium::seconds);
+        
         
         WHEN("bouncing session")
         {
             auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
             
-            bounceConfig->fileName = juce::File::createTempFile(".wav");
+            bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/out-slow-saw.wav"));
             bounceConfig->sampleRate = 44100.0;
-            //bounceConfig->positionSeconds = 1.5;
-            bounceConfig->positionSeconds = 0.0;
-            
+
             auto totalLength = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
-            totalLength -= bounceConfig->positionSeconds;
+            REQUIRE(totalLength == Catch::Approx(3.0));
+            
+            bounceConfig->lengthSeconds = 6.0;
             
             // bounce to file
             auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
             exporter->bounce();
             std::cout << "bounceToFile -> " << bounceConfig->fileName.getFullPathName() << std::endl;
             exporter = nullptr;
-
-#if 0
 
             THEN("examine bounced audio file")
             {
@@ -126,8 +172,7 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
                 std::unique_ptr<AudioFormatReader> reader;
                 reader.reset(formatManager.createReaderFor(bounceConfig->fileName));
 
-                if (reader != nullptr)
-                {
+                if (reader != nullptr) {
                     AudioBuffer<float> buffer((int)reader->numChannels, (int)reader->lengthInSamples);
                     
                     auto success = reader->read(&buffer,
@@ -138,63 +183,35 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
                                                 true);
                     // read should be successful
                     REQUIRE(success);
-                    mag = buffer.getMagnitude(0, buffer.getNumSamples());
-                    // bounced audio file should not be empty
-                    REQUIRE(mag > 0.0);
                     
+                    auto val = 0.f;
                     
-                    auto sessionStart = 1.0; // the 1st clip starts at second 1
+                    auto samplePerPhase = 44100;
                     
-                    auto samplesUntilStart = static_cast<int>(bounceConfig->sampleRate * (sessionStart - bounceConfig->positionSeconds));
+                    // end of phase should be +1
+                    val = buffer.getSample(0, samplePerPhase - 1);
+                    REQUIRE(val == Catch::Approx(1.f));
                     
-                    if (samplesUntilStart > 0) {
-                        // magnitue of 1st part is 0.0
-                        mag = buffer.getMagnitude(0, samplesUntilStart - 1);
-                        REQUIRE(mag == Catch::Approx(0.0));
-                    }
+                    // new phase should be -1
+                    val = buffer.getSample(0, samplePerPhase);
+                    REQUIRE(val == Catch::Approx(-1.f));
                     
-                    // magnitue of sample at 2nd part > 0.0
-                    if (samplesUntilStart < 0)
-                        samplesUntilStart = 0;
-                    mag = buffer.getMagnitude(samplesUntilStart, 1);
+                    // end of phase should be +1
+                    val = buffer.getSample(0, (samplePerPhase * 2) - 1);
+                    REQUIRE(val == Catch::Approx(1.f));
                     
-                    REQUIRE(mag > 0.0);
-                    
-                    auto sessionStart2 = 3.0; // the 2nd clip starts at second 3
-                    auto samplesUntilStart2 = static_cast<int>(bounceConfig->sampleRate * (sessionStart2 - bounceConfig->positionSeconds));
-                    auto durationGap = 1.0;
-                    auto durationGapSamples = static_cast<int>(bounceConfig->sampleRate * durationGap);
-                    
-                    
-                    mag = buffer.getMagnitude(samplesUntilStart2 - durationGapSamples, durationGapSamples - 1);
-                    REQUIRE(mag == Catch::Approx(0.0));
-                    
-                    if (samplesUntilStart < 0)
-                        samplesUntilStart = 0;
-                    mag = buffer.getMagnitude(samplesUntilStart2, 1);
-                    REQUIRE(mag > 0.0);
-                    
-                    
-                    // total length
-                    REQUIRE(reader->lengthInSamples == static_cast<unsigned int>(bounceConfig->sampleRate * totalLength));
-                    
+                    // new phase should be -1
+                    val = buffer.getSample(0, (samplePerPhase * 2));
+                    REQUIRE(val == Catch::Approx(-1.f));
                 }
-
-                
             }
             
             if (bounceConfig->fileName.existsAsFile())
                 bounceConfig->fileName.deleteFile();
-            
-#endif
         }
-        
         engine = nullptr;
-        
-        
     }
 
-    
     
     juce::DeletedAtShutdown::deleteAll();
     juce::MessageManager::deleteInstance();
