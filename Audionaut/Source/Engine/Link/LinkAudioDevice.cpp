@@ -27,7 +27,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
                                                         float* const* outputChannelData,
                                                         int totalNumOutputChannels,
                                                         int numSamples,
-                                                        [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context)
+                                                        [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context_)
 {
     
     // clear output
@@ -39,7 +39,9 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
         // Synchronize host time to reference the point when its output reaches the speaker.
         const auto hostTime =  host_time_filter.sampleTimeToHostTime(sample_time);
         const auto bufferBeginAtOutput = hostTime + linkEngine->mOutputLatency.load();
-        linkEngine->audioCallback(bufferBeginAtOutput, numSamples);
+        const auto isPlaying = linkEngine->audioCallback(bufferBeginAtOutput,
+                                                         static_cast<std::size_t>(numSamples));
+        const auto beats = linkEngine->beatAtTime(bufferBeginAtOutput, linkEngine->quantum());
         
         juce::AudioBuffer<float> outBuf (outputChannelData, totalNumOutputChannels, numSamples);
         juce::dsp::AudioBlock<float> out (outBuf);
@@ -49,9 +51,9 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
     
         juce::dsp::ProcessContextNonReplacing<float> context (in, out);
         
-        playListScheduler->process(context);
+        playListScheduler->process(context, isPlaying, beats, numSamples);
         
-        sample_time += numSamples;
+        sample_time += static_cast<std::uint64_t>(numSamples);
     }
 }
 

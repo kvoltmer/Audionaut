@@ -22,7 +22,6 @@
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeContainer.h"
 #include "Engine/Core/LockFreeCommander.h"
-#include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Region/AudioRegionContainer.h"
@@ -44,19 +43,6 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
     transportLoop->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
-void PlayListScheduler::tick(bool isPlaying,
-                             double beats,
-                             int numSamples)
-{
-    if (isPlaying &&
-        beats >= 0.0) {
-        auto pos = TempoProvider::beatsToClocks(beats);
-        auto onLoop = transportLoop->processLoop(pos, numSamples);
-        data.transportPositionClocks = pos;
-        process(data.transportPositionClocks, numSamples, onLoop);
-    }
-}
-
 void PlayListScheduler::process(double transportPositionClocks, int numSamples, bool onLoop)
 {
     // convert to seconds
@@ -76,8 +62,14 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples, 
         
         if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange)) {
             
-            if (clipsChanged || onLoop)
+//            if (onLoop) {
+//                transportSource->getAudioTransportSource()->stop();
+//                continue;
+//            }
+            
+            if (clipsChanged || onLoop) {
                 transportSource->getAudioTransportSource()->stop();
+            }
             
             if (!transportSource->getAudioTransportSource()->isPlaying()) {
                 
@@ -363,8 +355,10 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     startPlaying();
     
     jassert((int)config->sampleRate == (int)externalSampleRate);
-    
-    auto totalSamples   = static_cast<int64>((getTotalLength(audium::seconds) - config->positionSeconds) * externalSampleRate);
+    auto length         = getTotalLength(audium::seconds) - config->positionSeconds;
+    if (config->lengthSeconds > 0.0)
+        length = config->lengthSeconds;
+    auto totalSamples   = static_cast<int64>(length * externalSampleRate);
     auto iterations     = static_cast<int64>(totalSamples) / config->blockSize;
     auto remainder      = totalSamples - (iterations * config->blockSize);
     jassert(remainder < config->blockSize);
@@ -381,12 +375,10 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
-        tick(true, positionBeats, config->blockSize);
-        positionBeats += beatsThisBuffer;
-        
         juce::dsp::ProcessContextReplacing<float> context (outBlock);
         outBlock.clear();
-        process(context);
+        process(context, true, positionBeats, config->blockSize);
+        positionBeats += beatsThisBuffer;
         
         writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
         
@@ -409,7 +401,7 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
             info.numSamples = static_cast<int>(remainder);
             juce::dsp::ProcessContextReplacing<float> context (outBlock);
             
-            process(context);
+            process(context, true, positionBeats, info.numSamples);
             writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             samplesWritten += info.numSamples;
         }
@@ -417,10 +409,8 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         jassert(samplesWritten == totalSamples);
     }
     
-    
     setAbsoluteStartPosition(lastPosition, audium::seconds);
     stopPlaying();
-    
 }
 
 std::vector<std::shared_ptr<PlayListItem>> PlayListScheduler::getPlayListItems(bool excludeSelectedItems) const

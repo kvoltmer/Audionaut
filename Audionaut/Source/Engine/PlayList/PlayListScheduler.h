@@ -16,6 +16,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Export/ExportAudioConfig.h"
 #include "Engine/Playback/AudioBusInterface.h"
+#include "Engine/PlayList/TransportLoop.h"
 
 namespace audium {
 
@@ -58,11 +59,7 @@ public:
         playback(playback_),
         audioBusInterface(audioBusInterface_),
         transportLoop(transportLoop_)
-    {
-        linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) {
-            tick(isPlaying, beats, numSamples);
-        };
-        
+    {        
         audioTrackContainer->addChangeListener(this);
     }
     
@@ -102,15 +99,32 @@ public:
     double getAbsoluteStartPosition(audium::TimeContextType context) const;
     double getAbsolutePosition(audium::TimeContextType context) const;
     
-    
-    void tick(bool isPlaying, double beats, int numSamples);
-    
     template <typename ProcessContext>
-    void process (const ProcessContext& context) noexcept
+    void process (const ProcessContext& context, bool isPlaying, double beats, int numSamples) noexcept
     {
-        // TODO: avoid allocations in the audio thread ;/
         audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
-        audioBusInterface->process(context);
+        
+        if (isPlaying &&
+            beats >= 0.0) {
+            auto pos = TempoProvider::beatsToClocks(beats);
+            auto loopResult = transportLoop->processLoop(pos, numSamples);
+            data.transportPositionClocks = loopResult.positionResult;
+            
+            if (loopResult.loopEvent) {
+                // TODO: process until loop end and proceed with loop start
+                process(data.transportPositionClocks, numSamples, loopResult.loopEvent);
+                audioBusInterface->process(context);
+                
+            }
+            else {
+                process(data.transportPositionClocks, numSamples, loopResult.loopEvent);
+                audioBusInterface->process(context);
+            }
+            
+        }
+        else {
+            audioBusInterface->process(context);
+        }
     }
         
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;

@@ -24,7 +24,7 @@ class LinkAudioDevice : public juce::AudioIODeviceCallback {
 public:
     LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
                     std::shared_ptr<PlayListScheduler> playListScheduler);
-    ~LinkAudioDevice();
+    ~LinkAudioDevice() override;
     
     void audioDeviceIOCallbackWithContext (const float* const* inputChannelData,
                                            int totalNumInputChannels,
