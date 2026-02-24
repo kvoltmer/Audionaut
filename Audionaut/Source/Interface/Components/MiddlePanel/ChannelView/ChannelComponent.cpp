@@ -265,6 +265,7 @@ void ChannelComponent::timerCallback()
     }
     else {
         lvl = engine->getAudioBusInterface()->getChannelLevel(channelNumber);
+        jassert(lvl >= 0.f);
     }
     levelMeter->setGrayscale(displayRecordingLevel);
     levelMeter->setLevel(lvl);

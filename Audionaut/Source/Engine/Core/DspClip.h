@@ -28,9 +28,9 @@ public:
      * @param tempoProvider_ A shared pointer to the `TempoProvider` for tempo-related calculations.
      * @param data The initial `DspClipData` associated with this clip.
      */
-    DspClip(std::shared_ptr<TempoProvider> tempoProvider, DspClipData data) :
-        tempoProvider(tempoProvider),
-        dspClipData(data)
+    DspClip(std::shared_ptr<TempoProvider> tempoProvider_, DspClipData data_) :
+        tempoProvider(tempoProvider_),
+        dspClipData(data_)
     {}
 
     /**
