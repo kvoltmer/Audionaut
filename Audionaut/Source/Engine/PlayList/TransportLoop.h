@@ -81,6 +81,7 @@ public:
     struct LoopResult {
         double positionResult = 0.0;
         bool loopEvent = false;
+        bool loopEventNextIteration = false;
         int numSamplesUntilLoop = 0;
     };
     
@@ -117,7 +118,7 @@ private:
     int loopCount = 0; ///< Counter for the number of loop iterations.
     bool withinLoop = false; ///< Flag indicating whether playback is within the loop range.
     double currentPosition = 0.0;
-
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportLoop)
 };
 

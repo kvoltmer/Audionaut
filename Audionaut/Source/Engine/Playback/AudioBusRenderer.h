@@ -78,7 +78,7 @@ public:
                     
                     if (audioChannelData[k].record &&
                         audioChannelData[k].channelNumber == i) {
-                        recordingLevel[k] = inputBlock.getSingleChannelBlock(i).findMinAndMax().getEnd();
+                        recordingLevel[k] = std::abs(inputBlock.getSingleChannelBlock(i).findMinAndMax().getEnd());
                     }
 
                     if (audioChannelData[k].record &&
@@ -103,7 +103,7 @@ public:
                 auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
                 ProcessContextReplacing<SampleType> gainContext( channelBlock );
                 gains[i].process(gainContext);
-                channelLevel[i] = channelBlock.findMinAndMax().getEnd();
+                channelLevel[i] = std::abs(channelBlock.findMinAndMax().getEnd());
             }
             
             // mono output
@@ -139,7 +139,7 @@ public:
                 // master level
                 for (auto m = 0; m < outputChannels; ++m) {
                     auto minmax = outputBlock.getSingleChannelBlock(m).findMinAndMax();
-                    masterLevel[m].store( minmax.getEnd() );
+                    masterLevel[m].store( std::abs(minmax.getEnd()) );
                 }
             }
             else { // multichannel output

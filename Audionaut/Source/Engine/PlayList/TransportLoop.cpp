@@ -98,14 +98,36 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition, i
     jassert(thePosition >= 0.0);
     
     if (loopData.loopActive) {
-        
         // loop event
         if (withinLoop &&
             thePosition + clocksThisBuffer > loopRange.getEnd()) {
             
+            auto diff = (thePosition + clocksThisBuffer) - loopRange.getEnd();
+            jassert(diff >= 0.0);
+            
+            auto sec = tempoProvider->clocksToSeconds(diff);
+            result.numSamplesUntilLoop = numSamples - static_cast<int>(std::round(sec * externalSampleRate));
+            std::cout << diff << " " << result.numSamplesUntilLoop << std::endl;
+            
+            // TODO: this causes a problem.
             thePosition -= loopRange.getLength();
+            //jassert(thePosition >= 0.0);
             loopCount++;
             result.loopEvent = true;
+                
+            
+//            else {
+//                auto diff2 = (thePosition + clocksThisBuffer) - loopRange.getEnd();
+//                if (diff2 > 0.0) {
+//                    auto sec = tempoProvider->clocksToSeconds(diff2);
+//                    auto samples = sec * externalSampleRate;
+//                    result.numSamplesUntilLoop = numSamples - static_cast<int>(std::round(samples));
+//                    result.loopEventNextIteration = true;
+//                    std::cout << diff2 << " " << result.numSamplesUntilLoop << std::endl;
+//                }
+//            }
+        
+            
         }
         else if (loopRange.contains(thePosition)) {
             if (not withinLoop) {

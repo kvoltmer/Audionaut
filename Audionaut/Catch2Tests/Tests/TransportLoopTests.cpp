@@ -35,14 +35,24 @@ SCENARIO("transport loop scenario", "[engine][transport][loop]")
         WHEN("processing the loop")
         {
             // loop between 0 and 1
-            transportLoop->setLoopPositionRange(nullptr, {0.0, 1.0}, audium::clocks);
-            auto externalPos = 0.0;
-            for (auto i = 0; i < 101; i++) {
+            transportLoop->setLoopPositionRange(nullptr, {0.0, 1.0}, audium::seconds);
+            auto transportPos = 0.0;
+            auto delta = 0.1; // seconds
+            
+            for (auto i = 0; i < 1000; i++) {
                 
-                auto loopPos = externalPos;
-                transportLoop->processLoop(loopPos, 512);
+                auto samples = static_cast<int>(44100.0 * delta);
+                auto result = transportLoop->processLoop(transportPos, samples);
+                if (result.loopEvent) {
+                    REQUIRE(result.numSamplesUntilLoop >= 0);
+                    REQUIRE(result.numSamplesUntilLoop <= samples);
+                }
                 
-                externalPos += 1.0;
+                
+                // fake transport
+                auto inc = tempoProvider->secondsToClocks(0.1);
+                
+                transportPos += inc;
             }
             
             THEN("check on loop count")
@@ -51,12 +61,12 @@ SCENARIO("transport loop scenario", "[engine][transport][loop]")
             }
         }
         
-        WHEN("loop count for position")
+        WHEN("loop phase for position")
         {
             // loop between 2 and 3
             transportLoop->setLoopPositionRange(nullptr, {2.0, 3.0}, audium::clocks);
             
-            THEN("check on loop count for position")
+            THEN("check on loop phase for position")
             {
                 auto phase = 0.0;
                 // start < loop start and process 1.5 -> end up in the middle of the loop
@@ -80,6 +90,11 @@ SCENARIO("transport loop scenario", "[engine][transport][loop]")
     juce::MessageManager::deleteInstance();
 }
 
+static float genSaw(int s, int w)
+{
+    return (static_cast<float>(s) / static_cast<float>(w - 1) * 2.f) - 1.f;
+}
+
 static const File createTestFile()
 {
     auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/slow-saw.wav"));
@@ -98,23 +113,24 @@ static const File createTestFile()
         if (writer != nullptr) {
             
             auto blockSize = 44100;
-            auto totalSamples = 44100 * 3; // 3 seconds
-            auto iterations     = totalSamples / blockSize;
             
             AudioBuffer<float> buffer(1, blockSize);
             AudioSourceChannelInfo info (&buffer, 0, blockSize);
             
-            for (auto i = 0; i < iterations; ++i) {
-                // generate a saw [-1, +1] for each iteration
-                auto buf = info.buffer->getWritePointer(0);
-                for (auto s = 0; s < blockSize; s++) {
-                    auto val = static_cast<float>(s) / static_cast<float>(blockSize-1);
-                    val = (val * 2.f) - 1.f; // [-1, +1]
-                    buf[s] = val;
-                }
-//                std::cout << buf[blockSize-1] << std::endl;
-                writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            // 1st second silence
+            info.clearActiveBufferRegion();
+            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            
+            // 2nd second generate saw [-1, +1]
+            for (auto s = 0; s < blockSize; s++) {
+                *info.buffer->getWritePointer(0, s) = genSaw(s, blockSize);
             }
+            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            
+            // 3rd second silence
+            info.clearActiveBufferRegion();
+            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            
             writer.reset();
             tempFile.overwriteTargetFileWithTemporary();
             return tempFile.getTargetFile();
@@ -131,6 +147,7 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
     
     auto audioFile = createTestFile();
     jassert(audioFile.existsAsFile());
+    std::cout << "Testfile: " << audioFile.getFullPathName() << std::endl;
     
     auto outFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/out-slow-saw.wav"));
     
@@ -149,7 +166,7 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
         {
             auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
             
-            bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/out-slow-saw.wav"));
+            bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/slow-saw-out.wav"));
             bounceConfig->sampleRate = 44100.0;
 
             auto totalLength = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
@@ -165,8 +182,6 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
 
             THEN("examine bounced audio file")
             {
-
-                auto mag = 0.0;
                 AudioFormatManager formatManager;
                 formatManager.registerBasicFormats();
                 std::unique_ptr<AudioFormatReader> reader;
@@ -184,30 +199,24 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
                     // read should be successful
                     REQUIRE(success);
                     
-                    auto val = 0.f;
-                    
                     auto samplePerPhase = 44100;
-                    
-                    // end of phase should be +1
-                    val = buffer.getSample(0, samplePerPhase - 1);
-                    REQUIRE(val == Catch::Approx(1.f));
-                    
-                    // new phase should be -1
-                    val = buffer.getSample(0, samplePerPhase);
-                    REQUIRE(val == Catch::Approx(-1.f));
-                    
-                    // end of phase should be +1
-                    val = buffer.getSample(0, (samplePerPhase * 2) - 1);
-                    REQUIRE(val == Catch::Approx(1.f));
-                    
-                    // new phase should be -1
-                    val = buffer.getSample(0, (samplePerPhase * 2));
-                    REQUIRE(val == Catch::Approx(-1.f));
+                    auto iterations = 6;
+                    for (auto i = 1; i < iterations; i++) {
+                        
+                        for (auto s = 0; s < samplePerPhase; s++) {
+                            auto val0 = genSaw(s, samplePerPhase);
+                            auto val1 = buffer.getSample(0, s + (samplePerPhase * i));
+                            auto m = 0.000001f;
+                            REQUIRE(val0 == Catch::Approx(val1).margin(m));
+                            
+                        }
+                    }
                 }
             }
-            
+#if 0
             if (bounceConfig->fileName.existsAsFile())
                 bounceConfig->fileName.deleteFile();
+#endif
         }
         engine = nullptr;
     }

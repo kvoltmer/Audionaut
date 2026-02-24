@@ -43,7 +43,55 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
     transportLoop->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
-void PlayListScheduler::process(double transportPositionClocks, int numSamples, bool onLoop)
+void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
+                                     std::shared_ptr<AudiumTransportSource> transportSource,
+                                     double transportPosition)
+{
+    auto absolute = dspClip.getAbsolutePosition(audium::seconds);
+    auto local = dspClip.getRegionData(audium::seconds).getStart();
+    auto offset = absolute - transportPosition;
+    auto position = 0.0;
+    auto startSamples = 0;
+    
+    if (offset < 0.0) {
+        position = local - offset;
+        
+        startSamples = 0; // startSamples is 0
+    }
+    else {
+        position = local;
+        
+        startSamples = static_cast<int>(offset * externalSampleRate);
+        //jassert(startSamples < numSamples);
+    }
+    
+    auto duration = dspClip.getRegionData(audium::seconds).getEnd() - position;
+    
+    jassert(position >= 0.0 && duration >= 0.0);
+    
+    transportSource->schedulePosition(position, startSamples);
+    transportSource->scheduleDuration(duration, externalSampleRate);
+    
+//    if (not loopResult.loopEvent) {
+//        transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
+//    }
+    auto fadeIn = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
+    transportSource->getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
+    auto fadeOut = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
+    transportSource->getAudioTransportSource()->setFadeOutSeconds(fadeOut, duration, true);
+    
+    //                std::cout << "transport-pos: " << transportPosition << " ";
+    //                std::cout << "clip-pos: " <<  absolute << " ";
+    //                std::cout << "offset: " << offset << " ";
+    //                std::cout << "file-pos: " << position << " ";
+    //                std::cout << "duration: " << duration << " ";
+    //                std::cout << "gain: " << dspClip.dspClipData.clipGain << " ";
+    //                std::cout << std::endl;
+}
+
+void PlayListScheduler::process(double transportPositionClocks,
+                                int numSamples,
+                                const TransportLoop::LoopResult loopResult)
 {
     // convert to seconds
     auto transportPosition = tempoProvider->clocksToSeconds(transportPositionClocks);
@@ -62,63 +110,30 @@ void PlayListScheduler::process(double transportPositionClocks, int numSamples, 
         
         if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange)) {
             
-//            if (onLoop) {
-//                transportSource->getAudioTransportSource()->stop();
-//                continue;
-//            }
             
-            if (clipsChanged || onLoop) {
+            if (clipsChanged) {
                 transportSource->getAudioTransportSource()->stop();
+            }
+            else if (loopResult.loopEvent) {
+                // TODO: stop in
+                // loopResult.numSamplesUntilLoop
+                //transportSource->getAudioTransportSource()->stop();
+                
+                // re-schedule
+                scheduleClip(dspClip, transportSource, transportPosition);
             }
             
             if (!transportSource->getAudioTransportSource()->isPlaying()) {
                 
-                auto absolute = dspClip.getAbsolutePosition(audium::seconds);
-                auto local = dspClip.getRegionData(audium::seconds).getStart();
-                auto offset = absolute - transportPosition;
-                auto position = 0.0;
-                auto startSamples = 0;
+                scheduleClip(dspClip, transportSource, transportPosition);
                 
-                if (offset < 0.0) {
-                    position = local - offset;
-                    
-                    startSamples = 0; // startSamples is 0
-                }
-                else {
-                    position = local;
-                    
-                    startSamples = static_cast<int>(offset * externalSampleRate);
-                    jassert(startSamples < numSamples);
-                }
-                
-                auto duration = dspClip.getRegionData(audium::seconds).getEnd() - position;
-                
-                jassert(position >= 0.0 && duration >= 0.0);
-                
-                transportSource->schedulePosition(position, startSamples);
-                transportSource->scheduleDuration(duration, externalSampleRate);
-                
-                if (!onLoop) {
+                // TODO: why? please investigate
+                if (not loopResult.loopEvent) {
                     transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
                 }
-                auto fadeIn = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
-                transportSource->getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
-                auto fadeOut = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
-                transportSource->getAudioTransportSource()->setFadeOutSeconds(fadeOut, duration, true);
                 
                 transportSource->getAudioTransportSource()->start();
                 playback->startVoice(transportSource);
-                
-                
-                //                std::cout << "transport-pos: " << transportPosition << " ";
-                //                std::cout << "clip-pos: " <<  absolute << " ";
-                //                std::cout << "offset: " << offset << " ";
-                //                std::cout << "file-pos: " << position << " ";
-                //                std::cout << "duration: " << duration << " ";
-                //                std::cout << "gain: " << dspClip.dspClipData.clipGain << " ";
-                //                std::cout << std::endl;
-                
-                
             }
         }
         else {
@@ -365,17 +380,20 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     
     auto positionBeats = TempoProvider::clocksToBeats(getAbsolutePosition(audium::clocks));
     
-    AudioBuffer<float> buffer(config->numChannels, config->blockSize);
-    AudioSourceChannelInfo info (&buffer, 0, config->blockSize);
+    AudioBuffer<float> outBuffer(config->numChannels, config->blockSize);
+    AudioBuffer<float> inBuffer(config->numChannels, config->blockSize);
+    AudioSourceChannelInfo info (&outBuffer, 0, config->blockSize);
     
-    juce::dsp::AudioBlock<float> outBlock (buffer);
+    juce::dsp::AudioBlock<float> outBlock (outBuffer);
+    juce::dsp::AudioBlock<float> inBlock (inBuffer);
     
     int64 samplesWritten = 0;
     for (auto i = 0; i < iterations; ++i) {
         const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
-        juce::dsp::ProcessContextReplacing<float> context (outBlock);
+        juce::dsp::ProcessContextNonReplacing<float> context (inBlock, outBlock);
+        inBlock.clear();
         outBlock.clear();
         process(context, true, positionBeats, config->blockSize);
         positionBeats += beatsThisBuffer;

@@ -25,6 +25,7 @@ class PlayListItem;
 class TransportSourceContainer;
 class AudioResourceContainer;
 class Playback;
+class DspClip;
 
 /**
  * \class PlayListScheduler
@@ -68,13 +69,16 @@ public:
         audioTrackContainer->removeChangeListener(this);
     }
     
-    void changeListenerCallback (juce::ChangeBroadcaster*) override
+    void changeListenerCallback(juce::ChangeBroadcaster*) override
     {
         commitPlayListData();
     }
     
-    void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
+    void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     
+    void scheduleClip(const audium::DspClip &clip,
+                      std::shared_ptr<AudiumTransportSource> transportSource,
+                      double transportPosition);
     
     void startPlaying();
     void stopPlaying();
@@ -111,20 +115,15 @@ public:
             data.transportPositionClocks = loopResult.positionResult;
             
             if (loopResult.loopEvent) {
-                // TODO: process until loop end and proceed with loop start
-                process(data.transportPositionClocks, numSamples, loopResult.loopEvent);
-                audioBusInterface->process(context);
-                
+                process(data.transportPositionClocks, numSamples, loopResult);
             }
             else {
-                process(data.transportPositionClocks, numSamples, loopResult.loopEvent);
-                audioBusInterface->process(context);
+                process(data.transportPositionClocks, numSamples, loopResult);
             }
             
         }
-        else {
-            audioBusInterface->process(context);
-        }
+        
+        audioBusInterface->process(context);
     }
         
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
@@ -163,7 +162,9 @@ public:
 private:
     
     // process sequencing
-    void process(double absolutePosition, int numSamples, bool onLoop);
+    void process(double absolutePosition,
+                 int numSamples,
+                 const TransportLoop::LoopResult loopResult);
     
     
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;

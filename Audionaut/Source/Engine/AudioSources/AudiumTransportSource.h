@@ -69,6 +69,7 @@ public:
      */
     void schedulePosition (double newPosition, int startSample)
     {
+        std::cout << "schedulePosition " << newPosition << " " << startSample << std::endl;
         if (startSample == 0)
         {
             audioTransportSource->setPosition(newPosition);
