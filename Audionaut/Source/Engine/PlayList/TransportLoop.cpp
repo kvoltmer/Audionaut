@@ -94,8 +94,8 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
     auto loopRange = getLoopPositionRange(context);
     
     jassert(externalSampleRate > 0.0);
-    // subtract 1 sample from numSamples 
-    auto thisBuffer = static_cast<double>(numSamples - 1) / externalSampleRate;
+    auto thisBuffer = static_cast<double>(numSamples) / externalSampleRate;
+    
     if (context == audium::clocks)
         thisBuffer = tempoProvider->secondsToClocks(thisBuffer);
     
@@ -107,29 +107,29 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
         if (withinLoop &&
             thePosition + thisBuffer > loopRange.getEnd()) {
             
-            auto diff = (thePosition + thisBuffer) - loopRange.getEnd();
+            auto diff = thePosition + thisBuffer - loopRange.getEnd();
             jassert(diff >= 0.0);
             
-            auto untilLoop = thisBuffer - diff;
-            if (untilLoop < 0.0)
-                untilLoop = 0.0;
+            result.timeUntilLoop = thisBuffer - diff;
+            if (result.timeUntilLoop < 0.0)
+                result.timeUntilLoop = 0.0;
             
-            if (context == audium::clocks) {
-                untilLoop = tempoProvider->clocksToSeconds(untilLoop);
+            // calc samples until loop
+            auto secondsUntilLoop = result.timeUntilLoop;
+            if (context == audium::clocks)
+                secondsUntilLoop = tempoProvider->clocksToSeconds(result.timeUntilLoop);
+            result.numSamplesUntilLoop = static_cast<int>(std::round(secondsUntilLoop * externalSampleRate));
+            jassert(result.numSamplesUntilLoop >= 0);
+            
+            if (result.numSamplesUntilLoop < numSamples) {
+                
+                std::cout << diff << " " << result.numSamplesUntilLoop << std::endl;
+                
+                thePosition -= loopRange.getLength();
+                jassert(thePosition >= 0.0);
+                loopCount++;
+                result.loopEvent = true;
             }
-            
-            result.timeUntilLoop = untilLoop;
-            result.numSamplesUntilLoop = static_cast<int>(std::round(untilLoop * externalSampleRate));
-            jassert(result.numSamplesUntilLoop >= 0 &&
-                    result.numSamplesUntilLoop < numSamples);
-            
-            std::cout << diff << " " << result.numSamplesUntilLoop << std::endl;
-            
-            // TODO: this might cause a problem.
-            thePosition -= loopRange.getLength();
-            jassert(thePosition >= 0.0);
-            loopCount++;
-            result.loopEvent = true;
         }
         else if (loopRange.contains(thePosition)) {
             if (not withinLoop) {
