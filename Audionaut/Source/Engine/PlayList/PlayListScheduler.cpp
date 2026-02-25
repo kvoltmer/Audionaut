@@ -45,7 +45,9 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
 
 void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
                                      std::shared_ptr<AudiumTransportSource> transportSource,
-                                     double transportPosition)
+                                     double transportPosition,
+                                     int sampleOffset,
+                                     int numSamples)
 {
     auto absolute = dspClip.getAbsolutePosition(audium::seconds);
     auto local = dspClip.getRegionData(audium::seconds).getStart();
@@ -56,14 +58,15 @@ void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     if (offset < 0.0) {
         position = local - offset;
         
-        startSamples = 0; // startSamples is 0
+        // sample offset (loop)
+        startSamples = sampleOffset;
     }
     else {
         position = local;
-        
         startSamples = static_cast<int>(offset * externalSampleRate);
-        //jassert(startSamples < numSamples);
+        
     }
+    //jassert(startSamples < numSamples);
     
     auto duration = dspClip.getRegionData(audium::seconds).getEnd() - position;
     
@@ -95,6 +98,14 @@ void PlayListScheduler::process(double transportPositionClocks,
 {
     // convert to seconds
     auto transportPosition = tempoProvider->clocksToSeconds(transportPositionClocks);
+    
+    if (loopResult.context == audium::clocks) {
+        transportPosition = tempoProvider->clocksToSeconds(loopResult.positionResult);
+    }
+    else if (loopResult.context == audium::seconds) {
+        transportPosition = loopResult.positionResult;
+    }
+    
     const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
     auto transportRange = juce::Range<double> (transportPosition, transportPosition + secondsThisBuffer);
     
@@ -116,16 +127,27 @@ void PlayListScheduler::process(double transportPositionClocks,
             }
             else if (loopResult.loopEvent) {
                 // TODO: stop in
-                // loopResult.numSamplesUntilLoop
                 //transportSource->getAudioTransportSource()->stop();
                 
-                // re-schedule
-                scheduleClip(dspClip, transportSource, transportPosition);
+                // (re) schedule
+                auto secondsUntilLoop = loopResult.timeUntilLoop;
+                if (loopResult.context == clocks)
+                    secondsUntilLoop = tempoProvider->clocksToSeconds(loopResult.timeUntilLoop);
+                
+                scheduleClip(dspClip,
+                             transportSource,
+                             transportPosition + secondsUntilLoop,
+                             loopResult.numSamplesUntilLoop,
+                             numSamples);
             }
             
             if (!transportSource->getAudioTransportSource()->isPlaying()) {
                 
-                scheduleClip(dspClip, transportSource, transportPosition);
+                scheduleClip(dspClip,
+                             transportSource,
+                             transportPosition,
+                             0,
+                             numSamples);
                 
                 // TODO: why? please investigate
                 if (not loopResult.loopEvent) {

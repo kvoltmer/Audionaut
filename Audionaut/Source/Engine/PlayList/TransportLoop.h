@@ -78,11 +78,13 @@ public:
      */
     void setLoopActive(bool bActive);
 
+    
     struct LoopResult {
-        double positionResult = 0.0;
-        bool loopEvent = false;
-        bool loopEventNextIteration = false;
+        bool loopEvent          = false;
+        double positionResult   = 0.0;
+        double timeUntilLoop    = 0.0;
         int numSamplesUntilLoop = 0;
+        TimeContextType context = seconds;
     };
     
     /**
@@ -91,7 +93,9 @@ public:
      * @param numSamples The number of samples to process.
      * @return True if the loop was processed, false otherwise.
      */
-    const LoopResult processLoop(double thePosition, int numSamples);
+    const LoopResult processLoop(double thePosition,
+                                 int numSamples,
+                                 audium::TimeContextType context);
 
     /**
      * @brief Resets the loop state to its default configuration.
@@ -117,7 +121,7 @@ private:
     double externalSampleRate = 44100.0; ///< The external sample rate for playback.
     int loopCount = 0; ///< Counter for the number of loop iterations.
     bool withinLoop = false; ///< Flag indicating whether playback is within the loop range.
-    double currentPosition = 0.0;
+    double currentPositionClocks = 0.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportLoop)
 };

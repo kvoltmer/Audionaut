@@ -78,7 +78,9 @@ public:
     
     void scheduleClip(const audium::DspClip &clip,
                       std::shared_ptr<AudiumTransportSource> transportSource,
-                      double transportPosition);
+                      double transportPosition,
+                      int sampleOffset,
+                      int numSamples);
     
     void startPlaying();
     void stopPlaying();
@@ -110,16 +112,22 @@ public:
         
         if (isPlaying &&
             beats >= 0.0) {
-            auto pos = TempoProvider::beatsToClocks(beats);
-            auto loopResult = transportLoop->processLoop(pos, numSamples);
-            data.transportPositionClocks = loopResult.positionResult;
             
-            if (loopResult.loopEvent) {
-                process(data.transportPositionClocks, numSamples, loopResult);
-            }
-            else {
-                process(data.transportPositionClocks, numSamples, loopResult);
-            }
+            auto timeContext = audium::seconds;
+            auto pos = 0.0;
+            if (timeContext == clocks)
+                pos = tempoProvider->beatsToClocks(beats);
+            else
+                pos = tempoProvider->beatsToSeconds(beats);
+            
+            auto loopResult = transportLoop->processLoop(pos, numSamples, timeContext);
+            
+            if (loopResult.context == audium::seconds)
+                data.transportPositionClocks = tempoProvider->secondsToClocks(loopResult.positionResult);
+            else
+                data.transportPositionClocks = loopResult.positionResult;
+            
+            process(data.transportPositionClocks, numSamples, loopResult);
             
         }
         

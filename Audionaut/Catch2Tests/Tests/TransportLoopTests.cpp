@@ -42,7 +42,7 @@ SCENARIO("transport loop scenario", "[engine][transport][loop]")
             for (auto i = 0; i < 1000; i++) {
                 
                 auto samples = static_cast<int>(44100.0 * delta);
-                auto result = transportLoop->processLoop(transportPos, samples);
+                auto result = transportLoop->processLoop(transportPos, samples, audium::clocks);
                 if (result.loopEvent) {
                     REQUIRE(result.numSamplesUntilLoop >= 0);
                     REQUIRE(result.numSamplesUntilLoop <= samples);
@@ -168,11 +168,12 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
             
             bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/slow-saw-out.wav"));
             bounceConfig->sampleRate = 44100.0;
+            bounceConfig->blockSize = 64;
 
             auto totalLength = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
             REQUIRE(totalLength == Catch::Approx(3.0));
             
-            bounceConfig->lengthSeconds = 6.0;
+            bounceConfig->lengthSeconds = 60.0;
             
             // bounce to file
             auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
@@ -200,7 +201,7 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
                     REQUIRE(success);
                     
                     auto samplePerPhase = 44100;
-                    auto iterations = 6;
+                    auto iterations = static_cast<int>(bounceConfig->lengthSeconds);
                     for (auto i = 1; i < iterations; i++) {
                         
                         for (auto s = 0; s < samplePerPhase; s++) {
@@ -208,6 +209,12 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
                             auto val1 = buffer.getSample(0, s + (samplePerPhase * i));
                             auto m = 0.000001f;
                             REQUIRE(val0 == Catch::Approx(val1).margin(m));
+                            
+//                            if (val0 != Catch::Approx(val1).margin(m)) {
+//                                int yo;
+//                                yo++;
+//                            }
+//                            CHECK(val0 == Catch::Approx(val1).margin(m));
                             
                         }
                     }
