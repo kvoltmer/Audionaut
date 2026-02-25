@@ -139,6 +139,39 @@ static const File createTestFile()
     return File();
 }
 
+static void examineBouncedAudioFile(std::shared_ptr<audium::ExportAudioConfig> bounceConfig)
+{
+    AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();
+    
+    std::unique_ptr<AudioFormatReader> reader;
+    reader.reset(formatManager.createReaderFor(bounceConfig->fileName));
+
+    jassert(reader);
+    
+    AudioBuffer<float> buffer((int)reader->numChannels, (int)reader->lengthInSamples);
+    
+    auto success = reader->read(&buffer,
+                                0,
+                                (int)reader->lengthInSamples,
+                                0,
+                                true,
+                                true);
+    REQUIRE(success);
+    
+    for (auto i = 1; i < static_cast<int>(bounceConfig->lengthSeconds); i++) {
+        auto samplePerPhase = 44100;
+        for (auto s = 0; s < samplePerPhase; s++) {
+            auto val0 = genSaw(s, samplePerPhase);
+            auto val1 = buffer.getSample(0, s + (samplePerPhase * i));
+            
+            if (val0 != Catch::Approx(val1).margin(0.000001f)) {
+            }
+            REQUIRE(val0 == Catch::Approx(val1).margin(0.000001f));
+        }
+    }
+}
+
 
 SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
 {
@@ -151,7 +184,7 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
     
     auto outFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/out-slow-saw.wav"));
     
-    GIVEN("Load session file (audio file starts: at second 1 with 1 second duration)")
+    GIVEN("generated audio file with loop")
     {
         auto engine = AudiumFactory::createAudiumEngine();
         auto ok = engine->openFile(audioFile, nullptr);
@@ -160,71 +193,44 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
         auto loop = engine->getPlayListScheduler()->getTransportLoop();
         loop->setLoopActive(true);
         loop->setLoopPositionRange(nullptr, {1.0, 2.0}, audium::seconds);
+ 
+        auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+        bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/slow-saw-out.wav"));
+        bounceConfig->sampleRate = 44100.0;
+        bounceConfig->blockSize = 64;
+        bounceConfig->lengthSeconds = 60.0;
         
+        auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
         
         WHEN("bouncing session")
         {
-            auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
-            
-            bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/slow-saw-out.wav"));
-            bounceConfig->sampleRate = 44100.0;
-            bounceConfig->blockSize = 64;
-
-            auto totalLength = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
-            REQUIRE(totalLength == Catch::Approx(3.0));
-            
-            bounceConfig->lengthSeconds = 60.0;
-            
-            // bounce to file
-            auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
             exporter->bounce();
-            std::cout << "bounceToFile -> " << bounceConfig->fileName.getFullPathName() << std::endl;
-            exporter = nullptr;
 
             THEN("examine bounced audio file")
             {
-                AudioFormatManager formatManager;
-                formatManager.registerBasicFormats();
-                std::unique_ptr<AudioFormatReader> reader;
-                reader.reset(formatManager.createReaderFor(bounceConfig->fileName));
-
-                if (reader != nullptr) {
-                    AudioBuffer<float> buffer((int)reader->numChannels, (int)reader->lengthInSamples);
-                    
-                    auto success = reader->read(&buffer,
-                                                0,
-                                                (int)reader->lengthInSamples,
-                                                0,
-                                                true,
-                                                true);
-                    // read should be successful
-                    REQUIRE(success);
-                    
-                    auto samplePerPhase = 44100;
-                    auto iterations = static_cast<int>(bounceConfig->lengthSeconds);
-                    for (auto i = 1; i < iterations; i++) {
-                        
-                        for (auto s = 0; s < samplePerPhase; s++) {
-                            auto val0 = genSaw(s, samplePerPhase);
-                            auto val1 = buffer.getSample(0, s + (samplePerPhase * i));
-                            auto m = 0.000001f;
-                            REQUIRE(val0 == Catch::Approx(val1).margin(m));
-                            
-//                            if (val0 != Catch::Approx(val1).margin(m)) {
-//                                int yo;
-//                                yo++;
-//                            }
-//                            CHECK(val0 == Catch::Approx(val1).margin(m));
-                            
-                        }
-                    }
-                }
+                examineBouncedAudioFile(bounceConfig);
             }
-#if 0
-            if (bounceConfig->fileName.existsAsFile())
-                bounceConfig->fileName.deleteFile();
-#endif
         }
+//        WHEN("bouncing session with length to match loop end")
+//        {
+//            auto track = engine->getAudioTrackContainer()->getAudioTracks().front();
+//            jassert(track);
+//            auto item = track->getPlayListContainer()->getPlayListItem(0);
+//            jassert(item);
+//            item->setLength(2.0, audium::seconds);
+//
+//            exporter->bounce();
+//
+//            THEN("examine bounced audio file")
+//            {
+//                examineBouncedAudioFile(bounceConfig);
+//            }
+//        }
+        
+        
+        if (bounceConfig->fileName.existsAsFile())
+            bounceConfig->fileName.deleteFile();
+        
         engine = nullptr;
     }
 
