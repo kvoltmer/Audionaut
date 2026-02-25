@@ -84,50 +84,52 @@ void TransportLoop::setLoopActive(bool bActive)
     loopData.loopActive = bActive;
 }
 
-const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition, int numSamples)
+const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
+                                                           int numSamples,
+                                                           audium::TimeContextType context)
 {
     TransportLoop::LoopResult result;
+    result.context = context;
     
-    auto loopRange = getLoopPositionRange(audium::clocks);
+    auto loopRange = getLoopPositionRange(context);
     
     jassert(externalSampleRate > 0.0);
-    auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(numSamples) / externalSampleRate);
+    // subtract 1 sample from numSamples 
+    auto thisBuffer = static_cast<double>(numSamples - 1) / externalSampleRate;
+    if (context == audium::clocks)
+        thisBuffer = tempoProvider->secondsToClocks(thisBuffer);
     
     // subtract previous loops
     thePosition -= (static_cast<double>(loopCount) * loopRange.getLength());
     jassert(thePosition >= 0.0);
     
     if (loopData.loopActive) {
-        // loop event
         if (withinLoop &&
-            thePosition + clocksThisBuffer > loopRange.getEnd()) {
+            thePosition + thisBuffer > loopRange.getEnd()) {
             
-            auto diff = (thePosition + clocksThisBuffer) - loopRange.getEnd();
+            auto diff = (thePosition + thisBuffer) - loopRange.getEnd();
             jassert(diff >= 0.0);
             
-            auto sec = tempoProvider->clocksToSeconds(diff);
-            result.numSamplesUntilLoop = numSamples - static_cast<int>(std::round(sec * externalSampleRate));
+            auto untilLoop = thisBuffer - diff;
+            if (untilLoop < 0.0)
+                untilLoop = 0.0;
+            
+            if (context == audium::clocks) {
+                untilLoop = tempoProvider->clocksToSeconds(untilLoop);
+            }
+            
+            result.timeUntilLoop = untilLoop;
+            result.numSamplesUntilLoop = static_cast<int>(std::round(untilLoop * externalSampleRate));
+            jassert(result.numSamplesUntilLoop >= 0 &&
+                    result.numSamplesUntilLoop < numSamples);
+            
             std::cout << diff << " " << result.numSamplesUntilLoop << std::endl;
             
-            // TODO: this causes a problem.
+            // TODO: this might cause a problem.
             thePosition -= loopRange.getLength();
-            //jassert(thePosition >= 0.0);
+            jassert(thePosition >= 0.0);
             loopCount++;
             result.loopEvent = true;
-                
-            
-//            else {
-//                auto diff2 = (thePosition + clocksThisBuffer) - loopRange.getEnd();
-//                if (diff2 > 0.0) {
-//                    auto sec = tempoProvider->clocksToSeconds(diff2);
-//                    auto samples = sec * externalSampleRate;
-//                    result.numSamplesUntilLoop = numSamples - static_cast<int>(std::round(samples));
-//                    result.loopEventNextIteration = true;
-//                    std::cout << diff2 << " " << result.numSamplesUntilLoop << std::endl;
-//                }
-//            }
-        
-            
         }
         else if (loopRange.contains(thePosition)) {
             if (not withinLoop) {
@@ -143,13 +145,18 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition, i
         withinLoop = false;
     }
     
+    result.positionResult = thePosition;
+    
+    if (context == audium::seconds) {
+        currentPositionClocks = tempoProvider->secondsToClocks(thePosition);
+    }
+    else {
+        currentPositionClocks = thePosition;
+    }
+    
     if (result.loopEvent) {
-        // async message
         tempoProvider->sendActionMessage(audium::transportLoopAction);
     }
-    currentPosition = thePosition;
-    
-    result.positionResult = thePosition;
     
     return result;
 }
@@ -181,10 +188,10 @@ void TransportLoop::setAbsoluteStartPosition(double newPosition, audium::TimeCon
 double TransportLoop::getCurrentPosition(audium::TimeContextType context) const noexcept
 {
     if (context == audium::clocks) {
-        return currentPosition;
+        return currentPositionClocks;
     }
     else if (context == audium::seconds) {
-        return tempoProvider->secondsToClocks(currentPosition);
+        return tempoProvider->secondsToClocks(currentPositionClocks);
     }
     jassertfalse;
     return 0.0;

@@ -70,17 +70,19 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
             mainSource->getNextAudioBlock(info);
         }
     }
+    else if (scheduledStartSample.load() >= info.numSamples) {
+        scheduledStartSample.store(scheduledStartSample.load() - info.numSamples);
+        mainSource->getNextAudioBlock(info);
+    }
     else
     {
         auto startSample = scheduledStartSample.load();
         scheduledStartSample.store(0);
         jassert(startSample < info.numSamples);
     
-#if 0
-        // process 1st part (until start sample)
+        // process 1st part (until start sample, in case we are already playing)
         AudioSourceChannelInfo infoPart1 (info.buffer, 0, startSample);
         mainSource->getNextAudioBlock(infoPart1);
-#endif
         
         audioTransportSource->setPosition(scheduledPosition.load());
         
