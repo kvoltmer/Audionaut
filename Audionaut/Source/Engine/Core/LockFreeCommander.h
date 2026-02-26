@@ -45,8 +45,7 @@ public:
     void invoke()
     {
         std::function<void()> cmd;
-        if (fifo.pop (cmd)) {
-            // std::cout << "LockFreeCommander::invoke" << std::endl;
+        while (fifo.pop (cmd)) {
             juce::NullCheckedInvocation::invoke (cmd);
         }
     }

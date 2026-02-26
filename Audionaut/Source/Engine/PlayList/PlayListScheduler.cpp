@@ -49,8 +49,9 @@ void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
                                      int sampleOffset,
                                      int numSamples)
 {
-    auto absolute = dspClip.getAbsolutePosition(audium::seconds);
-    auto local = dspClip.getRegionData(audium::seconds).getStart();
+    auto context = audium::seconds;
+    auto absolute = dspClip.getAbsolutePosition(context);
+    auto local = dspClip.getRegionData(context).getStart();
     auto offset = absolute - transportPosition;
     auto position = 0.0;
     auto startSamples = 0;
@@ -66,13 +67,14 @@ void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
         startSamples = static_cast<int>(offset * externalSampleRate);
         
     }
-    //jassert(startSamples < numSamples);
+    jassert(startSamples < numSamples);
     
-    auto duration = dspClip.getRegionData(audium::seconds).getEnd() - position;
+    auto duration = dspClip.getRegionData(context).getEnd() - position;
     
     jassert(position >= 0.0 && duration >= 0.0);
     
     transportSource->schedulePosition(position, startSamples);
+    
     transportSource->scheduleDuration(duration, externalSampleRate);
     
 //    if (not loopResult.loopEvent) {
@@ -82,6 +84,8 @@ void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     transportSource->getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
     auto fadeOut = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
     transportSource->getAudioTransportSource()->setFadeOutSeconds(fadeOut, duration, true);
+    
+    transportSource->getAudioTransportSource()->resetClipGain();
     
     //                std::cout << "transport-pos: " << transportPosition << " ";
     //                std::cout << "clip-pos: " <<  absolute << " ";
@@ -191,6 +195,7 @@ void PlayListScheduler::startPlaying()
         linkEngine->startPlaying();
         transportLoop->reset();
         transportLoop->setAbsoluteStartPosition(data.startPositionClocks, audium::clocks);
+        audioBusInterface->resetGains();
     }
 }
 
