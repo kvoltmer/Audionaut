@@ -58,11 +58,22 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         auto offset = 0;
         if (durationTimer.process(info.numSamples, offset)) {
             // reached end of clip -> schedule stop
-            audioTransportSource->stop();
             if (offset > 0) {
-                AudioSourceChannelInfo infoStop (info);
-                infoStop.numSamples = offset;
-                mainSource->getNextAudioBlock(infoStop);
+                AudioSourceChannelInfo infoStop1 (info);
+                infoStop1.numSamples = offset;
+                mainSource->getNextAudioBlock(infoStop1);
+                
+                audioTransportSource->stop();
+                
+                AudioSourceChannelInfo infoStop2 (info);
+                infoStop2.startSample = offset;
+                infoStop2.numSamples = info.numSamples - offset;
+                mainSource->getNextAudioBlock(infoStop2);
+                
+            }
+            else {
+                audioTransportSource->stop();
+                mainSource->getNextAudioBlock(info);
             }
             
         }
@@ -100,6 +111,9 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
     }
     
 #if CATCH2_TESTS
+    
+//    std::cout << "first sample " << info.buffer->getSample(0, 0) << std::endl;
+    
     samplesProcessed += info.numSamples;
 #endif
 }

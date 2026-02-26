@@ -91,6 +91,8 @@ public:
     * @param newGain The new master gain value.
     */
     void setMasterGain(const float newGain);
+    
+    void resetGains();
 
     /**
     * @brief Gets the current level of a specific channel.

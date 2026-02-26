@@ -247,6 +247,8 @@ public:
     
     void setRecordEnabled(int channelNumber, bool bEnabled) { audioChannelData[channelNumber].record = bEnabled; }
     
+    void resetGains();
+    
 private:
     
     std::shared_ptr<audium::Playback> playback;

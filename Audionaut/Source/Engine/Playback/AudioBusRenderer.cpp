@@ -25,18 +25,24 @@ void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, d
     audioBus.setSize(audioBus.getNumChannels(), samplesPerBlockExpected);
     
     stereoBuffer.setSize(2, samplesPerBlockExpected);
+
+    juce::dsp::ProcessSpec spec;
+    spec.maximumBlockSize    = samplesPerBlockExpected;
+    spec.sampleRate          = sampleRate;
     
     for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
-        juce::dsp::ProcessSpec spec;
-        spec.numChannels         = 2;
-        spec.maximumBlockSize    = samplesPerBlockExpected;
-        spec.sampleRate          = sampleRate;
+        
+        spec.numChannels = 2;
         panners[i].prepare(spec);
         
-        spec.numChannels        = 1;
+        spec.numChannels = 1;
         gains[i].setRampDurationSeconds(0.01);
         gains[i].prepare(spec); 
     }
+    
+    spec.numChannels = 2;
+    masterGain.setRampDurationSeconds(0.01);
+    masterGain.prepare(spec);
 }
 
 template <class SampleType>
@@ -60,6 +66,22 @@ const AudioChannelData AudioBusRenderer<SampleType>::getChannelData(const int ch
     return AudioChannelData();
 }
 
+template <class SampleType>
+void AudioBusRenderer<SampleType>::resetGains()
+{
+    // stupid code to avoid smoothing when start processing (start playing)
+    for (auto i = 0; i < MAX_AUDIO_CHANNELS; ++i) {
+        auto rampDuration = gains[i].getRampDurationSeconds();
+        gains[i].setRampDurationSeconds(0.0);
+        gains[i].setGainLinear(gains[i].getGainLinear());
+        gains[i].setRampDurationSeconds(rampDuration);
+    }
+    
+    auto rampDuration = masterGain.getRampDurationSeconds();
+    masterGain.setRampDurationSeconds(0.0);
+    masterGain.setGainLinear(masterGain.getGainLinear());
+    masterGain.setRampDurationSeconds(rampDuration);
+}
 
 
 template class AudioBusRenderer<float>;

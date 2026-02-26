@@ -246,6 +246,7 @@ void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info
             clipGain.setGainLinear(gain.load());
             juce::dsp::AudioBlock<float> audioBlock (*info.buffer);
             juce::dsp::ProcessContextReplacing<float> gainContext(audioBlock);
+            
             clipGain.process(gainContext);
             clipFadeIn.process(gainContext);
             clipFadeOut.process(gainContext);
@@ -265,6 +266,14 @@ void AudioTransportSource::setGain (const float newGain) noexcept
 float AudioTransportSource::getGain() const noexcept
 {
     return gain.load();
+}
+
+void AudioTransportSource::resetClipGain()
+{
+    auto rampDuration = clipGain.getRampDurationSeconds();
+    clipGain.setRampDurationSeconds(0.0);
+    clipGain.setGainLinear(gain.load());
+    clipGain.setRampDurationSeconds(rampDuration);
 }
 
 void AudioTransportSource::setFadeInSeconds(double fadeInSeconds, double offsetInSeconds, bool reset)

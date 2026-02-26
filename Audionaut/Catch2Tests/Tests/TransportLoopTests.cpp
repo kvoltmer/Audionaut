@@ -182,8 +182,6 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
     jassert(audioFile.existsAsFile());
     std::cout << "Testfile: " << audioFile.getFullPathName() << std::endl;
     
-    auto outFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/out-slow-saw.wav"));
-    
     GIVEN("generated audio file with loop")
     {
         auto engine = AudiumFactory::createAudiumEngine();

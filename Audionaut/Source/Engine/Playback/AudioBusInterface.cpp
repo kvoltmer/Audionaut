@@ -128,6 +128,14 @@ void AudioBusInterface::setMasterGain(const float newGain)
     });
 }
 
+void AudioBusInterface::resetGains()
+{
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push([ptr] {
+        ptr->resetGains();
+    });
+}
+
 const float AudioBusInterface::getChannelLevel(const int channelNumber) const
 {
     return audioBusRenderer->getChannelLevel(channelNumber);
