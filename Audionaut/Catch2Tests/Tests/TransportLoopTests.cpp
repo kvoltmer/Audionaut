@@ -178,14 +178,14 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     
-    auto audioFile = createTestFile();
-    jassert(audioFile.existsAsFile());
-    std::cout << "Testfile: " << audioFile.getFullPathName() << std::endl;
+    auto testFile = createTestFile();
+    jassert(testFile.existsAsFile());
+    std::cout << "Testfile: " << testFile.getFullPathName() << std::endl;
     
     GIVEN("generated audio file with loop")
     {
         auto engine = AudiumFactory::createAudiumEngine();
-        auto ok = engine->openFile(audioFile, nullptr);
+        auto ok = engine->openFile(testFile, nullptr);
         REQUIRE(ok);
         engine->getPlayListScheduler()->commitPlayListData();
         auto loop = engine->getPlayListScheduler()->getTransportLoop();
@@ -209,21 +209,21 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
                 examineBouncedAudioFile(bounceConfig);
             }
         }
-//        WHEN("bouncing session with length to match loop end")
-//        {
-//            auto track = engine->getAudioTrackContainer()->getAudioTracks().front();
-//            jassert(track);
-//            auto item = track->getPlayListContainer()->getPlayListItem(0);
-//            jassert(item);
-//            item->setLength(2.0, audium::seconds);
-//
-//            exporter->bounce();
-//
-//            THEN("examine bounced audio file")
-//            {
-//                examineBouncedAudioFile(bounceConfig);
-//            }
-//        }
+        WHEN("bouncing session with length to match loop end")
+        {
+            auto track = engine->getAudioTrackContainer()->getAudioTracks().front();
+            jassert(track);
+            auto item = track->getPlayListContainer()->getPlayListItem(0);
+            jassert(item);
+            item->setLength(2.0, audium::seconds);
+
+            exporter->bounce();
+
+            THEN("examine bounced audio file")
+            {
+                examineBouncedAudioFile(bounceConfig);
+            }
+        }
         
         
         if (bounceConfig->fileName.existsAsFile())
@@ -231,6 +231,10 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
         
         engine = nullptr;
     }
+    
+    
+    if (testFile.existsAsFile())
+        testFile.deleteFile();
 
     
     juce::DeletedAtShutdown::deleteAll();
