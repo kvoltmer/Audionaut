@@ -39,7 +39,7 @@ SCENARIO("transport loop scenario", "[engine][transport][loop]")
             auto transportPos = 0.0;
             auto delta = 0.1; // seconds
             
-            for (auto i = 0; i < 1000; i++) {
+            for (auto i = 0; i < 1001; i++) {
                 
                 auto samples = static_cast<int>(44100.0 * delta);
                 auto result = transportLoop->processLoop(transportPos, samples, audium::clocks);
