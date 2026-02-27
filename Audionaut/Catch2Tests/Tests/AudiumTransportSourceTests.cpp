@@ -209,14 +209,14 @@ SCENARIO("tranport source duration scenario", "[engine][dsp][transport][duration
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     
-    auto audioFile = createTestFile();
-    jassert(audioFile.existsAsFile());
-    std::cout << "Testfile: " << audioFile.getFullPathName() << std::endl;
+    auto testFile = createTestFile();
+    jassert(testFile.existsAsFile());
+    std::cout << "Testfile: " << testFile.getFullPathName() << std::endl;
     
     GIVEN("engine loading the audio file")
     {
         auto engine = AudiumFactory::createAudiumEngine();
-        auto ok = engine->openFile(audioFile, nullptr);
+        auto ok = engine->openFile(testFile, nullptr);
         REQUIRE(ok);
         engine->getPlayListScheduler()->commitPlayListData();
         
@@ -249,6 +249,9 @@ SCENARIO("tranport source duration scenario", "[engine][dsp][transport][duration
         engine = nullptr;
     }
 
+    if (testFile.existsAsFile())
+        testFile.deleteFile();
+    
     juce::DeletedAtShutdown::deleteAll();
     juce::MessageManager::deleteInstance();
 }

@@ -68,7 +68,8 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
                 AudioSourceChannelInfo infoStop2 (info);
                 infoStop2.startSample = offset;
                 infoStop2.numSamples = info.numSamples - offset;
-                mainSource->getNextAudioBlock(infoStop2);
+                if (infoStop2.numSamples > 0)
+                    mainSource->getNextAudioBlock(infoStop2);
                 
             }
             else {
