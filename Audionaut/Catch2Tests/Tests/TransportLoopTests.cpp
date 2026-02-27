@@ -164,10 +164,10 @@ static void examineBouncedAudioFile(std::shared_ptr<audium::ExportAudioConfig> b
         for (auto s = 0; s < samplePerPhase; s++) {
             auto val0 = genSaw(s, samplePerPhase);
             auto val1 = buffer.getSample(0, s + (samplePerPhase * i));
-            
-            if (val0 != Catch::Approx(val1).margin(0.000001f)) {
+            auto margin = 0.000001f;
+            if (val0 != Catch::Approx(val1).margin(margin)) {
             }
-            REQUIRE(val0 == Catch::Approx(val1).margin(0.000001f));
+            REQUIRE(val0 == Catch::Approx(val1).margin(margin));
         }
     }
 }
@@ -212,10 +212,22 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
         WHEN("bouncing session with length to match loop end")
         {
             auto track = engine->getAudioTrackContainer()->getAudioTracks().front();
-            jassert(track);
             auto item = track->getPlayListContainer()->getPlayListItem(0);
-            jassert(item);
             item->setLength(2.0, audium::seconds);
+
+            exporter->bounce();
+
+            THEN("examine bounced audio file")
+            {
+                examineBouncedAudioFile(bounceConfig);
+            }
+        }
+        WHEN("bouncing session with start and end to match loop")
+        {
+            auto track = engine->getAudioTrackContainer()->getAudioTracks().front();
+            auto item = track->getPlayListContainer()->getPlayListItem(0);
+            item->setAbsolutePosition(1.0, audium::seconds);
+            item->getRegion()->setRegionData({1.0, 2.0}, audium::seconds);
 
             exporter->bounce();
 
