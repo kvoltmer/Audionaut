@@ -54,26 +54,26 @@ void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     auto local = dspClip.getRegionData(context).getStart();
     auto offset = absolute - transportPosition;
     auto position = 0.0;
-    auto startSamples = 0;
+    auto startSample = 0;
     
     if (offset < 0.0) {
         position = local - offset;
         
         // sample offset (loop)
-        startSamples = sampleOffset;
+        startSample = sampleOffset;
     }
     else {
         position = local;
-        startSamples = static_cast<int>(offset * externalSampleRate);
-        
+        startSample = static_cast<int>(std::round(offset * externalSampleRate));
+        startSample += sampleOffset;
     }
-    jassert(startSamples < numSamples);
+    jassert(startSample < numSamples);
     
     auto duration = dspClip.getRegionData(context).getEnd() - position;
     
     jassert(position >= 0.0 && duration >= 0.0);
     
-    transportSource->schedulePosition(position, startSamples);
+    transportSource->schedulePosition(position, startSample);
     
     transportSource->scheduleDuration(duration, externalSampleRate);
     
