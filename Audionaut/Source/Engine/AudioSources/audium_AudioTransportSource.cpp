@@ -140,7 +140,7 @@ bool AudioTransportSource::hasStreamFinished() const noexcept
 
 void AudioTransportSource::setNextReadPosition (int64 newPosition)
 {
-    std::cout << "setNextReadPosition " << newPosition << std::endl;
+    // std::cout << "setNextReadPosition " << newPosition << std::endl;
     if (positionableSource != nullptr) {
         if (sampleRate > 0 && sourceSampleRate > 0)
             newPosition = (int64) ((double) newPosition * sourceSampleRate / sampleRate);

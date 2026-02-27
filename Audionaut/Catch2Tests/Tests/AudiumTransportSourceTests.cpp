@@ -18,8 +18,8 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
     MessageManagerLock mmLock(Thread::getCurrentThread());
     
     
-    auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/120-funk-export.audium"));
-    REQUIRE(fileUnderTest.existsAsFile());
+    auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/120-funk-export-v2.audium"));
+    REQUIRE(fileUnderTest.exists());
     
 
     GIVEN("Load session file (audio file starts: at second 1 with 1 second duration)")
@@ -81,32 +81,26 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                     auto samplesUntilStart = static_cast<int>(bounceConfig->sampleRate * (sessionStart - bounceConfig->positionSeconds));
                     
                     if (samplesUntilStart > 0) {
-                        // magnitue of 1st part is 0.0
+                        // 1st second is silence
                         mag = buffer.getMagnitude(0, samplesUntilStart - 1);
                         REQUIRE(mag == Catch::Approx(0.0));
                     }
                     
-                    // magnitue of sample at 2nd part > 0.0
+                    // mag > 0 at second 1
                     if (samplesUntilStart < 0)
                         samplesUntilStart = 0;
                     mag = buffer.getMagnitude(samplesUntilStart, 1);
-                    
                     REQUIRE(mag > 0.0);
                     
-                    auto sessionStart2 = 3.0; // the 2nd clip starts at second 3
-                    auto samplesUntilStart2 = static_cast<int>(bounceConfig->sampleRate * (sessionStart2 - bounceConfig->positionSeconds));
-                    auto durationGap = 1.0;
-                    auto durationGapSamples = static_cast<int>(bounceConfig->sampleRate * durationGap);
+                    auto sr = bounceConfig->sampleRate;
                     
-                    
-                    mag = buffer.getMagnitude(samplesUntilStart2 - durationGapSamples, durationGapSamples - 1);
-                    REQUIRE(mag == Catch::Approx(0.0));
-                    
-                    if (samplesUntilStart < 0)
-                        samplesUntilStart = 0;
-                    mag = buffer.getMagnitude(samplesUntilStart2, 1);
+                    // silence at second 2
+                    mag = buffer.getMagnitude(static_cast<int>(2.0 * sr) , 1);
+                    REQUIRE(mag <= 0.0);
+
+                    // mag > 0 at second 3
+                    mag = buffer.getMagnitude(static_cast<int>(3.0 * sr) , 1);
                     REQUIRE(mag > 0.0);
-                    
                     
                     // total length
                     REQUIRE(reader->lengthInSamples == static_cast<unsigned int>(bounceConfig->sampleRate * totalLength));

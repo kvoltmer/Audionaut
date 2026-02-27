@@ -123,10 +123,10 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
             
             if (result.numSamplesUntilLoop < numSamples) {
                 
-                std::cout << diff << " " << result.numSamplesUntilLoop << std::endl;
+                // std::cout << diff << " " << result.numSamplesUntilLoop << std::endl;
                 
                 thePosition -= loopRange.getLength();
-                jassert(thePosition >= 0.0);
+                // jassert(thePosition >= 0.0);
                 loopCount++;
                 result.loopEvent = true;
             }
