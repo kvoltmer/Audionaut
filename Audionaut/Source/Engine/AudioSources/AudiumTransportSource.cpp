@@ -105,7 +105,7 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         auto offset = 0;
         if (durationTimer.process(infoPart2.numSamples, offset))
         {
-            jassertfalse; // hu?
+            std::cout << "AudiumTransportSource::getNextAudioBlock -> stop right after start!" << std::endl;
             audioTransportSource->stop();
         }
         

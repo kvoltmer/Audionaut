@@ -68,10 +68,10 @@ void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
         startSample += sampleOffset;
     }
     jassert(startSample < numSamples);
+    jassert(position >= 0.0);
     
     auto duration = dspClip.getRegionData(context).getEnd() - position;
-    
-    jassert(position >= 0.0 && duration >= 0.0);
+    jassert(duration >= 0.0);
     
     transportSource->schedulePosition(position, startSample);
     
@@ -130,19 +130,14 @@ void PlayListScheduler::process(double transportPositionClocks,
                 transportSource->getAudioTransportSource()->stop();
             }
             else if (loopResult.loopEvent) {
-                // TODO: stop in
-                //transportSource->getAudioTransportSource()->stop();
-                
-                // (re) schedule
-                auto secondsUntilLoop = loopResult.timeUntilLoop;
-                if (loopResult.context == clocks)
-                    secondsUntilLoop = tempoProvider->clocksToSeconds(loopResult.timeUntilLoop);
-                
+                // (re) schedule clip
                 scheduleClip(dspClip,
                              transportSource,
-                             transportPosition + secondsUntilLoop,
+                             transportPosition,
                              loopResult.numSamplesUntilLoop,
                              numSamples);
+                // re-schedule: we assume the clip is already playing 
+                // jassert(transportSource->getAudioTransportSource()->isPlaying());
             }
             
             if (!transportSource->getAudioTransportSource()->isPlaying()) {
