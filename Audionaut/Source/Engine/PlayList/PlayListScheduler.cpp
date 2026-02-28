@@ -67,7 +67,7 @@ void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
         startSample = static_cast<int>(std::round(offset * externalSampleRate));
         startSample += sampleOffset;
     }
-    jassert(startSample < numSamples);
+    jassert(startSample <= numSamples);
     jassert(position >= 0.0);
     
     auto duration = dspClip.getRegionData(context).getEnd() - position;
