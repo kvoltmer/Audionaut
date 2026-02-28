@@ -101,7 +101,7 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
     
     // subtract previous loops
     thePosition -= (static_cast<double>(loopCount) * loopRange.getLength());
-    jassert(thePosition >= 0.0);
+    // jassert(thePosition >= 0.0);
     
     if (loopData.loopActive) {
         if (withinLoop &&
@@ -123,10 +123,13 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
             
             if (result.numSamplesUntilLoop < numSamples) {
                 
-                // std::cout << diff << " " << result.numSamplesUntilLoop << std::endl;
-                
+                // subtract loop length from current position
                 thePosition -= loopRange.getLength();
-                // jassert(thePosition >= 0.0);
+                
+                // correct position by the time until the loop
+                // otherwise position exceeds loop start and tiggers clips outside the loop
+                thePosition += result.timeUntilLoop;
+                jassert(thePosition >= 0.0);
                 loopCount++;
                 result.loopEvent = true;
             }

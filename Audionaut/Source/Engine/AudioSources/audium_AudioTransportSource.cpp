@@ -298,6 +298,9 @@ void AudioTransportSource::setFadeInSeconds(double fadeInSeconds, double offsetI
 
 void AudioTransportSource::setFadeOutSeconds(double fadeOutSeconds, double duration, bool reset)
 {
+    if (duration < 0.0)
+        duration = 0.0;
+    
     auto fadeTime = fadeOutSeconds;
     auto initialGain = 1.0;
     if (fadeOutSeconds <= duration) {
