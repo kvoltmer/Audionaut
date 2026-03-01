@@ -44,7 +44,6 @@ public:
     
     void paintLabel (juce::Graphics& g, const juce::String label)
     {
-        
         g.setFont (12.0f);
         
         juce::Rectangle<int> bonds(5,
@@ -70,7 +69,8 @@ public:
 
         g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
-        paintLabel(g, getLabelString());
+        if (not isRecording())
+            paintLabel(g, getLabelString());
 
     }
 
@@ -135,9 +135,7 @@ public:
     void commitRangeToEngine(juce::Range<double> rangeInClocks)
     {
         // commit values to engine
-    
         commitData(rangeInClocks, audium::clocks);
-        
     }
     
     void commitData(const juce::Range<double> newData, audium::TimeContextType context);
@@ -155,6 +153,8 @@ public:
     virtual const juce::String getLabelString() const = 0;
     
     virtual bool validateData() = 0;
+    
+    virtual bool isRecording() = 0;
     
     void setComponentToDrag(juce::Component* comp);
     

@@ -87,6 +87,25 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItem(std::shared_
     return playListItem;
 }
 
+std::shared_ptr<PlayListItem> PlayListContainer::clonePlayListItem(std::shared_ptr<PlayListItem> item)
+{
+    auto context = audium::clocks;
+    
+    auto resourceGroup = item->getRegion()->getResourceGroup();
+    auto regionContainer = resourceGroup->getAudioRegionContainer();
+    auto name = regionContainer->getUniqueName(item->getRegion()->getName());
+    
+    auto track = item->getRegion()->getAudioTrack();
+    auto newRegion = regionContainer->createRegion(name,
+                                                   item->getRegionData(context),
+                                                   track,
+                                                   resourceGroup,
+                                                   item->getRegion(),
+                                                   context);
+
+    return createPlayListItemAtPositionUI(newRegion, item->getAbsolutePosition(context), context);
+}
+
 void PlayListContainer::movePlayListItemsPosition(int startIndex)
 {
     // try to make way for item at startIndex

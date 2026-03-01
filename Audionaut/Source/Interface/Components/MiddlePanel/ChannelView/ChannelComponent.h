@@ -88,6 +88,9 @@ public:
     static void configureVolumeSlider(juce::Slider *slider, double dbMax = 6.0);
     static void configurePanSlider(juce::Slider *slider);
     
+    bool audioInputAvailable(int channelNumber);
+    void setRecordEnabled(int channelNumber, bool bEnabled);
+    
 private:
     std::shared_ptr<audium::AudioTrack> audioTrack;
     std::shared_ptr<audium::AudiumEngine> engine;
@@ -98,6 +101,8 @@ private:
     std::unique_ptr<juce::ImageButton> volumeScaleButton;
     std::unique_ptr<juce::TextButton> muteButton;
     std::unique_ptr<juce::TextButton> soloButton;
+    std::unique_ptr<juce::DrawableButton> recordButton;
+    std::unique_ptr<juce::TextButton> monitorButton;
     
     int rowNumber = 0;
     

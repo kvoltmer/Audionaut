@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
-              bundleIdentifier="com.voltmer-systems.audionaut" version="1.0.7"
+              bundleIdentifier="com.voltmer-systems.audionaut" version="1.1.0"
               companyName="Klaus Voltmer" companyWebsite="audionaut.app" cppLanguageStandard="20"
               defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0">
   <MAINGROUP id="HQG80L" name="Audionaut">
@@ -184,6 +184,17 @@
                 file="Source/Engine/Region/AudioRegionContainer.h"/>
           <FILE id="fFl3aw" name="AudioRegionData.h" compile="0" resource="0"
                 file="Source/Engine/Region/AudioRegionData.h"/>
+        </GROUP>
+        <GROUP id="{111A3789-3471-D94A-74A8-E5F7DEB8B4E6}" name="Recording">
+          <FILE id="xwMMIq" name="AudioRecorder.cpp" compile="1" resource="0"
+                file="Source/Engine/Recording/AudioRecorder.cpp"/>
+          <FILE id="yfMXHA" name="AudioRecorder.h" compile="0" resource="0" file="Source/Engine/Recording/AudioRecorder.h"/>
+          <FILE id="FxX97M" name="Recording.cpp" compile="1" resource="0" file="Source/Engine/Recording/Recording.cpp"/>
+          <FILE id="UQtOwn" name="Recording.h" compile="0" resource="0" file="Source/Engine/Recording/Recording.h"/>
+          <FILE id="ODEQLK" name="RecordingActionHandler.cpp" compile="1" resource="0"
+                file="Source/Engine/Recording/RecordingActionHandler.cpp"/>
+          <FILE id="jzGTlj" name="RecordingActionHandler.h" compile="0" resource="0"
+                file="Source/Engine/Recording/RecordingActionHandler.h"/>
         </GROUP>
         <GROUP id="{27408FC8-AAF8-55C4-A1E1-787D504EC3DD}" name="Resource">
           <FILE id="bpy86C" name="AudioResource.cpp" compile="1" resource="0"
@@ -441,10 +452,11 @@
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
                extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
                smallIcon="qhU3Rr" bigIcon="gdiYPG" appSandboxInheritance="1"
-               appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write"
+               appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
                xcodeValidArchs="arm64,arm64e,x86_64" documentExtensions="audium"
-               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="10">
+               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="11" microphonePermissionNeeded="1"
+               localNetworkPermissionNeeded="1">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
                        customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"/>
@@ -465,6 +477,7 @@
         <MODULEPATH id="juce_dsp" path="../Submodules/juce/modules"/>
         <MODULEPATH id="juce_audio_utils" path="../Submodules/juce/modules"/>
         <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/juce/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <LINUX_MAKE targetFolder="Builds/LinuxMakefile" smallIcon="qhU3Rr" bigIcon="gdiYPG">
@@ -486,6 +499,7 @@
         <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
         <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
         <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/juce/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
     <VS2022 targetFolder="Builds/VisualStudio2022" extraDefs="LINK_PLATFORM_WINDOWS=1"
@@ -508,6 +522,7 @@
         <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
         <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
         <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/juce/modules"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>
@@ -517,6 +532,8 @@
     <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_processors_headless" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="0"/>
     <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>

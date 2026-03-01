@@ -3,6 +3,7 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
@@ -173,15 +174,12 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         audioChannelContainer->cleanup();
     }
     auto c = 0;
-    for (auto& jsonElement : jsonChannels)
-    {
+    for (auto& jsonElement : jsonChannels) {
         std::shared_ptr<AudioChannel> channel = nullptr;
-        if (rebuild)
-        {
+        if (rebuild) {
             channel = addChannel();
         }
-        else
-        {
+        else {
             channel = audioChannelContainer->getObjects()[c];
         }
         if (channel != nullptr) {
@@ -339,6 +337,67 @@ bool AudioTrack::getSolo(int channelNumber) const {
     return 0.0;
 }
 
+void AudioTrack::setChannelData(const int channelNumber, const AudioChannelData data)
+{
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        channel->data = data;
+        channel->commitChannelData();
+    }
+}
+
+const AudioChannelData AudioTrack::getChannelData(const int channelNumber) const
+{
+    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        return channel->data;
+    }
+    return AudioChannelData();
+}
+
+void AudioTrack::setRecordEnabled(const int channelNumber, bool bEnabled)
+{
+    if (channelNumber >= 0) {
+        if (auto channel = audioChannelContainer->objects[channelNumber]) {
+            channel->setRecordEnabled(bEnabled);
+        }
+    }
+    else {
+        // all channels
+        for (auto channel : audioChannelContainer->objects) {
+            channel->setRecordEnabled(bEnabled);
+        }
+    }
+}
+
+bool AudioTrack::isRecordEnabled(const int channelNumber)
+{
+    if (channelNumber > 0 && channelNumber < audioChannelContainer->objects.size()) {
+        return audioChannelContainer->objects[channelNumber]->isRecordEnabled();
+    }
+    else {
+        for (auto chan : audioChannelContainer->objects) {
+            if (chan->isRecordEnabled())
+                return true;
+        }
+        
+        return false;
+    }
+}
+
+bool AudioTrack::isRecording(const int channelNumber) const
+{
+    if (channelNumber > 0 && channelNumber < audioChannelContainer->objects.size()) {
+        return audioChannelContainer->objects[channelNumber]->isRecording();
+    }
+    else {
+        for (auto chan : audioChannelContainer->objects) {
+            if (chan->isRecording())
+                return true;
+        }
+        
+        return false;
+    }
+}
+
 void AudioTrack::onDragStart()
 {
     undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);
@@ -487,7 +546,9 @@ bool AudioTrack::deleteSelectedObject(std::shared_ptr<audium::Selectable> object
     else if (AudioRegion* audioRegion = dynamic_cast<AudioRegion*>(object.get()))
     {
         rebuild = false;
-        return audioRegion->getResourceGroup()->getAudioRegionContainer()->deleteAudioRegion(audioRegion);
+        auto result = audioRegion->getResourceGroup()->getAudioRegionContainer()->deleteAudioRegion(audioRegion);
+        deleteUnusedResourceGroups();
+        return result;
     }
     else if (PlayListItem* playListItem = dynamic_cast<PlayListItem*>(object.get()))
     {
@@ -558,7 +619,6 @@ void AudioTrack::deleteUnusedResourceGroups()
 
 bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
                                double position,
-                               bool arrangementMode,
                                std::function<void (std::string)> callback)
 {
     // Undo: store old state
@@ -568,13 +628,12 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
     std::shared_ptr<ResourceGroup> resourceGroup = nullptr;
     
     bool subGroupCreated = false;
-    if (arrangementMode) {
-        if (auto playListItem = getPlayListContainer()->itemAtAbsolutePosition(position,
-                                                                               audium::clocks)) {
-            resourceGroup = playListItem->getRegion()->getResourceGroup();
-        }
+
+    if (auto playListItem = getPlayListContainer()->itemAtAbsolutePosition(position,
+                                                                           audium::clocks)) {
+        resourceGroup = playListItem->getRegion()->getResourceGroup();
     }
-    
+ 
     if (resourceGroup == nullptr) {
         resourceGroup = createNewResourceGroup();
         subGroupCreated = true;
@@ -604,8 +663,7 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
         return false;
     }
     
-    if (arrangementMode &&
-        subGroupCreated)
+    if (subGroupCreated)
     {
         createDefaultPlayListItem(resources.front(), resourceGroup, position, audium::clocks);
     }
@@ -654,13 +712,16 @@ std::vector<std::shared_ptr<AudioResource>> AudioTrack::addAudioFile (std::share
     return result;
 }
 
-void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
+std::shared_ptr<PlayListItem> AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
                                            std::shared_ptr<ResourceGroup> resourceGroup,
                                            double position,
                                            audium::TimeContextType context)
 {
     // create default region
     juce::Range<double> defaultRange(0.0, audioResource->getFileLength(context));
+    if (defaultRange.getLength() <= 0.0) {
+        defaultRange.setLength(0.1);
+    }
     auto region = resourceGroup->getAudioRegionContainer()->createRegion(  audioResource->getFileNameWithoutExtension(),
                                                                     defaultRange,
                                                                     std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),
@@ -668,9 +729,25 @@ void AudioTrack::createDefaultPlayListItem(std::shared_ptr<AudioResource> audioR
                                                                     nullptr,
                                                                     context);
     
+    // an empty name indicates a recording
+    if (region->getName().isEmpty()) {
+        jassert(audioResource->isRecording());
+        auto take = AudiumEngine::recordingCounter;
+        auto takeString = juce::String(AudioRegionContainer::formatNumber(take + 1));
+        
+        // Format as [Year-Month-Day Hour-Minute-Second]
+        auto now = juce::Time::getCurrentTime();
+        auto formattedStr = now.formatted ("[%Y-%m-%d_%H-%M-%S]");
+        
+        auto name = "take " + takeString + " " + formattedStr;
+        region->setName(name);
+    }
+    
+    
     // create play list item
-    getPlayListContainer()->createPlayListItemAtPositionUI(region, position, context);
+    auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(region, position, context);
     getPlayListContainer()->sortByPosition();
+    return newItem;
 }
 
 double AudioTrack::getTotalLength(audium::TimeContextType context) const
@@ -679,7 +756,7 @@ double AudioTrack::getTotalLength(audium::TimeContextType context) const
 }
 
 
-std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) const
+std::vector<DspClipData> AudioTrack::getDspClipVector() const
 {
     std::vector<DspClipData> result;
     DspClipData dspClipData;
@@ -687,16 +764,18 @@ std::vector<DspClipData> AudioTrack::getDspClipVector(bool arrangementMode) cons
     // iterate playlist items and it's transport sources
     for (const auto &item : getPlayListContainer()->getPlayListItems()) {
         for (const auto &transportSource : item->getTransportSources()) {
-            dspClipData.active              = true;
-            auto channel = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
-            dspClipData.clipGain            = item->getRegion()->getGain(channel);
-            dspClipData.clipFadeInClocks    = item->getFadeInClocks();
-            dspClipData.clipFadeOutClocks   = item->getFadeOutClocks();
-            dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
-            dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
-            
-            dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);
-            result.push_back(dspClipData);
+            if (transportSource != nullptr) {
+                dspClipData.active              = true;
+                auto channel = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
+                dspClipData.clipGain            = item->getRegion()->getGain(channel);
+                dspClipData.clipFadeInClocks    = item->getFadeInClocks();
+                dspClipData.clipFadeOutClocks   = item->getFadeOutClocks();
+                dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
+                dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
+                
+                dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);
+                result.push_back(dspClipData);
+            }
         }
     }
 

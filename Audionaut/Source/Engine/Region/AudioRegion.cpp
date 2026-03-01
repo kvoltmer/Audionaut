@@ -40,18 +40,11 @@ bool AudioRegion::writeToJson (json& output)
     data.region_id      = resourceGroup->getAudioRegionContainer()->getRegionId(shared_ptr);
     data.track_id       = audioTrack->getId();
     data.resource_group_id   = audioTrack->resourceGroupContainer->getIndex(resourceGroup);
-    
+    data.recording      = isRecording();
     
     output = data;
     return true;
 }
-
-bool AudioRegion::readFromJson (json& input, bool rebuild)
-{
-    data = input;
-    return true;
-}
-
 
 int AudioRegion::getSizeInUnits()
 {
@@ -187,6 +180,15 @@ int AudioRegion::getResourcesMaxBitDepth() const
     }
     jassert(bitDepth > 0.0);
     return bitDepth;
+}
+
+bool AudioRegion::isRecording() const
+{
+    for (auto resource : getAudioResources())
+        if (resource->isRecording())
+            return true;
+    
+    return false;
 }
 
 } // namespace audium

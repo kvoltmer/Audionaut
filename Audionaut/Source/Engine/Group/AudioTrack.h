@@ -27,6 +27,7 @@ class ResourceGroup;
 class AudioChannel;
 class PositionableBase;
 class AudioTrackContainer;
+class AudioChannelData;
 
 typedef SelectableObjectContainer<ResourceGroup> tResourceGroupContainer;
 typedef SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
@@ -160,6 +161,13 @@ public:
     void setSolo(bool bSolo, int channelNumber);
     bool getSolo(int channelNumber) const;
     
+    void setChannelData(const int channelNumber, const AudioChannelData data);
+    const AudioChannelData getChannelData(const int channelNumber) const;
+    
+    void setRecordEnabled(const int channelNumber, bool bEnabled);
+    bool isRecordEnabled(const int channelNumber = -1);
+    bool isRecording(const int channelNumber = -1) const;
+    
     // undo for continious parameters:
     void onDragStart();
     void onDragEnd();
@@ -199,26 +207,25 @@ public:
     
     bool addAudioFiles(const juce::StringArray& filenames,
                        double positionClocks,
-                       bool arrangementMode,
                        std::function<void (std::string)> callback);
     
     std::vector<std::shared_ptr<AudioResource>> addAudioFile (std::shared_ptr<ResourceGroup> resourceGroup,
                                                               const juce::File filename,
                                                               int &destChannel);
     
-    void createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
+    std::shared_ptr<PlayListItem> createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
                                    std::shared_ptr<ResourceGroup> resourceGroup,
                                    double position,
                                    TimeContextType context);
     
     double getTotalLength(TimeContextType context) const;
     
-    std::vector<DspClipData> getDspClipVector(bool arrangementMode) const;
+    std::vector<DspClipData> getDspClipVector() const;
     
     std::shared_ptr<AudioRegion> getRegion(int rowNumber) const;
     const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;
     int getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const;
-    int lastRegionSelected = -1; ///< Index of the last region selected.
+    
     
 private:
     AudioTrackContainer &owner; ///< Reference to the owning container.

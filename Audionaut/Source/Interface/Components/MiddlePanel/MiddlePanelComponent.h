@@ -145,16 +145,6 @@ public:
         }
     }
     
-    bool arrangementComponentVisible() const
-    {
-        return arrangementComponent->isVisible();
-    }
-    
-    bool editComponentVisible() const
-    {
-        return false;
-    }
-    
     ArrangementEditBaseComponent* getVisibleComponent() const
     {
         if (arrangementComponent->isVisible())

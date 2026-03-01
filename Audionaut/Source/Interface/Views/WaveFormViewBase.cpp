@@ -109,30 +109,41 @@ void WaveFormViewBase::createThumbnailCache()
         audioThumbnail->removeChangeListener(this);
     }
 
-    if (audioResource != nullptr &&
-        audioResource->audioFormatReader != nullptr) {
-    
-        // create thumbnail
-        auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
-        auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
-        auto sourceSamplesPerThumbnailSample = 64;
-        //auto sourceSamplesPerThumbnailSample = 256;
-        //auto sourceSamplesPerThumbnailSample = 4096*4;
-        audioThumbnail.reset(new audium::AudioThumbnail(sourceSamplesPerThumbnailSample, *formatManager, *thumbnailCache));
-        audioThumbnail->setColour(colour);
-
-        // reuse shared_ptr if the file is memory mapped
-        if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
-            auto hashCode = audioResource->getUrl().toString(true).hashCode64();
-            audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
+    if (audioResource != nullptr) {
+        
+        if (audioResource->audioFormatReader != nullptr) {
+            // create thumbnail
+            auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
+            auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
+            auto sourceSamplesPerThumbnailSample = 64;
+            audioThumbnail = std::make_shared<audium::AudioThumbnail>(sourceSamplesPerThumbnailSample,
+                                                                      *formatManager,
+                                                                      *thumbnailCache);
+            // reuse shared_ptr if the file is memory mapped
+            if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
+                auto hashCode = audioResource->getUrl().toString(true).hashCode64();
+                audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
+            }
+            else {
+                // create a new input source
+                if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
+                    audioThumbnail->setSource(inputSource.release());
+                }
+            }
+            jassert(audioThumbnail);
         }
         else {
-            // create a new input source
-            if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
-                audioThumbnail->setSource(inputSource.release());
-            }
+            // get the thumbnail from the recorder
+            auto busChan = channelNumber + audioResource->getAudioTrack()->getChannelOffset();
+            audioThumbnail = audiumEngine->getAudioBusInterface()->getRecordingThumbnail(busChan);
+            jassert(audioThumbnail);
         }
-        audioThumbnail->addChangeListener(this);
+        
+        if (audioThumbnail != nullptr) {
+            audioThumbnail->addChangeListener(this);
+            audioThumbnail->setColour(colour);
+        }
+        
     }
     else {
         audioThumbnail = nullptr;

@@ -63,24 +63,6 @@ bool Playback::isPlaying(const std::shared_ptr<AudiumTransportSource> source)
     return false;
 }
 
-void Playback::processAudioBlock (const juce::AudioSourceChannelInfo& info)
-{
-    // avoid reallocating
-    auto numChannels = std::min(info.buffer->getNumChannels(), MAX_AUDIO_CHANNELS);
-    audioBusBuffer.setSize(numChannels, info.numSamples, false, false, true);
-    audioBusBuffer.clear();
-    juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
-    
-    for (auto i = 0; i < MAX_VOICES; ++i) {
-        if (voices[i].processing.load()) {
-            voices[i].processAudioBlock(audioBusInfo);
-            for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
-                info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
-            }
-        }
-    }
-}
-
 int Playback::getNumVoices() const
 {
     int counter = 0;

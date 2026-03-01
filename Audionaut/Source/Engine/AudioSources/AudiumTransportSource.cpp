@@ -58,11 +58,23 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         auto offset = 0;
         if (durationTimer.process(info.numSamples, offset)) {
             // reached end of clip -> schedule stop
-            audioTransportSource->stop();
             if (offset > 0) {
-                AudioSourceChannelInfo infoStop (info);
-                infoStop.numSamples = offset;
-                mainSource->getNextAudioBlock(infoStop);
+                AudioSourceChannelInfo infoStop1 (info);
+                infoStop1.numSamples = offset;
+                mainSource->getNextAudioBlock(infoStop1);
+                
+                audioTransportSource->stop();
+                
+                AudioSourceChannelInfo infoStop2 (info);
+                infoStop2.startSample = offset;
+                infoStop2.numSamples = info.numSamples - offset;
+                if (infoStop2.numSamples > 0)
+                    mainSource->getNextAudioBlock(infoStop2);
+                
+            }
+            else {
+                audioTransportSource->stop();
+                mainSource->getNextAudioBlock(info);
             }
             
         }
@@ -70,12 +82,23 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
             mainSource->getNextAudioBlock(info);
         }
     }
+    else if (scheduledStartSample.load() >= info.numSamples) {
+        scheduledStartSample.store(scheduledStartSample.load() - info.numSamples);
+        mainSource->getNextAudioBlock(info);
+    }
     else
     {
         auto startSample = scheduledStartSample.load();
         scheduledStartSample.store(0);
         jassert(startSample < info.numSamples);
-        
+    
+        if (reScheduled) {
+            // process 1st part (until start sample, in case we are already playing -> loop)
+            AudioSourceChannelInfo infoPart1 (info.buffer, 0, startSample);
+            mainSource->getNextAudioBlock(infoPart1);
+            reScheduled = false;
+        }
+
         audioTransportSource->setPosition(scheduledPosition.load());
         
         // process 2nd part
@@ -85,13 +108,16 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         auto offset = 0;
         if (durationTimer.process(infoPart2.numSamples, offset))
         {
-            jassertfalse; // hu?
+            std::cout << "AudiumTransportSource::getNextAudioBlock -> stop right after start!" << std::endl;
             audioTransportSource->stop();
         }
         
     }
     
 #if CATCH2_TESTS
+    
+//    std::cout << "first sample " << info.buffer->getSample(0, 0) << std::endl;
+    
     samplesProcessed += info.numSamples;
 #endif
 }

@@ -82,6 +82,10 @@ public:
      * @return The audio file directory as a `juce::File`.
      */
     static const juce::File getAudioFileDirectory();
+    
+    
+    static const juce::File getAudioRecordingFile(const int take,
+                                                  const int channel);
 
     
     bool isAudioFileCurrentlyLoaded(const juce::File audioFile) const;
@@ -167,8 +171,12 @@ public:
      */
     void cleanup();
     
-    
+    // delete obsolete files based on json
     void deleteObsoleteAudioFiles(const json &json);
+    
+    // delete obsolete files which are not currently loaded
+    void deleteObsoleteAudioFiles(const juce::File projectDirectory);
+
     
     juce::File getCurrentAudioFileDirectory();
 
@@ -248,6 +256,9 @@ public:
      * @return A pointer to the `TimeSliceThread`.
      */
     juce::TimeSliceThread *getReadAheadThread() { return &thread; }
+    
+    
+    void onRecordingFinished();
     
 private:
     /// List of pairs of audio tracks and resources.

@@ -3,21 +3,22 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-
-#include "Interface/Components/HeaderPanel/HeaderComponent.h"
-#include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
-#include "Interface/Components/RightPanel/RightPanelComponent.h"
-
-#include "Application/AudiumApplication.h"
-
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-
 #include "Engine/Export/PlayListItemExport.h"
+#include "Engine/Recording/RecordingActionHandler.h"
+
+#include "Interface/Components/HeaderPanel/HeaderComponent.h"
+#include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
+#include "Interface/Components/RightPanel/RightPanelComponent.h"
 #include "Interface/Models/PlayListTableListBoxItem.h"
+
+#include "Application/AudiumApplication.h"
+
+
 
 #include "MainComponent.h"
 
@@ -141,6 +142,24 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
         rightPanelComponent->updateUI(SelectionContext);
     }
+    else if (message == audium::recordingFinishedAction) {
+        audiumEngine->getRecordingActionHandler()->onRecordingFinished();
+        audiumEngine->getPlayListScheduler()->commitPlayListData();
+        updateUI();
+    }
+    else if (message == audium::transportLoopAction) {
+        if (audiumEngine->getPlayListScheduler()->isRecording()) {
+            audiumEngine->getRecordingActionHandler()->onLoopAction();
+            updateUI();
+        }
+    }
+    else if (message == audium::transportLoopEntered) {
+        if (audiumEngine->getPlayListScheduler()->isRecording()) {
+            audiumEngine->getRecordingActionHandler()->onLoopEntered();
+            updateUI();
+        }
+    }
+    
     else // update everything (eg. region deleted)
     {
         updateUI();
@@ -162,9 +181,6 @@ void MainComponent::rebuildUI()
 void MainComponent::updateUI()
 {
     headerComponent->updateUI();
-    auto editMode = audiumEngine->getPlayListScheduler()->isEditMode();
-    middlePanelComponent->showArrangementComponent(!editMode);
-
     middlePanelComponent->updateUI();
     rightPanelComponent->updateUI(ContentContext);
 

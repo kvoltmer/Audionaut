@@ -69,14 +69,14 @@ public:
      */
     void schedulePosition (double newPosition, int startSample)
     {
-        if (startSample == 0)
-        {
+//        std::cout << "schedulePosition " << newPosition << " " << startSample << std::endl;
+        if (startSample == 0) {
             audioTransportSource->setPosition(newPosition);
         }
-        else
-        {
+        else {
             scheduledStartSample.store(startSample);
             scheduledPosition = newPosition;
+            reScheduled = isPlaying();
         }
     }
     
@@ -114,8 +114,9 @@ public:
     
 private:
     AudioResource& audioResource; ///< Reference to the associated audio resource.
-    std::atomic<int> scheduledStartSample = 0; ///< The sample position for a scheduled position change.
-    std::atomic<double> scheduledPosition = 0.0; ///< The scheduled playback position in seconds.
+    std::atomic<int> scheduledStartSample   = 0; ///< The sample position for a scheduled position change.
+    std::atomic<double> scheduledPosition   = 0.0; ///< The scheduled playback position in seconds.
+    std::atomic<bool> reScheduled           = false; /// Helper to indicate if position is re-scheduled (loop)
     audium::SampleTimer durationTimer; ///< Timer for managing playback duration.
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
     std::shared_ptr<audium::AudioTransportSource> audioTransportSource; ///< Underlying audio transport source.

@@ -106,6 +106,8 @@ public:
     void setGain (float newGain) noexcept;
     float getGain() const noexcept;
     
+    void resetClipGain();
+    
     void setFadeInSeconds(double fadeInSeconds, double offsetInSeconds, bool reset);
     void setFadeOutSeconds(double fadeOutSeconds, double duration, bool reset);
 

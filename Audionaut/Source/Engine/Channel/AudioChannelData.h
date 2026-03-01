@@ -19,13 +19,19 @@ namespace audium
  * This structure holds information about an audio channel's height, gain, pan, mute, and solo states.
  * It also provides serialization and deserialization methods for JSON conversion.
  */
-struct AudioChannelData
+class AudioChannelData
 {
+public:
+    
     int height  = 100;   ///< The height of the audio channel in pixels.
     float gain  = 1.0f;  ///< The gain level of the audio channel (default is 1.0f).
     float pan   = 0.f;   ///< The pan position of the audio channel (-1.0f for left, 1.0f for right).
     bool mute   = false; ///< Indicates whether the audio channel is muted.
     bool solo   = false; ///< Indicates whether the audio channel is in solo mode.
+    bool record = false; ///< Indicates whether the audio channel is in record mode.
+    bool monitor = false; ///< Indicates whether the audio channel is in monitor mode.
+    int channelNumber = -1; /// The  channel number of the audio track.
+    int trackId = -1; /// The audio track id.
 };
 
 /**
@@ -38,7 +44,9 @@ inline void to_json(json& j, const AudioChannelData& data) {
         {"gain", data.gain},
         {"pan", data.pan},
         {"mute", data.mute},
-        {"solo", data.solo}
+        {"solo", data.solo},
+        {"record", data.record},
+        {"monitor", data.monitor}
     };
 }
 
@@ -61,9 +69,15 @@ inline void from_json(const json& j, AudioChannelData& data) {
     if (j.contains("mute"))
         data.mute = j.at("mute").get<bool>();
     
-    if (j.contains("solo")) {
+    if (j.contains("solo"))
         data.solo = j.at("solo").get<bool>();
-    }
+    
+    if (j.contains("record"))
+        data.record = j.at("record").get<bool>();
+    
+    if (j.contains("monitor"))
+        data.monitor = j.at("monitor").get<bool>();
+    
 }
 
 } // namespace audium

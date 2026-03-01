@@ -11,6 +11,8 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
+#include "Engine/Region/AudioRegionContainer.h"
+
 
 namespace audium {
 
@@ -27,7 +29,7 @@ AudioResource::AudioResource(AudioResourceContainer& audioResourceContainer_,
     resourceGroup(resourceGroup_),
     url(url_)
 {
-    jassert(audioFormatReader != nullptr);
+    //jassert(audioFormatReader != nullptr);
     
     channelMapping = std::make_unique<audium::ChannelMapping>();
     
@@ -65,7 +67,7 @@ const juce::String AudioResource::getFileNameWithoutExtension() const
     if (url.isLocalFile())
         return url.getLocalFile().getFileNameWithoutExtension();
     
-    return "n/a";
+    return "";
 }
 
 const juce::String AudioResource::getFullPathName() const
@@ -83,13 +85,24 @@ const juce::String AudioResource::getUrlAsString() const
 
 const juce::String AudioResource::getRelativePath(const juce::File &directoryToBeRelativeTo) const
 {
-    return url.getLocalFile().getRelativePathFrom(directoryToBeRelativeTo);
+    if (url.isEmpty() && isRecording()) {
+        auto outChannel = getOutputChannelNumber();
+        auto file = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedAudioFile(outChannel);
+        return file.getRelativePathFrom(directoryToBeRelativeTo);
+    }
+    else if (url.isLocalFile())
+        return url.getLocalFile().getRelativePathFrom(directoryToBeRelativeTo);
+    else
+        return url.toString(false);
 }
 
 double AudioResource::getSampleRate() const
 {
     if (audioFormatReader != nullptr) {
         return audioFormatReader->sampleRate;
+    }
+    else if (auto device = getContainer().getAudioDeviceManager()->getCurrentAudioDevice()) {
+        return device->getCurrentSampleRate();
     }
     return 44100.0;
 }
@@ -131,6 +144,59 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
     return 0.0;
 }
 
+double AudioResource::getRecordedLength(audium::TimeContextType context) const
+{
+    auto length = -1.0;
+    if (isRecording()) {
+        auto outChannel = getOutputChannelNumber();
+        length = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedLength(outChannel);
+    }
+    
+    if (context == audium::seconds) {
+        return length;
+    }
+    else if (context == audium::clocks) {
+        return owner.getTempoProvider()->secondsToClocks(length);
+    }
+
+    jassertfalse;
+    return length;
+}
+
+int AudioResource::getOutputChannelNumber() const
+{
+    auto channelOffset = getAudioTrack()->getChannelOffset();
+    auto dstChannel = getChannelMapping().getDestinationChannel();
+    return dstChannel + channelOffset;
+}
+
+bool AudioResource::loadRecordedAudioFile()
+{
+    auto audioBusChannel = getOutputChannelNumber();
+    auto audioBusInterface = getAudioTrack()->getAudioTrackContainer().audioBusInterface;
+    
+    // audio resrouce without audioFormatReader -> recording
+    if (audioFormatReader == nullptr &&
+        not audioBusInterface->isRecording(audioBusChannel)) {
+        // std::cout << "load rec file at channel " << audioBusChannel << std::endl;
+        auto file = audioBusInterface->getRecordedAudioFile(audioBusChannel);
+        
+        if (file.existsAsFile()) {
+            // std::cout << file.getFullPathName() << std::endl;
+            juce::URL theUrl(file);
+            setUrl(theUrl);
+            audioFormatReader = getAudioTrack()->getAudioResourceContainer().getAudioFormatReaderForUrl(theUrl);
+            jassert(audioFormatReader);
+            return (audioFormatReader != nullptr);
+        }
+        else {
+            // hu?
+            jassertfalse;
+        }
+    }
+    return false;
+}
+
 std::vector<std::shared_ptr<AudioResource>> AudioResource::getAudioResourcesWithinResourceGroup() const
 {
     std::vector<std::shared_ptr<AudioResource>> result;
@@ -161,7 +227,8 @@ bool AudioResource::writeToJson (json& output)
 {
     output["relative_file_path"]    = getRelativePath(AudiumEngine::projectDirectory).toStdString();
     output["number_of_channels"]    = getNumAudioFileChannels();
-    output["length_in_seconds"]     = getFileLength(audium::seconds);
+    if (not isRecording())
+        output["length_in_seconds"]     = getFileLength(audium::seconds);
     
     channelMapping->writeToJson(output);
     
@@ -216,8 +283,10 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
     
     if (input.contains("length_in_seconds"))
         lengthInSeconds = input["length_in_seconds"].template get<double>();
-    
-    
+    else {
+        lengthInSeconds = getFileLength(audium::seconds);
+//        std::cout << "readFromJson length " << lengthInSeconds << std::endl;
+    }
     if (! channelMapping->readFromJson(input, rebuild)) {
         return false;
     }

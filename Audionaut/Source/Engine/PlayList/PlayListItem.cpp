@@ -38,9 +38,16 @@ void PlayListItem::init()
     if (transportSources.size() > 0) {
         deinit();
     }
+
+    createTransportSources();
+}
+
+void PlayListItem::createTransportSources()
+{
     for (const auto &resource : getRegion()->getAudioResources()) {
         auto transportSource = owner.getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
-        transportSources.emplace_back(transportSource);
+        if (transportSource != nullptr)
+            transportSources.emplace_back(transportSource);
     }
 }
 
@@ -250,5 +257,46 @@ double PlayListItem::getFadeOut() const
     
     return 0.0;
 }
+
+bool PlayListItem::isRecording() const
+{
+    for (auto resource : audioRegion->getAudioResources()) {
+        if (resource->isRecording())
+            return true;
+    }
+    return false;
+}
+
+const double PlayListItem::getRecordedLength(audium::TimeContextType context) const
+{
+    auto length = 0.0;
+    for (auto res : getRegion()->getAudioResources()) {
+        length = std::max(res->getRecordedLength(context), length);
+    }
+    return length;
+}
+
+const double PlayListItem::getRecordingStartPosition(audium::TimeContextType context) const
+{
+    auto audioBusInterface = audioRegion->getAudioTrack()->getAudioTrackContainer().audioBusInterface;
+    auto resources = getRegion()->getAudioResources();
+    if (resources.size() > 0) {
+        auto outChannel = resources[0]->getOutputChannelNumber();
+        auto pos = audioBusInterface->getRecordingStartPosition(outChannel);
+        
+        
+        
+        if (context == audium::seconds) {
+            return owner.getTempoProvider()->clocksToSeconds(pos);
+        }
+        else if (context == audium::clocks) {
+            return pos;
+        }
+        
+    }
+    jassertfalse;
+    return 0.0;
+}
+
 
 } // namespace audium

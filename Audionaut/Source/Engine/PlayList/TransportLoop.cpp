@@ -27,7 +27,9 @@ void TransportLoop::setLoopPositionRange(std::shared_ptr<AudioTrackContainer> au
         if (newRange.getLength() >= minLength) {
             
             // undo
-            auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get(), false);
+            std::unique_ptr<UndoableContainerAction> action = nullptr;
+            if (audioTrackContainer != nullptr)
+                action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get(), false);
             
             if (context == audium::seconds)
                 newRange = tempoProvider->secondsToClocks(newRange);
@@ -44,9 +46,12 @@ void TransportLoop::setLoopPositionRange(std::shared_ptr<AudioTrackContainer> au
             
             
             // undo
-            action->storeNewState();
-            undoManager->perform(action.release(), "Change Loop");
-            undoManager->beginNewTransaction();
+            if (action != nullptr &&
+                undoManager != nullptr) {
+                action->storeNewState();
+                undoManager->perform(action.release(), "Change Loop");
+                undoManager->beginNewTransaction();
+            }
         }
     }
     else {
@@ -79,31 +84,61 @@ void TransportLoop::setLoopActive(bool bActive)
     loopData.loopActive = bActive;
 }
 
-
-bool TransportLoop::processLoop(double &thePosition, int numSamples)
+const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
+                                                           int numSamples,
+                                                           audium::TimeContextType context)
 {
-    auto loopResult = false;
+    TransportLoop::LoopResult result;
+    result.context = context;
     
-    auto loopRange = getLoopPositionRange(audium::clocks);
+    auto loopRange = getLoopPositionRange(context);
     
-    auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(numSamples) / externalSampleRate);
+    jassert(externalSampleRate > 0.0);
+    auto thisBuffer = static_cast<double>(numSamples) / externalSampleRate;
+    
+    if (context == audium::clocks)
+        thisBuffer = tempoProvider->secondsToClocks(thisBuffer);
     
     // subtract previous loops
     thePosition -= (static_cast<double>(loopCount) * loopRange.getLength());
-    jassert(thePosition >= 0.0);
+    // jassert(thePosition >= 0.0);
     
     if (loopData.loopActive) {
-        
-        // loop event
         if (withinLoop &&
-            thePosition + clocksThisBuffer > loopRange.getEnd()) {
+            thePosition + thisBuffer > loopRange.getEnd()) {
             
-            thePosition -= loopRange.getLength();
-            loopCount++;
-            loopResult = true;
+            auto diff = thePosition + thisBuffer - loopRange.getEnd();
+            jassert(diff >= 0.0);
+            
+            result.timeUntilLoop = thisBuffer - diff;
+            if (result.timeUntilLoop < 0.0)
+                result.timeUntilLoop = 0.0;
+            
+            // calc samples until loop
+            auto secondsUntilLoop = result.timeUntilLoop;
+            if (context == audium::clocks)
+                secondsUntilLoop = tempoProvider->clocksToSeconds(result.timeUntilLoop);
+            result.numSamplesUntilLoop = static_cast<int>(std::round(secondsUntilLoop * externalSampleRate));
+            jassert(result.numSamplesUntilLoop >= 0);
+            
+            if (result.numSamplesUntilLoop < numSamples) {
+                
+                // subtract loop length from current position
+                thePosition -= loopRange.getLength();
+                
+                // correct position by the time until the loop
+                // otherwise position exceeds loop start and tiggers clips outside the loop
+                thePosition += result.timeUntilLoop;
+                jassert(thePosition >= 0.0);
+                loopCount++;
+                result.loopEvent = true;
+            }
         }
         else if (loopRange.contains(thePosition)) {
-            withinLoop = true;
+            if (not withinLoop) {
+                withinLoop = true;
+                tempoProvider->sendActionMessage(audium::transportLoopEntered);
+            }
         }
         else {
             withinLoop = false;
@@ -113,13 +148,73 @@ bool TransportLoop::processLoop(double &thePosition, int numSamples)
         withinLoop = false;
     }
     
-    return loopResult;
+    result.positionResult = thePosition;
+    
+    if (context == audium::seconds) {
+        currentPositionClocks = tempoProvider->secondsToClocks(thePosition);
+    }
+    else {
+        currentPositionClocks = thePosition;
+    }
+    
+    if (result.loopEvent) {
+        tempoProvider->sendActionMessage(audium::transportLoopAction);
+    }
+    
+    return result;
 }
 
 void TransportLoop::reset()
 {
     loopCount = 0;
     withinLoop = false;
+}
+
+void TransportLoop::setAbsoluteStartPosition(double newPosition, audium::TimeContextType context)
+{
+    auto positionClocks = 0.0;
+    if (context == audium::clocks) {
+        positionClocks = newPosition;
+    }
+    else if (context == audium::seconds) {
+        positionClocks = tempoProvider->secondsToClocks(newPosition);
+    }
+    
+    auto loopRange = getLoopPositionRange(audium::clocks);
+    
+    if (loopRange.contains(positionClocks)) {
+        withinLoop = true;
+    }
+    
+}
+
+double TransportLoop::getCurrentPosition(audium::TimeContextType context) const noexcept
+{
+    if (context == audium::clocks) {
+        return currentPositionClocks;
+    }
+    else if (context == audium::seconds) {
+        return tempoProvider->secondsToClocks(currentPositionClocks);
+    }
+    jassertfalse;
+    return 0.0;
+}
+
+double TransportLoop::getLoopPhaseForPosition(double startPosition,
+                                              double duration,
+                                              audium::TimeContextType context) const
+{
+    if (context == audium::seconds) {
+        startPosition = tempoProvider->secondsToClocks(startPosition);
+        duration = tempoProvider->secondsToClocks(duration);
+    }
+    auto loopRange = getLoopPositionRange(context);
+    if (loopRange.getLength() > 0.0) {
+        auto durationInLoop = startPosition + duration - loopRange.getStart();
+        return durationInLoop / loopRange.getLength();
+    }
+    jassertfalse;
+    return 0.0;
 }
 
 } // namespace audium

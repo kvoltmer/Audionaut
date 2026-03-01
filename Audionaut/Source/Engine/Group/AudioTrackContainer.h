@@ -183,6 +183,7 @@ public:
     std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const noexcept { return transportSourceContainer; }
     std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
+    std::shared_ptr<TransportLoop> getTransportLoop() const noexcept { return transportLoop; }
     
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
@@ -222,7 +223,7 @@ public:
                        double positionClocks,
                        bool arrangementMode,
                        std::function<void (std::string)> callback);
-
+    
     std::shared_ptr<AudioBusInterface> audioBusInterface; ///< Shared pointer to the audio bus interface.
     std::vector<std::shared_ptr<AudioTrack>> audioTracks; ///< Vector of shared pointers to audio tracks.
     

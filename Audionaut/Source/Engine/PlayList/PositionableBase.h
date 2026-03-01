@@ -40,7 +40,7 @@ public:
         return juce::Range<double>(start, start + length);
     }
     
-    // set the left edge of a positionalbe item
+    // set the left edge of a positionable item
     void setAbsoluteStartPosition(double newStart, audium::TimeContextType context)
     {
         auto regionData = getRegionData(context);
@@ -57,9 +57,17 @@ public:
     // set the length of a positionalbe item
     void setLength(double newLength, audium::TimeContextType context)
     {
+        jassert(newLength >= 0.0);
         auto regionData = getRegionData(context);
         regionData.setLength(newLength);
         setRegionData(regionData, context);
+    }
+    
+    // set the absolute end of a positionable item
+    void setAbsoluteEndPosition(double end, audium::TimeContextType context)
+    {
+        setLength(end - getAbsolutePosition(context), context);
+        jassert(std::abs(getAbsolutePositionRange(context).getEnd() - end) <= 0.0);
     }
     
     // move left edge by amount

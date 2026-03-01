@@ -78,18 +78,39 @@ public:
      */
     void setLoopActive(bool bActive);
 
+    
+    struct LoopResult {
+        bool loopEvent          = false;
+        double positionResult   = 0.0;
+        double timeUntilLoop    = 0.0;
+        int numSamplesUntilLoop = 0;
+        TimeContextType context = seconds;
+    };
+    
     /**
      * @brief Processes the loop during playback.
      * @param thePosition Reference to the current playback position.
      * @param numSamples The number of samples to process.
      * @return True if the loop was processed, false otherwise.
      */
-    bool processLoop(double &thePosition, int numSamples);
+    const LoopResult processLoop(double thePosition,
+                                 int numSamples,
+                                 audium::TimeContextType context);
 
     /**
      * @brief Resets the loop state to its default configuration.
      */
     void reset();
+    
+    void setAbsoluteStartPosition(double newPosition, audium::TimeContextType context);
+    
+    int getLoopCount() const noexcept { return loopCount; }
+    
+    double getLoopPhaseForPosition(double startPosition,
+                                double length,
+                                audium::TimeContextType context) const;
+    
+    double getCurrentPosition(audium::TimeContextType context) const noexcept;
 
     LoopData loopData; ///< Data structure for storing loop-related information.
 
@@ -100,7 +121,8 @@ private:
     double externalSampleRate = 44100.0; ///< The external sample rate for playback.
     int loopCount = 0; ///< Counter for the number of loop iterations.
     bool withinLoop = false; ///< Flag indicating whether playback is within the loop range.
-
+    double currentPositionClocks = 0.0;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportLoop)
 };
 

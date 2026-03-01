@@ -65,6 +65,11 @@ public:
     void mouseDown (const juce::MouseEvent& e) override;
     
     void exportSelectedPlayListItem();
+    
+    bool isRecording() override
+    {
+        return playListItem->isRecording();
+    }
 
 private:
     std::shared_ptr<audium::PlayListContainer> playListContainer;

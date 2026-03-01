@@ -27,6 +27,7 @@ struct ExportAudioConfig {
     int numChannels = 2;             ///< The number of audio channels (e.g., 1 for mono, 2 for stereo).
     bool multiMono = false;          ///< Whether to export as multiple mono files.
     double positionSeconds = 0.0;    ///< The starting position for the export in seconds.
+    double lengthSeconds = -1.0;     ///< The export length in seconds.
     juce::File fileName;             ///< The file to which the audio will be exported.
     
     std::shared_ptr<audium::PlayListItem> playListItem = nullptr;
