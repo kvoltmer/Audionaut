@@ -93,6 +93,8 @@ public:
     void setMasterGain(const float newGain);
     
     void resetGains();
+    
+    void stopAllVoices();
 
     /**
     * @brief Gets the current level of a specific channel.

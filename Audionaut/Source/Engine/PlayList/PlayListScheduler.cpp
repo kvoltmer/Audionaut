@@ -204,7 +204,7 @@ void PlayListScheduler::stopPlaying()
         stopRecording();
     }
     
-    playback->stopAllVoices();
+    audioBusInterface->stopAllVoices();
 }
 
 bool PlayListScheduler::isPlaying() const
