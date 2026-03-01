@@ -51,6 +51,8 @@ public:
     std::shared_ptr<PlayListItem> createPlayListItemUI(std::shared_ptr<AudioRegion> region,
                                                        int indexOfItemToPlaceBefore);
     
+    std::shared_ptr<PlayListItem> clonePlayListItem(std::shared_ptr<PlayListItem> item);
+    
     void movePlayListItemBefore(int currentIndex, int indexOfItemToPlaceBefore);
     
     void deletePlayListItem(int atIndex);

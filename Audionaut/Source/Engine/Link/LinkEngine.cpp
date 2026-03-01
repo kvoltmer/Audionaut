@@ -198,49 +198,12 @@ void LinkEngine::renderMetronomeIntoBuffer( const double quantum,
     }
 }
 
-void LinkEngine::triggerScheduler(const double quantum,
-                                  const std::chrono::microseconds beginHostTime,
-                                  const std::size_t numSamples)
+double LinkEngine::beatAtTime(std::chrono::microseconds time, double quantum) const
 {
-    const auto beats = sessionState->beatAtTime(beginHostTime, quantum);
-    
-    // Call the PlayListScheduler
-    tickCallback(sessionState->isPlaying(), beats, static_cast<int>(numSamples));
-    
-#if 0 // sample code that shows at which sample a trigger occurs
-    
-    
-    // The number of microseconds that elapse between samples
-    const auto microsPerSample = 1e6 / mSampleRate;
-    for (std::size_t i = 0; i < numSamples; ++i)
-    {
-        // Compute the host time for this sample and the last.
-        const auto hostTime = beginHostTime + microseconds(llround(static_cast<double>(i) * microsPerSample));
-        const auto lastSampleHostTime = hostTime - microseconds(llround(microsPerSample));
-        
-        // Only make sound for positive beat magnitudes. Negative beat
-        // magnitudes are count-in beats.
-        auto beats = sessionState->beatAtTime(hostTime, quantum);
-        if (beats >= 0.)
-        {
-            
-            // If the phase wraps around between the last sample and the
-            // current one with respect to a 1 beat quantum, then a sample trigger
-            // should occur.
-            if (sessionState->phaseAtTime(hostTime, beat_length)
-                < sessionState->phaseAtTime(lastSampleHostTime, beat_length))
-            {
-                seconds s = std::chrono::duration_cast<seconds>(hostTime);
-                std::cout << "onTriggerBeat " << beats << " " << s.count() << " " << i << std::endl;
-            }
-        }
-    }
-#endif
-    
-    
+    return sessionState->beatAtTime(time, quantum);
 }
 
-void LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
+bool LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
                                 const std::size_t numSamples)
 {
     const auto engineData = pullEngineData();
@@ -285,9 +248,9 @@ void LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
         // As long as the engine is playing, generate metronome clicks in
         // the buffer at the appropriate beats.
         // renderMetronomeIntoBuffer(engineData.quantum, hostTime, numSamples);
-        
-        triggerScheduler(engineData.quantum, hostTime, numSamples);
     }
+    
+    return mIsPlaying;
 }
 
 } // namespace audium

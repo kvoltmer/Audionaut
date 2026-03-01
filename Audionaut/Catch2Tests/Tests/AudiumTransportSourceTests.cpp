@@ -18,8 +18,8 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
     MessageManagerLock mmLock(Thread::getCurrentThread());
     
     
-    auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/120-funk-export.audium"));
-    REQUIRE(fileUnderTest.existsAsFile());
+    auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/120-funk-export-v2.audium"));
+    REQUIRE(fileUnderTest.exists());
     
 
     GIVEN("Load session file (audio file starts: at second 1 with 1 second duration)")
@@ -81,32 +81,26 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
                     auto samplesUntilStart = static_cast<int>(bounceConfig->sampleRate * (sessionStart - bounceConfig->positionSeconds));
                     
                     if (samplesUntilStart > 0) {
-                        // magnitue of 1st part is 0.0
+                        // 1st second is silence
                         mag = buffer.getMagnitude(0, samplesUntilStart - 1);
                         REQUIRE(mag == Catch::Approx(0.0));
                     }
                     
-                    // magnitue of sample at 2nd part > 0.0
+                    // mag > 0 at second 1
                     if (samplesUntilStart < 0)
                         samplesUntilStart = 0;
                     mag = buffer.getMagnitude(samplesUntilStart, 1);
-                    
                     REQUIRE(mag > 0.0);
                     
-                    auto sessionStart2 = 3.0; // the 2nd clip starts at second 3
-                    auto samplesUntilStart2 = static_cast<int>(bounceConfig->sampleRate * (sessionStart2 - bounceConfig->positionSeconds));
-                    auto durationGap = 1.0;
-                    auto durationGapSamples = static_cast<int>(bounceConfig->sampleRate * durationGap);
+                    auto sr = bounceConfig->sampleRate;
                     
-                    
-                    mag = buffer.getMagnitude(samplesUntilStart2 - durationGapSamples, durationGapSamples - 1);
-                    REQUIRE(mag == Catch::Approx(0.0));
-                    
-                    if (samplesUntilStart < 0)
-                        samplesUntilStart = 0;
-                    mag = buffer.getMagnitude(samplesUntilStart2, 1);
+                    // silence at second 2
+                    mag = buffer.getMagnitude(static_cast<int>(2.0 * sr) , 1);
+                    REQUIRE(mag <= 0.0);
+
+                    // mag > 0 at second 3
+                    mag = buffer.getMagnitude(static_cast<int>(3.0 * sr) , 1);
                     REQUIRE(mag > 0.0);
-                    
                     
                     // total length
                     REQUIRE(reader->lengthInSamples == static_cast<unsigned int>(bounceConfig->sampleRate * totalLength));
@@ -126,4 +120,139 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
     juce::MessageManager::deleteInstance();
 }
 
+static float genSaw(int s, int w)
+{
+    return (static_cast<float>(s) / static_cast<float>(w - 1) * 2.f) - 1.f;
+}
+
+static const File createTestFile()
+{
+    auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/slow-saw-2-seconds.wav"));
+    TemporaryFile tempFile (targetFile);
+    
+    std::unique_ptr<OutputStream> stream (tempFile.getFile().createOutputStream());
+    jassert(stream);
+    if (stream != nullptr) {
+        WavAudioFormat wav;
+        auto opt = AudioFormatWriter::Options{}.withSampleRate (44100.0)
+            .withNumChannels (1)
+            .withBitsPerSample (32)
+            .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
+        auto writer = wav.createWriterFor (stream, opt);
+        jassert(writer);
+        if (writer != nullptr) {
+            
+            auto blockSize = 44100;
+            
+            AudioBuffer<float> buffer(1, blockSize);
+            AudioSourceChannelInfo info (&buffer, 0, blockSize);
+            
+            // 1st second generate saw [-1, +1]
+            for (auto s = 0; s < blockSize; s++) {
+                *info.buffer->getWritePointer(0, s) = genSaw(s, blockSize);
+            }
+            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            
+            // 2nd second silence
+            info.clearActiveBufferRegion();
+            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            
+            writer.reset();
+            tempFile.overwriteTargetFileWithTemporary();
+            return tempFile.getTargetFile();
+        }
+    }
+    return File();
+}
+
+static void examineFile(std::shared_ptr<audium::ExportAudioConfig> bounceConfig)
+{
+    AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();
+    
+    std::unique_ptr<AudioFormatReader> reader;
+    reader.reset(formatManager.createReaderFor(bounceConfig->fileName));
+
+    jassert(reader);
+    
+    AudioBuffer<float> buffer((int)reader->numChannels, (int)reader->lengthInSamples);
+    
+    auto success = reader->read(&buffer,
+                                0,
+                                (int)reader->lengthInSamples,
+                                0,
+                                true,
+                                true);
+    REQUIRE(success);
+    
+    // once sec ramp
+    auto samplePerPhase = 44100;
+    for (auto s = 0; s < samplePerPhase; s++) {
+        auto val0 = genSaw(s, samplePerPhase);
+        auto val1 = buffer.getSample(0, s);
+        
+        if (val0 != Catch::Approx(val1).margin(0.000001f)) {
+        }
+        REQUIRE(val0 == Catch::Approx(val1).margin(0.000001f));
+    }
+    // one sec silence
+    for (auto s = 0; s < samplePerPhase; s++) {
+        auto val1 = buffer.getSample(0, s + samplePerPhase);
+        REQUIRE(0.f == Catch::Approx(val1).margin(0.000001f));
+    }
+    
+    
+}
+
+SCENARIO("tranport source duration scenario", "[engine][dsp][transport][duration]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    
+    auto testFile = createTestFile();
+    jassert(testFile.existsAsFile());
+    std::cout << "Testfile: " << testFile.getFullPathName() << std::endl;
+    
+    GIVEN("engine loading the audio file")
+    {
+        auto engine = AudiumFactory::createAudiumEngine();
+        auto ok = engine->openFile(testFile, nullptr);
+        REQUIRE(ok);
+        engine->getPlayListScheduler()->commitPlayListData();
+        
+        auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+        bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/out.wav"));
+        bounceConfig->sampleRate = 44100.0;
+        bounceConfig->blockSize = 64;
+        bounceConfig->lengthSeconds = 3.0;
+        
+        auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
+        
+        WHEN("bouncing session")
+        {
+            auto track = engine->getAudioTrackContainer()->getAudioTracks().front();
+            jassert(track);
+            auto item = track->getPlayListContainer()->getPlayListItem(0);
+            jassert(item);
+            item->setLength(1.0, audium::seconds);
+            exporter->bounce();
+
+            THEN("examine bounced audio file")
+            {
+                examineFile(bounceConfig);
+            }
+        }
+
+        if (bounceConfig->fileName.existsAsFile())
+            bounceConfig->fileName.deleteFile();
+        
+        engine = nullptr;
+    }
+
+    if (testFile.existsAsFile())
+        testFile.deleteFile();
+    
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
 

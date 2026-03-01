@@ -45,6 +45,7 @@ public:
     
     void init();
     void deinit();
+    void createTransportSources();
     
     void cleanup() override {}
     
@@ -87,6 +88,17 @@ public:
     {
         return fadeOutClocks;
     }
+    
+    bool isRecording() const;
+    
+    const double getRecordedLength(audium::TimeContextType context) const;
+    
+    const double getRecordingStartPosition(audium::TimeContextType context) const;
+    
+    // Recording helpers:
+    bool needsLengthUpdate = false;
+    bool isFirstPartInLoop = false;
+    bool isSecondPartInLoop = false;
     
 private:
     const PlayListContainer &owner;

@@ -47,5 +47,22 @@ const char* const updateRightPanelAction = "update right panel";
  */
 const char* const updateArrangementAction = "update arrangement";
 
+/**
+ * @brief Action message to indicate that the recording is finished.
+ */
+const char* const recordingFinishedAction = "recording finished";
+
+/**
+ * @brief Action message to indicate that the transport was looped.
+ */
+const char* const transportLoopAction = "transport loop action";
+
+/**
+ * @brief Action message to indicate that the transport entered the lopp.
+ */
+const char* const transportLoopEntered = "transport loop entered";
+
+
+
 } // namespace audium
 

@@ -15,6 +15,7 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Util/EngineAccess.h"
 #include "Application/AudiumCommandIDs.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTrack_,
                                     std::shared_ptr<audium::AudiumEngine> engine_,
@@ -104,6 +105,39 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     };
     
 
+    // RECORD
+    recordButton = std::make_unique<juce::DrawableButton>("Record", juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
+    addAndMakeVisible(recordButton.get());
+    juce::Path rec;
+    rec.addEllipse(0, 0, 5, 5);
+    juce::DrawablePath recImage;
+    recImage.setPath(rec);
+    recImage.setFill (FillType(Colours::red.darker().darker()));
+    recordButton->setImages(&recImage);
+
+    recordButton->onClick = [this, rowNumber] {
+        setRecordEnabled(rowNumber, recordButton->getToggleState());
+    };
+    
+    recordButton->setClickingTogglesState(true);
+    recordButton->setColour (TextButton::buttonOnColourId, Colours::red.brighter().withAlpha(0.8f));
+    recordButton->setColour(TextButton::buttonColourId, Colours::grey);
+
+    
+    // MONITOR
+    monitorButton.reset (new juce::TextButton ("I"));
+    addAndMakeVisible (monitorButton.get());
+    monitorButton->setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    monitorButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::soloColourId));
+    monitorButton->setClickingTogglesState(true);
+    monitorButton->onClick = [this, rowNumber] {
+        audioTrack->onDragStart();
+        auto data = audioTrack->getChannelData(rowNumber);
+        data.monitor = monitorButton->getToggleState();
+        audioTrack->setChannelData(rowNumber, data);
+        audioTrack->onDragEnd();
+    };
+
     setSize (AudiumLookAndFeel::channelsWidth, 100);
     
     startTimerHz(60);
@@ -113,15 +147,22 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
 
 void ChannelComponent::resized()
 {
-    auto sliderWidth = 67;
+    auto sliderWidth = 67 + 39;
     auto sliderHeight = 15;
     auto space = 7;
     
     channelSizeComboBox->setBounds (space, 5, 15, 15);
     
     auto buttonSize = 15;
-    muteButton->setBounds(space + 30, 5, buttonSize, buttonSize);
-    soloButton->setBounds(space + 53, 5, buttonSize, buttonSize);
+    auto x = space + 24;
+    recordButton->setBounds(x, 5, buttonSize, buttonSize);
+    x += (buttonSize + space);
+    monitorButton->setBounds(x, 5, buttonSize, buttonSize);
+    x += (buttonSize + space);
+    soloButton->setBounds(x, 5, buttonSize, buttonSize);
+    x += (buttonSize + space);
+    muteButton->setBounds(x, 5, buttonSize, buttonSize);
+    
     
     volumeSlider->setBounds (space,
                              27,
@@ -185,11 +226,14 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     audioTrack = audioTrack_;
     rowNumber = rowNumber_;
     
-    volumeSlider->setValue(LevelMeter::gainToDecebel(audioTrack->getGain(rowNumber)), dontSendNotification);
-    panSlider->setValue(audioTrack->getPan(rowNumber), dontSendNotification);
+    auto channelData = audioTrack->getChannelData(rowNumber);
     
-    auto bMute = audioTrack->getMute(rowNumber);
-    auto bSolo = audioTrack->getSolo(rowNumber);
+    volumeSlider->setValue(LevelMeter::gainToDecebel(channelData.gain), dontSendNotification);
+    panSlider->setValue(channelData.pan, dontSendNotification);
+    
+    auto bMute = channelData.mute;
+    auto bSolo = channelData.solo;
+    
     auto anySolo = audioTrack->getAudioTrackContainer().anyChannelSolo();
     if (anySolo && !bSolo) {
         bMute = true;
@@ -200,6 +244,9 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     muteButton->setToggleState(bMute, dontSendNotification);
     soloButton->setToggleState(bSolo, dontSendNotification);
     
+    monitorButton->setToggleState(channelData.monitor, dontSendNotification);
+    recordButton->setToggleState(channelData.record, dontSendNotification);
+    
     if (not isTimerRunning()) {
         startTimerHz(60);
     }
@@ -209,8 +256,22 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
 
 void ChannelComponent::timerCallback()
 {
-    auto lvl = engine->getAudioBusInterface()->getChannelLevel(channelNumber);
+    auto lvl = 0.f;
+    
+    auto data = audioTrack->getChannelData(rowNumber);
+    auto displayRecordingLevel = (data.record && !data.monitor);
+    if (displayRecordingLevel) {
+        lvl = engine->getAudioBusInterface()->getRecordingLevel(channelNumber);
+    }
+    else {
+        lvl = engine->getAudioBusInterface()->getChannelLevel(channelNumber);
+        jassert(lvl >= 0.f);
+    }
+    levelMeter->setGrayscale(displayRecordingLevel);
     levelMeter->setLevel(lvl);
+    
+    recordButton->setToggleState(data.record, dontSendNotification);
+
 }
 
 void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
@@ -458,6 +519,57 @@ void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
         
     }
     hideInsertLines();
+}
+
+bool ChannelComponent::audioInputAvailable(int channelNumber)
+{
+    auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
+
+    if (currentDevice != nullptr &&
+        channelNumber < currentDevice->getActiveInputChannels().toInteger()) {
+        return true;
+    }
+    return false;
+}
+
+void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
+{
+    if (audioInputAvailable(channelNumber)) {
+
+        // Undo: store old state
+        auto action = bEnabled ? std::make_unique<audium::UndoableContainerAction>(*engine->getAudioTrackContainer(), false) : nullptr;
+        
+        if (ModifierKeys::currentModifiers.isShiftDown())
+            audioTrack->setRecordEnabled(-1, bEnabled);
+        else
+            audioTrack->setRecordEnabled(channelNumber, bEnabled);
+        
+        auto scheduler = engine->getPlayListScheduler();
+        
+        // start recording on the fly ?
+        if (scheduler->isPlaying() &&
+            scheduler->isRecordingArmed()) {
+            
+            if (bEnabled)
+                scheduler->startRecording(channelNumber + audioTrack->getChannelOffset());
+            else
+                scheduler->stopRecording(channelNumber + audioTrack->getChannelOffset());
+        }
+        
+        // Undo: store new state
+        if (action != nullptr) {
+            action->storeNewState();
+            engine->getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
+            engine->getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
+        }
+    }
+    else {
+        if (bEnabled) {
+            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                        "No audio input available at this channel.",
+                                                        "Please check: Settings ... -> Audio Device Settings");
+        }
+    }
 }
 
 //==============================================================================

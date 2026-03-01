@@ -7,14 +7,17 @@
 
 #include <JuceHeader.h>
 #include "PlaybackDefines.h"
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Playback/Playback.h"
+#include "Engine/Channel/AudioChannelData.h"
+#include "Engine/Recording/Recording.h"
+#include "Engine/Recording/AudioRecorder.h"
 
-
+using namespace juce::dsp;
 
 namespace audium
 {
-
-class AudioTrackContainer;
-class Playback;
+class AudioThumbnail;
 
 /**
  * @class AudioBusRenderer
@@ -31,11 +34,12 @@ class AudioBusRenderer {
     
     
 public:
-    AudioBusRenderer(std::shared_ptr<audium::Playback> playback_) :
-        playback(playback_)
+    AudioBusRenderer(std::shared_ptr<audium::Playback> playback_,
+                     std::shared_ptr<Recording> recording_) :
+        playback(playback_),
+        recording(recording_)
     {
         setMasterGain(1.f);
-        reset();
     }
     
     ~AudioBusRenderer() = default;
@@ -43,8 +47,109 @@ public:
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     
     void setNumAudioBusChannels(int numChannels);
-    
-    void processAudioBlock(const juce::AudioSourceChannelInfo& outputInfo);
+        
+    template <typename ProcessContext>
+    void process (const ProcessContext& context) noexcept
+    {
+        auto& outputBlock = context.getOutputBlock();
+        outputBlock.clear();
+        auto outputChannels = outputBlock.getNumChannels();
+
+        auto& inputBlock = context.getInputBlock();
+        auto inputChannels = inputBlock.getNumChannels();
+        
+        AudioBlock<SampleType> audioBusBlock(audioBus);
+        auto audioBusChannels = audioBus.getNumChannels();
+                
+        if (audioBusChannels > 0) {
+            
+            // render the entire bus (all channels)
+            audioBusBlock.clear();
+            
+
+            
+            // add input to audio bus
+            for (auto i = 0; i < inputChannels; i++) {
+                for (auto k = 0; k < audioBusChannels; k++) {
+                    if (audioChannelData[k].monitor &&
+                        audioChannelData[k].channelNumber == i) {
+                        audioBusBlock.getSingleChannelBlock(k).add( inputBlock.getSingleChannelBlock(i) );
+                    }
+                    
+                    if (audioChannelData[k].record &&
+                        audioChannelData[k].channelNumber == i) {
+                        recordingLevel[k] = std::abs(inputBlock.getSingleChannelBlock(i).findMinAndMax().getEnd());
+                    }
+
+                    if (audioChannelData[k].record &&
+                        audioChannelData[k].channelNumber == i) {
+                        if (auto recorder = recording->getAudioRecorder(k)) {
+                            auto input = inputBlock.getSingleChannelBlock(i);
+                            auto output = audioBusBlock.getSingleChannelBlock(i);
+                            ProcessContextNonReplacing<SampleType> recContext(input, output);
+                            recorder->process( recContext );
+                        }
+                    }
+                    
+                }
+            }
+            
+            // process playback, don't overwrite input -> ProcessContextNonReplacing
+            ProcessContextNonReplacing<SampleType> audioBusContext(inputBlock, audioBusBlock);
+            playback->process(audioBusContext);
+            
+            // process gain for each audio bus channel
+            for (auto i = 0; i < audioBusChannels; i++) {
+                auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
+                ProcessContextReplacing<SampleType> gainContext( channelBlock );
+                gains[i].process(gainContext);
+                channelLevel[i] = std::abs(channelBlock.findMinAndMax().getEnd());
+            }
+            
+            // mono output
+            if (outputChannels == 1) {
+                for (auto i = 0; i < audioBusChannels; i++) {
+                    // add from audio bus to mono output
+                    outputBlock.getSingleChannelBlock(0).add( audioBusBlock.getSingleChannelBlock(i) );
+                }
+                
+            } // stereo
+            else if (outputChannels == 2) {
+                for (auto i = 0; i < audioBusChannels; i++) {
+
+                    stereoBuffer.clear();
+                    AudioBlock<SampleType> stereoBlock (stereoBuffer);
+                    auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
+                    
+                    // process stereo pan
+                    ProcessContextNonReplacing<SampleType> panContext(channelBlock,
+                                                                                 stereoBlock);
+                    panners[i].process(panContext);
+                    
+                    // mix output
+                    for (auto c = 0; c < outputChannels; c++) {
+                        outputBlock.getSingleChannelBlock(c).add( stereoBlock.getSingleChannelBlock(c) );
+                    }
+                }
+                
+                // master gain
+                ProcessContextReplacing<SampleType> gainContext(outputBlock);
+                masterGain.process(gainContext);
+                
+                // master level
+                for (auto m = 0; m < outputChannels; ++m) {
+                    auto minmax = outputBlock.getSingleChannelBlock(m).findMinAndMax();
+                    masterLevel[m].store( std::abs(minmax.getEnd()) );
+                }
+            }
+            else { // multichannel output
+                jassert(outputChannels == audioBusChannels);
+                for (auto c = 0; c < std::min((int)outputChannels, audioBusChannels); c++) {
+                    outputBlock.getSingleChannelBlock(c).add( audioBusBlock.getSingleChannelBlock(c) );
+                }
+            }
+        }
+    }
     
     void setPan(const int channelNumber, const SampleType newPan)
     {
@@ -58,11 +163,11 @@ public:
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             // std::cout << "setGain " << channelNumber << " " << newGain << std::endl;
-            if (soloStates[channelNumber])
+            if (audioChannelData[channelNumber].solo)
                 gains[channelNumber].setGainLinear(newGain);
-            else if (!muteStates[channelNumber])
+            else if (!audioChannelData[channelNumber].mute)
                 gains[channelNumber].setGainLinear(newGain);
-            gainStates[channelNumber] = newGain;
+            audioChannelData[channelNumber].gain = newGain;
         }
     }
     
@@ -70,9 +175,9 @@ public:
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             //std::cout << "setMute " << channelNumber << " " << bMute << std::endl;
-            muteStates[channelNumber] = bMute;
-            if (!soloStates[channelNumber])
-                gains[channelNumber].setGainLinear(bMute ? 0.f : gainStates[channelNumber]);
+            audioChannelData[channelNumber].mute = bMute;
+            if (!audioChannelData[channelNumber].solo)
+                gains[channelNumber].setGainLinear(bMute ? 0.f : audioChannelData[channelNumber].gain);
         }
     }
 
@@ -80,11 +185,11 @@ public:
     {
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             //std::cout << "setSolo " << channelNumber << " " << bSolo << std::endl;
-            soloStates[channelNumber] = bSolo;
+            audioChannelData[channelNumber].solo = bSolo;
 
             auto anySolo = false;
             for (auto c = 0; c < audioBus.getNumChannels(); ++c) {
-                if (soloStates[c]) {
+                if (audioChannelData[c].solo) {
                     anySolo = true;
                     break;
                 }
@@ -92,18 +197,22 @@ public:
             
             for (auto c = 0; c < MAX_AUDIO_CHANNELS; ++c) {
                 if (anySolo) {
-                    if (soloStates[c])
-                        gains[c].setGainLinear(gainStates[c]);
+                    if (audioChannelData[c].solo)
+                        gains[c].setGainLinear(audioChannelData[c].gain);
                     else
                         gains[c].setGainLinear(0.f);
                 }
                 else {
                     // mute stats apply
-                    gains[c].setGainLinear(muteStates[c] ? 0.f : gainStates[c]);
+                    gains[c].setGainLinear(audioChannelData[c].mute ? 0.f : audioChannelData[c].gain);
                 }
             }
         }
     }
+    
+    void setChannelData(const int channelNumber, const AudioChannelData data);
+    
+    const AudioChannelData getChannelData(const int channelNumber) const;
     
     void setMasterGain(const float newGain)
     {
@@ -117,6 +226,14 @@ public:
         
         return 0.f;
     }
+
+    const float getRecordingLevel(const int channelNumber) const
+    {
+        if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS)
+            return recordingLevel[channelNumber].load();
+        
+        return 0.f;
+    }
     
     const float getMasterLevel(const int channelNumber) const
     {
@@ -126,34 +243,34 @@ public:
         return 0.f;
     }
     
-    void reset()
-    {
-        for (auto c = 0; c < MAX_AUDIO_CHANNELS; ++c) {
-            gainStates[c] = 1.0;
-            muteStates[c] = false;
-            soloStates[c] = false;
-            channelLevel[c] = 0.0;
-        }
-    }
+    std::shared_ptr<Recording> getRecording() const { return recording; }
+    
+    std::shared_ptr<Playback> getPlayback() const { return playback; }
+    
+    void setRecordEnabled(int channelNumber, bool bEnabled) { audioChannelData[channelNumber].record = bEnabled; }
+    
+    void resetGains();
     
 private:
     
     std::shared_ptr<audium::Playback> playback;
     
+    std::shared_ptr<Recording> recording;
+    
     juce::AudioBuffer<SampleType> audioBus;
-    juce::AudioBuffer<SampleType> channelBuffer;
     juce::AudioBuffer<SampleType> stereoBuffer;
         
-    juce::dsp::Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
-    juce::dsp::Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
-    juce::dsp::Gain<SampleType> masterGain;
+    Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
+    Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
+    Gain<SampleType> masterGain;
     
-    std::atomic<float> channelLevel[MAX_AUDIO_CHANNELS];
     std::atomic<float> masterLevel[2];
+    std::atomic<float> channelLevel[MAX_AUDIO_CHANNELS];
+    std::atomic<float> recordingLevel[MAX_AUDIO_CHANNELS];
     
-    SampleType gainStates[MAX_AUDIO_CHANNELS];
-    bool muteStates[MAX_AUDIO_CHANNELS];
-    bool soloStates[MAX_AUDIO_CHANNELS];
+    AudioChannelData audioChannelData[MAX_AUDIO_CHANNELS];
+    
+    double sampleRate = 0.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioBusRenderer)
 

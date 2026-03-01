@@ -50,6 +50,11 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
 
 void DraggerControl::mouseDrag (const juce::MouseEvent& e)
 {
+    if (isRecording()) {
+        // no dragging while recording!
+        return;
+    }
+    
     auto container = juce::DragAndDropContainer::findParentDragContainerFor(componentToDrag);
     auto dragActive = (container != nullptr && container->isDragAndDropActive());
     auto dragVertrically = (std::abs(e.getDistanceFromDragStartY()) > 20 && std::abs(e.getDistanceFromDragStartX()) < 20);

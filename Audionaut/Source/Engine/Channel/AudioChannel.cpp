@@ -15,8 +15,7 @@ namespace audium {
 void AudioChannel::setGain(const float newGain)
 {
     data.gain = newGain;
-    audioBusInterface->setGain(getChannelNumber() + audioTrack.getChannelOffset(),
-                               newGain);
+    commitChannelData();
 }
 
 float AudioChannel::getGain() const noexcept
@@ -27,8 +26,7 @@ float AudioChannel::getGain() const noexcept
 void AudioChannel::setPan(const float newPan)
 {
     data.pan = newPan;
-    audioBusInterface->setPan(getChannelNumber() + audioTrack.getChannelOffset(),
-                              newPan);
+    commitChannelData();
 }
 
 float AudioChannel::getPan() const noexcept
@@ -39,8 +37,7 @@ float AudioChannel::getPan() const noexcept
 void AudioChannel::setMute(bool bMute)
 {
     data.mute = bMute;
-    audioBusInterface->setMute(getChannelNumber() + audioTrack.getChannelOffset(),
-                               bMute);
+    commitChannelData();
 }
 bool AudioChannel::getMute() const noexcept
 {
@@ -50,8 +47,7 @@ bool AudioChannel::getMute() const noexcept
 void AudioChannel::setSolo(bool bSolo)
 {
     data.solo = bSolo;
-    audioBusInterface->setSolo(getChannelNumber() + audioTrack.getChannelOffset(),
-                               bSolo);
+    commitChannelData();
 }
 
 bool AudioChannel::getSolo() const noexcept
@@ -59,12 +55,37 @@ bool AudioChannel::getSolo() const noexcept
     return data.solo;
 }
 
+void AudioChannel::setRecordEnabled(bool bEnabled)
+{
+    auto currentDevice = getAudioTrack().getAudioResourceContainer().getAudioDeviceManager()->getCurrentAudioDevice();
+    
+    if (currentDevice != nullptr &&
+        getChannelNumber() < currentDevice->getActiveInputChannels().toInteger()) {
+        data.record = bEnabled;
+        audioBusInterface->setRecordEnabled(getChannelNumber() + audioTrack.getChannelOffset(), bEnabled);
+    }
+    else {
+        data.record = false;
+        std::cout << "Error, no input mapped at channel " << getChannelNumber() << std::endl;
+    }
+}
+
+bool AudioChannel::isRecording() const
+{
+    return audioBusInterface->isRecording(getChannelNumber() + audioTrack.getChannelOffset());
+}
+
+bool AudioChannel::isRecordEnabled() const noexcept
+{
+    jassert(data.record == audioBusInterface->getChannelData(getChannelNumber() + audioTrack.getChannelOffset()).record);
+    return data.record;
+}
+
 void AudioChannel::commitChannelData()
 {
-    setGain(data.gain);
-    setPan(data.pan);
-    setMute(data.mute);
-    setSolo(data.solo);
+    data.channelNumber = getChannelNumber();
+    data.trackId = audioTrack.getId();
+    audioBusInterface->setChannelData(getChannelNumber() + audioTrack.getChannelOffset(), data);
 }
 
 } // namespace audium

@@ -10,7 +10,7 @@ using namespace juce;
 
 namespace audium {
 
-std::string formatInteger(long num) {
+static std::string formatInteger(long num) {
     std::ostringstream oss;
     oss << std::setfill('0') << std::setw(2) << num;
     return oss.str();
@@ -25,12 +25,11 @@ void AudioExportThread::bounce()
     std::unique_ptr<OutputStream> outStream (tempFile.getFile().createOutputStream());
     
     if (outStream != nullptr) {
-        const StringPairArray metadata;
         WavAudioFormat wav;
-        std::unique_ptr<AudioFormatWriter> writer (wav.createWriterFor (outStream.release(), config->sampleRate,
-                                                                        static_cast<unsigned int>(config->numChannels),
-                                                                        config->bitDepth,
-                                                                        metadata, 0));
+        auto opt = AudioFormatWriter::Options{}.withSampleRate (config->sampleRate)
+                                                .withNumChannels (config->numChannels)
+                                                .withBitsPerSample (config->bitDepth);
+        auto writer = wav.createWriterFor (outStream, opt);
         if (writer != nullptr) {
             
             if (config->playListItem != nullptr) {
@@ -44,8 +43,11 @@ void AudioExportThread::bounce()
             else {
                 audiumEngine.getPlayListScheduler()->bounceProject(writer.get(), config, [this](void) {
                     setProgress(config->progress);
+
+#if !defined(CATCH2_TESTS)
                     if (threadShouldExit() || !isThreadRunning())
                         config->userCanceled = true;
+#endif
                     
                 });
             }
@@ -79,12 +81,12 @@ void AudioExportThread::bounce()
                 TemporaryFile temp (config->fileName.getSiblingFile(siblingName));
                 std::unique_ptr<OutputStream> out (temp.getFile().createOutputStream());
                 if (out != nullptr) {
-                    const StringPairArray metadata;
                     WavAudioFormat wav;
-                    std::unique_ptr<AudioFormatWriter> writer (wav.createWriterFor (out.release(), config->sampleRate,
-                                                                                    1,
-                                                                                    config->bitDepth,
-                                                                                    metadata, 0));
+                    auto opt = AudioFormatWriter::Options{}.withSampleRate (config->sampleRate)
+                                                            .withNumChannels (1)
+                                                            .withBitsPerSample (config->bitDepth);
+                    auto writer = wav.createWriterFor (outStream, opt);
+                    
                     if (writer != nullptr) {
                         AudioBuffer<float> monoBuf(1, buf.getNumSamples());
                         monoBuf.copyFrom(0, 0, buf, c, 0, buf.getNumSamples());

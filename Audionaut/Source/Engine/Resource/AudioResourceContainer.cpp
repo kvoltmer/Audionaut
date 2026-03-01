@@ -36,6 +36,29 @@ const juce::File AudioResourceContainer::getAudioFileDirectory()
     return getAudioFileDirectory(AudiumEngine::projectDirectory);
 }
 
+const juce::File AudioResourceContainer::getAudioRecordingFile(const int take,
+                                                               const int channel)
+{
+    auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+    if (!audioDir.exists()) {
+        audioDir = getAudioFileDirectory(AudiumEngine::tempDirectory);
+    }
+    jassert(audioDir.exists());
+    
+    // Format as [Year-Month-Day Hour-Minute-Second]
+    auto now = juce::Time::getCurrentTime();
+    auto formattedStr = now.formatted ("[%Y-%m-%d_%H-%M-%S]");
+    
+    auto takeString = juce::String(AudioRegionContainer::formatNumber(take + 1));
+    auto channelString = juce::String(AudioRegionContainer::formatNumber(channel + 1));
+    
+    auto fileName = "take" + takeString + "-chan" + channelString + "-" + formattedStr +".wav";
+    
+    auto uniqueFile = juce::File(audioDir.getFullPathName() + File::getSeparatorString() + fileName);
+    return uniqueFile;
+    
+}
+
 void AudioResourceContainer::deleteTemporaryProjectDirectory()
 {
     if (AudiumEngine::tempDirectory.exists())
@@ -213,7 +236,8 @@ std::shared_ptr<AudioResource> AudioResourceContainer::findResourceWithUrl(juce:
     for (auto it = audioResources.begin(); it != audioResources.end(); ++it) {
         if ((*it).second->getUrl() == url) {
             //            std::cout << "found url: " << url.getFileName() << std::endl;
-            return (*it).second;
+            if ((*it).second->audioFormatReader != nullptr)
+                return (*it).second;
         }
     }
     return nullptr;
@@ -258,7 +282,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                    resourceGroup,
                                                                    destChannel,
                                                                    sourceChannel);
-    if (audioResource->audioFormatReader != nullptr) {
+    if (audioResource != nullptr) {
         audioResources.push_back({track, audioResource});
         return audioResource;
     }
@@ -268,9 +292,11 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 
 std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
 {
-    auto source = std::make_shared<AudioFormatReaderSource>(audioResource->audioFormatReader.get(), false);
-    if (source != nullptr && source->getAudioFormatReader() != nullptr) {
-        return audioResource->createNewTransportSource(source);
+    if (audioResource->audioFormatReader != nullptr) {
+        auto source = std::make_shared<AudioFormatReaderSource>(audioResource->audioFormatReader.get(), false);
+        if (source != nullptr && source->getAudioFormatReader() != nullptr) {
+            return audioResource->createNewTransportSource(source);
+        }
     }
     return nullptr;
 }
@@ -312,7 +338,6 @@ void AudioResourceContainer::cleanup()
 
 void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
 {
-    
     std::vector<std::string> jsonPaths;
     
     if (!json.empty()) {
@@ -331,16 +356,96 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
             }
         }
         
-        if (jsonPaths.size() > 0) {
-            auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
-            for (auto& found : audioDir.findChildFiles (File::findFiles, false, "*")) {
+        
+        std::vector<juce::File> redundantFiles;
+        auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+        for (auto& found : audioDir.findChildFiles (File::findFiles, false, "*")) {
+            
+            auto relPath = found.getRelativePathFrom(AudiumEngine::projectDirectory);
+            if (std::find(jsonPaths.begin(), jsonPaths.end(), relPath) == jsonPaths.end()) {
+                redundantFiles.push_back(found);
+            }
+        }
+        
+        // delete redundant files
+        if (redundantFiles.size() > 0) {
+            
+            String redundantFilesString;
+            for (auto i = 0; i < redundantFiles.size(); i++) {
+                redundantFilesString += redundantFiles[i].getFullPathName() + "\n";
                 
-                auto relPath = found.getRelativePathFrom(AudiumEngine::projectDirectory);
-                if (std::find(jsonPaths.begin(), jsonPaths.end(), relPath) == jsonPaths.end()) {
-                    if (found.deleteFile()) {
-                        std::cout << "obsolete file deleted: " << found.getFullPathName() << std::endl;
+                // don't display more than 10 Files
+                if (i > 10) {
+                    redundantFilesString += "etc...";
+                    break;
+                }
+            }
+            auto result = true;
+#if !defined(CATCH2_TESTS)
+            result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
+                                                            "Redundant files found. Move files to trash?",
+                                                            "The following audio files are not used in the project anymore:\n\n" +
+                                                            redundantFilesString +
+                                                            "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
+#endif
+            if (result) {
+                bool success = true;
+                for (auto& file : redundantFiles) {
+                    if (!file.moveToTrash()) {
+                        success = false;
+                        break;
                     }
                 }
+                if (!success) {
+                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
+                }
+            }
+        }
+    }
+}
+
+void AudioResourceContainer::deleteObsoleteAudioFiles(const juce::File projectDirectory)
+{
+    // consitency check
+    std::vector<juce::File> redundantFiles;
+    for (auto& found : projectDirectory.findChildFiles (File::findFiles, false, "*")) {
+        if (!isAudioFileCurrentlyLoaded(found)) {
+            redundantFiles.push_back(found);
+        }
+    }
+    
+    // delete redundant files
+    if (redundantFiles.size() > 0) {
+        
+        String redundantFilesString;
+        for (auto i = 0; i < redundantFiles.size(); i++) {
+            redundantFilesString += redundantFiles[i].getFullPathName() + "\n";
+            
+            // don't display more than 10 Files
+            if (i > 10) {
+                redundantFilesString += "etc...";
+                break;
+            }
+        }
+        
+        auto result = true;
+#if !defined(CATCH2_TESTS)
+        result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
+                                                        "Redundant files found. Move files to trash?",
+                                                        "The following audio files are not used in the project anymore:\n\n" +
+                                                        redundantFilesString +
+                                                        "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
+#endif
+        if (result) {
+            bool success = true;
+            for (auto& file : redundantFiles) {
+                if (!file.moveToTrash()) {
+                    success = false;
+                    break;
+                }
+            }
+            if (!success) {
+                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
             }
         }
     }
@@ -431,6 +536,14 @@ void AudioResourceContainer::onDeleteChannel(AudioTrack* audioTrack, AudioChanne
     for (auto resource : resourcesToRemove)
     {
         removeAudioResource(resource);
+    }
+}
+
+void AudioResourceContainer::onRecordingFinished()
+{
+    // load recorded audio files
+    for (auto &itr : audioResources) {
+        itr.second->loadRecordedAudioFile();
     }
 }
 

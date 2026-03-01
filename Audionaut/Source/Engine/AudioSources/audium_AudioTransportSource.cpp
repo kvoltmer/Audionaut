@@ -140,6 +140,7 @@ bool AudioTransportSource::hasStreamFinished() const noexcept
 
 void AudioTransportSource::setNextReadPosition (int64 newPosition)
 {
+    // std::cout << "setNextReadPosition " << newPosition << std::endl;
     if (positionableSource != nullptr) {
         if (sampleRate > 0 && sourceSampleRate > 0)
             newPosition = (int64) ((double) newPosition * sourceSampleRate / sampleRate);
@@ -245,6 +246,7 @@ void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info
             clipGain.setGainLinear(gain.load());
             juce::dsp::AudioBlock<float> audioBlock (*info.buffer);
             juce::dsp::ProcessContextReplacing<float> gainContext(audioBlock);
+            
             clipGain.process(gainContext);
             clipFadeIn.process(gainContext);
             clipFadeOut.process(gainContext);
@@ -264,6 +266,14 @@ void AudioTransportSource::setGain (const float newGain) noexcept
 float AudioTransportSource::getGain() const noexcept
 {
     return gain.load();
+}
+
+void AudioTransportSource::resetClipGain()
+{
+    auto rampDuration = clipGain.getRampDurationSeconds();
+    clipGain.setRampDurationSeconds(0.0);
+    clipGain.setGainLinear(gain.load());
+    clipGain.setRampDurationSeconds(rampDuration);
 }
 
 void AudioTransportSource::setFadeInSeconds(double fadeInSeconds, double offsetInSeconds, bool reset)
@@ -288,6 +298,9 @@ void AudioTransportSource::setFadeInSeconds(double fadeInSeconds, double offsetI
 
 void AudioTransportSource::setFadeOutSeconds(double fadeOutSeconds, double duration, bool reset)
 {
+    if (duration < 0.0)
+        duration = 0.0;
+    
     auto fadeTime = fadeOutSeconds;
     auto initialGain = 1.0;
     if (fadeOutSeconds <= duration) {

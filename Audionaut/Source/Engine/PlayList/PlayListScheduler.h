@@ -15,6 +15,8 @@
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Export/ExportAudioConfig.h"
+#include "Engine/Playback/AudioBusInterface.h"
+#include "Engine/PlayList/TransportLoop.h"
 
 namespace audium {
 
@@ -23,7 +25,7 @@ class PlayListItem;
 class TransportSourceContainer;
 class AudioResourceContainer;
 class Playback;
-class AudioBusInterface;
+class DspClip;
 
 /**
  * \class PlayListScheduler
@@ -49,20 +51,16 @@ public:
                       std::shared_ptr<audium::Playback> playback_,
                       std::shared_ptr<AudioBusInterface> audioBusInterface_,
                       std::shared_ptr<TransportLoop> transportLoop_) :
-    audioTrackContainer(audioTrackContainer_),
-    audioResourceContainer(audioResourceContainer_),
-    tempoProvider(tempoProvider_),
-    linkEngine(linkEngine_),
-    audioClipContainer(audioClipContainer_),
-    transportSourceContainer(transportSourceContainer_),
-    playback(playback_),
-    audioBusInterface(audioBusInterface_),
-    transportLoop(transportLoop_)
-    {
-        linkEngine->tickCallback = [this](bool isPlaying, double beats, int numSamples) {
-            tick(isPlaying, beats, numSamples);
-        };
-        
+        audioTrackContainer(audioTrackContainer_),
+        audioResourceContainer(audioResourceContainer_),
+        tempoProvider(tempoProvider_),
+        linkEngine(linkEngine_),
+        audioClipContainer(audioClipContainer_),
+        transportSourceContainer(transportSourceContainer_),
+        playback(playback_),
+        audioBusInterface(audioBusInterface_),
+        transportLoop(transportLoop_)
+    {        
         audioTrackContainer->addChangeListener(this);
     }
     
@@ -71,21 +69,32 @@ public:
         audioTrackContainer->removeChangeListener(this);
     }
     
-    void changeListenerCallback (juce::ChangeBroadcaster*) override
+    void changeListenerCallback(juce::ChangeBroadcaster*) override
     {
         commitPlayListData();
     }
     
-    void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
+    void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     
+    void scheduleClip(const audium::DspClip &clip,
+                      std::shared_ptr<AudiumTransportSource> transportSource,
+                      double transportPosition,
+                      int sampleOffset,
+                      int numSamples);
     
     void startPlaying();
     void stopPlaying();
     bool isPlaying() const;
     void setFollowTransport(bool enable) { data.followTransport = enable; }
     bool getFollowTransport() const { return data.followTransport; }
+    
+    [[deprecated]]
     void setEditMode(bool bEditMode) { data.editMode = bEditMode; }
+    
+    [[deprecated]]
     bool isEditMode() const { return data.editMode; }
+    
+    [[deprecated]]
     bool isArrangementMode() const { return !data.editMode; }
     
     void setCurrentPositionAtPlayListItemIndex(std::shared_ptr<AudioTrack> track, int playListItemIndex);
@@ -96,11 +105,35 @@ public:
     double getAbsoluteStartPosition(audium::TimeContextType context) const;
     double getAbsolutePosition(audium::TimeContextType context) const;
     
-    
-    void tick(bool isPlaying, double beats, int numSamples);
-    
-    void processAudio (const juce::AudioSourceChannelInfo& info);
-    
+    template <typename ProcessContext>
+    void process (const ProcessContext& context, bool isPlaying, double beats, int numSamples) noexcept
+    {
+        audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
+        
+        if (isPlaying &&
+            beats >= 0.0) {
+            
+            auto timeContext = audium::seconds;
+            auto pos = 0.0;
+            if (timeContext == clocks)
+                pos = tempoProvider->beatsToClocks(beats);
+            else
+                pos = tempoProvider->beatsToSeconds(beats);
+            
+            auto loopResult = transportLoop->processLoop(pos, numSamples, timeContext);
+            
+            if (loopResult.context == audium::seconds)
+                data.transportPositionClocks = tempoProvider->secondsToClocks(loopResult.positionResult);
+            else
+                data.transportPositionClocks = loopResult.positionResult;
+            
+            process(data.transportPositionClocks, numSamples, loopResult);
+            
+        }
+        
+        audioBusInterface->process(context);
+    }
+        
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
     void bouncePlayListItem(juce::AudioFormatWriter* writer,
@@ -116,17 +149,30 @@ public:
     std::shared_ptr<Playback> getPlayback() const { return playback; }
     std::shared_ptr<AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
     std::shared_ptr<TransportLoop> getTransportLoop() const { return transportLoop; }
+    std::shared_ptr<AudioTrackContainer> getAudioTrackContainer() const { return audioTrackContainer; } 
     
     std::vector<std::shared_ptr<PlayListItem>> getPlayListItems(bool excludeSelectedItems = true) const;
     
     void commitPlayListData();
+    
+    // recording
+    bool anyTrackRecordEnabled() const;
+    void startRecording(const int channelNumber = -1);
+    void stopRecording(const int channelNumber = -1);
+    bool isRecordingArmed() const noexcept { return data.isRecordingArmed; }
+    void setRecordingArmed(bool bArmed) { data.isRecordingArmed = bArmed; }
+    double getRecordingLength(audium::TimeContextType context) const;
+    
+    bool isRecording() const noexcept;
     
     PlayListSchedulerData data;
     
 private:
     
     // process sequencing
-    void process(double absolutePosition, int numSamples, bool onLoop);
+    void process(double absolutePosition,
+                 int numSamples,
+                 const TransportLoop::LoopResult loopResult);
     
     
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;

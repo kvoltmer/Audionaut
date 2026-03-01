@@ -137,6 +137,16 @@ public:
     double getFileLength(audium::TimeContextType context) const;
     
     /**
+     * @brief The output channel number.
+     */
+    int getOutputChannelNumber() const;
+
+    /**
+     * @brief Load the recorded audio file. Called once recording is finished.
+     */
+    bool loadRecordedAudioFile();
+    
+    /**
      * @brief Retrieves all audio resources within the same subgroup.
      * @return A vector of shared pointers to `AudioResource` objects.
      */
@@ -207,6 +217,11 @@ public:
      */
     std::shared_ptr<juce::AudioFormatReader> audioFormatReader;
     
+    
+    bool isRecording() const { return audioFormatReader == nullptr; }
+    
+    double getRecordedLength(audium::TimeContextType context) const;
+    
 private:
     /**
      * @brief The container managing this resource.
@@ -236,7 +251,7 @@ private:
     /**
      * @brief The length of the audio file in seconds.
      */
-    double lengthInSeconds = 1.0;
+    double lengthInSeconds = 0.0;
 
     /**
      * @brief The number of channels in the audio file.

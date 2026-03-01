@@ -10,6 +10,7 @@
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/PlayList/TransportLoop.h"
+#include "Engine/Recording/RecordingActionHandler.h"
 
 #include "Interface/Controls/DefaultLabel.h"
 #include "Interface/ColourIds.h"
@@ -145,8 +146,19 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     playImage.setFill (FillType(Colours::white));
     playButton->setImages(&playImage);
     playButton->onClick = [this, scheduler]() {
-        if (playButton->getToggleState())
+        if (playButton->getToggleState()) {
+            
+            if (scheduler->isRecordingArmed()) {
+                // Undo: store old state
+                auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer(), false);
+                scheduler->startRecording();
+                // Undo: store new state
+                action->storeNewState();
+                audiumEngine->getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
+                audiumEngine->getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
+            }
             scheduler->startPlaying();
+        }
     };
     playButton->setClickingTogglesState(true);
     playButton->setColour (TextButton::buttonOnColourId, Colour (0xff12a4e2));
@@ -165,6 +177,25 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
         scheduler->stopPlaying();
     };
     stopButton->setColour(TextButton::buttonColourId, Colours::grey);
+    
+    // RECORD
+    recordButton = std::make_unique<juce::DrawableButton>("Record", juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
+    addAndMakeVisible(recordButton.get());
+    juce::Path rec;
+    rec.addEllipse(0, 0, 10, 10);
+    juce::DrawablePath recImage;
+    recImage.setPath(rec);
+    recImage.setFill (FillType(Colours::red.darker().darker()));
+    recordButton->setImages(&recImage);
+    recordButton->onClick = [this, scheduler]() {
+        scheduler->setRecordingArmed(recordButton->getToggleState());
+        if (scheduler->isPlaying())
+            scheduler->startRecording();
+    };
+    recordButton->setClickingTogglesState(true);
+    recordButton->setColour (TextButton::buttonOnColourId, Colours::red.brighter().withAlpha(0.8f));
+    recordButton->setColour(TextButton::buttonColourId, Colours::grey);
+    
     
     // LOOP
     loopButton = std::make_unique<DrawableButton>("Loop",
@@ -245,12 +276,19 @@ void HeaderComponent::resized()
     beatsSlider->setBounds (308, 10, 35, 20);
     clicksSlider->setBounds (346, 10, 35, 20);
     
-    playButton->setBounds(450, 10, 35, 20);
-    stopButton->setBounds(500, 10, 35, 20);
-    loopButton->setBounds(550, 10, 35, 20);
+    auto x = 400;
+    stopButton->setBounds(x, 10, 35, 20);
+    x += 38;
+    playButton->setBounds(x, 10, 35, 20);
+    x += 38;
+    recordButton->setBounds(x, 10, 35, 20);
+    x += 50;
+    loopButton->setBounds(x, 10, 35, 20);
     
-    volumeSlider->setBounds(600, 10, 70, 20);
-    stereoMeter->setBounds(700, 10, 110, 20);
+    x += 100;
+    volumeSlider->setBounds(x, 10, 70, 20);
+    x += 100;
+    stereoMeter->setBounds(x, 10, 110, 20);
     
     rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
 }
@@ -261,6 +299,8 @@ void HeaderComponent::updateUI()
     volumeSlider->setValue(LevelMeter::gainToDecebel(gain), dontSendNotification);
     auto loopActive = audiumEngine->getPlayListScheduler()->getTransportLoop()->isLoopActive();
     loopButton->setToggleState(loopActive, dontSendNotification);
+    
+    linkButton->setToggleState(audiumEngine->getPlayListScheduler()->getLinkEngine()->isEnabled(), dontSendNotification);
     
 }
 
@@ -285,15 +325,31 @@ void HeaderComponent::timerCallback()
     tempoSlider->setValue(tempo, dontSendNotification);
 
     
-    auto clocks = scheduler->getAbsolutePosition(audium::clocks);
-    barsSlider->setValue(audium::TempoProvider::clocksToBars(clocks), juce::dontSendNotification);
-    beatsSlider->setValue(audium::TempoProvider::clocksToBeats(clocks), juce::dontSendNotification);
-    clicksSlider->setValue(audium::TempoProvider::clocksToClicks(clocks), juce::dontSendNotification);
+    auto positionInClocks = scheduler->getAbsolutePosition(audium::clocks);
+    
+    auto bars = std::floor(audium::TempoProvider::clocksToBars(positionInClocks));
+    barsSlider->setValue(bars, juce::dontSendNotification);
+    
+    positionInClocks -= audium::TempoProvider::barsToClocks(bars);
+    auto beats = std::floor(audium::TempoProvider::clocksToBeats(positionInClocks));
+    beatsSlider->setValue(beats, juce::dontSendNotification);
+                            
+    positionInClocks -= audium::TempoProvider::beatsToClocks(beats);
+    auto clicks = std::floor(audium::TempoProvider::clocksToClicks(positionInClocks));
+    clicksSlider->setValue(clicks, juce::dontSendNotification);
     
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
     
-    playButton->setToggleState(audiumEngine->getPlayListScheduler()->isPlaying(), dontSendNotification);
+    playButton->setToggleState(audiumEngine->getPlayListScheduler()->isPlaying(),
+                               dontSendNotification);
+    
+    recordButton->setToggleState(audiumEngine->getPlayListScheduler()->isRecordingArmed(),
+                                 dontSendNotification);
+    
+    if (audiumEngine->getPlayListScheduler()->isRecording()) {
+        audiumEngine->getRecordingActionHandler()->onTimerUpdate();
+    }
 }
 
 void HeaderComponent::configureSlider(juce::Slider* slider)

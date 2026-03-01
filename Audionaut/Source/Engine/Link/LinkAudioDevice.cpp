@@ -7,13 +7,14 @@
 #include "LinkEngine.hpp"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Provider/TempoProvider.h"
+#include "Engine/Playback/AudioBusInterface.h"
 
 namespace audium {
 
-LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine,
-                                 std::shared_ptr<PlayListScheduler> playListScheduler) :
-linkEngine(linkEngine),
-playListScheduler(playListScheduler)
+LinkAudioDevice::LinkAudioDevice(std::shared_ptr<audium::LinkEngine> linkEngine_,
+                                 std::shared_ptr<PlayListScheduler> playListScheduler_) :
+    linkEngine(linkEngine_),
+    playListScheduler(playListScheduler_)
 {
 }
 
@@ -26,7 +27,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
                                                         float* const* outputChannelData,
                                                         int totalNumOutputChannels,
                                                         int numSamples,
-                                                        [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context)
+                                                        [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context_)
 {
     
     // clear output
@@ -34,30 +35,25 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
         if (outputChannelData[i] != nullptr)
             juce::zeromem (outputChannelData[i], (size_t) numSamples * sizeof (float));
     
-    if (not byPass.load())
-    {
+    if (not byPass.load()) {
         // Synchronize host time to reference the point when its output reaches the speaker.
         const auto hostTime =  host_time_filter.sampleTimeToHostTime(sample_time);
         const auto bufferBeginAtOutput = hostTime + linkEngine->mOutputLatency.load();
+        const auto isPlaying = linkEngine->audioCallback(bufferBeginAtOutput,
+                                                         static_cast<std::size_t>(numSamples));
+        const auto beats = linkEngine->beatAtTime(bufferBeginAtOutput, linkEngine->quantum());
         
-        linkEngine->audioCallback(bufferBeginAtOutput, numSamples);
+        juce::AudioBuffer<float> outBuf (outputChannelData, totalNumOutputChannels, numSamples);
+        juce::dsp::AudioBlock<float> out (outBuf);
         
-        for (int i = 0; i < totalNumOutputChannels; ++i)
-        {
-            if (outputChannelData[i] != nullptr)
-            {
-                for (auto j = 0; j < numSamples; ++j)
-                {
-                    outputChannelData[i][j] += linkEngine->mBuffer[j];
-                }
-            }
-        }
+        juce::AudioBuffer<const float> inBuf (inputChannelData, totalNumInputChannels, numSamples);
+        juce::dsp::AudioBlock<const float> in (inBuf);
+    
+        juce::dsp::ProcessContextNonReplacing<float> context (in, out);
         
-        juce::AudioBuffer<float> buffer (outputChannelData, totalNumOutputChannels, numSamples);
-        juce::AudioSourceChannelInfo info (&buffer, 0, numSamples);
-        playListScheduler->processAudio(info);
+        playListScheduler->process(context, isPlaying, beats, numSamples);
         
-        sample_time += numSamples;
+        sample_time += static_cast<std::uint64_t>(numSamples);
     }
 }
 

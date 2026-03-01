@@ -28,9 +28,11 @@ public:
     TempoProvider(std::shared_ptr<audium::LinkEngine> linkEngine_) :
         linkEngine(linkEngine_)
     {
-        linkEngine->getLink()->setTempoCallback([this](const double p) { onTempoChange(p); });
-        linkEngine->getLink()->enable(false);
-        linkEngine->setTempo(tempoBPM);
+        if (linkEngine != nullptr) {
+            linkEngine->getLink()->setTempoCallback([this](const double p) { onTempoChange(p); });
+            linkEngine->getLink()->enable(false);
+            linkEngine->setTempo(tempoBPM);
+        }
     }
     
     /**
@@ -65,38 +67,6 @@ public:
     {
         tempoBPM = newTempo;
         sendActionMessage (tempoChanged);
-    }
-    
-    /**
-     * @brief Prepares the provider for playback.
-     * @param samplesPerBlockExpected The expected number of samples per block.
-     * @param sampleRate_ The sample rate in Hz.
-     */
-    void prepareToPlay (int samplesPerBlockExpected, double sampleRate_)
-    {
-        sampleRate = sampleRate_;
-        bufferSize = samplesPerBlockExpected;
-    }
-    
-    /**
-     * @brief Converts seconds to samples.
-     * @param seconds The time in seconds.
-     * @return The equivalent time in samples.
-     */
-    uint64_t secondsToSamples(double seconds)
-    {
-        return static_cast<uint64_t>(seconds * sampleRate);
-    }
-    
-    /**
-     * @brief Converts samples to seconds.
-     * @param samples The time in samples.
-     * @return The equivalent time in seconds.
-     */
-    double samplesToSeconds(uint64_t samples)
-    {
-        jassert(sampleRate > 0.0);
-        return static_cast<double>(samples) / sampleRate;
     }
     
     /**
@@ -303,12 +273,6 @@ private:
 
     /// The current tempo in beats per minute (BPM).
     double tempoBPM = 120.0;
-
-    /// The sample rate in Hz.
-    double sampleRate = 0.0;
-
-    /// The buffer size in samples.
-    int bufferSize = 0;
     
 };
 
