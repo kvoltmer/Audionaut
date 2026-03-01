@@ -136,6 +136,14 @@ void AudioBusInterface::resetGains()
     });
 }
 
+void AudioBusInterface::stopAllVoices()
+{
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push([ptr] {
+        ptr->getPlayback()->stopAllVoices();
+    });
+}
+
 const float AudioBusInterface::getChannelLevel(const int channelNumber) const
 {
     return audioBusRenderer->getChannelLevel(channelNumber);

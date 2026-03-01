@@ -245,6 +245,8 @@ public:
     
     std::shared_ptr<Recording> getRecording() const { return recording; }
     
+    std::shared_ptr<Playback> getPlayback() const { return playback; }
+    
     void setRecordEnabled(int channelNumber, bool bEnabled) { audioChannelData[channelNumber].record = bEnabled; }
     
     void resetGains();
