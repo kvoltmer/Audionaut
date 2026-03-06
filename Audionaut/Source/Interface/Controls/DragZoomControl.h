@@ -127,11 +127,10 @@ public:
         auto contentPosition = contentWidth * relativePosition;
         auto visibleRange = zoomHandler->getVisibleRange();
         zoomHandler->setVisibleRange(visibleRange.movedToStartAt(contentPosition - visibleRange.getLength() * 0.5),
-                                     sendNotificationAsync);
+                                     sendNotificationSync);
         
         
         updateFromEngine();
-        
     }
 
     void mouseUp (const juce::MouseEvent& e) override
