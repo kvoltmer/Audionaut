@@ -12,6 +12,7 @@
 
 #include "Interface/Views/TransportView.h"
 #include "Interface/Controls/LoopDraggerControl.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class TransportPositionControl  :   public juce::Component,
                                     private juce::Timer
@@ -64,9 +65,7 @@ public:
             
         };
         
-        
-        startTimerHz (40);
-        
+        startTimerHz (AudiumLookAndFeel::timerHz);
         updateLoopView();
     }
 

@@ -59,8 +59,6 @@ public:
 
 private:
     
-    std::shared_ptr<audium::PlayListItem> playListItem;
-    
     std::unique_ptr<FadeInOutView> fadeInOutView;
     
     std::unique_ptr<SliderControl> volumeSlider;

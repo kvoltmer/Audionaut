@@ -60,6 +60,8 @@ public:
     bool snapToGrid(double &clocks);
     bool snapToGrid(juce::Range<double> &clocks);
     
+    double reinterpretSeconds(const double seconds);
+    
     void focusViewOnPlayPosition();
     
     void focusView(double positionInSeconds);

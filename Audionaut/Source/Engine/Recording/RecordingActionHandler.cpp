@@ -127,36 +127,37 @@ void RecordingActionHandler::onTimerUpdate()
                 auto itemRange = item->getAbsolutePositionRange(context);
                 if (itemRange.getLength() < length) {
                     itemRange.setLength(length);
-                    
-                    // length must not exceed loop end
-                    if (transportLoop->isLoopActive()) {
-                        if (itemRange.intersects(loopRange)) {
-                            if (itemRange.getEnd() > loopRange.getEnd()) {
-                                itemRange.setEnd(loopRange.getEnd());
-                            }
-                        }
-                    }
-
-                    item->getRegion()->setRegionLength(itemRange.getLength(), context);
-                    
-                    needToUpdate = true;
                 }
                                 
                 if (transportLoop->isLoopActive()) {
+                    
+                    // length must not exceed loop end
+                    if (itemRange.intersects(loopRange)) {
+                        if (itemRange.getEnd() > loopRange.getEnd()) {
+                            itemRange.setEnd(loopRange.getEnd());
+                        }
+                    }
+                    
                     auto currPos = transportLoop->getCurrentPosition(context);
                     // std::cout << "loop " << loopRange.getStart() << " " << currPos << " " << loopRange.getEnd() << std::endl;
-                    auto currLen = currPos - loopRange.getStart();
-                    if (currLen < 0.0) {
-                        currLen = 0.1;
+                    
+                    auto currLength = currPos - loopRange.getStart();
+                    if (currLength < 0.0) {
+                        currLength = 0.1;
                     }
                     
                     if (item->isFirstPartInLoop) {
-                        item->setLength(currLen, context);
+                        itemRange.setLength(currLength);
                     }
                     else if (item->isSecondPartInLoop) {
-                        item->setAbsoluteStartPosition(currPos, context);
+                        item->setAbsoluteStartPosition(currPos, context);  
                     }
                 }
+                
+                if (not item->isSecondPartInLoop) {
+                    item->getRegion()->setRegionLength(itemRange.getLength(), context);
+                }
+                needToUpdate = true;
             }
         }
     }

@@ -68,6 +68,8 @@ public:
     static const int extraSpaceAtBottom = 200;
     static const int maxTrackColours = 256;
     
+    static const int timerHz = 60;
+    
     static juce::Colour trackColours[maxTrackColours];
 private:
     void setupColours();

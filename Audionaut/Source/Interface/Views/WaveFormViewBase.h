@@ -81,6 +81,7 @@ protected:
     juce::Component *parentComponent;
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<audium::AudioResource> audioResource;
+    std::shared_ptr<audium::PlayListItem> playListItem = nullptr;
     std::shared_ptr<ZoomHandler> zoomHandler;
 
     juce::Colour colour;
