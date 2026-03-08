@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 
 #include "Interface/Handlers/ZoomHandler.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class PositionMarker  : public juce::Component,
                             private juce::Timer
@@ -18,9 +19,7 @@ public:
     {
         setColour(Colours::pink);
         addAndMakeVisible (currentPositionMarker);
-        
-        startTimerHz (60);
-        
+        startTimerHz (AudiumLookAndFeel::timerHz);
         setInterceptsMouseClicks(false, false);
     }
 

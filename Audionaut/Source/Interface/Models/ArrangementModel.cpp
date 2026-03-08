@@ -54,10 +54,9 @@ const juce::Range<double> ArrangementModel::getRangeForItem(int itemNumber) cons
     juce::Range<double> result;
     if (audioTrack->getPlayListContainer()->playListItems.objectExistsAtIndex(itemNumber)) {
         auto playListItem = audioTrack->getPlayListContainer()->playListItems.getObjects()[itemNumber];
-        auto start = zoomHandler->clocksToX(playListItem->getAbsolutePosition(audium::clocks));
-        auto width = zoomHandler->clocksToX(playListItem->getDurationTime(audium::clocks));
-        result.setStart(start);
-        result.setLength(width);
+        auto positionRange = playListItem->getAbsolutePositionRange(audium::clocks);
+        auto rangeX = zoomHandler->clocksToX(positionRange);
+        return juce::Range<double> (rangeX.getStart(), rangeX.getEnd());
     }
     
     return result;
