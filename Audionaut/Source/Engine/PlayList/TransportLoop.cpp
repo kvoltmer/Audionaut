@@ -137,6 +137,7 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
         else if (loopRange.contains(thePosition)) {
             if (not withinLoop) {
                 withinLoop = true;
+                NullCheckedInvocation::invoke (onLoopEnteredFunction);
                 tempoProvider->sendActionMessage(audium::transportLoopEntered);
             }
         }
@@ -158,8 +159,12 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
     }
     
     if (result.loopEvent) {
+        NullCheckedInvocation::invoke (onLoopActionFunction);
         tempoProvider->sendActionMessage(audium::transportLoopAction);
     }
+    
+    
+    NullCheckedInvocation::invoke (onPlayListItemUpdateFunction);
     
     return result;
 }
