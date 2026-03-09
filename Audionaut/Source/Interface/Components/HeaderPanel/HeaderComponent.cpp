@@ -349,7 +349,7 @@ void HeaderComponent::timerCallback()
                                  dontSendNotification);
     
     if (audiumEngine->getPlayListScheduler()->isRecording()) {
-        audiumEngine->getRecordingActionHandler()->onTimerUpdate();
+        audiumEngine->getPlayListScheduler()->getTempoProvider()->sendActionMessage(audium::updateArrangementAction);
     }
 }
 

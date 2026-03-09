@@ -16,9 +16,9 @@ void WaveFormViewBase::paint (juce::Graphics& g)
  
         jassert(audioResource != nullptr);
         
-        const auto regionStart  = getRegionStart(audium::seconds);
+        auto start              = getRegionStart(audium::seconds);
         // convert region start to integer x values (avoids jitter when recording in a loop)
-        const auto start        = zoomHandler->reinterpretSeconds(regionStart);
+        start                   = zoomHandler->reinterpretSeconds(start);
         const auto thumbArea    = getClippedDrawingArea();
         const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
         const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());

@@ -113,6 +113,13 @@ public:
     double getCurrentPosition(audium::TimeContextType context) const noexcept;
 
     LoopData loopData; ///< Data structure for storing loop-related information.
+    
+    
+    std::function<void()> onLoopEnteredFunction;
+    
+    std::function<void()> onLoopActionFunction;
+    
+    std::function<void()> onPlayListItemUpdateFunction;
 
 private:
     std::shared_ptr<juce::UndoManager> undoManager; ///< Undo manager for loop-related operations.
