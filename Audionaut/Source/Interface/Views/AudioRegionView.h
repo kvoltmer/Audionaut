@@ -20,20 +20,22 @@ class ZoomHandler;
 class AudioRegionView : public WaveFormViewBase
 {
 public:
-    AudioRegionView(juce::Component *parentComponent,
-                    std::shared_ptr<audium::AudiumEngine> audiumEngine,
-                    std::shared_ptr<audium::AudioResource> audioResource,
-                    std::shared_ptr<ZoomHandler> zoomHandler,
-                    juce::Colour colour,
-                    std::shared_ptr<RegionSelector> regionSelector,
-                    int rowNumber) :
-        WaveFormViewBase(parentComponent,
-                         audiumEngine,
-                         audioResource,
-                         zoomHandler,
-                         colour,
-                         regionSelector,
-                         rowNumber)
+    AudioRegionView(juce::Component *parentComponent_,
+                    std::shared_ptr<audium::AudiumEngine> audiumEngine_,
+                    std::shared_ptr<audium::AudioResource> audioResource_,
+                    std::shared_ptr<ZoomHandler> zoomHandler_,
+                    juce::Colour colour_,
+                    std::shared_ptr<RegionSelector> regionSelector_,
+                    int rowNumber_,
+                    std::shared_ptr<audium::PlayListItem> playListItem_) :
+        WaveFormViewBase(parentComponent_,
+                         audiumEngine_,
+                         audioResource_,
+                         zoomHandler_,
+                         colour_,
+                         regionSelector_,
+                         rowNumber_,
+                         playListItem_)
     {
         // FADE IN OUT VIEW
         fadeInOutView = std::make_unique<FadeInOutView>();
