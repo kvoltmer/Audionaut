@@ -25,20 +25,22 @@
 class WaveFormViewBase : public juce::Component, public juce::ChangeListener
 {
 public:
-    WaveFormViewBase(juce::Component *parentComponent,
-                     std::shared_ptr<audium::AudiumEngine> audiumEngine,
-                     std::shared_ptr<audium::AudioResource> audioResource,
-                     std::shared_ptr<ZoomHandler> zoomHandler,
-                     juce::Colour colour,
-                     std::shared_ptr<RegionSelector> regionSelector,
-                     int channelNumber_) :
-        parentComponent(parentComponent),
-        audiumEngine(audiumEngine),
-        audioResource(audioResource),
-        zoomHandler(zoomHandler),
-        colour(colour),
-        regionSelector(regionSelector),
-        channelNumber(channelNumber_)
+    WaveFormViewBase(juce::Component *parentComponent_,
+                     std::shared_ptr<audium::AudiumEngine> audiumEngine_,
+                     std::shared_ptr<audium::AudioResource> audioResource_,
+                     std::shared_ptr<ZoomHandler> zoomHandler_,
+                     juce::Colour colour_,
+                     std::shared_ptr<RegionSelector> regionSelector_,
+                     int channelNumber_,
+                     std::shared_ptr<audium::PlayListItem> playListItem_) :
+        parentComponent(parentComponent_),
+        audiumEngine(audiumEngine_),
+        audioResource(audioResource_),
+        zoomHandler(zoomHandler_),
+        colour(colour_),
+        regionSelector(regionSelector_),
+        channelNumber(channelNumber_),
+        playListItem(playListItem_)
     {
         // this component doesn't handle mouse events
         //setInterceptsMouseClicks(false, false);

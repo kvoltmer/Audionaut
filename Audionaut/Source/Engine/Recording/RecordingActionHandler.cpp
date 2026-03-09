@@ -19,9 +19,11 @@ RecordingActionHandler::RecordingActionHandler(std::shared_ptr<AudioTrackContain
     transportLoop(transportLoop_),
     playListScheduler(playListScheduler_)
 {
+#if CATCH2_TESTS
     transportLoop->onLoopEnteredFunction        = [this] { onLoopEntered(); };
     transportLoop->onLoopActionFunction         = [this] { onLoopAction(); };
     transportLoop->onPlayListItemUpdateFunction = [this] { onPlayListItemUpdate(); };
+#endif
 }
 
 

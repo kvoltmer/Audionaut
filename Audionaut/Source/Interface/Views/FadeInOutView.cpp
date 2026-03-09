@@ -10,7 +10,10 @@ using namespace juce;
 
 void FadeInOutView::paint (juce::Graphics& g)
 {
-    jassert(playListItem);
+    if (playListItem == nullptr)
+        return;
+    
+    
     auto fFadeInWidth   = playListItem->getFadeIn() * getWidth();
     auto iFadeInWidth   = static_cast<int>(fFadeInWidth);
     auto fFadeOutWidth  = playListItem->getFadeOut() * getWidth();

@@ -199,7 +199,7 @@ double TransportLoop::getCurrentPosition(audium::TimeContextType context) const 
         return currentPositionClocks;
     }
     else if (context == audium::seconds) {
-        return tempoProvider->secondsToClocks(currentPositionClocks);
+        return tempoProvider->clocksToSeconds(currentPositionClocks);
     }
     jassertfalse;
     return 0.0;

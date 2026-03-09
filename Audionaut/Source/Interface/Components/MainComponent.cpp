@@ -148,14 +148,14 @@ void MainComponent::actionListenerCallback (const juce::String& message)
         updateUI();
     }
     else if (message == audium::transportLoopAction) {
-        // kinda obsolete due to timer updates
         if (audiumEngine->getPlayListScheduler()->isRecording()) {
+            audiumEngine->getRecordingActionHandler()->onLoopAction();
             middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
         }
     }
     else if (message == audium::transportLoopEntered) {
-        // kinda obsolete due to timer updates
         if (audiumEngine->getPlayListScheduler()->isRecording()) {
+            audiumEngine->getRecordingActionHandler()->onLoopEntered();
             middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
         }
     }
