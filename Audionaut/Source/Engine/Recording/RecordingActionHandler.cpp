@@ -7,6 +7,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Channel/AudioChannel.h"
 
 namespace audium {
 
@@ -24,20 +25,89 @@ RecordingActionHandler::RecordingActionHandler(std::shared_ptr<AudioTrackContain
     transportLoop->onLoopActionFunction         = [this] { onLoopAction(); };
     transportLoop->onPlayListItemUpdateFunction = [this] { onPlayListItemUpdate(); };
 #endif
+    
+    playListScheduler->onRecordingStartedFunction = [this] { onRecordingStarted(); };
 }
 
+void RecordingActionHandler::onRecordingStarted()
+{
+    for (auto track : audioTrackContainer->getAudioTracks()) {
+        
+        if (track->isRecordEnabled() &&
+            not track->isRecording()) {
+            
+            auto resourceGroup = track->createNewResourceGroup();
+            std::vector<std::shared_ptr<AudioResource>> resources;
+            
+            for (auto chan : track->audioChannelContainer->objects) {
+                if (chan->isRecordEnabled()) {
+                    auto &arc = track->getAudioResourceContainer();
+                    auto res = arc.addAudioResource({},
+                                                    nullptr,
+                                                    track,
+                                                    resourceGroup,
+                                                    chan->getChannelNumber(),
+                                                    0);
+                    resources.push_back(res);
+                }
+            }
+            
+            auto newItem = track->createDefaultPlayListItem(resources.front(),
+                                             resourceGroup,
+                                             playListScheduler->data.recordingStartPositionClocks,
+                                             audium::clocks);
+            newItem->needsLengthUpdate = true;
+        }
+    }
+}
 
 void RecordingActionHandler::onRecordingFinished()
 {
+    auto context = audium::seconds;
     audioResourceContainer->onRecordingFinished();
 
+    auto loopRange = transportLoop->getLoopPositionRange(context);
+    
     for (auto track : audioTrackContainer->getAudioTracks()) {
-        for (auto playListItem : track->getPlayListContainer()->getPlayListItems()) {
-            if (not playListItem->isRecording()) {
-                if (playListItem->getTransportSources().size() == 0) {
-                    playListItem->createTransportSources();
+        for (auto item : track->getPlayListContainer()->getPlayListItems()) {
+            if (not item->isRecording()) {
+                if (item->getTransportSources().size() == 0) {
+                    item->createTransportSources();
                 }
-                playListItem->needsLengthUpdate = false;
+                item->needsLengthUpdate = false;
+                
+                auto recStart = item->getRecordingStartPosition(context);
+                auto recLength = item->getRecordedLength(context);
+                auto phase = transportLoop->getLoopPhaseForPosition(recStart,
+                                                                    recLength,
+                                                                    context);
+                auto fraction = phase - std::floor(phase);
+                auto regionData = item->getRegionData(context);
+                
+                if (item->isFirstPartInLoop) {
+                    item->isFirstPartInLoop = false;
+
+                    // first part is always the newest stuff
+                    regionData.setEnd(recLength);
+                    regionData.setStart(recLength - (fraction * loopRange.getLength()));
+                    item->setRegionData(regionData, context);
+                }
+                else if (item->isSecondPartInLoop) {
+                    item->isSecondPartInLoop = false;
+                    
+                    auto end = recLength - (fraction * loopRange.getLength());
+                    auto len = (1.0 - fraction) * loopRange.getLength();
+                    auto start = end - len;
+                    regionData.setEnd(end);
+                    regionData.setStart(start);
+                    item->setRegionData(regionData, context);
+                    
+                    auto newPos = loopRange.getStart() + (fraction * loopRange.getLength());
+                    item->setAbsolutePosition(newPos, context);
+                }
+                
+//                auto pos = item->getAbsolutePosition(context);
+//                std::cout << "pos " << pos << " start " << regionData.getStart() << " length " << regionData.getLength() << std::endl;
             }
         }
     }
@@ -65,7 +135,7 @@ void RecordingActionHandler::onLoopEntered()
                     
                     // new region start is the length of the old region
                     auto regionLength = item->getAbsolutePositionRange(context).getLength();
-                    juce::Range<double> theRange(regionLength, regionLength + 0.1);
+                    juce::Range<double> theRange(regionLength, regionLength);
                     clone->setRegionData(theRange, context);
                     // the new item's position is where the loop range starts
                     clone->setAbsolutePosition(loopRange.getStart(), context);
@@ -107,7 +177,7 @@ void RecordingActionHandler::onLoopAction()
                         
                         // region start -> old region's start + length
                         auto start = item->getRegionData(context).getStart() + item->getRegionData(context).getLength();
-                        clone->setRegionData({start, start + 0.1}, context);
+                        clone->setRegionData({start, start}, context);
                         
                         // position at loop start pos
                         clone->setAbsolutePosition(loopRange.getStart(), context);
@@ -125,7 +195,6 @@ void RecordingActionHandler::onLoopAction()
                         if (item->isFirstPartInLoop ||
                             item->isSecondPartInLoop) {
                             auto regionData = item->getRegionData(context);
-                            // TODO: better store the absolute position of the recording start and calc the accurate region start (% loop length)
                             regionData = regionData.movedToStartAt(regionData.getStart() + loopRange.getLength());
                             item->setRegionData(regionData, context);
                         }
@@ -141,7 +210,6 @@ void RecordingActionHandler::onPlayListItemUpdate()
     if (playListScheduler->isRecording()) {
         
         auto context = audium::clocks;
-        auto loopRange = transportLoop->getLoopPositionRange(context);
         
         for (auto track : audioTrackContainer->getAudioTracks()) {
             for (auto item : track->getPlayListContainer()->getPlayListItems()) {
@@ -154,7 +222,10 @@ void RecordingActionHandler::onPlayListItemUpdate()
                         itemRange.setLength(length);
                     }
                     
-                    if (transportLoop->isLoopActive()) {
+                    if (transportLoop->isLoopActive() &&
+                        transportLoop->isWithinLoop()) {
+                        
+                        auto loopRange = transportLoop->getLoopPositionRange(context);
                         
                         // length must not exceed loop end
                         if (itemRange.intersects(loopRange)) {
@@ -168,7 +239,7 @@ void RecordingActionHandler::onPlayListItemUpdate()
                         
                         auto currLength = currPos - loopRange.getStart();
                         if (currLength < 0.0) {
-                            currLength = 0.1;
+                            currLength = 0.0;
                         }
                         
                         if (item->isFirstPartInLoop) {
@@ -177,10 +248,14 @@ void RecordingActionHandler::onPlayListItemUpdate()
                         else if (item->isSecondPartInLoop) {
                             // std::cout << "currPos " << currPos << std::endl;
                             item->setAbsoluteStartPosition(currPos, context);
+                            // continue to skip length update
+                            continue;
                         }
                     }
                     
-                    if (not item->isSecondPartInLoop) {
+                    // !!! set the length of the play list item
+                    auto currentLength = item->getRegion()->getRegionData(context).getLength();
+                    if (not exactlyEqual (currentLength, itemRange.getLength())) {
                         item->getRegion()->setRegionLength(itemRange.getLength(), context);
                     }
                 }

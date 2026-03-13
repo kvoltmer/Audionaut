@@ -34,10 +34,12 @@ void Voice::start(std::shared_ptr<AudiumTransportSource> transportSource_)
     processing.store(true);
 }
 
-void Voice::stop()
+void Voice::stop(bool fadeOutLastBlock)
 {
-    if (transportSource != nullptr)
-        transportSource->getAudioTransportSource()->stop();
+    if (transportSource != nullptr &&
+        transportSource->getAudioTransportSource()->isPlaying())
+        
+        transportSource->getAudioTransportSource()->stop(fadeOutLastBlock);
 }
 
 

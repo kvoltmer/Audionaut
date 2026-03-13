@@ -105,6 +105,8 @@ public:
     void setAbsoluteStartPosition(double newPosition, audium::TimeContextType context);
     
     int getLoopCount() const noexcept { return loopCount; }
+        
+    bool isWithinLoop() const noexcept { return withinLoop; }
     
     double getLoopPhaseForPosition(double startPosition,
                                 double length,

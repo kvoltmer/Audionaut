@@ -89,7 +89,7 @@ public:
     /**
      * @brief Creates a new project with default settings.
      */
-    void createNewProject();
+    void createNewProject(const int numChannels = 2);
 
     /**
      * @brief Opens a project file.

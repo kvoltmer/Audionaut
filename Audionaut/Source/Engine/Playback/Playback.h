@@ -53,7 +53,8 @@ public:
      * @param source Shared pointer to the `AudiumTransportSource` to stop.
      * @return True if the voice was successfully stopped, false otherwise.
      */
-    bool stopVoice(const std::shared_ptr<AudiumTransportSource> source);
+    bool stopVoice(const std::shared_ptr<AudiumTransportSource> source,
+                   bool fadeOutLastBlock);
 
     /**
      * @brief Stops all active voices.

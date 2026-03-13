@@ -108,10 +108,6 @@ public:
     void configureDynamics(std::shared_ptr<PlayListItem> item,
                            std::shared_ptr<TempoProvider> tempoProvider);
     
-#if CATCH2_TESTS
-    int64 samplesProcessed = 0;
-#endif
-    
 private:
     AudioResource& audioResource; ///< Reference to the associated audio resource.
     std::atomic<int> scheduledStartSample   = 0; ///< The sample position for a scheduled position change.

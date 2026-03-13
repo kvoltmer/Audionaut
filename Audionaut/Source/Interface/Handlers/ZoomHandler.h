@@ -28,7 +28,7 @@ public:
     
     juce::Range<double> getVisibleRangeInSeconds() const noexcept;
     
-    void setViewport(juce::Viewport *view) { viewPort = view; };
+    void setViewport(juce::Viewport *view) { viewPort = view; }
     int getScrollBarHeight() const { return viewPort->getHorizontalScrollBar().getHeight(); }
     
     double secondsToXWithOffset (const double time) const;

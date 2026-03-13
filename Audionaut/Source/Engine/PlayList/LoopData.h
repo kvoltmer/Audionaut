@@ -32,6 +32,6 @@ struct LoopData
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(LoopData,
                                                 loopStartPositionClocks,
                                                 loopEndPositionClocks,
-                                                loopActive);
+                                                loopActive)
 
 } // namespace audium

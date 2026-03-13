@@ -9,22 +9,16 @@ bool AudioRecorder::createThreadedWriter(const double sampleRate_, const juce::F
 {
     jassert(!recordedFile.existsAsFile());
     
-    if (auto fileStream = std::unique_ptr<juce::FileOutputStream> (recordedFile.createOutputStream())) {
-        juce::WavAudioFormat wavFormat;
-        
-// TODO: 
-//        auto opt = AudioFormatWriter::Options{}.withSampleRate (sampleRate)
-//                                               .withNumChannels (1)
-//                                               .withBitsPerSample (24);
-//        auto writer = wavFormat.createWriterFor (fileStream, opt);
-        
-        if (auto writer = wavFormat.createWriterFor (fileStream.get(), sampleRate_, 1, 24, {}, 0))
-        {
-            // (passes responsibility for deleting the stream to the writer object that is now using it)
-            fileStream.release();
-            
-            threadedWriter.reset (new juce::AudioFormatWriter::ThreadedWriter (writer, backgroundThread, 32768));
-            
+    std::unique_ptr<OutputStream> outStream (recordedFile.createOutputStream());
+    if (outStream != nullptr) {
+        WavAudioFormat wav;
+        auto opt = AudioFormatWriter::Options{}.withSampleRate (sampleRate)
+                                                .withNumChannels (1)
+                                                .withBitsPerSample (24);
+        auto writer = wav.createWriterFor (outStream, opt);
+        if (writer != nullptr) {
+            threadedWriter.reset (new AudioFormatWriter::ThreadedWriter (writer.release(),                                                                                     backgroundThread,
+                                                                         32768));
             return true;
         }
     }

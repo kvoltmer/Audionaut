@@ -21,7 +21,7 @@ std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTra
 
 bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource)
 {
-    playback->stopVoice(audioTransportSource);
+    playback->stopVoice(audioTransportSource, false);
     
     return std::erase_if(audioTransportSources, [audioTransportSource](const auto& item) {
         return item == audioTransportSource;
