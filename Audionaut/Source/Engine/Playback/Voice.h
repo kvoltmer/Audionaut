@@ -48,7 +48,7 @@ public:
     /**
      * @brief Stops playback.
      */
-    void stop();
+    void stop(bool fadeOutLastBlock);
 
     /**
      * @brief Checks if the voice is currently processing audio.

@@ -209,10 +209,6 @@ double TransportLoop::getLoopPhaseForPosition(double startPosition,
                                               double duration,
                                               audium::TimeContextType context) const
 {
-    if (context == audium::seconds) {
-        startPosition = tempoProvider->secondsToClocks(startPosition);
-        duration = tempoProvider->secondsToClocks(duration);
-    }
     auto loopRange = getLoopPositionRange(context);
     if (loopRange.getLength() > 0.0) {
         auto durationInLoop = startPosition + duration - loopRange.getStart();

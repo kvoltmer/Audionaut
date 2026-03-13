@@ -67,6 +67,7 @@ void AudioBusInterface::record(bool start, const int channelNumber, const double
 {
     if (start)
         AudiumEngine::recordingCounter++;
+    
     audioBusRenderer->getRecording()->record(start, channelNumber, positionClocks);
 }
 
@@ -92,7 +93,7 @@ const double AudioBusInterface::getRecordedLength(int channelNumber) const
     if (recorder != nullptr)
         return recorder->getTotalLength();
     else
-        return 0.1;
+        return 0.0;
 }
 
 const double AudioBusInterface::getRecordingStartPosition(int channelNumber) const

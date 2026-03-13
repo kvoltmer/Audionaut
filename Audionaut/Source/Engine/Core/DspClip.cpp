@@ -8,12 +8,7 @@
 namespace audium {
 
 juce::Range<double> DspClip::getRegionData(audium::TimeContextType context) const
-{
-    if (dspClipData.clipData.regionData.isEmpty()) {
-        jassertfalse;
-        return juce::Range<double>(0.0, 0.0);
-    }
-    
+{    
     if (context == audium::seconds) {
         return dspClipData.clipData.regionData;
     }

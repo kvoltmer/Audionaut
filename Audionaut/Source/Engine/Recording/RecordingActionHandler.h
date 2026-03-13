@@ -23,7 +23,7 @@ public:
                            std::shared_ptr<TransportLoop> transportLoop_,
                            std::shared_ptr<PlayListScheduler> playListScheduler_);
 
-    
+    void onRecordingStarted();
     void onRecordingFinished();
     void onLoopEntered();
     void onLoopAction();

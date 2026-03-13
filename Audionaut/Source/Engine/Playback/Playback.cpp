@@ -38,10 +38,11 @@ bool Playback::startVoice(std::shared_ptr<AudiumTransportSource> transportSource
     return false;
 }
 
-bool Playback::stopVoice(const std::shared_ptr<AudiumTransportSource> source)
+bool Playback::stopVoice(const std::shared_ptr<AudiumTransportSource> source,
+                         bool fadeOutLastBlock)
 {
     if (auto voice = findVoice(source)) {
-        voice->stop();
+        voice->stop(fadeOutLastBlock);
         return true;
     }
     return false;
@@ -51,7 +52,7 @@ void Playback::stopAllVoices()
 {
     // std::cout << "stopAllVoices" << std::endl;
     for(auto i = 0; i < MAX_VOICES; ++i) {
-        voices[i].stop();
+        voices[i].stop(true);
     }
 }
 

@@ -43,7 +43,7 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
     transportLoop->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
-void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
+bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
                                      std::shared_ptr<AudiumTransportSource> transportSource,
                                      double transportPosition,
                                      int sampleOffset,
@@ -73,6 +73,13 @@ void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     auto duration = dspClip.getRegionData(context).getEnd() - position;
     jassert(duration >= 0.0);
     
+    const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
+    jassert(context == audium::seconds);
+    if (duration < secondsThisBuffer) {
+        std::cout << "duration samples " << int(duration * externalSampleRate) << " too small." << std::endl;
+        return false;
+    }
+    
     transportSource->schedulePosition(position, startSample);
     
     transportSource->scheduleDuration(duration, externalSampleRate);
@@ -87,13 +94,15 @@ void PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     
     transportSource->getAudioTransportSource()->resetClipGain();
     
-    //                std::cout << "transport-pos: " << transportPosition << " ";
-    //                std::cout << "clip-pos: " <<  absolute << " ";
-    //                std::cout << "offset: " << offset << " ";
-    //                std::cout << "file-pos: " << position << " ";
-    //                std::cout << "duration: " << duration << " ";
-    //                std::cout << "gain: " << dspClip.dspClipData.clipGain << " ";
-    //                std::cout << std::endl;
+//    std::cout << "transport-pos: " << transportPosition << " ";
+//    std::cout << "clip-pos: " <<  absolute << " ";
+//    std::cout << "offset: " << offset << " ";
+//    std::cout << "file-pos: " << position << " ";
+//    std::cout << "duration: " << duration << " ";
+//    std::cout << "gain: " << dspClip.dspClipData.clipGain << " ";
+//    std::cout << std::endl;
+    
+    return true;
 }
 
 void PlayListScheduler::process(double transportPositionClocks,
@@ -119,6 +128,10 @@ void PlayListScheduler::process(double transportPositionClocks,
     for (auto clipData : dspClips) {
         
         const audium::DspClip dspClip(getTempoProvider(), clipData);
+        
+        if (dspClip.getRegionData(audium::seconds).isEmpty())
+            continue;
+        
         const auto transportSource = transportSourceContainer->getTransportSourceAtIndex(dspClip.dspClipData.transportSourceIndex);
         if (transportSource == nullptr)
             continue;
@@ -126,27 +139,37 @@ void PlayListScheduler::process(double transportPositionClocks,
         if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange)) {
             
             
-            if (clipsChanged) {
-                transportSource->getAudioTransportSource()->stop();
-            }
-            else if (loopResult.loopEvent) {
-                // (re) schedule clip
-                scheduleClip(dspClip,
-                             transportSource,
-                             transportPosition,
-                             loopResult.numSamplesUntilLoop,
-                             numSamples);
-                // re-schedule: we assume the clip is already playing 
-                // jassert(transportSource->getAudioTransportSource()->isPlaying());
+            if (clipsChanged &&
+                transportSource->getAudioTransportSource()->isPlaying()) {
+                transportSource->getAudioTransportSource()->stop(true);
             }
             
-            if (!transportSource->getAudioTransportSource()->isPlaying()) {
+            if (loopResult.loopEvent) {
+                // re-schedule clip
+                if (not scheduleClip(dspClip,
+                                     transportSource,
+                                     transportPosition,
+                                     loopResult.numSamplesUntilLoop,
+                                     numSamples)) {
+                    continue;
+                }
                 
-                scheduleClip(dspClip,
-                             transportSource,
-                             transportPosition,
-                             0,
-                             numSamples);
+                // clip might start at loop start
+                if (!transportSource->getAudioTransportSource()->isPlaying()) {
+                    transportSource->getAudioTransportSource()->start();
+                    playback->startVoice(transportSource);
+                }
+            }
+            
+            if (not transportSource->getAudioTransportSource()->isPlaying()) {
+                
+                if (not scheduleClip(dspClip,
+                                     transportSource,
+                                     transportPosition,
+                                     0,
+                                     numSamples)) {
+                    continue;;
+                }
                 
                 // TODO: why? please investigate
                 if (not loopResult.loopEvent) {
@@ -158,7 +181,7 @@ void PlayListScheduler::process(double transportPositionClocks,
             }
         }
         else {
-            playback->stopVoice(transportSource);
+            playback->stopVoice(transportSource, false);
         }
     }
 }
@@ -517,36 +540,7 @@ void PlayListScheduler::startRecording(const int channelNumber)
             data.recordingStartPositionClocks = data.transportPositionClocks;
         }
         
-        for (auto track : getAudioTrackContainer()->getAudioTracks()) {
-            
-            if (track->isRecordEnabled() &&
-                not track->isRecording()) {
-                
-                auto resourceGroup = track->createNewResourceGroup();
-                std::vector<std::shared_ptr<AudioResource>> resources;
-                
-                for (auto chan : track->audioChannelContainer->objects) {
-                    if (chan->isRecordEnabled()) {
-                        auto destChannel = chan->getChannelNumber();
-                        auto url = URL (juce::File());
-                        auto audioResource = track->getAudioResourceContainer().addAudioResource(url,
-                                                                                                 nullptr,
-                                                                                                 track,
-                                                                                                 resourceGroup,
-                                                                                                 destChannel,
-                                                                                                 0);
-                        resources.push_back(audioResource);
-                    }
-                }
-                
-                auto newItem = track->createDefaultPlayListItem(resources.front(),
-                                                 resourceGroup,
-                                                 data.recordingStartPositionClocks,
-                                                 audium::clocks);
-                newItem->needsLengthUpdate = true;
-                
-            }
-        }
+        NullCheckedInvocation::invoke (onRecordingStartedFunction);
         
         data.isRecording = true;
         audioBusInterface->record(true,
@@ -588,5 +582,100 @@ bool PlayListScheduler::isRecording() const noexcept
 {
     return data.isRecording;
 }
+
+#if CATCH2_TESTS
+void PlayListScheduler::recordFromAudioBuffer(const AudioBuffer<float> &inputBuffer,
+                                              double recLengthSeconds)
+{
+    auto blockSize = 512;
+    auto sampleRate = 44100.0;
+    
+    prepareToPlay(blockSize, sampleRate);
+    setAbsoluteStartPosition(0.0, audium::seconds);
+    
+    // arm for recording
+    setRecordingArmed(true);
+    auto track = getAudioTrackContainer()->getAudioTrack(0);
+    jassert(track);
+    track->setRecordEnabled(0, true);
+    
+    // sync 
+    audioBusInterface->invokeCommands();
+    
+    // go for it:
+    startRecording();
+    startPlaying();
+    
+    jassert((int)sampleRate == (int)externalSampleRate);
+    auto totalSamples   = static_cast<int64>(recLengthSeconds * sampleRate);
+    jassert(totalSamples <= inputBuffer.getNumSamples());
+    auto iterations     = static_cast<int64>(totalSamples) / blockSize;
+    auto remainder      = totalSamples - (iterations * blockSize);
+    jassert(remainder < blockSize);
+    
+    auto positionBeats = TempoProvider::clocksToBeats(getAbsolutePosition(audium::clocks));
+    
+    AudioBuffer<float> inBuffer(1, blockSize);
+    AudioBuffer<float> outBuffer(1, blockSize);
+    juce::dsp::AudioBlock<float> inBlock (inBuffer);
+    juce::dsp::AudioBlock<float> outBlock (outBuffer);
+    
+    
+    int64 samplesProcessed = 0;
+    for (auto i = 0; i < iterations; ++i) {
+        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(blockSize) / externalSampleRate);
+        const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
+        
+        
+        jassert(samplesProcessed < inputBuffer.getNumSamples());
+        inBuffer.copyFrom(0, 0, inputBuffer, 0, (int)samplesProcessed, blockSize);
+        
+    
+        juce::dsp::ProcessContextNonReplacing<float> context (inBlock, outBlock);
+        
+        outBlock.clear();
+        process(context, true, positionBeats, blockSize);
+        
+        positionBeats += beatsThisBuffer;
+        samplesProcessed += blockSize;
+        
+        // the threaded writer needs to catch up
+        juce::Thread::sleep (1);
+    }
+    
+    // process remaining samples
+    if (remainder > 0) {
+        outBlock.clear();
+        
+        blockSize = (int)remainder;
+        prepareToPlay(blockSize, sampleRate);
+        
+        inBuffer.setSize(1, blockSize);
+        outBuffer.setSize(1, blockSize);
+        // need to re-assign
+        inBlock = juce::dsp::AudioBlock<float>(inBuffer);
+        outBlock = juce::dsp::AudioBlock<float>(outBuffer);
+
+        
+        jassert(samplesProcessed + blockSize <= inputBuffer.getNumSamples());
+        inBuffer.copyFrom(0, 0, inputBuffer, 0, (int)(samplesProcessed), blockSize);
+        
+        juce::dsp::ProcessContextNonReplacing<float> context (inBlock, outBlock);
+        process(context, true, positionBeats, blockSize);
+        samplesProcessed += blockSize;
+        
+    }
+    
+    juce::Thread::sleep (1);
+    
+    jassert(samplesProcessed == totalSamples);
+    
+    
+    stopRecording();
+    stopPlaying();
+    
+    audioBusInterface->invokeCommands();
+}
+#endif // CATCH2_TESTS
 
 } // namespace audium
