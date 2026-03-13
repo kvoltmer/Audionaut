@@ -43,6 +43,10 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
                                                          static_cast<std::size_t>(numSamples));
         const auto beats = linkEngine->beatAtTime(bufferBeginAtOutput, linkEngine->quantum());
         
+        // TODO: hack hack... we only support 2 output channels at this time
+        if (totalNumOutputChannels > 2)
+            totalNumOutputChannels = 2;
+        
         juce::AudioBuffer<float> outBuf (outputChannelData, totalNumOutputChannels, numSamples);
         juce::dsp::AudioBlock<float> out (outBuf);
         
