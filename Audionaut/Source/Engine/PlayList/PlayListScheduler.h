@@ -76,7 +76,7 @@ public:
     
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     
-    void scheduleClip(const audium::DspClip &clip,
+    bool scheduleClip(const audium::DspClip &clip,
                       std::shared_ptr<AudiumTransportSource> transportSource,
                       double transportPosition,
                       int sampleOffset,
@@ -165,7 +165,14 @@ public:
     
     bool isRecording() const noexcept;
     
+#if CATCH2_TESTS
+    void recordFromAudioBuffer(const AudioBuffer<float> &inBuffer,
+                               double recLengthSeconds);
+#endif
+    
     PlayListSchedulerData data;
+    
+    std::function<void()> onRecordingStartedFunction;
     
 private:
     

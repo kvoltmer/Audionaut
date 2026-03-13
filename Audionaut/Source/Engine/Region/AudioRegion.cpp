@@ -66,8 +66,7 @@ const AudioRegionData::tRange AudioRegion::getRegionData(audium::TimeContextType
 
 void AudioRegion::setRegionData(const AudioRegionData::tRange newRegionData, audium::TimeContextType context)
 {
-    if (!newRegionData.isEmpty() &&
-        newRegionData.getStart() <= newRegionData.getEnd()) {
+    if (newRegionData.getStart() <= newRegionData.getEnd()) {
         if (context == audium::seconds) {
             data.range = newRegionData;
         }

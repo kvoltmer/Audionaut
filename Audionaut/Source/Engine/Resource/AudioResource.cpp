@@ -146,11 +146,9 @@ double AudioResource::getFileLength(audium::TimeContextType context) const
 
 double AudioResource::getRecordedLength(audium::TimeContextType context) const
 {
-    auto length = -1.0;
-    if (isRecording()) {
-        auto outChannel = getOutputChannelNumber();
-        length = getAudioTrack()->getAudioTrackContainer().audioBusInterface->getRecordedLength(outChannel);
-    }
+    auto outChannel = getOutputChannelNumber();
+    auto audioBusInterface = getAudioTrack()->getAudioTrackContainer().audioBusInterface;
+    auto length = audioBusInterface->getRecordedLength(outChannel);
     
     if (context == audium::seconds) {
         return length;
@@ -178,15 +176,16 @@ bool AudioResource::loadRecordedAudioFile()
     // audio resrouce without audioFormatReader -> recording
     if (audioFormatReader == nullptr &&
         not audioBusInterface->isRecording(audioBusChannel)) {
-        // std::cout << "load rec file at channel " << audioBusChannel << std::endl;
+//        std::cout << "load rec file at channel " << audioBusChannel << std::endl;
         auto file = audioBusInterface->getRecordedAudioFile(audioBusChannel);
         
         if (file.existsAsFile()) {
-            // std::cout << file.getFullPathName() << std::endl;
+//            std::cout << file.getFullPathName() << std::endl;
             juce::URL theUrl(file);
             setUrl(theUrl);
             audioFormatReader = getAudioTrack()->getAudioResourceContainer().getAudioFormatReaderForUrl(theUrl);
             jassert(audioFormatReader);
+//            std::cout << getFileLength(seconds) << std::endl;
             return (audioFormatReader != nullptr);
         }
         else {

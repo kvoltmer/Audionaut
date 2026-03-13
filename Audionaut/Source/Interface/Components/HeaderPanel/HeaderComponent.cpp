@@ -15,6 +15,7 @@
 #include "Interface/Controls/DefaultLabel.h"
 #include "Interface/ColourIds.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 using namespace juce;
 
@@ -254,7 +255,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     
     
     setSize (1200, 40);
-    startTimerHz(60.f);
+    startTimerHz(AudiumLookAndFeel::timerHz);
 }
 
 HeaderComponent::~HeaderComponent()
@@ -337,10 +338,10 @@ void HeaderComponent::timerCallback()
     positionInClocks -= audium::TempoProvider::beatsToClocks(beats);
     auto clicks = std::floor(audium::TempoProvider::clocksToClicks(positionInClocks));
     clicksSlider->setValue(clicks, juce::dontSendNotification);
-    
+
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
-    
+
     playButton->setToggleState(audiumEngine->getPlayListScheduler()->isPlaying(),
                                dontSendNotification);
     
@@ -348,7 +349,8 @@ void HeaderComponent::timerCallback()
                                  dontSendNotification);
     
     if (audiumEngine->getPlayListScheduler()->isRecording()) {
-        audiumEngine->getRecordingActionHandler()->onTimerUpdate();
+        audiumEngine->getRecordingActionHandler()->onPlayListItemUpdate();
+        audiumEngine->getPlayListScheduler()->getTempoProvider()->sendActionMessage(audium::updateArrangementAction);
     }
 }
 

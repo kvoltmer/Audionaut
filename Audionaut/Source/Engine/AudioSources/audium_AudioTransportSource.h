@@ -94,7 +94,7 @@ public:
     bool hasStreamFinished() const noexcept;
 
     void start();
-    void stop();
+    void stop(bool fadeout);
 
     /** Returns true if it's currently playing. */
     bool isPlaying() const noexcept     { return playing; }
@@ -148,6 +148,7 @@ private:
 
     std::atomic<bool> playing  = false;
     std::atomic<bool> stopped  = true;
+    std::atomic<bool> fadeOutLastBlock  = false;
     double sampleRate = 44100.0, sourceSampleRate = 0.0;
     int blockSize = 128, readAheadBufferSize = 0;
     std::atomic<bool> isPrepared = false;

@@ -69,10 +69,6 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
     
-    auto recordingActionHandler     = std::make_shared<RecordingActionHandler>(audioTrackContainer,
-                                                                               audioResourceContainer,
-                                                                               transportLoop);
-    
     auto playListScheduler          = std::make_shared<PlayListScheduler>(audioTrackContainer,
                                                                           audioResourceContainer,
                                                                           tempoProvider,
@@ -82,6 +78,11 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                           playback,
                                                                           audioBusInterface,
                                                                           transportLoop);
+    
+    auto recordingActionHandler     = std::make_shared<RecordingActionHandler>(audioTrackContainer,
+                                                                               audioResourceContainer,
+                                                                               transportLoop,
+                                                                               playListScheduler);
     
     auto linkAudioDevice            = std::make_shared<LinkAudioDevice>(linkEngine,
                                                                         playListScheduler);

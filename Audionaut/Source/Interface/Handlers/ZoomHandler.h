@@ -28,7 +28,7 @@ public:
     
     juce::Range<double> getVisibleRangeInSeconds() const noexcept;
     
-    void setViewport(juce::Viewport *view) { viewPort = view; };
+    void setViewport(juce::Viewport *view) { viewPort = view; }
     int getScrollBarHeight() const { return viewPort->getHorizontalScrollBar().getHeight(); }
     
     double secondsToXWithOffset (const double time) const;
@@ -59,6 +59,8 @@ public:
 
     bool snapToGrid(double &clocks);
     bool snapToGrid(juce::Range<double> &clocks);
+    
+    double reinterpretSeconds(const double seconds);
     
     void focusViewOnPlayPosition();
     

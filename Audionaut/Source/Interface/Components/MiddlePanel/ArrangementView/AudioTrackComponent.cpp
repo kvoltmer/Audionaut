@@ -97,10 +97,8 @@ void AudioTrackComponent::updateContents(bool forceRebuildComponents)
                                              getLocalBounds().getY(),
                                              range.getLength(),
                                              getLocalBounds().getHeight());
-            itemComp->setBounds(rect_tmp.toNearestInt());
-            
+            itemComp->setBounds(rect_tmp.getSmallestIntegerContainer());
             itemComp->update (item);
-            
             itemComp->repaint();
         }
     }

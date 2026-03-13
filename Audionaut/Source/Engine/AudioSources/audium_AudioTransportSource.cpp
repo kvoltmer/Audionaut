@@ -96,16 +96,18 @@ void AudioTransportSource::start()
     if ((! playing) && masterSource != nullptr) {
         playing = true;
         stopped = false;
+        fadeOutLastBlock = false;
     }
 }
 
-void AudioTransportSource::stop()
+void AudioTransportSource::stop(bool fadeout_)
 {
     jassert(isPrepared);
     if (playing) {
         playing = false;
         stopped = true;
     }
+    fadeOutLastBlock = fadeout_;
 }
 
 void AudioTransportSource::setPosition (double newPosition)
@@ -229,18 +231,21 @@ void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info
             masterSource->getNextAudioBlock (info);
             
             if (!playing && stopped) {
-                // just stopped playing, so fade out the last block..
-                for (int i = info.buffer->getNumChannels(); --i >= 0;)
-                    info.buffer->applyGainRamp (i, info.startSample, jmin (256, info.numSamples), 1.0f, 0.0f);
-                
-                if (info.numSamples > 256)
-                    info.buffer->clear (info.startSample + 256, info.numSamples - 256);
-                
+                if (fadeOutLastBlock) {
+                    fadeOutLastBlock = false;
+                    // just stopped playing, so fade out the last block..
+                    for (int i = info.buffer->getNumChannels(); --i >= 0;)
+                        info.buffer->applyGainRamp (i, info.startSample, jmin (256, info.numSamples), 1.0f, 0.0f);
+                    
+                    if (info.numSamples > 256)
+                        info.buffer->clear (info.startSample + 256, info.numSamples - 256);
+                    
+                }
                 stopped = true;
             }
             
             if (hasStreamFinished())
-                stop();
+                stop(false);
             
             // clip gain
             clipGain.setGainLinear(gain.load());

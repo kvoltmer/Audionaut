@@ -105,6 +105,8 @@ public:
     void setAbsoluteStartPosition(double newPosition, audium::TimeContextType context);
     
     int getLoopCount() const noexcept { return loopCount; }
+        
+    bool isWithinLoop() const noexcept { return withinLoop; }
     
     double getLoopPhaseForPosition(double startPosition,
                                 double length,
@@ -113,6 +115,13 @@ public:
     double getCurrentPosition(audium::TimeContextType context) const noexcept;
 
     LoopData loopData; ///< Data structure for storing loop-related information.
+    
+    
+    std::function<void()> onLoopEnteredFunction;
+    
+    std::function<void()> onLoopActionFunction;
+    
+    std::function<void()> onPlayListItemUpdateFunction;
 
 private:
     std::shared_ptr<juce::UndoManager> undoManager; ///< Undo manager for loop-related operations.
