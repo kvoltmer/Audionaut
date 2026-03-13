@@ -105,6 +105,10 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem
 {
     playListItem = item;
     
+    
+    fadeInControl->setPlayListItem(item);
+    fadeOutControl->setPlayListItem(item);
+    
     // function pointer setup:
     fadeInControl->onValueChange = [this, item] {
         if (item->setFadeIn(fadeInControl->getValue()))

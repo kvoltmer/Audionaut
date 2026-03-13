@@ -139,9 +139,8 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     };
 
     setSize (AudiumLookAndFeel::channelsWidth, 100);
-    
-    startTimerHz(60);
-    
+  
+    startTimerHz(AudiumLookAndFeel::timerHz);
     refreshComponent(audioTrack, rowNumber, false);
 }
 
@@ -247,10 +246,10 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     monitorButton->setToggleState(channelData.monitor, dontSendNotification);
     recordButton->setToggleState(channelData.record, dontSendNotification);
     
+
     if (not isTimerRunning()) {
-        startTimerHz(60);
+        startTimerHz(AudiumLookAndFeel::timerHz);
     }
-    
     channelNumber = audioTrack->getChannel(rowNumber)->getChannelNumber() + audioTrack->getChannelOffset();
 }
 

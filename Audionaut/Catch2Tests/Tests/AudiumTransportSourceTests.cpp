@@ -9,6 +9,8 @@
 #include "Engine/Export/AudioExportThread.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
+#include "TestUtils.h"
+
 using namespace audium;
 using namespace juce;
 
@@ -120,51 +122,6 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
     juce::MessageManager::deleteInstance();
 }
 
-static float genSaw(int s, int w)
-{
-    return (static_cast<float>(s) / static_cast<float>(w - 1) * 2.f) - 1.f;
-}
-
-static const File createTestFile()
-{
-    auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/slow-saw-2-seconds.wav"));
-    TemporaryFile tempFile (targetFile);
-    
-    std::unique_ptr<OutputStream> stream (tempFile.getFile().createOutputStream());
-    jassert(stream);
-    if (stream != nullptr) {
-        WavAudioFormat wav;
-        auto opt = AudioFormatWriter::Options{}.withSampleRate (44100.0)
-            .withNumChannels (1)
-            .withBitsPerSample (32)
-            .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
-        auto writer = wav.createWriterFor (stream, opt);
-        jassert(writer);
-        if (writer != nullptr) {
-            
-            auto blockSize = 44100;
-            
-            AudioBuffer<float> buffer(1, blockSize);
-            AudioSourceChannelInfo info (&buffer, 0, blockSize);
-            
-            // 1st second generate saw [-1, +1]
-            for (auto s = 0; s < blockSize; s++) {
-                *info.buffer->getWritePointer(0, s) = genSaw(s, blockSize);
-            }
-            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
-            
-            // 2nd second silence
-            info.clearActiveBufferRegion();
-            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
-            
-            writer.reset();
-            tempFile.overwriteTargetFileWithTemporary();
-            return tempFile.getTargetFile();
-        }
-    }
-    return File();
-}
-
 static void examineFile(std::shared_ptr<audium::ExportAudioConfig> bounceConfig)
 {
     AudioFormatManager formatManager;
@@ -209,7 +166,7 @@ SCENARIO("tranport source duration scenario", "[engine][dsp][transport][duration
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     
-    auto testFile = createTestFile();
+    auto testFile = createSlowSawTwoSecondsAudioFile();
     jassert(testFile.existsAsFile());
     std::cout << "Testfile: " << testFile.getFullPathName() << std::endl;
     

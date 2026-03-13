@@ -137,6 +137,7 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
         else if (loopRange.contains(thePosition)) {
             if (not withinLoop) {
                 withinLoop = true;
+                NullCheckedInvocation::invoke (onLoopEnteredFunction);
                 tempoProvider->sendActionMessage(audium::transportLoopEntered);
             }
         }
@@ -158,8 +159,12 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
     }
     
     if (result.loopEvent) {
+        NullCheckedInvocation::invoke (onLoopActionFunction);
         tempoProvider->sendActionMessage(audium::transportLoopAction);
     }
+    
+    
+    NullCheckedInvocation::invoke (onPlayListItemUpdateFunction);
     
     return result;
 }
@@ -194,7 +199,7 @@ double TransportLoop::getCurrentPosition(audium::TimeContextType context) const 
         return currentPositionClocks;
     }
     else if (context == audium::seconds) {
-        return tempoProvider->secondsToClocks(currentPositionClocks);
+        return tempoProvider->clocksToSeconds(currentPositionClocks);
     }
     jassertfalse;
     return 0.0;
@@ -204,10 +209,6 @@ double TransportLoop::getLoopPhaseForPosition(double startPosition,
                                               double duration,
                                               audium::TimeContextType context) const
 {
-    if (context == audium::seconds) {
-        startPosition = tempoProvider->secondsToClocks(startPosition);
-        duration = tempoProvider->secondsToClocks(duration);
-    }
     auto loopRange = getLoopPositionRange(context);
     if (loopRange.getLength() > 0.0) {
         auto durationInLoop = startPosition + duration - loopRange.getStart();

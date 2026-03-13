@@ -55,6 +55,12 @@ public:
         audioBusRenderer->process(context);
     }
 
+    
+    void invokeCommands () noexcept
+    {
+        lockFreeCommander->invoke();
+    }
+    
     /**
     * @brief Sets the number of audio bus channels.
     * @param numChannels The number of channels to set.

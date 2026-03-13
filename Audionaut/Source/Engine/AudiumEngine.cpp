@@ -79,7 +79,7 @@ void AudiumEngine::cleanup()
     currentJson.clear();
 }
 
-void AudiumEngine::createNewProject()
+void AudiumEngine::createNewProject(const int numChannels)
 {
     // reset current project dir
     projectDirectory = File();
@@ -90,8 +90,9 @@ void AudiumEngine::createNewProject()
     for (auto i = 0; i < 1; i++) {
         auto track = audioTrackContainer->createNewAudioTrack("Track " + String(i+1));
         track->setColour(audioTrackContainer->getNewAudioTrackColour());
-        track->addChannel();
-        track->addChannel();
+        for (auto c = 0; c < numChannels; c++) {
+            track->addChannel();
+        }
     }
 }
 

@@ -719,9 +719,6 @@ std::shared_ptr<PlayListItem> AudioTrack::createDefaultPlayListItem(std::shared_
 {
     // create default region
     juce::Range<double> defaultRange(0.0, audioResource->getFileLength(context));
-    if (defaultRange.getLength() <= 0.0) {
-        defaultRange.setLength(0.1);
-    }
     auto region = resourceGroup->getAudioRegionContainer()->createRegion(  audioResource->getFileNameWithoutExtension(),
                                                                     defaultRange,
                                                                     std::dynamic_pointer_cast<AudioTrack>(getSharedPtr()),

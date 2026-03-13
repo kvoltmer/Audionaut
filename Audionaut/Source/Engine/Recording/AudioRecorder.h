@@ -73,6 +73,8 @@ public:
                                              inputChannels,
                                              numSamples);
             
+//            std::cout << "rec " << buffer.getSample(0, 0) << std::endl;
+            
             activeWriter.load()->write (buffer.getArrayOfReadPointers(), numSamples);
             samplesWritten += numSamples;
             

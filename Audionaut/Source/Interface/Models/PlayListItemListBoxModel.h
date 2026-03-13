@@ -71,7 +71,8 @@ public:
                                                  zoomHandler,
                                                  audioTrack->getColour(),
                                                  regionSelector,
-                                                 rowNumber);
+                                                 rowNumber,
+                                                 playListItem);
             component->setPlayListItem(playListItem, volumeControlVisible);
             return component;
             

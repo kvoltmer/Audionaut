@@ -55,27 +55,22 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
     }
     
     if (scheduledStartSample.load() == 0) {
-        auto offset = 0;
-        if (durationTimer.process(info.numSamples, offset)) {
-            // reached end of clip -> schedule stop
-            if (offset > 0) {
-                AudioSourceChannelInfo infoStop1 (info);
-                infoStop1.numSamples = offset;
+        auto samplesUntilStop = 0;
+        if (durationTimer.process(info.numSamples, samplesUntilStop)) {
+            
+            AudioSourceChannelInfo infoStop1 (info);
+            infoStop1.numSamples = samplesUntilStop;
+            if (infoStop1.numSamples > 0)
                 mainSource->getNextAudioBlock(infoStop1);
-                
-                audioTransportSource->stop();
-                
-                AudioSourceChannelInfo infoStop2 (info);
-                infoStop2.startSample = offset;
-                infoStop2.numSamples = info.numSamples - offset;
-                if (infoStop2.numSamples > 0)
-                    mainSource->getNextAudioBlock(infoStop2);
-                
-            }
-            else {
-                audioTransportSource->stop();
-                mainSource->getNextAudioBlock(info);
-            }
+
+            // reached end of clip -> apply stop
+            audioTransportSource->stop(false);
+            
+            AudioSourceChannelInfo infoStop2 (info);
+            infoStop2.startSample = samplesUntilStop;
+            infoStop2.numSamples = info.numSamples - samplesUntilStop;
+            if (infoStop2.numSamples > 0)
+                mainSource->getNextAudioBlock(infoStop2);
             
         }
         else {
@@ -109,17 +104,10 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         if (durationTimer.process(infoPart2.numSamples, offset))
         {
             std::cout << "AudiumTransportSource::getNextAudioBlock -> stop right after start!" << std::endl;
-            audioTransportSource->stop();
+            audioTransportSource->stop(false);
         }
         
     }
-    
-#if CATCH2_TESTS
-    
-//    std::cout << "first sample " << info.buffer->getSample(0, 0) << std::endl;
-    
-    samplesProcessed += info.numSamples;
-#endif
 }
 
 void AudiumTransportSource::applyChannelMapping(bool withChannelOffset)

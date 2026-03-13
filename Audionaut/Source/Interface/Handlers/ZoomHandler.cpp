@@ -5,6 +5,7 @@
 
 #include "ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 ZoomHandler::ZoomHandler(std::shared_ptr<audium::PlayListScheduler> playListScheduler_,
                          std::shared_ptr<SnapToGridHandler> snapToGridHandler_) :
@@ -24,7 +25,7 @@ ZoomHandler::ZoomHandler(std::shared_ptr<audium::PlayListScheduler> playListSche
     // zoom out max = 10 times -> 0.0009765625
     maxZoomOutFactor = std::pow(0.5, 10.0);
         
-    startTimerHz(40);
+    startTimerHz(AudiumLookAndFeel::timerHz);
 }
 
 ZoomHandler::~ZoomHandler()
@@ -197,6 +198,12 @@ bool ZoomHandler::snapToGrid(double &clocks)
 bool ZoomHandler::snapToGrid(juce::Range<double> &clocks)
 {
     return getSnapToGridHandler()->snapToGrid(*this, clocks);
+}
+
+double ZoomHandler::reinterpretSeconds(const double seconds)
+{
+    auto x = static_cast<int>(secondsToX(seconds));
+    return xToSeconds(static_cast<double>(x));
 }
 
 void ZoomHandler::focusViewOnPlayPosition()
