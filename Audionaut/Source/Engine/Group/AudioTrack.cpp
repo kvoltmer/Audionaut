@@ -62,6 +62,8 @@ bool AudioTrack::writeToJson (json& output)
 {
     output["name"] = name;
     output["colour"] = groupColour.toString().toStdString();
+    if (isMinimized)
+        output["minimized"] = isMinimized;
     
     for (auto channel : audioChannelContainer->getObjects())
     {
@@ -162,6 +164,9 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     
     if (input.contains("name"))
         name = input["name"].template get<std::string>();
+    
+    if (input.contains("minimized"))
+        isMinimized = input["minimized"].template get<bool>();
     
     if (input.contains("colour"))
         groupColour = juce::Colour::fromString(input["colour"].template get<std::string>());
