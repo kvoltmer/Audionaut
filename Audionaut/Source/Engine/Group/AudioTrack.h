@@ -190,6 +190,8 @@ public:
     // channel height:
     int getTotalHeight() const;
     void setChannelHeight(int height);
+    bool getMinimized() const { return isMinimized; }
+    void setMinimized(bool minimized) { isMinimized = minimized; }
     
     std::list<std::shared_ptr<PositionableBase>> getPositionableItems() const;
     
@@ -241,6 +243,7 @@ public:
 private:
     std::string name; ///< Name of the audio track.
     juce::Colour groupColour = juce::Colours::pink; ///< Color of the audio track.
+    bool isMinimized = false;
     std::unique_ptr<UndoableContainerAction> undoableContainerAction; ///< Undoable action container.
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)
