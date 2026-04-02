@@ -12,8 +12,10 @@
 
 #if JUCE_WINDOWS
     static String regPath = "HKEY_CURRENT_USER\\Software\\Voltmer-Systems\\";
-#else
+#elif JUCE_MAC
     static String regPath = "com.voltmer-systems.";
+#elif JUCE_LINUX
+    static String regPath = "";
 #endif
 
 String Preferences::s_RegistryName = "";
@@ -25,22 +27,26 @@ String Preferences::getRegPath()
 {
     jassert(s_RegistryName.isNotEmpty()); // call init!
 
-#if JUCE_MAC
-    return String(regPath + s_RegistryName);
-#else
+#if JUCE_WINDOWS
     return String(regPath + s_RegistryName + "\\");
+#elif JUCE_MAC
+    return String(regPath + s_RegistryName);
+#elif JUCE_LINUX
+    return String(regPath + s_RegistryName);
 #endif
 }
 
 String Preferences::getAbsolutePlistPath()
 {
-#if JUCE_MAC
+#if JUCE_WINDOWS
+    return "";
+#elif JUCE_MAC
     String test = "/Users/";
     test += getenv("USER");
     test += "/Library/Preferences/";
     test += getRegPath();
     return test;
-#else
+#elif JUCE_LINUX
     return "";
 #endif
 }
@@ -73,7 +79,7 @@ String Preferences::getValue(const String& key, const String& defaultValue)
 {
 #if JUCE_WINDOWS
 	return WindowsRegistry::getValue(getRegPath() + key, defaultValue);
-#else
+#elif JUCE_MAC
     String theValue = defaultValue;
     
     CFStringRef	keyRef = key.toCFString();
@@ -102,6 +108,9 @@ String Preferences::getValue(const String& key, const String& defaultValue)
     ::CFRelease(prefsHandle);
     
     return theValue;
+    
+#elif JUCE_LINUX
+    return "";
 #endif
 }
 
@@ -109,7 +118,7 @@ bool Preferences::setValue(const String& key, const String& value)
 {
 #if JUCE_WINDOWS
 	return WindowsRegistry::setValue(getRegPath() + key, value);
-#else
+#elif JUCE_MAC
     CFStringRef keyRef		= key.toCFString();
     CFStringRef valueRef	= value.toCFString();
     CFStringRef prefsHandle = getRegPath().toCFString();
@@ -119,6 +128,8 @@ bool Preferences::setValue(const String& key, const String& value)
     ::CFRelease(keyRef);
     
     return true;
+#elif JUCE_LINUX
+    return false;
 #endif
 }
 
@@ -126,7 +137,7 @@ bool Preferences::valueExists(const String& key)
 {
 #if JUCE_WINDOWS
 	return WindowsRegistry::valueExists(getRegPath() + key);
-#else
+#elif JUCE_MAC
     bool result = false;
     CFStringRef prefsHandle = getRegPath().toCFString();
     CFArrayRef keyList = ::CFPreferencesCopyKeyList(prefsHandle, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
@@ -159,6 +170,8 @@ bool Preferences::valueExists(const String& key)
     ::CFRelease(prefsHandle);
 
     return result;
+#elif JUCE_LINUX
+    return false;
 #endif
 }
 
@@ -195,8 +208,8 @@ int Preferences::getIntegerValue(const String& key, const int defaultValue)
 
 	return 0;
 
+#elif JUCE_MAC
     
-#else
     int theValue = defaultValue;
     
     CFStringRef	keyRef = key.toCFString();
@@ -225,6 +238,9 @@ int Preferences::getIntegerValue(const String& key, const int defaultValue)
     ::CFRelease(prefsHandle);
     
     return theValue;
+    
+#elif JUCE_LINUX
+    return 0;
 #endif
     
 }
@@ -233,7 +249,7 @@ bool Preferences::setIntegerValue(const String& key, const uint64_t& value)
 {
 #if JUCE_WINDOWS
     return WindowsRegistry::setValue(getRegPath() + key, (uint32)value);
-#else
+#elif JUCE_MAC
     CFStringRef	keyRef = key.toCFString();
     CFStringRef prefsHandle = getRegPath().toCFString();
     
@@ -244,8 +260,8 @@ bool Preferences::setIntegerValue(const String& key, const uint64_t& value)
     ::CFRelease(keyRef);
     
     return true;
-    
-    
+#elif JUCE_LINUX
+    return false;
 #endif
     
 }
