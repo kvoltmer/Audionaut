@@ -66,7 +66,6 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         initialSaveDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialSaveDirectory));
     
     
-    mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
     
     // try to load project from command line
     if (! commandLine.trim().startsWithChar ('-')) {
@@ -77,6 +76,24 @@ void AudiumApplication::initialise (const juce::String& commandLine)
             openFile (arg.resolveAsFile());
         }
     }
+    
+
+
+    
+    // do further initialisation in a moment when the message loop has started
+    triggerAsyncUpdate();
+}
+
+void AudiumApplication::handleAsyncUpdate()
+{
+    menuModel = std::make_unique<AudiumMenuModel>();
+    
+#if JUCE_MAC
+    rebuildAppleMenu();
+    appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
+#endif
+    mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
+
     
     // try to load default project from prefs
     if (!audiumEngine->getCurrentProjectFile().exists()) {
@@ -91,19 +108,6 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         audiumEngine->createNewProject();
     }
     
-    // do further initialisation in a moment when the message loop has started
-    triggerAsyncUpdate();
-}
-
-void AudiumApplication::handleAsyncUpdate()
-{
-    menuModel = std::make_unique<AudiumMenuModel>();
-    
-#if JUCE_MAC
-    rebuildAppleMenu();
-    appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
-#endif
-    
     updateUI();
     
 }
@@ -111,7 +115,8 @@ void AudiumApplication::handleAsyncUpdate()
 void AudiumApplication::shutdown()
 {
     // Add your application's shutdown code here..
-    
+    mainWindow.reset(); // (deletes our window)
+
     updateSettings();
 
 #if JUCE_MAC
@@ -121,11 +126,8 @@ void AudiumApplication::shutdown()
     menuModel.reset();
     commandManager.reset();
     
-    mainWindow = nullptr; // (deletes our window)
-    
     audiumEngine->uninitialise();
-    audiumEngine = nullptr;
-    
+    audiumEngine.reset();
 }
 
 void AudiumApplication::askToSaveIfDirtyAndInvoke(std::function<void ()> callback)
