@@ -500,6 +500,7 @@ void AudiumApplication::askUserToOpenFile()
         // open chooser...
         
         auto wildcard = "*" + String(audium::AudiumEngine::projectFileExtension) + ";";
+        wildcard += "*.json;";
         wildcard += audiumEngine->getAudioResourceContainer()->getAudioFormatManager()->getWildcardForAllFormats();
         chooser = std::make_unique<FileChooser> ("Open File", initialOpenDirectory, wildcard);
         auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles | FileBrowserComponent::canSelectDirectories;
