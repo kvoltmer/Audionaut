@@ -40,7 +40,7 @@ void AudiumEngine::initialise()
     auto numOutputChannelsNeeded = MAX_AUDIO_CHANNELS;
     String result;
 
-    
+#if !defined(CATCH2_TESTS)
     if (AudiumApplication::getPreferences().valueExists(PreferenceKeys::audioDeviceSettings)) {
         juce::XmlDocument xml (AudiumApplication::getPreferences().getValue(PreferenceKeys::audioDeviceSettings));
         if (auto saveState = xml.getDocumentElement()) {
@@ -52,22 +52,26 @@ void AudiumEngine::initialise()
     }
     else {
         result = audioDeviceManager->initialiseWithDefaultDevices (numInputChannelsNeeded,
-                                                                        numOutputChannelsNeeded);
+                                                                   numOutputChannelsNeeded);
     }
+#else
+    result = audioDeviceManager->initialiseWithDefaultDevices (numInputChannelsNeeded,
+                                                               numOutputChannelsNeeded);
+#endif
     std::cout << result.toStdString() << std::endl;
     audioDeviceManager->addAudioCallback(linkAudioDevice.get());
 }
 
 void AudiumEngine::uninitialise()
 {
-    
+#if !defined(CATCH2_TESTS)
     if (auto stateXml = audioDeviceManager->createStateXml()) {
         AudiumApplication::getPreferences().setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString().toStdString());
     }
+#endif
     
     undoManager->clearUndoHistory();
     audioDeviceManager->removeAudioCallback(linkAudioDevice.get());
-    
 }
 
 void AudiumEngine::cleanup()

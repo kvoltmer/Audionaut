@@ -1,8 +1,4 @@
 
-#if __APPLE__
-#include <CoreFoundation/CoreFoundation.h>
-#endif
-
 #include "Util/Preferences.h"
 
 using namespace juce;
