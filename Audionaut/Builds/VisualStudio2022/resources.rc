@@ -15,7 +15,7 @@ BEGIN
   BEGIN
     BLOCK "040904E4"
     BEGIN
-      VALUE "CompanyName",  "Klaus Voltmer\0"
+      VALUE "CompanyName",  "voltmer-systems\0"
       VALUE "FileDescription",  "Audionaut\0"
       VALUE "FileVersion",  "1.1.1\0"
       VALUE "ProductName",  "Audionaut\0"

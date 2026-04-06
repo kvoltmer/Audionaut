@@ -16,6 +16,7 @@
 #include "Interface/Dialogs/AboutDialog.h"
 #include "Interface/Dialogs/FloatingToolWindow.h"
 
+using namespace audium;
 
 AudiumApplication& AudiumApplication::getApp()
 {
@@ -31,18 +32,18 @@ juce::ApplicationCommandManager& AudiumApplication::getCommandManager()
     return *cm;
 }
 
+audium::Preferences& AudiumApplication::getPreferences()
+{
+    auto* prefs = AudiumApplication::getApp().preferences.get();
+    jassert (prefs != nullptr);
+    return *prefs;
+}
+
 void AudiumApplication::initialise (const juce::String& commandLine)
 {
     LookAndFeel::setDefaultLookAndFeel (&lookAndFeel);
     
-    Preferences::init(getApplicationName());
-    
-    recentFiles.setMaxNumberOfItems(20);
-    if (Preferences::valueExists(PreferenceKeys::recentFiles)) {
-        recentFiles.restoreFromString (Preferences::getValue (PreferenceKeys::recentFiles));
-        recentFiles.removeNonExistentFiles();
-    }
-    
+    initPreferences();
     initCommandManager();
     
     // create audium engine
@@ -59,11 +60,11 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     }
         
     
-    if (Preferences::valueExists(PreferenceKeys::initialOpenDirectory))
-        initialOpenDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialOpenDirectory));
+    if (getPreferences().valueExists(PreferenceKeys::initialOpenDirectory))
+        initialOpenDirectory = juce::File(getPreferences().getValue(PreferenceKeys::initialOpenDirectory));
     
-    if (Preferences::valueExists(PreferenceKeys::initialSaveDirectory))
-        initialSaveDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialSaveDirectory));
+    if (getPreferences().valueExists(PreferenceKeys::initialSaveDirectory))
+        initialSaveDirectory = juce::File(getPreferences().getValue(PreferenceKeys::initialSaveDirectory));
     
     
     
@@ -97,9 +98,9 @@ void AudiumApplication::handleAsyncUpdate()
     
     // try to load default project from prefs
     if (!audiumEngine->getCurrentProjectFile().exists()) {
-        if (Preferences::valueExists(PreferenceKeys::defaultFile)) {
-            const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
-            openFile(juce::File(Preferences::getValue(PreferenceKeys::defaultFile)));
+        if (getPreferences().valueExists(PreferenceKeys::defaultFile)) {
+            const auto file = juce::File(getPreferences().getValue(PreferenceKeys::defaultFile));
+            openFile(juce::File(getPreferences().getValue(PreferenceKeys::defaultFile)));
         }
     }
 
@@ -204,6 +205,19 @@ void AudiumApplication::initCommandManager()
 {
     commandManager.reset (new ApplicationCommandManager());
     commandManager->registerAllCommandsForTarget (this);
+}
+
+void AudiumApplication::initPreferences()
+{
+    preferences = std::make_unique<Preferences>();
+    getPreferences().init(getApplicationName().toStdString(),
+                          getApplicationCompanyName().toStdString());
+    
+    recentFiles.setMaxNumberOfItems(30);
+    if (getPreferences().valueExists(PreferenceKeys::recentFiles)) {
+        recentFiles.restoreFromString (getPreferences().getValue (PreferenceKeys::recentFiles));
+        recentFiles.removeNonExistentFiles();
+    }
 }
 
 MenuBarModel* AudiumApplication::getMenuModel()
@@ -437,10 +451,10 @@ bool AudiumApplication::perform (const InvocationInfo& info)
                     projectFile = projectFile.getParentDirectory();
                 }
                 jassert(audium::AudiumEngine::isValidProjectStructure(projectFile));
-                Preferences::setValue(PreferenceKeys::defaultFile, projectFile.getFullPathName());
+                getPreferences().setValue(PreferenceKeys::defaultFile, projectFile.getFullPathName().toStdString());
             }
             else {
-                Preferences::removeKey(PreferenceKeys::defaultFile);
+                getPreferences().removeKey(PreferenceKeys::defaultFile);
             }
             break;
         case CommandIDs::saveProject:
@@ -672,8 +686,8 @@ void AudiumApplication::clearRecentFiles()
 
 void AudiumApplication::updateSettings()
 {
-    Preferences::setValue(PreferenceKeys::initialOpenDirectory, initialOpenDirectory.getFullPathName());
-    Preferences::setValue(PreferenceKeys::initialSaveDirectory, initialSaveDirectory.getFullPathName());
-    Preferences::setValue(PreferenceKeys::recentFiles, recentFiles.toString());
-    Preferences::synchronize();
+    getPreferences().setValue(PreferenceKeys::initialOpenDirectory, initialOpenDirectory.getFullPathName().toStdString());
+    getPreferences().setValue(PreferenceKeys::initialSaveDirectory, initialSaveDirectory.getFullPathName().toStdString());
+    getPreferences().setValue(PreferenceKeys::recentFiles, recentFiles.toString().toStdString());
+    getPreferences().synchronize();
 }

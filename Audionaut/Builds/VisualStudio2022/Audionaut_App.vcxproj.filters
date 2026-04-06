@@ -8,6 +8,9 @@
     <Filter Include="Audionaut\Source\Application">
       <UniqueIdentifier>{B153C1B2-9FF0-A3A4-E312-B0ED155AD336}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Util\native">
+      <UniqueIdentifier>{71BAFF86-C3AF-8630-E411-C1C268F206DB}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Util">
       <UniqueIdentifier>{B3F23B26-C34C-91E9-7425-79EA9F14D0BA}</UniqueIdentifier>
     </Filter>
@@ -825,6 +828,15 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Application\Main.cpp">
       <Filter>Audionaut\Source\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Util\native\PreferencesLinux.cpp">
+      <Filter>Audionaut\Source\Util\native</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Util\native\PreferencesMacOS.cpp">
+      <Filter>Audionaut\Source\Util\native</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Util\native\PreferencesWindows.cpp">
+      <Filter>Audionaut\Source\Util\native</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Util\EngineAccess.cpp">
       <Filter>Audionaut\Source\Util</Filter>
