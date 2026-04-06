@@ -321,17 +321,6 @@ int AudiumEngine::getSizeInUnits()
     return audioTrackContainer->getSizeInUnits() + 1;
 }
 
-void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> track)
-{
-    jassertfalse;
-    //    if (audioRegionContainer->getNumRegions(track.get()) == 0)
-    //    {
-    //        auto region = audioRegionContainer->createDefaultRegion(track);
-    //        track->getPlayListContainer()->createPlayListItem(region);
-    //    }
-}
-
-
 void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
 {
     // first bounce the mix

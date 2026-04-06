@@ -41,7 +41,6 @@
 //    auto inFile = File(testFilesDirectory + "silence-fade.aiff");
 //    auto audioresource = engine->getAudioResourceContainer()->addAudioResource(juce::URL(inFile));
 //
-//    engine->createDefaultRegionAndPlayList();
 //
 //    auto waveFormComponent = std::shared_ptr<WaveFormComponent>(new WaveFormComponent(audioresource, engine->getPlayListContainer(), zoomHandler));
 //    waveFormComponent->setSize (1200, 400);
