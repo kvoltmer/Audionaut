@@ -3,6 +3,10 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#if __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #include <JuceHeader.h>
 
 #if JUCE_WINDOWS
