@@ -3,8 +3,8 @@
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
               bundleIdentifier="com.voltmer-systems.audionaut" version="1.1.1"
-              companyName="Klaus Voltmer" companyWebsite="audionaut.app" cppLanguageStandard="20"
-              defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0">
+              companyName="voltmer-systems" companyWebsite="audionaut.app"
+              cppLanguageStandard="20" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0">
   <MAINGROUP id="HQG80L" name="Audionaut">
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
       <FILE id="pY6hrq" name="README.txt" compile="0" resource="0" file="Catch2Tests/README.txt"/>
@@ -29,6 +29,14 @@
         <FILE id="aJEqT2" name="Main.cpp" compile="1" resource="0" file="Source/Application/Main.cpp"/>
       </GROUP>
       <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
+        <GROUP id="{E06E4F23-6CE8-7605-2078-9846BE4FC6DD}" name="native">
+          <FILE id="kPlD8D" name="PreferencesLinux.cpp" compile="0" resource="0"
+                file="Source/Util/native/PreferencesLinux.cpp"/>
+          <FILE id="rSkCFG" name="PreferencesMacOS.cpp" compile="0" resource="0"
+                file="Source/Util/native/PreferencesMacOS.cpp"/>
+          <FILE id="Dfo9Ps" name="PreferencesWindows.cpp" compile="0" resource="0"
+                file="Source/Util/native/PreferencesWindows.cpp"/>
+        </GROUP>
         <FILE id="DdTX0t" name="EngineAccess.cpp" compile="1" resource="0"
               file="Source/Util/EngineAccess.cpp"/>
         <FILE id="ynCVR0" name="EngineAccess.h" compile="0" resource="0" file="Source/Util/EngineAccess.h"/>

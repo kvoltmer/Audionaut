@@ -15,6 +15,7 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Export/AudioExportThread.h"
 #include "Playback/PlaybackDefines.h"
+#include "Application/AudiumApplication.h"
 
 #include "Interface/ColourIds.h"
 
@@ -40,8 +41,8 @@ void AudiumEngine::initialise()
     String result;
 
     
-    if (Preferences::valueExists(PreferenceKeys::audioDeviceSettings)) {
-        juce::XmlDocument xml (Preferences::getValue(PreferenceKeys::audioDeviceSettings));
+    if (AudiumApplication::getPreferences().valueExists(PreferenceKeys::audioDeviceSettings)) {
+        juce::XmlDocument xml (AudiumApplication::getPreferences().getValue(PreferenceKeys::audioDeviceSettings));
         if (auto saveState = xml.getDocumentElement()) {
             result = audioDeviceManager->initialise(numInputChannelsNeeded,
                                                     numOutputChannelsNeeded,
@@ -61,7 +62,7 @@ void AudiumEngine::uninitialise()
 {
     
     if (auto stateXml = audioDeviceManager->createStateXml()) {
-        Preferences::setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString());
+        AudiumApplication::getPreferences().setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString().toStdString());
     }
     
     undoManager->clearUndoHistory();

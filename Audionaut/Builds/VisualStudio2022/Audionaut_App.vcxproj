@@ -150,6 +150,15 @@
     <ClCompile Include="..\..\Source\Application\AudiumApplication.cpp"/>
     <ClCompile Include="..\..\Source\Application\AudiumMainWindow.cpp"/>
     <ClCompile Include="..\..\Source\Application\Main.cpp"/>
+    <ClCompile Include="..\..\Source\Util\native\PreferencesLinux.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Util\native\PreferencesMacOS.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Util\native\PreferencesWindows.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Util\EngineAccess.cpp"/>
     <ClCompile Include="..\..\Source\Util\Preferences.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp"/>

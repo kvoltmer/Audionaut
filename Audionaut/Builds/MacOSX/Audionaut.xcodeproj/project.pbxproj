@@ -128,6 +128,7 @@
 		03DF3A11364360FFACBE47A6 /* PlayListComponent.h */ /* PlayListComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListComponent.h; path = ../../Source/Interface/Components/RightPanel/PlayListComponent.h; sourceTree = SOURCE_ROOT; };
 		05B46617E562A6E50F8D63E8 /* ZoomHandler.h */ /* ZoomHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ZoomHandler.h; path = ../../Source/Interface/Handlers/ZoomHandler.h; sourceTree = SOURCE_ROOT; };
 		068707BEEF91E3C5815141F9 /* AudioResourceFactory.h */ /* AudioResourceFactory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResourceFactory.h; path = ../../Source/Engine/Factory/AudioResourceFactory.h; sourceTree = SOURCE_ROOT; };
+		0779160CB57EE785F95B027E /* PreferencesMacOS.cpp */ /* PreferencesMacOS.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PreferencesMacOS.cpp; path = ../../Source/Util/native/PreferencesMacOS.cpp; sourceTree = SOURCE_ROOT; };
 		0850DA0A9D93EDCFB3AEF06D /* AudioRegionAdapter.cpp */ /* AudioRegionAdapter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegionAdapter.cpp; path = ../../Source/Engine/Group/AudioRegionAdapter.cpp; sourceTree = SOURCE_ROOT; };
 		08733DF44C724B9C6381E13C /* AudioTrackListBoxModel.cpp */ /* AudioTrackListBoxModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrackListBoxModel.cpp; path = ../../Source/Interface/Models/AudioTrackListBoxModel.cpp; sourceTree = SOURCE_ROOT; };
 		08A77E4418EC3F878A5A06B4 /* AudioTrackBaseComponent.cpp */ /* AudioTrackBaseComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrackBaseComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/AudioTrackBaseComponent.cpp; sourceTree = SOURCE_ROOT; };
@@ -322,6 +323,7 @@
 		BC325BA600975DA123084DA3 /* AudioToolbox.framework */ /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		BC912F2C45ABACEAA30761C1 /* RegionSelector.cpp */ /* RegionSelector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionSelector.cpp; path = ../../Source/Interface/Controls/RegionSelector.cpp; sourceTree = SOURCE_ROOT; };
 		BCC2B6A9AAC816A403A24E63 /* RightPanelComponent.cpp */ /* RightPanelComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RightPanelComponent.cpp; path = ../../Source/Interface/Components/RightPanel/RightPanelComponent.cpp; sourceTree = SOURCE_ROOT; };
+		BCCBD1CD4486F54716542D65 /* PreferencesLinux.cpp */ /* PreferencesLinux.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PreferencesLinux.cpp; path = ../../Source/Util/native/PreferencesLinux.cpp; sourceTree = SOURCE_ROOT; };
 		BD120C92EBF0312BF1D4DBB1 /* QuartzCore.framework */ /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		BD317E4F3A130A3FD8EDC934 /* RegionLabel.h */ /* RegionLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionLabel.h; path = ../../Source/Interface/Controls/RegionLabel.h; sourceTree = SOURCE_ROOT; };
 		BDC989EF8839976F75651BC9 /* PositionableBase.h */ /* PositionableBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PositionableBase.h; path = ../../Source/Engine/PlayList/PositionableBase.h; sourceTree = SOURCE_ROOT; };
@@ -363,6 +365,7 @@
 		E138ACDCC3A702D0B7A742EF /* include_juce_dsp.mm */ /* include_juce_dsp.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_dsp.mm; path = ../../JuceLibraryCode/include_juce_dsp.mm; sourceTree = SOURCE_ROOT; };
 		E23433D3E1A5019D20FA91F2 /* FadeInOutControl.h */ /* FadeInOutControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FadeInOutControl.h; path = ../../Source/Interface/Controls/FadeInOutControl.h; sourceTree = SOURCE_ROOT; };
 		E460A10ACA07926504BD4E72 /* ChannelComponent.cpp */ /* ChannelComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ChannelComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.cpp; sourceTree = SOURCE_ROOT; };
+		E5E3A9D6D02E7746C3B11F10 /* PreferencesWindows.cpp */ /* PreferencesWindows.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PreferencesWindows.cpp; path = ../../Source/Util/native/PreferencesWindows.cpp; sourceTree = SOURCE_ROOT; };
 		E7074F66C3DD69F43FBB467D /* AutoEditComponent.cpp */ /* AutoEditComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AutoEditComponent.cpp; path = ../../Source/Interface/Dialogs/AutoEditComponent.cpp; sourceTree = SOURCE_ROOT; };
 		E7D40ECC830522FB5F052F11 /* audium_AudioThumbnail.h */ /* audium_AudioThumbnail.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = audium_AudioThumbnail.h; path = ../../Source/Interface/Widgets/audium_AudioThumbnail.h; sourceTree = SOURCE_ROOT; };
 		E7DCC773606E61410D6A0216 /* SelectionContext.h */ /* SelectionContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SelectionContext.h; path = ../../Source/Engine/Selection/SelectionContext.h; sourceTree = SOURCE_ROOT; };
@@ -554,6 +557,7 @@
 		2CB8BE86332BBED53E17042A /* Util */ = {
 			isa = PBXGroup;
 			children = (
+				B680B6A90BDAFB5030E65897,
 				15B08AD17A4543A6F9323602,
 				84484F21C03C97F770F1A3FE,
 				352338A322365BD5C3C74D37,
@@ -882,6 +886,16 @@
 			name = Resources;
 			sourceTree = "<group>";
 		};
+		B680B6A90BDAFB5030E65897 /* native */ = {
+			isa = PBXGroup;
+			children = (
+				BCCBD1CD4486F54716542D65,
+				0779160CB57EE785F95B027E,
+				E5E3A9D6D02E7746C3B11F10,
+			);
+			name = native;
+			sourceTree = "<group>";
+		};
 		BC2B67D0D7A6BD59EDC47E2D /* DragAndDrop */ = {
 			isa = PBXGroup;
 			children = (
@@ -1061,7 +1075,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1340;
-				ORGANIZATIONNAME = "Klaus Voltmer";
+				ORGANIZATIONNAME = "voltmer-systems";
 				TargetAttributes = {
 					160C71CC35ECD0DE4AD0BCA8 = {
 						DevelopmentTeam = Q89CZBX79G;
