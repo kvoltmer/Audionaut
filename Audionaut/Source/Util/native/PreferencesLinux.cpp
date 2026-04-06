@@ -27,9 +27,6 @@ Preferences::~Preferences() = default;
 
 void Preferences::init(const std::string& product, const std::string& manufacture)
 {
-    registryProduct = product;
-    registryManufacture = manufacture;
-
     PropertiesFile::Options options;
     options.applicationName     = product;
     options.filenameSuffix      = "settings";
