@@ -79,7 +79,8 @@ private:
             dir = AudiumApplication::getApp().initialSaveDirectory;
         #endif
             safeThis->chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
-            audium::ExportUtil::exportAudio(safeThis->chooser, audiumEngine, safeThis->config);
+            auto exportThread = std::make_shared<audium::AudioExportThread>(*audiumEngine.get(), config);
+            audium::ExportUtil::exportAudio(safeThis->chooser, audiumEngine, safeThis->config, exportThread);
 
 
         };
