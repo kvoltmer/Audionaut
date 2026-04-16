@@ -472,20 +472,20 @@
                        customXcodeFlags="INSTALL_PATH=/Applications"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
-        <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_events" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_core" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_data_structures" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_devices" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_basics" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_formats" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_dsp" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_utils" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_analytics" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <LINUX_MAKE targetFolder="Builds/LinuxMakefile" smallIcon="qhU3Rr" bigIcon="gdiYPG"
@@ -518,20 +518,20 @@
         <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source" targetName="Audionaut"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
-        <MODULEPATH id="juce_analytics" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_basics" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_devices" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_formats" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_processors" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_utils" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_core" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_data_structures" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_dsp" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_events" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_graphics" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_gui_basics" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_gui_extra" path="../Submodules/juce/modules"/>
-        <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/juce/modules"/>
+        <MODULEPATH id="juce_analytics" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>
