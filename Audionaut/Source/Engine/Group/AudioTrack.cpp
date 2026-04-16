@@ -291,52 +291,52 @@ int AudioTrack::getTotalHeight() const
 }
 
 void AudioTrack::setGain(float gain, int channelNumber) {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         channel->setGain(gain);
     }
 }
 
 float AudioTrack::getGain(int channelNumber) const {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         return channel->getGain();
     }
     return 0.0;
 }
 
 void AudioTrack::setPan(float pan, int channelNumber) {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         channel->setPan(pan);
     }
 }
 
 float AudioTrack::getPan(int channelNumber) const {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         return channel->getPan();
     }
     return 0.0;
 }
 
 void AudioTrack::setMute(bool bMute, int channelNumber) {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         channel->setMute(bMute);
     }
 }
 
 bool AudioTrack::getMute(int channelNumber) const {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         return channel->getMute();
     }
     return 0.0;
 }
 
 void AudioTrack::setSolo(bool bSolo, int channelNumber) {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         channel->setSolo(bSolo);
     }
 }
 
 bool AudioTrack::getSolo(int channelNumber) const {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         return channel->getSolo();
     }
     return 0.0;
@@ -344,7 +344,7 @@ bool AudioTrack::getSolo(int channelNumber) const {
 
 void AudioTrack::setChannelData(const int channelNumber, const AudioChannelData data)
 {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         channel->data = data;
         channel->commitChannelData();
     }
@@ -352,7 +352,7 @@ void AudioTrack::setChannelData(const int channelNumber, const AudioChannelData 
 
 const AudioChannelData AudioTrack::getChannelData(const int channelNumber) const
 {
-    if (auto channel = audioChannelContainer->objects[channelNumber]) {
+    if (auto channel = audioChannelContainer->getObject(channelNumber)) {
         return channel->data;
     }
     return AudioChannelData();
@@ -361,7 +361,7 @@ const AudioChannelData AudioTrack::getChannelData(const int channelNumber) const
 void AudioTrack::setRecordEnabled(const int channelNumber, bool bEnabled)
 {
     if (channelNumber >= 0) {
-        if (auto channel = audioChannelContainer->objects[channelNumber]) {
+        if (auto channel = audioChannelContainer->getObject(channelNumber)) {
             channel->setRecordEnabled(bEnabled);
         }
     }
@@ -376,7 +376,7 @@ void AudioTrack::setRecordEnabled(const int channelNumber, bool bEnabled)
 bool AudioTrack::isRecordEnabled(const int channelNumber)
 {
     if (channelNumber > 0 && channelNumber < audioChannelContainer->objects.size()) {
-        return audioChannelContainer->objects[channelNumber]->isRecordEnabled();
+        return audioChannelContainer->getObject(channelNumber)->isRecordEnabled();
     }
     else {
         for (auto chan : audioChannelContainer->objects) {
@@ -391,7 +391,7 @@ bool AudioTrack::isRecordEnabled(const int channelNumber)
 bool AudioTrack::isRecording(const int channelNumber) const
 {
     if (channelNumber > 0 && channelNumber < audioChannelContainer->objects.size()) {
-        return audioChannelContainer->objects[channelNumber]->isRecording();
+        return audioChannelContainer->getObject(channelNumber)->isRecording();
     }
     else {
         for (auto chan : audioChannelContainer->objects) {
