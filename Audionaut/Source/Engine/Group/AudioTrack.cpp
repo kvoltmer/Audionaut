@@ -256,17 +256,22 @@ void AudioTrack::ensureNumChannels(int channelsNeeded)
 {
     while (getNumAudioTrackChannels() < channelsNeeded)
     {
-        addChannel();
+        if (addChannel() == nullptr)
+            break;
     }
 }
 
 std::shared_ptr<AudioChannel> AudioTrack::addChannel()
 {
-    auto channel = std::make_shared<AudioChannel>(*this,
-                                                  selectionManager,
-                                                  getAudioTrackContainer().audioBusInterface);
-    audioChannelContainer->push_back(channel);
-    return channel;
+    if (getAudioTrackContainer().getNumAudioTrackChannels() < MAX_AUDIO_CHANNELS) {
+        auto channel = std::make_shared<AudioChannel>(*this,
+                                                      selectionManager,
+                                                      getAudioTrackContainer().audioBusInterface);
+        audioChannelContainer->push_back(channel);
+        return channel;
+    }
+    std::cout << "error: max audio channels reached: " << getAudioTrackContainer().getNumAudioTrackChannels() << std::endl;
+    return nullptr;
 }
 
 std::shared_ptr<AudioChannel> AudioTrack::getChannel(int channelNumber) const

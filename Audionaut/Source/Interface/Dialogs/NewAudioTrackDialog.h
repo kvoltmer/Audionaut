@@ -98,6 +98,13 @@ private:
         auto track = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(name);
         track->setColour(audiumEngine->getAudioTrackContainer()->getNewAudioTrackColour());
         track->ensureNumChannels(numChannels);
+        auto numTotalChannels = audiumEngine->getAudioTrackContainer()->getNumAudioTrackChannels();
+        if (numTotalChannels >= MAX_AUDIO_CHANNELS) {
+            juce::String message = "Maximum number of ";
+            message += juce::String(numTotalChannels);
+            message += " audio channels reached.";
+            juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "Error", message);
+        }
         
         action->storeNewState();
         auto undoManager = audiumEngine->getAudioTrackContainer()->getUndoManager();
