@@ -85,7 +85,7 @@ void AudioExportThread::bounce()
                     auto opt = AudioFormatWriter::Options{}.withSampleRate (config->sampleRate)
                                                             .withNumChannels (1)
                                                             .withBitsPerSample (config->bitDepth);
-                    auto writer = wav.createWriterFor (outStream, opt);
+                    auto writer = wav.createWriterFor (out, opt);
                     
                     if (writer != nullptr) {
                         AudioBuffer<float> monoBuf(1, buf.getNumSamples());
