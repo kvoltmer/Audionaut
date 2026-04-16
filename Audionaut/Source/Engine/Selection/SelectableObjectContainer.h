@@ -73,6 +73,19 @@ public:
         });
         return it != objects.end();
     }
+    
+    /**
+     * @brief get an object by index
+     * @param
+     * @return maybe nullptr
+     */
+    std::shared_ptr<ElementType> getObject(size_t index) const {
+        if (index >= 0 &&
+            index < size()) {
+            return objects[index];
+        }
+        return nullptr;
+    }
 
     /**
      * @brief Checks if an object exists at a specific index.
