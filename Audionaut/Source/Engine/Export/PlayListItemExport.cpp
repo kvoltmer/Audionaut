@@ -9,7 +9,7 @@
 */
 
 #include "Engine/Export/PlayListItemExport.h"
-#include "Engine/Export/AudioExportThread.h"
+
 #include "Application/AudiumApplication.h"
 #include "Engine/Export/ExportUtil.h"
 #include "Engine/Group/AudioTrack.h"
@@ -33,6 +33,8 @@ bool PlayListItemExport::exportItem()
     
     // use the maximum bit depth
     config->bitDepth = audioRegion->getResourcesMaxBitDepth();
+    
+    exportThread = std::make_shared<audium::AudioExportThread>(*audiumEngine.get(), config);
 
     if (useFileChooser) {
         
@@ -44,15 +46,18 @@ bool PlayListItemExport::exportItem()
 #endif
         juce::File dir(defaultFileName);
         chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
-        return ExportUtil::exportAudio(chooser, audiumEngine, config);
+        return ExportUtil::exportAudio(chooser,
+                                       audiumEngine,
+                                       config,
+                                       exportThread);
     }
     else {
         config->fileName = File(AudiumEngine::tempDirectory.getFullPathName() + File::getSeparatorString() + audioRegion->getName() + ".wav");
         // create the thread
-        auto thread = std::make_unique<audium::AudioExportThread>(*audiumEngine.get(), config);
+        
         
         // start the thread
-        if (thread->runThread()) {
+        if (exportThread->runThread()) {
             // thread finished normally..
             return true;
         }

@@ -17,6 +17,8 @@
 #include "Interface/Dialogs/ExportAudioDialog.h"
 #include "Interface/Dialogs/NewAudioTrackDialog.h"
 
+using namespace audium;
+
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::AudiumEngine> audiumEngine)
     : DocumentWindow (name,
                       juce::Desktop::getInstance().getDefaultLookAndFeel()
@@ -57,8 +59,8 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::A
     setResizable (true, true);
     
     String windowState;
-    if (Preferences::valueExists (PreferenceKeys::mainWindowState))
-        windowState = Preferences::getValue (PreferenceKeys::mainWindowState);
+    if (AudiumApplication::getPreferences().valueExists (PreferenceKeys::mainWindowState))
+        windowState = AudiumApplication::getPreferences().getValue (PreferenceKeys::mainWindowState);
 
     if (windowState.isNotEmpty()) {
         restoreWindowStateFromString (windowState);
@@ -74,7 +76,7 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::A
 
 AudiumMainWindow::~AudiumMainWindow()
 {
-    Preferences::setValue (PreferenceKeys::mainWindowState, getWindowStateAsString());
+    AudiumApplication::getPreferences().setValue (PreferenceKeys::mainWindowState, getWindowStateAsString().toStdString());
 #if ! JUCE_MAC
     setMenuBar (nullptr);
 #endif

@@ -14,6 +14,7 @@
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/Export/AudioExportThread.h"
 
 namespace audium {
 
@@ -37,6 +38,7 @@ private:
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<PlayListItem> playListItem;
     std::shared_ptr<juce::FileChooser> chooser;
+    std::shared_ptr<audium::AudioExportThread> exportThread;
     bool useFileChooser;
     
 public:

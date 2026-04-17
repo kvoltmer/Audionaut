@@ -16,6 +16,7 @@
 #include "Interface/Dialogs/AboutDialog.h"
 #include "Interface/Dialogs/FloatingToolWindow.h"
 
+using namespace audium;
 
 AudiumApplication& AudiumApplication::getApp()
 {
@@ -31,18 +32,18 @@ juce::ApplicationCommandManager& AudiumApplication::getCommandManager()
     return *cm;
 }
 
+audium::Preferences& AudiumApplication::getPreferences()
+{
+    auto* prefs = AudiumApplication::getApp().preferences.get();
+    jassert (prefs != nullptr);
+    return *prefs;
+}
+
 void AudiumApplication::initialise (const juce::String& commandLine)
 {
     LookAndFeel::setDefaultLookAndFeel (&lookAndFeel);
     
-    Preferences::init(getApplicationName());
-    
-    recentFiles.setMaxNumberOfItems(20);
-    if (Preferences::valueExists(PreferenceKeys::recentFiles)) {
-        recentFiles.restoreFromString (Preferences::getValue (PreferenceKeys::recentFiles));
-        recentFiles.removeNonExistentFiles();
-    }
-    
+    initPreferences();
     initCommandManager();
     
     // create audium engine
@@ -59,14 +60,13 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     }
         
     
-    if (Preferences::valueExists(PreferenceKeys::initialOpenDirectory))
-        initialOpenDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialOpenDirectory));
+    if (getPreferences().valueExists(PreferenceKeys::initialOpenDirectory))
+        initialOpenDirectory = juce::File(getPreferences().getValue(PreferenceKeys::initialOpenDirectory));
     
-    if (Preferences::valueExists(PreferenceKeys::initialSaveDirectory))
-        initialSaveDirectory = juce::File(Preferences::getValue(PreferenceKeys::initialSaveDirectory));
+    if (getPreferences().valueExists(PreferenceKeys::initialSaveDirectory))
+        initialSaveDirectory = juce::File(getPreferences().getValue(PreferenceKeys::initialSaveDirectory));
     
     
-    mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
     
     // try to load project from command line
     if (! commandLine.trim().startsWithChar ('-')) {
@@ -78,18 +78,8 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         }
     }
     
-    // try to load default project from prefs
-    if (!audiumEngine->getCurrentProjectFile().exists()) {
-        if (Preferences::valueExists(PreferenceKeys::defaultFile)) {
-            const auto file = juce::File(Preferences::getValue(PreferenceKeys::defaultFile));
-            openFile(juce::File(Preferences::getValue(PreferenceKeys::defaultFile)));
-        }
-    }
 
-    // still nothing loaded? -> create new project
-    if (!audiumEngine->getCurrentProjectFile().exists()) {
-        audiumEngine->createNewProject();
-    }
+
     
     // do further initialisation in a moment when the message loop has started
     triggerAsyncUpdate();
@@ -103,6 +93,21 @@ void AudiumApplication::handleAsyncUpdate()
     rebuildAppleMenu();
     appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
 #endif
+    mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
+
+    
+    // try to load default project from prefs
+    if (!audiumEngine->getCurrentProjectFile().exists()) {
+        if (getPreferences().valueExists(PreferenceKeys::defaultFile)) {
+            const auto file = juce::File(getPreferences().getValue(PreferenceKeys::defaultFile));
+            openFile(juce::File(getPreferences().getValue(PreferenceKeys::defaultFile)));
+        }
+    }
+
+    // still nothing loaded? -> create new project
+    if (!audiumEngine->getCurrentProjectFile().exists()) {
+        audiumEngine->createNewProject();
+    }
     
     updateUI();
     
@@ -111,7 +116,8 @@ void AudiumApplication::handleAsyncUpdate()
 void AudiumApplication::shutdown()
 {
     // Add your application's shutdown code here..
-    
+    mainWindow.reset(); // (deletes our window)
+
     updateSettings();
 
 #if JUCE_MAC
@@ -121,11 +127,8 @@ void AudiumApplication::shutdown()
     menuModel.reset();
     commandManager.reset();
     
-    mainWindow = nullptr; // (deletes our window)
-    
     audiumEngine->uninitialise();
-    audiumEngine = nullptr;
-    
+    audiumEngine.reset();
 }
 
 void AudiumApplication::askToSaveIfDirtyAndInvoke(std::function<void ()> callback)
@@ -202,6 +205,19 @@ void AudiumApplication::initCommandManager()
 {
     commandManager.reset (new ApplicationCommandManager());
     commandManager->registerAllCommandsForTarget (this);
+}
+
+void AudiumApplication::initPreferences()
+{
+    preferences = std::make_unique<Preferences>();
+    getPreferences().init(getApplicationName().toStdString(),
+                          getApplicationCompanyName().toStdString());
+    
+    recentFiles.setMaxNumberOfItems(30);
+    if (getPreferences().valueExists(PreferenceKeys::recentFiles)) {
+        recentFiles.restoreFromString (getPreferences().getValue (PreferenceKeys::recentFiles));
+        recentFiles.removeNonExistentFiles();
+    }
 }
 
 MenuBarModel* AudiumApplication::getMenuModel()
@@ -435,10 +451,10 @@ bool AudiumApplication::perform (const InvocationInfo& info)
                     projectFile = projectFile.getParentDirectory();
                 }
                 jassert(audium::AudiumEngine::isValidProjectStructure(projectFile));
-                Preferences::setValue(PreferenceKeys::defaultFile, projectFile.getFullPathName());
+                getPreferences().setValue(PreferenceKeys::defaultFile, projectFile.getFullPathName().toStdString());
             }
             else {
-                Preferences::removeKey(PreferenceKeys::defaultFile);
+                getPreferences().removeKey(PreferenceKeys::defaultFile);
             }
             break;
         case CommandIDs::saveProject:
@@ -498,6 +514,7 @@ void AudiumApplication::askUserToOpenFile()
         // open chooser...
         
         auto wildcard = "*" + String(audium::AudiumEngine::projectFileExtension) + ";";
+        wildcard += "*.json;";
         wildcard += audiumEngine->getAudioResourceContainer()->getAudioFormatManager()->getWildcardForAllFormats();
         chooser = std::make_unique<FileChooser> ("Open File", initialOpenDirectory, wildcard);
         auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles | FileBrowserComponent::canSelectDirectories;
@@ -669,8 +686,8 @@ void AudiumApplication::clearRecentFiles()
 
 void AudiumApplication::updateSettings()
 {
-    Preferences::setValue(PreferenceKeys::initialOpenDirectory, initialOpenDirectory.getFullPathName());
-    Preferences::setValue(PreferenceKeys::initialSaveDirectory, initialSaveDirectory.getFullPathName());
-    Preferences::setValue(PreferenceKeys::recentFiles, recentFiles.toString());
-    Preferences::synchronize();
+    getPreferences().setValue(PreferenceKeys::initialOpenDirectory, initialOpenDirectory.getFullPathName().toStdString());
+    getPreferences().setValue(PreferenceKeys::initialSaveDirectory, initialSaveDirectory.getFullPathName().toStdString());
+    getPreferences().setValue(PreferenceKeys::recentFiles, recentFiles.toString().toStdString());
+    getPreferences().synchronize();
 }

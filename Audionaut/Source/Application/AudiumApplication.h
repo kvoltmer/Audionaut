@@ -11,10 +11,9 @@
 #include "AudiumMenuModel.h"
 #include "Application/AudiumCommandIDs.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Util/Preferences.h"
 
 class SettingsDialog;
-class AudiumFactory;
-class Preferences;
 
 class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
 {
@@ -23,9 +22,11 @@ public:
     
     static AudiumApplication& getApp();
     static juce::ApplicationCommandManager& getCommandManager();
+    static audium::Preferences& getPreferences();
 
     const juce::String getApplicationName() override       { return ProjectInfo::projectName; }
     const juce::String getApplicationVersion() override    { return ProjectInfo::versionString; }
+    const juce::String getApplicationCompanyName()         { return ProjectInfo::companyName; }
     bool moreThanOneInstanceAllowed() override             { return true; }
 
     void initialise (const juce::String& commandLine) override;
@@ -75,6 +76,7 @@ private:
     std::unique_ptr<AudiumMainWindow> mainWindow;
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
+    std::unique_ptr<audium::Preferences> preferences;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
     std::unique_ptr<juce::Component> aboutWindow;
@@ -83,6 +85,7 @@ private:
     juce::RecentlyOpenedFilesList recentFiles;
     
     void initCommandManager();
+    void initPreferences();
     void handleAsyncUpdate() override;
     
     void showAboutWindow();

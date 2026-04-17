@@ -58,6 +58,11 @@ public:
         return playListItem->getRegion()->getName();
     }
     
+    const juce::Colour getLabelColour() const override
+    {
+        return playListItem->getRegion()->getAudioTrack()->getColour();
+    }
+    
     bool validateData() override;
     
     void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_) { playListItem = playListItem_; }

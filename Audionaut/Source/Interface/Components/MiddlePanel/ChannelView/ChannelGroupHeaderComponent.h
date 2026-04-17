@@ -14,9 +14,10 @@
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Controls/AudiumLabel.h"
 
+#include "Application/AudiumCommandIDs.h"
+
 class ChannelGroupHeaderComponent : public juce::Component,
                                     public juce::Label::Listener,
-                                    public juce::ComboBox::Listener,
                                     public juce::KeyListener,
                                     public juce::DragAndDropTarget
 {
@@ -36,28 +37,56 @@ public:
         audioTrackNameLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
         audioTrackNameLabel->setColour (juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack);
         audioTrackNameLabel->setColour (juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
-        
-        
-        // avoid scaling of text
-        audioTrackNameLabel->setMinimumHorizontalScale(1.f);
-        
+        audioTrackNameLabel->setMinimumHorizontalScale(1.f); // avoid scaling of text
         audioTrackNameLabel->addListener (this);
         
-        channelSizeComboBox.reset (new juce::ComboBox ("channel size combo box"));
-        addAndMakeVisible (channelSizeComboBox.get());
-        channelSizeComboBox->setEditableText (false);
-        channelSizeComboBox->setJustificationType (juce::Justification::centred);
-        channelSizeComboBox->addItem (TRANS ("small"), 1);
-        channelSizeComboBox->addItem (TRANS ("medium"), 2);
-        channelSizeComboBox->addItem (TRANS ("large"), 3);
-        channelSizeComboBox->addItem (TRANS ("huge"), 4);
-        channelSizeComboBox->addListener (this);
-        // 19 is the dragger height. center vertically -> 19 - 15 = 4 / 2 = 2
-        channelSizeComboBox->setBounds (5, 2, 15, 15);
         
-        updateFromEngine(audioTrack);
+        minimizeButton = std::make_unique<juce::DrawableButton>("Minimize", juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
+        addAndMakeVisible(minimizeButton.get());
+        minimizeButton->setClickingTogglesState(true);
         
-        addKeyListener(this);
+        auto arrowSize = 15.f;
+        Rectangle<float> arrowZone (1.f, 1.f, arrowSize - 2.f, arrowSize - 2.f);
+        Point<float> p;
+        
+        Path path1;
+        p = Point(arrowZone.getX() + 3.f, arrowZone.getCentreY() - 2.f);
+        path1.startNewSubPath (p);
+        p = Point(arrowZone.getCentreX(), arrowZone.getCentreY() + 3.f);
+        path1.lineTo (p);
+        p = Point(arrowZone.getRight() - 3.f, arrowZone.getCentreY() - 2.f);
+        path1.lineTo (p);
+        juce::DrawablePath drawablePath1;
+        drawablePath1.setPath(path1);
+        drawablePath1.setFill (FillType(findColour (ComboBox::arrowColourId).withAlpha (0.9f)));
+        
+        Path path2;
+        p = Point(arrowZone.getCentreX() - 2.f, arrowZone.getCentreY() + 3.f);
+        path2.startNewSubPath (p);
+        p = Point(arrowZone.getRight() - 3.f, arrowZone.getCentreY());
+        path2.lineTo (p);
+        p = Point(arrowZone.getCentreX() - 2.f, arrowZone.getCentreY() - 3.f);
+        path2.lineTo (p);
+        juce::DrawablePath drawablePath2;
+        drawablePath2.setPath(path2);
+        drawablePath2.setFill (FillType(findColour (ComboBox::arrowColourId).withAlpha (0.9f)));
+        
+        minimizeButton->setImages(&drawablePath1, nullptr, nullptr, nullptr, &drawablePath2);
+        
+        auto bc = findColour (ComboBox::backgroundColourId);
+        minimizeButton->setColour (TextButton::buttonOnColourId, bc);
+        minimizeButton->setColour (TextButton::buttonColourId, bc);
+        
+        // 19 is the dragger height. center horizontally -> 19 - 15 = 4 / 2 = 2
+        minimizeButton->setBounds (5, 2, 15, 15);
+        
+        minimizeButton->onClick = [this]() {
+            setMinimized (minimizeButton->getToggleState());
+        };
+   
+        updateFromEngine (audioTrack);
+        
+        addKeyListener (this);
     }
 
     ~ChannelGroupHeaderComponent() override
@@ -92,53 +121,69 @@ public:
     void updateFromEngine(std::shared_ptr<audium::AudioTrack> newAudioTrack)
     {
         audioTrack = newAudioTrack;
-        audioTrackNameLabel->setText(audioTrack->getAudioTrackName(), juce::dontSendNotification);
+        audioTrackNameLabel->setText (audioTrack->getAudioTrackName(), juce::dontSendNotification);
         audioTrackNameLabel->setColour (juce::Label::textColourId, audioTrack->getColour());
         audioTrackNameLabel->setColour (juce::TextEditor::textColourId, audioTrack->getColour());
         audioTrackNameLabel->setColour (juce::Label::textWhenEditingColourId, audioTrack->getColour());
+        
+        minimizeButton->setToggleState (audioTrack->getMinimized(), dontSendNotification);
     }
-    
-    void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override
-    {
-        if (comboBoxThatHasChanged == channelSizeComboBox.get())
-        {
-            auto height = 0;
-            switch (channelSizeComboBox->getSelectedId()) {
-                case 1:
-                    height = 50;
-                    break;
-                case 2:
-                    height = 100;
-                    break;
-                case 3:
-                    height = 200;
-                    break;
-                case 4:
-                    height = 400;
-                    break;
-                default:
-                    break;
-            }
-
-            channelSizeComboBox->setText("", juce::dontSendNotification);
-
-            // undo
-            auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
-            
-            audioTrack->setChannelHeight(height);
-            
-            // undo
-            action->storeNewState();
-            audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set audio track height");
-            audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
-        }
-    }
-    
     
     void paint (juce::Graphics& g) override;
     
+    static void contextMenuCallback (int result, ChannelGroupHeaderComponent* component)
+    {
+        if (component != nullptr &&
+            result != 0) {
+            
+            auto height = result;
+            component->setChannelHeight(height);
+        }
+    }
+    
+    void setMinimized(bool bMinimized)
+    {
+        // undo
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+        
+        audioTrack->setMinimized(bMinimized);
+        
+        // undo
+        action->storeNewState();
+        audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "minimize audio track");
+        audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+    }
+    
+    void setChannelHeight(int height)
+    {
+        // undo
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+        
+        jassert(height > 0);
+        audioTrack->setMinimized(false);
+        audioTrack->setChannelHeight(height);
+        
+        // undo
+        action->storeNewState();
+        audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set audio track height");
+        audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+    }
+    
+    
     void mouseDown (const juce::MouseEvent& e) override
     {
+        if (e.mods.isPopupMenu()) {
+            PopupMenu m;
+            m.addItem (AudiumLookAndFeel::SizeIds::micro, TRANS ("micro"), true);
+            m.addItem (AudiumLookAndFeel::SizeIds::small, TRANS ("small"), true);
+            m.addItem (AudiumLookAndFeel::SizeIds::medium, TRANS ("medium"), true);
+            m.addItem (AudiumLookAndFeel::SizeIds::large, TRANS ("large"), true);
+            m.addItem (AudiumLookAndFeel::SizeIds::huge, TRANS ("huge"), true);
+            m.setLookAndFeel (&getLookAndFeel());
+            m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight),
+                             ModalCallbackFunction::forComponent (contextMenuCallback, this));
+        }
+        
         if (!e.mods.isAnyModifierKeyDown() && !isSelected()) {
             audioTrack->getSelectionManager()->deselectAll();
         }
@@ -211,7 +256,7 @@ private:
     std::shared_ptr<audium::AudioTrack> audioTrack;
     
     std::unique_ptr<AudiumLabel> audioTrackNameLabel;
-    std::unique_ptr<juce::ComboBox> channelSizeComboBox;
+    std::unique_ptr<juce::DrawableButton> minimizeButton;
     
     bool insertBefore = false;
     

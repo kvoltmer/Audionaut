@@ -11,6 +11,12 @@
 
 namespace audium {
 
+int AudioChannel::getChannelHeight() const noexcept {
+    if (audioTrack.getMinimized())
+        return 0;
+    
+    return data.height;
+}
 
 void AudioChannel::setGain(const float newGain)
 {

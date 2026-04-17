@@ -30,6 +30,11 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
     lockFreeCommander->fifo.push([ptr, channelNumber, data] {
         ptr->setChannelData(channelNumber, data);
     });
+    
+#if CATCH2_TESTS
+    lockFreeCommander->invoke();
+#endif
+    
 }
 
 const AudioChannelData AudioBusInterface::getChannelData(const int channelNumber) const
