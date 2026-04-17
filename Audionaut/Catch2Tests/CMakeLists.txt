@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(Audionaut_Tests VERSION 0.0.1)
-include(CTest)
 
 set(APP_NAME "AudionautTests")
 message(STATUS "Name: ${APP_NAME}")
