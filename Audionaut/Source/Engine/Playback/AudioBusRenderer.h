@@ -167,6 +167,7 @@ public:
                 gains[channelNumber].setGainLinear(newGain);
             else if (!audioChannelData[channelNumber].mute)
                 gains[channelNumber].setGainLinear(newGain);
+            
             audioChannelData[channelNumber].gain = newGain;
         }
     }
@@ -250,6 +251,8 @@ public:
     void setRecordEnabled(int channelNumber, bool bEnabled) { audioChannelData[channelNumber].record = bEnabled; }
     
     void resetGains();
+    
+    const Gain<SampleType>& getGain(int channel) { return gains[channel]; }
     
 private:
     

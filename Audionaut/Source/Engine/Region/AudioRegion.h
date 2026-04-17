@@ -37,14 +37,14 @@ public:
      * @param tempoProvider A shared pointer to the `TempoProvider`.
      * @param selectionManager A shared pointer to the `SelectionManager`.
      */
-    AudioRegion(std::shared_ptr<AudioTrack> audioTrack,
-                std::shared_ptr<ResourceGroup> resourceGroup,
-                std::shared_ptr<TempoProvider> tempoProvider,
-                std::shared_ptr<SelectionManager> selectionManager) :
-    audium::Selectable(selectionManager),
-    audioTrack(audioTrack),
-    resourceGroup(resourceGroup),
-    tempoProvider(tempoProvider)
+    AudioRegion(std::shared_ptr<AudioTrack> audioTrack_,
+                std::shared_ptr<ResourceGroup> resourceGroup_,
+                std::shared_ptr<TempoProvider> tempoProvider_,
+                std::shared_ptr<SelectionManager> selectionManager_) :
+        audium::Selectable(selectionManager_),
+        audioTrack(audioTrack_),
+        resourceGroup(resourceGroup_),
+        tempoProvider(tempoProvider_)
     {
         jassert(audioTrack != nullptr);
     }

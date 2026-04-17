@@ -16,7 +16,6 @@
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Controls/RegionLabel.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
-#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 using namespace juce;
 

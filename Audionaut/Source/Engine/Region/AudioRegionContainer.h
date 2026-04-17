@@ -33,13 +33,6 @@ public:
     AudioRegionContainer(AudioTrack &audioTrack_);
 
     /**
-     * @brief Creates a default audio region for the specified track.
-     * @param track A shared pointer to the `AudioTrack`.
-     * @return A shared pointer to the created `AudioRegion`.
-     */
-    std::shared_ptr<AudioRegion> createDefaultRegion(std::shared_ptr<AudioTrack> track);
-
-    /**
      * @brief Creates an audio region for the specified track and resource group.
      * @param track A shared pointer to the `AudioTrack`.
      * @param resourceGroup A shared pointer to the `ResourceGroup`.

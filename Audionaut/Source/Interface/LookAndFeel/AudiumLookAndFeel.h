@@ -71,6 +71,17 @@ public:
     static const int timerHz = 60;
     
     static juce::Colour trackColours[maxTrackColours];
+    
+    
+    enum SizeIds
+    {
+        micro   = 25,
+        small   = 50,
+        medium  = 100,
+        large   = 200,
+        huge    = 400,
+    };
+    
 private:
     void setupColours();
 };

@@ -7,50 +7,49 @@
 
 #include <JuceHeader.h>
 
-using namespace juce;
+namespace audium {
 
 class Preferences
 {
 public:
-    Preferences() = default;
-    ~Preferences() = default;
+    Preferences();
+    ~Preferences();
     
-    static String getRegPath();
-    
-    static String getAbsolutePlistPath();
+//    std::string getRegPath();
+//
+//    std::string getAbsolutePlistPath();
+//
+    void init(const std::string& product, const std::string& manufacture);
 
-    static void init(const String& product);
-    static void deinit();
-    
-    static void synchronize();
-    
-	static String getValue(const String& key, const String& defaultValue = "");
-	static bool setValue(const String& key, const String& value);
-    
-    static int getIntegerValue(const String& key, const int defaultValue = 0);
-    static bool setIntegerValue(const String& key, const uint64_t& value);
-    
-    static bool valueExists(const String& key);
-    
-    static bool getString (const std::string& key, std::string& value);
+    void synchronize();
 
-    static void removeKey(const String& key);
+    std::string getValue(const std::string& key,
+                         const std::string& defaultValue = "");
 
-    static String s_RegistryName;
+    bool setValue(const std::string& key,
+                  const std::string& value);
 
+    bool valueExists(const std::string& key);
+
+    void removeKey(const std::string& key);
 
 private:
     
+    class Impl;
+    std::unique_ptr<Impl> impl;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Preferences)
     
 };
 
 namespace PreferenceKeys
 {
-    static const char* const defaultFile = "DefaultProjectFile";
-    static const char* const initialOpenDirectory = "InitialOpenDirectory";
-    static const char* const initialSaveDirectory = "InitialSaveDirectory";
-    static const char* const recentFiles = "RecentProjectFiles";
-    static const char* const audioDeviceSettings = "AudioDeviceSettings";
-    static const char* const mainWindowState = "MainWindowState";
-
+    static const char* const defaultFile            = "DefaultProjectFile";
+    static const char* const initialOpenDirectory   = "InitialOpenDirectory";
+    static const char* const initialSaveDirectory   = "InitialSaveDirectory";
+    static const char* const recentFiles            = "RecentProjectFiles";
+    static const char* const audioDeviceSettings    = "AudioDeviceSettings";
+    static const char* const mainWindowState        = "MainWindowState";
 }
+
+} // namespace audium

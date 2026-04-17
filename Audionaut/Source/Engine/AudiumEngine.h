@@ -144,13 +144,6 @@ public:
     int getSizeInUnits() override;
 
     /**
-     * @brief Creates a default region and playlist for a given audio track.
-     * @param track A shared pointer to the `AudioTrack` to create the region and playlist for.
-     */
-    void createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> track);
-
-
-    /**
      * @brief Retrieves the current project file.
      * @return The current project file as a `juce::File`.
      */

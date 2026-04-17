@@ -51,9 +51,10 @@ void AudioBusRenderer<SampleType>::setChannelData(const int channelNumber, const
     if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
         audioChannelData[channelNumber] = data;
         setPan(channelNumber, data.pan);
+        
+        setGain(channelNumber, data.gain);
         setMute(channelNumber, data.mute);
         setSolo(channelNumber, data.solo);
-        setGain(channelNumber, data.gain);
     }
 }
 

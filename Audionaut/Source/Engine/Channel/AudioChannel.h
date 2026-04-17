@@ -46,9 +46,7 @@ public:
     * @brief Retrieves the height of the audio channel.
     * @return The height of the audio channel in pixels.
     */
-    int getChannelHeight() const noexcept {
-        return data.height;
-    }
+    int getChannelHeight() const noexcept;
     
     /**
      * @brief Sets the height of the audio channel.

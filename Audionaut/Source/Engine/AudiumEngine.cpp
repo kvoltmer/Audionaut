@@ -15,6 +15,7 @@
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Export/AudioExportThread.h"
 #include "Playback/PlaybackDefines.h"
+#include "Application/AudiumApplication.h"
 
 #include "Interface/ColourIds.h"
 
@@ -39,9 +40,9 @@ void AudiumEngine::initialise()
     auto numOutputChannelsNeeded = MAX_AUDIO_CHANNELS;
     String result;
 
-    
-    if (Preferences::valueExists(PreferenceKeys::audioDeviceSettings)) {
-        juce::XmlDocument xml (Preferences::getValue(PreferenceKeys::audioDeviceSettings));
+#if !defined(CATCH2_TESTS)
+    if (AudiumApplication::getPreferences().valueExists(PreferenceKeys::audioDeviceSettings)) {
+        juce::XmlDocument xml (AudiumApplication::getPreferences().getValue(PreferenceKeys::audioDeviceSettings));
         if (auto saveState = xml.getDocumentElement()) {
             result = audioDeviceManager->initialise(numInputChannelsNeeded,
                                                     numOutputChannelsNeeded,
@@ -51,22 +52,26 @@ void AudiumEngine::initialise()
     }
     else {
         result = audioDeviceManager->initialiseWithDefaultDevices (numInputChannelsNeeded,
-                                                                        numOutputChannelsNeeded);
+                                                                   numOutputChannelsNeeded);
     }
+#else
+    result = audioDeviceManager->initialiseWithDefaultDevices (numInputChannelsNeeded,
+                                                               numOutputChannelsNeeded);
+#endif
     std::cout << result.toStdString() << std::endl;
     audioDeviceManager->addAudioCallback(linkAudioDevice.get());
 }
 
 void AudiumEngine::uninitialise()
 {
-    
+#if !defined(CATCH2_TESTS)
     if (auto stateXml = audioDeviceManager->createStateXml()) {
-        Preferences::setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString());
+        AudiumApplication::getPreferences().setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString().toStdString());
     }
+#endif
     
     undoManager->clearUndoHistory();
     audioDeviceManager->removeAudioCallback(linkAudioDevice.get());
-    
 }
 
 void AudiumEngine::cleanup()
@@ -315,17 +320,6 @@ int AudiumEngine::getSizeInUnits()
 {
     return audioTrackContainer->getSizeInUnits() + 1;
 }
-
-void AudiumEngine::createDefaultRegionAndPlayList(std::shared_ptr<AudioTrack> track)
-{
-    jassertfalse;
-    //    if (audioRegionContainer->getNumRegions(track.get()) == 0)
-    //    {
-    //        auto region = audioRegionContainer->createDefaultRegion(track);
-    //        track->getPlayListContainer()->createPlayListItem(region);
-    //    }
-}
-
 
 void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
 {

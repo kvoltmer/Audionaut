@@ -27,23 +27,6 @@ AudioRegionContainer::AudioRegionContainer(AudioTrack &audioTrack_) :
 {
 }
 
-std::shared_ptr<AudioRegion> AudioRegionContainer::createDefaultRegion(std::shared_ptr<AudioTrack> track)
-{
-    //    jassert(getNumRegions(track.get()) == 0);
-    //    auto audioResources = audioResourceContainer->getAudioResourcesForGroup(track.get());
-    //    auto name = (audioResources.size() > 0) ? audioResources[0]->getFileNameWithoutExtension() : "n/a";
-    //    auto seconds = 0.0;
-    //    for (auto resource : audioResources)
-    //    {
-    //        seconds = juce::jmax(seconds, resource->getAudioTransportSource()->getLengthInSeconds());
-    //    }
-    //    jassert(seconds > 0.0);
-    //
-    //    return createRegion(name, juce::Range(0.0, seconds), track);
-    jassertfalse;
-    return nullptr;
-}
-
 std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(std::shared_ptr<AudioTrack> track,
                                                                 std::shared_ptr<ResourceGroup> resourceGroup)
 {
@@ -67,8 +50,7 @@ std::shared_ptr<AudioRegion> AudioRegionContainer::createRegion(juce::String reg
 {
     jassert(track != nullptr);
     
-    if (resourceGroup == nullptr)
-    {
+    if (resourceGroup == nullptr) {
         resourceGroup = track->getDefaultResourceGroup();
     }
     

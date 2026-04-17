@@ -51,7 +51,7 @@ public:
                                    GlyphArrangement::getStringWidth (g.getCurrentFont(), label),
                                    g.getCurrentFont().getHeight());
         
-        g.setColour (findColour(audium::defaultTextColourId));
+        g.setColour (getLabelColour());
         g.drawFittedText (label, bonds, juce::Justification::topLeft, 1);
     }
 
@@ -151,6 +151,8 @@ public:
     virtual void shiftSelect() = 0;
     
     virtual const juce::String getLabelString() const = 0;
+    
+    virtual const juce::Colour getLabelColour() const = 0;
     
     virtual bool validateData() = 0;
     

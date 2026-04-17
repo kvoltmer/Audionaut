@@ -41,10 +41,11 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     addAndMakeVisible (channelSizeComboBox.get());
     channelSizeComboBox->setEditableText (false);
     channelSizeComboBox->setJustificationType (juce::Justification::centred);
-    channelSizeComboBox->addItem (TRANS ("small"), 1);
-    channelSizeComboBox->addItem (TRANS ("medium"), 2);
-    channelSizeComboBox->addItem (TRANS ("large"), 3);
-    channelSizeComboBox->addItem (TRANS ("huge"), 4);
+    channelSizeComboBox->addItem (TRANS ("micro"), AudiumLookAndFeel::SizeIds::micro);
+    channelSizeComboBox->addItem (TRANS ("small"), AudiumLookAndFeel::SizeIds::small);
+    channelSizeComboBox->addItem (TRANS ("medium"), AudiumLookAndFeel::SizeIds::medium);
+    channelSizeComboBox->addItem (TRANS ("large"), AudiumLookAndFeel::SizeIds::large);
+    channelSizeComboBox->addItem (TRANS ("huge"), AudiumLookAndFeel::SizeIds::huge);
     channelSizeComboBox->addListener (this);
 
 
@@ -277,23 +278,7 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
 {
     if (comboBoxThatHasChanged == channelSizeComboBox.get())
     {
-        auto height = 0;
-        switch (channelSizeComboBox->getSelectedId()) {
-            case 1:
-                height = 50;
-                break;
-            case 2:
-                height = 100;
-                break;
-            case 3:
-                height = 200;
-                break;
-            case 4:
-                height = 400;
-                break;
-            default:
-                break;
-        }
+        auto height = channelSizeComboBox->getSelectedId();
 
         channelSizeComboBox->setText("", dontSendNotification);
 

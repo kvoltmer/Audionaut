@@ -23,7 +23,8 @@ public:
     
     static bool exportAudio(std::shared_ptr<juce::FileChooser> chooser,
                             std::shared_ptr<audium::AudiumEngine> audiumEngine,
-                            std::shared_ptr<audium::ExportAudioConfig> config)
+                            std::shared_ptr<audium::ExportAudioConfig> config,
+                            std::shared_ptr<audium::AudioExportThread> exportThread)
     {
         auto result = false;
         jassert(chooser);
@@ -31,7 +32,7 @@ public:
                    | FileBrowserComponent::canSelectFiles
                    | FileBrowserComponent::warnAboutOverwriting;
 
-        chooser->launchAsync (flags, [audiumEngine, config, &result] (const FileChooser& fc) {
+        chooser->launchAsync (flags, [audiumEngine, config, exportThread, &result] (const FileChooser& fc) {
             const auto file = fc.getResult();
             
             if (file != File{}) {
@@ -52,11 +53,9 @@ public:
                 jassert(config != nullptr);
                 config->fileName = file;
                 
-                // create the thread
-                auto thread = std::make_unique<audium::AudioExportThread>(*audiumEngine.get(), config);
                 
                 // start the thread
-                if (thread->runThread()) {
+                if (exportThread->runThread()) {
                     // thread finished normally..
                     result = true;
                     
