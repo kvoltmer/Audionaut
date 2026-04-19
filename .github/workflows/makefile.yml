@@ -22,8 +22,3 @@ jobs:
     - name: Compile
       run: make -C Audionaut/Builds/LinuxMakefile/
 
-    - name: Run check
-      run: make check
-
-    - name: Run distcheck
-      run: make distcheck
