@@ -46,7 +46,7 @@ namespace CommandIDs
         zoomNormal              = 0x300073,
         spaceBarDrag            = 0x300074,
         followTransport         = 0x300075,
-        toggleEditArrangement   = 0x300076,
+        toggleFileBrowser       = 0x300076,
         toggleFullScreen        = 0x300077,
         pageLeft                = 0x300078,
         pageRight               = 0x300079,

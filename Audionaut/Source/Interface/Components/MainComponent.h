@@ -35,8 +35,6 @@ public:
 
     void pageLeft();
     void pageRight();
-
-    void toggleEditArrangementComponent();
     
     void selectAll();
     void duplicate();

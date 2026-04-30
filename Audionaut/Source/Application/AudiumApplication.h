@@ -66,6 +66,8 @@ public:
     
     void updateUI();
     
+    bool fileBrowserVisible() const;
+    
     AudiumLookAndFeel lookAndFeel;
     
     File initialSaveDirectory;
