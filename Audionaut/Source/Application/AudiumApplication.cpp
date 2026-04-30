@@ -330,10 +330,8 @@ PopupMenu AudiumApplication::createViewMenu()
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::toggleFullScreen);
     menu.addSeparator();
-#if HAS_REGION_EDIT_VIEW
-    menu.addCommandItem (commandManager.get(), CommandIDs::toggleEditArrangement);
+    menu.addCommandItem (commandManager.get(), CommandIDs::toggleFileBrowser);
     menu.addSeparator();
-#endif
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomIn);
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomOut);
     menu.addCommandItem (commandManager.get(), CommandIDs::pageLeft);
@@ -379,6 +377,7 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::showAboutWindow,
                                 CommandIDs::showSettingsWindow,
                                 CommandIDs::clearRecentFiles,
+                                CommandIDs::toggleFileBrowser,
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -425,6 +424,11 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::clearRecentFiles:
         result.setInfo ("Clear Recent Files", "Clears all recent files from the menu", CommandCategories::general, 0);
         result.setActive (recentFiles.getNumFiles() > 0);
+        break;
+    case CommandIDs::toggleFileBrowser:
+        result.setInfo ("File Browser", "Show and hide file browser.", CommandCategories::view, 0);
+        result.setTicked (fileBrowserVisible());
+        result.defaultKeypresses.add (KeyPress (KeyPress::numberPad5, ModifierKeys::shiftModifier, 0));
         break;
 
     default:
@@ -476,6 +480,10 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             break;
         case CommandIDs::clearRecentFiles:
             clearRecentFiles();
+            break;
+        case CommandIDs::toggleFileBrowser:
+            // TODO:
+            notImplemented();
             break;
 
         default:
@@ -690,4 +698,9 @@ void AudiumApplication::updateSettings()
     getPreferences().setValue(PreferenceKeys::initialSaveDirectory, initialSaveDirectory.getFullPathName().toStdString());
     getPreferences().setValue(PreferenceKeys::recentFiles, recentFiles.toString().toStdString());
     getPreferences().synchronize();
+}
+
+bool AudiumApplication::fileBrowserVisible() const
+{
+    return false;
 }
