@@ -15,10 +15,6 @@ public:
     Preferences();
     ~Preferences();
     
-//    std::string getRegPath();
-//
-//    std::string getAbsolutePlistPath();
-//
     void init(const std::string& product, const std::string& manufacture);
 
     void synchronize();

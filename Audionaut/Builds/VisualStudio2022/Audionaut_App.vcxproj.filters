@@ -4302,10 +4302,10 @@
     <ClInclude Include="..\..\Source\Interface\UIContext.h">
       <Filter>Audionaut\Source\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\NewAudioTrackDialog.h">
+    <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AboutDialog.h">
+    <ClInclude Include="..\..\Source\Interface\Dialogs\NewAudioTrackDialog.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutWindowComponent.h">
