@@ -81,7 +81,8 @@ private:
     std::unique_ptr<audium::Preferences> preferences;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
-    std::unique_ptr<juce::Component> aboutWindow;
+    std::unique_ptr<juce::Component> aboutComponent;
+    std::unique_ptr<juce::Component> fileBrowserView;
     std::shared_ptr<SettingsDialog> settingsDialog;
     
     juce::RecentlyOpenedFilesList recentFiles;
@@ -91,6 +92,7 @@ private:
     void handleAsyncUpdate() override;
     
     void showAboutWindow();
+    void showFileBrowserWindow();
     void showSettingsDialog();
     
     void clearRecentFiles();
