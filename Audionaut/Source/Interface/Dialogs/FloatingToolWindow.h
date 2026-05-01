@@ -10,7 +10,16 @@
 
 #include <Application/AudiumApplication.h>
 
+/**
+    A lightweight floating dialog that hosts a tool component and keeps its
+    screen position in preferences.
 
+    The window stores a reference to the caller's owning `std::unique_ptr`,
+    assigns itself into that pointer on construction, and clears it again when
+    the user closes the window or presses Escape.
+ 
+    This class is similar to Projucer's FloatingToolWindow
+*/
 class FloatingToolWindow final : public DialogWindow
 {
 public:

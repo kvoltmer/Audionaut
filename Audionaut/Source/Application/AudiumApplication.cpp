@@ -204,7 +204,7 @@ void AudiumApplication::anotherInstanceStarted (const juce::String& commandLine)
 
 void AudiumApplication::initCommandManager()
 {
-    commandManager.reset (new ApplicationCommandManager());
+    commandManager = std::make_unique<ApplicationCommandManager>();
     commandManager->registerAllCommandsForTarget (this);
 }
 

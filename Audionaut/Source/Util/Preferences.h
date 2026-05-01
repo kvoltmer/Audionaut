@@ -9,6 +9,13 @@
 
 namespace audium {
 
+/**
+    Provides access to the application's persistent key-value settings.
+
+    `Preferences` wraps the platform-specific storage backend behind a small
+    interface for initialization, reading and writing string values, checking
+    for existing keys, removing entries, and synchronizing pending changes.
+*/
 class Preferences
 {
 public:
