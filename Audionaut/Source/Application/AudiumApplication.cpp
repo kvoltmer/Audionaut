@@ -96,6 +96,9 @@ void AudiumApplication::handleAsyncUpdate()
 #endif
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
 
+    auto browserOpen = getPreferences().getValue(PreferenceKeys::browserWindowOpen);
+    if (browserOpen == "true")
+        showFileBrowserWindow();
     
     // try to load default project from prefs
     if (!audiumEngine->getCurrentProjectFile().exists()) {
@@ -116,6 +119,8 @@ void AudiumApplication::handleAsyncUpdate()
 
 void AudiumApplication::shutdown()
 {
+    getPreferences().setValue(PreferenceKeys::browserWindowOpen, fileBrowserVisible() ? "true" : "false");
+    
     // Add your application's shutdown code here..
     mainWindow.reset(); // (deletes our window)
 
@@ -682,7 +687,7 @@ void AudiumApplication::showFileBrowserWindow()
     if (fileBrowserView != nullptr)
         fileBrowserView->toFront (true);
     else
-        new FloatingToolWindow ("File Browser", "FileBrowserWindowPosition",
+        new FloatingToolWindow ("File Browser", audium::PreferenceKeys::browserWindowState,
                                 new FileBrowserView(),
                                 fileBrowserView, true,
                                 w, h, 50, 50, 3000, 3000);
@@ -713,5 +718,9 @@ void AudiumApplication::updateSettings()
 
 bool AudiumApplication::fileBrowserVisible() const
 {
+    if (fileBrowserView != nullptr &&
+        fileBrowserView->isVisible()) {
+        return true;
+    }
     return false;
 }

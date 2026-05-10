@@ -120,6 +120,9 @@ bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSou
     if (dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
     
+    if (dynamic_cast<juce::FileTreeComponent*>(dragSourceDetails.sourceComponent.get()) != nullptr)
+        return true;
+    
     return false;
 }
 
@@ -193,6 +196,9 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
     else if (auto playListTableListBoxItem = dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get())) {
         audioTrack->dropPlayListItem(playListTableListBoxItem->getPlayListItem(), pos, audium::clocks, true);
         success = true;
+    }
+    else if (auto tree = dynamic_cast<juce::FileTreeComponent*>(dragSourceDetails.sourceComponent.get())) {
+        std::cout << "TODO" << std::endl;
     }
     
     

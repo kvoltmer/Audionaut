@@ -74,6 +74,11 @@ void AudiumLookAndFeel::setupColours()
     // Slider
     setColour(Slider::backgroundColourId, Colours::transparentBlack);
     
+    // FileBrowserComponent
+//    setColour(FileBrowserComponent::currentPathBoxArrowColourId, Colours::green);
+    //setColour(FileBrowserComponent::filenameBoxBackgroundColourId, Colours::red);
+    
+    
 }
 
 void AudiumLookAndFeel::drawButtonBackground (Graphics& g,
