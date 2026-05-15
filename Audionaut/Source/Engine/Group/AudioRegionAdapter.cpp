@@ -17,7 +17,7 @@
 namespace audium {
 
 AudioRegionAdapter::AudioRegionAdapter(AudioTrackContainer &owner_) :
-owner(owner_)
+    owner(owner_)
 {
 }
 

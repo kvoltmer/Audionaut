@@ -81,18 +81,16 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     }
     
     transportSource->schedulePosition(position, startSample);
-    
     transportSource->scheduleDuration(duration, externalSampleRate);
     
-//    if (not loopResult.loopEvent) {
-//        transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
-//    }
     auto fadeIn = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
     transportSource->getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
     auto fadeOut = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
     transportSource->getAudioTransportSource()->setFadeOutSeconds(fadeOut, duration, true);
-    
+
+    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
     transportSource->getAudioTransportSource()->resetClipGain();
+    
     
 //    std::cout << "transport-pos: " << transportPosition << " ";
 //    std::cout << "clip-pos: " <<  absolute << " ";

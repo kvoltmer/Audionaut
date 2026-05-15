@@ -89,6 +89,9 @@ public:
         return fadeOutClocks;
     }
     
+    void setClipGain(int channel, double val);
+    double getClipGain(int channel) const;
+    
     bool isRecording() const;
     
     const double getRecordedLength(audium::TimeContextType context) const;
