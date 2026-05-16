@@ -45,10 +45,10 @@ void AudioTrackBaseComponent::paint (juce::Graphics& g)
     
 }
 
-void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
+void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, double position, bool undo)
 {
     if ( !filenames.isEmpty() ) {
-        auto position = zoomHandler->xToClocks(x);
+        
         zoomHandler->snapToGrid(position);
         
         std::function<void (std::string)> callback = [](std::string error) {
@@ -57,15 +57,20 @@ void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x,
                                                         "Failed to open: " + juce::String(error));
         };
         
-        audioTrack->addAudioFiles(filenames, position, callback);
+        audioTrack->addAudioFiles(filenames, position, callback, undo);
  
     }
-    
     
     externalDragAndDrop = false;
     regionSelector->setEnabled(true);
     zoomHandler->getSnapToGridHandler()->clearRange();
     repaint();
+}
+
+void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
+{
+    auto position = zoomHandler->xToClocks(x);
+    filesDropped(filenames, position, true);
 }
 
 void AudioTrackBaseComponent::fileDragEnter (const juce::StringArray& files, int x, int y)

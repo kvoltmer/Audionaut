@@ -198,10 +198,13 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
         success = true;
     }
     else if (auto tree = dynamic_cast<juce::FileTreeComponent*>(dragSourceDetails.sourceComponent.get())) {
-        std::cout << "TODO" << std::endl;
+        StringArray filenames;
+        for (auto i = 0; i < tree->getNumSelectedFiles(); i++) {
+            filenames.add (tree->getSelectedFile(i).getFullPathName());
+        }
+        filesDropped(filenames, pos, false);
+        success = true;
     }
-    
-    
     
     if (success) {
         action->storeNewState();

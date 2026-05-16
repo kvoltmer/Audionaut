@@ -44,11 +44,10 @@ void AudioTrackListBox::setNewGroupColour(std::shared_ptr<audium::AudioTrack> au
     }
 }
 
-void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
+void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, double position, bool undo)
 {
     if ( !filenames.isEmpty()) {
                 
-        auto position = zoomHandler->xToClocksWithOffset(mouseX);
         zoomHandler->snapToGrid(position);
         
         std::function<void (std::string)> callback = [this](std::string error) {
@@ -57,12 +56,21 @@ void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mo
                                                         "Failed to open: " + juce::String(error));
         };
         
-        bool arrangementMode = audiumEngine->getPlayListScheduler()->isArrangementMode();
-        audiumEngine->getAudioTrackContainer()->addAudioFiles(filenames, position, arrangementMode, callback);
+        
+        audiumEngine->getAudioTrackContainer()->addAudioFiles(filenames,
+                                                              position,
+                                                              callback,
+                                                              undo);
 
     }
     externalDragAndDrop = false;
     repaint();
+}
+
+void AudioTrackListBox::filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY)
+{
+    auto position = zoomHandler->xToClocksWithOffset(mouseX);
+    filesDropped(filenames, position, true);
 }
 
 void AudioTrackListBox::fileDragEnter (const juce::StringArray& files, int x, int y)
@@ -98,8 +106,10 @@ bool AudioTrackListBox::isInterestedInDragSource (const SourceDetails &dragSourc
     if (dynamic_cast<PlayListTableListBoxItem*>(dragSourceDetails.sourceComponent.get()) != nullptr)
         return true;
     
-    
-    
+    if (dynamic_cast<juce::FileTreeComponent*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
+        return true;
+    }
+
     return false;
 }
 
@@ -178,6 +188,14 @@ void AudioTrackListBox::itemDropped (const SourceDetails &dragSourceDetails)
         auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
         setNewGroupColour(audioTrack);
         audioTrack->dropPlayListItem(playListTableListBoxItem->getPlayListItem(), pos, audium::clocks);
+        success = true;
+    }
+    else if (auto tree = dynamic_cast<juce::FileTreeComponent*>(dragSourceDetails.sourceComponent.get())) {
+        StringArray filenames;
+        for (auto i = 0; i < tree->getNumSelectedFiles(); i++) {
+            filenames.add (tree->getSelectedFile(i).getFullPathName());
+        }
+        filesDropped(filenames, pos, false);
         success = true;
     }
     
