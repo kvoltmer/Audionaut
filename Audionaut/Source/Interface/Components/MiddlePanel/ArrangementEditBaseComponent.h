@@ -134,7 +134,7 @@ public:
             g.setColour (juce::Colours::white.withAlpha(0.75f));
             g.setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
             auto txt = "Drop Audio Files Here";
-#if JUCE_LINUX
+#ifdef JUCE_LINUX
             txt = "Open the file browser (VIEW -> Open File Browser) and drop audio files here."
 #endif
             g.drawText (txt, getLocalBounds(),
