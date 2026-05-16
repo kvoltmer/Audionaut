@@ -38,6 +38,8 @@ public:
     void paint (juce::Graphics&) override;
     
     // drag & drop:
+    void filesDropped (const StringArray& filenames, double position, bool undo);
+    // drag & drop overrides:
     void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
     bool isInterestedInFileDrag (const juce::StringArray& /*files*/) override { return true; }
     void fileDragEnter (const juce::StringArray& files, int x, int y) override;

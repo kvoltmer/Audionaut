@@ -373,13 +373,13 @@ bool AudioTrackContainer::copySelectedChannelsToNewTrack(bool copyChannels)
 }
 
 bool AudioTrackContainer::addAudioFiles(const juce::StringArray& filenames,
-                               double position,
-                               bool arrangementMode,
-                               std::function<void (std::string)> callback)
+                                        double position,
+                                        std::function<void (std::string)> callback,
+                                        bool undo)
 {
     auto audioTrack = createNewAudioTrack(juce::String());
     audioTrack->setColour(getNewAudioTrackColour());
-    if (!audioTrack->addAudioFiles(filenames, position, callback)) {
+    if (!audioTrack->addAudioFiles(filenames, position, callback, undo)) {
         deleteAudioTrack(audioTrack.get());
         return false;
     }

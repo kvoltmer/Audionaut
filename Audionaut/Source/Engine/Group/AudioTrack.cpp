@@ -629,10 +629,11 @@ void AudioTrack::deleteUnusedResourceGroups()
 
 bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
                                double position,
-                               std::function<void (std::string)> callback)
+                               std::function<void (std::string)> callback,
+                               bool undo)
 {
     // Undo: store old state
-    auto action = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer());
+    auto action = undo ? std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer()) : nullptr;
     
     int destChannel = 0;
     std::shared_ptr<ResourceGroup> resourceGroup = nullptr;
@@ -678,9 +679,11 @@ bool AudioTrack::addAudioFiles(const juce::StringArray& filenames,
         createDefaultPlayListItem(resources.front(), resourceGroup, position, audium::clocks);
     }
         
-    action->storeNewState();
-    getAudioTrackContainer().getUndoManager()->perform(action.release(), "File(s) added");
-    getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+    if (action != nullptr) {
+        action->storeNewState();
+        getAudioTrackContainer().getUndoManager()->perform(action.release(), "File(s) added");
+        getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+    }
     return resources.size() > 0;
 }
 
