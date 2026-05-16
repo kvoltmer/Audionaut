@@ -432,7 +432,7 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
         result.setActive (recentFiles.getNumFiles() > 0);
         break;
     case CommandIDs::showFileBrowser:
-        result.setInfo ("Show File Browser", "Show file browser window.", CommandCategories::view, 0);
+        result.setInfo ("Open File Browser", "Open File Browser window.", CommandCategories::view, 0);
         result.defaultKeypresses.add (KeyPress (KeyPress::numberPad5, ModifierKeys::shiftModifier, 0));
         break;
 
