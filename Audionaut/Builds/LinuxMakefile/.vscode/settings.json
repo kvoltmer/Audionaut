@@ -1,0 +1,9 @@
+{
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/klus/dev/Audionaut/Audionaut/Builds/LinuxMakefile/build",
+            "binaryPath": "/home/klus/dev/Audionaut/Audionaut/Builds/LinuxMakefile/build/Audionaut",
+            "binaryArgs": []
+        }
+    ]
+}

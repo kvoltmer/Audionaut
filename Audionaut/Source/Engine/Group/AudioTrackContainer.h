@@ -215,14 +215,13 @@ public:
      * @brief Adds audio files to the container.
      * @param filenames The filenames of the audio files to add.
      * @param positionClocks The position in transport clocks to add the files.
-     * @param arrangementMode Whether to use arrangement mode.
      * @param callback A callback function for handling errors or progress.
      * @return True if the files were successfully added, false otherwise.
      */
     bool addAudioFiles(const juce::StringArray& filenames,
                        double positionClocks,
-                       bool arrangementMode,
-                       std::function<void (std::string)> callback);
+                       std::function<void (std::string)> callback,
+                       bool undo);
     
     std::shared_ptr<AudioBusInterface> audioBusInterface; ///< Shared pointer to the audio bus interface.
     std::vector<std::shared_ptr<AudioTrack>> audioTracks; ///< Vector of shared pointers to audio tracks.

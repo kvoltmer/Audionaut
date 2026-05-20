@@ -9,16 +9,19 @@
 
 namespace audium {
 
+/**
+    Provides access to the application's persistent key-value settings.
+
+    `Preferences` wraps the platform-specific storage backend behind a small
+    interface for initialization, reading and writing string values, checking
+    for existing keys, removing entries, and synchronizing pending changes.
+*/
 class Preferences
 {
 public:
     Preferences();
     ~Preferences();
     
-//    std::string getRegPath();
-//
-//    std::string getAbsolutePlistPath();
-//
     void init(const std::string& product, const std::string& manufacture);
 
     void synchronize();
@@ -50,6 +53,10 @@ namespace PreferenceKeys
     static const char* const recentFiles            = "RecentProjectFiles";
     static const char* const audioDeviceSettings    = "AudioDeviceSettings";
     static const char* const mainWindowState        = "MainWindowState";
+    static const char* const browserWindowState     = "BrowserWindowState";
+    static const char* const browserWindowOpen      = "BrowserWindowOpen";
+    static const char* const fileTreeState          = "FileTreeState";
+    static const char* const browserRoot            = "BrowserRoot";
 }
 
 } // namespace audium

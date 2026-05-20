@@ -236,15 +236,6 @@ void MainComponent::pageRight()
     middlePanelComponent->pageRight();
 }
 
-void MainComponent::toggleEditArrangementComponent()
-{
-    // toggle edit mode
-    auto editMode = !audiumEngine->getPlayListScheduler()->isEditMode();
-    audiumEngine->getPlayListScheduler()->setEditMode(editMode);
-    audiumEngine->getUiState()["editMode"] = editMode;
-    updateUI();
-}
-
 void MainComponent::selectAll()
 {
     for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks())

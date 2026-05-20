@@ -209,7 +209,8 @@ public:
     
     bool addAudioFiles(const juce::StringArray& filenames,
                        double positionClocks,
-                       std::function<void (std::string)> callback);
+                       std::function<void (std::string)> callback,
+                       bool undo);
     
     std::vector<std::shared_ptr<AudioResource>> addAudioFile (std::shared_ptr<ResourceGroup> resourceGroup,
                                                               const juce::File filename,

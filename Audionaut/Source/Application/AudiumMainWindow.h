@@ -26,18 +26,9 @@ public:
     ~AudiumMainWindow() override;
 
     void closeButtonPressed() override;
-
-    /* Note: Be careful if you override any DocumentWindow methods - the base
-       class uses a lot of them, so by overriding you might break its functionality.
-       It's best to do all your work in your content component instead, but if
-       you really have to override any DocumentWindow methods, make sure your
-       subclass also calls the superclass's method.
-    */
     
     std::shared_ptr<audium::AudiumEngine> getEngine() const { return audiumEngine; }
     
-    
-    //==============================================================================
     ApplicationCommandTarget* getNextCommandTarget() override;
     void getAllCommands (Array <CommandID>& commands) override;
     void getCommandInfo (CommandID commandID, ApplicationCommandInfo& result) override;

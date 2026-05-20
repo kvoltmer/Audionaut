@@ -13,8 +13,9 @@
 #include "Util/Preferences.h"
 #include "AudiumMainWindow.h"
 #include "Interface/Dialogs/SettingsDialog.h"
-#include "Interface/Dialogs/AboutDialog.h"
 #include "Interface/Dialogs/FloatingToolWindow.h"
+#include "Interface/Dialogs/FileBrowserView.h"
+#include "Interface/Dialogs/AboutWindowComponent.h"
 
 using namespace audium;
 
@@ -95,6 +96,9 @@ void AudiumApplication::handleAsyncUpdate()
 #endif
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
 
+    auto browserOpen = getPreferences().getValue(PreferenceKeys::browserWindowOpen);
+    if (browserOpen == "true")
+        showFileBrowserWindow();
     
     // try to load default project from prefs
     if (!audiumEngine->getCurrentProjectFile().exists()) {
@@ -115,6 +119,8 @@ void AudiumApplication::handleAsyncUpdate()
 
 void AudiumApplication::shutdown()
 {
+    getPreferences().setValue(PreferenceKeys::browserWindowOpen, fileBrowserVisible() ? "true" : "false");
+    
     // Add your application's shutdown code here..
     mainWindow.reset(); // (deletes our window)
 
@@ -203,7 +209,7 @@ void AudiumApplication::anotherInstanceStarted (const juce::String& commandLine)
 
 void AudiumApplication::initCommandManager()
 {
-    commandManager.reset (new ApplicationCommandManager());
+    commandManager = std::make_unique<ApplicationCommandManager>();
     commandManager->registerAllCommandsForTarget (this);
 }
 
@@ -330,10 +336,8 @@ PopupMenu AudiumApplication::createViewMenu()
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::toggleFullScreen);
     menu.addSeparator();
-#if HAS_REGION_EDIT_VIEW
-    menu.addCommandItem (commandManager.get(), CommandIDs::toggleEditArrangement);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showFileBrowser);
     menu.addSeparator();
-#endif
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomIn);
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomOut);
     menu.addCommandItem (commandManager.get(), CommandIDs::pageLeft);
@@ -379,6 +383,7 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::showAboutWindow,
                                 CommandIDs::showSettingsWindow,
                                 CommandIDs::clearRecentFiles,
+                                CommandIDs::showFileBrowser,
     };
 
     commands.addArray (ids, numElementsInArray (ids));
@@ -425,6 +430,10 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::clearRecentFiles:
         result.setInfo ("Clear Recent Files", "Clears all recent files from the menu", CommandCategories::general, 0);
         result.setActive (recentFiles.getNumFiles() > 0);
+        break;
+    case CommandIDs::showFileBrowser:
+        result.setInfo ("Open File Browser", "Open File Browser window.", CommandCategories::view, 0);
+        result.defaultKeypresses.add (KeyPress (KeyPress::numberPad5, ModifierKeys::shiftModifier, 0));
         break;
 
     default:
@@ -476,6 +485,9 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             break;
         case CommandIDs::clearRecentFiles:
             clearRecentFiles();
+            break;
+        case CommandIDs::showFileBrowser:
+            showFileBrowserWindow();
             break;
 
         default:
@@ -649,9 +661,7 @@ bool AudiumApplication::saveProject()
 
 void AudiumApplication::updateUI()
 {
-    auto comp = dynamic_cast<MainComponent*>(mainWindow->getContentComponent());
-    if (comp != nullptr)
-    {
+    if (auto comp = dynamic_cast<MainComponent*>(mainWindow->getContentComponent())) {
         comp->rebuildUI();
         comp->updateUI();
     }
@@ -661,12 +671,26 @@ void AudiumApplication::showAboutWindow()
 {
     auto w = 600;
     auto h = 400;
-    if (aboutWindow != nullptr)
-        aboutWindow->toFront (true);
+    if (aboutComponent != nullptr)
+        aboutComponent->toFront (true);
     else
-        new FloatingToolWindow ({}, {}, new AboutWindowComponent(),
-                                aboutWindow, false,
+        new FloatingToolWindow ("About", "AboutWindowPosition",
+                                new AboutWindowComponent(),
+                                aboutComponent, false,
                                 w, h, w, h, w, h);
+}
+
+void AudiumApplication::showFileBrowserWindow()
+{
+    auto w = 300;
+    auto h = 800;
+    if (fileBrowserView != nullptr)
+        fileBrowserView->toFront (true);
+    else
+        new FloatingToolWindow ("File Browser", audium::PreferenceKeys::browserWindowState,
+                                new FileBrowserView(),
+                                fileBrowserView, true,
+                                w, h, 50, 50, 3000, 3000);
 }
 
 void AudiumApplication::showSettingsDialog()
@@ -690,4 +714,13 @@ void AudiumApplication::updateSettings()
     getPreferences().setValue(PreferenceKeys::initialSaveDirectory, initialSaveDirectory.getFullPathName().toStdString());
     getPreferences().setValue(PreferenceKeys::recentFiles, recentFiles.toString().toStdString());
     getPreferences().synchronize();
+}
+
+bool AudiumApplication::fileBrowserVisible() const
+{
+    if (fileBrowserView != nullptr &&
+        fileBrowserView->isVisible()) {
+        return true;
+    }
+    return false;
 }
