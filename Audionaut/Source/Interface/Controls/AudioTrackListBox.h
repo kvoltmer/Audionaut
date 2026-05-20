@@ -19,6 +19,8 @@ public:
                        std::shared_ptr<ZoomHandler> zoomHandler);
     ~AudioTrackListBox() override;
     
+    void filesDropped (const juce::StringArray& filenames, double pos, bool undo);
+    
     /// FileDragAndDropTarget overrides
     void filesDropped (const juce::StringArray& filenames, int mouseX, int mouseY) override;
     bool isInterestedInFileDrag (const juce::StringArray& /*files*/) override { return true; }

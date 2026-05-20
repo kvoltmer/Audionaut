@@ -99,6 +99,42 @@ static const File createSlowSawTwoSecondsAudioFile()
     return File();
 }
 
+static const File generateDcOffsetAudioFile(double lengthInSeconds)
+{
+    auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/dc-offset.wav"));
+    TemporaryFile tempFile (targetFile);
+    
+    std::unique_ptr<OutputStream> stream (tempFile.getFile().createOutputStream());
+    jassert(stream);
+    if (stream != nullptr) {
+        WavAudioFormat wav;
+        auto opt = AudioFormatWriter::Options{}.withSampleRate (44100.0)
+            .withNumChannels (1)
+            .withBitsPerSample (32)
+            .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
+        auto writer = wav.createWriterFor (stream, opt);
+        jassert(writer);
+        if (writer != nullptr) {
+            
+            auto blockSize = static_cast<int>(44100.0 * lengthInSeconds);
+            
+            AudioBuffer<float> buffer(1, blockSize);
+            AudioSourceChannelInfo info (&buffer, 0, blockSize);
+            
+            // generate dc offset [+1]
+            for (auto s = 0; s < blockSize; s++) {
+                *info.buffer->getWritePointer(0, s) = 1.f;
+            }
+            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            
+            writer.reset();
+            tempFile.overwriteTargetFileWithTemporary();
+            return tempFile.getTargetFile();
+        }
+    }
+    return File();
+}
+
 static AudioBuffer<float> audioFileToAudioBuffer(const juce::File fileName)
 {
     AudioFormatManager formatManager;

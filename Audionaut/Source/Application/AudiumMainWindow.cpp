@@ -116,9 +116,6 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::pageLeft,
         CommandIDs::pageRight,
         CommandIDs::followTransport,
-#if HAS_REGION_EDIT_VIEW
-        CommandIDs::toggleEditArrangement,
-#endif
         CommandIDs::toggleFullScreen,
         StandardApplicationCommandIDs::undo,
         StandardApplicationCommandIDs::redo,
@@ -189,13 +186,8 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case CommandIDs::toggleFullScreen:
             result.setInfo ("Full Screen", "Enter full screen", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::commandModifier | ModifierKeys::ctrlModifier, 0));
+            result.setTicked (isFullScreen());
             break;
-#if HAS_REGION_EDIT_VIEW
-        case CommandIDs::toggleEditArrangement:
-            result.setInfo ("Toggle Region / Arrangement View", "Toggle Region / Arrangement View", CommandCategories::view, 0);
-            result.defaultKeypresses.add (KeyPress (KeyPress::tabKey, ModifierKeys::noModifiers, 0));
-            break;
-#endif
         case CommandIDs::zoomIn:
             result.setInfo ("Zoom In", "Zoom in", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('+', ModifierKeys::commandModifier, 0));
@@ -215,6 +207,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case CommandIDs::followTransport:
             result.setInfo ("Follow Transport", "Follow Transport", CommandCategories::view, 0);
             result.defaultKeypresses.add (KeyPress ('f', ModifierKeys::ctrlModifier, 0));
+            result.setTicked (getEngine()->getPlayListScheduler()->getFollowTransport());
             break;
         
         case StandardApplicationCommandIDs::undo:
@@ -307,9 +300,6 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::toggleFullScreen:
             setFullScreen (!isFullScreen());
-            break;
-        case CommandIDs::toggleEditArrangement:
-            mainComponent->toggleEditArrangementComponent();
             break;
         case CommandIDs::zoomIn:
             mainComponent->zoomIn();

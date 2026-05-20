@@ -7,7 +7,6 @@
 
 #include <JuceHeader.h>
 
-//==============================================================================
 class AudiumMenuModel  : public juce::MenuBarModel
 {
 public:

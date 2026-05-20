@@ -133,7 +133,11 @@ public:
         if (audiumEngine->getAudioResourceContainer()->getNumAudioResources() == 0) {
             g.setColour (juce::Colours::white.withAlpha(0.75f));
             g.setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
-            g.drawText ("Drop Audio Files Here", getLocalBounds(),
+            auto txt = "Drop Audio Files Here";
+#ifdef JUCE_LINUX
+            txt = "Open the file browser (VIEW -> Open File Browser) and drop audio files here.";
+#endif
+            g.drawText (txt, getLocalBounds(),
                         juce::Justification::centred, true);
         }
     }

@@ -135,8 +135,8 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
             // try to open an audio file
             getAudioTrackContainer()->addAudioFiles({inFile.getFullPathName()},
                                                     0.0,
-                                                    true,
-                                                    callback);
+                                                    callback,
+                                                    true);
             return true;
         }
         else {

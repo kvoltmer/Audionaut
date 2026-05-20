@@ -258,6 +258,16 @@ double PlayListItem::getFadeOut() const
     return 0.0;
 }
 
+void PlayListItem::setClipGain(int channel, double val)
+{
+    audioRegion->setGain(channel, val);
+}
+
+double PlayListItem::getClipGain(int channel) const
+{
+    return audioRegion->getGain(channel);
+}
+
 bool PlayListItem::isRecording() const
 {
     for (auto resource : audioRegion->getAudioResources()) {
