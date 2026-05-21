@@ -493,9 +493,9 @@
                 extraDefs="LINK_PLATFORM_LINUX=1">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source" extraCompilerFlags="-Wno-multichar"
-                       targetName="audionaut_debug"/>
+                       targetName="audionaut"/>
         <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source" extraCompilerFlags="-Wno-multichar"
-                       targetName="audionaut" extraLinkerFlags="-static"/>
+                       targetName="audionaut"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/JUCE/modules"/>
