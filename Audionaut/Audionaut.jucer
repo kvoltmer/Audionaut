@@ -492,8 +492,10 @@
     <LINUX_MAKE targetFolder="Builds/LinuxMakefile" smallIcon="qhU3Rr" bigIcon="gdiYPG"
                 extraDefs="LINK_PLATFORM_LINUX=1">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source" extraCompilerFlags="-Wno-multichar"/>
-        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source" extraCompilerFlags="-Wno-multichar"/>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source" extraCompilerFlags="-Wno-multichar"
+                       targetName="audionaut_debug"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source" extraCompilerFlags="-Wno-multichar"
+                       targetName="audionaut" extraLinkerFlags="-static"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/JUCE/modules"/>
