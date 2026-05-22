@@ -44,7 +44,7 @@ compile:
 
 ```
 cd Audionaut/Builds/LinuxMakefile/
-make -j8
+make CONFIG=Release -j8
 ```
 
 ## TESTS:
