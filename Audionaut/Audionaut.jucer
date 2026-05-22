@@ -455,6 +455,8 @@
         </GROUP>
       </GROUP>
     </GROUP>
+    <FILE id="VlxEsb" name="LICENSE.md" compile="0" resource="0" file="../LICENSE.md"/>
+    <FILE id="dvvj4K" name="README.md" compile="0" resource="0" file="../README.md"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>

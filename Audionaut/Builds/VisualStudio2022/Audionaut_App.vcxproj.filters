@@ -8672,6 +8672,12 @@
     <None Include="..\..\Resources\zoomin.svg">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
     </None>
+    <None Include="..\..\..\LICENSE.md">
+      <Filter>Audionaut</Filter>
+    </None>
+    <None Include="..\..\..\README.md">
+      <Filter>Audionaut</Filter>
+    </None>
     <None Include="..\..\..\Submodules\JUCE\modules\juce_audio_devices\native\asio\LICENSE.txt">
       <Filter>JUCE Modules\juce_audio_devices\native\asio</Filter>
     </None>
