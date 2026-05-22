@@ -4613,8 +4613,8 @@
     <ClInclude Include="..\..\JuceLibraryCode\JuceHeader.h"/>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Catch2Tests\README.txt"/>
     <None Include="..\..\Catch2Tests\CMakeLists.txt"/>
+    <None Include="..\..\Catch2Tests\README.md"/>
     <None Include="..\..\Resources\audionaut_logo_512x512.png"/>
     <None Include="..\..\Resources\audionaut_logo_1024x1024.png"/>
     <None Include="..\..\Resources\zoomin.svg"/>

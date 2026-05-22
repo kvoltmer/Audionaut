@@ -8657,10 +8657,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Catch2Tests\README.txt">
+    <None Include="..\..\Catch2Tests\CMakeLists.txt">
       <Filter>Audionaut\Catch2Tests</Filter>
     </None>
-    <None Include="..\..\Catch2Tests\CMakeLists.txt">
+    <None Include="..\..\Catch2Tests\README.md">
       <Filter>Audionaut\Catch2Tests</Filter>
     </None>
     <None Include="..\..\Resources\audionaut_logo_512x512.png">
