@@ -4618,6 +4618,8 @@
     <None Include="..\..\Resources\audionaut_logo_512x512.png"/>
     <None Include="..\..\Resources\audionaut_logo_1024x1024.png"/>
     <None Include="..\..\Resources\zoomin.svg"/>
+    <None Include="..\..\..\LICENSE.md"/>
+    <None Include="..\..\..\README.md"/>
     <None Include="..\..\..\Submodules\JUCE\modules\juce_audio_devices\native\asio\LICENSE.txt"/>
     <None Include="..\..\..\Submodules\JUCE\modules\juce_audio_devices\native\oboe\src\common\README.md"/>
     <None Include="..\..\..\Submodules\JUCE\modules\juce_audio_devices\native\oboe\src\flowgraph\resampler\README.md"/>

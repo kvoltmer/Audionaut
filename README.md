@@ -1,7 +1,7 @@
 # Audionaut
  
 
-### BUILD
+### CHECKOUT:
 
 Make sure to clone with submodules:
 
@@ -14,17 +14,22 @@ or once cloned do:
 git submodule update --init --recursive
 ```
 
-#### Build with Xcode
+### BUILD:
 
-Open the project in Xcode located in `Audionaut/Audionaut.xcodeproj`
+#### Xcode:
 
-#### Build with Visual Studio 2022
+Open the Xcode project located in `Audionaut/Audionaut.xcodeproj`
 
-Open the solution in Visual Studio located in `Audionaut/Audionaut.sln`
+#### Visual Studio 2022:
 
-#### Build with Linux
+Open the Visual Studio solution located in `Audionaut/Audionaut.sln`
 
-Please be patient. I am working on this.
+#### Linux Makefile:
+
+```
+cd Audionaut/Builds/LinuxMakefile/
+make -j8
+```
 
 
 
