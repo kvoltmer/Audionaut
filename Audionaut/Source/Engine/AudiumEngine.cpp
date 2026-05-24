@@ -224,19 +224,23 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         projectDirectory = file.getParentDirectory();
         
         juce::TemporaryFile temp (file);
-        juce::FileOutputStream out (temp.getFile());
-        if (out.failedToOpen()) {
-            NullCheckedInvocation::invoke (callback, out.getStatus().getErrorMessage().toStdString());
-            return false;
-        }
-        
-        if (writeToStream(out)) {
-            if (temp.overwriteTargetFileWithTemporary()) {
-                currentProjectFile = file;
-                undoManager->clearUndoHistory();
-                                
-                return true;
+        auto success = false;
+        if (auto out = std::unique_ptr<juce::FileOutputStream>(temp.getFile().createOutputStream())) {
+            if (out->failedToOpen()) {
+                NullCheckedInvocation::invoke(callback, out->getStatus().getErrorMessage().toStdString());
+                return false;
             }
+
+            if (writeToStream (*out.get())) {
+                out->flush();
+                success = true;
+            }
+        }
+
+        if (success && temp.overwriteTargetFileWithTemporary()) {
+            currentProjectFile = file;
+            undoManager->clearUndoHistory();
+            return true;
         }
         
         jassertfalse;

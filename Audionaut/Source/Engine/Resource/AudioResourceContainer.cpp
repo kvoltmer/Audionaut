@@ -26,9 +26,11 @@ AudioResourceContainer::~AudioResourceContainer()
 
 const juce::File AudioResourceContainer::getAudioFileDirectory(const juce::File projectRoot)
 {
-    return juce::File(projectRoot.getFullPathName() + File::getSeparatorString() +
-                      "Media" + File::getSeparatorString() +
-                      "Audio" + File::getSeparatorString());
+    if (projectRoot.getFullPathName().isNotEmpty())
+        return juce::File(projectRoot.getFullPathName() + File::getSeparatorString() +
+                          "Media" + File::getSeparatorString() +
+                          "Audio" + File::getSeparatorString());
+    return juce::File();
 }
 
 const juce::File AudioResourceContainer::getAudioFileDirectory()
