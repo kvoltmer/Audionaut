@@ -55,3 +55,6 @@ Audionaut/Catch2Tests/_build
 build
 Audionaut/Catch2Tests/TestFiles/Sessions/testing.audium
 Audionaut/Builds/MacOSX/Audionaut.xcodeproj/project.xcworkspace/xcuserdata/klausvoltmer.xcuserdatad
+Audionaut/Builds/VisualStudio2026/.vs/
+Audionaut/Builds/VisualStudio2026/x64/
+Audionaut/Builds/VisualStudio2026/Audionaut_App.vcxproj.user

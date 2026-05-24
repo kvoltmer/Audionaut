@@ -46,7 +46,7 @@ public:
         minimizeButton->setClickingTogglesState(true);
         
         auto arrowSize = 15.f;
-        Rectangle<float> arrowZone (1.f, 1.f, arrowSize - 2.f, arrowSize - 2.f);
+        juce::Rectangle<float> arrowZone (1.f, 1.f, arrowSize - 2.f, arrowSize - 2.f);
         Point<float> p;
         
         Path path1;

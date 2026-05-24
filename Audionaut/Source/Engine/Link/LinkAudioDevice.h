@@ -53,6 +53,9 @@ private:
     double sampleRate = 0.0;
     int bufferSize = 0;
     std::atomic<bool> byPass;
+
+    juce::AudioBuffer<const float> inBuf;
+	juce::AudioBuffer<float> outBuf;
     
 };
 

@@ -44,13 +44,19 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
         const auto beats = linkEngine->beatAtTime(bufferBeginAtOutput, linkEngine->quantum());
         
         // TODO: hack hack... we only support 2 output channels at this time
-        if (totalNumOutputChannels > 2)
+        if (totalNumOutputChannels > 2) 
             totalNumOutputChannels = 2;
-        
-        juce::AudioBuffer<float> outBuf (outputChannelData, totalNumOutputChannels, numSamples);
+
+		jassert (totalNumOutputChannels > 0);
+		outBuf.setDataToReferTo(outputChannelData, totalNumOutputChannels, numSamples);
         juce::dsp::AudioBlock<float> out (outBuf);
         
-        juce::AudioBuffer<const float> inBuf (inputChannelData, totalNumInputChannels, numSamples);
+
+		if (totalNumInputChannels > 0)
+		    inBuf.setDataToReferTo(inputChannelData, totalNumInputChannels, numSamples);
+        else {
+           // inBuf.setSize(1, numSamples); // dummy input buffer with 1 channel and numSamples samples
+        }
         juce::dsp::AudioBlock<const float> in (inBuf);
     
         juce::dsp::ProcessContextNonReplacing<float> context (in, out);
