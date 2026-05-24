@@ -451,7 +451,7 @@
                 file="Resources/audionaut_logo_512x512.png"/>
           <FILE id="gdiYPG" name="audionaut_logo_1024x1024.png" compile="0" resource="1"
                 file="Resources/audionaut_logo_1024x1024.png"/>
-          <FILE id="zKjXO3" name="zoomin.svg" compile="0" resource="1" file="Resources/zoomin.svg"/>
+          <FILE id="FBwe0J" name="zoomin-inv.svg" compile="0" resource="1" file="Resources/zoomin-inv.svg"/>
         </GROUP>
       </GROUP>
     </GROUP>

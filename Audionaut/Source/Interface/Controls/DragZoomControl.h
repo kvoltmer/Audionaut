@@ -34,7 +34,7 @@ public:
         
 
         // load svg and apply zoom cursor
-        drawable = juce::Drawable::createFromImageData (BinaryData::zoomin_svg, BinaryData::zoomin_svgSize);
+        drawable = juce::Drawable::createFromImageData (BinaryData::zoomininv_svg, BinaryData::zoomininv_svgSize);
         juce::Rectangle<int> rect(0, 0, 17, 17);
         cursorImage = juce::Image(Image::PixelFormat::RGB, rect.getWidth(), rect.getHeight(), true);
         auto g = juce::Graphics(cursorImage);

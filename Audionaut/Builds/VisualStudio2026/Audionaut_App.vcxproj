@@ -4617,7 +4617,7 @@
     <None Include="..\..\Catch2Tests\README.md"/>
     <None Include="..\..\Resources\audionaut_logo_512x512.png"/>
     <None Include="..\..\Resources\audionaut_logo_1024x1024.png"/>
-    <None Include="..\..\Resources\zoomin.svg"/>
+    <None Include="..\..\Resources\zoomin-inv.svg"/>
     <None Include="..\..\..\LICENSE.md"/>
     <None Include="..\..\..\README.md"/>
     <None Include="..\..\..\Submodules\JUCE\modules\juce_audio_devices\native\asio\LICENSE.txt"/>

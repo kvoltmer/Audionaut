@@ -8669,7 +8669,7 @@
     <None Include="..\..\Resources\audionaut_logo_1024x1024.png">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
     </None>
-    <None Include="..\..\Resources\zoomin.svg">
+    <None Include="..\..\Resources\zoomin-inv.svg">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
     </None>
     <None Include="..\..\..\LICENSE.md">
