@@ -181,6 +181,7 @@
 		3EAF65124DEAE2090689ABBB /* RegionComponent.h */ /* RegionComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionComponent.h; path = ../../Source/Interface/Components/RightPanel/RegionComponent.h; sourceTree = SOURCE_ROOT; };
 		3F436BA69588E2039CDFB0F5 /* CoreMIDI.framework */ /* CoreMIDI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMIDI.framework; path = System/Library/Frameworks/CoreMIDI.framework; sourceTree = SDKROOT; };
 		401ADB784677352C68E0DA29 /* AboutWindowComponent.h */ /* AboutWindowComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AboutWindowComponent.h; path = ../../Source/Interface/Dialogs/AboutWindowComponent.h; sourceTree = SOURCE_ROOT; };
+		40B22223993C59F1CDBB666C /* zoomin-inv.svg */ /* zoomin-inv.svg */ = {isa = PBXFileReference; lastKnownFileType = file.svg; name = "zoomin-inv.svg"; path = "../../Resources/zoomin-inv.svg"; sourceTree = SOURCE_ROOT; };
 		40C4B2AFB6AEC8724EBF0CC7 /* SubGroupListBoxModel.h */ /* SubGroupListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SubGroupListBoxModel.h; path = ../../Source/Interface/Models/SubGroupListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		41C5D3B1E81DCFA1BE08D14C /* LevelMeter.cpp */ /* LevelMeter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LevelMeter.cpp; path = ../../Source/Interface/Controls/LevelMeter.cpp; sourceTree = SOURCE_ROOT; };
 		42B5F856AB06EB5D3BEDFA0D /* juce_core */ /* juce_core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_core; path = ../../../Submodules/JUCE/modules/juce_core; sourceTree = SOURCE_ROOT; };
@@ -277,7 +278,6 @@
 		943D98F56E5E829F41F6B3C8 /* Icon.icns */ /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = file.icns; name = Icon.icns; path = Icon.icns; sourceTree = SOURCE_ROOT; };
 		959C9EE2E0644995C7EAD197 /* FooterComponent.h */ /* FooterComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FooterComponent.h; path = ../../Source/Interface/Components/RightPanel/FooterComponent.h; sourceTree = SOURCE_ROOT; };
 		963735C0B1CDBB40A2BD217B /* juce_graphics */ /* juce_graphics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_graphics; path = ../../../Submodules/JUCE/modules/juce_graphics; sourceTree = SOURCE_ROOT; };
-		96AC39DC12BE49CADA52A77D /* zoomin.svg */ /* zoomin.svg */ = {isa = PBXFileReference; lastKnownFileType = file.svg; name = zoomin.svg; path = ../../Resources/zoomin.svg; sourceTree = SOURCE_ROOT; };
 		97685BF53A801E7DFE09A038 /* include_juce_graphics_Sheenbidi.c */ /* include_juce_graphics_Sheenbidi.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = include_juce_graphics_Sheenbidi.c; path = ../../JuceLibraryCode/include_juce_graphics_Sheenbidi.c; sourceTree = SOURCE_ROOT; };
 		98761E06E3AA2ACF7AD31005 /* AudioRegion.cpp */ /* AudioRegion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegion.cpp; path = ../../Source/Engine/Region/AudioRegion.cpp; sourceTree = SOURCE_ROOT; };
 		99CF1EA9B471BEDBBEEAACCB /* AudiumMainWindow.cpp */ /* AudiumMainWindow.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumMainWindow.cpp; path = ../../Source/Application/AudiumMainWindow.cpp; sourceTree = SOURCE_ROOT; };
@@ -883,7 +883,7 @@
 			children = (
 				0D1CB76F68824962A22C954B,
 				63607F26EE0959076C19A362,
-				96AC39DC12BE49CADA52A77D,
+				40B22223993C59F1CDBB666C,
 			);
 			name = Resources;
 			sourceTree = "<group>";

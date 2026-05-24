@@ -2624,17 +2624,58 @@ static const unsigned char temp_binary_data_1[] =
 
 const char* audionaut_logo_1024x1024_png = (const char*) temp_binary_data_1;
 
-//================== zoomin.svg ==================
+//================== zoomin-inv.svg ==================
 static const unsigned char temp_binary_data_2[] =
-"<svg width=\"256\" height=\"256\" xmlns=\"http://www.w3.org/2000/svg\">\n"
-"    <g fill-rule=\"evenodd\">\n"
-"        <path d=\"M120.46 158.29c-30.166 8.65-61.631-8.792-70.281-38.957-8.65-30.165 8.792-61.63 38.957-70.28 30.165-8.65 61.63 8.792 70.28 38.957 4.417 15.403-1.937 38.002-9.347 50.872-.614 1.067 59.212 53.064 59.212 53.064l-17.427 17.63-53.514-56.7"
-"2s-10.233 3.241-17.88 5.434zM104 144c22.091 0 40-17.909 40-40s-17.909-40-40-40-40 17.909-40 40 17.909 40 40 40z\"/>\n"
-"        <path d=\"M111.912 80.047h-15.95v16.037H80v15.992h15.962V128h15.95v-15.924H128V96.084h-16.088z\"/>\n"
-"    </g>\n"
+"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+"<svg\n"
+"   width=\"256\"\n"
+"   height=\"256\"\n"
+"   version=\"1.1\"\n"
+"   id=\"svg2\"\n"
+"   sodipodi:docname=\"zoomin-inv.svg\"\n"
+"   inkscape:version=\"1.4.4 (dcaf3e7, 2026-05-05)\"\n"
+"   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n"
+"   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n"
+"   xmlns=\"http://www.w3.org/2000/svg\"\n"
+"   xmlns:svg=\"http://www.w3.org/2000/svg\">\n"
+"  <defs\n"
+"     id=\"defs2\" />\n"
+"  <sodipodi:namedview\n"
+"     id=\"namedview2\"\n"
+"     pagecolor=\"#ffffff\"\n"
+"     bordercolor=\"#000000\"\n"
+"     borderopacity=\"0.25\"\n"
+"     inkscape:showpageshadow=\"2\"\n"
+"     inkscape:pageopacity=\"0.0\"\n"
+"     inkscape:pagecheckerboard=\"0\"\n"
+"     inkscape:deskcolor=\"#d1d1d1\"\n"
+"     showgrid=\"false\"\n"
+"     inkscape:zoom=\"2.7774558\"\n"
+"     inkscape:cx=\"128.5349\"\n"
+"     inkscape:cy=\"128.35488\"\n"
+"     inkscape:window-width=\"1415\"\n"
+"     inkscape:window-height=\"766\"\n"
+"     inkscape:window-x=\"0\"\n"
+"     inkscape:window-y=\"30\"\n"
+"     inkscape:window-maximized=\"0\"\n"
+"     inkscape:current-layer=\"svg2\" />\n"
+"  <g\n"
+"     fill-rule=\"evenodd\"\n"
+"     id=\"g2\"\n"
+"     style=\"fill:none;fill-opacity:1\">\n"
+"    <path\n"
+"       d=\"m 120.46,158.29 c -30.166,8.65 -61.631,-8.792 -70.281,-38.957 -8.65,-30.165 8.792,-61.63 38.957,-70.28 30.165,-8.65 61.63,8.792 70.28,38.957 4.417,15.403 -1.937,38.002 -9.347,50.872 -0.614,1.067 59.212,53.064 59.212,53.064 l -17.427,17.63 "
+"-53.514,-56.72 c 0,0 -10.233,3.241 -17.88,5.434 z M 104,144 c 22.091,0 40,-17.909 40,-40 0,-22.091 -17.909,-40 -40,-40 -22.091,0 -40,17.909 -40,40 0,22.091 17.909,40 40,40 z\"\n"
+"       id=\"path1\"\n"
+"       style=\"display:inline;mix-blend-mode:color;fill:#ffffff;fill-opacity:1\" />\n"
+"    <path\n"
+"       d=\"M 111.912,80.047 H 95.962 V 96.084 H 80 v 15.992 H 95.962 V 128 h 15.95 V 112.076 H 128 V 96.084 h -16.088 z\"\n"
+"       id=\"path2\"\n"
+"       style=\"display:inline;mix-blend-mode:color;fill:#ffffff;fill-opacity:1;opacity:1\" />\n"
+"  </g>\n"
 "</svg>\n";
 
-const char* zoomin_svg = (const char*) temp_binary_data_2;
+const char* zoomininv_svg = (const char*) temp_binary_data_2;
 
 
 const char* getNamedResource (const char* resourceNameUTF8, int& numBytes);
@@ -2650,7 +2691,7 @@ const char* getNamedResource (const char* resourceNameUTF8, int& numBytes)
     {
         case 0x4a961181:  numBytes = 54720; return audionaut_logo_512x512_png;
         case 0x6c164825:  numBytes = 134349; return audionaut_logo_1024x1024_png;
-        case 0xfebd99dd:  numBytes = 579; return zoomin_svg;
+        case 0x7a886dde:  numBytes = 1882; return zoomininv_svg;
         default: break;
     }
 
@@ -2662,14 +2703,14 @@ const char* namedResourceList[] =
 {
     "audionaut_logo_512x512_png",
     "audionaut_logo_1024x1024_png",
-    "zoomin_svg"
+    "zoomininv_svg"
 };
 
 const char* originalFilenames[] =
 {
     "audionaut_logo_512x512.png",
     "audionaut_logo_1024x1024.png",
-    "zoomin.svg"
+    "zoomin-inv.svg"
 };
 
 const char* getNamedResourceOriginalFilename (const char* resourceNameUTF8);
