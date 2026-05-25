@@ -45,7 +45,7 @@ namespace ProjectInfo
 {
     const char* const  projectName    = "Audionaut";
     const char* const  companyName    = "voltmer-systems";
-    const char* const  versionString  = "1.1.2";
-    const int          versionNumber  = 0x10102;
+    const char* const  versionString  = "1.1.3";
+    const int          versionNumber  = 0x10103;
 }
 #endif
