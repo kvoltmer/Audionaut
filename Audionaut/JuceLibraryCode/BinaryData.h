@@ -15,7 +15,7 @@ namespace BinaryData
     const int            audionaut_logo_1024x1024_pngSize = 134349;
 
     extern const char*   zoomininv_svg;
-    const int            zoomininv_svgSize = 1882;
+    const int            zoomininv_svgSize = 1929;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
     const int namedResourceListSize = 3;
