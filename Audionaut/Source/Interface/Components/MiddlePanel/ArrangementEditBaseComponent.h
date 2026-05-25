@@ -85,23 +85,17 @@ public:
         audioTrackListBox->getViewport()->getViewedComponent()->addAndMakeVisible(gridView.get());
         gridView->toBack();
      
-        // loop start postition view
+
+        // loop postition view
         auto transportLoop = audiumEngine->getPlayListScheduler()->getTransportLoop();
         
-        loopStartPositionMarker = std::make_unique<PositionMarker>(zoomHandler);
-        addAndMakeVisible(loopStartPositionMarker.get());
-        loopStartPositionMarker->setColour(Colours::white.withAlpha (0.5f));
-        loopStartPositionMarker->onUpdatePosition = [transportLoop] (auto context) {
-            return transportLoop->getLoopPositionRange(context).getStart();
+        loopRangeMarker = std::make_unique<PositionMarker>(zoomHandler);
+        addAndMakeVisible(loopRangeMarker.get());
+        loopRangeMarker->setColour(Colours::black.withAlpha (0.2f));
+        loopRangeMarker->onUpdateRange = [transportLoop] (auto context) {
+            return transportLoop->getLoopPositionRange(context);
         };
-        
-        // loop end postition view
-        loopEndPositionMarker = std::make_unique<PositionMarker>(zoomHandler);
-        addAndMakeVisible(loopEndPositionMarker.get());
-        loopEndPositionMarker->setColour(Colours::white.withAlpha (0.5f));
-        loopEndPositionMarker->onUpdatePosition = [transportLoop] (auto context) {
-            return transportLoop->getLoopPositionRange(context).getEnd();
-        };
+
         
         // play postition view (on top)
         playPositionMarker = std::make_unique<PositionMarker>(zoomHandler);
@@ -151,8 +145,8 @@ public:
         
         audioTrackListBox->setBounds(bounds);
         playPositionMarker->setBounds(bounds);
-        loopStartPositionMarker->setBounds(bounds);
-        loopEndPositionMarker->setBounds(bounds);
+        
+        loopRangeMarker->setBounds(bounds);
     }
     
     void changeListenerCallback (ChangeBroadcaster* source) override
@@ -168,10 +162,10 @@ public:
         regionSelector->updateFromEngine();
         arrangementOverview->updateFromEngine();
         dragZoomControl->updateFromEngine();
-        
+
+
         auto loopActive = audiumEngine->getPlayListScheduler()->getTransportLoop()->isLoopActive();
-        loopStartPositionMarker->setVisible(loopActive);
-        loopEndPositionMarker->setVisible(loopActive);
+        loopRangeMarker->setVisible(loopActive);
         
         audioTrackListBox->getHeaderComponent()->resized();
     }
@@ -269,7 +263,7 @@ public:
 
 protected:
     
-    std::shared_ptr<audium::AudiumEngine>               audiumEngine;
+    std::shared_ptr<audium::AudiumEngine>       audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
     
@@ -277,8 +271,8 @@ protected:
     std::shared_ptr<AudioTrackListBox>          audioTrackListBox;
     std::unique_ptr<AudioTrackListBoxModel>     audioTrackListBoxModel;
     std::unique_ptr<PositionMarker>             playPositionMarker;
-    std::unique_ptr<PositionMarker>             loopStartPositionMarker;
-    std::unique_ptr<PositionMarker>             loopEndPositionMarker;
+    std::unique_ptr<PositionMarker>             loopRangeMarker;
+
     std::unique_ptr<DragZoomControl>            dragZoomControl;
     std::unique_ptr<ArrangementOverview>        arrangementOverview;
     
