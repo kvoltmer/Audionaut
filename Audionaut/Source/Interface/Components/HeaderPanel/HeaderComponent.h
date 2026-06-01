@@ -29,9 +29,7 @@ public:
     std::function<void()> onRightPanelButtonClick;
     
 private:
-    
-    void configureSlider(juce::Slider* slider);
-    
+        
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
 
     std::unique_ptr<juce::TextButton> linkButton;

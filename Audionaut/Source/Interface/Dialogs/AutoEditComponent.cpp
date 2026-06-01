@@ -5,166 +5,211 @@
 
 
 #include "AutoEditComponent.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/PlayList/PlayListItem.h"
 
-
-
-//==============================================================================
-AutoEditComponent::AutoEditComponent ()
+AutoEditComponent::AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
+    audiumEngine(audiumEngine_)
 {
 
+    // Selected audio track
+    selectedTrack = std::make_unique<juce::ComboBox>();
+    addAndMakeVisible (selectedTrack.get());
 
-    juce__label.reset (new juce::Label ("new label",
-                                        TRANS ("Assemble Duration (Seconds)")));
-    addAndMakeVisible (juce__label.get());
-    juce__label->setFont (juce::FontOptions (12.00f));
-    juce__label->setJustificationType (juce::Justification::centredLeft);
-    juce__label->setEditable (false, false, false);
-    juce__label->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-    juce__label->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
+    selectedTrackLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Audio track:"));
+    selectedTrackLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+    selectedTrackLabel->attachToComponent (selectedTrack.get(), true);
+    
+    // Selected playlist item
+    selectedPlaylistItem = std::make_unique<juce::ComboBox>();
+    addAndMakeVisible (selectedPlaylistItem.get());
 
-    juce__label->setBounds (0, 39, 150, 24);
+    selectedPlaylistItemLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Audio clip:"));
+    selectedPlaylistItemLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+    selectedPlaylistItemLabel->attachToComponent (selectedPlaylistItem.get(), true);
+    
 
-    juce__label2.reset (new juce::Label ("new label",
-                                         TRANS ("Number of Segments")));
-    addAndMakeVisible (juce__label2.get());
-    juce__label2->setFont (juce::FontOptions (12.00f));
-    juce__label2->setJustificationType (juce::Justification::centredLeft);
-    juce__label2->setEditable (false, false, false);
-    juce__label2->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-    juce__label2->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
-
-    juce__label2->setBounds (0, 73, 150, 24);
-
-    juce__label3.reset (new juce::Label ("new label",
-                                         TRANS ("Min. Segment Length")));
-    addAndMakeVisible (juce__label3.get());
-    juce__label3->setFont (juce::FontOptions (12.00f));
-    juce__label3->setJustificationType (juce::Justification::centredLeft);
-    juce__label3->setEditable (false, false, false);
-    juce__label3->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-    juce__label3->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
-
-    juce__label3->setBounds (0, 107, 150, 24);
-
-    juce__label4.reset (new juce::Label ("new label",
-                                         TRANS ("Max. Segment Length")));
-    addAndMakeVisible (juce__label4.get());
-    juce__label4->setFont (juce::FontOptions (12.00f));
-    juce__label4->setJustificationType (juce::Justification::centredLeft);
-    juce__label4->setEditable (false, false, false);
-    juce__label4->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-    juce__label4->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
-
-    juce__label4->setBounds (0, 141, 150, 24);
-
-    duration.reset (new juce::TextEditor ("duration"));
-    addAndMakeVisible (duration.get());
-    duration->setMultiLine (false);
-    duration->setReturnKeyStartsNewLine (false);
-    duration->setReadOnly (false);
-    duration->setScrollbarsShown (true);
-    duration->setCaretVisible (true);
-    duration->setPopupMenuEnabled (true);
-    duration->setText (TRANS ("180"));
-
-    duration->setBounds (149, 39, 150, 24);
-
-    numSegments.reset (new juce::TextEditor ("new text editor"));
+    // Number of segments
+    numSegments = std::make_unique<juce::Slider>("Num Segments Slider Font 13");
     addAndMakeVisible (numSegments.get());
-    numSegments->setMultiLine (false);
-    numSegments->setReturnKeyStartsNewLine (false);
-    numSegments->setReadOnly (false);
-    numSegments->setScrollbarsShown (true);
-    numSegments->setCaretVisible (true);
-    numSegments->setPopupMenuEnabled (true);
-    numSegments->setText (TRANS ("20"));
+    AudiumLookAndFeel::configureSlider(numSegments.get());
+    numSegments->setColour (juce::Slider::backgroundColourId, juce::Colours::black);
+    numSegments->setVelocityModeParameters(1.0, 1, 0.01);
+    numSegments->setNormalisableRange(juce::NormalisableRange<double>(0, 16000, 1));
+    numSegments->onValueChange = [this]() {
+    };
+    numSegments->setTextValueSuffix (" segments");
+    numSegments->setValue(20.0, juce::dontSendNotification);
+    numSegments->updateText();
+    
+    numSegmentsLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Cut up into number of:"));
+    numSegmentsLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+    numSegmentsLabel->attachToComponent (numSegments.get(), true);
 
-    numSegments->setBounds (149, 73, 150, 24);
 
-    segmentMin.reset (new juce::TextEditor ("new text editor"));
+    // minimum length
+    segmentMin = std::make_unique<juce::Slider>("Min Segments Slider Font 13");
     addAndMakeVisible (segmentMin.get());
-    segmentMin->setMultiLine (false);
-    segmentMin->setReturnKeyStartsNewLine (false);
-    segmentMin->setReadOnly (true);
-    segmentMin->setScrollbarsShown (true);
-    segmentMin->setCaretVisible (false);
-    segmentMin->setPopupMenuEnabled (true);
-    segmentMin->setText (TRANS ("2.0"));
+    AudiumLookAndFeel::configureSlider(segmentMin.get());
+    segmentMin->setColour (juce::Slider::backgroundColourId, juce::Colours::black);
+    segmentMin->setVelocityModeParameters(1.0, 1, 0.1);
+    segmentMin->setTextValueSuffix (" seconds");
+    segmentMin->setNormalisableRange(juce::NormalisableRange<double>(0.1, 60.0, 1));
+    segmentMin->onValueChange = [this]() {
+    };
+    segmentMin->setValue(2.0, juce::dontSendNotification);
+    segmentMin->updateText();
+    
+    segmentMinLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Minimum segment length:"));
+    segmentMinLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+    segmentMinLabel->attachToComponent (segmentMin.get(), true);
+    
 
-    segmentMin->setBounds (149, 107, 150, 24);
-
-    segmentMax.reset (new juce::TextEditor ("new text editor"));
+    // maximum length
+    segmentMax = std::make_unique<juce::Slider>("Max Segments Slider Font 13");
     addAndMakeVisible (segmentMax.get());
-    segmentMax->setMultiLine (false);
-    segmentMax->setReturnKeyStartsNewLine (false);
-    segmentMax->setReadOnly (true);
-    segmentMax->setScrollbarsShown (true);
-    segmentMax->setCaretVisible (false);
-    segmentMax->setPopupMenuEnabled (true);
-    segmentMax->setText (TRANS ("60.0"));
+    AudiumLookAndFeel::configureSlider(segmentMax.get());
+    segmentMax->setColour (juce::Slider::backgroundColourId, juce::Colours::black);
+    segmentMax->setVelocityModeParameters(1.0, 1, 0.01);
+    segmentMax->setTextValueSuffix (" seconds");
+    segmentMax->setNormalisableRange(juce::NormalisableRange<double>(0, 600, 1));
+    segmentMax->onValueChange = [this]() {
+    };
+    segmentMax->setValue(60.0, juce::dontSendNotification);
+    segmentMax->updateText();
+    
+    segmentMaxLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Maximum segment length:"));
+    segmentMaxLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+    segmentMaxLabel->attachToComponent (segmentMax.get(), true);
 
-    segmentMax->setBounds (149, 141, 150, 24);
-
-    mode.reset (new juce::ComboBox ("new combo box"));
-    addAndMakeVisible (mode.get());
-    mode->setEditableText (false);
-    mode->setJustificationType (juce::Justification::centredLeft);
-    mode->setTextWhenNothingSelected (TRANS ("Random"));
-    mode->setTextWhenNoChoicesAvailable (TRANS ("(no choices)"));
-    mode->addItem (TRANS ("Random"), 1);
-    mode->addItem (TRANS ("Sequential"), 2);
-    mode->addSeparator();
-    mode->addListener (this);
-
-    mode->setBounds (150, 5, 150, 24);
-
-    juce__label5.reset (new juce::Label ("new label",
-                                         TRANS ("Assemble Mode")));
-    addAndMakeVisible (juce__label5.get());
-    juce__label5->setFont (juce::FontOptions (12.00f));
-    juce__label5->setJustificationType (juce::Justification::centredLeft);
-    juce__label5->setEditable (false, false, false);
-    juce__label5->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-    juce__label5->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
-
-    juce__label5->setBounds (0, 5, 150, 24);
-
-
-    setSize (305, 170);
-
-
-}
-
-AutoEditComponent::~AutoEditComponent()
-{
-    juce__label = nullptr;
-    juce__label2 = nullptr;
-    juce__label3 = nullptr;
-    juce__label4 = nullptr;
-    duration = nullptr;
-    numSegments = nullptr;
-    segmentMin = nullptr;
-    segmentMax = nullptr;
-    mode = nullptr;
-    juce__label5 = nullptr;
-
-}
-
-void AutoEditComponent::paint (juce::Graphics& g)
-{
+    setSize (500, 250);
+    
+    
+    selectedTrack->addListener(this);
 }
 
 void AutoEditComponent::resized()
 {
+    juce::Rectangle<int> r(proportionOfWidth(0.5f), 20, proportionOfWidth(0.4f), 3000);
+    
+    const int h = 23;
+    const int space = h / 4;
+    
+    if (selectedTrack != nullptr) {
+        selectedTrack->setBounds (r.removeFromTop (h));
+        r.removeFromTop (space);
+    }
+    
+    if (selectedPlaylistItem != nullptr) {
+        selectedPlaylistItem->setBounds (r.removeFromTop (h));
+        r.removeFromTop (space);
+    }
+    
+    if (numSegments != nullptr) {
+        numSegments->setBounds (r.removeFromTop (h));
+        r.removeFromTop (space);
+    }
+    
+    if (segmentMin != nullptr) {
+        segmentMin->setBounds (r.removeFromTop (h));
+        r.removeFromTop (space);
+    }
+    
+    if (segmentMax != nullptr) {
+        segmentMax->setBounds (r.removeFromTop (h));
+        r.removeFromTop (space);
+    }
 }
+
+void AutoEditComponent::update()
+{
+    updateSelectedTrack();
+    updateSelectedPlaylistItem();
+}
+
+const audium::PlayListItem* AutoEditComponent::getSelectedPlaylistItem() const
+{
+    auto selectedObjects = audiumEngine->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects();
+    for (auto object : selectedObjects) {
+        if (auto playListItem = dynamic_cast<audium::PlayListItem*>(object.get())) {
+            return playListItem;
+        }
+    }
+    return nullptr;
+}
+
+void AutoEditComponent::updateSelectedTrack()
+{
+    selectedTrack->removeListener(this);
+    
+    selectedTrack->clear();
+    
+    for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks()) {
+        selectedTrack->addItem(track->getAudioTrackName(), track->getId() + 1);
+    }
+    
+    if (selectedTrack->getNumItems() > 0) {
+        
+        if (auto selectedItem = getSelectedPlaylistItem()) {
+            auto trackId = selectedItem->getRegion()->getAudioTrack()->getId();
+            selectedTrack->setSelectedId(trackId + 1, juce::dontSendNotification);
+        }
+        else {
+            selectedTrack->setSelectedId(1, juce::dontSendNotification);
+        }
+    }
+    else {
+        selectedTrack->setText("n/a", juce::dontSendNotification);
+    }
+    
+    selectedTrack->addListener(this);
+}
+
+void  AutoEditComponent::updateSelectedPlaylistItem()
+{
+    
+    
+    selectedPlaylistItem->clear();
+    auto minLength = 1.0;
+    if (auto selectedItem = getSelectedPlaylistItem()) {
+        auto track = selectedItem->getRegion()->getAudioTrack();
+        for (auto item : track->getPlayListContainer()->getPlayListItems()) {
+            if (item->getRegion()->getRegionData(audium::seconds).getLength() >= minLength) {
+    
+                selectedPlaylistItem->addItem(item->getRegion()->getName(), item->getId() + 1);
+            }
+        }
+        selectedPlaylistItem->setSelectedId(selectedItem->getId() + 1, juce::dontSendNotification);
+    }
+    else {
+        // fallback to default track
+        if (auto track = audiumEngine->getAudioTrackContainer()->getDefaultGroup()) {
+            for (auto item : track->getPlayListContainer()->getPlayListItems()) {
+                if (item->getRegion()->getRegionData(audium::seconds).getLength() >= minLength) {
+                    selectedPlaylistItem->addItem(item->getRegion()->getName(), item->getId() + 1);
+                }
+            }
+        }
+        
+        if (selectedPlaylistItem->getNumItems() > 0) {
+            selectedPlaylistItem->setSelectedId(1, juce::dontSendNotification);
+        }
+        else {
+            selectedPlaylistItem->setText("n/a", juce::dontSendNotification);
+        }
+    }
+}
+
 
 void AutoEditComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
 {
-    if (comboBoxThatHasChanged == mode.get())
-    {
-
+    if (comboBoxThatHasChanged == selectedTrack.get()) {
+        auto trackId = selectedTrack->getSelectedId() - 1;
+        if (auto track = audiumEngine->getAudioTrackContainer()->getAudioTrack(trackId)) {
+            track->getAudioTrackContainer().getSelectionManager()->deselectAll();
+            track->setSelected(true, false);
+            updateSelectedPlaylistItem();
+        }
     }
-
 }
-
-

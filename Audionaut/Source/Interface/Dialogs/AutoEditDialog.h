@@ -18,37 +18,34 @@ class AutoEditDialog
 {
     
 public:
-    AutoEditDialog()
+    AutoEditDialog(std::shared_ptr<audium::AudiumEngine> audiumEngine_)
     {
-        autoEditComponent.reset(new AutoEditComponent());
+        autoEditComponent = std::make_unique<AutoEditComponent>(audiumEngine_);
     }
     
-    void invokeAutoEdit(std::shared_ptr<audium::AudiumEngine> engine, std::shared_ptr<MainComponent> component)
+    void invoke(std::shared_ptr<audium::AudiumEngine> engine, std::shared_ptr<MainComponent> component)
     {
-        invokeAutoEditInternal(engine, component);
+        invokeInternal(engine, component);
     }
     
 private:
     
     static String getClassNameFieldName()  { return "Auto Edit Name"; }
     
-    void invokeAutoEditInternal(std::shared_ptr<audium::AudiumEngine> engine,
-                                std::shared_ptr<MainComponent> component)
+    void invokeInternal(std::shared_ptr<audium::AudiumEngine> engine,
+                        std::shared_ptr<MainComponent> component)
     {
         audiumEngine = engine;
         mainComponent = component;
-        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Auto Edit Parameters:"),
-                                                          "",
+        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Auto Edit"), "",
                                                           MessageBoxIconType::NoIcon, mainComponent.get());
-
+        asyncAlertWindow->setMessage("Analyze and automatically edit the selected audio clip.");
         asyncAlertWindow->addCustomComponent(autoEditComponent.get());
+        autoEditComponent->update();
         asyncAlertWindow->addButton (TRANS ("Apply"),  1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"), 0, KeyPress (KeyPress::escapeKey));
-        
 
-
-
-        auto resultCallback = [safeThis = WeakReference<AutoEditDialog> { this }, this] (int result)
+        auto resultCallback = [safeThis = WeakReference<AutoEditDialog> { this }] (int result)
         {
             if (safeThis == nullptr)
                 return;
@@ -61,24 +58,13 @@ private:
             if (result == 0)
                 return;
             
-            auto mode = autoEditComponent->getEditMode().toString().getIntValue();
             audium::AutoEditConfig config;
-            switch (mode) {
-                case 1:
-                    config.mode = "random";
-                    break;
-                case 2:
-                    config.mode = "sequential";
-                    break;
-                default:
-                    config.mode = "random";
-                    break;
-            }
             
-            config.duration = autoEditComponent->getDuration().toString().getDoubleValue();
-            config.numSegments = autoEditComponent->getNumSegments().toString().getIntValue();
-            config.minSegLength = autoEditComponent->getMinSegmentLength().toString().getDoubleValue();
-            config.maxSegLength = autoEditComponent->getMaxSegmentLength().toString().getDoubleValue();
+            config.mode = "random";
+            config.duration = safeThis->autoEditComponent->getDuration();
+            config.numSegments = safeThis->autoEditComponent->getNumSegments();
+            config.minSegLength = safeThis->autoEditComponent->getMinSegmentLength();
+            config.maxSegLength = safeThis->autoEditComponent->getMaxSegmentLength();
         
             safeThis->autoEdit(config);
         };

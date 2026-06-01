@@ -51,6 +51,57 @@ public:
                                            float maxSliderPos,
                                            const juce::Slider::SliderStyle style, juce::Slider& slider) override;
     
+    static void configureSlider(juce::Slider* slider)
+    {
+        slider->setSliderStyle(juce::Slider::LinearBarVertical);
+        slider->setVelocityBasedMode(true);
+        slider->setDoubleClickReturnValue(true, 0.0);
+        slider->setColour(juce::Slider::trackColourId, juce::Colours::transparentBlack);
+        slider->setColour (juce::Slider::backgroundColourId, juce::Colours::grey);
+    }
+    
+    // linear scaling
+    static const double scale_linear(const double dVal, const double dMin, const double dMax)
+    {
+        return dMin + (dVal * abs(dMax - dMin));
+    }
+
+    // reverse linear scaling
+    static double reverse_linear(const double dVal, const double dMin, const double dMax)
+    {
+        return abs(dVal - dMin) / abs(dMax - dMin);
+    }
+    
+    static void configureVolumeSlider(juce::Slider *slider, double dbMax = 6.0)
+    {
+        slider->setSliderStyle(juce::Slider::LinearBarVertical);
+        slider->setColour(juce::Slider::textBoxTextColourId, juce::Colours::white);
+        slider->setColour(juce::Slider::trackColourId, juce::Colours::transparentBlack);
+        
+        slider->setTextValueSuffix (" dB");
+        slider->setNumDecimalPlacesToDisplay(1);
+        slider->setDoubleClickReturnValue(true, 0.0);
+        slider->setVelocityModeParameters(1.0, 1, 0.05);
+        slider->setVelocityBasedMode(true);
+        
+        auto scaled2UnscaledFunc = [](auto min, auto max, auto scaled) {
+            return scale_linear(pow(scaled, 0.33333333), min, max);
+        };
+        auto unscaled2ScaledFunc = [](auto min, auto max, auto unscaled) {
+            return pow(reverse_linear(unscaled, min, max), 3.0);
+        };
+        slider->setNormalisableRange(juce::NormalisableRange<double>(-80.0, dbMax,
+                                                               scaled2UnscaledFunc,
+                                                               unscaled2ScaledFunc));
+        
+        slider->textFromValueFunction = [](auto val) {
+            if (val <= -80.0)
+                return juce::String("-") + juce::String(juce::CharPointer_UTF8 ("\xe2\x88\x9e"));
+            return juce::String(val, 1);
+        };
+        slider->updateText();
+    }
+    
     // Table
     virtual void drawTableHeaderColumn (juce::Graphics& g, juce::TableHeaderComponent& header,
                                                 const juce::String& columnName, int /*columnId*/,

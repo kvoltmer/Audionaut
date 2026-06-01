@@ -312,6 +312,8 @@ PopupMenu AudiumApplication::createEditMenu()
     menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::splitRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::cleanupRegions);
+    menu.addSeparator();
+    menu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
     
 #if AUTO_EDIT_ENABLED
     menu.addSeparator();

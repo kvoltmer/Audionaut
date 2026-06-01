@@ -44,7 +44,7 @@ public:
         // VOLUME
         volumeSlider = std::make_unique<SliderControl>(juce::String(), regionSelector);
         addAndMakeVisible(volumeSlider.get());
-        ChannelComponent::configureVolumeSlider(volumeSlider.get(), 36.0);
+        AudiumLookAndFeel::configureVolumeSlider(volumeSlider.get(), 36.0);
         
         
     }

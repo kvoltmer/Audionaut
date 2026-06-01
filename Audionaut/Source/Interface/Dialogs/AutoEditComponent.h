@@ -7,43 +7,45 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/AudiumEngine.h"
 
-class AutoEditComponent  : public juce::Component,
-                           public juce::ComboBox::Listener
+class AutoEditComponent  : public juce::Component, public juce::ComboBox::Listener
 {
 public:
-    AutoEditComponent ();
-    ~AutoEditComponent() override;
+    AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine);
+    ~AutoEditComponent() override = default;
 
 
-    juce::Value& getDuration() const { return duration->getTextValue(); }
-    juce::Value& getNumSegments() const { return numSegments->getTextValue(); }
-    juce::Value& getMinSegmentLength() const { return segmentMin->getTextValue(); }
-    juce::Value& getMaxSegmentLength() const { return segmentMax->getTextValue(); }
-    juce::Value& getEditMode() const { return mode->getSelectedIdAsValue(); }
+    int getDuration() const { return 180; }
+    int getNumSegments() const { return static_cast<int>(numSegments->getValue()); }
+    double getMinSegmentLength() const { return segmentMin->getValue(); }
+    double getMaxSegmentLength() const { return segmentMax->getValue(); }
 
-    void paint (juce::Graphics& g) override;
     void resized() override;
+
+    void update();
+    
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override;
-
-
-
+    
 private:
 
+    const audium::PlayListItem* getSelectedPlaylistItem() const;
+    void updateSelectedTrack();
+    void updateSelectedPlaylistItem();
 
-    //==============================================================================
-    std::unique_ptr<juce::Label> juce__label;
-    std::unique_ptr<juce::Label> juce__label2;
-    std::unique_ptr<juce::Label> juce__label3;
-    std::unique_ptr<juce::Label> juce__label4;
-    std::unique_ptr<juce::TextEditor> duration;
-    std::unique_ptr<juce::TextEditor> numSegments;
-    std::unique_ptr<juce::TextEditor> segmentMin;
-    std::unique_ptr<juce::TextEditor> segmentMax;
-    std::unique_ptr<juce::ComboBox> mode;
-    std::unique_ptr<juce::Label> juce__label5;
+    std::shared_ptr<audium::AudiumEngine> audiumEngine;
+
+    
+    std::unique_ptr<juce::ComboBox> selectedTrack;
+    std::unique_ptr<juce::Label> selectedTrackLabel;
+    
+    std::unique_ptr<juce::ComboBox> selectedPlaylistItem;
+    std::unique_ptr<juce::Label> selectedPlaylistItemLabel;
+    
+    
+    std::unique_ptr<juce::Slider> numSegments, segmentMin, segmentMax;
+    std::unique_ptr<juce::Label> numSegmentsLabel, segmentMinLabel, segmentMaxLabel;
 
 
-    //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AutoEditComponent)
 };

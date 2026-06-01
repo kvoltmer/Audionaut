@@ -40,7 +40,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     // Tempo
     tempoSlider = std::make_unique<juce::Slider>("Tempo Slider Font 13");
     addAndMakeVisible(tempoSlider.get());
-    configureSlider(tempoSlider.get());
+    AudiumLookAndFeel::configureSlider(tempoSlider.get());
     tempoSlider->setVelocityModeParameters(1.0, 2, 0.001);
     tempoSlider->setNormalisableRange(NormalisableRange<double>(30, 999, 0.01));
     auto tempoProvider = audiumEngine->getPlayListScheduler()->getTempoProvider().get();
@@ -51,7 +51,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     // Bars
     barsSlider = std::make_unique<juce::Slider>("Bars Slider Font 13");
     addAndMakeVisible (barsSlider.get());
-    configureSlider(barsSlider.get());
+    AudiumLookAndFeel::configureSlider(barsSlider.get());
     barsSlider->setVelocityModeParameters(1.0, 1, 0.01);
     barsSlider->setNormalisableRange(NormalisableRange<double>(0, 1000, 1));
     barsSlider->onDragStart = [this]() {
@@ -79,7 +79,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     // Beats
     beatsSlider = std::make_unique<juce::Slider>("Beats Slider Font 13");
     addAndMakeVisible (beatsSlider.get());
-    configureSlider(beatsSlider.get());
+    AudiumLookAndFeel::configureSlider(beatsSlider.get());
     beatsSlider->setVelocityModeParameters(1.0, 1, 0.01);
     beatsSlider->setNormalisableRange(NormalisableRange<double>(0, 4000, 1));
     beatsSlider->onDragStart = [this]() {
@@ -107,7 +107,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     // Clicks
     clicksSlider = std::make_unique<juce::Slider>("Clocks Slider Font 13");
     addAndMakeVisible (clicksSlider.get());
-    configureSlider(clicksSlider.get());
+    AudiumLookAndFeel::configureSlider(clicksSlider.get());
     clicksSlider->setVelocityModeParameters(1.0, 1, 0.01);
     clicksSlider->setNormalisableRange(NormalisableRange<double>(0, 16000, 1));
     beatsSlider->onDragStart = [this]() {
@@ -238,7 +238,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     // master volume
     volumeSlider = std::make_unique<juce::Slider>("Master Volume Font 13");
     addAndMakeVisible(volumeSlider.get());
-    ChannelComponent::configureVolumeSlider(volumeSlider.get());
+    AudiumLookAndFeel::configureVolumeSlider(volumeSlider.get());
     volumeSlider->setColour (Slider::backgroundColourId, juce::Colours::grey);
 
     volumeSlider->onValueChange = [this] {
@@ -352,15 +352,6 @@ void HeaderComponent::timerCallback()
         audiumEngine->getRecordingActionHandler()->onPlayListItemUpdate();
         audiumEngine->getPlayListScheduler()->getTempoProvider()->sendActionMessage(audium::updateArrangementAction);
     }
-}
-
-void HeaderComponent::configureSlider(juce::Slider* slider)
-{
-    slider->setSliderStyle(juce::Slider::LinearBarVertical);
-    slider->setVelocityBasedMode(true);
-    slider->setDoubleClickReturnValue(true, 0.0);
-    slider->setColour(Slider::trackColourId, juce::Colours::transparentBlack);
-    slider->setColour (Slider::backgroundColourId, juce::Colours::grey);
 }
 
 juce::Path HeaderComponent::getRightPanelButtonPath()
