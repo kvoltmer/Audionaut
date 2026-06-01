@@ -21,7 +21,6 @@ class AudioRegionContainer;
 class AudioResourceContainer;
 class TransportSourceContainer;
 class PlayListScheduler;
-struct AutoEditConfig;
 class LinkAudioDevice;
 class AudioBusInterface;
 class RecordingActionHandler;
@@ -230,13 +229,6 @@ public:
     {
         return recordingActionHandler;
     }
-
-    
-    /**
-     * @brief Invokes the auto-edit functionality with the given configuration.
-     * @param config The `AutoEditConfig` to use for the auto-edit operation.
-     */
-    void invokeAutoEdit(const AutoEditConfig config);
 
     /**
      * @brief Retrieves the UI state as a JSON object.

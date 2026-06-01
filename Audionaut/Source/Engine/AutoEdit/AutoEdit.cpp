@@ -9,12 +9,14 @@
 #include <JuceHeader.h>
 
 #include "AutoEdit.h"
+#include "Engine/AudiumEngine.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Export/AudioExportThread.h"
 
 namespace audium {
 
@@ -24,7 +26,40 @@ const juce::String AutoEdit::getTempDirectory()
     return juce::File::getSpecialLocation(juce::File::tempDirectory).getFullPathName();
 }
 
-bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
+bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
+                              std::function<void(std::string)> callback)
+{
+    if (auto track = audiumEngine->getAudioTrackContainer()->getAudioTrack(config.trackId)) {
+        if (auto item = track->getPlayListContainer()->playListItems.getObject(config.playlistItemId)) {
+            bool success = false;
+            auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+            bounceConfig->playListItem = item;
+            bounceConfig->fileName = juce::File::createTempFile(".wav");
+            bounceConfig->sampleRate = 48000.0;
+            
+            auto thread = std::make_unique<AudioExportThread>(*audiumEngine, bounceConfig);
+            if (thread->runThread()) {
+                // thread finished normally..
+                config.bounceFileName = bounceConfig->fileName.getFullPathName().toStdString();
+                
+                success = invokePython(config, std::move(callback));
+                
+                if (success) {
+                    applyAutoEditResult(bounceConfig->sampleRate);
+                }
+            }
+            else {
+                // user pressed the cancel button during export
+            }
+            return success;
+        }
+    }
+    NullCheckedInvocation::invoke (callback, "Please select a valid audio clip to edit.");
+    return false;
+}
+
+bool AutoEdit::invokePython(AutoEditConfig &config,
+                            std::function<void(std::string)> callback)
 {
     // NOTE: Make sure PATH and PYTHONPATH is set correctly.
     // With XCode you must edit the scheme and set the environment variables
@@ -48,20 +83,24 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig config)
         //        commandString += " --seglen_max " + std::to_string(config.maxSegLength);
         commandString += " --filenames " + config.bounceFileName;
         
-        // execute
-        auto result = std::system(commandString.c_str());
-        if (result == 0)
-        {
-            return true;
+        try {
+            // execute
+            if (std::system(commandString.c_str()) == 0) {
+                return true;
+            }
+        } catch (std::exception &e) {
+            NullCheckedInvocation::invoke (callback, e.what());
         }
     }
-    else
-    {
-        juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "no audio data", "export audio failed.");
+    else {
+        NullCheckedInvocation::invoke(callback, "Export audio failed.");
     }
     
+    NullCheckedInvocation::invoke (callback, "Call to std::system failed.");
     return false;
 }
+
+
 
 const std::string AutoEdit::getBaseName() const
 {
@@ -92,6 +131,7 @@ const std::string AutoEdit::getCountFromFile() const
 }
 void AutoEdit::applyAutoEditResult(double sampleRate)
 {
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
     auto track = audioTrackContainer->getDefaultGroup();
     if (track != nullptr)
     {
@@ -120,6 +160,7 @@ void AutoEdit::applyAutoEditResult(double sampleRate)
 
 bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRate)
 {
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
     std::fstream segFile;
     segFile.open(segFileName, std::ios::in);
     if (segFile.is_open())
@@ -164,6 +205,7 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
 
 bool AutoEdit::createPlayListFromSongFile(std::string songFileName)
 {
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
     std::fstream songFile;
     songFile.open(songFileName, std::ios::in);
     if (songFile.is_open())

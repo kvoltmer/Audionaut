@@ -5,7 +5,6 @@
 
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
-#include "Engine/AutoEdit/AutoEdit.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
@@ -13,8 +12,6 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
-#include "Engine/Export/AudioExportThread.h"
-#include "Playback/PlaybackDefines.h"
 #include "Application/AudiumApplication.h"
 
 #include "Interface/ColourIds.h"
@@ -323,37 +320,6 @@ bool AudiumEngine::readFromJson (json& input, bool rebuild)
 int AudiumEngine::getSizeInUnits()
 {
     return audioTrackContainer->getSizeInUnits() + 1;
-}
-
-void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
-{
-    // first bounce the mix
-    auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
-    
-    bounceConfig->fileName = juce::File::createTempFile(".wav");
-    bounceConfig->sampleRate = 48000.0;
-    
-    // create the thread
-    auto thread = std::make_unique<AudioExportThread>(*this, bounceConfig);
-    
-    // start the thread
-    if (thread->runThread())
-    {
-        // thread finished normally..
-        config.bounceFileName = bounceConfig->fileName.getFullPathName().toStdString();
-        
-        std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioTrackContainer,
-                                                        audioResourceContainer));
-        if (autoEdit->invokeAutoEdit(config))
-        {
-            autoEdit->applyAutoEditResult(bounceConfig->sampleRate);
-        }
-    }
-    else
-    {
-        // user pressed the cancel button..
-    }
-    
 }
 
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const

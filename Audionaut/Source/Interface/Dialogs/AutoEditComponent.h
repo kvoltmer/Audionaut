@@ -8,6 +8,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Engine/AutoEdit/AutoEdit.h"
 
 class AutoEditComponent  : public juce::Component, public juce::ComboBox::Listener
 {
@@ -16,11 +17,8 @@ public:
     ~AutoEditComponent() override = default;
 
 
-    int getDuration() const { return 180; }
-    int getNumSegments() const { return static_cast<int>(numSegments->getValue()); }
-    double getMinSegmentLength() const { return segmentMin->getValue(); }
-    double getMaxSegmentLength() const { return segmentMax->getValue(); }
-
+    audium::AutoEditConfig& getAutoEditConfig();
+    
     void resized() override;
 
     void update();
@@ -34,7 +32,8 @@ private:
     void updateSelectedPlaylistItem();
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
-
+    
+    audium::AutoEditConfig config;
     
     std::unique_ptr<juce::ComboBox> selectedTrack;
     std::unique_ptr<juce::Label> selectedTrackLabel;
