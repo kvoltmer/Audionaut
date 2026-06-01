@@ -10,10 +10,7 @@
 #include "Engine/AudiumEngine.h"
 
 
-//==============================================================================
-/*
-*/
-class ExportAudioComponent  : public juce::Component, public juce::Label::Listener
+class ExportAudioComponent  : public juce::Component
 {
 public:
     ExportAudioComponent(std::shared_ptr<audium::AudiumEngine> engine) :
@@ -53,11 +50,6 @@ public:
             bitDepthDropDown->setBounds (r.removeFromTop (h));
             r.removeFromTop (space);
         }
-    }
-    
-    void labelTextChanged (Label* labelThatHasChanged) override
-    {
-        
     }
     
     void update()

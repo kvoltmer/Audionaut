@@ -290,13 +290,13 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::autoEdit:
             if (autoEditDialog == nullptr)
-                autoEditDialog = std::make_unique<AutoEditDialog>();
-            autoEditDialog->invokeAutoEdit(getEngine(), mainComponent);
+                autoEditDialog = std::make_unique<AutoEditDialog>(getEngine());
+            autoEditDialog->invoke (getEngine(), mainComponent);
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
                 exportAudioDialog = std::make_unique<ExportAudioDialog>(getEngine());
-            exportAudioDialog->invoke(mainComponent);
+            exportAudioDialog->invoke (mainComponent);
             break;
         case CommandIDs::toggleFullScreen:
             setFullScreen (!isFullScreen());
