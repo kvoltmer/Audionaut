@@ -10,10 +10,10 @@
 namespace audium {
 
 
-class AudioResourceContainer;
-class AudioRegionContainer;
+class AudiumEngine;
 class PlayListContainer;
 class AudioTrackContainer;
+class PlayListItem;
 
 struct AutoEditConfig {
     std::string mode = "random";
@@ -22,18 +22,23 @@ struct AutoEditConfig {
     double minSegLength = 2.0;
     double maxSegLength = 60.0;
     std::string bounceFileName = "";
+    int trackId = -1;
+    int playlistItemId = -1;
 };
 
 class AutoEdit {
     
 public:
-    AutoEdit(std::shared_ptr<AudioTrackContainer> audioTrackContainer,
-             std::shared_ptr<AudioResourceContainer> audioResourceContainer) :
-    audioTrackContainer(audioTrackContainer),
-    audioResourceContainer(audioResourceContainer)
+    AutoEdit(std::shared_ptr<AudiumEngine> audiumEngine_) :
+        audiumEngine(audiumEngine_)
     {}
     
-    bool invokeAutoEdit(const AutoEditConfig config);
+    bool invokeAutoEdit(AutoEditConfig &config,
+                        std::function<void(std::string)> callback);
+    
+    bool invokePython(AutoEditConfig &config,
+                      std::function<void(std::string)> callback);
+    
     void applyAutoEditResult(double sampleRate);
     
     bool createRegionsFromSegFile(std::string segFileName, double sampleRate);
@@ -42,8 +47,7 @@ public:
     static const juce::String getTempDirectory();
     
 private:
-    std::shared_ptr<AudioTrackContainer> audioTrackContainer;
-    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<AudiumEngine> audiumEngine;
     
     std::string audioResourceFilePath;
     

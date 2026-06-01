@@ -213,3 +213,16 @@ void AutoEditComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
         }
     }
 }
+
+audium::AutoEditConfig& AutoEditComponent::getAutoEditConfig()
+{
+    config.mode = "random";
+    config.duration = 180;
+    config.numSegments = static_cast<int>(numSegments->getValue());
+    config.minSegLength = segmentMin->getValue();
+    config.maxSegLength = segmentMax->getValue();
+    config.trackId = selectedTrack->getSelectedId() - 1;
+    config.playlistItemId = selectedPlaylistItem->getSelectedId() - 1;
+    
+    return config;
+}

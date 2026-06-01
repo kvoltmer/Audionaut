@@ -57,16 +57,8 @@ private:
 
             if (result == 0)
                 return;
-            
-            audium::AutoEditConfig config;
-            
-            config.mode = "random";
-            config.duration = safeThis->autoEditComponent->getDuration();
-            config.numSegments = safeThis->autoEditComponent->getNumSegments();
-            config.minSegLength = safeThis->autoEditComponent->getMinSegmentLength();
-            config.maxSegLength = safeThis->autoEditComponent->getMaxSegmentLength();
         
-            safeThis->autoEdit(config);
+            safeThis->apply();
         };
 
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);
@@ -75,9 +67,18 @@ private:
             editor->toFront(true);
     }
     
-    void autoEdit(const audium::AutoEditConfig config)
+    void apply()
     {
-        audiumEngine->invokeAutoEdit(config);
+        auto autoEdit = std::make_unique<audium::AutoEdit>(audiumEngine);
+        autoEdit->invokeAutoEdit(autoEditComponent->getAutoEditConfig(), [](std::string error) {
+#if CATCH2_TESTS
+            std::cout << "error: " << error << std::endl;
+#else
+            NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                  "Error",
+                                                  String(error));
+#endif
+        });
     }
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;
