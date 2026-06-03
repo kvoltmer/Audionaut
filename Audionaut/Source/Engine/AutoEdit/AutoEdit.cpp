@@ -67,7 +67,7 @@ bool AutoEdit::invokePython(AutoEditConfig &config,
     // system("env");
     
     // Path to python binary
-    std::string python = "python3";
+    std::string python = "/opt/homebrew/bin/python3";
     
     if (juce::File(config.bounceFileName).existsAsFile())
     {
@@ -84,6 +84,15 @@ bool AutoEdit::invokePython(AutoEditConfig &config,
         commandString += " --filenames " + config.bounceFileName;
         
         try {
+            const char* pythonPath = "/opt/homebrew/lib/python3.11/site-packages:~/dev/smp_base:~/dev/smp_audio:~/dev/gaborgandalf";
+            
+            setenv("PYTHONPATH", pythonPath, true);
+            
+            const char* path = "/usr/local/bin:/usr/local/sbin:/opt/homebrew/opt/openjdk/bin:/Users/klausvoltmer/.nvm/versions/node/v14.20.0/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/Users/klausvoltmer/Library/Android/sdk/platform-tools:/opt/homebrew/Cellar/cmake/3.22.3/bin:/Users/klausvoltmer/Library/Android/sdk/cmake/3.6.4111459/bin:/opt/homebrew/opt/python@3.9/libexec/bin:/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home/bin/:/Users/klausvoltmer/.rvm/bin";
+            
+            //setenv("PATH", path, true);
+            
+            std::system("env");
             // execute
             if (std::system(commandString.c_str()) == 0) {
                 return true;
