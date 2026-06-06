@@ -13,6 +13,3 @@
 [submodule "Submodules/farbot"]
 	path = Submodules/farbot
 	url = https://github.com/hogliux/farbot.git
-[submodule "Submodules/LibrosaCpp"]
-	path = Submodules/LibrosaCpp
-	url = git@github.com:ewan-xu/LibrosaCpp.git
