@@ -97,8 +97,10 @@ source_group(TREE "${SRC_PATH}" PREFIX "Source Files" FILES ${SRC_AUDIUM})
 
 target_include_directories(${APP_NAME}
                         PUBLIC ../Source/
-                        PUBLIC ../../Submodules/json/include
-                        PUBLIC ../../Submodules/farbot/include
+                        PUBLIC ${SUBMODULES_PATH}/json/include
+                        PUBLIC ${SUBMODULES_PATH}/farbot/include
+                        PUBLIC ${SUBMODULES_PATH}/essentia/src
+                        PUBLIC ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3
                         )
 # c++ standard
 #set(CMAKE_CXX_STANDARD 20)
@@ -143,6 +145,7 @@ target_compile_definitions(${APP_NAME}
 include(${SUBMODULES_PATH}/link/AbletonLinkConfig.cmake)
 #target_link_libraries(${APP_NAME} Ableton::Link)
 
+
 target_link_libraries(${APP_NAME}
     PRIVATE
         # ConsoleAppData            # If you'd created a binary data target, you'd link to it here
@@ -152,6 +155,18 @@ target_link_libraries(${APP_NAME}
         juce::juce_dsp
         Catch2::Catch2WithMain
         Ableton::Link
+        ${SUBMODULES_PATH}/essentia/build/src/libessentia.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libavcodec.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libchromaprint.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libmp3lame.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libavformat.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libfftw3f.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libswresample.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libz.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libavutil.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libsamplerate.a
+        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libyaml.a
+        libiconv.a
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
@@ -164,3 +179,6 @@ set_target_properties(${APP_NAME}
                       PROPERTIES
                       XCODE_ATTRIBUTE_DEVELOPMENT_TEAM Q89CZBX79G)
                     
+
+
+

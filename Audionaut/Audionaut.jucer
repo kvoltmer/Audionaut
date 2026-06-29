@@ -44,6 +44,12 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <GROUP id="{F264B579-6549-549F-C533-C737634896B7}" name="Analysis">
+          <FILE id="aWMWyc" name="AnalysisProvider.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/AnalysisProvider.cpp"/>
+          <FILE id="H2DipS" name="AnalysisProvider.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/AnalysisProvider.h"/>
+        </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
           <FILE id="S0kUtq" name="AudiumTransportSource.cpp" compile="1" resource="0"

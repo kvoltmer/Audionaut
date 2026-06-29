@@ -28,6 +28,7 @@ class AudioChannel;
 class PositionableBase;
 class AudioTrackContainer;
 class AudioChannelData;
+class AnalysisProvider;
 
 typedef SelectableObjectContainer<ResourceGroup> tResourceGroupContainer;
 typedef SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
@@ -60,12 +61,14 @@ public:
                std::shared_ptr<SelectionManager> selectionManager_,
                std::shared_ptr<tResourceGroupContainer> resourceGroups_,
                std::shared_ptr<tAudioChannelContainer> channels_,
+               std::shared_ptr<AnalysisProvider> analysisProvider_,
                juce::String nameString_) :
         Selectable(selectionManager_),
         owner(owner_),
         audioResourceContainer(audioResourceContainer_),
         transportSourceContainer(transportSourceContainer_),
         selectionManager(selectionManager_),
+        analysisProvider(analysisProvider_),
         resourceGroupContainer(resourceGroups_),
         audioChannelContainer(channels_),
         name(nameString_.toStdString())
@@ -229,6 +232,7 @@ public:
     const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;
     int getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const;
     
+    std::shared_ptr<AnalysisProvider> getAnalysisProvider() const { return analysisProvider; }
     
 private:
     AudioTrackContainer &owner; ///< Reference to the owning container.
@@ -236,7 +240,7 @@ private:
     std::shared_ptr<PlayListContainer> playListContainer; ///< Shared pointer to the playlist container.
     std::shared_ptr<TransportSourceContainer> transportSourceContainer; ///< Shared pointer to the transport source container.
     std::shared_ptr<SelectionManager> selectionManager; ///< Shared pointer to the selection manager.
-
+    std::shared_ptr<AnalysisProvider> analysisProvider;
 public:
     std::shared_ptr<tResourceGroupContainer> resourceGroupContainer; ///< Shared pointer to the resource group container.
     std::shared_ptr<tAudioChannelContainer> audioChannelContainer; ///< Shared pointer to the audio channel container.

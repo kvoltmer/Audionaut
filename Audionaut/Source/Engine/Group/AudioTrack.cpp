@@ -16,6 +16,7 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Resource/ChannelMapping.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
 namespace audium {
 
@@ -748,9 +749,7 @@ std::shared_ptr<PlayListItem> AudioTrack::createDefaultPlayListItem(std::shared_
         // Format as [Year-Month-Day Hour-Minute-Second]
         auto now = juce::Time::getCurrentTime();
         auto formattedStr = now.formatted ("[%Y-%m-%d_%H-%M-%S]");
-        
-        auto name = "take " + takeString + " " + formattedStr;
-        region->setName(name);
+        region->setName("take " + takeString + " " + formattedStr);
     }
     
     

@@ -10,6 +10,7 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/ActionMessages.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Controls/AudiumLabel.h"
@@ -136,6 +137,10 @@ public:
         if (component != nullptr &&
             result != 0) {
             
+            if (result == CommandIDs::analyzeSBic) {
+                component->getAudioTrack()->getAnalysisProvider()->analyzeSBic();
+            }
+            
             auto height = result;
             component->setChannelHeight(height);
         }
@@ -174,12 +179,21 @@ public:
     {
         if (e.mods.isPopupMenu()) {
             PopupMenu m;
-            m.addItem (AudiumLookAndFeel::SizeIds::micro, TRANS ("micro"), true);
-            m.addItem (AudiumLookAndFeel::SizeIds::small, TRANS ("small"), true);
-            m.addItem (AudiumLookAndFeel::SizeIds::medium, TRANS ("medium"), true);
-            m.addItem (AudiumLookAndFeel::SizeIds::large, TRANS ("large"), true);
-            m.addItem (AudiumLookAndFeel::SizeIds::huge, TRANS ("huge"), true);
             m.setLookAndFeel (&getLookAndFeel());
+            PopupMenu sizeMenu;
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::micro, TRANS ("micro"), true);
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::small, TRANS ("small"), true);
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::medium, TRANS ("medium"), true);
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::large, TRANS ("large"), true);
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::huge, TRANS ("huge"), true);
+            
+            m.addSubMenu("Waveform Size", sizeMenu);
+            
+            PopupMenu analysisMenu;
+            analysisMenu.addItem (CommandIDs::analyzeSBic, TRANS ("SBic"), true);
+            
+            m.addSubMenu("Analysis", analysisMenu);
+            
             m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight),
                              ModalCallbackFunction::forComponent (contextMenuCallback, this));
         }

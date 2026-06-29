@@ -52,6 +52,7 @@
 		5C62C0C8EE35E00AC1B8E3AC /* RightPanelComponent.cpp */ = {isa = PBXBuildFile; fileRef = BCC2B6A9AAC816A403A24E63; };
 		5D5ACD630FA6238F1429787B /* RecordingActionHandler.cpp */ = {isa = PBXBuildFile; fileRef = 0C2871C7A8AF0B9971AFED86; };
 		5E58276753980A3B968C5B4A /* AudioTrackContainer.cpp */ = {isa = PBXBuildFile; fileRef = 90A1F23ACDB59F5B8DF7DB30; };
+		60C7DEA3545A27039A64E1CA /* AnalysisProvider.cpp */ = {isa = PBXBuildFile; fileRef = A1B47D6F617B000A13EF9E94; };
 		63AE7E83398F33BA6144FBD5 /* PlayListTableListBoxItem.cpp */ = {isa = PBXBuildFile; fileRef = 7E44DB630C41B875C940DDCD; };
 		65DB121ADA7F1D26B04AA405 /* audium_AudioThumbnail.cpp */ = {isa = PBXBuildFile; fileRef = 1759C02F6B3B9F8E2D69CAD7; };
 		6683D39BE00F743773ACD3BD /* AudioTrack.cpp */ = {isa = PBXBuildFile; fileRef = B8B95DEF1C6536F44482A856; };
@@ -221,6 +222,7 @@
 		63607F26EE0959076C19A362 /* audionaut_logo_1024x1024.png */ /* audionaut_logo_1024x1024.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = audionaut_logo_1024x1024.png; path = ../../Resources/audionaut_logo_1024x1024.png; sourceTree = SOURCE_ROOT; };
 		6373A60BC5F852259A3F5976 /* Cocoa.framework */ /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		639F020B0D320DB9D05ECAF9 /* Recording.h */ /* Recording.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Recording.h; path = ../../Source/Engine/Recording/Recording.h; sourceTree = SOURCE_ROOT; };
+		645496D8217E1422BD5E28E2 /* AnalysisProvider.h */ /* AnalysisProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AnalysisProvider.h; path = ../../Source/Engine/Analysis/AnalysisProvider.h; sourceTree = SOURCE_ROOT; };
 		65A6EAD1842D8FFA4768DC84 /* RegionLabel.cpp */ /* RegionLabel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionLabel.cpp; path = ../../Source/Interface/Controls/RegionLabel.cpp; sourceTree = SOURCE_ROOT; };
 		65EE5B24CA6AA1915694E01E /* App */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Audionaut.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		65FA0FE104D1D2422632E136 /* AudiumCommandIDs.h */ /* AudiumCommandIDs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumCommandIDs.h; path = ../../Source/Application/AudiumCommandIDs.h; sourceTree = SOURCE_ROOT; };
@@ -293,6 +295,7 @@
 		A1367AD7787D8F61E862A1E1 /* GridView.h */ /* GridView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GridView.h; path = ../../Source/Interface/Views/GridView.h; sourceTree = SOURCE_ROOT; };
 		A1772A9E5D22DA6FA0F26F8C /* ChannelsComponent.cpp */ /* ChannelsComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ChannelsComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.cpp; sourceTree = SOURCE_ROOT; };
 		A1A369F220657933EB193914 /* AudioResourceContainer.cpp */ /* AudioResourceContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioResourceContainer.cpp; path = ../../Source/Engine/Resource/AudioResourceContainer.cpp; sourceTree = SOURCE_ROOT; };
+		A1B47D6F617B000A13EF9E94 /* AnalysisProvider.cpp */ /* AnalysisProvider.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisProvider.cpp; path = ../../Source/Engine/Analysis/AnalysisProvider.cpp; sourceTree = SOURCE_ROOT; };
 		A224A208AE5292EA25E5E2C4 /* include_juce_core.mm */ /* include_juce_core.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_core.mm; path = ../../JuceLibraryCode/include_juce_core.mm; sourceTree = SOURCE_ROOT; };
 		A261F3F01187B698A828FBF3 /* juce_gui_extra */ /* juce_gui_extra */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_extra; path = ../../../Submodules/JUCE/modules/juce_gui_extra; sourceTree = SOURCE_ROOT; };
 		A3346CAE6FB6CD785EE49D2D /* MainComponent.h */ /* MainComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MainComponent.h; path = ../../Source/Interface/Components/MainComponent.h; sourceTree = SOURCE_ROOT; };
@@ -906,6 +909,15 @@
 			name = DragAndDrop;
 			sourceTree = "<group>";
 		};
+		C01702B6AFD62C9050D9860F /* Analysis */ = {
+			isa = PBXGroup;
+			children = (
+				A1B47D6F617B000A13EF9E94,
+				645496D8217E1422BD5E28E2,
+			);
+			name = Analysis;
+			sourceTree = "<group>";
+		};
 		C0F43CC73124D31A727604B0 /* Export */ = {
 			isa = PBXGroup;
 			children = (
@@ -1026,6 +1038,7 @@
 		FCB7E52916C7F60CEA2D39E3 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
+				C01702B6AFD62C9050D9860F,
 				92F42FF8411787223E37422D,
 				C0F43CC73124D31A727604B0,
 				D700EDF203B0146F3E09A49F,
@@ -1146,6 +1159,7 @@
 				4ABF177467832242153DF416,
 				090A584AB0AC23AB9528BCCD,
 				6BD9E0BBB60EAD02583E8F7C,
+				60C7DEA3545A27039A64E1CA,
 				C5E930EAB7AD7588663B25D9,
 				4A8AF8534DDE8E5A4E97CD8D,
 				34B5505825588B723F9E9F74,
