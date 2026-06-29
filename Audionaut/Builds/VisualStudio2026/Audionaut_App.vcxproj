@@ -161,6 +161,7 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Util\EngineAccess.cpp"/>
     <ClCompile Include="..\..\Source\Util\Preferences.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisProvider.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.cpp"/>
@@ -3097,6 +3098,7 @@
     <ClInclude Include="..\..\Source\Application\AudiumMainWindow.h"/>
     <ClInclude Include="..\..\Source\Util\EngineAccess.h"/>
     <ClInclude Include="..\..\Source\Util\Preferences.h"/>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisProvider.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.h"/>

@@ -11,6 +11,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
 namespace audium {
 
@@ -40,12 +41,14 @@ public:
     {
         auto resourceGroups  = std::shared_ptr<tResourceGroupContainer> (new tResourceGroupContainer());
         auto channels   = std::shared_ptr<tAudioChannelContainer> (new tAudioChannelContainer());
+        auto analysisProvider = std::shared_ptr<AnalysisProvider>(new AnalysisProvider(owner));
         auto audioTrack = std::shared_ptr<AudioTrack>(new AudioTrack(owner,
                                                                      *audioResourceContainer.get(),
                                                                      owner.getTransportSourceContainer(),
                                                                      owner.getSelectionManager(),
                                                                      resourceGroups,
                                                                      channels,
+                                                                     analysisProvider,
                                                                      std::string()));
         return audioTrack;
     }

@@ -14,6 +14,9 @@
     <Filter Include="Audionaut\Source\Util">
       <UniqueIdentifier>{B3F23B26-C34C-91E9-7425-79EA9F14D0BA}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Engine\Analysis">
+      <UniqueIdentifier>{D0BC868D-0F64-6D47-E860-837179C691A7}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Engine\AudioSources">
       <UniqueIdentifier>{99B03463-BAA4-F2D8-8F41-CC5450AC2F9E}</UniqueIdentifier>
     </Filter>
@@ -843,6 +846,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Util\Preferences.cpp">
       <Filter>Audionaut\Source\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisProvider.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
@@ -4112,6 +4118,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Util\Preferences.h">
       <Filter>Audionaut\Source\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisProvider.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>

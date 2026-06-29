@@ -13,3 +13,6 @@
 [submodule "Submodules/farbot"]
 	path = Submodules/farbot
 	url = https://github.com/hogliux/farbot.git
+[submodule "Submodules/essentia"]
+	path = Submodules/essentia
+	url = git@github.com:MTG/essentia.git
