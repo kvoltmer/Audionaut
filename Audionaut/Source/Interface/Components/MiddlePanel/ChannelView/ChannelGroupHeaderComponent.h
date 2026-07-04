@@ -138,7 +138,8 @@ public:
             result != 0) {
             
             if (result == CommandIDs::analyzeSBic) {
-                component->getAudioTrack()->getAnalysisProvider()->analyzeSBic();
+                auto audioTrack = component->getAudioTrack();
+                audioTrack->getAnalysisProvider()->analyzeSBic(*audioTrack);
             }
             
             auto height = result;

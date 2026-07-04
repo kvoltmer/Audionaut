@@ -9,22 +9,29 @@
 */
 
 #include "AnalysisProvider.h"
+#include "Engine/Resource/AudioResource.h"
 
 
 namespace audium {
 
-void AnalysisProvider::analyzeSBic()
+void AnalysisProvider::analyzeSBic(AudioTrack& audioTrack)
 {
-    std::cout << "AnalysisProvider::analyzeSBic() called." << std::endl;
+    auto resources = audioTrack.getAudioResources();
+    if (resources.empty())
+    {
+        std::cout << "AnalysisProvider::analyzeSBic() - track has no audio resources to analyse." << std::endl;
+        return;
+    }
+
+    const auto audioFile = juce::File(resources.front()->getFullPathName());
 
     // The BIC segmentation itself is delegated to the injected SBicSegmenter.
-    // TODO: resolve the rendered audio file of the track(s) held by
-    //       audioTrackContainer and feed it to the segmenter, e.g.:
-    //
-    //     auto segments = sBicSegmenter->analyze(audioFile);
-    //
-    // (Enabling this in the app target additionally requires linking Essentia
-    //  into the Projucer exporters, which currently only the test target does.)
+    const auto segments = sBicSegmenter->analyze(audioFile);
+
+    std::cout << "AnalysisProvider::analyzeSBic() - " << segments.size()
+              << " segment boundary/boundaries for " << audioFile.getFileName() << std::endl;
+    for (auto seconds : segments)
+        std::cout << "  segment at " << seconds << " s" << std::endl;
 }
 
 } // namespace audium

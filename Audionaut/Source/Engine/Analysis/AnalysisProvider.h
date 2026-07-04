@@ -22,7 +22,7 @@ public:
     {}
 
 
-    void analyzeSBic();
+    void analyzeSBic(AudioTrack& audioTrack);
 
 private:
     AudioTrackContainer &audioTrackContainer;
