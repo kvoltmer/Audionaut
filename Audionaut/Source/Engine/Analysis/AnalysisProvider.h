@@ -7,23 +7,27 @@
 
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Analysis/SBicSegmenter.h"
 
 namespace audium {
 
 class AnalysisProvider {
-    
-    
+
+
 public:
-    AnalysisProvider(AudioTrackContainer &audioTrackContainer_) :
-        audioTrackContainer(audioTrackContainer_)
+    AnalysisProvider(AudioTrackContainer &audioTrackContainer_,
+                     std::shared_ptr<SBicSegmenter> sBicSegmenter_) :
+        audioTrackContainer(audioTrackContainer_),
+        sBicSegmenter(sBicSegmenter_)
     {}
-    
-    
+
+
     void analyzeSBic();
-    
+
 private:
     AudioTrackContainer &audioTrackContainer;
-    
+    std::shared_ptr<SBicSegmenter> sBicSegmenter;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AnalysisProvider)
 };
 
