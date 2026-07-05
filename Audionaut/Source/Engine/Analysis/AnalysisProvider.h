@@ -14,6 +14,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Analysis/SBicSegmenter.h"
 #include "Engine/Analysis/OnsetSegmenter.h"
+#include "Engine/Analysis/BeatSegmenter.h"
 #include "Engine/Analysis/AnalysisCache.h"
 
 namespace audium {
@@ -25,16 +26,19 @@ public:
     AnalysisProvider(AudioTrackContainer &audioTrackContainer_,
                      std::shared_ptr<SBicSegmenter> sBicSegmenter_,
                      std::shared_ptr<OnsetSegmenter> onsetSegmenter_,
+                     std::shared_ptr<BeatSegmenter> beatSegmenter_,
                      std::shared_ptr<AnalysisCache> analysisCache_) :
         audioTrackContainer(audioTrackContainer_),
         sBicSegmenter(sBicSegmenter_),
         onsetSegmenter(onsetSegmenter_),
+        beatSegmenter(beatSegmenter_),
         analysisCache(analysisCache_)
     {}
 
 
     void analyzeSBic(AudioTrack& audioTrack);
     void analyzeOnsets(AudioTrack& audioTrack);
+    void analyzeBeats(AudioTrack& audioTrack);
 
     /**
      * @brief Segment boundaries (in seconds) from the most recent analysis of
@@ -63,6 +67,7 @@ private:
     AudioTrackContainer &audioTrackContainer;
     std::shared_ptr<SBicSegmenter> sBicSegmenter;
     std::shared_ptr<OnsetSegmenter> onsetSegmenter;
+    std::shared_ptr<BeatSegmenter> beatSegmenter;
     std::shared_ptr<AnalysisCache> analysisCache;
 
     // Most recent segment boundaries (seconds), keyed by analysis type and

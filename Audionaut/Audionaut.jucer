@@ -60,6 +60,10 @@
                 file="Source/Engine/Analysis/OnsetSegmenter.cpp"/>
           <FILE id="onSegH" name="OnsetSegmenter.h" compile="0" resource="0"
                 file="Source/Engine/Analysis/OnsetSegmenter.h"/>
+          <FILE id="btSegC" name="BeatSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/BeatSegmenter.cpp"/>
+          <FILE id="btSegH" name="BeatSegmenter.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/BeatSegmenter.h"/>
         </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>

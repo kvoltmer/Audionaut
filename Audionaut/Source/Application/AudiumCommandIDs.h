@@ -58,6 +58,7 @@ namespace CommandIDs
 
         analyzeSBic             = 0x500000,
         analyzeOnsets           = 0x500001,
+        analyzeBeats            = 0x500002,
 
         lastCommandIDEntry
     };

@@ -81,6 +81,7 @@ void AudioClipView::refreshSegments()
     std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType;
     segmentsByType[audium::AnalysisType::SBic]  = analysisProvider->getSegments(audium::AnalysisType::SBic, audioFile);
     segmentsByType[audium::AnalysisType::Onset] = analysisProvider->getSegments(audium::AnalysisType::Onset, audioFile);
+    segmentsByType[audium::AnalysisType::Beat]  = analysisProvider->getSegments(audium::AnalysisType::Beat, audioFile);
 
     segmentationView->setSegments(std::move(segmentsByType), getRegionStart(audium::seconds));
 }

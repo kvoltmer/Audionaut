@@ -28,6 +28,13 @@ void AnalysisProvider::analyzeOnsets(AudioTrack& audioTrack)
                      [this](const juce::File& file) { return onsetSegmenter->analyze(file); });
 }
 
+void AnalysisProvider::analyzeBeats(AudioTrack& audioTrack)
+{
+    // Beat tracking is delegated to the injected BeatSegmenter.
+    analyzeResources(audioTrack, AnalysisType::Beat,
+                     [this](const juce::File& file) { return beatSegmenter->analyze(file); });
+}
+
 void AnalysisProvider::analyzeResources(AudioTrack& audioTrack,
                                         AnalysisType analysisType,
                                         const std::function<std::vector<float>(const juce::File&)>& segmenter)
