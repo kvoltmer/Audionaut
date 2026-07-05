@@ -79,6 +79,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/EngineAccess_b7e0d334.o \
   $(JUCE_OBJDIR)/Preferences_96bfe954.o \
   $(JUCE_OBJDIR)/AnalysisProvider_7450833c.o \
+  $(JUCE_OBJDIR)/SBicSegmenter_68bb20f2.o \
   $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o \
   $(JUCE_OBJDIR)/TransportSourceContainer_8c0ec2a6.o \
   $(JUCE_OBJDIR)/audium_AudioTransportSource_b27fe79d.o \
@@ -215,6 +216,11 @@ $(JUCE_OBJDIR)/Preferences_96bfe954.o: ../../Source/Util/Preferences.cpp
 $(JUCE_OBJDIR)/AnalysisProvider_7450833c.o: ../../Source/Engine/Analysis/AnalysisProvider.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AnalysisProvider.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/SBicSegmenter_68bb20f2.o: ../../Source/Engine/Analysis/SBicSegmenter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling SBicSegmenter.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o: ../../Source/Engine/AudioSources/AudiumTransportSource.cpp

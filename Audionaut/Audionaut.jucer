@@ -49,6 +49,9 @@
                 file="Source/Engine/Analysis/AnalysisProvider.cpp"/>
           <FILE id="H2DipS" name="AnalysisProvider.h" compile="0" resource="0"
                 file="Source/Engine/Analysis/AnalysisProvider.h"/>
+          <FILE id="sbicSc" name="SBicSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/SBicSegmenter.cpp"/>
+          <FILE id="sbicSh" name="SBicSegmenter.h" compile="0" resource="0" file="Source/Engine/Analysis/SBicSegmenter.h"/>
         </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
@@ -467,17 +470,17 @@
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
-               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
-               smallIcon="qhU3Rr" bigIcon="gdiYPG" appSandboxInheritance="1"
-               appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
+               extraDefs="LINK_PLATFORM_MACOSX=1"
+               appSandbox="1" useLegacyBuildSystem="0" smallIcon="qhU3Rr" bigIcon="gdiYPG"
+               appSandboxInheritance="1" appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
-               xcodeValidArchs="arm64,arm64e,x86_64" documentExtensions="audium"
-               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="15" microphonePermissionNeeded="1"
-               localNetworkPermissionNeeded="1">
+               xcodeValidArchs="arm64,arm64e" documentExtensions="audium" iosDevelopmentTeamID="Q89CZBX79G"
+               buildNumber="15" microphonePermissionNeeded="1" localNetworkPermissionNeeded="1"
+               extraLinkerFlags="$(SRCROOT)/../Precompiled/Essentia/MacOS/libessentia.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libavcodec.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libchromaprint.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libmp3lame.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libavformat.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libfftw3f.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libswresample.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libz.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libavutil.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libsamplerate.a $(SRCROOT)/../Precompiled/Essentia/MacOS/libyaml.a -liconv">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
                        customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
+        <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
                        customXcodeFlags="INSTALL_PATH=/Applications"/>
       </CONFIGURATIONS>
       <MODULEPATHS>

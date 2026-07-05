@@ -850,6 +850,9 @@
     <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisProvider.cpp">
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\SBicSegmenter.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
@@ -4120,6 +4123,9 @@
       <Filter>Audionaut\Source\Util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisProvider.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\SBicSegmenter.h">
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h">
