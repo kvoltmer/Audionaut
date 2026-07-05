@@ -42,8 +42,9 @@ public:
         auto resourceGroups  = std::shared_ptr<tResourceGroupContainer> (new tResourceGroupContainer());
         auto channels   = std::shared_ptr<tAudioChannelContainer> (new tAudioChannelContainer());
         auto sBicSegmenter = std::make_shared<SBicSegmenter>();
+        auto onsetSegmenter = std::make_shared<OnsetSegmenter>();
         auto analysisCache = std::make_shared<AnalysisCache>();
-        auto analysisProvider = std::shared_ptr<AnalysisProvider>(new AnalysisProvider(owner, sBicSegmenter, analysisCache));
+        auto analysisProvider = std::shared_ptr<AnalysisProvider>(new AnalysisProvider(owner, sBicSegmenter, onsetSegmenter, analysisCache));
         auto audioTrack = std::shared_ptr<AudioTrack>(new AudioTrack(owner,
                                                                      *audioResourceContainer.get(),
                                                                      owner.getTransportSourceContainer(),

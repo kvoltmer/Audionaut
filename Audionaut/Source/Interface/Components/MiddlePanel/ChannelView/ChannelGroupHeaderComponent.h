@@ -141,6 +141,10 @@ public:
                 auto audioTrack = component->getAudioTrack();
                 audioTrack->getAnalysisProvider()->analyzeSBic(*audioTrack);
             }
+            else if (result == CommandIDs::analyzeOnsets) {
+                auto audioTrack = component->getAudioTrack();
+                audioTrack->getAnalysisProvider()->analyzeOnsets(*audioTrack);
+            }
             else {
                 auto height = result;
                 component->setChannelHeight(height);
@@ -193,7 +197,8 @@ public:
             
             PopupMenu analysisMenu;
             analysisMenu.addItem (CommandIDs::analyzeSBic, TRANS ("SBic"), true);
-            
+            analysisMenu.addItem (CommandIDs::analyzeOnsets, TRANS ("Onsets"), true);
+
             m.addSubMenu("Analysis", analysisMenu);
             
             m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight),

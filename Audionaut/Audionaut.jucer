@@ -56,6 +56,10 @@
                 file="Source/Engine/Analysis/AnalysisCache.cpp"/>
           <FILE id="anCchH" name="AnalysisCache.h" compile="0" resource="0"
                 file="Source/Engine/Analysis/AnalysisCache.h"/>
+          <FILE id="onSegC" name="OnsetSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/OnsetSegmenter.cpp"/>
+          <FILE id="onSegH" name="OnsetSegmenter.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/OnsetSegmenter.h"/>
         </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
