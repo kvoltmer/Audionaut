@@ -151,7 +151,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o \
   $(JUCE_OBJDIR)/SegmentationView_81438847.o \
   $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o \
-  $(JUCE_OBJDIR)/AudioRegionView_e0200259.o \
+  $(JUCE_OBJDIR)/AudioClipView_1a258175.o \
   $(JUCE_OBJDIR)/BinaryData_ce4232d4.o \
   $(JUCE_OBJDIR)/include_juce_analytics_f8e9fa94.o \
   $(JUCE_OBJDIR)/include_juce_audio_basics_8a4e984a.o \
@@ -581,9 +581,9 @@ $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o: ../../Source/Interface/Views/WaveFor
 	@echo "Compiling WaveFormViewBase.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/AudioRegionView_e0200259.o: ../../Source/Interface/Views/AudioRegionView.cpp
+$(JUCE_OBJDIR)/AudioClipView_1a258175.o: ../../Source/Interface/Views/AudioClipView.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AudioRegionView.cpp"
+	@echo "Compiling AudioClipView.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/BinaryData_ce4232d4.o: ../../JuceLibraryCode/BinaryData.cpp

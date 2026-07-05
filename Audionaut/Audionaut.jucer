@@ -461,10 +461,10 @@
                 file="Source/Interface/Views/WaveFormViewBase.cpp"/>
           <FILE id="nZmqga" name="WaveFormViewBase.h" compile="0" resource="0"
                 file="Source/Interface/Views/WaveFormViewBase.h"/>
-          <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"
-                file="Source/Interface/Views/AudioRegionView.cpp"/>
-          <FILE id="D4QJ9Q" name="AudioRegionView.h" compile="0" resource="0"
-                file="Source/Interface/Views/AudioRegionView.h"/>
+          <FILE id="m8P0Gz" name="AudioClipView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AudioClipView.cpp"/>
+          <FILE id="D4QJ9Q" name="AudioClipView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AudioClipView.h"/>
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
         <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">

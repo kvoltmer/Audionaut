@@ -15,7 +15,7 @@
 #include "Engine/Channel/AudioChannel.h"
 
 #include "Interface/Widgets/audium_ListBox.h"
-#include "Interface/Views/AudioRegionView.h"
+#include "Interface/Views/AudioClipView.h"
 
 
 class PlayListItemListBoxModel  : public audium::ListBoxModel
@@ -65,7 +65,7 @@ public:
         if (existingComponentToUpdate == nullptr) {
             jassert(parentComponent);
             jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
-            auto component = new AudioRegionView(parentComponent,
+            auto component = new AudioClipView(parentComponent,
                                                  audiumEngine,
                                                  audioResource,
                                                  zoomHandler,
@@ -78,7 +78,7 @@ public:
             
         }
         else {
-            auto component = dynamic_cast<AudioRegionView*>(existingComponentToUpdate);
+            auto component = dynamic_cast<AudioClipView*>(existingComponentToUpdate);
             if (component != nullptr) {
                 jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
                 component->setParentComponent(parentComponent);

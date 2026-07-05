@@ -19,7 +19,7 @@
  *        boundaries, onsets, ...) as vertical markers over a region.
  *
  * Follows the same pattern as FadeInOutView: a lightweight juce::Component
- * child of AudioRegionView that renders in paint() from data supplied by its
+ * child of AudioClipView that renders in paint() from data supplied by its
  * owner. Segment timestamps are file-relative seconds; they are mapped to
  * region-local x with the ZoomHandler, offset by the region's source start.
  */

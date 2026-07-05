@@ -234,7 +234,7 @@
     <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\SegmentationView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Views\AudioRegionView.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Views\AudioClipView.cpp"/>
     <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_Analytics.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
@@ -3231,7 +3231,7 @@
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\ArrangementOverview.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\WaveFormViewBase.h"/>
-    <ClInclude Include="..\..\Source\Interface\Views\AudioRegionView.h"/>
+    <ClInclude Include="..\..\Source\Interface\Views\AudioClipView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\TransportView.h"/>
     <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_Analytics.h"/>
     <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_ButtonTracker.h"/>

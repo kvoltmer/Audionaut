@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include <JuceHeader.h>
-#include "AudioRegionView.h"
+#include "AudioClipView.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Interface/ColourIds.h"
@@ -15,17 +15,17 @@
 
 using namespace juce;
 
-double AudioRegionView::getRegionStart(audium::TimeContextType context) const
+double AudioClipView::getRegionStart(audium::TimeContextType context) const
 {
     return playListItem->getRegion()->getRegionData(audium::seconds).getStart();
 }
 
-double AudioRegionView::getClipGain() const
+double AudioClipView::getClipGain() const
 {
     return playListItem->getRegion()->getGain(channelNumber);
 }
 
-void AudioRegionView::resized()
+void AudioClipView::resized()
 {
     fadeInOutView->setBounds(getLocalBounds());
     segmentationView->setBounds(getLocalBounds());
@@ -46,16 +46,16 @@ void AudioRegionView::resized()
     }
 }
 
-void AudioRegionView::updateUI(std::shared_ptr<audium::AudioResource> audioResource_, int theChannel)
+void AudioClipView::updateUI(std::shared_ptr<audium::AudioResource> audioResource_, int theChannel)
 {
-    //std::cout << "AudioRegionView::updateUI " << playListItem->getRegion()->getName() << std::endl;
+    //std::cout << "AudioClipView::updateUI " << playListItem->getRegion()->getName() << std::endl;
     channelNumber = theChannel;
     if (audioResource != audioResource_) {
         audioResource = audioResource_;
         createThumbnailCache();
     }
     else {
-        //std::cout << "AudioRegionView::updateUI " << this << " null" << std::endl;
+        //std::cout << "AudioClipView::updateUI " << this << " null" << std::endl;
     }
         
     volumeSlider->setValue(LevelMeter::gainToDecebel(getClipGain()), dontSendNotification);
@@ -63,7 +63,7 @@ void AudioRegionView::updateUI(std::shared_ptr<audium::AudioResource> audioResou
     refreshSegments();
 }
 
-void AudioRegionView::refreshSegments()
+void AudioClipView::refreshSegments()
 {
     if (playListItem == nullptr || audioResource == nullptr)
         return;
@@ -85,7 +85,7 @@ void AudioRegionView::refreshSegments()
     segmentationView->setSegments(std::move(segmentsByType), getRegionStart(audium::seconds));
 }
 
-void AudioRegionView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible)
+void AudioClipView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible)
 {
     playListItem = item;
 
