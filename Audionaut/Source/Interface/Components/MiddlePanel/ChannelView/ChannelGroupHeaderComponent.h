@@ -147,6 +147,11 @@ public:
                 audioTrack->getAnalysisProvider()->analyzeOnsets(*audioTrack);
                 audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateArrangementAction);
             }
+            else if (result == CommandIDs::analyzeBeats) {
+                auto audioTrack = component->getAudioTrack();
+                audioTrack->getAnalysisProvider()->analyzeBeats(*audioTrack);
+                audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateArrangementAction);
+            }
             else {
                 auto height = result;
                 component->setChannelHeight(height);
@@ -200,6 +205,7 @@ public:
             PopupMenu analysisMenu;
             analysisMenu.addItem (CommandIDs::analyzeSBic, TRANS ("SBic"), true);
             analysisMenu.addItem (CommandIDs::analyzeOnsets, TRANS ("Onsets"), true);
+            analysisMenu.addItem (CommandIDs::analyzeBeats, TRANS ("Beats"), true);
 
             m.addSubMenu("Analysis", analysisMenu);
             
