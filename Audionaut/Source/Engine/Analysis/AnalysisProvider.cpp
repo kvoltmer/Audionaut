@@ -16,10 +16,26 @@ namespace audium {
 
 void AnalysisProvider::analyzeSBic(AudioTrack& audioTrack)
 {
+    // The BIC segmentation itself is delegated to the injected SBicSegmenter.
+    analyzeResources(audioTrack, AnalysisType::SBic,
+                     [this](const juce::File& file) { return sBicSegmenter->analyze(file); });
+}
+
+void AnalysisProvider::analyzeOnsets(AudioTrack& audioTrack)
+{
+    // Onset detection is delegated to the injected OnsetSegmenter.
+    analyzeResources(audioTrack, AnalysisType::Onset,
+                     [this](const juce::File& file) { return onsetSegmenter->analyze(file); });
+}
+
+void AnalysisProvider::analyzeResources(AudioTrack& audioTrack,
+                                        AnalysisType analysisType,
+                                        const std::function<std::vector<float>(const juce::File&)>& segmenter)
+{
     auto resources = audioTrack.getAudioResources();
     if (resources.empty())
     {
-        std::cout << "AnalysisProvider::analyzeSBic() - track has no audio resources to analyse." << std::endl;
+        std::cout << "AnalysisProvider::analyzeResources() - track has no audio resources to analyse." << std::endl;
         return;
     }
 
@@ -31,31 +47,30 @@ void AnalysisProvider::analyzeSBic(AudioTrack& audioTrack)
         const auto audioFile = juce::File(resource->getFullPathName());
 
         // Reuse a cached result when the file is unchanged; otherwise run the
-        // (expensive) BIC segmentation and cache it for next time.
+        // (expensive) analysis and cache it for next time.
         std::vector<float> segments;
-        if (auto cached = analysisCache->get(audioFile, AnalysisType::SBic))
+        if (auto cached = analysisCache->get(audioFile, analysisType))
         {
             segments = std::move(*cached);
-            std::cout << "AnalysisProvider::analyzeSBic() - cache hit for "
+            std::cout << "AnalysisProvider::analyzeResources() - cache hit for "
                       << audioFile.getFileName() << std::endl;
         }
         else
         {
-            // The BIC segmentation itself is delegated to the injected SBicSegmenter.
-            segments = sBicSegmenter->analyze(audioFile);
+            segments = segmenter(audioFile);
 
             // Only cache successful analyses so failures are retried next time.
             if (! segments.empty())
-                analysisCache->put(audioFile, AnalysisType::SBic, segments);
+                analysisCache->put(audioFile, analysisType, segments);
         }
 
-        std::cout << "AnalysisProvider::analyzeSBic() - " << segments.size()
-                  << " segment boundary/boundaries for " << audioFile.getFileName() << std::endl;
+        std::cout << "AnalysisProvider::analyzeResources() - " << segments.size()
+                  << " boundary/boundaries for " << audioFile.getFileName() << std::endl;
         for (auto seconds : segments)
-            std::cout << "  segment at " << seconds << " s" << std::endl;
+            std::cout << "  at " << seconds << " s" << std::endl;
 
         // Keep the result available for later querying (e.g. by the UI).
-        analysisResults[AnalysisType::SBic][audioFile.getFullPathName().toStdString()] = std::move(segments);
+        analysisResults[analysisType][audioFile.getFullPathName().toStdString()] = std::move(segments);
     }
 }
 

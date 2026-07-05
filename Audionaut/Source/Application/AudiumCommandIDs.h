@@ -57,7 +57,8 @@ namespace CommandIDs
         copyChansToNewTrackId   = 0xf836744,
 
         analyzeSBic             = 0x500000,
-        
+        analyzeOnsets           = 0x500001,
+
         lastCommandIDEntry
     };
 }

@@ -81,6 +81,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AnalysisProvider_7450833c.o \
   $(JUCE_OBJDIR)/SBicSegmenter_68bb20f2.o \
   $(JUCE_OBJDIR)/AnalysisCache_e40fdde1.o \
+  $(JUCE_OBJDIR)/OnsetSegmenter_cc2f2d0c.o \
   $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o \
   $(JUCE_OBJDIR)/TransportSourceContainer_8c0ec2a6.o \
   $(JUCE_OBJDIR)/audium_AudioTransportSource_b27fe79d.o \
@@ -227,6 +228,11 @@ $(JUCE_OBJDIR)/SBicSegmenter_68bb20f2.o: ../../Source/Engine/Analysis/SBicSegmen
 $(JUCE_OBJDIR)/AnalysisCache_e40fdde1.o: ../../Source/Engine/Analysis/AnalysisCache.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AnalysisCache.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/OnsetSegmenter_cc2f2d0c.o: ../../Source/Engine/Analysis/OnsetSegmenter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling OnsetSegmenter.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o: ../../Source/Engine/AudioSources/AudiumTransportSource.cpp
