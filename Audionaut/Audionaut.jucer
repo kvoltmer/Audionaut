@@ -52,6 +52,10 @@
           <FILE id="sbicSc" name="SBicSegmenter.cpp" compile="1" resource="0"
                 file="Source/Engine/Analysis/SBicSegmenter.cpp"/>
           <FILE id="sbicSh" name="SBicSegmenter.h" compile="0" resource="0" file="Source/Engine/Analysis/SBicSegmenter.h"/>
+          <FILE id="anCchC" name="AnalysisCache.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/AnalysisCache.cpp"/>
+          <FILE id="anCchH" name="AnalysisCache.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/AnalysisCache.h"/>
         </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
