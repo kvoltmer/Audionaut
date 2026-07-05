@@ -149,6 +149,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/RegionTableListBox_80e14e37.o \
   $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o \
   $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o \
+  $(JUCE_OBJDIR)/SegmentationView_81438847.o \
   $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o \
   $(JUCE_OBJDIR)/AudioRegionView_e0200259.o \
   $(JUCE_OBJDIR)/BinaryData_ce4232d4.o \
@@ -568,6 +569,11 @@ $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o: ../../Source/Interface/Controls/Aud
 $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o: ../../Source/Interface/Views/FadeInOutView.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling FadeInOutView.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/SegmentationView_81438847.o: ../../Source/Interface/Views/SegmentationView.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling SegmentationView.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o: ../../Source/Interface/Views/WaveFormViewBase.cpp

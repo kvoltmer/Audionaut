@@ -140,10 +140,12 @@ public:
             if (result == CommandIDs::analyzeSBic) {
                 auto audioTrack = component->getAudioTrack();
                 audioTrack->getAnalysisProvider()->analyzeSBic(*audioTrack);
+                audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateArrangementAction);
             }
             else if (result == CommandIDs::analyzeOnsets) {
                 auto audioTrack = component->getAudioTrack();
                 audioTrack->getAnalysisProvider()->analyzeOnsets(*audioTrack);
+                audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateArrangementAction);
             }
             else {
                 auto height = result;

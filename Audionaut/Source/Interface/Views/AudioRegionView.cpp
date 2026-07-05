@@ -11,6 +11,7 @@
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
 using namespace juce;
 
@@ -27,7 +28,8 @@ double AudioRegionView::getClipGain() const
 void AudioRegionView::resized()
 {
     fadeInOutView->setBounds(getLocalBounds());
-    
+    segmentationView->setBounds(getLocalBounds());
+
     auto sliderWidth = 67;
     auto sliderHeight = 15;
     auto space = 5;
@@ -57,14 +59,40 @@ void AudioRegionView::updateUI(std::shared_ptr<audium::AudioResource> audioResou
     }
         
     volumeSlider->setValue(LevelMeter::gainToDecebel(getClipGain()), dontSendNotification);
+
+    refreshSegments();
+}
+
+void AudioRegionView::refreshSegments()
+{
+    if (playListItem == nullptr || audioResource == nullptr)
+        return;
+
+    auto audioTrack = playListItem->getRegion()->getAudioTrack();
+    if (audioTrack == nullptr)
+        return;
+
+    auto analysisProvider = audioTrack->getAnalysisProvider();
+    if (analysisProvider == nullptr)
+        return;
+
+    const auto audioFile = juce::File(audioResource->getFullPathName());
+
+    std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType;
+    segmentsByType[audium::AnalysisType::SBic]  = analysisProvider->getSegments(audium::AnalysisType::SBic, audioFile);
+    segmentsByType[audium::AnalysisType::Onset] = analysisProvider->getSegments(audium::AnalysisType::Onset, audioFile);
+
+    segmentationView->setSegments(std::move(segmentsByType), getRegionStart(audium::seconds));
 }
 
 void AudioRegionView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible)
 {
     playListItem = item;
-    
+
     fadeInOutView->setPlayListItem(item);
-    
+
+    refreshSegments();
+
     auto audioRegion = item->getRegion();
     
     volumeSlider->onValueChange = [this, audioRegion] {

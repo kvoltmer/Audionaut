@@ -450,6 +450,10 @@
           <FILE id="aCyjt9" name="FadeInOutView.cpp" compile="1" resource="0"
                 file="Source/Interface/Views/FadeInOutView.cpp"/>
           <FILE id="FdmpTf" name="FadeInOutView.h" compile="0" resource="0" file="Source/Interface/Views/FadeInOutView.h"/>
+          <FILE id="segViC" name="SegmentationView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/SegmentationView.cpp"/>
+          <FILE id="segViH" name="SegmentationView.h" compile="0" resource="0"
+                file="Source/Interface/Views/SegmentationView.h"/>
           <FILE id="hpKHS1" name="GridView.h" compile="0" resource="0" file="Source/Interface/Views/GridView.h"/>
           <FILE id="Fx8wUZ" name="ArrangementOverview.h" compile="0" resource="0"
                 file="Source/Interface/Views/ArrangementOverview.h"/>
