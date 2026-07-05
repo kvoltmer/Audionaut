@@ -141,9 +141,10 @@ public:
                 auto audioTrack = component->getAudioTrack();
                 audioTrack->getAnalysisProvider()->analyzeSBic(*audioTrack);
             }
-            
-            auto height = result;
-            component->setChannelHeight(height);
+            else {
+                auto height = result;
+                component->setChannelHeight(height);
+            }
         }
     }
     

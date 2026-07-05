@@ -163,6 +163,7 @@
     <ClCompile Include="..\..\Source\Util\Preferences.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisProvider.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Analysis\SBicSegmenter.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisCache.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.cpp"/>
@@ -3101,6 +3102,7 @@
     <ClInclude Include="..\..\Source\Util\Preferences.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisProvider.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\SBicSegmenter.h"/>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisCache.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.h"/>
