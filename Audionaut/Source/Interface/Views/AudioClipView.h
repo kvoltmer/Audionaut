@@ -18,10 +18,10 @@
 
 class ZoomHandler;
 
-class AudioRegionView : public WaveFormViewBase
+class AudioClipView : public WaveFormViewBase
 {
 public:
-    AudioRegionView(juce::Component *parentComponent_,
+    AudioClipView(juce::Component *parentComponent_,
                     std::shared_ptr<audium::AudiumEngine> audiumEngine_,
                     std::shared_ptr<audium::AudioResource> audioResource_,
                     std::shared_ptr<ZoomHandler> zoomHandler_,
@@ -78,5 +78,5 @@ private:
     // the segmentation overlay.
     void refreshSegments();
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionView)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioClipView)
 };

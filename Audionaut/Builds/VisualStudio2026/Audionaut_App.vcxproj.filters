@@ -1066,7 +1066,7 @@
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Views\AudioRegionView.cpp">
+    <ClCompile Include="..\..\Source\Interface\Views\AudioClipView.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_Analytics.cpp">
@@ -4518,7 +4518,7 @@
     <ClInclude Include="..\..\Source\Interface\Views\WaveFormViewBase.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Views\AudioRegionView.h">
+    <ClInclude Include="..\..\Source\Interface\Views\AudioClipView.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\TransportView.h">
