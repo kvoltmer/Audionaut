@@ -11,6 +11,10 @@ message(STATUS "Submodules at: ${SUBMODULES_PATH}")
 set(SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/../Source")
 message(STATUS "source file root at: ${SRC_PATH}")
 
+# Precompiled Essentia static libraries (copied out of the submodule build tree).
+set(ESSENTIA_LIB_PATH "${CMAKE_CURRENT_LIST_DIR}/../Builds/Precompiled/Essentia/MacOS")
+message(STATUS "Essentia precompiled libs at: ${ESSENTIA_LIB_PATH}")
+
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
 # included JUCE directly in your source tree (perhaps as a submodule), you'll need to tell CMake to
@@ -156,17 +160,17 @@ target_link_libraries(${APP_NAME}
         juce::juce_dsp
         Catch2::Catch2WithMain
         Ableton::Link
-        ${SUBMODULES_PATH}/essentia/build/src/libessentia.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libavcodec.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libchromaprint.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libmp3lame.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libavformat.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libfftw3f.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libswresample.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libz.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libavutil.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libsamplerate.a
-        ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib/libyaml.a
+        ${ESSENTIA_LIB_PATH}/libessentia.a
+        ${ESSENTIA_LIB_PATH}/libavcodec.a
+        ${ESSENTIA_LIB_PATH}/libchromaprint.a
+        ${ESSENTIA_LIB_PATH}/libmp3lame.a
+        ${ESSENTIA_LIB_PATH}/libavformat.a
+        ${ESSENTIA_LIB_PATH}/libfftw3f.a
+        ${ESSENTIA_LIB_PATH}/libswresample.a
+        ${ESSENTIA_LIB_PATH}/libz.a
+        ${ESSENTIA_LIB_PATH}/libavutil.a
+        ${ESSENTIA_LIB_PATH}/libsamplerate.a
+        ${ESSENTIA_LIB_PATH}/libyaml.a
         libiconv.a
     PUBLIC
         juce::juce_recommended_config_flags
