@@ -9,6 +9,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Factory/AudioTrackFactory.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
@@ -85,7 +86,10 @@ void AudiumEngine::createNewProject(const int numChannels)
 {
     // reset current project dir
     projectDirectory = File();
-    
+
+    // A fresh project starts with no analysis data.
+    audioTrackContainer->getAnalysisProvider()->getCache()->clear();
+
     AudioResourceContainer::createTemporaryProjectDirectory(true);
     
     audium::WaveFormColours::resetWaveFormColour();
@@ -147,6 +151,12 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
                 AudioResourceContainer::createTemporaryProjectDirectory(true);
                 
                 projectDirectory = inFile.getParentDirectory();
+
+                // Load persisted analysis data before reading the project: the
+                // subsequent rebuild clears tracks but not the analysis cache,
+                // so segments are available as soon as the UI queries them.
+                audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+
                 if (readFromStream(inputStream, true)){
                     currentProjectFile = inFile;
                     undoManager->clearUndoHistory();
@@ -216,6 +226,11 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
             }
             
             audioResourceContainer->changeAudioFilePaths(destinationDirectory);
+
+            // Audio files were relocated into the project - re-point the
+            // analysis cache at their new location so persisted results survive
+            // a Save-As from a temporary/other directory.
+            audioTrackContainer->getAnalysisProvider()->getCache()->rebaseAudioFolder(destinationDirectory);
         }
         // assign new project directory
         projectDirectory = file.getParentDirectory();
@@ -237,6 +252,9 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         if (success && temp.overwriteTargetFileWithTemporary()) {
             currentProjectFile = file;
             undoManager->clearUndoHistory();
+
+            // Persist analysis results alongside the project file.
+            audioTrackContainer->getAnalysisProvider()->getCache()->saveToFolder(projectDirectory);
             return true;
         }
         
