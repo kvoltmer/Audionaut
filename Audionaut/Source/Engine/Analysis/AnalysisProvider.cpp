@@ -76,33 +76,21 @@ void AnalysisProvider::analyzeResources(AudioTrack& audioTrack,
         for (auto seconds : segments)
             std::cout << "  at " << seconds << " s" << std::endl;
 
-        // Keep the result available for later querying (e.g. by the UI).
-        analysisResults[analysisType][audioFile.getFullPathName().toStdString()] = std::move(segments);
+        // Results are held (and persisted) by the cache - the UI queries them
+        // back via getSegments(), so nothing further to store here.
     }
 }
 
 std::vector<float> AnalysisProvider::getSegments(AnalysisType analysisType,
                                                  const juce::File& audioFile) const
 {
-    const auto typeIt = analysisResults.find(analysisType);
-    if (typeIt == analysisResults.end())
-        return {};
-
-    const auto fileIt = typeIt->second.find(audioFile.getFullPathName().toStdString());
-    if (fileIt == typeIt->second.end())
-        return {};
-
-    return fileIt->second;
+    return analysisCache->get(audioFile, analysisType).value_or(std::vector<float>{});
 }
 
 std::unordered_map<std::string, std::vector<float>>
     AnalysisProvider::getSegments(AnalysisType analysisType) const
 {
-    const auto typeIt = analysisResults.find(analysisType);
-    if (typeIt == analysisResults.end())
-        return {};
-
-    return typeIt->second;
+    return analysisCache->getAll(analysisType);
 }
 
 } // namespace audium

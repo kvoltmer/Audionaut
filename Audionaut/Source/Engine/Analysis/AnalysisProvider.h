@@ -23,12 +23,10 @@ class AnalysisProvider {
 
 
 public:
-    AnalysisProvider(AudioTrackContainer &audioTrackContainer_,
-                     std::shared_ptr<SBicSegmenter> sBicSegmenter_,
+    AnalysisProvider(std::shared_ptr<SBicSegmenter> sBicSegmenter_,
                      std::shared_ptr<OnsetSegmenter> onsetSegmenter_,
                      std::shared_ptr<BeatSegmenter> beatSegmenter_,
                      std::shared_ptr<AnalysisCache> analysisCache_) :
-        audioTrackContainer(audioTrackContainer_),
         sBicSegmenter(sBicSegmenter_),
         onsetSegmenter(onsetSegmenter_),
         beatSegmenter(beatSegmenter_),
@@ -57,6 +55,9 @@ public:
     std::unordered_map<std::string, std::vector<float>>
         getSegments(AnalysisType analysisType) const;
 
+    /** @brief The underlying (persistent) analysis cache. */
+    std::shared_ptr<AnalysisCache> getCache() const { return analysisCache; }
+
 private:
     // Runs the given segmenter over every audio resource of the track,
     // consulting/updating the cache and storing results under analysisType.
@@ -64,16 +65,10 @@ private:
                           AnalysisType analysisType,
                           const std::function<std::vector<float>(const juce::File&)>& segmenter);
 
-    AudioTrackContainer &audioTrackContainer;
     std::shared_ptr<SBicSegmenter> sBicSegmenter;
     std::shared_ptr<OnsetSegmenter> onsetSegmenter;
     std::shared_ptr<BeatSegmenter> beatSegmenter;
     std::shared_ptr<AnalysisCache> analysisCache;
-
-    // Most recent segment boundaries (seconds), keyed by analysis type and
-    // then by analysed file path.
-    std::unordered_map<AnalysisType,
-                       std::unordered_map<std::string, std::vector<float>>> analysisResults;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AnalysisProvider)
 };

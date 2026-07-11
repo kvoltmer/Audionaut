@@ -41,18 +41,15 @@ public:
     {
         auto resourceGroups  = std::shared_ptr<tResourceGroupContainer> (new tResourceGroupContainer());
         auto channels   = std::shared_ptr<tAudioChannelContainer> (new tAudioChannelContainer());
-        auto sBicSegmenter = std::make_shared<SBicSegmenter>();
-        auto onsetSegmenter = std::make_shared<OnsetSegmenter>();
-        auto beatSegmenter = std::make_shared<BeatSegmenter>();
-        auto analysisCache = std::make_shared<AnalysisCache>();
-        auto analysisProvider = std::shared_ptr<AnalysisProvider>(new AnalysisProvider(owner, sBicSegmenter, onsetSegmenter, beatSegmenter, analysisCache));
+        // The analysis provider (and its cache) is shared across all tracks and
+        // owned by the container, so every track queries/persists the same data.
         auto audioTrack = std::shared_ptr<AudioTrack>(new AudioTrack(owner,
                                                                      *audioResourceContainer.get(),
                                                                      owner.getTransportSourceContainer(),
                                                                      owner.getSelectionManager(),
                                                                      resourceGroups,
                                                                      channels,
-                                                                     analysisProvider,
+                                                                     owner.getAnalysisProvider(),
                                                                      std::string()));
         return audioTrack;
     }
