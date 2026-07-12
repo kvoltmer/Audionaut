@@ -11,26 +11,28 @@ message(STATUS "Submodules at: ${SUBMODULES_PATH}")
 set(SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/../Source")
 message(STATUS "source file root at: ${SRC_PATH}")
 
-# Essentia powers the audio-analysis features. It is a prebuilt static library
-# that isn't produced by this CMake build, so allow building without it. When
-# AUDIONAUT_ENABLE_ESSENTIA is OFF the analysis code compiles to no-ops (see
+# Essentia powers the audio-analysis features. It is not produced by this CMake
+# build - build it from the submodule with Audionaut/Builds/build_essentia.sh.
+# When AUDIONAUT_ENABLE_ESSENTIA is OFF the analysis code compiles to no-ops (see
 # ESSENTIA_ENABLED in the segmenters) and the Essentia headers/libs are skipped.
 #
-# Default to whatever is actually available: the Essentia submodule ships its
-# src headers, but its Eigen 3rd-party headers are a build artifact that a clean
-# submodule checkout lacks, so key detection on those. Override with
-# -DAUDIONAUT_ENABLE_ESSENTIA=ON/OFF.
-if(EXISTS "${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3/signature_of_eigen3_matrix_library")
+# Link against the freshly built libs in the submodule build tree:
+#   - libessentia.a under essentia/build/src
+#   - its 3rd-party static deps under essentia/packaging/debian_3rdparty/lib
+# Default to whatever is actually available: require both the Eigen headers (a
+# build artifact absent from a clean submodule checkout) and the built
+# libessentia.a. Override with -DAUDIONAUT_ENABLE_ESSENTIA=ON/OFF.
+set(ESSENTIA_LIB_PATH "${SUBMODULES_PATH}/essentia/build/src")
+set(ESSENTIA_3RDPARTY_LIB_PATH "${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib")
+if(EXISTS "${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3/signature_of_eigen3_matrix_library"
+   AND EXISTS "${ESSENTIA_LIB_PATH}/libessentia.a")
     set(ESSENTIA_AVAILABLE ON)
 else()
     set(ESSENTIA_AVAILABLE OFF)
 endif()
-option(AUDIONAUT_ENABLE_ESSENTIA "Build against the prebuilt Essentia library" ${ESSENTIA_AVAILABLE})
+option(AUDIONAUT_ENABLE_ESSENTIA "Build against the Essentia library" ${ESSENTIA_AVAILABLE})
 message(STATUS "Essentia enabled: ${AUDIONAUT_ENABLE_ESSENTIA} (detected available: ${ESSENTIA_AVAILABLE})")
-
-# Precompiled Essentia static libraries (copied out of the submodule build tree).
-set(ESSENTIA_LIB_PATH "${CMAKE_CURRENT_LIST_DIR}/../Builds/Precompiled/Essentia/MacOS")
-message(STATUS "Essentia precompiled libs at: ${ESSENTIA_LIB_PATH}")
+message(STATUS "Essentia libs at: ${ESSENTIA_LIB_PATH} / ${ESSENTIA_3RDPARTY_LIB_PATH}")
 
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
@@ -191,16 +193,16 @@ if(AUDIONAUT_ENABLE_ESSENTIA)
     target_link_libraries(${APP_NAME}
         PRIVATE
             ${ESSENTIA_LIB_PATH}/libessentia.a
-            ${ESSENTIA_LIB_PATH}/libavcodec.a
-            ${ESSENTIA_LIB_PATH}/libchromaprint.a
-            ${ESSENTIA_LIB_PATH}/libmp3lame.a
-            ${ESSENTIA_LIB_PATH}/libavformat.a
-            ${ESSENTIA_LIB_PATH}/libfftw3f.a
-            ${ESSENTIA_LIB_PATH}/libswresample.a
-            ${ESSENTIA_LIB_PATH}/libz.a
-            ${ESSENTIA_LIB_PATH}/libavutil.a
-            ${ESSENTIA_LIB_PATH}/libsamplerate.a
-            ${ESSENTIA_LIB_PATH}/libyaml.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavcodec.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libchromaprint.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libmp3lame.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavformat.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libfftw3f.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libswresample.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libz.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavutil.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libsamplerate.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libyaml.a
             libiconv.a)
 endif()
 
