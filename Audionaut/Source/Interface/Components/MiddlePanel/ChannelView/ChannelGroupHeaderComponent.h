@@ -137,20 +137,14 @@ public:
         if (component != nullptr &&
             result != 0) {
             
-            if (result == CommandIDs::analyzeSBic) {
-                auto audioTrack = component->getAudioTrack();
-                audioTrack->getAnalysisProvider()->analyzeSBic(*audioTrack);
-                audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateArrangementAction);
+            if (result == CommandIDs::showSBic) {
+                component->toggleAnalysisVisibility(audium::AnalysisType::SBic);
             }
-            else if (result == CommandIDs::analyzeOnsets) {
-                auto audioTrack = component->getAudioTrack();
-                audioTrack->getAnalysisProvider()->analyzeOnsets(*audioTrack);
-                audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateArrangementAction);
+            else if (result == CommandIDs::showOnsets) {
+                component->toggleAnalysisVisibility(audium::AnalysisType::Onset);
             }
-            else if (result == CommandIDs::analyzeBeats) {
-                auto audioTrack = component->getAudioTrack();
-                audioTrack->getAnalysisProvider()->analyzeBeats(*audioTrack);
-                audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateArrangementAction);
+            else if (result == CommandIDs::showBeats) {
+                component->toggleAnalysisVisibility(audium::AnalysisType::Beat);
             }
             else {
                 auto height = result;
@@ -172,6 +166,22 @@ public:
         audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
     }
     
+    void toggleAnalysisVisibility(audium::AnalysisType analysisType)
+    {
+        // undo
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+
+        audioTrack->setAnalysisTypeVisible(analysisType, !audioTrack->isAnalysisTypeVisible(analysisType));
+
+        // undo
+        action->storeNewState();
+        audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "toggle analysis visibility");
+        audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+
+        // refresh the arrangement so the clips redraw with the new visibility
+        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateArrangementAction);
+    }
+
     void setChannelHeight(int height)
     {
         // undo
@@ -202,12 +212,16 @@ public:
             
             m.addSubMenu("Waveform Size", sizeMenu);
             
-            PopupMenu analysisMenu;
-            analysisMenu.addItem (CommandIDs::analyzeSBic, TRANS ("SBic"), true);
-            analysisMenu.addItem (CommandIDs::analyzeOnsets, TRANS ("Onsets"), true);
-            analysisMenu.addItem (CommandIDs::analyzeBeats, TRANS ("Beats"), true);
+            // Toggle visibility of each analysis overlay (ticked = currently shown).
+            PopupMenu showMenu;
+            showMenu.addItem (CommandIDs::showSBic, TRANS ("SBic"), true,
+                              audioTrack->isAnalysisTypeVisible (audium::AnalysisType::SBic));
+            showMenu.addItem (CommandIDs::showOnsets, TRANS ("Onsets"), true,
+                              audioTrack->isAnalysisTypeVisible (audium::AnalysisType::Onset));
+            showMenu.addItem (CommandIDs::showBeats, TRANS ("Beats"), true,
+                              audioTrack->isAnalysisTypeVisible (audium::AnalysisType::Beat));
 
-            m.addSubMenu("Analysis", analysisMenu);
+            m.addSubMenu("Show Analysis", showMenu);
             
             m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight),
                              ModalCallbackFunction::forComponent (contextMenuCallback, this));

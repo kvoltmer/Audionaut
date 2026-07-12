@@ -76,12 +76,20 @@ void AudioClipView::refreshSegments()
     if (analysisProvider == nullptr)
         return;
 
+    if (audioResource->isRecording())
+        return;
+    
     const auto audioFile = juce::File(audioResource->getFullPathName());
 
+    // Only display the analysis types the track is configured to show.
     std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType;
-    segmentsByType[audium::AnalysisType::SBic]  = analysisProvider->getSegments(audium::AnalysisType::SBic, audioFile);
-    segmentsByType[audium::AnalysisType::Onset] = analysisProvider->getSegments(audium::AnalysisType::Onset, audioFile);
-    segmentsByType[audium::AnalysisType::Beat]  = analysisProvider->getSegments(audium::AnalysisType::Beat, audioFile);
+    for (auto analysisType : { audium::AnalysisType::SBic,
+                               audium::AnalysisType::Onset,
+                               audium::AnalysisType::Beat })
+    {
+        if (audioTrack->isAnalysisTypeVisible(analysisType))
+            segmentsByType[analysisType] = analysisProvider->getSegments(analysisType, audioFile);
+    }
 
     segmentationView->setSegments(std::move(segmentsByType), getRegionStart(audium::seconds));
 }

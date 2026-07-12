@@ -83,6 +83,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AnalysisCache_e40fdde1.o \
   $(JUCE_OBJDIR)/OnsetSegmenter_cc2f2d0c.o \
   $(JUCE_OBJDIR)/BeatSegmenter_1543c9e5.o \
+  $(JUCE_OBJDIR)/AnalysisWorker_87f10fc9.o \
   $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o \
   $(JUCE_OBJDIR)/TransportSourceContainer_8c0ec2a6.o \
   $(JUCE_OBJDIR)/audium_AudioTransportSource_b27fe79d.o \
@@ -240,6 +241,11 @@ $(JUCE_OBJDIR)/OnsetSegmenter_cc2f2d0c.o: ../../Source/Engine/Analysis/OnsetSegm
 $(JUCE_OBJDIR)/BeatSegmenter_1543c9e5.o: ../../Source/Engine/Analysis/BeatSegmenter.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling BeatSegmenter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AnalysisWorker_87f10fc9.o: ../../Source/Engine/Analysis/AnalysisWorker.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AnalysisWorker.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o: ../../Source/Engine/AudioSources/AudiumTransportSource.cpp

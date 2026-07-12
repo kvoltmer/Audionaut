@@ -862,6 +862,9 @@
     <ClCompile Include="..\..\Source\Engine\Analysis\BeatSegmenter.cpp">
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisWorker.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
@@ -4147,6 +4150,9 @@
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Analysis\BeatSegmenter.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisWorker.h">
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h">

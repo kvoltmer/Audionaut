@@ -20,6 +20,7 @@
 #include "Engine/Recording/Recording.h"
 #include "Engine/Recording/RecordingActionHandler.h"
 #include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Analysis/AnalysisWorker.h"
 
 namespace audium {
 
@@ -46,22 +47,12 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording);
     
     auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback);
-    
-    auto audioResourceContainer     = std::make_shared<AudioResourceContainer>(audioDeviceManager,
-                                                                               formatManager,
-                                                                               audioThumbnailCache,
-                                                                               tempoProvider,
-                                                                               transportSourceContainer);
-    
-    auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
-    
-    auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer);
-    
-    auto transportLoop              = std::make_shared<TransportLoop>(undoManager,
-                                                                      tempoProvider);
 
     // A single analysis provider (and its cache) is shared across all tracks
     // and owned by the track container; the cache persists to AnalysisData.json.
+    // The AnalysisWorker drives that provider on a low-priority background thread
+    // and is injected into the resource container, which enqueues each newly
+    // added audio file for analysis.
     auto sBicSegmenter              = std::make_shared<SBicSegmenter>();
     auto onsetSegmenter             = std::make_shared<OnsetSegmenter>();
     auto beatSegmenter              = std::make_shared<BeatSegmenter>();
@@ -70,6 +61,21 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                          onsetSegmenter,
                                                                          beatSegmenter,
                                                                          analysisCache);
+    auto analysisWorker             = std::make_shared<AnalysisWorker>(analysisProvider);
+
+    auto audioResourceContainer     = std::make_shared<AudioResourceContainer>(audioDeviceManager,
+                                                                               formatManager,
+                                                                               audioThumbnailCache,
+                                                                               tempoProvider,
+                                                                               transportSourceContainer,
+                                                                               analysisWorker);
+
+    auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
+    
+    auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer);
+    
+    auto transportLoop              = std::make_shared<TransportLoop>(undoManager,
+                                                                      tempoProvider);
 
     auto audioTrackContainer        = std::make_shared<AudioTrackContainer>(undoManager,
                                                                             tempoProvider,

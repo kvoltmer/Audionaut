@@ -56,9 +56,9 @@ namespace CommandIDs
         exportSelectedItemsId   = 0xf836743,
         copyChansToNewTrackId   = 0xf836744,
 
-        analyzeSBic             = 0x500000,
-        analyzeOnsets           = 0x500001,
-        analyzeBeats            = 0x500002,
+        showSBic                = 0x500010,
+        showOnsets              = 0x500011,
+        showBeats               = 0x500012,
 
         lastCommandIDEntry
     };

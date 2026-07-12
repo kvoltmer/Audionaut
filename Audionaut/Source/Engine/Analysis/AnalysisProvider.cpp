@@ -16,33 +16,25 @@ namespace audium {
 
 void AnalysisProvider::analyzeSBic(AudioTrack& audioTrack)
 {
-    // The BIC segmentation itself is delegated to the injected SBicSegmenter.
-    analyzeResources(audioTrack, AnalysisType::SBic,
-                     [this](const juce::File& file) { return sBicSegmenter->analyze(file); });
+    analyzeTrack(audioTrack, AnalysisType::SBic);
 }
 
 void AnalysisProvider::analyzeOnsets(AudioTrack& audioTrack)
 {
-    // Onset detection is delegated to the injected OnsetSegmenter.
-    analyzeResources(audioTrack, AnalysisType::Onset,
-                     [this](const juce::File& file) { return onsetSegmenter->analyze(file); });
+    analyzeTrack(audioTrack, AnalysisType::Onset);
 }
 
 void AnalysisProvider::analyzeBeats(AudioTrack& audioTrack)
 {
-    // Beat tracking is delegated to the injected BeatSegmenter.
-    analyzeResources(audioTrack, AnalysisType::Beat,
-                     [this](const juce::File& file) { return beatSegmenter->analyze(file); });
+    analyzeTrack(audioTrack, AnalysisType::Beat);
 }
 
-void AnalysisProvider::analyzeResources(AudioTrack& audioTrack,
-                                        AnalysisType analysisType,
-                                        const std::function<std::vector<float>(const juce::File&)>& segmenter)
+void AnalysisProvider::analyzeTrack(AudioTrack& audioTrack, AnalysisType analysisType)
 {
     auto resources = audioTrack.getAudioResources();
     if (resources.empty())
     {
-        std::cout << "AnalysisProvider::analyzeResources() - track has no audio resources to analyse." << std::endl;
+        std::cout << "AnalysisProvider::analyzeTrack() - track has no audio resources to analyse." << std::endl;
         return;
     }
 
@@ -51,34 +43,60 @@ void AnalysisProvider::analyzeResources(AudioTrack& audioTrack,
         if (resource == nullptr)
             continue;
 
-        const auto audioFile = juce::File(resource->getFullPathName());
-
-        // Reuse a cached result when the file is unchanged; otherwise run the
-        // (expensive) analysis and cache it for next time.
-        std::vector<float> segments;
-        if (auto cached = analysisCache->get(audioFile, analysisType))
-        {
-            segments = std::move(*cached);
-            std::cout << "AnalysisProvider::analyzeResources() - cache hit for "
-                      << audioFile.getFileName() << std::endl;
-        }
-        else
-        {
-            segments = segmenter(audioFile);
-
-            // Only cache successful analyses so failures are retried next time.
-            if (! segments.empty())
-                analysisCache->put(audioFile, analysisType, segments);
-        }
-
-        std::cout << "AnalysisProvider::analyzeResources() - " << segments.size()
-                  << " boundary/boundaries for " << audioFile.getFileName() << std::endl;
-        for (auto seconds : segments)
-            std::cout << "  at " << seconds << " s" << std::endl;
-
-        // Results are held (and persisted) by the cache - the UI queries them
-        // back via getSegments(), so nothing further to store here.
+        analyzeFile(juce::File(resource->getFullPathName()), analysisType);
     }
+}
+
+std::vector<float> AnalysisProvider::runSegmenter(AnalysisType analysisType,
+                                                  const juce::File& audioFile)
+{
+    switch (analysisType)
+    {
+        case AnalysisType::SBic:  return sBicSegmenter->analyze(audioFile);
+        case AnalysisType::Onset: return onsetSegmenter->analyze(audioFile);
+        case AnalysisType::Beat:  return beatSegmenter->analyze(audioFile);
+    }
+    return {};
+}
+
+std::vector<float> AnalysisProvider::analyzeFile(const juce::File& audioFile,
+                                                 AnalysisType analysisType)
+{
+    // Reuse a cached result when the file is unchanged; otherwise run the
+    // (expensive) analysis and cache it for next time.
+    if (auto cached = analysisCache->get(audioFile, analysisType))
+    {
+        std::cout << "AnalysisProvider::analyzeFile() - cache hit for "
+                  << audioFile.getFileName() << std::endl;
+        return std::move(*cached);
+    }
+
+    std::vector<float> segments;
+    {
+        // Serialise the actual segmenter run; a concurrent caller may have
+        // computed the same result while we waited, so re-check the cache.
+        std::lock_guard<std::mutex> lock(segmenterMutex);
+        if (auto cached = analysisCache->get(audioFile, analysisType))
+            return std::move(*cached);
+
+        segments = runSegmenter(analysisType, audioFile);
+    }
+
+    // Only cache successful analyses so failures are retried next time.
+    if (! segments.empty())
+        analysisCache->put(audioFile, analysisType, segments);
+
+    std::cout << "AnalysisProvider::analyzeFile() - " << segments.size()
+              << " boundary/boundaries for " << audioFile.getFileName() << std::endl;
+    
+#if 0
+    for (auto seconds : segments)
+        std::cout << "  at " << seconds << " s" << std::endl;
+#endif
+    
+    // Results are held (and persisted) by the cache - the UI queries them
+    // back via getSegments(), so nothing further to store here.
+    return segments;
 }
 
 std::vector<float> AnalysisProvider::getSegments(AnalysisType analysisType,
