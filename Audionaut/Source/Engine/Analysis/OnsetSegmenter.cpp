@@ -7,9 +7,16 @@
 
 // ESSENTIA_ENABLED lets the codebase build without the (prebuilt) Essentia
 // library present. When it is 0 the analysis is compiled out and analyze()
-// returns an empty result. Defaults to on so normal builds are unaffected.
+// returns an empty result. It is auto-detected from the availability of the
+// Essentia and Eigen headers (Eigen lives under Essentia's 3rd-party include
+// tree, which is a build artifact absent from a clean Essentia checkout), and
+// can be forced by the build system defining it explicitly.
 #ifndef ESSENTIA_ENABLED
- #define ESSENTIA_ENABLED 1
+ #if __has_include(<essentia/algorithmfactory.h>) && __has_include(<unsupported/Eigen/CXX11/Tensor>)
+  #define ESSENTIA_ENABLED 1
+ #else
+  #define ESSENTIA_ENABLED 0
+ #endif
 #endif
 
 #if ESSENTIA_ENABLED
