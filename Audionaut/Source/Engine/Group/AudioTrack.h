@@ -5,9 +5,12 @@
 
 #pragma once
 
+#include <set>
+
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
+#include "Engine/Analysis/AnalysisCache.h"
 #include "Engine/Core/DspClipData.h"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Selection/Selectable.h"
@@ -195,6 +198,17 @@ public:
     void setChannelHeight(int height);
     bool getMinimized() const { return isMinimized; }
     void setMinimized(bool minimized) { isMinimized = minimized; }
+
+    // Which analysis types (SBic/onset/beat) are shown in this track's clips.
+    bool isAnalysisTypeVisible(AnalysisType type) const { return visibleAnalysisTypes.count(type) > 0; }
+    void setAnalysisTypeVisible(AnalysisType type, bool visible)
+    {
+        if (visible)
+            visibleAnalysisTypes.insert(type);
+        else
+            visibleAnalysisTypes.erase(type);
+    }
+    const std::set<AnalysisType>& getVisibleAnalysisTypes() const { return visibleAnalysisTypes; }
     
     std::list<std::shared_ptr<PositionableBase>> getPositionableItems() const;
     
@@ -249,6 +263,9 @@ private:
     std::string name; ///< Name of the audio track.
     juce::Colour groupColour = juce::Colours::pink; ///< Color of the audio track.
     bool isMinimized = false;
+
+    // Analysis overlays visible in this track's clips (none shown by default).
+    std::set<AnalysisType> visibleAnalysisTypes;
     std::unique_ptr<UndoableContainerAction> undoableContainerAction; ///< Undoable action container.
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)

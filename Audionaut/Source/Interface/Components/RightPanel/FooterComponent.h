@@ -10,6 +10,8 @@
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/Playback/Playback.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Analysis/AnalysisWorker.h"
 
 class FooterComponent  : public juce::Component, private juce::Timer
 {
@@ -22,17 +24,22 @@ public:
         totalLengthLabel->setFont (juce::FontOptions { 13.0f });
         totalLengthLabel->setJustificationType (juce::Justification::centredLeft);
         totalLengthLabel->setEditable (false, false, false);
-        totalLengthLabel->setColour (juce::Label::backgroundColourId, findColour(audium::backgroundColourId));
-        totalLengthLabel->setColour (juce::TextEditor::textColourId, juce::Colours::black);
         
         numVoicesLabel.reset(new juce::Label());
         addAndMakeVisible(numVoicesLabel.get());
         numVoicesLabel->setFont (juce::FontOptions { 13.0f });
         numVoicesLabel->setJustificationType (juce::Justification::centredLeft);
         numVoicesLabel->setEditable (false, false, false);
-        numVoicesLabel->setColour (juce::Label::backgroundColourId, findColour(audium::backgroundColourId));
-        numVoicesLabel->setColour (juce::TextEditor::textColourId, juce::Colours::black);
-        
+
+        // Background-analysis status. Added last so it draws on top of the two
+        // labels above, and shown only while the AnalysisWorker is busy.
+        analysisStatusLabel.reset(new juce::Label());
+        addChildComponent(analysisStatusLabel.get());
+        analysisStatusLabel->setFont (juce::FontOptions { 13.0f });
+        analysisStatusLabel->setJustificationType (juce::Justification::centredLeft);
+        analysisStatusLabel->setEditable (false, false, false);
+
+
         startTimer(50);
     }
 
@@ -55,21 +62,33 @@ public:
         juce::Rectangle<int> numVoiceBounds(width, 0, width, getHeight());
         numVoicesLabel->setBounds(numVoiceBounds);
 
+        // Overlays the full footer, on top of both labels above.
+        analysisStatusLabel->setBounds(0, 0, getWidth(), getHeight());
     }
-    
+
     void timerCallback() override
     {
         auto timeSec = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds);
         totalLengthLabel->setText(audium::TempoProvider::secondsToFormattedString(timeSec), juce::dontSendNotification);
-        
+
         auto numVoices = audiumEngine->getPlayListScheduler()->getPlayback()->getNumVoices();
         numVoicesLabel->setText("Voices " + juce::String(numVoices), juce::dontSendNotification);
+
+        auto analysisWorker = audiumEngine->getAudioResourceContainer()->getAnalysisWorker();
+        const bool busy = analysisWorker != nullptr && analysisWorker->isBusy();
+        if (busy) {
+            std::string txt = "Analysing: " + analysisWorker->getCurrentFileName().toStdString() + " ";
+            txt += "(" + std::to_string(analysisWorker->getRemainingCount()) + " remaining)";
+            analysisStatusLabel->setText(txt, juce::dontSendNotification);
+        }
+        analysisStatusLabel->setVisible(busy);
     }
 
 private:
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::unique_ptr<juce::Label> totalLengthLabel;
     std::unique_ptr<juce::Label> numVoicesLabel;
+    std::unique_ptr<juce::Label> analysisStatusLabel;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FooterComponent)
 };
