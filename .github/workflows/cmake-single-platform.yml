@@ -37,6 +37,15 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Pin CMake 3.x for the legacy Essentia 3rd-party builds
+      # Essentia's 3rd-party deps (taglib, chromaprint, ...) ship CMakeLists from
+      # 2012-2016 that CMake 4.x refuses (removed <3.5 minimums and OLD policy
+      # behaviour). The runner ships CMake 4.x; pin the last 3.x line, which also
+      # builds the JUCE/Catch2 project fine (it needs only >= 3.15).
+      run: |
+        pip install "cmake~=3.31.0"
+        echo "cmake: $(command -v cmake)  $(cmake --version | head -1)"
+
     - name: Install Essentia build tools
       run: brew install pkg-config
 
@@ -44,9 +53,13 @@ jobs:
       id: essentia-rev
       run: echo "sha=$(git -C Submodules/essentia rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-    - name: Cache Essentia build
+    # Restore/save are split (not the combined cache action) so the cache is
+    # only written after a *successful* build - a partial build from a failed
+    # run must never poison the cache (it would make CMake silently fall back to
+    # Essentia-off and pass without exercising analysis).
+    - name: Restore Essentia cache
       id: cache-essentia
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: |
           Submodules/essentia/build
@@ -57,6 +70,17 @@ jobs:
     - name: Build Essentia
       if: steps.cache-essentia.outputs.cache-hit != 'true'
       run: ./Audionaut/Builds/build_essentia.sh
+
+    - name: Save Essentia cache
+      # Reached only if Build Essentia succeeded (the job stops on failure).
+      if: steps.cache-essentia.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          Submodules/essentia/build
+          Submodules/essentia/packaging/debian_3rdparty/include
+          Submodules/essentia/packaging/debian_3rdparty/lib
+        key: essentia-${{ runner.os }}-${{ runner.arch }}-${{ steps.essentia-rev.outputs.sha }}-${{ hashFiles('Audionaut/Builds/build_essentia.sh') }}
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
