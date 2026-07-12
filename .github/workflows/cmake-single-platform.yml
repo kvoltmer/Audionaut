@@ -28,6 +28,36 @@ jobs:
       with:
         submodules: 'recursive'
 
+    # Essentia (the audio-analysis backend) is built from the submodule tree; the
+    # tests link the resulting static libs. Without it, ESSENTIA_ENABLED
+    # auto-detects off and the analysis tests compile out.
+    - name: Set up Python for waf
+      # Essentia's bundled waf needs stdlib distutils, removed in Python 3.12+.
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Essentia build tools
+      run: brew install pkg-config
+
+    - name: Essentia submodule revision
+      id: essentia-rev
+      run: echo "sha=$(git -C Submodules/essentia rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Essentia build
+      id: cache-essentia
+      uses: actions/cache@v4
+      with:
+        path: |
+          Submodules/essentia/build
+          Submodules/essentia/packaging/debian_3rdparty/include
+          Submodules/essentia/packaging/debian_3rdparty/lib
+        key: essentia-${{ runner.os }}-${{ runner.arch }}-${{ steps.essentia-rev.outputs.sha }}-${{ hashFiles('Audionaut/Builds/build_essentia.sh') }}
+
+    - name: Build Essentia
+      if: steps.cache-essentia.outputs.cache-hit != 'true'
+      run: ./Audionaut/Builds/build_essentia.sh
+
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
