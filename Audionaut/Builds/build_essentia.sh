@@ -52,6 +52,12 @@ fi
 
 cd "$ESSENTIA_DIR"
 
+# Some 3rd-party deps (taglib, chromaprint) ship CMakeLists with a very old
+# cmake_minimum_required that CMake >= 4.0 refuses. This env var (honoured by
+# CMake >= 3.31, ignored by older) lets those projects configure. Harmless on
+# the interpreters/toolchains that don't need it.
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 # 0. Patch Essentia's (x86/Linux-oriented) 3rd-party build scripts so they build
 #    on modern macOS / Apple Silicon. All edits are idempotent, so re-runs and
 #    already-patched checkouts are no-ops - we deliberately patch the working
