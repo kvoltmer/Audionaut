@@ -26,9 +26,6 @@
 *.a
 *.lib
 
-# ...except the precompiled Essentia libs we ship in the build tree
-!Audionaut/Builds/Precompiled/Essentia/**/*.a
-
 # Executables
 *.exe
 *.out
