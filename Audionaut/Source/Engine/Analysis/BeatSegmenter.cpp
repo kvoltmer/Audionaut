@@ -5,12 +5,20 @@
 
 #include "BeatSegmenter.h"
 
-#define EIGEN_HAS_STD_RESULT_OF 0
+// ESSENTIA_ENABLED lets the codebase build without the (prebuilt) Essentia
+// library present. When it is 0 the analysis is compiled out and analyze()
+// returns an empty result. Defaults to on so normal builds are unaffected.
+#ifndef ESSENTIA_ENABLED
+ #define ESSENTIA_ENABLED 1
+#endif
 
-#include <essentia/algorithmfactory.h>
-#include <essentia/pool.h>
-#include <essentia/scheduler/network.h>
-#include <essentia/streaming/algorithms/poolstorage.h>
+#if ESSENTIA_ENABLED
+ #define EIGEN_HAS_STD_RESULT_OF 0
+ #include <essentia/algorithmfactory.h>
+ #include <essentia/pool.h>
+ #include <essentia/scheduler/network.h>
+ #include <essentia/streaming/algorithms/poolstorage.h>
+#endif
 
 namespace audium {
 
@@ -22,6 +30,10 @@ std::vector<float> BeatSegmenter::analyze(const juce::File& audioFile)
 std::vector<float> BeatSegmenter::analyze(const juce::File& audioFile,
                                           const Parameters& params)
 {
+#if ! ESSENTIA_ENABLED
+    juce::ignoreUnused (audioFile, params);
+    return {};
+#else
     if (! audioFile.existsAsFile())
         return {};
 
@@ -66,6 +78,7 @@ std::vector<float> BeatSegmenter::analyze(const juce::File& audioFile,
     essentia::shutdown();
 
     return timestamps;
+#endif // ESSENTIA_ENABLED
 }
 
 } // namespace audium

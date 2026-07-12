@@ -1,5 +1,14 @@
 #include <catch2/catch_test_macros.hpp>
 
+// This whole translation unit exercises Essentia directly, so it is compiled
+// out when the codebase is built without Essentia. See ESSENTIA_ENABLED in the
+// segmenters.
+#ifndef ESSENTIA_ENABLED
+ #define ESSENTIA_ENABLED 1
+#endif
+
+#if ESSENTIA_ENABLED
+
 #define EIGEN_HAS_STD_RESULT_OF 0
 
 #include <iostream>
@@ -93,3 +102,5 @@ SCENARIO("essentia multi-feature", "[engine][essentia][BeatTrackerMultiFeature]"
 
     essentia::shutdown();
 }
+
+#endif // ESSENTIA_ENABLED
