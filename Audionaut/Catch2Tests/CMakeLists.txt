@@ -11,6 +11,13 @@ message(STATUS "Submodules at: ${SUBMODULES_PATH}")
 set(SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/../Source")
 message(STATUS "source file root at: ${SRC_PATH}")
 
+# Essentia powers the audio-analysis features. It is a prebuilt static library
+# that isn't produced by this CMake build, so allow building without it. When
+# AUDIONAUT_ENABLE_ESSENTIA is OFF the analysis code compiles to no-ops (see
+# ESSENTIA_ENABLED in the segmenters) and the Essentia headers/libs are skipped.
+option(AUDIONAUT_ENABLE_ESSENTIA "Build against the prebuilt Essentia library" ON)
+message(STATUS "Essentia enabled: ${AUDIONAUT_ENABLE_ESSENTIA}")
+
 # Precompiled Essentia static libraries (copied out of the submodule build tree).
 set(ESSENTIA_LIB_PATH "${CMAKE_CURRENT_LIST_DIR}/../Builds/Precompiled/Essentia/MacOS")
 message(STATUS "Essentia precompiled libs at: ${ESSENTIA_LIB_PATH}")
@@ -104,9 +111,14 @@ target_include_directories(${APP_NAME}
                         PUBLIC ../Source/
                         PUBLIC ${SUBMODULES_PATH}/json/include
                         PUBLIC ${SUBMODULES_PATH}/farbot/include
+                        )
+
+if(AUDIONAUT_ENABLE_ESSENTIA)
+    target_include_directories(${APP_NAME}
                         PUBLIC ${SUBMODULES_PATH}/essentia/src
                         PUBLIC ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3
                         )
+endif()
 # c++ standard
 #set(CMAKE_CXX_STANDARD 20)
 set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 20)
@@ -125,7 +137,8 @@ target_compile_definitions(${APP_NAME}
         CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}" # This is needed for the Catch2 tests to find the test files
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
-        JUCE_USE_CURL=0)    # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
+        JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
+        ESSENTIA_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_ESSENTIA}>)
 
 
 #target_compile_options( ${APP_NAME}
@@ -160,21 +173,26 @@ target_link_libraries(${APP_NAME}
         juce::juce_dsp
         Catch2::Catch2WithMain
         Ableton::Link
-        ${ESSENTIA_LIB_PATH}/libessentia.a
-        ${ESSENTIA_LIB_PATH}/libavcodec.a
-        ${ESSENTIA_LIB_PATH}/libchromaprint.a
-        ${ESSENTIA_LIB_PATH}/libmp3lame.a
-        ${ESSENTIA_LIB_PATH}/libavformat.a
-        ${ESSENTIA_LIB_PATH}/libfftw3f.a
-        ${ESSENTIA_LIB_PATH}/libswresample.a
-        ${ESSENTIA_LIB_PATH}/libz.a
-        ${ESSENTIA_LIB_PATH}/libavutil.a
-        ${ESSENTIA_LIB_PATH}/libsamplerate.a
-        ${ESSENTIA_LIB_PATH}/libyaml.a
-        libiconv.a
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
+
+if(AUDIONAUT_ENABLE_ESSENTIA)
+    target_link_libraries(${APP_NAME}
+        PRIVATE
+            ${ESSENTIA_LIB_PATH}/libessentia.a
+            ${ESSENTIA_LIB_PATH}/libavcodec.a
+            ${ESSENTIA_LIB_PATH}/libchromaprint.a
+            ${ESSENTIA_LIB_PATH}/libmp3lame.a
+            ${ESSENTIA_LIB_PATH}/libavformat.a
+            ${ESSENTIA_LIB_PATH}/libfftw3f.a
+            ${ESSENTIA_LIB_PATH}/libswresample.a
+            ${ESSENTIA_LIB_PATH}/libz.a
+            ${ESSENTIA_LIB_PATH}/libavutil.a
+            ${ESSENTIA_LIB_PATH}/libsamplerate.a
+            ${ESSENTIA_LIB_PATH}/libyaml.a
+            libiconv.a)
+endif()
 
 
 add_test(NAME ${APP_NAME}

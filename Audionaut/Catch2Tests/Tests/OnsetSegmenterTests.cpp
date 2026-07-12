@@ -2,8 +2,15 @@
 
 #include "Engine/Analysis/OnsetSegmenter.h"
 
+// This scenario needs real analysis results, which are only available when the
+// codebase is built against Essentia. See ESSENTIA_ENABLED in the segmenters.
+#ifndef ESSENTIA_ENABLED
+ #define ESSENTIA_ENABLED 1
+#endif
+
 using namespace audium;
 
+#if ESSENTIA_ENABLED
 SCENARIO("OnsetSegmenter detects onsets in an audio file", "[engine][analysis][onsets]")
 {
     auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
@@ -32,6 +39,7 @@ SCENARIO("OnsetSegmenter detects onsets in an audio file", "[engine][analysis][o
         }
     }
 }
+#endif // ESSENTIA_ENABLED
 
 SCENARIO("OnsetSegmenter returns no onsets for a missing file", "[engine][analysis][onsets]")
 {
