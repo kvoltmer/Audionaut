@@ -44,6 +44,31 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <GROUP id="{F264B579-6549-549F-C533-C737634896B7}" name="Analysis">
+          <FILE id="aWMWyc" name="AnalysisProvider.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/AnalysisProvider.cpp"/>
+          <FILE id="H2DipS" name="AnalysisProvider.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/AnalysisProvider.h"/>
+          <FILE id="sbicSc" name="SBicSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/SBicSegmenter.cpp"/>
+          <FILE id="sbicSh" name="SBicSegmenter.h" compile="0" resource="0" file="Source/Engine/Analysis/SBicSegmenter.h"/>
+          <FILE id="anCchC" name="AnalysisCache.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/AnalysisCache.cpp"/>
+          <FILE id="anCchH" name="AnalysisCache.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/AnalysisCache.h"/>
+          <FILE id="onSegC" name="OnsetSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/OnsetSegmenter.cpp"/>
+          <FILE id="onSegH" name="OnsetSegmenter.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/OnsetSegmenter.h"/>
+          <FILE id="btSegC" name="BeatSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/BeatSegmenter.cpp"/>
+          <FILE id="btSegH" name="BeatSegmenter.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/BeatSegmenter.h"/>
+          <FILE id="anWrkC" name="AnalysisWorker.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/AnalysisWorker.cpp"/>
+          <FILE id="anWrkH" name="AnalysisWorker.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/AnalysisWorker.h"/>
+        </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
           <FILE id="S0kUtq" name="AudiumTransportSource.cpp" compile="1" resource="0"
@@ -433,6 +458,10 @@
           <FILE id="aCyjt9" name="FadeInOutView.cpp" compile="1" resource="0"
                 file="Source/Interface/Views/FadeInOutView.cpp"/>
           <FILE id="FdmpTf" name="FadeInOutView.h" compile="0" resource="0" file="Source/Interface/Views/FadeInOutView.h"/>
+          <FILE id="segViC" name="SegmentationView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/SegmentationView.cpp"/>
+          <FILE id="segViH" name="SegmentationView.h" compile="0" resource="0"
+                file="Source/Interface/Views/SegmentationView.h"/>
           <FILE id="hpKHS1" name="GridView.h" compile="0" resource="0" file="Source/Interface/Views/GridView.h"/>
           <FILE id="Fx8wUZ" name="ArrangementOverview.h" compile="0" resource="0"
                 file="Source/Interface/Views/ArrangementOverview.h"/>
@@ -440,10 +469,10 @@
                 file="Source/Interface/Views/WaveFormViewBase.cpp"/>
           <FILE id="nZmqga" name="WaveFormViewBase.h" compile="0" resource="0"
                 file="Source/Interface/Views/WaveFormViewBase.h"/>
-          <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"
-                file="Source/Interface/Views/AudioRegionView.cpp"/>
-          <FILE id="D4QJ9Q" name="AudioRegionView.h" compile="0" resource="0"
-                file="Source/Interface/Views/AudioRegionView.h"/>
+          <FILE id="m8P0Gz" name="AudioClipView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AudioClipView.cpp"/>
+          <FILE id="D4QJ9Q" name="AudioClipView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AudioClipView.h"/>
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
         <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">
@@ -461,17 +490,17 @@
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
-               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
-               smallIcon="qhU3Rr" bigIcon="gdiYPG" appSandboxInheritance="1"
-               appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
+               extraDefs="LINK_PLATFORM_MACOSX=1"
+               appSandbox="1" useLegacyBuildSystem="0" smallIcon="qhU3Rr" bigIcon="gdiYPG"
+               appSandboxInheritance="1" appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
-               xcodeValidArchs="arm64,arm64e,x86_64" documentExtensions="audium"
-               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="15" microphonePermissionNeeded="1"
-               localNetworkPermissionNeeded="1">
+               xcodeValidArchs="arm64,arm64e" documentExtensions="audium" iosDevelopmentTeamID="Q89CZBX79G"
+               buildNumber="15" microphonePermissionNeeded="1" localNetworkPermissionNeeded="1"
+               extraLinkerFlags="$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
                        customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
+        <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
                        customXcodeFlags="INSTALL_PATH=/Applications"/>
       </CONFIGURATIONS>
       <MODULEPATHS>

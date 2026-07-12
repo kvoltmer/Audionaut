@@ -78,6 +78,12 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/Main_70df61c1.o \
   $(JUCE_OBJDIR)/EngineAccess_b7e0d334.o \
   $(JUCE_OBJDIR)/Preferences_96bfe954.o \
+  $(JUCE_OBJDIR)/AnalysisProvider_7450833c.o \
+  $(JUCE_OBJDIR)/SBicSegmenter_68bb20f2.o \
+  $(JUCE_OBJDIR)/AnalysisCache_e40fdde1.o \
+  $(JUCE_OBJDIR)/OnsetSegmenter_cc2f2d0c.o \
+  $(JUCE_OBJDIR)/BeatSegmenter_1543c9e5.o \
+  $(JUCE_OBJDIR)/AnalysisWorker_87f10fc9.o \
   $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o \
   $(JUCE_OBJDIR)/TransportSourceContainer_8c0ec2a6.o \
   $(JUCE_OBJDIR)/audium_AudioTransportSource_b27fe79d.o \
@@ -145,8 +151,9 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/RegionTableListBox_80e14e37.o \
   $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o \
   $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o \
+  $(JUCE_OBJDIR)/SegmentationView_81438847.o \
   $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o \
-  $(JUCE_OBJDIR)/AudioRegionView_e0200259.o \
+  $(JUCE_OBJDIR)/AudioClipView_1a258175.o \
   $(JUCE_OBJDIR)/BinaryData_ce4232d4.o \
   $(JUCE_OBJDIR)/include_juce_analytics_f8e9fa94.o \
   $(JUCE_OBJDIR)/include_juce_audio_basics_8a4e984a.o \
@@ -209,6 +216,36 @@ $(JUCE_OBJDIR)/EngineAccess_b7e0d334.o: ../../Source/Util/EngineAccess.cpp
 $(JUCE_OBJDIR)/Preferences_96bfe954.o: ../../Source/Util/Preferences.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling Preferences.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AnalysisProvider_7450833c.o: ../../Source/Engine/Analysis/AnalysisProvider.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AnalysisProvider.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/SBicSegmenter_68bb20f2.o: ../../Source/Engine/Analysis/SBicSegmenter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling SBicSegmenter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AnalysisCache_e40fdde1.o: ../../Source/Engine/Analysis/AnalysisCache.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AnalysisCache.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/OnsetSegmenter_cc2f2d0c.o: ../../Source/Engine/Analysis/OnsetSegmenter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling OnsetSegmenter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/BeatSegmenter_1543c9e5.o: ../../Source/Engine/Analysis/BeatSegmenter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling BeatSegmenter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AnalysisWorker_87f10fc9.o: ../../Source/Engine/Analysis/AnalysisWorker.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AnalysisWorker.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o: ../../Source/Engine/AudioSources/AudiumTransportSource.cpp
@@ -546,14 +583,19 @@ $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o: ../../Source/Interface/Views/FadeInOutV
 	@echo "Compiling FadeInOutView.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/SegmentationView_81438847.o: ../../Source/Interface/Views/SegmentationView.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling SegmentationView.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o: ../../Source/Interface/Views/WaveFormViewBase.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling WaveFormViewBase.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/AudioRegionView_e0200259.o: ../../Source/Interface/Views/AudioRegionView.cpp
+$(JUCE_OBJDIR)/AudioClipView_1a258175.o: ../../Source/Interface/Views/AudioClipView.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AudioRegionView.cpp"
+	@echo "Compiling AudioClipView.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/BinaryData_ce4232d4.o: ../../JuceLibraryCode/BinaryData.cpp

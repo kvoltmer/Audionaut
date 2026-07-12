@@ -16,6 +16,7 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Resource/ChannelMapping.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
 namespace audium {
 
@@ -64,6 +65,11 @@ bool AudioTrack::writeToJson (json& output)
     output["colour"] = groupColour.toString().toStdString();
     if (isMinimized)
         output["minimized"] = isMinimized;
+
+    auto visibleAnalysis = json::array();
+    for (auto type : visibleAnalysisTypes)
+        visibleAnalysis.push_back(analysisTypeToString(type));
+    output["visible_analysis"] = visibleAnalysis;
     
     for (auto channel : audioChannelContainer->getObjects())
     {
@@ -167,6 +173,14 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     
     if (input.contains("minimized"))
         isMinimized = input["minimized"].template get<bool>();
+
+    if (input.contains("visible_analysis"))
+    {
+        visibleAnalysisTypes.clear();
+        for (const auto& element : input["visible_analysis"])
+            if (auto type = analysisTypeFromString(element.template get<std::string>()))
+                visibleAnalysisTypes.insert(*type);
+    }
     
     if (input.contains("colour"))
         groupColour = juce::Colour::fromString(input["colour"].template get<std::string>());
@@ -748,9 +762,7 @@ std::shared_ptr<PlayListItem> AudioTrack::createDefaultPlayListItem(std::shared_
         // Format as [Year-Month-Day Hour-Minute-Second]
         auto now = juce::Time::getCurrentTime();
         auto formattedStr = now.formatted ("[%Y-%m-%d_%H-%M-%S]");
-        
-        auto name = "take " + takeString + " " + formattedStr;
-        region->setName(name);
+        region->setName("take " + takeString + " " + formattedStr);
     }
     
     

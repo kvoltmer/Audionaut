@@ -252,8 +252,8 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     volumeSlider->onDragEnd = [this] {
         // TODO: undo/redo
     };
-    
-    
+
+
     setSize (1200, 40);
     startTimerHz(AudiumLookAndFeel::timerHz);
 }
@@ -290,7 +290,7 @@ void HeaderComponent::resized()
     volumeSlider->setBounds(x, 10, 70, 20);
     x += 100;
     stereoMeter->setBounds(x, 10, 110, 20);
-    
+
     rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
 }
 

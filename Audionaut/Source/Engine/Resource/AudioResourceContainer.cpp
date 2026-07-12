@@ -13,6 +13,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/Analysis/AnalysisWorker.h"
 
 using namespace juce;
 
@@ -286,9 +287,15 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                    sourceChannel);
     if (audioResource != nullptr) {
         audioResources.push_back({track, audioResource});
+
+        // Kick off background analysis of the new file. Recording placeholders
+        // (no reader yet) are analysed later, once recording finishes.
+        if (analysisWorker != nullptr && ! audioResource->isRecording())
+            analysisWorker->enqueue(juce::File(audioResource->getFullPathName()));
+
         return audioResource;
     }
-    
+
     return nullptr;
 }
 
@@ -545,7 +552,15 @@ void AudioResourceContainer::onRecordingFinished()
 {
     // load recorded audio files
     for (auto &itr : audioResources) {
-        itr.second->loadRecordedAudioFile();
+        auto resource = itr.second;
+
+        // A successful load means a freshly recorded file is now on disk with a
+        // reader - analyse it in the background, like any newly added resource.
+        if (resource->loadRecordedAudioFile()
+            && analysisWorker != nullptr)
+        {
+            analysisWorker->enqueue(juce::File(resource->getFullPathName()));
+        }
     }
 }
 

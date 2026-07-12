@@ -5,9 +5,12 @@
 
 #pragma once
 
+#include <set>
+
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
+#include "Engine/Analysis/AnalysisCache.h"
 #include "Engine/Core/DspClipData.h"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Selection/Selectable.h"
@@ -28,6 +31,7 @@ class AudioChannel;
 class PositionableBase;
 class AudioTrackContainer;
 class AudioChannelData;
+class AnalysisProvider;
 
 typedef SelectableObjectContainer<ResourceGroup> tResourceGroupContainer;
 typedef SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
@@ -60,12 +64,14 @@ public:
                std::shared_ptr<SelectionManager> selectionManager_,
                std::shared_ptr<tResourceGroupContainer> resourceGroups_,
                std::shared_ptr<tAudioChannelContainer> channels_,
+               std::shared_ptr<AnalysisProvider> analysisProvider_,
                juce::String nameString_) :
         Selectable(selectionManager_),
         owner(owner_),
         audioResourceContainer(audioResourceContainer_),
         transportSourceContainer(transportSourceContainer_),
         selectionManager(selectionManager_),
+        analysisProvider(analysisProvider_),
         resourceGroupContainer(resourceGroups_),
         audioChannelContainer(channels_),
         name(nameString_.toStdString())
@@ -192,6 +198,17 @@ public:
     void setChannelHeight(int height);
     bool getMinimized() const { return isMinimized; }
     void setMinimized(bool minimized) { isMinimized = minimized; }
+
+    // Which analysis types (SBic/onset/beat) are shown in this track's clips.
+    bool isAnalysisTypeVisible(AnalysisType type) const { return visibleAnalysisTypes.count(type) > 0; }
+    void setAnalysisTypeVisible(AnalysisType type, bool visible)
+    {
+        if (visible)
+            visibleAnalysisTypes.insert(type);
+        else
+            visibleAnalysisTypes.erase(type);
+    }
+    const std::set<AnalysisType>& getVisibleAnalysisTypes() const { return visibleAnalysisTypes; }
     
     std::list<std::shared_ptr<PositionableBase>> getPositionableItems() const;
     
@@ -229,6 +246,7 @@ public:
     const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;
     int getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const;
     
+    std::shared_ptr<AnalysisProvider> getAnalysisProvider() const { return analysisProvider; }
     
 private:
     AudioTrackContainer &owner; ///< Reference to the owning container.
@@ -236,7 +254,7 @@ private:
     std::shared_ptr<PlayListContainer> playListContainer; ///< Shared pointer to the playlist container.
     std::shared_ptr<TransportSourceContainer> transportSourceContainer; ///< Shared pointer to the transport source container.
     std::shared_ptr<SelectionManager> selectionManager; ///< Shared pointer to the selection manager.
-
+    std::shared_ptr<AnalysisProvider> analysisProvider;
 public:
     std::shared_ptr<tResourceGroupContainer> resourceGroupContainer; ///< Shared pointer to the resource group container.
     std::shared_ptr<tAudioChannelContainer> audioChannelContainer; ///< Shared pointer to the audio channel container.
@@ -245,6 +263,9 @@ private:
     std::string name; ///< Name of the audio track.
     juce::Colour groupColour = juce::Colours::pink; ///< Color of the audio track.
     bool isMinimized = false;
+
+    // Analysis overlays visible in this track's clips (none shown by default).
+    std::set<AnalysisType> visibleAnalysisTypes;
     std::unique_ptr<UndoableContainerAction> undoableContainerAction; ///< Undoable action container.
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)

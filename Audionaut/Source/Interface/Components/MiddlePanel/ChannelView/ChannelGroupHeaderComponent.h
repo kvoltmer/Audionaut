@@ -10,6 +10,7 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/ActionMessages.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Controls/AudiumLabel.h"
@@ -136,8 +137,19 @@ public:
         if (component != nullptr &&
             result != 0) {
             
-            auto height = result;
-            component->setChannelHeight(height);
+            if (result == CommandIDs::showSBic) {
+                component->toggleAnalysisVisibility(audium::AnalysisType::SBic);
+            }
+            else if (result == CommandIDs::showOnsets) {
+                component->toggleAnalysisVisibility(audium::AnalysisType::Onset);
+            }
+            else if (result == CommandIDs::showBeats) {
+                component->toggleAnalysisVisibility(audium::AnalysisType::Beat);
+            }
+            else {
+                auto height = result;
+                component->setChannelHeight(height);
+            }
         }
     }
     
@@ -154,6 +166,22 @@ public:
         audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
     }
     
+    void toggleAnalysisVisibility(audium::AnalysisType analysisType)
+    {
+        // undo
+        auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+
+        audioTrack->setAnalysisTypeVisible(analysisType, !audioTrack->isAnalysisTypeVisible(analysisType));
+
+        // undo
+        action->storeNewState();
+        audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "toggle analysis visibility");
+        audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+
+        // refresh the arrangement so the clips redraw with the new visibility
+        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateArrangementAction);
+    }
+
     void setChannelHeight(int height)
     {
         // undo
@@ -174,12 +202,27 @@ public:
     {
         if (e.mods.isPopupMenu()) {
             PopupMenu m;
-            m.addItem (AudiumLookAndFeel::SizeIds::micro, TRANS ("micro"), true);
-            m.addItem (AudiumLookAndFeel::SizeIds::small, TRANS ("small"), true);
-            m.addItem (AudiumLookAndFeel::SizeIds::medium, TRANS ("medium"), true);
-            m.addItem (AudiumLookAndFeel::SizeIds::large, TRANS ("large"), true);
-            m.addItem (AudiumLookAndFeel::SizeIds::huge, TRANS ("huge"), true);
             m.setLookAndFeel (&getLookAndFeel());
+            PopupMenu sizeMenu;
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::micro, TRANS ("micro"), true);
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::small, TRANS ("small"), true);
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::medium, TRANS ("medium"), true);
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::large, TRANS ("large"), true);
+            sizeMenu.addItem (AudiumLookAndFeel::SizeIds::huge, TRANS ("huge"), true);
+            
+            m.addSubMenu("Waveform Size", sizeMenu);
+            
+            // Toggle visibility of each analysis overlay (ticked = currently shown).
+            PopupMenu showMenu;
+            showMenu.addItem (CommandIDs::showSBic, TRANS ("SBic"), true,
+                              audioTrack->isAnalysisTypeVisible (audium::AnalysisType::SBic));
+            showMenu.addItem (CommandIDs::showOnsets, TRANS ("Onsets"), true,
+                              audioTrack->isAnalysisTypeVisible (audium::AnalysisType::Onset));
+            showMenu.addItem (CommandIDs::showBeats, TRANS ("Beats"), true,
+                              audioTrack->isAnalysisTypeVisible (audium::AnalysisType::Beat));
+
+            m.addSubMenu("Show Analysis", showMenu);
+            
             m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight),
                              ModalCallbackFunction::forComponent (contextMenuCallback, this));
         }

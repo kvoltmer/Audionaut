@@ -9,6 +9,7 @@
 #include <memory>
 #include "WaveFormViewBase.h"
 #include "Interface/Views/FadeInOutView.h"
+#include "Interface/Views/SegmentationView.h"
 #include "Interface/Controls/SliderControl.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Engine/PlayList/PlayListItem.h"
@@ -17,10 +18,10 @@
 
 class ZoomHandler;
 
-class AudioRegionView : public WaveFormViewBase
+class AudioClipView : public WaveFormViewBase
 {
 public:
-    AudioRegionView(juce::Component *parentComponent_,
+    AudioClipView(juce::Component *parentComponent_,
                     std::shared_ptr<audium::AudiumEngine> audiumEngine_,
                     std::shared_ptr<audium::AudioResource> audioResource_,
                     std::shared_ptr<ZoomHandler> zoomHandler_,
@@ -40,7 +41,13 @@ public:
         // FADE IN OUT VIEW
         fadeInOutView = std::make_unique<FadeInOutView>();
         addAndMakeVisible(fadeInOutView.get());
-        
+
+        // SEGMENTATION VIEW (analysis result overlay)
+        segmentationView = std::make_unique<SegmentationView>();
+        segmentationView->setZoomHandler(zoomHandler);
+        segmentationView->setInterceptsMouseClicks(false, false);
+        addAndMakeVisible(segmentationView.get());
+
         // VOLUME
         volumeSlider = std::make_unique<SliderControl>(juce::String(), regionSelector);
         addAndMakeVisible(volumeSlider.get());
@@ -62,8 +69,14 @@ public:
 private:
     
     std::unique_ptr<FadeInOutView> fadeInOutView;
-    
+
+    std::unique_ptr<SegmentationView> segmentationView;
+
     std::unique_ptr<SliderControl> volumeSlider;
+
+    // Pulls the track's stored analysis results for this region's file into
+    // the segmentation overlay.
+    void refreshSegments();
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionView)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioClipView)
 };

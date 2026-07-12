@@ -24,6 +24,7 @@ class TransportSourceContainer;
 class AudioResourceContainer;
 class AudioBusInterface;
 class TransportLoop;
+class AnalysisProvider;
 
 /**
  * @class AudioTrackContainer
@@ -52,7 +53,8 @@ public:
                         std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
                         std::shared_ptr<SelectionManager> selectionManager_,
                         std::shared_ptr<AudioBusInterface> audioBusInterface_,
-                        std::shared_ptr<TransportLoop> transportLoop_) :
+                        std::shared_ptr<TransportLoop> transportLoop_,
+                        std::shared_ptr<AnalysisProvider> analysisProvider_) :
         audioBusInterface(audioBusInterface_),
         undoManager(undoManager_),
         tempoProvider(tempoProvider_),
@@ -60,6 +62,7 @@ public:
         transportSourceContainer(transportSourceContainer_),
         selectionManager(selectionManager_),
         transportLoop(transportLoop_),
+        analysisProvider(analysisProvider_),
         audioRegionAdapter(*this)
     {
     }
@@ -184,6 +187,7 @@ public:
     std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const noexcept { return transportSourceContainer; }
     std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     std::shared_ptr<TransportLoop> getTransportLoop() const noexcept { return transportLoop; }
+    std::shared_ptr<AnalysisProvider> getAnalysisProvider() const noexcept { return analysisProvider; }
     
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
@@ -233,6 +237,7 @@ private:
     std::shared_ptr<TransportSourceContainer> transportSourceContainer; ///< Shared pointer to the transport source container.
     std::shared_ptr<SelectionManager> selectionManager; ///< Shared pointer to the selection manager.
     std::shared_ptr<TransportLoop> transportLoop; ///< Shared pointer to the transport loop.
+    std::shared_ptr<AnalysisProvider> analysisProvider; ///< Shared analysis provider (owns the analysis cache).
 
     std::size_t selectedGroup = 0; ///< Index of the currently selected group.
     float masterGain = 1.f; ///< Master gain value.

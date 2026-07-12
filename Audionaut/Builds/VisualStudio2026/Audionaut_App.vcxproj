@@ -161,6 +161,12 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Util\EngineAccess.cpp"/>
     <ClCompile Include="..\..\Source\Util\Preferences.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisProvider.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Analysis\SBicSegmenter.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisCache.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Analysis\OnsetSegmenter.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Analysis\BeatSegmenter.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisWorker.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.cpp"/>
@@ -228,8 +234,9 @@
     <ClCompile Include="..\..\Source\Interface\Controls\RegionTableListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\AudioTrackListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Views\SegmentationView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Views\AudioRegionView.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Views\AudioClipView.cpp"/>
     <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_Analytics.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
@@ -3097,6 +3104,12 @@
     <ClInclude Include="..\..\Source\Application\AudiumMainWindow.h"/>
     <ClInclude Include="..\..\Source\Util\EngineAccess.h"/>
     <ClInclude Include="..\..\Source\Util\Preferences.h"/>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisProvider.h"/>
+    <ClInclude Include="..\..\Source\Engine\Analysis\SBicSegmenter.h"/>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisCache.h"/>
+    <ClInclude Include="..\..\Source\Engine\Analysis\OnsetSegmenter.h"/>
+    <ClInclude Include="..\..\Source\Engine\Analysis\BeatSegmenter.h"/>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisWorker.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.h"/>
@@ -3218,10 +3231,11 @@
     <ClInclude Include="..\..\Source\Interface\Controls\TransportPositionControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AudioTrackListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h"/>
+    <ClInclude Include="..\..\Source\Interface\Views\SegmentationView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\ArrangementOverview.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\WaveFormViewBase.h"/>
-    <ClInclude Include="..\..\Source\Interface\Views\AudioRegionView.h"/>
+    <ClInclude Include="..\..\Source\Interface\Views\AudioClipView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\TransportView.h"/>
     <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_Analytics.h"/>
     <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_ButtonTracker.h"/>

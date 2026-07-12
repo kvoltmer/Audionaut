@@ -11,6 +11,29 @@ message(STATUS "Submodules at: ${SUBMODULES_PATH}")
 set(SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/../Source")
 message(STATUS "source file root at: ${SRC_PATH}")
 
+# Essentia powers the audio-analysis features. It is not produced by this CMake
+# build - build it from the submodule with Audionaut/Builds/build_essentia.sh.
+# When AUDIONAUT_ENABLE_ESSENTIA is OFF the analysis code compiles to no-ops (see
+# ESSENTIA_ENABLED in the segmenters) and the Essentia headers/libs are skipped.
+#
+# Link against the freshly built libs in the submodule build tree:
+#   - libessentia.a under essentia/build/src
+#   - its 3rd-party static deps under essentia/packaging/debian_3rdparty/lib
+# Default to whatever is actually available: require both the Eigen headers (a
+# build artifact absent from a clean submodule checkout) and the built
+# libessentia.a. Override with -DAUDIONAUT_ENABLE_ESSENTIA=ON/OFF.
+set(ESSENTIA_LIB_PATH "${SUBMODULES_PATH}/essentia/build/src")
+set(ESSENTIA_3RDPARTY_LIB_PATH "${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib")
+if(EXISTS "${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3/signature_of_eigen3_matrix_library"
+   AND EXISTS "${ESSENTIA_LIB_PATH}/libessentia.a")
+    set(ESSENTIA_AVAILABLE ON)
+else()
+    set(ESSENTIA_AVAILABLE OFF)
+endif()
+option(AUDIONAUT_ENABLE_ESSENTIA "Build against the Essentia library" ${ESSENTIA_AVAILABLE})
+message(STATUS "Essentia enabled: ${AUDIONAUT_ENABLE_ESSENTIA} (detected available: ${ESSENTIA_AVAILABLE})")
+message(STATUS "Essentia libs at: ${ESSENTIA_LIB_PATH} / ${ESSENTIA_3RDPARTY_LIB_PATH}")
+
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
 # included JUCE directly in your source tree (perhaps as a submodule), you'll need to tell CMake to
@@ -44,6 +67,7 @@ juce_generate_juce_header(${APP_NAME})
 
 file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
+        ${SRC_PATH}/Engine/Analysis/*.cpp
         ${SRC_PATH}/Engine/Core/*.cpp
         ${SRC_PATH}/Engine/Channel/*.cpp
         ${SRC_PATH}/Engine/AutoEdit/*.cpp
@@ -97,9 +121,16 @@ source_group(TREE "${SRC_PATH}" PREFIX "Source Files" FILES ${SRC_AUDIUM})
 
 target_include_directories(${APP_NAME}
                         PUBLIC ../Source/
-                        PUBLIC ../../Submodules/json/include
-                        PUBLIC ../../Submodules/farbot/include
+                        PUBLIC ${SUBMODULES_PATH}/json/include
+                        PUBLIC ${SUBMODULES_PATH}/farbot/include
                         )
+
+if(AUDIONAUT_ENABLE_ESSENTIA)
+    target_include_directories(${APP_NAME}
+                        PUBLIC ${SUBMODULES_PATH}/essentia/src
+                        PUBLIC ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3
+                        )
+endif()
 # c++ standard
 #set(CMAKE_CXX_STANDARD 20)
 set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 20)
@@ -118,7 +149,8 @@ target_compile_definitions(${APP_NAME}
         CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}" # This is needed for the Catch2 tests to find the test files
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
-        JUCE_USE_CURL=0)    # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
+        JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
+        ESSENTIA_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_ESSENTIA}>)
 
 
 #target_compile_options( ${APP_NAME}
@@ -143,6 +175,7 @@ target_compile_definitions(${APP_NAME}
 include(${SUBMODULES_PATH}/link/AbletonLinkConfig.cmake)
 #target_link_libraries(${APP_NAME} Ableton::Link)
 
+
 target_link_libraries(${APP_NAME}
     PRIVATE
         # ConsoleAppData            # If you'd created a binary data target, you'd link to it here
@@ -156,6 +189,23 @@ target_link_libraries(${APP_NAME}
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
 
+if(AUDIONAUT_ENABLE_ESSENTIA)
+    target_link_libraries(${APP_NAME}
+        PRIVATE
+            ${ESSENTIA_LIB_PATH}/libessentia.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavcodec.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libchromaprint.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libmp3lame.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavformat.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libfftw3f.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libswresample.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libz.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavutil.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libsamplerate.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libyaml.a
+            libiconv.a)
+endif()
+
 
 add_test(NAME ${APP_NAME}
          COMMAND ${APP_NAME})
@@ -164,3 +214,6 @@ set_target_properties(${APP_NAME}
                       PROPERTIES
                       XCODE_ATTRIBUTE_DEVELOPMENT_TEAM Q89CZBX79G)
                     
+
+
+
