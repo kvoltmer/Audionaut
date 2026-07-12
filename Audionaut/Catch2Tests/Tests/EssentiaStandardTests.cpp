@@ -4,7 +4,11 @@
 // out when the codebase is built without Essentia. See ESSENTIA_ENABLED in the
 // segmenters.
 #ifndef ESSENTIA_ENABLED
- #define ESSENTIA_ENABLED 1
+ #if __has_include(<essentia/algorithmfactory.h>) && __has_include(<unsupported/Eigen/CXX11/Tensor>)
+  #define ESSENTIA_ENABLED 1
+ #else
+  #define ESSENTIA_ENABLED 0
+ #endif
 #endif
 
 #if ESSENTIA_ENABLED

@@ -15,8 +15,18 @@ message(STATUS "source file root at: ${SRC_PATH}")
 # that isn't produced by this CMake build, so allow building without it. When
 # AUDIONAUT_ENABLE_ESSENTIA is OFF the analysis code compiles to no-ops (see
 # ESSENTIA_ENABLED in the segmenters) and the Essentia headers/libs are skipped.
-option(AUDIONAUT_ENABLE_ESSENTIA "Build against the prebuilt Essentia library" ON)
-message(STATUS "Essentia enabled: ${AUDIONAUT_ENABLE_ESSENTIA}")
+#
+# Default to whatever is actually available: the Essentia submodule ships its
+# src headers, but its Eigen 3rd-party headers are a build artifact that a clean
+# submodule checkout lacks, so key detection on those. Override with
+# -DAUDIONAUT_ENABLE_ESSENTIA=ON/OFF.
+if(EXISTS "${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3/signature_of_eigen3_matrix_library")
+    set(ESSENTIA_AVAILABLE ON)
+else()
+    set(ESSENTIA_AVAILABLE OFF)
+endif()
+option(AUDIONAUT_ENABLE_ESSENTIA "Build against the prebuilt Essentia library" ${ESSENTIA_AVAILABLE})
+message(STATUS "Essentia enabled: ${AUDIONAUT_ENABLE_ESSENTIA} (detected available: ${ESSENTIA_AVAILABLE})")
 
 # Precompiled Essentia static libraries (copied out of the submodule build tree).
 set(ESSENTIA_LIB_PATH "${CMAKE_CURRENT_LIST_DIR}/../Builds/Precompiled/Essentia/MacOS")
