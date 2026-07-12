@@ -60,6 +60,15 @@ apply_essentia_build_patches() {
     local cfg="packaging/build_config.sh"
     local taglib="packaging/debian_3rdparty/build_taglib.sh"
 
+    # nproc is GNU coreutils and absent on stock macOS. It is only referenced by
+    # the (unused) TensorFlow flags, but is evaluated when build_config.sh is
+    # sourced, so replace it with a portable CPU count.
+    if grep -q '\$(nproc)' "$cfg"; then
+        echo "  · replace nproc with a portable CPU count"
+        sed -i.bak 's/\$(nproc)/$(getconf _NPROCESSORS_ONLN)/g' "$cfg"
+        rm -f "$cfg.bak"
+    fi
+
     # zlib 1.2.12's zutil.h stubs fdopen() under TARGET_OS_MAC (classic Mac OS),
     # which modern macOS SDKs define =1 - breaking <stdio.h>. Use a newer zlib.
     if grep -q '^ZLIB_VERSION=zlib-1\.2\.12$' "$cfg"; then
