@@ -189,7 +189,7 @@ void MainComponent::updateUI()
     if (auto audiumLookAndFeel = dynamic_cast<AudiumLookAndFeel*>(&getLookAndFeel())) {
         for (auto audioTrack : audiumEngine->getAudioTrackContainer()->getAudioTracks()) {
             if (audioTrack->getId() < AudiumLookAndFeel::maxTrackColours)
-                audiumLookAndFeel->trackColours[audioTrack->getId()] = audioTrack->getColour();
+                audiumLookAndFeel->trackColours[audioTrack->getId()] = audioTrack->getViewState().getColour();
         }
     }
 }

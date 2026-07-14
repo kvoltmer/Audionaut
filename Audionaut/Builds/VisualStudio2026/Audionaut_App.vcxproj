@@ -179,6 +179,7 @@
     <ClCompile Include="..\..\Source\Engine\Factory\AudiumFactory.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrack.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrackContainer.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Group\AudioTrackViewState.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioRegionAdapter.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\ResourceGroup.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Link\LinkAudioDevice.cpp"/>
@@ -3138,6 +3139,7 @@
     <ClInclude Include="..\..\Source\Engine\Group\AudioClipData.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\AudioTrack.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\AudioTrackContainer.h"/>
+    <ClInclude Include="..\..\Source\Engine\Group\AudioTrackViewState.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\AudioRegionAdapter.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\ResourceGroup.h"/>
     <ClInclude Include="..\..\Source\Engine\Link\LinkAudioDevice.h"/>

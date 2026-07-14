@@ -5,12 +5,11 @@
 
 #pragma once
 
-#include <set>
-
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
 #include "Engine/Analysis/AnalysisCache.h"
+#include "Engine/Group/AudioTrackViewState.h"
 #include "Engine/Core/DspClipData.h"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Selection/Selectable.h"
@@ -105,19 +104,6 @@ public:
     void setAudioTrackName(const juce::String newName);
     
     /**
-     * @brief Sets the color of the audio track.
-     * @param colour The new color.
-     */
-    void setColour(juce::Colour colour);
-    
-    /**
-     * @brief Gets the color of the audio track.
-     * @return The current color.
-     */
-
-    juce::Colour getColour() const { return groupColour; }
-    
-    /**
      * @brief Gets the index of the audio track within its container.
      * @return The index of the track.
      */
@@ -193,23 +179,10 @@ public:
     std::shared_ptr<ResourceGroup> getDefaultResourceGroup() const;
     std::vector<std::shared_ptr<ResourceGroup>> getResourceGroups() const { return resourceGroupContainer->getObjects(); }
     
-    // channel height:
-    int getTotalHeight() const;
-    void setChannelHeight(int height);
-    bool getMinimized() const { return isMinimized; }
-    void setMinimized(bool minimized) { isMinimized = minimized; }
+    // view/display state (colour, minimized, visible analysis, channel heights):
+    AudioTrackViewState& getViewState() { return viewState; }
+    const AudioTrackViewState& getViewState() const { return viewState; }
 
-    // Which analysis types (SBic/onset/beat) are shown in this track's clips.
-    bool isAnalysisTypeVisible(AnalysisType type) const { return visibleAnalysisTypes.count(type) > 0; }
-    void setAnalysisTypeVisible(AnalysisType type, bool visible)
-    {
-        if (visible)
-            visibleAnalysisTypes.insert(type);
-        else
-            visibleAnalysisTypes.erase(type);
-    }
-    const std::set<AnalysisType>& getVisibleAnalysisTypes() const { return visibleAnalysisTypes; }
-    
     std::list<std::shared_ptr<PositionableBase>> getPositionableItems() const;
     
     // objects:
@@ -261,11 +234,7 @@ public:
 
 private:
     std::string name; ///< Name of the audio track.
-    juce::Colour groupColour = juce::Colours::pink; ///< Color of the audio track.
-    bool isMinimized = false;
-
-    // Analysis overlays visible in this track's clips (none shown by default).
-    std::set<AnalysisType> visibleAnalysisTypes;
+    AudioTrackViewState viewState { *this }; ///< View/display state of the audio track.
     std::unique_ptr<UndoableContainerAction> undoableContainerAction; ///< Undoable action container.
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)

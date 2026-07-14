@@ -76,7 +76,7 @@ public:
                 text = juce::String(seconds, 4);
             }
             
-            auto textColour = r->getAudioTrack()->getColour();
+            auto textColour = r->getAudioTrack()->getViewState().getColour();
             setColour (juce::Label::textColourId, isSelected ? textColour.brighter() : textColour);
             
         }

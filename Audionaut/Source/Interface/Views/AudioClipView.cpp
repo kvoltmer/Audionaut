@@ -87,7 +87,7 @@ void AudioClipView::refreshSegments()
                                audium::AnalysisType::Onset,
                                audium::AnalysisType::Beat })
     {
-        if (audioTrack->isAnalysisTypeVisible(analysisType))
+        if (audioTrack->getViewState().isAnalysisTypeVisible(analysisType))
             segmentsByType[analysisType] = analysisProvider->getSegments(analysisType, audioFile);
     }
 

@@ -60,7 +60,7 @@ public:
     
     const juce::Colour getLabelColour() const override
     {
-        return playListItem->getRegion()->getAudioTrack()->getColour();
+        return playListItem->getRegion()->getAudioTrack()->getViewState().getColour();
     }
     
     bool validateData() override;

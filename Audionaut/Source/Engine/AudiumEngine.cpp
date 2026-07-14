@@ -95,7 +95,7 @@ void AudiumEngine::createNewProject(const int numChannels)
     audium::WaveFormColours::resetWaveFormColour();
     for (auto i = 0; i < 1; i++) {
         auto track = audioTrackContainer->createNewAudioTrack("Track " + String(i+1));
-        track->setColour(audioTrackContainer->getNewAudioTrackColour());
+        track->getViewState().setColour(audioTrackContainer->getNewAudioTrackColour());
         for (auto c = 0; c < numChannels; c++) {
             track->addChannel();
         }
