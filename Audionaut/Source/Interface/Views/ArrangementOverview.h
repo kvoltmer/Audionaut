@@ -57,7 +57,7 @@ public:
             {
                 groupRectangles.push_back(std::make_unique<juce::DrawableRectangle>());
                 addAndMakeVisible(groupRectangles[i].get());
-                groupRectangles[i]->setFill (track->getColour().withAlpha (0.375f));
+                groupRectangles[i]->setFill (track->getViewState().getColour().withAlpha (0.375f));
                 
                 auto position = item->getAbsolutePositionRange(audium::seconds);
                 auto relativePos = position.getStart() / totalLength;

@@ -51,7 +51,7 @@ int AudioTrackListBoxModel::getRowHeight (int rowNumber) const
 {
     auto track = audiumEngine->getAudioTrackContainer()->getAudioTrack(rowNumber);
     if (track != nullptr)
-        return track->getTotalHeight() + DraggerControl::draggerHeight;
+        return track->getViewState().getTotalHeight() + DraggerControl::draggerHeight;
     
     jassertfalse;
     return 0;

@@ -74,7 +74,7 @@ public:
     {
         auto track = audiumEngine->getAudioTrackContainer()->getAudioTrack(rowNumber);
         if (track != nullptr)
-            return track->getTotalHeight() + DraggerControl::draggerHeight;
+            return track->getViewState().getTotalHeight() + DraggerControl::draggerHeight;
         
         return 0;
     }
