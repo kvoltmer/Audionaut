@@ -57,15 +57,21 @@ jobs:
     # only written after a *successful* build - a partial build from a failed
     # run must never poison the cache (it would make CMake silently fall back to
     # Essentia-off and pass without exercising analysis).
+    # The cache must include src/version.h: waf generates it into the *source*
+    # tree, and the test build includes it via essentia/src. Without it, a
+    # cache hit skips the build step and the compile fails on the missing
+    # header. Key is versioned (v2) to invalidate earlier caches saved without
+    # version.h.
     - name: Restore Essentia cache
       id: cache-essentia
       uses: actions/cache/restore@v4
       with:
         path: |
           Submodules/essentia/build
+          Submodules/essentia/src/version.h
           Submodules/essentia/packaging/debian_3rdparty/include
           Submodules/essentia/packaging/debian_3rdparty/lib
-        key: essentia-${{ runner.os }}-${{ runner.arch }}-${{ steps.essentia-rev.outputs.sha }}-${{ hashFiles('Audionaut/Builds/build_essentia.sh') }}
+        key: essentia-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.essentia-rev.outputs.sha }}-${{ hashFiles('Audionaut/Builds/build_essentia.sh') }}
 
     - name: Build Essentia
       if: steps.cache-essentia.outputs.cache-hit != 'true'
@@ -78,9 +84,10 @@ jobs:
       with:
         path: |
           Submodules/essentia/build
+          Submodules/essentia/src/version.h
           Submodules/essentia/packaging/debian_3rdparty/include
           Submodules/essentia/packaging/debian_3rdparty/lib
-        key: essentia-${{ runner.os }}-${{ runner.arch }}-${{ steps.essentia-rev.outputs.sha }}-${{ hashFiles('Audionaut/Builds/build_essentia.sh') }}
+        key: essentia-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.essentia-rev.outputs.sha }}-${{ hashFiles('Audionaut/Builds/build_essentia.sh') }}
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
