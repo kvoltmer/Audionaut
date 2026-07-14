@@ -69,7 +69,7 @@ public:
                                                        audiumEngine,
                                                        audioResource,
                                                        zoomHandler,
-                                                       resourceGroup->getAudioTrack().getColour(),
+                                                       resourceGroup->getAudioTrack().getViewState().getColour(),
                                                        regionSelector,
                                                        rowNumber);
                 return component;

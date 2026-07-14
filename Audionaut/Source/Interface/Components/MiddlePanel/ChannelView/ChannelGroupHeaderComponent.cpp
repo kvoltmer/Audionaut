@@ -16,7 +16,7 @@ void ChannelGroupHeaderComponent::paint (juce::Graphics& g)
     g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
     
     if (insertBefore) {
-        g.setColour(audioTrack->getColour());
+        g.setColour(audioTrack->getViewState().getColour());
         g.fillRect(0, 0, getWidth(), 3);
     }
 }

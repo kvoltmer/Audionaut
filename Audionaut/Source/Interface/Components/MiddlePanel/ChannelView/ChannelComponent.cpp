@@ -209,7 +209,7 @@ void ChannelComponent::paint (juce::Graphics& g)
     g.setColour(borderColour);
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
     
-    g.setColour(audioTrack->getColour());
+    g.setColour(audioTrack->getViewState().getColour());
     if( insertAfter )
     {
         g.fillRect(0, getHeight()-3, getWidth(), 3);

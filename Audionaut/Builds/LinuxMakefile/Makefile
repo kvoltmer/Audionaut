@@ -96,6 +96,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudiumFactory_21005c30.o \
   $(JUCE_OBJDIR)/AudioTrack_cd929473.o \
   $(JUCE_OBJDIR)/AudioTrackContainer_546eaa98.o \
+  $(JUCE_OBJDIR)/AudioTrackViewState_3eefa983.o \
   $(JUCE_OBJDIR)/AudioRegionAdapter_714661e3.o \
   $(JUCE_OBJDIR)/ResourceGroup_483fb77d.o \
   $(JUCE_OBJDIR)/LinkAudioDevice_ad84cc6b.o \
@@ -306,6 +307,11 @@ $(JUCE_OBJDIR)/AudioTrack_cd929473.o: ../../Source/Engine/Group/AudioTrack.cpp
 $(JUCE_OBJDIR)/AudioTrackContainer_546eaa98.o: ../../Source/Engine/Group/AudioTrackContainer.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AudioTrackContainer.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AudioTrackViewState_3eefa983.o: ../../Source/Engine/Group/AudioTrackViewState.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AudioTrackViewState.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudioRegionAdapter_714661e3.o: ../../Source/Engine/Group/AudioRegionAdapter.cpp

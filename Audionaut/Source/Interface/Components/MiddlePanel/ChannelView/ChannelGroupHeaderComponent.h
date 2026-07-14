@@ -123,11 +123,11 @@ public:
     {
         audioTrack = newAudioTrack;
         audioTrackNameLabel->setText (audioTrack->getAudioTrackName(), juce::dontSendNotification);
-        audioTrackNameLabel->setColour (juce::Label::textColourId, audioTrack->getColour());
-        audioTrackNameLabel->setColour (juce::TextEditor::textColourId, audioTrack->getColour());
-        audioTrackNameLabel->setColour (juce::Label::textWhenEditingColourId, audioTrack->getColour());
+        audioTrackNameLabel->setColour (juce::Label::textColourId, audioTrack->getViewState().getColour());
+        audioTrackNameLabel->setColour (juce::TextEditor::textColourId, audioTrack->getViewState().getColour());
+        audioTrackNameLabel->setColour (juce::Label::textWhenEditingColourId, audioTrack->getViewState().getColour());
         
-        minimizeButton->setToggleState (audioTrack->getMinimized(), dontSendNotification);
+        minimizeButton->setToggleState (audioTrack->getViewState().getMinimized(), dontSendNotification);
     }
     
     void paint (juce::Graphics& g) override;
@@ -158,7 +158,7 @@ public:
         // undo
         auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
         
-        audioTrack->setMinimized(bMinimized);
+        audioTrack->getViewState().setMinimized(bMinimized);
         
         // undo
         action->storeNewState();
@@ -171,7 +171,7 @@ public:
         // undo
         auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
 
-        audioTrack->setAnalysisTypeVisible(analysisType, !audioTrack->isAnalysisTypeVisible(analysisType));
+        audioTrack->getViewState().setAnalysisTypeVisible(analysisType, !audioTrack->getViewState().isAnalysisTypeVisible(analysisType));
 
         // undo
         action->storeNewState();
@@ -188,8 +188,8 @@ public:
         auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
         
         jassert(height > 0);
-        audioTrack->setMinimized(false);
-        audioTrack->setChannelHeight(height);
+        audioTrack->getViewState().setMinimized(false);
+        audioTrack->getViewState().setChannelHeight(height);
         
         // undo
         action->storeNewState();
@@ -215,11 +215,11 @@ public:
             // Toggle visibility of each analysis overlay (ticked = currently shown).
             PopupMenu showMenu;
             showMenu.addItem (CommandIDs::showSBic, TRANS ("SBic"), true,
-                              audioTrack->isAnalysisTypeVisible (audium::AnalysisType::SBic));
+                              audioTrack->getViewState().isAnalysisTypeVisible (audium::AnalysisType::SBic));
             showMenu.addItem (CommandIDs::showOnsets, TRANS ("Onsets"), true,
-                              audioTrack->isAnalysisTypeVisible (audium::AnalysisType::Onset));
+                              audioTrack->getViewState().isAnalysisTypeVisible (audium::AnalysisType::Onset));
             showMenu.addItem (CommandIDs::showBeats, TRANS ("Beats"), true,
-                              audioTrack->isAnalysisTypeVisible (audium::AnalysisType::Beat));
+                              audioTrack->getViewState().isAnalysisTypeVisible (audium::AnalysisType::Beat));
 
             m.addSubMenu("Show Analysis", showMenu);
             

@@ -100,7 +100,7 @@ public:
         
         auto columnName = audioTrack->getAudioTrackName() + " - Playlist";
         playListTableListBox->getHeader().setColumnName(1, columnName);
-        playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, audioTrack->getColour());
+        playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, audioTrack->getViewState().getColour());
     }
     
     std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }

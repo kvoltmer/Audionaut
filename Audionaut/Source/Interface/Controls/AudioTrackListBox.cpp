@@ -38,9 +38,9 @@ AudioTrackListBox::~AudioTrackListBox()
 
 void AudioTrackListBox::setNewGroupColour(std::shared_ptr<audium::AudioTrack> audioTrack)
 {
-    if (audioTrack->getColour() == juce::Colours::pink)
+    if (audioTrack->getViewState().getColour() == juce::Colours::pink)
     {
-        audioTrack->setColour(audiumEngine->getAudioTrackContainer()->getNewAudioTrackColour());
+        audioTrack->getViewState().setColour(audiumEngine->getAudioTrackContainer()->getNewAudioTrackColour());
     }
 }
 

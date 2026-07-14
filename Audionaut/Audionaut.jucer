@@ -149,6 +149,10 @@
                 file="Source/Engine/Group/AudioTrackContainer.cpp"/>
           <FILE id="SIX9na" name="AudioTrackContainer.h" compile="0" resource="0"
                 file="Source/Engine/Group/AudioTrackContainer.h"/>
+          <FILE id="Vw3kQp" name="AudioTrackViewState.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioTrackViewState.cpp"/>
+          <FILE id="Nf8xZr" name="AudioTrackViewState.h" compile="0" resource="0"
+                file="Source/Engine/Group/AudioTrackViewState.h"/>
           <FILE id="Xw6tEJ" name="AudioRegionAdapter.cpp" compile="1" resource="0"
                 file="Source/Engine/Group/AudioRegionAdapter.cpp"/>
           <FILE id="otPqzW" name="AudioRegionAdapter.h" compile="0" resource="0"

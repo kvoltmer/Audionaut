@@ -65,7 +65,7 @@ void PlayListComponent::updateInsertLines(const juce::DragAndDropTarget::SourceD
 void PlayListComponent::paint(juce::Graphics &g)
 {
     if (itemDrag) {
-        g.setColour(audioTrack->getColour());
+        g.setColour(audioTrack->getViewState().getColour());
         auto height = playListTableListBox->getHeaderHeight();
         height += playListTableListBox->getRowHeight() * playListTableListBoxModel->getNumRows();
         g.fillRect(0, height, getWidth(), 3);

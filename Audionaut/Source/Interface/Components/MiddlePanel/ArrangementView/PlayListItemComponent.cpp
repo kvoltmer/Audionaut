@@ -37,7 +37,7 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngin
     auto dragger = std::unique_ptr<PlayListItemDraggerControl> (new PlayListItemDraggerControl(audiumEngine,
                                                                                                playListContainer,
                                                                                                zoomHandler,
-                                                                                               audioTrack->getColour(),
+                                                                                               audioTrack->getViewState().getColour(),
                                                                                                regionSelector));
     dragger->addChangeListener(this);
     playListItemListBox->setHeaderComponent(std::move(dragger));
@@ -78,7 +78,7 @@ void PlayListItemComponent::paint (juce::Graphics& g)
     }
     else
     {
-        g.setColour (audioTrack->getColour().withAlpha(0.50f));
+        g.setColour (audioTrack->getViewState().getColour().withAlpha(0.50f));
     }
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 1.0f);
 }

@@ -901,6 +901,9 @@
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrackContainer.cpp">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Group\AudioTrackViewState.cpp">
+      <Filter>Audionaut\Source\Engine\Group</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Group\AudioRegionAdapter.cpp">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClCompile>
@@ -4237,6 +4240,9 @@
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Group\AudioTrackContainer.h">
+      <Filter>Audionaut\Source\Engine\Group</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Group\AudioTrackViewState.h">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Group\AudioRegionAdapter.h">
