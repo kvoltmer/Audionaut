@@ -48,6 +48,20 @@ void AnalysisWorker::enqueue(const juce::File& audioFile,
     thread.notify();
 }
 
+void AnalysisWorker::cancel(const juce::File& audioFile)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    jobs.erase(std::remove_if(jobs.begin(), jobs.end(),
+                              [&audioFile] (const Job& job) { return job.file == audioFile; }),
+               jobs.end());
+}
+
+void AnalysisWorker::cancelAll()
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    jobs.clear();
+}
+
 int AnalysisWorker::useTimeSlice()
 {
     Job job;

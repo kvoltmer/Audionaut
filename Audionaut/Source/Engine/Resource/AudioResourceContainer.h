@@ -271,6 +271,10 @@ public:
     void onRecordingFinished();
     
 private:
+    /// Cancels pending background analysis of the file unless another loaded
+    /// resource still references it.
+    void cancelAnalysisIfUnloaded(const juce::File& audioFile);
+
     /// List of pairs of audio tracks and resources.
     std::list<tAudioTrackPair> audioResources;
 

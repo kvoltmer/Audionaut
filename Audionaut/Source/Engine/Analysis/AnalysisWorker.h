@@ -74,6 +74,24 @@ public:
      */
     void enqueue(const juce::File& audioFile) { enqueue(audioFile, defaultTypes); }
 
+    /**
+     * @brief Cancels all pending analyses of @p audioFile (any type).
+     *
+     * Call when the file's audio resource is unloaded so the worker doesn't
+     * waste time analysing a file nobody references anymore (and which may be
+     * about to be deleted). An analysis of the file that is already running is
+     * not interrupted; it finishes normally and its result simply lands in the
+     * cache. Safe to call from the message thread.
+     */
+    void cancel(const juce::File& audioFile);
+
+    /**
+     * @brief Cancels every pending analysis (e.g. when the project closes).
+     *
+     * As with cancel(), an analysis already running is not interrupted.
+     */
+    void cancelAll();
+
     /** @brief Number of queued analyses not yet started (excludes any running). */
     int getPendingCount() const;
 
