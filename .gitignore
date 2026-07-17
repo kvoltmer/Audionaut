@@ -58,3 +58,4 @@ Audionaut/Builds/MacOSX/Audionaut.xcodeproj/project.xcworkspace/xcuserdata/klaus
 Audionaut/Builds/VisualStudio2026/.vs/
 Audionaut/Builds/VisualStudio2026/x64/
 Audionaut/Builds/VisualStudio2026/Audionaut_App.vcxproj.user
+Audionaut/Catch2Tests/cmake-build/
