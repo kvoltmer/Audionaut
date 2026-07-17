@@ -192,18 +192,27 @@ target_link_libraries(${APP_NAME}
 if(AUDIONAUT_ENABLE_ESSENTIA)
     target_link_libraries(${APP_NAME}
         PRIVATE
+            # GNU ld resolves static libs left to right, so dependents must
+            # precede their dependencies: essentia/chromaprint -> avformat ->
+            # avcodec -> swresample -> avutil, codecs and utility libs last.
             ${ESSENTIA_LIB_PATH}/libessentia.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavcodec.a
             ${ESSENTIA_3RDPARTY_LIB_PATH}/libchromaprint.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libmp3lame.a
             ${ESSENTIA_3RDPARTY_LIB_PATH}/libavformat.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libfftw3f.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavcodec.a
             ${ESSENTIA_3RDPARTY_LIB_PATH}/libswresample.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libz.a
             ${ESSENTIA_3RDPARTY_LIB_PATH}/libavutil.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libmp3lame.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libfftw3f.a
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libz.a
             ${ESSENTIA_3RDPARTY_LIB_PATH}/libsamplerate.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libyaml.a
-            libiconv.a)
+            ${ESSENTIA_3RDPARTY_LIB_PATH}/libyaml.a)
+    if(APPLE)
+        # glibc provides iconv natively; a separate libiconv exists only on macOS
+        target_link_libraries(${APP_NAME} PRIVATE libiconv.a)
+    else()
+        # libavutil's hwcontext_drm needs libdrm on Linux
+        target_link_libraries(${APP_NAME} PRIVATE drm)
+    endif()
 endif()
 
 
