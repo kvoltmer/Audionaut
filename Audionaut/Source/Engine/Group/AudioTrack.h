@@ -147,7 +147,7 @@ public:
     void mergeChannelFromJson(json& input);
     
     // Selectable override:
-    void setSelected(bool bSelected, bool selectChildren) override;
+    void setSelected(bool bSelected) override;
     
     void setGain(float gain, int channelNumber);
     float getGain(int channelNumber) const;

@@ -28,8 +28,8 @@ public:
      * @brief Constructs a Selectable object.
      * @param selectionManager A shared pointer to the SelectionManager managing this object.
      */
-    Selectable(std::shared_ptr<SelectionManager> selectionManager) :
-        selectionManager(selectionManager)
+    Selectable(std::shared_ptr<SelectionManager> selectionManager_) :
+        selectionManager(selectionManager_)
     {
     }
     
@@ -41,9 +41,8 @@ public:
     /**
      * @brief Sets the selection state of the object.
      * @param bSelected True to select the object, false to deselect it.
-     * @param selectChildren If true, also selects/deselects child objects (default: false).
      */
-    virtual void setSelected(bool bSelected, bool selectChildren = false) {
+    virtual void setSelected(bool bSelected) {
         if (selected != bSelected) {
             selected = bSelected;
             jassert(selectionManager);
