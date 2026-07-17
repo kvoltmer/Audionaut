@@ -219,10 +219,9 @@ int PlayListContainer::getNumItems(std::shared_ptr<AudioTrack> track) const
 
 std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) const
 {
-    if (index >= 0 && index < playListItems.size())
-    {
-        return playListItems.getObjects()[index];
-    }
+    auto i = static_cast<size_t> (index);
+    if (i >= 0 && i < playListItems.size())
+        return playListItems.getObjects()[i];
     return nullptr;
 }
 

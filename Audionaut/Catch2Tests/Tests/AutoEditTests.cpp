@@ -20,11 +20,16 @@ SCENARIO("load audio file and do auto edit", "[engine][autoedit]")
     REQUIRE(inFile.existsAsFile());
     
 //    auto outProjectFile = File(testFilesDirectory + "Sessions/testing.audium/" + AudiumEngine::projectFileName);
-    
+ //   engine->openFile(inFile, nullptr);
+
+    engine->getAudioTrackContainer()->addAudioFiles({inFile.getFullPathName()},
+                                                    0.0,
+                                                    nullptr,
+                                                    false);        
+
     GIVEN("new project") {
         //engine->createNewProject();
         
-        engine->openFile(inFile, nullptr);
         
         auto autoEdit = std::make_unique<AutoEdit>(engine);
         AutoEditConfig config;

@@ -29,8 +29,8 @@ const juce::String AutoEdit::getTempDirectory()
 bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
                               std::function<void(std::string)> callback)
 {
-    if (auto track = audiumEngine->getAudioTrackContainer()->getAudioTrack(config.trackId)) {
-        if (auto item = track->getPlayListContainer()->playListItems.getObject(config.playlistItemId)) {
+    if (auto track = audiumEngine->getAudioTrackContainer()->getAudioTrack (config.trackId)) {
+        if (auto item = track->getPlayListContainer()->getPlayListItem (config.playlistItemId)) {
             bool success = false;
             auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
             bounceConfig->playListItem = item;
@@ -66,8 +66,8 @@ bool AutoEdit::invokePython(AutoEditConfig &config,
     // double check with:
     // system("env");
     
-    // Path to python binary
-    std::string python = "/opt/homebrew/bin/python3";
+    // Path to python binary (/opt/homebrew/bin/)
+    std::string python = "python3";
     
     if (juce::File(config.bounceFileName).existsAsFile())
     {
@@ -75,7 +75,8 @@ bool AutoEdit::invokePython(AutoEditConfig &config,
         // Build the command line string
         std::string commandString;
         commandString += "cd " + getTempDirectory().toStdString() + ";";
-        commandString += python + " $HOME/dev/gaborgandalf/gaborgandalf/automain.py --verbose autoedit";
+        // --verbose
+        commandString += python + " $HOME/dev/gaborgandalf/gaborgandalf/automain.py autoedit";
         //      commandString += " --assemble_mode " + config.mode;
         commandString += " --duration " + std::to_string(config.duration);
         commandString += " --numsegs " + std::to_string(config.numSegments);
@@ -84,15 +85,17 @@ bool AutoEdit::invokePython(AutoEditConfig &config,
         commandString += " --filenames " + config.bounceFileName;
         
         try {
-            const char* pythonPath = "/opt/homebrew/lib/python3.11/site-packages:~/dev/smp_base:~/dev/smp_audio:~/dev/gaborgandalf";
+            //const char* pythonPath = "/opt/homebrew/lib/python3.11/site-packages:~/dev/smp_base:~/dev/smp_audio:~/dev/gaborgandalf";
             
-            setenv("PYTHONPATH", pythonPath, true);
+            //setenv("PYTHONPATH", pythonPath, true);
             
-            const char* path = "/usr/local/bin:/usr/local/sbin:/opt/homebrew/opt/openjdk/bin:/Users/klausvoltmer/.nvm/versions/node/v14.20.0/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/Users/klausvoltmer/Library/Android/sdk/platform-tools:/opt/homebrew/Cellar/cmake/3.22.3/bin:/Users/klausvoltmer/Library/Android/sdk/cmake/3.6.4111459/bin:/opt/homebrew/opt/python@3.9/libexec/bin:/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home/bin/:/Users/klausvoltmer/.rvm/bin";
+            //const char* path = "/usr/local/bin:/usr/local/sbin:/opt/homebrew/opt/openjdk/bin:/Users/klausvoltmer/.nvm/versions/node/v14.20.0/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/Users/klausvoltmer/Library/Android/sdk/platform-tools:/opt/homebrew/Cellar/cmake/3.22.3/bin:/Users/klausvoltmer/Library/Android/sdk/cmake/3.6.4111459/bin:/opt/homebrew/opt/python@3.9/libexec/bin:/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home/bin/:/Users/klausvoltmer/.rvm/bin";
             
             //setenv("PATH", path, true);
-            
-            std::system("env");
+            // std::system("source ~/autoedit-venv/bin/activate");
+            // std::system("source ~/.bashrc");
+
+            //std::system("env");
             // execute
             if (std::system(commandString.c_str()) == 0) {
                 return true;
@@ -141,29 +144,29 @@ const std::string AutoEdit::getCountFromFile() const
 void AutoEdit::applyAutoEditResult(double sampleRate)
 {
     auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+    auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get());
+
     auto track = audioTrackContainer->getDefaultGroup();
-    if (track != nullptr)
-    {
-        auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get());
         
-        auto countString = getCountFromFile();
-        jassert(countString.length() > 0);
-        
-        //  read segments in json format
-        std::string segFileName = getTempDirectory().toStdString() + "/data/segs/" + getBaseName() + "-seg-data.json";
-        createRegionsFromSegFile(segFileName, sampleRate);
-        
-        
-        // song in json format
-        auto dir = juce::File(audioResourceFilePath).getParentDirectory().getFullPathName().toStdString();
-        std::string songFileName = dir + "/" + getBaseName() + "-autoedit-" + countString + ".json";
-        createPlayListFromSongFile(songFileName);
-        
-        // Undo: store new state
-        action->storeNewState();
-        audioTrackContainer->getUndoManager()->perform(action.release(), "Auto Edit");
-        audioTrackContainer->getUndoManager()->beginNewTransaction();
-    }
+    auto countString = getCountFromFile();
+    jassert(countString.length() > 0);
+    
+    //  read segments in json format
+    std::string segFileName = getTempDirectory().toStdString() + "/data/segs/" + getBaseName() + "-seg-data.json";
+    createRegionsFromSegFile(segFileName, sampleRate);
+    
+
+#if 0
+    // song in json format
+    auto dir = juce::File(audioResourceFilePath).getParentDirectory().getFullPathName().toStdString();
+    std::string songFileName = dir + "/" + getBaseName() + "-autoedit-" + countString + ".json";
+    createPlayListFromSongFile(songFileName);
+ #endif       
+    // Undo: store new state
+    action->storeNewState();
+    audioTrackContainer->getUndoManager()->perform(action.release(), "Auto Edit");
+    audioTrackContainer->getUndoManager()->beginNewTransaction();
+    
 }
 
 
@@ -172,17 +175,13 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
     auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
     std::fstream segFile;
     segFile.open(segFileName, std::ios::in);
-    if (segFile.is_open())
-    {
-        if (auto track = audioTrackContainer->getDefaultGroup())
-        {
-            track->cleanup();
+    if (segFile.is_open()) {
+        if (auto track = audioTrackContainer->getDefaultGroup()) {
             
             int counter = 1;
             auto segdata = nlohmann::json::parse(segFile);
             // create regions from parsed result
-            for (auto& elem : segdata)
-            {
+            for (auto& elem : segdata) {
                 juce::Range<double> position;
                 position.setStart(static_cast<double>(elem["start"]) / sampleRate);
                 position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
@@ -190,22 +189,21 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
                 
                 
                 // CREATE REGIONs:
-                
-                // use the first sub track
-                auto resourceGroups = track->getResourceGroups();
-                
-                jassert(resourceGroups.size() > 0);
-                if (resourceGroups.size() > 0)
-                {
-                    resourceGroups[0]->getAudioRegionContainer()->createRegion(regionName, position, track, resourceGroups[0], nullptr, audium::seconds);
+                if (track->getResourceGroups().size() > 0) {
+                    auto resourceGroup = track->getResourceGroups()[0];
+                    resourceGroup->getAudioRegionContainer()->createRegion (regionName,
+                                                                            position,
+                                                                            track,
+                                                                            resourceGroup,
+                                                                            nullptr,
+                                                                            audium::seconds);
                 }
             }
         }
         segFile.close();
         return true;
     }
-    else
-    {
+    else {
         std::cout << "error seg file not found: " << segFileName << std::endl;
         return false;
     }
