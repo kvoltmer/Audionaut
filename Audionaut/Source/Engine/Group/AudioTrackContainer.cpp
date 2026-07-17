@@ -273,12 +273,6 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::getDefaultGroup() const
     return nullptr;
 }
 
-void AudioTrackContainer::selectAllGroups(bool bSelected, bool selectChildren)
-{
-    for (auto track : audioTracks)
-        track->setSelected(bSelected, selectChildren);
-}
-
 juce::SparseSet<int> AudioTrackContainer::getSelectedRows() const
 {
     juce::SparseSet<int> result;
@@ -296,11 +290,9 @@ juce::SparseSet<int> AudioTrackContainer::getSelectedRows() const
 void AudioTrackContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 {
     getSelectionManager()->deselectAll();
-    for (auto i = 0; i < selectedRows.size(); i++)
-    {
-        if (auto track = getAudioTrack(selectedRows[i]))
-        {
-            track->setSelected(true, false);
+    for (auto i = 0; i < selectedRows.size(); i++) {
+        if (auto track = getAudioTrack(selectedRows[i])) {
+            track->setSelected(true);
         }
     }
 }

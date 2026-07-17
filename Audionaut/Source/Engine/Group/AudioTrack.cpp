@@ -482,16 +482,9 @@ std::shared_ptr<ResourceGroup> AudioTrack::getDefaultResourceGroup() const
 }
 
 
-void AudioTrack::setSelected(bool bSelected, bool selectChildren)
-{
-    if (selectChildren)
-    {
-        audioChannelContainer->selectAllObjects(bSelected);
-        resourceGroupContainer->selectAllObjects(bSelected);
-        getPlayListContainer()->playListItems.selectAllObjects(bSelected);
-    }
-    
-    audium::Selectable::setSelected(bSelected, selectChildren);
+void AudioTrack::setSelected(bool bSelected)
+{    
+    audium::Selectable::setSelected(bSelected);
 }
 
 

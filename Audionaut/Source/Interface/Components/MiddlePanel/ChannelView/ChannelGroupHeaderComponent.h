@@ -241,7 +241,7 @@ public:
     
     void setSelected(bool bSelected)
     {
-        audioTrack->setSelected(bSelected, false);
+        audioTrack->setSelected(bSelected);
         
         audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
     }
