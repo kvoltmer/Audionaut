@@ -238,9 +238,8 @@ void MainComponent::pageRight()
 
 void MainComponent::selectAll()
 {
-    for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks())
-    {
-        track->setSelected(true, true);
+    for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks()){
+        track->setSelected(true);
     }
     updateUI();
 }

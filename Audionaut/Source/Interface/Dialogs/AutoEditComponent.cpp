@@ -208,7 +208,7 @@ void AutoEditComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
         auto trackId = selectedTrack->getSelectedId() - 1;
         if (auto track = audiumEngine->getAudioTrackContainer()->getAudioTrack(trackId)) {
             track->getAudioTrackContainer().getSelectionManager()->deselectAll();
-            track->setSelected(true, false);
+            track->setSelected(true);
             updateSelectedPlaylistItem();
         }
     }

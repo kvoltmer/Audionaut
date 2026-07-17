@@ -175,7 +175,6 @@ public:
     
     const std::vector<std::shared_ptr<AudioTrack>> &getAudioTracks() const { return audioTracks; }
     
-    void selectAllGroups(bool bSelected, bool selectChildren);
     juce::SparseSet<int> getSelectedRows() const;
     void setSelectedRows(juce::SparseSet<int>& selectedRows);
     
