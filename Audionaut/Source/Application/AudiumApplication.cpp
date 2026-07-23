@@ -19,6 +19,9 @@
 
 using namespace audium;
 
+AudiumApplication::AudiumApplication() = default;
+AudiumApplication::~AudiumApplication() = default;
+
 AudiumApplication& AudiumApplication::getApp()
 {
     AudiumApplication* const app = dynamic_cast<AudiumApplication*> (JUCEApplication::getInstance());
@@ -43,7 +46,9 @@ audium::Preferences& AudiumApplication::getPreferences()
 void AudiumApplication::initialise (const juce::String& commandLine)
 {
     LookAndFeel::setDefaultLookAndFeel (&lookAndFeel);
-    
+
+    splashScreen = std::make_unique<AboutSplashScreen>();
+
     initPreferences();
     initCommandManager();
     
@@ -114,7 +119,11 @@ void AudiumApplication::handleAsyncUpdate()
     }
     
     updateUI();
-    
+
+    if (splashScreen != nullptr) {
+        splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
+        splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
+    }
 }
 
 void AudiumApplication::shutdown()
@@ -672,7 +681,7 @@ void AudiumApplication::updateUI()
 void AudiumApplication::showAboutWindow()
 {
     auto w = 600;
-    auto h = 400;
+    auto h = 420;
     if (aboutComponent != nullptr)
         aboutComponent->toFront (true);
     else

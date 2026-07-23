@@ -14,12 +14,14 @@
 #include "Util/Preferences.h"
 
 class SettingsDialog;
+class AboutSplashScreen;
 
 class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
 {
 public:
-    AudiumApplication() = default;
-    
+    AudiumApplication();
+    ~AudiumApplication() override;
+
     static AudiumApplication& getApp();
     static juce::ApplicationCommandManager& getCommandManager();
     static audium::Preferences& getPreferences();
@@ -82,6 +84,7 @@ private:
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
     std::unique_ptr<juce::Component> aboutComponent;
+    std::unique_ptr<AboutSplashScreen> splashScreen;
     std::unique_ptr<juce::Component> fileBrowserView;
     std::shared_ptr<SettingsDialog> settingsDialog;
     
