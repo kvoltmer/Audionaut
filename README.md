@@ -69,8 +69,12 @@ make CONFIG=Release -j8
 
 <a href="Audionaut/Catch2Tests/README.md">catch2 tests README</a>
 
+## LICENSE:
 
+Audionaut is dual-licensed under GPL3 (or later) and a commercial license — see <a href="LICENSE.md">LICENSE.md</a> for details.
 
+## CONTRIBUTING:
 
+Contributions are welcome — see <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for how to get started and the required Contributor License Agreement (<a href="CLA.md">CLA.md</a>).
 
 
