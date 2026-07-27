@@ -59,6 +59,7 @@ namespace CommandIDs
         showSBic                = 0x500010,
         showOnsets              = 0x500011,
         showBeats               = 0x500012,
+        showBeatsDegara         = 0x500013,
 
         lastCommandIDEntry
     };

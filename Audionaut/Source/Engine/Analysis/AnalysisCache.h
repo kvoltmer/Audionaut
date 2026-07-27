@@ -18,9 +18,10 @@ namespace audium {
 
 /** @brief The kinds of analysis whose results the cache can hold. */
 enum class AnalysisType {
-    SBic,   ///< BIC segmentation.
-    Onset,  ///< Onset detection.
-    Beat    ///< Beat tracking.
+    SBic,       ///< BIC segmentation.
+    Onset,      ///< Onset detection.
+    Beat,       ///< Beat tracking (BeatTrackerMultiFeature).
+    BeatDegara  ///< Beat tracking (BeatTrackerDegara; faster, less accurate).
 };
 
 /** @brief Stable, human-readable name for an analysis type (used in JSON). */

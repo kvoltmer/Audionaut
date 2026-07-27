@@ -12,9 +12,10 @@ const char* AnalysisCache::fileName = "AnalysisData.json";
 std::string analysisTypeToString(AnalysisType analysisType)
 {
     switch (analysisType) {
-        case AnalysisType::SBic:  return "sbic";
-        case AnalysisType::Onset: return "onset";
-        case AnalysisType::Beat:  return "beat";
+        case AnalysisType::SBic:       return "sbic";
+        case AnalysisType::Onset:      return "onset";
+        case AnalysisType::Beat:       return "beat";
+        case AnalysisType::BeatDegara: return "beat_degara";
     }
     jassertfalse;
     return "unknown";
@@ -22,9 +23,10 @@ std::string analysisTypeToString(AnalysisType analysisType)
 
 std::optional<AnalysisType> analysisTypeFromString(const std::string& name)
 {
-    if (name == "sbic")  return AnalysisType::SBic;
-    if (name == "onset") return AnalysisType::Onset;
-    if (name == "beat")  return AnalysisType::Beat;
+    if (name == "sbic")        return AnalysisType::SBic;
+    if (name == "onset")       return AnalysisType::Onset;
+    if (name == "beat")        return AnalysisType::Beat;
+    if (name == "beat_degara") return AnalysisType::BeatDegara;
     return std::nullopt;
 }
 

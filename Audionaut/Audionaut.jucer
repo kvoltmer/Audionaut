@@ -64,6 +64,10 @@
                 file="Source/Engine/Analysis/BeatSegmenter.cpp"/>
           <FILE id="btSegH" name="BeatSegmenter.h" compile="0" resource="0"
                 file="Source/Engine/Analysis/BeatSegmenter.h"/>
+          <FILE id="btDgSC" name="BeatDegaraSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/BeatDegaraSegmenter.cpp"/>
+          <FILE id="btDgSH" name="BeatDegaraSegmenter.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/BeatDegaraSegmenter.h"/>
           <FILE id="anWrkC" name="AnalysisWorker.cpp" compile="1" resource="0"
                 file="Source/Engine/Analysis/AnalysisWorker.cpp"/>
           <FILE id="anWrkH" name="AnalysisWorker.h" compile="0" resource="0"

@@ -56,10 +56,12 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto sBicSegmenter              = std::make_shared<SBicSegmenter>();
     auto onsetSegmenter             = std::make_shared<OnsetSegmenter>();
     auto beatSegmenter              = std::make_shared<BeatSegmenter>();
+    auto beatDegaraSegmenter        = std::make_shared<BeatDegaraSegmenter>();
     auto analysisCache              = std::make_shared<AnalysisCache>();
     auto analysisProvider           = std::make_shared<AnalysisProvider>(sBicSegmenter,
                                                                          onsetSegmenter,
                                                                          beatSegmenter,
+                                                                         beatDegaraSegmenter,
                                                                          analysisCache);
     auto analysisWorker             = std::make_shared<AnalysisWorker>(analysisProvider);
 

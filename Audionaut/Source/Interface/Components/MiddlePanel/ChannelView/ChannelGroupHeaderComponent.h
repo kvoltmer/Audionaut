@@ -146,6 +146,9 @@ public:
             else if (result == CommandIDs::showBeats) {
                 component->toggleAnalysisVisibility(audium::AnalysisType::Beat);
             }
+            else if (result == CommandIDs::showBeatsDegara) {
+                component->toggleAnalysisVisibility(audium::AnalysisType::BeatDegara);
+            }
             else {
                 auto height = result;
                 component->setChannelHeight(height);
@@ -220,6 +223,8 @@ public:
                               audioTrack->getViewState().isAnalysisTypeVisible (audium::AnalysisType::Onset));
             showMenu.addItem (CommandIDs::showBeats, TRANS ("Beats"), true,
                               audioTrack->getViewState().isAnalysisTypeVisible (audium::AnalysisType::Beat));
+            showMenu.addItem (CommandIDs::showBeatsDegara, TRANS ("Beats (Degara)"), true,
+                              audioTrack->getViewState().isAnalysisTypeVisible (audium::AnalysisType::BeatDegara));
 
             m.addSubMenu("Show Analysis", showMenu);
             

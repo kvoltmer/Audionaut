@@ -40,14 +40,15 @@ public:
      * @param analysisProvider The provider used to run each analysis.
      * @param defaultAnalysisTypes The analyses queued when enqueue() is called
      *        without an explicit type list (e.g. for a newly added resource).
-     *        Defaults to all three; pass a subset (or an empty list) to change
+     *        Defaults to all four; pass a subset (or an empty list) to change
      *        or disable automatic analysis.
      */
     explicit AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider,
                             std::vector<AnalysisType> defaultAnalysisTypes = {
                                 AnalysisType::SBic,
                                 AnalysisType::Onset,
-                                AnalysisType::Beat
+                                AnalysisType::Beat,
+                                AnalysisType::BeatDegara
                             });
 
     /** @brief Stops the background thread, waiting for any in-flight analysis. */

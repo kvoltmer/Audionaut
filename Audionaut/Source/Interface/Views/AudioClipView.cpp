@@ -85,7 +85,8 @@ void AudioClipView::refreshSegments()
     std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType;
     for (auto analysisType : { audium::AnalysisType::SBic,
                                audium::AnalysisType::Onset,
-                               audium::AnalysisType::Beat })
+                               audium::AnalysisType::Beat,
+                               audium::AnalysisType::BeatDegara })
     {
         if (audioTrack->getViewState().isAnalysisTypeVisible(analysisType))
             segmentsByType[analysisType] = analysisProvider->getSegments(analysisType, audioFile);

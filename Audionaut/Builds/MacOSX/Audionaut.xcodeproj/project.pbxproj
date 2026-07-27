@@ -101,6 +101,7 @@
 		BDB04D599194CEC90685AC2F /* WaveFormViewBase.cpp */ = {isa = PBXBuildFile; fileRef = CB19A935EF026FE60A0F874E; };
 		C575E8965634F5A9854889EE /* PlayListContainerComponent.cpp */ = {isa = PBXBuildFile; fileRef = EDD9561EE704339EB0B3F25B; };
 		C5E930EAB7AD7588663B25D9 /* AudiumTransportSource.cpp */ = {isa = PBXBuildFile; fileRef = AC56136A076FC15C2E904E25; };
+		C72F6713E952E6AF948A8BDE /* BeatDegaraSegmenter.cpp */ = {isa = PBXBuildFile; fileRef = D8B7B36B34F1A4405B9C407D; };
 		C7E01543145F382740DBCE2E /* ChannelMapping.cpp */ = {isa = PBXBuildFile; fileRef = 6D8AC9B6CB6D3128D93BC4FA; };
 		C8949253863B11F346377536 /* HeaderComponent.cpp */ = {isa = PBXBuildFile; fileRef = 4468CC1C68E6B9520FDF6E20; };
 		CDA95CD2511DEFBB590AA722 /* AutoEdit.cpp */ = {isa = PBXBuildFile; fileRef = 9BF7BC63A9CB9770D4AA89B3; };
@@ -176,6 +177,7 @@
 		2B3D46B4A25BB609791350BD /* TempoProvider.h */ /* TempoProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TempoProvider.h; path = ../../Source/Engine/Provider/TempoProvider.h; sourceTree = SOURCE_ROOT; };
 		2B63D05A72768F7263241FEF /* FadeInOutControl.cpp */ /* FadeInOutControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FadeInOutControl.cpp; path = ../../Source/Interface/Controls/FadeInOutControl.cpp; sourceTree = SOURCE_ROOT; };
 		2C5C1EAFF66023F86D50E2F0 /* UIContext.h */ /* UIContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UIContext.h; path = ../../Source/Interface/UIContext.h; sourceTree = SOURCE_ROOT; };
+		2D9276576710EA2A8E02D711 /* BeatDegaraSegmenter.h */ /* BeatDegaraSegmenter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BeatDegaraSegmenter.h; path = ../../Source/Engine/Analysis/BeatDegaraSegmenter.h; sourceTree = SOURCE_ROOT; };
 		2DBC2B906A322A93C6867BBE /* AudioTrack.h */ /* AudioTrack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrack.h; path = ../../Source/Engine/Group/AudioTrack.h; sourceTree = SOURCE_ROOT; };
 		2E146D46199124CB4DC74349 /* AudiumMenuModel.h */ /* AudiumMenuModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumMenuModel.h; path = ../../Source/Application/AudiumMenuModel.h; sourceTree = SOURCE_ROOT; };
 		2FE373B95CF4904654564FC3 /* Recording.cpp */ /* Recording.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Recording.cpp; path = ../../Source/Engine/Recording/Recording.cpp; sourceTree = SOURCE_ROOT; };
@@ -374,6 +376,7 @@
 		D75AD80777C6009AB3531AE6 /* RecordingActionHandler.h */ /* RecordingActionHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RecordingActionHandler.h; path = ../../Source/Engine/Recording/RecordingActionHandler.h; sourceTree = SOURCE_ROOT; };
 		D86D2ABE8CAA425BC9C41A6A /* SettingsDialog.h */ /* SettingsDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SettingsDialog.h; path = ../../Source/Interface/Dialogs/SettingsDialog.h; sourceTree = SOURCE_ROOT; };
 		D8950D3AC385340A9172F172 /* UndoableContainerAction.h */ /* UndoableContainerAction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UndoableContainerAction.h; path = ../../Source/Engine/Undo/UndoableContainerAction.h; sourceTree = SOURCE_ROOT; };
+		D8B7B36B34F1A4405B9C407D /* BeatDegaraSegmenter.cpp */ /* BeatDegaraSegmenter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = BeatDegaraSegmenter.cpp; path = ../../Source/Engine/Analysis/BeatDegaraSegmenter.cpp; sourceTree = SOURCE_ROOT; };
 		D983C7A6E23DC948014EE2B0 /* ColourIds.h */ /* ColourIds.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ColourIds.h; path = ../../Source/Interface/ColourIds.h; sourceTree = SOURCE_ROOT; };
 		D99E2BA7FAA07351D04D4A65 /* SegmentationView.h */ /* SegmentationView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SegmentationView.h; path = ../../Source/Interface/Views/SegmentationView.h; sourceTree = SOURCE_ROOT; };
 		D9CD4CFFE043714175B25D56 /* Selectable.h */ /* Selectable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Selectable.h; path = ../../Source/Engine/Selection/Selectable.h; sourceTree = SOURCE_ROOT; };
@@ -945,6 +948,8 @@
 				1AE0078BCCC81F812D26BB9B,
 				F8E23A04EB8ABD66140B0153,
 				AFD4DEDA178EA9AC422CC144,
+				D8B7B36B34F1A4405B9C407D,
+				2D9276576710EA2A8E02D711,
 				FA8649A2DA5195058DB8F983,
 				C45FE6DBE93443F26B7AC698,
 			);
@@ -1199,6 +1204,7 @@
 				F99AF51695C3C8382F9FED7A,
 				F5D241FD039A48617EF1CA56,
 				9EE367062E87E7B98DEFBDCD,
+				C72F6713E952E6AF948A8BDE,
 				774EB253259208BB9A748B4C,
 				C5E930EAB7AD7588663B25D9,
 				4A8AF8534DDE8E5A4E97CD8D,

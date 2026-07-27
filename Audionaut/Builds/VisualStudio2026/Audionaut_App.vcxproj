@@ -166,6 +166,7 @@
     <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisCache.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Analysis\OnsetSegmenter.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Analysis\BeatSegmenter.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Analysis\BeatDegaraSegmenter.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisWorker.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.cpp"/>
@@ -3110,6 +3111,7 @@
     <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisCache.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\OnsetSegmenter.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\BeatSegmenter.h"/>
+    <ClInclude Include="..\..\Source\Engine\Analysis\BeatDegaraSegmenter.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisWorker.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h"/>
