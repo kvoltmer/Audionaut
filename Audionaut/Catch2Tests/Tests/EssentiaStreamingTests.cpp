@@ -99,7 +99,7 @@ SCENARIO("essentia multi-feature", "[engine][essentia][BeatTrackerMultiFeature]"
     j["rhythm.ticks"] = ticks;
     outStream->writeString(j.dump(4));
 
-    cout << j.dump(4) << endl;
+//    cout << j.dump(4) << endl;
 
     // cleanup
     if (outFile.existsAsFile()) outFile.deleteFile();

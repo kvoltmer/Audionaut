@@ -15,10 +15,10 @@
 using namespace audium;
 
 #if ESSENTIA_ENABLED
-SCENARIO("BeatSegmenter tracks beats in an audio file", "[engine][analysis][beats]")
+SCENARIO("BeatSegmenter tracks beats in an audio file", "[engine][essentia][analysis][beats]")
 {
     auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
-    auto inFile = File(testFilesDirectory + "_export_TRK-18.wav");
+    auto inFile = File(testFilesDirectory + "TRK-18-epy-jul.wav");
     REQUIRE(inFile.existsAsFile());
 
     BeatSegmenter segmenter;
@@ -42,10 +42,33 @@ SCENARIO("BeatSegmenter tracks beats in an audio file", "[engine][analysis][beat
             }
         }
     }
+
+    WHEN("the file is analysed with the Degara method")
+    {
+        BeatSegmenter::Parameters params;
+        params.method = BeatSegmenter::Method::Degara;
+
+        auto beats = segmenter.analyze(inFile, params);
+
+        THEN("it returns beat timestamps")
+        {
+            REQUIRE_FALSE(beats.empty());
+        }
+
+        THEN("the timestamps are non-negative and strictly increasing (in seconds)")
+        {
+            for (size_t i = 0; i < beats.size(); ++i)
+            {
+                REQUIRE(beats[i] >= 0.0f);
+                if (i > 0)
+                    REQUIRE(beats[i] > beats[i - 1]);
+            }
+        }
+    }
 }
 #endif // ESSENTIA_ENABLED
 
-SCENARIO("BeatSegmenter returns no beats for a missing file", "[engine][analysis][beats]")
+SCENARIO("BeatSegmenter returns no beats for a missing file", "[engine][essentia][analysis][beats]")
 {
     BeatSegmenter segmenter;
     auto missing = File("/non/existent/audio/file.wav");

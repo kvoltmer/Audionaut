@@ -57,10 +57,15 @@ std::vector<float> AnalysisProvider::runSegmenter(AnalysisType analysisType,
 {
     switch (analysisType)
     {
-        case AnalysisType::SBic:       return sBicSegmenter->analyze(audioFile);
-        case AnalysisType::Onset:      return onsetSegmenter->analyze(audioFile);
-        case AnalysisType::Beat:       return beatSegmenter->analyze(audioFile);
-        case AnalysisType::BeatDegara: return beatDegaraSegmenter->analyze(audioFile);
+        case AnalysisType::SBic:  return sBicSegmenter->analyze(audioFile);
+        case AnalysisType::Onset: return onsetSegmenter->analyze(audioFile);
+        case AnalysisType::Beat:  return beatSegmenter->analyze(audioFile);
+        case AnalysisType::BeatDegara:
+        {
+            BeatSegmenter::Parameters params;
+            params.method = BeatSegmenter::Method::Degara;
+            return beatSegmenter->analyze(audioFile, params);
+        }
     }
     return {};
 }

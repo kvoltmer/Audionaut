@@ -16,7 +16,6 @@
 #include "Engine/Analysis/SBicSegmenter.h"
 #include "Engine/Analysis/OnsetSegmenter.h"
 #include "Engine/Analysis/BeatSegmenter.h"
-#include "Engine/Analysis/BeatDegaraSegmenter.h"
 #include "Engine/Analysis/AnalysisCache.h"
 
 namespace audium {
@@ -28,12 +27,10 @@ public:
     AnalysisProvider(std::shared_ptr<SBicSegmenter> sBicSegmenter_,
                      std::shared_ptr<OnsetSegmenter> onsetSegmenter_,
                      std::shared_ptr<BeatSegmenter> beatSegmenter_,
-                     std::shared_ptr<BeatDegaraSegmenter> beatDegaraSegmenter_,
                      std::shared_ptr<AnalysisCache> analysisCache_) :
         sBicSegmenter(sBicSegmenter_),
         onsetSegmenter(onsetSegmenter_),
         beatSegmenter(beatSegmenter_),
-        beatDegaraSegmenter(beatDegaraSegmenter_),
         analysisCache(analysisCache_)
     {}
 
@@ -92,7 +89,6 @@ private:
     std::shared_ptr<SBicSegmenter> sBicSegmenter;
     std::shared_ptr<OnsetSegmenter> onsetSegmenter;
     std::shared_ptr<BeatSegmenter> beatSegmenter;
-    std::shared_ptr<BeatDegaraSegmenter> beatDegaraSegmenter;
     std::shared_ptr<AnalysisCache> analysisCache;
 
     // Serialises segmenter access so a background (AnalysisWorker) analysis and

@@ -20,8 +20,8 @@ namespace audium {
 enum class AnalysisType {
     SBic,       ///< BIC segmentation.
     Onset,      ///< Onset detection.
-    Beat,       ///< Beat tracking (BeatTrackerMultiFeature).
-    BeatDegara  ///< Beat tracking (BeatTrackerDegara; faster, less accurate).
+    Beat,       ///< Beat tracking (BeatSegmenter, Method::MultiFeature).
+    BeatDegara  ///< Beat tracking (BeatSegmenter, Method::Degara).
 };
 
 /** @brief Stable, human-readable name for an analysis type (used in JSON). */

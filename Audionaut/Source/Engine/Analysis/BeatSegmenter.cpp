@@ -54,18 +54,26 @@ std::vector<float> BeatSegmenter::analyze(const juce::File& audioFile,
     essentia::init();
 
     Pool pool;
-
     streaming::AlgorithmFactory& factory = streaming::AlgorithmFactory::instance();
 
-    // MonoLoader -> BeatTrackerMultiFeature
+    const auto methodString = (params.method == Method::Degara) ? "degara"
+                                                                  : "multifeature";
+
+    // MonoLoader -> RhythmExtractor2013 (method=multifeature/degara)
     streaming::Algorithm* monoloader = factory.create("MonoLoader", "filename", audioFilename);
-    streaming::Algorithm* beattracker = factory.create("BeatTrackerMultiFeature");
+    streaming::Algorithm* beattracker = factory.create("RhythmExtractor2013",
+                                                        "method", methodString,
+                                                        "maxTempo", params.maxTempo,
+                                                        "minTempo", params.minTempo);
 
     monoloader->configure("sampleRate", (Real) params.sampleRate);
 
-    monoloader->output("audio")       >> beattracker->input("signal");
-    beattracker->output("ticks")      >> PC(pool, "rhythm.ticks");
-    beattracker->output("confidence") >> NOWHERE;
+    monoloader->output("audio")        >> beattracker->input("signal");
+    beattracker->output("ticks")       >> PC(pool, "rhythm.ticks");
+    beattracker->output("confidence")  >> NOWHERE;
+    beattracker->output("bpm")         >> PC(pool, "rhythm.bpm");
+    beattracker->output("estimates")   >> NOWHERE;
+    beattracker->output("bpmIntervals") >> NOWHERE;
 
     // The Network takes ownership of the connected algorithms and frees them.
     Network network(monoloader);
@@ -80,6 +88,12 @@ std::vector<float> BeatSegmenter::analyze(const juce::File& audioFile,
         timestamps.reserve(ticks.size());
         for (auto tick : ticks)
             timestamps.push_back((float) tick);
+    }
+    
+    if (pool.contains<Real>("rhythm.bpm"))
+    {
+        const auto bpm = pool.value<Real>("rhythm.bpm");
+        std::cout << "bpm: " << bpm << std::endl;
     }
 
     essentia::shutdown();

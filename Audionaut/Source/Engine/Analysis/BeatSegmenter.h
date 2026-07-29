@@ -24,10 +24,23 @@ class BeatSegmenter {
 
 public:
     /**
+     * @brief Beat-tracking method, passed through to RhythmExtractor2013's
+     *        "method" parameter.
+     */
+    enum class Method {
+        MultiFeature,
+        Degara
+    };
+
+    /**
      * @brief Tunable parameters for the beat tracking.
      */
     struct Parameters {
         float sampleRate = 44100.0f;
+        Method method = Method::MultiFeature;
+        // RhythmExtractor2013's own tempo search range defaults.
+        int maxTempo = 208;
+        int minTempo = 40;
     };
 
     BeatSegmenter() = default;

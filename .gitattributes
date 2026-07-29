@@ -1,1 +1,2 @@
 Audionaut/Catch2Tests/TestFiles/_export_TRK-18.wav filter=lfs diff=lfs merge=lfs -text
+Audionaut/Catch2Tests/TestFiles/TRK-18-epy-jul.wav filter=lfs diff=lfs merge=lfs -text
