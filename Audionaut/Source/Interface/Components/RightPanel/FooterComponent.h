@@ -77,9 +77,24 @@ public:
         auto analysisWorker = audiumEngine->getAudioResourceContainer()->getAnalysisWorker();
         const bool busy = analysisWorker != nullptr && analysisWorker->isBusy();
         if (busy) {
-            std::string txt = "Analysing: " + analysisWorker->getCurrentFileName().toStdString() + " ";
+            // Small ASCII "sweep" animation, one step every 4 timer ticks
+            // (startTimer(50) above -> ~200ms per step) so it reads as
+            // moving rather than flickering.
+            static constexpr const char* sweepFrames[] = { "[=   ]", "[ =  ]", "[  = ]", "[   =]",
+                                                            "[  = ]", "[ =  ]" };
+            constexpr auto numFrames = sizeof(sweepFrames) / sizeof(sweepFrames[0]);
+            const auto frame = sweepFrames[(analysisAnimationTick++ / 4) % numFrames];
+
+            auto analysisType = analysisWorker->getCurrentAnalysisType();
+            auto typeLabel = analysisType.has_value() ? audium::analysisTypeToString(*analysisType) : "";
+
+            std::string txt = std::string(frame) + " Analysing " + typeLabel + ": "
+                             + analysisWorker->getCurrentFileName().toStdString() + " ";
             txt += "(" + std::to_string(analysisWorker->getRemainingCount()) + " remaining)";
             analysisStatusLabel->setText(txt, juce::dontSendNotification);
+        }
+        else {
+            analysisAnimationTick = 0;
         }
         analysisStatusLabel->setVisible(busy);
     }
@@ -89,6 +104,7 @@ private:
     std::unique_ptr<juce::Label> totalLengthLabel;
     std::unique_ptr<juce::Label> numVoicesLabel;
     std::unique_ptr<juce::Label> analysisStatusLabel;
-    
+    int analysisAnimationTick = 0;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FooterComponent)
 };

@@ -9,6 +9,7 @@
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <vector>
 #include <JuceHeader.h>
 
@@ -105,6 +106,9 @@ public:
     /** @brief Name of the file being analysed right now, or empty if idle. */
     juce::String getCurrentFileName() const;
 
+    /** @brief Type of the analysis running right now, or std::nullopt if idle. */
+    std::optional<AnalysisType> getCurrentAnalysisType() const;
+
 private:
     int useTimeSlice() override;
 
@@ -129,6 +133,9 @@ private:
 
     // Name of the file currently being analysed (empty when idle); guarded by mutex.
     juce::String currentFileName;
+
+    // Type of the analysis currently running (nullopt when idle); guarded by mutex.
+    std::optional<AnalysisType> currentAnalysisType;
 
     juce::TimeSliceThread thread { "analysis worker" };
 
