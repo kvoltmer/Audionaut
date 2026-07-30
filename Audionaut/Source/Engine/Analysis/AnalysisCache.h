@@ -63,6 +63,15 @@ public:
                                           AnalysisType analysisType) const;
 
     /**
+     * @brief Looks up a cached BPM estimate (set for beat-tracking analyses).
+     * @param audioFile     The analysed audio file.
+     * @param analysisType  The kind of analysis.
+     * @return The cached BPM estimate, or std::nullopt on a miss.
+     */
+    std::optional<float> getBpm(const juce::File& audioFile,
+                                AnalysisType analysisType) const;
+
+    /**
      * @brief All results for an analysis type, keyed by analysed file path.
      * @return The per-file results, or an empty map if nothing has been
      *         cached with that type.
@@ -72,10 +81,13 @@ public:
 
     /**
      * @brief Stores a result, replacing any existing entry for the same key.
+     * @param bpm Overall BPM estimate to store alongside the segments (only
+     *            meaningful for beat-tracking analyses); defaults to 0.
      */
     void put(const juce::File& audioFile,
              AnalysisType analysisType,
-             std::vector<float> result);
+             std::vector<float> result,
+             float bpm = 0.0f);
 
     /**
      * @brief Re-points cached entries at audio files that have been relocated
@@ -134,6 +146,7 @@ private:
         juce::int64 size;
         juce::int64 modificationTime;
         std::vector<float> segments;
+        float bpm = 0.0f;
     };
 
     static std::string makeKey(const juce::File& audioFile,

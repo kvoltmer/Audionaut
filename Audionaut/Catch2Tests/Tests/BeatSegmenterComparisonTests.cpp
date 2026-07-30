@@ -63,8 +63,8 @@ SCENARIO("BeatSegmenter's Degara method agrees with its MultiFeature method", "[
         BeatSegmenter::Parameters degaraParams;
         degaraParams.method = BeatSegmenter::Method::Degara;
 
-        auto multiFeatureBeats = segmenter.analyze(inFile, multiFeatureParams);
-        auto degaraBeats = segmenter.analyze(inFile, degaraParams);
+        auto multiFeatureBeats = segmenter.analyze(inFile, multiFeatureParams).beats;
+        auto degaraBeats = segmenter.analyze(inFile, degaraParams).beats;
 
         THEN("both return beat timestamps")
         {

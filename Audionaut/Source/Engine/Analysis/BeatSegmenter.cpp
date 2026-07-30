@@ -29,13 +29,13 @@
 
 namespace audium {
 
-std::vector<float> BeatSegmenter::analyze(const juce::File& audioFile)
+BeatSegmenter::Result BeatSegmenter::analyze(const juce::File& audioFile)
 {
     return analyze(audioFile, Parameters());
 }
 
-std::vector<float> BeatSegmenter::analyze(const juce::File& audioFile,
-                                          const Parameters& params)
+BeatSegmenter::Result BeatSegmenter::analyze(const juce::File& audioFile,
+                                             const Parameters& params)
 {
 #if ! ESSENTIA_ENABLED
     juce::ignoreUnused (audioFile, params);
@@ -81,24 +81,21 @@ std::vector<float> BeatSegmenter::analyze(const juce::File& audioFile,
 
     // BeatTrackerMultiFeature reports beat positions in seconds. The pool may
     // be empty when no beats were found.
-    std::vector<float> timestamps;
+    Result result;
     if (pool.contains<std::vector<Real>>("rhythm.ticks"))
     {
         const auto ticks = pool.value<std::vector<Real>>("rhythm.ticks");
-        timestamps.reserve(ticks.size());
+        result.beats.reserve(ticks.size());
         for (auto tick : ticks)
-            timestamps.push_back((float) tick);
+            result.beats.push_back((float) tick);
     }
-    
+
     if (pool.contains<Real>("rhythm.bpm"))
-    {
-        const auto bpm = pool.value<Real>("rhythm.bpm");
-        std::cout << "bpm: " << bpm << std::endl;
-    }
+        result.bpm = (float) pool.value<Real>("rhythm.bpm");
 
     essentia::shutdown();
 
-    return timestamps;
+    return result;
 #endif // ESSENTIA_ENABLED
 }
 

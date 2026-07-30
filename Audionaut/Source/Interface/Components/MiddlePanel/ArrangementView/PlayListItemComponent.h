@@ -44,7 +44,13 @@ public:
     DraggerControl* getDraggerControl() const;
     
     void updateUI(std::shared_ptr<audium::PlayListItem> playListItem);
-    
+
+    /**
+     * @brief Refreshes the analysis (segmentation/BPM) overlay on every
+     *        currently visible channel row, without rebuilding waveforms.
+     */
+    void refreshAnalysisDisplay();
+
     void mouseEnter (const MouseEvent& e) override;
     void mouseExit (const MouseEvent& e) override;
     

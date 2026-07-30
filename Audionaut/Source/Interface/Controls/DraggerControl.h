@@ -42,17 +42,32 @@ public:
         removeKeyListener(this);
     }
     
-    void paintLabel (juce::Graphics& g, const juce::String label)
+    void paintLabel (juce::Graphics& g, const juce::String label, const juce::String suffix = {})
     {
         g.setFont (12.0f);
-        
+
+        auto labelWidth = GlyphArrangement::getStringWidth (g.getCurrentFont(), label);
+
         juce::Rectangle<int> bonds(5,
                                    4,
-                                   GlyphArrangement::getStringWidth (g.getCurrentFont(), label),
+                                   labelWidth,
                                    g.getCurrentFont().getHeight());
-        
+
         g.setColour (getLabelColour());
         g.drawFittedText (label, bonds, juce::Justification::topLeft, 1);
+
+        if (suffix.isNotEmpty())
+        {
+            juce::Rectangle<int> suffixBonds(5 + labelWidth + 4,
+                                             4,
+                                             GlyphArrangement::getStringWidth (g.getCurrentFont(), suffix),
+                                             g.getCurrentFont().getHeight());
+
+            // A subtler alpha than the main label so the suffix reads as
+            // secondary/auxiliary information.
+            g.setColour (getLabelColour().withAlpha (0.75f));
+            g.drawFittedText (suffix, suffixBonds, juce::Justification::topLeft, 1);
+        }
     }
 
     void paint (juce::Graphics& g) override
@@ -70,7 +85,7 @@ public:
         g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
         if (not isRecording())
-            paintLabel(g, getLabelString());
+            paintLabel(g, getLabelString(), getLabelSuffix());
 
     }
 
@@ -151,7 +166,10 @@ public:
     virtual void shiftSelect() = 0;
     
     virtual const juce::String getLabelString() const = 0;
-    
+
+    /** @brief Secondary label text drawn after the main label at a reduced alpha. */
+    virtual const juce::String getLabelSuffix() const { return {}; }
+
     virtual const juce::Colour getLabelColour() const = 0;
     
     virtual bool validateData() = 0;

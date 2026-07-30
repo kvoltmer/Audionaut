@@ -20,6 +20,20 @@ double AudioClipView::getRegionStart(audium::TimeContextType context) const
     return playListItem->getRegion()->getRegionData(audium::seconds).getStart();
 }
 
+void AudioClipView::changeListenerCallback (juce::ChangeBroadcaster* source)
+{
+    auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider();
+
+    if (analysisProvider != nullptr && source == analysisProvider.get())
+    {
+        refreshSegments();
+        return;
+    }
+
+    // Not our analysis provider - fall back to the base class (thumbnail change).
+    WaveFormViewBase::changeListenerCallback(source);
+}
+
 double AudioClipView::getClipGain() const
 {
     return playListItem->getRegion()->getGain(channelNumber);

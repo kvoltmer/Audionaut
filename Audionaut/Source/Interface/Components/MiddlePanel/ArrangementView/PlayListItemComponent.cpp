@@ -12,6 +12,7 @@
 #include "Interface/Controls/PlayListItemDraggerControl.h"
 #include "Interface/Controls/LevelMeter.h"
 #include "Interface/Controls/FadeInOutControl.h"
+#include "Interface/Views/AudioClipView.h"
 
 PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine,
                                              std::shared_ptr<audium::AudioTrack> audioTrack,
@@ -141,17 +142,27 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
     playListItemListBoxModel->setPlayListItem(playListItem);
     playListItemListBoxModel->setParentComponent(getParentComponent());
     playListItemListBox->setModel(playListItemListBoxModel.get());
-    //playListItemListBox->updateContent();
-        
+    // Not calling playListItemListBox->updateContent() here: it recycles row
+    // components across rows and previously caused clips to show the wrong
+    // waveform (see "bugfix: wrong waveform in clip"). refreshAnalysisDisplay()
+    // updates the analysis overlay on the existing row components instead.
+    refreshAnalysisDisplay();
 
     fadeInControl->setPlayListItem(playListItem);
     fadeOutControl->setPlayListItem(playListItem);
 
     fadeInControl->setValue(playListItem->getFadeIn());
     fadeOutControl->setValue(playListItem->getFadeOut());
-    
+
     fadeInControl->setVisible(playListItem->isSelected());
     fadeOutControl->setVisible(playListItem->isSelected());
+}
+
+void PlayListItemComponent::refreshAnalysisDisplay()
+{
+    for (int row = 0; row < playListItemListBoxModel->getNumRows(); ++row)
+        if (auto* clipView = dynamic_cast<AudioClipView*>(playListItemListBox->getComponentForRowNumber(row)))
+            clipView->refreshSegments();
 }
 
 void PlayListItemComponent::mouseEnter (const MouseEvent& e)

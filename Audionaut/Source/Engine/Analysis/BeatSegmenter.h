@@ -43,23 +43,31 @@ public:
         int minTempo = 40;
     };
 
+    /**
+     * @brief Result of a beat-tracking pass.
+     */
+    struct Result {
+        std::vector<float> beats;  ///< Beat timestamps in seconds.
+        float bpm = 0.0f;          ///< RhythmExtractor2013's overall BPM estimate.
+    };
+
     BeatSegmenter() = default;
 
     /**
      * @brief Tracks beats using the default parameters.
      * @param audioFile The audio file to analyse.
-     * @return Beat timestamps in seconds. Empty on failure.
+     * @return Beat timestamps and BPM estimate. Empty/zero on failure.
      */
-    std::vector<float> analyze(const juce::File& audioFile);
+    Result analyze(const juce::File& audioFile);
 
     /**
      * @brief Tracks beats for the given audio file.
      * @param audioFile The audio file to analyse.
      * @param params Beat-tracking parameters.
-     * @return Beat timestamps in seconds. Empty on failure.
+     * @return Beat timestamps and BPM estimate. Empty/zero on failure.
      */
-    std::vector<float> analyze(const juce::File& audioFile,
-                               const Parameters& params);
+    Result analyze(const juce::File& audioFile,
+                   const Parameters& params);
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeatSegmenter)
