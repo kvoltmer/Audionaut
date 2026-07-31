@@ -80,6 +80,7 @@ void AudiumEngine::cleanup()
     
     currentProjectFile = File();
     currentJson.clear();
+    uiState.clear();
 }
 
 void AudiumEngine::createNewProject(const int numChannels)

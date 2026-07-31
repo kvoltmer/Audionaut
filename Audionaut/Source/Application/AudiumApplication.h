@@ -15,6 +15,7 @@
 
 class SettingsDialog;
 class AboutSplashScreen;
+class MainComponent;
 
 class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
 {
@@ -67,7 +68,16 @@ public:
     void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
     
     void updateUI();
-    
+
+    /// the window's content component, or nullptr while the window is not up yet
+    MainComponent* getMainComponent() const;
+
+    /// captures the view state (zoom / scroll) into the engine so it gets saved with the project
+    void captureUiState();
+
+    /// applies the view state (zoom / scroll) that was loaded with the project
+    void restoreUiState();
+
     bool fileBrowserVisible() const;
     
     AudiumLookAndFeel lookAndFeel;

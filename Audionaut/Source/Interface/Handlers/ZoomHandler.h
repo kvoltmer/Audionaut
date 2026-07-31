@@ -22,6 +22,9 @@ public:
         
     void setZoomFactor(double factor);
     double getZoomFactor() const noexcept;
+
+    // the zoom factor a fresh project starts with
+    static constexpr double defaultZoomFactor = 1.0;
     
     juce::Range<double> getVisibleRange() const noexcept;
     void setVisibleRange(juce::Range<double> newRange, juce::NotificationType notification = juce::sendNotificationAsync);

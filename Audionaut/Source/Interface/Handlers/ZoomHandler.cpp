@@ -3,6 +3,8 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <algorithm>
+
 #include "ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
@@ -13,7 +15,7 @@ ZoomHandler::ZoomHandler(std::shared_ptr<audium::PlayListScheduler> playListSche
     snapToGridHandler(snapToGridHandler_)
 {
     // the default zoom factor
-    zoomFactor = 1.0;
+    zoomFactor = defaultZoomFactor;
     
     // 1 bar = 200 pixels
     // 1 second = 100 pixels (@120BPM)
@@ -47,9 +49,7 @@ double ZoomHandler::zoomOut()
 
 void ZoomHandler::setZoomFactor(double factor)
 {
-    zoomFactor = std::min(factor, maxZoomInFactor);
-    
-    zoomFactor = std::max(factor, maxZoomOutFactor);
+    zoomFactor = std::clamp(factor, maxZoomOutFactor, maxZoomInFactor);
 }
 
 double ZoomHandler::getZoomFactor() const noexcept
