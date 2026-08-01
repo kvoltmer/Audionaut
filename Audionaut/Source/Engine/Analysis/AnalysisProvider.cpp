@@ -123,6 +123,94 @@ std::vector<float> AnalysisProvider::analyzeFile(const juce::File& audioFile,
     return result.segments;
 }
 
+const std::vector<AnalysisType>& AnalysisProvider::getMergeAnalysisTypes()
+{
+    // Stream order matters: EventMerger expects the segmentation stream first.
+    static const std::vector<AnalysisType> types {
+        AnalysisType::SBic,
+        AnalysisType::BeatDegara,
+        AnalysisType::Onset
+    };
+
+    return types;
+}
+
+std::vector<EventMerger::EventStream>
+    AnalysisProvider::makeMergeStreams(const std::vector<float>& sBicSegments,
+                                       const std::vector<float>& degaraBeats,
+                                       const std::vector<float>& onsets)
+{
+    std::vector<EventMerger::EventStream> streams;
+
+    const auto add = [&streams] (const char* label,
+                                 EventMerger::Kind kind,
+                                 const std::vector<float>& times)
+    {
+        // An analysis that found nothing contributes no stream, so the labels
+        // stay meaningful and the column order stays predictable.
+        if (times.empty())
+            return;
+
+        EventMerger::EventStream stream;
+        stream.label = label;
+        stream.kind = kind;
+        stream.times = times;
+
+        streams.push_back(std::move(stream));
+    };
+
+    // The structural boundaries are the rare events, so they carry the widest
+    // kernel and dominate the merge. Beats and onsets are dense event streams;
+    // neither describes structure, so both are Kind::Beat.
+    add("sbic", EventMerger::Kind::Segmentation, sBicSegments);
+    add("beats_degara", EventMerger::Kind::Beat, degaraBeats);
+    add("onsets", EventMerger::Kind::Beat, onsets);
+
+    return streams;
+}
+
+std::vector<AnalysisType>
+    AnalysisProvider::findMissingMergeAnalyses(const juce::File& audioFile) const
+{
+    std::vector<AnalysisType> missing;
+
+    for (auto analysisType : getMergeAnalysisTypes())
+        if (! analysisCache->get(audioFile, analysisType).has_value())
+            missing.push_back(analysisType);
+
+    return missing;
+}
+
+EventMerger::Result AnalysisProvider::mergeCachedAnalyses(const juce::File& audioFile,
+                                                          float durationSeconds,
+                                                          const EventMerger::Parameters& params) const
+{
+    // Cache-only by design: running three Essentia analyses here would block
+    // whichever thread called us, and AnalysisWorker has normally cached them
+    // already. A caller wanting to explain the gap asks
+    // findMissingMergeAnalyses().
+    auto sBicSegments = analysisCache->get(audioFile, AnalysisType::SBic);
+    auto degaraBeats  = analysisCache->get(audioFile, AnalysisType::BeatDegara);
+    auto onsets       = analysisCache->get(audioFile, AnalysisType::Onset);
+
+    if (! sBicSegments || ! degaraBeats || ! onsets)
+        return {};
+
+    auto streams = makeMergeStreams(*sBicSegments, *degaraBeats, *onsets);
+
+    if (streams.empty())
+        return {};
+
+    EventMerger merger;
+    return merger.merge(streams, durationSeconds, params);
+}
+
+EventMerger::Result AnalysisProvider::mergeCachedAnalyses(const juce::File& audioFile,
+                                                          float durationSeconds) const
+{
+    return mergeCachedAnalyses(audioFile, durationSeconds, EventMerger::Parameters());
+}
+
 std::vector<float> AnalysisProvider::getSegments(AnalysisType analysisType,
                                                  const juce::File& audioFile) const
 {
