@@ -96,7 +96,10 @@ public:
                                      std::shared_ptr<ResourceGroup> resourceGroup);
 
     /** @brief Reads the Python path's segment file and creates regions from it. */
-    bool createRegionsFromSegFile(std::string segFileName, double sampleRate);
+    bool createRegionsFromSegFile(std::string segFileName,
+                                  double sampleRate,
+                                  std::shared_ptr<AudioTrack> track,
+                                  std::shared_ptr<ResourceGroup> resourceGroup);
 
     static const juce::String getTempDirectory();
 

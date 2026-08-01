@@ -15,6 +15,8 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/PlayListItem.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/ResourceGroup.h"
@@ -29,7 +31,55 @@ struct EditTarget {
     std::shared_ptr<AudioTrack> track;
     std::shared_ptr<ResourceGroup> resourceGroup;
     std::shared_ptr<AudioResource> resource;
+
+    bool isValid() const
+    {
+        return track != nullptr && resourceGroup != nullptr && resource != nullptr;
+    }
 };
+
+/**
+ * Works out which audio an edit applies to.
+ *
+ * The arrangement is what the user is editing, so the playlist item chosen in
+ * the dialog picks the target: its region names the resource group, and that
+ * group names the audio file. With the usual one item to one region to one file
+ * arrangement this is the same audio the fallback would find, but it stops
+ * being so as soon as a track carries more than one.
+ */
+EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItemId)
+{
+    EditTarget target;
+    target.track = track;
+
+    if (track == nullptr)
+        return target;
+
+    if (auto playListContainer = track->getPlayListContainer())
+        if (auto item = playListContainer->getPlayListItem(playListItemId))
+            if (auto region = item->getRegion())
+                target.resourceGroup = region->getResourceGroup();
+
+    // No playlist item named, or one that resolves to nothing: fall back to the
+    // track's first group, which is where a single-file track keeps its audio.
+    if (target.resourceGroup == nullptr)
+    {
+        auto resourceGroups = track->getResourceGroups();
+
+        if (! resourceGroups.empty())
+            target.resourceGroup = resourceGroups[0];
+    }
+
+    if (target.resourceGroup != nullptr)
+    {
+        auto resources = target.resourceGroup->getAudioResources();
+
+        if (! resources.empty())
+            target.resource = resources[0];
+    }
+
+    return target;
+}
 
 // Names the missing analyses so the user is told what to wait for rather than
 // just that nothing happened.
@@ -69,24 +119,18 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
         return false;
     }
 
-    auto resourceGroups = track->getResourceGroups();
+    // The arrangement is what is being edited, so the chosen playlist item
+    // decides which audio that is.
+    const auto target = resolveEditTarget(track, config.playlistItemId);
 
-    if (resourceGroups.empty() || resourceGroups[0] == nullptr)
+    if (! target.isValid())
     {
-        NullCheckedInvocation::invoke(callback, "The selected track has no audio to edit.");
+        NullCheckedInvocation::invoke(callback, "The selected clip has no audio to edit.");
         return false;
     }
 
-    auto resourceGroup = resourceGroups[0];
-    auto resources = resourceGroup->getAudioResources();
-
-    if (resources.empty() || resources[0] == nullptr)
-    {
-        NullCheckedInvocation::invoke(callback, "The selected track has no audio to edit.");
-        return false;
-    }
-
-    auto resource = resources[0];
+    auto resourceGroup = target.resourceGroup;
+    auto resource = target.resource;
     const auto audioFile = juce::File(resource->getFullPathName());
 
     if (! audioFile.existsAsFile())
@@ -240,22 +284,13 @@ bool AutoEdit::invokePython(const juce::File& audioFile,
     // The script writes its segment positions in samples of the file it was
     // given, so they are converted with that file's rate - not a fixed one.
     auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
-    auto track = audioTrackContainer->getAudioTrack(config.trackId);
+    const auto target = resolveEditTarget(audioTrackContainer->getAudioTrack(config.trackId),
+                                          config.playlistItemId);
 
-    if (track == nullptr)
+    if (! target.isValid())
         return false;
 
-    auto resourceGroups = track->getResourceGroups();
-
-    if (resourceGroups.empty() || resourceGroups[0] == nullptr)
-        return false;
-
-    auto resources = resourceGroups[0]->getAudioResources();
-
-    if (resources.empty() || resources[0] == nullptr)
-        return false;
-
-    const auto sampleRate = resources[0]->getSampleRate();
+    const auto sampleRate = target.resource->getSampleRate();
 
     if (sampleRate <= 0.0)
     {
@@ -266,9 +301,9 @@ bool AutoEdit::invokePython(const juce::File& audioFile,
     std::string segFileName = getTempDirectory().toStdString() + "/data/segs/"
                                   + getBaseName() + "-seg-data.json";
 
-    return applyAsUndoableEdit([this, segFileName, sampleRate]
+    return applyAsUndoableEdit([this, segFileName, sampleRate, target]
     {
-        return createRegionsFromSegFile(segFileName, sampleRate);
+        return createRegionsFromSegFile(segFileName, sampleRate, target.track, target.resourceGroup);
     });
 }
 
@@ -277,9 +312,14 @@ const std::string AutoEdit::getBaseName() const
     return juce::File(audioResourceFilePath).getFileNameWithoutExtension().toStdString();
 }
 
-bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRate)
+bool AutoEdit::createRegionsFromSegFile(std::string segFileName,
+                                       double sampleRate,
+                                       std::shared_ptr<AudioTrack> track,
+                                       std::shared_ptr<ResourceGroup> resourceGroup)
 {
-    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+    if (track == nullptr || resourceGroup == nullptr)
+        return false;
+
     std::fstream segFile;
     segFile.open(segFileName, std::ios::in);
 
@@ -288,16 +328,6 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName, double sampleRa
         std::cout << "error seg file not found: " << segFileName << std::endl;
         return false;
     }
-
-    auto track = audioTrackContainer->getDefaultGroup();
-
-    if (track == nullptr || track->getResourceGroups().empty())
-    {
-        segFile.close();
-        return false;
-    }
-
-    auto resourceGroup = track->getResourceGroups()[0];
 
     int counter = 1;
     auto segdata = nlohmann::json::parse(segFile);

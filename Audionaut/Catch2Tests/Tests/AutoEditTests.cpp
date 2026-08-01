@@ -294,3 +294,88 @@ SCENARIO("AutoEdit reports an unusable target instead of failing silently",
     DeletedAtShutdown::deleteAll();
     MessageManager::deleteInstance();
 }
+
+SCENARIO("AutoEdit edits the audio the chosen playlist item refers to",
+         "[engine][autoedit]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto engine = AudiumFactory::createAudiumEngine();
+
+        auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
+        auto firstFile = File(testFilesDirectory + "_export_TRK-18.wav");
+        auto secondFile = File(testFilesDirectory + "120-funk-export.wav");
+        REQUIRE(firstFile.existsAsFile());
+        REQUIRE(secondFile.existsAsFile());
+
+        auto trackContainer = engine->getAudioTrackContainer();
+
+        // The container makes a new track per call, so the second file is added
+        // to the same track directly - and at a position no playlist item
+        // occupies, so it gets its own resource group and item rather than
+        // joining the first as another channel.
+        trackContainer->addAudioFiles({ firstFile.getFullPathName() }, 0.0, nullptr, false);
+
+        auto track = trackContainer->getAudioTrack(0);
+        REQUIRE(track != nullptr);
+
+        track->addAudioFiles({ secondFile.getFullPathName() }, 1.0e9, nullptr, false);
+
+        auto playListItems = track->getPlayListContainer()->getPlayListItems();
+
+        // Only meaningful when the track really does carry two separate items.
+        if (playListItems.size() < 2)
+            SKIP("the two audio files did not produce two playlist items");
+
+        auto secondGroup = playListItems[1]->getRegion()->getResourceGroup();
+        REQUIRE(secondGroup != nullptr);
+        REQUIRE(secondGroup != playListItems[0]->getRegion()->getResourceGroup());
+
+        auto secondResource = secondGroup->getAudioResources()[0];
+        const auto secondAnalysed = File(secondResource->getFullPathName());
+
+        // Cache analyses for the second item's audio only. If the edit resolved
+        // its target any other way it would find nothing cached and decline.
+        auto cache = trackContainer->getAnalysisProvider()->getCache();
+        cache->put(secondAnalysed, AnalysisType::SBic, evenTimes(0.0f, 0.25f, 5));
+        cache->put(secondAnalysed, AnalysisType::BeatDegara, evenTimes(0.0f, 0.1f, 12));
+        cache->put(secondAnalysed, AnalysisType::Onset, evenTimes(0.0f, 0.05f, 24));
+
+        const auto baseline = secondGroup->getAudioRegionContainer()->getObjects().size();
+
+        AutoEdit autoEdit(engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+        config.playlistItemId = 1;
+        config.numSegments = 4;
+
+        std::string reportedError;
+        auto onError = [&reportedError](std::string error) { reportedError = error; };
+
+        WHEN("the second playlist item is auto edited")
+        {
+            const auto succeeded = autoEdit.invokeAutoEdit(config, onError);
+
+            THEN("it edits that item's audio, not the track's first")
+            {
+                INFO("error was: " << reportedError);
+                REQUIRE(succeeded);
+
+                // Re-query: the undoable action rebuilt the container.
+                auto items = trackContainer->getAudioTrack(0)->getPlayListContainer()->getPlayListItems();
+                REQUIRE(items.size() >= 2);
+
+                auto group = items[1]->getRegion()->getResourceGroup();
+                REQUIRE(group->getAudioRegionContainer()->getObjects().size() > baseline);
+            }
+        }
+
+        engine = nullptr;
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
