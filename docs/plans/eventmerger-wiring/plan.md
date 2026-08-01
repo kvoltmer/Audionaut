@@ -63,6 +63,7 @@ zero cost and keyed to a stable path, unlike a per-run temp file.
 | D3 | Cache the merged result? | **No — recompute.** Inputs are already cached; a key ignoring `EventMerger::Parameters` would go stale when `numSegments` changes. |
 | D4 | How does AutoEdit reach `AnalysisProvider`? | **Existing path** — `getAudioTrackContainer()->getAnalysisProvider()`, already the idiom in six UI call sites. No new API. |
 | D5 | Bounce, or use cached analysis? | **Cached analysis of the source resource. No bounce.** Removes the temp file, the `AudioExportThread` dependency, the cold-cache cost and the timeline mismatch above. |
+| D6 | What if only some analyses are cached? | **Produce no boundaries.** Never merge a partial set: it yields plausible-looking but different cut points, which is worse than producing none because it looks like it worked. `findMissingMergeAnalyses()` names what is outstanding so the caller can say so. |
 
 ### Assumptions (not explicitly confirmed — overturn freely)
 - **Onset maps to `Kind::Beat`.** `Kind` selects the reference's treatment: segmentation streams get
