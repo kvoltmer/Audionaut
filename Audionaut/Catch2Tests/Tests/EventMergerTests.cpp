@@ -525,3 +525,342 @@ SCENARIO("EventMerger's strictStreamMapping flag repairs the beat column pairing
         }
     }
 }
+
+SCENARIO("EventMerger's Ricker kernel matches the reference wavelet",
+         "[engine][analysis][merge]")
+{
+    GIVEN("a five-point kernel of width one")
+    {
+        auto kernel = EventMerger::ricker (5, 1.0f);
+
+        THEN("it matches scipy.signal.ricker's closed form")
+        {
+            // A = 2 / (sqrt(3) * pi^(1/4)) = 0.8673251, so the centre is A, the
+            // wavelet crosses zero at |x| = a, and the tails are
+            // A * (1 - 4) * exp(-2) = -0.3521391.
+            REQUIRE(kernel.size() == 5);
+            REQUIRE(kernel[0] == Catch::Approx(-0.3521391f).margin(1e-6f));
+            REQUIRE(kernel[1] == Catch::Approx(0.0f).margin(1e-6f));
+            REQUIRE(kernel[2] == Catch::Approx(0.8673251f).margin(1e-6f));
+            REQUIRE(kernel[3] == Catch::Approx(0.0f).margin(1e-6f));
+            REQUIRE(kernel[4] == Catch::Approx(-0.3521391f).margin(1e-6f));
+        }
+    }
+
+    GIVEN("an odd-length kernel")
+    {
+        auto kernel = EventMerger::ricker (51, 4.0f);
+
+        THEN("it is symmetric about its centre")
+        {
+            for (size_t i = 0; i < kernel.size() / 2; ++i)
+                REQUIRE(kernel[i] == Catch::Approx(kernel[kernel.size() - 1 - i]).margin(1e-6f));
+        }
+
+        THEN("it peaks at the centre")
+        {
+            const auto peak = std::max_element (kernel.begin(), kernel.end());
+            REQUIRE(std::distance (kernel.begin(), peak) == 25);
+        }
+
+        THEN("a wider kernel has a lower peak, spreading the same event further")
+        {
+            auto wider = EventMerger::ricker (51, 8.0f);
+            REQUIRE(wider[25] < kernel[25]);
+        }
+    }
+
+    GIVEN("degenerate arguments")
+    {
+        THEN("no kernel is produced")
+        {
+            REQUIRE(EventMerger::ricker (0, 1.0f).empty());
+            REQUIRE(EventMerger::ricker (-5, 1.0f).empty());
+            REQUIRE(EventMerger::ricker (5, 0.0f).empty());
+            REQUIRE(EventMerger::ricker (5, -1.0f).empty());
+        }
+    }
+}
+
+SCENARIO("EventMerger's convolution keeps the same window numpy does",
+         "[engine][analysis][merge]")
+{
+    // This scenario is the contract for the centring convention. numpy's
+    // mode='same' keeps the centre max(M, N) samples of the full convolution,
+    // starting at offset (K - 1) / 2 where K is the shorter input's length. Get
+    // that offset wrong and every boundary shifts.
+
+    GIVEN("an even-length kernel")
+    {
+        auto result = EventMerger::convolveSame ({ 1.0f, 2.0f, 3.0f, 4.0f }, { 1.0f, 1.0f });
+
+        THEN("the window starts at the head of the full convolution")
+        {
+            // full = [1, 3, 5, 7, 4], offset = 0
+            REQUIRE(result == std::vector<float> { 1.0f, 3.0f, 5.0f, 7.0f });
+        }
+    }
+
+    GIVEN("a centred unit impulse as the kernel")
+    {
+        auto result = EventMerger::convolveSame ({ 1.0f, 2.0f, 3.0f }, { 0.0f, 1.0f, 0.0f });
+
+        THEN("the signal comes back unchanged")
+        {
+            REQUIRE(result == std::vector<float> { 1.0f, 2.0f, 3.0f });
+        }
+    }
+
+    GIVEN("an impulse at the very start of the signal")
+    {
+        auto result = EventMerger::convolveSame ({ 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+                                                 { 1.0f, 2.0f, 3.0f });
+
+        THEN("the kernel is centred on that frame and clipped on the left")
+        {
+            // full = [1, 2, 3, 0, 0, 0, 0], offset = 1, so the kernel's leading
+            // sample falls off the front.
+            REQUIRE(result == std::vector<float> { 2.0f, 3.0f, 0.0f, 0.0f, 0.0f });
+        }
+    }
+
+    GIVEN("the output length")
+    {
+        THEN("it is max(M, N)")
+        {
+            REQUIRE(EventMerger::convolveSame (std::vector<float> (10, 1.0f),
+                                               std::vector<float> (3, 1.0f)).size() == 10);
+            REQUIRE(EventMerger::convolveSame (std::vector<float> (4, 1.0f),
+                                               std::vector<float> (4, 1.0f)).size() == 4);
+        }
+    }
+
+    GIVEN("an empty input")
+    {
+        THEN("nothing is produced")
+        {
+            REQUIRE(EventMerger::convolveSame ({}, { 1.0f }).empty());
+            REQUIRE(EventMerger::convolveSame ({ 1.0f }, {}).empty());
+        }
+    }
+}
+
+SCENARIO("EventMerger sums the kernel activations across streams",
+         "[engine][analysis][merge]")
+{
+    EventMerger::Parameters params;
+    const auto numFrames = 200;
+
+    const std::vector<EventMerger::EventStream> streams {
+        streamFromFrames ("seg", EventMerger::Kind::Segmentation, { 0, 60, 120, 180 }, params),
+        streamFromFrames ("beat", EventMerger::Kind::Beat, { 0, 10, 20, 30, 40, 50, 60 }, params)
+    };
+
+    auto activations = EventMerger::buildActivations (streams, numFrames, params);
+
+    GIVEN("the reference default, which discards its kernel weights")
+    {
+        REQUIRE_FALSE(params.applyKernelWeights);
+
+        auto summed = EventMerger::summedActivation (activations, params);
+
+        THEN("there is one value per frame")
+        {
+            REQUIRE(summed.size() == (size_t) numFrames);
+        }
+
+        THEN("it is the plain sum of the convolved columns")
+        {
+            const auto points = std::min (params.maxKernelPoints, numFrames);
+
+            std::vector<float> expected ((size_t) numFrames, 0.0f);
+
+            for (size_t i = 0; i < activations.columns.size(); ++i)
+            {
+                auto kernel = EventMerger::ricker (points,
+                                                   activations.intervals[i] / params.kernelWidthDivisor);
+                auto convolved = EventMerger::convolveSame (activations.columns[i], kernel);
+
+                for (size_t frame = 0; frame < expected.size(); ++frame)
+                    expected[frame] += convolved[frame];
+            }
+
+            for (size_t frame = 0; frame < expected.size(); ++frame)
+                REQUIRE(summed[frame] == Catch::Approx(expected[frame]).margin(1e-4f));
+        }
+    }
+
+    GIVEN("the kernel weights enabled")
+    {
+        params.applyKernelWeights = true;
+
+        auto weighted = EventMerger::summedActivation (activations, params);
+
+        params.applyKernelWeights = false;
+        auto plain = EventMerger::summedActivation (activations, params);
+
+        THEN("column i is scaled by 1 + i, so the two differ")
+        {
+            REQUIRE(weighted.size() == plain.size());
+
+            auto anyDifference = false;
+
+            for (size_t frame = 0; frame < weighted.size(); ++frame)
+                if (std::abs (weighted[frame] - plain[frame]) > 1e-4f)
+                    anyDifference = true;
+
+            REQUIRE(anyDifference);
+        }
+    }
+
+    GIVEN("a stream whose events all land on one frame")
+    {
+        // Two events quantising to the same frame give a zero interval, and so
+        // no usable kernel width.
+        const std::vector<EventMerger::EventStream> degenerate {
+            streamFromFrames ("flat", EventMerger::Kind::Beat, { 20, 20, 20 }, params),
+            streamFromFrames ("seg", EventMerger::Kind::Segmentation, { 0, 60, 120 }, params)
+        };
+
+        auto degenerateActivations = EventMerger::buildActivations (degenerate, numFrames, params);
+
+        THEN("it contributes nothing rather than poisoning the sum")
+        {
+            REQUIRE(degenerateActivations.columns.size() == 2);
+
+            auto summed = EventMerger::summedActivation (degenerateActivations, params);
+
+            REQUIRE(summed.size() == (size_t) numFrames);
+
+            for (auto value : summed)
+                REQUIRE(std::isfinite (value));
+        }
+    }
+}
+
+SCENARIO("EventMerger picks the strongest frames deterministically",
+         "[engine][analysis][merge]")
+{
+    EventMerger::Parameters params;
+    params.peakIndexOffset = 0;
+
+    GIVEN("a clear ranking")
+    {
+        const std::vector<float> activation { 1.0f, 9.0f, 3.0f, 7.0f, 2.0f };
+
+        THEN("the strongest frames come back in ascending order")
+        {
+            REQUIRE(EventMerger::pickPeaks (activation, 2, params) == std::vector<int> { 1, 3 });
+            REQUIRE(EventMerger::pickPeaks (activation, 3, params) == std::vector<int> { 1, 2, 3 });
+        }
+    }
+
+    GIVEN("tied activations")
+    {
+        const std::vector<float> activation { 5.0f, 5.0f, 5.0f, 5.0f };
+
+        THEN("ties resolve by frame order rather than arbitrarily")
+        {
+            // np.argpartition leaves this unspecified, which is why parity with
+            // the reference is only guaranteed to a frame.
+            REQUIRE(EventMerger::pickPeaks (activation, 2, params) == std::vector<int> { 0, 1 });
+            REQUIRE(EventMerger::pickPeaks (activation, 2, params)
+                        == EventMerger::pickPeaks (activation, 2, params));
+        }
+    }
+
+    GIVEN("more segments requested than there are frames")
+    {
+        const std::vector<float> activation { 1.0f, 2.0f, 3.0f };
+
+        THEN("the request is clamped instead of running off the end")
+        {
+            // The reference raises here.
+            REQUIRE(EventMerger::pickPeaks (activation, 10, params) == std::vector<int> { 0, 1, 2 });
+        }
+    }
+
+    GIVEN("the reference's index offset")
+    {
+        params.peakIndexOffset = -2;
+        const std::vector<float> activation { 1.0f, 2.0f, 9.0f, 8.0f, 3.0f };
+
+        THEN("every picked index is shifted by it")
+        {
+            REQUIRE(EventMerger::pickPeaks (activation, 2, params) == std::vector<int> { 0, 1 });
+        }
+
+        THEN("indices shifted off the front of the grid are kept for the next stage")
+        {
+            const std::vector<float> earlyPeak { 9.0f, 8.0f, 1.0f };
+            REQUIRE(EventMerger::pickPeaks (earlyPeak, 2, params) == std::vector<int> { -2, -1 });
+        }
+    }
+
+    GIVEN("degenerate arguments")
+    {
+        THEN("nothing is picked")
+        {
+            REQUIRE(EventMerger::pickPeaks ({}, 5, params).empty());
+            REQUIRE(EventMerger::pickPeaks ({ 1.0f, 2.0f }, 0, params).empty());
+        }
+    }
+}
+
+SCENARIO("EventMerger produces boundaries end to end", "[engine][analysis][merge]")
+{
+    EventMerger::Parameters params;
+    params.numSegments = 5;
+
+    EventMerger merger;
+
+    GIVEN("segment boundaries and a beat grid over a minute of material")
+    {
+        const auto duration = 60.0f;
+        const auto numFrames = EventMerger::frameCount (duration, params);
+
+        std::vector<int> segFrames, beatFrames;
+
+        for (auto frame = 0; frame < numFrames; frame += 400)
+            segFrames.push_back (frame);
+
+        for (auto frame = 0; frame < numFrames; frame += 43)
+            beatFrames.push_back (frame);
+
+        const std::vector<EventMerger::EventStream> streams {
+            streamFromFrames ("sbic", EventMerger::Kind::Segmentation, segFrames, params),
+            streamFromFrames ("beats", EventMerger::Kind::Beat, beatFrames, params)
+        };
+
+        WHEN("the streams are merged")
+        {
+            auto result = merger.merge (streams, duration, params);
+
+            THEN("boundaries are produced")
+            {
+                REQUIRE_FALSE(result.boundaries.empty());
+                REQUIRE(result.boundaries.size() <= (size_t) params.numSegments);
+            }
+
+            THEN("they are ascending and inside the material")
+            {
+                for (size_t i = 0; i < result.boundaries.size(); ++i)
+                {
+                    REQUIRE(result.boundaries[i] >= 0.0f);
+                    REQUIRE(result.boundaries[i] <= duration);
+
+                    if (i > 0)
+                        REQUIRE(result.boundaries[i] > result.boundaries[i - 1]);
+                }
+            }
+
+            THEN("the activation it picked them from is returned alongside")
+            {
+                REQUIRE(result.activation.size() == (size_t) numFrames);
+
+                for (auto value : result.activation)
+                    REQUIRE(std::isfinite (value));
+            }
+        }
+    }
+}

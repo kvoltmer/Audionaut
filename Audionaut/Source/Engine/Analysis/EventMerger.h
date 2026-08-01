@@ -206,6 +206,76 @@ public:
                                         int numFrames,
                                         const Parameters& params);
 
+    /**
+     * @brief Collapses the activation columns into the single per-frame
+     *        activation the boundaries are picked from.
+     *
+     * Each column is convolved with a Ricker kernel whose width comes from that
+     * column's mean event interval, and the results are summed. Because a wider
+     * kernel spreads more energy, streams with rarer events - segment
+     * boundaries - end up dominating streams with frequent ones - beats.
+     *
+     * A column whose interval is not positive describes no usable kernel width
+     * and contributes nothing rather than poisoning the sum.
+     *
+     * @return One value per frame, or empty if there is nothing to sum.
+     */
+    static std::vector<float> summedActivation(const Activations& activations,
+                                               const Parameters& params);
+
+    /**
+     * @brief Picks the frames carrying the strongest activation.
+     *
+     * Ties are broken by frame order, so the result is deterministic. The
+     * reference relies on `np.argpartition`, whose tie ordering is unspecified,
+     * which is why exact index parity with it is not guaranteed on ties.
+     *
+     * Parameters::peakIndexOffset is applied to every index, so the result can
+     * contain indices outside the grid; the minimum-length pass discards them.
+     *
+     * @param activation   Per-frame activation from summedActivation().
+     * @param numSegments  How many peaks to keep; clamped to the frame count.
+     * @return The picked frame indices in ascending order.
+     */
+    static std::vector<int> pickPeaks(const std::vector<float>& activation,
+                                      int numSegments,
+                                      const Parameters& params);
+
+    /** @name Kernel primitives
+     *
+     * The building blocks of the pass above, exposed so their conventions can
+     * be pinned by tests.
+     */
+    ///@{
+    /**
+     * @brief A Ricker ("mexican hat") wavelet, matching `scipy.signal.ricker`.
+     *
+     * That function was removed in SciPy 1.15, so this is the closed form it
+     * used:
+     * `A (1 - x^2/a^2) exp(-x^2 / 2a^2)`, with `A = 2 / (sqrt(3a) pi^(1/4))`
+     * and `x` running symmetrically about the centre point.
+     *
+     * @param points Kernel length in samples.
+     * @param width  The wavelet's `a` parameter. Must be positive.
+     * @return The kernel, or empty for a non-positive length or width.
+     */
+    static std::vector<float> ricker(int points, float width);
+
+    /**
+     * @brief Convolution truncated to the signal's length, matching
+     *        `np.convolve(..., mode='same')`.
+     *
+     * The result is the centre `max(M, N)` samples of the full convolution,
+     * taken from offset `(K - 1) / 2` where `K` is the shorter input's length.
+     * Getting that offset wrong shifts every boundary, so it is pinned by test.
+     *
+     * @return `max(signal.size(), kernel.size())` samples; empty if either
+     *         input is.
+     */
+    static std::vector<float> convolveSame(const std::vector<float>& signal,
+                                           const std::vector<float>& kernel);
+    ///@}
+
     /** @name Grid conversion
      *
      * Conversions between the public seconds domain and the internal frame
