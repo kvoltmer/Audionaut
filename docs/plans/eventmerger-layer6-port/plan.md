@@ -356,26 +356,25 @@ The epic is done when, on the `feature/event-merger` base:
 3. The full suite `./build/AudionautTests_artefacts/AudionautTests` is green — confirming Phase 1's
    Projucer re-save broke nothing.
 4. The macOS app target builds from the regenerated Xcode project.
-5. `grep -r "essentia" Source/Engine/Analysis/EventMerger.*` returns nothing.
-6. `AutoEdit.cpp` and `AnalysisProvider.{h,cpp}` are unchanged versus `feature/degara-analysis` — the
-   standalone guarantee of decision D1.
+5. `grep -rn "#include.*essentia" Source/Engine/Analysis/EventMerger.*` returns nothing. (Match the
+   include, not the word — the class doc comment explains *why* there is no Essentia dependency, so a
+   bare `grep essentia` matches prose and always "fails".)
+6. `AutoEdit.cpp` and `AnalysisProvider.{h,cpp}` are unchanged versus `develop` — the standalone
+   guarantee of decision D1.
 
 ---
 
 ## Branch structure
 
-- **Epic base:** `feature/event-merger`, forked off `feature/degara-analysis` with `--no-track`.
-  `EventMerger` itself has no dependency on the segmenters, so `develop` would also have worked; basing
-  on the degara branch instead keeps this work stacked on the current line of analysis development
-  rather than forking a parallel one.
-- **Consequence to manage:** `feature/degara-analysis` is 5 commits ahead of `develop` and unmerged, so
-  the four phase PRs sit on top of unmerged work. Two follow-ons:
-  - Phase PR diffs will read cleanly (they target the epic base, not `develop`), but the epic base
-    cannot merge to `develop` until `feature/degara-analysis` does.
-  - If `feature/degara-analysis` is rebased or amended before it merges, rebase `feature/event-merger`
-    onto it in the same pass, before the phase branches diverge further.
+- **Epic base:** `feature/event-merger`, forked off `develop` with `--no-track`.
+  `develop` is the integration branch — it carries `Engine/Analysis/`, and CI runs on it
+  (`.github/workflows/`). `main` does not have the Analysis subsystem and is promoted separately.
 - **Planning branch:** `plan/event-merger` off the epic base, containing only `docs/plans/eventmerger-layer6-port/`.
 - **Draft PR:** `plan/event-merger` → `feature/event-merger`, so the reviewed diff is exactly this plan.
 - **Each phase:** its own branch off `feature/event-merger`, its own PR back into it.
-- `feature/event-merger` → `feature/degara-analysis` (or straight to `develop` if degara has landed by
-  then) once all four phases have merged.
+- `feature/event-merger` → `develop` once all four phases have merged.
+
+> **History note.** The epic was briefly based on `feature/degara-analysis`, which has since merged to
+> `develop` via [#23](https://github.com/kvoltmer/Audionaut/pull/23). The epic base was fast-forwarded
+> to `develop` and the phase branches rebased onto it, so no degara-specific sequencing constraint
+> remains.
