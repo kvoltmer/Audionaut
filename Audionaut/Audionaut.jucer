@@ -68,6 +68,10 @@
                 file="Source/Engine/Analysis/AnalysisWorker.cpp"/>
           <FILE id="anWrkH" name="AnalysisWorker.h" compile="0" resource="0"
                 file="Source/Engine/Analysis/AnalysisWorker.h"/>
+          <FILE id="evMrgC" name="EventMerger.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/EventMerger.cpp"/>
+          <FILE id="evMrgH" name="EventMerger.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/EventMerger.h"/>
         </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
