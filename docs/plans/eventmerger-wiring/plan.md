@@ -4,35 +4,51 @@
 
 [`EventMerger`](../../../Audionaut/Source/Engine/Analysis/EventMerger.h) landed on `develop` as a
 standalone, reference-checked port of gaborgandalf's layer-6 event merge
-([plan](../eventmerger-layer6-port/plan.md)). Decision D1 of that epic deliberately left it
-unwired: nothing in the running application calls it.
+([plan](../eventmerger-layer6-port/plan.md)). Decision D1 of that epic deliberately left it unwired.
 
-This epic wires it up, replacing the Python segmentation round-trip in AutoEdit.
+This epic wires it up, replacing the Python segmentation round-trip in AutoEdit **and removing the
+bounce**: AutoEdit reads the analyses already sitting in the cache instead of rendering a temporary
+file and analysing that.
 
 ### What AutoEdit does today
 
 1. [`AutoEdit.cpp:37`](../../../Audionaut/Source/Engine/AutoEdit/AutoEdit.cpp#L37) bounces the
    selected playlist item to `juce::File::createTempFile(".wav")` at 48 kHz.
 2. [`AutoEdit.cpp:79`](../../../Audionaut/Source/Engine/AutoEdit/AutoEdit.cpp#L79) shells out to
-   `$HOME/dev/gaborgandalf/gaborgandalf/automain.py autoedit`.
+   `$HOME/dev/gaborgandalf/gaborgandalf/automain.py autoedit` on that temp file.
 3. `applyAutoEditResult` reads `count.txt`, then `createRegionsFromSegFile` turns
    `<base>-seg-data.json` into regions.
 
+Two facts about that flow drive this plan.
+
 **Only the segmentation half is live.** `createPlayListFromSongFile` — the consumer of the Python
 assembly — is `#if 0`'d out at [`AutoEdit.cpp:159`](../../../Audionaut/Source/Engine/AutoEdit/AutoEdit.cpp#L159).
-So replacing segmentation removes the subprocess from the live path entirely, not half of it.
+Replacing segmentation removes the subprocess from the live path entirely, not half of it.
+
+**The bounce introduces a timeline mismatch.** Boundaries are derived from the bounced mix and
+converted with the *bounce's* 48 kHz rate, but the regions are created against
+`track->getResourceGroups()[0]` — the **source** resource
+([`AutoEdit.cpp:192`](../../../Audionaut/Source/Engine/AutoEdit/AutoEdit.cpp#L192)). The two
+timelines coincide only when the playlist item is a 1:1 pass-through of the whole source at 48 kHz.
+Analysing the source directly removes the mismatch rather than papering over it.
+
+### The analyses are already cached
+`AnalysisWorker` runs **all four** analysis types on every newly added audio file by default
+([`AnalysisWorker.h:48`](../../../Audionaut/Source/Engine/Analysis/AnalysisWorker.h#L48)) on a
+low-priority background thread, and `AnalysisCache` persists them to `AnalysisData.json`. So SBic,
+Onset and BeatDegara for the source file are normally present before AutoEdit is ever opened — at
+zero cost and keyed to a stable path, unlike a per-run temp file.
 
 ### In scope
-- A merged-analysis entry point on `AnalysisProvider`, feeding `EventMerger` from existing analyses.
-- A native AutoEdit path that creates regions from merged boundaries, with the Python path retained
-  behind a config toggle for A/B comparison.
-- A UI control to pick between them.
+- A merged-analysis entry point on `AnalysisProvider`, fed from cached analyses.
+- A native AutoEdit path that creates regions from merged boundaries of the **source resource**,
+  with no bounce and no temp files.
+- A UI control to pick between native and the retained Python path.
 
 ### Out of scope
-- **Automatic assembly** (layer 7). Still unported, and its consumer is still `#if 0`'d out.
-- **Removing `invokePython`.** Retained behind the toggle; deleting it is a later decision once the
-  native path is trusted on real material.
-- Changing `AnalysisWorker`, the background analysis path, or how non-AutoEdit views consume analyses.
+- **Automatic assembly** (layer 7). Still unported; its consumer is still `#if 0`'d out.
+- **Removing `invokePython`.** Retained behind the toggle.
+- Changing `AnalysisWorker` or the background analysis path itself.
 
 > **No ticket tracker.** Scope is this document plus the conversation that produced it.
 
@@ -42,17 +58,23 @@ So replacing segmentation removes the subprocess from the live path entirely, no
 
 | # | Question | Decision |
 |---|----------|----------|
-| D1 | What happens to `invokePython`? | **Keep behind a config toggle.** `AutoEditConfig::Source` = `Native` (default) or `Python`, so merged boundaries can be A/B'd against the reference on real material. |
-| D2 | Which analyses feed the merge? | **SBic, Degara, Onset.** No MultiFeature beat tracker, no decimated variants. |
-| D3 | Cache the merged result? | **No — recompute.** The expensive inputs are already cached per file; the merge is milliseconds. A cache key that ignored `Parameters` would go stale when `numSegments` changes. |
-| D4 | How does AutoEdit reach `AnalysisProvider`? | **Via the existing path.** No new API needed — see Architecture. |
+| D1 | What happens to `invokePython`? | **Keep behind a config toggle.** `AutoEditConfig::Source` = `Native` (default) / `Python`. |
+| D2 | Which analyses feed the merge? | **SBic, Degara, Onset.** No MultiFeature tracker, no decimated variants. |
+| D3 | Cache the merged result? | **No — recompute.** Inputs are already cached; a key ignoring `EventMerger::Parameters` would go stale when `numSegments` changes. |
+| D4 | How does AutoEdit reach `AnalysisProvider`? | **Existing path** — `getAudioTrackContainer()->getAnalysisProvider()`, already the idiom in six UI call sites. No new API. |
+| D5 | Bounce, or use cached analysis? | **Cached analysis of the source resource. No bounce.** Removes the temp file, the `AudioExportThread` dependency, the cold-cache cost and the timeline mismatch above. |
 
 ### Assumptions (not explicitly confirmed — overturn freely)
 - **Onset maps to `Kind::Beat`.** `Kind` selects the reference's treatment: segmentation streams get
   the `dropLastSegBoundary` truncation and lead the column order. Onsets are dense event streams, not
-  structural boundaries. The resulting kernel-width spread is SBic wide, Degara narrow, Onset narrowest.
-- **`EventMerger::Parameters` keeps its defaults**, including the four reference quirks, except
-  `numSegments`, which comes from `AutoEditConfig::numSegments` (the existing UI slider).
+  structural boundaries. Kernel widths end up SBic wide, Degara narrow, Onset narrowest.
+- **The Python path also drops the bounce**, running on the same source file. Otherwise the two
+  sources would analyse different material and the A/B comparison D1 exists for would be meaningless.
+- **Cache-only, no compute-on-miss.** If any of the three analyses is absent, AutoEdit reports that
+  rather than running Essentia on the message thread — which is the very cost D5 removes. In normal
+  use the worker has already populated them.
+- **The source is `getResourceGroups()[0]`'s first audio resource**, matching where
+  `createRegionsFromSegFile` already places its regions.
 
 ---
 
@@ -61,21 +83,13 @@ So replacing segmentation removes the subprocess from the live path entirely, no
 ### The dependency path already exists
 `AudiumEngine` has no analysis accessor, but `AudioTrackContainer` does
 ([`AudioTrackContainer.h:189`](../../../Audionaut/Source/Engine/Group/AudioTrackContainer.h#L189)),
-and that is the established idiom — six call sites already use it, e.g.
-[`AudioClipView.cpp:25`](../../../Audionaut/Source/Interface/Views/AudioClipView.cpp#L25) and
-[`PlayListItemDraggerControl.h:36`](../../../Audionaut/Source/Interface/Controls/PlayListItemDraggerControl.h#L36):
-
-```cpp
-audiumEngine->getAudioTrackContainer()->getAnalysisProvider()
-```
-
-`AutoEdit::applyAutoEditResult` already calls `getAudioTrackContainer()`. **No new accessor, no
-constructor injection.**
+and so does `AudioTrack`
+([`AudioTrack.h:222`](../../../Audionaut/Source/Engine/Group/AudioTrack.h#L222)). `AutoEdit` already
+calls `getAudioTrackContainer()`. **No new accessor, no constructor injection.**
 
 ### Stream assembly is a pure function
-The merge inputs come from three `analyzeFile()` calls, but assembling them into `EventStream`s is
-pure arithmetic-free bookkeeping. Splitting it out keeps it testable without Essentia — matching
-`EventMerger`'s own unconditional-test property:
+Assembling three analyses into `EventStream`s is pure bookkeeping. Splitting it out keeps it testable
+without Essentia, matching `EventMerger`'s own unconditional-test property:
 
 ```cpp
 // AnalysisProvider
@@ -84,30 +98,37 @@ static std::vector<EventMerger::EventStream>
                       const std::vector<float>& degara,
                       const std::vector<float>& onsets);
 
-EventMerger::Result analyzeMerged (const juce::File& audioFile,
-                                   float durationSeconds,
-                                   const EventMerger::Parameters& params);
+/** Merges the cached analyses of a file. Returns an empty result if any is missing. */
+EventMerger::Result mergeCachedAnalyses (const juce::File& audioFile,
+                                         float durationSeconds,
+                                         const EventMerger::Parameters& params) const;
 ```
 
-`analyzeMerged` runs the three `analyzeFile()` calls (each cache-consulting, as today), assembles,
-merges, and returns. It does **not** write to the cache (D3).
+`mergeCachedAnalyses` reads via `getSegments(type, file)` — cache-only, never computing (see
+assumptions). It does not write to the cache (D3), so it is `const`.
 
-### Region creation loses its JSON round-trip
-`createRegionsFromSegFile` parses `{start, end}` sample pairs from disk. The native path has
-boundaries in seconds already, so it needs a sibling that takes them directly:
+### The native AutoEdit flow
 
-```cpp
-bool createRegionsFromBoundaries (const std::vector<float>& boundarySeconds);
+```
+invokeAutoEdit(config)
+  track    = trackContainer->getAudioTrack(config.trackId)
+  group    = track->getResourceGroups()[0]
+  resource = group->getAudioResources()[0]
+  file     = resource->getFullPathName()
+  duration = resource->getFileLength(audium::seconds)
+
+  Native:  provider->mergeCachedAnalyses(file, duration, params)
+           -> createRegionsFromBoundaries(boundaries, track, group)
+  Python:  invokePython(config with file)   // unchanged apart from its input
 ```
 
-Consecutive boundaries form each region, mirroring the existing loop's pairing. The undo/redo
-wrapping in `applyAutoEditResult` is unchanged.
+No `AudioExportThread`, no temp file, no `count.txt`, no JSON.
 
-### Duration
-`EventMerger::merge` needs the material's length. The bounced file's duration comes from the engine's
-`AudioFormatManager` via a reader, which AutoEdit can reach through the resource container. Guard
-against a zero-length read — `merge()` returns empty for a non-positive duration, which would
-silently produce no regions.
+`createRegionsFromBoundaries` pairs consecutive boundaries into regions, mirroring the existing loop
+but taking seconds directly. The undo wrapping in `applyAutoEditResult` is unchanged.
+
+`EventMerger::Parameters` keeps its defaults, including the four reference quirks, except
+`numSegments`, which comes from `AutoEditConfig::numSegments` (the existing UI slider).
 
 ---
 
@@ -116,34 +137,37 @@ silently produce no regions.
 Single track, three PRs off `feature/event-merger-wiring`.
 
 ### Phase 1 — Merged analysis on AnalysisProvider
-**Scope:** `makeMergeStreams()` and `analyzeMerged()`. Nothing calls them yet.
+**Scope:** `makeMergeStreams()` and `mergeCachedAnalyses()`. Nothing calls them yet.
 
 - **Files:** `AnalysisProvider.{h,cpp}`, `Catch2Tests/Tests/AnalysisProviderMergeTests.cpp` (new).
 - **Depends on:** nothing.
-- **Reviewed in isolation:** `makeMergeStreams` is pure, so its tests run unconditionally — stream
-  count, `Kind` assignment, ordering, and empty-input handling. `analyzeMerged` gets an
-  `ESSENTIA_ENABLED`-gated test over `TestFiles/_export_TRK-18.wav`.
-- **Note:** no Projucer change — no new source files under `Source/`.
+- **Reviewed in isolation:** `makeMergeStreams` is pure, so its tests run unconditionally. The
+  cache-miss behaviour of `mergeCachedAnalyses` is testable by populating an `AnalysisCache`
+  directly — no Essentia needed. One `ESSENTIA_ENABLED`-gated test covers a real analysis end to end.
+- **Note:** no Projucer change — no new files under `Source/`.
 
-### Phase 2 — Native AutoEdit path
-**Scope:** `AutoEditConfig::Source`, `createRegionsFromBoundaries()`, and the branch in
-`invokeAutoEdit`. Python retained, no longer the default.
+### Phase 2 — Native AutoEdit path, bounce removed
+**Scope:** `AutoEditConfig::Source`, `createRegionsFromBoundaries()`, the native branch, and deleting
+the bounce.
 
 - **Files:** `AutoEdit.{h,cpp}`, `Catch2Tests/Tests/AutoEditTests.cpp`.
 - **Depends on:** Phase 1.
-- **Reviewed in isolation:** the diff is one new branch plus one new region-creation method; the
-  Python path is untouched, so the two can be compared side by side. Existing `AutoEditTests` is
-  extended to drive the native path (it currently drives the Python one and passes regardless of
-  outcome — see Risks).
+- **Reviewed in isolation:** the removal of `AudioExportThread` and the temp file is most of the
+  diff and is mechanical; the new branch is small. `createRegionsFromSegFile`, `getCountFromFile`
+  and `getBaseName` become unreachable once Python takes the source file directly — delete them in
+  this phase rather than leaving dead code.
+- **Rewrite the test.** `AutoEditTests` currently asserts nothing (see R2).
 
 ### Phase 3 — UI and menu cleanup
-**Scope:** a source selector in `AutoEditComponent`, and the duplicate menu item.
+**Scope:** a source selector in `AutoEditComponent`; the duplicate menu item.
 
 - **Files:** `Interface/Dialogs/AutoEditComponent.{h,cpp}`, `Application/AudiumApplication.cpp`.
 - **Depends on:** Phase 2.
 - **Reviewed in isolation:** UI-only. `AudiumApplication.cpp:325` adds `CommandIDs::autoEdit`
   unconditionally and again at line 329 inside `#if AUTO_EDIT_ENABLED`; with the flag at 0 the item
-  appears once, so the `#if` block currently gates nothing. Remove the redundant pair.
+  appears once, so the `#if` gates nothing. Remove the redundant pair.
+- Also consider what the dialog's playlist-item combo now means — it no longer selects anything the
+  analysis uses (see R3).
 
 ---
 
@@ -151,11 +175,9 @@ Single track, three PRs off `feature/event-merger-wiring`.
 
 | Path | Add/Modify | Phase |
 |------|-----------|-------|
-| `Source/Engine/Analysis/AnalysisProvider.h` | MODIFY | 1 |
-| `Source/Engine/Analysis/AnalysisProvider.cpp` | MODIFY | 1 |
+| `Source/Engine/Analysis/AnalysisProvider.{h,cpp}` | MODIFY | 1 |
 | `Catch2Tests/Tests/AnalysisProviderMergeTests.cpp` | ADD | 1 |
-| `Source/Engine/AutoEdit/AutoEdit.h` | MODIFY | 2 |
-| `Source/Engine/AutoEdit/AutoEdit.cpp` | MODIFY | 2 |
+| `Source/Engine/AutoEdit/AutoEdit.{h,cpp}` | MODIFY (net deletion) | 2 |
 | `Catch2Tests/Tests/AutoEditTests.cpp` | MODIFY | 2 |
 | `Source/Interface/Dialogs/AutoEditComponent.{h,cpp}` | MODIFY | 3 |
 | `Source/Application/AudiumApplication.cpp` | MODIFY | 3 |
@@ -167,16 +189,18 @@ Single track, three PRs off `feature/event-merger-wiring`.
 
 **Phase 1** (`[engine][analysis][merge]`)
 1. Three non-empty analyses give three streams: SBic as `Segmentation`, Degara and Onset as `Beat`.
-2. Segmentation stream leads the ordering.
+2. The segmentation stream leads the ordering.
 3. An empty analysis contributes no stream; all-empty gives no streams.
 4. Event times pass through unchanged, in seconds.
-5. *(Essentia-gated)* `analyzeMerged` over the test file returns ascending boundaries within the file's duration.
+5. `mergeCachedAnalyses` returns an empty result when any of the three is absent from the cache.
+6. With all three present in the cache, it returns ascending boundaries within the duration.
+7. *(Essentia-gated)* end to end over `TestFiles/_export_TRK-18.wav`.
 
 **Phase 2** (`[engine][autoedit]`)
-6. The native path creates one region per consecutive boundary pair.
-7. Region positions are in seconds and ascending.
-8. A merge yielding no boundaries creates no regions and reports an error rather than asserting.
-9. `Source::Python` still takes the subprocess branch.
+8. The native path creates one region per consecutive boundary pair, on the source resource group.
+9. Region positions are in seconds, ascending, and within the resource length.
+10. Missing analyses create no regions and report an error rather than asserting.
+11. No temp file is created and no subprocess is spawned on the native path.
 
 **Phase 3** — none; UI-only.
 
@@ -190,35 +214,35 @@ Not applicable — no analytics subsystem in this codebase.
 
 ## 8. QA
 
-Unlike the port epic, this one **is** user-visible.
-
-1. Open a project with an audio clip; select a playlist item.
-2. Edit → Auto Edit. Confirm the dialog offers a source selector (Phase 3).
-3. With **Native**: confirm regions appear on the default track, that they tile the material without
-   gaps or overlaps, and that a single Undo removes them all.
-4. With **Python**: confirm the old behaviour still runs *if* a working gaborgandalf environment
-   exists — see Risk R2.
-5. Vary the `numSegments` slider and confirm the region count responds.
+1. Add an audio file to a project and wait for background analysis to finish (the footer indicator).
+2. Edit → Auto Edit, source **Native**. Regions should appear essentially instantly — no progress
+   bar, no bounce.
+3. Confirm the regions tile the source without gaps or overlaps, and that one Undo removes them all.
+4. Vary `numSegments` and confirm the region count responds.
+5. Invoke it on a file whose analysis has *not* finished; confirm a clear message rather than a hang.
+6. **Compare against the previous behaviour**: check regions land on musically sensible points, since
+   removing the bounce changes what is analysed.
 
 ---
 
 ## 9. Risks
 
-- **R1 — Every run does three cold analyses.** The bounce target is
-  `juce::File::createTempFile(".wav")`, a fresh path each invocation, so the `AnalysisCache` key
-  (path + size + modification time) can never hit. SBic, Degara and Onset therefore run in full on
-  every AutoEdit, on the message thread via `runThread()`. On long material this will be slow.
-  *Mitigation:* measure in Phase 2; if it hurts, either bounce to a deterministic path or run the
-  merge on the `AnalysisWorker` thread. Not solved in this epic.
-- **R2 — The Python path is currently broken anyway.** `python3` is 3.14 with no numpy, so
-  `Source::Python` will fail on this machine regardless. The toggle is for later comparison against
-  a repaired environment, not something Phase 2 can validate end to end.
-- **R3 — `AutoEditTests` passes regardless of outcome.** It calls `invokeAutoEdit` and only prints
-  the error callback; it asserts nothing about the result, and most of its body is commented out.
-  Phase 2 must add real assertions rather than trusting the existing green.
-- **R4 — Grid mismatch (R5 of the port plan).** The segmenters analyse at 44100 Hz while
-  `EventMerger`'s default grid is 22050 Hz. Harmless because the merge API takes seconds, but do not
-  "align" the two by passing the segmenter rate as `gridRate` — that changes every kernel width.
+- **R1 — Semantics change with the bounce removed.** Analysis now describes the source file rather
+  than the rendered playlist item. This is the *intended* change and fixes the timeline mismatch
+  described in Context, but boundaries will differ from what the Python path produced. Expect
+  different — and more correct — cut points.
+- **R2 — `AutoEditTests` passes regardless of outcome.** It calls `invokeAutoEdit`, prints the error
+  callback, and asserts nothing; most of its body is commented out. The existing green means nothing.
+  Phase 2 must add real assertions.
+- **R3 — `playlistItemId` loses its purpose.** It selected what to bounce. With no bounce, only
+  `trackId` matters. Phase 3 should either repurpose the combo or remove it, not leave a control that
+  silently does nothing.
+- **R4 — Multi-resource tracks.** Only `getResourceGroups()[0]`'s first resource is analysed, matching
+  where regions are already placed. A track with several resources gets boundaries from just one.
+  Acceptable for now; call it out if it becomes real.
+- **R5 — Grid mismatch (R5 of the port plan).** Segmenters analyse at 44100 Hz while `EventMerger`'s
+  default grid is 22050 Hz. Harmless because the merge API takes seconds — but do not "align" them by
+  passing the segmenter rate as `gridRate`, which would change every kernel width.
 
 ---
 
@@ -227,7 +251,8 @@ Unlike the port epic, this one **is** user-visible.
 1. Full Catch2 suite green.
 2. macOS app target builds.
 3. Auto Edit with **Native** produces regions on real material, undoable in one step.
-4. `grep -rn "gaborgandalf" Source/` returns only the retained `invokePython`.
+4. `grep -rn "AudioExportThread\|createTempFile" Source/Engine/AutoEdit/` returns nothing.
+5. `grep -rn "gaborgandalf" Source/` returns only the retained `invokePython`.
 
 ---
 
