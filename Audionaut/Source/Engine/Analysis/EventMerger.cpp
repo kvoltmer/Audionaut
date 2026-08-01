@@ -3,7 +3,9 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <utility>
 
 #include "EventMerger.h"
@@ -185,6 +187,164 @@ EventMerger::Activations EventMerger::buildActivations (const std::vector<EventS
     return activations;
 }
 
+std::vector<float> EventMerger::ricker (int points, float width)
+{
+    std::vector<float> kernel;
+
+    if (points < 1 || width <= 0.0f)
+        return kernel;
+
+    const auto a = (double) width;
+    const auto wsq = a * a;
+
+    // 2 / (sqrt(3a) * pi^(1/4))
+    const auto amplitude = 2.0 / (std::sqrt (3.0 * a) * std::pow (juce::MathConstants<double>::pi, 0.25));
+
+    // x runs symmetrically about the centre, so an even-length kernel straddles
+    // the middle rather than sitting on it.
+    const auto centre = ((double) points - 1.0) / 2.0;
+
+    kernel.reserve ((size_t) points);
+
+    for (auto i = 0; i < points; ++i)
+    {
+        const auto x = (double) i - centre;
+        const auto xsq = x * x;
+
+        kernel.push_back ((float) (amplitude * (1.0 - xsq / wsq) * std::exp (-xsq / (2.0 * wsq))));
+    }
+
+    return kernel;
+}
+
+std::vector<float> EventMerger::convolveSame (const std::vector<float>& signal,
+                                              const std::vector<float>& kernel)
+{
+    std::vector<float> output;
+
+    if (signal.empty() || kernel.empty())
+        return output;
+
+    const auto signalLength = (int) signal.size();
+    const auto kernelLength = (int) kernel.size();
+
+    // numpy convolves the longer input with the shorter one and keeps the
+    // centre max(M, N) samples of the full result, so the offset into that
+    // result is derived from the shorter length.
+    const auto outputLength = std::max (signalLength, kernelLength);
+    const auto shorter = std::min (signalLength, kernelLength);
+    const auto offset = (shorter - 1) / 2;
+
+    output.reserve ((size_t) outputLength);
+
+    for (auto i = 0; i < outputLength; ++i)
+    {
+        // full[n] = sum over k of signal[k] * kernel[n - k]
+        const auto n = i + offset;
+
+        // Clamp k to where both inputs are in range, rather than testing inside
+        // the loop.
+        const auto firstK = std::max (0, n - kernelLength + 1);
+        const auto lastK = std::min (n, signalLength - 1);
+
+        auto sum = 0.0;
+
+        for (auto k = firstK; k <= lastK; ++k)
+            sum += (double) signal[(size_t) k] * (double) kernel[(size_t) (n - k)];
+
+        output.push_back ((float) sum);
+    }
+
+    return output;
+}
+
+std::vector<float> EventMerger::summedActivation (const Activations& activations,
+                                                  const Parameters& params)
+{
+    std::vector<float> summed;
+
+    if (activations.columns.empty() || activations.numFrames < 1)
+        return summed;
+
+    jassert (activations.columns.size() == activations.intervals.size());
+
+    // The reference caps the kernel at 250 points and shortens it further when
+    // the material itself is shorter.
+    const auto points = std::min (params.maxKernelPoints, activations.numFrames);
+
+    if (points < 1)
+        return summed;
+
+    summed.assign ((size_t) activations.numFrames, 0.0f);
+
+    for (size_t i = 0; i < activations.columns.size(); ++i)
+    {
+        const auto width = activations.intervals[i] / params.kernelWidthDivisor;
+
+        // No usable width - every event of the stream landed on one frame, or
+        // the divisor is degenerate. Contribute nothing rather than NaN.
+        if (! (width > 0.0f))
+            continue;
+
+        const auto kernel = ricker (points, width);
+        const auto convolved = convolveSame (activations.columns[i], kernel);
+
+        if (convolved.size() != summed.size())
+        {
+            jassertfalse;
+            continue;
+        }
+
+        // The reference computes these weights and then never applies them.
+        const auto weight = params.applyKernelWeights ? 1.0f + (float) i : 1.0f;
+
+        for (size_t frame = 0; frame < summed.size(); ++frame)
+            summed[frame] += convolved[frame] * weight;
+    }
+
+    return summed;
+}
+
+std::vector<int> EventMerger::pickPeaks (const std::vector<float>& activation,
+                                         int numSegments,
+                                         const Parameters& params)
+{
+    std::vector<int> picked;
+
+    if (activation.empty() || numSegments < 1)
+        return picked;
+
+    // The reference passes numsegs straight to np.argpartition, which raises
+    // when it exceeds the frame count.
+    const auto wanted = (size_t) std::min ((size_t) numSegments, activation.size());
+
+    std::vector<int> order ((size_t) activation.size());
+    std::iota (order.begin(), order.end(), 0);
+
+    // Strongest first, ties by frame order so the selection is deterministic.
+    const auto stronger = [&activation] (int lhs, int rhs)
+    {
+        const auto a = activation[(size_t) lhs];
+        const auto b = activation[(size_t) rhs];
+
+        if (a != b)
+            return a > b;
+
+        return lhs < rhs;
+    };
+
+    std::partial_sort (order.begin(), order.begin() + (long) wanted, order.end(), stronger);
+
+    picked.assign (order.begin(), order.begin() + (long) wanted);
+
+    for (auto& index : picked)
+        index += params.peakIndexOffset;
+
+    std::sort (picked.begin(), picked.end());
+
+    return picked;
+}
+
 EventMerger::Result EventMerger::merge (const std::vector<EventStream>& streams,
                                         float durationSeconds)
 {
@@ -213,12 +373,24 @@ EventMerger::Result EventMerger::merge (const std::vector<EventStream>& streams,
     if (activations.columns.empty())
         return result;
 
-    // The remaining stages land in the following phases of this port:
-    //   phase 3 - stage B, Ricker kernels, convolution and peak picking
-    //   phase 4 - stage C, the minimum-length pass and the conversion back to
-    //             seconds
-    // Until then a well-formed call returns no boundaries rather than wrong
-    // ones.
+    // Stage B: kernel per column, summed, strongest peaks kept.
+    auto summed = summedActivation (activations, params);
+
+    if (summed.empty())
+        return result;
+
+    const auto peaks = pickPeaks (summed, params.numSegments, params);
+
+    // Stage C - the minimum-length pass, and prefixing the run with a boundary
+    // at zero - lands in the next phase of this port. Until then the peaks are
+    // returned as they were picked, less any the index offset pushed off the
+    // grid.
+    for (auto peak : peaks)
+        if (peak >= 0 && peak < numFrames)
+            result.boundaries.push_back (frameToTime (peak, params));
+
+    result.activation = std::move (summed);
+
     return result;
 }
 
