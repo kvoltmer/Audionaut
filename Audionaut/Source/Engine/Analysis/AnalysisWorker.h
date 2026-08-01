@@ -9,6 +9,7 @@
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <vector>
 #include <JuceHeader.h>
 
@@ -40,14 +41,15 @@ public:
      * @param analysisProvider The provider used to run each analysis.
      * @param defaultAnalysisTypes The analyses queued when enqueue() is called
      *        without an explicit type list (e.g. for a newly added resource).
-     *        Defaults to all three; pass a subset (or an empty list) to change
+     *        Defaults to all four; pass a subset (or an empty list) to change
      *        or disable automatic analysis.
      */
     explicit AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider,
                             std::vector<AnalysisType> defaultAnalysisTypes = {
                                 AnalysisType::SBic,
                                 AnalysisType::Onset,
-                                AnalysisType::Beat
+                                AnalysisType::Beat,
+                                AnalysisType::BeatDegara
                             });
 
     /** @brief Stops the background thread, waiting for any in-flight analysis. */
@@ -104,6 +106,9 @@ public:
     /** @brief Name of the file being analysed right now, or empty if idle. */
     juce::String getCurrentFileName() const;
 
+    /** @brief Type of the analysis running right now, or std::nullopt if idle. */
+    std::optional<AnalysisType> getCurrentAnalysisType() const;
+
 private:
     int useTimeSlice() override;
 
@@ -128,6 +133,9 @@ private:
 
     // Name of the file currently being analysed (empty when idle); guarded by mutex.
     juce::String currentFileName;
+
+    // Type of the analysis currently running (nullopt when idle); guarded by mutex.
+    std::optional<AnalysisType> currentAnalysisType;
 
     juce::TimeSliceThread thread { "analysis worker" };
 

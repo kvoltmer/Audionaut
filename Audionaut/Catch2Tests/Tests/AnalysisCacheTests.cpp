@@ -54,6 +54,36 @@ SCENARIO("AnalysisCache stores and retrieves results", "[engine][analysis][cache
         }
     }
 
+    WHEN("a result is stored with a BPM estimate")
+    {
+        const auto beatType = AnalysisType::Beat;
+        cache.put(file, beatType, { 0.5f, 1.0f }, 128.0f);
+
+        THEN("the BPM estimate can be retrieved for the same file and type")
+        {
+            auto bpm = cache.getBpm(file, beatType);
+            REQUIRE(bpm.has_value());
+            REQUIRE(*bpm == 128.0f);
+        }
+
+        THEN("a different analysis type misses the BPM lookup")
+        {
+            REQUIRE_FALSE(cache.getBpm(file, AnalysisType::BeatDegara).has_value());
+        }
+    }
+
+    WHEN("a result is stored without a BPM estimate")
+    {
+        cache.put(file, analysisType, { 0.5f, 1.0f });
+
+        THEN("the BPM estimate defaults to zero")
+        {
+            auto bpm = cache.getBpm(file, analysisType);
+            REQUIRE(bpm.has_value());
+            REQUIRE(*bpm == 0.0f);
+        }
+    }
+
     WHEN("a result is stored twice for the same key")
     {
         cache.put(file, analysisType, { 1.0f });
@@ -109,12 +139,15 @@ SCENARIO("AnalysisCache persists to and loads from a project folder",
 
     const std::vector<float> sbic { 0.0f, 1.5f, 3.25f };
     const std::vector<float> onset { 0.5f, 2.0f };
+    const std::vector<float> beats { 0.4f, 0.9f, 1.4f };
+    constexpr float beatsBpm = 128.0f;
 
     GIVEN("a populated cache")
     {
         AnalysisCache cache;
         cache.put(audioFile, AnalysisType::SBic, sbic);
         cache.put(audioFile, AnalysisType::Onset, onset);
+        cache.put(audioFile, AnalysisType::Beat, beats, beatsBpm);
 
         WHEN("it is saved to the project folder")
         {
@@ -129,18 +162,28 @@ SCENARIO("AnalysisCache persists to and loads from a project folder",
             {
                 AnalysisCache loaded;
                 REQUIRE(loaded.loadFromFolder(projectFolder));
-                REQUIRE(loaded.size() == 2);
+                REQUIRE(loaded.size() == 3);
                 REQUIRE(loaded.get(audioFile, AnalysisType::SBic) == sbic);
                 REQUIRE(loaded.get(audioFile, AnalysisType::Onset) == onset);
+                REQUIRE(loaded.get(audioFile, AnalysisType::Beat) == beats);
+            }
+
+            THEN("the BPM estimate round-trips with it")
+            {
+                AnalysisCache loaded;
+                REQUIRE(loaded.loadFromFolder(projectFolder));
+                auto bpm = loaded.getBpm(audioFile, AnalysisType::Beat);
+                REQUIRE(bpm.has_value());
+                REQUIRE(*bpm == beatsBpm);
             }
 
             THEN("loading discards any pre-existing entries first")
             {
                 AnalysisCache loaded;
-                loaded.put(File(testFilesDirectory + "stale.wav"), AnalysisType::Beat, { 9.0f });
+                loaded.put(File(testFilesDirectory + "stale.wav"), AnalysisType::BeatDegara, { 9.0f });
                 REQUIRE(loaded.loadFromFolder(projectFolder));
-                REQUIRE(loaded.size() == 2);
-                REQUIRE(loaded.getAll(AnalysisType::Beat).empty());
+                REQUIRE(loaded.size() == 3);
+                REQUIRE(loaded.getAll(AnalysisType::BeatDegara).empty());
             }
 
             THEN("results are treated as stale once the file is modified")

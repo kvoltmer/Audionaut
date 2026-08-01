@@ -24,10 +24,31 @@ class BeatSegmenter {
 
 public:
     /**
+     * @brief Beat-tracking method, passed through to RhythmExtractor2013's
+     *        "method" parameter.
+     */
+    enum class Method {
+        MultiFeature,
+        Degara
+    };
+
+    /**
      * @brief Tunable parameters for the beat tracking.
      */
     struct Parameters {
         float sampleRate = 44100.0f;
+        Method method = Method::MultiFeature;
+        // RhythmExtractor2013's own tempo search range defaults.
+        int maxTempo = 208;
+        int minTempo = 40;
+    };
+
+    /**
+     * @brief Result of a beat-tracking pass.
+     */
+    struct Result {
+        std::vector<float> beats;  ///< Beat timestamps in seconds.
+        float bpm = 0.0f;          ///< RhythmExtractor2013's overall BPM estimate.
     };
 
     BeatSegmenter() = default;
@@ -35,18 +56,18 @@ public:
     /**
      * @brief Tracks beats using the default parameters.
      * @param audioFile The audio file to analyse.
-     * @return Beat timestamps in seconds. Empty on failure.
+     * @return Beat timestamps and BPM estimate. Empty/zero on failure.
      */
-    std::vector<float> analyze(const juce::File& audioFile);
+    Result analyze(const juce::File& audioFile);
 
     /**
      * @brief Tracks beats for the given audio file.
      * @param audioFile The audio file to analyse.
      * @param params Beat-tracking parameters.
-     * @return Beat timestamps in seconds. Empty on failure.
+     * @return Beat timestamps and BPM estimate. Empty/zero on failure.
      */
-    std::vector<float> analyze(const juce::File& audioFile,
-                               const Parameters& params);
+    Result analyze(const juce::File& audioFile,
+                   const Parameters& params);
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeatSegmenter)

@@ -12,9 +12,10 @@ const char* AnalysisCache::fileName = "AnalysisData.json";
 std::string analysisTypeToString(AnalysisType analysisType)
 {
     switch (analysisType) {
-        case AnalysisType::SBic:  return "sbic";
-        case AnalysisType::Onset: return "onset";
-        case AnalysisType::Beat:  return "beat";
+        case AnalysisType::SBic:       return "sbic";
+        case AnalysisType::Onset:      return "onset";
+        case AnalysisType::Beat:       return "beat";
+        case AnalysisType::BeatDegara: return "beat_degara";
     }
     jassertfalse;
     return "unknown";
@@ -22,9 +23,10 @@ std::string analysisTypeToString(AnalysisType analysisType)
 
 std::optional<AnalysisType> analysisTypeFromString(const std::string& name)
 {
-    if (name == "sbic")  return AnalysisType::SBic;
-    if (name == "onset") return AnalysisType::Onset;
-    if (name == "beat")  return AnalysisType::Beat;
+    if (name == "sbic")        return AnalysisType::SBic;
+    if (name == "onset")       return AnalysisType::Onset;
+    if (name == "beat")        return AnalysisType::Beat;
+    if (name == "beat_degara") return AnalysisType::BeatDegara;
     return std::nullopt;
 }
 
@@ -66,6 +68,18 @@ std::optional<std::vector<float>> AnalysisCache::get(const juce::File& audioFile
     return it->second.segments;
 }
 
+std::optional<float> AnalysisCache::getBpm(const juce::File& audioFile,
+                                           AnalysisType analysisType) const
+{
+    const std::lock_guard<std::mutex> lock(mutex);
+
+    const auto it = entries.find(makeKey(audioFile, analysisType));
+    if (it == entries.end())
+        return std::nullopt;
+
+    return it->second.bpm;
+}
+
 std::unordered_map<std::string, std::vector<float>>
     AnalysisCache::getAll(AnalysisType analysisType) const
 {
@@ -81,7 +95,8 @@ std::unordered_map<std::string, std::vector<float>>
 
 void AnalysisCache::put(const juce::File& audioFile,
                         AnalysisType analysisType,
-                        std::vector<float> result)
+                        std::vector<float> result,
+                        float bpm)
 {
     const std::lock_guard<std::mutex> lock(mutex);
 
@@ -91,6 +106,7 @@ void AnalysisCache::put(const juce::File& audioFile,
     entry.size = audioFile.getSize();
     entry.modificationTime = audioFile.getLastModificationTime().toMilliseconds();
     entry.segments = std::move(result);
+    entry.bpm = bpm;
 
     entries[makeKey(audioFile, analysisType)] = std::move(entry);
 }
@@ -153,6 +169,7 @@ bool AnalysisCache::writeToJson(json& output)
         record["size"] = entry.size;
         record["mtime"] = entry.modificationTime;
         record["segments"] = entry.segments;
+        record["bpm"] = entry.bpm;
         records.push_back(std::move(record));
     }
     output["entries"] = std::move(records);
@@ -193,6 +210,7 @@ bool AnalysisCache::readFromJson(json& input, bool /*rebuild*/)
         entry.size = record.value("size", (juce::int64) 0);
         entry.modificationTime = record.value("mtime", (juce::int64) 0);
         entry.segments = record["segments"].get<std::vector<float>>();
+        entry.bpm = record.value("bpm", 0.0f);
 
         // Reconstruct the identity key from the resolved path + stored fields so
         // an unchanged file hits on a later get().

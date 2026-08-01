@@ -15,6 +15,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
 class ZoomHandler;
 
@@ -52,10 +53,22 @@ public:
         volumeSlider = std::make_unique<SliderControl>(juce::String(), regionSelector);
         addAndMakeVisible(volumeSlider.get());
         AudiumLookAndFeel::configureVolumeSlider(volumeSlider.get(), 36.0);
-        
-        
+
+        // Refresh the segmentation overlay whenever a background/foreground
+        // analysis finishes (see AnalysisProvider::analyzeFile), not just on
+        // the next explicit updateUI()/setPlayListItem() call.
+        if (auto analysisProvider = audiumEngine_->getAudioTrackContainer()->getAnalysisProvider())
+            analysisProvider->addChangeListener(this);
     }
-    
+
+    ~AudioClipView() override
+    {
+        if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
+            analysisProvider->removeChangeListener(this);
+    }
+
+    void changeListenerCallback (juce::ChangeBroadcaster* source) override;
+
     double getRegionStart(audium::TimeContextType context) const override;
     
     double getClipGain() const override;
@@ -66,17 +79,19 @@ public:
     
     void setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible);
 
+    // Pulls the track's stored analysis results for this region's file into
+    // the segmentation overlay. Public so PlayListItemComponent can refresh
+    // the overlay (e.g. when analysis visibility is toggled) without
+    // rebuilding the waveform/thumbnail state.
+    void refreshSegments();
+
 private:
-    
+
     std::unique_ptr<FadeInOutView> fadeInOutView;
 
     std::unique_ptr<SegmentationView> segmentationView;
 
     std::unique_ptr<SliderControl> volumeSlider;
 
-    // Pulls the track's stored analysis results for this region's file into
-    // the segmentation overlay.
-    void refreshSegments();
-    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioClipView)
 };

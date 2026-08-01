@@ -77,6 +77,7 @@ int AnalysisWorker::useTimeSlice()
     {
         std::lock_guard<std::mutex> lock(mutex);
         currentFileName = job.file.getFileName();
+        currentAnalysisType = job.type;
     }
     busy = true;
     if (analysisProvider != nullptr)
@@ -85,6 +86,7 @@ int AnalysisWorker::useTimeSlice()
     {
         std::lock_guard<std::mutex> lock(mutex);
         currentFileName = {};
+        currentAnalysisType = std::nullopt;
     }
 
     // Come straight back if more work is waiting, otherwise idle.
@@ -108,6 +110,12 @@ juce::String AnalysisWorker::getCurrentFileName() const
 {
     std::lock_guard<std::mutex> lock(mutex);
     return currentFileName;
+}
+
+std::optional<AnalysisType> AnalysisWorker::getCurrentAnalysisType() const
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    return currentAnalysisType;
 }
 
 } // namespace audium

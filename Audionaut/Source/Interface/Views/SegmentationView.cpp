@@ -12,9 +12,10 @@ juce::Colour SegmentationView::colourForType(audium::AnalysisType analysisType)
 {
     switch (analysisType)
     {
-        case audium::AnalysisType::SBic:  return Colours::orange;
-        case audium::AnalysisType::Onset: return Colours::cyan;
-        case audium::AnalysisType::Beat:  return Colours::magenta;
+        case audium::AnalysisType::SBic:       return Colours::orange;
+        case audium::AnalysisType::Onset:      return Colours::cyan;
+        case audium::AnalysisType::Beat:       return Colours::yellow;
+        case audium::AnalysisType::BeatDegara: return Colours::magenta;
     }
 
     return Colours::white;

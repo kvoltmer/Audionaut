@@ -178,6 +178,16 @@ void MainComponent::rebuildUI()
     rightPanelComponent->updateUI(RebuildContext);
 }
 
+void MainComponent::writeUiState(json& uiState)
+{
+    middlePanelComponent->writeUiState(uiState);
+}
+
+void MainComponent::readUiState(const json& uiState)
+{
+    middlePanelComponent->readUiState(uiState);
+}
+
 void MainComponent::updateUI()
 {
     headerComponent->updateUI();

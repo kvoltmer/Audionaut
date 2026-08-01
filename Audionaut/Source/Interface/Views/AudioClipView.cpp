@@ -20,6 +20,20 @@ double AudioClipView::getRegionStart(audium::TimeContextType context) const
     return playListItem->getRegion()->getRegionData(audium::seconds).getStart();
 }
 
+void AudioClipView::changeListenerCallback (juce::ChangeBroadcaster* source)
+{
+    auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider();
+
+    if (analysisProvider != nullptr && source == analysisProvider.get())
+    {
+        refreshSegments();
+        return;
+    }
+
+    // Not our analysis provider - fall back to the base class (thumbnail change).
+    WaveFormViewBase::changeListenerCallback(source);
+}
+
 double AudioClipView::getClipGain() const
 {
     return playListItem->getRegion()->getGain(channelNumber);
@@ -85,7 +99,8 @@ void AudioClipView::refreshSegments()
     std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType;
     for (auto analysisType : { audium::AnalysisType::SBic,
                                audium::AnalysisType::Onset,
-                               audium::AnalysisType::Beat })
+                               audium::AnalysisType::Beat,
+                               audium::AnalysisType::BeatDegara })
     {
         if (audioTrack->getViewState().isAnalysisTypeVisible(analysisType))
             segmentsByType[analysisType] = analysisProvider->getSegments(analysisType, audioFile);

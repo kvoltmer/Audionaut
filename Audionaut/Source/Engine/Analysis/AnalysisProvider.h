@@ -20,7 +20,16 @@
 
 namespace audium {
 
-class AnalysisProvider {
+/**
+ * @class AnalysisProvider
+ * @brief Runs/caches audio analyses and broadcasts a change whenever one
+ *        finishes, so UI views (e.g. AudioClipView) can refresh without
+ *        polling. One shared instance serves the whole engine (see
+ *        AudiumFactory), so listeners don't need to know which track/file
+ *        triggered the change - they simply re-read the cache for whatever
+ *        they display.
+ */
+class AnalysisProvider : public juce::ChangeBroadcaster {
 
 
 public:
@@ -38,6 +47,7 @@ public:
     void analyzeSBic(AudioTrack& audioTrack);
     void analyzeOnsets(AudioTrack& audioTrack);
     void analyzeBeats(AudioTrack& audioTrack);
+    void analyzeBeatsDegara(AudioTrack& audioTrack);
 
     /**
      * @brief Analyses a single audio file for one analysis type, consulting and
@@ -73,6 +83,14 @@ public:
     std::unordered_map<std::string, std::vector<float>>
         getSegments(AnalysisType analysisType) const;
 
+    /**
+     * @brief BPM estimate from the most recent beat-tracking analysis of the
+     *        given type for the given file.
+     * @return The BPM estimate, or 0.0f if the file has not been analysed
+     *         with that type.
+     */
+    float getBpm(AnalysisType analysisType, const juce::File& audioFile) const;
+
     /** @brief The underlying (persistent) analysis cache. */
     std::shared_ptr<AnalysisCache> getCache() const { return analysisCache; }
 
@@ -81,9 +99,16 @@ private:
     // each file to analyzeFile().
     void analyzeTrack(AudioTrack& audioTrack, AnalysisType analysisType);
 
+    // Result of a single segmenter run: segment boundaries plus (for
+    // beat-tracking types) the overall BPM estimate.
+    struct SegmentResult {
+        std::vector<float> segments;
+        float bpm = 0.0f;
+    };
+
     // Dispatches to the segmenter matching the analysis type.
-    std::vector<float> runSegmenter(AnalysisType analysisType,
-                                    const juce::File& audioFile);
+    SegmentResult runSegmenter(AnalysisType analysisType,
+                               const juce::File& audioFile);
 
     std::shared_ptr<SBicSegmenter> sBicSegmenter;
     std::shared_ptr<OnsetSegmenter> onsetSegmenter;

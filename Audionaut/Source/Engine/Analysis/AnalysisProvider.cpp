@@ -29,6 +29,11 @@ void AnalysisProvider::analyzeBeats(AudioTrack& audioTrack)
     analyzeTrack(audioTrack, AnalysisType::Beat);
 }
 
+void AnalysisProvider::analyzeBeatsDegara(AudioTrack& audioTrack)
+{
+    analyzeTrack(audioTrack, AnalysisType::BeatDegara);
+}
+
 void AnalysisProvider::analyzeTrack(AudioTrack& audioTrack, AnalysisType analysisType)
 {
     auto resources = audioTrack.getAudioResources();
@@ -47,14 +52,25 @@ void AnalysisProvider::analyzeTrack(AudioTrack& audioTrack, AnalysisType analysi
     }
 }
 
-std::vector<float> AnalysisProvider::runSegmenter(AnalysisType analysisType,
-                                                  const juce::File& audioFile)
+AnalysisProvider::SegmentResult AnalysisProvider::runSegmenter(AnalysisType analysisType,
+                                                                const juce::File& audioFile)
 {
     switch (analysisType)
     {
-        case AnalysisType::SBic:  return sBicSegmenter->analyze(audioFile);
-        case AnalysisType::Onset: return onsetSegmenter->analyze(audioFile);
-        case AnalysisType::Beat:  return beatSegmenter->analyze(audioFile);
+        case AnalysisType::SBic:  return { sBicSegmenter->analyze(audioFile), 0.0f };
+        case AnalysisType::Onset: return { onsetSegmenter->analyze(audioFile), 0.0f };
+        case AnalysisType::Beat:
+        {
+            auto result = beatSegmenter->analyze(audioFile);
+            return { std::move(result.beats), result.bpm };
+        }
+        case AnalysisType::BeatDegara:
+        {
+            BeatSegmenter::Parameters params;
+            params.method = BeatSegmenter::Method::Degara;
+            auto result = beatSegmenter->analyze(audioFile, params);
+            return { std::move(result.beats), result.bpm };
+        }
     }
     return {};
 }
@@ -71,7 +87,7 @@ std::vector<float> AnalysisProvider::analyzeFile(const juce::File& audioFile,
         return std::move(*cached);
     }
 
-    std::vector<float> segments;
+    SegmentResult result;
     {
         // Serialise the actual segmenter run; a concurrent caller may have
         // computed the same result while we waited, so re-check the cache.
@@ -79,24 +95,32 @@ std::vector<float> AnalysisProvider::analyzeFile(const juce::File& audioFile,
         if (auto cached = analysisCache->get(audioFile, analysisType))
             return std::move(*cached);
 
-        segments = runSegmenter(analysisType, audioFile);
+        result = runSegmenter(analysisType, audioFile);
     }
 
     // Only cache successful analyses so failures are retried next time.
-    if (! segments.empty())
-        analysisCache->put(audioFile, analysisType, segments);
+    if (! result.segments.empty())
+    {
+        analysisCache->put(audioFile, analysisType, result.segments, result.bpm);
 
-    std::cout << "AnalysisProvider::analyzeFile() - " << segments.size()
+        // Notify listeners (e.g. AudioClipView) that new results are ready to
+        // display. Safe to call from any thread - AnalysisWorker runs this on
+        // a background thread and ChangeBroadcaster dispatches asynchronously
+        // on the message thread.
+        sendChangeMessage();
+    }
+
+    std::cout << "AnalysisProvider::analyzeFile() - " << result.segments.size()
               << " boundary/boundaries for " << audioFile.getFileName() << std::endl;
-    
+
 #if 0
-    for (auto seconds : segments)
+    for (auto seconds : result.segments)
         std::cout << "  at " << seconds << " s" << std::endl;
 #endif
-    
+
     // Results are held (and persisted) by the cache - the UI queries them
-    // back via getSegments(), so nothing further to store here.
-    return segments;
+    // back via getSegments()/getBpm(), so nothing further to store here.
+    return result.segments;
 }
 
 std::vector<float> AnalysisProvider::getSegments(AnalysisType analysisType,
@@ -109,6 +133,11 @@ std::unordered_map<std::string, std::vector<float>>
     AnalysisProvider::getSegments(AnalysisType analysisType) const
 {
     return analysisCache->getAll(analysisType);
+}
+
+float AnalysisProvider::getBpm(AnalysisType analysisType, const juce::File& audioFile) const
+{
+    return analysisCache->getBpm(audioFile, analysisType).value_or(0.0f);
 }
 
 } // namespace audium
