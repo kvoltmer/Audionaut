@@ -135,6 +135,33 @@ public:
         std::vector<float> activation;
     };
 
+    /**
+     * @brief The merge's first stage: one activation column per contributing
+     *        stream, together with the mean event interval that sizes that
+     *        column's kernel.
+     *
+     * A stream contributes a column only if it holds at least two events, since
+     * a single event has no interval to derive a kernel width from. Streams are
+     * ordered segmentation-first, then beats, matching the reference.
+     */
+    struct Activations {
+        /// Length of every column, in frames.
+        int numFrames = 0;
+
+        /// Mean interval between events, in frames, one per column. Sizes the
+        /// column's kernel in the next stage.
+        std::vector<float> intervals;
+
+        /// The activation columns: `1` on a frame carrying an event, `0`
+        /// elsewhere. `columns[i]` has `numFrames` entries.
+        std::vector<std::vector<float>> columns;
+
+        /// Label of the stream each column's events came from. Diagnostics
+        /// only - but see Parameters::strictStreamMapping, where this is the
+        /// visible difference between the two mappings.
+        std::vector<std::string> labels;
+    };
+
     EventMerger() = default;
 
     /**
@@ -157,6 +184,27 @@ public:
     Result merge(const std::vector<EventStream>& streams,
                  float durationSeconds,
                  const Parameters& params);
+
+    /**
+     * @brief Runs the merge's first stage on its own.
+     *
+     * Exposed so the stage can be tested and inspected independently of the
+     * kernel pass that consumes it; `merge()` calls it internally.
+     *
+     * Events are quantised onto the frame grid and those falling outside
+     * `[0, numFrames)` are dropped. Intervals are computed from every event of
+     * a stream, including any the activation pass then discards - see
+     * Parameters::dropLastSegBoundary.
+     *
+     * @param streams    The event streams to merge.
+     * @param numFrames  Length of the material in grid frames, from frameCount().
+     * @param params     Merge parameters.
+     * @return The activation columns and their intervals. Empty when no stream
+     *         carries enough events, or when `numFrames` is below 1.
+     */
+    static Activations buildActivations(const std::vector<EventStream>& streams,
+                                        int numFrames,
+                                        const Parameters& params);
 
     /** @name Grid conversion
      *
