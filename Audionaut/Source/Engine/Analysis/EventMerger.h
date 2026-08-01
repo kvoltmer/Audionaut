@@ -241,6 +241,29 @@ public:
                                       int numSegments,
                                       const Parameters& params);
 
+    /**
+     * @brief Drops boundaries that would make a segment shorter than
+     *        Parameters::minSegmentFrames, and opens the run at frame zero.
+     *
+     * Note the reference's rule, reproduced here: a peak is measured against
+     * the peak *before it in the picked list*, not against the last boundary
+     * kept. A run of peaks packed closer than the minimum therefore collapses
+     * to whichever of them follows a large enough gap, rather than to the first
+     * of the run.
+     *
+     * The picked peaks are bracketed by frame zero and the last frame before
+     * the rule is applied, so the material's end can itself become a boundary.
+     * Indices outside the grid - which Parameters::peakIndexOffset can produce
+     * - fail the rule and fall away here.
+     *
+     * @param peaks      Picked frame indices; sorted internally.
+     * @param numFrames  Length of the material in grid frames.
+     * @return The surviving frame indices, ascending, always starting at zero.
+     */
+    static std::vector<int> applyMinimumLength(const std::vector<int>& peaks,
+                                               int numFrames,
+                                               const Parameters& params);
+
     /** @name Kernel primitives
      *
      * The building blocks of the pass above, exposed so their conventions can

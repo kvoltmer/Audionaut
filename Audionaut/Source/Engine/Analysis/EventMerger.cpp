@@ -345,6 +345,45 @@ std::vector<int> EventMerger::pickPeaks (const std::vector<float>& activation,
     return picked;
 }
 
+std::vector<int> EventMerger::applyMinimumLength (const std::vector<int>& peaks,
+                                                  int numFrames,
+                                                  const Parameters& params)
+{
+    std::vector<int> kept;
+
+    if (numFrames < 1)
+        return kept;
+
+    // The reference brackets the picked peaks with frame zero and the last
+    // frame, then walks that bracketed list keeping an entry whenever its gap
+    // from the entry *before it in the list* clears the minimum. That gap is
+    // measured against the previous entry rather than the last one kept, so a
+    // run of peaks packed tighter than the minimum collapses to whichever of
+    // them follows a large enough gap.
+    auto sorted = peaks;
+    std::sort (sorted.begin(), sorted.end());
+
+    // Only the peaks are sorted - the brackets are then placed around them
+    // without re-sorting, exactly as the reference does. With a negative index
+    // offset that leaves the list genuinely out of order, and the gaps are
+    // measured on it as it stands.
+    std::vector<int> bracketed;
+    bracketed.reserve (sorted.size() + 2);
+
+    bracketed.push_back (0);
+    bracketed.insert (bracketed.end(), sorted.begin(), sorted.end());
+    bracketed.push_back (numFrames - 1);
+
+    // A run always opens at the start of the material.
+    kept.push_back (0);
+
+    for (size_t i = 1; i < bracketed.size(); ++i)
+        if (bracketed[i] - bracketed[i - 1] > params.minSegmentFrames)
+            kept.push_back (bracketed[i]);
+
+    return kept;
+}
+
 EventMerger::Result EventMerger::merge (const std::vector<EventStream>& streams,
                                         float durationSeconds)
 {
@@ -381,13 +420,10 @@ EventMerger::Result EventMerger::merge (const std::vector<EventStream>& streams,
 
     const auto peaks = pickPeaks (summed, params.numSegments, params);
 
-    // Stage C - the minimum-length pass, and prefixing the run with a boundary
-    // at zero - lands in the next phase of this port. Until then the peaks are
-    // returned as they were picked, less any the index offset pushed off the
-    // grid.
-    for (auto peak : peaks)
-        if (peak >= 0 && peak < numFrames)
-            result.boundaries.push_back (frameToTime (peak, params));
+    // Stage C: collapse boundaries that sit too close together, then back to
+    // seconds.
+    for (auto frame : applyMinimumLength (peaks, numFrames, params))
+        result.boundaries.push_back (frameToTime (frame, params));
 
     result.activation = std::move (summed);
 
