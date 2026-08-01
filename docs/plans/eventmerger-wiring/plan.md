@@ -74,8 +74,8 @@ zero cost and keyed to a stable path, unlike a per-run temp file.
 - **Cache-only, no compute-on-miss.** If any of the three analyses is absent, AutoEdit reports that
   rather than running Essentia on the message thread — which is the very cost D5 removes. In normal
   use the worker has already populated them.
-- **The source is `getResourceGroups()[0]`'s first audio resource**, matching where
-  `createRegionsFromSegFile` already places its regions.
+- **The target comes from the chosen playlist item**, falling back to `getResourceGroups()[0]` when
+  no item is named.
 
 ---
 
@@ -167,8 +167,7 @@ the bounce.
 - **Reviewed in isolation:** UI-only. `AudiumApplication.cpp:325` adds `CommandIDs::autoEdit`
   unconditionally and again at line 329 inside `#if AUTO_EDIT_ENABLED`; with the flag at 0 the item
   appears once, so the `#if` gates nothing. Remove the redundant pair.
-- Also consider what the dialog's playlist-item combo now means — it no longer selects anything the
-  analysis uses (see R3).
+- The playlist-item combo keeps its meaning and needs no change (see R3).
 
 ---
 
@@ -235,12 +234,15 @@ Not applicable — no analytics subsystem in this codebase.
 - **R2 — `AutoEditTests` passes regardless of outcome.** It calls `invokeAutoEdit`, prints the error
   callback, and asserts nothing; most of its body is commented out. The existing green means nothing.
   Phase 2 must add real assertions.
-- **R3 — `playlistItemId` loses its purpose.** It selected what to bounce. With no bounce, only
-  `trackId` matters. Phase 3 should either repurpose the combo or remove it, not leave a control that
-  silently does nothing.
-- **R4 — Multi-resource tracks.** Only `getResourceGroups()[0]`'s first resource is analysed, matching
-  where regions are already placed. A track with several resources gets boundaries from just one.
-  Acceptable for now; call it out if it becomes real.
+- **R3 — `playlistItemId` selects the target audio.** The arrangement is what is being edited, so the
+  chosen playlist item decides which audio the edit applies to: its region names the resource group,
+  and the group names the file. With the usual one item to one region to one file arrangement this is
+  the same audio a first-group fallback would find, which is why the distinction is invisible by
+  default - and why getting it wrong would go unnoticed until a track carries more than one. The
+  combo stays; Phase 3 has nothing to do here.
+- **R4 — Multi-resource groups.** Within the resolved group only the first resource is analysed. A
+  group carrying several channels as separate resources gets boundaries from just one. Acceptable for
+  now; call it out if it becomes real.
 - **R5 — Grid mismatch (R5 of the port plan).** Segmenters analyse at 44100 Hz while `EventMerger`'s
   default grid is 22050 Hz. Harmless because the merge API takes seconds — but do not "align" them by
   passing the segmenter rate as `gridRate`, which would change every kernel width.
