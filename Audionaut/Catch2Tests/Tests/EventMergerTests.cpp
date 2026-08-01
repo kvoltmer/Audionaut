@@ -2,6 +2,7 @@
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <nlohmann/json.hpp>
 
 #include "Engine/Analysis/EventMerger.h"
 
@@ -839,7 +840,14 @@ SCENARIO("EventMerger produces boundaries end to end", "[engine][analysis][merge
             THEN("boundaries are produced")
             {
                 REQUIRE_FALSE(result.boundaries.empty());
-                REQUIRE(result.boundaries.size() <= (size_t) params.numSegments);
+                // The picked peaks, plus the boundary at zero the run opens
+                // with and the end of the material it may close on.
+                REQUIRE(result.boundaries.size() <= (size_t) params.numSegments + 2);
+            }
+
+            THEN("the run opens at the start of the material")
+            {
+                REQUIRE(result.boundaries.front() == Catch::Approx(0.0f));
             }
 
             THEN("they are ascending and inside the material")
@@ -860,6 +868,253 @@ SCENARIO("EventMerger produces boundaries end to end", "[engine][analysis][merge
 
                 for (auto value : result.activation)
                     REQUIRE(std::isfinite (value));
+            }
+
+            THEN("no segment is shorter than the minimum")
+            {
+                const auto minSeconds = EventMerger::frameToTime (params.minSegmentFrames, params);
+
+                for (size_t i = 1; i < result.boundaries.size(); ++i)
+                    REQUIRE(result.boundaries[i] - result.boundaries[i - 1] > minSeconds * 0.999f);
+            }
+        }
+    }
+}
+
+SCENARIO("EventMerger collapses boundaries that sit too close together",
+         "[engine][analysis][merge]")
+{
+    EventMerger::Parameters params;
+    params.minSegmentFrames = 10;
+    const auto numFrames = 200;
+
+    GIVEN("peaks spaced comfortably apart")
+    {
+        auto kept = EventMerger::applyMinimumLength ({ 50, 100, 150 }, numFrames, params);
+
+        THEN("all of them survive, opening at zero and closing on the last frame")
+        {
+            REQUIRE(kept == std::vector<int> { 0, 50, 100, 150, 199 });
+        }
+    }
+
+    GIVEN("a run of peaks packed tighter than the minimum")
+    {
+        auto kept = EventMerger::applyMinimumLength ({ 50, 52, 54, 120 }, numFrames, params);
+
+        THEN("only those following a large enough gap survive")
+        {
+            // 52 and 54 are each two frames from the peak before them in the
+            // list, so both fall away.
+            REQUIRE(kept == std::vector<int> { 0, 50, 120, 199 });
+        }
+    }
+
+    GIVEN("a peak closer to the start than the minimum")
+    {
+        auto kept = EventMerger::applyMinimumLength ({ 5, 100 }, numFrames, params);
+
+        THEN("it is dropped rather than duplicating the opening boundary")
+        {
+            REQUIRE(kept == std::vector<int> { 0, 100, 199 });
+        }
+    }
+
+    GIVEN("a peak within the minimum of the last frame")
+    {
+        auto kept = EventMerger::applyMinimumLength ({ 100, 195 }, numFrames, params);
+
+        THEN("the end of the material is not added as its own boundary")
+        {
+            // 199 is only four frames past 195.
+            REQUIRE(kept == std::vector<int> { 0, 100, 195 });
+        }
+    }
+
+    GIVEN("no peaks at all")
+    {
+        auto kept = EventMerger::applyMinimumLength ({}, numFrames, params);
+
+        THEN("the material is one segment end to end")
+        {
+            REQUIRE(kept == std::vector<int> { 0, 199 });
+        }
+    }
+
+    GIVEN("unsorted peaks")
+    {
+        auto sorted = EventMerger::applyMinimumLength ({ 150, 50, 100 }, numFrames, params);
+        auto asGiven = EventMerger::applyMinimumLength ({ 50, 100, 150 }, numFrames, params);
+
+        THEN("they are ordered before the rule is applied")
+        {
+            REQUIRE(sorted == asGiven);
+        }
+    }
+
+    GIVEN("no material")
+    {
+        THEN("there is nothing to bound")
+        {
+            REQUIRE(EventMerger::applyMinimumLength ({ 5 }, 0, params).empty());
+        }
+    }
+}
+
+SCENARIO("EventMerger discards peaks the index offset pushed off the grid",
+         "[engine][analysis][merge]")
+{
+    EventMerger::Parameters params;
+    params.minSegmentFrames = 10;
+    const auto numFrames = 200;
+
+    GIVEN("peaks shifted below zero by the reference's offset")
+    {
+        REQUIRE(params.peakIndexOffset == -2);
+
+        auto kept = EventMerger::applyMinimumLength ({ -2, -1, 100 }, numFrames, params);
+
+        THEN("the negative indices fall away without being read")
+        {
+            // The reference leaves these in its bracketed list too, where they
+            // fail the gap rule exactly as they do here.
+            REQUIRE(kept == std::vector<int> { 0, 100, 199 });
+        }
+    }
+
+    GIVEN("an end-to-end merge whose earliest peak sits at frame zero")
+    {
+        EventMerger::Parameters merged;
+        merged.numSegments = 4;
+
+        const auto duration = 30.0f;
+        const auto frames = EventMerger::frameCount (duration, merged);
+
+        std::vector<int> segFrames, beatFrames;
+
+        for (auto frame = 0; frame < frames; frame += 300)
+            segFrames.push_back (frame);
+
+        for (auto frame = 0; frame < frames; frame += 43)
+            beatFrames.push_back (frame);
+
+        const std::vector<EventMerger::EventStream> streams {
+            streamFromFrames ("sbic", EventMerger::Kind::Segmentation, segFrames, merged),
+            streamFromFrames ("beats", EventMerger::Kind::Beat, beatFrames, merged)
+        };
+
+        EventMerger merger;
+        auto result = merger.merge (streams, duration, merged);
+
+        THEN("every boundary is a real time inside the material")
+        {
+            REQUIRE_FALSE(result.boundaries.empty());
+
+            for (auto boundary : result.boundaries)
+            {
+                REQUIRE(boundary >= 0.0f);
+                REQUIRE(boundary <= duration);
+            }
+        }
+    }
+}
+
+SCENARIO("EventMerger reproduces the reference implementation's boundaries",
+         "[engine][analysis][merge]")
+{
+    // The fixture records what gaborgandalf's segments.py produces for a fixed
+    // synthetic input, so the port can be checked against the original without
+    // needing Python at test time. See TestFiles/EventMerger/generate-reference.py
+    // for how it is produced - the reference needs numpy < 2 and scipy < 1.15,
+    // the last release still carrying signal.ricker.
+    const auto fixtureFile = File (String (CURRENT_SOURCE_DIR)
+                                       + String ("/TestFiles/EventMerger/reference-layer6.json"));
+
+    if (! fixtureFile.existsAsFile())
+        SKIP("reference-layer6.json is absent - see generate-reference.py to produce it");
+
+    const auto fixture = nlohmann::json::parse (fixtureFile.loadFileAsString().toStdString());
+
+    EventMerger::Parameters params;
+    params.hopSize = fixture["grid"]["hopSize"];
+    params.gridRate = fixture["grid"]["gridRate"];
+    params.numSegments = fixture["params"]["numSegments"];
+    params.maxKernelPoints = fixture["params"]["maxKernelPoints"];
+    params.kernelWidthDivisor = fixture["params"]["kernelWidthDivisor"];
+    params.minSegmentFrames = fixture["params"]["minSegmentFrames"];
+
+    // Every quirk flag stays at its reference default - that is the whole point.
+    REQUIRE_FALSE(params.applyKernelWeights);
+    REQUIRE(params.peakIndexOffset == -2);
+    REQUIRE(params.dropLastSegBoundary);
+    REQUIRE_FALSE(params.strictStreamMapping);
+
+    const int numFrames = fixture["numFrames"];
+
+    GIVEN("the streams the reference was run on")
+    {
+        std::vector<EventMerger::EventStream> streams;
+
+        // Segmentation streams first, matching the order the reference
+        // assembles its columns in.
+        for (const auto& stream : fixture["segmentationStreams"])
+            streams.push_back (streamFromFrames ("seg",
+                                                 EventMerger::Kind::Segmentation,
+                                                 stream.get<std::vector<int>>(),
+                                                 params));
+
+        for (const auto& stream : fixture["beatStreams"])
+            streams.push_back (streamFromFrames ("beat",
+                                                 EventMerger::Kind::Beat,
+                                                 stream.get<std::vector<int>>(),
+                                                 params));
+
+        WHEN("stage A runs")
+        {
+            auto activations = EventMerger::buildActivations (streams, numFrames, params);
+
+            THEN("the mean intervals match the reference's")
+            {
+                const auto expected = fixture["expectedIntervals"].get<std::vector<float>>();
+
+                REQUIRE(activations.intervals.size() == expected.size());
+
+                for (size_t i = 0; i < expected.size(); ++i)
+                    REQUIRE(activations.intervals[i] == Catch::Approx(expected[i]).margin(1e-3f));
+            }
+        }
+
+        WHEN("the whole merge runs")
+        {
+            // Half a frame past the last one, so the frame count comes out at
+            // exactly what the reference worked with.
+            const auto frameSeconds = EventMerger::frameToTime (1, params);
+            const auto duration = EventMerger::frameToTime (numFrames, params) + 0.5f * frameSeconds;
+
+            REQUIRE(EventMerger::frameCount (duration, params) == numFrames);
+
+            EventMerger merger;
+            auto result = merger.merge (streams, duration, params);
+
+            THEN("it lands on the boundaries the reference chose")
+            {
+                const auto expected = fixture["expectedBoundaryFrames"].get<std::vector<int>>();
+
+                std::vector<int> actual;
+
+                for (auto boundary : result.boundaries)
+                    actual.push_back (EventMerger::timeToFrame (boundary, params));
+
+                REQUIRE(actual.size() == expected.size());
+
+                for (size_t i = 0; i < expected.size(); ++i)
+                {
+                    // A frame of slack: np.argpartition leaves the ordering of
+                    // tied activations unspecified, so an exact match cannot be
+                    // guaranteed in general.
+                    INFO("boundary " << i);
+                    REQUIRE(std::abs (actual[i] - expected[i]) <= 1);
+                }
             }
         }
     }
