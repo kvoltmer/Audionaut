@@ -216,6 +216,10 @@ if(AUDIONAUT_ENABLE_ESSENTIA)
 endif()
 
 
+# Without this add_test() registers nothing and ctest reports "No tests were
+# found!!!" while still exiting 0 - so CI went green having run no tests at all.
+enable_testing()
+
 add_test(NAME ${APP_NAME}
          COMMAND ${APP_NAME})
 
