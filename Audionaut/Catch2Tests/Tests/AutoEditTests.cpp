@@ -534,3 +534,104 @@ SCENARIO("AutoEdit's first segment begins where the clip does", "[engine][autoed
     DeletedAtShutdown::deleteAll();
     MessageManager::deleteInstance();
 }
+
+SCENARIO("AutoEdit can replace the edited clip with its segments",
+         "[engine][autoedit]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture();
+        cacheMergeAnalyses(fixture);
+
+        const auto playListItems = [&fixture]
+        {
+            return fixture.track()->getPlayListContainer()->getPlayListItems();
+        };
+
+        REQUIRE(playListItems().size() == 1);
+        const auto originalRegionName = playListItems()[0]->getRegion()->getName();
+
+        AutoEdit autoEdit(fixture.engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+        config.playlistItemId = 0;
+        config.numSegments = 6;
+
+        std::string reportedError;
+        auto onError = [&reportedError](std::string error) { reportedError = error; };
+
+        GIVEN("the option left on, as it is by default")
+        {
+            REQUIRE(config.replacePlayListItem);
+
+            WHEN("the clip is auto edited")
+            {
+                INFO("error was: " << reportedError);
+                REQUIRE(autoEdit.invokeAutoEdit(config, onError));
+
+                THEN("the arrangement now holds the segments instead of the clip")
+                {
+                    auto items = playListItems();
+                    REQUIRE(items.size() > 1);
+
+                    for (const auto& item : items)
+                        REQUIRE(item->getRegion()->getName().startsWith("seg-"));
+                }
+
+                THEN("they are in playing order")
+                {
+                    auto items = playListItems();
+                    double previousStart = -1.0;
+
+                    for (const auto& item : items)
+                    {
+                        const auto start = item->getRegion()->getRegionData(audium::seconds).getStart();
+                        REQUIRE(start > previousStart);
+                        previousStart = start;
+                    }
+                }
+
+                THEN("one undo puts the clip back")
+                {
+                    auto undoManager = fixture.engine->getAudioTrackContainer()->getUndoManager();
+                    REQUIRE(undoManager->canUndo());
+
+                    undoManager->undo();
+
+                    auto items = playListItems();
+                    REQUIRE(items.size() == 1);
+                    REQUIRE(items[0]->getRegion()->getName() == originalRegionName);
+                }
+            }
+        }
+
+        GIVEN("the option turned off")
+        {
+            config.replacePlayListItem = false;
+
+            WHEN("the clip is auto edited")
+            {
+                INFO("error was: " << reportedError);
+                REQUIRE(autoEdit.invokeAutoEdit(config, onError));
+
+                THEN("the arrangement is left as it was")
+                {
+                    auto items = playListItems();
+                    REQUIRE(items.size() == 1);
+                    REQUIRE(items[0]->getRegion()->getName() == originalRegionName);
+                }
+
+                THEN("the segments were still created")
+                {
+                    REQUIRE(fixture.regionCount() > 1);
+                }
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}

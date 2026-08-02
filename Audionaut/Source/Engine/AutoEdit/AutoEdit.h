@@ -20,6 +20,7 @@ class PlayListContainer;
 class AudioTrackContainer;
 class PlayListItem;
 class ResourceGroup;
+class AudioRegion;
 
 struct AutoEditConfig {
     /**
@@ -39,6 +40,11 @@ struct AutoEditConfig {
     };
 
     Source source = Source::Native;
+
+    /// Replace the edited clip in the arrangement with the segments cut from
+    /// it. Off leaves the arrangement alone and only adds the regions.
+    bool replacePlayListItem = true;
+
     std::string mode = "random";
     double duration = 120.0;
     int numSegments = 20;
@@ -102,10 +108,28 @@ public:
      * @return True when regions were created; false when no boundary falls
      *         inside @p extent, leaving nothing to cut.
      */
-    bool createRegionsFromBoundaries(const std::vector<float>& boundarySeconds,
-                                     juce::Range<double> extent,
-                                     std::shared_ptr<AudioTrack> track,
-                                     std::shared_ptr<ResourceGroup> resourceGroup);
+    std::vector<std::shared_ptr<AudioRegion>>
+        createRegionsFromBoundaries(const std::vector<float>& boundarySeconds,
+                                    juce::Range<double> extent,
+                                    std::shared_ptr<AudioTrack> track,
+                                    std::shared_ptr<ResourceGroup> resourceGroup);
+
+    /**
+     * @brief Puts the segments into the arrangement in place of the clip they
+     *        were cut from.
+     *
+     * The segments are inserted where the clip sat, in order, and the clip's
+     * own item is then removed. Its region is left alone - it still describes
+     * the audio the segments came from, and other items may reference it.
+     *
+     * @param track              The track whose arrangement to rewrite.
+     * @param playListItemIndex  The clip to replace.
+     * @param regions            The segments, in playing order.
+     * @return True when the arrangement was rewritten.
+     */
+    bool replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
+                                        int playListItemIndex,
+                                        const std::vector<std::shared_ptr<AudioRegion>>& regions);
 
     /** @brief Reads the Python path's segment file and creates regions from it. */
     bool createRegionsFromSegFile(std::string segFileName,

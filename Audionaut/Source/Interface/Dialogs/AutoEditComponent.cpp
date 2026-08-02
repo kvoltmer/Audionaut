@@ -30,6 +30,11 @@ AutoEditComponent::AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audi
     selectedPlaylistItemLabel->attachToComponent (selectedPlaylistItem.get(), true);
 
 
+    // Replace the clip with its segments
+    replacePlayListItem = std::make_unique<juce::ToggleButton>(TRANS ("Replace clip with segments"));
+    addAndMakeVisible (replacePlayListItem.get());
+    replacePlayListItem->setToggleState (true, juce::dontSendNotification);
+
     // Number of segments
     numSegments = std::make_unique<juce::Slider>("Num Segments Slider Font 13");
     addAndMakeVisible (numSegments.get());
@@ -118,6 +123,11 @@ void AutoEditComponent::resized()
     
     if (segmentMax != nullptr) {
         segmentMax->setBounds (r.removeFromTop (h));
+        r.removeFromTop (space);
+    }
+
+    if (replacePlayListItem != nullptr) {
+        replacePlayListItem->setBounds (r.removeFromTop (h));
         r.removeFromTop (space);
     }
 }
@@ -223,6 +233,7 @@ audium::AutoEditConfig& AutoEditComponent::getAutoEditConfig()
     config.maxSegLength = segmentMax->getValue();
     config.trackId = selectedTrack->getSelectedId() - 1;
     config.playlistItemId = selectedPlaylistItem->getSelectedId() - 1;
+    config.replacePlayListItem = replacePlayListItem->getToggleState();
     // config.source is left at its default: the dialog only ever runs the
     // built-in analysis. The Python path is reachable from tests, which is
     // where the two get compared.

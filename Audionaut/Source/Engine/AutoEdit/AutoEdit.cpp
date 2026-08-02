@@ -38,6 +38,10 @@ struct EditTarget {
     // file.
     juce::Range<double> extent;
 
+    // Index of the clip the extent came from, or -1 when none was resolved and
+    // the whole file is being used.
+    int playListItemIndex = -1;
+
     bool isValid() const
     {
         return track != nullptr && resourceGroup != nullptr && resource != nullptr;
@@ -80,6 +84,7 @@ EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItem
                 // A clip need not span its whole file, and only what it covers
                 // is being edited.
                 target.extent = region->getRegionData(audium::seconds);
+                target.playListItemIndex = playListContainer->getPlayListItemIndex(item.get());
             }
     }
 
@@ -258,9 +263,23 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
     const auto extent = target.extent.isEmpty() ? juce::Range<double>(0.0, duration)
                                                 : target.extent;
 
-    if (! applyAsUndoableEdit([this, &boundaries, extent, track, resourceGroup]
+    const auto replaceClip = config.replacePlayListItem;
+    const auto clipIndex = target.playListItemIndex;
+
+    if (! applyAsUndoableEdit([this, &boundaries, extent, track, resourceGroup,
+                               replaceClip, clipIndex]
         {
-            return createRegionsFromBoundaries(boundaries, extent, track, resourceGroup);
+            auto created = createRegionsFromBoundaries(boundaries, extent, track, resourceGroup);
+
+            if (created.empty())
+                return false;
+
+            // Inside the same transaction, so one Undo takes the arrangement
+            // back along with the regions.
+            if (replaceClip)
+                replacePlayListItemWithRegions(track, clipIndex, created);
+
+            return true;
         }))
     {
         NullCheckedInvocation::invoke(callback,
@@ -288,18 +307,21 @@ bool AutoEdit::applyAsUndoableEdit(std::function<bool()> createRegions)
     return true;
 }
 
-bool AutoEdit::createRegionsFromBoundaries(const std::vector<float>& boundarySeconds,
-                                           juce::Range<double> extent,
-                                           std::shared_ptr<AudioTrack> track,
-                                           std::shared_ptr<ResourceGroup> resourceGroup)
+std::vector<std::shared_ptr<AudioRegion>>
+    AutoEdit::createRegionsFromBoundaries(const std::vector<float>& boundarySeconds,
+                                          juce::Range<double> extent,
+                                          std::shared_ptr<AudioTrack> track,
+                                          std::shared_ptr<ResourceGroup> resourceGroup)
 {
+    std::vector<std::shared_ptr<AudioRegion>> created;
+
     if (track == nullptr || resourceGroup == nullptr || extent.getLength() <= 0.0)
-        return false;
+        return created;
 
     auto regionContainer = resourceGroup->getAudioRegionContainer();
 
     if (regionContainer == nullptr)
-        return false;
+        return created;
 
     // Boundaries describe the whole file, so those outside the clip are of no
     // use here. The ones that remain are bracketed by the clip's own edges, so
@@ -319,7 +341,7 @@ bool AutoEdit::createRegionsFromBoundaries(const std::vector<float>& boundarySec
     // Nothing fell inside, so there is no cut to make - one region spanning the
     // clip would just restate what is already there.
     if (points.size() < 3)
-        return false;
+        return created;
 
     int counter = 1;
 
@@ -331,15 +353,54 @@ bool AutoEdit::createRegionsFromBoundaries(const std::vector<float>& boundarySec
 
         juce::String regionName = "seg-" + juce::String(counter++);
 
-        regionContainer->createRegion(regionName,
-                                      position,
-                                      track,
-                                      resourceGroup,
-                                      nullptr,
-                                      audium::seconds);
+        if (auto region = regionContainer->createRegion(regionName,
+                                                        position,
+                                                        track,
+                                                        resourceGroup,
+                                                        nullptr,
+                                                        audium::seconds))
+            created.push_back(region);
     }
 
-    return counter > 1;
+    return created;
+}
+
+bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
+                                              int playListItemIndex,
+                                              const std::vector<std::shared_ptr<AudioRegion>>& regions)
+{
+    if (track == nullptr || regions.empty())
+        return false;
+
+    auto playListContainer = track->getPlayListContainer();
+
+    if (playListContainer == nullptr)
+        return false;
+
+    auto original = playListContainer->getPlayListItem(playListItemIndex);
+
+    if (original == nullptr)
+        original = playListContainer->getPlayListItem(0);
+
+    if (original == nullptr)
+        return false;
+
+    const auto insertAt = playListContainer->getPlayListItemIndex(original.get());
+
+    if (insertAt < 0)
+        return false;
+
+    // Insert the segments where the clip sat, in order, then drop the clip's
+    // own item. Deleting by pointer rather than index, since each insertion
+    // shifts it along.
+    int offset = 0;
+
+    for (const auto& region : regions)
+        playListContainer->createPlayListItemUI(region, insertAt + offset++);
+
+    // The clip's region stays: it still describes the audio the segments came
+    // from, and other items may reference it.
+    return playListContainer->deletePlayListItem(original.get(), false);
 }
 
 bool AutoEdit::invokePython(const juce::File& audioFile,
