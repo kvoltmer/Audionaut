@@ -37,13 +37,18 @@ jobs:
         # actions/checkout rewrites .gitmodules' SSH URLs to HTTPS only when it
         # handles submodules itself, so it is done explicitly here.
         git config --global url."https://github.com/".insteadOf "git@github.com:"
-        git submodule update --init --recursive \
+        git submodule update --init \
           Submodules/JUCE \
           Submodules/Catch2 \
           Submodules/json \
           Submodules/link \
           Submodules/farbot \
           Submodules/essentia
+        # Only link needs its nested submodule - the build includes asio from it.
+        # Recursing further would pull essentia's test/models, whose Git LFS
+        # objects are not downloadable ("Git LFS is disabled for this
+        # repository"), and farbot's googletest, which nothing here uses.
+        git submodule update --init --recursive Submodules/link
 
     # Essentia (the audio-analysis backend) is built from the submodule tree; the
     # tests link the resulting static libs. Without it, ESSENTIA_ENABLED
