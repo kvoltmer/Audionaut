@@ -59,16 +59,15 @@ zero cost and keyed to a stable path, unlike a per-run temp file.
 | # | Question | Decision |
 |---|----------|----------|
 | D1 | What happens to `invokePython`? | **Keep behind a config toggle.** `AutoEditConfig::Source` = `Native` (default) / `Python`. |
-| D2 | Which analyses feed the merge? | **SBic, Degara, Onset.** No MultiFeature tracker, no decimated variants. |
+| D2 | Which analyses feed the merge? | **SBic and Degara.** No MultiFeature tracker, no decimated variants. Onsets were included at first and then dropped: as the densest stream they carried the narrowest kernel and contributed least, while costing a third cached analysis before an edit could run. Onset detection itself is untouched. |
 | D3 | Cache the merged result? | **No — recompute.** Inputs are already cached; a key ignoring `EventMerger::Parameters` would go stale when `numSegments` changes. |
 | D4 | How does AutoEdit reach `AnalysisProvider`? | **Existing path** — `getAudioTrackContainer()->getAnalysisProvider()`, already the idiom in six UI call sites. No new API. |
 | D5 | Bounce, or use cached analysis? | **Cached analysis of the source resource. No bounce.** Removes the temp file, the `AudioExportThread` dependency, the cold-cache cost and the timeline mismatch above. |
 | D6 | What if only some analyses are cached? | **Produce no boundaries.** Never merge a partial set: it yields plausible-looking but different cut points, which is worse than producing none because it looks like it worked. `findMissingMergeAnalyses()` names what is outstanding so the caller can say so. |
+| D7 | Should onsets feed the merge? | **No** - see D2. |
 
 ### Assumptions (not explicitly confirmed — overturn freely)
-- **Onset maps to `Kind::Beat`.** `Kind` selects the reference's treatment: segmentation streams get
-  the `dropLastSegBoundary` truncation and lead the column order. Onsets are dense event streams, not
-  structural boundaries. Kernel widths end up SBic wide, Degara narrow, Onset narrowest.
+- ~~Onset maps to `Kind::Beat`.~~ Moot - onsets no longer feed the merge (D2).
 - **The Python path also drops the bounce**, running on the same source file. Otherwise the two
   sources would analyse different material and the A/B comparison D1 exists for would be meaningless.
 - **Cache-only, no compute-on-miss.** If any of the three analyses is absent, AutoEdit reports that
@@ -188,12 +187,12 @@ the bounce.
 ## 6. Tests
 
 **Phase 1** (`[engine][analysis][merge]`)
-1. Three non-empty analyses give three streams: SBic as `Segmentation`, Degara and Onset as `Beat`.
+1. Two non-empty analyses give two streams: SBic as `Segmentation`, Degara as `Beat`.
 2. The segmentation stream leads the ordering.
 3. An empty analysis contributes no stream; all-empty gives no streams.
 4. Event times pass through unchanged, in seconds.
-5. `mergeCachedAnalyses` returns an empty result when any of the three is absent from the cache.
-6. With all three present in the cache, it returns ascending boundaries within the duration.
+5. `mergeCachedAnalyses` returns an empty result when either is absent from the cache.
+6. With both present in the cache, it returns ascending boundaries within the duration.
 7. *(Essentia-gated)* end to end over `TestFiles/_export_TRK-18.wav`.
 
 **Phase 2** (`[engine][autoedit]`)
