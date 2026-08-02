@@ -4359,6 +4359,9 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingToolWindow.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\NewAudioTrackDialog.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
