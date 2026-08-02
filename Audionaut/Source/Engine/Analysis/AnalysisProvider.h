@@ -110,21 +110,19 @@ public:
     /**
      * @brief Assembles analysis results into the merge's input streams.
      *
-     * BIC boundaries become the (rare, structural) segmentation stream; beats
-     * and onsets become event streams. An analysis with no results contributes
-     * no stream at all, rather than an empty one.
+     * BIC boundaries become the (rare, structural) segmentation stream and
+     * beats the event stream. An analysis with no results contributes no stream
+     * at all, rather than an empty one.
      *
      * Pure and free of any Essentia dependency, so it can be exercised without
      * running an analysis.
      *
      * @param sBicSegments Boundaries from AnalysisType::SBic, in seconds.
      * @param degaraBeats  Beats from AnalysisType::BeatDegara, in seconds.
-     * @param onsets       Onsets from AnalysisType::Onset, in seconds.
      */
     static std::vector<EventMerger::EventStream>
         makeMergeStreams(const std::vector<float>& sBicSegments,
-                         const std::vector<float>& degaraBeats,
-                         const std::vector<float>& onsets);
+                         const std::vector<float>& degaraBeats);
 
     /**
      * @brief Which of the merge's analyses are not yet cached for a file.
