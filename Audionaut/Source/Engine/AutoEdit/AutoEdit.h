@@ -84,14 +84,22 @@ public:
                       std::function<void(std::string)> callback);
 
     /**
-     * @brief Creates one region per consecutive pair of boundaries.
+     * @brief Creates one region per consecutive pair of boundaries, covering
+     *        the given stretch of audio and nothing outside it.
+     *
+     * Boundaries come from analysing a whole file, but a clip need not span all
+     * of it. Those falling outside @p extent are discarded and the survivors
+     * bracketed by its edges, so the regions tile exactly what was selected.
      *
      * @param boundarySeconds Ascending boundary times, in seconds.
+     * @param extent          The stretch of audio being edited, in seconds.
      * @param track           The track to create the regions on.
      * @param resourceGroup   The resource group the regions belong to.
-     * @return True when at least one region was created.
+     * @return True when regions were created; false when no boundary falls
+     *         inside @p extent, leaving nothing to cut.
      */
     bool createRegionsFromBoundaries(const std::vector<float>& boundarySeconds,
+                                     juce::Range<double> extent,
                                      std::shared_ptr<AudioTrack> track,
                                      std::shared_ptr<ResourceGroup> resourceGroup);
 
