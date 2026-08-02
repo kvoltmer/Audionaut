@@ -48,15 +48,14 @@ File testFile()
 SCENARIO("AnalysisProvider assembles the merge's input streams",
          "[engine][analysis][merge]")
 {
-    GIVEN("results from all three analyses")
+    GIVEN("results from both analyses")
     {
         auto streams = AnalysisProvider::makeMergeStreams(evenTimes(0.0f, 10.0f, 6),
-                                                          evenTimes(0.0f, 0.5f, 100),
-                                                          evenTimes(0.0f, 0.2f, 250));
+                                                          evenTimes(0.0f, 0.5f, 100));
 
         THEN("each analysis contributes one stream")
         {
-            REQUIRE(streams.size() == 3);
+            REQUIRE(streams.size() == 2);
         }
 
         THEN("the structural boundaries lead, as the merge expects")
@@ -65,12 +64,10 @@ SCENARIO("AnalysisProvider assembles the merge's input streams",
             REQUIRE(streams[0].kind == EventMerger::Kind::Segmentation);
         }
 
-        THEN("beats and onsets are event streams, not structural ones")
+        THEN("beats are an event stream, not a structural one")
         {
             REQUIRE(streams[1].label == "beats_degara");
             REQUIRE(streams[1].kind == EventMerger::Kind::Beat);
-            REQUIRE(streams[2].label == "onsets");
-            REQUIRE(streams[2].kind == EventMerger::Kind::Beat);
         }
 
         THEN("the event times are carried through unchanged")
@@ -79,27 +76,23 @@ SCENARIO("AnalysisProvider assembles the merge's input streams",
             REQUIRE(streams[0].times[0] == Catch::Approx(0.0f));
             REQUIRE(streams[0].times[5] == Catch::Approx(50.0f));
             REQUIRE(streams[1].times.size() == 100);
-            REQUIRE(streams[2].times.size() == 250);
         }
     }
 
     GIVEN("one analysis that found nothing")
     {
-        auto streams = AnalysisProvider::makeMergeStreams(evenTimes(0.0f, 10.0f, 6),
-                                                          {},
-                                                          evenTimes(0.0f, 0.2f, 250));
+        auto streams = AnalysisProvider::makeMergeStreams(evenTimes(0.0f, 10.0f, 6), {});
 
         THEN("it contributes no stream at all, rather than an empty one")
         {
-            REQUIRE(streams.size() == 2);
+            REQUIRE(streams.size() == 1);
             REQUIRE(streams[0].label == "sbic");
-            REQUIRE(streams[1].label == "onsets");
         }
     }
 
     GIVEN("no results at all")
     {
-        auto streams = AnalysisProvider::makeMergeStreams({}, {}, {});
+        auto streams = AnalysisProvider::makeMergeStreams({}, {});
 
         THEN("there is nothing to merge")
         {
@@ -121,10 +114,10 @@ SCENARIO("AnalysisProvider merges only what the cache already holds",
 
     GIVEN("an unanalysed file")
     {
-        THEN("all three analyses are reported missing")
+        THEN("both analyses are reported missing")
         {
             auto missing = provider->findMissingMergeAnalyses(audioFile);
-            REQUIRE(missing.size() == 3);
+            REQUIRE(missing.size() == 2);
         }
 
         THEN("merging yields nothing rather than running an analysis")
@@ -138,7 +131,6 @@ SCENARIO("AnalysisProvider merges only what the cache already holds",
     GIVEN("only some of the analyses cached")
     {
         cache->put(audioFile, AnalysisType::SBic, evenTimes(0.0f, 10.0f, 6));
-        cache->put(audioFile, AnalysisType::Onset, evenTimes(0.0f, 0.2f, 250));
 
         THEN("the outstanding one is named")
         {
@@ -154,11 +146,10 @@ SCENARIO("AnalysisProvider merges only what the cache already holds",
         }
     }
 
-    GIVEN("all three analyses cached")
+    GIVEN("both analyses cached")
     {
         cache->put(audioFile, AnalysisType::SBic, evenTimes(0.0f, 7.5f, 8));
         cache->put(audioFile, AnalysisType::BeatDegara, evenTimes(0.0f, 0.5f, 120));
-        cache->put(audioFile, AnalysisType::Onset, evenTimes(0.0f, 0.2f, 300));
 
         THEN("nothing is reported missing")
         {

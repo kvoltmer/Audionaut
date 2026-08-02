@@ -128,8 +128,7 @@ const std::vector<AnalysisType>& AnalysisProvider::getMergeAnalysisTypes()
     // Stream order matters: EventMerger expects the segmentation stream first.
     static const std::vector<AnalysisType> types {
         AnalysisType::SBic,
-        AnalysisType::BeatDegara,
-        AnalysisType::Onset
+        AnalysisType::BeatDegara
     };
 
     return types;
@@ -137,8 +136,7 @@ const std::vector<AnalysisType>& AnalysisProvider::getMergeAnalysisTypes()
 
 std::vector<EventMerger::EventStream>
     AnalysisProvider::makeMergeStreams(const std::vector<float>& sBicSegments,
-                                       const std::vector<float>& degaraBeats,
-                                       const std::vector<float>& onsets)
+                                       const std::vector<float>& degaraBeats)
 {
     std::vector<EventMerger::EventStream> streams;
 
@@ -160,11 +158,10 @@ std::vector<EventMerger::EventStream>
     };
 
     // The structural boundaries are the rare events, so they carry the widest
-    // kernel and dominate the merge. Beats and onsets are dense event streams;
-    // neither describes structure, so both are Kind::Beat.
+    // kernel and dominate the merge. Beats are the dense event stream they are
+    // aligned to.
     add("sbic", EventMerger::Kind::Segmentation, sBicSegments);
     add("beats_degara", EventMerger::Kind::Beat, degaraBeats);
-    add("onsets", EventMerger::Kind::Beat, onsets);
 
     return streams;
 }
@@ -191,12 +188,11 @@ EventMerger::Result AnalysisProvider::mergeCachedAnalyses(const juce::File& audi
     // findMissingMergeAnalyses().
     auto sBicSegments = analysisCache->get(audioFile, AnalysisType::SBic);
     auto degaraBeats  = analysisCache->get(audioFile, AnalysisType::BeatDegara);
-    auto onsets       = analysisCache->get(audioFile, AnalysisType::Onset);
 
-    if (! sBicSegments || ! degaraBeats || ! onsets)
+    if (! sBicSegments || ! degaraBeats)
         return {};
 
-    auto streams = makeMergeStreams(*sBicSegments, *degaraBeats, *onsets);
+    auto streams = makeMergeStreams(*sBicSegments, *degaraBeats);
 
     if (streams.empty())
         return {};

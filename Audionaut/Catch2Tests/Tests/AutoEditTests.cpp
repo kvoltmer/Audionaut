@@ -114,14 +114,13 @@ Fixture makeFixture()
     return fixture;
 }
 
-// Populates the three analyses the merge needs, shaped like real results.
+// Populates the analyses the merge needs, shaped like real results.
 void cacheMergeAnalyses(const Fixture& fixture)
 {
     auto cache = fixture.engine->getAudioTrackContainer()->getAnalysisProvider()->getCache();
 
     cache->put(fixture.analysedFile, AnalysisType::SBic, evenTimes(0.0f, 2.5f, 8));
     cache->put(fixture.analysedFile, AnalysisType::BeatDegara, evenTimes(0.0f, 0.5f, 40));
-    cache->put(fixture.analysedFile, AnalysisType::Onset, evenTimes(0.0f, 0.25f, 80));
 }
 
 } // namespace
@@ -225,11 +224,10 @@ SCENARIO("AutoEdit refuses to edit before the analyses are cached",
     {
         auto fixture = makeFixture();
 
-        // Deliberately cache only two of the three the merge needs. A partial
+        // Deliberately cache only one of the two the merge needs. A partial
         // merge would produce plausible but different cuts.
         auto cache = fixture.engine->getAudioTrackContainer()->getAnalysisProvider()->getCache();
         cache->put(fixture.analysedFile, AnalysisType::SBic, evenTimes(0.0f, 2.5f, 8));
-        cache->put(fixture.analysedFile, AnalysisType::Onset, evenTimes(0.0f, 0.25f, 80));
 
         AutoEdit autoEdit(fixture.engine);
 
@@ -341,7 +339,6 @@ SCENARIO("AutoEdit edits the audio the chosen playlist item refers to",
         auto cache = trackContainer->getAnalysisProvider()->getCache();
         cache->put(secondAnalysed, AnalysisType::SBic, evenTimes(0.0f, 0.25f, 5));
         cache->put(secondAnalysed, AnalysisType::BeatDegara, evenTimes(0.0f, 0.1f, 12));
-        cache->put(secondAnalysed, AnalysisType::Onset, evenTimes(0.0f, 0.05f, 24));
 
         const auto baseline = secondGroup->getAudioRegionContainer()->getObjects().size();
 
