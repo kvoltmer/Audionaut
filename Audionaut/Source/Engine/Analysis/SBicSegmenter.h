@@ -25,8 +25,19 @@ class SBicSegmenter {
 
 public:
     /**
-     * @brief Tunable parameters for the segmentation. Defaults match the
-     *        values validated in the Essentia segmentation test.
+     * @brief Tunable parameters for the segmentation.
+     *
+     * The BIC values follow gaborgandalf rather than Essentia's stock defaults,
+     * which is what this used to carry. Measured against the reference on the
+     * project's test material, they are what account for most of the difference
+     * in where the two implementations cut: the lower complexity penalty in
+     * particular roughly doubles the number of boundaries found, while the
+     * feature the BIC runs over - MFCC here, chroma there - turns out to matter
+     * comparatively little.
+     *
+     * Note the frame rate works out the same on both sides despite the
+     * different rate and hop: 44100/1024 and 22050/512 are both 43.07 frames
+     * per second, so the window and length values transfer directly.
      */
     struct Parameters {
         float sampleRate = 44100.0f;
@@ -34,13 +45,14 @@ public:
         int   hopSize    = 1024;
 
         // BIC segmentation window/increment sizes, in frames.
-        int size1 = 300, inc1 = 60, size2 = 200, inc2 = 20;
+        int size1 = 200, inc1 = 60, size2 = 300, inc2 = 20;
 
-        // Minimum segment length, in frames.
-        int minimumSegmentLength = 10;
+        // Minimum segment length, in frames. 50 is ~1.16 s at the frame rate
+        // above.
+        int minimumSegmentLength = 50;
 
-        // Complexity penalty weight [0, inf].
-        float complexityPenaltyWeight = 1.5f;
+        // Complexity penalty weight [0, inf]. Lower yields more boundaries.
+        float complexityPenaltyWeight = 0.5f;
     };
 
     SBicSegmenter() = default;
