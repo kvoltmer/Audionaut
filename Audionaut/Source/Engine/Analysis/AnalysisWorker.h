@@ -43,13 +43,19 @@ public:
      *        without an explicit type list (e.g. for a newly added resource).
      *        Defaults to all four; pass a subset (or an empty list) to change
      *        or disable automatic analysis.
+     *
+     *        The order matters: jobs run in the order they are queued, so the
+     *        analyses the merge is built from (see
+     *        AnalysisProvider::getMergeAnalysisTypes) come first. Auto Edit
+     *        needs only those, so it becomes available without waiting for the
+     *        rest.
      */
     explicit AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider,
                             std::vector<AnalysisType> defaultAnalysisTypes = {
                                 AnalysisType::SBic,
+                                AnalysisType::BeatDegara,
                                 AnalysisType::Onset,
-                                AnalysisType::Beat,
-                                AnalysisType::BeatDegara
+                                AnalysisType::Beat
                             });
 
     /** @brief Stops the background thread, waiting for any in-flight analysis. */

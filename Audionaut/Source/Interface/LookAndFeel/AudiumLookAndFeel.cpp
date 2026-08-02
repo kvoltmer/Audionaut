@@ -79,7 +79,7 @@ void AudiumLookAndFeel::setupColours()
     //setColour(FileBrowserComponent::filenameBoxBackgroundColourId, Colours::red);
     
     // Label
-    setColour(Label::backgroundColourId, findColour(backgroundColourId));
+    setColour(Label::backgroundColourId, findColour(secondaryBackgroundColourId));
     setColour(Label::textColourId, findColour(audium::defaultTextColourId));
     
     
