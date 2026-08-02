@@ -11,15 +11,13 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
-
-#include "Interface/Controls/RegionTableListBox.h"
-#include "Interface/Models/RegionTableListBoxModel.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
-//==============================================================================
-/*
-*/
+#include "Interface/Controls/RegionTableListBox.h"
+#include "Interface/Models/RegionTableListBoxModel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+
 class RegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
@@ -78,6 +76,10 @@ public:
             
             auto textColour = r->getAudioTrack()->getViewState().getColour();
             setColour (juce::Label::textColourId, isSelected ? textColour.brighter() : textColour);
+            
+            auto background = findColour(audium::secondaryBackgroundColourId);
+            background = isSelected ? background.brighter() : background;
+            setColour(juce::Label::backgroundColourId, background);
             
         }
         setText (text, juce::dontSendNotification);
