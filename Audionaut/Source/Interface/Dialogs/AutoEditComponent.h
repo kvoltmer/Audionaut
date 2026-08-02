@@ -42,6 +42,9 @@ private:
     std::unique_ptr<juce::Label> selectedPlaylistItemLabel;
 
     
+    // Whether the edited clip is replaced in the arrangement by its segments.
+    std::unique_ptr<juce::ToggleButton> replacePlayListItem;
+
     std::unique_ptr<juce::Slider> numSegments, segmentMin, segmentMax;
     std::unique_ptr<juce::Label> numSegmentsLabel, segmentMinLabel, segmentMaxLabel;
 
