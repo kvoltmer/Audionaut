@@ -8,6 +8,9 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/ResourceGroup.h"
+#include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/PlayListItem.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Resource/AudioResourceContainer.h"
@@ -371,6 +374,87 @@ SCENARIO("AutoEdit edits the audio the chosen playlist item refers to",
         }
 
         engine = nullptr;
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("AutoEdit cuts only what the selected clip covers", "[engine][autoedit]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture();
+        cacheMergeAnalyses(fixture);
+
+        // Shrink the clip to the middle of the file. The analyses still
+        // describe all of it, so anything outside this window has to be
+        // discarded rather than cut.
+        const juce::Range<double> clip { 4.0, 12.0 };
+
+        {
+            auto items = fixture.track()->getPlayListContainer()->getPlayListItems();
+            REQUIRE_FALSE(items.empty());
+            items[0]->getRegion()->setRegionData(clip, audium::seconds);
+        }
+
+        const auto baseline = fixture.regionCount();
+
+        AutoEdit autoEdit(fixture.engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+        config.playlistItemId = 0;
+        config.numSegments = 8;
+
+        std::string reportedError;
+        auto onError = [&reportedError](std::string error) { reportedError = error; };
+
+        WHEN("the clip is auto edited")
+        {
+            const auto succeeded = autoEdit.invokeAutoEdit(config, onError);
+
+            THEN("regions are created")
+            {
+                INFO("error was: " << reportedError);
+                REQUIRE(succeeded);
+                REQUIRE(fixture.regionCount() > baseline);
+            }
+
+            THEN("none of them reaches outside the clip")
+            {
+                std::vector<juce::Range<double>> created;
+
+                for (const auto& region : fixture.regions())
+                    if (region->getName().startsWith("seg-"))
+                        created.push_back(region->getRegionData(audium::seconds));
+
+                REQUIRE_FALSE(created.empty());
+
+                for (const auto& range : created)
+                {
+                    REQUIRE(range.getStart() >= clip.getStart() - 0.001);
+                    REQUIRE(range.getEnd() <= clip.getEnd() + 0.001);
+                }
+            }
+
+            THEN("together they span the clip exactly")
+            {
+                std::vector<juce::Range<double>> created;
+
+                for (const auto& region : fixture.regions())
+                    if (region->getName().startsWith("seg-"))
+                        created.push_back(region->getRegionData(audium::seconds));
+
+                std::sort(created.begin(), created.end(),
+                          [](const auto& a, const auto& b) { return a.getStart() < b.getStart(); });
+
+                REQUIRE(created.front().getStart() == Catch::Approx(clip.getStart()).margin(0.001));
+                REQUIRE(created.back().getEnd() == Catch::Approx(clip.getEnd()).margin(0.001));
+            }
+        }
     }
 
     DeletedAtShutdown::deleteAll();

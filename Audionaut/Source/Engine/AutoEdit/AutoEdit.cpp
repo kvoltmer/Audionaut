@@ -33,6 +33,11 @@ struct EditTarget {
     std::shared_ptr<ResourceGroup> resourceGroup;
     std::shared_ptr<AudioResource> resource;
 
+    // The stretch of audio the chosen clip covers, in seconds. Empty when no
+    // playlist item named one, in which case the caller substitutes the whole
+    // file.
+    juce::Range<double> extent;
+
     bool isValid() const
     {
         return track != nullptr && resourceGroup != nullptr && resource != nullptr;
@@ -59,7 +64,13 @@ EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItem
     if (auto playListContainer = track->getPlayListContainer())
         if (auto item = playListContainer->getPlayListItem(playListItemId))
             if (auto region = item->getRegion())
+            {
                 target.resourceGroup = region->getResourceGroup();
+
+                // A clip need not span its whole file, and only what it covers
+                // is being edited.
+                target.extent = region->getRegionData(audium::seconds);
+            }
 
     // No playlist item named, or one that resolves to nothing: fall back to the
     // track's first group, which is where a single-file track keeps its audio.
@@ -231,10 +242,22 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
 
     const auto boundaries = result.boundaries;
 
-    return applyAsUndoableEdit([this, &boundaries, track, resourceGroup]
+    // The analyses describe the whole file; the edit applies only to what the
+    // chosen clip covers. Without a clip to go on, that is the whole file.
+    const auto extent = target.extent.isEmpty() ? juce::Range<double>(0.0, duration)
+                                                : target.extent;
+
+    if (! applyAsUndoableEdit([this, &boundaries, extent, track, resourceGroup]
+        {
+            return createRegionsFromBoundaries(boundaries, extent, track, resourceGroup);
+        }))
     {
-        return createRegionsFromBoundaries(boundaries, track, resourceGroup);
-    });
+        NullCheckedInvocation::invoke(callback,
+                                      "No segment boundaries fall inside the selected clip.");
+        return false;
+    }
+
+    return true;
 }
 
 bool AutoEdit::applyAsUndoableEdit(std::function<bool()> createRegions)
@@ -255,10 +278,11 @@ bool AutoEdit::applyAsUndoableEdit(std::function<bool()> createRegions)
 }
 
 bool AutoEdit::createRegionsFromBoundaries(const std::vector<float>& boundarySeconds,
+                                           juce::Range<double> extent,
                                            std::shared_ptr<AudioTrack> track,
                                            std::shared_ptr<ResourceGroup> resourceGroup)
 {
-    if (track == nullptr || resourceGroup == nullptr || boundarySeconds.size() < 2)
+    if (track == nullptr || resourceGroup == nullptr || extent.getLength() <= 0.0)
         return false;
 
     auto regionContainer = resourceGroup->getAudioRegionContainer();
@@ -266,15 +290,33 @@ bool AutoEdit::createRegionsFromBoundaries(const std::vector<float>& boundarySec
     if (regionContainer == nullptr)
         return false;
 
+    // Boundaries describe the whole file, so those outside the clip are of no
+    // use here. The ones that remain are bracketed by the clip's own edges, so
+    // the regions tile exactly what was selected and nothing beyond it.
+    std::vector<double> points { extent.getStart() };
+
+    for (auto boundary : boundarySeconds)
+    {
+        const auto point = (double) boundary;
+
+        if (point > extent.getStart() && point < extent.getEnd())
+            points.push_back(point);
+    }
+
+    points.push_back(extent.getEnd());
+
+    // Nothing fell inside, so there is no cut to make - one region spanning the
+    // clip would just restate what is already there.
+    if (points.size() < 3)
+        return false;
+
     int counter = 1;
 
-    // Consecutive boundaries bound one region each, so n boundaries give n - 1
-    // regions that tile the material without gaps.
-    for (size_t i = 1; i < boundarySeconds.size(); ++i)
+    for (size_t i = 1; i < points.size(); ++i)
     {
         juce::Range<double> position;
-        position.setStart((double) boundarySeconds[i - 1]);
-        position.setEnd((double) boundarySeconds[i]);
+        position.setStart(points[i - 1]);
+        position.setEnd(points[i]);
 
         juce::String regionName = "seg-" + juce::String(counter++);
 
