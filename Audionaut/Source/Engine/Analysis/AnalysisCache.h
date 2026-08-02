@@ -138,6 +138,33 @@ public:
     /** @brief File name of the analysis sidecar within a project folder. */
     static const char* fileName;
 
+    /**
+     * @brief Version of the analysis sidecar's contents.
+     *
+     * **Bump this whenever a change alters what an analysis produces** - new
+     * segmenter parameters, a different feature, a corrected algorithm. The
+     * cache key covers the analysed file's identity but says nothing about how
+     * it was analysed, so without a bump every already-analysed project keeps
+     * its stale results indefinitely, and only files that happen to change on
+     * disk are ever re-analysed.
+     *
+     * A sidecar carrying any other version is discarded on load and the
+     * analyses simply run again, which costs time but never correctness.
+     *
+     * This is deliberately not `Streamable::fileVersion`: that describes the
+     * project document format, and analysis results turn over far more often
+     * than it does.
+     *
+     * Version history:
+     *   1 - initial; sidecars written before the version was ever checked
+     *   2 - version checking introduced, discarding all of those
+     *
+     * Note the bump has to accompany the change that motivates it. Landing a
+     * segmenter change *after* a bump leaves caches rebuilt with the old
+     * behaviour and still considered current, so it needs a bump of its own.
+     */
+    static constexpr int dataVersion = 2;
+
 private:
     /** @brief A cached result plus the file identity it was computed from. */
     struct Entry {

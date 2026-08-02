@@ -3,6 +3,8 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <iostream>
+
 #include "AnalysisCache.h"
 
 namespace audium {
@@ -151,7 +153,7 @@ bool AnalysisCache::writeToJson(json& output)
 {
     const std::lock_guard<std::mutex> lock(mutex);
 
-    output["version"] = fileVersion;
+    output["version"] = dataVersion;
 
     const bool relative = serializationFolder != juce::File();
 
@@ -182,6 +184,18 @@ bool AnalysisCache::readFromJson(json& input, bool /*rebuild*/)
     const std::lock_guard<std::mutex> lock(mutex);
 
     entries.clear();
+
+    // Results written by another version describe analyses that no longer
+    // produce them, so they are dropped rather than trusted - see dataVersion.
+    const auto version = input.value("version", 0);
+
+    if (version != dataVersion)
+    {
+        std::cout << "AnalysisCache: discarding analysis data written by version "
+                  << version << " (this build expects " << dataVersion
+                  << "); affected files will be analysed again." << std::endl;
+        return true;
+    }
 
     if (! input.contains("entries") || ! input["entries"].is_array())
         return true;
