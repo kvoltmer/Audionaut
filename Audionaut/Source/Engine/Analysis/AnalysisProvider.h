@@ -17,6 +17,7 @@
 #include "Engine/Analysis/OnsetSegmenter.h"
 #include "Engine/Analysis/BeatSegmenter.h"
 #include "Engine/Analysis/AnalysisCache.h"
+#include "Engine/Analysis/EventMerger.h"
 
 namespace audium {
 
@@ -93,6 +94,65 @@ public:
 
     /** @brief The underlying (persistent) analysis cache. */
     std::shared_ptr<AnalysisCache> getCache() const { return analysisCache; }
+
+    /** @name Merged analysis
+     *
+     * Combines several analyses of one file into a single set of boundaries,
+     * via `EventMerger`. Because a wider kernel spreads more energy, the rarer
+     * structural boundaries dominate the frequent beats and onsets, so the
+     * result lands on beat-aligned segment boundaries rather than on either
+     * analysis alone.
+     */
+    ///@{
+    /** @brief The analyses the merge is built from, in stream order. */
+    static const std::vector<AnalysisType>& getMergeAnalysisTypes();
+
+    /**
+     * @brief Assembles analysis results into the merge's input streams.
+     *
+     * BIC boundaries become the (rare, structural) segmentation stream and
+     * beats the event stream. An analysis with no results contributes no stream
+     * at all, rather than an empty one.
+     *
+     * Pure and free of any Essentia dependency, so it can be exercised without
+     * running an analysis.
+     *
+     * @param sBicSegments Boundaries from AnalysisType::SBic, in seconds.
+     * @param degaraBeats  Beats from AnalysisType::BeatDegara, in seconds.
+     */
+    static std::vector<EventMerger::EventStream>
+        makeMergeStreams(const std::vector<float>& sBicSegments,
+                         const std::vector<float>& degaraBeats);
+
+    /**
+     * @brief Which of the merge's analyses are not yet cached for a file.
+     *
+     * Lets a caller explain what is missing instead of silently producing no
+     * boundaries. Empty means the file is ready to merge.
+     */
+    std::vector<AnalysisType> findMissingMergeAnalyses(const juce::File& audioFile) const;
+
+    /**
+     * @brief Merges the cached analyses of a file into segment boundaries.
+     *
+     * Reads results from the cache only - it never runs an analysis, so it is
+     * safe to call from the message thread. `AnalysisWorker` normally populates
+     * the cache when the file is added, long before this is called.
+     *
+     * @param audioFile       The analysed audio file.
+     * @param durationSeconds Length of the file, in seconds.
+     * @param params          Merge parameters.
+     * @return The merged boundaries, or an empty result if any of the analyses
+     *         is missing - see findMissingMergeAnalyses().
+     */
+    EventMerger::Result mergeCachedAnalyses(const juce::File& audioFile,
+                                            float durationSeconds,
+                                            const EventMerger::Parameters& params) const;
+
+    /** @brief Merges the cached analyses using the default merge parameters. */
+    EventMerger::Result mergeCachedAnalyses(const juce::File& audioFile,
+                                            float durationSeconds) const;
+    ///@}
 
 private:
     // Analyses every audio resource of the track for the given type, delegating

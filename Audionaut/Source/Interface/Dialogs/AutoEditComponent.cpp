@@ -9,6 +9,14 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/PlayList/PlayListItem.h"
 
+namespace {
+
+// Combo box ids are 1-based; these map onto AutoEditConfig::Source.
+constexpr int sourceNativeId = 1;
+constexpr int sourcePythonId = 2;
+
+} // namespace
+
 AutoEditComponent::AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
     audiumEngine(audiumEngine_)
 {
@@ -28,7 +36,19 @@ AutoEditComponent::AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audi
     selectedPlaylistItemLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Audio clip:"));
     selectedPlaylistItemLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
     selectedPlaylistItemLabel->attachToComponent (selectedPlaylistItem.get(), true);
-    
+
+    // Where the cut points come from. Combo ids are 1-based, so they map to the
+    // Source enum by subtracting one in getAutoEditConfig().
+    selectedSource = std::make_unique<juce::ComboBox>();
+    addAndMakeVisible (selectedSource.get());
+    selectedSource->addItem (TRANS ("Analysis (built in)"), sourceNativeId);
+    selectedSource->addItem (TRANS ("gaborgandalf (Python)"), sourcePythonId);
+    selectedSource->setSelectedId (sourceNativeId, juce::dontSendNotification);
+
+    selectedSourceLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Segment source:"));
+    selectedSourceLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+    selectedSourceLabel->attachToComponent (selectedSource.get(), true);
+
 
     // Number of segments
     numSegments = std::make_unique<juce::Slider>("Num Segments Slider Font 13");
@@ -118,6 +138,11 @@ void AutoEditComponent::resized()
     
     if (segmentMax != nullptr) {
         segmentMax->setBounds (r.removeFromTop (h));
+        r.removeFromTop (space);
+    }
+
+    if (selectedSource != nullptr) {
+        selectedSource->setBounds (r.removeFromTop (h));
         r.removeFromTop (space);
     }
 }
@@ -223,6 +248,9 @@ audium::AutoEditConfig& AutoEditComponent::getAutoEditConfig()
     config.maxSegLength = segmentMax->getValue();
     config.trackId = selectedTrack->getSelectedId() - 1;
     config.playlistItemId = selectedPlaylistItem->getSelectedId() - 1;
-    
+    config.source = selectedSource->getSelectedId() == sourcePythonId
+                        ? audium::AutoEditConfig::Source::Python
+                        : audium::AutoEditConfig::Source::Native;
+
     return config;
 }

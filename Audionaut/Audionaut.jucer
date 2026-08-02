@@ -281,6 +281,8 @@
         <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
           <FILE id="Y3mnJv" name="FileBrowserView.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/FileBrowserView.h"/>
+          <FILE id="fltTlW" name="FloatingToolWindow.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/FloatingToolWindow.h"/>
           <FILE id="vHwlEq" name="NewAudioTrackDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/NewAudioTrackDialog.h"/>
           <FILE id="XUO0Mz" name="AboutWindowComponent.h" compile="0" resource="0"
