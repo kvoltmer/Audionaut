@@ -26,10 +26,30 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        submodules: 'recursive'
         # The test audio is stored in LFS. Without this it arrives as pointer
         # files and every scenario that loads audio fails.
         lfs: true
+        # Submodules are taken below instead: lfs applies to them too, and
+        # essentia's nested test/models submodule stores a 347 MB model on a
+        # repository with LFS disabled, so a recursive checkout cannot complete.
+        submodules: false
+
+    - name: Check out the submodules CI needs
+      run: |
+        # actions/checkout rewrites .gitmodules' SSH URLs to HTTPS only when it
+        # handles submodules itself, so it is done explicitly here.
+        git config --global url."https://github.com/".insteadOf "git@github.com:"
+        git submodule update --init \
+          Submodules/JUCE \
+          Submodules/Catch2 \
+          Submodules/json \
+          Submodules/link \
+          Submodules/farbot \
+          Submodules/essentia
+        # Only link has a nested submodule the build needs - asio, which the
+        # Projucer header paths point at. Recursing further would reach
+        # essentia's test data and fail on its LFS objects.
+        git submodule update --init --recursive Submodules/link
 
     # Essentia (the audio-analysis backend) is built from the submodule tree; the
     # tests link the resulting static libs. Without it, ESSENTIA_ENABLED
