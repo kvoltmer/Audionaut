@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <nlohmann/json.hpp>
 
 #include "Engine/Analysis/AnalysisCache.h"
 
@@ -307,4 +308,67 @@ SCENARIO("AnalysisCache persists to and loads from a project folder",
     }
 
     projectFolder.deleteRecursively();
+}
+
+SCENARIO("AnalysisCache discards data written by another version",
+         "[engine][analysis][cache]")
+{
+    // The cache key covers which file was analysed, not how, so a change to the
+    // segmenters would otherwise leave every existing project on stale results
+    // forever. The version is what forces them to be recomputed.
+    auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
+    auto file = File(testFilesDirectory + "_export_TRK-18.wav");
+    REQUIRE(file.existsAsFile());
+
+    auto folder = File::getSpecialLocation(File::tempDirectory)
+                      .getChildFile("AnalysisCacheVersionTest");
+    folder.deleteRecursively();
+    REQUIRE(folder.createDirectory());
+
+    GIVEN("a sidecar this build wrote")
+    {
+        AnalysisCache cache;
+        cache.put(file, AnalysisType::SBic, { 0.0f, 1.5f, 3.25f });
+        REQUIRE(cache.saveToFolder(folder));
+
+        WHEN("it is loaded back")
+        {
+            AnalysisCache reloaded;
+            REQUIRE(reloaded.loadFromFolder(folder));
+
+            THEN("the results are kept")
+            {
+                REQUIRE(reloaded.size() == 1);
+                REQUIRE(reloaded.get(file, AnalysisType::SBic).has_value());
+            }
+        }
+    }
+
+    GIVEN("a sidecar carrying a different version")
+    {
+        AnalysisCache cache;
+        cache.put(file, AnalysisType::SBic, { 0.0f, 1.5f, 3.25f });
+        REQUIRE(cache.saveToFolder(folder));
+
+        // Rewrite the version as an older build would have left it.
+        auto sidecar = folder.getChildFile(AnalysisCache::fileName);
+        auto contents = nlohmann::json::parse(sidecar.loadFileAsString().toStdString());
+        contents["version"] = AnalysisCache::dataVersion - 1;
+        REQUIRE(sidecar.replaceWithText(contents.dump()));
+
+        WHEN("it is loaded back")
+        {
+            AnalysisCache reloaded;
+
+            THEN("loading still succeeds, but the results are dropped")
+            {
+                // Not an error: the analyses simply run again.
+                REQUIRE(reloaded.loadFromFolder(folder));
+                REQUIRE(reloaded.size() == 0);
+                REQUIRE_FALSE(reloaded.get(file, AnalysisType::SBic).has_value());
+            }
+        }
+    }
+
+    folder.deleteRecursively();
 }
