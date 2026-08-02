@@ -3,6 +3,7 @@
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Analysis/AnalysisProvider.h"
@@ -78,12 +79,12 @@ struct ComparisonFixture {
     ~ComparisonFixture() { engine = nullptr; }
 };
 
-ComparisonFixture makeFixture()
+ComparisonFixture makeFixture(const juce::String& audioFileName)
 {
     ComparisonFixture fixture;
     fixture.engine = AudiumFactory::createAudiumEngine();
 
-    auto inFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/_export_TRK-18.wav"));
+    auto inFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/") + audioFileName);
     REQUIRE(inFile.existsAsFile());
 
     fixture.engine->getAudioTrackContainer()->addAudioFiles({ inFile.getFullPathName() },
@@ -171,6 +172,14 @@ SCENARIO("Auto edit cuts in the same places whichever implementation picks them"
     MessageManagerLock mmLock(Thread::getCurrentThread());
 
     {
+        // Two pieces of very different length, because how far the two
+        // implementations drift apart depends on the material.
+        const auto audioFileName = GENERATE(as<juce::String>{},
+                                            "_export_TRK-18.wav",
+                                            "epy-oh-yeah-streicher-fix.wav");
+
+        INFO("audio: " << audioFileName);
+
         const auto numSegments = 8;
 
         // --- the Python reference -------------------------------------------
@@ -181,7 +190,7 @@ SCENARIO("Auto edit cuts in the same places whichever implementation picks them"
         std::string pythonError;
 
         {
-            auto fixture = makeFixture();
+            auto fixture = makeFixture(audioFileName);
 
             AutoEdit autoEdit(fixture.engine);
 
@@ -204,7 +213,7 @@ SCENARIO("Auto edit cuts in the same places whichever implementation picks them"
         std::vector<double> nativeCuts;
 
         {
-            auto fixture = makeFixture();
+            auto fixture = makeFixture(audioFileName);
 
             // The native path reads the cache and never analyses, so the
             // analyses it merges are computed up front here.
@@ -232,68 +241,57 @@ SCENARIO("Auto edit cuts in the same places whichever implementation picks them"
             nativeCuts = fixture.cutPoints();
         }
 
+        // Both directions: a one-sided nearest-distance grows simply by having
+        // more cuts than the other side, so it cannot be read on its own.
         const auto distances = nearestDistances(nativeCuts, pythonCuts);
+        const auto reverse = nearestDistances(pythonCuts, nativeCuts);
 
         // Reported on every run rather than only on failure: how far apart the
         // two implementations are is the point of this scenario, and there is
         // no threshold worth asserting it against - see the note below.
-        WARN("auto edit comparison over " << pythonCuts.size() << " python / "
+        WARN("auto edit comparison - " << audioFileName << "\n"
+             << "  " << pythonCuts.size() << " python / "
              << nativeCuts.size() << " native cuts\n"
              << "  python: " << describe(pythonCuts) << "\n"
              << "  native: " << describe(nativeCuts) << "\n"
-             << "  median distance from a native cut to the nearest python one: "
-             << median(distances) << " s\n"
+             << "  median native -> nearest python: " << median(distances) << " s\n"
+             << "  median python -> nearest native: " << median(reverse) << " s\n"
              << "  native cuts within 1 s of a python cut: "
              << (int) (agreementWithin(nativeCuts, pythonCuts, 1.0) * 100.0) << " %\n"
              << "  native cuts within 2 s of a python cut: "
              << (int) (agreementWithin(nativeCuts, pythonCuts, 2.0) * 100.0) << " %");
 
-        GIVEN("cut points from both implementations")
-        {
-            THEN("both produced cuts")
-            {
-                REQUIRE_FALSE(pythonCuts.empty());
-                REQUIRE_FALSE(nativeCuts.empty());
-            }
+        // Checked in one pass rather than in separate THEN sections: Catch2
+        // re-runs the scenario body per leaf section, which would run both auto
+        // edits - and the analyses behind them - once per assertion.
+        CHECK_FALSE(pythonCuts.empty());
+        CHECK_FALSE(nativeCuts.empty());
 
-            THEN("both open at the start of the material")
-            {
-                REQUIRE(pythonCuts.front() == Catch::Approx(0.0).margin(0.001));
-                REQUIRE(nativeCuts.front() == Catch::Approx(0.0).margin(0.001));
-            }
+        // Both runs open at the start of the material.
+        CHECK(pythonCuts.front() == Catch::Approx(0.0).margin(0.001));
+        CHECK(nativeCuts.front() == Catch::Approx(0.0).margin(0.001));
 
-            THEN("both honour the requested number of segments")
-            {
-                // A merge yields at most one cut per requested segment, and a
-                // handful is the least that can be called an edit.
-                REQUIRE(pythonCuts.size() <= (size_t) numSegments);
-                REQUIRE(nativeCuts.size() <= (size_t) numSegments);
-                REQUIRE(pythonCuts.size() >= 2);
-                REQUIRE(nativeCuts.size() >= 2);
-            }
+        // A merge yields at most one cut per requested segment, and a handful
+        // is the least that can be called an edit.
+        CHECK(pythonCuts.size() <= (size_t) numSegments);
+        CHECK(nativeCuts.size() <= (size_t) numSegments);
+        CHECK(pythonCuts.size() >= 2);
+        CHECK(nativeCuts.size() >= 2);
 
-            THEN("neither is wildly more fragmented than the other")
-            {
-                const auto ratio = (double) std::max(pythonCuts.size(), nativeCuts.size())
-                                       / (double) std::min(pythonCuts.size(), nativeCuts.size());
+        // Neither should be wildly more fragmented than the other.
+        const auto ratio = (double) std::max(pythonCuts.size(), nativeCuts.size())
+                               / (double) std::min(pythonCuts.size(), nativeCuts.size());
+        INFO("python " << pythonCuts.size() << " cuts, native " << nativeCuts.size());
+        CHECK(ratio <= 3.0);
 
-                INFO("python " << pythonCuts.size() << " cuts, native " << nativeCuts.size());
-                REQUIRE(ratio <= 3.0);
-            }
-
-            // Deliberately not asserted: that the cuts agree in position.
-            //
-            // They do not, and are not built to. The two merge different
-            // analyses - native takes BIC plus Degara beats, the reference adds
-            // librosa's agglomerative segmentation, three beat grids and their
-            // decimations - and even the shared BIC step runs at a different
-            // rate with different parameters on each side. Measured on the test
-            // material the median native cut sits ~4 s from the nearest
-            // reference cut, with only the opening cut common to both. Any
-            // threshold tight enough to be meaningful would fail, and any
-            // threshold loose enough to pass would assert nothing, so the
-            // divergence is reported instead.
-        }
+        // Deliberately not asserted: that the cuts agree in position.
+        //
+        // They do not, and are not built to. The two merge different analyses,
+        // and the distance between them depends heavily on the material - the
+        // median native cut sits several seconds from the nearest reference cut
+        // on short material and far further on long. Any threshold tight enough
+        // to be meaningful would fail, and any threshold loose enough to pass
+        // would assert nothing, so the divergence is reported instead.
     }
 
     DeletedAtShutdown::deleteAll();
