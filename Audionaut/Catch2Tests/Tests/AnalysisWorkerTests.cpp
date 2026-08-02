@@ -1,5 +1,8 @@
+#include <algorithm>
+
 #include <catch2/catch_test_macros.hpp>
 
+#include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Analysis/AnalysisWorker.h"
 
 using namespace audium;
@@ -47,6 +50,39 @@ SCENARIO("AnalysisWorker cancels queued analyses", "[engine][analysis][worker]")
         THEN("the worker is unaffected")
         {
             REQUIRE(worker.getPendingCount() == 0);
+        }
+    }
+}
+
+SCENARIO("AnalysisWorker runs the merge's analyses first", "[engine][analysis][worker]")
+{
+    // Jobs run in the order they are queued, so whatever Auto Edit needs should
+    // be at the front: it can then run without waiting for the analyses only
+    // the waveform display uses.
+    AnalysisWorker worker(nullptr);
+
+    const auto& defaults = worker.getDefaultAnalysisTypes();
+    const auto& mergeTypes = AnalysisProvider::getMergeAnalysisTypes();
+
+    GIVEN("the default analysis order")
+    {
+        THEN("every analysis the merge needs is queued")
+        {
+            for (auto mergeType : mergeTypes)
+                REQUIRE(std::find(defaults.begin(), defaults.end(), mergeType) != defaults.end());
+        }
+
+        THEN("they lead the queue, ahead of the others")
+        {
+            REQUIRE(defaults.size() >= mergeTypes.size());
+
+            for (size_t i = 0; i < mergeTypes.size(); ++i)
+                REQUIRE(defaults[i] == mergeTypes[i]);
+        }
+
+        THEN("the remaining analyses still run afterwards")
+        {
+            REQUIRE(defaults.size() == 4);
         }
     }
 }
