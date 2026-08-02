@@ -99,9 +99,11 @@ public:
      *
      * Combines several analyses of one file into a single set of boundaries,
      * via `EventMerger`. Because a wider kernel spreads more energy, the rarer
-     * structural boundaries dominate the frequent beats and onsets, so the
-     * result lands on beat-aligned segment boundaries rather than on either
-     * analysis alone.
+     * structural boundaries dominate the frequent beats, so the result lands on
+     * beat-aligned segment boundaries rather than on either analysis alone.
+     *
+     * getMergeAnalysisTypes() is the authority on which analyses take part;
+     * onsets did once and no longer do.
      */
     ///@{
     /** @brief The analyses the merge is built from, in stream order. */
