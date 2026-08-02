@@ -24,6 +24,10 @@ class ResourceGroup;
 struct AutoEditConfig {
     /**
      * @brief Where the segment boundaries come from.
+     *
+     * The dialog does not offer this: it always runs the built-in analysis.
+     * Python is selectable from tests, which is where the two implementations
+     * are compared - see AutoEditComparisonTests.
      */
     enum class Source {
         /// AnalysisProvider + EventMerger, merged from the cached analyses.

@@ -41,12 +41,6 @@ private:
     std::unique_ptr<juce::ComboBox> selectedPlaylistItem;
     std::unique_ptr<juce::Label> selectedPlaylistItemLabel;
 
-    // Which implementation picks the cut points. Native needs nothing beyond
-    // the analyses already cached; Python shells out to gaborgandalf and is
-    // kept so the two can be compared on the same audio.
-    std::unique_ptr<juce::ComboBox> selectedSource;
-    std::unique_ptr<juce::Label> selectedSourceLabel;
-
     
     std::unique_ptr<juce::Slider> numSegments, segmentMin, segmentMax;
     std::unique_ptr<juce::Label> numSegmentsLabel, segmentMinLabel, segmentMaxLabel;
