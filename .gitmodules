@@ -16,3 +16,6 @@
 [submodule "Submodules/essentia"]
 	path = Submodules/essentia
 	url = git@github.com:MTG/essentia.git
+[submodule "Submodules/gaborgandalf"]
+	path = Submodules/gaborgandalf
+	url = git@github.com:Audionatomist/gaborgandalf.git

@@ -26,7 +26,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        submodules: 'recursive'
+        submodules: false
+
+    # Submodules are initialised explicitly rather than recursively: the
+    # gaborgandalf checkout is private, so a recursive clone would fail here on
+    # the workflow token, which is scoped to this repository alone. It is only
+    # needed by AutoEdit's optional Python path, which CI does not exercise.
+    - name: Check out the submodules CI needs
+      run: |
+        # actions/checkout rewrites .gitmodules' SSH URLs to HTTPS only when it
+        # handles submodules itself, so it is done explicitly here.
+        git config --global url."https://github.com/".insteadOf "git@github.com:"
+        git submodule update --init --recursive \
+          Submodules/JUCE \
+          Submodules/Catch2 \
+          Submodules/json \
+          Submodules/link \
+          Submodules/farbot \
+          Submodules/essentia
 
     # Essentia (the audio-analysis backend) is built from the submodule tree; the
     # tests link the resulting static libs. Without it, ESSENTIA_ENABLED

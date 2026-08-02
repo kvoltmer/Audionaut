@@ -83,6 +83,56 @@ EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItem
 }
 
 /**
+ * Locates the gaborgandalf checkout the autoedit script lives in.
+ *
+ * It ships as the Submodules/gaborgandalf submodule, so the repository is
+ * found by walking up from the running binary until that directory appears -
+ * which works for both the app and the test binary, since both are built
+ * inside the checkout. A developer copy elsewhere is still honoured as a
+ * fallback, and AUDIONAUT_GABORGANDALF overrides the search.
+ *
+ * @return The checkout directory, or an invalid File when none is found.
+ */
+juce::File findGaborgandalfDirectory()
+{
+    const auto isCheckout = [] (const juce::File& directory)
+    {
+        return directory.getChildFile("gaborgandalf/automain.py").existsAsFile();
+    };
+
+    if (auto* override_ = std::getenv("AUDIONAUT_GABORGANDALF"))
+    {
+        const auto directory = juce::File(juce::String(override_));
+
+        if (isCheckout(directory))
+            return directory;
+    }
+
+    // Walk up from the executable looking for the submodule. The binary sits
+    // several levels inside the checkout in every build configuration, so the
+    // depth is not worth pinning down exactly.
+    auto directory = juce::File::getSpecialLocation(juce::File::currentExecutableFile);
+
+    while (directory.getParentDirectory() != directory)
+    {
+        directory = directory.getParentDirectory();
+
+        const auto submodule = directory.getChildFile("Submodules/gaborgandalf");
+
+        if (isCheckout(submodule))
+            return submodule;
+    }
+
+    const auto developerCopy = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                                   .getChildFile("dev/gaborgandalf");
+
+    if (isCheckout(developerCopy))
+        return developerCopy;
+
+    return {};
+}
+
+/**
  * Finds a Python interpreter that can actually run gaborgandalf.
  *
  * A plain `python3` is no use: launched from Finder the app inherits a minimal
@@ -293,6 +343,17 @@ bool AutoEdit::invokePython(const juce::File& audioFile,
                             AutoEditConfig &config,
                             std::function<void(std::string)> callback)
 {
+    const auto gaborgandalf = findGaborgandalfDirectory();
+
+    if (! gaborgandalf.isDirectory())
+    {
+        NullCheckedInvocation::invoke(callback,
+                                      "The gaborgandalf checkout could not be found. Run "
+                                      "'git submodule update --init Submodules/gaborgandalf', or point "
+                                      "AUDIONAUT_GABORGANDALF at a copy of it.");
+        return false;
+    }
+
     const auto python = findPythonInterpreter();
 
     if (python.empty())
@@ -304,6 +365,7 @@ bool AutoEdit::invokePython(const juce::File& audioFile,
         return false;
     }
 
+    const auto gaborgandalfPath = gaborgandalf.getFullPathName().toStdString();
     const auto audioFilePath = audioFile.getFullPathName().toStdString();
 
     // Build the command line string
@@ -314,10 +376,10 @@ bool AutoEdit::invokePython(const juce::File& audioFile,
     // not the parent - so `import gaborgandalf` needs the checkout added here.
     // Launched from Finder the app has no PYTHONPATH at all, so relying on the
     // shell's would work only when started from a terminal.
-    commandString += "PYTHONPATH=\"$HOME/dev/gaborgandalf${PYTHONPATH:+:$PYTHONPATH}\" ";
+    commandString += "PYTHONPATH=\"" + gaborgandalfPath + "${PYTHONPATH:+:$PYTHONPATH}\" ";
 
     // --verbose
-    commandString += "\"" + python + "\" $HOME/dev/gaborgandalf/gaborgandalf/automain.py autoedit";
+    commandString += "\"" + python + "\" \"" + gaborgandalfPath + "/gaborgandalf/automain.py\" autoedit";
     commandString += " --duration " + std::to_string(config.duration);
     commandString += " --numsegs " + std::to_string(config.numSegments);
     commandString += " --filenames " + audioFilePath;
