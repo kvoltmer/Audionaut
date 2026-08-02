@@ -3,6 +3,7 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -79,6 +80,50 @@ EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItem
     }
 
     return target;
+}
+
+/**
+ * Finds a Python interpreter that can actually run gaborgandalf.
+ *
+ * A plain `python3` is no use: launched from Finder the app inherits a minimal
+ * PATH and resolves it to Apple's /usr/bin/python3, and from a shell it finds
+ * whatever Homebrew has installed - neither carrying essentia and librosa. So
+ * candidates are probed in order and the first one able to import the modules
+ * the script needs wins.
+ *
+ * Set AUDIONAUT_PYTHON to override the search entirely.
+ *
+ * @return The interpreter path, or an empty string when none can run the script.
+ */
+std::string findPythonInterpreter()
+{
+    std::vector<std::string> candidates;
+
+    if (auto* override_ = std::getenv("AUDIONAUT_PYTHON"))
+        candidates.emplace_back(override_);
+
+    const auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                          .getFullPathName().toStdString();
+
+    candidates.push_back(home + "/.venvs/gaborgandalf/bin/python3");
+    candidates.push_back("/opt/homebrew/bin/python3");
+    candidates.push_back("/usr/local/bin/python3");
+    // Last resort: whatever PATH offers, which is what this used to assume.
+    candidates.push_back("python3");
+
+    for (const auto& candidate : candidates)
+    {
+        // Quiet on both streams: this runs several times and a failing probe is
+        // expected, not an error worth printing.
+        const auto probe = "\"" + candidate
+                               + "\" -c \"import essentia, librosa, scipy.signal; "
+                                 "assert hasattr(scipy.signal, 'ricker')\" >/dev/null 2>&1";
+
+        if (std::system(probe.c_str()) == 0)
+            return candidate;
+    }
+
+    return {};
 }
 
 // Names the missing analyses so the user is told what to wait for rather than
@@ -248,21 +293,31 @@ bool AutoEdit::invokePython(const juce::File& audioFile,
                             AutoEditConfig &config,
                             std::function<void(std::string)> callback)
 {
-    // NOTE: Make sure PATH and PYTHONPATH is set correctly.
-    // With XCode you must edit the scheme and set the environment variables
-    // double check with:
-    // system("env");
+    const auto python = findPythonInterpreter();
 
-    // Path to python binary (/opt/homebrew/bin/)
-    std::string python = "python3";
+    if (python.empty())
+    {
+        NullCheckedInvocation::invoke(callback,
+                                      "No Python interpreter with gaborgandalf's dependencies was found. "
+                                      "Install them into ~/.venvs/gaborgandalf, or point AUDIONAUT_PYTHON at "
+                                      "an interpreter that has essentia, librosa and scipy < 1.15.");
+        return false;
+    }
 
     const auto audioFilePath = audioFile.getFullPathName().toStdString();
 
     // Build the command line string
     std::string commandString;
     commandString += "cd " + getTempDirectory().toStdString() + ";";
+
+    // automain.py is run by path, which puts its own directory on sys.path but
+    // not the parent - so `import gaborgandalf` needs the checkout added here.
+    // Launched from Finder the app has no PYTHONPATH at all, so relying on the
+    // shell's would work only when started from a terminal.
+    commandString += "PYTHONPATH=\"$HOME/dev/gaborgandalf${PYTHONPATH:+:$PYTHONPATH}\" ";
+
     // --verbose
-    commandString += python + " $HOME/dev/gaborgandalf/gaborgandalf/automain.py autoedit";
+    commandString += "\"" + python + "\" $HOME/dev/gaborgandalf/gaborgandalf/automain.py autoedit";
     commandString += " --duration " + std::to_string(config.duration);
     commandString += " --numsegs " + std::to_string(config.numSegments);
     commandString += " --filenames " + audioFilePath;
