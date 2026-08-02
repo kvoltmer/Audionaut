@@ -1,5 +1,6 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Factory/AudioTrackFactory.h"
@@ -453,6 +454,79 @@ SCENARIO("AutoEdit cuts only what the selected clip covers", "[engine][autoedit]
 
                 REQUIRE(created.front().getStart() == Catch::Approx(clip.getStart()).margin(0.001));
                 REQUIRE(created.back().getEnd() == Catch::Approx(clip.getEnd()).margin(0.001));
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("AutoEdit's first segment begins where the clip does", "[engine][autoedit]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture();
+        cacheMergeAnalyses(fixture);
+
+        // A clip that starts partway into its audio: the edit covers what the
+        // clip covers, so the first segment starts where it does and the last
+        // ends where it ends.
+        const juce::Range<double> clip { 3.0, 15.0 };
+
+        {
+            auto items = fixture.track()->getPlayListContainer()->getPlayListItems();
+            REQUIRE_FALSE(items.empty());
+            items[0]->getRegion()->setRegionData(clip, audium::seconds);
+        }
+
+        AutoEdit autoEdit(fixture.engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+        config.numSegments = 8;
+        // -1 is what the dialog sends when its clip list is empty, which it is
+        // for clips under a second. The clip's start still has to be honoured.
+        config.playlistItemId = GENERATE(0, -1);
+
+        std::string reportedError;
+
+        WHEN("the clip is auto edited")
+        {
+            const auto succeeded = autoEdit.invokeAutoEdit(
+                config, [&reportedError](std::string e) { reportedError = e; });
+
+            INFO("error was: " << reportedError);
+            REQUIRE(succeeded);
+
+            std::vector<juce::Range<double>> created;
+
+            for (const auto& region : fixture.regions())
+                if (region->getName().startsWith("seg-"))
+                    created.push_back(region->getRegionData(audium::seconds));
+
+            std::sort(created.begin(), created.end(),
+                      [](const auto& a, const auto& b) { return a.getStart() < b.getStart(); });
+
+            REQUIRE_FALSE(created.empty());
+
+            THEN("the first segment starts at the clip's start")
+            {
+                REQUIRE(created.front().getStart() == Catch::Approx(3.0).margin(0.001));
+            }
+
+            THEN("the last segment ends at the clip's end")
+            {
+                REQUIRE(created.back().getEnd() == Catch::Approx(15.0).margin(0.001));
+            }
+
+            THEN("they tile the clip without gaps")
+            {
+                for (size_t i = 1; i < created.size(); ++i)
+                    REQUIRE(created[i].getStart()
+                                == Catch::Approx(created[i - 1].getEnd()).margin(0.001));
             }
         }
     }

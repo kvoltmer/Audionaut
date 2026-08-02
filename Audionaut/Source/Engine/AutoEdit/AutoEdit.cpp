@@ -62,7 +62,17 @@ EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItem
         return target;
 
     if (auto playListContainer = track->getPlayListContainer())
-        if (auto item = playListContainer->getPlayListItem(playListItemId))
+    {
+        auto item = playListContainer->getPlayListItem(playListItemId);
+
+        // The dialog sends -1 when its clip list is empty - it hides clips
+        // under a second - and an id that no longer resolves is possible too.
+        // Editing the whole file in that case would silently ignore where the
+        // clip starts, so the track's first clip is used instead.
+        if (item == nullptr)
+            item = playListContainer->getPlayListItem(0);
+
+        if (item != nullptr)
             if (auto region = item->getRegion())
             {
                 target.resourceGroup = region->getResourceGroup();
@@ -71,6 +81,7 @@ EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItem
                 // is being edited.
                 target.extent = region->getRegionData(audium::seconds);
             }
+    }
 
     // No playlist item named, or one that resolves to nothing: fall back to the
     // track's first group, which is where a single-file track keeps its audio.
