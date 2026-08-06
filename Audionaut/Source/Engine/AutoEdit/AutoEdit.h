@@ -86,6 +86,21 @@ public:
                         std::function<void(std::string)> callback);
 
     /**
+     * @brief Publishes the boundaries an invokeAutoEdit() with this config
+     *        would cut at, as a merge preview on the AnalysisProvider.
+     *
+     * Views overlay the preview on the clips of the previewed file (see
+     * SegmentationView). When the target cannot be resolved or its analyses
+     * are not cached yet, any active preview is cleared instead.
+     *
+     * Native source only - the Python path computes its boundaries in a
+     * subprocess at invoke time, so there is nothing to preview.
+     *
+     * @return True when a preview was published.
+     */
+    bool previewAutoEdit(AutoEditConfig &config);
+
+    /**
      * @brief Runs the gaborgandalf subprocess over @p audioFile and turns the
      *        segment file it writes into regions.
      */

@@ -42,6 +42,9 @@ struct EditTarget {
     // the whole file is being used.
     int playListItemIndex = -1;
 
+    // Id of that clip (same numbering the dialog uses), or -1 when none.
+    int playListItemId = -1;
+
     bool isValid() const
     {
         return track != nullptr && resourceGroup != nullptr && resource != nullptr;
@@ -85,6 +88,7 @@ EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItem
                 // is being edited.
                 target.extent = region->getRegionData(audium::seconds);
                 target.playListItemIndex = playListContainer->getPlayListItemIndex(item.get());
+                target.playListItemId = item->getId();
             }
     }
 
@@ -287,6 +291,47 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
         return false;
     }
 
+    return true;
+}
+
+bool AutoEdit::previewAutoEdit(AutoEditConfig &config)
+{
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+
+    auto analysisProvider = audioTrackContainer->getAnalysisProvider();
+
+    if (analysisProvider == nullptr)
+        return false;
+
+    auto track = audioTrackContainer->getAudioTrack(config.trackId);
+    const auto target = resolveEditTarget(track, config.playlistItemId);
+
+    if (! target.isValid() || config.source != AutoEditConfig::Source::Native)
+    {
+        analysisProvider->clearMergePreview();
+        return false;
+    }
+
+    const auto audioFile = juce::File(target.resource->getFullPathName());
+    const auto duration = target.resource->getFileLength(audium::seconds);
+
+    if (! audioFile.existsAsFile()
+        || duration <= 0.0
+        || ! analysisProvider->findMissingMergeAnalyses(audioFile).empty())
+    {
+        analysisProvider->clearMergePreview();
+        return false;
+    }
+
+    EventMerger::Parameters params;
+    params.numSegments = config.numSegments;
+
+    auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
+
+    analysisProvider->setMergePreview(audioFile.getFullPathName().toStdString(),
+                                      track->getId(),
+                                      target.playListItemId,
+                                      std::move(result.boundaries));
     return true;
 }
 

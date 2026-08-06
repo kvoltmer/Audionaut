@@ -9,64 +9,63 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Engine/AutoEdit/AutoEdit.h"
-#include "Interface/Components/MainComponent.h"
 #include "Interface/Dialogs/AutoEditComponent.h"
+#include "Interface/Dialogs/FloatingToolWindow.h"
+#include "Util/Preferences.h"
 
 using namespace juce;
 
 class AutoEditDialog
 {
-    
+
 public:
-    AutoEditDialog(std::shared_ptr<audium::AudiumEngine> audiumEngine_)
+    AutoEditDialog(std::shared_ptr<audium::AudiumEngine> audiumEngine_) :
+        audiumEngine(audiumEngine_)
     {
-        autoEditComponent = std::make_unique<AutoEditComponent>(audiumEngine_);
     }
-    
-    void invoke(std::shared_ptr<audium::AudiumEngine> engine, std::shared_ptr<MainComponent> component)
-    {
-        invokeInternal(engine, component);
-    }
-    
-private:
-    
-    static String getClassNameFieldName()  { return "Auto Edit Name"; }
-    
-    void invokeInternal(std::shared_ptr<audium::AudiumEngine> engine,
-                        std::shared_ptr<MainComponent> component)
+
+    void invoke(std::shared_ptr<audium::AudiumEngine> engine)
     {
         audiumEngine = engine;
-        mainComponent = component;
-        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Auto Edit"), "",
-                                                          MessageBoxIconType::NoIcon, mainComponent.get());
-        asyncAlertWindow->setMessage("Analyze and automatically edit the selected audio clip.");
-        asyncAlertWindow->addCustomComponent(autoEditComponent.get());
-        autoEditComponent->update();
-        asyncAlertWindow->addButton (TRANS ("Apply"),  1, KeyPress (KeyPress::returnKey));
-        asyncAlertWindow->addButton (TRANS ("Cancel"), 0, KeyPress (KeyPress::escapeKey));
 
-        auto resultCallback = [safeThis = WeakReference<AutoEditDialog> { this }] (int result)
-        {
-            if (safeThis == nullptr)
-                return;
+        if (window != nullptr) {
+            autoEditComponent->update();
+            window->toFront (true);
+            return;
+        }
 
-            auto& aw = *(safeThis->asyncAlertWindow);
+        // The window owns the component; both live until the user closes the
+        // window, which resets `window` again.
+        autoEditComponent = new AutoEditComponent (audiumEngine);
+        autoEditComponent->onApply = [this]() {
+            apply();
 
-            aw.exitModalState (result);
-            aw.setVisible (false);
-
-            if (result == 0)
-                return;
-        
-            safeThis->apply();
+            // The window owns the button whose click invoked this callback,
+            // so it must not be destroyed before the click has finished.
+            MessageManager::callAsync ([safeThis = WeakReference<AutoEditDialog> { this }]() {
+                if (safeThis != nullptr)
+                    safeThis->close();
+            });
         };
+        auto w = autoEditComponent->getWidth();
+        auto h = autoEditComponent->getHeight();
+        new FloatingToolWindow (autoEditComponent->getTitle().toStdString(),
+                                audium::PreferenceKeys::autoEditWindowState,
+                                autoEditComponent, window, false,
+                                w, h, w, h, w, h);
 
-        asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);
-        auto editor = asyncAlertWindow->getTextEditor(getClassNameFieldName());
-        if (editor != nullptr)
-            editor->toFront(true);
+        // Preview the pending edit's cuts in the arrangement.
+        autoEditComponent->update();
     }
-    
+
+private:
+
+    void close()
+    {
+        window.reset();
+        autoEditComponent = nullptr;
+    }
+
     void apply()
     {
         auto autoEdit = std::make_unique<audium::AutoEdit>(audiumEngine);
@@ -80,12 +79,12 @@ private:
 #endif
         });
     }
-    
-    std::unique_ptr<AlertWindow> asyncAlertWindow;
-    std::unique_ptr<AutoEditComponent> autoEditComponent;
+
+    AutoEditComponent* autoEditComponent = nullptr;
+    std::unique_ptr<Component> window;
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
-    std::shared_ptr<MainComponent> mainComponent;
-    
+
     JUCE_DECLARE_WEAK_REFERENCEABLE (AutoEditDialog)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AutoEditDialog)
 };

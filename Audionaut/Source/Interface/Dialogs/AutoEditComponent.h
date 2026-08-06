@@ -10,38 +10,50 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/AutoEdit/AutoEdit.h"
 
-class AutoEditComponent  : public juce::Component, public juce::ComboBox::Listener
+class AutoEditComponent  : public juce::Component,
+                           public juce::ChangeListener
 {
 public:
     AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine);
-    ~AutoEditComponent() override = default;
+    ~AutoEditComponent() override;
 
 
     audium::AutoEditConfig& getAutoEditConfig();
-    
+
     void resized() override;
 
+    // Refreshes the hosting window's title and the merge preview from the
+    // current selection.
     void update();
-    
-    void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override;
-    
+
+    // The window title: "Auto Edit <track name> : <playlist item name>".
+    juce::String getTitle() const;
+
+    // Follows selection changes made elsewhere in the application.
+    void changeListenerCallback (juce::ChangeBroadcaster* source) override;
+
+    // Invoked when the user presses the Apply button.
+    std::function<void()> onApply;
+
 private:
 
     const audium::PlayListItem* getSelectedPlaylistItem() const;
-    void updateSelectedTrack();
-    void updateSelectedPlaylistItem();
+
+    // The selected playlist item, or the first sufficiently long item on the
+    // default track when no playlist item is selected.
+    const audium::PlayListItem* getTargetPlaylistItem() const;
+
+    // Publishes the boundaries the current config would cut at, so the
+    // arrangement previews them (see AutoEdit::previewAutoEdit).
+    void updatePreview();
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
-    
-    audium::AutoEditConfig config;
-    
-    std::unique_ptr<juce::ComboBox> selectedTrack;
-    std::unique_ptr<juce::Label> selectedTrackLabel;
-    
-    std::unique_ptr<juce::ComboBox> selectedPlaylistItem;
-    std::unique_ptr<juce::Label> selectedPlaylistItemLabel;
 
-    
+    audium::AutoEditConfig config;
+
+    std::unique_ptr<juce::Label> messageLabel;
+    std::unique_ptr<juce::TextButton> applyButton;
+
     // Whether the edited clip is replaced in the arrangement by its segments.
     std::unique_ptr<juce::ToggleButton> replacePlayListItem;
 

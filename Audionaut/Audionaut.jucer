@@ -472,6 +472,10 @@
                 file="Source/Interface/Views/SegmentationView.cpp"/>
           <FILE id="segViH" name="SegmentationView.h" compile="0" resource="0"
                 file="Source/Interface/Views/SegmentationView.h"/>
+          <FILE id="aePvwC" name="AutoEditPreviewView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AutoEditPreviewView.cpp"/>
+          <FILE id="aePvwH" name="AutoEditPreviewView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AutoEditPreviewView.h"/>
           <FILE id="hpKHS1" name="GridView.h" compile="0" resource="0" file="Source/Interface/Views/GridView.h"/>
           <FILE id="Fx8wUZ" name="ArrangementOverview.h" compile="0" resource="0"
                 file="Source/Interface/Views/ArrangementOverview.h"/>

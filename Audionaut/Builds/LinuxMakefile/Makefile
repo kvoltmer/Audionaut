@@ -154,6 +154,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o \
   $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o \
   $(JUCE_OBJDIR)/SegmentationView_81438847.o \
+  $(JUCE_OBJDIR)/AutoEditPreviewView_ccfab99e.o \
   $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o \
   $(JUCE_OBJDIR)/AudioClipView_1a258175.o \
   $(JUCE_OBJDIR)/BinaryData_ce4232d4.o \
@@ -598,6 +599,11 @@ $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o: ../../Source/Interface/Views/FadeInOutV
 $(JUCE_OBJDIR)/SegmentationView_81438847.o: ../../Source/Interface/Views/SegmentationView.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling SegmentationView.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AutoEditPreviewView_ccfab99e.o: ../../Source/Interface/Views/AutoEditPreviewView.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AutoEditPreviewView.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o: ../../Source/Interface/Views/WaveFormViewBase.cpp

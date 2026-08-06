@@ -18,6 +18,7 @@ class ZoomHandler;
 class RegionSelector;
 class DraggerControl;
 class FadeInOutControl;
+class AutoEditPreviewView;
 
 //==============================================================================
 /*
@@ -60,17 +61,26 @@ public:
     }
     
 private:
+    // Feeds the merge preview of a pending auto edit to the overlay
+    // (AnalysisProvider::getMergePreview for this clip's audio file).
+    void refreshAutoEditPreview();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<audium::AudioTrack>     audioTrack;
     std::shared_ptr<audium::PlayListItem>   playListItem;
     std::shared_ptr<RegionSelector> regionSelector;
-        
+
     std::unique_ptr<audium::ListBox> playListItemListBox;
     std::unique_ptr<PlayListItemListBoxModel> playListItemListBoxModel;
-    
-        
+
+
     std::unique_ptr<FadeInOutControl> fadeInControl;
     std::unique_ptr<FadeInOutControl> fadeOutControl;
+
+    // Mouse-transparent container stacked over the whole clip (header and all
+    // channel rows) hosting overlays that must draw above everything else.
+    std::unique_ptr<juce::Component> overlayContainer;
+    std::unique_ptr<AutoEditPreviewView> autoEditPreviewView;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)
 };

@@ -156,6 +156,46 @@ public:
                                             float durationSeconds) const;
     ///@}
 
+    /** @name Merge preview
+     *
+     * Transient boundaries a pending auto edit would cut at, published so
+     * views can overlay them (see AutoEditPreviewView) while the Auto Edit
+     * window is open. Not part of the cache: nothing is persisted. The
+     * preview is keyed by file path plus the target clip's identity, so it
+     * follows the clip the edit would apply to rather than showing on every
+     * clip cut from the same file. Message thread only.
+     */
+    ///@{
+    /**
+     * @brief Publishes preview boundaries and broadcasts a change.
+     * @param audioFilePath  The analysed file the boundaries describe.
+     * @param trackId        The target track's id.
+     * @param playlistItemId The target clip's id, or -1 when the edit has no
+     *                       clip and applies to the whole file - the preview
+     *                       then shows on every clip of the file.
+     * @param boundaries     The merged boundary times, in seconds.
+     */
+    void setMergePreview(const std::string& audioFilePath,
+                         int trackId,
+                         int playlistItemId,
+                         std::vector<float> boundaries);
+
+    /** @brief Removes the preview (broadcasting only if one was shown). */
+    void clearMergePreview();
+
+    /**
+     * @brief The preview boundaries for a clip.
+     * @param audioFile      The clip's audio file.
+     * @param trackId        The id of the track the clip sits on.
+     * @param playlistItemId The clip's id.
+     * @return The boundaries, or empty when no preview is active, it belongs
+     *         to a different file, or it targets a different clip.
+     */
+    std::vector<float> getMergePreview(const juce::File& audioFile,
+                                       int trackId,
+                                       int playlistItemId) const;
+    ///@}
+
 private:
     // Analyses every audio resource of the track for the given type, delegating
     // each file to analyzeFile().
@@ -180,6 +220,12 @@ private:
     // Serialises segmenter access so a background (AnalysisWorker) analysis and
     // a UI-triggered one never run the same Essentia algorithms concurrently.
     std::mutex segmenterMutex;
+
+    // Active merge preview (see setMergePreview). Message thread only.
+    std::string mergePreviewFilePath;
+    int mergePreviewTrackId = -1;
+    int mergePreviewPlaylistItemId = -1;
+    std::vector<float> mergePreviewBoundaries;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AnalysisProvider)
 };

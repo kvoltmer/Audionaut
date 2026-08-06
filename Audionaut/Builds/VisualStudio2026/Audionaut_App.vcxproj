@@ -237,6 +237,7 @@
     <ClCompile Include="..\..\Source\Interface\Controls\AudioTrackListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\SegmentationView.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Views\AutoEditPreviewView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\AudioClipView.cpp"/>
     <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_Analytics.cpp">
@@ -3237,6 +3238,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\AudioTrackListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\SegmentationView.h"/>
+    <ClInclude Include="..\..\Source\Interface\Views\AutoEditPreviewView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\ArrangementOverview.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\WaveFormViewBase.h"/>

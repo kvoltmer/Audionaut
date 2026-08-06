@@ -291,7 +291,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
         case CommandIDs::autoEdit:
             if (autoEditDialog == nullptr)
                 autoEditDialog = std::make_unique<AutoEditDialog>(getEngine());
-            autoEditDialog->invoke (getEngine(), mainComponent);
+            autoEditDialog->invoke (getEngine());
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)

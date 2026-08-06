@@ -13,6 +13,11 @@
 #include "Interface/Controls/LevelMeter.h"
 #include "Interface/Controls/FadeInOutControl.h"
 #include "Interface/Views/AudioClipView.h"
+#include "Interface/Views/AutoEditPreviewView.h"
+#include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Group/ResourceGroup.h"
+#include "Engine/Region/AudioRegion.h"
+#include "Engine/Resource/AudioResource.h"
 
 PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine,
                                              std::shared_ptr<audium::AudioTrack> audioTrack,
@@ -64,10 +69,28 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngin
                                                        regionSelector);
     addAndMakeVisible(fadeOutControl.get());
     fadeOutControl->setVisible(false);
+
+    // OVERLAY CONTAINER (topmost, mouse-transparent)
+    overlayContainer = std::make_unique<juce::Component>("PlayListItemOverlay");
+    overlayContainer->setInterceptsMouseClicks(false, false);
+    addAndMakeVisible(overlayContainer.get());
+
+    // AUTO EDIT PREVIEW (pending auto edit's cuts, spanning the whole clip)
+    autoEditPreviewView = std::make_unique<AutoEditPreviewView>();
+    autoEditPreviewView->setZoomHandler(zoomHandler);
+    autoEditPreviewView->setInterceptsMouseClicks(false, false);
+    overlayContainer->addAndMakeVisible(autoEditPreviewView.get());
+
+    // Follow the preview published/cleared by the Auto Edit window.
+    if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
+        analysisProvider->addChangeListener(this);
 }
 
 PlayListItemComponent::~PlayListItemComponent()
 {
+    if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
+        analysisProvider->removeChangeListener(this);
+
     playListItemListBox->setModel(nullptr);
 }
 
@@ -87,6 +110,12 @@ void PlayListItemComponent::paint (juce::Graphics& g)
 void PlayListItemComponent::resized()
 {
     playListItemListBox->setBounds(getLocalBounds());
+
+    // The overlay starts below the dragger header, covering the channel rows.
+    overlayContainer->setBounds(getLocalBounds().withTrimmedTop(DraggerControl::draggerHeight));
+    overlayContainer->toFront(false);
+    autoEditPreviewView->setBounds(overlayContainer->getLocalBounds());
+
     regionSelector->updateFromEngine();
 
     updateUI(playListItem);
@@ -94,6 +123,15 @@ void PlayListItemComponent::resized()
 
 void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)
 {
+    auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider();
+
+    if (analysisProvider != nullptr && source == analysisProvider.get())
+    {
+        refreshAutoEditPreview();
+        return;
+    }
+
+    // The dragger control broadcast a change.
     playListItemListBox->updateContent();
 }
 
@@ -163,6 +201,37 @@ void PlayListItemComponent::refreshAnalysisDisplay()
     for (int row = 0; row < playListItemListBoxModel->getNumRows(); ++row)
         if (auto* clipView = dynamic_cast<AudioClipView*>(playListItemListBox->getComponentForRowNumber(row)))
             clipView->refreshSegments();
+
+    refreshAutoEditPreview();
+}
+
+void PlayListItemComponent::refreshAutoEditPreview()
+{
+    if (playListItem == nullptr)
+        return;
+
+    auto region = playListItem->getRegion();
+    if (region == nullptr)
+        return;
+
+    auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider();
+    if (analysisProvider == nullptr)
+        return;
+
+    // The preview is keyed by the analysed file - the region's resource - and
+    // by the target clip's identity, so it follows the selection.
+    std::vector<float> preview;
+    if (auto resourceGroup = region->getResourceGroup())
+    {
+        auto resources = resourceGroup->getAudioResources();
+        if (! resources.empty())
+            preview = analysisProvider->getMergePreview(juce::File(resources[0]->getFullPathName()),
+                                                        audioTrack->getId(),
+                                                        playListItem->getId());
+    }
+
+    autoEditPreviewView->setPreviewSegments(std::move(preview),
+                                            region->getRegionData(audium::seconds).getStart());
 }
 
 void PlayListItemComponent::mouseEnter (const MouseEvent& e)

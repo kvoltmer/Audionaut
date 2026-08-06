@@ -1075,6 +1075,9 @@
     <ClCompile Include="..\..\Source\Interface\Views\SegmentationView.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Views\AutoEditPreviewView.cpp">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
@@ -4534,6 +4537,9 @@
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\SegmentationView.h">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Views\AutoEditPreviewView.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h">
