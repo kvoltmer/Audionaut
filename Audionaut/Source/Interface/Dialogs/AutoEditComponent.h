@@ -47,6 +47,12 @@ private:
     // arrangement previews them (see AutoEdit::previewAutoEdit).
     void updatePreview();
 
+    // Mirrors the number of segments the pending edit would cut inside the
+    // clip into the numSegments slider, so the abstract measure control
+    // visibly drives the concrete one. Does nothing while the parameter is
+    // off.
+    void updateDerivedNumSegments();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
 
     audium::AutoEditConfig config;
@@ -56,6 +62,12 @@ private:
 
     // Whether the edited clip is replaced in the arrangement by its segments.
     std::unique_ptr<juce::ToggleButton> replacePlayListItem;
+
+    // The abstract parameter: target segment length in musical measures. It
+    // drives the concrete sliders below; adjusting numSegments directly turns
+    // it off again (see AutoEditConfig::segmentMeasures).
+    std::unique_ptr<juce::Slider> segmentMeasures;
+    std::unique_ptr<juce::Label> segmentMeasuresLabel;
 
     std::unique_ptr<juce::Slider> numSegments, segmentMin, segmentMax;
     std::unique_ptr<juce::Label> numSegmentsLabel, segmentMinLabel, segmentMaxLabel;

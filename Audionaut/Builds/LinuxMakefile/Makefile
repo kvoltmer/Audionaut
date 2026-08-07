@@ -93,6 +93,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o \
   $(JUCE_OBJDIR)/DspClip_7236184f.o \
   $(JUCE_OBJDIR)/AutoEdit_95866c4b.o \
+  $(JUCE_OBJDIR)/AutoEditParameter_df9b8e8.o \
   $(JUCE_OBJDIR)/AudioChannel_b77c3b27.o \
   $(JUCE_OBJDIR)/AudiumFactory_21005c30.o \
   $(JUCE_OBJDIR)/AudioTrack_cd929473.o \
@@ -294,6 +295,11 @@ $(JUCE_OBJDIR)/DspClip_7236184f.o: ../../Source/Engine/Core/DspClip.cpp
 $(JUCE_OBJDIR)/AutoEdit_95866c4b.o: ../../Source/Engine/AutoEdit/AutoEdit.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AutoEdit.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AutoEditParameter_df9b8e8.o: ../../Source/Engine/AutoEdit/AutoEditParameter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AutoEditParameter.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudioChannel_b77c3b27.o: ../../Source/Engine/Channel/AudioChannel.cpp

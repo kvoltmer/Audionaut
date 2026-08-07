@@ -176,6 +176,7 @@
     <ClCompile Include="..\..\Source\Engine\Selection\SelectionManager.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Core\DspClip.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEdit.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Channel\AudioChannel.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Factory\AudiumFactory.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrack.cpp"/>
@@ -3134,6 +3135,7 @@
     <ClInclude Include="..\..\Source\Engine\Streamable.h"/>
     <ClInclude Include="..\..\Source\Engine\TimeContext.h"/>
     <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEdit.h"/>
+    <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.h"/>
     <ClInclude Include="..\..\Source\Engine\Channel\AudioChannel.h"/>
     <ClInclude Include="..\..\Source\Engine\Channel\AudioChannelData.h"/>
     <ClInclude Include="..\..\Source\Engine\Factory\AudioTrackFactory.h"/>

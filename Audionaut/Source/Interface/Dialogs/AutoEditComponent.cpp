@@ -23,6 +23,27 @@ AutoEditComponent::AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audi
     addAndMakeVisible (replacePlayListItem.get());
     replacePlayListItem->setToggleState (true, juce::dontSendNotification);
 
+    // The abstract parameter: segment length in musical measures. It drives
+    // the concrete numSegments slider below; 0 turns it off.
+    segmentMeasures = std::make_unique<juce::Slider>("Segment Measures Slider Font 13");
+    addAndMakeVisible (segmentMeasures.get());
+    AudiumLookAndFeel::configureSlider(segmentMeasures.get());
+    segmentMeasures->setColour (juce::Slider::backgroundColourId, juce::Colours::black);
+    segmentMeasures->setVelocityModeParameters(1.0, 1, 0.01);
+    segmentMeasures->setNormalisableRange(juce::NormalisableRange<double>(0, 64, 1));
+    segmentMeasures->onValueChange = [this]() {
+        updateDerivedNumSegments();
+        updatePreview();
+    };
+    segmentMeasures->setTextValueSuffix (" measures");
+    segmentMeasures->setValue(4.0, juce::dontSendNotification);
+    segmentMeasures->updateText();
+
+    segmentMeasuresLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Cut into segments of:"));
+    segmentMeasuresLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+    segmentMeasuresLabel->attachToComponent (segmentMeasures.get(), true);
+
+
     // Number of segments
     numSegments = std::make_unique<juce::Slider>("Num Segments Slider Font 13");
     addAndMakeVisible (numSegments.get());
@@ -31,6 +52,10 @@ AutoEditComponent::AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audi
     numSegments->setVelocityModeParameters(1.0, 1, 0.01);
     numSegments->setNormalisableRange(juce::NormalisableRange<double>(0, 16000, 1));
     numSegments->onValueChange = [this]() {
+        // Direct control over the concrete count: the abstract measure
+        // parameter lets go so the two never fight over it.
+        segmentMeasures->setValue(0.0, juce::dontSendNotification);
+        segmentMeasures->updateText();
         updatePreview();
     };
     numSegments->setTextValueSuffix (" segments");
@@ -110,6 +135,11 @@ void AutoEditComponent::resized()
     const int h = 23;
     const int space = h / 4;
 
+    if (segmentMeasures != nullptr) {
+        segmentMeasures->setBounds (r.removeFromTop (h));
+        r.removeFromTop (space);
+    }
+
     if (numSegments != nullptr) {
         numSegments->setBounds (r.removeFromTop (h));
         r.removeFromTop (space);
@@ -139,7 +169,22 @@ void AutoEditComponent::update()
     if (auto window = findParentComponentOfClass<juce::DialogWindow>())
         window->setName (getTitle());
 
+    // The target may have changed, and with it the length and tempo the
+    // measure parameter derives from.
+    updateDerivedNumSegments();
     updatePreview();
+}
+
+void AutoEditComponent::updateDerivedNumSegments()
+{
+    if (segmentMeasures->getValue() <= 0.0)
+        return;
+
+    audium::AutoEdit autoEdit(audiumEngine);
+    const auto derived = autoEdit.resolveNumSegments(getAutoEditConfig());
+
+    numSegments->setValue(derived, juce::dontSendNotification);
+    numSegments->updateText();
 }
 
 void AutoEditComponent::updatePreview()
@@ -193,6 +238,7 @@ audium::AutoEditConfig& AutoEditComponent::getAutoEditConfig()
 {
     config.mode = "random";
     config.duration = 180;
+    config.segmentMeasures = segmentMeasures->getValue();
     config.numSegments = static_cast<int>(numSegments->getValue());
     config.minSegLength = segmentMin->getValue();
     config.maxSegLength = segmentMax->getValue();

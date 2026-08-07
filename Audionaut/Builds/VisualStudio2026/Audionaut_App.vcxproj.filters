@@ -892,6 +892,9 @@
     <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEdit.cpp">
       <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.cpp">
+      <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Channel\AudioChannel.cpp">
       <Filter>Audionaut\Source\Engine\Channel</Filter>
     </ClCompile>
@@ -4225,6 +4228,9 @@
       <Filter>Audionaut\Source\Engine</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEdit.h">
+      <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.h">
       <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Channel\AudioChannel.h">

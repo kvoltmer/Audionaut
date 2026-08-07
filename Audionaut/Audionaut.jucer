@@ -128,6 +128,10 @@
         <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
           <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
           <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
+          <FILE id="AePmCp" name="AutoEditParameter.cpp" compile="1" resource="0"
+                file="Source/Engine/AutoEdit/AutoEditParameter.cpp"/>
+          <FILE id="AePmHd" name="AutoEditParameter.h" compile="0" resource="0"
+                file="Source/Engine/AutoEdit/AutoEditParameter.h"/>
         </GROUP>
         <GROUP id="{44EAE852-D94A-E010-D086-40CC86FE8C48}" name="Channel">
           <FILE id="styheO" name="AudioChannel.cpp" compile="1" resource="0"

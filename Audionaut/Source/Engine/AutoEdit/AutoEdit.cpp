@@ -10,6 +10,7 @@
 #include <JuceHeader.h>
 
 #include "AutoEdit.h"
+#include "AutoEditParameter.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Resource/AudioResource.h"
@@ -157,6 +158,32 @@ std::string findPythonInterpreter()
     return {};
 }
 
+/**
+ * The abstract measure parameter resolved against the analysed material: the
+ * tempo comes from the file's cached beat analysis, so a measure spans what a
+ * measure of that audio actually lasts. Falls back to the concrete numSegments
+ * when the parameter is off or the file has no cached tempo (the merge's
+ * analyses may predate BPM caching).
+ */
+int effectiveNumSegments(const AutoEditConfig& config,
+                         const AnalysisProvider& analysisProvider,
+                         const juce::File& audioFile,
+                         double durationSeconds)
+{
+    const AutoEditParameter parameter(config.segmentMeasures);
+
+    if (parameter.isActive())
+    {
+        const auto bpm = analysisProvider.getBpm(AnalysisType::BeatDegara, audioFile);
+        const auto derived = parameter.numSegmentsFor(durationSeconds, bpm);
+
+        if (derived > 0)
+            return derived;
+    }
+
+    return config.numSegments;
+}
+
 // Names the missing analyses so the user is told what to wait for rather than
 // just that nothing happened.
 std::string describeMissing(const std::vector<AnalysisType>& missing)
@@ -249,7 +276,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
     }
 
     EventMerger::Parameters params;
-    params.numSegments = config.numSegments;
+    params.numSegments = effectiveNumSegments(config, *analysisProvider, audioFile, duration);
 
     auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
 
@@ -324,7 +351,7 @@ bool AutoEdit::previewAutoEdit(AutoEditConfig &config)
     }
 
     EventMerger::Parameters params;
-    params.numSegments = config.numSegments;
+    params.numSegments = effectiveNumSegments(config, *analysisProvider, audioFile, duration);
 
     auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
 
@@ -333,6 +360,51 @@ bool AutoEdit::previewAutoEdit(AutoEditConfig &config)
                                       target.playListItemId,
                                       std::move(result.boundaries));
     return true;
+}
+
+int AutoEdit::resolveNumSegments(AutoEditConfig &config)
+{
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+    auto analysisProvider = audioTrackContainer->getAnalysisProvider();
+
+    const auto target = resolveEditTarget(audioTrackContainer->getAudioTrack(config.trackId),
+                                          config.playlistItemId);
+
+    if (analysisProvider == nullptr || ! target.isValid())
+        return config.numSegments;
+
+    const auto audioFile = juce::File(target.resource->getFullPathName());
+    const auto duration = target.resource->getFileLength(audium::seconds);
+
+    const auto effective = effectiveNumSegments(config, *analysisProvider, audioFile, duration);
+
+    if (duration <= 0.0 || ! analysisProvider->findMissingMergeAnalyses(audioFile).empty())
+        return effective;
+
+    // The merge parameter describes the whole file, but only what falls inside
+    // the clip is cut. Counting the merged boundaries the same way
+    // createRegionsFromBoundaries filters them gives the count the edit would
+    // actually produce.
+    EventMerger::Parameters params;
+    params.numSegments = effective;
+
+    const auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
+
+    const auto extent = target.extent.isEmpty() ? juce::Range<double>(0.0, duration)
+                                                : target.extent;
+
+    int inside = 0;
+
+    for (auto boundary : result.boundaries)
+    {
+        const auto point = (double) boundary;
+
+        if (point > extent.getStart() && point < extent.getEnd())
+            ++inside;
+    }
+
+    // No boundary inside the clip means nothing gets cut, not one big segment.
+    return inside > 0 ? inside + 1 : 0;
 }
 
 bool AutoEdit::applyAsUndoableEdit(std::function<bool()> createRegions)

@@ -47,6 +47,13 @@ struct AutoEditConfig {
 
     std::string mode = "random";
     double duration = 120.0;
+
+    /// The abstract musical parameter: target segment length in measures
+    /// (bars). When positive, numSegments is derived from it and the analysed
+    /// file's own tempo (see AutoEditParameter); at zero it is off and
+    /// numSegments is used as given.
+    double segmentMeasures = 0.0;
+
     int numSegments = 20;
     double minSegLength = 2.0;
     double maxSegLength = 60.0;
@@ -99,6 +106,23 @@ public:
      * @return True when a preview was published.
      */
     bool previewAutoEdit(AutoEditConfig &config);
+
+    /**
+     * @brief The number of segments an invokeAutoEdit() with this config would
+     *        actually create inside the target clip.
+     *
+     * The merge's segment parameter describes the whole analysed file (see
+     * AutoEditConfig::segmentMeasures), but only the boundaries falling inside
+     * the clip become cuts. This resolves the parameter, runs the merge, and
+     * counts what survives the clip's extent - the number the dialog mirrors
+     * into its concrete segment control. Zero means no boundary falls inside
+     * the clip and the edit would cut nothing.
+     *
+     * @return The in-clip count; config.numSegments (or the value the measure
+     *         parameter derives) when the target does not resolve or its
+     *         analyses are not cached yet, since there is nothing to count.
+     */
+    int resolveNumSegments(AutoEditConfig &config);
 
     /**
      * @brief Runs the gaborgandalf subprocess over @p audioFile and turns the
