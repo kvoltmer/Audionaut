@@ -32,7 +32,7 @@ AutoEditComponent::AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audi
     segmentMeasures->setVelocityModeParameters(1.0, 1, 0.01);
     segmentMeasures->setNormalisableRange(juce::NormalisableRange<double>(0, 64, 1));
     segmentMeasures->onValueChange = [this]() {
-        updateDerivedNumSegments();
+        updateDerivedParameters();
         updatePreview();
     };
     segmentMeasures->setTextValueSuffix (" measures");
@@ -75,6 +75,12 @@ AutoEditComponent::AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audi
     segmentMin->setVelocityModeParameters(1.0, 1, 0.1);
     segmentMin->setTextValueSuffix (" seconds");
     segmentMin->setNormalisableRange(juce::NormalisableRange<double>(0.1, 60.0, 1));
+    segmentMin->onValueChange = [this]() {
+        // Direct control, so the abstract measure parameter lets go.
+        segmentMeasures->setValue(0.0, juce::dontSendNotification);
+        segmentMeasures->updateText();
+        updatePreview();
+    };
     segmentMin->setValue(2.0, juce::dontSendNotification);
     segmentMin->updateText();
 
@@ -91,6 +97,12 @@ AutoEditComponent::AutoEditComponent (std::shared_ptr<audium::AudiumEngine> audi
     segmentMax->setVelocityModeParameters(1.0, 1, 0.01);
     segmentMax->setTextValueSuffix (" seconds");
     segmentMax->setNormalisableRange(juce::NormalisableRange<double>(0, 600, 1));
+    segmentMax->onValueChange = [this]() {
+        // Direct control, so the abstract measure parameter lets go.
+        segmentMeasures->setValue(0.0, juce::dontSendNotification);
+        segmentMeasures->updateText();
+        updatePreview();
+    };
     segmentMax->setValue(60.0, juce::dontSendNotification);
     segmentMax->updateText();
 
@@ -171,20 +183,33 @@ void AutoEditComponent::update()
 
     // The target may have changed, and with it the length and tempo the
     // measure parameter derives from.
-    updateDerivedNumSegments();
+    updateDerivedParameters();
     updatePreview();
 }
 
-void AutoEditComponent::updateDerivedNumSegments()
+void AutoEditComponent::updateDerivedParameters()
 {
     if (segmentMeasures->getValue() <= 0.0)
         return;
 
     audium::AutoEdit autoEdit(audiumEngine);
-    const auto derived = autoEdit.resolveNumSegments(getAutoEditConfig());
+    auto& config = getAutoEditConfig();
+
+    const auto derived = autoEdit.resolveNumSegments(config);
 
     numSegments->setValue(derived, juce::dontSendNotification);
     numSegments->updateText();
+
+    const auto bounds = autoEdit.resolveSegmentLengthBounds(config);
+
+    if (! bounds.isEmpty())
+    {
+        segmentMin->setValue(bounds.getStart(), juce::dontSendNotification);
+        segmentMin->updateText();
+
+        segmentMax->setValue(bounds.getEnd(), juce::dontSendNotification);
+        segmentMax->updateText();
+    }
 }
 
 void AutoEditComponent::updatePreview()

@@ -41,6 +41,19 @@ SCENARIO("AutoEditParameter derives the segment count from measures and tempo",
         {
             REQUIRE(parameter.numSegmentsFor(3.0, 120.0) == 1);
         }
+
+        // The bounds bracket the target musically: half below, double above.
+        THEN("the length bounds are two and eight measures")
+        {
+            REQUIRE(parameter.minSegmentMeasures() == Catch::Approx(2.0));
+            REQUIRE(parameter.maxSegmentMeasures() == Catch::Approx(8.0));
+        }
+
+        THEN("the length bounds are four and sixteen seconds")
+        {
+            REQUIRE(parameter.minSegmentSeconds(120.0) == Catch::Approx(4.0));
+            REQUIRE(parameter.maxSegmentSeconds(120.0) == Catch::Approx(16.0));
+        }
     }
 
     GIVEN("inputs nothing can be derived from")
@@ -51,12 +64,16 @@ SCENARIO("AutoEditParameter derives the segment count from measures and tempo",
 
             REQUIRE_FALSE(parameter.isActive());
             REQUIRE(parameter.numSegmentsFor(120.0, 120.0) == 0);
+            REQUIRE(parameter.minSegmentSeconds(120.0) == 0.0);
+            REQUIRE(parameter.maxSegmentSeconds(120.0) == 0.0);
         }
 
         THEN("an unknown tempo derives nothing")
         {
             REQUIRE(AutoEditParameter::measureSeconds(0.0) == 0.0);
             REQUIRE(AutoEditParameter(4.0).numSegmentsFor(120.0, 0.0) == 0);
+            REQUIRE(AutoEditParameter(4.0).minSegmentSeconds(0.0) == 0.0);
+            REQUIRE(AutoEditParameter(4.0).maxSegmentSeconds(0.0) == 0.0);
         }
 
         THEN("an empty duration derives nothing")

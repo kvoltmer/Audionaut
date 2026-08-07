@@ -184,6 +184,34 @@ int effectiveNumSegments(const AutoEditConfig& config,
     return config.numSegments;
 }
 
+/**
+ * The merge parameters with the abstract measure parameter applied: the
+ * segment count, and the minimum-length rule tightened (or relaxed) to the
+ * derived lower bound so no segment falls below half the target length.
+ * The upper bound has no merge-side rule to feed yet.
+ */
+EventMerger::Parameters effectiveMergeParameters(const AutoEditConfig& config,
+                                                 const AnalysisProvider& analysisProvider,
+                                                 const juce::File& audioFile,
+                                                 double durationSeconds)
+{
+    EventMerger::Parameters params;
+    params.numSegments = effectiveNumSegments(config, analysisProvider, audioFile, durationSeconds);
+
+    const AutoEditParameter parameter(config.segmentMeasures);
+
+    if (parameter.isActive())
+    {
+        const auto bpm = analysisProvider.getBpm(AnalysisType::BeatDegara, audioFile);
+        const auto minSeconds = parameter.minSegmentSeconds(bpm);
+
+        if (minSeconds > 0.0)
+            params.minSegmentFrames = EventMerger::timeToFrame((float) minSeconds, params);
+    }
+
+    return params;
+}
+
 // Names the missing analyses so the user is told what to wait for rather than
 // just that nothing happened.
 std::string describeMissing(const std::vector<AnalysisType>& missing)
@@ -275,8 +303,7 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
         return false;
     }
 
-    EventMerger::Parameters params;
-    params.numSegments = effectiveNumSegments(config, *analysisProvider, audioFile, duration);
+    const auto params = effectiveMergeParameters(config, *analysisProvider, audioFile, duration);
 
     auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
 
@@ -350,8 +377,7 @@ bool AutoEdit::previewAutoEdit(AutoEditConfig &config)
         return false;
     }
 
-    EventMerger::Parameters params;
-    params.numSegments = effectiveNumSegments(config, *analysisProvider, audioFile, duration);
+    const auto params = effectiveMergeParameters(config, *analysisProvider, audioFile, duration);
 
     auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
 
@@ -376,18 +402,15 @@ int AutoEdit::resolveNumSegments(AutoEditConfig &config)
     const auto audioFile = juce::File(target.resource->getFullPathName());
     const auto duration = target.resource->getFileLength(audium::seconds);
 
-    const auto effective = effectiveNumSegments(config, *analysisProvider, audioFile, duration);
+    const auto params = effectiveMergeParameters(config, *analysisProvider, audioFile, duration);
 
     if (duration <= 0.0 || ! analysisProvider->findMissingMergeAnalyses(audioFile).empty())
-        return effective;
+        return params.numSegments;
 
     // The merge parameter describes the whole file, but only what falls inside
     // the clip is cut. Counting the merged boundaries the same way
     // createRegionsFromBoundaries filters them gives the count the edit would
     // actually produce.
-    EventMerger::Parameters params;
-    params.numSegments = effective;
-
     const auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
 
     const auto extent = target.extent.isEmpty() ? juce::Range<double>(0.0, duration)
@@ -405,6 +428,30 @@ int AutoEdit::resolveNumSegments(AutoEditConfig &config)
 
     // No boundary inside the clip means nothing gets cut, not one big segment.
     return inside > 0 ? inside + 1 : 0;
+}
+
+juce::Range<double> AutoEdit::resolveSegmentLengthBounds(AutoEditConfig &config)
+{
+    const AutoEditParameter parameter(config.segmentMeasures);
+
+    if (! parameter.isActive())
+        return {};
+
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+    auto analysisProvider = audioTrackContainer->getAnalysisProvider();
+
+    const auto target = resolveEditTarget(audioTrackContainer->getAudioTrack(config.trackId),
+                                          config.playlistItemId);
+
+    if (analysisProvider == nullptr || ! target.isValid())
+        return {};
+
+    const auto audioFile = juce::File(target.resource->getFullPathName());
+    const auto bpm = analysisProvider->getBpm(AnalysisType::BeatDegara, audioFile);
+
+    // Both bounds are zero when the tempo is unknown, which is the empty range
+    // the caller checks for.
+    return { parameter.minSegmentSeconds(bpm), parameter.maxSegmentSeconds(bpm) };
 }
 
 bool AutoEdit::applyAsUndoableEdit(std::function<bool()> createRegions)

@@ -15,8 +15,8 @@ namespace audium {
  * are not how an edit is thought about: material is cut in measures, not in
  * segment counts. This class holds the abstract value - a target segment
  * length in measures (bars) - and derives the concrete values from it and the
- * material's tempo. The segment count is derived today; the length bounds are
- * meant to follow.
+ * material's tempo: the segment count, and the segment length bounds that
+ * bracket the target musically.
  *
  * A measure is four beats, the project-wide convention (see TempoProvider,
  * where a 96-clock bar is four 24-clock beats). The tempo is expected to be
@@ -58,8 +58,46 @@ public:
      */
     int numSegmentsFor(double durationSeconds, double bpm) const;
 
+    /** @name Segment length bounds
+     *
+     * The bounds bracket the target length musically: half the target below,
+     * double the target above. A segment may run a little short or long of
+     * the target, but not leave its musical order of magnitude.
+     *
+     * The minimum feeds the merge's minimum-segment rule (see
+     * EventMerger::Parameters::minSegmentFrames); the maximum is advisory
+     * until the merge learns an upper bound.
+     */
+    ///@{
+    /** @brief The shortest segment the edit should produce, in measures. */
+    double minSegmentMeasures() const { return measures * minRatio; }
+
+    /** @brief The longest segment the edit should produce, in measures. */
+    double maxSegmentMeasures() const { return measures * maxRatio; }
+
+    /**
+     * @brief The shortest segment the edit should produce, in seconds.
+     * @param bpm The material's tempo.
+     * @return The bound, or 0 when nothing can be derived - the parameter is
+     *         off or the tempo is not positive.
+     */
+    double minSegmentSeconds(double bpm) const;
+
+    /**
+     * @brief The longest segment the edit should produce, in seconds.
+     * @param bpm The material's tempo.
+     * @return The bound, or 0 when nothing can be derived - the parameter is
+     *         off or the tempo is not positive.
+     */
+    double maxSegmentSeconds(double bpm) const;
+    ///@}
+
 private:
     static constexpr double beatsPerMeasure = 4.0;
+
+    // How far a segment may fall short of or overshoot the target length.
+    static constexpr double minRatio = 0.5;
+    static constexpr double maxRatio = 2.0;
 
     double measures = 0.0;
 };

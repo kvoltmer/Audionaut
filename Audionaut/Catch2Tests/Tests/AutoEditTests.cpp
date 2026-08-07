@@ -689,6 +689,16 @@ SCENARIO("AutoEdit resolves the segment count the edit would cut inside the clip
                 REQUIRE(succeeded);
                 REQUIRE(createdSegments() == predicted);
             }
+
+            // Four measures at 120 bpm are eight seconds a segment, and the
+            // bounds bracket that: half below, double above.
+            THEN("the length bounds resolve to four and sixteen seconds")
+            {
+                const auto bounds = autoEdit.resolveSegmentLengthBounds(config);
+
+                REQUIRE(bounds.getStart() == Catch::Approx(4.0));
+                REQUIRE(bounds.getEnd() == Catch::Approx(16.0));
+            }
         }
 
         WHEN("the clip covers only part of the file")
@@ -748,6 +758,23 @@ SCENARIO("AutoEdit resolves the segment count the edit would cut inside the clip
             THEN("there is nothing to count and numSegments is used as given")
             {
                 REQUIRE(autoEdit.resolveNumSegments(config) == 6);
+            }
+
+            THEN("no length bounds resolve either")
+            {
+                REQUIRE(autoEdit.resolveSegmentLengthBounds(config).isEmpty());
+            }
+        }
+
+        WHEN("the parameter is off")
+        {
+            cacheMergeAnalyses(fixture);
+
+            REQUIRE(config.segmentMeasures == 0.0);
+
+            THEN("no length bounds resolve")
+            {
+                REQUIRE(autoEdit.resolveSegmentLengthBounds(config).isEmpty());
             }
         }
     }

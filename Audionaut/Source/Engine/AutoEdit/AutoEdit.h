@@ -49,9 +49,10 @@ struct AutoEditConfig {
     double duration = 120.0;
 
     /// The abstract musical parameter: target segment length in measures
-    /// (bars). When positive, numSegments is derived from it and the analysed
-    /// file's own tempo (see AutoEditParameter); at zero it is off and
-    /// numSegments is used as given.
+    /// (bars). When positive, numSegments and the segment length bounds are
+    /// derived from it and the analysed file's own tempo (see
+    /// AutoEditParameter); at zero it is off and the concrete values below are
+    /// used as given.
     double segmentMeasures = 0.0;
 
     int numSegments = 20;
@@ -123,6 +124,20 @@ public:
      *         analyses are not cached yet, since there is nothing to count.
      */
     int resolveNumSegments(AutoEditConfig &config);
+
+    /**
+     * @brief The segment length bounds the abstract measure parameter
+     *        resolves to for the target file, in seconds.
+     *
+     * Half the target length below, double above (see AutoEditParameter).
+     * The lower bound is what invokeAutoEdit() feeds the merge's
+     * minimum-segment rule; the upper bound is advisory until the merge
+     * learns one. The dialog mirrors both into its concrete length sliders.
+     *
+     * @return The bounds, or an empty range when the parameter is off, the
+     *         target does not resolve, or the file's tempo is not cached.
+     */
+    juce::Range<double> resolveSegmentLengthBounds(AutoEditConfig &config);
 
     /**
      * @brief Runs the gaborgandalf subprocess over @p audioFile and turns the

@@ -31,4 +31,20 @@ int AutoEditParameter::numSegmentsFor(double durationSeconds, double bpm) const
     return std::max(1, (int) std::lround(durationSeconds / segmentSeconds));
 }
 
+double AutoEditParameter::minSegmentSeconds(double bpm) const
+{
+    if (! isActive())
+        return 0.0;
+
+    return minSegmentMeasures() * measureSeconds(bpm);
+}
+
+double AutoEditParameter::maxSegmentSeconds(double bpm) const
+{
+    if (! isActive())
+        return 0.0;
+
+    return maxSegmentMeasures() * measureSeconds(bpm);
+}
+
 } // namespace audium

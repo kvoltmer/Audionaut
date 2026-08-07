@@ -47,11 +47,11 @@ private:
     // arrangement previews them (see AutoEdit::previewAutoEdit).
     void updatePreview();
 
-    // Mirrors the number of segments the pending edit would cut inside the
-    // clip into the numSegments slider, so the abstract measure control
-    // visibly drives the concrete one. Does nothing while the parameter is
-    // off.
-    void updateDerivedNumSegments();
+    // Mirrors what the abstract measure parameter resolves to into the
+    // concrete sliders: the number of segments the pending edit would cut
+    // inside the clip, and the derived segment length bounds. Does nothing
+    // while the parameter is off.
+    void updateDerivedParameters();
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
 
