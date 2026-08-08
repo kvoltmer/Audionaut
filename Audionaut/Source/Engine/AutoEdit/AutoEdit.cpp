@@ -22,6 +22,7 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/ResourceGroup.h"
+#include "Engine/Selection/SelectionManager.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 namespace audium {
@@ -237,6 +238,43 @@ const juce::String AutoEdit::getTempDirectory()
     return juce::File::getSpecialLocation(juce::File::tempDirectory).getFullPathName();
 }
 
+bool AutoEdit::targetSelectedClip(AutoEditConfig &config)
+{
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+
+    for (const auto& object : audioTrackContainer->getSelectionManager()->getSelectedObjects())
+        if (auto* item = dynamic_cast<PlayListItem*>(object.get()))
+        {
+            config.trackId = item->getRegion()->getAudioTrack()->getId();
+            config.playlistItemId = item->getId();
+            return true;
+        }
+
+    return false;
+}
+
+void AutoEdit::targetSelection(AutoEditConfig &config)
+{
+    config.trackId = -1;
+    config.playlistItemId = -1;
+
+    if (targetSelectedClip(config))
+        return;
+
+    // No clip selected: the first clip of at least a second on the default
+    // track, skipping slivers that are not worth editing.
+    constexpr auto minLength = 1.0;
+
+    if (auto track = audiumEngine->getAudioTrackContainer()->getDefaultGroup())
+        for (const auto& item : track->getPlayListContainer()->getPlayListItems())
+            if (item->getRegion()->getRegionData(audium::seconds).getLength() >= minLength)
+            {
+                config.trackId = track->getId();
+                config.playlistItemId = item->getId();
+                return;
+            }
+}
+
 bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
                               std::function<void(std::string)> callback)
 {
@@ -384,7 +422,8 @@ bool AutoEdit::previewAutoEdit(AutoEditConfig &config)
     analysisProvider->setMergePreview(audioFile.getFullPathName().toStdString(),
                                       track->getId(),
                                       target.playListItemId,
-                                      std::move(result.boundaries));
+                                      std::move(result.boundaries),
+                                      config.segmentMeasures);
     return true;
 }
 

@@ -291,12 +291,6 @@
                 file="Source/Interface/Dialogs/NewAudioTrackDialog.h"/>
           <FILE id="XUO0Mz" name="AboutWindowComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AboutWindowComponent.h"/>
-          <FILE id="HO4Dqt" name="AutoEditDialog.h" compile="0" resource="0"
-                file="Source/Interface/Dialogs/AutoEditDialog.h"/>
-          <FILE id="y2L75o" name="AutoEditComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Dialogs/AutoEditComponent.cpp"/>
-          <FILE id="rN8IxH" name="AutoEditComponent.h" compile="0" resource="0"
-                file="Source/Interface/Dialogs/AutoEditComponent.h"/>
           <FILE id="oKVp3j" name="ExportAudioDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/ExportAudioDialog.h"/>
           <FILE id="f9OpEm" name="ExportAudioComponent.h" compile="0" resource="0"
@@ -424,6 +418,10 @@
                 file="Source/Interface/Models/PlayListItemListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="AeOvCp" name="AutoEditOverlayControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/AutoEditOverlayControl.cpp"/>
+          <FILE id="AeOvHd" name="AutoEditOverlayControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/AutoEditOverlayControl.h"/>
           <FILE id="Y7l77u" name="LoopDraggerControl.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/LoopDraggerControl.cpp"/>
           <FILE id="nuQDk2" name="LoopDraggerControl.h" compile="0" resource="0"

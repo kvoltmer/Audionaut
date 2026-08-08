@@ -62,8 +62,12 @@ public:
     void updateMouseZone (const juce::MouseEvent& e);
 
     const Edge getDragMode(int x) const;
-    
+
     void updateFromEngine();
+
+    /** @brief Dismisses the selection rectangle and clears the engine's
+     *         selected range, as a click outside the selection would. */
+    void cancelSelection();
     
     // play list dragger controls
     std::vector<PlayListItemDraggerControl*> playListItemDraggerControls;

@@ -206,7 +206,6 @@
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp"/>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Dialogs\AutoEditComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\ColourIds.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_AudioThumbnail.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_ListBox.cpp"/>
@@ -227,6 +226,7 @@
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
@@ -3184,8 +3184,6 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingToolWindow.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\NewAudioTrackDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutWindowComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditDialog.h"/>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ExportAudioDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ExportAudioComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\NewRegionDialog.h"/>
@@ -3222,6 +3220,7 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h"/>

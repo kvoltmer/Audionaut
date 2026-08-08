@@ -19,6 +19,7 @@ class RegionSelector;
 class DraggerControl;
 class FadeInOutControl;
 class AutoEditPreviewView;
+class AutoEditOverlayControl;
 
 //==============================================================================
 /*
@@ -77,10 +78,16 @@ private:
     std::unique_ptr<FadeInOutControl> fadeInControl;
     std::unique_ptr<FadeInOutControl> fadeOutControl;
 
-    // Mouse-transparent container stacked over the whole clip (header and all
-    // channel rows) hosting overlays that must draw above everything else.
+    // Container stacked over the whole clip (header and all channel rows)
+    // hosting overlays that must draw above everything else. Transparent to
+    // the mouse itself, but its children may take clicks - the overlay
+    // control does, the preview lines do not.
     std::unique_ptr<juce::Component> overlayContainer;
     std::unique_ptr<AutoEditPreviewView> autoEditPreviewView;
+
+    // The pending auto edit's control (measures + Apply), shown while this
+    // clip's merge preview is active.
+    std::unique_ptr<AutoEditOverlayControl> autoEditOverlayControl;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)
 };

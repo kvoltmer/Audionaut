@@ -210,12 +210,14 @@ EventMerger::Result AnalysisProvider::mergeCachedAnalyses(const juce::File& audi
 void AnalysisProvider::setMergePreview(const std::string& audioFilePath,
                                        int trackId,
                                        int playlistItemId,
-                                       std::vector<float> boundaries)
+                                       std::vector<float> boundaries,
+                                       double measures)
 {
     mergePreviewFilePath = audioFilePath;
     mergePreviewTrackId = trackId;
     mergePreviewPlaylistItemId = playlistItemId;
     mergePreviewBoundaries = std::move(boundaries);
+    mergePreviewMeasures = measures;
     sendChangeMessage();
 }
 
@@ -228,6 +230,7 @@ void AnalysisProvider::clearMergePreview()
     mergePreviewTrackId = -1;
     mergePreviewPlaylistItemId = -1;
     mergePreviewBoundaries.clear();
+    mergePreviewMeasures = 0.0;
     sendChangeMessage();
 }
 

@@ -982,9 +982,6 @@
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp">
       <Filter>Audionaut\Source\Interface\LookAndFeel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Dialogs\AutoEditComponent.cpp">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\ColourIds.cpp">
       <Filter>Audionaut\Source\Interface</Filter>
     </ClCompile>
@@ -1044,6 +1041,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp">
       <Filter>Audionaut\Source\Interface\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.cpp">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
@@ -4377,12 +4377,6 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutWindowComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditDialog.h">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditComponent.h">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ExportAudioDialog.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
@@ -4490,6 +4484,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h">
       <Filter>Audionaut\Source\Interface\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>

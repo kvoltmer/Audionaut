@@ -26,7 +26,7 @@ struct AutoEditConfig {
     /**
      * @brief Where the segment boundaries come from.
      *
-     * The dialog does not offer this: it always runs the built-in analysis.
+     * The UI does not offer this: it always runs the built-in analysis.
      * Python is selectable from tests, which is where the two implementations
      * are compared - see AutoEditComparisonTests.
      */
@@ -94,6 +94,23 @@ public:
                         std::function<void(std::string)> callback);
 
     /**
+     * @brief Points @p config at the selected playlist item.
+     * @return False when no playlist item is selected; @p config is then left
+     *         untouched, so a pending edit keeps its current target.
+     */
+    bool targetSelectedClip(AutoEditConfig &config);
+
+    /**
+     * @brief Points @p config at the clip an auto edit invoked without further
+     *        targeting applies to.
+     *
+     * The selected playlist item wins; without one, the first clip of at least
+     * a second on the default track is used. Fills trackId / playlistItemId,
+     * leaving both at -1 when nothing qualifies.
+     */
+    void targetSelection(AutoEditConfig &config);
+
+    /**
      * @brief Publishes the boundaries an invokeAutoEdit() with this config
      *        would cut at, as a merge preview on the AnalysisProvider.
      *
@@ -115,9 +132,9 @@ public:
      * The merge's segment parameter describes the whole analysed file (see
      * AutoEditConfig::segmentMeasures), but only the boundaries falling inside
      * the clip become cuts. This resolves the parameter, runs the merge, and
-     * counts what survives the clip's extent - the number the dialog mirrors
-     * into its concrete segment control. Zero means no boundary falls inside
-     * the clip and the edit would cut nothing.
+     * counts what survives the clip's extent - the number the UI can show
+     * for the pending edit. Zero means no boundary falls inside the clip and
+     * the edit would cut nothing.
      *
      * @return The in-clip count; config.numSegments (or the value the measure
      *         parameter derives) when the target does not resolve or its
@@ -132,7 +149,7 @@ public:
      * Half the target length below, double above (see AutoEditParameter).
      * The lower bound is what invokeAutoEdit() feeds the merge's
      * minimum-segment rule; the upper bound is advisory until the merge
-     * learns one. The dialog mirrors both into its concrete length sliders.
+     * learns one.
      *
      * @return The bounds, or an empty range when the parameter is off, the
      *         target does not resolve, or the file's tempo is not cached.

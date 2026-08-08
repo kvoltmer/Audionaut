@@ -12,6 +12,7 @@
 #include "Interface/Controls/PlayListItemDraggerControl.h"
 #include "Interface/Controls/LevelMeter.h"
 #include "Interface/Controls/FadeInOutControl.h"
+#include "Interface/Controls/AutoEditOverlayControl.h"
 #include "Interface/Views/AudioClipView.h"
 #include "Interface/Views/AutoEditPreviewView.h"
 #include "Engine/Analysis/AnalysisProvider.h"
@@ -70,9 +71,9 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngin
     addAndMakeVisible(fadeOutControl.get());
     fadeOutControl->setVisible(false);
 
-    // OVERLAY CONTAINER (topmost, mouse-transparent)
+    // OVERLAY CONTAINER (topmost; transparent itself, children may take clicks)
     overlayContainer = std::make_unique<juce::Component>("PlayListItemOverlay");
-    overlayContainer->setInterceptsMouseClicks(false, false);
+    overlayContainer->setInterceptsMouseClicks(false, true);
     addAndMakeVisible(overlayContainer.get());
 
     // AUTO EDIT PREVIEW (pending auto edit's cuts, spanning the whole clip)
@@ -80,6 +81,10 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngin
     autoEditPreviewView->setZoomHandler(zoomHandler);
     autoEditPreviewView->setInterceptsMouseClicks(false, false);
     overlayContainer->addAndMakeVisible(autoEditPreviewView.get());
+
+    // AUTO EDIT CONTROL (measures + Apply, shown while this clip is previewed)
+    autoEditOverlayControl = std::make_unique<AutoEditOverlayControl>(audiumEngine, regionSelector);
+    overlayContainer->addChildComponent(autoEditOverlayControl.get());
 
     // Follow the preview published/cleared by the Auto Edit window.
     if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
@@ -230,8 +235,14 @@ void PlayListItemComponent::refreshAutoEditPreview()
                                                         playListItem->getId());
     }
 
+    const auto previewActive = ! preview.empty();
+
     autoEditPreviewView->setPreviewSegments(std::move(preview),
                                             region->getRegionData(audium::seconds).getStart());
+
+    // The previewed clip also carries the edit's control.
+    autoEditOverlayControl->setTarget(audioTrack->getId(), playListItem->getId());
+    autoEditOverlayControl->setVisible(previewActive);
 }
 
 void PlayListItemComponent::mouseEnter (const MouseEvent& e)

@@ -159,8 +159,8 @@ public:
     /** @name Merge preview
      *
      * Transient boundaries a pending auto edit would cut at, published so
-     * views can overlay them (see AutoEditPreviewView) while the Auto Edit
-     * window is open. Not part of the cache: nothing is persisted. The
+     * views can overlay them (see AutoEditPreviewView) while an auto edit is
+     * pending. Not part of the cache: nothing is persisted. The
      * preview is keyed by file path plus the target clip's identity, so it
      * follows the clip the edit would apply to rather than showing on every
      * clip cut from the same file. Message thread only.
@@ -174,14 +174,26 @@ public:
      *                       clip and applies to the whole file - the preview
      *                       then shows on every clip of the file.
      * @param boundaries     The merged boundary times, in seconds.
+     * @param measures       The measure value the pending edit was previewed
+     *                       with (AutoEditConfig::segmentMeasures), kept with
+     *                       the preview so the value survives the preview
+     *                       moving between clips. 0 when none.
      */
     void setMergePreview(const std::string& audioFilePath,
                          int trackId,
                          int playlistItemId,
-                         std::vector<float> boundaries);
+                         std::vector<float> boundaries,
+                         double measures = 0.0);
 
     /** @brief Removes the preview (broadcasting only if one was shown). */
     void clearMergePreview();
+
+    /** @brief Whether a merge preview is currently published. */
+    bool hasMergePreview() const { return ! mergePreviewFilePath.empty(); }
+
+    /** @brief The measure value the active preview was published with; 0 when
+     *         no preview is active or it carried none. */
+    double getMergePreviewMeasures() const { return mergePreviewMeasures; }
 
     /**
      * @brief The preview boundaries for a clip.
@@ -226,6 +238,7 @@ private:
     int mergePreviewTrackId = -1;
     int mergePreviewPlaylistItemId = -1;
     std::vector<float> mergePreviewBoundaries;
+    double mergePreviewMeasures = 0.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AnalysisProvider)
 };
