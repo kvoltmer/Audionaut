@@ -19,8 +19,11 @@ class RegionSelector;
  *
  * Replaces the old Auto Edit dialog: PlayListItemComponent shows it on the
  * clip whose merge preview is active, floating above AutoEditPreviewView's
- * dashed cuts. It offers only the abstract measure parameter and an Apply
- * button - the preview underneath is the feedback for everything else.
+ * dashed cuts. It offers only the abstract measure parameter - stepped
+ * musically by a Less/More button pair speaking in segments: More cuts more
+ * (halving the measures), Less cuts fewer (doubling them) - and an Apply
+ * button. The preview underneath is the feedback; the resulting measures
+ * value is also logged to the console.
  *
  * The control keeps itself centred vertically over the clip and horizontally
  * within the part of the clip visible in the enclosing viewport, so it stays
@@ -80,6 +83,14 @@ public:
 private:
     audium::AutoEditConfig makeConfig() const;
 
+    // Doubles (longer = true) or halves the measures, clamped to [1, 64],
+    // logs the result and refreshes the preview. Longer segments mean fewer
+    // of them - the Less button - and vice versa.
+    void stepMeasures(bool longer);
+
+    // A button whose step could go no further is disabled.
+    void updateStepButtons();
+
     // Re-publishes the preview for the current measures value.
     void updatePreview();
 
@@ -126,7 +137,10 @@ private:
     // Faded away while a zoom is reshaping the clip (see hideForZoom).
     bool hiddenForZoom = false;
 
-    std::unique_ptr<juce::Slider> segmentMeasures;
+    // The abstract parameter's value, in measures (see AutoEditParameter).
+    double measures = defaultMeasures;
+
+    std::unique_ptr<juce::TextButton> lessButton, moreButton;
     std::unique_ptr<juce::TextButton> applyButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AutoEditOverlayControl)

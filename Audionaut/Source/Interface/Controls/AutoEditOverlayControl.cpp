@@ -11,15 +11,20 @@
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Interface/Controls/RegionSelector.h"
-#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 namespace {
 
 constexpr int controlHeight = 28;
-constexpr int sliderWidth = 190;
+constexpr int stepButtonWidth = 52;
+constexpr int stepGap = 4;
 constexpr int buttonWidth = 70;
 constexpr int gap = 8;
 constexpr int padding = 6;
+
+// The measure parameter's range. Stepping halves or doubles, so every
+// reachable value is a musically meaningful power of two.
+constexpr double minMeasures = 1.0;
+constexpr double maxMeasures = 64.0;
 
 // How far the control keeps clear of the visible edges, so it sits well
 // within the arrangement rather than hugging a border.
@@ -41,7 +46,8 @@ constexpr int glideMilliseconds = 1000;
 constexpr int fadeMilliseconds = 50;
 constexpr int comebackDelayMilliseconds = 500;
 
-constexpr int preferredWidth = padding + sliderWidth + gap + buttonWidth + padding;
+constexpr int preferredWidth = padding + stepButtonWidth + stepGap + stepButtonWidth
+                                   + gap + buttonWidth + padding;
 
 } // namespace
 
@@ -52,24 +58,27 @@ AutoEditOverlayControl::AutoEditOverlayControl(std::shared_ptr<audium::AudiumEng
 {
     setWantsKeyboardFocus (true);
 
-    segmentMeasures = std::make_unique<juce::Slider>("Auto Edit Measures Slider Font 13");
-    addAndMakeVisible (segmentMeasures.get());
-    AudiumLookAndFeel::configureSlider(segmentMeasures.get());
-    segmentMeasures->setColour (juce::Slider::backgroundColourId, juce::Colours::black);
-    segmentMeasures->setVelocityModeParameters(1.0, 1, 0.01);
-    segmentMeasures->setNormalisableRange(juce::NormalisableRange<double>(0, 64, 1));
-    segmentMeasures->onValueChange = [this]() {
-        updatePreview();
+    // More/less speak in segments: more segments means shorter ones, so More
+    // halves the measures and Less doubles them.
+    lessButton = std::make_unique<juce::TextButton> (TRANS ("Less"));
+    addAndMakeVisible (lessButton.get());
+    lessButton->onClick = [this]() {
+        stepMeasures(true);
     };
-    segmentMeasures->setTextValueSuffix (" measures");
-    segmentMeasures->setValue(defaultMeasures, juce::dontSendNotification);
-    segmentMeasures->updateText();
+
+    moreButton = std::make_unique<juce::TextButton> (TRANS ("More"));
+    addAndMakeVisible (moreButton.get());
+    moreButton->onClick = [this]() {
+        stepMeasures(false);
+    };
 
     applyButton = std::make_unique<juce::TextButton> (TRANS ("Apply"));
     addAndMakeVisible (applyButton.get());
     applyButton->onClick = [this]() {
         apply();
     };
+
+    updateStepButtons();
 }
 
 AutoEditOverlayControl::~AutoEditOverlayControl()
@@ -96,9 +105,27 @@ audium::AutoEditConfig AutoEditOverlayControl::makeConfig() const
     audium::AutoEditConfig config;
     config.trackId = trackId;
     config.playlistItemId = playlistItemId;
-    config.segmentMeasures = segmentMeasures->getValue();
+    config.segmentMeasures = measures;
 
     return config;
+}
+
+void AutoEditOverlayControl::stepMeasures(bool longer)
+{
+    measures = juce::jlimit (minMeasures, maxMeasures,
+                             longer ? measures * 2.0 : measures / 2.0);
+
+    std::cout << "AutoEdit measures: " << measures << std::endl;
+
+    updateStepButtons();
+    updatePreview();
+}
+
+void AutoEditOverlayControl::updateStepButtons()
+{
+    // Less doubles the measures, More halves them (see the constructor).
+    lessButton->setEnabled (measures < maxMeasures);
+    moreButton->setEnabled (measures > minMeasures);
 }
 
 void AutoEditOverlayControl::updatePreview()
@@ -157,7 +184,9 @@ void AutoEditOverlayControl::resized()
 
     applyButton->setBounds (r.removeFromRight (buttonWidth));
     r.removeFromRight (gap);
-    segmentMeasures->setBounds (r);
+    lessButton->setBounds (r.removeFromLeft (stepButtonWidth));
+    r.removeFromLeft (stepGap);
+    moreButton->setBounds (r.removeFromLeft (stepButtonWidth));
 }
 
 void AutoEditOverlayControl::visibilityChanged()
@@ -171,11 +200,9 @@ void AutoEditOverlayControl::visibilityChanged()
         // value travels with it.
         if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
             if (analysisProvider->getMergePreviewMeasures() > 0.0)
-            {
-                segmentMeasures->setValue(analysisProvider->getMergePreviewMeasures(),
-                                          juce::dontSendNotification);
-                segmentMeasures->updateText();
-            }
+                measures = analysisProvider->getMergePreviewMeasures();
+
+        updateStepButtons();
 
         // Only the visible control follows the selection, so a pending edit
         // has exactly one follower.
