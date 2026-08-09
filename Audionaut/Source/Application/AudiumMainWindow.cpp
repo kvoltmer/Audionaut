@@ -13,7 +13,9 @@
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Interface/Dialogs/NewRegionDialog.h"
-#include "Interface/Dialogs/AutoEditDialog.h"
+#include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/AutoEdit/AutoEdit.h"
+#include "Interface/Controls/AutoEditOverlayControl.h"
 #include "Interface/Dialogs/ExportAudioDialog.h"
 #include "Interface/Dialogs/NewAudioTrackDialog.h"
 
@@ -171,6 +173,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             break;
         case CommandIDs::autoEdit:
             result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
+            result.setActive (canToggleAutoEditPreview());
             result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::bounceProject:
@@ -289,9 +292,7 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             getEngine()->getAudioTrackContainer()->deleteUnusedRegions();
             break;
         case CommandIDs::autoEdit:
-            if (autoEditDialog == nullptr)
-                autoEditDialog = std::make_unique<AutoEditDialog>(getEngine());
-            autoEditDialog->invoke (getEngine(), mainComponent);
+            toggleAutoEditPreview();
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
@@ -362,4 +363,59 @@ bool AudiumMainWindow::anythingSelected()
 bool AudiumMainWindow::canPaste()
 {
     return getEngine()->getAudioTrackContainer()->getSelectionManager()->canParseFromClipboard();
+}
+
+bool AudiumMainWindow::canToggleAutoEditPreview()
+{
+    auto analysisProvider = getEngine()->getAudioTrackContainer()->getAnalysisProvider();
+
+    if (analysisProvider == nullptr)
+        return false;
+
+    // A pending edit can always be cancelled.
+    if (analysisProvider->hasMergePreview())
+        return true;
+
+    audium::AutoEdit autoEdit(getEngine());
+
+    audium::AutoEditConfig config;
+    config.segmentMeasures = AutoEditOverlayControl::defaultMeasures;
+    autoEdit.targetSelection(config);
+
+    // Zero means no cut would land inside the clip - it is too short at this
+    // measure value, and entering the edit would only dead-end at Apply.
+    return autoEdit.resolveNumSegments(config) > 0;
+}
+
+void AudiumMainWindow::toggleAutoEditPreview()
+{
+    // The command system already refuses inactive commands; this guards any
+    // other caller.
+    if (! canToggleAutoEditPreview())
+        return;
+
+    auto analysisProvider = getEngine()->getAudioTrackContainer()->getAnalysisProvider();
+
+    if (analysisProvider == nullptr)
+        return;
+
+    // Invoked while an edit is pending, the command cancels it - the cleared
+    // preview hides the overlay control again.
+    if (analysisProvider->hasMergePreview())
+    {
+        analysisProvider->clearMergePreview();
+        return;
+    }
+
+    audium::AutoEdit autoEdit(getEngine());
+
+    audium::AutoEditConfig config;
+    config.segmentMeasures = AutoEditOverlayControl::defaultMeasures;
+    autoEdit.targetSelection(config);
+
+    if (! autoEdit.previewAutoEdit(config))
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::InfoIcon,
+                                              "Auto Edit",
+                                              "No preview is available for this clip yet - "
+                                              "its analyses may still be running. Please try again shortly.");
 }

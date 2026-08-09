@@ -269,7 +269,6 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::getDefaultGroup() const
         return audioTracks[0];
     }
     
-    jassertfalse;
     return nullptr;
 }
 

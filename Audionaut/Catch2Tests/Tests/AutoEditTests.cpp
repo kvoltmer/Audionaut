@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <cmath>
+
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -628,6 +631,150 @@ SCENARIO("AutoEdit can replace the edited clip with its segments",
                 {
                     REQUIRE(fixture.regionCount() > 1);
                 }
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("AutoEdit resolves the segment count the edit would cut inside the clip",
+         "[engine][autoedit][parameter]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture();
+
+        auto cache = fixture.engine->getAudioTrackContainer()->getAnalysisProvider()->getCache();
+
+        AutoEdit autoEdit(fixture.engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+        config.numSegments = 6;
+
+        std::string reportedError;
+        auto onError = [&reportedError](std::string error) { reportedError = error; };
+
+        auto createdSegments = [&fixture]() {
+            int count = 0;
+
+            for (const auto& region : fixture.regions())
+                if (region->getName().startsWith("seg-"))
+                    ++count;
+
+            return count;
+        };
+
+        WHEN("the measure parameter is on and the material's tempo is cached")
+        {
+            cache->put(fixture.analysedFile, AnalysisType::SBic, evenTimes(0.0f, 2.5f, 8));
+            cache->put(fixture.analysedFile, AnalysisType::BeatDegara,
+                       evenTimes(0.0f, 0.5f, 40), 120.0f);
+
+            config.segmentMeasures = 4.0;
+
+            const auto predicted = autoEdit.resolveNumSegments(config);
+
+            THEN("it predicts exactly the segments the edit then creates")
+            {
+                REQUIRE(predicted > 0);
+
+                const auto succeeded = autoEdit.invokeAutoEdit(config, onError);
+
+                INFO("error was: " << reportedError);
+                REQUIRE(succeeded);
+                REQUIRE(createdSegments() == predicted);
+            }
+
+            // Four measures at 120 bpm are eight seconds a segment, and the
+            // bounds bracket that: half below, double above.
+            THEN("the length bounds resolve to four and sixteen seconds")
+            {
+                const auto bounds = autoEdit.resolveSegmentLengthBounds(config);
+
+                REQUIRE(bounds.getStart() == Catch::Approx(4.0));
+                REQUIRE(bounds.getEnd() == Catch::Approx(16.0));
+            }
+        }
+
+        WHEN("the clip covers only part of the file")
+        {
+            cacheMergeAnalyses(fixture);
+
+            // The analyses still describe the whole file, but only the
+            // boundaries inside this window become cuts - and only they are
+            // counted.
+            const juce::Range<double> clip { 4.0, 12.0 };
+
+            {
+                auto items = fixture.track()->getPlayListContainer()->getPlayListItems();
+                REQUIRE_FALSE(items.empty());
+                items[0]->getRegion()->setRegionData(clip, audium::seconds);
+            }
+
+            config.playlistItemId = 0;
+            config.numSegments = 8;
+
+            const auto wholeFile = [&] {
+                AutoEditConfig wholeConfig = config;
+                wholeConfig.playlistItemId = -1;
+
+                // The fallback target is the same clip, so widen it back for
+                // the whole-file reading.
+                auto items = fixture.track()->getPlayListContainer()->getPlayListItems();
+                const auto restore = items[0]->getRegion()->getRegionData(audium::seconds);
+                items[0]->getRegion()->setRegionData({ 0.0, fixture.audioLengthSeconds() },
+                                                     audium::seconds);
+
+                const auto count = autoEdit.resolveNumSegments(wholeConfig);
+                items[0]->getRegion()->setRegionData(restore, audium::seconds);
+
+                return count;
+            }();
+
+            const auto predicted = autoEdit.resolveNumSegments(config);
+
+            THEN("the count is the clip's, not the whole file's")
+            {
+                REQUIRE(predicted > 0);
+                REQUIRE(predicted <= wholeFile);
+
+                const auto succeeded = autoEdit.invokeAutoEdit(config, onError);
+
+                INFO("error was: " << reportedError);
+                REQUIRE(succeeded);
+                REQUIRE(createdSegments() == predicted);
+            }
+        }
+
+        WHEN("the analyses are not cached yet")
+        {
+            config.segmentMeasures = 4.0;
+
+            THEN("there is nothing to count and numSegments is used as given")
+            {
+                REQUIRE(autoEdit.resolveNumSegments(config) == 6);
+            }
+
+            THEN("no length bounds resolve either")
+            {
+                REQUIRE(autoEdit.resolveSegmentLengthBounds(config).isEmpty());
+            }
+        }
+
+        WHEN("the parameter is off")
+        {
+            cacheMergeAnalyses(fixture);
+
+            REQUIRE(config.segmentMeasures == 0.0);
+
+            THEN("no length bounds resolve")
+            {
+                REQUIRE(autoEdit.resolveSegmentLengthBounds(config).isEmpty());
             }
         }
     }

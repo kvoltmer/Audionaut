@@ -10,7 +10,6 @@
 #include "Interface/Components/MainComponent.h"
 
 class NewRegionDialog;
-class AutoEditDialog;
 class ExportAudioDialog;
 class NewAudioTrackDialog;
 
@@ -38,12 +37,22 @@ private:
     
     bool anythingSelected();
     bool canPaste();
-        
+
+    // Starts an auto edit as an in-arrangement preview - the previewed clip
+    // shows the overlay control (see AutoEditOverlayControl) - or cancels the
+    // pending one. Replaces the old Auto Edit dialog.
+    void toggleAutoEditPreview();
+
+    // Whether the Auto Edit command is available: always while an edit is
+    // pending (the command is also the cancel), otherwise only when the
+    // target clip would yield at least one segment at the entry measure
+    // value - a clip too short for a single cut greys the command out.
+    bool canToggleAutoEditPreview();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
-    
+
     std::unique_ptr<NewRegionDialog> newRegionDialog;
-    std::unique_ptr<AutoEditDialog> autoEditDialog;
     std::unique_ptr<ExportAudioDialog> exportAudioDialog;
     std::unique_ptr<NewAudioTrackDialog> newAudioTrackDialog;
         

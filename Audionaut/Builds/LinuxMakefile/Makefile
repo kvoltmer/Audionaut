@@ -93,6 +93,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o \
   $(JUCE_OBJDIR)/DspClip_7236184f.o \
   $(JUCE_OBJDIR)/AutoEdit_95866c4b.o \
+  $(JUCE_OBJDIR)/AutoEditParameter_df9b8e8.o \
   $(JUCE_OBJDIR)/AudioChannel_b77c3b27.o \
   $(JUCE_OBJDIR)/AudiumFactory_21005c30.o \
   $(JUCE_OBJDIR)/AudioTrack_cd929473.o \
@@ -122,7 +123,6 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o \
   $(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o \
   $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o \
-  $(JUCE_OBJDIR)/AutoEditComponent_2f86d78b.o \
   $(JUCE_OBJDIR)/ColourIds_54ae2f37.o \
   $(JUCE_OBJDIR)/audium_AudioThumbnail_f5797f4f.o \
   $(JUCE_OBJDIR)/audium_ListBox_b1d2231e.o \
@@ -143,6 +143,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioTrackListBoxModel_e0f725e1.o \
   $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o \
   $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o \
+  $(JUCE_OBJDIR)/AutoEditOverlayControl_e143b2a.o \
   $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o \
   $(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
@@ -154,6 +155,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o \
   $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o \
   $(JUCE_OBJDIR)/SegmentationView_81438847.o \
+  $(JUCE_OBJDIR)/AutoEditPreviewView_ccfab99e.o \
   $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o \
   $(JUCE_OBJDIR)/AudioClipView_1a258175.o \
   $(JUCE_OBJDIR)/BinaryData_ce4232d4.o \
@@ -293,6 +295,11 @@ $(JUCE_OBJDIR)/DspClip_7236184f.o: ../../Source/Engine/Core/DspClip.cpp
 $(JUCE_OBJDIR)/AutoEdit_95866c4b.o: ../../Source/Engine/AutoEdit/AutoEdit.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AutoEdit.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AutoEditParameter_df9b8e8.o: ../../Source/Engine/AutoEdit/AutoEditParameter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AutoEditParameter.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudioChannel_b77c3b27.o: ../../Source/Engine/Channel/AudioChannel.cpp
@@ -440,11 +447,6 @@ $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o: ../../Source/Interface/LookAnd
 	@echo "Compiling TrackColourLookAndFeel.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/AutoEditComponent_2f86d78b.o: ../../Source/Interface/Dialogs/AutoEditComponent.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AutoEditComponent.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
 $(JUCE_OBJDIR)/ColourIds_54ae2f37.o: ../../Source/Interface/ColourIds.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling ColourIds.cpp"
@@ -545,6 +547,11 @@ $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o: ../../Source/Interface/Models
 	@echo "Compiling RegionTableListBoxModel.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/AutoEditOverlayControl_e143b2a.o: ../../Source/Interface/Controls/AutoEditOverlayControl.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AutoEditOverlayControl.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o: ../../Source/Interface/Controls/LoopDraggerControl.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling LoopDraggerControl.cpp"
@@ -598,6 +605,11 @@ $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o: ../../Source/Interface/Views/FadeInOutV
 $(JUCE_OBJDIR)/SegmentationView_81438847.o: ../../Source/Interface/Views/SegmentationView.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling SegmentationView.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AutoEditPreviewView_ccfab99e.o: ../../Source/Interface/Views/AutoEditPreviewView.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AutoEditPreviewView.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o: ../../Source/Interface/Views/WaveFormViewBase.cpp

@@ -892,6 +892,9 @@
     <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEdit.cpp">
       <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.cpp">
+      <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Channel\AudioChannel.cpp">
       <Filter>Audionaut\Source\Engine\Channel</Filter>
     </ClCompile>
@@ -979,9 +982,6 @@
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp">
       <Filter>Audionaut\Source\Interface\LookAndFeel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Dialogs\AutoEditComponent.cpp">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\ColourIds.cpp">
       <Filter>Audionaut\Source\Interface</Filter>
     </ClCompile>
@@ -1042,6 +1042,9 @@
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.cpp">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
@@ -1073,6 +1076,9 @@
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Views\SegmentationView.cpp">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Views\AutoEditPreviewView.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp">
@@ -4224,6 +4230,9 @@
     <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEdit.h">
       <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.h">
+      <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Channel\AudioChannel.h">
       <Filter>Audionaut\Source\Engine\Channel</Filter>
     </ClInclude>
@@ -4368,12 +4377,6 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutWindowComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditDialog.h">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditComponent.h">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ExportAudioDialog.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
@@ -4482,6 +4485,9 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
@@ -4534,6 +4540,9 @@
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\SegmentationView.h">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Views\AutoEditPreviewView.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h">

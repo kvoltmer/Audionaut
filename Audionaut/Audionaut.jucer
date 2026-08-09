@@ -128,6 +128,10 @@
         <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
           <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
           <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
+          <FILE id="AePmCp" name="AutoEditParameter.cpp" compile="1" resource="0"
+                file="Source/Engine/AutoEdit/AutoEditParameter.cpp"/>
+          <FILE id="AePmHd" name="AutoEditParameter.h" compile="0" resource="0"
+                file="Source/Engine/AutoEdit/AutoEditParameter.h"/>
         </GROUP>
         <GROUP id="{44EAE852-D94A-E010-D086-40CC86FE8C48}" name="Channel">
           <FILE id="styheO" name="AudioChannel.cpp" compile="1" resource="0"
@@ -287,12 +291,6 @@
                 file="Source/Interface/Dialogs/NewAudioTrackDialog.h"/>
           <FILE id="XUO0Mz" name="AboutWindowComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AboutWindowComponent.h"/>
-          <FILE id="HO4Dqt" name="AutoEditDialog.h" compile="0" resource="0"
-                file="Source/Interface/Dialogs/AutoEditDialog.h"/>
-          <FILE id="y2L75o" name="AutoEditComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Dialogs/AutoEditComponent.cpp"/>
-          <FILE id="rN8IxH" name="AutoEditComponent.h" compile="0" resource="0"
-                file="Source/Interface/Dialogs/AutoEditComponent.h"/>
           <FILE id="oKVp3j" name="ExportAudioDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/ExportAudioDialog.h"/>
           <FILE id="f9OpEm" name="ExportAudioComponent.h" compile="0" resource="0"
@@ -420,6 +418,10 @@
                 file="Source/Interface/Models/PlayListItemListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="AeOvCp" name="AutoEditOverlayControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/AutoEditOverlayControl.cpp"/>
+          <FILE id="AeOvHd" name="AutoEditOverlayControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/AutoEditOverlayControl.h"/>
           <FILE id="Y7l77u" name="LoopDraggerControl.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/LoopDraggerControl.cpp"/>
           <FILE id="nuQDk2" name="LoopDraggerControl.h" compile="0" resource="0"
@@ -472,6 +474,10 @@
                 file="Source/Interface/Views/SegmentationView.cpp"/>
           <FILE id="segViH" name="SegmentationView.h" compile="0" resource="0"
                 file="Source/Interface/Views/SegmentationView.h"/>
+          <FILE id="aePvwC" name="AutoEditPreviewView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AutoEditPreviewView.cpp"/>
+          <FILE id="aePvwH" name="AutoEditPreviewView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AutoEditPreviewView.h"/>
           <FILE id="hpKHS1" name="GridView.h" compile="0" resource="0" file="Source/Interface/Views/GridView.h"/>
           <FILE id="Fx8wUZ" name="ArrangementOverview.h" compile="0" resource="0"
                 file="Source/Interface/Views/ArrangementOverview.h"/>

@@ -207,6 +207,49 @@ EventMerger::Result AnalysisProvider::mergeCachedAnalyses(const juce::File& audi
     return mergeCachedAnalyses(audioFile, durationSeconds, EventMerger::Parameters());
 }
 
+void AnalysisProvider::setMergePreview(const std::string& audioFilePath,
+                                       int trackId,
+                                       int playlistItemId,
+                                       std::vector<float> boundaries,
+                                       double measures)
+{
+    mergePreviewFilePath = audioFilePath;
+    mergePreviewTrackId = trackId;
+    mergePreviewPlaylistItemId = playlistItemId;
+    mergePreviewBoundaries = std::move(boundaries);
+    mergePreviewMeasures = measures;
+    sendChangeMessage();
+}
+
+void AnalysisProvider::clearMergePreview()
+{
+    if (mergePreviewFilePath.empty() && mergePreviewBoundaries.empty())
+        return;
+
+    mergePreviewFilePath.clear();
+    mergePreviewTrackId = -1;
+    mergePreviewPlaylistItemId = -1;
+    mergePreviewBoundaries.clear();
+    mergePreviewMeasures = 0.0;
+    sendChangeMessage();
+}
+
+std::vector<float> AnalysisProvider::getMergePreview(const juce::File& audioFile,
+                                                     int trackId,
+                                                     int playlistItemId) const
+{
+    if (mergePreviewFilePath != audioFile.getFullPathName().toStdString())
+        return {};
+
+    // A preview without a clip applies to the whole file and shows on all of
+    // its clips; one with a clip shows on that clip alone.
+    if (mergePreviewPlaylistItemId >= 0
+        && (mergePreviewTrackId != trackId || mergePreviewPlaylistItemId != playlistItemId))
+        return {};
+
+    return mergePreviewBoundaries;
+}
+
 std::vector<float> AnalysisProvider::getSegments(AnalysisType analysisType,
                                                  const juce::File& audioFile) const
 {

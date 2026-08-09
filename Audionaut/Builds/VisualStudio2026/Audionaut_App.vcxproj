@@ -176,6 +176,7 @@
     <ClCompile Include="..\..\Source\Engine\Selection\SelectionManager.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Core\DspClip.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEdit.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Channel\AudioChannel.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Factory\AudiumFactory.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrack.cpp"/>
@@ -205,7 +206,6 @@
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp"/>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Dialogs\AutoEditComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\ColourIds.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_AudioThumbnail.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_ListBox.cpp"/>
@@ -226,6 +226,7 @@
     <ClCompile Include="..\..\Source\Interface\Models\AudioTrackListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
@@ -237,6 +238,7 @@
     <ClCompile Include="..\..\Source\Interface\Controls\AudioTrackListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\SegmentationView.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Views\AutoEditPreviewView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\AudioClipView.cpp"/>
     <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_Analytics.cpp">
@@ -3133,6 +3135,7 @@
     <ClInclude Include="..\..\Source\Engine\Streamable.h"/>
     <ClInclude Include="..\..\Source\Engine\TimeContext.h"/>
     <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEdit.h"/>
+    <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.h"/>
     <ClInclude Include="..\..\Source\Engine\Channel\AudioChannel.h"/>
     <ClInclude Include="..\..\Source\Engine\Channel\AudioChannelData.h"/>
     <ClInclude Include="..\..\Source\Engine\Factory\AudioTrackFactory.h"/>
@@ -3181,8 +3184,6 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingToolWindow.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\NewAudioTrackDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutWindowComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditDialog.h"/>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ExportAudioDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ExportAudioComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\NewRegionDialog.h"/>
@@ -3219,6 +3220,7 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h"/>
@@ -3237,6 +3239,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\AudioTrackListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\SegmentationView.h"/>
+    <ClInclude Include="..\..\Source\Interface\Views\AutoEditPreviewView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\ArrangementOverview.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\WaveFormViewBase.h"/>

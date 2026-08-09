@@ -26,7 +26,7 @@ struct AutoEditConfig {
     /**
      * @brief Where the segment boundaries come from.
      *
-     * The dialog does not offer this: it always runs the built-in analysis.
+     * The UI does not offer this: it always runs the built-in analysis.
      * Python is selectable from tests, which is where the two implementations
      * are compared - see AutoEditComparisonTests.
      */
@@ -47,6 +47,14 @@ struct AutoEditConfig {
 
     std::string mode = "random";
     double duration = 120.0;
+
+    /// The abstract musical parameter: target segment length in measures
+    /// (bars). When positive, numSegments and the segment length bounds are
+    /// derived from it and the analysed file's own tempo (see
+    /// AutoEditParameter); at zero it is off and the concrete values below are
+    /// used as given.
+    double segmentMeasures = 0.0;
+
     int numSegments = 20;
     double minSegLength = 2.0;
     double maxSegLength = 60.0;
@@ -84,6 +92,69 @@ public:
      */
     bool invokeAutoEdit(AutoEditConfig &config,
                         std::function<void(std::string)> callback);
+
+    /**
+     * @brief Points @p config at the selected playlist item.
+     * @return False when no playlist item is selected; @p config is then left
+     *         untouched, so a pending edit keeps its current target.
+     */
+    bool targetSelectedClip(AutoEditConfig &config);
+
+    /**
+     * @brief Points @p config at the clip an auto edit invoked without further
+     *        targeting applies to.
+     *
+     * The selected playlist item wins; without one, the first clip of at least
+     * a second on the default track is used. Fills trackId / playlistItemId,
+     * leaving both at -1 when nothing qualifies.
+     */
+    void targetSelection(AutoEditConfig &config);
+
+    /**
+     * @brief Publishes the boundaries an invokeAutoEdit() with this config
+     *        would cut at, as a merge preview on the AnalysisProvider.
+     *
+     * Views overlay the preview on the clips of the previewed file (see
+     * SegmentationView). When the target cannot be resolved or its analyses
+     * are not cached yet, any active preview is cleared instead.
+     *
+     * Native source only - the Python path computes its boundaries in a
+     * subprocess at invoke time, so there is nothing to preview.
+     *
+     * @return True when a preview was published.
+     */
+    bool previewAutoEdit(AutoEditConfig &config);
+
+    /**
+     * @brief The number of segments an invokeAutoEdit() with this config would
+     *        actually create inside the target clip.
+     *
+     * The merge's segment parameter describes the whole analysed file (see
+     * AutoEditConfig::segmentMeasures), but only the boundaries falling inside
+     * the clip become cuts. This resolves the parameter, runs the merge, and
+     * counts what survives the clip's extent - the number the UI can show
+     * for the pending edit. Zero means no boundary falls inside the clip and
+     * the edit would cut nothing.
+     *
+     * @return The in-clip count; config.numSegments (or the value the measure
+     *         parameter derives) when the target does not resolve or its
+     *         analyses are not cached yet, since there is nothing to count.
+     */
+    int resolveNumSegments(AutoEditConfig &config);
+
+    /**
+     * @brief The segment length bounds the abstract measure parameter
+     *        resolves to for the target file, in seconds.
+     *
+     * Half the target length below, double above (see AutoEditParameter).
+     * The lower bound is what invokeAutoEdit() feeds the merge's
+     * minimum-segment rule; the upper bound is advisory until the merge
+     * learns one.
+     *
+     * @return The bounds, or an empty range when the parameter is off, the
+     *         target does not resolve, or the file's tempo is not cached.
+     */
+    juce::Range<double> resolveSegmentLengthBounds(AutoEditConfig &config);
 
     /**
      * @brief Runs the gaborgandalf subprocess over @p audioFile and turns the
