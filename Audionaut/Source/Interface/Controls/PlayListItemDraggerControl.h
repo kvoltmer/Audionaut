@@ -13,7 +13,8 @@
 #include "Engine/Analysis/AnalysisProvider.h"
 
 class PlayListItemDraggerControl : public DraggerControl,
-                                   public juce::ChangeListener
+                                   public juce::ChangeListener,
+                                   public juce::ActionListener
 {
 public:
     
@@ -30,15 +31,23 @@ public:
     {
         regionSelector->playListItemDraggerControls.push_back(this);
 
-        // The BPM suffix is computed live at paint-time from the analysis
-        // cache (see getBpmSuffix()), so a repaint is all that's needed to
-        // pick up a background analysis that just finished.
+        // The BPM suffix and the grid-match check mark are computed live at
+        // paint-time from the analysis cache (see getBpmSuffix() /
+        // matchesProjectGrid()), so a repaint is all that's needed to pick up
+        // a background analysis that just finished.
         if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
             analysisProvider->addChangeListener(this);
+
+        // The grid-match check mark also depends on the project tempo.
+        if (auto tempoProvider = playListContainer->getTempoProvider())
+            tempoProvider->addActionListener(this);
     }
 
     ~PlayListItemDraggerControl() override
     {
+        if (auto tempoProvider = playListContainer->getTempoProvider())
+            tempoProvider->removeActionListener(this);
+
         if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
             analysisProvider->removeChangeListener(this);
 
@@ -51,6 +60,14 @@ public:
     {
         repaint();
     }
+
+    void actionListenerCallback (const juce::String& message) override
+    {
+        if (message == audium::tempoChanged)
+            repaint();
+    }
+
+    void paint (juce::Graphics& g) override;
 
 
     bool isSelected() const override
@@ -100,6 +117,15 @@ private:
     // file or "(128.0, 132.0) BPM" when the region spans several files with
     // differing estimates. Empty if no BPM estimate is available.
     juce::String getBpmSuffix() const;
+
+    // Whether every analysed resource of the item sits on the project's beat
+    // grid (see AnalysisProvider::matchesGrid). False when nothing has been
+    // analysed yet.
+    bool matchesProjectGrid() const;
+
+    // Small green check mark at the right end of the dragger strip, shown
+    // while matchesProjectGrid() holds.
+    void paintGridMatchCheckMark (juce::Graphics& g) const;
 
     std::shared_ptr<audium::PlayListContainer> playListContainer;
     std::shared_ptr<audium::PlayListItem> playListItem;

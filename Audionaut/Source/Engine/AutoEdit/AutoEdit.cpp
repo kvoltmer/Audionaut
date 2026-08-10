@@ -3,6 +3,8 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -22,6 +24,7 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/ResourceGroup.h"
+#include "Engine/Provider/TempoProvider.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
@@ -46,6 +49,11 @@ struct EditTarget {
 
     // Id of that clip (same numbering the dialog uses), or -1 when none.
     int playListItemId = -1;
+
+    // The clip's absolute timeline position, in clocks. Only meaningful while
+    // playListItemIndex >= 0 - without a clip the edit has no place on the
+    // timeline.
+    double clipStartClocks = 0.0;
 
     bool isValid() const
     {
@@ -91,6 +99,7 @@ EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItem
                 target.extent = region->getRegionData(audium::seconds);
                 target.playListItemIndex = playListContainer->getPlayListItemIndex(item.get());
                 target.playListItemId = item->getId();
+                target.clipStartClocks = item->getAbsolutePosition(audium::clocks);
             }
     }
 
@@ -211,6 +220,41 @@ EventMerger::Parameters effectiveMergeParameters(const AutoEditConfig& config,
     }
 
     return params;
+}
+
+/**
+ * The merged boundaries snapped onto the project's beat grid - but only when
+ * the clip's beat analysis sits on that grid (the same
+ * AnalysisProvider::matchesGrid() check that shows the dragger's check mark).
+ * An off-grid clip keeps its analysed cut positions, losing only the ones
+ * within a beat of the clip's edges - the sub-beat-sliver rule holds either
+ * way. Left alone entirely when no clip anchors the edit to the timeline.
+ */
+std::vector<float> snapBoundariesForTarget(std::vector<float> boundaries,
+                                           const EditTarget& target,
+                                           const AnalysisProvider& analysisProvider,
+                                           const AudioTrackContainer& audioTrackContainer,
+                                           const juce::File& audioFile)
+{
+    if (target.playListItemIndex < 0)
+        return boundaries;
+
+    auto tempoProvider = audioTrackContainer.getTempoProvider();
+
+    if (tempoProvider == nullptr)
+        return boundaries;
+
+    const auto projectTempo = tempoProvider->getTempo();
+    const auto bpm = analysisProvider.getBpm(AnalysisType::BeatDegara, audioFile);
+    const auto beats = analysisProvider.getSegments(AnalysisType::BeatDegara, audioFile);
+
+    if (! AnalysisProvider::matchesGrid(projectTempo, bpm, beats,
+                                        target.clipStartClocks, target.extent))
+        return AutoEdit::skipEdgeBoundaries(boundaries, projectTempo, target.extent);
+
+    return AutoEdit::snapBoundariesToGrid(boundaries, projectTempo,
+                                          target.clipStartClocks,
+                                          target.extent);
 }
 
 // Names the missing analyses so the user is told what to wait for rather than
@@ -352,7 +396,11 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
         return false;
     }
 
-    const auto boundaries = result.boundaries;
+    const auto boundaries = snapBoundariesForTarget(std::move(result.boundaries),
+                                                    target,
+                                                    *analysisProvider,
+                                                    *audioTrackContainer,
+                                                    audioFile);
 
     // The analyses describe the whole file; the edit applies only to what the
     // chosen clip covers. Without a clip to go on, that is the whole file.
@@ -419,10 +467,31 @@ bool AutoEdit::previewAutoEdit(AutoEditConfig &config)
 
     auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
 
+    // Snapped the same way invokeAutoEdit() snaps, so the preview shows the
+    // cuts the edit would actually make.
+    auto boundaries = snapBoundariesForTarget(std::move(result.boundaries),
+                                              target,
+                                              *analysisProvider,
+                                              *audioTrackContainer,
+                                              audioFile);
+
+    // Only boundaries that become cuts are published: the merge always emits
+    // the file's own edges, which createRegionsFromBoundaries drops - shown in
+    // the preview they would read as an edit right at the clip's start or end
+    // that invoking the edit never makes.
+    const auto extent = target.extent.isEmpty() ? juce::Range<double>(0.0, duration)
+                                                : target.extent;
+
+    std::erase_if(boundaries, [&extent] (float boundary)
+    {
+        const auto point = (double) boundary;
+        return point <= extent.getStart() || point >= extent.getEnd();
+    });
+
     analysisProvider->setMergePreview(audioFile.getFullPathName().toStdString(),
                                       track->getId(),
                                       target.playListItemId,
-                                      std::move(result.boundaries),
+                                      std::move(boundaries),
                                       config.segmentMeasures);
     return true;
 }
@@ -448,16 +517,23 @@ int AutoEdit::resolveNumSegments(AutoEditConfig &config)
 
     // The merge parameter describes the whole file, but only what falls inside
     // the clip is cut. Counting the merged boundaries the same way
-    // createRegionsFromBoundaries filters them gives the count the edit would
-    // actually produce.
-    const auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
+    // createRegionsFromBoundaries filters them - after the same grid snapping
+    // invokeAutoEdit() applies - gives the count the edit would actually
+    // produce.
+    auto result = analysisProvider->mergeCachedAnalyses(audioFile, (float) duration, params);
+
+    const auto boundaries = snapBoundariesForTarget(std::move(result.boundaries),
+                                                    target,
+                                                    *analysisProvider,
+                                                    *audioTrackContainer,
+                                                    audioFile);
 
     const auto extent = target.extent.isEmpty() ? juce::Range<double>(0.0, duration)
                                                 : target.extent;
 
     int inside = 0;
 
-    for (auto boundary : result.boundaries)
+    for (auto boundary : boundaries)
     {
         const auto point = (double) boundary;
 
@@ -508,6 +584,94 @@ bool AutoEdit::applyAsUndoableEdit(std::function<bool()> createRegions)
     audioTrackContainer->getUndoManager()->beginNewTransaction();
 
     return true;
+}
+
+std::vector<float> AutoEdit::snapBoundariesToGrid(const std::vector<float>& boundarySeconds,
+                                                  double projectTempoBpm,
+                                                  double clipStartClocks,
+                                                  juce::Range<double> playedRegionSeconds)
+{
+    const auto regionStart = playedRegionSeconds.getStart();
+
+    const auto toTimelineBeats = [&] (double fileSeconds)
+    {
+        return TempoProvider::clocksToBeats(clipStartClocks
+            + TempoProvider::secondsToClocks(projectTempoBpm, fileSeconds - regionStart));
+    };
+
+    // The grid beats a snapped cut may land on: at least one beat away from
+    // either edge of the clip, so no cut can bound a segment shorter than a
+    // beat against the clip's start or end.
+    const auto firstAllowedBeat = std::ceil(toTimelineBeats(regionStart) + 1.0);
+    const auto lastAllowedBeat  = std::floor(toTimelineBeats(playedRegionSeconds.getEnd()) - 1.0);
+
+    std::vector<float> snapped;
+    snapped.reserve(boundarySeconds.size());
+
+    for (auto boundary : boundarySeconds)
+    {
+        const auto fileSeconds = (double) boundary;
+
+        // Edge and outside boundaries make no cut either way - passing them
+        // through unchanged keeps a cut from being invented where the
+        // analysis put none.
+        if (fileSeconds <= regionStart || fileSeconds >= playedRegionSeconds.getEnd())
+        {
+            snapped.push_back(boundary);
+            continue;
+        }
+
+        const auto beat = std::round(toTimelineBeats(fileSeconds));
+
+        // A cut whose nearest beat sits within a beat of the clip's start or
+        // end is skipped: it would leave a sub-beat sliver of a segment.
+        if (beat < firstAllowedBeat || beat > lastAllowedBeat)
+            continue;
+
+        snapped.push_back((float) (regionStart
+            + TempoProvider::clocksToSeconds(projectTempoBpm,
+                                             TempoProvider::beatsToClocks(beat) - clipStartClocks)));
+    }
+
+    // Two boundaries can snap onto the same beat; the duplicate would only
+    // bound a zero-length segment.
+    std::sort(snapped.begin(), snapped.end());
+    snapped.erase(std::unique(snapped.begin(), snapped.end()), snapped.end());
+
+    return snapped;
+}
+
+std::vector<float> AutoEdit::skipEdgeBoundaries(const std::vector<float>& boundarySeconds,
+                                                double projectTempoBpm,
+                                                juce::Range<double> playedRegionSeconds)
+{
+    std::vector<float> kept;
+    kept.reserve(boundarySeconds.size());
+
+    for (auto boundary : boundarySeconds)
+    {
+        const auto fileSeconds = (double) boundary;
+
+        // On or outside the edges: no cut either way, filtered later.
+        if (fileSeconds <= playedRegionSeconds.getStart()
+            || fileSeconds >= playedRegionSeconds.getEnd())
+        {
+            kept.push_back(boundary);
+            continue;
+        }
+
+        const auto startDistanceBeats = TempoProvider::secondsToBeats(
+            projectTempoBpm, fileSeconds - playedRegionSeconds.getStart());
+        const auto endDistanceBeats = TempoProvider::secondsToBeats(
+            projectTempoBpm, playedRegionSeconds.getEnd() - fileSeconds);
+
+        if (startDistanceBeats < 1.0 || endDistanceBeats < 1.0)
+            continue;
+
+        kept.push_back(boundary);
+    }
+
+    return kept;
 }
 
 std::vector<std::shared_ptr<AudioRegion>>
@@ -596,14 +760,36 @@ bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
     // Insert the segments where the clip sat, in order, then drop the clip's
     // own item. Deleting by pointer rather than index, since each insertion
     // shifts it along.
+    const auto originalStartClocks = original->getAbsolutePosition(audium::clocks);
+
     int offset = 0;
+    std::vector<std::shared_ptr<PlayListItem>> createdItems;
 
     for (const auto& region : regions)
-        playListContainer->createPlayListItemUI(region, insertAt + offset++);
+        if (auto item = playListContainer->createPlayListItemUI(region, insertAt + offset++))
+            createdItems.push_back(item);
+
+    // The segments take the clip's place on the timeline: the first sits
+    // exactly where the clip sat and the rest follow seamlessly.
+    // createPlayListItemUI()'s own placement cannot be trusted for this - its
+    // insert-at-the-beginning heuristic places an item *before* the track's
+    // first, shifting the first segment left when the edited clip is first on
+    // its track.
+    auto positionClocks = originalStartClocks;
+
+    for (const auto& item : createdItems)
+    {
+        item->setAbsolutePosition(positionClocks, audium::clocks);
+        positionClocks += item->getRegionData(audium::clocks).getLength();
+    }
 
     // The clip's region stays: it still describes the audio the segments came
     // from, and other items may reference it.
-    return playListContainer->deletePlayListItem(original.get(), false);
+    const auto deleted = playListContainer->deletePlayListItem(original.get(), false);
+
+    playListContainer->sortByPosition();
+
+    return deleted;
 }
 
 bool AutoEdit::invokePython(const juce::File& audioFile,
