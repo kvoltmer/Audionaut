@@ -42,14 +42,27 @@ public:
         removeKeyListener(this);
     }
     
+    // Label metrics. paintLabel() draws the label at labelLeftInset and the
+    // suffix immediately after it, separated by labelSuffixGap. Subclasses that
+    // decide whether text fits have to measure against exactly these values, so
+    // they live here rather than being restated at each call site.
+    static constexpr float labelFontHeight = 12.0f;
+    static constexpr float labelLeftInset  = 5.0f;
+    static constexpr float labelSuffixGap  = 4.0f;
+
+    // Centres the label in the draggerHeight strip: (19 - 12) / 2 = 3.5, rounded up.
+    static constexpr int labelTopInset = 4;
+
+    static juce::Font getLabelFont() { return juce::Font (juce::FontOptions (labelFontHeight)); }
+
     void paintLabel (juce::Graphics& g, const juce::String label, const juce::String suffix = {})
     {
-        g.setFont (12.0f);
+        g.setFont (getLabelFont());
 
         auto labelWidth = GlyphArrangement::getStringWidth (g.getCurrentFont(), label);
 
-        juce::Rectangle<int> bonds(5,
-                                   4,
+        juce::Rectangle<int> bonds((int) labelLeftInset,
+                                   labelTopInset,
                                    labelWidth,
                                    g.getCurrentFont().getHeight());
 
@@ -58,8 +71,8 @@ public:
 
         if (suffix.isNotEmpty())
         {
-            juce::Rectangle<int> suffixBonds(5 + labelWidth + 4,
-                                             4,
+            juce::Rectangle<int> suffixBonds((int) (labelLeftInset + labelWidth + labelSuffixGap),
+                                             labelTopInset,
                                              GlyphArrangement::getStringWidth (g.getCurrentFont(), suffix),
                                              g.getCurrentFont().getHeight());
 

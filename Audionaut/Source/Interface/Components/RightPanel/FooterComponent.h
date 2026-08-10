@@ -12,6 +12,7 @@
 #include "Engine/Playback/Playback.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Analysis/AnalysisWorker.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class FooterComponent  : public juce::Component, private juce::Timer
 {
@@ -21,13 +22,13 @@ public:
     {
         totalLengthLabel.reset(new juce::Label());
         addAndMakeVisible(totalLengthLabel.get());
-        totalLengthLabel->setFont (juce::FontOptions { 13.0f });
+        totalLengthLabel->setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions { 13.0f }));
         totalLengthLabel->setJustificationType (juce::Justification::centredLeft);
         totalLengthLabel->setEditable (false, false, false);
         
         numVoicesLabel.reset(new juce::Label());
         addAndMakeVisible(numVoicesLabel.get());
-        numVoicesLabel->setFont (juce::FontOptions { 13.0f });
+        numVoicesLabel->setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions { 13.0f }));
         numVoicesLabel->setJustificationType (juce::Justification::centredLeft);
         numVoicesLabel->setEditable (false, false, false);
 
@@ -35,7 +36,8 @@ public:
         // labels above, and shown only while the AnalysisWorker is busy.
         analysisStatusLabel.reset(new juce::Label());
         addChildComponent(analysisStatusLabel.get());
-        analysisStatusLabel->setFont (juce::FontOptions { 13.0f });
+        // Also tabular: the trailing "(N remaining)" counts down while this is visible.
+        analysisStatusLabel->setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions { 13.0f }));
         analysisStatusLabel->setJustificationType (juce::Justification::centredLeft);
         analysisStatusLabel->setEditable (false, false, false);
 

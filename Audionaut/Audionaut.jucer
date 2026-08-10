@@ -497,6 +497,18 @@
           <FILE id="gdiYPG" name="audionaut_logo_1024x1024.png" compile="0" resource="1"
                 file="Resources/audionaut_logo_1024x1024.png"/>
           <FILE id="FBwe0J" name="zoomin-inv.svg" compile="0" resource="1" file="Resources/zoomin-inv.svg"/>
+          <GROUP id="{7A1C4E90-2B63-4D18-9F52-1E8A6C0D3B47}" name="Fonts">
+            <FILE id="ftInR0" name="Inter-Regular.ttf" compile="0" resource="1"
+                  file="Resources/Fonts/Inter-Regular.ttf"/>
+            <FILE id="ftInB0" name="Inter-Bold.ttf" compile="0" resource="1"
+                  file="Resources/Fonts/Inter-Bold.ttf"/>
+            <FILE id="ftInI0" name="Inter-Italic.ttf" compile="0" resource="1"
+                  file="Resources/Fonts/Inter-Italic.ttf"/>
+            <FILE id="ftInBI" name="Inter-BoldItalic.ttf" compile="0" resource="1"
+                  file="Resources/Fonts/Inter-BoldItalic.ttf"/>
+            <FILE id="ftInLC" name="Inter-LICENSE.txt" compile="0" resource="0"
+                  file="Resources/Fonts/Inter-LICENSE.txt"/>
+          </GROUP>
         </GROUP>
       </GROUP>
     </GROUP>
@@ -510,7 +522,8 @@
                appSandbox="1" useLegacyBuildSystem="0" smallIcon="qhU3Rr" bigIcon="gdiYPG"
                appSandboxInheritance="1" appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
-               xcodeValidArchs="arm64,arm64e" documentExtensions="audium" iosDevelopmentTeamID="Q89CZBX79G"
+               xcodeValidArchs="arm64,arm64e" documentExtensions="audium" documentTypeIsPackage="1"
+               iosDevelopmentTeamID="Q89CZBX79G"
                buildNumber="15" microphonePermissionNeeded="1" localNetworkPermissionNeeded="1"
                extraLinkerFlags="$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv">
       <CONFIGURATIONS>

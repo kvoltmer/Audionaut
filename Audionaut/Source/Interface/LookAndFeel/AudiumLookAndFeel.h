@@ -15,7 +15,12 @@ public:
     ~AudiumLookAndFeel() override;
     
     static LookAndFeel_V4::ColourScheme getDarkAudiumColourScheme();
-    
+
+    // Typeface — routes every juce::Font without an explicit typeface to the
+    // embedded Inter faces, so the UI renders identically on all platforms
+    // instead of falling through to the per-platform default sans-serif.
+    juce::Typeface::Ptr getTypefaceForFont (const juce::Font& font) override;
+
     // Button
     void drawButtonBackground (juce::Graphics& g,
                                juce::Button& button,
@@ -107,6 +112,23 @@ public:
                                                 const juce::String& columnName, int /*columnId*/,
                                                 int width, int height, bool isMouseOver, bool isMouseDown,
                                                 int columnFlags) override;
+
+    // Header text is sized from the header height. Shared so this and the
+    // TrackColourLookAndFeel override cannot drift apart.
+    static juce::FontOptions getTableHeaderFontOptions (int height)
+    {
+        return juce::FontOptions ((float) height * 0.5f, juce::Font::bold);
+    }
+
+    // Tabular figures, for readouts whose digits change while the user watches
+    // them. Inter's proportional digits differ in advance by enough to shift the
+    // surrounding text as a value ticks over - a ten-digit string spans 43.7px of
+    // ones but 66.5px of eights at 13pt - which reads as jitter. With "tnum"
+    // every digit takes the widest advance, so the text stays put.
+    static juce::FontOptions withTabularFigures (juce::FontOptions opts)
+    {
+        return opts.withFeatureEnabled (juce::FontFeatureTag ("tnum"));
+    }
     
     // Various statics
     static const int channelsWidth = 140;
@@ -135,6 +157,9 @@ public:
     
 private:
     void setupColours();
+    void setupTypefaces();
+
+    juce::Typeface::Ptr interRegular, interBold, interItalic, interBoldItalic;
 };
 
 

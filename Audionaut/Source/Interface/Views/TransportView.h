@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 #include "Interface/ColourIds.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -49,7 +50,7 @@ public:
             
             // draw text Min::Sec
             g.setColour (textColour);
-            g.setFont (12.0f);
+            g.setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions (12.0f)));
             juce::Rectangle<float> bonds(x + 5.f,
                                          rectangle.getY(),
                                          itemWidth,
@@ -84,7 +85,7 @@ public:
             
             // draw text
             g.setColour (textColour);
-            g.setFont (12.0f);
+            g.setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions (12.0f)));
             juce::Rectangle<float> bonds(x + 5.f, rectangle.getY(), itemWidth, rectangle.getHeight());
             g.drawText (String(bars + 1), bonds, juce::Justification::centredLeft, true);
         }

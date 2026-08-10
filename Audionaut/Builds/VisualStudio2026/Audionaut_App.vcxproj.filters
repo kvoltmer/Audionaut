@@ -110,6 +110,9 @@
     <Filter Include="Audionaut\Source\Interface\Views">
       <UniqueIdentifier>{BA9EB445-C8E2-6CDF-3118-19A888ED239E}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Interface\Resources\Fonts">
+      <UniqueIdentifier>{AEF9F468-218F-E433-18EA-D158AE1869A6}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Interface\Resources">
       <UniqueIdentifier>{9AD0C17C-E8B0-E4C4-3A9C-830E4E458E7D}</UniqueIdentifier>
     </Filter>
@@ -8740,6 +8743,21 @@
     </None>
     <None Include="..\..\Resources\zoomin-inv.svg">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-Regular.ttf">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-Bold.ttf">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-Italic.ttf">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-BoldItalic.ttf">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-LICENSE.txt">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
     </None>
     <None Include="..\..\..\LICENSE.md">
       <Filter>Audionaut</Filter>

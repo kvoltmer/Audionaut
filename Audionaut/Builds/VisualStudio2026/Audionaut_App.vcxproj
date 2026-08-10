@@ -4640,6 +4640,11 @@
     <None Include="..\..\Resources\audionaut_logo_512x512.png"/>
     <None Include="..\..\Resources\audionaut_logo_1024x1024.png"/>
     <None Include="..\..\Resources\zoomin-inv.svg"/>
+    <None Include="..\..\Resources\Fonts\Inter-Regular.ttf"/>
+    <None Include="..\..\Resources\Fonts\Inter-Bold.ttf"/>
+    <None Include="..\..\Resources\Fonts\Inter-Italic.ttf"/>
+    <None Include="..\..\Resources\Fonts\Inter-BoldItalic.ttf"/>
+    <None Include="..\..\Resources\Fonts\Inter-LICENSE.txt"/>
     <None Include="..\..\..\LICENSE.md"/>
     <None Include="..\..\..\README.md"/>
     <None Include="..\..\..\Submodules\JUCE\modules\juce_audio_devices\native\asio\LICENSE.txt"/>

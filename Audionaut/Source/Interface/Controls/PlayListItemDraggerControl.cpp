@@ -21,19 +21,16 @@ const juce::String PlayListItemDraggerControl::getLabelSuffix() const
     if (bpmSuffix.isEmpty())
         return {};
 
-    // paintLabel() draws the main label then the suffix right after it, at a
-    // 5px left inset using a 12pt font (see DraggerControl::paintLabel); only
-    // show the suffix if it would still fit alongside the label in the
-    // control's current width, otherwise a narrow clip would show a
-    // truncated BPM estimate.
-    constexpr float labelLeftInset = 5.0f;
-    constexpr float suffixGap = 4.0f;
-    juce::Font labelFont (juce::FontOptions (12.0f));
+    // paintLabel() draws the main label then the suffix right after it; measure
+    // with its own metrics so the two cannot disagree. Only show the suffix if it
+    // would still fit alongside the label in the control's current width,
+    // otherwise a narrow clip would show a truncated BPM estimate.
+    const auto labelFont = getLabelFont();
 
     auto nameWidth = juce::GlyphArrangement::getStringWidth (labelFont, getLabelString());
     auto suffixWidth = juce::GlyphArrangement::getStringWidth (labelFont, bpmSuffix);
 
-    if (labelLeftInset + nameWidth + suffixGap + suffixWidth > (float) getWidth())
+    if (labelLeftInset + nameWidth + labelSuffixGap + suffixWidth > (float) getWidth())
         return {};
 
     return bpmSuffix;

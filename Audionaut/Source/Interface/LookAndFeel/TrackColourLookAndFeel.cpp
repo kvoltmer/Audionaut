@@ -37,6 +37,6 @@ void TrackColourLookAndFeel::drawTableHeaderColumn (Graphics& g, TableHeaderComp
     jassert(columnId > 0);
     g.setColour (trackColours[columnId - 1]);
     
-    g.setFont (withDefaultMetrics (FontOptions ((float) height * 0.5f, Font::bold)));
+    g.setFont (withDefaultMetrics (getTableHeaderFontOptions (height)));
     g.drawFittedText (columnName, area, Justification::centredLeft, 1, 1.f);
 }

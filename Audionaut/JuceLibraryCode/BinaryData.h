@@ -17,8 +17,20 @@ namespace BinaryData
     extern const char*   zoomininv_svg;
     const int            zoomininv_svgSize = 1882;
 
+    extern const char*   InterRegular_ttf;
+    const int            InterRegular_ttfSize = 411640;
+
+    extern const char*   InterBold_ttf;
+    const int            InterBold_ttfSize = 420428;
+
+    extern const char*   InterItalic_ttf;
+    const int            InterItalic_ttfSize = 417388;
+
+    extern const char*   InterBoldItalic_ttf;
+    const int            InterBoldItalic_ttfSize = 425296;
+
     // Number of elements in the namedResourceList and originalFileNames arrays.
-    const int namedResourceListSize = 3;
+    const int namedResourceListSize = 7;
 
     // Points to the start of a list of resource names.
     extern const char* namedResourceList[];
