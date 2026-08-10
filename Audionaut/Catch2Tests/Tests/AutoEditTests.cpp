@@ -311,7 +311,7 @@ SCENARIO("AutoEdit edits the audio the chosen playlist item refers to",
 
         auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
         auto firstFile = File(testFilesDirectory + "_export_TRK-18.wav");
-        auto secondFile = File(testFilesDirectory + "120-funk-export.wav");
+        auto secondFile = File(testFilesDirectory + "TRK-18-epy-jul.wav");
         REQUIRE(firstFile.existsAsFile());
         REQUIRE(secondFile.existsAsFile());
 
@@ -343,9 +343,11 @@ SCENARIO("AutoEdit edits the audio the chosen playlist item refers to",
 
         // Cache analyses for the second item's audio only. If the edit resolved
         // its target any other way it would find nothing cached and decline.
+        // Shaped like cacheMergeAnalyses() so the merge places cuts clear of
+        // the clip's edges, where the sub-beat-sliver rule would skip them.
         auto cache = trackContainer->getAnalysisProvider()->getCache();
-        cache->put(secondAnalysed, AnalysisType::SBic, evenTimes(0.0f, 0.25f, 5));
-        cache->put(secondAnalysed, AnalysisType::BeatDegara, evenTimes(0.0f, 0.1f, 12));
+        cache->put(secondAnalysed, AnalysisType::SBic, evenTimes(0.0f, 2.5f, 8));
+        cache->put(secondAnalysed, AnalysisType::BeatDegara, evenTimes(0.0f, 0.5f, 40));
 
         const auto baseline = secondGroup->getAudioRegionContainer()->getObjects().size();
 
@@ -671,9 +673,14 @@ SCENARIO("AutoEdit resolves the segment count the edit would cut inside the clip
 
         WHEN("the measure parameter is on and the material's tempo is cached")
         {
-            cache->put(fixture.analysedFile, AnalysisType::SBic, evenTimes(0.0f, 2.5f, 8));
+            // Analyses spanning the whole (roughly one minute) file, with
+            // structural events far enough apart to clear the parameter's
+            // minimum segment length, so the merge places cuts well inside
+            // the clip - the grid snapping the edit applies skips cuts within
+            // a beat of the clip's edges.
+            cache->put(fixture.analysedFile, AnalysisType::SBic, evenTimes(0.0f, 10.0f, 6));
             cache->put(fixture.analysedFile, AnalysisType::BeatDegara,
-                       evenTimes(0.0f, 0.5f, 40), 120.0f);
+                       evenTimes(0.0f, 0.5f, 120), 120.0f);
 
             config.segmentMeasures = 4.0;
 
@@ -775,6 +782,271 @@ SCENARIO("AutoEdit resolves the segment count the edit would cut inside the clip
             THEN("no length bounds resolve")
             {
                 REQUIRE(autoEdit.resolveSegmentLengthBounds(config).isEmpty());
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("AutoEdit snaps boundaries onto the project's beat grid",
+         "[engine][autoedit][gridmatch]")
+{
+    // 120 BPM: a beat lasts 0.5 s and spans 24 clocks.
+    constexpr auto projectTempo = 120.0;
+
+    GIVEN("a clip at the timeline origin playing its file from the start")
+    {
+        const juce::Range<double> playedRegion(0.0, 10.0);
+
+        THEN("boundaries move to the nearest grid beat")
+        {
+            const auto snapped = AutoEdit::snapBoundariesToGrid({ 1.02f, 2.98f },
+                                                                projectTempo, 0.0, playedRegion);
+
+            REQUIRE(snapped.size() == 2);
+            REQUIRE(snapped[0] == Catch::Approx(1.0));
+            REQUIRE(snapped[1] == Catch::Approx(3.0));
+        }
+
+        THEN("boundaries snapping onto the same beat collapse into one")
+        {
+            const auto snapped = AutoEdit::snapBoundariesToGrid({ 0.99f, 1.01f },
+                                                                projectTempo, 0.0, playedRegion);
+
+            REQUIRE(snapped.size() == 1);
+            REQUIRE(snapped[0] == Catch::Approx(1.0));
+        }
+
+        THEN("a boundary cutting a sub-beat sliver at the clip's end is skipped")
+        {
+            // 9.9 s snaps to beat 20 - the clip's end itself - so the cut
+            // would leave nothing but a sliver.
+            REQUIRE(AutoEdit::snapBoundariesToGrid({ 9.9f },
+                                                   projectTempo, 0.0, playedRegion).empty());
+        }
+
+        THEN("a boundary cutting a sub-beat sliver at the clip's start is skipped")
+        {
+            // 0.2 s snaps to beat 0 - the clip's start itself - which would
+            // cut nothing but a sliver.
+            REQUIRE(AutoEdit::snapBoundariesToGrid({ 0.2f },
+                                                   projectTempo, 0.0, playedRegion).empty());
+        }
+
+        THEN("a cut exactly one beat from the clip's edge is kept")
+        {
+            const auto snapped = AutoEdit::snapBoundariesToGrid({ 9.4f },
+                                                                projectTempo, 0.0, playedRegion);
+
+            REQUIRE(snapped.size() == 1);
+            REQUIRE(snapped[0] == Catch::Approx(9.5));
+        }
+
+        THEN("boundaries on the clip's edges pass through unsnapped")
+        {
+            // An edge boundary makes no cut; clamping it inwards would invent
+            // one the analysis never produced.
+            const auto snapped = AutoEdit::snapBoundariesToGrid({ 0.0f, 10.0f },
+                                                                projectTempo, 0.0, playedRegion);
+
+            REQUIRE(snapped.size() == 2);
+            REQUIRE(snapped[0] == Catch::Approx(0.0));
+            REQUIRE(snapped[1] == Catch::Approx(10.0));
+        }
+    }
+
+    GIVEN("a clip sitting off the grid")
+    {
+        THEN("boundaries snap to the grid, not to the clip's own phase")
+        {
+            // Clip start 6 clocks = a quarter beat: a boundary one second in
+            // sits at 2.25 timeline beats and snaps back to beat 2, which is
+            // 0.875 s into the played audio.
+            const auto snapped = AutoEdit::snapBoundariesToGrid({ 1.0f },
+                                                                projectTempo, 6.0,
+                                                                juce::Range<double>(0.0, 10.0));
+
+            REQUIRE(snapped.size() == 1);
+            REQUIRE(snapped[0] == Catch::Approx(0.875));
+        }
+    }
+
+    GIVEN("a clip playing a trimmed part of its file")
+    {
+        THEN("boundaries stay in file time, offset by the region start")
+        {
+            // Region starts 0.25 s into the file, clip on the grid: a boundary
+            // at 1.27 s file time is 1.02 s into the clip, snaps to timeline
+            // beat 2 (1.0 s), and maps back to 1.25 s file time.
+            const auto snapped = AutoEdit::snapBoundariesToGrid({ 1.27f },
+                                                                projectTempo, 0.0,
+                                                                juce::Range<double>(0.25, 10.0));
+
+            REQUIRE(snapped.size() == 1);
+            REQUIRE(snapped[0] == Catch::Approx(1.25));
+        }
+    }
+
+    GIVEN("a clip shorter than a beat")
+    {
+        THEN("an inside boundary is dropped rather than snapped somewhere it cannot go")
+        {
+            const auto snapped = AutoEdit::snapBoundariesToGrid({ 0.6f },
+                                                                projectTempo, 12.0,
+                                                                juce::Range<double>(0.5, 0.7));
+
+            REQUIRE(snapped.empty());
+        }
+    }
+}
+
+SCENARIO("AutoEdit previews only the boundaries the edit would cut",
+         "[engine][autoedit][preview]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture();
+        cacheMergeAnalyses(fixture);
+
+        AutoEdit autoEdit(fixture.engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+        config.numSegments = 6;
+
+        WHEN("a preview is published")
+        {
+            REQUIRE(autoEdit.previewAutoEdit(config));
+
+            auto analysisProvider = fixture.engine->getAudioTrackContainer()->getAnalysisProvider();
+            auto item = fixture.track()->getPlayListContainer()->getPlayListItem(0);
+            REQUIRE(item != nullptr);
+
+            const auto preview = analysisProvider->getMergePreview(fixture.analysedFile,
+                                                                   0, item->getId());
+
+            // The merge always emits the file's own edges (a boundary at 0 in
+            // particular), which the edit never cuts - shown in the preview
+            // they would read as an edit right at the clip's start.
+            THEN("no previewed boundary sits on or outside the clip's edges")
+            {
+                REQUIRE_FALSE(preview.empty());
+
+                const auto extent = item->getRegionData(audium::seconds);
+
+                for (auto boundary : preview)
+                {
+                    REQUIRE(boundary > extent.getStart());
+                    REQUIRE(boundary < extent.getEnd());
+                }
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("AutoEdit skips edge slivers for clips that do not sit on the grid",
+         "[engine][autoedit][gridmatch]")
+{
+    // 120 BPM: a beat lasts 0.5 s. The clip plays 0..10 s of its file.
+    constexpr auto projectTempo = 120.0;
+    const juce::Range<double> playedRegion(0.0, 10.0);
+
+    GIVEN("boundaries within a beat of the clip's edges")
+    {
+        THEN("they are dropped, without moving the surviving cuts")
+        {
+            const auto kept = AutoEdit::skipEdgeBoundaries({ 0.4f, 3.14f, 9.7f },
+                                                           projectTempo, playedRegion);
+
+            REQUIRE(kept.size() == 1);
+            REQUIRE(kept[0] == Catch::Approx(3.14));
+        }
+
+        THEN("a boundary exactly a beat from an edge is kept")
+        {
+            const auto kept = AutoEdit::skipEdgeBoundaries({ 0.5f, 9.5f },
+                                                           projectTempo, playedRegion);
+
+            REQUIRE(kept.size() == 2);
+        }
+
+        THEN("boundaries on or outside the edges pass through for the later filter")
+        {
+            const auto kept = AutoEdit::skipEdgeBoundaries({ 0.0f, 10.0f },
+                                                           projectTempo, playedRegion);
+
+            REQUIRE(kept.size() == 2);
+        }
+    }
+}
+
+SCENARIO("AutoEdit keeps the edited clip's timeline position",
+         "[engine][autoedit]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture();
+        cacheMergeAnalyses(fixture);
+
+        // Move the clip away from the timeline origin while it stays the
+        // track's first item - the case where createPlayListItemUI()'s
+        // insert-at-the-beginning heuristic used to shift the first segment
+        // left of where the clip sat.
+        const auto clipStartClocks = 960.0;
+
+        fixture.track()->getPlayListContainer()->getPlayListItem(0)
+            ->setAbsolutePosition(clipStartClocks, audium::clocks);
+
+        AutoEdit autoEdit(fixture.engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+        config.numSegments = 6;
+
+        std::string reportedError;
+        auto onError = [&reportedError](std::string error) { reportedError = error; };
+
+        WHEN("the clip is auto edited in place")
+        {
+            const auto succeeded = autoEdit.invokeAutoEdit(config, onError);
+
+            INFO("error was: " << reportedError);
+            REQUIRE(succeeded);
+
+            THEN("the segments tile the timeline from exactly the clip's position")
+            {
+                // Re-query: the undoable action rebuilt the container.
+                auto items = fixture.track()->getPlayListContainer()->getPlayListItems();
+
+                std::vector<std::shared_ptr<PlayListItem>> segments;
+
+                for (const auto& item : items)
+                    if (item->getRegion()->getName().startsWith("seg-"))
+                        segments.push_back(item);
+
+                REQUIRE_FALSE(segments.empty());
+
+                std::sort(segments.begin(), segments.end(), [](const auto& a, const auto& b) {
+                    return a->getAbsolutePosition(audium::clocks) < b->getAbsolutePosition(audium::clocks);
+                });
+
+                auto expected = clipStartClocks;
+
+                for (const auto& segment : segments)
+                {
+                    REQUIRE(segment->getAbsolutePosition(audium::clocks)
+                                == Catch::Approx(expected));
+                    expected += segment->getRegionData(audium::clocks).getLength();
+                }
             }
         }
     }

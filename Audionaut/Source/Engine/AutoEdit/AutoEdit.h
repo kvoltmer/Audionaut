@@ -118,6 +118,11 @@ public:
      * SegmentationView). When the target cannot be resolved or its analyses
      * are not cached yet, any active preview is cleared instead.
      *
+     * Published are exactly the cuts invoking the edit would make: the
+     * boundaries after the same grid snapping, without the ones falling on or
+     * outside the clip's edges (which the merge always emits but the edit
+     * drops).
+     *
      * Native source only - the Python path computes its boundaries in a
      * subprocess at invoke time, so there is nothing to preview.
      *
@@ -132,9 +137,10 @@ public:
      * The merge's segment parameter describes the whole analysed file (see
      * AutoEditConfig::segmentMeasures), but only the boundaries falling inside
      * the clip become cuts. This resolves the parameter, runs the merge, and
-     * counts what survives the clip's extent - the number the UI can show
-     * for the pending edit. Zero means no boundary falls inside the clip and
-     * the edit would cut nothing.
+     * counts what survives the clip's extent - after the same grid snapping
+     * invokeAutoEdit() would apply - the number the UI can show for the
+     * pending edit. Zero means no boundary falls inside the clip and the edit
+     * would cut nothing.
      *
      * @return The in-clip count; config.numSegments (or the value the measure
      *         parameter derives) when the target does not resolve or its
@@ -163,6 +169,57 @@ public:
     bool invokePython(const juce::File& audioFile,
                       AutoEditConfig &config,
                       std::function<void(std::string)> callback);
+
+    /**
+     * @brief Snaps boundaries onto the project's beat grid.
+     *
+     * Each boundary strictly inside the played region is mapped onto the
+     * timeline at the clip's position, moved to the nearest grid beat, and
+     * mapped back into file time. A boundary whose nearest beat sits within a
+     * beat of the clip's start or end is skipped - the cut would leave a
+     * sub-beat sliver of a segment against the clip's edge. Boundaries on or
+     * outside the region's edges pass through untouched - snapping them
+     * inwards would invent a cut where the analysis put none. Boundaries that
+     * snap onto the same beat are collapsed into one, so no zero-length
+     * segment can result.
+     *
+     * Callers gate this on AnalysisProvider::matchesGrid() - snapping is only
+     * meaningful when the clip's beat analysis already sits on the grid.
+     *
+     * @param boundarySeconds     Boundary times, in seconds within the
+     *                            analysed file.
+     * @param projectTempoBpm     The project tempo.
+     * @param clipStartClocks     The clip's absolute timeline position, in
+     *                            clocks.
+     * @param playedRegionSeconds The part of the file the clip plays, in
+     *                            seconds within the file.
+     * @return The snapped boundaries, ascending and duplicate-free.
+     */
+    static std::vector<float> snapBoundariesToGrid(const std::vector<float>& boundarySeconds,
+                                                   double projectTempoBpm,
+                                                   double clipStartClocks,
+                                                   juce::Range<double> playedRegionSeconds);
+
+    /**
+     * @brief Drops boundaries within a beat of the clip's start or end.
+     *
+     * The sub-beat-sliver rule of snapBoundariesToGrid() for clips whose beat
+     * analysis does not sit on the grid: cuts are not moved, but one that
+     * would leave a segment shorter than a (project-tempo) beat against the
+     * clip's edge is skipped. A boundary exactly a beat from an edge is kept,
+     * as are boundaries on or outside the edges (they make no cut and are
+     * filtered later either way).
+     *
+     * @param boundarySeconds     Boundary times, in seconds within the
+     *                            analysed file.
+     * @param projectTempoBpm     The project tempo.
+     * @param playedRegionSeconds The part of the file the clip plays, in
+     *                            seconds within the file.
+     * @return The surviving boundaries.
+     */
+    static std::vector<float> skipEdgeBoundaries(const std::vector<float>& boundarySeconds,
+                                                 double projectTempoBpm,
+                                                 juce::Range<double> playedRegionSeconds);
 
     /**
      * @brief Creates one region per consecutive pair of boundaries, covering
