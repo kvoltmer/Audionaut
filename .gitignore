@@ -55,6 +55,14 @@ Audionaut/Catch2Tests/_build/catch2-bin
 Audionaut/Catch2Tests/_build/CMakeFiles
 Audionaut/Catch2Tests/_build
 build
+# Coverage builds and reports. The bare `build` entry above matches that exact
+# name only, so a sibling coverage build tree needs its own entry.
+build-coverage
+coverage.xml
+coverage-html/
+*.gcda
+*.gcno
+*.gcov
 Audionaut/Catch2Tests/TestFiles/Sessions/testing.audium
 Audionaut/Builds/MacOSX/Audionaut.xcodeproj/project.xcworkspace/xcuserdata/klausvoltmer.xcuserdatad
 Audionaut/Builds/VisualStudio2026/.vs/

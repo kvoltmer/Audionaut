@@ -34,6 +34,16 @@ option(AUDIONAUT_ENABLE_ESSENTIA "Build against the Essentia library" ${ESSENTIA
 message(STATUS "Essentia enabled: ${AUDIONAUT_ENABLE_ESSENTIA} (detected available: ${ESSENTIA_AVAILABLE})")
 message(STATUS "Essentia libs at: ${ESSENTIA_LIB_PATH} / ${ESSENTIA_3RDPARTY_LIB_PATH}")
 
+# Code coverage. Off by default; the instrumentation is attached to the
+# AudionautTests target only (see below), so JUCE, Catch2 and the other
+# submodules are never instrumented and never appear in the report.
+#
+#   cmake -B build-coverage -S Audionaut/Catch2Tests \
+#         -DCMAKE_BUILD_TYPE=Debug -DAUDIONAUT_ENABLE_COVERAGE=ON
+#   cmake --build build-coverage -j8 --target coverage
+option(AUDIONAUT_ENABLE_COVERAGE "Instrument the test target for code coverage" OFF)
+message(STATUS "Coverage enabled: ${AUDIONAUT_ENABLE_COVERAGE}")
+
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
 # included JUCE directly in your source tree (perhaps as a submodule), you'll need to tell CMake to
@@ -151,6 +161,85 @@ target_compile_definitions(${APP_NAME}
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
         ESSENTIA_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_ESSENTIA}>)
+
+
+# ---------------------------------------------------------------------------
+# Coverage instrumentation
+#
+# Scoped to this target with target_compile_options/target_link_options rather
+# than CMAKE_CXX_FLAGS: a global flag would also instrument JUCE, Catch2, Link
+# and Essentia, which multiplies build time and drowns the report in submodule
+# source we don't own.
+# ---------------------------------------------------------------------------
+if(AUDIONAUT_ENABLE_COVERAGE)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR
+            "AUDIONAUT_ENABLE_COVERAGE requires GCC or Clang (got ${CMAKE_CXX_COMPILER_ID}).")
+    endif()
+
+    # Line counts are only meaningful without inlining, and JUCE's
+    # juce_recommended_config_flags injects -O3 for non-Debug builds through its
+    # INTERFACE options, which land after ours on the command line and would win.
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(WARNING
+            "AUDIONAUT_ENABLE_COVERAGE is ON but CMAKE_BUILD_TYPE is "
+            "'${CMAKE_BUILD_TYPE}'. Optimised builds inline away lines and skew "
+            "the report - configure with -DCMAKE_BUILD_TYPE=Debug.")
+    endif()
+
+    target_compile_options(${APP_NAME} PRIVATE -O0 -g --coverage)
+    target_link_options(${APP_NAME} PRIVATE --coverage)
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # The engine runs work on real-time audio threads; non-atomic counter
+        # updates race there and silently under-count. Costs some run time.
+        target_compile_options(${APP_NAME} PRIVATE -fprofile-update=atomic)
+    endif()
+
+    # `coverage` target: run the suite, then summarise. gcovr is optional - the
+    # instrumented build is still usable with plain gcov without it.
+    find_program(GCOVR_EXECUTABLE gcovr)
+    if(GCOVR_EXECUTABLE)
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+            set(GCOVR_GCOV_ARG --gcov-executable "llvm-cov gcov")
+        else()
+            set(GCOVR_GCOV_ARG "")
+        endif()
+
+        # --root is the repo root, not SRC_PATH: gcovr resolves --filter against
+        # it, and rooting at SRC_PATH filters every file back out again.
+        # --gcov-ignore-errors=no_working_dir_found is required, not defensive:
+        # some Essentia headers pulled into the analysis TUs defeat gcovr's
+        # working-directory inference and abort the whole run without it.
+        # Both paths must be normalised: SRC_PATH is spelled ".../Catch2Tests/../Source"
+        # and gcovr matches --filter as a literal path prefix without resolving
+        # "..", so the unnormalised form silently filters out every file.
+        get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+        get_filename_component(COVERAGE_SRC_ROOT "${SRC_PATH}" ABSOLUTE)
+
+        add_custom_target(coverage
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage-html
+            COMMAND $<TARGET_FILE:${APP_NAME}>
+            COMMAND ${GCOVR_EXECUTABLE}
+                    --root ${REPO_ROOT}
+                    --filter ${COVERAGE_SRC_ROOT}
+                    ${GCOVR_GCOV_ARG}
+                    --gcov-ignore-errors=no_working_dir_found
+                    --exclude-unreachable-branches
+                    --print-summary
+                    --xml ${CMAKE_BINARY_DIR}/coverage.xml
+                    --html-details ${CMAKE_BINARY_DIR}/coverage-html/index.html
+                    .
+            DEPENDS ${APP_NAME}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running AudionautTests and generating coverage report"
+            VERBATIM)
+    else()
+        message(STATUS
+            "gcovr not found - the 'coverage' target is unavailable. "
+            "Install it (pipx install gcovr) or read the .gcda files with gcov directly.")
+    endif()
+endif()
 
 
 #target_compile_options( ${APP_NAME}
