@@ -49,6 +49,10 @@ constexpr int comebackDelayMilliseconds = 500;
 constexpr int preferredWidth = padding + stepButtonWidth + stepGap + stepButtonWidth
                                    + gap + buttonWidth + padding;
 
+// When space is tight the Less/More pair sits out first: an Apply-only
+// control can still finish the edit.
+constexpr int applyOnlyWidth = padding + buttonWidth + padding;
+
 } // namespace
 
 AutoEditOverlayControl::AutoEditOverlayControl(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
@@ -112,8 +116,16 @@ audium::AutoEditConfig AutoEditOverlayControl::makeConfig() const
 
 void AutoEditOverlayControl::stepMeasures(bool longer)
 {
-    measures = juce::jlimit (minMeasures, maxMeasures,
-                             longer ? measures * 2.0 : measures / 2.0);
+    const auto stepped = juce::jlimit (minMeasures, maxMeasures,
+                                       longer ? measures * 2.0 : measures / 2.0);
+
+    // The Less button is already disabled one step before the preview would
+    // go empty (see wouldCut); this guard keeps the invariant if a step
+    // arrives some other way.
+    if (longer && ! wouldCut (stepped))
+        return;
+
+    measures = stepped;
 
     std::cout << "AutoEdit measures: " << measures << std::endl;
 
@@ -121,10 +133,25 @@ void AutoEditOverlayControl::stepMeasures(bool longer)
     updatePreview();
 }
 
+bool AutoEditOverlayControl::wouldCut(double steppedMeasures) const
+{
+    audium::AutoEdit autoEdit(audiumEngine);
+
+    auto config = makeConfig();
+    config.segmentMeasures = steppedMeasures;
+
+    // Zero means no boundary falls inside the clip; an unresolved target or
+    // missing analyses report a nonzero placeholder, so only a definite
+    // zero-cut step is refused.
+    return autoEdit.resolveNumSegments(config) != 0;
+}
+
 void AutoEditOverlayControl::updateStepButtons()
 {
     // Less doubles the measures, More halves them (see the constructor).
-    lessButton->setEnabled (measures < maxMeasures);
+    // Less also stops where doubling would leave the clip uncut - previewing
+    // zero cuts would hide this control and cancel the edit.
+    lessButton->setEnabled (measures < maxMeasures && wouldCut (measures * 2.0));
     moreButton->setEnabled (measures > minMeasures);
 }
 
@@ -184,6 +211,12 @@ void AutoEditOverlayControl::resized()
 
     applyButton->setBounds (r.removeFromRight (buttonWidth));
     r.removeFromRight (gap);
+
+    // At the Apply-only width (see updatePosition) the step pair sits out.
+    const bool stepsFit = getWidth() >= preferredWidth;
+    lessButton->setVisible (stepsFit);
+    moreButton->setVisible (stepsFit);
+
     lessButton->setBounds (r.removeFromLeft (stepButtonWidth));
     r.removeFromLeft (stepGap);
     moreButton->setBounds (r.removeFromLeft (stepButtonWidth));
@@ -333,7 +366,14 @@ void AutoEditOverlayControl::updatePosition()
 
     auto& animator = juce::Desktop::getInstance().getAnimator();
 
-    if (area.isEmpty())
+    // The control never squeezes its buttons: full width when it fits,
+    // Apply-only when just that fits, and hidden until scrolling or zooming
+    // makes room otherwise.
+    const auto width = area.getWidth() >= preferredWidth ? preferredWidth
+                     : area.getWidth() >= applyOnlyWidth ? applyOnlyWidth
+                                                         : 0;
+
+    if (width == 0)
     {
         animator.cancelAnimation(this, false);
         setBounds ({});
@@ -341,7 +381,6 @@ void AutoEditOverlayControl::updatePosition()
         return;
     }
 
-    const auto width = juce::jmin (area.getWidth(), preferredWidth);
     const auto height = juce::jmin (area.getHeight(), controlHeight);
 
     const auto ideal = area.withSizeKeepingCentre (width, height);

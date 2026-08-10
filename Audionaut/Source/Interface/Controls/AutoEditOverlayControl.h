@@ -88,6 +88,12 @@ private:
     // of them - the Less button - and vice versa.
     void stepMeasures(bool longer);
 
+    // Whether a preview at this measures value would still cut the clip.
+    // Segments longer than the clip leave no boundary inside it; publishing
+    // that empty preview hides this control, cancelling the edit - so Less
+    // must stop one step before it (see updateStepButtons).
+    bool wouldCut(double steppedMeasures) const;
+
     // A button whose step could go no further is disabled.
     void updateStepButtons();
 
