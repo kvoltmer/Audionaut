@@ -95,6 +95,47 @@ public:
     /** @brief The underlying (persistent) analysis cache. */
     std::shared_ptr<AnalysisCache> getCache() const { return analysisCache; }
 
+    /** @name Grid match
+     *
+     * Decides whether a clip's beat-tracking result lines up with the
+     * project's beat grid, so the UI can flag clips that already sit on the
+     * grid (see PlayListItemDraggerControl). Pure and free of any Essentia
+     * dependency, so it can be exercised without running an analysis.
+     */
+    ///@{
+    /** @brief How far the detected BPM may deviate from the project tempo,
+     *         as a fraction of the project tempo. */
+    static constexpr double tempoMatchTolerance = 0.1;
+
+    /** @brief How far the detected beats may sit from the grid's beat lines
+     *         on average, in beats. */
+    static constexpr double gridMatchToleranceBeats = 0.1;
+
+    /**
+     * @brief Whether detected beats line up with the project's beat grid.
+     *
+     * The detected tempo must be within tempoMatchTolerance of the project
+     * tempo, and the beats - mapped onto the timeline at the clip's position -
+     * must deviate from the nearest grid beat by no more than
+     * gridMatchToleranceBeats on average. Only beats inside the played part of
+     * the file take part; a clip with no such beats never matches.
+     *
+     * @param projectTempoBpm     The project tempo (TempoProvider::getTempo()).
+     * @param detectedBpm         The BPM estimate of the beat analysis.
+     * @param beatSeconds         The detected beat times, in seconds within
+     *                            the analysed file.
+     * @param clipStartClocks     The clip's absolute timeline position, in
+     *                            clocks.
+     * @param playedRegionSeconds The part of the file the clip plays, in
+     *                            seconds within the file.
+     */
+    static bool matchesGrid(double projectTempoBpm,
+                            float detectedBpm,
+                            const std::vector<float>& beatSeconds,
+                            double clipStartClocks,
+                            juce::Range<double> playedRegionSeconds);
+    ///@}
+
     /** @name Merged analysis
      *
      * Combines several analyses of one file into a single set of boundaries,

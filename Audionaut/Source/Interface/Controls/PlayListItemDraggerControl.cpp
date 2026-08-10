@@ -70,6 +70,92 @@ juce::String PlayListItemDraggerControl::getBpmSuffix() const
     return "(" + bpms.joinIntoString(", ") + ") BPM";
 }
 
+void PlayListItemDraggerControl::paint (juce::Graphics& g)
+{
+    DraggerControl::paint(g);
+
+    if (! isRecording() && matchesProjectGrid())
+        paintGridMatchCheckMark(g);
+}
+
+bool PlayListItemDraggerControl::matchesProjectGrid() const
+{
+    auto region = playListItem->getRegion();
+    auto audioTrack = region->getAudioTrack();
+    if (audioTrack == nullptr)
+        return false;
+
+    auto analysisProvider = audioTrack->getAnalysisProvider();
+    if (analysisProvider == nullptr)
+        return false;
+
+    auto tempoProvider = playListContainer->getTempoProvider();
+    if (tempoProvider == nullptr)
+        return false;
+
+    const auto projectTempo = tempoProvider->getTempo();
+    const auto playedRegionSeconds = playListItem->getRegionData(audium::seconds);
+    const auto clipStartClocks = playListItem->getAbsolutePosition(audium::clocks);
+
+    // Resources without a beat analysis are skipped rather than counted as a
+    // mismatch (matching getBpmSuffix()), but at least one analysed resource
+    // has to match - an unanalysed item shows no check mark.
+    auto anyAnalysed = false;
+    for (const auto& resource : region->getAudioResources())
+    {
+        if (resource == nullptr)
+            continue;
+
+        const auto audioFile = juce::File(resource->getFullPathName());
+        const auto bpm = analysisProvider->getBpm(audium::AnalysisType::BeatDegara, audioFile);
+        const auto beats = analysisProvider->getSegments(audium::AnalysisType::BeatDegara, audioFile);
+
+        if (bpm <= 0.0f || beats.empty())
+            continue;
+
+        anyAnalysed = true;
+
+        if (! audium::AnalysisProvider::matchesGrid(projectTempo, bpm, beats,
+                                                    clipStartClocks, playedRegionSeconds))
+            return false;
+    }
+
+    return anyAnalysed;
+}
+
+void PlayListItemDraggerControl::paintGridMatchCheckMark (juce::Graphics& g) const
+{
+    constexpr auto size = 8.0f;
+    constexpr auto rightInset = 5.0f;
+
+    const auto right = (float) getWidth() - rightInset;
+    const auto left = right - size;
+
+    // Skip the mark when it would sit on top of the label text - measured
+    // with the label's own metrics, like getLabelSuffix() does, so zoomed-out
+    // (narrow) clips drop the mark rather than overpainting the name.
+    const auto labelFont = getLabelFont();
+    auto textRight = labelLeftInset
+        + juce::GlyphArrangement::getStringWidth (labelFont, getLabelString());
+
+    const auto suffix = getLabelSuffix();
+    if (suffix.isNotEmpty())
+        textRight += labelSuffixGap
+            + juce::GlyphArrangement::getStringWidth (labelFont, suffix);
+
+    if (left < textRight + labelSuffixGap)
+        return;
+    const auto top = ((float) draggerHeight - size) / 2.0f;
+
+    juce::Path checkMark;
+    checkMark.startNewSubPath (left, top + size * 0.55f);
+    checkMark.lineTo (left + size * 0.35f, top + size);
+    checkMark.lineTo (right, top + size * 0.15f);
+
+    g.setColour (juce::Colours::limegreen);
+    g.strokePath (checkMark, juce::PathStrokeType (1.5f));
+}
+
 bool PlayListItemDraggerControl::validateData()
 {
     bool result = playListItem->validateData();

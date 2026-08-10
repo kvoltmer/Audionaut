@@ -10,6 +10,9 @@
 
 #include "AnalysisProvider.h"
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Provider/TempoProvider.h"
+
+#include <cmath>
 
 
 namespace audium {
@@ -121,6 +124,46 @@ std::vector<float> AnalysisProvider::analyzeFile(const juce::File& audioFile,
     // Results are held (and persisted) by the cache - the UI queries them
     // back via getSegments()/getBpm(), so nothing further to store here.
     return result.segments;
+}
+
+bool AnalysisProvider::matchesGrid(double projectTempoBpm,
+                                   float detectedBpm,
+                                   const std::vector<float>& beatSeconds,
+                                   double clipStartClocks,
+                                   juce::Range<double> playedRegionSeconds)
+{
+    if (projectTempoBpm <= 0.0 || detectedBpm <= 0.0f)
+        return false;
+
+    if (std::abs((double) detectedBpm - projectTempoBpm)
+            > projectTempoBpm * tempoMatchTolerance)
+        return false;
+
+    // Map each played beat onto the timeline and measure its distance to the
+    // nearest grid beat. The mean (rather than the maximum) deviation decides,
+    // so a single jittery beat estimate cannot spoil an otherwise aligned clip.
+    auto totalDeviationBeats = 0.0;
+    auto beatCount = 0;
+
+    for (auto beatTime : beatSeconds)
+    {
+        if (beatTime < playedRegionSeconds.getStart()
+            || beatTime > playedRegionSeconds.getEnd())
+            continue;
+
+        const auto timelineClocks = clipStartClocks
+            + TempoProvider::secondsToClocks(projectTempoBpm,
+                                             beatTime - playedRegionSeconds.getStart());
+        const auto timelineBeats = TempoProvider::clocksToBeats(timelineClocks);
+
+        totalDeviationBeats += std::abs(timelineBeats - std::round(timelineBeats));
+        ++beatCount;
+    }
+
+    if (beatCount == 0)
+        return false;
+
+    return totalDeviationBeats / beatCount <= gridMatchToleranceBeats;
 }
 
 const std::vector<AnalysisType>& AnalysisProvider::getMergeAnalysisTypes()
