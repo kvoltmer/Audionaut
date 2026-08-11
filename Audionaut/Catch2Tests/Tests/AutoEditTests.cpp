@@ -42,6 +42,11 @@ struct Fixture {
     // so scenarios compare against what was there rather than against zero.
     size_t baselineRegions = 0;
 
+    // The names of those pre-existing regions. Segments are named after the
+    // track through the container's unique-name mechanism, so an edit's
+    // regions are recognised as the ones that were not there before.
+    juce::StringArray baselineNames;
+
     std::shared_ptr<AudioTrack> track() const
     {
         return engine->getAudioTrackContainer()->getAudioTrack(0);
@@ -68,6 +73,23 @@ struct Fixture {
     }
 
     size_t regionCount() const { return regions().size(); }
+
+    bool isCreated(const std::shared_ptr<AudioRegion>& region) const
+    {
+        return ! baselineNames.contains(region->getName());
+    }
+
+    // The regions an edit created: everything not present at fixture creation.
+    std::vector<std::shared_ptr<AudioRegion>> createdRegions() const
+    {
+        std::vector<std::shared_ptr<AudioRegion>> result;
+
+        for (const auto& region : regions())
+            if (isCreated(region))
+                result.push_back(region);
+
+        return result;
+    }
 
     double audioLengthSeconds() const
     {
@@ -117,6 +139,9 @@ Fixture makeFixture()
     // cache has to be keyed off whatever it actually points at.
     fixture.analysedFile = File(group->getAudioResources()[0]->getFullPathName());
     fixture.baselineRegions = fixture.regionCount();
+
+    for (const auto& region : fixture.regions())
+        fixture.baselineNames.add(region->getName());
 
     return fixture;
 }
@@ -182,9 +207,8 @@ SCENARIO("AutoEdit cuts a track into regions from its cached analyses",
                 // only the ones this edit produced are checked for tiling.
                 std::vector<juce::Range<double>> created;
 
-                for (const auto& region : regions)
-                    if (region->getName().startsWith("seg-"))
-                        created.push_back(region->getRegionData(audium::seconds));
+                for (const auto& region : fixture.createdRegions())
+                    created.push_back(region->getRegionData(audium::seconds));
 
                 REQUIRE_FALSE(created.empty());
 
@@ -433,9 +457,8 @@ SCENARIO("AutoEdit cuts only what the selected clip covers", "[engine][autoedit]
             {
                 std::vector<juce::Range<double>> created;
 
-                for (const auto& region : fixture.regions())
-                    if (region->getName().startsWith("seg-"))
-                        created.push_back(region->getRegionData(audium::seconds));
+                for (const auto& region : fixture.createdRegions())
+                    created.push_back(region->getRegionData(audium::seconds));
 
                 REQUIRE_FALSE(created.empty());
 
@@ -450,9 +473,8 @@ SCENARIO("AutoEdit cuts only what the selected clip covers", "[engine][autoedit]
             {
                 std::vector<juce::Range<double>> created;
 
-                for (const auto& region : fixture.regions())
-                    if (region->getName().startsWith("seg-"))
-                        created.push_back(region->getRegionData(audium::seconds));
+                for (const auto& region : fixture.createdRegions())
+                    created.push_back(region->getRegionData(audium::seconds));
 
                 std::sort(created.begin(), created.end(),
                           [](const auto& a, const auto& b) { return a.getStart() < b.getStart(); });
@@ -508,9 +530,8 @@ SCENARIO("AutoEdit's first segment begins where the clip does", "[engine][autoed
 
             std::vector<juce::Range<double>> created;
 
-            for (const auto& region : fixture.regions())
-                if (region->getName().startsWith("seg-"))
-                    created.push_back(region->getRegionData(audium::seconds));
+            for (const auto& region : fixture.createdRegions())
+                created.push_back(region->getRegionData(audium::seconds));
 
             std::sort(created.begin(), created.end(),
                       [](const auto& a, const auto& b) { return a.getStart() < b.getStart(); });
@@ -583,7 +604,22 @@ SCENARIO("AutoEdit can replace the edited clip with its segments",
                     REQUIRE(items.size() > 1);
 
                     for (const auto& item : items)
-                        REQUIRE(item->getRegion()->getName().startsWith("seg-"));
+                        REQUIRE(fixture.isCreated(item->getRegion()));
+                }
+
+                THEN("the segments are named <track>-seg-<number>")
+                {
+                    const auto prefix = fixture.track()->getAudioTrackName() + "-seg-";
+
+                    for (const auto& item : playListItems())
+                    {
+                        const auto name = item->getRegion()->getName();
+
+                        INFO("segment name: " << name);
+                        REQUIRE(name.startsWith(prefix));
+                        // The "-" separator reads as a sign to JUCE, hence abs.
+                        REQUIRE(std::abs(name.getTrailingIntValue()) > 0);
+                    }
                 }
 
                 THEN("they are in playing order")
@@ -662,13 +698,7 @@ SCENARIO("AutoEdit resolves the segment count the edit would cut inside the clip
         auto onError = [&reportedError](std::string error) { reportedError = error; };
 
         auto createdSegments = [&fixture]() {
-            int count = 0;
-
-            for (const auto& region : fixture.regions())
-                if (region->getName().startsWith("seg-"))
-                    ++count;
-
-            return count;
+            return (int) fixture.createdRegions().size();
         };
 
         WHEN("the measure parameter is on and the material's tempo is cached")
@@ -998,9 +1028,9 @@ SCENARIO("AutoEdit keeps the edited clip's timeline position",
         cacheMergeAnalyses(fixture);
 
         // Move the clip away from the timeline origin while it stays the
-        // track's first item - the case where createPlayListItemUI()'s
-        // insert-at-the-beginning heuristic used to shift the first segment
-        // left of where the clip sat.
+        // track's first item - the case where an insert-at-the-beginning
+        // heuristic used to shift the first segment left of where the clip
+        // sat.
         const auto clipStartClocks = 960.0;
 
         fixture.track()->getPlayListContainer()->getPlayListItem(0)
@@ -1030,7 +1060,7 @@ SCENARIO("AutoEdit keeps the edited clip's timeline position",
                 std::vector<std::shared_ptr<PlayListItem>> segments;
 
                 for (const auto& item : items)
-                    if (item->getRegion()->getName().startsWith("seg-"))
+                    if (fixture.isCreated(item->getRegion()))
                         segments.push_back(item);
 
                 REQUIRE_FALSE(segments.empty());
@@ -1054,3 +1084,4 @@ SCENARIO("AutoEdit keeps the edited clip's timeline position",
     DeletedAtShutdown::deleteAll();
     MessageManager::deleteInstance();
 }
+

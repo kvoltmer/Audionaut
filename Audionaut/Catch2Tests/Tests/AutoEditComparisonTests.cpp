@@ -48,6 +48,11 @@ struct ComparisonFixture {
     std::shared_ptr<AudiumEngine> engine;
     juce::File analysedFile;
 
+    // The names of the regions that came with the audio. Segments are named
+    // after the track through the container's unique-name mechanism, so the
+    // edit's regions are recognised as the ones that were not there before.
+    juce::StringArray baselineNames;
+
     std::shared_ptr<ResourceGroup> resourceGroup() const
     {
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
@@ -69,7 +74,7 @@ struct ComparisonFixture {
             return points;
 
         for (const auto& region : group->getAudioRegionContainer()->getObjects())
-            if (region->getName().startsWith("seg-"))
+            if (! baselineNames.contains(region->getName()))
                 points.push_back(region->getRegionData(audium::seconds).getStart());
 
         std::sort(points.begin(), points.end());
@@ -97,6 +102,10 @@ ComparisonFixture makeFixture(const juce::String& audioFileName)
     REQUIRE_FALSE(group->getAudioResources().empty());
 
     fixture.analysedFile = File(group->getAudioResources()[0]->getFullPathName());
+
+    for (const auto& region : group->getAudioRegionContainer()->getObjects())
+        fixture.baselineNames.add(region->getName());
+
     return fixture;
 }
 

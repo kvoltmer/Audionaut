@@ -710,15 +710,16 @@ std::vector<std::shared_ptr<AudioRegion>>
     if (points.size() < 3)
         return created;
 
-    int counter = 1;
-
     for (size_t i = 1; i < points.size(); ++i)
     {
         juce::Range<double> position;
         position.setStart(points[i - 1]);
         position.setEnd(points[i]);
 
-        juce::String regionName = "seg-" + juce::String(counter++);
+        // Named <track>-seg-<number>, numbered by the container's own
+        // unique-name mechanism - each created region advances the number for
+        // the next.
+        const auto regionName = regionContainer->getUniqueName(track->getAudioTrackName() + "-seg");
 
         if (auto region = regionContainer->createRegion(regionName,
                                                         position,
@@ -887,8 +888,9 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName,
         return false;
     }
 
-    int counter = 1;
+    auto created = 0;
     auto segdata = nlohmann::json::parse(segFile);
+    auto regionContainer = resourceGroup->getAudioRegionContainer();
 
     // create regions from parsed result
     for (auto& elem : segdata)
@@ -896,18 +898,23 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName,
         juce::Range<double> position;
         position.setStart(static_cast<double>(elem["start"]) / sampleRate);
         position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
-        juce::String regionName = "seg-" + juce::String(counter++);
 
-        resourceGroup->getAudioRegionContainer()->createRegion(regionName,
-                                                               position,
-                                                               track,
-                                                               resourceGroup,
-                                                               nullptr,
-                                                               audium::seconds);
+        // Named <track>-seg-<number>, numbered by the container's own
+        // unique-name mechanism - each created region advances the number for
+        // the next.
+        const auto regionName = regionContainer->getUniqueName(track->getAudioTrackName() + "-seg");
+
+        if (regionContainer->createRegion(regionName,
+                                          position,
+                                          track,
+                                          resourceGroup,
+                                          nullptr,
+                                          audium::seconds))
+            ++created;
     }
 
     segFile.close();
-    return counter > 1;
+    return created > 0;
 }
 
 } // namespace audium
