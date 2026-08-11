@@ -3,6 +3,8 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <random>
+
 #include "AudiumMainWindow.h"
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
@@ -11,7 +13,9 @@
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Interface/Dialogs/NewRegionDialog.h"
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/AutoEdit/AutoEdit.h"
@@ -108,6 +112,8 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::splitRegion,
         CommandIDs::cleanupRegions,
         CommandIDs::autoEdit,
+        CommandIDs::assembleRandom,
+        CommandIDs::assembleSequential,
         CommandIDs::bounceProject,
         CommandIDs::duplicate,
         
@@ -175,6 +181,14 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
             result.setActive (canToggleAutoEditPreview());
             result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::assembleRandom:
+            result.setInfo ("Assemble Random", "Assembles a new playlist from the track's regions in random order", CommandCategories::editing, 0);
+            result.setActive (canAssemble());
+            break;
+        case CommandIDs::assembleSequential:
+            result.setInfo ("Assemble Sequential", "Assembles a new playlist from the track's regions in sequential order", CommandCategories::editing, 0);
+            result.setActive (canAssemble());
             break;
         case CommandIDs::bounceProject:
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
@@ -293,6 +307,12 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::autoEdit:
             toggleAutoEditPreview();
+            break;
+        case CommandIDs::assembleRandom:
+            invokeAssemble(audium::AssembleConfig::Mode::Random);
+            break;
+        case CommandIDs::assembleSequential:
+            invokeAssemble(audium::AssembleConfig::Mode::Sequential);
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
@@ -418,4 +438,47 @@ void AudiumMainWindow::toggleAutoEditPreview()
                                               "Auto Edit",
                                               "No preview is available for this clip yet - "
                                               "its analyses may still be running. Please try again shortly.");
+}
+
+bool AudiumMainWindow::canAssemble()
+{
+    audium::AutoEdit autoEdit(getEngine());
+
+    audium::AssembleConfig config;
+    autoEdit.targetAssembleTrack(config);
+
+    auto track = getEngine()->getAudioTrackContainer()->getAudioTrack(config.trackId);
+
+    if (track == nullptr)
+        return false;
+
+    // At least one region with audio is needed as source material.
+    for (const auto& region : track->getRegions())
+        if (region->getRegionData(audium::seconds).getLength() > 0.0)
+            return true;
+
+    return false;
+}
+
+void AudiumMainWindow::invokeAssemble(audium::AssembleConfig::Mode mode)
+{
+    audium::AutoEdit autoEdit(getEngine());
+
+    audium::AssembleConfig config;
+    config.mode = mode;
+
+    // A fresh seed per invocation, so re-running the command arranges the
+    // material anew rather than repeating the same song.
+    config.seed = std::random_device{}();
+
+    autoEdit.targetAssembleTrack(config);
+
+    autoEdit.invokeAssemble(config, [](std::string error)
+    {
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                              "Assemble",
+                                              juce::String(error));
+    });
+
+    mainComponent->updateUI();
 }

@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Engine/AutoEdit/AutoEdit.h"
 #include "Interface/Components/MainComponent.h"
 
 class NewRegionDialog;
@@ -48,6 +49,15 @@ private:
     // target clip would yield at least one segment at the entry measure
     // value - a clip too short for a single cut greys the command out.
     bool canToggleAutoEditPreview();
+
+    // Rebuilds the target track's playlist as a song assembled from its
+    // regions (see AutoEdit::invokeAssemble), seeded freshly per invocation
+    // so every run arranges anew.
+    void invokeAssemble(audium::AssembleConfig::Mode mode);
+
+    // Whether the Assemble commands are available: the target track needs at
+    // least one region with audio to arrange.
+    bool canAssemble();
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;

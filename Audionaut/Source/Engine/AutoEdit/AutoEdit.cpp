@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <numeric>
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -325,6 +326,177 @@ void AutoEdit::targetSelection(AutoEditConfig &config)
             }
 }
 
+void AutoEdit::targetAssembleTrack(AssembleConfig &config)
+{
+    config.trackId = -1;
+
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+
+    // The selected clip names the track being worked on, like the auto edit's
+    // own targeting; without a selection the default track stands in.
+    for (const auto& object : audioTrackContainer->getSelectionManager()->getSelectedObjects())
+        if (auto* item = dynamic_cast<PlayListItem*>(object.get()))
+        {
+            config.trackId = item->getRegion()->getAudioTrack()->getId();
+            return;
+        }
+
+    if (auto track = audioTrackContainer->getDefaultGroup())
+        config.trackId = track->getId();
+}
+
+std::vector<int> AutoEdit::chooseRandomSequence(const std::vector<double>& lengthsSeconds,
+                                                double targetSeconds,
+                                                std::mt19937& rng)
+{
+    std::vector<int> chosen;
+
+    if (lengthsSeconds.empty() || targetSeconds <= 0.0)
+        return chosen;
+
+    std::uniform_int_distribution<int> pick(0, (int) lengthsSeconds.size() - 1);
+
+    // Every length is positive, so the accumulated total must reach the target
+    // within this many picks - the cap only guards against a caller breaking
+    // that precondition, where the loop would otherwise never end.
+    const auto minLength = *std::min_element(lengthsSeconds.begin(), lengthsSeconds.end());
+    const auto maxPicks = minLength > 0.0
+                              ? (size_t) std::ceil(targetSeconds / minLength) + 1
+                              : lengthsSeconds.size();
+
+    double total = 0.0;
+
+    while (total < targetSeconds && chosen.size() < maxPicks)
+    {
+        const auto index = pick(rng);
+        chosen.push_back(index);
+        total += lengthsSeconds[(size_t) index];
+    }
+
+    return chosen;
+}
+
+std::vector<int> AutoEdit::chooseSequentialSequence(const std::vector<double>& lengthsSeconds,
+                                                    double targetSeconds,
+                                                    std::mt19937& rng)
+{
+    std::vector<int> chosen;
+
+    if (lengthsSeconds.empty() || targetSeconds <= 0.0)
+        return chosen;
+
+    const auto total = std::accumulate(lengthsSeconds.begin(), lengthsSeconds.end(), 0.0);
+
+    if (total <= 0.0)
+        return chosen;
+
+    const auto scale = targetSeconds / total;
+
+    std::uniform_real_distribution<double> uniform01(0.0, 1.0);
+
+    // One draw per segment, kept or not - so a given seed always produces the
+    // same keep-or-skip pattern. A scale of one or more keeps everything, the
+    // draws being strictly below one.
+    for (size_t i = 0; i < lengthsSeconds.size(); ++i)
+        if (uniform01(rng) <= scale)
+            chosen.push_back((int) i);
+
+    return chosen;
+}
+
+bool AutoEdit::invokeAssemble(AssembleConfig &config,
+                              std::function<void(std::string)> callback)
+{
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+
+    auto track = audioTrackContainer->getAudioTrack(config.trackId);
+
+    if (track == nullptr)
+    {
+        NullCheckedInvocation::invoke(callback, "Please select a valid track to assemble.");
+        return false;
+    }
+
+    if (config.duration <= 0.0)
+    {
+        NullCheckedInvocation::invoke(callback, "The song duration must be longer than zero seconds.");
+        return false;
+    }
+
+    // The track's regions are the source material. A zero-length region would
+    // make a clip that plays nothing (and could stall the random draw's
+    // progress towards the target), so only regions with audio qualify.
+    std::vector<std::shared_ptr<AudioRegion>> eligible;
+    std::vector<double> lengths;
+
+    for (const auto& region : track->getRegions())
+    {
+        const auto length = region->getRegionData(audium::seconds).getLength();
+
+        if (length > 0.0)
+        {
+            eligible.push_back(region);
+            lengths.push_back(length);
+        }
+    }
+
+    if (eligible.empty())
+    {
+        NullCheckedInvocation::invoke(callback,
+                                      "The track has no regions to assemble. Run Auto Edit first.");
+        return false;
+    }
+
+    std::mt19937 rng(config.seed);
+
+    const auto chosen = config.mode == AssembleConfig::Mode::Random
+                            ? chooseRandomSequence(lengths, config.duration, rng)
+                            : chooseSequentialSequence(lengths, config.duration, rng);
+
+    // Only sequential mode can end up here: with a target well below the total
+    // length, every draw may skip. Nothing has been touched yet, so the
+    // arrangement is simply left as it was.
+    if (chosen.empty())
+    {
+        NullCheckedInvocation::invoke(callback,
+                                      "No regions were chosen - try again or use a longer duration.");
+        return false;
+    }
+
+    return applyAsUndoableEdit([&track, &eligible, &chosen]
+        {
+            auto playListContainer = track->getPlayListContainer();
+
+            if (playListContainer == nullptr)
+                return false;
+
+            // The old arrangement makes way entirely; the regions all stay -
+            // they are the material being arranged. The item list is copied
+            // first: it is a reference into the container being emptied.
+            const auto items = playListContainer->getPlayListItems();
+
+            for (const auto& item : items)
+                if (! playListContainer->deletePlayListItem(item.get(), false))
+                    return false;
+
+            // The chosen regions become the new arrangement, butt-joined from
+            // the start of the timeline in the order the mode chose. Random
+            // mode repeats regions, so several items may share one region.
+            auto positionClocks = 0.0;
+
+            for (auto index : chosen)
+                if (auto item = playListContainer->createPlayListItemAtPositionUI(eligible[(size_t) index],
+                                                                                  positionClocks,
+                                                                                  audium::clocks))
+                    positionClocks += item->getRegionData(audium::clocks).getLength();
+
+            playListContainer->sortByPosition();
+
+            return true;
+        },
+        "Assemble");
+}
+
 bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
                               std::function<void(std::string)> callback)
 {
@@ -581,18 +753,19 @@ juce::Range<double> AutoEdit::resolveSegmentLengthBounds(AutoEditConfig &config)
     return { parameter.minSegmentSeconds(bpm), parameter.maxSegmentSeconds(bpm) };
 }
 
-bool AutoEdit::applyAsUndoableEdit(std::function<bool()> createRegions)
+bool AutoEdit::applyAsUndoableEdit(std::function<bool()> mutate,
+                                   const juce::String& transactionName)
 {
     auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
     auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get());
 
-    if (! createRegions())
+    if (! mutate())
         return false;
 
-    // Undo: store new state, so a single Undo removes every region this edit
-    // created.
+    // Undo: store new state, so a single Undo takes back everything this edit
+    // changed.
     action->storeNewState();
-    audioTrackContainer->getUndoManager()->perform(action.release(), "Auto Edit");
+    audioTrackContainer->getUndoManager()->perform(action.release(), transactionName);
     audioTrackContainer->getUndoManager()->beginNewTransaction();
 
     return true;

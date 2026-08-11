@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 #include <JuceHeader.h>
@@ -45,7 +46,6 @@ struct AutoEditConfig {
     /// it. Off leaves the arrangement alone and only adds the regions.
     bool replacePlayListItem = true;
 
-    std::string mode = "random";
     double duration = 120.0;
 
     /// The abstract musical parameter: target segment length in measures
@@ -60,6 +60,37 @@ struct AutoEditConfig {
     double maxSegLength = 60.0;
     int trackId = -1;
     int playlistItemId = -1;
+};
+
+/**
+ * @brief How a track's regions are assembled into a new playlist.
+ *
+ * The C++ port of gaborgandalf's final layer: the segments the auto edit cut
+ * become the source material a song of the wanted duration is assembled from.
+ */
+struct AssembleConfig {
+    enum class Mode {
+        /// Segments are drawn uniformly at random, with replacement, until the
+        /// song is long enough - so segments may repeat or be left out.
+        Random,
+        /// Segments keep their order but are thinned out: each is kept with
+        /// probability duration / total length, so the song only reaches the
+        /// wanted duration in expectation.
+        Sequential
+    };
+
+    Mode mode = Mode::Random;
+
+    /// Target song length, in seconds. Random mode overshoots it by up to one
+    /// segment; sequential mode hits it only in expectation.
+    double duration = 60.0;
+
+    int trackId = -1;
+
+    /// Seeds the draws, so a fixed seed reproduces the same song. The default
+    /// mirrors gaborgandalf's config; interactive callers pass a random seed
+    /// to get a fresh arrangement each time.
+    unsigned int seed = 1234;
 };
 
 /**
@@ -92,6 +123,73 @@ public:
      */
     bool invokeAutoEdit(AutoEditConfig &config,
                         std::function<void(std::string)> callback);
+
+    /**
+     * @brief Assembles a new playlist for the track from its regions.
+     *
+     * The C++ port of gaborgandalf's assemble step: the track's regions -
+     * typically the segments a previous auto edit cut - are the source
+     * material, and the arrangement is rebuilt as a song of roughly
+     * config.duration seconds. Every playlist item on the track is removed
+     * first (the regions all stay), then one item per chosen region is placed
+     * butt-joined from the start of the timeline, in the order the mode chose.
+     * One Undo restores the previous arrangement.
+     *
+     * @param config   Mode, target duration, track and seed.
+     * @param callback Invoked with a human-readable reason when nothing was
+     *                 assembled - e.g. the track has no regions yet.
+     * @return True when the playlist was rebuilt.
+     */
+    bool invokeAssemble(AssembleConfig &config,
+                        std::function<void(std::string)> callback);
+
+    /**
+     * @brief Points @p config at the track an assemble applies to.
+     *
+     * The selected clip's track wins; without one, the default track. Leaves
+     * trackId at -1 when neither exists.
+     */
+    void targetAssembleTrack(AssembleConfig &config);
+
+    /**
+     * @brief The playing order of AssembleConfig::Mode::Random, as indices
+     *        into @p lengthsSeconds.
+     *
+     * Indices are drawn uniformly at random with replacement and appended
+     * until the accumulated length reaches @p targetSeconds, so the last pick
+     * may overshoot it by up to one segment (gaborgandalf's
+     * track_assemble_from_segments).
+     *
+     * @param lengthsSeconds Segment lengths, all positive - the caller filters.
+     * @param targetSeconds  The wanted song length.
+     * @param rng            The seeded generator the picks are drawn from.
+     * @return The chosen indices in playing order; empty when there is nothing
+     *         to choose from or the target is not positive.
+     */
+    static std::vector<int> chooseRandomSequence(const std::vector<double>& lengthsSeconds,
+                                                 double targetSeconds,
+                                                 std::mt19937& rng);
+
+    /**
+     * @brief The playing order of AssembleConfig::Mode::Sequential, as indices
+     *        into @p lengthsSeconds.
+     *
+     * The input order is kept but thinned out: each segment survives with
+     * probability targetSeconds / total length, so the song reaches the target
+     * only in expectation (gaborgandalf's
+     * track_assemble_from_segments_sequential_scale). A target no shorter than
+     * the total keeps everything. One draw is spent per segment either way, so
+     * a given seed always produces the same keep-or-skip pattern.
+     *
+     * @param lengthsSeconds Segment lengths, all positive - the caller filters.
+     * @param targetSeconds  The wanted song length.
+     * @param rng            The seeded generator the draws come from.
+     * @return The kept indices, ascending; empty when every draw skipped or
+     *         there was nothing to choose from.
+     */
+    static std::vector<int> chooseSequentialSequence(const std::vector<double>& lengthsSeconds,
+                                                     double targetSeconds,
+                                                     std::mt19937& rng);
 
     /**
      * @brief Points @p config at the selected playlist item.
@@ -283,9 +381,10 @@ private:
 
     const std::string getBaseName() const;
 
-    // Wraps region creation in the undo transaction the UI expects, so one
-    // Undo removes every region an edit produced.
-    bool applyAsUndoableEdit(std::function<bool()> createRegions);
+    // Wraps a mutation in the undo transaction the UI expects, so one Undo
+    // takes back everything the edit changed.
+    bool applyAsUndoableEdit(std::function<bool()> mutate,
+                             const juce::String& transactionName = "Auto Edit");
 };
 
 } // namespace audium
