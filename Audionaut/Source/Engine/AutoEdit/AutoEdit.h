@@ -246,9 +246,11 @@ public:
      * @brief Puts the segments into the arrangement in place of the clip they
      *        were cut from.
      *
-     * The segments are inserted where the clip sat, in order, and the clip's
-     * own item is then removed. Its region is left alone - it still describes
-     * the audio the segments came from, and other items may reference it.
+     * The clip's own item is removed and the segments are placed where it
+     * sat, in order, tiling exactly the stretch it covered - the neighbouring
+     * items keep their positions. The clip's region is left alone - it still
+     * describes the audio the segments came from, and other items may
+     * reference it.
      *
      * @param track              The track whose arrangement to rewrite.
      * @param playListItemIndex  The clip to replace.

@@ -753,44 +753,31 @@ bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
     if (original == nullptr)
         return false;
 
-    const auto insertAt = playListContainer->getPlayListItemIndex(original.get());
-
-    if (insertAt < 0)
-        return false;
-
-    // Insert the segments where the clip sat, in order, then drop the clip's
-    // own item. Deleting by pointer rather than index, since each insertion
-    // shifts it along.
     const auto originalStartClocks = original->getAbsolutePosition(audium::clocks);
 
-    int offset = 0;
-    std::vector<std::shared_ptr<PlayListItem>> createdItems;
-
-    for (const auto& region : regions)
-        if (auto item = playListContainer->createPlayListItemUI(region, insertAt + offset++))
-            createdItems.push_back(item);
+    // The clip's item goes first: inserting the segments while it still sat
+    // there would make way for each of them, pushing the clip - and every
+    // neighbouring item behind it - down the timeline, and only the segments
+    // would be moved back. The clip's region stays: it still describes the
+    // audio the segments came from, and other items may reference it.
+    if (! playListContainer->deletePlayListItem(original.get(), false))
+        return false;
 
     // The segments take the clip's place on the timeline: the first sits
-    // exactly where the clip sat and the rest follow seamlessly.
-    // createPlayListItemUI()'s own placement cannot be trusted for this - its
-    // insert-at-the-beginning heuristic places an item *before* the track's
-    // first, shifting the first segment left when the edited clip is first on
-    // its track.
+    // exactly where the clip sat and the rest follow seamlessly. Placing them
+    // by position rather than by index leaves the neighbouring items where
+    // they are - the segments only ever cover the stretch the clip covered.
     auto positionClocks = originalStartClocks;
 
-    for (const auto& item : createdItems)
-    {
-        item->setAbsolutePosition(positionClocks, audium::clocks);
-        positionClocks += item->getRegionData(audium::clocks).getLength();
-    }
-
-    // The clip's region stays: it still describes the audio the segments came
-    // from, and other items may reference it.
-    const auto deleted = playListContainer->deletePlayListItem(original.get(), false);
+    for (const auto& region : regions)
+        if (auto item = playListContainer->createPlayListItemAtPositionUI(region,
+                                                                          positionClocks,
+                                                                          audium::clocks))
+            positionClocks += item->getRegionData(audium::clocks).getLength();
 
     playListContainer->sortByPosition();
 
-    return deleted;
+    return true;
 }
 
 bool AutoEdit::invokePython(const juce::File& audioFile,

@@ -1085,3 +1085,85 @@ SCENARIO("AutoEdit keeps the edited clip's timeline position",
     MessageManager::deleteInstance();
 }
 
+SCENARIO("AutoEdit leaves the neighbouring clip where it was",
+         "[engine][autoedit]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture();
+        cacheMergeAnalyses(fixture);
+
+        auto playListContainer = fixture.track()->getPlayListContainer();
+        auto items = playListContainer->getPlayListItems();
+        REQUIRE(items.size() == 1);
+
+        // A second clip sitting right behind the edited one - the worst case
+        // for an edit that inserts its segments on top of the clip, since any
+        // making-way would push this neighbour down the timeline.
+        const auto neighbourStartClocks =
+            items[0]->getAbsolutePositionRange(audium::clocks).getEnd();
+
+        auto neighbourRegion = fixture.resourceGroup()->getAudioRegionContainer()
+            ->createRegion("neighbour",
+                           items[0]->getRegion()->getRegionData(audium::seconds),
+                           fixture.track(),
+                           fixture.resourceGroup(),
+                           nullptr,
+                           audium::seconds);
+        REQUIRE(neighbourRegion != nullptr);
+        REQUIRE(playListContainer->createPlayListItemAtPositionUI(neighbourRegion,
+                                                                  neighbourStartClocks,
+                                                                  audium::clocks)
+                    != nullptr);
+
+        AutoEdit autoEdit(fixture.engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+        config.playlistItemId = 0;
+        config.numSegments = 6;
+
+        std::string reportedError;
+        auto onError = [&reportedError](std::string error) { reportedError = error; };
+
+        WHEN("the first clip is auto edited in place")
+        {
+            const auto succeeded = autoEdit.invokeAutoEdit(config, onError);
+
+            INFO("error was: " << reportedError);
+            REQUIRE(succeeded);
+
+            // Re-query: the undoable action rebuilt the container.
+            auto rebuilt = fixture.track()->getPlayListContainer()->getPlayListItems();
+
+            std::shared_ptr<PlayListItem> neighbour;
+            size_t segmentCount = 0;
+
+            for (const auto& item : rebuilt)
+            {
+                // The neighbour was created after the fixture, so it counts as
+                // created too - it is told apart by its name.
+                if (item->getRegion()->getName() == "neighbour")
+                    neighbour = item;
+                else if (fixture.isCreated(item->getRegion()))
+                    ++segmentCount;
+            }
+
+            // Without more than one segment nothing would have been pushed
+            // and the scenario would pass vacuously.
+            REQUIRE(segmentCount > 1);
+            REQUIRE(neighbour != nullptr);
+
+            THEN("the neighbouring clip keeps its timeline position")
+            {
+                REQUIRE(neighbour->getAbsolutePosition(audium::clocks)
+                            == Catch::Approx(neighbourStartClocks));
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
