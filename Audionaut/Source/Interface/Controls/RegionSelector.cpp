@@ -206,8 +206,9 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
             auto clocks = zoomHandler->xToClocksWithOffset(zoomHandler->getVisibleRange().getLength() * 0.5);
             zoomHandler->zoomIn();
             owner->setMinimumContentWidth(zoomHandler->getContentWidth());
-            updateFromEngine();
             zoomHandler->centerView(clocks, 0.5);
+            // last: our position depends on the scroll offset centerView changed
+            updateFromEngine();
             return true;
         }
         else if (key.isKeyCode (KeyPress::downKey))
@@ -216,8 +217,9 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
             auto clocks = zoomHandler->xToClocksWithOffset(zoomHandler->getVisibleRange().getLength() * 0.5);
             zoomHandler->zoomOut();
             owner->setMinimumContentWidth(zoomHandler->getContentWidth());
-            updateFromEngine();
             zoomHandler->centerView(clocks, 0.5);
+            // last: our position depends on the scroll offset centerView changed
+            updateFromEngine();
             return true;
         }
         else if (key.isKeyCode (KeyPress::escapeKey))

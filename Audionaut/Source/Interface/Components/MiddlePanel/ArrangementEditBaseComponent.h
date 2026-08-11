@@ -167,6 +167,10 @@ public:
             zoomHandler->setVisibleRange(visibleRange.movedToStartAt(contentPosition - visibleRange.getLength() * 0.5),
                                          juce::sendNotificationSync);
             dragZoomControl->updateFromEngine();
+
+            // last: the selector's position depends on the scroll offset the
+            // setVisibleRange() above just changed
+            regionSelector->updateFromEngine();
         }
     }
 
@@ -196,11 +200,13 @@ public:
         viewPortBounds.setWidth(std::max(contentWidth, viewPortBounds.getWidth()));
         gridView->setBounds(viewPortBounds);
 
-        // the grid's spacing depends on the zoom factor, so it needs a repaint
-        // even when the clamped bounds above did not change
+        // the grid's and the ruler's spacing depend on the zoom factor, so
+        // they need a repaint even when their bounds did not change (the
+        // header's timer only moves its markers, it never repaints the ruler)
         gridView->repaint();
 
         audioTrackListBox->getHeaderComponent()->resized();
+        audioTrackListBox->getHeaderComponent()->repaint();
     }
 
     void zoomIn()
@@ -298,7 +304,6 @@ private:
     void handleAsyncUpdate() override
     {
         setContentWidth(zoomHandler->getContentWidth());
-        regionSelector->updateFromEngine();
         dragZoomControl->updateFromEngine();
 
         if (pendingZoomCenter.has_value())
@@ -312,6 +317,10 @@ private:
             pendingFocusPlayPosition = false;
             zoomHandler->focusViewOnPlayPosition();
         }
+
+        // last: the selector's position depends on the scroll offset the
+        // centring/focus calls above may have changed
+        regionSelector->updateFromEngine();
     }
 
     // position (clocks) to keep under the pinch gesture, and where in the
