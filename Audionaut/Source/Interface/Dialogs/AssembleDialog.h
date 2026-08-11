@@ -59,24 +59,25 @@ private:
                 slider.setValue (value, dontSendNotification);
             };
 
-            setup (minutesLabel, minutesSlider, TRANS ("Minutes:"), 999, minutes);
-            setup (secondsLabel, secondsSlider, TRANS ("Seconds:"), 59, seconds);
+            setup (minutesLabel, minutesSlider, TRANS ("Minutes"), 999, minutes);
+            setup (secondsLabel, secondsSlider, TRANS ("Seconds"), 59, seconds);
 
-            // The header's slider height, so the boxes look the same here.
-            setSize (280, 20);
+            // The boxes keep the header's 20 pixel slider height, with the
+            // labels in a row of their own above them.
+            setSize (280, 38);
         }
 
         void resized() override
         {
             auto area = getLocalBounds();
+            auto labels = area.removeFromTop (18);
+            auto boxes = area.removeFromBottom (20);
 
-            auto left = area.removeFromLeft (area.getWidth() / 2).reduced (2, 0);
-            minutesLabel.setBounds (left.removeFromLeft (66));
-            minutesSlider.setBounds (left);
+            minutesLabel.setBounds (labels.removeFromLeft (labels.getWidth() / 2).reduced (2, 0));
+            secondsLabel.setBounds (labels.reduced (2, 0));
 
-            auto right = area.reduced (2, 0);
-            secondsLabel.setBounds (right.removeFromLeft (66));
-            secondsSlider.setBounds (right);
+            minutesSlider.setBounds (boxes.removeFromLeft (boxes.getWidth() / 2).reduced (2, 0));
+            secondsSlider.setBounds (boxes.reduced (2, 0));
         }
 
         int getMinutes() const { return (int) minutesSlider.getValue(); }
