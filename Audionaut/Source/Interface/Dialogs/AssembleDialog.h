@@ -85,6 +85,50 @@ private:
         TextEditor minutesEditor, secondsEditor;
     };
 
+    /**
+     * The random and sequential mode choice as two check-box buttons in one
+     * row. They share a radio group, so picking one always unpicks the other.
+     */
+    class ModeComponent : public Component
+    {
+    public:
+        explicit ModeComponent(audium::AssembleConfig::Mode mode)
+        {
+            randomButton.setButtonText (TRANS ("Random"));
+            sequentialButton.setButtonText (TRANS ("Sequential"));
+
+            for (auto* button : { &randomButton, &sequentialButton })
+            {
+                button->setRadioGroupId (modeGroupId);
+                addAndMakeVisible (button);
+            }
+
+            (mode == audium::AssembleConfig::Mode::Random ? randomButton : sequentialButton)
+                .setToggleState (true, dontSendNotification);
+
+            setSize (280, 28);
+        }
+
+        void resized() override
+        {
+            auto area = getLocalBounds();
+
+            randomButton.setBounds (area.removeFromLeft (area.getWidth() / 2).reduced (2, 0));
+            sequentialButton.setBounds (area.reduced (2, 0));
+        }
+
+        audium::AssembleConfig::Mode getMode() const
+        {
+            return randomButton.getToggleState() ? audium::AssembleConfig::Mode::Random
+                                                 : audium::AssembleConfig::Mode::Sequential;
+        }
+
+    private:
+        static constexpr int modeGroupId = 1;
+
+        ToggleButton randomButton, sequentialButton;
+    };
+
     static String getTitle(audium::AssembleConfig::Mode mode)
     {
         return mode == audium::AssembleConfig::Mode::Random ? "Assemble Random Sequence"
@@ -105,8 +149,11 @@ private:
         const String minutes = preferences.getValue(audium::PreferenceKeys::assembleMinutes, "2");
         const String seconds = preferences.getValue(audium::PreferenceKeys::assembleSeconds, "0");
 
-        // The window does not own custom components, so the row outlives it as
-        // a member - recreated here after the old window is gone.
+        // The window does not own custom components, so the rows outlive it as
+        // members - recreated here after the old window is gone.
+        modeComponent = std::make_unique<ModeComponent> (mode);
+        asyncAlertWindow->addCustomComponent (modeComponent.get());
+
         lengthComponent = std::make_unique<LengthComponent> (minutes, seconds);
         asyncAlertWindow->addCustomComponent (lengthComponent.get());
 
@@ -125,6 +172,11 @@ private:
 
             if (result == 0)
                 return;
+
+            // The buttons may have switched the mode away from the invoking
+            // command's - what is picked in the dialog wins, and a re-opened
+            // dialog keeps the switch.
+            safeThis->mode = safeThis->modeComponent->getMode();
 
             const auto minutes = safeThis->lengthComponent->getMinutes();
             const auto seconds = safeThis->lengthComponent->getSeconds();
@@ -171,6 +223,7 @@ private:
 
     std::unique_ptr<AlertWindow> asyncAlertWindow;
 
+    std::unique_ptr<ModeComponent> modeComponent;
     std::unique_ptr<LengthComponent> lengthComponent;
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
