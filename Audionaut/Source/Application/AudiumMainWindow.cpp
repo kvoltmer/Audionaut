@@ -178,7 +178,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Delete Unused Regions", "Deletes all unused regions", CommandCategories::editing, 0);
             break;
         case CommandIDs::autoEdit:
-            result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
+            result.setInfo ("Create Segments", "Cuts the selected clip into segments at analysed boundaries", CommandCategories::editing, 0);
             result.setActive (canToggleAutoEditPreview());
             result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
             break;

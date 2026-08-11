@@ -322,10 +322,13 @@ PopupMenu AudiumApplication::createEditMenu()
     menu.addCommandItem(commandManager.get(), CommandIDs::splitRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::cleanupRegions);
     menu.addSeparator();
-    menu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
-    menu.addSeparator();
-    menu.addCommandItem(commandManager.get(), CommandIDs::assembleRandom);
-    menu.addCommandItem(commandManager.get(), CommandIDs::assembleSequential);
+
+    PopupMenu autoEditMenu;
+    autoEditMenu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
+    autoEditMenu.addSeparator();
+    autoEditMenu.addCommandItem(commandManager.get(), CommandIDs::assembleRandom);
+    autoEditMenu.addCommandItem(commandManager.get(), CommandIDs::assembleSequential);
+    menu.addSubMenu("Auto Edit", autoEditMenu);
 
     //menu.addSeparator();
     //menu.addCommandItem(commandManager.get(), CommandIDs::loopPlayList);
