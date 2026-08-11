@@ -178,7 +178,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case CommandIDs::autoEdit:
             result.setInfo ("Create Segments...", "Cuts the selected clip into segments at analysed boundaries", CommandCategories::editing, 0);
             result.setActive (canToggleAutoEditPreview());
-            result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
+            result.defaultKeypresses.add (KeyPress ('1', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::assembleSequence:
             result.setInfo ("Assemble Sequence...", "Assembles a new sequence from the track's regions", CommandCategories::editing, 0);
