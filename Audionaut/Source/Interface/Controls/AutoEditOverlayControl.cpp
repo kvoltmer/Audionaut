@@ -14,11 +14,16 @@
 
 namespace {
 
-constexpr int controlHeight = 28;
-constexpr int stepButtonWidth = 52;
-constexpr int stepGap = 4;
-constexpr int buttonWidth = 70;
-constexpr int gap = 8;
+// A row of icon buttons sized like the header's transport buttons
+// (see HeaderComponent::resized), with their text labels drawn underneath on
+// the scrim (see paint()).
+constexpr int buttonWidth = 35;
+constexpr int buttonHeight = 20;
+constexpr int labelHeight = 12;
+constexpr float labelFontHeight = 10.0f;
+constexpr int controlHeight = 3 + buttonHeight + labelHeight + 3;
+constexpr int stepGap = 8;
+constexpr int gap = 12;
 constexpr int padding = 6;
 
 // The measure parameter's range. Stepping halves or doubles, so every
@@ -46,12 +51,85 @@ constexpr int glideMilliseconds = 1000;
 constexpr int fadeMilliseconds = 50;
 constexpr int comebackDelayMilliseconds = 500;
 
-constexpr int preferredWidth = padding + stepButtonWidth + stepGap + stepButtonWidth
+constexpr int preferredWidth = padding + buttonWidth + stepGap + buttonWidth
                                    + gap + buttonWidth + padding;
 
 // When space is tight the Less/More pair sits out first: an Apply-only
 // control can still finish the edit.
 constexpr int applyOnlyWidth = padding + buttonWidth + padding;
+
+/**
+ * Icon paths, all in a shared 24-unit design box so the three icons scale
+ * identically. DrawableButton fits the drawable's own bounds into the image
+ * area, so the invisible corner subpaths pin every path's bounds to the full
+ * box - without them a lone minus bar would be blown up to fill the area.
+ */
+void pinToDesignBox (juce::Path& path)
+{
+    path.startNewSubPath (0.0f, 0.0f);
+    path.startNewSubPath (24.0f, 24.0f);
+}
+
+// Less: minus - fewer, longer segments.
+juce::Path minusIconPath()
+{
+    juce::Path path;
+    path.addRoundedRectangle (3.0f, 10.75f, 18.0f, 2.5f, 1.25f);
+    pinToDesignBox (path);
+    return path;
+}
+
+// More: plus - more, shorter segments.
+juce::Path plusIconPath()
+{
+    juce::Path path;
+    path.addRoundedRectangle (3.0f, 10.75f, 18.0f, 2.5f, 1.25f);
+    path.addRoundedRectangle (10.75f, 3.0f, 2.5f, 18.0f, 1.25f);
+    pinToDesignBox (path);
+    return path;
+}
+
+// Apply: check mark.
+juce::Path checkIconPath()
+{
+    juce::Path line;
+    line.startNewSubPath (4.5f, 13.0f);
+    line.lineTo (10.0f, 18.5f);
+    line.lineTo (19.5f, 6.0f);
+
+    juce::Path path;
+    juce::PathStrokeType (2.5f, juce::PathStrokeType::curved,
+                          juce::PathStrokeType::rounded).createStrokedPath (path, line);
+    pinToDesignBox (path);
+    return path;
+}
+
+/**
+ * A square icon button in the app's standard button look, like the header's
+ * transport buttons. The label is not part of the button - paint() draws it
+ * underneath on the scrim. The disabled image has to be handed over
+ * explicitly: the look-and-feel dims only the background of a disabled
+ * button, not its drawable.
+ */
+std::unique_ptr<juce::DrawableButton> makeIconButton (const juce::String& label,
+                                                      const juce::Path& iconPath)
+{
+    auto button = std::make_unique<juce::DrawableButton> (
+        label, juce::DrawableButton::ButtonStyle::ImageOnButtonBackground);
+
+    juce::DrawablePath icon;
+    icon.setPath (iconPath);
+    icon.setFill (juce::FillType (juce::Colours::white));
+
+    juce::DrawablePath disabledIcon;
+    disabledIcon.setPath (iconPath);
+    disabledIcon.setFill (juce::FillType (juce::Colours::white.withAlpha (0.4f)));
+
+    // setImages() deep-copies, so the stack locals are safe to hand over.
+    button->setImages (&icon, nullptr, nullptr, &disabledIcon);
+
+    return button;
+}
 
 } // namespace
 
@@ -63,20 +141,21 @@ AutoEditOverlayControl::AutoEditOverlayControl(std::shared_ptr<audium::AudiumEng
     setWantsKeyboardFocus (true);
 
     // More/less speak in segments: more segments means shorter ones, so More
-    // halves the measures and Less doubles them.
-    lessButton = std::make_unique<juce::TextButton> (TRANS ("Less"));
+    // halves the measures and Less doubles them - hence minus for Less and
+    // plus for More.
+    lessButton = makeIconButton (TRANS ("Less"), minusIconPath());
     addAndMakeVisible (lessButton.get());
     lessButton->onClick = [this]() {
         stepMeasures(true);
     };
 
-    moreButton = std::make_unique<juce::TextButton> (TRANS ("More"));
+    moreButton = makeIconButton (TRANS ("More"), plusIconPath());
     addAndMakeVisible (moreButton.get());
     moreButton->onClick = [this]() {
         stepMeasures(false);
     };
 
-    applyButton = std::make_unique<juce::TextButton> (TRANS ("Apply"));
+    applyButton = makeIconButton (TRANS ("Apply"), checkIconPath());
     addAndMakeVisible (applyButton.get());
     applyButton->onClick = [this]() {
         apply();
@@ -153,6 +232,9 @@ void AutoEditOverlayControl::updateStepButtons()
     // zero cuts would hide this control and cancel the edit.
     lessButton->setEnabled (measures < maxMeasures && wouldCut (measures * 2.0));
     moreButton->setEnabled (measures > minMeasures);
+
+    // The labels live in this component's paint() and dim with their button.
+    repaint();
 }
 
 void AutoEditOverlayControl::updatePreview()
@@ -203,23 +285,46 @@ void AutoEditOverlayControl::paint (juce::Graphics& g)
     // readable underneath.
     g.setColour (juce::Colours::black.withAlpha (0.45f));
     g.fillRoundedRectangle (getLocalBounds().toFloat(), 5.0f);
+
+    // The labels sit below their buttons, on the scrim rather than inside the
+    // button. Centred on the button, allowed to run wider than it - the
+    // button spacing keeps neighbouring labels apart.
+    g.setFont (juce::Font (juce::FontOptions (labelFontHeight)));
+
+    for (auto* button : { lessButton.get(), moreButton.get(), applyButton.get() })
+    {
+        if (! button->isVisible())
+            continue;
+
+        const auto labelArea = button->getBounds()
+                                   .withY (button->getBottom())
+                                   .withHeight (labelHeight)
+                                   .expanded (stepGap, 0);
+
+        g.setColour (juce::Colours::white.withMultipliedAlpha (button->isEnabled() ? 1.0f : 0.4f));
+        g.drawFittedText (button->getName(), labelArea, juce::Justification::centred, 1);
+    }
 }
 
 void AutoEditOverlayControl::resized()
 {
     auto r = getLocalBounds().reduced (padding, 3);
 
-    applyButton->setBounds (r.removeFromRight (buttonWidth));
-    r.removeFromRight (gap);
+    // The buttons take the top strip; the strip below is where paint() puts
+    // their labels.
+    auto buttonRow = r.removeFromTop (buttonHeight);
+
+    applyButton->setBounds (buttonRow.removeFromRight (buttonWidth));
+    buttonRow.removeFromRight (gap);
 
     // At the Apply-only width (see updatePosition) the step pair sits out.
     const bool stepsFit = getWidth() >= preferredWidth;
     lessButton->setVisible (stepsFit);
     moreButton->setVisible (stepsFit);
 
-    lessButton->setBounds (r.removeFromLeft (stepButtonWidth));
-    r.removeFromLeft (stepGap);
-    moreButton->setBounds (r.removeFromLeft (stepButtonWidth));
+    lessButton->setBounds (buttonRow.removeFromLeft (buttonWidth));
+    buttonRow.removeFromLeft (stepGap);
+    moreButton->setBounds (buttonRow.removeFromLeft (buttonWidth));
 }
 
 void AutoEditOverlayControl::visibilityChanged()
