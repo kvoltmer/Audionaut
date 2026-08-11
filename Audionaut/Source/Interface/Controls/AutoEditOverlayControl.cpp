@@ -14,14 +14,12 @@
 
 namespace {
 
-// A row of icon buttons sized like the header's transport buttons
-// (see HeaderComponent::resized), with their text labels drawn underneath on
+// A row of square icon buttons with their text labels drawn underneath, on
 // the scrim (see paint()).
-constexpr int buttonWidth = 35;
-constexpr int buttonHeight = 20;
+constexpr int buttonSize = 28;
 constexpr int labelHeight = 12;
 constexpr float labelFontHeight = 10.0f;
-constexpr int controlHeight = 3 + buttonHeight + labelHeight + 3;
+constexpr int controlHeight = 3 + buttonSize + labelHeight + 3;
 constexpr int stepGap = 8;
 constexpr int gap = 12;
 constexpr int padding = 6;
@@ -51,12 +49,12 @@ constexpr int glideMilliseconds = 1000;
 constexpr int fadeMilliseconds = 50;
 constexpr int comebackDelayMilliseconds = 500;
 
-constexpr int preferredWidth = padding + buttonWidth + stepGap + buttonWidth
-                                   + gap + buttonWidth + padding;
+constexpr int preferredWidth = padding + buttonSize + stepGap + buttonSize
+                                   + gap + buttonSize + padding;
 
 // When space is tight the Less/More pair sits out first: an Apply-only
 // control can still finish the edit.
-constexpr int applyOnlyWidth = padding + buttonWidth + padding;
+constexpr int applyOnlyWidth = padding + buttonSize + padding;
 
 /**
  * Icon paths, all in a shared 24-unit design box so the three icons scale
@@ -160,6 +158,10 @@ AutoEditOverlayControl::AutoEditOverlayControl(std::shared_ptr<audium::AudiumEng
     applyButton->onClick = [this]() {
         apply();
     };
+
+    // The mouse spends its time here over the buttons, and mouseEnter has to
+    // fire for those too (see the header).
+    addMouseListener (this, true);
 
     updateStepButtons();
 }
@@ -266,6 +268,19 @@ void AutoEditOverlayControl::apply()
     });
 }
 
+void AutoEditOverlayControl::mouseEnter (const juce::MouseEvent&)
+{
+    // A hover control's mouseExit may have handed the selector back while the
+    // edit is pending; the takeover is re-asserted the same way
+    // visibilityChanged() established it, before a button click could start a
+    // region selection instead.
+    if (regionSelector != nullptr)
+    {
+        regionSelector->cancelSelection();
+        regionSelector->setEnabled(false);
+    }
+}
+
 bool AutoEditOverlayControl::keyPressed (const juce::KeyPress& key)
 {
     if (key == juce::KeyPress::escapeKey)
@@ -312,9 +327,9 @@ void AutoEditOverlayControl::resized()
 
     // The buttons take the top strip; the strip below is where paint() puts
     // their labels.
-    auto buttonRow = r.removeFromTop (buttonHeight);
+    auto buttonRow = r.removeFromTop (buttonSize);
 
-    applyButton->setBounds (buttonRow.removeFromRight (buttonWidth));
+    applyButton->setBounds (buttonRow.removeFromRight (buttonSize));
     buttonRow.removeFromRight (gap);
 
     // At the Apply-only width (see updatePosition) the step pair sits out.
@@ -322,9 +337,9 @@ void AutoEditOverlayControl::resized()
     lessButton->setVisible (stepsFit);
     moreButton->setVisible (stepsFit);
 
-    lessButton->setBounds (buttonRow.removeFromLeft (buttonWidth));
+    lessButton->setBounds (buttonRow.removeFromLeft (buttonSize));
     buttonRow.removeFromLeft (stepGap);
-    moreButton->setBounds (buttonRow.removeFromLeft (buttonWidth));
+    moreButton->setBounds (buttonRow.removeFromLeft (buttonSize));
 }
 
 void AutoEditOverlayControl::visibilityChanged()

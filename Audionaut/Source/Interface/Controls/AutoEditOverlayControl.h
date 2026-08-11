@@ -49,7 +49,10 @@ class RegionSelector;
  * as long as the pending edit is active - not just under the cursor, as the
  * hover controls (FadeInOutControl, DraggerControl) do - and handed back when
  * the edit is applied or cancelled. While an auto edit is pending, the
- * arrangement is in that edit's mode and nothing else's.
+ * arrangement is in that edit's mode and nothing else's. Those hover controls
+ * hand the selector back on their own mouseExit, though, which would leave it
+ * armed under this control's buttons - so entering this control (or its
+ * buttons) re-asserts the takeover (see mouseEnter).
  */
 class AutoEditOverlayControl : public juce::Component,
                                public juce::ChangeListener,
@@ -72,6 +75,14 @@ public:
     void resized() override;
     void visibilityChanged() override;
     bool keyPressed (const juce::KeyPress& key) override;
+
+    // A hover control's mouseExit may have re-enabled the region selector
+    // while the edit is pending; entering here disables it again before a
+    // button click could start a selection. Received for the child buttons
+    // too - the constructor registers for nested mouse events. There is no
+    // re-enabling mouseExit: the selector stays off until the control hides
+    // (see visibilityChanged), as the class comment describes.
+    void mouseEnter (const juce::MouseEvent& e) override;
 
     // A zoom re-laid the clip out under the control: fade away and schedule
     // the comeback.
