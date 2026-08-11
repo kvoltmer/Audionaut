@@ -10,6 +10,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/AutoEdit/AutoEdit.h"
 #include "Application/AudiumApplication.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Util/Preferences.h"
 
 using namespace juce;
@@ -35,30 +36,32 @@ private:
     /**
      * The minutes and seconds fields side by side in one row - the alert
      * window stacks its own text editors vertically, so the row is added as a
-     * custom component instead. Digits only, so no negative or garbled length
-     * can be entered.
+     * custom component instead. Both values are velocity-drag number boxes in
+     * the same look as the header's bars and beats.
      */
     class LengthComponent : public Component
     {
     public:
-        LengthComponent(const String& minutes, const String& seconds)
+        LengthComponent(int minutes, int seconds) :
+            minutesSlider ("Minutes Slider Font 13"),
+            secondsSlider ("Seconds Slider Font 13")
         {
-            auto setup = [this] (Label& label, TextEditor& editor,
-                                 const String& text, const String& value)
+            auto setup = [this] (Label& label, Slider& slider,
+                                 const String& text, double maximum, int value)
             {
                 label.setText (text, dontSendNotification);
                 addAndMakeVisible (label);
 
-                editor.setInputRestrictions (3, "0123456789");
-                editor.setText (value);
-                // Return and escape still press the window's buttons while an
-                // editor has the focus.
-                editor.setEscapeAndReturnKeysConsumed (false);
-                addAndMakeVisible (editor);
+                addAndMakeVisible (slider);
+                AudiumLookAndFeel::configureSlider (&slider);
+                slider.setVelocityModeParameters (1.0, 1, 0.01);
+                slider.setNormalisableRange (NormalisableRange<double> (0, maximum, 1));
+                slider.setTextBoxIsEditable (false);
+                slider.setValue (value, dontSendNotification);
             };
 
-            setup (minutesLabel, minutesEditor, TRANS ("Minutes:"), minutes);
-            setup (secondsLabel, secondsEditor, TRANS ("Seconds:"), seconds);
+            setup (minutesLabel, minutesSlider, TRANS ("Minutes:"), 999, minutes);
+            setup (secondsLabel, secondsSlider, TRANS ("Seconds:"), 59, seconds);
 
             setSize (280, 28);
         }
@@ -69,21 +72,19 @@ private:
 
             auto left = area.removeFromLeft (area.getWidth() / 2).reduced (2, 0);
             minutesLabel.setBounds (left.removeFromLeft (66));
-            minutesEditor.setBounds (left);
+            minutesSlider.setBounds (left);
 
             auto right = area.reduced (2, 0);
             secondsLabel.setBounds (right.removeFromLeft (66));
-            secondsEditor.setBounds (right);
+            secondsSlider.setBounds (right);
         }
 
-        int getMinutes() const { return minutesEditor.getText().trim().getIntValue(); }
-        int getSeconds() const { return secondsEditor.getText().trim().getIntValue(); }
-
-        void focusMinutes() { minutesEditor.grabKeyboardFocus(); }
+        int getMinutes() const { return (int) minutesSlider.getValue(); }
+        int getSeconds() const { return (int) secondsSlider.getValue(); }
 
     private:
         Label minutesLabel, secondsLabel;
-        TextEditor minutesEditor, secondsEditor;
+        Slider minutesSlider, secondsSlider;
     };
 
     /**
@@ -141,8 +142,8 @@ private:
         // The last length and mode used are offered again - two minutes and
         // sequential until then.
         auto& preferences = AudiumApplication::getPreferences();
-        const String minutes = preferences.getValue(audium::PreferenceKeys::assembleMinutes, "2");
-        const String seconds = preferences.getValue(audium::PreferenceKeys::assembleSeconds, "0");
+        const auto minutes = String(preferences.getValue(audium::PreferenceKeys::assembleMinutes, "2")).getIntValue();
+        const auto seconds = String(preferences.getValue(audium::PreferenceKeys::assembleSeconds, "0")).getIntValue();
 
         mode = preferences.getValue(audium::PreferenceKeys::assembleMode, "sequential") == "random"
                    ? audium::AssembleConfig::Mode::Random
@@ -196,7 +197,6 @@ private:
         };
 
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);
-        lengthComponent->focusMinutes();
     }
 
     void assembleTrack(double durationSeconds)
