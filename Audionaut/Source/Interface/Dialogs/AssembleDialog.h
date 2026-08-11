@@ -31,8 +31,59 @@ public:
 
 private:
 
-    static String getMinutesFieldName()  { return "Minutes"; }
-    static String getSecondsFieldName()  { return "Seconds"; }
+    /**
+     * The minutes and seconds fields side by side in one row - the alert
+     * window stacks its own text editors vertically, so the row is added as a
+     * custom component instead. Digits only, so no negative or garbled length
+     * can be entered.
+     */
+    class LengthComponent : public Component
+    {
+    public:
+        LengthComponent(const String& minutes, const String& seconds)
+        {
+            auto setup = [this] (Label& label, TextEditor& editor,
+                                 const String& text, const String& value)
+            {
+                label.setText (text, dontSendNotification);
+                addAndMakeVisible (label);
+
+                editor.setInputRestrictions (3, "0123456789");
+                editor.setText (value);
+                // Return and escape still press the window's buttons while an
+                // editor has the focus.
+                editor.setEscapeAndReturnKeysConsumed (false);
+                addAndMakeVisible (editor);
+            };
+
+            setup (minutesLabel, minutesEditor, TRANS ("Minutes:"), minutes);
+            setup (secondsLabel, secondsEditor, TRANS ("Seconds:"), seconds);
+
+            setSize (280, 28);
+        }
+
+        void resized() override
+        {
+            auto area = getLocalBounds();
+
+            auto left = area.removeFromLeft (area.getWidth() / 2).reduced (2, 0);
+            minutesLabel.setBounds (left.removeFromLeft (66));
+            minutesEditor.setBounds (left);
+
+            auto right = area.reduced (2, 0);
+            secondsLabel.setBounds (right.removeFromLeft (66));
+            secondsEditor.setBounds (right);
+        }
+
+        int getMinutes() const { return minutesEditor.getText().trim().getIntValue(); }
+        int getSeconds() const { return secondsEditor.getText().trim().getIntValue(); }
+
+        void focusMinutes() { minutesEditor.grabKeyboardFocus(); }
+
+    private:
+        Label minutesLabel, secondsLabel;
+        TextEditor minutesEditor, secondsEditor;
+    };
 
     static String getTitle(audium::AssembleConfig::Mode mode)
     {
@@ -54,11 +105,10 @@ private:
         const String minutes = preferences.getValue(audium::PreferenceKeys::assembleMinutes, "2");
         const String seconds = preferences.getValue(audium::PreferenceKeys::assembleSeconds, "0");
 
-        asyncAlertWindow->addTextBlock ("Minutes:");
-        asyncAlertWindow->addTextEditor (getMinutesFieldName(), minutes, String(), false);
-
-        asyncAlertWindow->addTextBlock ("Seconds:");
-        asyncAlertWindow->addTextEditor (getSecondsFieldName(), seconds, String(), false);
+        // The window does not own custom components, so the row outlives it as
+        // a member - recreated here after the old window is gone.
+        lengthComponent = std::make_unique<LengthComponent> (minutes, seconds);
+        asyncAlertWindow->addCustomComponent (lengthComponent.get());
 
         asyncAlertWindow->addButton (TRANS ("Assemble"), 1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"), 0, KeyPress (KeyPress::escapeKey));
@@ -76,11 +126,11 @@ private:
             if (result == 0)
                 return;
 
-            const auto minutes = aw.getTextEditorContents (getMinutesFieldName()).trim().getIntValue();
-            const auto seconds = aw.getTextEditorContents (getSecondsFieldName()).trim().getIntValue();
+            const auto minutes = safeThis->lengthComponent->getMinutes();
+            const auto seconds = safeThis->lengthComponent->getSeconds();
             const auto duration = minutes * 60.0 + seconds;
 
-            if (minutes >= 0 && seconds >= 0 && duration > 0.0)
+            if (duration > 0.0)
             {
                 auto& preferences = AudiumApplication::getPreferences();
                 preferences.setValue(audium::PreferenceKeys::assembleMinutes, String(minutes).toStdString());
@@ -94,9 +144,7 @@ private:
         };
 
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);
-        auto editor = asyncAlertWindow->getTextEditor(getMinutesFieldName());
-        if (editor != nullptr)
-            editor->toFront(true);
+        lengthComponent->focusMinutes();
     }
 
     void assembleTrack(double durationSeconds)
@@ -122,6 +170,8 @@ private:
     }
 
     std::unique_ptr<AlertWindow> asyncAlertWindow;
+
+    std::unique_ptr<LengthComponent> lengthComponent;
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
 
