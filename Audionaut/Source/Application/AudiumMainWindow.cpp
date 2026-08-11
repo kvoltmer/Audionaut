@@ -183,7 +183,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::assembleRandom:
-            result.setInfo ("Assemble Random", "Assembles a new playlist from the track's regions in random order", CommandCategories::editing, 0);
+            result.setInfo ("Assemble Random Sequence", "Assembles a new playlist from the track's regions in random order", CommandCategories::editing, 0);
             result.setActive (canAssemble());
             break;
         case CommandIDs::assembleSequential:
