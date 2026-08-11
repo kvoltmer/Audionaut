@@ -187,7 +187,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setActive (canAssemble());
             break;
         case CommandIDs::assembleSequential:
-            result.setInfo ("Assemble Sequential", "Assembles a new playlist from the track's regions in sequential order", CommandCategories::editing, 0);
+            result.setInfo ("Assemble Sequential Sequence", "Assembles a new playlist from the track's regions in sequential order", CommandCategories::editing, 0);
             result.setActive (canAssemble());
             break;
         case CommandIDs::bounceProject:
