@@ -56,14 +56,14 @@ private:
                 AudiumLookAndFeel::configureSlider (&slider);
                 slider.setVelocityModeParameters (1.0, 1, 0.01);
                 slider.setNormalisableRange (NormalisableRange<double> (0, maximum, 1));
-                slider.setTextBoxIsEditable (false);
                 slider.setValue (value, dontSendNotification);
             };
 
             setup (minutesLabel, minutesSlider, TRANS ("Minutes:"), 999, minutes);
             setup (secondsLabel, secondsSlider, TRANS ("Seconds:"), 59, seconds);
 
-            setSize (280, 28);
+            // The header's slider height, so the boxes look the same here.
+            setSize (280, 20);
         }
 
         void resized() override
