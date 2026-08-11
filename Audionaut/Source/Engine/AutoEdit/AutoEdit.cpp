@@ -50,6 +50,11 @@ struct EditTarget {
     // Id of that clip (same numbering the dialog uses), or -1 when none.
     int playListItemId = -1;
 
+    // The clip's name - its region's name, which is what the arrangement
+    // shows on it. Empty when no clip resolved; the segments cut from the
+    // clip are named after it.
+    juce::String clipName;
+
     // The clip's absolute timeline position, in clocks. Only meaningful while
     // playListItemIndex >= 0 - without a clip the edit has no place on the
     // timeline.
@@ -100,6 +105,7 @@ EditTarget resolveEditTarget(std::shared_ptr<AudioTrack> track, int playListItem
                 target.playListItemIndex = playListContainer->getPlayListItemIndex(item.get());
                 target.playListItemId = item->getId();
                 target.clipStartClocks = item->getAbsolutePosition(audium::clocks);
+                target.clipName = region->getName();
             }
     }
 
@@ -410,10 +416,16 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
     const auto replaceClip = config.replacePlayListItem;
     const auto clipIndex = target.playListItemIndex;
 
+    // Segments are named after the clip they are cut from; without one, the
+    // track name stands in.
+    const auto baseName = target.clipName.isNotEmpty() ? target.clipName
+                                                       : track->getAudioTrackName();
+
     if (! applyAsUndoableEdit([this, &boundaries, extent, track, resourceGroup,
-                               replaceClip, clipIndex]
+                               replaceClip, clipIndex, baseName]
         {
-            auto created = createRegionsFromBoundaries(boundaries, extent, track, resourceGroup);
+            auto created = createRegionsFromBoundaries(boundaries, extent, track,
+                                                       resourceGroup, baseName);
 
             if (created.empty())
                 return false;
@@ -678,7 +690,8 @@ std::vector<std::shared_ptr<AudioRegion>>
     AutoEdit::createRegionsFromBoundaries(const std::vector<float>& boundarySeconds,
                                           juce::Range<double> extent,
                                           std::shared_ptr<AudioTrack> track,
-                                          std::shared_ptr<ResourceGroup> resourceGroup)
+                                          std::shared_ptr<ResourceGroup> resourceGroup,
+                                          const juce::String& baseName)
 {
     std::vector<std::shared_ptr<AudioRegion>> created;
 
@@ -716,10 +729,10 @@ std::vector<std::shared_ptr<AudioRegion>>
         position.setStart(points[i - 1]);
         position.setEnd(points[i]);
 
-        // Named <track>-seg-<number>, numbered by the container's own
+        // Named <clip>-seg-<number>, numbered by the container's own
         // unique-name mechanism - each created region advances the number for
         // the next.
-        const auto regionName = regionContainer->getUniqueName(track->getAudioTrackName() + "-seg");
+        const auto regionName = regionContainer->getUniqueName(baseName + "-seg");
 
         if (auto region = regionContainer->createRegion(regionName,
                                                         position,
@@ -847,9 +860,16 @@ bool AutoEdit::invokePython(const juce::File& audioFile,
     std::string segFileName = getTempDirectory().toStdString() + "/data/segs/"
                                   + getBaseName() + "-seg-data.json";
 
-    return applyAsUndoableEdit([this, segFileName, sampleRate, target]
+    // Segments are named after the clip they are cut from; without one, the
+    // track name stands in.
+    const auto regionBaseName = target.clipName.isNotEmpty()
+                                    ? target.clipName
+                                    : target.track->getAudioTrackName();
+
+    return applyAsUndoableEdit([this, segFileName, sampleRate, target, regionBaseName]
     {
-        return createRegionsFromSegFile(segFileName, sampleRate, target.track, target.resourceGroup);
+        return createRegionsFromSegFile(segFileName, sampleRate, target.track,
+                                        target.resourceGroup, regionBaseName);
     });
 }
 
@@ -861,7 +881,8 @@ const std::string AutoEdit::getBaseName() const
 bool AutoEdit::createRegionsFromSegFile(std::string segFileName,
                                        double sampleRate,
                                        std::shared_ptr<AudioTrack> track,
-                                       std::shared_ptr<ResourceGroup> resourceGroup)
+                                       std::shared_ptr<ResourceGroup> resourceGroup,
+                                       const juce::String& baseName)
 {
     if (track == nullptr || resourceGroup == nullptr)
         return false;
@@ -886,10 +907,10 @@ bool AutoEdit::createRegionsFromSegFile(std::string segFileName,
         position.setStart(static_cast<double>(elem["start"]) / sampleRate);
         position.setEnd(static_cast<double>(elem["end"]) / sampleRate);
 
-        // Named <track>-seg-<number>, numbered by the container's own
+        // Named <clip>-seg-<number>, numbered by the container's own
         // unique-name mechanism - each created region advances the number for
         // the next.
-        const auto regionName = regionContainer->getUniqueName(track->getAudioTrackName() + "-seg");
+        const auto regionName = regionContainer->getUniqueName(baseName + "-seg");
 
         if (regionContainer->createRegion(regionName,
                                           position,

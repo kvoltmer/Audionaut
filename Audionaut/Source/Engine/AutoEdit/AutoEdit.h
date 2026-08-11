@@ -233,6 +233,10 @@ public:
      * @param extent          The stretch of audio being edited, in seconds.
      * @param track           The track to create the regions on.
      * @param resourceGroup   The resource group the regions belong to.
+     * @param baseName        What the segments are named after - the edited
+     *                        clip's name; each region becomes
+     *                        <baseName>-seg-<number> through the container's
+     *                        unique-name mechanism.
      * @return True when regions were created; false when no boundary falls
      *         inside @p extent, leaving nothing to cut.
      */
@@ -240,7 +244,8 @@ public:
         createRegionsFromBoundaries(const std::vector<float>& boundarySeconds,
                                     juce::Range<double> extent,
                                     std::shared_ptr<AudioTrack> track,
-                                    std::shared_ptr<ResourceGroup> resourceGroup);
+                                    std::shared_ptr<ResourceGroup> resourceGroup,
+                                    const juce::String& baseName);
 
     /**
      * @brief Puts the segments into the arrangement in place of the clip they
@@ -261,11 +266,13 @@ public:
                                         int playListItemIndex,
                                         const std::vector<std::shared_ptr<AudioRegion>>& regions);
 
-    /** @brief Reads the Python path's segment file and creates regions from it. */
+    /** @brief Reads the Python path's segment file and creates regions from
+     *         it, named <baseName>-seg-<number> like the native path's. */
     bool createRegionsFromSegFile(std::string segFileName,
                                   double sampleRate,
                                   std::shared_ptr<AudioTrack> track,
-                                  std::shared_ptr<ResourceGroup> resourceGroup);
+                                  std::shared_ptr<ResourceGroup> resourceGroup,
+                                  const juce::String& baseName);
 
     static const juce::String getTempDirectory();
 

@@ -607,9 +607,9 @@ SCENARIO("AutoEdit can replace the edited clip with its segments",
                         REQUIRE(fixture.isCreated(item->getRegion()));
                 }
 
-                THEN("the segments are named <track>-seg-<number>")
+                THEN("the segments are named <clip>-seg-<number>")
                 {
-                    const auto prefix = fixture.track()->getAudioTrackName() + "-seg-";
+                    const auto prefix = originalRegionName + "-seg-";
 
                     for (const auto& item : playListItems())
                     {
