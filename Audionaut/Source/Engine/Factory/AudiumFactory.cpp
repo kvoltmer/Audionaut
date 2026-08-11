@@ -38,7 +38,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto formatManager              = std::make_shared<juce::AudioFormatManager>();
     
-    auto audioThumbnailCache        = std::make_shared<juce::AudioThumbnailCache>(64);
+    // one thumbnail per clip channel shares this cache - with only 64 slots a
+    // project with many clips thrashes it and re-reads audio files on paint
+    auto audioThumbnailCache        = std::make_shared<juce::AudioThumbnailCache>(512);
     
     auto playback                   = std::make_shared<audium::Playback>();
     

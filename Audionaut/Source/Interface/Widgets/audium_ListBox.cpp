@@ -377,8 +377,6 @@ public:
                 rowComp->setBounds (0, rowY, w, rowH);
                 rowY += rowH;
                 rowComp->update (row, owner.isRowSelected (row));
-                /// TODO: this is a temp fix for missing repaint when zooming out
-                rowComp->repaint();
             }
         }
         
@@ -426,9 +424,6 @@ public:
                                               jmax (owner.getWidth() - owner.outlineThickness * 2,
                                                     content.getWidth()),
                                               owner.headerComponent->getHeight());
-        
-            /// TODO: this is a temp fix for missing repaint when zooming out
-            owner.headerComponent->repaint();
         }
     }
 

@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <atomic>
+#include <cstdint>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -103,6 +105,14 @@ public:
     /** @brief Removes all cached entries. */
     void clear();
 
+    /**
+     * @brief Counter that changes whenever the cached contents change.
+     *
+     * Lets displays skip re-querying (and re-copying) results when nothing
+     * was stored, cleared or re-keyed since their last lookup.
+     */
+    std::uint64_t getGeneration() const noexcept { return generation.load(std::memory_order_relaxed); }
+
     /** @brief Number of cached entries (mainly useful for testing). */
     size_t size() const;
 
@@ -185,6 +195,7 @@ private:
 
     mutable std::mutex mutex;
     std::unordered_map<std::string, Entry> entries;
+    std::atomic<std::uint64_t> generation { 0 };
 
     // Base folder used to (de)serialise entry paths as project-relative. Set
     // only for the duration of saveToFolder/loadFromFolder; an invalid File()

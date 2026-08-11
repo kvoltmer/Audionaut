@@ -111,6 +111,7 @@ void AnalysisCache::put(const juce::File& audioFile,
     entry.bpm = bpm;
 
     entries[makeKey(audioFile, analysisType)] = std::move(entry);
+    ++generation;
 }
 
 void AnalysisCache::rebaseAudioFolder(const juce::File& newAudioFolder)
@@ -135,12 +136,14 @@ void AnalysisCache::rebaseAudioFolder(const juce::File& newAudioFolder)
     }
 
     entries = std::move(rebased);
+    ++generation;
 }
 
 void AnalysisCache::clear()
 {
     const std::lock_guard<std::mutex> lock(mutex);
     entries.clear();
+    ++generation;
 }
 
 size_t AnalysisCache::size() const
@@ -184,6 +187,7 @@ bool AnalysisCache::readFromJson(json& input, bool /*rebuild*/)
     const std::lock_guard<std::mutex> lock(mutex);
 
     entries.clear();
+    ++generation;
 
     // Results written by another version describe analyses that no longer
     // produce them, so they are dropped rather than trusted - see dataVersion.

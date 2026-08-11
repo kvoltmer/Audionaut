@@ -120,10 +120,6 @@ void PlayListItemComponent::resized()
     overlayContainer->setBounds(getLocalBounds().withTrimmedTop(DraggerControl::draggerHeight));
     overlayContainer->toFront(false);
     autoEditPreviewView->setBounds(overlayContainer->getLocalBounds());
-
-    regionSelector->updateFromEngine();
-
-    updateUI(playListItem);
 }
 
 void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)

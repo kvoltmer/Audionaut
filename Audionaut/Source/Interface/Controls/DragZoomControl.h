@@ -113,25 +113,19 @@ public:
         }
         
         zoomHandler->setZoomFactor(newFactor);
-        
-        // the change message will trigger ArrangementEditBaseComponent::setContentWidth
-        sendSynchronousChangeMessage();
-        
-        // left - right
-        auto x = e.position.getX();
-        auto contentWidth = zoomHandler->getContentWidth();
-        auto w = getLocalBounds().toFloat().getWidth();
-        
-        auto relativePosition = x / w;
-        
-        auto contentPosition = contentWidth * relativePosition;
-        auto visibleRange = zoomHandler->getVisibleRange();
-        zoomHandler->setVisibleRange(visibleRange.movedToStartAt(contentPosition - visibleRange.getLength() * 0.5),
-                                     sendNotificationSync);
-        
-        
-        updateFromEngine();
+
+        // where the visible range should end up centred, as a fraction of the
+        // content width - the change listener applies it after resizing the
+        // content, since the centring needs the new content width in place
+        targetCenterFraction = e.position.getX() / getLocalBounds().toFloat().getWidth();
+
+        // asynchronous and coalesced: a pending change message swallows
+        // further ones, so a burst of drag events causes one content rebuild
+        // per message-loop pass instead of one per event
+        sendChangeMessage();
     }
+
+    double getTargetCenterFraction() const noexcept { return targetCenterFraction; }
 
     void mouseUp (const juce::MouseEvent& e) override
     {
@@ -154,6 +148,8 @@ private:
     bool                                        arrangementMode;
     
     double mouseDownFactor = 1.0;
+
+    double targetCenterFraction = 0.5;
     
     // cursor stuff:
     juce::MouseCursor zoomCursor;

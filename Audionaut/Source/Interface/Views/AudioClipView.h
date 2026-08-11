@@ -87,6 +87,13 @@ public:
 
 private:
 
+    // the inputs of the last refreshSegments() run; a call where none of them
+    // changed skips the locked analysis-cache queries and the overlay update
+    std::uint64_t lastAnalysisGeneration = 0;
+    juce::String lastAnalysisPath;
+    double lastRegionStartSeconds = 0.0;
+    int lastVisibleTypesMask = -1;
+
     std::unique_ptr<FadeInOutView> fadeInOutView;
 
     std::unique_ptr<SegmentationView> segmentationView;

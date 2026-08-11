@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include <optional>
+#include <utility>
+
 #include <JuceHeader.h>
 
 #include "Engine/Group/AudioTrackContainer.h"
@@ -30,7 +33,7 @@
  This class contains the AudioTrackListBox!
 
  */
-class ArrangementEditBaseComponent  : public juce::Component, public juce::ChangeListener
+class ArrangementEditBaseComponent  : public juce::Component, public juce::ChangeListener, private juce::AsyncUpdater
 {
 public:
     ArrangementEditBaseComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine,
@@ -114,6 +117,7 @@ public:
 
     virtual ~ArrangementEditBaseComponent() override
     {
+        cancelPendingUpdate();
         audioTrackListBox->removeMouseListener (audioTrackListBox->getHeaderComponent());
         dragZoomControl->removeChangeListener(this);
         zoomHandler->getSnapToGridHandler()->removeChangeListener(gridView.get());
@@ -152,6 +156,18 @@ public:
     void changeListenerCallback (ChangeBroadcaster* source) override
     {
         setContentWidth(zoomHandler->getContentWidth());
+
+        if (source == dragZoomControl.get())
+        {
+            // centre the visible range where the drag-zoom gesture points;
+            // this has to follow setContentWidth so the scrollbar's total
+            // range already reflects the new zoom factor
+            auto contentPosition = zoomHandler->getContentWidth() * dragZoomControl->getTargetCenterFraction();
+            auto visibleRange = zoomHandler->getVisibleRange();
+            zoomHandler->setVisibleRange(visibleRange.movedToStartAt(contentPosition - visibleRange.getLength() * 0.5),
+                                         juce::sendNotificationSync);
+            dragZoomControl->updateFromEngine();
+        }
     }
 
     void updateUI()
@@ -179,26 +195,26 @@ public:
         auto viewPortBounds = audioTrackListBox->getViewport()->getViewedComponent()->getLocalBounds();
         viewPortBounds.setWidth(std::max(contentWidth, viewPortBounds.getWidth()));
         gridView->setBounds(viewPortBounds);
-        
+
+        // the grid's spacing depends on the zoom factor, so it needs a repaint
+        // even when the clamped bounds above did not change
+        gridView->repaint();
+
         audioTrackListBox->getHeaderComponent()->resized();
     }
 
     void zoomIn()
     {
         zoomHandler->zoomIn();
-        setContentWidth(zoomHandler->getContentWidth());
-        regionSelector->updateFromEngine();
-        dragZoomControl->updateFromEngine();
-        zoomHandler->focusViewOnPlayPosition();
+        pendingFocusPlayPosition = true;
+        triggerAsyncUpdate();
     }
 
     void zoomOut()
     {
         zoomHandler->zoomOut();
-        setContentWidth(zoomHandler->getContentWidth());
-        regionSelector->updateFromEngine();
-        dragZoomControl->updateFromEngine();
-        zoomHandler->focusViewOnPlayPosition();
+        pendingFocusPlayPosition = true;
+        triggerAsyncUpdate();
     }
     
     void pageLeft()
@@ -221,12 +237,10 @@ public:
         
         // absolute position in clocks
         auto clocks = zoomHandler->xToClocksWithOffset(x);
-        
+
         zoomHandler->setZoomFactor(zoomHandler->getZoomFactor() * static_cast<double>(scaleFactor));
-        setContentWidth(zoomHandler->getContentWidth());
-        regionSelector->updateFromEngine();
-        
-        zoomHandler->centerView(clocks, center);
+        pendingZoomCenter = std::make_pair(clocks, center);
+        triggerAsyncUpdate();
     }
     
     RegionSelector* getRegionSelector() const { return regionSelector.get(); }
@@ -275,8 +289,36 @@ protected:
 
     std::unique_ptr<DragZoomControl>            dragZoomControl;
     std::unique_ptr<ArrangementOverview>        arrangementOverview;
-    
+
 private:
-    
+
+    // Zoom gestures only store the new zoom factor and trigger this deferred
+    // update, so a burst of pinch/key events queued behind a slow rebuild
+    // collapses into a single rebuild instead of one per event.
+    void handleAsyncUpdate() override
+    {
+        setContentWidth(zoomHandler->getContentWidth());
+        regionSelector->updateFromEngine();
+        dragZoomControl->updateFromEngine();
+
+        if (pendingZoomCenter.has_value())
+        {
+            zoomHandler->centerView(pendingZoomCenter->first, pendingZoomCenter->second);
+            pendingZoomCenter.reset();
+        }
+
+        if (pendingFocusPlayPosition)
+        {
+            pendingFocusPlayPosition = false;
+            zoomHandler->focusViewOnPlayPosition();
+        }
+    }
+
+    // position (clocks) to keep under the pinch gesture, and where in the
+    // visible range (fraction) to keep it
+    std::optional<std::pair<double, double>>    pendingZoomCenter;
+
+    bool                                        pendingFocusPlayPosition = false;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ArrangementEditBaseComponent)
 };

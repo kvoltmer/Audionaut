@@ -96,17 +96,40 @@ void AudioClipView::refreshSegments()
     const auto audioFile = juce::File(audioResource->getFullPathName());
 
     // Only display the analysis types the track is configured to show.
-    std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType;
-    for (auto analysisType : { audium::AnalysisType::SBic,
-                               audium::AnalysisType::Onset,
-                               audium::AnalysisType::Beat,
-                               audium::AnalysisType::BeatDegara })
-    {
-        if (audioTrack->getViewState().isAnalysisTypeVisible(analysisType))
-            segmentsByType[analysisType] = analysisProvider->getSegments(analysisType, audioFile);
-    }
+    constexpr audium::AnalysisType allTypes[] = { audium::AnalysisType::SBic,
+                                                  audium::AnalysisType::Onset,
+                                                  audium::AnalysisType::Beat,
+                                                  audium::AnalysisType::BeatDegara };
 
-    segmentationView->setSegments(std::move(segmentsByType), getRegionStart(audium::seconds));
+    int visibleTypes = 0;
+    for (int i = 0; i < 4; ++i)
+        if (audioTrack->getViewState().isAnalysisTypeVisible(allTypes[i]))
+            visibleTypes |= (1 << i);
+
+    // The queried results depend only on these inputs, so an unchanged set
+    // means the overlay is already current - this runs on every clip layout
+    // pass, and the cache lookups (mutex + vector copy per type) are too
+    // expensive to repeat per zoom step or scroll notch.
+    const auto generation = analysisProvider->getCache()->getGeneration();
+    const auto regionStart = getRegionStart(audium::seconds);
+
+    if (generation == lastAnalysisGeneration
+        && visibleTypes == lastVisibleTypesMask
+        && regionStart == lastRegionStartSeconds
+        && audioFile.getFullPathName() == lastAnalysisPath)
+        return;
+
+    lastAnalysisGeneration = generation;
+    lastVisibleTypesMask = visibleTypes;
+    lastRegionStartSeconds = regionStart;
+    lastAnalysisPath = audioFile.getFullPathName();
+
+    std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType;
+    for (int i = 0; i < 4; ++i)
+        if ((visibleTypes & (1 << i)) != 0)
+            segmentsByType[allTypes[i]] = analysisProvider->getSegments(allTypes[i], audioFile);
+
+    segmentationView->setSegments(std::move(segmentsByType), regionStart);
 }
 
 void AudioClipView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible)

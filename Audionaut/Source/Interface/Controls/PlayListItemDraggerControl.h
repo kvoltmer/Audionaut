@@ -31,10 +31,10 @@ public:
     {
         regionSelector->playListItemDraggerControls.push_back(this);
 
-        // The BPM suffix and the grid-match check mark are computed live at
-        // paint-time from the analysis cache (see getBpmSuffix() /
-        // matchesProjectGrid()), so a repaint is all that's needed to pick up
-        // a background analysis that just finished.
+        // The BPM suffix and the grid-match check mark are derived from the
+        // analysis cache, memoised against their inputs (see
+        // updateAnalysisPaintCache()), so a repaint is all that's needed to
+        // pick up a background analysis that just finished.
         if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
             analysisProvider->addChangeListener(this);
 
@@ -122,6 +122,25 @@ private:
     // grid (see AnalysisProvider::matchesGrid). False when nothing has been
     // analysed yet.
     bool matchesProjectGrid() const;
+
+    // Both of the above are served from this memo - the analysis lookups
+    // behind them (locked cache queries, a beat-vector copy per resource)
+    // are too expensive to run on every paint, and the playhead stripe
+    // repaints this control at timer rate during playback.
+    struct AnalysisPaintCache {
+        bool valid = false;
+        std::uint64_t generation = 0;
+        const void* item = nullptr;
+        double tempo = 0.0;
+        double startClocks = 0.0;
+        juce::Range<double> regionSeconds;
+        juce::String bpmSuffix;
+        bool gridMatch = false;
+    };
+
+    void updateAnalysisPaintCache() const;
+
+    mutable AnalysisPaintCache analysisPaintCache;
 
     // Small green check mark at the right end of the dragger strip, shown
     // while matchesProjectGrid() holds.

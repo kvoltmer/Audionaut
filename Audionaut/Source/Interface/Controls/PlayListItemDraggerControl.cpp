@@ -38,36 +38,8 @@ const juce::String PlayListItemDraggerControl::getLabelSuffix() const
 
 juce::String PlayListItemDraggerControl::getBpmSuffix() const
 {
-    auto region = playListItem->getRegion();
-    auto audioTrack = region->getAudioTrack();
-    if (audioTrack == nullptr)
-        return {};
-
-    auto analysisProvider = audioTrack->getAnalysisProvider();
-    if (analysisProvider == nullptr)
-        return {};
-
-    juce::StringArray bpms;
-    for (const auto& resource : region->getAudioResources())
-    {
-        if (resource == nullptr)
-            continue;
-
-        const auto audioFile = juce::File(resource->getFullPathName());
-
-        auto bpm = analysisProvider->getBpm(audium::AnalysisType::BeatDegara, audioFile);
-
-        if (bpm > 0.0f)
-            bpms.add(juce::String(bpm, 1));
-    }
-
-    if (bpms.isEmpty())
-        return {};
-
-    if (bpms.size() == 1)
-        return bpms[0] + " BPM";
-
-    return "(" + bpms.joinIntoString(", ") + ") BPM";
+    updateAnalysisPaintCache();
+    return analysisPaintCache.bpmSuffix;
 }
 
 void PlayListItemDraggerControl::paint (juce::Graphics& g)
@@ -80,27 +52,44 @@ void PlayListItemDraggerControl::paint (juce::Graphics& g)
 
 bool PlayListItemDraggerControl::matchesProjectGrid() const
 {
+    updateAnalysisPaintCache();
+    return analysisPaintCache.gridMatch;
+}
+
+void PlayListItemDraggerControl::updateAnalysisPaintCache() const
+{
     auto region = playListItem->getRegion();
     auto audioTrack = region->getAudioTrack();
-    if (audioTrack == nullptr)
-        return false;
+    auto analysisProvider = (audioTrack != nullptr) ? audioTrack->getAnalysisProvider() : nullptr;
 
-    auto analysisProvider = audioTrack->getAnalysisProvider();
     if (analysisProvider == nullptr)
-        return false;
+    {
+        analysisPaintCache = {};
+        return;
+    }
 
     auto tempoProvider = playListContainer->getTempoProvider();
-    if (tempoProvider == nullptr)
-        return false;
 
-    const auto projectTempo = tempoProvider->getTempo();
-    const auto playedRegionSeconds = playListItem->getRegionData(audium::seconds);
+    const auto generation = analysisProvider->getCache()->getGeneration();
+    const auto projectTempo = (tempoProvider != nullptr) ? tempoProvider->getTempo() : 0.0;
     const auto clipStartClocks = playListItem->getAbsolutePosition(audium::clocks);
+    const auto playedRegionSeconds = playListItem->getRegionData(audium::seconds);
+
+    if (analysisPaintCache.valid
+        && analysisPaintCache.generation == generation
+        && analysisPaintCache.item == playListItem.get()
+        && analysisPaintCache.tempo == projectTempo
+        && analysisPaintCache.startClocks == clipStartClocks
+        && analysisPaintCache.regionSeconds == playedRegionSeconds)
+        return;
+
+    juce::StringArray bpms;
 
     // Resources without a beat analysis are skipped rather than counted as a
-    // mismatch (matching getBpmSuffix()), but at least one analysed resource
-    // has to match - an unanalysed item shows no check mark.
+    // mismatch, but at least one analysed resource has to match - an
+    // unanalysed item shows no check mark.
     auto anyAnalysed = false;
+    auto allMatch = true;
     for (const auto& resource : region->getAudioResources())
     {
         if (resource == nullptr)
@@ -108,6 +97,10 @@ bool PlayListItemDraggerControl::matchesProjectGrid() const
 
         const auto audioFile = juce::File(resource->getFullPathName());
         const auto bpm = analysisProvider->getBpm(audium::AnalysisType::BeatDegara, audioFile);
+
+        if (bpm > 0.0f)
+            bpms.add(juce::String(bpm, 1));
+
         const auto beats = analysisProvider->getSegments(audium::AnalysisType::BeatDegara, audioFile);
 
         if (bpm <= 0.0f || beats.empty())
@@ -117,10 +110,23 @@ bool PlayListItemDraggerControl::matchesProjectGrid() const
 
         if (! audium::AnalysisProvider::matchesGrid(projectTempo, bpm, beats,
                                                     clipStartClocks, playedRegionSeconds))
-            return false;
+            allMatch = false;
     }
 
-    return anyAnalysed;
+    analysisPaintCache.valid = true;
+    analysisPaintCache.generation = generation;
+    analysisPaintCache.item = playListItem.get();
+    analysisPaintCache.tempo = projectTempo;
+    analysisPaintCache.startClocks = clipStartClocks;
+    analysisPaintCache.regionSeconds = playedRegionSeconds;
+    analysisPaintCache.gridMatch = anyAnalysed && allMatch;
+
+    if (bpms.isEmpty())
+        analysisPaintCache.bpmSuffix = {};
+    else if (bpms.size() == 1)
+        analysisPaintCache.bpmSuffix = bpms[0] + " BPM";
+    else
+        analysisPaintCache.bpmSuffix = "(" + bpms.joinIntoString(", ") + ") BPM";
 }
 
 void PlayListItemDraggerControl::paintGridMatchCheckMark (juce::Graphics& g) const
