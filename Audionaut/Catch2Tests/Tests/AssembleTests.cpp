@@ -231,7 +231,7 @@ TEST_CASE("chooseSequentialSequence thins the segments but keeps their order",
 {
     const std::vector<double> lengths { 2.0, 3.5, 1.25, 4.0, 0.75, 2.5 };
 
-    SECTION("a target covering the total keeps every segment in order")
+    SECTION("a target matching the total keeps every segment once, in order")
     {
         std::mt19937 rng(1234);
         const auto total = std::accumulate(lengths.begin(), lengths.end(), 0.0);
@@ -240,19 +240,44 @@ TEST_CASE("chooseSequentialSequence thins the segments but keeps their order",
         REQUIRE(chosen == std::vector<int> { 0, 1, 2, 3, 4, 5 });
     }
 
-    SECTION("kept indices are ascending and inside the input")
+    SECTION("a target beyond the total repeats the material in order")
+    {
+        std::mt19937 rng(1234);
+        const auto total = std::accumulate(lengths.begin(), lengths.end(), 0.0);
+        const auto target = total * 2.5;
+
+        const auto chosen = AutoEdit::chooseSequentialSequence(lengths, target, rng);
+
+        double sum = 0.0;
+
+        for (size_t i = 0; i < chosen.size(); ++i)
+        {
+            // Nothing is thinned when the target exceeds the total, so the
+            // walk is the plain wrapped order.
+            REQUIRE(chosen[i] == (int) (i % lengths.size()));
+            sum += lengths[(size_t) chosen[i]];
+        }
+
+        REQUIRE(sum >= target);
+        REQUIRE(sum - lengths[(size_t) chosen.back()] < target);
+    }
+
+    SECTION("the thinned walk reaches the target, overshooting by at most one segment")
     {
         std::mt19937 rng(1234);
         const auto chosen = AutoEdit::chooseSequentialSequence(lengths, 7.0, rng);
 
-        auto previous = -1;
+        double sum = 0.0;
 
         for (auto index : chosen)
         {
-            REQUIRE(index > previous);
+            REQUIRE(index >= 0);
             REQUIRE((size_t) index < lengths.size());
-            previous = index;
+            sum += lengths[(size_t) index];
         }
+
+        REQUIRE(sum >= 7.0);
+        REQUIRE(sum - lengths[(size_t) chosen.back()] < 7.0);
     }
 
     SECTION("the same seed reproduces the same choice")
@@ -351,10 +376,26 @@ SCENARIO("Assemble rebuilds the track's playlist from its regions",
             }
         }
 
-        WHEN("a sequential song covering all the material is assembled")
+        WHEN("a sequential song of exactly the material's length is assembled")
         {
+            // Summed in the same order invokeAssemble sums, so the duration
+            // matches the total bit for bit and one full pass fills it.
+            juce::StringArray eligibleNames;
+            double totalSeconds = 0.0;
+
+            for (const auto& region : fixture.track()->getRegions())
+            {
+                const auto length = region->getRegionData(audium::seconds).getLength();
+
+                if (length > 0.0)
+                {
+                    eligibleNames.add(region->getName());
+                    totalSeconds += length;
+                }
+            }
+
             config.mode = AssembleConfig::Mode::Sequential;
-            config.duration = 100000.0;
+            config.duration = totalSeconds;
 
             const auto succeeded = autoEdit.invokeAssemble(config, onError);
 
@@ -362,14 +403,28 @@ SCENARIO("Assemble rebuilds the track's playlist from its regions",
             {
                 INFO("error was: " << reportedError);
                 REQUIRE(succeeded);
-
-                juce::StringArray eligibleNames;
-
-                for (const auto& region : fixture.track()->getRegions())
-                    if (region->getRegionData(audium::seconds).getLength() > 0.0)
-                        eligibleNames.add(region->getName());
-
                 REQUIRE(fixture.playListRegionNames() == eligibleNames);
+            }
+        }
+
+        WHEN("a sequential song longer than the material is assembled")
+        {
+            config.mode = AssembleConfig::Mode::Sequential;
+            config.duration = 100.0;
+
+            const auto succeeded = autoEdit.invokeAssemble(config, onError);
+
+            THEN("the material repeats until the song is long enough")
+            {
+                INFO("error was: " << reportedError);
+                REQUIRE(succeeded);
+
+                double totalSeconds = 0.0;
+
+                for (const auto& item : fixture.playListItems())
+                    totalSeconds += item->getRegion()->getRegionData(audium::seconds).getLength();
+
+                REQUIRE(totalSeconds >= config.duration);
             }
         }
 
@@ -448,8 +503,9 @@ SCENARIO("Assemble reports why nothing could be assembled and leaves the "
         WHEN("a sequential draw keeps nothing")
         {
             // A vanishingly small target makes the keep probability so small
-            // that every draw skips - the assemble must then leave the
-            // arrangement as it found it rather than empty it.
+            // that the walk exhausts its visit cap without keeping anything -
+            // the assemble must then leave the arrangement as it found it
+            // rather than empty it.
             AssembleConfig config;
             config.trackId = 0;
             config.mode = AssembleConfig::Mode::Sequential;

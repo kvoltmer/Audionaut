@@ -390,16 +390,37 @@ std::vector<int> AutoEdit::chooseSequentialSequence(const std::vector<double>& l
     if (total <= 0.0)
         return chosen;
 
-    const auto scale = targetSeconds / total;
+    // gaborgandalf's thinning probability, which by itself only approximates
+    // the target and can never exceed the material. Walking the segments in
+    // order and wrapping around at the end until the target is reached keeps
+    // the order and the thinning character, but actually delivers the
+    // asked-for length - repeating the material when it is shorter than that.
+    const auto keepProbability = std::min(1.0, targetSeconds / total);
 
     std::uniform_real_distribution<double> uniform01(0.0, 1.0);
 
-    // One draw per segment, kept or not - so a given seed always produces the
-    // same keep-or-skip pattern. A scale of one or more keeps everything, the
-    // draws being strictly below one.
-    for (size_t i = 0; i < lengthsSeconds.size(); ++i)
-        if (uniform01(rng) <= scale)
-            chosen.push_back((int) i);
+    // Both caps only guard the pathological: every length is positive, so the
+    // kept total must reach the target within maxKept picks, and a keep is
+    // drawn about every 1 / keepProbability visits. An absurdly small target
+    // can exhaust the visit cap and yield less than asked - or nothing.
+    const auto minLength = *std::min_element(lengthsSeconds.begin(), lengthsSeconds.end());
+    const auto maxKept = (size_t) std::ceil(targetSeconds / minLength) + 1;
+    const auto maxVisits = std::min((size_t) 1000000,
+                                    (size_t) std::ceil((double) maxKept / keepProbability) * 4 + 64);
+
+    double accumulated = 0.0;
+
+    for (size_t visit = 0; accumulated < targetSeconds && visit < maxVisits; ++visit)
+    {
+        // One draw per visited segment, kept or not - so a given seed always
+        // produces the same keep-or-skip pattern.
+        if (uniform01(rng) > keepProbability)
+            continue;
+
+        const auto index = (int) (visit % lengthsSeconds.size());
+        chosen.push_back(index);
+        accumulated += lengthsSeconds[(size_t) index];
+    }
 
     return chosen;
 }

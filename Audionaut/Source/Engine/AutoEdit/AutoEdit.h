@@ -73,9 +73,9 @@ struct AssembleConfig {
         /// Segments are drawn uniformly at random, with replacement, until the
         /// song is long enough - so segments may repeat or be left out.
         Random,
-        /// Segments keep their order but are thinned out: each is kept with
-        /// probability duration / total length, so the song only reaches the
-        /// wanted duration in expectation.
+        /// Segments keep their order but are thinned out with probability
+        /// duration / total length, walking the material again from the start
+        /// until the song is long enough - so shorter material repeats.
         Sequential
     };
 
@@ -174,18 +174,22 @@ public:
      * @brief The playing order of AssembleConfig::Mode::Sequential, as indices
      *        into @p lengthsSeconds.
      *
-     * The input order is kept but thinned out: each segment survives with
-     * probability targetSeconds / total length, so the song reaches the target
-     * only in expectation (gaborgandalf's
-     * track_assemble_from_segments_sequential_scale). A target no shorter than
-     * the total keeps everything. One draw is spent per segment either way, so
-     * a given seed always produces the same keep-or-skip pattern.
+     * The input order is kept but thinned out: the segments are visited in
+     * order, wrapping around at the end, and each visit survives with
+     * gaborgandalf's thinning probability targetSeconds / total length
+     * (track_assemble_from_segments_sequential_scale) - continuing until the
+     * accumulated length reaches the target, so the last keep may overshoot it
+     * by up to one segment. A target no shorter than the total keeps
+     * everything, repeating the material as often as it takes. One draw is
+     * spent per visited segment either way, so a given seed always produces
+     * the same keep-or-skip pattern.
      *
      * @param lengthsSeconds Segment lengths, all positive - the caller filters.
      * @param targetSeconds  The wanted song length.
      * @param rng            The seeded generator the draws come from.
-     * @return The kept indices, ascending; empty when every draw skipped or
-     *         there was nothing to choose from.
+     * @return The kept indices in playing order; empty when there was nothing
+     *         to choose from, or when an absurdly small target exhausts the
+     *         internal visit cap before anything is kept.
      */
     static std::vector<int> chooseSequentialSequence(const std::vector<double>& lengthsSeconds,
                                                      double targetSeconds,
