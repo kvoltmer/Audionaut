@@ -111,8 +111,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::splitRegion,
         CommandIDs::cleanupRegions,
         CommandIDs::autoEdit,
-        CommandIDs::assembleRandom,
-        CommandIDs::assembleSequential,
+        CommandIDs::assembleSequence,
         CommandIDs::bounceProject,
         CommandIDs::duplicate,
         
@@ -181,12 +180,8 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setActive (canToggleAutoEditPreview());
             result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
             break;
-        case CommandIDs::assembleRandom:
-            result.setInfo ("Assemble Random Sequence...", "Assembles a new sequence from the track's regions in random order", CommandCategories::editing, 0);
-            result.setActive (canAssemble());
-            break;
-        case CommandIDs::assembleSequential:
-            result.setInfo ("Assemble Sequential Sequence...", "Assembles a new sequence from the track's regions in sequential order", CommandCategories::editing, 0);
+        case CommandIDs::assembleSequence:
+            result.setInfo ("Assemble Sequence...", "Assembles a new sequence from the track's regions", CommandCategories::editing, 0);
             result.setActive (canAssemble());
             break;
         case CommandIDs::bounceProject:
@@ -307,11 +302,8 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
         case CommandIDs::autoEdit:
             toggleAutoEditPreview();
             break;
-        case CommandIDs::assembleRandom:
-            invokeAssemble(audium::AssembleConfig::Mode::Random);
-            break;
-        case CommandIDs::assembleSequential:
-            invokeAssemble(audium::AssembleConfig::Mode::Sequential);
+        case CommandIDs::assembleSequence:
+            invokeAssemble();
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
@@ -459,10 +451,10 @@ bool AudiumMainWindow::canAssemble()
     return false;
 }
 
-void AudiumMainWindow::invokeAssemble(audium::AssembleConfig::Mode mode)
+void AudiumMainWindow::invokeAssemble()
 {
     if (assembleDialog == nullptr)
         assembleDialog = std::make_unique<AssembleDialog>();
 
-    assembleDialog->assemble(getEngine(), mode);
+    assembleDialog->assemble(getEngine());
 }

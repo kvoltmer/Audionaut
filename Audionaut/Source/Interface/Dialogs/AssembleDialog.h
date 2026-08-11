@@ -16,17 +16,18 @@ using namespace juce;
 
 /**
  * Asks for the length of the sequence to assemble - minutes and seconds,
- * defaulting to two minutes - then rebuilds the track's playlist through
- * AutoEdit::invokeAssemble in the invoked mode.
+ * defaulting to two minutes - and the mode, then rebuilds the track's
+ * playlist through AutoEdit::invokeAssemble. The last-used length and mode
+ * are offered again on the next invocation.
  */
 class AssembleDialog
 {
 
 public:
 
-    void assemble(std::shared_ptr<audium::AudiumEngine> engine, audium::AssembleConfig::Mode mode)
+    void assemble(std::shared_ptr<audium::AudiumEngine> engine)
     {
-        assembleInternal(engine, mode);
+        assembleInternal(engine);
     }
 
 private:
@@ -129,18 +130,11 @@ private:
         ToggleButton randomButton, sequentialButton;
     };
 
-    static String getTitle(audium::AssembleConfig::Mode mode)
-    {
-        return mode == audium::AssembleConfig::Mode::Random ? "Assemble Random Sequence"
-                                                            : "Assemble Sequential Sequence";
-    }
-
-    void assembleInternal(std::shared_ptr<audium::AudiumEngine> engine, audium::AssembleConfig::Mode mode_)
+    void assembleInternal(std::shared_ptr<audium::AudiumEngine> engine)
     {
         audiumEngine = engine;
-        mode = mode_;
 
-        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS (getTitle(mode)),
+        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Assemble Sequence"),
                                                           TRANS ("Please enter the length of the new sequence"),
                                                           MessageBoxIconType::NoIcon, nullptr);
 
@@ -173,9 +167,8 @@ private:
             if (result == 0)
                 return;
 
-            // The buttons may have switched the mode away from the invoking
-            // command's - what is picked in the dialog wins, and a re-opened
-            // dialog keeps the switch.
+            // What is picked in the dialog becomes the mode - and the next
+            // invocation offers it again, the dialog living on in the window.
             safeThis->mode = safeThis->modeComponent->getMode();
 
             const auto minutes = safeThis->lengthComponent->getMinutes();
@@ -192,7 +185,7 @@ private:
                 return;
             }
 
-            safeThis->assembleInternal(audiumEngine, mode);
+            safeThis->assembleInternal(audiumEngine);
         };
 
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);

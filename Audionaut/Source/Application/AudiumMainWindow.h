@@ -51,10 +51,10 @@ private:
     // value - a clip too short for a single cut greys the command out.
     bool canToggleAutoEditPreview();
 
-    // Asks for the sequence length (see AssembleDialog), then rebuilds the
-    // target track's playlist as a song assembled from its regions (see
-    // AutoEdit::invokeAssemble).
-    void invokeAssemble(audium::AssembleConfig::Mode mode);
+    // Asks for the sequence length and mode (see AssembleDialog), then
+    // rebuilds the target track's playlist as a song assembled from its
+    // regions (see AutoEdit::invokeAssemble).
+    void invokeAssemble();
 
     // Whether the Assemble commands are available: the target track needs at
     // least one region with audio to arrange.

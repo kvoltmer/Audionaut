@@ -39,8 +39,7 @@ namespace CommandIDs
         duplicate               = 0x300062,
         cleanupRegions          = 0x300063,
         splitRegion             = 0x300064,
-        assembleRandom          = 0x300065,
-        assembleSequential      = 0x300066,
+        assembleSequence        = 0x300065,
 
         enableSnapToGrid        = 0x300070,
         zoomIn                  = 0x300071,
