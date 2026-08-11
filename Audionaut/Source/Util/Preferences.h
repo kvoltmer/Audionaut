@@ -60,6 +60,7 @@ namespace PreferenceKeys
     static const char* const browserRoot            = "BrowserRoot";
     static const char* const assembleMinutes        = "AssembleMinutes";
     static const char* const assembleSeconds        = "AssembleSeconds";
+    static const char* const assembleMode           = "AssembleMode";
 }
 
 } // namespace audium

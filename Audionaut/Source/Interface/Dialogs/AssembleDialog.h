@@ -16,9 +16,9 @@ using namespace juce;
 
 /**
  * Asks for the length of the sequence to assemble - minutes and seconds,
- * defaulting to two minutes - and the mode, then rebuilds the track's
- * playlist through AutoEdit::invokeAssemble. The last-used length and mode
- * are offered again on the next invocation.
+ * defaulting to two minutes - and the mode, sequential by default, then
+ * rebuilds the track's playlist through AutoEdit::invokeAssemble. The
+ * last-used length and mode are remembered in the preferences.
  */
 class AssembleDialog
 {
@@ -138,18 +138,23 @@ private:
                                                           TRANS ("Please enter the length of the new sequence"),
                                                           MessageBoxIconType::NoIcon, nullptr);
 
-        // The last length used is offered again, two minutes until then.
+        // The last length and mode used are offered again - two minutes and
+        // sequential until then.
         auto& preferences = AudiumApplication::getPreferences();
         const String minutes = preferences.getValue(audium::PreferenceKeys::assembleMinutes, "2");
         const String seconds = preferences.getValue(audium::PreferenceKeys::assembleSeconds, "0");
 
+        mode = preferences.getValue(audium::PreferenceKeys::assembleMode, "sequential") == "random"
+                   ? audium::AssembleConfig::Mode::Random
+                   : audium::AssembleConfig::Mode::Sequential;
+
         // The window does not own custom components, so the rows outlive it as
         // members - recreated here after the old window is gone.
-        modeComponent = std::make_unique<ModeComponent> (mode);
-        asyncAlertWindow->addCustomComponent (modeComponent.get());
-
         lengthComponent = std::make_unique<LengthComponent> (minutes, seconds);
         asyncAlertWindow->addCustomComponent (lengthComponent.get());
+
+        modeComponent = std::make_unique<ModeComponent> (mode);
+        asyncAlertWindow->addCustomComponent (modeComponent.get());
 
         asyncAlertWindow->addButton (TRANS ("Assemble"), 1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"), 0, KeyPress (KeyPress::escapeKey));
@@ -167,8 +172,7 @@ private:
             if (result == 0)
                 return;
 
-            // What is picked in the dialog becomes the mode - and the next
-            // invocation offers it again, the dialog living on in the window.
+            // What is picked in the dialog becomes the mode.
             safeThis->mode = safeThis->modeComponent->getMode();
 
             const auto minutes = safeThis->lengthComponent->getMinutes();
@@ -180,6 +184,9 @@ private:
                 auto& preferences = AudiumApplication::getPreferences();
                 preferences.setValue(audium::PreferenceKeys::assembleMinutes, String(minutes).toStdString());
                 preferences.setValue(audium::PreferenceKeys::assembleSeconds, String(seconds).toStdString());
+                preferences.setValue(audium::PreferenceKeys::assembleMode,
+                                     safeThis->mode == audium::AssembleConfig::Mode::Random ? "random"
+                                                                                            : "sequential");
 
                 safeThis->assembleTrack(duration);
                 return;
