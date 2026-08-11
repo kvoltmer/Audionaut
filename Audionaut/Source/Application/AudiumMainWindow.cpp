@@ -3,8 +3,6 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-#include <random>
-
 #include "AudiumMainWindow.h"
 #include "AudiumApplication.h"
 #include "AudiumCommandIDs.h"
@@ -22,6 +20,7 @@
 #include "Interface/Controls/AutoEditOverlayControl.h"
 #include "Interface/Dialogs/ExportAudioDialog.h"
 #include "Interface/Dialogs/NewAudioTrackDialog.h"
+#include "Interface/Dialogs/AssembleDialog.h"
 
 using namespace audium;
 
@@ -183,11 +182,11 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::assembleRandom:
-            result.setInfo ("Assemble Random Sequence", "Assembles a new playlist from the track's regions in random order", CommandCategories::editing, 0);
+            result.setInfo ("Assemble Random Sequence...", "Assembles a new sequence from the track's regions in random order", CommandCategories::editing, 0);
             result.setActive (canAssemble());
             break;
         case CommandIDs::assembleSequential:
-            result.setInfo ("Assemble Sequential Sequence", "Assembles a new playlist from the track's regions in sequential order", CommandCategories::editing, 0);
+            result.setInfo ("Assemble Sequential Sequence...", "Assembles a new sequence from the track's regions in sequential order", CommandCategories::editing, 0);
             result.setActive (canAssemble());
             break;
         case CommandIDs::bounceProject:
@@ -462,23 +461,8 @@ bool AudiumMainWindow::canAssemble()
 
 void AudiumMainWindow::invokeAssemble(audium::AssembleConfig::Mode mode)
 {
-    audium::AutoEdit autoEdit(getEngine());
+    if (assembleDialog == nullptr)
+        assembleDialog = std::make_unique<AssembleDialog>();
 
-    audium::AssembleConfig config;
-    config.mode = mode;
-
-    // A fresh seed per invocation, so re-running the command arranges the
-    // material anew rather than repeating the same song.
-    config.seed = std::random_device{}();
-
-    autoEdit.targetAssembleTrack(config);
-
-    autoEdit.invokeAssemble(config, [](std::string error)
-    {
-        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                              "Assemble",
-                                              juce::String(error));
-    });
-
-    mainComponent->updateUI();
+    assembleDialog->assemble(getEngine(), mode);
 }

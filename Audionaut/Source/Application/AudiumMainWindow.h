@@ -13,6 +13,7 @@
 class NewRegionDialog;
 class ExportAudioDialog;
 class NewAudioTrackDialog;
+class AssembleDialog;
 
 //==============================================================================
 /*
@@ -50,9 +51,9 @@ private:
     // value - a clip too short for a single cut greys the command out.
     bool canToggleAutoEditPreview();
 
-    // Rebuilds the target track's playlist as a song assembled from its
-    // regions (see AutoEdit::invokeAssemble), seeded freshly per invocation
-    // so every run arranges anew.
+    // Asks for the sequence length (see AssembleDialog), then rebuilds the
+    // target track's playlist as a song assembled from its regions (see
+    // AutoEdit::invokeAssemble).
     void invokeAssemble(audium::AssembleConfig::Mode mode);
 
     // Whether the Assemble commands are available: the target track needs at
@@ -65,6 +66,7 @@ private:
     std::unique_ptr<NewRegionDialog> newRegionDialog;
     std::unique_ptr<ExportAudioDialog> exportAudioDialog;
     std::unique_ptr<NewAudioTrackDialog> newAudioTrackDialog;
+    std::unique_ptr<AssembleDialog> assembleDialog;
         
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
 };
