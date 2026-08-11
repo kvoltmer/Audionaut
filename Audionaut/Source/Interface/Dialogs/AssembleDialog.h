@@ -9,6 +9,8 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Engine/AutoEdit/AutoEdit.h"
+#include "Application/AudiumApplication.h"
+#include "Util/Preferences.h"
 
 using namespace juce;
 
@@ -47,11 +49,16 @@ private:
                                                           TRANS ("Please enter the length of the new sequence"),
                                                           MessageBoxIconType::NoIcon, nullptr);
 
+        // The last length used is offered again, two minutes until then.
+        auto& preferences = AudiumApplication::getPreferences();
+        const String minutes = preferences.getValue(audium::PreferenceKeys::assembleMinutes, "2");
+        const String seconds = preferences.getValue(audium::PreferenceKeys::assembleSeconds, "0");
+
         asyncAlertWindow->addTextBlock ("Minutes:");
-        asyncAlertWindow->addTextEditor (getMinutesFieldName(), "2", String(), false);
+        asyncAlertWindow->addTextEditor (getMinutesFieldName(), minutes, String(), false);
 
         asyncAlertWindow->addTextBlock ("Seconds:");
-        asyncAlertWindow->addTextEditor (getSecondsFieldName(), "0", String(), false);
+        asyncAlertWindow->addTextEditor (getSecondsFieldName(), seconds, String(), false);
 
         asyncAlertWindow->addButton (TRANS ("Assemble"), 1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"), 0, KeyPress (KeyPress::escapeKey));
@@ -75,6 +82,10 @@ private:
 
             if (minutes >= 0 && seconds >= 0 && duration > 0.0)
             {
+                auto& preferences = AudiumApplication::getPreferences();
+                preferences.setValue(audium::PreferenceKeys::assembleMinutes, String(minutes).toStdString());
+                preferences.setValue(audium::PreferenceKeys::assembleSeconds, String(seconds).toStdString());
+
                 safeThis->assembleTrack(duration);
                 return;
             }
