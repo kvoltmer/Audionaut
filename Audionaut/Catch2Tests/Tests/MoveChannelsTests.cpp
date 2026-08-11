@@ -16,8 +16,18 @@ SCENARIO("move channels scenario", "[engine][channels]")
     GIVEN("Load session file")
     {
         auto engine     = AudiumFactory::createAudiumEngine();
-        auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/move-channels.audium"));
-        REQUIRE(fileUnderTest.exists());
+        auto sourceSession = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/move-channels.audium"));
+        REQUIRE(sourceSession.exists());
+
+        // Open a disposable copy, never the checked-in session: openFile()
+        // points the engine's process-wide AudiumEngine::projectDirectory at
+        // the opened package, and every audio file any later test adds would
+        // be copied into the repository's session otherwise.
+        auto fileUnderTest = File::getSpecialLocation(File::tempDirectory)
+                                 .getChildFile("move-channels.audium")
+                                 .getNonexistentSibling();
+        REQUIRE(sourceSession.copyDirectoryTo(fileUnderTest));
+
         auto ok = engine->openFile(fileUnderTest, nullptr);
         REQUIRE(ok);
         
@@ -75,6 +85,7 @@ SCENARIO("move channels scenario", "[engine][channels]")
         }
     
         engine = nullptr;
+        fileUnderTest.deleteRecursively();
     }
 
     juce::DeletedAtShutdown::deleteAll();
