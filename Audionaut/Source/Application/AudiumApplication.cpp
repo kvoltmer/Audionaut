@@ -325,7 +325,6 @@ PopupMenu AudiumApplication::createEditMenu()
 
     PopupMenu autoEditMenu;
     autoEditMenu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
-    autoEditMenu.addSeparator();
     autoEditMenu.addCommandItem(commandManager.get(), CommandIDs::assembleSequence);
     menu.addSubMenu("Auto Edit", autoEditMenu);
 
