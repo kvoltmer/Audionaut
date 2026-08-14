@@ -10,6 +10,7 @@
 #include "Util/Preferences.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/ActionMessages.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -435,10 +436,22 @@ void AudiumMainWindow::toggleAutoEditPreview()
     autoEdit.targetSelection(config);
 
     if (! autoEdit.previewAutoEdit(config))
+    {
         NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::InfoIcon,
                                               "Auto Edit",
                                               "No preview is available for this clip yet - "
                                               "its analyses may still be running. Please try again shortly.");
+        return;
+    }
+
+    // Select the track the segments belong to, so its highlight in the
+    // channel and playlist headers shows where the edit lands.
+    if (auto track = getEngine()->getAudioTrackContainer()->getAudioTrack(config.trackId))
+    {
+        getEngine()->getAudioTrackContainer()->getSelectionManager()->deselectAll();
+        track->setSelected(true);
+        getEngine()->getAudioTrackContainer()->sendActionMessage(audium::updateAll);
+    }
 }
 
 bool AudiumMainWindow::canAssemble()

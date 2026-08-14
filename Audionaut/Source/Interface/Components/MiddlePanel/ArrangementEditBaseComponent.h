@@ -178,7 +178,13 @@ public:
     {
         // will call -> audioTrackListBox->updateContent()
         setContentWidth(zoomHandler->getContentWidth());
-        
+
+        // mirror the engine's track selection into the list box rows, so
+        // modifier-key clicks build on selections made in other views
+        audioTrackListBox->setSelectedRows(audiumEngine->getAudioTrackContainer()->getSelectedRows(),
+                                           juce::dontSendNotification);
+
+
         regionSelector->updateFromEngine();
         arrangementOverview->updateFromEngine();
         dragZoomControl->updateFromEngine();

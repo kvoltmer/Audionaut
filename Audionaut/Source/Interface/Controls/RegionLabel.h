@@ -74,13 +74,14 @@ public:
                 text = juce::String(seconds, 4);
             }
             
+            // selected rows look like the playlist's: the list box background
+            // colour behind track-coloured, double-brightened text
             auto textColour = r->getAudioTrack()->getViewState().getColour();
-            setColour (juce::Label::textColourId, isSelected ? textColour.brighter() : textColour);
-            
-            auto background = findColour(audium::secondaryBackgroundColourId);
-            background = isSelected ? background.brighter() : background;
-            setColour(juce::Label::backgroundColourId, background);
-            
+            setColour (juce::Label::textColourId, isSelected ? textColour.brighter().brighter() : textColour);
+
+            setColour(juce::Label::backgroundColourId, isSelected ? findColour(audium::listBoxBackgroundColourId)
+                                                                  : findColour(audium::secondaryBackgroundColourId));
+
         }
         setText (text, juce::dontSendNotification);
         

@@ -247,8 +247,10 @@ public:
     void setSelected(bool bSelected)
     {
         audioTrack->setSelected(bSelected);
-        
-        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
+
+        // updateAll: the arrangement rows and the right panel's selected-track
+        // header need to follow, not just the channel view
+        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateAll);
     }
 
     bool keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent) override

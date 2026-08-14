@@ -9,6 +9,8 @@
 #include "AutoEditOverlayControl.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Interface/Controls/RegionSelector.h"
 
@@ -468,6 +470,21 @@ void AutoEditOverlayControl::changeListenerCallback (juce::ChangeBroadcaster*)
         return;
 
     autoEdit.previewAutoEdit(config);
+
+    // The edit followed the clip, so the track selection follows too - the
+    // channel and playlist headers keep highlighting the track being edited.
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+    if (auto track = audioTrackContainer->getAudioTrack(config.trackId))
+    {
+        if (! track->isSelected())
+        {
+            // move the track selection over; the clip selection stays put
+            for (auto& other : audioTrackContainer->getAudioTracks())
+                other->setSelected(other->getId() == track->getId());
+
+            audioTrackContainer->sendActionMessage(audium::updateAll);
+        }
+    }
 }
 
 void AutoEditOverlayControl::updatePosition()

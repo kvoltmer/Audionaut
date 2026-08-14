@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/PlayList/PlayListItem.h"
 #include "Interface/Models/RegionTableListBoxModel.h"
 #include "Interface/Controls/RegionTableListBox.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -69,7 +70,19 @@ public:
     
     void updateSelection()
     {
-        auto selection = audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getSelectedRows();
+        auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+        auto selection = audioTrackContainer->getAudioRegionAdapter().getSelectedRows();
+
+        // regions referenced by selected playlist items highlight too, so
+        // clicking an item points at its source region. Display only - the
+        // region is not engine-selected, so delete/copy still target the item.
+        auto regions = audioTrackContainer->getAudioRegionAdapter().getAudioRegions();
+        for (const auto& object : audioTrackContainer->getSelectionManager()->getSelectedObjects())
+            if (auto* item = dynamic_cast<audium::PlayListItem*>(object.get()))
+                for (int row = 0; row < static_cast<int>(regions.size()); row++)
+                    if (regions[static_cast<size_t>(row)] == item->getRegion())
+                        selection.addRange({row, row + 1});
+
         regionTableListBox->setSelectedRows(selection, juce::dontSendNotification);
     }
     

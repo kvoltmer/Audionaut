@@ -38,9 +38,8 @@ void AudioTrackBaseComponent::paint (juce::Graphics& g)
     }
     
     if (audioTrack->isSelected()) {
-        g.setColour (juce::Colours::white.withAlpha(0.5f));
-        g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 1.0f);
-        
+        g.setColour (juce::Colours::white.withAlpha (0.25f));
+        g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (1.0f), 3.0f, 1.0f);
     }
     
 }
