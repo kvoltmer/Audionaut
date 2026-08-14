@@ -111,7 +111,8 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::splitRegion,
         CommandIDs::cleanupRegions,
         CommandIDs::autoEdit,
-        CommandIDs::assembleSequence,
+        CommandIDs::assembleSequential,
+        CommandIDs::assembleRandom,
         CommandIDs::bounceProject,
         CommandIDs::duplicate,
         
@@ -180,10 +181,15 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setActive (canToggleAutoEditPreview());
             result.defaultKeypresses.add (KeyPress ('1', ModifierKeys::commandModifier, 0));
             break;
-        case CommandIDs::assembleSequence:
-            result.setInfo ("2. Assemble Sequence...", "Assembles a new sequence from the track's regions", CommandCategories::editing, 0);
+        case CommandIDs::assembleSequential:
+            result.setInfo ("Sequential...", "Assembles a new sequence from the track's regions, in order", CommandCategories::editing, 0);
             result.setActive (canAssemble());
             result.defaultKeypresses.add (KeyPress ('2', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::assembleRandom:
+            result.setInfo ("Random...", "Assembles a new sequence from the track's regions, shuffled", CommandCategories::editing, 0);
+            result.setActive (canAssemble());
+            result.defaultKeypresses.add (KeyPress ('3', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::bounceProject:
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
@@ -303,8 +309,11 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
         case CommandIDs::autoEdit:
             toggleAutoEditPreview();
             break;
-        case CommandIDs::assembleSequence:
-            invokeAssemble();
+        case CommandIDs::assembleSequential:
+            invokeAssemble(audium::AssembleConfig::Mode::Sequential);
+            break;
+        case CommandIDs::assembleRandom:
+            invokeAssemble(audium::AssembleConfig::Mode::Random);
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
@@ -452,10 +461,10 @@ bool AudiumMainWindow::canAssemble()
     return false;
 }
 
-void AudiumMainWindow::invokeAssemble()
+void AudiumMainWindow::invokeAssemble(audium::AssembleConfig::Mode mode)
 {
     if (assembleDialog == nullptr)
         assembleDialog = std::make_unique<AssembleDialog>();
 
-    assembleDialog->assemble(getEngine());
+    assembleDialog->assemble(getEngine(), mode);
 }
