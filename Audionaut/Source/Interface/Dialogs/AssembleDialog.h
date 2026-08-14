@@ -16,147 +16,165 @@
 using namespace juce;
 
 /**
- * Asks for the length of the sequence to assemble - minutes and seconds,
- * defaulting to two minutes - and the mode, sequential by default, then
- * rebuilds the track's playlist through AutoEdit::invokeAssemble. The
- * last-used length and mode are remembered in the preferences.
+ * Asks for the length of the sequence to assemble - a minutes and a seconds
+ * field, defaulting to two minutes - then rebuilds the track's playlist
+ * through AutoEdit::invokeAssemble in the given mode. The mode is picked in
+ * the Assemble sub menu; the last-used length is remembered in the
+ * preferences.
  */
 class AssembleDialog
 {
 
 public:
 
-    void assemble(std::shared_ptr<audium::AudiumEngine> engine)
+    void assemble(std::shared_ptr<audium::AudiumEngine> engine, audium::AssembleConfig::Mode assembleMode)
     {
+        mode = assembleMode;
         assembleInternal(engine);
     }
 
 private:
 
     /**
-     * The minutes and seconds fields side by side in one row - the alert
-     * window stacks its own text editors vertically, so the row is added as a
-     * custom component instead. Both values are velocity-drag number boxes in
-     * the same look as the header's bars and beats.
+     * The message naming the affected track in bold, the length as a minutes
+     * field above a seconds field, and a short mode explanation underneath.
+     * Each value is a horizontal bar handled like the channel's pan slider -
+     * click or drag to the wanted position. The message lives here rather
+     * than in the AlertWindow because the window's message text cannot mix
+     * regular and bold type.
      */
     class LengthComponent : public Component
     {
     public:
-        LengthComponent(int minutes, int seconds) :
+        LengthComponent(int lengthSeconds, const String& message,
+                        const String& trackName, Colour trackColour,
+                        const String& description) :
+            message (message),
+            trackName (trackName),
+            trackColour (trackColour),
             minutesSlider ("Minutes Slider Font 13"),
             secondsSlider ("Seconds Slider Font 13")
         {
-            auto setup = [this] (Label& label, Slider& slider,
-                                 const String& text, double maximum, int value)
-            {
-                label.setText (text, dontSendNotification);
-                addAndMakeVisible (label);
+            setUpSlider (minutesSlider, 60, 2, TRANS ("min"));
+            setUpSlider (secondsSlider, 59, 0, TRANS ("s"));
 
-                addAndMakeVisible (slider);
-                AudiumLookAndFeel::configureSlider (&slider);
-                slider.setVelocityModeParameters (1.0, 1, 0.01);
-                slider.setNormalisableRange (NormalisableRange<double> (0, maximum, 1));
-                slider.setValue (value, dontSendNotification);
-            };
+            minutesSlider.setValue (lengthSeconds / 60, dontSendNotification);
+            secondsSlider.setValue (lengthSeconds % 60, dontSendNotification);
 
-            setup (minutesLabel, minutesSlider, TRANS ("Minutes"), 999, minutes);
-            setup (secondsLabel, secondsSlider, TRANS ("Seconds"), 59, seconds);
+            addAndMakeVisible (descriptionLabel);
+            descriptionLabel.setText (description, dontSendNotification);
+            descriptionLabel.setJustificationType (Justification::topLeft);
+            descriptionLabel.setColour (Label::textColourId, Colours::white.withAlpha (0.6f));
 
-            // The boxes keep the header's 20 pixel slider height, with the
-            // labels in a row of their own above them.
-            setSize (280, 38);
+            // The message on top, then minutes above seconds - each bar keeps
+            // the header's 20 pixel slider height - and the explanation
+            // underneath.
+            setSize (280, 132);
         }
 
-        void resized() override
+        void paint (Graphics& g) override
         {
-            auto area = getLocalBounds();
-            auto labels = area.removeFromTop (18);
-            auto boxes = area.removeFromBottom (20);
+            // The same font as the description below, so the two texts match.
+            const auto font = descriptionLabel.getFont();
+            const auto colour = findColour (AlertWindow::textColourId);
 
-            minutesLabel.setBounds (labels.removeFromLeft (labels.getWidth() / 2).reduced (2, 0));
-            secondsLabel.setBounds (labels.reduced (2, 0));
+            AttributedString text;
+            text.setJustification (Justification::centredTop);
+            text.append (message + " ", font, colour);
+            text.append (trackName, font.boldened(), trackColour);
 
-            minutesSlider.setBounds (boxes.removeFromLeft (boxes.getWidth() / 2).reduced (2, 0));
-            secondsSlider.setBounds (boxes.reduced (2, 0));
-        }
+            // The alert window places this component left of its centre, so
+            // the message is centred against the window, not the component.
+            auto area = messageArea.toFloat();
+            if (auto* window = getParentComponent())
+                area.setCentre ((float) getLocalPoint (window, window->getLocalBounds().getCentre()).x,
+                                area.getCentreY());
 
-        int getMinutes() const { return (int) minutesSlider.getValue(); }
-        int getSeconds() const { return (int) secondsSlider.getValue(); }
-
-    private:
-        Label minutesLabel, secondsLabel;
-        Slider minutesSlider, secondsSlider;
-    };
-
-    /**
-     * The random and sequential mode choice as two check-box buttons in one
-     * row. They share a radio group, so picking one always unpicks the other.
-     */
-    class ModeComponent : public Component
-    {
-    public:
-        explicit ModeComponent(audium::AssembleConfig::Mode mode)
-        {
-            randomButton.setButtonText (TRANS ("Random"));
-            sequentialButton.setButtonText (TRANS ("Sequential"));
-
-            for (auto* button : { &randomButton, &sequentialButton })
-            {
-                button->setRadioGroupId (modeGroupId);
-                addAndMakeVisible (button);
-            }
-
-            (mode == audium::AssembleConfig::Mode::Random ? randomButton : sequentialButton)
-                .setToggleState (true, dontSendNotification);
-
-            setSize (280, 28);
+            text.draw (g, area);
         }
 
         void resized() override
         {
             auto area = getLocalBounds();
 
-            randomButton.setBounds (area.removeFromLeft (area.getWidth() / 2).reduced (2, 0));
-            sequentialButton.setBounds (area.reduced (2, 0));
+            messageArea = area.removeFromTop (30).reduced (2, 0);
+            area.removeFromTop (6);
+            minutesSlider.setBounds (area.removeFromTop (20).reduced (2, 0));
+            area.removeFromTop (4);
+            secondsSlider.setBounds (area.removeFromTop (20).reduced (2, 0));
+            area.removeFromTop (4);
+            descriptionLabel.setBounds (area);
         }
 
-        audium::AssembleConfig::Mode getMode() const
+        int getLengthSeconds() const
         {
-            return randomButton.getToggleState() ? audium::AssembleConfig::Mode::Random
-                                                 : audium::AssembleConfig::Mode::Sequential;
+            return (int) minutesSlider.getValue() * 60 + (int) secondsSlider.getValue();
         }
 
     private:
-        static constexpr int modeGroupId = 1;
+        void setUpSlider (Slider& slider, int maximum, int doubleClickValue, const String& suffix)
+        {
+            addAndMakeVisible (slider);
+            slider.setSliderStyle (Slider::LinearBar);
+            slider.setColour (Slider::textBoxTextColourId, Colours::white);
+            slider.setColour (Slider::trackColourId, Colours::grey.withAlpha (0.5f));
+            slider.setDoubleClickReturnValue (true, doubleClickValue);
+            slider.setNormalisableRange (NormalisableRange<double> (0, maximum, 1));
+            slider.setTextValueSuffix (" " + suffix);
+        }
 
-        ToggleButton randomButton, sequentialButton;
+        String message;
+        String trackName;
+        Colour trackColour;
+        Rectangle<int> messageArea;
+
+        Slider minutesSlider;
+        Slider secondsSlider;
+        Label descriptionLabel;
     };
 
     void assembleInternal(std::shared_ptr<audium::AudiumEngine> engine)
     {
         audiumEngine = engine;
 
-        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Assemble Sequence"),
-                                                          TRANS ("Please enter the length of the new sequence"),
+        const auto title = mode == audium::AssembleConfig::Mode::Random
+                               ? TRANS ("Assemble Random Sequence")
+                               : TRANS ("Assemble Sequential Sequence");
+
+        const auto description = mode == audium::AssembleConfig::Mode::Random
+                                     ? TRANS ("Builds a new sequence of the chosen length from the "
+                                              "track's segments, picked at random - segments may "
+                                              "repeat or be left out.")
+                                     : TRANS ("Builds a new sequence of the chosen length from the "
+                                              "track's segments, keeping their original order and "
+                                              "leaving some out to fit.");
+
+        // The affected track is named in the message - resolved the same way
+        // the assemble itself targets it later.
+        audium::AssembleConfig targetConfig;
+        audium::AutoEdit (audiumEngine).targetAssembleTrack (targetConfig);
+        const auto track = audiumEngine->getAudioTrackContainer()->getAudioTrack (targetConfig.trackId);
+
+        const auto message = track != nullptr
+                                 ? TRANS ("Length of the new sequence for")
+                                 : TRANS ("Length of the new sequence");
+        const auto trackName = track != nullptr ? track->getAudioTrackName() : String();
+        const auto trackColour = track != nullptr ? track->getViewState().getColour() : Colours::white;
+
+        // The message is drawn by the custom component, where the track name
+        // can be bold - the window's own message stays empty.
+        asyncAlertWindow = std::make_unique<AlertWindow> (title, String(),
                                                           MessageBoxIconType::NoIcon, nullptr);
 
-        // The last length and mode used are offered again - two minutes and
-        // sequential until then.
+        // The last length used is offered again - two minutes until then.
         auto& preferences = AudiumApplication::getPreferences();
         const auto minutes = String(preferences.getValue(audium::PreferenceKeys::assembleMinutes, "2")).getIntValue();
         const auto seconds = String(preferences.getValue(audium::PreferenceKeys::assembleSeconds, "0")).getIntValue();
 
-        mode = preferences.getValue(audium::PreferenceKeys::assembleMode, "sequential") == "random"
-                   ? audium::AssembleConfig::Mode::Random
-                   : audium::AssembleConfig::Mode::Sequential;
-
-        // The window does not own custom components, so the rows outlive it as
-        // members - recreated here after the old window is gone.
-        lengthComponent = std::make_unique<LengthComponent> (minutes, seconds);
+        // The window does not own custom components, so the row outlives it as
+        // a member - recreated here after the old window is gone.
+        lengthComponent = std::make_unique<LengthComponent> (minutes * 60 + seconds, message, trackName, trackColour, description);
         asyncAlertWindow->addCustomComponent (lengthComponent.get());
-
-        modeComponent = std::make_unique<ModeComponent> (mode);
-        asyncAlertWindow->addCustomComponent (modeComponent.get());
 
         asyncAlertWindow->addButton (TRANS ("Assemble"), 1, KeyPress (KeyPress::returnKey));
         asyncAlertWindow->addButton (TRANS ("Cancel"), 0, KeyPress (KeyPress::escapeKey));
@@ -174,21 +192,14 @@ private:
             if (result == 0)
                 return;
 
-            // What is picked in the dialog becomes the mode.
-            safeThis->mode = safeThis->modeComponent->getMode();
-
-            const auto minutes = safeThis->lengthComponent->getMinutes();
-            const auto seconds = safeThis->lengthComponent->getSeconds();
-            const auto duration = minutes * 60.0 + seconds;
+            const auto lengthSeconds = safeThis->lengthComponent->getLengthSeconds();
+            const auto duration = (double) lengthSeconds;
 
             if (duration > 0.0)
             {
                 auto& preferences = AudiumApplication::getPreferences();
-                preferences.setValue(audium::PreferenceKeys::assembleMinutes, String(minutes).toStdString());
-                preferences.setValue(audium::PreferenceKeys::assembleSeconds, String(seconds).toStdString());
-                preferences.setValue(audium::PreferenceKeys::assembleMode,
-                                     safeThis->mode == audium::AssembleConfig::Mode::Random ? "random"
-                                                                                            : "sequential");
+                preferences.setValue(audium::PreferenceKeys::assembleMinutes, String(lengthSeconds / 60).toStdString());
+                preferences.setValue(audium::PreferenceKeys::assembleSeconds, String(lengthSeconds % 60).toStdString());
 
                 safeThis->assembleTrack(duration);
                 return;
@@ -224,7 +235,6 @@ private:
 
     std::unique_ptr<AlertWindow> asyncAlertWindow;
 
-    std::unique_ptr<ModeComponent> modeComponent;
     std::unique_ptr<LengthComponent> lengthComponent;
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
