@@ -1,6 +1,6 @@
 [submodule "Submodules/JUCE"]
 	path = Submodules/JUCE
-	url = git@github.com:juce-framework/JUCE.git
+	url = https://github.com/juce-framework/JUCE.git
 [submodule "Submodules/Catch2"]
 	path = Submodules/Catch2
 	url = https://github.com/catchorg/Catch2.git
@@ -15,4 +15,4 @@
 	url = https://github.com/hogliux/farbot.git
 [submodule "Submodules/essentia"]
 	path = Submodules/essentia
-	url = git@github.com:MTG/essentia.git
+	url = https://github.com/MTG/essentia.git
