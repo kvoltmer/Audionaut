@@ -58,9 +58,22 @@ public:
                 }
             }
         }
+        else if (onUpdateRange != nullptr) {
+            auto range = onUpdateRange(audium::seconds);
+            
+            auto x = zoomHandler->secondsToXWithOffset(range.getStart());
+            auto w = zoomHandler->secondsToX(range.getLength());
+            auto h = static_cast<float>(getHeight() - zoomHandler->getScrollBarHeight());
+            juce::Rectangle<float> rect (x, 0, w, h);
+            currentPositionMarker.setRectangle (rect);
+            
+            
+        }
     }
     
     std::function<double(const audium::TimeContextType context)> onUpdatePosition = nullptr;
+    
+    std::function<juce::Range<double>(const audium::TimeContextType context)> onUpdateRange = nullptr;
     
 private:
         

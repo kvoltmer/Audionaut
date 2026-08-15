@@ -11,15 +11,13 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
-
-#include "Interface/Controls/RegionTableListBox.h"
-#include "Interface/Models/RegionTableListBoxModel.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
-//==============================================================================
-/*
-*/
+#include "Interface/Controls/RegionTableListBox.h"
+#include "Interface/Models/RegionTableListBoxModel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+
 class RegionLabel  : public juce::Label, juce::Label::Listener
 {
 public:
@@ -76,9 +74,14 @@ public:
                 text = juce::String(seconds, 4);
             }
             
-            auto textColour = r->getAudioTrack()->getColour();
-            setColour (juce::Label::textColourId, isSelected ? textColour.brighter() : textColour);
-            
+            // selected rows look like the playlist's: the list box background
+            // colour behind track-coloured, double-brightened text
+            auto textColour = r->getAudioTrack()->getViewState().getColour();
+            setColour (juce::Label::textColourId, isSelected ? textColour.brighter().brighter() : textColour);
+
+            setColour(juce::Label::backgroundColourId, isSelected ? findColour(audium::listBoxBackgroundColourId)
+                                                                  : findColour(audium::secondaryBackgroundColourId));
+
         }
         setText (text, juce::dontSendNotification);
         

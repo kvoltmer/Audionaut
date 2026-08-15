@@ -30,6 +30,10 @@ public:
     void rebuildUI();
     void updateWindowTitle();
 
+    /// captures / restores the view state that is persisted with the project
+    void writeUiState(json& uiState);
+    void readUiState(const json& uiState);
+
     void zoomIn();
     void zoomOut();
 

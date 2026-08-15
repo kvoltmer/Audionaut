@@ -52,10 +52,9 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
         /// click outside the selection?
         if (!getBoundsInParent().contains(parentPosition))
         {
-            setSize (0, 0);
+            cancelSelection();
             dragStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
             currentDragMode = RegionSelector::outsideEdge;
-            audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().setSelectedRange(juce::Range<double>(), audium::seconds);
         }
         else /// click inside -> modify current selection
         {
@@ -207,8 +206,9 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
             auto clocks = zoomHandler->xToClocksWithOffset(zoomHandler->getVisibleRange().getLength() * 0.5);
             zoomHandler->zoomIn();
             owner->setMinimumContentWidth(zoomHandler->getContentWidth());
-            updateFromEngine();
             zoomHandler->centerView(clocks, 0.5);
+            // last: our position depends on the scroll offset centerView changed
+            updateFromEngine();
             return true;
         }
         else if (key.isKeyCode (KeyPress::downKey))
@@ -217,8 +217,9 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
             auto clocks = zoomHandler->xToClocksWithOffset(zoomHandler->getVisibleRange().getLength() * 0.5);
             zoomHandler->zoomOut();
             owner->setMinimumContentWidth(zoomHandler->getContentWidth());
-            updateFromEngine();
             zoomHandler->centerView(clocks, 0.5);
+            // last: our position depends on the scroll offset centerView changed
+            updateFromEngine();
             return true;
         }
         else if (key.isKeyCode (KeyPress::escapeKey))
@@ -231,6 +232,12 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
     }
     
     return false;
+}
+
+void RegionSelector::cancelSelection()
+{
+    setSize (0, 0);
+    audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().setSelectedRange(juce::Range<double>(), audium::seconds);
 }
 
 void RegionSelector::updateFromEngine()

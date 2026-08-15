@@ -42,17 +42,45 @@ public:
         removeKeyListener(this);
     }
     
-    void paintLabel (juce::Graphics& g, const juce::String label)
+    // Label metrics. paintLabel() draws the label at labelLeftInset and the
+    // suffix immediately after it, separated by labelSuffixGap. Subclasses that
+    // decide whether text fits have to measure against exactly these values, so
+    // they live here rather than being restated at each call site.
+    static constexpr float labelFontHeight = 12.0f;
+    static constexpr float labelLeftInset  = 5.0f;
+    static constexpr float labelSuffixGap  = 4.0f;
+
+    // Centres the label in the draggerHeight strip: (19 - 12) / 2 = 3.5, rounded up.
+    static constexpr int labelTopInset = 4;
+
+    static juce::Font getLabelFont() { return juce::Font (juce::FontOptions (labelFontHeight)); }
+
+    void paintLabel (juce::Graphics& g, const juce::String label, const juce::String suffix = {})
     {
-        g.setFont (12.0f);
-        
-        juce::Rectangle<int> bonds(5,
-                                   4,
-                                   GlyphArrangement::getStringWidth (g.getCurrentFont(), label),
+        g.setFont (getLabelFont());
+
+        auto labelWidth = GlyphArrangement::getStringWidth (g.getCurrentFont(), label);
+
+        juce::Rectangle<int> bonds((int) labelLeftInset,
+                                   labelTopInset,
+                                   labelWidth,
                                    g.getCurrentFont().getHeight());
-        
+
         g.setColour (getLabelColour());
         g.drawFittedText (label, bonds, juce::Justification::topLeft, 1);
+
+        if (suffix.isNotEmpty())
+        {
+            juce::Rectangle<int> suffixBonds((int) (labelLeftInset + labelWidth + labelSuffixGap),
+                                             labelTopInset,
+                                             GlyphArrangement::getStringWidth (g.getCurrentFont(), suffix),
+                                             g.getCurrentFont().getHeight());
+
+            // A subtler alpha than the main label so the suffix reads as
+            // secondary/auxiliary information.
+            g.setColour (getLabelColour().withAlpha (0.75f));
+            g.drawFittedText (suffix, suffixBonds, juce::Justification::topLeft, 1);
+        }
     }
 
     void paint (juce::Graphics& g) override
@@ -70,7 +98,7 @@ public:
         g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
         if (not isRecording())
-            paintLabel(g, getLabelString());
+            paintLabel(g, getLabelString(), getLabelSuffix());
 
     }
 
@@ -151,7 +179,10 @@ public:
     virtual void shiftSelect() = 0;
     
     virtual const juce::String getLabelString() const = 0;
-    
+
+    /** @brief Secondary label text drawn after the main label at a reduced alpha. */
+    virtual const juce::String getLabelSuffix() const { return {}; }
+
     virtual const juce::Colour getLabelColour() const = 0;
     
     virtual bool validateData() = 0;

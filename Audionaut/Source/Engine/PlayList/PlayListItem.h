@@ -37,7 +37,7 @@ class PlayListItem : public PositionableBase, public audium::Selectable
     
 public:
     
-    PlayListItem(const PlayListContainer &owner,
+    PlayListItem(PlayListContainer &owner,
                  std::shared_ptr<AudioRegion> audioRegion,
                  std::shared_ptr<SelectionManager> selectionManager);
     
@@ -59,7 +59,7 @@ public:
     double getAbsolutePosition(audium::TimeContextType context) const override;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
     
-    const PlayListContainer &getPlayListContainer() const { return owner; }
+    PlayListContainer &getPlayListContainer() const { return owner; }
     
     bool writeToJson (json& output);
     bool readFromJson (json& input, bool rebuild);
@@ -98,13 +98,15 @@ public:
     
     const double getRecordingStartPosition(audium::TimeContextType context) const;
     
+    int getId() const;
+    
     // Recording helpers:
     bool needsLengthUpdate = false;
     bool isFirstPartInLoop = false;
     bool isSecondPartInLoop = false;
     
 private:
-    const PlayListContainer &owner;
+    PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
     std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
     

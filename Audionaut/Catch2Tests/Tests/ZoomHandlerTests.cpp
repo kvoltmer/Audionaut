@@ -33,8 +33,19 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
         const auto secondsResult = zoomHandler->xToSeconds(x);
         REQUIRE_THAT(secondsResult, Catch::Matchers::WithinAbs(seconds, 0.0));
     }
-    
-    
+
+    // out of range factors are clamped to the zoom limits - a restored project
+    // must never push the view past them
+    zoomHandler->setZoomFactor(zoomHandler->maxZoomInFactor * 100.0);
+    REQUIRE(zoomHandler->getZoomFactor() == zoomHandler->maxZoomInFactor);
+
+    zoomHandler->setZoomFactor(zoomHandler->maxZoomOutFactor * 0.01);
+    REQUIRE(zoomHandler->getZoomFactor() == zoomHandler->maxZoomOutFactor);
+
+    zoomHandler->setZoomFactor(ZoomHandler::defaultZoomFactor);
+    REQUIRE(zoomHandler->getZoomFactor() == ZoomHandler::defaultZoomFactor);
+
+
     
 //    double secondsToXWithOffset (const double time) const;
 //    double xToSecondsWithOffset (const double x) const;

@@ -1,0 +1,77 @@
+name: Build Essentia
+description: >
+  Restore or build the Essentia static libraries that the app and tests link
+  (Submodules/essentia/build/src/libessentia.a + the 3rd-party .a files under
+  packaging/debian_3rdparty). Results are cached per submodule revision, so
+  only the first run on a new Essentia commit pays the full build.
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python for waf
+      # Essentia's bundled waf needs stdlib distutils, removed in Python 3.12+.
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Pin CMake 3.x for the legacy Essentia 3rd-party builds
+      # Essentia's 3rd-party deps (taglib, chromaprint, ...) ship CMakeLists
+      # from 2012-2016 that CMake 4.x refuses (removed <3.5 minimums and OLD
+      # policy behaviour). Runners ship CMake 4.x; pin the last 3.x line.
+      shell: bash
+      run: |
+        pip install "cmake~=3.31.0"
+        echo "cmake: $(command -v cmake)  $(cmake --version | head -1)"
+
+    - name: Install Essentia build tools (Linux)
+      # nasm: ffmpeg 7.x refuses to configure on x86_64 without nasm/yasm
+      # (its build flags don't pass --disable-x86asm).
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y nasm pkg-config
+
+    - name: Install Essentia build tools (macOS)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: brew install pkg-config
+
+    - name: Essentia submodule revision
+      id: essentia-rev
+      shell: bash
+      run: echo "sha=$(git -C Submodules/essentia rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+    # Restore/save are split (not the combined cache action) so the cache is
+    # only written after a *successful* build - a partial build from a failed
+    # run must never poison the cache. The cache must include src/version.h:
+    # waf generates it into the *source* tree and the include path points at
+    # essentia/src. Key scheme matches the one already used by the macOS test
+    # workflow so caches are shared.
+    - name: Restore Essentia cache
+      id: cache-essentia
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          Submodules/essentia/build
+          Submodules/essentia/src/version.h
+          Submodules/essentia/packaging/debian_3rdparty/include
+          Submodules/essentia/packaging/debian_3rdparty/lib
+        key: essentia-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.essentia-rev.outputs.sha }}-${{ hashFiles('Audionaut/Builds/build_essentia.sh') }}
+
+    - name: Build Essentia
+      if: steps.cache-essentia.outputs.cache-hit != 'true'
+      shell: bash
+      run: ./Audionaut/Builds/build_essentia.sh
+
+    - name: Save Essentia cache
+      # Reached only if Build Essentia succeeded (the job stops on failure).
+      if: steps.cache-essentia.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          Submodules/essentia/build
+          Submodules/essentia/src/version.h
+          Submodules/essentia/packaging/debian_3rdparty/include
+          Submodules/essentia/packaging/debian_3rdparty/lib
+        key: essentia-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.essentia-rev.outputs.sha }}-${{ hashFiles('Audionaut/Builds/build_essentia.sh') }}

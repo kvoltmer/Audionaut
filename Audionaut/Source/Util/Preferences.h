@@ -54,9 +54,12 @@ namespace PreferenceKeys
     static const char* const audioDeviceSettings    = "AudioDeviceSettings";
     static const char* const mainWindowState        = "MainWindowState";
     static const char* const browserWindowState     = "BrowserWindowState";
+    static const char* const autoEditWindowState    = "AutoEditWindowState";
     static const char* const browserWindowOpen      = "BrowserWindowOpen";
     static const char* const fileTreeState          = "FileTreeState";
     static const char* const browserRoot            = "BrowserRoot";
+    static const char* const assembleMinutes        = "AssembleMinutes";
+    static const char* const assembleSeconds        = "AssembleSeconds";
 }
 
 } // namespace audium

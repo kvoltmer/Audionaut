@@ -39,13 +39,13 @@ ifeq ($(CONFIG),Debug)
     TARGET_ARCH := 
   endif
 
-  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DDEBUG=1" "-D_DEBUG=1" "-DJUCE_PROJUCER_VERSION=0x8000c" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.1.2" "-DJUCE_APP_VERSION_HEX=0x10102" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
+  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DDEBUG=1" "-D_DEBUG=1" "-DJUCE_PROJUCER_VERSION=0x8000c" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.2.0" "-DJUCE_APP_VERSION_HEX=0x10200" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/essentia/src -I../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3 -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=0" "-DJucePlugin_Build_Unity=0" "-DJucePlugin_Build_LV2=0"
   JUCE_TARGET_APP := audionaut
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -g -ggdb -O0 -Wno-multichar $(CFLAGS)
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++20 $(CXXFLAGS)
-  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) $(shell $(PKG_CONFIG) --libs alsa freetype2 fontconfig libcurl) -fvisibility=hidden -lrt -ldl -lpthread $(LDFLAGS)
+  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) $(shell $(PKG_CONFIG) --libs alsa freetype2 fontconfig libcurl) -fvisibility=hidden ../../../Submodules/essentia/build/src/libessentia.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -ldrm -lrt -ldl -lpthread $(LDFLAGS)
 
   CLEANCMD = rm -rf $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) $(JUCE_OBJDIR)
 endif
@@ -60,13 +60,13 @@ ifeq ($(CONFIG),Release)
     TARGET_ARCH := 
   endif
 
-  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DNDEBUG=1" "-DJUCE_PROJUCER_VERSION=0x8000c" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.1.2" "-DJUCE_APP_VERSION_HEX=0x10102" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
+  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DNDEBUG=1" "-DJUCE_PROJUCER_VERSION=0x8000c" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.2.0" "-DJUCE_APP_VERSION_HEX=0x10200" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/essentia/src -I../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3 -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=0" "-DJucePlugin_Build_Unity=0" "-DJucePlugin_Build_LV2=0"
   JUCE_TARGET_APP := audionaut
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -O3 -Wno-multichar $(CFLAGS)
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++20 $(CXXFLAGS)
-  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) $(shell $(PKG_CONFIG) --libs alsa freetype2 fontconfig libcurl) -fvisibility=hidden -lrt -ldl -lpthread $(LDFLAGS)
+  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) $(shell $(PKG_CONFIG) --libs alsa freetype2 fontconfig libcurl) -fvisibility=hidden ../../../Submodules/essentia/build/src/libessentia.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -ldrm -lrt -ldl -lpthread $(LDFLAGS)
 
   CLEANCMD = rm -rf $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) $(JUCE_OBJDIR)
 endif
@@ -78,6 +78,13 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/Main_70df61c1.o \
   $(JUCE_OBJDIR)/EngineAccess_b7e0d334.o \
   $(JUCE_OBJDIR)/Preferences_96bfe954.o \
+  $(JUCE_OBJDIR)/AnalysisProvider_7450833c.o \
+  $(JUCE_OBJDIR)/SBicSegmenter_68bb20f2.o \
+  $(JUCE_OBJDIR)/AnalysisCache_e40fdde1.o \
+  $(JUCE_OBJDIR)/OnsetSegmenter_cc2f2d0c.o \
+  $(JUCE_OBJDIR)/BeatSegmenter_1543c9e5.o \
+  $(JUCE_OBJDIR)/AnalysisWorker_87f10fc9.o \
+  $(JUCE_OBJDIR)/EventMerger_5b3b38cf.o \
   $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o \
   $(JUCE_OBJDIR)/TransportSourceContainer_8c0ec2a6.o \
   $(JUCE_OBJDIR)/audium_AudioTransportSource_b27fe79d.o \
@@ -86,10 +93,12 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o \
   $(JUCE_OBJDIR)/DspClip_7236184f.o \
   $(JUCE_OBJDIR)/AutoEdit_95866c4b.o \
+  $(JUCE_OBJDIR)/AutoEditParameter_df9b8e8.o \
   $(JUCE_OBJDIR)/AudioChannel_b77c3b27.o \
   $(JUCE_OBJDIR)/AudiumFactory_21005c30.o \
   $(JUCE_OBJDIR)/AudioTrack_cd929473.o \
   $(JUCE_OBJDIR)/AudioTrackContainer_546eaa98.o \
+  $(JUCE_OBJDIR)/AudioTrackViewState_3eefa983.o \
   $(JUCE_OBJDIR)/AudioRegionAdapter_714661e3.o \
   $(JUCE_OBJDIR)/ResourceGroup_483fb77d.o \
   $(JUCE_OBJDIR)/LinkAudioDevice_ad84cc6b.o \
@@ -114,7 +123,6 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o \
   $(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o \
   $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o \
-  $(JUCE_OBJDIR)/AutoEditComponent_2f86d78b.o \
   $(JUCE_OBJDIR)/ColourIds_54ae2f37.o \
   $(JUCE_OBJDIR)/audium_AudioThumbnail_f5797f4f.o \
   $(JUCE_OBJDIR)/audium_ListBox_b1d2231e.o \
@@ -135,6 +143,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioTrackListBoxModel_e0f725e1.o \
   $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o \
   $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o \
+  $(JUCE_OBJDIR)/AutoEditOverlayControl_e143b2a.o \
   $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o \
   $(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
@@ -145,8 +154,10 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/RegionTableListBox_80e14e37.o \
   $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o \
   $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o \
+  $(JUCE_OBJDIR)/SegmentationView_81438847.o \
+  $(JUCE_OBJDIR)/AutoEditPreviewView_ccfab99e.o \
   $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o \
-  $(JUCE_OBJDIR)/AudioRegionView_e0200259.o \
+  $(JUCE_OBJDIR)/AudioClipView_1a258175.o \
   $(JUCE_OBJDIR)/BinaryData_ce4232d4.o \
   $(JUCE_OBJDIR)/include_juce_analytics_f8e9fa94.o \
   $(JUCE_OBJDIR)/include_juce_audio_basics_8a4e984a.o \
@@ -211,6 +222,41 @@ $(JUCE_OBJDIR)/Preferences_96bfe954.o: ../../Source/Util/Preferences.cpp
 	@echo "Compiling Preferences.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/AnalysisProvider_7450833c.o: ../../Source/Engine/Analysis/AnalysisProvider.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AnalysisProvider.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/SBicSegmenter_68bb20f2.o: ../../Source/Engine/Analysis/SBicSegmenter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling SBicSegmenter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AnalysisCache_e40fdde1.o: ../../Source/Engine/Analysis/AnalysisCache.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AnalysisCache.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/OnsetSegmenter_cc2f2d0c.o: ../../Source/Engine/Analysis/OnsetSegmenter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling OnsetSegmenter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/BeatSegmenter_1543c9e5.o: ../../Source/Engine/Analysis/BeatSegmenter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling BeatSegmenter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AnalysisWorker_87f10fc9.o: ../../Source/Engine/Analysis/AnalysisWorker.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AnalysisWorker.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/EventMerger_5b3b38cf.o: ../../Source/Engine/Analysis/EventMerger.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling EventMerger.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o: ../../Source/Engine/AudioSources/AudiumTransportSource.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AudiumTransportSource.cpp"
@@ -251,6 +297,11 @@ $(JUCE_OBJDIR)/AutoEdit_95866c4b.o: ../../Source/Engine/AutoEdit/AutoEdit.cpp
 	@echo "Compiling AutoEdit.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/AutoEditParameter_df9b8e8.o: ../../Source/Engine/AutoEdit/AutoEditParameter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AutoEditParameter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/AudioChannel_b77c3b27.o: ../../Source/Engine/Channel/AudioChannel.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AudioChannel.cpp"
@@ -269,6 +320,11 @@ $(JUCE_OBJDIR)/AudioTrack_cd929473.o: ../../Source/Engine/Group/AudioTrack.cpp
 $(JUCE_OBJDIR)/AudioTrackContainer_546eaa98.o: ../../Source/Engine/Group/AudioTrackContainer.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AudioTrackContainer.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AudioTrackViewState_3eefa983.o: ../../Source/Engine/Group/AudioTrackViewState.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AudioTrackViewState.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudioRegionAdapter_714661e3.o: ../../Source/Engine/Group/AudioRegionAdapter.cpp
@@ -391,11 +447,6 @@ $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o: ../../Source/Interface/LookAnd
 	@echo "Compiling TrackColourLookAndFeel.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/AutoEditComponent_2f86d78b.o: ../../Source/Interface/Dialogs/AutoEditComponent.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AutoEditComponent.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
 $(JUCE_OBJDIR)/ColourIds_54ae2f37.o: ../../Source/Interface/ColourIds.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling ColourIds.cpp"
@@ -496,6 +547,11 @@ $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o: ../../Source/Interface/Models
 	@echo "Compiling RegionTableListBoxModel.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/AutoEditOverlayControl_e143b2a.o: ../../Source/Interface/Controls/AutoEditOverlayControl.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AutoEditOverlayControl.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o: ../../Source/Interface/Controls/LoopDraggerControl.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling LoopDraggerControl.cpp"
@@ -546,14 +602,24 @@ $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o: ../../Source/Interface/Views/FadeInOutV
 	@echo "Compiling FadeInOutView.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/SegmentationView_81438847.o: ../../Source/Interface/Views/SegmentationView.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling SegmentationView.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AutoEditPreviewView_ccfab99e.o: ../../Source/Interface/Views/AutoEditPreviewView.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AutoEditPreviewView.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/WaveFormViewBase_72cde273.o: ../../Source/Interface/Views/WaveFormViewBase.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling WaveFormViewBase.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/AudioRegionView_e0200259.o: ../../Source/Interface/Views/AudioRegionView.cpp
+$(JUCE_OBJDIR)/AudioClipView_1a258175.o: ../../Source/Interface/Views/AudioClipView.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AudioRegionView.cpp"
+	@echo "Compiling AudioClipView.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/BinaryData_ce4232d4.o: ../../JuceLibraryCode/BinaryData.cpp

@@ -24,8 +24,11 @@ class AudiumEngine;
  * This class provides functionality to manage selected objects, handle
  * selection states, and perform operations like copying and pasting
  * selected objects.
+ *
+ * Selection changes are broadcast asynchronously to registered
+ * juce::ChangeListeners.
  */
-class SelectionManager
+class SelectionManager : public juce::ChangeBroadcaster
 {
 public:
     /**
@@ -52,6 +55,8 @@ public:
 
         if (bSelected)
             selectedObjects.push_back(object);
+
+        sendChangeMessage();
     }
 
     /**
@@ -69,7 +74,11 @@ public:
     /**
      * @brief Clears the selection, deselecting all objects.
      */
-    void clear() { selectedObjects.clear(); }
+    void clear()
+    {
+        selectedObjects.clear();
+        sendChangeMessage();
+    }
 
     /**
      * @brief Deselects all currently selected objects.

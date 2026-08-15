@@ -49,7 +49,7 @@ void Preferences::synchronize()
 std::string Preferences::getValue(const std::string& key,
                                   const std::string& defaultValue)
 {
-    return WindowsRegistry::getValue(impl->getRegPath() + key, defaultValue);
+    return WindowsRegistry::getValue(impl->getRegPath() + key, defaultValue).toStdString();
 }
 
 bool Preferences::setValue(const std::string& key,

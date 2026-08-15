@@ -298,7 +298,7 @@ void AudioRegionContainer::setSelectedRows(juce::SparseSet<int>& selectedRows) {
     {
         if (auto object = audioRegions[selectedRows[i]])
         {
-            object->setSelected(true, false);
+            object->setSelected(true);
         }
     }
 }

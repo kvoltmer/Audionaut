@@ -19,6 +19,9 @@
 
 using namespace audium;
 
+AudiumApplication::AudiumApplication() = default;
+AudiumApplication::~AudiumApplication() = default;
+
 AudiumApplication& AudiumApplication::getApp()
 {
     AudiumApplication* const app = dynamic_cast<AudiumApplication*> (JUCEApplication::getInstance());
@@ -43,7 +46,9 @@ audium::Preferences& AudiumApplication::getPreferences()
 void AudiumApplication::initialise (const juce::String& commandLine)
 {
     LookAndFeel::setDefaultLookAndFeel (&lookAndFeel);
-    
+
+    splashScreen = std::make_unique<AboutSplashScreen>();
+
     initPreferences();
     initCommandManager();
     
@@ -114,7 +119,11 @@ void AudiumApplication::handleAsyncUpdate()
     }
     
     updateUI();
-    
+
+    if (splashScreen != nullptr) {
+        splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
+        splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
+    }
 }
 
 void AudiumApplication::shutdown()
@@ -312,11 +321,17 @@ PopupMenu AudiumApplication::createEditMenu()
     menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::splitRegion);
     menu.addCommandItem(commandManager.get(), CommandIDs::cleanupRegions);
-    
-#if AUTO_EDIT_ENABLED
     menu.addSeparator();
-    menu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
-#endif
+
+    PopupMenu assembleMenu;
+    assembleMenu.addCommandItem(commandManager.get(), CommandIDs::assembleSequential);
+    assembleMenu.addCommandItem(commandManager.get(), CommandIDs::assembleRandom);
+
+    PopupMenu autoEditMenu;
+    autoEditMenu.addCommandItem(commandManager.get(), CommandIDs::autoEdit);
+    autoEditMenu.addSubMenu("2. Assemble", assembleMenu);
+    menu.addSubMenu("Auto Edit", autoEditMenu);
+
     //menu.addSeparator();
     //menu.addCommandItem(commandManager.get(), CommandIDs::loopPlayList);
     return menu;
@@ -516,6 +531,9 @@ void AudiumApplication::createNewProject()
         audiumEngine->cleanup();
         audiumEngine->createNewProject();
         updateUI();
+
+        // cleanup() cleared the ui state, so this resets the view to its defaults
+        restoreUiState();
     });
 }
 
@@ -540,6 +558,10 @@ void AudiumApplication::askUserToOpenFile()
 
 void AudiumApplication::openFile(juce::File file)
 {
+    // audio files are added to the current project - only a project file brings its own view state
+    const auto isProjectFile = audium::AudiumEngine::isValidProjectStructure(file) ||
+                               audium::AudiumEngine::isJsonProjectFile(file);
+
     auto success = audiumEngine->openFile(file, [this, file](std::string error) {
         NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
                                               "Error",
@@ -555,9 +577,14 @@ void AudiumApplication::openFile(juce::File file)
         recentFiles.addFile (file);
         updateSettings();
     }
-    
+
     updateUI();
-    
+
+    // the view state is only meaningful once the tracks it refers to are laid out.
+    // a failed load leaves the engine on a fresh project with an empty ui state,
+    // which resets the view to its defaults - that is what we want in that case too.
+    if (isProjectFile)
+        restoreUiState();
 }
 
 const File createProjectDirectory(const File &inFile)
@@ -626,6 +653,9 @@ bool AudiumApplication::saveProjectAs()
 
 bool AudiumApplication::saveProjectToFile(juce::File file)
 {
+    // the engine serialises its UI state, so hand it the current view first
+    captureUiState();
+
     auto success = audiumEngine->saveFile(file, [this, file] (std::string error) {
 
         NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
@@ -659,18 +689,39 @@ bool AudiumApplication::saveProject()
     return saveProjectToFile(audiumEngine->getCurrentProjectFile());
 }
 
+// a file passed on the command line is opened before the main window exists
+MainComponent* AudiumApplication::getMainComponent() const
+{
+    if (mainWindow == nullptr)
+        return nullptr;
+
+    return dynamic_cast<MainComponent*>(mainWindow->getContentComponent());
+}
+
 void AudiumApplication::updateUI()
 {
-    if (auto comp = dynamic_cast<MainComponent*>(mainWindow->getContentComponent())) {
+    if (auto comp = getMainComponent()) {
         comp->rebuildUI();
         comp->updateUI();
     }
 }
 
+void AudiumApplication::captureUiState()
+{
+    if (auto comp = getMainComponent())
+        comp->writeUiState(audiumEngine->getUiState());
+}
+
+void AudiumApplication::restoreUiState()
+{
+    if (auto comp = getMainComponent())
+        comp->readUiState(audiumEngine->getUiState());
+}
+
 void AudiumApplication::showAboutWindow()
 {
     auto w = 600;
-    auto h = 400;
+    auto h = 420;
     if (aboutComponent != nullptr)
         aboutComponent->toFront (true);
     else

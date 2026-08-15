@@ -37,9 +37,13 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemAtPositionUI(
     
     if (auto playListItem = createPlayListItem(audioRegion, insertIndex)) {
         playListItem->setAbsolutePosition(position, context);
+        // createPlayListItem() sorted while the item still sat at its
+        // provisional position; only now does it hold the position it was
+        // asked for, so the order has to be restored here.
+        sortByPosition();
         return playListItem;
     }
-    
+
     return nullptr;
 }
 
@@ -219,10 +223,9 @@ int PlayListContainer::getNumItems(std::shared_ptr<AudioTrack> track) const
 
 std::shared_ptr<PlayListItem> PlayListContainer::getPlayListItem(int index) const
 {
-    if (index >= 0 && index < playListItems.size())
-    {
-        return playListItems.getObjects()[index];
-    }
+    auto i = static_cast<size_t> (index);
+    if (i >= 0 && i < playListItems.size())
+        return playListItems.getObjects()[i];
     return nullptr;
 }
 

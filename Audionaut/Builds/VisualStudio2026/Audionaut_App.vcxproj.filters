@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Audionaut\Catch2Tests">
       <UniqueIdentifier>{A5516E1B-93FA-21AA-E5F7-F4470EE48EAC}</UniqueIdentifier>
@@ -13,6 +13,9 @@
     </Filter>
     <Filter Include="Audionaut\Source\Util">
       <UniqueIdentifier>{B3F23B26-C34C-91E9-7425-79EA9F14D0BA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\Source\Engine\Analysis">
+      <UniqueIdentifier>{D0BC868D-0F64-6D47-E860-837179C691A7}</UniqueIdentifier>
     </Filter>
     <Filter Include="Audionaut\Source\Engine\AudioSources">
       <UniqueIdentifier>{99B03463-BAA4-F2D8-8F41-CC5450AC2F9E}</UniqueIdentifier>
@@ -106,6 +109,9 @@
     </Filter>
     <Filter Include="Audionaut\Source\Interface\Views">
       <UniqueIdentifier>{BA9EB445-C8E2-6CDF-3118-19A888ED239E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\Source\Interface\Resources\Fonts">
+      <UniqueIdentifier>{AEF9F468-218F-E433-18EA-D158AE1869A6}</UniqueIdentifier>
     </Filter>
     <Filter Include="Audionaut\Source\Interface\Resources">
       <UniqueIdentifier>{9AD0C17C-E8B0-E4C4-3A9C-830E4E458E7D}</UniqueIdentifier>
@@ -844,6 +850,27 @@
     <ClCompile Include="..\..\Source\Util\Preferences.cpp">
       <Filter>Audionaut\Source\Util</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisProvider.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\SBicSegmenter.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisCache.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\OnsetSegmenter.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\BeatSegmenter.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisWorker.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Analysis\EventMerger.cpp">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
@@ -868,6 +895,9 @@
     <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEdit.cpp">
       <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.cpp">
+      <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Channel\AudioChannel.cpp">
       <Filter>Audionaut\Source\Engine\Channel</Filter>
     </ClCompile>
@@ -878,6 +908,9 @@
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrackContainer.cpp">
+      <Filter>Audionaut\Source\Engine\Group</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Group\AudioTrackViewState.cpp">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Group\AudioRegionAdapter.cpp">
@@ -952,9 +985,6 @@
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp">
       <Filter>Audionaut\Source\Interface\LookAndFeel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Dialogs\AutoEditComponent.cpp">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\ColourIds.cpp">
       <Filter>Audionaut\Source\Interface</Filter>
     </ClCompile>
@@ -1015,6 +1045,9 @@
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.cpp">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
@@ -1045,10 +1078,16 @@
     <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Views\SegmentationView.cpp">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Views\AutoEditPreviewView.cpp">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Views\WaveFormViewBase.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Views\AudioRegionView.cpp">
+    <ClCompile Include="..\..\Source\Interface\Views\AudioClipView.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_analytics\analytics\juce_Analytics.cpp">
@@ -4113,6 +4152,27 @@
     <ClInclude Include="..\..\Source\Util\Preferences.h">
       <Filter>Audionaut\Source\Util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisProvider.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\SBicSegmenter.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisCache.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\OnsetSegmenter.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\BeatSegmenter.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisWorker.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Analysis\EventMerger.h">
+      <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
@@ -4173,6 +4233,9 @@
     <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEdit.h">
       <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEditParameter.h">
+      <Filter>Audionaut\Source\Engine\AutoEdit</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Channel\AudioChannel.h">
       <Filter>Audionaut\Source\Engine\Channel</Filter>
     </ClInclude>
@@ -4195,6 +4258,9 @@
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Group\AudioTrackContainer.h">
+      <Filter>Audionaut\Source\Engine\Group</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Group\AudioTrackViewState.h">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Group\AudioRegionAdapter.h">
@@ -4302,19 +4368,19 @@
     <ClInclude Include="..\..\Source\Interface\UIContext.h">
       <Filter>Audionaut\Source\Interface</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingToolWindow.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\NewAudioTrackDialog.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutWindowComponent.h">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditDialog.h">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ExportAudioDialog.h">
@@ -4425,6 +4491,9 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h">
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
@@ -4476,6 +4545,12 @@
     <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Views\SegmentationView.h">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Views\AutoEditPreviewView.h">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\GridView.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
@@ -4485,7 +4560,7 @@
     <ClInclude Include="..\..\Source\Interface\Views\WaveFormViewBase.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Views\AudioRegionView.h">
+    <ClInclude Include="..\..\Source\Interface\Views\AudioClipView.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\TransportView.h">
@@ -8669,8 +8744,23 @@
     <None Include="..\..\Resources\audionaut_logo_1024x1024.png">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
     </None>
-    <None Include="..\..\Resources\zoomin.svg">
+    <None Include="..\..\Resources\zoomin-inv.svg">
       <Filter>Audionaut\Source\Interface\Resources</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-Regular.ttf">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-Bold.ttf">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-Italic.ttf">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-BoldItalic.ttf">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
+    </None>
+    <None Include="..\..\Resources\Fonts\Inter-LICENSE.txt">
+      <Filter>Audionaut\Source\Interface\Resources\Fonts</Filter>
     </None>
     <None Include="..\..\..\LICENSE.md">
       <Filter>Audionaut</Filter>

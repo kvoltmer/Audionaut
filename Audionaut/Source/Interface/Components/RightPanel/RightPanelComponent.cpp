@@ -79,6 +79,6 @@ void RightPanelComponent::updateUI(UIContext context)
 {
     playListContainerComponent->updateUI(context);
     regionComponent->updateUI(context);
-    
+
     resized();
 }

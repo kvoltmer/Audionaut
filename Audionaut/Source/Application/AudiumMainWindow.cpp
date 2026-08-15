@@ -10,12 +10,18 @@
 #include "Util/Preferences.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/ActionMessages.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Region/AudioRegion.h"
 #include "Interface/Dialogs/NewRegionDialog.h"
-#include "Interface/Dialogs/AutoEditDialog.h"
+#include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/AutoEdit/AutoEdit.h"
+#include "Interface/Controls/AutoEditOverlayControl.h"
 #include "Interface/Dialogs/ExportAudioDialog.h"
 #include "Interface/Dialogs/NewAudioTrackDialog.h"
+#include "Interface/Dialogs/AssembleDialog.h"
 
 using namespace audium;
 
@@ -106,6 +112,8 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::splitRegion,
         CommandIDs::cleanupRegions,
         CommandIDs::autoEdit,
+        CommandIDs::assembleSequential,
+        CommandIDs::assembleRandom,
         CommandIDs::bounceProject,
         CommandIDs::duplicate,
         
@@ -170,8 +178,19 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Delete Unused Regions", "Deletes all unused regions", CommandCategories::editing, 0);
             break;
         case CommandIDs::autoEdit:
-            result.setInfo ("Auto Edit", "Automatically creates an Edit", CommandCategories::editing, 0);
-            result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
+            result.setInfo ("1. Create Segments...", "Cuts the selected clip into segments at analysed boundaries", CommandCategories::editing, 0);
+            result.setActive (canToggleAutoEditPreview());
+            result.defaultKeypresses.add (KeyPress ('1', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::assembleSequential:
+            result.setInfo ("Sequential...", "Assembles a new sequence from the track's regions, in order", CommandCategories::editing, 0);
+            result.setActive (canAssemble());
+            result.defaultKeypresses.add (KeyPress ('2', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::assembleRandom:
+            result.setInfo ("Random...", "Assembles a new sequence from the track's regions, shuffled", CommandCategories::editing, 0);
+            result.setActive (canAssemble());
+            result.defaultKeypresses.add (KeyPress ('3', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::bounceProject:
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
@@ -289,14 +308,18 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             getEngine()->getAudioTrackContainer()->deleteUnusedRegions();
             break;
         case CommandIDs::autoEdit:
-            if (autoEditDialog == nullptr)
-                autoEditDialog = std::make_unique<AutoEditDialog>();
-            autoEditDialog->invokeAutoEdit(getEngine(), mainComponent);
+            toggleAutoEditPreview();
+            break;
+        case CommandIDs::assembleSequential:
+            invokeAssemble(audium::AssembleConfig::Mode::Sequential);
+            break;
+        case CommandIDs::assembleRandom:
+            invokeAssemble(audium::AssembleConfig::Mode::Random);
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
                 exportAudioDialog = std::make_unique<ExportAudioDialog>(getEngine());
-            exportAudioDialog->invoke(mainComponent);
+            exportAudioDialog->invoke (mainComponent);
             break;
         case CommandIDs::toggleFullScreen:
             setFullScreen (!isFullScreen());
@@ -362,4 +385,99 @@ bool AudiumMainWindow::anythingSelected()
 bool AudiumMainWindow::canPaste()
 {
     return getEngine()->getAudioTrackContainer()->getSelectionManager()->canParseFromClipboard();
+}
+
+bool AudiumMainWindow::canToggleAutoEditPreview()
+{
+    auto analysisProvider = getEngine()->getAudioTrackContainer()->getAnalysisProvider();
+
+    if (analysisProvider == nullptr)
+        return false;
+
+    // A pending edit can always be cancelled.
+    if (analysisProvider->hasMergePreview())
+        return true;
+
+    audium::AutoEdit autoEdit(getEngine());
+
+    audium::AutoEditConfig config;
+    config.segmentMeasures = AutoEditOverlayControl::defaultMeasures;
+    autoEdit.targetSelection(config);
+
+    // Zero means no cut would land inside the clip - it is too short at this
+    // measure value, and entering the edit would only dead-end at Apply.
+    return autoEdit.resolveNumSegments(config) > 0;
+}
+
+void AudiumMainWindow::toggleAutoEditPreview()
+{
+    // The command system already refuses inactive commands; this guards any
+    // other caller.
+    if (! canToggleAutoEditPreview())
+        return;
+
+    auto analysisProvider = getEngine()->getAudioTrackContainer()->getAnalysisProvider();
+
+    if (analysisProvider == nullptr)
+        return;
+
+    // Invoked while an edit is pending, the command cancels it - the cleared
+    // preview hides the overlay control again.
+    if (analysisProvider->hasMergePreview())
+    {
+        analysisProvider->clearMergePreview();
+        return;
+    }
+
+    audium::AutoEdit autoEdit(getEngine());
+
+    audium::AutoEditConfig config;
+    config.segmentMeasures = AutoEditOverlayControl::defaultMeasures;
+    autoEdit.targetSelection(config);
+
+    if (! autoEdit.previewAutoEdit(config))
+    {
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::InfoIcon,
+                                              "Auto Edit",
+                                              "No preview is available for this clip yet - "
+                                              "its analyses may still be running. Please try again shortly.");
+        return;
+    }
+
+    // Select the track the segments belong to, so its highlight in the
+    // channel and playlist headers shows where the edit lands.
+    if (auto track = getEngine()->getAudioTrackContainer()->getAudioTrack(config.trackId))
+    {
+        getEngine()->getAudioTrackContainer()->getSelectionManager()->deselectAll();
+        track->setSelected(true);
+        getEngine()->getAudioTrackContainer()->sendActionMessage(audium::updateAll);
+    }
+}
+
+bool AudiumMainWindow::canAssemble()
+{
+    audium::AutoEdit autoEdit(getEngine());
+
+    audium::AssembleConfig config;
+    autoEdit.targetAssembleTrack(config);
+
+    auto track = getEngine()->getAudioTrackContainer()->getAudioTrack(config.trackId);
+
+    if (track == nullptr)
+        return false;
+
+    // At least one region with audio is needed as source material.
+    for (const auto& region : track->getRegions())
+        if (region->getRegionData(audium::seconds).getLength() > 0.0)
+            return true;
+
+    return false;
+}
+
+void AudiumMainWindow::invokeAssemble(audium::AssembleConfig::Mode mode)
+{
+    if (assembleDialog == nullptr)
+        assembleDialog = std::make_unique<AssembleDialog>();
+
+    assembleDialog->assemble(getEngine(), mode);
 }

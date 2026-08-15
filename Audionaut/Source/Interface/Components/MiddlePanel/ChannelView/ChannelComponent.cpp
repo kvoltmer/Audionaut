@@ -55,7 +55,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     // volume slider
     volumeSlider = std::make_unique<juce::Slider>();
     addAndMakeVisible(volumeSlider.get());
-    configureVolumeSlider(volumeSlider.get(), 12.0);
+    AudiumLookAndFeel::configureVolumeSlider(volumeSlider.get(), 12.0);
     volumeSlider->onValueChange = [this, rowNumber] {
         audioTrack->setGain(Decibels::decibelsToGain(volumeSlider->getValue()), rowNumber);
     };
@@ -209,7 +209,7 @@ void ChannelComponent::paint (juce::Graphics& g)
     g.setColour(borderColour);
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
     
-    g.setColour(audioTrack->getColour());
+    g.setColour(audioTrack->getViewState().getColour());
     if( insertAfter )
     {
         g.fillRect(0, getHeight()-3, getWidth(), 3);
@@ -292,36 +292,6 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
         audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set audio track height");
         audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
     }
-}
-
-void ChannelComponent::configureVolumeSlider(juce::Slider *slider, double dbMax)
-{
-    slider->setSliderStyle(juce::Slider::LinearBarVertical);
-    slider->setColour(Slider::textBoxTextColourId, juce::Colours::white);
-    slider->setColour(Slider::trackColourId, Colours::transparentBlack);
-    
-    slider->setTextValueSuffix (" dB");
-    slider->setNumDecimalPlacesToDisplay(1);
-    slider->setDoubleClickReturnValue(true, 0.0);
-    slider->setVelocityModeParameters(1.0, 1, 0.05);
-    slider->setVelocityBasedMode(true);
-    
-    auto scaled2UnscaledFunc = [](auto min, auto max, auto scaled) {
-        return scale_linear(pow(scaled, 0.33333333), min, max);
-    };
-    auto unscaled2ScaledFunc = [](auto min, auto max, auto unscaled) {
-        return pow(reverse_linear(unscaled, min, max), 3.0);
-    };
-    slider->setNormalisableRange(NormalisableRange<double>(-80.0, dbMax,
-                                                           scaled2UnscaledFunc,
-                                                           unscaled2ScaledFunc));
-    
-    slider->textFromValueFunction = [](auto val) {
-        if (val <= -80.0)
-            return String("-") + String(juce::CharPointer_UTF8 ("\xe2\x88\x9e"));
-        return String(val, 1);
-    };
-    slider->updateText();
 }
 
 void ChannelComponent::configurePanSlider(juce::Slider *slider)

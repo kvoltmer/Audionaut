@@ -137,7 +137,7 @@ void PlayListTableListBoxItem::paint(juce::Graphics& g)
     auto container = playListModel->getAudioTrack()->getPlayListContainer();
     if (auto item = container->getPlayListItem(rowNumber)) {
         juce::String text;
-        auto groupColour = item->getRegion()->getAudioTrack()->getColour();
+        auto groupColour = item->getRegion()->getAudioTrack()->getViewState().getColour();
         auto groupHighlightColour = groupColour.brighter().brighter();
 
         if (columnNumber == 1)

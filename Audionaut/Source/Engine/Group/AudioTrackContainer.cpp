@@ -269,14 +269,7 @@ std::shared_ptr<AudioTrack> AudioTrackContainer::getDefaultGroup() const
         return audioTracks[0];
     }
     
-    jassertfalse;
     return nullptr;
-}
-
-void AudioTrackContainer::selectAllGroups(bool bSelected, bool selectChildren)
-{
-    for (auto track : audioTracks)
-        track->setSelected(bSelected, selectChildren);
 }
 
 juce::SparseSet<int> AudioTrackContainer::getSelectedRows() const
@@ -296,11 +289,9 @@ juce::SparseSet<int> AudioTrackContainer::getSelectedRows() const
 void AudioTrackContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 {
     getSelectionManager()->deselectAll();
-    for (auto i = 0; i < selectedRows.size(); i++)
-    {
-        if (auto track = getAudioTrack(selectedRows[i]))
-        {
-            track->setSelected(true, false);
+    for (auto i = 0; i < selectedRows.size(); i++) {
+        if (auto track = getAudioTrack(selectedRows[i])) {
+            track->setSelected(true);
         }
     }
 }
@@ -330,7 +321,7 @@ juce::Colour AudioTrackContainer::getNewAudioTrackColour() const
     auto newColour = audium::WaveFormColours::getNewWaveFormColour();
     
     for (auto track : audioTracks) {
-        if(newColour == track->getColour())
+        if(newColour == track->getViewState().getColour())
             newColour = audium::WaveFormColours::getNewWaveFormColour();
     }
     
@@ -347,7 +338,7 @@ bool AudioTrackContainer::copySelectedChannelsToNewTrack(bool copyChannels)
         
         // create new audio track
         auto audioTrack = createNewAudioTrack(juce::String());
-        audioTrack->setColour(getNewAudioTrackColour());
+        audioTrack->getViewState().setColour(getNewAudioTrackColour());
         
         // copy selected channels
         for (auto object : selectedObjects) {
@@ -378,7 +369,7 @@ bool AudioTrackContainer::addAudioFiles(const juce::StringArray& filenames,
                                         bool undo)
 {
     auto audioTrack = createNewAudioTrack(juce::String());
-    audioTrack->setColour(getNewAudioTrackColour());
+    audioTrack->getViewState().setColour(getNewAudioTrackColour());
     if (!audioTrack->addAudioFiles(filenames, position, callback, undo)) {
         deleteAudioTrack(audioTrack.get());
         return false;

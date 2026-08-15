@@ -178,6 +178,16 @@ void MainComponent::rebuildUI()
     rightPanelComponent->updateUI(RebuildContext);
 }
 
+void MainComponent::writeUiState(json& uiState)
+{
+    middlePanelComponent->writeUiState(uiState);
+}
+
+void MainComponent::readUiState(const json& uiState)
+{
+    middlePanelComponent->readUiState(uiState);
+}
+
 void MainComponent::updateUI()
 {
     headerComponent->updateUI();
@@ -189,7 +199,7 @@ void MainComponent::updateUI()
     if (auto audiumLookAndFeel = dynamic_cast<AudiumLookAndFeel*>(&getLookAndFeel())) {
         for (auto audioTrack : audiumEngine->getAudioTrackContainer()->getAudioTracks()) {
             if (audioTrack->getId() < AudiumLookAndFeel::maxTrackColours)
-                audiumLookAndFeel->trackColours[audioTrack->getId()] = audioTrack->getColour();
+                audiumLookAndFeel->trackColours[audioTrack->getId()] = audioTrack->getViewState().getColour();
         }
     }
 }
@@ -238,9 +248,8 @@ void MainComponent::pageRight()
 
 void MainComponent::selectAll()
 {
-    for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks())
-    {
-        track->setSelected(true, true);
+    for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks()){
+        track->setSelected(true);
     }
     updateUI();
 }

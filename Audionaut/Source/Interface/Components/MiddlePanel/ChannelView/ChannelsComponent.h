@@ -52,6 +52,11 @@ public:
     void updateUI()
     {
         audioChannelsListBox->updateContent();
+
+        // mirror the engine's track selection into the list box rows, so
+        // modifier-key clicks build on selections made in other views
+        audioChannelsListBox->setSelectedRows(audiumEngine->getAudioTrackContainer()->getSelectedRows(),
+                                              juce::dontSendNotification);
     }
     
     void setVerticalScrollOffset(double offset)

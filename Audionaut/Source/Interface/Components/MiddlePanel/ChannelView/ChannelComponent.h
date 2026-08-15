@@ -85,7 +85,6 @@ public:
     std::shared_ptr<audium::AudiumEngine> getEngine() const { return engine; }
     std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
     
-    static void configureVolumeSlider(juce::Slider *slider, double dbMax = 6.0);
     static void configurePanSlider(juce::Slider *slider);
     
     bool audioInputAvailable(int channelNumber);
@@ -112,18 +111,6 @@ private:
     bool insertAfter = false;
     bool insertBefore = false;
 
-    
-    // linear scaling
-    static const double scale_linear(const double dVal, const double dMin, const double dMax)
-    {
-        return dMin + (dVal * abs(dMax - dMin));
-    }
-
-    // reverse linear scaling
-    static double reverse_linear(const double dVal, const double dMin, const double dMax)
-    {
-        return abs(dVal - dMin) / abs(dMax - dMin);
-    }
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelComponent)
 };

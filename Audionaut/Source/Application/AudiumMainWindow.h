@@ -7,12 +7,13 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Engine/AutoEdit/AutoEdit.h"
 #include "Interface/Components/MainComponent.h"
 
 class NewRegionDialog;
-class AutoEditDialog;
 class ExportAudioDialog;
 class NewAudioTrackDialog;
+class AssembleDialog;
 
 //==============================================================================
 /*
@@ -38,14 +39,35 @@ private:
     
     bool anythingSelected();
     bool canPaste();
-        
+
+    // Starts an auto edit as an in-arrangement preview - the previewed clip
+    // shows the overlay control (see AutoEditOverlayControl) - or cancels the
+    // pending one. Replaces the old Auto Edit dialog.
+    void toggleAutoEditPreview();
+
+    // Whether the Auto Edit command is available: always while an edit is
+    // pending (the command is also the cancel), otherwise only when the
+    // target clip would yield at least one segment at the entry measure
+    // value - a clip too short for a single cut greys the command out.
+    bool canToggleAutoEditPreview();
+
+    // Asks for the sequence length (see AssembleDialog), then rebuilds the
+    // target track's playlist as a song assembled from its regions in the
+    // given mode (see AutoEdit::invokeAssemble). The mode comes from the
+    // menu item picked in the Assemble sub menu.
+    void invokeAssemble(audium::AssembleConfig::Mode mode);
+
+    // Whether the Assemble commands are available: the target track needs at
+    // least one region with audio to arrange.
+    bool canAssemble();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
-    
+
     std::unique_ptr<NewRegionDialog> newRegionDialog;
-    std::unique_ptr<AutoEditDialog> autoEditDialog;
     std::unique_ptr<ExportAudioDialog> exportAudioDialog;
     std::unique_ptr<NewAudioTrackDialog> newAudioTrackDialog;
+    std::unique_ptr<AssembleDialog> assembleDialog;
         
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
 };

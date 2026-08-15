@@ -36,12 +36,19 @@ public:
 
         if (auto* m = owner.getModel())
         {
+            auto* previous = customComponent.get();
             customComponent.reset (m->refreshComponentForItem (newItem, customComponent.release()));
 
             if (customComponent != nullptr)
             {
                 addAndMakeVisible (customComponent.get());
                 customComponent->setBounds (getLocalBounds());
+
+                // a freshly created component can only be wired up once it has
+                // a parent - updateUI uses the parent as the drag target
+                if (customComponent.get() != previous)
+                    if (auto* playListItemComponent = dynamic_cast<PlayListItemComponent*>(customComponent.get()))
+                        playListItemComponent->updateUI (playListItemComponent->getPlayListItem());
 
                 setFocusContainerType (FocusContainerType::focusContainer);
             }
@@ -86,20 +93,27 @@ void AudioTrackComponent::updateContents(bool forceRebuildComponents)
         addAndMakeVisible (*itemComponents.back());
     }
         
+    // clips outside the visible range are hidden and not refreshed; scrolling or
+    // zooming re-enters here, so they catch up when they come back on screen
+    const auto visibleRange = zoomHandler->getVisibleRange();
+
     for (auto item = 0; item < itemComponents.size(); ++item) {
-        
-        // TODO: optimise -> if (auto* rowComp = getComponentForRowIfOnscreen (row))
-        
+
         if (auto itemComp = dynamic_cast<ItemComponent*>(itemComponents[item].get())) {
-            
+
             auto range = model->getRangeForItem(item);
+
+            const auto onScreen = visibleRange.isEmpty() || range.intersects(visibleRange);
+            itemComp->setVisible(onScreen);
+            if (!onScreen)
+                continue;
+
             juce::Rectangle<double> rect_tmp(range.getStart(),
                                              getLocalBounds().getY(),
                                              range.getLength(),
                                              getLocalBounds().getHeight());
             itemComp->setBounds(rect_tmp.getSmallestIntegerContainer());
             itemComp->update (item);
-            itemComp->repaint();
         }
     }
 }

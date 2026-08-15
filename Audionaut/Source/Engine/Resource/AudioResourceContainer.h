@@ -17,6 +17,7 @@ namespace audium {
 
 class TransportSourceContainer;
 class AudiumEngine;
+class AnalysisWorker;
 
 /**
  * @class AudioResourceContainer
@@ -36,17 +37,20 @@ public:
      * @param audioThumbnailCache_ A shared pointer to the `AudioThumbnailCache`.
      * @param tempoProvider_ A shared pointer to the `TempoProvider`.
      * @param transportSourceContainer_ A shared pointer to the `TransportSourceContainer`.
+     * @param analysisWorker_ A shared pointer to the background `AnalysisWorker`.
      */
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager_,
                            std::shared_ptr<juce::AudioFormatManager> formatManager_,
                            std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache_,
                            std::shared_ptr<TempoProvider> tempoProvider_,
-                           std::shared_ptr<TransportSourceContainer> transportSourceContainer_) :
+                           std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                           std::shared_ptr<AnalysisWorker> analysisWorker_) :
         audioDeviceManager(audioDeviceManager_),
         formatManager(formatManager_),
         audioThumbnailCache(audioThumbnailCache_),
         tempoProvider(tempoProvider_),
-        transportSourceContainer(transportSourceContainer_)
+        transportSourceContainer(transportSourceContainer_),
+        analysisWorker(analysisWorker_)
     {
         formatManager->registerBasicFormats();
         thread.startThread();
@@ -244,6 +248,12 @@ public:
      * @return A shared pointer to the `AudioDeviceManager`.
      */
     std::shared_ptr<juce::AudioDeviceManager> getAudioDeviceManager() const { return audioDeviceManager; }
+
+    /**
+     * @brief Retrieves the background `AnalysisWorker`.
+     * @return A shared pointer to the `AnalysisWorker`.
+     */
+    std::shared_ptr<AnalysisWorker> getAnalysisWorker() const { return analysisWorker; }
     
     /**
      * @typedef tAudioTrackPair
@@ -261,6 +271,10 @@ public:
     void onRecordingFinished();
     
 private:
+    /// Cancels pending background analysis of the file unless another loaded
+    /// resource still references it.
+    void cancelAnalysisIfUnloaded(const juce::File& audioFile);
+
     /// List of pairs of audio tracks and resources.
     std::list<tAudioTrackPair> audioResources;
 
@@ -278,6 +292,9 @@ private:
 
     /// Shared pointer to the `TransportSourceContainer`.
     std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+
+    /// Background worker that analyses newly added audio resources off-thread.
+    std::shared_ptr<AnalysisWorker> analysisWorker;
 
     /// Thread for read-ahead operations.
     juce::TimeSliceThread thread { "read ahead thread" };

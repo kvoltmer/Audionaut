@@ -18,6 +18,8 @@ class ZoomHandler;
 class RegionSelector;
 class DraggerControl;
 class FadeInOutControl;
+class AutoEditPreviewView;
+class AutoEditOverlayControl;
 
 //==============================================================================
 /*
@@ -44,7 +46,13 @@ public:
     DraggerControl* getDraggerControl() const;
     
     void updateUI(std::shared_ptr<audium::PlayListItem> playListItem);
-    
+
+    /**
+     * @brief Refreshes the analysis (segmentation/BPM) overlay on every
+     *        currently visible channel row, without rebuilding waveforms.
+     */
+    void refreshAnalysisDisplay();
+
     void mouseEnter (const MouseEvent& e) override;
     void mouseExit (const MouseEvent& e) override;
     
@@ -54,17 +62,32 @@ public:
     }
     
 private:
+    // Feeds the merge preview of a pending auto edit to the overlay
+    // (AnalysisProvider::getMergePreview for this clip's audio file).
+    void refreshAutoEditPreview();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<audium::AudioTrack>     audioTrack;
     std::shared_ptr<audium::PlayListItem>   playListItem;
     std::shared_ptr<RegionSelector> regionSelector;
-        
+
     std::unique_ptr<audium::ListBox> playListItemListBox;
     std::unique_ptr<PlayListItemListBoxModel> playListItemListBoxModel;
-    
-        
+
+
     std::unique_ptr<FadeInOutControl> fadeInControl;
     std::unique_ptr<FadeInOutControl> fadeOutControl;
+
+    // Container stacked over the whole clip (header and all channel rows)
+    // hosting overlays that must draw above everything else. Transparent to
+    // the mouse itself, but its children may take clicks - the overlay
+    // control does, the preview lines do not.
+    std::unique_ptr<juce::Component> overlayContainer;
+    std::unique_ptr<AutoEditPreviewView> autoEditPreviewView;
+
+    // The pending auto edit's control (measures + Apply), shown while this
+    // clip's merge preview is active.
+    std::unique_ptr<AutoEditOverlayControl> autoEditOverlayControl;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)
 };

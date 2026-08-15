@@ -38,10 +38,16 @@ public:
         bool isPlayListItem = false;
     };
     
+    // Segments cover [startInSegmentType, startInSegmentType + lengthInSegmentType],
+    // beginning at the last grid line at or before the start, so callers can
+    // request just the range they are about to draw. The grid spacing depends
+    // only on the pixels-per-unit density (widthInPixels / lengthInSegmentType),
+    // which is the same for a sub-range as for the whole content.
     const std::vector<Segment> getGridInSegments(const double widthInPixels,
                                                  const double lengthInSegmentType,
                                                  SnapToGridHandler::SegmentType type,
-                                                 bool includePlayListItems = false);
+                                                 bool includePlayListItems = false,
+                                                 double startInSegmentType = 0.0);
     
     const std::vector<Segment> getPlayListItemsInSegments(SnapToGridHandler::SegmentType type) const;
     

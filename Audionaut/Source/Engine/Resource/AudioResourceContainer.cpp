@@ -13,6 +13,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/Analysis/AnalysisWorker.h"
 
 using namespace juce;
 
@@ -26,9 +27,11 @@ AudioResourceContainer::~AudioResourceContainer()
 
 const juce::File AudioResourceContainer::getAudioFileDirectory(const juce::File projectRoot)
 {
-    return juce::File(projectRoot.getFullPathName() + File::getSeparatorString() +
-                      "Media" + File::getSeparatorString() +
-                      "Audio" + File::getSeparatorString());
+    if (projectRoot.getFullPathName().isNotEmpty())
+        return juce::File(projectRoot.getFullPathName() + File::getSeparatorString() +
+                          "Media" + File::getSeparatorString() +
+                          "Audio" + File::getSeparatorString());
+    return juce::File();
 }
 
 const juce::File AudioResourceContainer::getAudioFileDirectory()
@@ -284,9 +287,15 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
                                                                    sourceChannel);
     if (audioResource != nullptr) {
         audioResources.push_back({track, audioResource});
+
+        // Kick off background analysis of the new file. Recording placeholders
+        // (no reader yet) are analysed later, once recording finishes.
+        if (analysisWorker != nullptr && ! audioResource->isRecording())
+            analysisWorker->enqueue(juce::File(audioResource->getFullPathName()));
+
         return audioResource;
     }
-    
+
     return nullptr;
 }
 
@@ -310,6 +319,7 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> 
                 transportSourceContainer->removeTransportSource(source);
             }
             audioResources.erase(it);
+            cancelAnalysisIfUnloaded(juce::File(resource->getFullPathName()));
             break;
         }
     }
@@ -319,11 +329,27 @@ void AudioResourceContainer::removeAudioResourcesForTrack (AudioTrack *track)
 {
     jassert(track != nullptr);
     if (track != nullptr) {
-        for (auto it = audioResources.begin(); it != audioResources.end(); it++) {
-            if ((*it).first.get() == track)
-                audioResources.erase(it++);
+        std::vector<juce::File> removedFiles;
+        for (auto it = audioResources.begin(); it != audioResources.end();) {
+            if ((*it).first.get() == track) {
+                removedFiles.push_back(juce::File((*it).second->getFullPathName()));
+                it = audioResources.erase(it);
+            }
+            else {
+                ++it;
+            }
         }
+        for (const auto& file : removedFiles)
+            cancelAnalysisIfUnloaded(file);
     }
+}
+
+void AudioResourceContainer::cancelAnalysisIfUnloaded(const juce::File& audioFile)
+{
+    // Another resource may still reference the same file - only cancel once
+    // nothing loaded uses it anymore.
+    if (analysisWorker != nullptr && ! isAudioFileCurrentlyLoaded(audioFile))
+        analysisWorker->cancel(audioFile);
 }
 
 int AudioResourceContainer::getNumAudioResources() const
@@ -334,6 +360,11 @@ int AudioResourceContainer::getNumAudioResources() const
 void AudioResourceContainer::cleanup()
 {
     audioResources.clear();
+
+    // No resources are loaded anymore, so any analysis still queued is for
+    // unloaded files - drop it all.
+    if (analysisWorker != nullptr)
+        analysisWorker->cancelAll();
 }
 
 void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
@@ -543,7 +574,15 @@ void AudioResourceContainer::onRecordingFinished()
 {
     // load recorded audio files
     for (auto &itr : audioResources) {
-        itr.second->loadRecordedAudioFile();
+        auto resource = itr.second;
+
+        // A successful load means a freshly recorded file is now on disk with a
+        // reader - analyse it in the background, like any newly added resource.
+        if (resource->loadRecordedAudioFile()
+            && analysisWorker != nullptr)
+        {
+            analysisWorker->enqueue(juce::File(resource->getFullPathName()));
+        }
     }
 }
 

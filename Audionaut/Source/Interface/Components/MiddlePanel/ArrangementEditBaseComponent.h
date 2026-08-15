@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include <optional>
+#include <utility>
+
 #include <JuceHeader.h>
 
 #include "Engine/Group/AudioTrackContainer.h"
@@ -30,7 +33,7 @@
  This class contains the AudioTrackListBox!
 
  */
-class ArrangementEditBaseComponent  : public juce::Component, public juce::ChangeListener
+class ArrangementEditBaseComponent  : public juce::Component, public juce::ChangeListener, private juce::AsyncUpdater
 {
 public:
     ArrangementEditBaseComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine,
@@ -85,23 +88,17 @@ public:
         audioTrackListBox->getViewport()->getViewedComponent()->addAndMakeVisible(gridView.get());
         gridView->toBack();
      
-        // loop start postition view
+
+        // loop postition view
         auto transportLoop = audiumEngine->getPlayListScheduler()->getTransportLoop();
         
-        loopStartPositionMarker = std::make_unique<PositionMarker>(zoomHandler);
-        addAndMakeVisible(loopStartPositionMarker.get());
-        loopStartPositionMarker->setColour(Colours::white.withAlpha (0.5f));
-        loopStartPositionMarker->onUpdatePosition = [transportLoop] (auto context) {
-            return transportLoop->getLoopPositionRange(context).getStart();
+        loopRangeMarker = std::make_unique<PositionMarker>(zoomHandler);
+        addAndMakeVisible(loopRangeMarker.get());
+        loopRangeMarker->setColour(Colours::black.withAlpha (0.2f));
+        loopRangeMarker->onUpdateRange = [transportLoop] (auto context) {
+            return transportLoop->getLoopPositionRange(context);
         };
-        
-        // loop end postition view
-        loopEndPositionMarker = std::make_unique<PositionMarker>(zoomHandler);
-        addAndMakeVisible(loopEndPositionMarker.get());
-        loopEndPositionMarker->setColour(Colours::white.withAlpha (0.5f));
-        loopEndPositionMarker->onUpdatePosition = [transportLoop] (auto context) {
-            return transportLoop->getLoopPositionRange(context).getEnd();
-        };
+
         
         // play postition view (on top)
         playPositionMarker = std::make_unique<PositionMarker>(zoomHandler);
@@ -120,6 +117,7 @@ public:
 
     virtual ~ArrangementEditBaseComponent() override
     {
+        cancelPendingUpdate();
         audioTrackListBox->removeMouseListener (audioTrackListBox->getHeaderComponent());
         dragZoomControl->removeChangeListener(this);
         zoomHandler->getSnapToGridHandler()->removeChangeListener(gridView.get());
@@ -151,27 +149,49 @@ public:
         
         audioTrackListBox->setBounds(bounds);
         playPositionMarker->setBounds(bounds);
-        loopStartPositionMarker->setBounds(bounds);
-        loopEndPositionMarker->setBounds(bounds);
+        
+        loopRangeMarker->setBounds(bounds);
     }
     
     void changeListenerCallback (ChangeBroadcaster* source) override
     {
         setContentWidth(zoomHandler->getContentWidth());
+
+        if (source == dragZoomControl.get())
+        {
+            // centre the visible range where the drag-zoom gesture points;
+            // this has to follow setContentWidth so the scrollbar's total
+            // range already reflects the new zoom factor
+            auto contentPosition = zoomHandler->getContentWidth() * dragZoomControl->getTargetCenterFraction();
+            auto visibleRange = zoomHandler->getVisibleRange();
+            zoomHandler->setVisibleRange(visibleRange.movedToStartAt(contentPosition - visibleRange.getLength() * 0.5),
+                                         juce::sendNotificationSync);
+            dragZoomControl->updateFromEngine();
+
+            // last: the selector's position depends on the scroll offset the
+            // setVisibleRange() above just changed
+            regionSelector->updateFromEngine();
+        }
     }
 
     void updateUI()
     {
         // will call -> audioTrackListBox->updateContent()
         setContentWidth(zoomHandler->getContentWidth());
-        
+
+        // mirror the engine's track selection into the list box rows, so
+        // modifier-key clicks build on selections made in other views
+        audioTrackListBox->setSelectedRows(audiumEngine->getAudioTrackContainer()->getSelectedRows(),
+                                           juce::dontSendNotification);
+
+
         regionSelector->updateFromEngine();
         arrangementOverview->updateFromEngine();
         dragZoomControl->updateFromEngine();
-        
+
+
         auto loopActive = audiumEngine->getPlayListScheduler()->getTransportLoop()->isLoopActive();
-        loopStartPositionMarker->setVisible(loopActive);
-        loopEndPositionMarker->setVisible(loopActive);
+        loopRangeMarker->setVisible(loopActive);
         
         audioTrackListBox->getHeaderComponent()->resized();
     }
@@ -185,26 +205,28 @@ public:
         auto viewPortBounds = audioTrackListBox->getViewport()->getViewedComponent()->getLocalBounds();
         viewPortBounds.setWidth(std::max(contentWidth, viewPortBounds.getWidth()));
         gridView->setBounds(viewPortBounds);
-        
+
+        // the grid's and the ruler's spacing depend on the zoom factor, so
+        // they need a repaint even when their bounds did not change (the
+        // header's timer only moves its markers, it never repaints the ruler)
+        gridView->repaint();
+
         audioTrackListBox->getHeaderComponent()->resized();
+        audioTrackListBox->getHeaderComponent()->repaint();
     }
 
     void zoomIn()
     {
         zoomHandler->zoomIn();
-        setContentWidth(zoomHandler->getContentWidth());
-        regionSelector->updateFromEngine();
-        dragZoomControl->updateFromEngine();
-        zoomHandler->focusViewOnPlayPosition();
+        pendingFocusPlayPosition = true;
+        triggerAsyncUpdate();
     }
 
     void zoomOut()
     {
         zoomHandler->zoomOut();
-        setContentWidth(zoomHandler->getContentWidth());
-        regionSelector->updateFromEngine();
-        dragZoomControl->updateFromEngine();
-        zoomHandler->focusViewOnPlayPosition();
+        pendingFocusPlayPosition = true;
+        triggerAsyncUpdate();
     }
     
     void pageLeft()
@@ -227,12 +249,10 @@ public:
         
         // absolute position in clocks
         auto clocks = zoomHandler->xToClocksWithOffset(x);
-        
+
         zoomHandler->setZoomFactor(zoomHandler->getZoomFactor() * static_cast<double>(scaleFactor));
-        setContentWidth(zoomHandler->getContentWidth());
-        regionSelector->updateFromEngine();
-        
-        zoomHandler->centerView(clocks, center);
+        pendingZoomCenter = std::make_pair(clocks, center);
+        triggerAsyncUpdate();
     }
     
     RegionSelector* getRegionSelector() const { return regionSelector.get(); }
@@ -269,7 +289,7 @@ public:
 
 protected:
     
-    std::shared_ptr<audium::AudiumEngine>               audiumEngine;
+    std::shared_ptr<audium::AudiumEngine>       audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;
     std::shared_ptr<RegionSelector>             regionSelector;
     
@@ -277,12 +297,43 @@ protected:
     std::shared_ptr<AudioTrackListBox>          audioTrackListBox;
     std::unique_ptr<AudioTrackListBoxModel>     audioTrackListBoxModel;
     std::unique_ptr<PositionMarker>             playPositionMarker;
-    std::unique_ptr<PositionMarker>             loopStartPositionMarker;
-    std::unique_ptr<PositionMarker>             loopEndPositionMarker;
+    std::unique_ptr<PositionMarker>             loopRangeMarker;
+
     std::unique_ptr<DragZoomControl>            dragZoomControl;
     std::unique_ptr<ArrangementOverview>        arrangementOverview;
-    
+
 private:
-    
+
+    // Zoom gestures only store the new zoom factor and trigger this deferred
+    // update, so a burst of pinch/key events queued behind a slow rebuild
+    // collapses into a single rebuild instead of one per event.
+    void handleAsyncUpdate() override
+    {
+        setContentWidth(zoomHandler->getContentWidth());
+        dragZoomControl->updateFromEngine();
+
+        if (pendingZoomCenter.has_value())
+        {
+            zoomHandler->centerView(pendingZoomCenter->first, pendingZoomCenter->second);
+            pendingZoomCenter.reset();
+        }
+
+        if (pendingFocusPlayPosition)
+        {
+            pendingFocusPlayPosition = false;
+            zoomHandler->focusViewOnPlayPosition();
+        }
+
+        // last: the selector's position depends on the scroll offset the
+        // centring/focus calls above may have changed
+        regionSelector->updateFromEngine();
+    }
+
+    // position (clocks) to keep under the pinch gesture, and where in the
+    // visible range (fraction) to keep it
+    std::optional<std::pair<double, double>>    pendingZoomCenter;
+
+    bool                                        pendingFocusPlayPosition = false;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ArrangementEditBaseComponent)
 };

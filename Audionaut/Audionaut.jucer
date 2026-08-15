@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
-              bundleIdentifier="com.voltmer-systems.audionaut" version="1.1.2"
+              bundleIdentifier="com.voltmer-systems.audionaut" version="1.2.0"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
               cppLanguageStandard="20" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0">
   <MAINGROUP id="HQG80L" name="Audionaut">
@@ -44,6 +44,35 @@
         <FILE id="WWvB0P" name="Preferences.h" compile="0" resource="0" file="Source/Util/Preferences.h"/>
       </GROUP>
       <GROUP id="{06AEFCBA-E882-6AD0-6A51-92C0D7211F2A}" name="Engine">
+        <GROUP id="{F264B579-6549-549F-C533-C737634896B7}" name="Analysis">
+          <FILE id="aWMWyc" name="AnalysisProvider.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/AnalysisProvider.cpp"/>
+          <FILE id="H2DipS" name="AnalysisProvider.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/AnalysisProvider.h"/>
+          <FILE id="sbicSc" name="SBicSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/SBicSegmenter.cpp"/>
+          <FILE id="sbicSh" name="SBicSegmenter.h" compile="0" resource="0" file="Source/Engine/Analysis/SBicSegmenter.h"/>
+          <FILE id="anCchC" name="AnalysisCache.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/AnalysisCache.cpp"/>
+          <FILE id="anCchH" name="AnalysisCache.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/AnalysisCache.h"/>
+          <FILE id="onSegC" name="OnsetSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/OnsetSegmenter.cpp"/>
+          <FILE id="onSegH" name="OnsetSegmenter.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/OnsetSegmenter.h"/>
+          <FILE id="btSegC" name="BeatSegmenter.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/BeatSegmenter.cpp"/>
+          <FILE id="btSegH" name="BeatSegmenter.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/BeatSegmenter.h"/>
+          <FILE id="anWrkC" name="AnalysisWorker.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/AnalysisWorker.cpp"/>
+          <FILE id="anWrkH" name="AnalysisWorker.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/AnalysisWorker.h"/>
+          <FILE id="evMrgC" name="EventMerger.cpp" compile="1" resource="0"
+                file="Source/Engine/Analysis/EventMerger.cpp"/>
+          <FILE id="evMrgH" name="EventMerger.h" compile="0" resource="0"
+                file="Source/Engine/Analysis/EventMerger.h"/>
+        </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
           <FILE id="S0kUtq" name="AudiumTransportSource.cpp" compile="1" resource="0"
@@ -99,6 +128,10 @@
         <GROUP id="{6B870B77-B413-A965-D2A4-8A537459E789}" name="AutoEdit">
           <FILE id="SOpcEI" name="AutoEdit.cpp" compile="1" resource="0" file="Source/Engine/AutoEdit/AutoEdit.cpp"/>
           <FILE id="RqBEzK" name="AutoEdit.h" compile="0" resource="0" file="Source/Engine/AutoEdit/AutoEdit.h"/>
+          <FILE id="AePmCp" name="AutoEditParameter.cpp" compile="1" resource="0"
+                file="Source/Engine/AutoEdit/AutoEditParameter.cpp"/>
+          <FILE id="AePmHd" name="AutoEditParameter.h" compile="0" resource="0"
+                file="Source/Engine/AutoEdit/AutoEditParameter.h"/>
         </GROUP>
         <GROUP id="{44EAE852-D94A-E010-D086-40CC86FE8C48}" name="Channel">
           <FILE id="styheO" name="AudioChannel.cpp" compile="1" resource="0"
@@ -124,6 +157,10 @@
                 file="Source/Engine/Group/AudioTrackContainer.cpp"/>
           <FILE id="SIX9na" name="AudioTrackContainer.h" compile="0" resource="0"
                 file="Source/Engine/Group/AudioTrackContainer.h"/>
+          <FILE id="Vw3kQp" name="AudioTrackViewState.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/AudioTrackViewState.cpp"/>
+          <FILE id="Nf8xZr" name="AudioTrackViewState.h" compile="0" resource="0"
+                file="Source/Engine/Group/AudioTrackViewState.h"/>
           <FILE id="Xw6tEJ" name="AudioRegionAdapter.cpp" compile="1" resource="0"
                 file="Source/Engine/Group/AudioRegionAdapter.cpp"/>
           <FILE id="otPqzW" name="AudioRegionAdapter.h" compile="0" resource="0"
@@ -246,18 +283,16 @@
         </GROUP>
         <FILE id="Z0WoBP" name="UIContext.h" compile="0" resource="0" file="Source/Interface/UIContext.h"/>
         <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
+          <FILE id="AsmDlg" name="AssembleDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AssembleDialog.h"/>
           <FILE id="Y3mnJv" name="FileBrowserView.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/FileBrowserView.h"/>
+          <FILE id="fltTlW" name="FloatingToolWindow.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/FloatingToolWindow.h"/>
           <FILE id="vHwlEq" name="NewAudioTrackDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/NewAudioTrackDialog.h"/>
           <FILE id="XUO0Mz" name="AboutWindowComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AboutWindowComponent.h"/>
-          <FILE id="HO4Dqt" name="AutoEditDialog.h" compile="0" resource="0"
-                file="Source/Interface/Dialogs/AutoEditDialog.h"/>
-          <FILE id="y2L75o" name="AutoEditComponent.cpp" compile="1" resource="0"
-                file="Source/Interface/Dialogs/AutoEditComponent.cpp"/>
-          <FILE id="rN8IxH" name="AutoEditComponent.h" compile="0" resource="0"
-                file="Source/Interface/Dialogs/AutoEditComponent.h"/>
           <FILE id="oKVp3j" name="ExportAudioDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/ExportAudioDialog.h"/>
           <FILE id="f9OpEm" name="ExportAudioComponent.h" compile="0" resource="0"
@@ -385,6 +420,10 @@
                 file="Source/Interface/Models/PlayListItemListBoxModel.h"/>
         </GROUP>
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
+          <FILE id="AeOvCp" name="AutoEditOverlayControl.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/AutoEditOverlayControl.cpp"/>
+          <FILE id="AeOvHd" name="AutoEditOverlayControl.h" compile="0" resource="0"
+                file="Source/Interface/Controls/AutoEditOverlayControl.h"/>
           <FILE id="Y7l77u" name="LoopDraggerControl.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/LoopDraggerControl.cpp"/>
           <FILE id="nuQDk2" name="LoopDraggerControl.h" compile="0" resource="0"
@@ -433,6 +472,14 @@
           <FILE id="aCyjt9" name="FadeInOutView.cpp" compile="1" resource="0"
                 file="Source/Interface/Views/FadeInOutView.cpp"/>
           <FILE id="FdmpTf" name="FadeInOutView.h" compile="0" resource="0" file="Source/Interface/Views/FadeInOutView.h"/>
+          <FILE id="segViC" name="SegmentationView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/SegmentationView.cpp"/>
+          <FILE id="segViH" name="SegmentationView.h" compile="0" resource="0"
+                file="Source/Interface/Views/SegmentationView.h"/>
+          <FILE id="aePvwC" name="AutoEditPreviewView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AutoEditPreviewView.cpp"/>
+          <FILE id="aePvwH" name="AutoEditPreviewView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AutoEditPreviewView.h"/>
           <FILE id="hpKHS1" name="GridView.h" compile="0" resource="0" file="Source/Interface/Views/GridView.h"/>
           <FILE id="Fx8wUZ" name="ArrangementOverview.h" compile="0" resource="0"
                 file="Source/Interface/Views/ArrangementOverview.h"/>
@@ -440,10 +487,10 @@
                 file="Source/Interface/Views/WaveFormViewBase.cpp"/>
           <FILE id="nZmqga" name="WaveFormViewBase.h" compile="0" resource="0"
                 file="Source/Interface/Views/WaveFormViewBase.h"/>
-          <FILE id="m8P0Gz" name="AudioRegionView.cpp" compile="1" resource="0"
-                file="Source/Interface/Views/AudioRegionView.cpp"/>
-          <FILE id="D4QJ9Q" name="AudioRegionView.h" compile="0" resource="0"
-                file="Source/Interface/Views/AudioRegionView.h"/>
+          <FILE id="m8P0Gz" name="AudioClipView.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/AudioClipView.cpp"/>
+          <FILE id="D4QJ9Q" name="AudioClipView.h" compile="0" resource="0"
+                file="Source/Interface/Views/AudioClipView.h"/>
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
         <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">
@@ -451,7 +498,19 @@
                 file="Resources/audionaut_logo_512x512.png"/>
           <FILE id="gdiYPG" name="audionaut_logo_1024x1024.png" compile="0" resource="1"
                 file="Resources/audionaut_logo_1024x1024.png"/>
-          <FILE id="zKjXO3" name="zoomin.svg" compile="0" resource="1" file="Resources/zoomin.svg"/>
+          <FILE id="FBwe0J" name="zoomin-inv.svg" compile="0" resource="1" file="Resources/zoomin-inv.svg"/>
+          <GROUP id="{7A1C4E90-2B63-4D18-9F52-1E8A6C0D3B47}" name="Fonts">
+            <FILE id="ftInR0" name="Inter-Regular.ttf" compile="0" resource="1"
+                  file="Resources/Fonts/Inter-Regular.ttf"/>
+            <FILE id="ftInB0" name="Inter-Bold.ttf" compile="0" resource="1"
+                  file="Resources/Fonts/Inter-Bold.ttf"/>
+            <FILE id="ftInI0" name="Inter-Italic.ttf" compile="0" resource="1"
+                  file="Resources/Fonts/Inter-Italic.ttf"/>
+            <FILE id="ftInBI" name="Inter-BoldItalic.ttf" compile="0" resource="1"
+                  file="Resources/Fonts/Inter-BoldItalic.ttf"/>
+            <FILE id="ftInLC" name="Inter-LICENSE.txt" compile="0" resource="0"
+                  file="Resources/Fonts/Inter-LICENSE.txt"/>
+          </GROUP>
         </GROUP>
       </GROUP>
     </GROUP>
@@ -461,17 +520,18 @@
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
-               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
-               smallIcon="qhU3Rr" bigIcon="gdiYPG" appSandboxInheritance="1"
-               appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
+               extraDefs="LINK_PLATFORM_MACOSX=1"
+               appSandbox="1" useLegacyBuildSystem="0" smallIcon="qhU3Rr" bigIcon="gdiYPG"
+               appSandboxInheritance="1" appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
-               xcodeValidArchs="arm64,arm64e,x86_64" documentExtensions="audium"
-               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="14" microphonePermissionNeeded="1"
-               localNetworkPermissionNeeded="1">
+               xcodeValidArchs="arm64,arm64e" documentExtensions="audium" documentTypeIsPackage="1"
+               iosDevelopmentTeamID="Q89CZBX79G"
+               buildNumber="15" microphonePermissionNeeded="1" localNetworkPermissionNeeded="1"
+               extraLinkerFlags="$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
                        customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
+        <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
                        customXcodeFlags="INSTALL_PATH=/Applications"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
@@ -492,12 +552,12 @@
       </MODULEPATHS>
     </XCODE_MAC>
     <LINUX_MAKE targetFolder="Builds/LinuxMakefile" smallIcon="qhU3Rr" bigIcon="gdiYPG"
-                extraDefs="LINK_PLATFORM_LINUX=1">
+                extraDefs="LINK_PLATFORM_LINUX=1" extraLinkerFlags="../../../Submodules/essentia/build/src/libessentia.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -ldrm">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source" extraCompilerFlags="-Wno-multichar"
-                       targetName="audionaut"/>
-        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source" extraCompilerFlags="-Wno-multichar"
-                       targetName="audionaut"/>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
+                       extraCompilerFlags="-Wno-multichar" targetName="audionaut"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
+                       extraCompilerFlags="-Wno-multichar" targetName="audionaut"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/JUCE/modules"/>
@@ -516,11 +576,11 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
-    <VS2022 targetFolder="Builds/VisualStudio2022" extraDefs="LINK_PLATFORM_WINDOWS=1"
+    <VS2026 targetFolder="Builds/VisualStudio2026" extraDefs="LINK_PLATFORM_WINDOWS=1"
             smallIcon="qhU3Rr" bigIcon="gdiYPG">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source" targetName="Audionaut"/>
-        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source" targetName="Audionaut"/>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/JUCE/modules"/>
@@ -528,6 +588,7 @@
         <MODULEPATH id="juce_audio_devices" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_audio_formats" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_audio_processors" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_audio_utils" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_core" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_data_structures" path="../Submodules/JUCE/modules"/>
@@ -536,9 +597,8 @@
         <MODULEPATH id="juce_graphics" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_gui_basics" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_gui_extra" path="../Submodules/JUCE/modules"/>
-        <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
-    </VS2022>
+    </VS2026>
   </EXPORTFORMATS>
   <MODULES>
     <MODULE id="juce_analytics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>

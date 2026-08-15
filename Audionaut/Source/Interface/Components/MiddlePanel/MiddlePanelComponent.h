@@ -114,6 +114,54 @@ public:
         }
     }
     
+    /**
+     * Writes the arrangement's zoom factor and scroll position into the project's UI state.
+     */
+    void writeUiState(json& uiState)
+    {
+        json jsonArrangement;
+        jsonArrangement["zoom_factor"] = zoomHandler->getZoomFactor();
+        jsonArrangement["scroll_x"] = arrangementComponent->getHorizontalScrollOffset();
+        jsonArrangement["scroll_y"] = arrangementComponent->getVerticalScrollOffset();
+        uiState["arrangement"] = jsonArrangement;
+    }
+
+    /**
+     * Restores the arrangement's zoom factor and scroll position from the project's UI state.
+     * Missing entries (new or older projects) fall back to the defaults.
+     */
+    void readUiState(const json& uiState)
+    {
+        auto zoomFactor = ZoomHandler::defaultZoomFactor;
+        auto scrollX = 0.0;
+        auto scrollY = 0.0;
+
+        if (uiState.contains("arrangement")) {
+            const auto& jsonArrangement = uiState["arrangement"];
+
+            if (jsonArrangement.contains("zoom_factor"))
+                zoomFactor = jsonArrangement["zoom_factor"].template get<double>();
+
+            if (jsonArrangement.contains("scroll_x"))
+                scrollX = jsonArrangement["scroll_x"].template get<double>();
+
+            if (jsonArrangement.contains("scroll_y"))
+                scrollY = jsonArrangement["scroll_y"].template get<double>();
+        }
+
+        zoomHandler->setZoomFactor(zoomFactor);
+
+        // the scroll bar ranges are only valid once the content has been laid
+        // out for the restored zoom factor
+        arrangementComponent->updateUI();
+
+        arrangementComponent->setHorizontalScrollOffset(scrollX);
+        arrangementComponent->setVerticalScrollOffset(scrollY);
+
+        arrangementComponent->onScrollContext();
+        channelsComponent->setVerticalScrollOffset(arrangementComponent->getVerticalScrollOffset());
+    }
+
     void zoomIn()
     {
         getVisibleComponent()->zoomIn();

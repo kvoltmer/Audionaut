@@ -102,7 +102,7 @@ public:
      */
     void selectAllObjects(bool bSelected) {
         for (auto object : objects)
-            object->setSelected(bSelected, false);
+            object->setSelected(bSelected);
     }
 
     /**
@@ -155,7 +155,7 @@ public:
         selectAllObjects(false);
         for (auto i = 0; i < selectedRows.size(); i++) {
             if (auto object = objects[selectedRows[i]]) {
-                object->setSelected(true, false);
+                object->setSelected(true);
             }
         }
     }

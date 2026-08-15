@@ -19,6 +19,8 @@
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Recording/Recording.h"
 #include "Engine/Recording/RecordingActionHandler.h"
+#include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Analysis/AnalysisWorker.h"
 
 namespace audium {
 
@@ -36,7 +38,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto formatManager              = std::make_shared<juce::AudioFormatManager>();
     
-    auto audioThumbnailCache        = std::make_shared<juce::AudioThumbnailCache>(64);
+    // one thumbnail per clip channel shares this cache - with only 64 slots a
+    // project with many clips thrashes it and re-reads audio files on paint
+    auto audioThumbnailCache        = std::make_shared<juce::AudioThumbnailCache>(512);
     
     auto playback                   = std::make_shared<audium::Playback>();
     
@@ -45,27 +49,44 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording);
     
     auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback);
-    
+
+    // A single analysis provider (and its cache) is shared across all tracks
+    // and owned by the track container; the cache persists to AnalysisData.json.
+    // The AnalysisWorker drives that provider on a low-priority background thread
+    // and is injected into the resource container, which enqueues each newly
+    // added audio file for analysis.
+    auto sBicSegmenter              = std::make_shared<SBicSegmenter>();
+    auto onsetSegmenter             = std::make_shared<OnsetSegmenter>();
+    auto beatSegmenter              = std::make_shared<BeatSegmenter>();
+    auto analysisCache              = std::make_shared<AnalysisCache>();
+    auto analysisProvider           = std::make_shared<AnalysisProvider>(sBicSegmenter,
+                                                                         onsetSegmenter,
+                                                                         beatSegmenter,
+                                                                         analysisCache);
+    auto analysisWorker             = std::make_shared<AnalysisWorker>(analysisProvider);
+
     auto audioResourceContainer     = std::make_shared<AudioResourceContainer>(audioDeviceManager,
                                                                                formatManager,
                                                                                audioThumbnailCache,
                                                                                tempoProvider,
-                                                                               transportSourceContainer);
-    
+                                                                               transportSourceContainer,
+                                                                               analysisWorker);
+
     auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
     
     auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer);
     
     auto transportLoop              = std::make_shared<TransportLoop>(undoManager,
                                                                       tempoProvider);
-    
+
     auto audioTrackContainer        = std::make_shared<AudioTrackContainer>(undoManager,
                                                                             tempoProvider,
                                                                             audioResourceContainer,
                                                                             transportSourceContainer,
                                                                             selectionManager,
                                                                             audioBusInterface,
-                                                                            transportLoop);
+                                                                            transportLoop,
+                                                                            analysisProvider);
     
     auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
     

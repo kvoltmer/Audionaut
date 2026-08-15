@@ -9,18 +9,20 @@
 #include <memory>
 #include "WaveFormViewBase.h"
 #include "Interface/Views/FadeInOutView.h"
+#include "Interface/Views/SegmentationView.h"
 #include "Interface/Controls/SliderControl.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
 class ZoomHandler;
 
-class AudioRegionView : public WaveFormViewBase
+class AudioClipView : public WaveFormViewBase
 {
 public:
-    AudioRegionView(juce::Component *parentComponent_,
+    AudioClipView(juce::Component *parentComponent_,
                     std::shared_ptr<audium::AudiumEngine> audiumEngine_,
                     std::shared_ptr<audium::AudioResource> audioResource_,
                     std::shared_ptr<ZoomHandler> zoomHandler_,
@@ -40,15 +42,33 @@ public:
         // FADE IN OUT VIEW
         fadeInOutView = std::make_unique<FadeInOutView>();
         addAndMakeVisible(fadeInOutView.get());
-        
+
+        // SEGMENTATION VIEW (analysis result overlay)
+        segmentationView = std::make_unique<SegmentationView>();
+        segmentationView->setZoomHandler(zoomHandler);
+        segmentationView->setInterceptsMouseClicks(false, false);
+        addAndMakeVisible(segmentationView.get());
+
         // VOLUME
         volumeSlider = std::make_unique<SliderControl>(juce::String(), regionSelector);
         addAndMakeVisible(volumeSlider.get());
-        ChannelComponent::configureVolumeSlider(volumeSlider.get(), 36.0);
-        
-        
+        AudiumLookAndFeel::configureVolumeSlider(volumeSlider.get(), 36.0);
+
+        // Refresh the segmentation overlay whenever a background/foreground
+        // analysis finishes (see AnalysisProvider::analyzeFile), not just on
+        // the next explicit updateUI()/setPlayListItem() call.
+        if (auto analysisProvider = audiumEngine_->getAudioTrackContainer()->getAnalysisProvider())
+            analysisProvider->addChangeListener(this);
     }
-    
+
+    ~AudioClipView() override
+    {
+        if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
+            analysisProvider->removeChangeListener(this);
+    }
+
+    void changeListenerCallback (juce::ChangeBroadcaster* source) override;
+
     double getRegionStart(audium::TimeContextType context) const override;
     
     double getClipGain() const override;
@@ -59,11 +79,26 @@ public:
     
     void setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible);
 
+    // Pulls the track's stored analysis results for this region's file into
+    // the segmentation overlay. Public so PlayListItemComponent can refresh
+    // the overlay (e.g. when analysis visibility is toggled) without
+    // rebuilding the waveform/thumbnail state.
+    void refreshSegments();
+
 private:
-    
+
+    // the inputs of the last refreshSegments() run; a call where none of them
+    // changed skips the locked analysis-cache queries and the overlay update
+    std::uint64_t lastAnalysisGeneration = 0;
+    juce::String lastAnalysisPath;
+    double lastRegionStartSeconds = 0.0;
+    int lastVisibleTypesMask = -1;
+
     std::unique_ptr<FadeInOutView> fadeInOutView;
-    
+
+    std::unique_ptr<SegmentationView> segmentationView;
+
     std::unique_ptr<SliderControl> volumeSlider;
-    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRegionView)
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioClipView)
 };

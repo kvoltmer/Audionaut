@@ -12,7 +12,7 @@
 namespace audium {
 
 int AudioChannel::getChannelHeight() const noexcept {
-    if (audioTrack.getMinimized())
+    if (audioTrack.getViewState().getMinimized())
         return 0;
     
     return data.height;

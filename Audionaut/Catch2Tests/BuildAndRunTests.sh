@@ -8,5 +8,5 @@ set -e
 
 BUILD_DIR=cmake-build
 
-/opt/homebrew/bin/cmake -B ${BUILD_DIR}
-/opt/homebrew/bin/cmake --build ${BUILD_DIR}
+cmake -B ${BUILD_DIR}
+cmake --build ${BUILD_DIR}

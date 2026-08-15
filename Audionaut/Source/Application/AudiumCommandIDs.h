@@ -39,6 +39,8 @@ namespace CommandIDs
         duplicate               = 0x300062,
         cleanupRegions          = 0x300063,
         splitRegion             = 0x300064,
+        assembleSequential      = 0x300065,
+        assembleRandom          = 0x300066,
 
         enableSnapToGrid        = 0x300070,
         zoomIn                  = 0x300071,
@@ -55,6 +57,11 @@ namespace CommandIDs
        
         exportSelectedItemsId   = 0xf836743,
         copyChansToNewTrackId   = 0xf836744,
+
+        showSBic                = 0x500010,
+        showOnsets              = 0x500011,
+        showBeats               = 0x500012,
+        showBeatsDegara         = 0x500013,
 
         lastCommandIDEntry
     };

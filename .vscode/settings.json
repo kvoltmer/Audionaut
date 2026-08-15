@@ -1,3 +1,4 @@
 {
-    "makefile.makefilePath": "Audionaut/Builds/LinuxMakefile/Makefile"
+    "makefile.makefilePath": "Audionaut/Builds/LinuxMakefile/Makefile",
+    "cmake.sourceDirectory": "/home/klus/dev/Audionaut/Audionaut/Catch2Tests"
 }

@@ -42,7 +42,7 @@ public:
     {
     }
     
-    ~PlayListContainer();
+    ~PlayListContainer() override;
     
     // called from UI
     std::shared_ptr<PlayListItem> createPlayListItemAtPositionUI(std::shared_ptr<AudioRegion> audioRegion,

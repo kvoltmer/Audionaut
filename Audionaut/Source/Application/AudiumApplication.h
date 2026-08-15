@@ -14,12 +14,15 @@
 #include "Util/Preferences.h"
 
 class SettingsDialog;
+class AboutSplashScreen;
+class MainComponent;
 
 class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
 {
 public:
-    AudiumApplication() = default;
-    
+    AudiumApplication();
+    ~AudiumApplication() override;
+
     static AudiumApplication& getApp();
     static juce::ApplicationCommandManager& getCommandManager();
     static audium::Preferences& getPreferences();
@@ -27,7 +30,7 @@ public:
     const juce::String getApplicationName() override       { return ProjectInfo::projectName; }
     const juce::String getApplicationVersion() override    { return ProjectInfo::versionString; }
     const juce::String getApplicationCompanyName()         { return ProjectInfo::companyName; }
-    bool moreThanOneInstanceAllowed() override             { return true; }
+    bool moreThanOneInstanceAllowed() override             { return false; }
 
     void initialise (const juce::String& commandLine) override;
 
@@ -65,7 +68,16 @@ public:
     void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
     
     void updateUI();
-    
+
+    /// the window's content component, or nullptr while the window is not up yet
+    MainComponent* getMainComponent() const;
+
+    /// captures the view state (zoom / scroll) into the engine so it gets saved with the project
+    void captureUiState();
+
+    /// applies the view state (zoom / scroll) that was loaded with the project
+    void restoreUiState();
+
     bool fileBrowserVisible() const;
     
     AudiumLookAndFeel lookAndFeel;
@@ -82,6 +94,7 @@ private:
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
     std::unique_ptr<juce::Component> aboutComponent;
+    std::unique_ptr<AboutSplashScreen> splashScreen;
     std::unique_ptr<juce::Component> fileBrowserView;
     std::shared_ptr<SettingsDialog> settingsDialog;
     

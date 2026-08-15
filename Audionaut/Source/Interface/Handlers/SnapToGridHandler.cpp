@@ -3,6 +3,9 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <algorithm>
+#include <cmath>
+
 #include "SnapToGridHandler.h"
 #include "Interface/Handlers/ZoomHandler.h"
 
@@ -85,17 +88,18 @@ int roundBeatsToGrid(int x)
 const std::vector<SnapToGridHandler::Segment> SnapToGridHandler::getGridInSegments(const double widthInPixels,
                                                                                    const double lengthInSegmentType,
                                                                                    SnapToGridHandler::SegmentType type,
-                                                                                   bool includePlayListItems)
+                                                                                   bool includePlayListItems,
+                                                                                   double startInSegmentType)
 {
     std::vector<SnapToGridHandler::Segment> segmentList;
 
     if (widthInPixels > 0.0 &&
         lengthInSegmentType > 0.0) {
-        
+
         auto pixelsPerSegmentType = widthInPixels / lengthInSegmentType;
-        
+
         auto grid = 0.0;
-                
+
         switch (type) {
             case seconds:
                 grid = roundSecondsToGrid(static_cast<int>(100.0 / pixelsPerSegmentType));
@@ -109,11 +113,15 @@ const std::vector<SnapToGridHandler::Segment> SnapToGridHandler::getGridInSegmen
             default:
                 break;
         }
-        
-        auto numSegments = (lengthInSegmentType / grid) + 1;
+
+        // the last grid line at or before the requested start, so a segment
+        // whose label reaches into the range is included as well
+        const auto firstSegment = std::floor(std::max(0.0, startInSegmentType) / grid);
+
+        auto numSegments = (lengthInSegmentType / grid) + 2;
         for (auto i = 0; i < numSegments; i++) {
             SnapToGridHandler::Segment seg;
-            seg.position = i * grid;
+            seg.position = (firstSegment + i) * grid;
             seg.grid = grid;
             seg.type = type;
             segmentList.push_back(seg);

@@ -8,15 +8,16 @@
 void ChannelGroupHeaderComponent::paint (juce::Graphics& g)
 {
     if (audioTrack->isSelected()) {
-        auto colour = findColour(audium::secondaryBackgroundColourId).brighter().withAlpha(0.3f);
-        g.fillAll (colour);
+        // same tint as the selected playlist header in the right panel, so
+        // the selection reads as connected across the views
+        g.fillAll (audioTrack->getViewState().getColour().withAlpha(0.25f));
     }
-    
+
     g.setColour (juce::Colours::black);
     g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
     
     if (insertBefore) {
-        g.setColour(audioTrack->getColour());
+        g.setColour(audioTrack->getViewState().getColour());
         g.fillRect(0, 0, getWidth(), 3);
     }
 }

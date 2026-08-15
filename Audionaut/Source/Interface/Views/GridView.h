@@ -28,21 +28,24 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        paintGridInBeats(g, getLocalBounds().toFloat());
-        
-        //std::cout << "GridView: " << getLocalBounds().getWidth() << " " << getLocalBounds().getHeight() << std::endl;
+        // this component spans the whole content width (millions of pixels
+        // when zoomed in), so segment generation is bounded by the dirty
+        // region rather than the full bounds
+        paintGridInBeats(g, getLocalBounds().toFloat(), g.getClipBounds().toFloat());
     }
-    
-    void paintGridInBeats(juce::Graphics& g, juce::Rectangle<float> drawingArea)
+
+    void paintGridInBeats(juce::Graphics& g, juce::Rectangle<float> drawingArea, juce::Rectangle<float> dirtyArea)
     {
         auto range = zoomHandler->clocksToX(currentRangeClocks);
-        auto lengthInBeats = zoomHandler->xToBeats(drawingArea.getWidth());
+        auto startInBeats = std::max(0.0, zoomHandler->xToBeats(dirtyArea.getX()));
+        auto lengthInBeats = zoomHandler->xToBeats(dirtyArea.getWidth());
         auto snapToGridHandler = zoomHandler->getSnapToGridHandler();
         auto includePlayListItems = !range.isEmpty();
-        auto segmentList = snapToGridHandler->getGridInSegments(drawingArea.getWidth(),
+        auto segmentList = snapToGridHandler->getGridInSegments(dirtyArea.getWidth(),
                                                                 lengthInBeats,
                                                                 SnapToGridHandler::beats,
-                                                                includePlayListItems);
+                                                                includePlayListItems,
+                                                                startInBeats);
 
         for (auto seg : segmentList) {
             auto x = zoomHandler->beatsToX(seg.position);

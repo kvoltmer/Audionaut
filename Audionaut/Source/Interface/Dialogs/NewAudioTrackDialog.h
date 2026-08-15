@@ -96,7 +96,7 @@ private:
         auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
         
         auto track = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(name);
-        track->setColour(audiumEngine->getAudioTrackContainer()->getNewAudioTrackColour());
+        track->getViewState().setColour(audiumEngine->getAudioTrackContainer()->getNewAudioTrackColour());
         track->ensureNumChannels(numChannels);
         auto numTotalChannels = audiumEngine->getAudioTrackContainer()->getNumAudioTrackChannels();
         if (numTotalChannels >= MAX_AUDIO_CHANNELS) {

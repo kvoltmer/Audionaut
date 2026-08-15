@@ -16,6 +16,7 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 #include "Engine/Resource/ChannelMapping.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
 namespace audium {
 
@@ -43,11 +44,6 @@ std::vector<std::shared_ptr<AudioResource>> AudioTrack::getAudioResources() cons
     return audioResourceContainer.getAudioResourcesForTrack(const_cast<AudioTrack*>(this));
 }
 
-void AudioTrack::setColour(juce::Colour colour)
-{
-    groupColour = colour;
-}
-
 const int AudioTrack::getId() const
 {
     return owner.getAudioTrackId(std::dynamic_pointer_cast<const AudioTrack>(getSharedPtr()));
@@ -61,10 +57,8 @@ const int AudioTrack::getChannelOffset() const
 bool AudioTrack::writeToJson (json& output)
 {
     output["name"] = name;
-    output["colour"] = groupColour.toString().toStdString();
-    if (isMinimized)
-        output["minimized"] = isMinimized;
-    
+    viewState.writeToJson(output);
+
     for (auto channel : audioChannelContainer->getObjects())
     {
         output["channels"] += channel->data;
@@ -164,13 +158,9 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     
     if (input.contains("name"))
         name = input["name"].template get<std::string>();
-    
-    if (input.contains("minimized"))
-        isMinimized = input["minimized"].template get<bool>();
-    
-    if (input.contains("colour"))
-        groupColour = juce::Colour::fromString(input["colour"].template get<std::string>());
-    
+
+    viewState.readFromJson(input);
+
     // Channels
     auto jsonChannels = input["channels"];
     
@@ -282,17 +272,6 @@ std::shared_ptr<AudioChannel> AudioTrack::getChannel(int channelNumber) const
         return audioChannelContainer->getObject((std::size_t)channelNumber);
     }
     return nullptr;
-}
-
-int AudioTrack::getTotalHeight() const
-{
-    int height = 0;
-    auto channels = getNumAudioTrackChannels();
-    for (auto c = 0; c < channels; c++)
-    {
-        height += getChannel(c)->getChannelHeight();
-    }
-    return height;
 }
 
 void AudioTrack::setGain(float gain, int channelNumber) {
@@ -503,26 +482,11 @@ std::shared_ptr<ResourceGroup> AudioTrack::getDefaultResourceGroup() const
 }
 
 
-void AudioTrack::setSelected(bool bSelected, bool selectChildren)
-{
-    if (selectChildren)
-    {
-        audioChannelContainer->selectAllObjects(bSelected);
-        resourceGroupContainer->selectAllObjects(bSelected);
-        getPlayListContainer()->playListItems.selectAllObjects(bSelected);
-    }
-    
-    audium::Selectable::setSelected(bSelected, selectChildren);
+void AudioTrack::setSelected(bool bSelected)
+{    
+    audium::Selectable::setSelected(bSelected);
 }
 
-
-void AudioTrack::setChannelHeight(int height)
-{
-    for (auto i = 0; i < getNumAudioTrackChannels(); i++)
-    {
-        getChannel(i)->setChannelHeight(height);
-    }
-}
 
 std::list<std::shared_ptr<PositionableBase>> AudioTrack::getPositionableItems() const
 {
@@ -748,9 +712,7 @@ std::shared_ptr<PlayListItem> AudioTrack::createDefaultPlayListItem(std::shared_
         // Format as [Year-Month-Day Hour-Minute-Second]
         auto now = juce::Time::getCurrentTime();
         auto formattedStr = now.formatted ("[%Y-%m-%d_%H-%M-%S]");
-        
-        auto name = "take " + takeString + " " + formattedStr;
-        region->setName(name);
+        region->setName("take " + takeString + " " + formattedStr);
     }
     
     

@@ -49,9 +49,23 @@ Lola/Catch2Tests/_build/AudionautTests_artefacts
 Lola/Catch2Tests/_build/Audionaut_Tests.xcodeproj/xcuserdata/klausvoltmer.xcuserdatad
 Audionaut/Builds/MacOSX/Audionaut.xcodeproj/xcuserdata/klausvoltmer.xcuserdatad
 Audionaut/Builds/MacOSX/Audionaut Workspace.xcworkspace/xcuserdata/klausvoltmer.xcuserdatad
+XCode/AudiumWorkspace.xcworkspace/xcuserdata/klausvoltmer.xcuserdatad
+Audionaut/Builds/Precompiled/Essentia/
 Audionaut/Catch2Tests/_build/catch2-bin
 Audionaut/Catch2Tests/_build/CMakeFiles
 Audionaut/Catch2Tests/_build
 build
+# Coverage builds and reports. The bare `build` entry above matches that exact
+# name only, so a sibling coverage build tree needs its own entry.
+build-coverage
+coverage.xml
+coverage-html/
+*.gcda
+*.gcno
+*.gcov
 Audionaut/Catch2Tests/TestFiles/Sessions/testing.audium
 Audionaut/Builds/MacOSX/Audionaut.xcodeproj/project.xcworkspace/xcuserdata/klausvoltmer.xcuserdatad
+Audionaut/Builds/VisualStudio2026/.vs/
+Audionaut/Builds/VisualStudio2026/x64/
+Audionaut/Builds/VisualStudio2026/Audionaut_App.vcxproj.user
+Audionaut/Catch2Tests/cmake-build/

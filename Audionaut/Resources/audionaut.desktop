@@ -1,0 +1,9 @@
+# Desktop entry for the Linux AppImage (packaged by .github/workflows/release-linux.yml).
+[Desktop Entry]
+Type=Application
+Name=Audionaut
+Comment=Audio editing application for multitrack recordings
+Exec=audionaut
+Icon=audionaut
+Categories=AudioVideo;Audio;AudioVideoEditing;
+Terminal=false

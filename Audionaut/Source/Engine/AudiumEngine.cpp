@@ -5,16 +5,14 @@
 
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
-#include "Engine/AutoEdit/AutoEdit.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Factory/AudioTrackFactory.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
-#include "Engine/Export/AudioExportThread.h"
-#include "Playback/PlaybackDefines.h"
 #include "Application/AudiumApplication.h"
 
 #include "Interface/ColourIds.h"
@@ -82,19 +80,23 @@ void AudiumEngine::cleanup()
     
     currentProjectFile = File();
     currentJson.clear();
+    uiState.clear();
 }
 
 void AudiumEngine::createNewProject(const int numChannels)
 {
     // reset current project dir
     projectDirectory = File();
-    
+
+    // A fresh project starts with no analysis data.
+    audioTrackContainer->getAnalysisProvider()->getCache()->clear();
+
     AudioResourceContainer::createTemporaryProjectDirectory(true);
     
     audium::WaveFormColours::resetWaveFormColour();
     for (auto i = 0; i < 1; i++) {
         auto track = audioTrackContainer->createNewAudioTrack("Track " + String(i+1));
-        track->setColour(audioTrackContainer->getNewAudioTrackColour());
+        track->getViewState().setColour(audioTrackContainer->getNewAudioTrackColour());
         for (auto c = 0; c < numChannels; c++) {
             track->addChannel();
         }
@@ -150,6 +152,12 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
                 AudioResourceContainer::createTemporaryProjectDirectory(true);
                 
                 projectDirectory = inFile.getParentDirectory();
+
+                // Load persisted analysis data before reading the project: the
+                // subsequent rebuild clears tracks but not the analysis cache,
+                // so segments are available as soon as the UI queries them.
+                audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+
                 if (readFromStream(inputStream, true)){
                     currentProjectFile = inFile;
                     undoManager->clearUndoHistory();
@@ -219,24 +227,36 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
             }
             
             audioResourceContainer->changeAudioFilePaths(destinationDirectory);
+
+            // Audio files were relocated into the project - re-point the
+            // analysis cache at their new location so persisted results survive
+            // a Save-As from a temporary/other directory.
+            audioTrackContainer->getAnalysisProvider()->getCache()->rebaseAudioFolder(destinationDirectory);
         }
         // assign new project directory
         projectDirectory = file.getParentDirectory();
         
         juce::TemporaryFile temp (file);
-        juce::FileOutputStream out (temp.getFile());
-        if (out.failedToOpen()) {
-            NullCheckedInvocation::invoke (callback, out.getStatus().getErrorMessage().toStdString());
-            return false;
-        }
-        
-        if (writeToStream(out)) {
-            if (temp.overwriteTargetFileWithTemporary()) {
-                currentProjectFile = file;
-                undoManager->clearUndoHistory();
-                                
-                return true;
+        auto success = false;
+        if (auto out = std::unique_ptr<juce::FileOutputStream>(temp.getFile().createOutputStream())) {
+            if (out->failedToOpen()) {
+                NullCheckedInvocation::invoke(callback, out->getStatus().getErrorMessage().toStdString());
+                return false;
             }
+
+            if (writeToStream (*out.get())) {
+                out->flush();
+                success = true;
+            }
+        }
+
+        if (success && temp.overwriteTargetFileWithTemporary()) {
+            currentProjectFile = file;
+            undoManager->clearUndoHistory();
+
+            // Persist analysis results alongside the project file.
+            audioTrackContainer->getAnalysisProvider()->getCache()->saveToFolder(projectDirectory);
+            return true;
         }
         
         jassertfalse;
@@ -319,37 +339,6 @@ bool AudiumEngine::readFromJson (json& input, bool rebuild)
 int AudiumEngine::getSizeInUnits()
 {
     return audioTrackContainer->getSizeInUnits() + 1;
-}
-
-void AudiumEngine::invokeAutoEdit(AutoEditConfig config)
-{
-    // first bounce the mix
-    auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
-    
-    bounceConfig->fileName = juce::File::createTempFile(".wav");
-    bounceConfig->sampleRate = 48000.0;
-    
-    // create the thread
-    auto thread = std::make_unique<AudioExportThread>(*this, bounceConfig);
-    
-    // start the thread
-    if (thread->runThread())
-    {
-        // thread finished normally..
-        config.bounceFileName = bounceConfig->fileName.getFullPathName().toStdString();
-        
-        std::unique_ptr<AutoEdit> autoEdit(new AutoEdit(audioTrackContainer,
-                                                        audioResourceContainer));
-        if (autoEdit->invokeAutoEdit(config))
-        {
-            autoEdit->applyAutoEditResult(bounceConfig->sampleRate);
-        }
-    }
-    else
-    {
-        // user pressed the cancel button..
-    }
-    
 }
 
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const

@@ -52,7 +52,7 @@ public:
     /**
       * @brief Destructor for `AudioRegion`.
       */
-    ~AudioRegion() = default;
+    ~AudioRegion() override = default;
 
     /**
     * @brief Sends an action message.

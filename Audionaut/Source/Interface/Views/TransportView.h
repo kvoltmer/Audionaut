@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 #include "Interface/ColourIds.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -24,14 +25,17 @@ public:
     {
     }
 
-    void paintTimeLineInMinutesSeconds(juce::Graphics& g, juce::Rectangle<float> rectangle)
+    void paintTimeLineInMinutesSeconds(juce::Graphics& g, juce::Rectangle<float> rectangle, juce::Rectangle<float> dirtyArea)
     {
         // draw the timeline in Min::Sec
-        auto lengthInSeconds = zoomHandler->xToSeconds(rectangle.getWidth());
+        auto startInSeconds = std::max(0.0, zoomHandler->xToSeconds(dirtyArea.getX()));
+        auto lengthInSeconds = zoomHandler->xToSeconds(dirtyArea.getWidth());
         auto snapToGridHandler = zoomHandler->getSnapToGridHandler();
-        auto segmentList = snapToGridHandler->getGridInSegments(rectangle.getWidth(),
+        auto segmentList = snapToGridHandler->getGridInSegments(dirtyArea.getWidth(),
                                                                 lengthInSeconds,
-                                                                SnapToGridHandler::seconds);
+                                                                SnapToGridHandler::seconds,
+                                                                false,
+                                                                startInSeconds);
         
         auto textColour = findColour(audium::defaultTextColourId);
         auto gridColour = juce::Colours::black;
@@ -49,7 +53,7 @@ public:
             
             // draw text Min::Sec
             g.setColour (textColour);
-            g.setFont (12.0f);
+            g.setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions (12.0f)));
             juce::Rectangle<float> bonds(x + 5.f,
                                          rectangle.getY(),
                                          itemWidth,
@@ -62,13 +66,16 @@ public:
         }
     }
     
-    void paintTimeLineInBars(juce::Graphics& g, juce::Rectangle<float> rectangle)
+    void paintTimeLineInBars(juce::Graphics& g, juce::Rectangle<float> rectangle, juce::Rectangle<float> dirtyArea)
     {
-        auto lengthInBars = zoomHandler->xToBars(rectangle.getWidth());
+        auto startInBars = std::max(0.0, zoomHandler->xToBars(dirtyArea.getX()));
+        auto lengthInBars = zoomHandler->xToBars(dirtyArea.getWidth());
         auto snapToGridHandler = zoomHandler->getSnapToGridHandler();
-        auto segmentList = snapToGridHandler->getGridInSegments(rectangle.getWidth(),
+        auto segmentList = snapToGridHandler->getGridInSegments(dirtyArea.getWidth(),
                                                                 lengthInBars,
-                                                                SnapToGridHandler::bars);
+                                                                SnapToGridHandler::bars,
+                                                                false,
+                                                                startInBars);
         
         auto textColour = findColour(audium::defaultTextColourId);
         auto gridColour = juce::Colours::black;
@@ -84,7 +91,7 @@ public:
             
             // draw text
             g.setColour (textColour);
-            g.setFont (12.0f);
+            g.setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions (12.0f)));
             juce::Rectangle<float> bonds(x + 5.f, rectangle.getY(), itemWidth, rectangle.getHeight());
             g.drawText (String(bars + 1), bonds, juce::Justification::centredLeft, true);
         }
@@ -92,16 +99,17 @@ public:
     
     void paint (juce::Graphics& g) override
     {
-        
         auto bounds = getLocalBounds().toFloat();
-        //std::cout << "TransportView: " << getLocalBounds().getWidth() << " " << getLocalBounds().getHeight() << std::endl;
 
-        
+        // spans the whole content width - bound the segment generation by the
+        // dirty region (the header's 60 Hz markers dirty narrow stripes)
+        auto dirtyArea = g.getClipBounds().toFloat();
+
         auto minSec = bounds.withBottom(bounds.getHeight() * 0.5f);
-        paintTimeLineInMinutesSeconds(g, minSec);
-        
+        paintTimeLineInMinutesSeconds(g, minSec, dirtyArea);
+
         auto bars = bounds.withTop(bounds.getHeight() * 0.5f);
-        paintTimeLineInBars(g, bars);
+        paintTimeLineInBars(g, bars, dirtyArea);
     }
 
     void resized() override

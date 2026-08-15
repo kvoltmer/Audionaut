@@ -6,7 +6,161 @@
 #include "PlayListItemDraggerControl.h"
 #include "Application/AudiumCommandIDs.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Engine/Region/AudioRegion.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Resource/AudioResource.h"
+#include "Engine/Analysis/AnalysisProvider.h"
 
+
+const juce::String PlayListItemDraggerControl::getLabelSuffix() const
+{
+    if (! isSelected())
+        return {};
+
+    auto bpmSuffix = getBpmSuffix();
+    if (bpmSuffix.isEmpty())
+        return {};
+
+    // paintLabel() draws the main label then the suffix right after it; measure
+    // with its own metrics so the two cannot disagree. Only show the suffix if it
+    // would still fit alongside the label in the control's current width,
+    // otherwise a narrow clip would show a truncated BPM estimate.
+    const auto labelFont = getLabelFont();
+
+    auto nameWidth = juce::GlyphArrangement::getStringWidth (labelFont, getLabelString());
+    auto suffixWidth = juce::GlyphArrangement::getStringWidth (labelFont, bpmSuffix);
+
+    if (labelLeftInset + nameWidth + labelSuffixGap + suffixWidth > (float) getWidth())
+        return {};
+
+    return bpmSuffix;
+}
+
+juce::String PlayListItemDraggerControl::getBpmSuffix() const
+{
+    updateAnalysisPaintCache();
+    return analysisPaintCache.bpmSuffix;
+}
+
+void PlayListItemDraggerControl::paint (juce::Graphics& g)
+{
+    DraggerControl::paint(g);
+
+    if (! isRecording() && matchesProjectGrid())
+        paintGridMatchCheckMark(g);
+}
+
+bool PlayListItemDraggerControl::matchesProjectGrid() const
+{
+    updateAnalysisPaintCache();
+    return analysisPaintCache.gridMatch;
+}
+
+void PlayListItemDraggerControl::updateAnalysisPaintCache() const
+{
+    auto region = playListItem->getRegion();
+    auto audioTrack = region->getAudioTrack();
+    auto analysisProvider = (audioTrack != nullptr) ? audioTrack->getAnalysisProvider() : nullptr;
+
+    if (analysisProvider == nullptr)
+    {
+        analysisPaintCache = {};
+        return;
+    }
+
+    auto tempoProvider = playListContainer->getTempoProvider();
+
+    const auto generation = analysisProvider->getCache()->getGeneration();
+    const auto projectTempo = (tempoProvider != nullptr) ? tempoProvider->getTempo() : 0.0;
+    const auto clipStartClocks = playListItem->getAbsolutePosition(audium::clocks);
+    const auto playedRegionSeconds = playListItem->getRegionData(audium::seconds);
+
+    if (analysisPaintCache.valid
+        && analysisPaintCache.generation == generation
+        && analysisPaintCache.item == playListItem.get()
+        && analysisPaintCache.tempo == projectTempo
+        && analysisPaintCache.startClocks == clipStartClocks
+        && analysisPaintCache.regionSeconds == playedRegionSeconds)
+        return;
+
+    juce::StringArray bpms;
+
+    // Resources without a beat analysis are skipped rather than counted as a
+    // mismatch, but at least one analysed resource has to match - an
+    // unanalysed item shows no check mark.
+    auto anyAnalysed = false;
+    auto allMatch = true;
+    for (const auto& resource : region->getAudioResources())
+    {
+        if (resource == nullptr)
+            continue;
+
+        const auto audioFile = juce::File(resource->getFullPathName());
+        const auto bpm = analysisProvider->getBpm(audium::AnalysisType::BeatDegara, audioFile);
+
+        if (bpm > 0.0f)
+            bpms.add(juce::String(bpm, 1));
+
+        const auto beats = analysisProvider->getSegments(audium::AnalysisType::BeatDegara, audioFile);
+
+        if (bpm <= 0.0f || beats.empty())
+            continue;
+
+        anyAnalysed = true;
+
+        if (! audium::AnalysisProvider::matchesGrid(projectTempo, bpm, beats,
+                                                    clipStartClocks, playedRegionSeconds))
+            allMatch = false;
+    }
+
+    analysisPaintCache.valid = true;
+    analysisPaintCache.generation = generation;
+    analysisPaintCache.item = playListItem.get();
+    analysisPaintCache.tempo = projectTempo;
+    analysisPaintCache.startClocks = clipStartClocks;
+    analysisPaintCache.regionSeconds = playedRegionSeconds;
+    analysisPaintCache.gridMatch = anyAnalysed && allMatch;
+
+    if (bpms.isEmpty())
+        analysisPaintCache.bpmSuffix = {};
+    else if (bpms.size() == 1)
+        analysisPaintCache.bpmSuffix = bpms[0] + " BPM";
+    else
+        analysisPaintCache.bpmSuffix = "(" + bpms.joinIntoString(", ") + ") BPM";
+}
+
+void PlayListItemDraggerControl::paintGridMatchCheckMark (juce::Graphics& g) const
+{
+    constexpr auto size = 8.0f;
+    constexpr auto rightInset = 5.0f;
+
+    const auto right = (float) getWidth() - rightInset;
+    const auto left = right - size;
+
+    // Skip the mark when it would sit on top of the label text - measured
+    // with the label's own metrics, like getLabelSuffix() does, so zoomed-out
+    // (narrow) clips drop the mark rather than overpainting the name.
+    const auto labelFont = getLabelFont();
+    auto textRight = labelLeftInset
+        + juce::GlyphArrangement::getStringWidth (labelFont, getLabelString());
+
+    const auto suffix = getLabelSuffix();
+    if (suffix.isNotEmpty())
+        textRight += labelSuffixGap
+            + juce::GlyphArrangement::getStringWidth (labelFont, suffix);
+
+    if (left < textRight + labelSuffixGap)
+        return;
+    const auto top = ((float) draggerHeight - size) / 2.0f;
+
+    juce::Path checkMark;
+    checkMark.startNewSubPath (left, top + size * 0.55f);
+    checkMark.lineTo (left + size * 0.35f, top + size);
+    checkMark.lineTo (right, top + size * 0.15f);
+
+    g.setColour (juce::Colours::limegreen);
+    g.strokePath (checkMark, juce::PathStrokeType (1.5f));
+}
 
 bool PlayListItemDraggerControl::validateData()
 {

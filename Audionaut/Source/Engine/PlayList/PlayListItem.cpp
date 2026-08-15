@@ -16,12 +16,12 @@
 
 namespace audium {
 
-PlayListItem::PlayListItem(const PlayListContainer &owner_,
+PlayListItem::PlayListItem(PlayListContainer &owner_,
                            std::shared_ptr<AudioRegion> audioRegion_,
                            std::shared_ptr<SelectionManager> selectionManager_) :
-audium::Selectable(selectionManager_),
-owner(owner_),
-audioRegion(audioRegion_)
+    audium::Selectable(selectionManager_),
+    owner(owner_),
+    audioRegion(audioRegion_)
 {
     if (audioRegion != nullptr) {
         init();
@@ -308,5 +308,9 @@ const double PlayListItem::getRecordingStartPosition(audium::TimeContextType con
     return 0.0;
 }
 
+int PlayListItem::getId() const {
+    auto item = std::dynamic_pointer_cast<const PlayListItem>(getSharedPtr());
+    return owner.playListItems.getIndex(item);
+}
 
 } // namespace audium

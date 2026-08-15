@@ -5,6 +5,7 @@
 
 #include "AudiumLookAndFeel.h"
 #include "Interface/Widgets/audium_ListBox.h"
+#include "../JuceLibraryCode/BinaryData.h"
 
 using namespace juce;
 using namespace audium;
@@ -12,6 +13,7 @@ using namespace audium;
 AudiumLookAndFeel::AudiumLookAndFeel()
 {
     setupColours();
+    setupTypefaces();
 }
 
 AudiumLookAndFeel::~AudiumLookAndFeel()
@@ -25,6 +27,47 @@ LookAndFeel_V4::ColourScheme AudiumLookAndFeel::getDarkAudiumColourScheme()
     return { 0xff323e44, 0xff263238, 0xff323e44,
              0xff8e989b, 0xffffffff, Colours::grey,
              0xffffffff, 0xff181f22, 0xffffffff };
+}
+
+void AudiumLookAndFeel::setupTypefaces()
+{
+    interRegular    = Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf,    BinaryData::InterRegular_ttfSize);
+    interBold       = Typeface::createSystemTypefaceFor (BinaryData::InterBold_ttf,       BinaryData::InterBold_ttfSize);
+    interItalic     = Typeface::createSystemTypefaceFor (BinaryData::InterItalic_ttf,     BinaryData::InterItalic_ttfSize);
+    interBoldItalic = Typeface::createSystemTypefaceFor (BinaryData::InterBoldItalic_ttf, BinaryData::InterBoldItalic_ttfSize);
+}
+
+Typeface::Ptr AudiumLookAndFeel::getTypefaceForFont (const Font& font)
+{
+    const auto name = font.getTypefaceName();
+
+    // Inter is embedded, not installed, so the platform cannot resolve a font
+    // that names it and would hand back a null typeface. Fonts reach us under
+    // that name because Font::setTypeface() renames a font to its typeface's
+    // family, which JUCE does when it applies a glyph fallback.
+    const auto isOurs = name == Font::getDefaultSansSerifFontName()
+                     || (interRegular != nullptr && name == interRegular->getName());
+
+    if (! isOurs)
+        return LookAndFeel_V4::getTypefaceForFont (font);
+
+    // The style arrives as flags on a plain Font, but as a style string on one
+    // that has been through a typeface round-trip - honour both.
+    const auto style  = font.getTypefaceStyle();
+    const auto bold   = font.isBold()   || style.containsIgnoreCase ("Bold");
+    const auto italic = font.isItalic() || style.containsIgnoreCase ("Italic");
+
+    const auto face = bold && italic ? interBoldItalic
+                    : bold           ? interBold
+                    : italic         ? interItalic
+                                     : interRegular;
+
+    // Never return null: a caller that dereferences it segfaults rather than
+    // falling back to a readable font.
+    if (face != nullptr)
+        return face;
+
+    return LookAndFeel_V4::getTypefaceForFont (font);
 }
 
 void AudiumLookAndFeel::setupColours()
@@ -77,6 +120,10 @@ void AudiumLookAndFeel::setupColours()
     // FileBrowserComponent
 //    setColour(FileBrowserComponent::currentPathBoxArrowColourId, Colours::green);
     //setColour(FileBrowserComponent::filenameBoxBackgroundColourId, Colours::red);
+    
+    // Label
+    setColour(Label::backgroundColourId, findColour(secondaryBackgroundColourId));
+    setColour(Label::textColourId, findColour(audium::defaultTextColourId));
     
     
 }
@@ -214,10 +261,12 @@ Label* AudiumLookAndFeel::createSliderTextBox (Slider& slider)
 
     // try to extract the font size from the name
     auto fontSize = slider.getName().getTrailingIntValue();
-    if (fontSize > 0)
-        l->setFont (juce::FontOptions ((float)fontSize));
-    else
-        l->setFont (juce::FontOptions (11.00f));
+    if (fontSize <= 0)
+        fontSize = 11;
+
+    // Slider text boxes are numeric by definition, and the transport ones update
+    // during playback, so they all want tabular figures.
+    l->setFont (withTabularFigures (juce::FontOptions ((float) fontSize)));
     return l;
 }
 
@@ -259,7 +308,7 @@ void AudiumLookAndFeel::drawTableHeaderColumn (Graphics& g, TableHeaderComponent
     }
 
     g.setColour (header.findColour (TableHeaderComponent::textColourId));
-    g.setFont (withDefaultMetrics (FontOptions ((float) height * 0.5f, Font::bold)));
+    g.setFont (withDefaultMetrics (getTableHeaderFontOptions (height)));
     g.drawFittedText (columnName, area, Justification::centredLeft, 1, 1.f);
 }
 

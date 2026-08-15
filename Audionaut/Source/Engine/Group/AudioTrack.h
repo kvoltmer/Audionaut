@@ -8,6 +8,8 @@
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
+#include "Engine/Analysis/AnalysisCache.h"
+#include "Engine/Group/AudioTrackViewState.h"
 #include "Engine/Core/DspClipData.h"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Selection/Selectable.h"
@@ -28,6 +30,7 @@ class AudioChannel;
 class PositionableBase;
 class AudioTrackContainer;
 class AudioChannelData;
+class AnalysisProvider;
 
 typedef SelectableObjectContainer<ResourceGroup> tResourceGroupContainer;
 typedef SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
@@ -60,12 +63,14 @@ public:
                std::shared_ptr<SelectionManager> selectionManager_,
                std::shared_ptr<tResourceGroupContainer> resourceGroups_,
                std::shared_ptr<tAudioChannelContainer> channels_,
+               std::shared_ptr<AnalysisProvider> analysisProvider_,
                juce::String nameString_) :
         Selectable(selectionManager_),
         owner(owner_),
         audioResourceContainer(audioResourceContainer_),
         transportSourceContainer(transportSourceContainer_),
         selectionManager(selectionManager_),
+        analysisProvider(analysisProvider_),
         resourceGroupContainer(resourceGroups_),
         audioChannelContainer(channels_),
         name(nameString_.toStdString())
@@ -97,19 +102,6 @@ public:
      * @param newName The new name for the audio track.
      */
     void setAudioTrackName(const juce::String newName);
-    
-    /**
-     * @brief Sets the color of the audio track.
-     * @param colour The new color.
-     */
-    void setColour(juce::Colour colour);
-    
-    /**
-     * @brief Gets the color of the audio track.
-     * @return The current color.
-     */
-
-    juce::Colour getColour() const { return groupColour; }
     
     /**
      * @brief Gets the index of the audio track within its container.
@@ -147,7 +139,7 @@ public:
     void mergeChannelFromJson(json& input);
     
     // Selectable override:
-    void setSelected(bool bSelected, bool selectChildren) override;
+    void setSelected(bool bSelected) override;
     
     void setGain(float gain, int channelNumber);
     float getGain(int channelNumber) const;
@@ -187,12 +179,10 @@ public:
     std::shared_ptr<ResourceGroup> getDefaultResourceGroup() const;
     std::vector<std::shared_ptr<ResourceGroup>> getResourceGroups() const { return resourceGroupContainer->getObjects(); }
     
-    // channel height:
-    int getTotalHeight() const;
-    void setChannelHeight(int height);
-    bool getMinimized() const { return isMinimized; }
-    void setMinimized(bool minimized) { isMinimized = minimized; }
-    
+    // view/display state (colour, minimized, visible analysis, channel heights):
+    AudioTrackViewState& getViewState() { return viewState; }
+    const AudioTrackViewState& getViewState() const { return viewState; }
+
     std::list<std::shared_ptr<PositionableBase>> getPositionableItems() const;
     
     // objects:
@@ -229,6 +219,7 @@ public:
     const std::vector<std::shared_ptr<AudioRegion>> getRegions() const;
     int getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const;
     
+    std::shared_ptr<AnalysisProvider> getAnalysisProvider() const { return analysisProvider; }
     
 private:
     AudioTrackContainer &owner; ///< Reference to the owning container.
@@ -236,15 +227,14 @@ private:
     std::shared_ptr<PlayListContainer> playListContainer; ///< Shared pointer to the playlist container.
     std::shared_ptr<TransportSourceContainer> transportSourceContainer; ///< Shared pointer to the transport source container.
     std::shared_ptr<SelectionManager> selectionManager; ///< Shared pointer to the selection manager.
-
+    std::shared_ptr<AnalysisProvider> analysisProvider;
 public:
     std::shared_ptr<tResourceGroupContainer> resourceGroupContainer; ///< Shared pointer to the resource group container.
     std::shared_ptr<tAudioChannelContainer> audioChannelContainer; ///< Shared pointer to the audio channel container.
 
 private:
     std::string name; ///< Name of the audio track.
-    juce::Colour groupColour = juce::Colours::pink; ///< Color of the audio track.
-    bool isMinimized = false;
+    AudioTrackViewState viewState { *this }; ///< View/display state of the audio track.
     std::unique_ptr<UndoableContainerAction> undoableContainerAction; ///< Undoable action container.
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)
