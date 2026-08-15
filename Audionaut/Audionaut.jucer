@@ -54,24 +54,20 @@
           <FILE id="sbicSh" name="SBicSegmenter.h" compile="0" resource="0" file="Source/Engine/Analysis/SBicSegmenter.h"/>
           <FILE id="anCchC" name="AnalysisCache.cpp" compile="1" resource="0"
                 file="Source/Engine/Analysis/AnalysisCache.cpp"/>
-          <FILE id="anCchH" name="AnalysisCache.h" compile="0" resource="0"
-                file="Source/Engine/Analysis/AnalysisCache.h"/>
+          <FILE id="anCchH" name="AnalysisCache.h" compile="0" resource="0" file="Source/Engine/Analysis/AnalysisCache.h"/>
           <FILE id="onSegC" name="OnsetSegmenter.cpp" compile="1" resource="0"
                 file="Source/Engine/Analysis/OnsetSegmenter.cpp"/>
           <FILE id="onSegH" name="OnsetSegmenter.h" compile="0" resource="0"
                 file="Source/Engine/Analysis/OnsetSegmenter.h"/>
           <FILE id="btSegC" name="BeatSegmenter.cpp" compile="1" resource="0"
                 file="Source/Engine/Analysis/BeatSegmenter.cpp"/>
-          <FILE id="btSegH" name="BeatSegmenter.h" compile="0" resource="0"
-                file="Source/Engine/Analysis/BeatSegmenter.h"/>
+          <FILE id="btSegH" name="BeatSegmenter.h" compile="0" resource="0" file="Source/Engine/Analysis/BeatSegmenter.h"/>
           <FILE id="anWrkC" name="AnalysisWorker.cpp" compile="1" resource="0"
                 file="Source/Engine/Analysis/AnalysisWorker.cpp"/>
           <FILE id="anWrkH" name="AnalysisWorker.h" compile="0" resource="0"
                 file="Source/Engine/Analysis/AnalysisWorker.h"/>
-          <FILE id="evMrgC" name="EventMerger.cpp" compile="1" resource="0"
-                file="Source/Engine/Analysis/EventMerger.cpp"/>
-          <FILE id="evMrgH" name="EventMerger.h" compile="0" resource="0"
-                file="Source/Engine/Analysis/EventMerger.h"/>
+          <FILE id="evMrgC" name="EventMerger.cpp" compile="1" resource="0" file="Source/Engine/Analysis/EventMerger.cpp"/>
+          <FILE id="evMrgH" name="EventMerger.h" compile="0" resource="0" file="Source/Engine/Analysis/EventMerger.h"/>
         </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
@@ -489,8 +485,7 @@
                 file="Source/Interface/Views/WaveFormViewBase.h"/>
           <FILE id="m8P0Gz" name="AudioClipView.cpp" compile="1" resource="0"
                 file="Source/Interface/Views/AudioClipView.cpp"/>
-          <FILE id="D4QJ9Q" name="AudioClipView.h" compile="0" resource="0"
-                file="Source/Interface/Views/AudioClipView.h"/>
+          <FILE id="D4QJ9Q" name="AudioClipView.h" compile="0" resource="0" file="Source/Interface/Views/AudioClipView.h"/>
           <FILE id="iAJKyv" name="TransportView.h" compile="0" resource="0" file="Source/Interface/Views/TransportView.h"/>
         </GROUP>
         <GROUP id="{5F867CD1-058C-FCD7-0411-EF234D187A08}" name="Resources">
@@ -502,8 +497,7 @@
           <GROUP id="{7A1C4E90-2B63-4D18-9F52-1E8A6C0D3B47}" name="Fonts">
             <FILE id="ftInR0" name="Inter-Regular.ttf" compile="0" resource="1"
                   file="Resources/Fonts/Inter-Regular.ttf"/>
-            <FILE id="ftInB0" name="Inter-Bold.ttf" compile="0" resource="1"
-                  file="Resources/Fonts/Inter-Bold.ttf"/>
+            <FILE id="ftInB0" name="Inter-Bold.ttf" compile="0" resource="1" file="Resources/Fonts/Inter-Bold.ttf"/>
             <FILE id="ftInI0" name="Inter-Italic.ttf" compile="0" resource="1"
                   file="Resources/Fonts/Inter-Italic.ttf"/>
             <FILE id="ftInBI" name="Inter-BoldItalic.ttf" compile="0" resource="1"
@@ -520,19 +514,20 @@
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
-               extraDefs="LINK_PLATFORM_MACOSX=1"
-               appSandbox="1" useLegacyBuildSystem="0" smallIcon="qhU3Rr" bigIcon="gdiYPG"
-               appSandboxInheritance="1" appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
-               customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
+               extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
+               smallIcon="qhU3Rr" bigIcon="gdiYPG" appSandboxInheritance="1"
+               appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
+               customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;&lt;key&gt;LSMinimumSystemVersion&lt;/key&gt;&#10;&#9;&lt;string&gt;13.0&lt;/string&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
                xcodeValidArchs="arm64,arm64e" documentExtensions="audium" documentTypeIsPackage="1"
-               iosDevelopmentTeamID="Q89CZBX79G"
-               buildNumber="15" microphonePermissionNeeded="1" localNetworkPermissionNeeded="1"
-               extraLinkerFlags="$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv">
+               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="16" microphonePermissionNeeded="1"
+               localNetworkPermissionNeeded="1" extraLinkerFlags="$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
-                       customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"/>
+                       customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"
+                       macOSDeploymentTarget="13.0"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
-                       customXcodeFlags="INSTALL_PATH=/Applications"/>
+                       customXcodeFlags="INSTALL_PATH=/Applications, GCC_GENERATE_DEBUGGING_SYMBOLS=YES, DEBUG_INFORMATION_FORMAT=dwarf-with-dsym"
+                       macOSDeploymentTarget="13.0"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/JUCE/modules"/>
