@@ -6,7 +6,7 @@
 Make sure to clone with submodules:
 
 ```
-git clone --recursive git@github.com:kvoltmer/Audionaut.git
+git clone --recursive https://github.com/kvoltmer/Audionaut.git
 ```
 or once cloned do:
 
