@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
-              bundleIdentifier="com.voltmer-systems.audionaut" version="1.2.0"
+              bundleIdentifier="com.voltmer-systems.audionaut" version="1.2.1"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
               cppLanguageStandard="20" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0">
   <MAINGROUP id="HQG80L" name="Audionaut">
