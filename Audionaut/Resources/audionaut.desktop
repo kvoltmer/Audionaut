@@ -1,9 +1,19 @@
-# Desktop entry for the Linux AppImage (packaged by .github/workflows/release-linux.yml).
+# Desktop entry for both Linux packages: the AppImage (packaged by
+# .github/workflows/release-linux.yml) and the .deb (Audionaut/Builds/Debian).
+# Only the .deb also ships the application/x-audium-project MIME definition;
+# in the AppImage the type below is simply unregistered, which is harmless.
 [Desktop Entry]
+Version=1.1
 Type=Application
 Name=Audionaut
+GenericName=Audio Editor
 Comment=Audio editing application for multitrack recordings
-Exec=audionaut
+Exec=audionaut %f
+TryExec=audionaut
 Icon=audionaut
-Categories=AudioVideo;Audio;AudioVideoEditing;
 Terminal=false
+StartupNotify=true
+StartupWMClass=Audionaut
+Categories=AudioVideo;Audio;AudioVideoEditing;Recorder;
+MimeType=application/x-audium-project;
+Keywords=audio;editor;recording;multitrack;

@@ -69,3 +69,11 @@ Audionaut/Builds/VisualStudio2026/.vs/
 Audionaut/Builds/VisualStudio2026/x64/
 Audionaut/Builds/VisualStudio2026/Audionaut_App.vcxproj.user
 Audionaut/Catch2Tests/cmake-build/
+
+# Debian packaging output (deploy.sh stages the payload, equivs-build emits the
+# package and its companion files next to it).
+Audionaut/Builds/Debian/staging/
+Audionaut/Builds/Debian/*.deb
+Audionaut/Builds/Debian/*.ddeb
+Audionaut/Builds/Debian/*.changes
+Audionaut/Builds/Debian/*.buildinfo
