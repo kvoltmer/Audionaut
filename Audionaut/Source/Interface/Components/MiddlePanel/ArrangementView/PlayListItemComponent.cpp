@@ -151,19 +151,21 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem
     
     // function pointer setup:
     fadeInControl->onValueChange = [this, item] {
-        if (item->setFadeIn(fadeInControl->getValue()))
-            fadeOutControl->setValue(playListItem->getFadeOut());
-        
+        if (item->getDynamics().setFadeIn(fadeInControl->getValue()))
+            fadeOutControl->setValue(playListItem->getDynamics().getFadeOut());
+
         playListItemListBox->updateContent();
+        repaintClipRows();
     };
     fadeInControl->onDragStart = [item] { item->onDragStart(); };
     fadeInControl->onDragEnd = [item] { item->onDragEnd(); };
     
     // function pointer setup:
     fadeOutControl->onValueChange = [this, item] {
-        if (item->setFadeOut(fadeOutControl->getValue()))
-            fadeInControl->setValue(item->getFadeIn());
+        if (item->getDynamics().setFadeOut(fadeOutControl->getValue()))
+            fadeInControl->setValue(item->getDynamics().getFadeIn());
         playListItemListBox->updateContent();
+        repaintClipRows();
     };
     fadeOutControl->onDragStart = [item] { item->onDragStart(); };
     fadeOutControl->onDragEnd = [item] { item->onDragEnd(); };
@@ -190,11 +192,21 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
     fadeInControl->setPlayListItem(playListItem);
     fadeOutControl->setPlayListItem(playListItem);
 
-    fadeInControl->setValue(playListItem->getFadeIn());
-    fadeOutControl->setValue(playListItem->getFadeOut());
+    fadeInControl->setValue(playListItem->getDynamics().getFadeIn());
+    fadeOutControl->setValue(playListItem->getDynamics().getFadeOut());
 
     fadeInControl->setVisible(playListItem->isSelected());
     fadeOutControl->setVisible(playListItem->isSelected());
+}
+
+void PlayListItemComponent::repaintClipRows()
+{
+    // The fade overlay (FadeInOutView) is painted by the clip's row components,
+    // which nothing repaints on a fade drag since the listbox force-repaints
+    // were removed - repaint them explicitly.
+    for (int row = 0; row < playListItemListBoxModel->getNumRows(); ++row)
+        if (auto* rowComponent = playListItemListBox->getComponentForRowNumber(row))
+            rowComponent->repaint();
 }
 
 void PlayListItemComponent::refreshAnalysisDisplay()

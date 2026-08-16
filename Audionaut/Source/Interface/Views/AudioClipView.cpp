@@ -36,7 +36,7 @@ void AudioClipView::changeListenerCallback (juce::ChangeBroadcaster* source)
 
 double AudioClipView::getClipGain() const
 {
-    return playListItem->getRegion()->getGain(channelNumber);
+    return playListItem->getDynamics().getGain(channelNumber);
 }
 
 void AudioClipView::resized()
@@ -140,10 +140,8 @@ void AudioClipView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item, 
 
     refreshSegments();
 
-    auto audioRegion = item->getRegion();
-    
-    volumeSlider->onValueChange = [this, audioRegion] {
-        audioRegion->setGain(channelNumber, Decibels::decibelsToGain(volumeSlider->getValue()), true);
+    volumeSlider->onValueChange = [this] {
+        playListItem->getDynamics().setGain(channelNumber, Decibels::decibelsToGain(volumeSlider->getValue()), true);
         this->audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
     };
     volumeSlider->onDragStart = [this] {

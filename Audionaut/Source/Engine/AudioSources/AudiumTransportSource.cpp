@@ -136,16 +136,16 @@ void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item
 {
     // Gain:
     auto channel    = getAudioResource().getChannelMapping().getDestinationChannel();
-    auto gain       = item->getRegion()->getGain(channel);
-    getAudioTransportSource()->setGain(gain);
+    auto gain       = item->getDynamics().getGain(channel);
+    getAudioTransportSource()->setGain(static_cast<float>(gain));
     
     // Fade-in
-    auto fadeIn = tempoProvider->clocksToSeconds(item->getFadeInClocks());
+    auto fadeIn = tempoProvider->clocksToSeconds(item->getDynamics().getFadeInClocks());
     auto offset = 0;
     getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
     
     // Fade-out
-    auto fadeOut = tempoProvider->clocksToSeconds(item->getFadeOutClocks());
+    auto fadeOut = tempoProvider->clocksToSeconds(item->getDynamics().getFadeOutClocks());
     getAudioTransportSource()->setFadeOutSeconds(fadeOut, item->getRegionData(audium::seconds).getLength(), true);
 }
 

@@ -19,6 +19,7 @@ namespace audium {
 
 class AudioRegionContainer;
 class TransportSourceContainer;
+class AudioChannel;
 
 /**
  * \class PlayListContainer
@@ -66,8 +67,11 @@ public:
     
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
-    void mergeFromJson(json& input);
+    // writes the playlist items with the given channel's clip gain as "channel_clip_gain"
+    bool writeChannelToJson(json& output, AudioChannel* audioChannel);
+    void mergeFromJson(json& input, int destinationChannel = -1);
     bool playListItemExists(std::shared_ptr<PlayListItem> item) const;
+    std::shared_ptr<PlayListItem> findExistingItem(std::shared_ptr<PlayListItem> item) const;
     std::shared_ptr<PlayListItem> createPlayListItemFromJson (json& jsonItem);
     
     int getSizeInUnits() override;

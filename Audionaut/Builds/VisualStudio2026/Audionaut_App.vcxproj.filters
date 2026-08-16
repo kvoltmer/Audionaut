@@ -946,6 +946,9 @@
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListContainer.cpp">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\PlayList\ClipDynamics.cpp">
+      <Filter>Audionaut\Source\Engine\PlayList</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListItem.cpp">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClCompile>
@@ -4306,6 +4309,9 @@
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListContainer.h">
+      <Filter>Audionaut\Source\Engine\PlayList</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\PlayList\ClipDynamics.h">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListItem.h">

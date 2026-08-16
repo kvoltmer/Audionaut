@@ -56,6 +56,7 @@
 		5E58276753980A3B968C5B4A /* AudioTrackContainer.cpp */ = {isa = PBXBuildFile; fileRef = 90A1F23ACDB59F5B8DF7DB30; };
 		60C7DEA3545A27039A64E1CA /* AnalysisProvider.cpp */ = {isa = PBXBuildFile; fileRef = A1B47D6F617B000A13EF9E94; };
 		63AE7E83398F33BA6144FBD5 /* PlayListTableListBoxItem.cpp */ = {isa = PBXBuildFile; fileRef = 7E44DB630C41B875C940DDCD; };
+		63F4FA925C4004BBBE9B0C10 /* ClipDynamics.cpp */ = {isa = PBXBuildFile; fileRef = CEB5F9424FDABC8B2B31BD2E; };
 		65DB121ADA7F1D26B04AA405 /* audium_AudioThumbnail.cpp */ = {isa = PBXBuildFile; fileRef = 1759C02F6B3B9F8E2D69CAD7; };
 		6683D39BE00F743773ACD3BD /* AudioTrack.cpp */ = {isa = PBXBuildFile; fileRef = B8B95DEF1C6536F44482A856; };
 		68EB658E314D29C5272125F7 /* include_juce_audio_processors.mm */ = {isa = PBXBuildFile; fileRef = 25423A74B016191855679F72; };
@@ -379,11 +380,13 @@
 		CC656249763518FB2B3F1F45 /* juce_audio_processors */ /* juce_audio_processors */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_processors; path = ../../../Submodules/JUCE/modules/juce_audio_processors; sourceTree = SOURCE_ROOT; };
 		CCE3F7F89E7D505303A815E3 /* SelectionManager.cpp */ /* SelectionManager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SelectionManager.cpp; path = ../../Source/Engine/Selection/SelectionManager.cpp; sourceTree = SOURCE_ROOT; };
 		CD9DF76826B53BB30A3A124E /* include_juce_audio_processors_headless_ara.cpp */ /* include_juce_audio_processors_headless_ara.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_audio_processors_headless_ara.cpp; path = ../../JuceLibraryCode/include_juce_audio_processors_headless_ara.cpp; sourceTree = SOURCE_ROOT; };
+		CEB5F9424FDABC8B2B31BD2E /* ClipDynamics.cpp */ /* ClipDynamics.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ClipDynamics.cpp; path = ../../Source/Engine/PlayList/ClipDynamics.cpp; sourceTree = SOURCE_ROOT; };
 		CF6214DF537EF846309FBAAC /* ChannelComponent.h */ /* ChannelComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h; sourceTree = SOURCE_ROOT; };
 		CF6FD03FA866D8A505F8A5C2 /* BinaryData.h */ /* BinaryData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BinaryData.h; path = ../../JuceLibraryCode/BinaryData.h; sourceTree = SOURCE_ROOT; };
 		D04235F9BAA6971A90F71532 /* AnalysisCache.h */ /* AnalysisCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AnalysisCache.h; path = ../../Source/Engine/Analysis/AnalysisCache.h; sourceTree = SOURCE_ROOT; };
 		D0FD3C88C9809AA0C63BB2DB /* LinkEngine.hpp */ /* LinkEngine.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LinkEngine.hpp; path = ../../Source/Engine/Link/LinkEngine.hpp; sourceTree = SOURCE_ROOT; };
 		D1A83A17077D93FB902AE177 /* TimeContext.h */ /* TimeContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TimeContext.h; path = ../../Source/Engine/TimeContext.h; sourceTree = SOURCE_ROOT; };
+		D459B5B5D32F218D6599B47E /* ClipDynamics.h */ /* ClipDynamics.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipDynamics.h; path = ../../Source/Engine/PlayList/ClipDynamics.h; sourceTree = SOURCE_ROOT; };
 		D66220847DE18D8AB52B260E /* ResourceGroup.cpp */ /* ResourceGroup.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ResourceGroup.cpp; path = ../../Source/Engine/Group/ResourceGroup.cpp; sourceTree = SOURCE_ROOT; };
 		D75AD80777C6009AB3531AE6 /* RecordingActionHandler.h */ /* RecordingActionHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RecordingActionHandler.h; path = ../../Source/Engine/Recording/RecordingActionHandler.h; sourceTree = SOURCE_ROOT; };
 		D86D2ABE8CAA425BC9C41A6A /* SettingsDialog.h */ /* SettingsDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SettingsDialog.h; path = ../../Source/Interface/Dialogs/SettingsDialog.h; sourceTree = SOURCE_ROOT; };
@@ -555,6 +558,8 @@
 				DD3D293D5BE7C2DD00072E80,
 				F0C4F5AE7B7A830FDF5AEC81,
 				8D37E966475206DF93CB732C,
+				CEB5F9424FDABC8B2B31BD2E,
+				D459B5B5D32F218D6599B47E,
 				78220737D71F4A95C1825E8A,
 				09200639918EB49CFF3382BE,
 				5FD6D72AF76F4D6569EBD29F,
@@ -1261,6 +1266,7 @@
 				E5BE69FA0C3547470215E2AF,
 				EC17943064736AF6F2C07E47,
 				3511CED8CECC0D7EB195CB8F,
+				63F4FA925C4004BBBE9B0C10,
 				40A419903992121036F44F2D,
 				F6DB9E50FB9B911D1D30AA15,
 				90604054E06103D6AFE63F65,
@@ -1376,8 +1382,8 @@
 					"JUCE_ENABLE_REPAINT_DEBUGGING=0",
 					"LINK_PLATFORM_MACOSX=1",
 					"JUCER_XCODE_MAC_F6D2F4CF=1",
-					"JUCE_APP_VERSION=1.2.0",
-					"JUCE_APP_VERSION_HEX=0x10200",
+					"JUCE_APP_VERSION=1.2.1",
+					"JUCE_APP_VERSION_HEX=0x10201",
 					"JucePlugin_Build_VST=0",
 					"JucePlugin_Build_VST3=0",
 					"JucePlugin_Build_AU=0",
@@ -1554,8 +1560,8 @@
 					"AUTO_EDIT_ENABLED=0",
 					"LINK_PLATFORM_MACOSX=1",
 					"JUCER_XCODE_MAC_F6D2F4CF=1",
-					"JUCE_APP_VERSION=1.2.0",
-					"JUCE_APP_VERSION_HEX=0x10200",
+					"JUCE_APP_VERSION=1.2.1",
+					"JUCE_APP_VERSION_HEX=0x10201",
 					"JucePlugin_Build_VST=0",
 					"JucePlugin_Build_VST3=0",
 					"JucePlugin_Build_AU=0",
