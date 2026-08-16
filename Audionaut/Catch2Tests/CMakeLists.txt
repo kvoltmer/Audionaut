@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.15)
 
 project(Audionaut_Tests VERSION 0.0.1)
 
+# Required for the add_test() at the bottom to reach CTest. Without it CMake
+# writes no CTestTestfile.cmake, add_test() is silently discarded, and `ctest`
+# exits 0 in about a second having found nothing - a green CI run that never
+# executed a single assertion.
+enable_testing()
+
 set(APP_NAME "AudionautTests")
 message(STATUS "Name: ${APP_NAME}")
 

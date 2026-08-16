@@ -98,7 +98,10 @@ jobs:
 
     - name: Run tests
       working-directory: build-coverage
-      run: ctest --output-on-failure
+      # --no-tests=error: ctest passes by default when it finds no tests, which
+      # is how a missing enable_testing() made this step a silent no-op - and
+      # here it would also have produced a coverage number from an unrun suite.
+      run: ctest --output-on-failure --no-tests=error
 
     - name: Generate coverage report
       # Mirrors the `coverage` CMake target. --root is the repo root, not

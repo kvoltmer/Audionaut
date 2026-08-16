@@ -72,4 +72,7 @@ jobs:
 
     - name: Run tests
       working-directory: build
-      run: ctest -C ${{ env.BUILD_TYPE }} --output-on-failure
+      # --no-tests=error: ctest's default is to pass when it finds no tests at
+      # all, which is how a missing enable_testing() once made this step "pass"
+      # in a second without running an assertion. Fail loudly instead.
+      run: ctest -C ${{ env.BUILD_TYPE }} --output-on-failure --no-tests=error
