@@ -53,6 +53,12 @@ public:
      */
     void refreshAnalysisDisplay();
 
+    /**
+     * @brief Repaints every currently visible channel row of the clip
+     *        (e.g. so the fade overlay follows a fade-handle drag).
+     */
+    void repaintClipRows();
+
     void mouseEnter (const MouseEvent& e) override;
     void mouseExit (const MouseEvent& e) override;
     
