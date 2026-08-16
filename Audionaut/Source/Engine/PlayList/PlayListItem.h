@@ -115,7 +115,7 @@ private:
     // The absolute transport position
     double absolutePositionClocks = 0.0;
     
-    double gain = 1.0;
+    
     double fadeInClocks = 0.0;
     double fadeOutClocks = 0.0;
     
