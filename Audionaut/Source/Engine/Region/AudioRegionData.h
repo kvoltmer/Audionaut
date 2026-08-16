@@ -54,7 +54,7 @@ struct AudioRegionData
 
     /**
      * @brief Legacy read-only: clip gain moved to PlayListItem. Kept so old
-     * projects can be migrated into PlayListItem::clipGains on load.
+     * projects can be migrated into the playlist item's ClipDynamics on load.
      */
     std::vector<double> gain_vector;
     

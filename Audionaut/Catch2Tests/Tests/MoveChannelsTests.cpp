@@ -46,9 +46,9 @@ SCENARIO("move channels scenario", "[engine][channels]")
             REQUIRE(track->getNumAudioTrackChannels() == numChannels);
             
             for (int i = 0; i < numChannels; ++i) {
-                gains[i][0] = track->getPlayListContainer()->getPlayListItem(0)->getClipGain(i);
-                gains[i][1] = track->getPlayListContainer()->getPlayListItem(1)->getClipGain(i);
-                gains[i][2] = track->getPlayListContainer()->getPlayListItem(2)->getClipGain(i);
+                gains[i][0] = track->getPlayListContainer()->getPlayListItem(0)->getDynamics().getGain(i);
+                gains[i][1] = track->getPlayListContainer()->getPlayListItem(1)->getDynamics().getGain(i);
+                gains[i][2] = track->getPlayListContainer()->getPlayListItem(2)->getDynamics().getGain(i);
 
                 // select all channels
                 track->audioChannelContainer->objects[(std::size_t)i]->setSelected(true);
@@ -76,9 +76,9 @@ SCENARIO("move channels scenario", "[engine][channels]")
                 };
                 
                 for (int i = 0; i < numChannels; ++i) {
-                    new_gains[i][0] = track->getPlayListContainer()->getPlayListItem(0)->getClipGain(i);
-                    new_gains[i][1] = track->getPlayListContainer()->getPlayListItem(1)->getClipGain(i);
-                    new_gains[i][2] = track->getPlayListContainer()->getPlayListItem(2)->getClipGain(i);
+                    new_gains[i][0] = track->getPlayListContainer()->getPlayListItem(0)->getDynamics().getGain(i);
+                    new_gains[i][1] = track->getPlayListContainer()->getPlayListItem(1)->getDynamics().getGain(i);
+                    new_gains[i][2] = track->getPlayListContainer()->getPlayListItem(2)->getDynamics().getGain(i);
                 }
                 
                 

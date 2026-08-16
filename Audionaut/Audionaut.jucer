@@ -205,6 +205,10 @@
                 file="Source/Engine/PlayList/PlayListContainer.cpp"/>
           <FILE id="l4Sshh" name="PlayListContainer.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListContainer.h"/>
+          <FILE id="Cdyn01" name="ClipDynamics.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/ClipDynamics.cpp"/>
+          <FILE id="Cdyn02" name="ClipDynamics.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/ClipDynamics.h"/>
           <FILE id="y8wZY3" name="PlayListItem.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListItem.cpp"/>
           <FILE id="iSTHS0" name="PlayListItem.h" compile="0" resource="0" file="Source/Engine/PlayList/PlayListItem.h"/>

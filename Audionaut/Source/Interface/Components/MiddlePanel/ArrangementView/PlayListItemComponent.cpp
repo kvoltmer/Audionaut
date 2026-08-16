@@ -151,8 +151,8 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem
     
     // function pointer setup:
     fadeInControl->onValueChange = [this, item] {
-        if (item->setFadeIn(fadeInControl->getValue()))
-            fadeOutControl->setValue(playListItem->getFadeOut());
+        if (item->getDynamics().setFadeIn(fadeInControl->getValue()))
+            fadeOutControl->setValue(playListItem->getDynamics().getFadeOut());
         
         playListItemListBox->updateContent();
     };
@@ -161,8 +161,8 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem
     
     // function pointer setup:
     fadeOutControl->onValueChange = [this, item] {
-        if (item->setFadeOut(fadeOutControl->getValue()))
-            fadeInControl->setValue(item->getFadeIn());
+        if (item->getDynamics().setFadeOut(fadeOutControl->getValue()))
+            fadeInControl->setValue(item->getDynamics().getFadeIn());
         playListItemListBox->updateContent();
     };
     fadeOutControl->onDragStart = [item] { item->onDragStart(); };
@@ -190,8 +190,8 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
     fadeInControl->setPlayListItem(playListItem);
     fadeOutControl->setPlayListItem(playListItem);
 
-    fadeInControl->setValue(playListItem->getFadeIn());
-    fadeOutControl->setValue(playListItem->getFadeOut());
+    fadeInControl->setValue(playListItem->getDynamics().getFadeIn());
+    fadeOutControl->setValue(playListItem->getDynamics().getFadeOut());
 
     fadeInControl->setVisible(playListItem->isSelected());
     fadeOutControl->setVisible(playListItem->isSelected());

@@ -49,7 +49,7 @@ SCENARIO("recording scenario", "[engine][clip][volume]")
         REQUIRE(track->getPlayListContainer()->sortedByPosition());
         
         // set gain 0.5 for second region
-        track->getPlayListContainer()->getPlayListItem(1)->setClipGain(0, 0.5);
+        track->getPlayListContainer()->getPlayListItem(1)->getDynamics().setGain(0, 0.5);
         
         engine->getPlayListScheduler()->commitPlayListData();
         
@@ -120,12 +120,12 @@ SCENARIO("clip gain is per playlist item, not per region", "[engine][clip][volum
 
         WHEN("the gain of the first item is changed")
         {
-            item0->setClipGain(0, 0.5);
+            item0->getDynamics().setGain(0, 0.5);
 
             THEN("the second item keeps its own gain")
             {
-                REQUIRE(item0->getClipGain(0) == Catch::Approx(0.5));
-                REQUIRE(item1->getClipGain(0) == Catch::Approx(1.0));
+                REQUIRE(item0->getDynamics().getGain(0) == Catch::Approx(0.5));
+                REQUIRE(item1->getDynamics().getGain(0) == Catch::Approx(1.0));
             }
         }
     }

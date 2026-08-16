@@ -171,7 +171,7 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                                                                            item->getRegion(),
                                                                            context);
                 if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, item->getAbsolutePosition(context), context)) {
-                    newItem->copyClipGainsFrom(*item);
+                    newItem->getDynamics().copyGainsFrom(item->getDynamics());
                 }
                 success = true;
             }
@@ -187,7 +187,7 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                                                                            item->getRegion(),
                                                                            context);
                 if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getStart(), context)) {
-                    newItem->copyClipGainsFrom(*item);
+                    newItem->getDynamics().copyGainsFrom(item->getDynamics());
                 }
                 success = true;
             }
@@ -205,7 +205,7 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                                                                            item->getRegion(),
                                                                            context);
                 if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getEnd(), context)) {
-                    newItem->copyClipGainsFrom(*item);
+                    newItem->getDynamics().copyGainsFrom(item->getDynamics());
                 }
                 success = true;
             }

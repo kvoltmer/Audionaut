@@ -183,24 +183,24 @@ SCENARIO("clip gain migrates from legacy region gain and persists", "[engine][lo
         auto playList = engine->getAudioTrackContainer()->getAudioTrack(0)->getPlayListContainer();
 
         // migrated into the playlist items on load
-        REQUIRE(playList->getPlayListItem(1)->getClipGain(0) == Catch::Approx(1.4125375446227544));
-        REQUIRE(playList->getPlayListItem(1)->getClipGain(1) == Catch::Approx(0.7752542528795534));
-        REQUIRE(playList->getPlayListItem(2)->getClipGain(0) == Catch::Approx(1.9952623149688797));
-        REQUIRE(playList->getPlayListItem(2)->getClipGain(1) == Catch::Approx(0.25118864315095796));
+        REQUIRE(playList->getPlayListItem(1)->getDynamics().getGain(0) == Catch::Approx(1.4125375446227544));
+        REQUIRE(playList->getPlayListItem(1)->getDynamics().getGain(1) == Catch::Approx(0.7752542528795534));
+        REQUIRE(playList->getPlayListItem(2)->getDynamics().getGain(0) == Catch::Approx(1.9952623149688797));
+        REQUIRE(playList->getPlayListItem(2)->getDynamics().getGain(1) == Catch::Approx(0.25118864315095796));
 
         WHEN("a gain is changed and the project is saved and loaded again") {
-            playList->getPlayListItem(0)->setClipGain(0, 0.25);
+            playList->getPlayListItem(0)->getDynamics().setGain(0, 0.25);
 
             REQUIRE(engine->saveFile(outProject, nullptr));
             REQUIRE(engine->openFile(outProject.getParentDirectory(), nullptr));
 
             THEN("the new and the migrated gains survive the round trip") {
                 auto reloaded = engine->getAudioTrackContainer()->getAudioTrack(0)->getPlayListContainer();
-                REQUIRE(reloaded->getPlayListItem(0)->getClipGain(0) == Catch::Approx(0.25));
-                REQUIRE(reloaded->getPlayListItem(1)->getClipGain(0) == Catch::Approx(1.4125375446227544));
-                REQUIRE(reloaded->getPlayListItem(1)->getClipGain(1) == Catch::Approx(0.7752542528795534));
-                REQUIRE(reloaded->getPlayListItem(2)->getClipGain(0) == Catch::Approx(1.9952623149688797));
-                REQUIRE(reloaded->getPlayListItem(2)->getClipGain(1) == Catch::Approx(0.25118864315095796));
+                REQUIRE(reloaded->getPlayListItem(0)->getDynamics().getGain(0) == Catch::Approx(0.25));
+                REQUIRE(reloaded->getPlayListItem(1)->getDynamics().getGain(0) == Catch::Approx(1.4125375446227544));
+                REQUIRE(reloaded->getPlayListItem(1)->getDynamics().getGain(1) == Catch::Approx(0.7752542528795534));
+                REQUIRE(reloaded->getPlayListItem(2)->getDynamics().getGain(0) == Catch::Approx(1.9952623149688797));
+                REQUIRE(reloaded->getPlayListItem(2)->getDynamics().getGain(1) == Catch::Approx(0.25118864315095796));
             }
         }
     }

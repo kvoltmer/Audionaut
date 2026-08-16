@@ -110,7 +110,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::clonePlayListItem(std::shared_p
 
     auto newItem = createPlayListItemAtPositionUI(newRegion, item->getAbsolutePosition(context), context);
     if (newItem != nullptr) {
-        newItem->copyClipGainsFrom(*item);
+        newItem->getDynamics().copyGainsFrom(item->getDynamics());
     }
     return newItem;
 }
@@ -297,7 +297,7 @@ bool PlayListContainer::writeChannelToJson(json& output, AudioChannel* audioChan
         if (item->writeToJson(j)) {
             // the full vector is indexed by source channels - meaningless at the destination
             j.erase("gain_vector");
-            j["channel_clip_gain"] = item->getClipGain(channelNumber);
+            j["channel_clip_gain"] = item->getDynamics().getGain(channelNumber);
             output["play_list_vector"] += j;
         }
     }
@@ -330,11 +330,11 @@ void PlayListContainer::mergeFromJson(json& input, int destinationChannel)
                 if (auto existingItem = findExistingItem(playListItem)) {
                     // item was already merged from a previous channel - only add this channel's gain
                     if (destinationChannel >= 0)
-                        existingItem->setClipGain(destinationChannel, clipGain);
+                        existingItem->getDynamics().setGain(destinationChannel, clipGain);
                 }
                 else {
                     if (destinationChannel >= 0)
-                        playListItem->setClipGain(destinationChannel, clipGain);
+                        playListItem->getDynamics().setGain(destinationChannel, clipGain);
                     playListItems.push_back(playListItem);
                 }
             }

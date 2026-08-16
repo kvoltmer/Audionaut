@@ -115,19 +115,7 @@ bool PlayListItem::writeToJson (json& output)
         output["selected"]          = isSelected();
         output["track_id"]          = getRegion()->getAudioTrack()->getId();
         
-        if (fadeInClocks > 0.0) {
-            output["fade_in_clocks"]    = fadeInClocks;
-        }
-        
-        if (fadeOutClocks > 0.0) {
-            output["fade_out_clocks"]   = fadeOutClocks;
-        }
-
-        // Written whenever non-empty (even all-1.0): an absent key means "never set"
-        // and triggers the legacy migration read from the region's gain_vector.
-        if (!clipGains.empty()) {
-            output["gain_vector"] = clipGains;
-        }
+        dynamics.writeToJson(output);
         return true;
     }
     jassertfalse; // no audio region
@@ -167,22 +155,7 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
                 }
             }
             
-            if (input.contains("fade_in_clocks")) {
-                fadeInClocks = input.at("fade_in_clocks").get<double>();
-            }
-            
-            if (input.contains("fade_out_clocks")) {
-                fadeOutClocks = input.at("fade_out_clocks").get<double>();
-            }
-
-            if (input.contains("gain_vector")) {
-                input.at("gain_vector").get_to(clipGains);
-            }
-            else {
-                // Legacy projects stored clip gain on the region; also resets
-                // reused item objects when restoring an undo state without gains.
-                clipGains = audioRegion->data.gain_vector;
-            }
+            dynamics.readFromJson(input);
         }
         return true;
     }
@@ -231,87 +204,6 @@ void PlayListItem::onDragEnd()
         auto undoManager = audioRegion->getAudioTrack()->getAudioTrackContainer().getUndoManager();
         undoManager->perform(undoableAction.release(), "Set Clip Gain");
         undoManager->beginNewTransaction();
-    }
-}
-
-bool PlayListItem::setFadeIn(double val)
-{
-    auto length = audioRegion->getRegionData(audium::clocks).getLength();
-    fadeInClocks = length * val;
-    if (fadeInClocks + fadeOutClocks > length) {
-        fadeOutClocks = length - fadeInClocks;
-        return true;
-    }
-    return false;
-}
-
-double PlayListItem::getFadeIn() const
-{
-    auto length = audioRegion->getRegionData(audium::clocks).getLength();
-    if (length > 0.0)
-        return fadeInClocks / length;
-    
-    return 0.0;
-}
-
-bool PlayListItem::setFadeOut(double val)
-{
-    auto length = audioRegion->getRegionData(audium::clocks).getLength();
-    fadeOutClocks = length * val;
-    if (fadeInClocks + fadeOutClocks > length) {
-        fadeInClocks = length - fadeOutClocks;
-        return true;
-    }
-    return false;
-}
-
-double PlayListItem::getFadeOut() const
-{
-    auto length = audioRegion->getRegionData(audium::clocks).getLength();
-    if (length > 0.0)
-        return fadeOutClocks / length;
-    
-    return 0.0;
-}
-
-void PlayListItem::setClipGain(int channel, double val, bool continous)
-{
-    if (channel < 0)
-        return;
-
-    while (channel >= static_cast<int>(clipGains.size())) {
-        clipGains.push_back(1.0);
-    }
-    clipGains[static_cast<size_t>(channel)] = val;
-
-    if (continous) {
-        for (const auto &source : transportSources) {
-            if (source != nullptr &&
-                source->getAudioResource().getChannelMapping().getDestinationChannel() == channel &&
-                source->isPlaying()) {
-                source->getAudioTransportSource()->setGain(static_cast<float>(val));
-            }
-        }
-    }
-}
-
-double PlayListItem::getClipGain(int channel) const
-{
-    if (channel >= 0 && channel < static_cast<int>(clipGains.size())) {
-        return clipGains[static_cast<size_t>(channel)];
-    }
-    return 1.0;
-}
-
-void PlayListItem::copyClipGainsFrom(const PlayListItem& other)
-{
-    clipGains = other.clipGains;
-}
-
-void PlayListItem::onDeleteChannel(int channel)
-{
-    if (channel >= 0 && channel < static_cast<int>(clipGains.size())) {
-        clipGains.erase(clipGains.begin() + channel);
     }
 }
 
