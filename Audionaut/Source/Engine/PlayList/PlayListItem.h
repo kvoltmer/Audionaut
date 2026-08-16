@@ -89,8 +89,10 @@ public:
         return fadeOutClocks;
     }
     
-    void setClipGain(int channel, double val);
+    void setClipGain(int channel, double val, bool continous = false);
     double getClipGain(int channel) const;
+    void copyClipGainsFrom(const PlayListItem& other);
+    void onDeleteChannel(int channel);
     
     bool isRecording() const;
     
@@ -114,8 +116,10 @@ private:
     
     // The absolute transport position
     double absolutePositionClocks = 0.0;
-    
-    
+
+    // Gain per destination channel; empty => 1.0 for every channel
+    std::vector<double> clipGains;
+
     double fadeInClocks = 0.0;
     double fadeOutClocks = 0.0;
     

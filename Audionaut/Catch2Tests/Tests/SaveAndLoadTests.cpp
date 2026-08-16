@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
@@ -137,15 +138,15 @@ SCENARIO("load project and save", "[engine][load][save][new]")
     auto outProject = File(testFilesDirectory + "/Sessions/out-test.audium/" + AudiumEngine::projectFileName);
     
     GIVEN("open project") {
-    
+
         engine->openFile(inProject, nullptr);
-        
+
         WHEN("save project") {
             REQUIRE(engine->saveFile(outProject, nullptr));
 
             THEN("examine project") {
                 REQUIRE(outProject.exists());
-                
+
                 auto audioFileDir = AudioResourceContainer::getAudioFileDirectory();
                 REQUIRE(audioFileDir.exists());
             }
@@ -153,7 +154,60 @@ SCENARIO("load project and save", "[engine][load][save][new]")
     }
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-    
+
+    engine = nullptr;
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("clip gain migrates from legacy region gain and persists", "[engine][load][save][clip][volume]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    auto sourceSession = File(testFilesDirectory + "Sessions/move-channels.audium");
+    REQUIRE(sourceSession.exists());
+
+    // open a disposable copy, never the checked-in session (see MoveChannelsTests)
+    auto fileUnderTest = File::getSpecialLocation(File::tempDirectory)
+                             .getChildFile("clip-gain-migration.audium")
+                             .getNonexistentSibling();
+    REQUIRE(sourceSession.copyDirectoryTo(fileUnderTest));
+
+    auto outProject = File(testFilesDirectory + "Sessions/clip-gain-test.audium/" + AudiumEngine::projectFileName);
+
+    GIVEN("a legacy project with gains stored on the regions") {
+        REQUIRE(engine->openFile(fileUnderTest, nullptr));
+
+        auto playList = engine->getAudioTrackContainer()->getAudioTrack(0)->getPlayListContainer();
+
+        // migrated into the playlist items on load
+        REQUIRE(playList->getPlayListItem(1)->getClipGain(0) == Catch::Approx(1.4125375446227544));
+        REQUIRE(playList->getPlayListItem(1)->getClipGain(1) == Catch::Approx(0.7752542528795534));
+        REQUIRE(playList->getPlayListItem(2)->getClipGain(0) == Catch::Approx(1.9952623149688797));
+        REQUIRE(playList->getPlayListItem(2)->getClipGain(1) == Catch::Approx(0.25118864315095796));
+
+        WHEN("a gain is changed and the project is saved and loaded again") {
+            playList->getPlayListItem(0)->setClipGain(0, 0.25);
+
+            REQUIRE(engine->saveFile(outProject, nullptr));
+            REQUIRE(engine->openFile(outProject.getParentDirectory(), nullptr));
+
+            THEN("the new and the migrated gains survive the round trip") {
+                auto reloaded = engine->getAudioTrackContainer()->getAudioTrack(0)->getPlayListContainer();
+                REQUIRE(reloaded->getPlayListItem(0)->getClipGain(0) == Catch::Approx(0.25));
+                REQUIRE(reloaded->getPlayListItem(1)->getClipGain(0) == Catch::Approx(1.4125375446227544));
+                REQUIRE(reloaded->getPlayListItem(1)->getClipGain(1) == Catch::Approx(0.7752542528795534));
+                REQUIRE(reloaded->getPlayListItem(2)->getClipGain(0) == Catch::Approx(1.9952623149688797));
+                REQUIRE(reloaded->getPlayListItem(2)->getClipGain(1) == Catch::Approx(0.25118864315095796));
+            }
+        }
+    }
+    // cleanup ... comment out in case you need to isolate an issue
+    outProject.getParentDirectory().deleteRecursively();
+    fileUnderTest.deleteRecursively();
+
     engine = nullptr;
     DeletedAtShutdown::deleteAll();
     MessageManager::deleteInstance();

@@ -9,6 +9,7 @@
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/AudioSources/audium_AudioTransportSource.h"
@@ -121,6 +122,12 @@ bool PlayListItem::writeToJson (json& output)
         if (fadeOutClocks > 0.0) {
             output["fade_out_clocks"]   = fadeOutClocks;
         }
+
+        // Written whenever non-empty (even all-1.0): an absent key means "never set"
+        // and triggers the legacy migration read from the region's gain_vector.
+        if (!clipGains.empty()) {
+            output["gain_vector"] = clipGains;
+        }
         return true;
     }
     jassertfalse; // no audio region
@@ -166,6 +173,15 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
             
             if (input.contains("fade_out_clocks")) {
                 fadeOutClocks = input.at("fade_out_clocks").get<double>();
+            }
+
+            if (input.contains("gain_vector")) {
+                input.at("gain_vector").get_to(clipGains);
+            }
+            else {
+                // Legacy projects stored clip gain on the region; also resets
+                // reused item objects when restoring an undo state without gains.
+                clipGains = audioRegion->data.gain_vector;
             }
         }
         return true;
@@ -258,14 +274,45 @@ double PlayListItem::getFadeOut() const
     return 0.0;
 }
 
-void PlayListItem::setClipGain(int channel, double val)
+void PlayListItem::setClipGain(int channel, double val, bool continous)
 {
-    audioRegion->setGain(channel, val);
+    if (channel < 0)
+        return;
+
+    while (channel >= static_cast<int>(clipGains.size())) {
+        clipGains.push_back(1.0);
+    }
+    clipGains[static_cast<size_t>(channel)] = val;
+
+    if (continous) {
+        for (const auto &source : transportSources) {
+            if (source != nullptr &&
+                source->getAudioResource().getChannelMapping().getDestinationChannel() == channel &&
+                source->isPlaying()) {
+                source->getAudioTransportSource()->setGain(static_cast<float>(val));
+            }
+        }
+    }
 }
 
 double PlayListItem::getClipGain(int channel) const
 {
-    return audioRegion->getGain(channel);
+    if (channel >= 0 && channel < static_cast<int>(clipGains.size())) {
+        return clipGains[static_cast<size_t>(channel)];
+    }
+    return 1.0;
+}
+
+void PlayListItem::copyClipGainsFrom(const PlayListItem& other)
+{
+    clipGains = other.clipGains;
+}
+
+void PlayListItem::onDeleteChannel(int channel)
+{
+    if (channel >= 0 && channel < static_cast<int>(clipGains.size())) {
+        clipGains.erase(clipGains.begin() + channel);
+    }
 }
 
 bool PlayListItem::isRecording() const

@@ -170,7 +170,9 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                                                                            resourceGroup,
                                                                            item->getRegion(),
                                                                            context);
-                track->getPlayListContainer()->createPlayListItemAtPositionUI(region, item->getAbsolutePosition(context), context);
+                if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, item->getAbsolutePosition(context), context)) {
+                    newItem->copyClipGainsFrom(*item);
+                }
                 success = true;
             }
             
@@ -184,7 +186,9 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                                                                            resourceGroup,
                                                                            item->getRegion(),
                                                                            context);
-                track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getStart(), context);
+                if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getStart(), context)) {
+                    newItem->copyClipGainsFrom(*item);
+                }
                 success = true;
             }
             
@@ -200,7 +204,9 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                                                                            resourceGroup,
                                                                            item->getRegion(),
                                                                            context);
-                track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getEnd(), context);
+                if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getEnd(), context)) {
+                    newItem->copyClipGainsFrom(*item);
+                }
                 success = true;
             }
             
