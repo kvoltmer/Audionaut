@@ -27,6 +27,9 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: 'recursive'
+        # Some test wavs (see .gitattributes) live in Git LFS; without this the
+        # checkout leaves pointer stubs and the tests that load them fail.
+        lfs: true
 
     # Essentia (the audio-analysis backend) is built from the submodule tree; the
     # tests link the resulting static libs. Without it, ESSENTIA_ENABLED
