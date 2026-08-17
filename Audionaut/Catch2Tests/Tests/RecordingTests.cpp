@@ -6,7 +6,7 @@
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
-#include "Engine/Export/AudioExportThread.h"
+#include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 #include "Engine/PlayList/TransportLoop.h"
@@ -75,7 +75,7 @@ SCENARIO("recording scenario", "[engine][recording]")
             engine->getRecordingActionHandler()->onRecordingFinished();
             engine->getPlayListScheduler()->commitPlayListData();
 
-            auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
             exporter->bounce();
             
             THEN("examine bounced audio file")

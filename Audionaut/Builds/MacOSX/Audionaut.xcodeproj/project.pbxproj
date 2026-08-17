@@ -432,6 +432,7 @@
 		F92285741D1FC2129C528C37 /* SBicSegmenter.cpp */ /* SBicSegmenter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SBicSegmenter.cpp; path = ../../Source/Engine/Analysis/SBicSegmenter.cpp; sourceTree = SOURCE_ROOT; };
 		F9816C9AA6BF2BC4109172C2 /* include_juce_data_structures.mm */ /* include_juce_data_structures.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_data_structures.mm; path = ../../JuceLibraryCode/include_juce_data_structures.mm; sourceTree = SOURCE_ROOT; };
 		F98594A24820592F045D6479 /* AudioBusRenderer.h */ /* AudioBusRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioBusRenderer.h; path = ../../Source/Engine/Playback/AudioBusRenderer.h; sourceTree = SOURCE_ROOT; };
+		F986B76C535362EA061CA277 /* AudioExporter.h */ /* AudioExporter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioExporter.h; path = ../../Source/Engine/Export/AudioExporter.h; sourceTree = SOURCE_ROOT; };
 		FA8649A2DA5195058DB8F983 /* AnalysisWorker.cpp */ /* AnalysisWorker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisWorker.cpp; path = ../../Source/Engine/Analysis/AnalysisWorker.cpp; sourceTree = SOURCE_ROOT; };
 		FA93BF48B115085D2B707FEE /* README.md */ /* README.md */ = {isa = PBXFileReference; lastKnownFileType = file.md; name = README.md; path = ../../../README.md; sourceTree = SOURCE_ROOT; };
 		FCD67B95E8ED469C52987653 /* juce_audio_basics */ /* juce_audio_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_basics; path = ../../../Submodules/JUCE/modules/juce_audio_basics; sourceTree = SOURCE_ROOT; };
@@ -1000,6 +1001,7 @@
 				F8CFE8B71FB1DA1627A6C1E0,
 				51102FD0ADB1F5E991BEABC5,
 				9EE160AC533646BB61CD4DD6,
+				F986B76C535362EA061CA277,
 			);
 			name = Export;
 			sourceTree = "<group>";

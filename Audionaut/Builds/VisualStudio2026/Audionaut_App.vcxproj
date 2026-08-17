@@ -3124,6 +3124,7 @@
     <ClInclude Include="..\..\Source\Engine\Export\PlayListItemExport.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\ExportAudioConfig.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\AudioExportThread.h"/>
+    <ClInclude Include="..\..\Source\Engine\Export\AudioExporter.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\Selectable.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectableObjectContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionContext.h"/>

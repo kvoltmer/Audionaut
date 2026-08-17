@@ -96,6 +96,8 @@
                 file="Source/Engine/Export/AudioExportThread.cpp"/>
           <FILE id="duXPV9" name="AudioExportThread.h" compile="0" resource="0"
                 file="Source/Engine/Export/AudioExportThread.h"/>
+          <FILE id="AeXpRt" name="AudioExporter.h" compile="0" resource="0"
+                file="Source/Engine/Export/AudioExporter.h"/>
         </GROUP>
         <GROUP id="{0AC7E64F-80C6-74C3-823D-493CC3105D80}" name="Selection">
           <FILE id="N9t1dH" name="Selectable.h" compile="0" resource="0" file="Source/Engine/Selection/Selectable.h"/>

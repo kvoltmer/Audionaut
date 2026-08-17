@@ -4200,6 +4200,9 @@
     <ClInclude Include="..\..\Source\Engine\Export\AudioExportThread.h">
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Export\AudioExporter.h">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Selection\Selectable.h">
       <Filter>Audionaut\Source\Engine\Selection</Filter>
     </ClInclude>

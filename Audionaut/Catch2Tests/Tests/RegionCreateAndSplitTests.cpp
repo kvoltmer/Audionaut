@@ -5,7 +5,7 @@
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
-#include "Engine/Export/AudioExportThread.h"
+#include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace audium;
