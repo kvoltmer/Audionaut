@@ -120,9 +120,13 @@ void RecordingActionHandler::onLoopEntered()
         auto context = audium::clocks;
         
         for (auto track : audioTrackContainer->getAudioTracks()) {
-            for (auto item : track->getPlayListContainer()->getPlayListItems()) {
+            // clonePlayListItem() inserts into the vector getPlayListItems()
+            // returns by reference - iterate a snapshot so the loop survives
+            // the insert (and the fresh clones are not visited).
+            auto items = track->getPlayListContainer()->getPlayListItems();
+            for (auto item : items) {
                 if (item->isRecording()) {
-                    
+
                     // split play list items in 2 parts
                     
                     // part BEFORE loop start
@@ -156,7 +160,9 @@ void RecordingActionHandler::onLoopAction()
         auto loopRange = transportLoop->getLoopPositionRange(context);
         
         for (auto track : audioTrackContainer->getAudioTracks()) {
-            for (auto item : track->getPlayListContainer()->getPlayListItems()) {
+            // snapshot: the clone below inserts into the iterated vector
+            auto items = track->getPlayListContainer()->getPlayListItems();
+            for (auto item : items) {
                 if (item != nullptr &&
                     item->isRecording() &&
                     item->needsLengthUpdate) {
