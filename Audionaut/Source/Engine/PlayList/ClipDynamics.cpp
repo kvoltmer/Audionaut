@@ -123,6 +123,11 @@ void ClipDynamics::writeToJson(json& output) const
 
 void ClipDynamics::readFromJson(json& input)
 {
+    // absent keys mean "no fade": reset so reused item objects (undo) don't
+    // keep a stale fade
+    fadeInClocks = 0.0;
+    fadeOutClocks = 0.0;
+
     if (input.contains("fade_in_clocks")) {
         fadeInClocks = input.at("fade_in_clocks").get<double>();
     }

@@ -93,56 +93,73 @@ public:
         
         auto len         = inBlock.getNumSamples();
         auto numChannels = inBlock.getNumChannels();
-        
-        if (skipSamples > 0)
-        {
-            if (skipSamples > 0)
-                skipSamples -= len;
-            
-            if (context.usesSeparateInputAndOutputBlocks())
-                outBlock.copyFrom (inBlock);
-            
-            return;
-        }
-        
+
         if (context.isBypassed)
         {
             gain.skip (static_cast<int> (len));
-            
+
             if (skipSamples > 0)
-                skipSamples -= len;
-            
+                skipSamples -= static_cast<int> (len);
+
             if (context.usesSeparateInputAndOutputBlocks())
                 outBlock.copyFrom (inBlock);
-            
+
             return;
         }
-        
+
+        // Samples before the scheduled fade start pass through untouched; the
+        // fade may begin in the middle of a block.
+        const auto pending = static_cast<size_t> (juce::jlimit (0, static_cast<int> (len), skipSamples));
+        if (pending > 0)
+        {
+            skipSamples -= static_cast<int> (pending);
+
+            if (context.usesSeparateInputAndOutputBlocks())
+                for (size_t chan = 0; chan < numChannels; ++chan)
+                    juce::FloatVectorOperations::copy (outBlock.getChannelPointer (chan),
+                                                       inBlock.getChannelPointer (chan),
+                                                       static_cast<int> (pending));
+
+            if (pending == len)
+                return;
+        }
+
+        const auto numToProcess = len - pending;
+
         if (numChannels == 1)
         {
-            auto* src = inBlock.getChannelPointer (0);
-            auto* dst = outBlock.getChannelPointer (0);
-            
-            for (size_t i = 0; i < len; ++i)
-                dst[i] = src[i] * pow(gain.getNextValue(), 0.5f);
+            auto* src = inBlock.getChannelPointer (0) + pending;
+            auto* dst = outBlock.getChannelPointer (0) + pending;
+
+            for (size_t i = 0; i < numToProcess; ++i)
+                dst[i] = src[i] * nextCurveValue();
         }
         else
         {
             JUCE_BEGIN_IGNORE_WARNINGS_MSVC (6255 6386)
-            auto* gains = static_cast<FloatType*> (alloca (sizeof (FloatType) * len));
+            auto* gains = static_cast<FloatType*> (alloca (sizeof (FloatType) * numToProcess));
 
-            for (size_t i = 0; i < len; ++i)
-                gains[i] = pow(gain.getNextValue(), 0.5f);
+            for (size_t i = 0; i < numToProcess; ++i)
+                gains[i] = nextCurveValue();
             JUCE_END_IGNORE_WARNINGS_MSVC
 
             for (size_t chan = 0; chan < numChannels; ++chan)
-                juce::FloatVectorOperations::multiply (outBlock.getChannelPointer (chan),
-                                                 inBlock.getChannelPointer (chan),
-                                                 gains, static_cast<int> (len));
+                juce::FloatVectorOperations::multiply (outBlock.getChannelPointer (chan) + pending,
+                                                 inBlock.getChannelPointer (chan) + pending,
+                                                 gains, static_cast<int> (numToProcess));
         }
     }
     
 private:
+    /** The fade curve: sqrt of the linear ramp. The smoothed value can drift
+        slightly below zero through float accumulation over long ramps -
+        unclamped, sqrt/pow would turn that into NaN and poison the mix. */
+    FloatType nextCurveValue() noexcept
+    {
+        auto g = gain.getNextValue();
+        return g > FloatType (0) ? std::sqrt (g) : FloatType (0);
+    }
+
     juce::SmoothedValue<FloatType> gain;
     double sampleRate = 0, rampDurationSeconds = 0;
     int skipSamples = 0;
