@@ -12,6 +12,8 @@
 #include <vector>
 #include <JuceHeader.h>
 
+#include "Engine/Analysis/AnalysisCache.h"
+
 namespace audium {
 
 
@@ -231,6 +233,35 @@ public:
      * @return True when a preview was published.
      */
     bool previewAutoEdit(AutoEditConfig &config);
+
+    /**
+     * @brief Whether every analysis the edit's merge needs is cached for the
+     *        target's audio file.
+     *
+     * False while the AnalysisWorker is still busy on the file - the usual
+     * reason previewAutoEdit() has nothing to show yet - which lets callers
+     * say "still analysing" instead of a vague failure. A target that does not
+     * resolve has no analyses to wait for and reports true; whatever else is
+     * wrong is not going to fix itself by waiting.
+     */
+    bool isAnalysisDone(AutoEditConfig &config);
+
+    /**
+     * @brief The merge analyses the target's file is missing that are switched
+     *        off in the auto-analysis settings, so waiting will never supply
+     *        them.
+     *
+     * Reads the AnalysisWorker's live settings: with automatic analysis
+     * disabled every missing merge analysis is reported; otherwise only the
+     * missing ones excluded from the worker's default types. An analysis that
+     * is switched off but already cached is not reported - its results are
+     * there regardless. Empty when nothing is missing, or when the target does
+     * not resolve.
+     *
+     * Callers use this to tell "still analysing, try again shortly" apart
+     * from "switched off in the settings, enable it there".
+     */
+    std::vector<AnalysisType> findSwitchedOffMergeAnalyses(AutoEditConfig &config);
 
     /**
      * @brief The number of segments an invokeAutoEdit() with this config would

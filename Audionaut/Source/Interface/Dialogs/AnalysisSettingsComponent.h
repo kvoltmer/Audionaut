@@ -10,6 +10,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Analysis/AnalysisWorker.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Util/Preferences.h"
 
@@ -105,7 +106,8 @@ public:
         hintLabel->setBounds (r.removeFromTop (h));
     }
 
-private:
+    /** The label the settings dialog shows for @p type - public so messages
+        pointing the user at the settings can use the same names. */
     static juce::String displayName (audium::AnalysisType type)
     {
         switch (type) {
@@ -118,6 +120,7 @@ private:
         return {};
     }
 
+private:
     void applyAndStore()
     {
         const auto enabled = autoAnalysisToggle->getToggleState();
