@@ -330,6 +330,7 @@
 		A735B19A59EA0CDBD20031CC /* OnsetSegmenter.cpp */ /* OnsetSegmenter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = OnsetSegmenter.cpp; path = ../../Source/Engine/Analysis/OnsetSegmenter.cpp; sourceTree = SOURCE_ROOT; };
 		A7DBC59B3C2B8291FF5DE5C4 /* WaveFormViewBase.h */ /* WaveFormViewBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormViewBase.h; path = ../../Source/Interface/Views/WaveFormViewBase.h; sourceTree = SOURCE_ROOT; };
 		A7F36F4ACE445A9F659EE136 /* Security.framework */ /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		A83249715DF7ACB1168CDA31 /* AnalysisSettingsComponent.h */ /* AnalysisSettingsComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AnalysisSettingsComponent.h; path = ../../Source/Interface/Dialogs/AnalysisSettingsComponent.h; sourceTree = SOURCE_ROOT; };
 		A96B870D734284F177524816 /* audium_ListBox.cpp */ /* audium_ListBox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_ListBox.cpp; path = ../../Source/Interface/Widgets/audium_ListBox.cpp; sourceTree = SOURCE_ROOT; };
 		AB7054CF560D1D97FFD59765 /* PlayListItemListBoxModel.h */ /* PlayListItemListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListItemListBoxModel.h; path = ../../Source/Interface/Models/PlayListItemListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		ABB4D8B1A90C513BD91D7DB5 /* include_juce_graphics_Harfbuzz.cpp */ /* include_juce_graphics_Harfbuzz.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_graphics_Harfbuzz.cpp; path = ../../JuceLibraryCode/include_juce_graphics_Harfbuzz.cpp; sourceTree = SOURCE_ROOT; };
@@ -831,6 +832,7 @@
 		9BE2411EEC9E2E92208463DB /* Dialogs */ = {
 			isa = PBXGroup;
 			children = (
+				A83249715DF7ACB1168CDA31,
 				F4DE426B74038D2458D7B572,
 				29D87B31AE24B528AF69492C,
 				F6E5A50D09EF933C9000BC02,

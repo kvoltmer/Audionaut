@@ -55,6 +55,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     // create audium engine
     audiumEngine = audium::AudiumFactory::createAudiumEngine();
     audiumEngine->initialise();
+    applyAnalysisPreferences();
 
 
     initialOpenDirectory = File::getSpecialLocation (File::userMusicDirectory);
@@ -232,6 +233,14 @@ void AudiumApplication::initPreferences()
     if (getPreferences().valueExists(PreferenceKeys::recentFiles)) {
         recentFiles.restoreFromString (getPreferences().getValue (PreferenceKeys::recentFiles));
         recentFiles.removeNonExistentFiles();
+    }
+}
+
+void AudiumApplication::applyAnalysisPreferences()
+{
+    if (auto worker = audiumEngine->getAudioResourceContainer()->getAnalysisWorker()) {
+        worker->setAutoAnalysisEnabled (AnalysisSettingsComponent::readAutoAnalysisEnabled (getPreferences()));
+        worker->setDefaultAnalysisTypes (AnalysisSettingsComponent::readAutoAnalysisTypes (getPreferences()));
     }
 }
 

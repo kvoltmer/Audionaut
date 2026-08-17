@@ -32,6 +32,17 @@ std::string analysisTypeToString(AnalysisType analysisType);
 /** @brief Parses an analysis type name; std::nullopt if unrecognised. */
 std::optional<AnalysisType> analysisTypeFromString(const std::string& name);
 
+/** @brief Comma-joins the types' names (see analysisTypeToString). */
+std::string analysisTypesToString(const std::vector<AnalysisType>& types);
+
+/**
+ * @brief Parses a comma-separated list of analysis type names.
+ *
+ * Whitespace around names is ignored; empty and unrecognised entries are
+ * skipped, so an unknown name from a newer version degrades gracefully.
+ */
+std::vector<AnalysisType> analysisTypesFromString(const std::string& csv);
+
 /**
  * @class AnalysisCache
  * @brief Persistent store for audio-analysis results keyed by the analysed

@@ -102,6 +102,7 @@ private:
     
     void initCommandManager();
     void initPreferences();
+    void applyAnalysisPreferences();
     void handleAsyncUpdate() override;
     
     void showAboutWindow();
