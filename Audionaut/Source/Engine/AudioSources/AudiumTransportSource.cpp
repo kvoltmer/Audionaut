@@ -65,12 +65,14 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
 
             // reached end of clip -> apply stop
             audioTransportSource->stop(false);
-            
+
+            // the clip has ended: the remainder of the buffer must stay
+            // silent instead of bleeding audio from beyond the clip end
             AudioSourceChannelInfo infoStop2 (info);
             infoStop2.startSample = samplesUntilStop;
             infoStop2.numSamples = info.numSamples - samplesUntilStop;
             if (infoStop2.numSamples > 0)
-                mainSource->getNextAudioBlock(infoStop2);
+                infoStop2.clearActiveBufferRegion();
             
         }
         else {
