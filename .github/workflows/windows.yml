@@ -38,6 +38,14 @@ jobs:
       with:
         submodules: 'recursive'
 
+    # Some test wavs (see .gitattributes) live in Git LFS; without this the
+    # tests get pointer stubs and fail loading them. A separate step rather
+    # than `lfs: true` on the checkout: that option also smudges LFS pointers
+    # inside the essentia submodule, whose upstream has LFS disabled, and the
+    # resulting download error fails the whole checkout.
+    - name: Fetch Git LFS test files
+      run: git lfs pull
+
     # Essentia is deliberately NOT built here. Audionaut/Builds/build_essentia.sh
     # is a bash + waf script targeting macOS/Linux, so there is no Windows path
     # for it today. Both the app and the tests degrade cleanly without it:
