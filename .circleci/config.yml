@@ -72,6 +72,25 @@ jobs:
           no_output_timeout: 30m
 
       - run:
+          name: Build the installer
+          # The .nsi packs the Release x64 exe the previous step just built.
+          # Run makensis from the script's directory so its relative File
+          # paths (..\..\Builds\...) resolve. NSIS is not preinstalled on the
+          # image. Placed before the test steps so a test failure does not
+          # block the installer artifact.
+          working_directory: Audionaut/Installers/NSIS
+          command: |
+            choco install nsis -y --no-progress
+            "/c/Program Files (x86)/NSIS/makensis.exe" Audionaut-Installer.nsi
+
+      # Shows up on the job's Artifacts tab. CI smoke-check output, not a
+      # release channel - artifacts expire (30 days by default) and the exe is
+      # unsigned.
+      - store_artifacts:
+          path: Audionaut/Installers/NSIS/Audionaut Setup.exe
+          destination: Audionaut-Setup.exe
+
+      - run:
           name: Configure tests
           # No -DCMAKE_BUILD_TYPE: the Visual Studio generator is multi-config
           # and ignores it - the configuration is chosen at build time with
