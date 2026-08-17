@@ -16,6 +16,7 @@
 #include "AutoEditParameter.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Analysis/AnalysisWorker.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
@@ -699,6 +700,53 @@ bool AutoEdit::previewAutoEdit(AutoEditConfig &config)
                                       std::move(boundaries),
                                       config.segmentMeasures);
     return true;
+}
+
+bool AutoEdit::isAnalysisDone(AutoEditConfig &config)
+{
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+    auto analysisProvider = audioTrackContainer->getAnalysisProvider();
+
+    const auto target = resolveEditTarget(audioTrackContainer->getAudioTrack(config.trackId),
+                                          config.playlistItemId);
+
+    // Nothing resolvable to analyse means nothing is pending.
+    if (analysisProvider == nullptr || ! target.isValid())
+        return true;
+
+    const auto audioFile = juce::File(target.resource->getFullPathName());
+
+    return analysisProvider->findMissingMergeAnalyses(audioFile).empty();
+}
+
+std::vector<AnalysisType> AutoEdit::findSwitchedOffMergeAnalyses(AutoEditConfig &config)
+{
+    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
+    auto analysisProvider = audioTrackContainer->getAnalysisProvider();
+    auto analysisWorker = audiumEngine->getAudioResourceContainer()->getAnalysisWorker();
+
+    const auto target = resolveEditTarget(audioTrackContainer->getAudioTrack(config.trackId),
+                                          config.playlistItemId);
+
+    if (analysisProvider == nullptr || analysisWorker == nullptr || ! target.isValid())
+        return {};
+
+    auto missing = analysisProvider->findMissingMergeAnalyses(
+        juce::File(target.resource->getFullPathName()));
+
+    // The master switch off stops every analysis; otherwise only the types
+    // excluded from the worker's defaults are never going to run.
+    if (analysisWorker->isAutoAnalysisEnabled())
+    {
+        const auto defaults = analysisWorker->getDefaultAnalysisTypes();
+
+        std::erase_if(missing, [&defaults] (AnalysisType type)
+        {
+            return std::find(defaults.begin(), defaults.end(), type) != defaults.end();
+        });
+    }
+
+    return missing;
 }
 
 int AutoEdit::resolveNumSegments(AutoEditConfig &config)

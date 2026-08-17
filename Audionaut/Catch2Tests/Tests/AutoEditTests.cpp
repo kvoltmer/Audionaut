@@ -8,6 +8,7 @@
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Analysis/AnalysisWorker.h"
 #include "Engine/AutoEdit/AutoEdit.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -283,6 +284,132 @@ SCENARIO("AutoEdit refuses to edit before the analyses are cached",
                 REQUIRE_FALSE(reportedError.empty());
                 REQUIRE(reportedError.find(analysisTypeToString(AnalysisType::BeatDegara))
                             != std::string::npos);
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("AutoEdit reports whether the target's analyses are done",
+         "[engine][autoedit]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture();
+
+        AutoEdit autoEdit(fixture.engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+
+        WHEN("nothing is cached yet")
+        {
+            THEN("the analyses are not done")
+            {
+                REQUIRE_FALSE(autoEdit.isAnalysisDone(config));
+            }
+        }
+
+        WHEN("only one of the analyses the merge needs is cached")
+        {
+            auto cache = fixture.engine->getAudioTrackContainer()->getAnalysisProvider()->getCache();
+            cache->put(fixture.analysedFile, AnalysisType::SBic, evenTimes(0.0f, 2.5f, 8));
+
+            THEN("the analyses are still not done")
+            {
+                REQUIRE_FALSE(autoEdit.isAnalysisDone(config));
+            }
+        }
+
+        WHEN("all the analyses the merge needs are cached")
+        {
+            cacheMergeAnalyses(fixture);
+
+            THEN("the analyses are done")
+            {
+                REQUIRE(autoEdit.isAnalysisDone(config));
+            }
+        }
+
+        WHEN("the target does not resolve")
+        {
+            AutoEditConfig unresolvable;
+            unresolvable.trackId = 99;
+
+            THEN("there is nothing pending to wait for")
+            {
+                REQUIRE(autoEdit.isAnalysisDone(unresolvable));
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("AutoEdit names the switched-off analyses waiting will not supply",
+         "[engine][autoedit]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture();
+
+        auto worker = fixture.engine->getAudioResourceContainer()->getAnalysisWorker();
+        REQUIRE(worker != nullptr);
+
+        // Adding the file already queued its analyses; cancelled so nothing
+        // lands in the cache behind the scenario's back.
+        worker->cancelAll();
+
+        AutoEdit autoEdit(fixture.engine);
+
+        AutoEditConfig config;
+        config.trackId = 0;
+
+        WHEN("all analyses are enabled but none has finished yet")
+        {
+            THEN("nothing is switched off - waiting will supply them")
+            {
+                REQUIRE(autoEdit.findSwitchedOffMergeAnalyses(config).empty());
+            }
+        }
+
+        WHEN("automatic analysis is disabled entirely")
+        {
+            worker->setAutoAnalysisEnabled(false);
+
+            THEN("every missing merge analysis is reported")
+            {
+                REQUIRE(autoEdit.findSwitchedOffMergeAnalyses(config)
+                            == AnalysisProvider::getMergeAnalysisTypes());
+            }
+        }
+
+        WHEN("one merge analysis is excluded from the default types")
+        {
+            worker->setDefaultAnalysisTypes({ AnalysisType::SBic });
+
+            THEN("only the excluded one is reported")
+            {
+                REQUIRE(autoEdit.findSwitchedOffMergeAnalyses(config)
+                            == std::vector<AnalysisType> { AnalysisType::BeatDegara });
+            }
+        }
+
+        WHEN("the switched-off analyses are already cached")
+        {
+            worker->setAutoAnalysisEnabled(false);
+            cacheMergeAnalyses(fixture);
+
+            THEN("nothing is reported - the results are there regardless")
+            {
+                REQUIRE(autoEdit.findSwitchedOffMergeAnalyses(config).empty());
             }
         }
     }
