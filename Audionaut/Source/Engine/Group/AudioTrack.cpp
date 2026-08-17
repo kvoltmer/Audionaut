@@ -91,11 +91,11 @@ bool AudioTrack::writeChannelToJson (json& output, AudioChannel* audioChannel)
         resourceGroup->writeChannelToJson(j, audioChannel);
         output["resource_groups"] += j;
     }
-    
-    playListContainer->writeToJson(output);
-    
+
+    playListContainer->writeChannelToJson(output, audioChannel);
+
     //std::cout << output.dump(4) << std::endl;
-    
+
     return true;
 }
 
@@ -133,7 +133,7 @@ void AudioTrack::mergeChannelFromJson(json& input)
         resourceGroup->mergeFromJson(jsonResourceGroup, destChannel);
     }
     // merge playlist
-    getPlayListContainer()->mergeFromJson(input);
+    getPlayListContainer()->mergeFromJson(input, destChannel);
 }
 
 bool AudioTrack::writeToStream (juce::OutputStream& outputStream)
@@ -548,11 +548,9 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
                 resource->getChannelMapping().decrementDestinationChannel(channelNumber);
             }
             
-            // volume vector changes for regions
-            for (auto resourceGroup : resourceGroupContainer->getObjects()) {
-                for (auto region : resourceGroup->getAudioRegionContainer()->getObjects()) {
-                    region->onDeleteChannel(channelNumber);
-                }
+            // gain vector changes for playlist items
+            for (const auto &item : getPlayListContainer()->getPlayListItems()) {
+                item->getDynamics().onDeleteChannel(channelNumber);
             }
             
             // cleanup subgroups
@@ -739,9 +737,9 @@ std::vector<DspClipData> AudioTrack::getDspClipVector() const
             if (transportSource != nullptr) {
                 dspClipData.active              = true;
                 auto channel = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
-                dspClipData.clipGain            = item->getRegion()->getGain(channel);
-                dspClipData.clipFadeInClocks    = item->getFadeInClocks();
-                dspClipData.clipFadeOutClocks   = item->getFadeOutClocks();
+                dspClipData.clipGain            = static_cast<float>(item->getDynamics().getGain(channel));
+                dspClipData.clipFadeInClocks    = item->getDynamics().getFadeInClocks();
+                dspClipData.clipFadeOutClocks   = item->getDynamics().getFadeOutClocks();
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
                 
@@ -819,7 +817,9 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
     auto region = item->getRegion();
     
     if (newPlayListItem) {
-        getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context);
+        if (auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context)) {
+            newItem->getDynamics().copyGainsFrom(item->getDynamics());
+        }
     }
     else if (this != region->getAudioTrack().get()) { // drag on different track -> create region and play list item
         // create new sub group
@@ -828,6 +828,7 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
                                                                                resourceGroup,
                                                                                region)) {
             auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, pos, context);
+            newItem->getDynamics().copyGainsFrom(item->getDynamics());
             item->setSelected(false);
             newItem->setSelected(true);
             if (!ModifierKeys::currentModifiers.isAltDown()) {
@@ -839,7 +840,9 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
         // same track
         if (ModifierKeys::currentModifiers.isAltDown()) {
             // copy
-            getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context);
+            if (auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context)) {
+                newItem->getDynamics().copyGainsFrom(item->getDynamics());
+            }
         }
         else {
             // move

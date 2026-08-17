@@ -193,6 +193,7 @@
     <ClCompile Include="..\..\Source\Engine\PlayList\TransportLoop.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PositionableBase.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListContainer.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\PlayList\ClipDynamics.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListItem.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListScheduler.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Region\AudioRegion.cpp"/>
@@ -3123,6 +3124,7 @@
     <ClInclude Include="..\..\Source\Engine\Export\PlayListItemExport.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\ExportAudioConfig.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\AudioExportThread.h"/>
+    <ClInclude Include="..\..\Source\Engine\Export\AudioExporter.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\Selectable.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectableObjectContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionContext.h"/>
@@ -3160,6 +3162,7 @@
     <ClInclude Include="..\..\Source\Engine\PlayList\PositionableBase.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\SampleTimer.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListContainer.h"/>
+    <ClInclude Include="..\..\Source\Engine\PlayList\ClipDynamics.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListItem.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListScheduler.h"/>
     <ClInclude Include="..\..\Source\Engine\Provider\TempoProvider.h"/>
@@ -3180,6 +3183,7 @@
     <ClInclude Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\UIContext.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\AnalysisSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingToolWindow.h"/>

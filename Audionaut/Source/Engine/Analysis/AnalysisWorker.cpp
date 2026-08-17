@@ -10,6 +10,11 @@
 
 namespace audium {
 
+AnalysisWorker::AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider_) :
+    AnalysisWorker(std::move(analysisProvider_), AnalysisProvider::getMergeAnalysisTypes())
+{
+}
+
 AnalysisWorker::AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider_,
                                std::vector<AnalysisType> defaultAnalysisTypes) :
     analysisProvider(std::move(analysisProvider_)),
@@ -20,6 +25,34 @@ AnalysisWorker::AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvide
     thread.addTimeSliceClient(this);
 }
 
+const std::vector<AnalysisType>& AnalysisWorker::canonicalAnalysisTypes()
+{
+    static const std::vector<AnalysisType> types {
+        AnalysisType::SBic,
+        AnalysisType::BeatDegara,
+        AnalysisType::Onset,
+        AnalysisType::Beat
+    };
+    return types;
+}
+
+std::vector<AnalysisType> AnalysisWorker::getDefaultAnalysisTypes() const
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    return defaultTypes;
+}
+
+void AnalysisWorker::setDefaultAnalysisTypes(const std::vector<AnalysisType>& types)
+{
+    std::vector<AnalysisType> canonical;
+    for (auto type : canonicalAnalysisTypes())
+        if (std::find(types.begin(), types.end(), type) != types.end())
+            canonical.push_back(type);
+
+    std::lock_guard<std::mutex> lock(mutex);
+    defaultTypes = std::move(canonical);
+}
+
 AnalysisWorker::~AnalysisWorker()
 {
     // Detach before stopping so removeTimeSliceClient() waits for any analysis
@@ -28,24 +61,43 @@ AnalysisWorker::~AnalysisWorker()
     thread.stopThread(-1);
 }
 
-void AnalysisWorker::enqueue(const juce::File& audioFile,
-                             const std::vector<AnalysisType>& types)
+int AnalysisWorker::enqueue(const juce::File& audioFile,
+                            const std::vector<AnalysisType>& types)
 {
     if (! audioFile.existsAsFile())
-        return;
+        return 0;
 
+    int queued = 0;
     {
         std::lock_guard<std::mutex> lock(mutex);
         for (auto type : types)
         {
             Job job { audioFile, type };
             if (std::find(jobs.begin(), jobs.end(), job) == jobs.end())
+            {
                 jobs.push_back(job);
+                ++queued;
+            }
         }
     }
 
     // Wake the thread so it picks up the new work without waiting out its idle poll.
     thread.notify();
+    return queued;
+}
+
+int AnalysisWorker::enqueue(const juce::File& audioFile)
+{
+    if (! autoAnalysisEnabled.load())
+        return 0;
+
+    // Snapshot outside enqueue()'s lock: the mutex is not recursive.
+    std::vector<AnalysisType> types;
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        types = defaultTypes;
+    }
+    return enqueue(audioFile, types);
 }
 
 void AnalysisWorker::cancel(const juce::File& audioFile)

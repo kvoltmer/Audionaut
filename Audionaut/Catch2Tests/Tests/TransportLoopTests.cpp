@@ -6,7 +6,7 @@
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
-#include "Engine/Export/AudioExportThread.h"
+#include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 #include "Engine/PlayList/TransportLoop.h"
@@ -150,7 +150,7 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
         bounceConfig->blockSize = 64;
         bounceConfig->lengthSeconds = 60.0;
         
-        auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
+        auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
         
         WHEN("bouncing session")
         {

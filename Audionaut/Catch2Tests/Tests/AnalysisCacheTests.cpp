@@ -372,3 +372,43 @@ SCENARIO("AnalysisCache discards data written by another version",
 
     folder.deleteRecursively();
 }
+
+SCENARIO("Analysis type lists round-trip through their string form", "[engine][analysis][cache]")
+{
+    GIVEN("every analysis type")
+    {
+        const std::vector<AnalysisType> all { AnalysisType::SBic, AnalysisType::BeatDegara,
+                                              AnalysisType::Onset, AnalysisType::Beat };
+
+        THEN("the list round-trips unchanged")
+        {
+            REQUIRE(analysisTypesFromString(analysisTypesToString(all)) == all);
+        }
+    }
+
+    GIVEN("a single type")
+    {
+        THEN("its string form has no separator")
+        {
+            REQUIRE(analysisTypesToString({ AnalysisType::Onset }) == "onset");
+        }
+    }
+
+    GIVEN("an empty list")
+    {
+        THEN("the string form is empty and parses back to an empty list")
+        {
+            REQUIRE(analysisTypesToString({}).empty());
+            REQUIRE(analysisTypesFromString("").empty());
+        }
+    }
+
+    GIVEN("a string with whitespace and unknown entries")
+    {
+        THEN("names are trimmed and unrecognised ones are skipped")
+        {
+            const std::vector<AnalysisType> expected { AnalysisType::SBic, AnalysisType::Beat };
+            REQUIRE(analysisTypesFromString(" sbic , from_the_future ,, beat ") == expected);
+        }
+    }
+}

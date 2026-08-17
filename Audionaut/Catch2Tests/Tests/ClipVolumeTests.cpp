@@ -6,7 +6,7 @@
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
-#include "Engine/Export/AudioExportThread.h"
+#include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 #include "Engine/PlayList/TransportLoop.h"
@@ -49,7 +49,7 @@ SCENARIO("recording scenario", "[engine][clip][volume]")
         REQUIRE(track->getPlayListContainer()->sortedByPosition());
         
         // set gain 0.5 for second region
-        track->getPlayListContainer()->getPlayListItem(1)->setClipGain(0, 0.5);
+        track->getPlayListContainer()->getPlayListItem(1)->getDynamics().setGain(0, 0.5);
         
         engine->getPlayListScheduler()->commitPlayListData();
         
@@ -59,7 +59,7 @@ SCENARIO("recording scenario", "[engine][clip][volume]")
         
         WHEN("bounce audio")
         {
-            auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
             exporter->bounce();
             
             THEN("examine bounced audio file")
@@ -92,7 +92,49 @@ SCENARIO("recording scenario", "[engine][clip][volume]")
     if (inputFile.existsAsFile())
         inputFile.deleteFile();
 
-    
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO("clip gain is per playlist item, not per region", "[engine][clip][volume]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    auto inputFile = generateDcOffsetAudioFile(2.0);
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    GIVEN("two playlist items sharing one region")
+    {
+        engine->openFile(inputFile, nullptr);
+
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        auto item0 = track->getPlayListContainer()->getPlayListItem(0);
+        REQUIRE(item0 != nullptr);
+
+        auto region = item0->getRegion();
+        auto item1 = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, 2.0, audium::seconds);
+        REQUIRE(item1 != nullptr);
+        REQUIRE(item1->getRegion() == region);
+
+        WHEN("the gain of the first item is changed")
+        {
+            item0->getDynamics().setGain(0, 0.5);
+
+            THEN("the second item keeps its own gain")
+            {
+                REQUIRE(item0->getDynamics().getGain(0) == Catch::Approx(0.5));
+                REQUIRE(item1->getDynamics().getGain(0) == Catch::Approx(1.0));
+            }
+        }
+    }
+
+    engine = nullptr;
+
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+
     juce::DeletedAtShutdown::deleteAll();
     juce::MessageManager::deleteInstance();
 }

@@ -46,13 +46,20 @@ SCENARIO("move channels scenario", "[engine][channels]")
             REQUIRE(track->getNumAudioTrackChannels() == numChannels);
             
             for (int i = 0; i < numChannels; ++i) {
-                gains[i][0] = track->getPlayListContainer()->getPlayListItem(0)->getRegion()->getGain(i);
-                gains[i][1] = track->getPlayListContainer()->getPlayListItem(1)->getRegion()->getGain(i);
-                gains[i][2] = track->getPlayListContainer()->getPlayListItem(2)->getRegion()->getGain(i);
-                
+                gains[i][0] = track->getPlayListContainer()->getPlayListItem(0)->getDynamics().getGain(i);
+                gains[i][1] = track->getPlayListContainer()->getPlayListItem(1)->getDynamics().getGain(i);
+                gains[i][2] = track->getPlayListContainer()->getPlayListItem(2)->getDynamics().getGain(i);
+
                 // select all channels
                 track->audioChannelContainer->objects[(std::size_t)i]->setSelected(true);
             }
+
+            // the session stores the gains on the regions (legacy format) - they
+            // must have been migrated into the playlist items on load
+            REQUIRE(gains[0][1] == Catch::Approx(1.4125375446227544));
+            REQUIRE(gains[1][1] == Catch::Approx(0.7752542528795534));
+            REQUIRE(gains[0][2] == Catch::Approx(1.9952623149688797));
+            REQUIRE(gains[1][2] == Catch::Approx(0.25118864315095796));
             
             
             // copy selected channels to new track channel 0
@@ -69,9 +76,9 @@ SCENARIO("move channels scenario", "[engine][channels]")
                 };
                 
                 for (int i = 0; i < numChannels; ++i) {
-                    new_gains[i][0] = track->getPlayListContainer()->getPlayListItem(0)->getRegion()->getGain(i);
-                    new_gains[i][1] = track->getPlayListContainer()->getPlayListItem(1)->getRegion()->getGain(i);
-                    new_gains[i][2] = track->getPlayListContainer()->getPlayListItem(2)->getRegion()->getGain(i);
+                    new_gains[i][0] = track->getPlayListContainer()->getPlayListItem(0)->getDynamics().getGain(i);
+                    new_gains[i][1] = track->getPlayListContainer()->getPlayListItem(1)->getDynamics().getGain(i);
+                    new_gains[i][2] = track->getPlayListContainer()->getPlayListItem(2)->getDynamics().getGain(i);
                 }
                 
                 

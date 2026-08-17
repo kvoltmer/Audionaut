@@ -96,6 +96,8 @@
                 file="Source/Engine/Export/AudioExportThread.cpp"/>
           <FILE id="duXPV9" name="AudioExportThread.h" compile="0" resource="0"
                 file="Source/Engine/Export/AudioExportThread.h"/>
+          <FILE id="AeXpRt" name="AudioExporter.h" compile="0" resource="0"
+                file="Source/Engine/Export/AudioExporter.h"/>
         </GROUP>
         <GROUP id="{0AC7E64F-80C6-74C3-823D-493CC3105D80}" name="Selection">
           <FILE id="N9t1dH" name="Selectable.h" compile="0" resource="0" file="Source/Engine/Selection/Selectable.h"/>
@@ -205,6 +207,10 @@
                 file="Source/Engine/PlayList/PlayListContainer.cpp"/>
           <FILE id="l4Sshh" name="PlayListContainer.h" compile="0" resource="0"
                 file="Source/Engine/PlayList/PlayListContainer.h"/>
+          <FILE id="Cdyn01" name="ClipDynamics.cpp" compile="1" resource="0"
+                file="Source/Engine/PlayList/ClipDynamics.cpp"/>
+          <FILE id="Cdyn02" name="ClipDynamics.h" compile="0" resource="0"
+                file="Source/Engine/PlayList/ClipDynamics.h"/>
           <FILE id="y8wZY3" name="PlayListItem.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListItem.cpp"/>
           <FILE id="iSTHS0" name="PlayListItem.h" compile="0" resource="0" file="Source/Engine/PlayList/PlayListItem.h"/>
@@ -279,6 +285,8 @@
         </GROUP>
         <FILE id="Z0WoBP" name="UIContext.h" compile="0" resource="0" file="Source/Interface/UIContext.h"/>
         <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
+          <FILE id="AnStCp" name="AnalysisSettingsComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AnalysisSettingsComponent.h"/>
           <FILE id="AsmDlg" name="AssembleDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AssembleDialog.h"/>
           <FILE id="Y3mnJv" name="FileBrowserView.h" compile="0" resource="0"

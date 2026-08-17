@@ -56,16 +56,29 @@ SCENARIO("AnalysisWorker cancels queued analyses", "[engine][analysis][worker]")
 
 SCENARIO("AnalysisWorker runs the merge's analyses first", "[engine][analysis][worker]")
 {
-    // Jobs run in the order they are queued, so whatever Auto Edit needs should
-    // be at the front: it can then run without waiting for the analyses only
-    // the waveform display uses.
-    AnalysisWorker worker(nullptr);
-
-    const auto& defaults = worker.getDefaultAnalysisTypes();
     const auto& mergeTypes = AnalysisProvider::getMergeAnalysisTypes();
 
-    GIVEN("the default analysis order")
+    GIVEN("a worker with the built-in defaults")
     {
+        AnalysisWorker worker(nullptr);
+
+        THEN("exactly the analyses the merge needs are queued automatically")
+        {
+            // Out of the box only Auto Edit's analyses run; the display-only
+            // ones are opt-in via the settings.
+            REQUIRE(worker.getDefaultAnalysisTypes() == mergeTypes);
+        }
+    }
+
+    GIVEN("a worker constructed with every analysis type")
+    {
+        // Jobs run in the order they are queued, so whatever Auto Edit needs
+        // should be at the front: it can then run without waiting for the
+        // analyses only the waveform display uses.
+        AnalysisWorker worker(nullptr, AnalysisWorker::canonicalAnalysisTypes());
+
+        const auto defaults = worker.getDefaultAnalysisTypes();
+
         THEN("every analysis the merge needs is queued")
         {
             for (auto mergeType : mergeTypes)
@@ -83,6 +96,74 @@ SCENARIO("AnalysisWorker runs the merge's analyses first", "[engine][analysis][w
         THEN("the remaining analyses still run afterwards")
         {
             REQUIRE(defaults.size() == 4);
+        }
+    }
+}
+
+SCENARIO("AnalysisWorker's automatic analysis can be configured", "[engine][analysis][worker]")
+{
+    auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
+    auto audioFile = File(testFilesDirectory + "silence-fade.aiff");
+    REQUIRE(audioFile.existsAsFile());
+
+    AnalysisWorker worker(nullptr, AnalysisWorker::canonicalAnalysisTypes());
+
+    WHEN("automatic analysis is disabled")
+    {
+        worker.setAutoAnalysisEnabled(false);
+
+        THEN("enqueueing with the defaults queues nothing")
+        {
+            REQUIRE_FALSE(worker.isAutoAnalysisEnabled());
+            REQUIRE(worker.enqueue(audioFile) == 0);
+        }
+
+        THEN("an explicitly requested analysis still queues")
+        {
+            REQUIRE(worker.enqueue(audioFile, { AnalysisType::Onset }) == 1);
+        }
+
+        THEN("re-enabling restores the default behaviour")
+        {
+            worker.setAutoAnalysisEnabled(true);
+            REQUIRE(worker.enqueue(audioFile) == 4);
+        }
+    }
+
+    WHEN("the default types are replaced in an arbitrary order")
+    {
+        worker.setDefaultAnalysisTypes({ AnalysisType::Beat, AnalysisType::Onset,
+                                         AnalysisType::SBic, AnalysisType::BeatDegara });
+
+        THEN("they are stored in canonical, merge-first order")
+        {
+            REQUIRE(worker.getDefaultAnalysisTypes() == AnalysisWorker::canonicalAnalysisTypes());
+        }
+    }
+
+    WHEN("the default types are replaced with a subset")
+    {
+        worker.setDefaultAnalysisTypes({ AnalysisType::Onset, AnalysisType::SBic });
+
+        THEN("the canonical order is kept within the subset")
+        {
+            const std::vector<AnalysisType> expected { AnalysisType::SBic, AnalysisType::Onset };
+            REQUIRE(worker.getDefaultAnalysisTypes() == expected);
+        }
+    }
+
+    WHEN("the default types are cleared")
+    {
+        worker.setDefaultAnalysisTypes({});
+
+        THEN("enqueueing with the defaults queues nothing")
+        {
+            REQUIRE(worker.enqueue(audioFile) == 0);
+        }
+
+        THEN("an explicitly requested analysis still queues")
+        {
+            REQUIRE(worker.enqueue(audioFile, { AnalysisType::Beat }) == 1);
         }
     }
 }

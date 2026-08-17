@@ -126,7 +126,7 @@ private:
         String message;
         String trackName;
         Colour trackColour;
-        Rectangle<int> messageArea;
+        juce::Rectangle<int> messageArea;
 
         Slider minutesSlider;
         Slider secondsSlider;

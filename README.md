@@ -49,10 +49,10 @@ Building Essentia is optional: without it, `ESSENTIA_ENABLED` auto-detects off a
 Audionaut/Builds/MacOSX/Audionaut.xcodeproj
 ```
 
-**Visual Studio 2022** — open the Visual Studio solution located here:
+**Visual Studio 2026** — open the Visual Studio solution located here:
 
 ```
-Audionaut/Builds/VisualStudio2022/Audionaut.sln
+Audionaut/Builds/VisualStudio2026/Audionaut.sln
 ```
 
 **Linux Makefile** — install dependencies:

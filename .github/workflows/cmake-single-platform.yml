@@ -28,6 +28,14 @@ jobs:
       with:
         submodules: 'recursive'
 
+    # Some test wavs (see .gitattributes) live in Git LFS; without this the
+    # tests get pointer stubs and fail loading them. A separate step rather
+    # than `lfs: true` on the checkout: that option also smudges LFS pointers
+    # inside the essentia submodule, whose upstream has LFS disabled, and the
+    # resulting download error fails the whole checkout.
+    - name: Fetch Git LFS test files
+      run: git lfs pull
+
     # Essentia (the audio-analysis backend) is built from the submodule tree; the
     # tests link the resulting static libs. Without it, ESSENTIA_ENABLED
     # auto-detects off and the analysis tests compile out.
@@ -102,5 +110,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}}
+      # --no-tests=error: ctest passes by default when it finds no tests, which
+      # is how a missing enable_testing() made this step a silent no-op.
+      run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure --no-tests=error
 

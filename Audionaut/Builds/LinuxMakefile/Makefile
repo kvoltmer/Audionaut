@@ -110,6 +110,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/TransportLoop_f6f3bb5e.o \
   $(JUCE_OBJDIR)/PositionableBase_8b3640ed.o \
   $(JUCE_OBJDIR)/PlayListContainer_29209da0.o \
+  $(JUCE_OBJDIR)/ClipDynamics_6197e6fd.o \
   $(JUCE_OBJDIR)/PlayListItem_8cc1eb1e.o \
   $(JUCE_OBJDIR)/PlayListScheduler_18e264da.o \
   $(JUCE_OBJDIR)/AudioRegion_38bb0c1d.o \
@@ -380,6 +381,11 @@ $(JUCE_OBJDIR)/PositionableBase_8b3640ed.o: ../../Source/Engine/PlayList/Positio
 $(JUCE_OBJDIR)/PlayListContainer_29209da0.o: ../../Source/Engine/PlayList/PlayListContainer.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling PlayListContainer.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ClipDynamics_6197e6fd.o: ../../Source/Engine/PlayList/ClipDynamics.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ClipDynamics.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/PlayListItem_8cc1eb1e.o: ../../Source/Engine/PlayList/PlayListItem.cpp

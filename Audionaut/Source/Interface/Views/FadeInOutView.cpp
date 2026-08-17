@@ -14,9 +14,9 @@ void FadeInOutView::paint (juce::Graphics& g)
         return;
     
     
-    auto fFadeInWidth   = playListItem->getFadeIn() * getWidth();
+    auto fFadeInWidth   = playListItem->getDynamics().getFadeIn() * getWidth();
     auto iFadeInWidth   = static_cast<int>(fFadeInWidth);
-    auto fFadeOutWidth  = playListItem->getFadeOut() * getWidth();
+    auto fFadeOutWidth  = playListItem->getDynamics().getFadeOut() * getWidth();
     auto iFadeOutWidth  = static_cast<int>(fFadeOutWidth);
     auto fHeight        = static_cast<float>(getHeight());
     auto fWidth         = static_cast<float>(getWidth());
