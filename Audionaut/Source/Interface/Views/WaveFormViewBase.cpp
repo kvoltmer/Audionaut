@@ -24,6 +24,20 @@ void WaveFormViewBase::paint (juce::Graphics& g)
         const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
         const auto channel      = audioResource->getChannelMapping().getSourceChannel();
         
+        // taper the waveform under the clip fades, matching the FadeInOutView
+        // overlay (which spans the same local bounds)
+        audium::WaveformEnvelope fadeEnvelope;
+        const audium::WaveformEnvelope* envelopePtr = nullptr;
+
+        if (playListItem != nullptr) {
+            const auto& dynamics      = playListItem->getDynamics();
+            fadeEnvelope.totalWidth   = static_cast<float>(getWidth());
+            fadeEnvelope.fadeInWidth  = static_cast<float>(dynamics.getFadeIn()  * getWidth());
+            fadeEnvelope.fadeOutWidth = static_cast<float>(dynamics.getFadeOut() * getWidth());
+            if (fadeEnvelope.isActive())
+                envelopePtr = &fadeEnvelope;
+        }
+
         if (channel >= 0 &&
             channel < audioResource->getNumAudioFileChannels()) {
             audioThumbnail->drawChannel(g,
@@ -31,7 +45,8 @@ void WaveFormViewBase::paint (juce::Graphics& g)
                                         startSeconds,
                                         endSeconds,
                                         channel,
-                                        verticalZoomFactor * getClipGain());
+                                        verticalZoomFactor * getClipGain(),
+                                        envelopePtr);
         }
         else {
             std::cout << "error WaveFormViewBase channel mapping." << std::endl;

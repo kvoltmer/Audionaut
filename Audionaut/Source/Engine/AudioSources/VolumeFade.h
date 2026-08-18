@@ -153,7 +153,9 @@ public:
 private:
     /** The fade curve: sqrt of the linear ramp. The smoothed value can drift
         slightly below zero through float accumulation over long ramps -
-        unclamped, sqrt/pow would turn that into NaN and poison the mix. */
+        unclamped, sqrt/pow would turn that into NaN and poison the mix.
+        Must stay in sync with ClipDynamics::fadeCurve, which the UI uses to
+        draw the same curve. */
     FloatType nextCurveValue() noexcept
     {
         auto g = gain.getNextValue();

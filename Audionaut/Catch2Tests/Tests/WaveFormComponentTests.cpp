@@ -1,4 +1,47 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
+
+#include "Engine/PlayList/ClipDynamics.h"
+#include "Interface/Widgets/audium_AudioThumbnail.h"
+
+TEST_CASE( "waveform fade envelope", "[WaveFormComponent][fade]" ) {
+
+    SECTION("fade curve is the sqrt of the linear progress, clamped to 0..1") {
+        REQUIRE(audium::ClipDynamics::fadeCurve(0.0)  == 0.0);
+        REQUIRE(audium::ClipDynamics::fadeCurve(0.5)  == Catch::Approx(std::sqrt(0.5)));
+        REQUIRE(audium::ClipDynamics::fadeCurve(1.0)  == 1.0);
+        REQUIRE(audium::ClipDynamics::fadeCurve(-0.5) == 0.0);
+        REQUIRE(audium::ClipDynamics::fadeCurve(2.0)  == 1.0);
+    }
+
+    SECTION("a default envelope is inactive") {
+        audium::WaveformEnvelope envelope;
+        REQUIRE_FALSE(envelope.isActive());
+        REQUIRE(envelope.gainAt(0.0f) == 1.0f);
+    }
+
+    SECTION("the envelope follows the fade curve within the fade spans") {
+        audium::WaveformEnvelope envelope;
+        envelope.fadeInWidth  = 100.0f;
+        envelope.fadeOutWidth = 50.0f;
+        envelope.totalWidth   = 1000.0f;
+
+        REQUIRE(envelope.isActive());
+
+        // fade in: 0 at the clip start, sqrt curve up to 1 at fadeInWidth
+        REQUIRE(envelope.gainAt(0.0f)  == 0.0f);
+        REQUIRE(envelope.gainAt(50.0f) == Catch::Approx(std::sqrt(0.5)));
+
+        // flat middle
+        REQUIRE(envelope.gainAt(100.0f) == 1.0f);
+        REQUIRE(envelope.gainAt(500.0f) == 1.0f);
+        REQUIRE(envelope.gainAt(950.0f) == 1.0f);
+
+        // fade out: sqrt curve down to 0 at the clip end
+        REQUIRE(envelope.gainAt(975.0f)  == Catch::Approx(std::sqrt(0.5)));
+        REQUIRE(envelope.gainAt(1000.0f) == 0.0f);
+    }
+}
 
 // TODO: update and activate this test
 

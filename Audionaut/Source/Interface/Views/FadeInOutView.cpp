@@ -27,7 +27,7 @@ void FadeInOutView::paint (juce::Graphics& g)
         thePath.startNewSubPath (Point<float> (0.f, fHeight));
         auto stride = iFadeInWidth > 10 ? 4 : 1;
         for (auto w = 0; w < iFadeInWidth; w += stride) {
-            auto square = powf(w / fFadeInWidth, 0.5f); // square root
+            auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(w / fFadeInWidth));
             auto y      = fHeight - (square * fHeight);
             
             thePath.lineTo(static_cast<float>(w), y);
@@ -48,7 +48,7 @@ void FadeInOutView::paint (juce::Graphics& g)
         
         auto stride = iFadeOutWidth > 10 ? 4 : 1;
         for (auto w = 0; w < iFadeOutWidth; w += stride) {
-            auto square = powf(1.f - (w / fFadeOutWidth), 0.5f); // square root
+            auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - (w / fFadeOutWidth)));
             auto y      = fHeight - (square * fHeight);
             
             thePath.lineTo(fWidth - fFadeOutWidth + static_cast<float>(w), y);
