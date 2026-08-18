@@ -121,4 +121,9 @@ jobs:
 workflows:
   windows:
     jobs:
-      - build-windows
+      - build-windows:
+          filters:
+            branches:
+              only:
+                - main
+                - develop
