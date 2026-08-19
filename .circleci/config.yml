@@ -29,6 +29,17 @@ jobs:
       # once an image ships v145.
       APP_TOOLSET: v143
 
+      # Essentia's Windows dependencies. The triplet must stay
+      # x64-windows-static-md - static libraries against the dynamic CRT, which
+      # is what both the .vcxproj and the JUCE CMake test target use.
+      VCPKG_TRIPLET: x64-windows-static-md
+      VCPKG_ROOT_DIR: C:/Users/circleci/vcpkg
+      # Read by the .vcxproj, which expands $(AUDIONAUT_VCPKG_PREFIX) in its
+      # include and library paths, and passed to the test configure. Forward
+      # slashes throughout: MSBuild, MSVC and CMake all accept them, and they
+      # avoid escaping this value twice.
+      AUDIONAUT_VCPKG_PREFIX: C:/Users/circleci/vcpkg/installed/x64-windows-static-md
+
       # Keep git-lfs from smudging during checkout / submodule update: the
       # essentia submodule's upstream has LFS disabled, and the resulting
       # download errors would fail the clone. The test wavs that really do
@@ -48,11 +59,58 @@ jobs:
           name: Fetch Git LFS test files
           command: git lfs pull
 
-      # Essentia is deliberately NOT built here - build_essentia.sh is a
-      # bash + waf script targeting macOS/Linux only. The app and tests degrade
-      # cleanly: AUDIONAUT_ENABLE_ESSENTIA auto-detects OFF and the analysis
-      # code compiles out. This job guards Windows *compilation*; the analysis
-      # features stay covered by the macOS and Linux workflows.
+      # Essentia. build_essentia.sh cannot be used - it is a bash + waf script
+      # targeting macOS/Linux - so this runs the CMake + vcpkg port instead.
+      # It has to come before the app build: the .vcxproj lists essentia.lib in
+      # AdditionalDependencies unconditionally, so a missing library is a hard
+      # LNK1104 rather than a graceful degradation.
+
+      - run:
+          name: Install Python (Essentia code generation)
+          # Builds/Windows/CMakeLists.txt does find_package(Python3 REQUIRED) to
+          # run generate_essentia_build.py. Only the standard library is used.
+          command: |
+            if ! command -v python > /dev/null && ! command -v python3 > /dev/null; then
+              choco install python3 -y --no-progress
+              echo 'export PATH="/c/Python313:/c/Python313/Scripts:$PATH"' >> "$BASH_ENV"
+            fi
+
+      - run:
+          name: Compute the Essentia cache key
+          # Everything that changes the output: the submodule revision, and the
+          # four files that decide what is compiled and against which
+          # dependencies. Written to a file because CircleCI's checksum template
+          # only reads files, not command output.
+          command: |
+            git -C Submodules/essentia rev-parse HEAD > essentia-cache-key.txt
+            cat Audionaut/Builds/build_essentia_windows.ps1                 Audionaut/Builds/Windows/CMakeLists.txt                 Audionaut/Builds/Windows/VcpkgDeps.cmake                 Audionaut/Builds/Windows/generate_essentia_build.py >> essentia-cache-key.txt
+
+      - restore_cache:
+          keys:
+            # No partial-match fallback key: a stale essentia.lib that does not
+            # match the current sources would link and then misbehave at
+            # runtime, which is worse than paying for a rebuild.
+            - essentia-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
+
+      - run:
+          name: Build Essentia
+          # A cache hit restores both the library and the vcpkg tree, so this
+          # becomes a no-op. On a miss the vcpkg FFmpeg build dominates the job.
+          command: |
+            if [ -f "Submodules/essentia/build-msvc/lib/$BUILD_TYPE/essentia.lib" ]; then
+              echo "Restored from cache - skipping"
+              exit 0
+            fi
+            powershell.exe -NoProfile -ExecutionPolicy Bypass               -File Audionaut/Builds/build_essentia_windows.ps1               -Configuration "$BUILD_TYPE"               -VcpkgRoot "$VCPKG_ROOT_DIR"               -Triplet "$VCPKG_TRIPLET"
+          no_output_timeout: 90m
+
+      - save_cache:
+          key: essentia-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
+          paths:
+            - Submodules/essentia/build-msvc
+            # The installed tree only - not vcpkg's buildtrees/packages, which
+            # are intermediates and dwarf it.
+            - C:/Users/circleci/vcpkg/installed
 
       - run:
           name: Build the app
@@ -104,7 +162,7 @@ jobs:
               echo 'export PATH="/c/Program Files/CMake/bin:$PATH"' >> "$BASH_ENV"
               source "$BASH_ENV"
             fi
-            cmake -B build -S Audionaut/Catch2Tests
+            cmake -B build -S Audionaut/Catch2Tests                   -DAUDIONAUT_VCPKG_PREFIX="$AUDIONAUT_VCPKG_PREFIX"
 
       - run:
           name: Build tests
