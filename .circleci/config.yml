@@ -108,21 +108,44 @@ jobs:
             - vcpkg-archives-v1-{{ arch }}-
 
       - run:
-          name: Build Essentia
-          # A cache hit restores both the library and the vcpkg tree, so this
-          # becomes a no-op. On a miss the vcpkg FFmpeg build dominates the
-          # job. -ReleaseOnlyDeps skips the Debug flavour of the dependencies
-          # (nothing in CI links it); without it a cold ffmpeg build blows the
-          # 60-minute job limit. The mkdir keeps save_cache below from
-          # tripping over a missing archives directory when vcpkg never ran.
+          name: Install Essentia dependencies (vcpkg)
+          # First of two runs of the build script: -DepsOnly stops after the
+          # vcpkg install so the binary archives can be snapshotted below
+          # BEFORE the essentia compile gets a chance to time the job out - a
+          # timed-out job saves no caches at all, which is how two cold runs
+          # in a row each rebuilt ffmpeg from scratch. -ReleaseOnlyDeps skips
+          # the Debug flavour of the dependencies (nothing in CI links it) and
+          # must match the Build Essentia invocation, or the second install
+          # would see different package ABIs and rebuild everything. The mkdir
+          # keeps save_cache from tripping over a missing archives directory
+          # when the essentia.lib cache hit and vcpkg never runs.
           command: |
             mkdir -p /c/Users/circleci/AppData/Local/vcpkg/archives
             if [ -f "Submodules/essentia/build-msvc/lib/$BUILD_TYPE/essentia.lib" ]; then
               echo "Restored from cache - skipping"
               exit 0
             fi
+            powershell.exe -NoProfile -ExecutionPolicy Bypass               -File Audionaut/Builds/build_essentia_windows.ps1               -VcpkgRoot "$VCPKG_ROOT_DIR"               -Triplet "$VCPKG_TRIPLET"               -ReleaseOnlyDeps               -DepsOnly
+          no_output_timeout: 45m
+
+      - save_cache:
+          key: vcpkg-archives-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
+          paths:
+            - C:/Users/circleci/AppData/Local/vcpkg/archives
+
+      - run:
+          name: Build Essentia
+          # Second run of the script does the actual build; its vcpkg install
+          # pass is a no-op now that the step above has installed everything.
+          # A cache hit on essentia-v1 restores both the library and the vcpkg
+          # tree, so this whole step is skipped.
+          command: |
+            if [ -f "Submodules/essentia/build-msvc/lib/$BUILD_TYPE/essentia.lib" ]; then
+              echo "Restored from cache - skipping"
+              exit 0
+            fi
             powershell.exe -NoProfile -ExecutionPolicy Bypass               -File Audionaut/Builds/build_essentia_windows.ps1               -Configuration "$BUILD_TYPE"               -VcpkgRoot "$VCPKG_ROOT_DIR"               -Triplet "$VCPKG_TRIPLET"               -ReleaseOnlyDeps
-          no_output_timeout: 90m
+          no_output_timeout: 45m
 
       - save_cache:
           key: essentia-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
@@ -131,14 +154,6 @@ jobs:
             # The installed tree only - not vcpkg's buildtrees/packages, which
             # are intermediates and dwarf it.
             - C:/Users/circleci/vcpkg/installed
-
-      # Saved right after the essentia build (not at the end of the job) so a
-      # failure in the app build or tests does not throw the dependency
-      # binaries away.
-      - save_cache:
-          key: vcpkg-archives-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
-          paths:
-            - C:/Users/circleci/AppData/Local/vcpkg/archives
 
       - run:
           name: Build the app

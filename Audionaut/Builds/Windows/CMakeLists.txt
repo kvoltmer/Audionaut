@@ -96,6 +96,11 @@ target_compile_definitions(essentia PUBLIC
 target_link_libraries(essentia PUBLIC ${ESSENTIA_DEP_LIBRARIES})
 
 if(MSVC)
+    # /MP: compile this target's translation units in parallel. MSBuild's -m
+    # (what cmake --build --parallel maps to) only parallelizes across
+    # *projects*, and essentia is a single project with ~800 files - without
+    # /MP they all go through one core, which timed the CI job out.
+    #
     # /bigobj: several algorithm translation units exceed the default section
     # limit once Eigen templates are instantiated.
     #
@@ -103,7 +108,7 @@ if(MSVC)
     # MSVC does not treat those as keywords unless /permissive- is on, and
     # force-including <iso646.h> supplies them as macros without switching the
     # whole (pre-C++11-era) codebase to strict conformance mode.
-    target_compile_options(essentia PRIVATE /bigobj /W0 /FIiso646.h)
+    target_compile_options(essentia PRIVATE /MP /bigobj /W0 /FIiso646.h)
 endif()
 
 # Land the archive at build-msvc/lib/<config>/essentia.lib, which is where

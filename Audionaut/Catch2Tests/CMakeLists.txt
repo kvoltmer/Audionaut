@@ -191,6 +191,14 @@ endif()
 #set(CMAKE_CXX_STANDARD 20)
 set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 20)
 
+if(MSVC)
+    # /MP: parallel compilation within this target. MSBuild's -m only
+    # parallelizes across projects, and the JUCE modules + engine + interface
+    # + tests all compile into this one target - without /MP that is a single
+    # core doing all of it.
+    target_compile_options(${APP_NAME} PRIVATE /MP)
+endif()
+
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
 # of compile definitions to switch certain features on/off, so if there's a particular feature you

@@ -38,7 +38,14 @@ param(
     # triplet in Builds/Windows/triplets (VCPKG_BUILD_TYPE=release). CI passes
     # this - it never links Debug, and ffmpeg's Debug build alone costs about
     # as much as its Release build. Omit it locally if you need Debug deps.
-    [switch]$ReleaseOnlyDeps
+    [switch]$ReleaseOnlyDeps,
+
+    # Stop after the vcpkg install, before building Essentia itself. CI runs
+    # the script twice: deps only, so it can snapshot vcpkg's binary archives
+    # while they are certain to exist, then the full build, whose install pass
+    # is a no-op. Pass the same triplet switches to both runs, or the second
+    # install will see different package ABIs and rebuild.
+    [switch]$DepsOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -109,6 +116,11 @@ if ($ReleaseOnlyDeps) {
 }
 & (Join-Path $VcpkgRoot 'vcpkg.exe') @vcpkgArgs
 if ($LASTEXITCODE -ne 0) { throw "vcpkg install failed" }
+
+if ($DepsOnly) {
+    Write-Host "-> -DepsOnly: dependencies installed, skipping the Essentia build"
+    return
+}
 
 # Configure and build ---------------------------------------------------------
 $toolchain = Join-Path $VcpkgRoot 'scripts\buildsystems\vcpkg.cmake'
