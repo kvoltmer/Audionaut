@@ -24,13 +24,13 @@ on:
 env:
   BUILD_TYPE: Release
 
-  # The runner image ships Visual Studio 2022 (toolset v143); the .vcxproj that
-  # Projucer generates asks for v145 (VS 2026), which no hosted image provides.
-  # Override on the command line rather than in the .jucer - the checked-in
-  # project must keep matching the toolset developers build with locally, and
-  # v143 still compiles the C++20 the project needs. Drop this once a runner
-  # image ships v145.
-  APP_TOOLSET: v143
+  # No toolset pin: the windows-2025 image ships Visual Studio 2026, so the
+  # v145 the .vcxproj asks for is what MSBuild picks natively - and what the
+  # CMake-driven Essentia and test builds pick as their default. Everything
+  # must stay on ONE toolset: an earlier v143 pin on the app alone left
+  # v145-built essentia.lib referencing vectorized STL helpers
+  # (__std_max_element_f_ and friends) that v143's support libraries do not
+  # have, which is a wall of LNK2001s at app link time.
 
   # Essentia's Windows dependencies. The triplet must stay
   # x64-windows-static-md - static libraries against the dynamic CRT, which
@@ -157,7 +157,6 @@ jobs:
         -m
         -p:Configuration=${{ env.BUILD_TYPE }}
         -p:Platform=x64
-        -p:PlatformToolset=${{ env.APP_TOOLSET }}
         -v:minimal
 
     - name: Configure tests
