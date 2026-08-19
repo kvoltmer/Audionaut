@@ -32,7 +32,13 @@ param(
 
     [string]$VcpkgRoot = "$PSScriptRoot\..\..\..\vcpkg",
 
-    [string]$Triplet = 'x64-windows-static-md'
+    [string]$Triplet = 'x64-windows-static-md',
+
+    # Build only the Release flavour of the vcpkg dependencies, via the overlay
+    # triplet in Builds/Windows/triplets (VCPKG_BUILD_TYPE=release). CI passes
+    # this - it never links Debug, and ffmpeg's Debug build alone costs about
+    # as much as its Release build. Omit it locally if you need Debug deps.
+    [switch]$ReleaseOnlyDeps
 )
 
 $ErrorActionPreference = 'Stop'
@@ -84,7 +90,24 @@ Write-Host "-> vcpkg at $VcpkgRoot"
 # test target use. A mismatch here surfaces as duplicate-symbol or
 # _ITERATOR_DEBUG_LEVEL link errors much later.
 Write-Host "-> Installing dependencies ($Triplet) - the ffmpeg build is slow on a cold cache"
-& (Join-Path $VcpkgRoot 'vcpkg.exe') install fftw3 ffmpeg libsamplerate libyaml eigen3 --triplet $Triplet
+# ffmpeg[core,...]: 'core' switches the default features off. Essentia only
+# uses the demux/decode/resample path - avformat, avcodec, avutil, swresample,
+# the exact set VcpkgDeps.cmake links - and the defaults would also build
+# avfilter, avdevice and swscale, roughly doubling ffmpeg's (dominant) share
+# of a cold dependency build for libraries nothing links.
+$vcpkgArgs = @(
+    'install'
+    'fftw3'
+    'ffmpeg[core,avcodec,avformat,swresample]'
+    'libsamplerate'
+    'libyaml'
+    'eigen3'
+    '--triplet', $Triplet
+)
+if ($ReleaseOnlyDeps) {
+    $vcpkgArgs += @('--overlay-triplets', (Join-Path $PSScriptRoot 'Windows\triplets'))
+}
+& (Join-Path $VcpkgRoot 'vcpkg.exe') @vcpkgArgs
 if ($LASTEXITCODE -ne 0) { throw "vcpkg install failed" }
 
 # Configure and build ---------------------------------------------------------
