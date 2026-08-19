@@ -4,13 +4,45 @@
 # Studio solution with MSBuild, then builds and runs the Catch2 suite.
 # See that workflow for the full rationale behind the individual steps; the
 # comments here cover only what is CircleCI-specific.
+#
+# Two jobs rather than one: a cold essentia build (vcpkg's ffmpeg plus ~800
+# Eigen-heavy translation units) runs 50+ minutes on its own, and jobs die at
+# the 60-minute limit - three cold single-job runs in a row timed out. The
+# split gives the essentia build and the app/test build their own 60-minute
+# budgets, connected through the caches.
 version: 2.1
 
 orbs:
   win: circleci/windows@5.1
 
+commands:
+  compute-essentia-cache-key:
+    description: >-
+      Everything that changes the essentia.lib output: the submodule revision,
+      and the five files that decide what is compiled and against which
+      dependencies. Written to a file because CircleCI's checksum template
+      only reads files, not command output. Both jobs run this, so their
+      cache keys cannot drift apart.
+    steps:
+      - run:
+          name: Compute the Essentia cache key
+          command: |
+            git -C Submodules/essentia rev-parse HEAD > essentia-cache-key.txt
+            cat Audionaut/Builds/build_essentia_windows.ps1 \
+                Audionaut/Builds/Windows/CMakeLists.txt \
+                Audionaut/Builds/Windows/VcpkgDeps.cmake \
+                Audionaut/Builds/Windows/generate_essentia_build.py \
+                Audionaut/Builds/Windows/triplets/x64-windows-static-md.cmake \
+                >> essentia-cache-key.txt
+
 jobs:
-  build-windows:
+  # Builds essentia.lib and its vcpkg dependencies, then caches both. On an
+  # essentia-v1 cache hit every step short-circuits and the job takes a few
+  # minutes. Worst case - a cache-key change with cold vcpkg archives - can
+  # still graze the 60-minute limit, but the archives cache is saved BEFORE
+  # the essentia compile, so a timed-out run leaves warm dependencies behind
+  # and the retry fits comfortably.
+  build-essentia-windows:
     executor:
       name: win/default # windows-server-2022-gui:current, Visual Studio 2022
       size: medium
@@ -18,7 +50,7 @@ jobs:
       # failing native command mid-script does not fail the step unless every
       # call is followed by an explicit $LASTEXITCODE check.
       shell: bash.exe -eo pipefail
-    environment:
+    environment: &windows-env
       BUILD_TYPE: Release
 
       # The image ships Visual Studio 2022 (toolset v143); the .vcxproj that
@@ -43,27 +75,18 @@ jobs:
       # Keep git-lfs from smudging during checkout / submodule update: the
       # essentia submodule's upstream has LFS disabled, and the resulting
       # download errors would fail the clone. The test wavs that really do
-      # live in LFS are pulled explicitly below.
+      # live in LFS are pulled explicitly where needed.
       GIT_LFS_SKIP_SMUDGE: "1"
 
     steps:
       - checkout
 
-      # CircleCI's checkout step does not fetch submodules (unlike
-      # actions/checkout with submodules: recursive).
       - run:
-          name: Fetch submodules
-          command: git submodule update --init --recursive
-
-      - run:
-          name: Fetch Git LFS test files
-          command: git lfs pull
-
-      # Essentia. build_essentia.sh cannot be used - it is a bash + waf script
-      # targeting macOS/Linux - so this runs the CMake + vcpkg port instead.
-      # It has to come before the app build: the .vcxproj lists essentia.lib in
-      # AdditionalDependencies unconditionally, so a missing library is a hard
-      # LNK1104 rather than a graceful degradation.
+          name: Fetch the Essentia submodule
+          # Only essentia is needed to build essentia.lib. The full recursive
+          # fetch (JUCE and friends) costs several minutes and belongs to
+          # build-windows.
+          command: git submodule update --init --recursive Submodules/essentia
 
       - run:
           name: Install Python (Essentia code generation)
@@ -75,20 +98,7 @@ jobs:
               echo 'export PATH="/c/Python313:/c/Python313/Scripts:$PATH"' >> "$BASH_ENV"
             fi
 
-      - run:
-          name: Compute the Essentia cache key
-          # Everything that changes the output: the submodule revision, and the
-          # four files that decide what is compiled and against which
-          # dependencies. Written to a file because CircleCI's checksum template
-          # only reads files, not command output.
-          command: |
-            git -C Submodules/essentia rev-parse HEAD > essentia-cache-key.txt
-            cat Audionaut/Builds/build_essentia_windows.ps1 \
-                Audionaut/Builds/Windows/CMakeLists.txt \
-                Audionaut/Builds/Windows/VcpkgDeps.cmake \
-                Audionaut/Builds/Windows/generate_essentia_build.py \
-                Audionaut/Builds/Windows/triplets/x64-windows-static-md.cmake \
-                >> essentia-cache-key.txt
+      - compute-essentia-cache-key
 
       - restore_cache:
           keys:
@@ -112,9 +122,8 @@ jobs:
           # First of two runs of the build script: -DepsOnly stops after the
           # vcpkg install so the binary archives can be snapshotted below
           # BEFORE the essentia compile gets a chance to time the job out - a
-          # timed-out job saves no caches at all, which is how two cold runs
-          # in a row each rebuilt ffmpeg from scratch. -ReleaseOnlyDeps skips
-          # the Debug flavour of the dependencies (nothing in CI links it) and
+          # timed-out job saves no caches at all. -ReleaseOnlyDeps skips the
+          # Debug flavour of the dependencies (nothing in CI links it) and
           # must match the Build Essentia invocation, or the second install
           # would see different package ABIs and rebuild everything. The mkdir
           # keeps save_cache from tripping over a missing archives directory
@@ -126,7 +135,7 @@ jobs:
               exit 0
             fi
             powershell.exe -NoProfile -ExecutionPolicy Bypass               -File Audionaut/Builds/build_essentia_windows.ps1               -VcpkgRoot "$VCPKG_ROOT_DIR"               -Triplet "$VCPKG_TRIPLET"               -ReleaseOnlyDeps               -DepsOnly
-          no_output_timeout: 45m
+          no_output_timeout: 30m
 
       - save_cache:
           key: vcpkg-archives-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
@@ -138,7 +147,8 @@ jobs:
           # Second run of the script does the actual build; its vcpkg install
           # pass is a no-op now that the step above has installed everything.
           # A cache hit on essentia-v1 restores both the library and the vcpkg
-          # tree, so this whole step is skipped.
+          # tree, so this whole step is skipped. ~35 minutes even with /MP:
+          # the algorithm sources instantiate a lot of Eigen.
           command: |
             if [ -f "Submodules/essentia/build-msvc/lib/$BUILD_TYPE/essentia.lib" ]; then
               echo "Restored from cache - skipping"
@@ -154,6 +164,47 @@ jobs:
             # The installed tree only - not vcpkg's buildtrees/packages, which
             # are intermediates and dwarf it.
             - C:/Users/circleci/vcpkg/installed
+
+  # Builds the app, the NSIS installer and the Catch2 suite against the
+  # essentia.lib and vcpkg tree that build-essentia-windows cached.
+  build-windows:
+    executor:
+      name: win/default
+      size: medium
+      shell: bash.exe -eo pipefail
+    environment: *windows-env
+
+    steps:
+      - checkout
+
+      # CircleCI's checkout step does not fetch submodules (unlike
+      # actions/checkout with submodules: recursive).
+      - run:
+          name: Fetch submodules
+          command: git submodule update --init --recursive
+
+      - run:
+          name: Fetch Git LFS test files
+          command: git lfs pull
+
+      - compute-essentia-cache-key
+
+      - restore_cache:
+          keys:
+            - essentia-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
+
+      - run:
+          name: Verify the Essentia cache restored
+          # The .vcxproj lists essentia.lib in AdditionalDependencies
+          # unconditionally, so a missing library would otherwise surface as a
+          # cryptic LNK1104 twenty minutes in. build-essentia-windows saved
+          # this cache in the same workflow, so a miss here means the key
+          # computation diverged between the two jobs.
+          command: |
+            if [ ! -f "Submodules/essentia/build-msvc/lib/$BUILD_TYPE/essentia.lib" ]; then
+              echo "essentia.lib was not restored from cache; check compute-essentia-cache-key" >&2
+              exit 1
+            fi
 
       - run:
           name: Build the app
@@ -222,7 +273,15 @@ jobs:
 workflows:
   windows:
     jobs:
+      - build-essentia-windows:
+          filters:
+            branches:
+              only:
+                - main
+                - develop
       - build-windows:
+          requires:
+            - build-essentia-windows
           filters:
             branches:
               only:
