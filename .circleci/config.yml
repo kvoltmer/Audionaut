@@ -45,7 +45,13 @@ jobs:
   build-essentia-windows:
     executor:
       name: win/default # windows-server-2022-gui:current, Visual Studio 2022
-      size: medium
+      # large (8 vCPU), unlike everything else here: even parallelized with
+      # /MP, Essentia's Eigen-heavy compile ate the whole 60-minute job limit
+      # on medium's 4 vCPUs. Costs 2x credits/minute but roughly half the
+      # minutes, so the price is a wash. If the plan ever stops offering
+      # windows.large this job fails within seconds with a resource-class
+      # error - drop back to medium and shrink the essentia build instead.
+      size: large
       # Git bash instead of the orb's PowerShell default: with PowerShell, a
       # failing native command mid-script does not fail the step unless every
       # call is followed by an explicit $LASTEXITCODE check.

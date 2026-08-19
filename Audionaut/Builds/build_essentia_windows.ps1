@@ -205,7 +205,10 @@ Write-Host "-> Configuring Essentia ($Configuration)"
 if ($LASTEXITCODE -ne 0) { throw "CMake configure failed" }
 
 Write-Host "-> Building Essentia"
-& $cmakeExe --build $buildDir --config $Configuration --parallel
+# /clp:ShowTimestamp prefixes every MSBuild line with a wall-clock time. The
+# compile runs tens of minutes in CI and emits little output; without the
+# timestamps a timed-out log cannot show where the minutes went.
+& $cmakeExe --build $buildDir --config $Configuration --parallel -- /clp:ShowTimestamp
 if ($LASTEXITCODE -ne 0) { throw "Essentia build failed" }
 
 $lib = Get-ChildItem $buildDir -Recurse -Filter 'essentia.lib' | Select-Object -First 1
