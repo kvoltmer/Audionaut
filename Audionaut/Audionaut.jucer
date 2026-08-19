@@ -579,11 +579,13 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
-    <VS2026 targetFolder="Builds/VisualStudio2026" extraDefs="LINK_PLATFORM_WINDOWS=1"
-            smallIcon="qhU3Rr" bigIcon="gdiYPG">
+    <VS2026 targetFolder="Builds/VisualStudio2026" extraDefs="LINK_PLATFORM_WINDOWS=1&#10;NOMINMAX&#10;WIN32_LEAN_AND_MEAN&#10;YAML_DECLARE_STATIC"
+            smallIcon="qhU3Rr" bigIcon="gdiYPG" externalLibraries="essentia.lib&#10;fftw3f.lib&#10;samplerate.lib&#10;yaml.lib&#10;avformat.lib&#10;avcodec.lib&#10;avutil.lib&#10;swresample.lib&#10;ws2_32.lib&#10;secur32.lib&#10;crypt32.lib&#10;ncrypt.lib&#10;bcrypt.lib&#10;mfplat.lib&#10;mfuuid.lib&#10;strmiids.lib">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source"/>
-        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source"/>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/build-msvc/generated&#10;$(AUDIONAUT_VCPKG_PREFIX)/include&#10;$(AUDIONAUT_VCPKG_PREFIX)/include/eigen3&#10;../../../../vcpkg/installed/x64-windows-static-md/include&#10;../../../../vcpkg/installed/x64-windows-static-md/include/eigen3"
+                       libraryPath="../../../Submodules/essentia/build-msvc/lib/Debug&#10;$(AUDIONAUT_VCPKG_PREFIX)/debug/lib&#10;../../../../vcpkg/installed/x64-windows-static-md/debug/lib"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/build-msvc/generated&#10;$(AUDIONAUT_VCPKG_PREFIX)/include&#10;$(AUDIONAUT_VCPKG_PREFIX)/include/eigen3&#10;../../../../vcpkg/installed/x64-windows-static-md/include&#10;../../../../vcpkg/installed/x64-windows-static-md/include/eigen3"
+                       libraryPath="../../../Submodules/essentia/build-msvc/lib/Release&#10;$(AUDIONAUT_VCPKG_PREFIX)/lib&#10;../../../../vcpkg/installed/x64-windows-static-md/lib"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/JUCE/modules"/>

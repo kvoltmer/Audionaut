@@ -116,6 +116,38 @@ branch. Nothing else in Essentia references them and Audionaut uses
 `PoolStorage`, so excluding them avoids taking on a pthreads dependency or
 patching the submodule.
 
+## Building the app against it
+
+`essentia.lib` feeds two targets: the Catch2 test build (configured with
+`-DAUDIONAUT_VCPKG_PREFIX=...`, see above) and the app itself. The app picks it
+up through the VS2026 exporter in `Audionaut.jucer` — re-save the `.jucer` in
+the Projucer after changing it, as with any exporter change.
+
+The segmenters (`BeatSegmenter`, `OnsetSegmenter`, `SBicSegmenter`) select their
+implementation with `__has_include(<essentia/algorithmfactory.h>)` and
+`__has_include(<unsupported/Eigen/CXX11/Tensor>)`, so nothing has to be switched
+on by hand: if the include paths resolve, `ESSENTIA_ENABLED` becomes 1 and the
+real implementations compile. If they do not, the app still builds and the
+analysis features are inert stubs. A Windows app build that silently lacks
+analysis means the include paths did not resolve — check that
+`build_essentia_windows.ps1` has been run.
+
+Two details differ from the macOS and Linux exporters:
+
+- **vcpkg lives outside the repo**, so its location cannot be a fixed relative
+  path. Both configurations list `$(AUDIONAUT_VCPKG_PREFIX)` first and the
+  script's default location (`vcpkg` beside the repo) second. Set the
+  environment variable if vcpkg is anywhere else; MSBuild expands an undefined
+  property to an empty string, leaving the entry harmlessly unresolvable.
+- **The library path is per-configuration**, because vcpkg installs release
+  libraries in `<prefix>/lib` and debug ones in `<prefix>/debug/lib` under
+  identical names — the same trap `VcpkgDeps.cmake` handles with generator
+  expressions. Debug searches `debug/lib`, Release searches `lib`, and each
+  points at its matching `build-msvc/lib/<config>`. This means the app
+  configuration must match the one Essentia was built with:
+  `build_essentia_windows.ps1 -Configuration Debug` is needed before a Debug
+  app build, and defaults to Release otherwise.
+
 ## Keeping this in sync
 
 The algorithm exclusions and source-selection rules are transcribed from
