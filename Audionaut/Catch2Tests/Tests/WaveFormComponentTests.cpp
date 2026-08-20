@@ -41,6 +41,57 @@ TEST_CASE( "waveform fade envelope", "[WaveFormComponent][fade]" ) {
         REQUIRE(envelope.gainAt(975.0f)  == Catch::Approx(std::sqrt(0.5)));
         REQUIRE(envelope.gainAt(1000.0f) == 0.0f);
     }
+
+    SECTION("ramp offsets shift the fade spans") {
+        audium::WaveformEnvelope envelope;
+        envelope.fadeInWidth      = 100.0f;
+        envelope.fadeInStartWidth = 50.0f;   // silent head inside the clip
+        envelope.fadeOutWidth     = 100.0f;
+        envelope.fadeOutEndWidth  = 50.0f;   // silent tail inside the clip
+        envelope.totalWidth       = 1000.0f;
+
+        REQUIRE(envelope.gainAt(25.0f)  == 0.0f);
+        REQUIRE(envelope.gainAt(75.0f)  == Catch::Approx(std::sqrt(0.5)));
+        REQUIRE(envelope.gainAt(500.0f) == 1.0f);
+        REQUIRE(envelope.gainAt(925.0f) == Catch::Approx(std::sqrt(0.5)));
+        REQUIRE(envelope.gainAt(975.0f) == 0.0f);
+    }
+
+    SECTION("a ramp lying entirely outside the clip still tapers negative x") {
+        // fade-in end at the clip start, start dragged outside: the ghost
+        // waveform (drawn at x < 0 in clip-local space) must follow the ramp
+        // even though the in-clip fade width is zero
+        audium::WaveformEnvelope envelope;
+        envelope.fadeInWidth      = 0.0f;
+        envelope.fadeInStartWidth = -100.0f;
+        envelope.fadeOutWidth     = 0.0f;
+        envelope.fadeOutEndWidth  = -100.0f;
+        envelope.totalWidth       = 1000.0f;
+
+        // fade-in ramp over [-100, 0]
+        REQUIRE(envelope.gainAt(-100.0f) == 0.0f);
+        REQUIRE(envelope.gainAt(-50.0f)  == Catch::Approx(std::sqrt(0.5)));
+        REQUIRE(envelope.gainAt(0.0f)    == 1.0f);
+
+        // inside the clip untouched
+        REQUIRE(envelope.gainAt(500.0f)  == 1.0f);
+        REQUIRE(envelope.gainAt(1000.0f) == 1.0f);
+
+        // fade-out ramp over [1000, 1100]
+        REQUIRE(envelope.gainAt(1050.0f) == Catch::Approx(std::sqrt(0.5)));
+        REQUIRE(envelope.gainAt(1100.0f) == 0.0f);
+    }
+
+    SECTION("a ramp crossing the clip edge tapers both sides of it") {
+        audium::WaveformEnvelope envelope;
+        envelope.fadeInWidth      = 100.0f;
+        envelope.fadeInStartWidth = -100.0f;
+        envelope.totalWidth       = 1000.0f;
+
+        REQUIRE(envelope.gainAt(-100.0f) == 0.0f);
+        REQUIRE(envelope.gainAt(0.0f)    == Catch::Approx(std::sqrt(0.5)));
+        REQUIRE(envelope.gainAt(100.0f)  == 1.0f);
+    }
 }
 
 // TODO: update and activate this test

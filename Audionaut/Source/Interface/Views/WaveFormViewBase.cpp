@@ -122,6 +122,34 @@ juce::Rectangle<double> WaveFormViewBase::getClippedDrawingArea() const
     return thumbArea;
 }
 
+std::shared_ptr<audium::AudioThumbnail> WaveFormViewBase::createThumbnailForResource(
+    const std::shared_ptr<audium::AudiumEngine>& audiumEngine,
+    const std::shared_ptr<audium::AudioResource>& audioResource)
+{
+    if (audioResource == nullptr ||
+        audioResource->audioFormatReader == nullptr)
+        return nullptr;
+
+    auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
+    auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
+    auto sourceSamplesPerThumbnailSample = 64;
+    auto thumbnail = std::make_shared<audium::AudioThumbnail>(sourceSamplesPerThumbnailSample,
+                                                              *formatManager,
+                                                              *thumbnailCache);
+    // reuse shared_ptr if the file is memory mapped
+    if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
+        auto hashCode = audioResource->getUrl().toString(true).hashCode64();
+        thumbnail->setReader(audioResource->audioFormatReader, hashCode);
+    }
+    else {
+        // create a new input source
+        if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
+            thumbnail->setSource(inputSource.release());
+        }
+    }
+    return thumbnail;
+}
+
 void WaveFormViewBase::createThumbnailCache()
 {
     if (audioThumbnail != nullptr) {
@@ -129,26 +157,9 @@ void WaveFormViewBase::createThumbnailCache()
     }
 
     if (audioResource != nullptr) {
-        
+
         if (audioResource->audioFormatReader != nullptr) {
-            // create thumbnail
-            auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
-            auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
-            auto sourceSamplesPerThumbnailSample = 64;
-            audioThumbnail = std::make_shared<audium::AudioThumbnail>(sourceSamplesPerThumbnailSample,
-                                                                      *formatManager,
-                                                                      *thumbnailCache);
-            // reuse shared_ptr if the file is memory mapped
-            if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
-                auto hashCode = audioResource->getUrl().toString(true).hashCode64();
-                audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
-            }
-            else {
-                // create a new input source
-                if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
-                    audioThumbnail->setSource(inputSource.release());
-                }
-            }
+            audioThumbnail = createThumbnailForResource(audiumEngine, audioResource);
             jassert(audioThumbnail);
         }
         else {

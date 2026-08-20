@@ -13,7 +13,10 @@ float WaveformEnvelope::gainAt (float x) const noexcept
 {
     auto gain = 1.0f;
 
-    if (fadeInWidth > 0.0f && x < fadeInWidth)
+    // a negative start offset keeps shaping x < 0 (the ghost waveform of an
+    // extension) even when the in-clip fade width is zero - the ramp then
+    // lies entirely outside the clip
+    if (x < fadeInWidth && (fadeInWidth > 0.0f || fadeInStartWidth < 0.0f))
     {
         if (x < fadeInStartWidth)
             gain = 0.0f; // silent head before the ramp
@@ -30,7 +33,7 @@ float WaveformEnvelope::gainAt (float x) const noexcept
     const auto fadeOutStartX = totalWidth - fadeOutWidth;
     const auto fadeOutEndX   = totalWidth - fadeOutEndWidth;
 
-    if (fadeOutWidth > 0.0f && x > fadeOutStartX)
+    if (x > fadeOutStartX && (fadeOutWidth > 0.0f || fadeOutEndWidth < 0.0f))
     {
         auto outGain = 0.0f; // silent tail after the ramp
         if (x < fadeOutEndX)

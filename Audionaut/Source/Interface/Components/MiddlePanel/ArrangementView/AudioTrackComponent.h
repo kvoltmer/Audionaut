@@ -45,7 +45,7 @@ public:
 
         // lane-wide layer above all clips: outside-the-clip fade ramps and
         // the lane-parented fade handles
-        fadeOverlay = std::make_unique<ClipFadeOverlay>(track, zoomHandler);
+        fadeOverlay = std::make_unique<ClipFadeOverlay>(track, audiumEngine, zoomHandler);
         addAndMakeVisible(fadeOverlay.get());
 
         refreshComponent(track);
