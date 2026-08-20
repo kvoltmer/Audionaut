@@ -281,60 +281,99 @@ void AudioTransportSource::resetClipGain()
     clipGain.setRampDurationSeconds(rampDuration);
 }
 
-void AudioTransportSource::setFadeInSeconds(double fadeInSeconds, double offsetInSeconds, bool reset)
+void configureClipFades (AudioTransportSource& source,
+                         const ClipFadeSpec& spec,
+                         double filePositionSeconds,
+                         bool reset)
 {
-    auto fadeTime = fadeInSeconds;
+    if (spec.fadeIn <= 0.0 && spec.fadeInStart == 0.0) {
+        source.clearFadeIn();
+    }
+    else {
+        // a pre-file clamp makes filePosition > regionStart + fadeInStart,
+        // which arms the ramp mid-way - the ramp progresses through the
+        // pre-file silence
+        source.setFadeInRamp(spec.fadeIn - spec.fadeInStart,
+                             (spec.regionStart + spec.fadeInStart) - filePositionSeconds,
+                             reset);
+    }
+
+    if (spec.fadeOut <= 0.0 && spec.fadeOutEnd == 0.0) {
+        source.clearFadeOut();
+    }
+    else {
+        source.setFadeOutRamp(spec.fadeOut - spec.fadeOutEnd,
+                              (spec.regionEnd - spec.fadeOut) - filePositionSeconds,
+                              reset);
+    }
+}
+
+void AudioTransportSource::clearFadeIn()
+{
+    clipFadeIn.setSilentSamples(0);
+    clipFadeIn.setRampDurationSeconds(0.0);
+    clipFadeIn.setGainLinear(1.0, true);
+}
+
+void AudioTransportSource::clearFadeOut()
+{
+    // no fade-out: keep the processor transparent instead of scheduling a
+    // zero-length ramp to gain 0 (which would mute instantly once the
+    // skip counter runs out)
+    clipFadeOut.setSkipSamples(0);
+    clipFadeOut.setRampDurationSeconds(0.0);
+    clipFadeOut.setGainLinear(1.0, true);
+}
+
+void AudioTransportSource::setFadeInRamp(double rampSeconds, double rampStartSeconds, bool reset)
+{
+    auto rampTime = rampSeconds;
     auto initialGain = 0.0;
-    if (offsetInSeconds < 0.0) {
-        fadeTime = fadeInSeconds + offsetInSeconds;
-        if (fadeTime < 0.0)
-            fadeTime = 0.0;
-        
-        if (fadeInSeconds > 0.0)
-            initialGain = 1.0 - (fadeTime / fadeInSeconds);
+
+    if (rampStartSeconds > 0.0) {
+        // silence until the ramp starts; the smoother is frozen meanwhile
+        clipFadeIn.setSilentSamples(juce::roundToInt(rampStartSeconds * sampleRate));
     }
-    
-    if (reset) {
+    else {
+        // the ramp (partly) elapsed before the scheduled position - always
+        // clear a stale silent span from a previous schedule
+        clipFadeIn.setSilentSamples(0);
+
+        auto elapsed = -rampStartSeconds;
+        rampTime = juce::jmax(0.0, rampSeconds - elapsed);
+        initialGain = rampSeconds > 0.0 ? juce::jmin(1.0, elapsed / rampSeconds) : 1.0;
+    }
+
+    // ordering is load-bearing: snap the initial gain, then the duration,
+    // then arm the target (setRampDurationSeconds resets the smoother)
+    if (reset)
         clipFadeIn.setGainLinear(initialGain, true);
-    }
-    clipFadeIn.setRampDurationSeconds(fadeTime);
+    clipFadeIn.setRampDurationSeconds(rampTime);
     clipFadeIn.setGainLinear(1.0, false);
 }
 
-void AudioTransportSource::setFadeOutSeconds(double fadeOutSeconds, double duration, bool reset)
+void AudioTransportSource::setFadeOutRamp(double rampSeconds, double rampStartSeconds, bool reset)
 {
-    if (duration < 0.0)
-        duration = 0.0;
-
-    if (fadeOutSeconds <= 0.0) {
-        // no fade-out: keep the processor transparent instead of scheduling a
-        // zero-length ramp to gain 0 (which would mute instantly once the
-        // skip counter runs out)
-        clipFadeOut.setSkipSamples(0);
-        clipFadeOut.setRampDurationSeconds(0.0);
-        clipFadeOut.setGainLinear(1.0, true);
-        return;
-    }
-
-    auto fadeTime = fadeOutSeconds;
+    auto rampTime = rampSeconds;
     auto initialGain = 1.0;
-    if (fadeOutSeconds <= duration) {
-        // schedule
-        auto start = duration - fadeOutSeconds;
-        clipFadeOut.setSkipSamples(start * sampleRate);
+
+    if (rampStartSeconds > 0.0) {
+        // unity pass-through until the ramp starts
+        clipFadeOut.setSkipSamples(juce::roundToInt(rampStartSeconds * sampleRate));
     }
     else {
-        fadeTime = duration;
-        
-        if (fadeOutSeconds > 0.0)
-            initialGain = duration / fadeOutSeconds;
+        // the ramp (partly) elapsed before the scheduled position - always
+        // clear a stale skip span from a previous schedule
+        clipFadeOut.setSkipSamples(0);
+
+        auto elapsed = -rampStartSeconds;
+        rampTime = juce::jmax(0.0, rampSeconds - elapsed);
+        initialGain = rampSeconds > 0.0 ? juce::jmax(0.0, rampTime / rampSeconds) : 0.0;
     }
-    
+
     if (reset)
         clipFadeOut.setGainLinear(initialGain, true);
-    
-    // std::cout << initialGain << " time: " << fadeTime << std::endl;
-    clipFadeOut.setRampDurationSeconds(fadeTime);
+    clipFadeOut.setRampDurationSeconds(rampTime);
     clipFadeOut.setGainLinear(0.0, false);
 }
 

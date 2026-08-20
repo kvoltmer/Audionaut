@@ -53,7 +53,22 @@ public:
     {
         skipSamples = numSamples;
     }
-    
+
+    /**
+     * @brief Outputs silence for the next numSamples processed samples.
+     *
+     * The smoothed gain does NOT advance while silent - the fade ramp begins
+     * once the silent span has been consumed. The source material underneath
+     * is consumed but muted (the silent head of a fade-in whose ramp starts
+     * inside the clip).
+     *
+     * @param numSamples The number of samples to silence.
+     */
+    void setSilentSamples(int numSamples) noexcept
+    {
+        silentSamples = numSamples;
+    }
+
     /** Returns the ramp duration in seconds. */
     double getRampDurationSeconds() const noexcept              { return rampDurationSeconds; }
     
@@ -101,35 +116,55 @@ public:
             if (skipSamples > 0)
                 skipSamples -= static_cast<int> (len);
 
+            if (silentSamples > 0)
+                silentSamples -= static_cast<int> (len);
+
             if (context.usesSeparateInputAndOutputBlocks())
                 outBlock.copyFrom (inBlock);
 
             return;
         }
 
+        // Samples before the scheduled ramp start are muted; the source
+        // underneath is consumed but the smoother does not advance. The ramp
+        // may begin in the middle of a block.
+        const auto silent = static_cast<size_t> (juce::jlimit (0, static_cast<int> (len), silentSamples));
+        if (silent > 0)
+        {
+            silentSamples -= static_cast<int> (silent);
+
+            for (size_t chan = 0; chan < numChannels; ++chan)
+                juce::FloatVectorOperations::clear (outBlock.getChannelPointer (chan),
+                                                    static_cast<int> (silent));
+
+            if (silent == len)
+                return;
+        }
+
         // Samples before the scheduled fade start pass through untouched; the
         // fade may begin in the middle of a block.
-        const auto pending = static_cast<size_t> (juce::jlimit (0, static_cast<int> (len), skipSamples));
+        const auto pending = static_cast<size_t> (juce::jlimit (0, static_cast<int> (len - silent), skipSamples));
         if (pending > 0)
         {
             skipSamples -= static_cast<int> (pending);
 
             if (context.usesSeparateInputAndOutputBlocks())
                 for (size_t chan = 0; chan < numChannels; ++chan)
-                    juce::FloatVectorOperations::copy (outBlock.getChannelPointer (chan),
-                                                       inBlock.getChannelPointer (chan),
+                    juce::FloatVectorOperations::copy (outBlock.getChannelPointer (chan) + silent,
+                                                       inBlock.getChannelPointer (chan) + silent,
                                                        static_cast<int> (pending));
 
-            if (pending == len)
+            if (silent + pending == len)
                 return;
         }
 
-        const auto numToProcess = len - pending;
+        const auto offset = silent + pending;
+        const auto numToProcess = len - offset;
 
         if (numChannels == 1)
         {
-            auto* src = inBlock.getChannelPointer (0) + pending;
-            auto* dst = outBlock.getChannelPointer (0) + pending;
+            auto* src = inBlock.getChannelPointer (0) + offset;
+            auto* dst = outBlock.getChannelPointer (0) + offset;
 
             for (size_t i = 0; i < numToProcess; ++i)
                 dst[i] = src[i] * nextCurveValue();
@@ -144,8 +179,8 @@ public:
             JUCE_END_IGNORE_WARNINGS_MSVC
 
             for (size_t chan = 0; chan < numChannels; ++chan)
-                juce::FloatVectorOperations::multiply (outBlock.getChannelPointer (chan) + pending,
-                                                 inBlock.getChannelPointer (chan) + pending,
+                juce::FloatVectorOperations::multiply (outBlock.getChannelPointer (chan) + offset,
+                                                 inBlock.getChannelPointer (chan) + offset,
                                                  gains, static_cast<int> (numToProcess));
         }
     }
@@ -165,6 +200,7 @@ private:
     juce::SmoothedValue<FloatType> gain;
     double sampleRate = 0, rampDurationSeconds = 0;
     int skipSamples = 0;
+    int silentSamples = 0;
 };
 
 } // namespace audium

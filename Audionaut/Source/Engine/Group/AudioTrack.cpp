@@ -740,6 +740,8 @@ std::vector<DspClipData> AudioTrack::getDspClipVector() const
                 dspClipData.clipGain            = static_cast<float>(item->getDynamics().getGain(channel));
                 dspClipData.clipFadeInClocks    = item->getDynamics().getFadeInClocks();
                 dspClipData.clipFadeOutClocks   = item->getDynamics().getFadeOutClocks();
+                dspClipData.clipFadeInStartClocks = item->getDynamics().getFadeInStartClocks();
+                dspClipData.clipFadeOutEndClocks  = item->getDynamics().getFadeOutEndClocks();
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
                 

@@ -61,6 +61,15 @@ void ClipDynamics::copyGainsFrom(const ClipDynamics& other)
     gains = other.gains;
 }
 
+void ClipDynamics::copyFrom(const ClipDynamics& other)
+{
+    gains = other.gains;
+    fadeInClocks = other.fadeInClocks;
+    fadeOutClocks = other.fadeOutClocks;
+    fadeInStartClocks = other.fadeInStartClocks;
+    fadeOutEndClocks = other.fadeOutEndClocks;
+}
+
 double ClipDynamics::getRegionLengthClocks() const
 {
     return owner.getRegionData(audium::clocks).getLength();

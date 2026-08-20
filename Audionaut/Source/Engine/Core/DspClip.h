@@ -61,6 +61,24 @@ public:
      */
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
 
+    /**
+     * @brief The audible head extension (negative fade-in start), clamped so
+     *        the extended read never goes before the source file's start.
+     */
+    double getHeadExtension(audium::TimeContextType context) const;
+
+    /**
+     * @brief The audible tail extension (negative fade-out end).
+     */
+    double getTailExtension(audium::TimeContextType context) const;
+
+    /**
+     * @brief The timeline span in which this clip produces audio: the region
+     *        window widened by the fade extensions. Replaces
+     *        getAbsolutePositionRange for scheduling decisions.
+     */
+    juce::Range<double> getAudibleRange(audium::TimeContextType context) const;
+
 private:
     /**
      * @brief A shared pointer to the `TempoProvider` for tempo-related calculations.

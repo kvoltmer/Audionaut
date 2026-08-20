@@ -54,6 +54,24 @@ struct DspClipData
      * A double value representing the duration of the fade-out effect.
      */
     double clipFadeOutClocks = 0.0;
+
+    /**
+     * @brief The fade-in ramp start offset from the clip start, in clocks.
+     *
+     * Signed: positive = the ramp begins inside the clip (silent head before
+     * it), negative = the ramp begins before the clip - the fade extends the
+     * audible material with source audio from before the region window.
+     */
+    double clipFadeInStartClocks = 0.0;
+
+    /**
+     * @brief The fade-out ramp end offset from the clip end, in clocks.
+     *
+     * Signed: positive = the ramp ends inside the clip (silent tail after
+     * it), negative = the ramp ends past the clip - the fade extends the
+     * audible material past the region window.
+     */
+    double clipFadeOutEndClocks = 0.0;
     
     /**
      * @brief The transport source index for the clip.

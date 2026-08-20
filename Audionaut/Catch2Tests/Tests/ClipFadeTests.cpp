@@ -69,6 +69,55 @@ static void examineFadeOutEnvelope(const AudioBuffer<float>& buffer,
     REQUIRE(last < 0.05f);
 }
 
+// The mirror of examineFadeOutEnvelope: silence up to silenceEndSample, a
+// monotonically rising sqrt ramp to fadeEndSample, unity plateau after.
+static void examineFadeInEnvelope(const AudioBuffer<float>& buffer,
+                                  int silenceEndSample,
+                                  int fadeEndSample,
+                                  int totalSamples,
+                                  int blockSize)
+{
+    const auto slack = blockSize;
+    const auto warmUp = 256;
+
+    // no NaN / Inf anywhere
+    for (auto s = 0; s < totalSamples; s++) {
+        auto val = buffer.getSample(0, s);
+        INFO("sample " << s << " = " << val);
+        REQUIRE(std::isfinite(val));
+    }
+
+    // before the ramp: silence
+    if (silenceEndSample > warmUp + slack) {
+        auto mag = buffer.getMagnitude(0, warmUp, silenceEndSample - warmUp - slack);
+        INFO("head magnitude = " << mag);
+        REQUIRE(mag == Catch::Approx(0.0).margin(0.01));
+    }
+
+    // inside the ramp: monotonically non-decreasing, within [0, 1]
+    auto previous = 0.f;
+    for (auto s = silenceEndSample + slack; s < fadeEndSample - slack; s++) {
+        auto val = buffer.getSample(0, s);
+        INFO("fade sample " << s << " = " << val << " previous " << previous);
+        REQUIRE(val >= previous - 0.005f);
+        REQUIRE(val <= 1.005f);
+        previous = val;
+    }
+
+    // the ramp is a sqrt curve: halfway in, the level must already be audible
+    auto fadeLength = fadeEndSample - silenceEndSample;
+    auto midpoint = buffer.getSample(0, silenceEndSample + fadeLength / 2);
+    INFO("fade midpoint = " << midpoint);
+    REQUIRE(midpoint > 0.5f);
+
+    // after the ramp: untouched plateau
+    for (auto s = fadeEndSample + slack; s < totalSamples - slack; s++) {
+        auto val = buffer.getSample(0, s);
+        INFO("plateau sample " << s << " = " << val);
+        REQUIRE(val == Catch::Approx(1.f).margin(0.01f));
+    }
+}
+
 SCENARIO("fade out on the transport source", "[engine][dsp][fade]")
 {
     auto sr = 44100.0;
@@ -91,8 +140,8 @@ SCENARIO("fade out on the transport source", "[engine][dsp][fade]")
         transportSource.resetClipGain();
 
         // as the scheduler does when a clip is scheduled
-        transportSource.setFadeInSeconds(0.0, 0.0, true);
-        transportSource.setFadeOutSeconds(fadeOutSeconds, lengthSeconds, true);
+        transportSource.clearFadeIn();
+        transportSource.setFadeOutRamp(fadeOutSeconds, lengthSeconds - fadeOutSeconds, true);
         transportSource.start();
 
         WHEN("rendering the full 2 seconds block by block")
@@ -1049,6 +1098,356 @@ SCENARIO("fade out on a clip that does not start at zero", "[engine][dsp][fade]"
                 auto last = buffer.getSample(0, totalSamples - 1);
                 INFO("last sample = " << last);
                 REQUIRE(last < 0.1f);
+            }
+        }
+    }
+
+    engine = nullptr;
+
+    if (bounceConfig->fileName.existsAsFile())
+        bounceConfig->fileName.deleteFile();
+
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO("fade ramps with offsets on the transport source", "[engine][dsp][fade]")
+{
+    auto sr = 44100.0;
+    auto blockSize = 512;
+    auto lengthSeconds = 2.0;
+    auto totalSamples = static_cast<int>(sr * lengthSeconds);
+
+    GIVEN("a transport source over a 2 second DC signal")
+    {
+        AudioBuffer<float> dcBuffer(1, totalSamples);
+        for (auto s = 0; s < totalSamples; s++)
+            dcBuffer.setSample(0, s, 1.f);
+
+        MemoryAudioSource memorySource(dcBuffer, false);
+
+        audium::AudioTransportSource transportSource;
+        transportSource.setSource(&memorySource, 0, nullptr, 0.0, 1);
+        transportSource.prepareToPlay(blockSize, sr);
+        transportSource.resetClipGain();
+
+        auto render = [&]() {
+            AudioBuffer<float> output(1, totalSamples);
+            output.clear();
+
+            AudioBuffer<float> block(1, blockSize);
+            auto rendered = 0;
+            while (rendered < totalSamples) {
+                auto numSamples = jmin(blockSize, totalSamples - rendered);
+                AudioSourceChannelInfo info(&block, 0, numSamples);
+                info.clearActiveBufferRegion();
+                transportSource.getNextAudioBlock(info);
+                output.copyFrom(0, rendered, block, 0, 0, numSamples);
+                rendered += numSamples;
+            }
+            return output;
+        };
+
+        WHEN("a fade-in ramp starts half a second in")
+        {
+            transportSource.setFadeInRamp(0.5, 0.5, true);
+            transportSource.clearFadeOut();
+            transportSource.start();
+
+            auto output = render();
+
+            THEN("the head is silent, then the ramp rises to unity")
+            {
+                examineFadeInEnvelope(output,
+                                      static_cast<int>(sr * 0.5),
+                                      static_cast<int>(sr * 1.0),
+                                      totalSamples, blockSize);
+            }
+        }
+
+        WHEN("a fade-in ramp is armed a quarter in (pre-elapsed)")
+        {
+            transportSource.setFadeInRamp(1.0, -0.25, true);
+            transportSource.clearFadeOut();
+            transportSource.start();
+
+            auto output = render();
+
+            THEN("the output starts mid-ramp and reaches unity early")
+            {
+                auto first = output.getSample(0, 16);
+                INFO("first sample " << first);
+                REQUIRE(first == Catch::Approx(std::sqrt(0.25)).margin(0.05));
+
+                auto atRampEnd = output.getSample(0, static_cast<int>(sr * 0.75) + blockSize);
+                REQUIRE(atRampEnd == Catch::Approx(1.0).margin(0.01));
+            }
+        }
+
+        WHEN("a scheduled fade-out is reconfigured to a pre-elapsed ramp")
+        {
+            // regression: the skip counter of the first schedule must not
+            // survive the reconfiguration
+            transportSource.setFadeOutRamp(0.5, 1.0, true);
+            transportSource.setFadeOutRamp(1.0, -0.5, true);
+            transportSource.clearFadeIn();
+            transportSource.start();
+
+            auto output = render();
+
+            THEN("the output starts mid-ramp and falls - no unity hold")
+            {
+                auto first = output.getSample(0, 16);
+                INFO("first sample " << first);
+                REQUIRE(first == Catch::Approx(std::sqrt(0.5)).margin(0.05));
+
+                auto later = output.getSample(0, static_cast<int>(sr * 0.25));
+                INFO("later sample " << later);
+                REQUIRE(later < first);
+            }
+        }
+
+        WHEN("a fade-out ramp ends early")
+        {
+            transportSource.clearFadeIn();
+            transportSource.setFadeOutRamp(0.5, 0.5, true);
+            transportSource.start();
+
+            auto output = render();
+
+            THEN("the ramp completes at second 1 and holds silence to the end")
+            {
+                examineFadeOutEnvelope(output,
+                                       static_cast<int>(sr * 0.5),
+                                       static_cast<int>(sr * 1.0),
+                                       blockSize);
+
+                auto tail = output.getMagnitude(0, static_cast<int>(sr * 1.0) + blockSize,
+                                                totalSamples - static_cast<int>(sr * 1.0) - blockSize);
+                INFO("tail magnitude " << tail);
+                REQUIRE(tail == Catch::Approx(0.0).margin(0.01));
+            }
+        }
+    }
+}
+
+SCENARIO("fade extensions extend the audible clip", "[engine][dsp][fade]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    auto sr = 44100.0;
+    auto inputFile = generateDcOffsetAudioFile(2.0);
+
+    auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+    bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/fade-extension.wav"));
+    bounceConfig->sampleRate = sr;
+    bounceConfig->blockSize = 512;
+    bounceConfig->numChannels = 1;
+
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    GIVEN("a clip trimmed to the middle second of a 2 second DC file, placed at second 1")
+    {
+        engine->openFile(inputFile, nullptr);
+
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        auto item = track->getPlayListContainer()->getPlayListItem(0);
+        REQUIRE(item != nullptr);
+
+        // region window [0.5, 1.5] of the source file, timeline [1.5, 2.5]
+        item->setAbsolutePosition(1.0, audium::seconds);
+        item->setAbsoluteStartPosition(1.5, audium::seconds);
+        item->setLength(1.0, audium::seconds);
+        REQUIRE(item->getRegionData(audium::seconds).getStart() == Catch::Approx(0.5));
+        REQUIRE(item->getRegionData(audium::seconds).getLength() == Catch::Approx(1.0));
+        REQUIRE(item->getAbsolutePosition(audium::seconds) == Catch::Approx(1.5));
+
+        WHEN("a negative fade-in start pulls in material before the clip")
+        {
+            item->getDynamics().setFadeIn(0.25);
+            item->getDynamics().setFadeInStart(-0.25);
+            engine->getPlayListScheduler()->commitPlayListData();
+
+            bounceConfig->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
+            exporter->bounce();
+
+            THEN("the ramp rises across the clip boundary from second 1.25")
+            {
+                auto buffer = audioFileToAudioBuffer(bounceConfig->fileName);
+                auto totalSamples = static_cast<int>(sr * 2.5);
+                REQUIRE(buffer.getNumSamples() >= totalSamples);
+
+                // audible start 1.25 (clip start 1.5 minus the 0.25 s
+                // extension), ramp end at 1.75 (fade-in 0.25 into the clip)
+                examineFadeInEnvelope(buffer,
+                                      static_cast<int>(sr * 1.25),
+                                      static_cast<int>(sr * 1.75),
+                                      totalSamples, bounceConfig->blockSize);
+            }
+        }
+
+        WHEN("a negative fade-out end lets the clip ring out past its end")
+        {
+            item->getDynamics().setFadeOut(0.25);
+            item->getDynamics().setFadeOutEnd(-0.25);
+            engine->getPlayListScheduler()->commitPlayListData();
+
+            bounceConfig->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+
+            THEN("the total length grew over the tail extension")
+            {
+                REQUIRE(bounceConfig->lengthSeconds == Catch::Approx(2.75));
+            }
+
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
+            exporter->bounce();
+
+            THEN("the ramp falls across the clip end and reaches silence at 2.75")
+            {
+                auto buffer = audioFileToAudioBuffer(bounceConfig->fileName);
+                auto totalSamples = static_cast<int>(sr * 2.75);
+                REQUIRE(buffer.getNumSamples() >= totalSamples);
+
+                // clip body from second 1.5 with the fade over [2.25, 2.75]
+                AudioBuffer<float> clipAudio(1, static_cast<int>(sr * 1.25));
+                clipAudio.copyFrom(0, 0, buffer, 0, static_cast<int>(sr * 1.5), clipAudio.getNumSamples());
+
+                examineFadeOutEnvelope(clipAudio,
+                                       static_cast<int>(sr * 0.75),
+                                       clipAudio.getNumSamples(),
+                                       bounceConfig->blockSize);
+            }
+        }
+
+        WHEN("a positive fade-in start leaves a silent head inside the clip")
+        {
+            item->getDynamics().setFadeIn(0.5);
+            item->getDynamics().setFadeInStart(0.25);
+            engine->getPlayListScheduler()->commitPlayListData();
+
+            bounceConfig->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+
+            THEN("the total length is unchanged")
+            {
+                REQUIRE(bounceConfig->lengthSeconds == Catch::Approx(2.5));
+            }
+
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
+            exporter->bounce();
+
+            THEN("the clip is silent until 1.75, ramping to unity at 2.0")
+            {
+                auto buffer = audioFileToAudioBuffer(bounceConfig->fileName);
+                auto totalSamples = static_cast<int>(sr * 2.5);
+                REQUIRE(buffer.getNumSamples() >= totalSamples);
+
+                // silent head [1.5, 1.75] inside the clip, ramp [1.75, 2.0],
+                // plateau to the clip end at 2.5
+                examineFadeInEnvelope(buffer,
+                                      static_cast<int>(sr * 1.75),
+                                      static_cast<int>(sr * 2.0),
+                                      totalSamples, bounceConfig->blockSize);
+            }
+        }
+
+        WHEN("the item is bounced on its own with a tail extension")
+        {
+            item->getDynamics().setFadeOut(0.25);
+            item->getDynamics().setFadeOutEnd(-0.25);
+            engine->getPlayListScheduler()->commitPlayListData();
+
+            bounceConfig->playListItem = item;
+
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
+            exporter->bounce();
+
+            THEN("the exported file spans the audible length and carries the fade")
+            {
+                auto buffer = audioFileToAudioBuffer(bounceConfig->fileName);
+                auto audibleSamples = static_cast<int>(sr * 1.25);
+                REQUIRE(buffer.getNumSamples() >= audibleSamples);
+
+                examineFadeOutEnvelope(buffer,
+                                       static_cast<int>(sr * 0.75),
+                                       audibleSamples,
+                                       bounceConfig->blockSize);
+            }
+        }
+    }
+
+    // the config must not keep the item alive past the engine teardown
+    bounceConfig->playListItem = nullptr;
+    engine = nullptr;
+
+    if (bounceConfig->fileName.existsAsFile())
+        bounceConfig->fileName.deleteFile();
+
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO("a tail extension past the end of the source file is silent", "[engine][dsp][fade]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    auto sr = 44100.0;
+    auto inputFile = generateDcOffsetAudioFile(2.0);
+
+    auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+    bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/fade-extension-eof.wav"));
+    bounceConfig->sampleRate = sr;
+    bounceConfig->blockSize = 512;
+    bounceConfig->numChannels = 1;
+
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    GIVEN("a full-file clip whose fade-out end reaches past the file")
+    {
+        engine->openFile(inputFile, nullptr);
+
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        auto item = track->getPlayListContainer()->getPlayListItem(0);
+        REQUIRE(item != nullptr);
+
+        // fractions of the 2 second region: -0.25 = half a second past the end
+        item->getDynamics().setFadeOutEnd(-0.25);
+        engine->getPlayListScheduler()->commitPlayListData();
+
+        WHEN("bouncing the session")
+        {
+            bounceConfig->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+            REQUIRE(bounceConfig->lengthSeconds == Catch::Approx(2.5));
+
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
+            exporter->bounce();
+
+            THEN("the clip plays to the file end and the extension is silence")
+            {
+                auto buffer = audioFileToAudioBuffer(bounceConfig->fileName);
+                auto totalSamples = static_cast<int>(sr * 2.5);
+                REQUIRE(buffer.getNumSamples() >= totalSamples);
+
+                for (auto s = 0; s < totalSamples; s++) {
+                    auto val = buffer.getSample(0, s);
+                    INFO("sample " << s << " = " << val);
+                    REQUIRE(std::isfinite(val));
+                }
+
+                auto slack = bounceConfig->blockSize;
+                auto tailStart = static_cast<int>(sr * 2.0) + slack;
+                auto tail = buffer.getMagnitude(0, tailStart, totalSamples - tailStart);
+                INFO("tail magnitude " << tail);
+                REQUIRE(tail == Catch::Approx(0.0).margin(0.01));
             }
         }
     }

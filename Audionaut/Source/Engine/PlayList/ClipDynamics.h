@@ -47,6 +47,10 @@ public:
     // gains only - split/clone don't inherit fades
     void copyGainsFrom(const ClipDynamics& other);
 
+    // the complete dynamics: gains AND all four fade values - for an export
+    // item that must sound exactly like its source item
+    void copyFrom(const ClipDynamics& other);
+
     // value range [0, 1]; returns true if other fade values were pushed
     bool setFadeIn(double val);
     double getFadeIn() const;
