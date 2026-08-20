@@ -186,7 +186,7 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
                                 auto widthPx  = static_cast<int>((endSeconds - clampedStart) / secondsPerPx);
                                 if (widthPx > 0)
                                     thumbnail->drawChannel(g,
-                                                           Rectangle<int>(xLocal,
+                                                           juce::Rectangle<int>(xLocal,
                                                                           static_cast<int>(bandTop),
                                                                           widthPx,
                                                                           static_cast<int>(bandHeight)),
@@ -207,7 +207,7 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
                                 auto widthPx  = static_cast<int>((clampedEnd - startSeconds) / secondsPerPx);
                                 if (widthPx > 0)
                                     thumbnail->drawChannel(g,
-                                                           Rectangle<int>(static_cast<int>(clipW),
+                                                           juce::Rectangle<int>(static_cast<int>(clipW),
                                                                           static_cast<int>(bandTop),
                                                                           widthPx,
                                                                           static_cast<int>(bandHeight)),
