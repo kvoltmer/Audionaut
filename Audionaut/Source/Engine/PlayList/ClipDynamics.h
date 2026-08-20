@@ -39,13 +39,29 @@ public:
     // gains only - split/clone don't inherit fades
     void copyGainsFrom(const ClipDynamics& other);
 
-    // value range [0, 1]; returns true if the opposite fade was clamped
+    // value range [0, 1]; returns true if other fade values were pushed
     bool setFadeIn(double val);
     double getFadeIn() const;
 
-    // value range [0, 1]; returns true if the opposite fade was clamped
+    // value range [0, 1]; returns true if other fade values were pushed
     bool setFadeOut(double val);
     double getFadeOut() const;
+
+    // where the fade-in ramp begins, measured from the clip start; positive:
+    // inside the clip, audio before it is silent. negative: outside the clip -
+    // the fade extends the audible material with source audio from before the
+    // region window (silence-padded past the file). value <= 1; returns true
+    // if other fade values were pushed
+    bool setFadeInStart(double val);
+    double getFadeInStart() const;
+
+    // where the fade-out ramp ends, measured from the clip end; positive:
+    // inside the clip, audio after it is silent. negative: outside the clip -
+    // the fade extends the audible material past the region window
+    // (silence-padded past the file). value <= 1; returns true if other fade
+    // values were pushed
+    bool setFadeOutEnd(double val);
+    double getFadeOutEnd() const;
 
     double getFadeInClocks() const
     {
@@ -55,6 +71,16 @@ public:
     double getFadeOutClocks() const
     {
         return fadeOutClocks;
+    }
+
+    double getFadeInStartClocks() const
+    {
+        return fadeInStartClocks;
+    }
+
+    double getFadeOutEndClocks() const
+    {
+        return fadeOutEndClocks;
     }
 
     void writeToJson(json& output) const;
@@ -71,6 +97,12 @@ private:
 
     double fadeInClocks = 0.0;
     double fadeOutClocks = 0.0;
+
+    // ramp start/end offsets, anchored to their clip edge like the fades;
+    // 0.0 means the fade touches the clip edge, negative means the ramp
+    // boundary lies outside the clip (extending the audible material)
+    double fadeInStartClocks = 0.0;
+    double fadeOutEndClocks = 0.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ClipDynamics)
 };

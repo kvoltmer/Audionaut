@@ -241,7 +241,7 @@
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\DraggingHandle.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\DraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\LevelMeter.cpp"/>
@@ -249,6 +249,7 @@
     <ClCompile Include="..\..\Source\Interface\Controls\RegionSelector.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\RegionTableListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\AudioTrackListBox.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Views\ClipFadeOverlay.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\SegmentationView.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Views\AutoEditPreviewView.cpp"/>
@@ -3239,7 +3240,7 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h"/>
-    <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\DraggingHandle.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DefaultLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AudiumLabel.h"/>
@@ -3254,6 +3255,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\RegionTableListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\TransportPositionControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AudioTrackListBox.h"/>
+    <ClInclude Include="..\..\Source\Interface\Views\ClipFadeOverlay.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\SegmentationView.h"/>
     <ClInclude Include="..\..\Source\Interface\Views\AutoEditPreviewView.h"/>

@@ -557,16 +557,287 @@ SCENARIO("fades reset when restoring an item state without fades", "[engine][fad
 
         item->getDynamics().setFadeIn(0.25);
         item->getDynamics().setFadeOut(0.5);
+        item->getDynamics().setFadeInStart(-0.1); // outside the clip
+        item->getDynamics().setFadeOutEnd(0.2);
 
         WHEN("reading a state without fade keys into the same item (undo)")
         {
             json state;
             item->getDynamics().readFromJson(state);
 
-            THEN("both fades are reset")
+            THEN("all fade values are reset")
             {
                 REQUIRE(item->getDynamics().getFadeIn() == Catch::Approx(0.0));
                 REQUIRE(item->getDynamics().getFadeOut() == Catch::Approx(0.0));
+                REQUIRE(item->getDynamics().getFadeInStart() == Catch::Approx(0.0));
+                REQUIRE(item->getDynamics().getFadeOutEnd() == Catch::Approx(0.0));
+            }
+        }
+    }
+
+    engine = nullptr;
+
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO("fade ramp offsets push their partner values", "[engine][fade]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    auto inputFile = generateDcOffsetAudioFile(2.0);
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    GIVEN("a playlist item with a fade in and a fade out")
+    {
+        engine->openFile(inputFile, nullptr);
+
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        auto item = track->getPlayListContainer()->getPlayListItem(0);
+        REQUIRE(item != nullptr);
+
+        auto& dynamics = item->getDynamics();
+        dynamics.setFadeIn(0.5);
+        dynamics.setFadeOut(0.4);
+
+        WHEN("the fade in start stays below the fade in end")
+        {
+            auto pushed = dynamics.setFadeInStart(0.25);
+
+            THEN("nothing else moves")
+            {
+                REQUIRE_FALSE(pushed);
+                REQUIRE(dynamics.getFadeInStart() == Catch::Approx(0.25));
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(0.5));
+                REQUIRE(dynamics.getFadeOut() == Catch::Approx(0.4));
+            }
+        }
+
+        WHEN("the fade in start is dragged past the fade in end")
+        {
+            auto pushed = dynamics.setFadeInStart(0.8);
+
+            THEN("the fade in end is pushed along and the fade out pushed back")
+            {
+                REQUIRE(pushed);
+                REQUIRE(dynamics.getFadeInStart() == Catch::Approx(0.8));
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(0.8));
+                REQUIRE(dynamics.getFadeOut() == Catch::Approx(0.2));
+            }
+        }
+
+        WHEN("the push cascades into the fade out end")
+        {
+            dynamics.setFadeOutEnd(0.3);
+            auto pushed = dynamics.setFadeInStart(0.9);
+
+            THEN("the whole fade out pair is pulled down")
+            {
+                REQUIRE(pushed);
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(0.9));
+                REQUIRE(dynamics.getFadeOut() == Catch::Approx(0.1));
+                REQUIRE(dynamics.getFadeOutEnd() == Catch::Approx(0.1));
+            }
+        }
+
+        WHEN("the fade in end is dragged below the fade in start")
+        {
+            dynamics.setFadeInStart(0.25);
+            auto pushed = dynamics.setFadeIn(0.1);
+
+            THEN("the fade in start is pulled down")
+            {
+                REQUIRE(pushed);
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(0.1));
+                REQUIRE(dynamics.getFadeInStart() == Catch::Approx(0.1));
+            }
+        }
+
+        WHEN("the fade out end is dragged past the fade out start")
+        {
+            auto pushed = dynamics.setFadeOutEnd(0.6);
+
+            THEN("the fade out start is pushed along and the fade in pushed back")
+            {
+                REQUIRE(pushed);
+                REQUIRE(dynamics.getFadeOutEnd() == Catch::Approx(0.6));
+                REQUIRE(dynamics.getFadeOut() == Catch::Approx(0.6));
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(0.4));
+            }
+        }
+
+        WHEN("the fade out start is dragged below the fade out end")
+        {
+            dynamics.setFadeOutEnd(0.2);
+            auto pushed = dynamics.setFadeOut(0.1);
+
+            THEN("the fade out end is pulled down")
+            {
+                REQUIRE(pushed);
+                REQUIRE(dynamics.getFadeOut() == Catch::Approx(0.1));
+                REQUIRE(dynamics.getFadeOutEnd() == Catch::Approx(0.1));
+            }
+        }
+
+        WHEN("the fade in start is dragged outside the clip")
+        {
+            auto pushed = dynamics.setFadeInStart(-0.25);
+
+            THEN("the negative offset is stored and nothing else moves")
+            {
+                REQUIRE_FALSE(pushed);
+                REQUIRE(dynamics.getFadeInStart() == Catch::Approx(-0.25));
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(0.5));
+                REQUIRE(dynamics.getFadeOut() == Catch::Approx(0.4));
+            }
+        }
+
+        WHEN("the fade in end is dragged after the start went outside the clip")
+        {
+            dynamics.setFadeInStart(-0.25);
+            auto pushed = dynamics.setFadeIn(0.1);
+
+            THEN("the extension survives - no pull towards the clip")
+            {
+                REQUIRE_FALSE(pushed);
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(0.1));
+                REQUIRE(dynamics.getFadeInStart() == Catch::Approx(-0.25));
+            }
+        }
+
+        WHEN("a cascade drives the fade in to zero while its start is outside")
+        {
+            dynamics.setFadeInStart(-0.2);
+            auto pushed = dynamics.setFadeOut(1.0);
+
+            THEN("the extension survives the cascade")
+            {
+                REQUIRE(pushed);
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(0.0));
+                REQUIRE(dynamics.getFadeInStart() == Catch::Approx(-0.2));
+            }
+        }
+
+        WHEN("the fade out end is dragged outside the clip")
+        {
+            auto pushed = dynamics.setFadeOutEnd(-0.3);
+            dynamics.setFadeOut(0.1);
+
+            THEN("the negative offset is stored and survives fade edits")
+            {
+                REQUIRE_FALSE(pushed);
+                REQUIRE(dynamics.getFadeOutEnd() == Catch::Approx(-0.3));
+                REQUIRE(dynamics.getFadeOut() == Catch::Approx(0.1));
+            }
+        }
+
+        WHEN("an offset beyond the far clip edge is requested")
+        {
+            auto pushed = dynamics.setFadeInStart(1.5);
+
+            THEN("it clamps to the clip length and pushes the fades")
+            {
+                REQUIRE(pushed);
+                REQUIRE(dynamics.getFadeInStart() == Catch::Approx(1.0));
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(1.0));
+                REQUIRE(dynamics.getFadeOut() == Catch::Approx(0.0));
+            }
+        }
+    }
+
+    engine = nullptr;
+
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO("fade ramp offsets serialize with the item", "[engine][fade]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    auto inputFile = generateDcOffsetAudioFile(2.0);
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    GIVEN("a playlist item")
+    {
+        engine->openFile(inputFile, nullptr);
+
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        auto item = track->getPlayListContainer()->getPlayListItem(0);
+        REQUIRE(item != nullptr);
+
+        auto& dynamics = item->getDynamics();
+
+        WHEN("nothing but the plain fades is set")
+        {
+            dynamics.setFadeIn(0.25);
+            dynamics.setFadeOut(0.5);
+
+            json state;
+            dynamics.writeToJson(state);
+
+            THEN("no ramp offset keys are written")
+            {
+                REQUIRE_FALSE(state.contains("fade_in_start_clocks"));
+                REQUIRE_FALSE(state.contains("fade_out_end_clocks"));
+            }
+        }
+
+        WHEN("all four fade values round-trip through json")
+        {
+            dynamics.setFadeIn(0.5);
+            dynamics.setFadeOut(0.4);
+            dynamics.setFadeInStart(0.25);
+            dynamics.setFadeOutEnd(0.3);
+
+            json state;
+            dynamics.writeToJson(state);
+
+            // overwrite before restoring, so the read is observable
+            dynamics.setFadeInStart(0.0);
+            dynamics.setFadeOutEnd(0.0);
+            dynamics.setFadeIn(0.75);
+            dynamics.setFadeOut(0.1);
+
+            dynamics.readFromJson(state);
+
+            THEN("all four values are restored")
+            {
+                REQUIRE(dynamics.getFadeIn() == Catch::Approx(0.5));
+                REQUIRE(dynamics.getFadeOut() == Catch::Approx(0.4));
+                REQUIRE(dynamics.getFadeInStart() == Catch::Approx(0.25));
+                REQUIRE(dynamics.getFadeOutEnd() == Catch::Approx(0.3));
+            }
+        }
+
+        WHEN("negative ramp offsets round-trip through json")
+        {
+            dynamics.setFadeIn(0.5);
+            dynamics.setFadeOut(0.4);
+            dynamics.setFadeInStart(-0.25);
+            dynamics.setFadeOutEnd(-0.3);
+
+            json state;
+            dynamics.writeToJson(state);
+
+            // overwrite before restoring, so the read is observable
+            dynamics.setFadeInStart(0.1);
+            dynamics.setFadeOutEnd(0.2);
+
+            dynamics.readFromJson(state);
+
+            THEN("the outside-the-clip offsets are restored")
+            {
+                REQUIRE(dynamics.getFadeInStart() == Catch::Approx(-0.25));
+                REQUIRE(dynamics.getFadeOutEnd() == Catch::Approx(-0.3));
             }
         }
     }

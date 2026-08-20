@@ -44,13 +44,15 @@ void AudioClipView::resized()
     fadeInOutView->setBounds(getLocalBounds());
     segmentationView->setBounds(getLocalBounds());
 
-    auto sliderWidth = 67;
+    auto sliderWidth = 50;
     auto sliderHeight = 15;
     auto space = 5;
-    
-    if (getWidth() > sliderWidth + (space * 2)) {
+    // keep clear of the fade-in-start handle in the bottom-left corner
+    auto sliderX = space + 20;
+
+    if (getWidth() > sliderX + sliderWidth + space) {
         volumeSlider->setVisible(true);
-        volumeSlider->setBounds (space,
+        volumeSlider->setBounds (sliderX,
                                  getHeight() - sliderHeight - space,
                                  sliderWidth,
                                  sliderHeight);

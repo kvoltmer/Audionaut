@@ -14,60 +14,88 @@ void FadeInOutView::paint (juce::Graphics& g)
         return;
     
     
-    auto fFadeInWidth   = playListItem->getDynamics().getFadeIn() * getWidth();
-    auto iFadeInWidth   = static_cast<int>(fFadeInWidth);
-    auto fFadeOutWidth  = playListItem->getDynamics().getFadeOut() * getWidth();
-    auto iFadeOutWidth  = static_cast<int>(fFadeOutWidth);
+    auto& dynamics      = playListItem->getDynamics();
     auto fHeight        = static_cast<float>(getHeight());
     auto fWidth         = static_cast<float>(getWidth());
     auto yOffset        = 1.f;
+
+    // the fade-in ramp runs from fadeInStartX up to fadeInEndX, the fade-out
+    // ramp from fadeOutStartX down to fadeOutEndX; audio outside
+    // [fadeInStartX, fadeOutEndX] is silent. negative fractions put the ramp
+    // origin outside the clip (the fade extends the audible material); the
+    // off-clip part is clipped away here and drawn by the lane's
+    // ClipFadeOverlay instead
+    auto fFadeInStartX  = static_cast<float>(dynamics.getFadeInStart()) * fWidth;
+    auto fFadeInEndX    = static_cast<float>(dynamics.getFadeIn()) * fWidth;
+    auto fFadeOutStartX = fWidth - static_cast<float>(dynamics.getFadeOut()) * fWidth;
+    auto fFadeOutEndX   = fWidth - static_cast<float>(dynamics.getFadeOutEnd()) * fWidth;
+
+    // fadeInStart <= fadeIn and fadeOutEnd <= fadeOut, so a non-zero offset
+    // implies a non-zero fade
+    auto hasFadeIn      = static_cast<int>(fFadeInEndX) > 0;
+    auto hasFadeOut     = static_cast<int>(fWidth - fFadeOutStartX) > 0;
+
+    // dim the silent head/tail
+    g.setColour(Colours::black.withAlpha(0.35f));
+    if (fFadeInStartX >= 1.f)
+        g.fillRect(0.f, 0.f, fFadeInStartX, fHeight);
+    if (fWidth - fFadeOutEndX >= 1.f)
+        g.fillRect(fFadeOutEndX, 0.f, fWidth - fFadeOutEndX, fHeight);
+
     juce::Path thePath;
-    
-    if (iFadeInWidth > 0) {
-        thePath.startNewSubPath (Point<float> (0.f, fHeight));
-        auto stride = iFadeInWidth > 10 ? 4 : 1;
-        for (auto w = 0; w < iFadeInWidth; w += stride) {
-            auto square = powf(w / fFadeInWidth, 0.5f); // square root
+
+    if (hasFadeIn) {
+        auto fRampWidth = fFadeInEndX - fFadeInStartX;
+        auto iRampWidth = static_cast<int>(fRampWidth);
+
+        thePath.startNewSubPath (Point<float> (fFadeInStartX, fHeight));
+        auto stride = iRampWidth > 10 ? 4 : 1;
+        for (auto w = 0; w < iRampWidth; w += stride) {
+            auto square = powf(w / fRampWidth, 0.5f); // square root
             auto y      = fHeight - (square * fHeight);
-            
-            thePath.lineTo(static_cast<float>(w), y);
+
+            thePath.lineTo(fFadeInStartX + static_cast<float>(w), y);
         }
-        thePath.lineTo(fFadeInWidth, yOffset);
-        if (iFadeOutWidth == 0) {
+        thePath.lineTo(fFadeInEndX, yOffset);
+        if (! hasFadeOut) {
             thePath.lineTo(fWidth, yOffset);
             thePath.lineTo(fWidth, fHeight);
         }
     }
-    
-    if (iFadeOutWidth > 0) {
-        
-        if (iFadeInWidth == 0) {
+
+    if (hasFadeOut) {
+
+        if (! hasFadeIn) {
             thePath.startNewSubPath (Point<float> (0.f, fHeight));
             thePath.lineTo(0.f, yOffset);
         }
-        
-        auto stride = iFadeOutWidth > 10 ? 4 : 1;
-        for (auto w = 0; w < iFadeOutWidth; w += stride) {
-            auto square = powf(1.f - (w / fFadeOutWidth), 0.5f); // square root
+
+        auto fRampWidth = fFadeOutEndX - fFadeOutStartX;
+        auto iRampWidth = static_cast<int>(fRampWidth);
+
+        thePath.lineTo(fFadeOutStartX, yOffset);
+        auto stride = iRampWidth > 10 ? 4 : 1;
+        for (auto w = 0; w < iRampWidth; w += stride) {
+            auto square = powf(1.f - (w / fRampWidth), 0.5f); // square root
             auto y      = fHeight - (square * fHeight);
-            
-            thePath.lineTo(fWidth - fFadeOutWidth + static_cast<float>(w), y);
+
+            thePath.lineTo(fFadeOutStartX + static_cast<float>(w), y);
         }
-        thePath.lineTo(fWidth, fHeight);
+        thePath.lineTo(fFadeOutEndX, fHeight);
     }
-    
-    
-    if (iFadeInWidth > 0 ||
-        iFadeOutWidth > 0) {
-    
+
+
+    if (hasFadeIn ||
+        hasFadeOut) {
+
         juce::Path roundedPath = thePath.createPathWithRoundedCorners(4);
-        
+
         g.setColour(Colour(Colours::white).withAlpha(0.1f));
         g.fillPath(roundedPath);
-        
+
         g.setColour(Colour(Colours::white).withAlpha(0.5f));
         g.strokePath(roundedPath, PathStrokeType (2.f));
-        
+
     }
     
 }

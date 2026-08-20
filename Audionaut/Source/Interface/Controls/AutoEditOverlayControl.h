@@ -47,7 +47,7 @@ class RegionSelector;
  *
  * The RegionSelector listens to the whole arrangement, so it is disabled for
  * as long as the pending edit is active - not just under the cursor, as the
- * hover controls (FadeInOutControl, DraggerControl) do - and handed back when
+ * hover controls (DraggingHandle, DraggerControl) do - and handed back when
  * the edit is applied or cancelled. While an auto edit is pending, the
  * arrangement is in that edit's mode and nothing else's. Those hover controls
  * hand the selector back on their own mouseExit, though, which would leave it

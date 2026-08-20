@@ -1054,7 +1054,7 @@
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\Controls\FadeInOutControl.cpp">
+    <ClCompile Include="..\..\Source\Interface\Controls\DraggingHandle.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp">
@@ -1077,6 +1077,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\AudioTrackListBox.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Views\ClipFadeOverlay.cpp">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Views\FadeInOutView.cpp">
       <Filter>Audionaut\Source\Interface\Views</Filter>
@@ -4509,7 +4512,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Controls\FadeInOutControl.h">
+    <ClInclude Include="..\..\Source\Interface\Controls\DraggingHandle.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\SliderControl.h">
@@ -4553,6 +4556,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\AudioTrackListBox.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Views\ClipFadeOverlay.h">
+      <Filter>Audionaut\Source\Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Views\FadeInOutView.h">
       <Filter>Audionaut\Source\Interface\Views</Filter>
