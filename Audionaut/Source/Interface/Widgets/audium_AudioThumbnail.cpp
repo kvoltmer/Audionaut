@@ -4,9 +4,25 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "audium_AudioThumbnail.h"
+#include "Engine/PlayList/ClipDynamics.h"
 
 namespace audium
 {
+
+float WaveformEnvelope::gainAt (float x) const noexcept
+{
+    auto gain = 1.0f;
+
+    if (fadeInWidth > 0.0f && x < fadeInWidth)
+        gain = (float) ClipDynamics::fadeCurve (x / fadeInWidth);
+
+    // jmin is defensive: ClipDynamics clamps the fades against each other,
+    // so the two spans should never overlap
+    if (fadeOutWidth > 0.0f && x > totalWidth - fadeOutWidth)
+        gain = jmin (gain, (float) ClipDynamics::fadeCurve ((totalWidth - x) / fadeOutWidth));
+
+    return gain;
+}
 
 struct AudioThumbnail::MinMaxValue
 {
@@ -421,7 +437,8 @@ public:
                       const double startTime, const double endTime,
                       const int channelNum, const float verticalZoomFactor,
                       const double rate, const int numChans, const int sampsPerThumbSample,
-                      LevelDataSource* levelData, const OwnedArray<ThumbData>& chans)
+                      LevelDataSource* levelData, const OwnedArray<ThumbData>& chans,
+                      const WaveformEnvelope* envelope)
     {
         if (refillCache (area.getWidth(), startTime, endTime, rate,
                          numChans, sampsPerThumbSample, levelData, chans)
@@ -457,7 +474,8 @@ public:
                 {
                     if (cacheData->isNonZero())
                     {
-                        auto top = jmax (midY - cacheData->getMaxValue() * vscale - 0.3f, topY);
+                        const auto env = envelope != nullptr ? envelope->gainAt (x) : 1.0f;
+                        auto top = jmax (midY - cacheData->getMaxValue() * vscale * env - 0.3f, topY);
                         // clip at zero crossing
                         top = jmin(top, midY);
 
@@ -481,7 +499,8 @@ public:
                 {
                     if (cacheData->isNonZero())
                     {
-                        auto bottom = jmin (midY - cacheData->getMinValue() * vscale + 0.3f, bottomY);
+                        const auto env = envelope != nullptr ? envelope->gainAt (x) : 1.0f;
+                        auto bottom = jmin (midY - cacheData->getMinValue() * vscale * env + 0.3f, bottomY);
                         // clip at zero crossing
                         bottom = jmax(bottom, midY);
                         
@@ -920,10 +939,18 @@ void AudioThumbnail::getApproximateMinMax (double startTime, double endTime, int
 void AudioThumbnail::drawChannel (Graphics& g, const Rectangle<int>& area, double startTime,
                                   double endTime, int channelNum, float verticalZoomFactor)
 {
+    drawChannel (g, area, startTime, endTime, channelNum, verticalZoomFactor, nullptr);
+}
+
+void AudioThumbnail::drawChannel (Graphics& g, const Rectangle<int>& area, double startTime,
+                                  double endTime, int channelNum, float verticalZoomFactor,
+                                  const WaveformEnvelope* envelope)
+{
     const ScopedLock sl (lock);
 
     window->drawChannel (g, area, startTime, endTime, channelNum, verticalZoomFactor,
-                         sampleRate, numChannels, samplesPerThumbSample, source.get(), channels);
+                         sampleRate, numChannels, samplesPerThumbSample, source.get(), channels,
+                         envelope);
 }
 
 void AudioThumbnail::drawChannels (Graphics& g, const Rectangle<int>& area, double startTimeSeconds,

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <vector>
 #include <JuceHeader.h>
 #include <nlohmann/json.hpp>
@@ -30,6 +31,13 @@ class ClipDynamics
 public:
 
     explicit ClipDynamics(PlayListItem& owner);
+
+    /** The fade curve shared by DSP and UI: sqrt of the linear 0..1 progress.
+        Mirrors VolumeFade::nextCurveValue() (Engine/AudioSources/VolumeFade.h). */
+    static double fadeCurve (double linearProgress) noexcept
+    {
+        return linearProgress > 0.0 ? std::sqrt (std::min (linearProgress, 1.0)) : 0.0;
+    }
 
     // gain (linear range), per destination channel
     void setGain(int channel, double val, bool continous = false);

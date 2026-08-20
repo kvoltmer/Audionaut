@@ -12,6 +12,21 @@ using namespace juce;
 namespace audium
 {
 
+/** Per-pixel amplitude envelope for waveform drawing, in the same
+    component-local pixel space as the `area` passed to drawChannel
+    (FadeInOutView draws the matching curve in the identical space). */
+struct WaveformEnvelope
+{
+    float fadeInWidth  = 0.0f;  // px, 0 = none
+    float fadeOutWidth = 0.0f;  // px, 0 = none
+    float totalWidth   = 0.0f;  // px, full clip component width
+
+    bool isActive() const noexcept { return fadeInWidth > 0.0f || fadeOutWidth > 0.0f; }
+
+    /** Gain 0..1 at component-local x, following ClipDynamics::fadeCurve. */
+    float gainAt (float x) const noexcept;
+};
+
 class  AudioThumbnail    : public AudioThumbnailBase
 {
 public:
@@ -129,6 +144,18 @@ public:
                       double endTimeSeconds,
                       int channelNum,
                       float verticalZoomFactor) override;
+
+    /** Same as drawChannel(), but scales each pixel column by the given
+        amplitude envelope (the clip fades). A nullptr envelope means a
+        flat 1.0, i.e. identical to the plain overload.
+    */
+    void drawChannel (Graphics& g,
+                      const juce::Rectangle<int>& area,
+                      double startTimeSeconds,
+                      double endTimeSeconds,
+                      int channelNum,
+                      float verticalZoomFactor,
+                      const WaveformEnvelope* envelope);
 
     /** Draws the waveforms for all channels in the thumbnail.
 
