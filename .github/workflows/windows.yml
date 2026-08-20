@@ -61,91 +61,13 @@ jobs:
       run: git lfs pull
 
     # Essentia. build_essentia.sh cannot be used - it is a bash + waf script
-    # targeting macOS/Linux - so this runs the CMake + vcpkg port instead.
-    # It has to come before the app build: the .vcxproj lists essentia.lib in
-    # AdditionalDependencies unconditionally, so a missing library is a hard
-    # linker error rather than a graceful degradation. Python and CMake are
-    # preinstalled on the runner image.
-
-    - name: Compute the Essentia cache key
-      # Everything that changes the output: the submodule revision, and the
-      # five files that decide what is compiled and against which
-      # dependencies. Written to a file so hashFiles() can consume it.
-      shell: bash
-      run: |
-        git -C Submodules/essentia rev-parse HEAD > essentia-cache-key.txt
-        cat Audionaut/Builds/build_essentia_windows.ps1 \
-            Audionaut/Builds/Windows/CMakeLists.txt \
-            Audionaut/Builds/Windows/VcpkgDeps.cmake \
-            Audionaut/Builds/Windows/generate_essentia_build.py \
-            Audionaut/Builds/Windows/triplets/x64-windows-static-md.cmake \
-            >> essentia-cache-key.txt
-
-    # Explicit restore/save pairs rather than the combined actions/cache: its
-    # save runs in a post-job step only when the job succeeds, so an app-build
-    # or test failure after a successful (hour-long) dependency build would
-    # throw the caches away and every retry would start cold.
-    - name: Restore the Essentia cache
-      id: essentia-cache
-      uses: actions/cache/restore@v4
-      with:
-        # No partial-match fallback key: a stale essentia.lib that does not
-        # match the current sources would link and then misbehave at
-        # runtime, which is worse than paying for a rebuild.
-        key: essentia-v1-windows-${{ hashFiles('essentia-cache-key.txt') }}
-        path: |
-          Submodules/essentia/build-msvc
-          C:/vcpkg/installed
-
-    # vcpkg's binary package cache, separate from the exact-key cache above.
-    # It is content-addressed per package (ABI hash), so a partial-match
-    # fallback IS safe here: on a key change vcpkg re-checks every package
-    # and reuses only the archives whose inputs are unchanged - e.g. an
-    # essentia submodule bump no longer rebuilds ffmpeg from scratch.
-    - name: Restore the vcpkg archives cache
-      id: vcpkg-archives-cache
-      uses: actions/cache/restore@v4
-      with:
-        key: vcpkg-archives-v1-windows-${{ hashFiles('essentia-cache-key.txt') }}
-        restore-keys: |
-          vcpkg-archives-v1-windows-
-        path: ~/AppData/Local/vcpkg/archives
-
+    # targeting macOS/Linux - so this runs the CMake + vcpkg port instead
+    # (cached; see the action for the cache design). It has to come before
+    # the app build: the .vcxproj lists essentia.lib in AdditionalDependencies
+    # unconditionally, so a missing library is a hard linker error rather
+    # than a graceful degradation.
     - name: Build Essentia
-      # A cache hit restores both the library and the vcpkg tree, so this
-      # becomes a no-op. On a miss the vcpkg FFmpeg build dominates the job.
-      # -ReleaseOnlyDeps skips the Debug flavour of the dependencies (nothing
-      # in CI links it). The New-Item keeps the archive save below from
-      # tripping over a missing directory when vcpkg never ran.
-      run: |
-        New-Item -ItemType Directory -Force "$env:LOCALAPPDATA/vcpkg/archives" | Out-Null
-        if (Test-Path "Submodules/essentia/build-msvc/lib/$env:BUILD_TYPE/essentia.lib") {
-          Write-Host "Restored from cache - skipping"
-          exit 0
-        }
-        ./Audionaut/Builds/build_essentia_windows.ps1 `
-          -Configuration $env:BUILD_TYPE `
-          -VcpkgRoot $env:VCPKG_ROOT_DIR `
-          -Triplet $env:VCPKG_TRIPLET `
-          -ReleaseOnlyDeps
-
-    # Saved right after the essentia build (not at the end of the job) so a
-    # failure in the app build or tests does not throw the binaries away.
-    - name: Save the Essentia cache
-      if: steps.essentia-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        key: essentia-v1-windows-${{ hashFiles('essentia-cache-key.txt') }}
-        path: |
-          Submodules/essentia/build-msvc
-          C:/vcpkg/installed
-
-    - name: Save the vcpkg archives cache
-      if: steps.vcpkg-archives-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        key: vcpkg-archives-v1-windows-${{ hashFiles('essentia-cache-key.txt') }}
-        path: ~/AppData/Local/vcpkg/archives
+      uses: ./.github/actions/build-essentia-windows
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
