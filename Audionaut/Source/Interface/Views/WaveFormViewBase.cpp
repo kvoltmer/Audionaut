@@ -31,9 +31,11 @@ void WaveFormViewBase::paint (juce::Graphics& g)
 
         if (playListItem != nullptr) {
             const auto& dynamics      = playListItem->getDynamics();
-            fadeEnvelope.totalWidth   = static_cast<float>(getWidth());
-            fadeEnvelope.fadeInWidth  = static_cast<float>(dynamics.getFadeIn()  * getWidth());
-            fadeEnvelope.fadeOutWidth = static_cast<float>(dynamics.getFadeOut() * getWidth());
+            fadeEnvelope.totalWidth       = static_cast<float>(getWidth());
+            fadeEnvelope.fadeInWidth      = static_cast<float>(dynamics.getFadeIn()  * getWidth());
+            fadeEnvelope.fadeOutWidth     = static_cast<float>(dynamics.getFadeOut() * getWidth());
+            fadeEnvelope.fadeInStartWidth = static_cast<float>(dynamics.getFadeInStart() * getWidth());
+            fadeEnvelope.fadeOutEndWidth  = static_cast<float>(dynamics.getFadeOutEnd()  * getWidth());
             if (fadeEnvelope.isActive())
                 envelopePtr = &fadeEnvelope;
         }

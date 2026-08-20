@@ -106,11 +106,11 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
             auto outsideWidth = static_cast<int>(clipX - rampStartX);
             auto stride = outsideWidth > 10 ? 4 : 1;
             for (auto w = 0; w < outsideWidth; w += stride) {
-                auto square = powf(w / rampWidth, 0.5f); // square root
+                auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(w / rampWidth));
                 curve.lineTo(rampStartX + static_cast<float>(w),
                              bandBottom - (square * bandHeight));
             }
-            auto squareAtEdge = powf((clipX - rampStartX) / rampWidth, 0.5f);
+            auto squareAtEdge = static_cast<float>(audium::ClipDynamics::fadeCurve((clipX - rampStartX) / rampWidth));
             curve.lineTo(clipX, bandBottom - (squareAtEdge * bandHeight));
 
             auto rounded = curve.createPathWithRoundedCorners(4);
@@ -133,12 +133,12 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
             auto rampWidth  = rampEndX - rampStartX;
 
             Path curve;
-            auto squareAtEdge = powf(1.f - ((clipRight - rampStartX) / rampWidth), 0.5f);
+            auto squareAtEdge = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - ((clipRight - rampStartX) / rampWidth)));
             curve.startNewSubPath(clipRight, bandBottom - (squareAtEdge * bandHeight));
             auto outsideWidth = static_cast<int>(rampEndX - clipRight);
             auto stride = outsideWidth > 10 ? 4 : 1;
             for (auto w = stride; w < outsideWidth; w += stride) {
-                auto square = powf(1.f - ((clipRight - rampStartX + w) / rampWidth), 0.5f);
+                auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - ((clipRight - rampStartX + w) / rampWidth)));
                 curve.lineTo(clipRight + static_cast<float>(w),
                              bandBottom - (square * bandHeight));
             }

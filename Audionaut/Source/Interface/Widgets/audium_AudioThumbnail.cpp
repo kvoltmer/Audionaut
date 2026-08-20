@@ -14,12 +14,33 @@ float WaveformEnvelope::gainAt (float x) const noexcept
     auto gain = 1.0f;
 
     if (fadeInWidth > 0.0f && x < fadeInWidth)
-        gain = (float) ClipDynamics::fadeCurve (x / fadeInWidth);
+    {
+        if (x < fadeInStartWidth)
+            gain = 0.0f; // silent head before the ramp
+        else
+        {
+            auto ramp = fadeInWidth - fadeInStartWidth;
+            gain = ramp > 0.0f ? (float) ClipDynamics::fadeCurve ((x - fadeInStartWidth) / ramp)
+                               : 0.0f;
+        }
+    }
 
     // jmin is defensive: ClipDynamics clamps the fades against each other,
     // so the two spans should never overlap
-    if (fadeOutWidth > 0.0f && x > totalWidth - fadeOutWidth)
-        gain = jmin (gain, (float) ClipDynamics::fadeCurve ((totalWidth - x) / fadeOutWidth));
+    const auto fadeOutStartX = totalWidth - fadeOutWidth;
+    const auto fadeOutEndX   = totalWidth - fadeOutEndWidth;
+
+    if (fadeOutWidth > 0.0f && x > fadeOutStartX)
+    {
+        auto outGain = 0.0f; // silent tail after the ramp
+        if (x < fadeOutEndX)
+        {
+            auto ramp = fadeOutEndX - fadeOutStartX;
+            outGain = ramp > 0.0f ? (float) ClipDynamics::fadeCurve ((fadeOutEndX - x) / ramp)
+                                  : 0.0f;
+        }
+        gain = jmin (gain, outGain);
+    }
 
     return gain;
 }

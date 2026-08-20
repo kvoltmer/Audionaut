@@ -17,10 +17,20 @@ namespace audium
     (FadeInOutView draws the matching curve in the identical space). */
 struct WaveformEnvelope
 {
-    float fadeInWidth  = 0.0f;  // px, 0 = none
-    float fadeOutWidth = 0.0f;  // px, 0 = none
+    float fadeInWidth  = 0.0f;  // px, ramp end from the left, 0 = none
+    float fadeOutWidth = 0.0f;  // px, ramp start from the right, 0 = none
+
+    // ramp start from the left / ramp end from the right; positive = silent
+    // head/tail inside the clip, negative = ramp origin outside the clip
+    // (the outside part never reaches this envelope - it only shapes x in
+    // [0, totalWidth])
+    float fadeInStartWidth = 0.0f;
+    float fadeOutEndWidth  = 0.0f;
+
     float totalWidth   = 0.0f;  // px, full clip component width
 
+    // a ramp lying entirely outside the clip (negative offset, zero fade)
+    // leaves the inside untouched, so the fade widths alone decide activity
     bool isActive() const noexcept { return fadeInWidth > 0.0f || fadeOutWidth > 0.0f; }
 
     /** Gain 0..1 at component-local x, following ClipDynamics::fadeCurve. */
