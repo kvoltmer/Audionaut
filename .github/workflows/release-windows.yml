@@ -1,0 +1,114 @@
+name: Windows Release
+
+# Builds the Release Windows binary, packages it as an NSIS installer, and
+# attaches it to a GitHub Release. Trigger by pushing a version tag:
+#   git tag v1.2.0 && git push origin v1.2.0
+# The tag must match the version in Audionaut.jucer (checked below).
+#
+# Can also be run manually from the Actions tab to exercise the build and the
+# packaging - a manual run skips the tag check and publishes nothing.
+#
+# Runs alongside the Linux release workflow on the same tag; both attach
+# their artifacts to one Release (whichever finishes first creates it).
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: Release
+
+  # No toolset pin: the windows-2025 image ships Visual Studio 2026, so the
+  # v145 the .vcxproj asks for is what MSBuild picks natively - and what the
+  # CMake-driven Essentia build picks as its default. See windows.yml.
+
+  # Essentia's Windows dependencies - same values as windows.yml; read by the
+  # build-essentia-windows action and expanded by the .vcxproj.
+  VCPKG_TRIPLET: x64-windows-static-md
+  VCPKG_ROOT_DIR: C:/vcpkg
+  AUDIONAUT_VCPKG_PREFIX: C:/vcpkg/installed/x64-windows-static-md
+
+jobs:
+  package:
+
+    runs-on: windows-2025
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    # No `git lfs pull`: the LFS files are test wavs, and this workflow runs
+    # no tests.
+
+    - name: Check tag matches .jucer version
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      run: |
+        TAG_VERSION="${GITHUB_REF_NAME#v}"
+        JUCER_VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' Audionaut/Audionaut.jucer | head -1 | cut -d'"' -f2)
+        echo "tag: $TAG_VERSION  .jucer: $JUCER_VERSION"
+        if [ "$TAG_VERSION" != "$JUCER_VERSION" ]; then
+          echo "::error::Tag version ($TAG_VERSION) does not match Audionaut.jucer version ($JUCER_VERSION). Bump the .jucer version (and re-save with Projucer) or fix the tag."
+          exit 1
+        fi
+
+    # A tag run can only restore caches scoped to the tag itself or to the
+    # default branch, so a release cut before Windows CI has run on main
+    # builds Essentia cold here - correct, just slower.
+    - name: Build Essentia
+      uses: ./.github/actions/build-essentia-windows
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build the app
+      # -m builds projects in parallel; the solution only defines x64.
+      run: >
+        msbuild Audionaut/Builds/VisualStudio2026/Audionaut.sln
+        -m
+        -p:Configuration=${{ env.BUILD_TYPE }}
+        -p:Platform=x64
+        -v:minimal
+
+    - name: Build the installer
+      # The .nsi packs the Release x64 exe the previous step just built. Run
+      # makensis from the script's directory so its relative File paths
+      # (..\..\Builds\...) resolve. The runner image ships NSIS; the choco
+      # install is only a guard against an image that stops doing so. The
+      # rename gives the artifact a versioned Release filename (mirroring the
+      # AppImage) without touching the .nsi; VERSION comes from the .jucer
+      # rather than the tag, so manual runs off a branch are named properly
+      # too - on a tag run the check above proves the two agree.
+      working-directory: Audionaut/Installers/NSIS
+      shell: bash
+      run: |
+        MAKENSIS="/c/Program Files (x86)/NSIS/makensis.exe"
+        if [ ! -f "$MAKENSIS" ]; then
+          choco install nsis -y --no-progress
+        fi
+        "$MAKENSIS" Audionaut-Installer.nsi
+        VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' ../../Audionaut.jucer | head -1 | cut -d'"' -f2)
+        mv "Audionaut Setup.exe" "Audionaut-$VERSION-Setup.exe"
+        ls -l Audionaut-*-Setup.exe
+
+    - name: Upload to GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # The Linux release workflow runs on the same tag; the `|| upload`
+        # covers losing the race to its `gh release create`.
+        ARTIFACTS=(Audionaut/Installers/NSIS/Audionaut-*-Setup.exe)
+        if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+          gh release upload "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" --clobber
+        else
+          gh release create "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" \
+            --title "Audionaut $GITHUB_REF_NAME" --generate-notes \
+            || gh release upload "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" --clobber
+        fi
