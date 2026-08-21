@@ -738,8 +738,12 @@ std::vector<DspClipData> AudioTrack::getDspClipVector() const
                 dspClipData.active              = true;
                 auto channel = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
                 dspClipData.clipGain            = static_cast<float>(item->getDynamics().getGain(channel));
-                dspClipData.clipFadeInClocks    = item->getDynamics().getFadeInClocks();
-                dspClipData.clipFadeOutClocks   = item->getDynamics().getFadeOutClocks();
+                dspClipData.clipFadeInClocks    = item->getDynamics().getFadeIn(audium::clocks);
+                dspClipData.clipFadeOutClocks   = item->getDynamics().getFadeOut(audium::clocks);
+                dspClipData.clipFadeInStartClocks = item->getDynamics().getFadeInStart(audium::clocks);
+                dspClipData.clipFadeOutEndClocks  = item->getDynamics().getFadeOutEnd(audium::clocks);
+                dspClipData.clipFadeInCurve       = item->getDynamics().getFadeInCurve();
+                dspClipData.clipFadeOutCurve      = item->getDynamics().getFadeOutCurve();
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
                 

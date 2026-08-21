@@ -46,3 +46,32 @@
 
 - [ ] **`Engine/Group` (56%) and `Engine/Region` (53%)** carry ~1,100
   uncovered lines between them and are the multitrack model core.
+
+## Clip crossfades — follow-ups (feature/clip-xfades)
+
+The plumbing is complete: fades have adjustable start/end offsets, negative
+offsets extend the audible material outside the region window (UI ghost
+waveform + lane overlay ramps), and playback/export render them (equal-power
+sqrt curves, overlapping clips sum as independent voices). What is missing is
+the one-gesture crossfade UX on top:
+
+- [ ] **Auto-create symmetric fades when clips overlap.** When a clip is
+  dragged/trimmed so it overlaps its neighbour on the same playlist, create
+  the crossfade automatically: the left clip gets a fade-out over the overlap
+  (`setFadeOut`), the right clip a fade-in (`setFadeIn`), each clamped to the
+  overlap range. Detection hooks exist —
+  `PlayListContainer::itemIntersectingRange` / `itemsAtAbsoluteRange` — and
+  the natural commit points are `DraggerControl::mouseUp` (after
+  `validateData`) and `AudioTrack::dropPlayListItem`. Decide: recompute on
+  every overlap change vs. only on first contact (protect user-edited fades),
+  and whether a preference toggles the behavior.
+
+- [ ] **Drag one handle across a cut to shape both clips at once.** At a butt
+  joint (clip A ends where clip B starts, typically after a split), dragging
+  A's fade-out-end handle past the cut should simultaneously set B's
+  fade-in-start to the mirrored negative offset (and vice versa), producing a
+  symmetric crossfade without touching clip positions. The handle wiring
+  lives in `PlayListItemComponent::setPlayListItem` (onValueChange lambdas);
+  the neighbour is found via the playlist container (items are kept sorted by
+  position). Needs a paired undo action (one gesture = one transaction across
+  two items) and the lane `ClipFadeOverlay` already draws both sides.

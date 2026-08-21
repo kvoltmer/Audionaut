@@ -200,6 +200,16 @@ bool ZoomHandler::snapToGrid(juce::Range<double> &clocks)
     return getSnapToGridHandler()->snapToGrid(*this, clocks);
 }
 
+double ZoomHandler::snapContentX(const double x) const
+{
+    if (viewPort == nullptr)
+        return std::round(x);
+
+    const auto fractionalScroll = getVisibleRange().getStart()
+                                - static_cast<double>(viewPort->getViewPositionX());
+    return std::round(x - fractionalScroll);
+}
+
 double ZoomHandler::reinterpretSeconds(const double seconds)
 {
     auto x = static_cast<int>(secondsToX(seconds));

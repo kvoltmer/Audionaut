@@ -48,7 +48,10 @@ public:
                                                                 startInBeats);
 
         for (auto seg : segmentList) {
-            auto x = zoomHandler->beatsToX(seg.position);
+            // whole pixels: a line on a fractional x is antialiased over two
+            // columns and shimmers against the integer-snapped clips while
+            // zooming
+            auto x = static_cast<float>(zoomHandler->snapContentX(zoomHandler->beatsToX(seg.position)));
             juce::Rectangle<float> gridLine(x, drawingArea.getY(), 1.f, drawingArea.getHeight());
 
             if (!range.isEmpty() &&

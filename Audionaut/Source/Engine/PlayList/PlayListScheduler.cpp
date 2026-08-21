@@ -50,43 +50,52 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
                                      int numSamples)
 {
     auto context = audium::seconds;
-    auto absolute = dspClip.getAbsolutePosition(context);
-    auto local = dspClip.getRegionData(context).getStart();
-    auto offset = absolute - transportPosition;
+
+    ClipFadeSpec spec;
+    spec.regionStart = dspClip.getRegionData(context).getStart();
+    spec.regionEnd   = dspClip.getRegionData(context).getEnd();
+    spec.fadeIn      = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
+    spec.fadeOut     = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
+    spec.fadeInStart = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInStartClocks);
+    spec.fadeOutEnd  = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutEndClocks);
+    spec.fadeInCurve  = dspClip.dspClipData.clipFadeInCurve;
+    spec.fadeOutCurve = dspClip.dspClipData.clipFadeOutCurve;
+
+    // the voice covers the audible span: the region window widened by the
+    // fade extensions (head clamped at the file start)
+    auto voiceAbsStart = dspClip.getAbsolutePosition(context) - dspClip.getHeadExtension(context);
+    auto offset = voiceAbsStart - transportPosition;
     auto position = 0.0;
     auto startSample = 0;
-    
+
     if (offset < 0.0) {
-        position = local - offset;
-        
+        position = spec.voiceFileStart() - offset;
+
         // sample offset (loop)
         startSample = sampleOffset;
     }
     else {
-        position = local;
+        position = spec.voiceFileStart();
         startSample = static_cast<int>(std::round(offset * externalSampleRate));
         startSample += sampleOffset;
     }
     jassert(startSample <= numSamples);
     jassert(position >= 0.0);
-    
-    auto duration = dspClip.getRegionData(context).getEnd() - position;
+
+    auto duration = spec.voiceFileEnd() - position;
     jassert(duration >= 0.0);
-    
+
     const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
     jassert(context == audium::seconds);
     if (duration < secondsThisBuffer) {
         std::cout << "duration samples " << int(duration * externalSampleRate) << " too small." << std::endl;
         return false;
     }
-    
+
     transportSource->schedulePosition(position, startSample);
     transportSource->scheduleDuration(duration, externalSampleRate);
-    
-    auto fadeIn = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
-    transportSource->getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
-    auto fadeOut = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
-    transportSource->getAudioTransportSource()->setFadeOutSeconds(fadeOut, duration, true);
+
+    configureClipFades(*transportSource->getAudioTransportSource(), spec, position, true);
 
     transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
     transportSource->getAudioTransportSource()->resetClipGain();
@@ -134,7 +143,10 @@ void PlayListScheduler::process(double transportPositionClocks,
         if (transportSource == nullptr)
             continue;
         
-        if (dspClip.getAbsolutePositionRange(audium::seconds).intersects(transportRange)) {
+        // the audible range includes the fade extensions - a head extension
+        // must start the voice early, a tail extension must not be stopped
+        // at the region end by the else branch below
+        if (dspClip.getAudibleRange(audium::seconds).intersects(transportRange)) {
             
             
             if (clipsChanged &&
@@ -313,7 +325,8 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> tr
         auto context = audium::clocks;
         auto localPosition = item->absoluteToLocalPosition(getAbsolutePosition(context), context);
         auto progress = ((localPosition - item->getRegionData(context).getStart()) / item->getRegionData(context).getLength());
-        return progress;
+        // fade extensions place the transport outside the region window
+        return juce::jlimit(0.0, 1.0, progress);
     }
     return 0.0;
 }
@@ -328,29 +341,59 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     config->numChannels = config->playListItem->getPlayListContainer().getAudioTrack().getNumAudioTrackChannels();
     std::cout << "bounce channels: " << config->numChannels << std::endl;
     
-    auto totalSamples   = static_cast<int64>((config->playListItem->getRegionData(audium::seconds).getLength()) * externalSampleRate);
-    auto iterations     = static_cast<int64>(totalSamples) / config->blockSize;
-    auto remainder      = totalSamples - (iterations * config->blockSize);
+    auto item = config->playListItem;
+
+    // the exported span is the audible length: region window plus the fade
+    // extensions; the portion of a head extension before the source file's
+    // first sample is written as leading silence
+    ClipFadeSpec spec;
+    auto regionSeconds = item->getRegionData(audium::seconds);
+    spec.regionStart = regionSeconds.getStart();
+    spec.regionEnd   = regionSeconds.getEnd();
+    spec.fadeIn      = item->getDynamics().getFadeIn(audium::seconds);
+    spec.fadeOut     = item->getDynamics().getFadeOut(audium::seconds);
+    spec.fadeInStart = item->getDynamics().getFadeInStart(audium::seconds);
+    spec.fadeOutEnd  = item->getDynamics().getFadeOutEnd(audium::seconds);
+    spec.fadeInCurve  = item->getDynamics().getFadeInCurve();
+    spec.fadeOutCurve = item->getDynamics().getFadeOutCurve();
+
+    auto totalSamples          = static_cast<int64>(spec.audibleLength() * externalSampleRate);
+    auto leadingSilenceSamples = static_cast<int64>(spec.preFileSilence() * externalSampleRate);
+    auto voiceSamples          = totalSamples - leadingSilenceSamples;
+    auto iterations            = voiceSamples / config->blockSize;
+    auto remainder             = voiceSamples - (iterations * config->blockSize);
     jassert(remainder < config->blockSize);
-    
+
     AudioBuffer<float> buffer(config->numChannels, config->blockSize);
     AudioSourceChannelInfo info (&buffer, 0, config->blockSize);
-    
+
     AudioBuffer<float> audioBusBuffer(config->numChannels, config->blockSize);
     juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
-    
-    auto item = config->playListItem;
-    
+
     for (auto source : config->playListItem->getTransportSources()) {
         source->prepareToPlay(config->blockSize, config->sampleRate);
-        source->schedulePosition(config->playListItem->getRegionData(seconds).getStart(), 0);
-        source->scheduleDuration(config->playListItem->getRegionData(seconds).getLength(), config->sampleRate);
+        source->schedulePosition(spec.voiceFileStart(), 0);
+        source->scheduleDuration(spec.voiceFileEnd() - spec.voiceFileStart(), config->sampleRate);
         source->configureDynamics(config->playListItem, tempoProvider);
+        // snap the gain smoother - otherwise the export starts with a
+        // 10 ms gain swell (the live scheduler does the same)
+        source->getAudioTransportSource()->resetClipGain();
         source->applyChannelMapping(false);
         source->getAudioTransportSource()->start();
     }
-    
+
     int64 samplesWritten = 0;
+
+    // leading silence for the pre-file part of a head extension
+    buffer.clear();
+    auto silenceRemaining = leadingSilenceSamples;
+    while (silenceRemaining > 0 && !config->userCanceled) {
+        auto numSilence = static_cast<int>(juce::jmin(silenceRemaining, static_cast<int64>(config->blockSize)));
+        writer->writeFromAudioSampleBuffer(buffer, 0, numSilence);
+        samplesWritten += numSilence;
+        silenceRemaining -= numSilence;
+    }
+
     for (auto i = 0; i < iterations; ++i) {
         info.clearActiveBufferRegion();
         audioBusInfo.clearActiveBufferRegion();

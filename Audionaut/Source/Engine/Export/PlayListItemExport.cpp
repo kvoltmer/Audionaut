@@ -24,7 +24,11 @@ bool PlayListItemExport::exportItem()
     config->playListItem = std::shared_ptr<PlayListItem>(new PlayListItem(playListItem->getPlayListContainer(),
                                                                           audioRegion,
                                                                           audioRegion->getAudioTrack()->getSelectionManager()));
-    
+
+    // the export must sound like the clip: carry gains, fades and the fade
+    // extensions over to the fresh export item
+    config->playListItem->getDynamics().copyFrom(playListItem->getDynamics());
+
     // the number of audio channels
     config->numChannels = audioRegion->getAudioTrack()->getNumAudioTrackChannels();
     

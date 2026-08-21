@@ -10,6 +10,7 @@
 #include "Engine/Playback/PlaybackDefines.h"
 #include "Application/AudiumApplication.h"
 #include "Interface/Dialogs/AnalysisSettingsComponent.h"
+#include "Interface/Dialogs/AutoEditSettingsComponent.h"
 
 using namespace juce;
 
@@ -32,12 +33,14 @@ public:
         audioDevSelComp->setSize(500, 300);
 
         analysisComp = std::make_unique<AnalysisSettingsComponent>(engine, AudiumApplication::getPreferences());
+        autoEditComp = std::make_unique<AutoEditSettingsComponent>(AudiumApplication::getPreferences());
 
         const auto tabColour = LookAndFeel::getDefaultLookAndFeel().findColour(ResizableWindow::backgroundColourId);
         tabbedComp = std::make_unique<TabbedComponent>(TabbedButtonBar::TabsAtTop);
         tabbedComp->setOutline(0);
         tabbedComp->addTab(TRANS ("Audio"), tabColour, audioDevSelComp.get(), false);
         tabbedComp->addTab(TRANS ("Analysis"), tabColour, analysisComp.get(), false);
+        tabbedComp->addTab(TRANS ("Auto Edit"), tabColour, autoEditComp.get(), false);
         tabbedComp->setSize(500, 340);
     }
     
@@ -57,6 +60,7 @@ private:
                                                           "",
                                                           MessageBoxIconType::NoIcon, mainComponent);
         analysisComp->refreshFromPreferences();
+        autoEditComp->refreshFromPreferences();
         asyncAlertWindow->addCustomComponent(tabbedComp.get());
         asyncAlertWindow->addButton (TRANS ("Close"),  1, KeyPress (KeyPress::returnKey));
 
@@ -85,6 +89,7 @@ private:
     // must let go of the pages before they are destroyed.
     std::unique_ptr<juce::AudioDeviceSelectorComponent> audioDevSelComp;
     std::unique_ptr<AnalysisSettingsComponent> analysisComp;
+    std::unique_ptr<AutoEditSettingsComponent> autoEditComp;
     std::unique_ptr<TabbedComponent> tabbedComp;
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;

@@ -48,6 +48,16 @@ struct AutoEditConfig {
     /// it. Off leaves the arrangement alone and only adds the regions.
     bool replacePlayListItem = true;
 
+    /// Apply a symmetric crossfade at every joint between the segments
+    /// (half the length on each side of the cut).
+    bool crossfades = true;
+    double crossfadeSeconds = 0.02;
+
+    /// The fade curve exponent at the joints: 0.5 = equal power (the
+    /// ClipDynamics default), 1.0 = linear (transparent for the contiguous
+    /// material a split produces).
+    double crossfadeCurve = 0.5;
+
     double duration = 120.0;
 
     /// The abstract musical parameter: target segment length in measures
@@ -397,7 +407,9 @@ public:
      */
     bool replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
                                         int playListItemIndex,
-                                        const std::vector<std::shared_ptr<AudioRegion>>& regions);
+                                        const std::vector<std::shared_ptr<AudioRegion>>& regions,
+                                        double crossfadeSeconds = 0.0,
+                                        double crossfadeCurve = 0.5);
 
     /** @brief Reads the Python path's segment file and creates regions from
      *         it, named <baseName>-seg-<number> like the native path's. */

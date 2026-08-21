@@ -7,11 +7,61 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "ClipDynamicsProcessor.h"
 #include "VolumeFade.h"
 
 using namespace juce;
 
 namespace audium {
+
+class AudioTransportSource;
+
+//==============================================================================
+/**
+ * @struct ClipFadeSpec
+ * @brief The complete fade geometry of one clip, in seconds, file/source time
+ *        domain. One spec drives live scheduling, project bounce and item
+ *        bounce identically.
+ *
+ * The signed offsets follow ClipDynamics: positive = ramp boundary inside
+ * the clip (silent head/tail), negative = outside (the fade extends the
+ * audible material past the region window).
+ */
+struct ClipFadeSpec
+{
+    double regionStart = 0.0, regionEnd = 0.0;   // the region window
+    double fadeIn = 0.0, fadeOut = 0.0;          // ramp end from start / ramp start from end
+    double fadeInStart = 0.0, fadeOutEnd = 0.0;  // signed ramp offsets
+    double fadeInCurve = 0.5, fadeOutCurve = 0.5; // curve exponents (0.5 = equal power)
+
+    double headExtension()  const noexcept { return juce::jmax(0.0, -fadeInStart); }
+    double tailExtension()  const noexcept { return juce::jmax(0.0, -fadeOutEnd); }
+
+    /** Portion of the head extension before the source file's first sample -
+        the voice cannot render it; it is timeline silence. */
+    double preFileSilence() const noexcept { return juce::jmax(0.0, headExtension() - regionStart); }
+
+    /** First file position the voice reads from; never negative. */
+    double voiceFileStart() const noexcept { return regionStart - headExtension() + preFileSilence(); }
+
+    /** File position the voice reads to (past EOF renders silent). */
+    double voiceFileEnd()   const noexcept { return regionEnd + tailExtension(); }
+
+    /** Full audible length including both extensions. */
+    double audibleLength()  const noexcept { return (regionEnd - regionStart) + headExtension() + tailExtension(); }
+};
+
+/**
+ * Configures both clip fades on `source` for a voice scheduled to read from
+ * filePositionSeconds (>= spec.voiceFileStart()). The one shared fade
+ * configuration used by PlayListScheduler::scheduleClip and
+ * AudiumTransportSource::configureDynamics - kept in lockstep by
+ * construction. Real-time safe.
+ */
+void configureClipFades (AudioTransportSource& source,
+                         const ClipFadeSpec& spec,
+                         double filePositionSeconds,
+                         bool reset);
 
 //==============================================================================
 /**
@@ -35,7 +85,10 @@ public:
     /** Creates an AudioTransportSource.
         After creating one of these, use the setSource() method to select an input source.
     */
-    AudioTransportSource();
+    /** The dynamics processor (clip gain + fades) is injected so the
+        rendering chain can be configured and tested on its own. */
+    explicit AudioTransportSource (std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor_
+                                       = std::make_shared<ClipDynamicsProcessor>());
 
     /** Destructor. */
     ~AudioTransportSource() override;
@@ -108,8 +161,29 @@ public:
     
     void resetClipGain();
     
-    void setFadeInSeconds(double fadeInSeconds, double offsetInSeconds, bool reset);
-    void setFadeOutSeconds(double fadeOutSeconds, double duration, bool reset);
+    /** Transparent resets: no fade, no stale skip/silent counters. */
+    void clearFadeIn();
+    void clearFadeOut();
+
+    /** The curve exponent applied over each ramp (ClipDynamics::fadeCurve). */
+    void setFadeInCurve(double curve);
+    void setFadeOutCurve(double curve);
+
+    /** Configures the fade-in as a ramp of rampSeconds starting
+        rampStartSeconds after the scheduled position. rampStartSeconds > 0
+        emits silence until the ramp starts; <= 0 means |value| of the ramp
+        has already elapsed (the ramp is armed mid-way). */
+    void setFadeInRamp(double rampSeconds, double rampStartSeconds, bool reset);
+
+    /** Configures the fade-out as a ramp of rampSeconds starting
+        rampStartSeconds after the scheduled position; the completed ramp
+        holds silence. rampSeconds <= 0 with a positive start is an instant
+        mute at the ramp point. rampStartSeconds as in setFadeInRamp (> 0:
+        unity pass-through until then). */
+    void setFadeOutRamp(double rampSeconds, double rampStartSeconds, bool reset);
+
+    /** The injected dynamics chain, for callers that configure it directly. */
+    std::shared_ptr<ClipDynamicsProcessor> getDynamicsProcessor() const { return dynamicsProcessor; }
 
     //==============================================================================
     /** Implementation of the AudioSource method. */
@@ -144,7 +218,7 @@ private:
     PositionableAudioSource* positionableSource = nullptr;
     AudioSource* masterSource = nullptr;
 
-    std::atomic<float> gain = 1.0f;
+    std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor;
 
     std::atomic<bool> playing  = false;
     std::atomic<bool> stopped  = true;
@@ -153,10 +227,7 @@ private:
     int blockSize = 128, readAheadBufferSize = 0;
     std::atomic<bool> isPrepared = false;
 
-    juce::dsp::Gain<float> clipGain;
     
-    audium::VolumeFade<float> clipFadeIn;
-    audium::VolumeFade<float> clipFadeOut;
     
     void releaseMasterResources();
 

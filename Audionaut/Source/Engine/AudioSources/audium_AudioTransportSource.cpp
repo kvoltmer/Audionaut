@@ -8,8 +8,10 @@
 namespace audium
 {
 
-AudioTransportSource::AudioTransportSource()
+AudioTransportSource::AudioTransportSource (std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor_) :
+    dynamicsProcessor (std::move (dynamicsProcessor_))
 {
+    jassert (dynamicsProcessor != nullptr);
 }
 
 AudioTransportSource::~AudioTransportSource()
@@ -194,14 +196,7 @@ void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double ne
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize    = samplesPerBlockExpected;
     spec.sampleRate          = newSampleRate;
-    clipGain.prepare(spec);
-    clipGain.setRampDurationSeconds(0.01);
-    
-    clipFadeIn.prepare(spec);
-    clipFadeIn.setRampDurationSeconds(0.0);
-    
-    clipFadeOut.prepare(spec);
-    clipFadeOut.setRampDurationSeconds(0.0);
+    dynamicsProcessor->prepare(spec);
     
     isPrepared = true;
 }
@@ -247,14 +242,11 @@ void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info
             if (hasStreamFinished())
                 stop(false);
             
-            // clip gain
-            clipGain.setGainLinear(gain.load());
+            // clip gain and fades
             juce::dsp::AudioBlock<float> audioBlock (*info.buffer);
             juce::dsp::ProcessContextReplacing<float> gainContext(audioBlock);
-            
-            clipGain.process(gainContext);
-            clipFadeIn.process(gainContext);
-            clipFadeOut.process(gainContext);
+
+            dynamicsProcessor->process(gainContext);
         }
         else {
             info.clearActiveBufferRegion();
@@ -265,77 +257,76 @@ void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info
 
 void AudioTransportSource::setGain (const float newGain) noexcept
 {
-    gain = newGain;
+    dynamicsProcessor->setGain(newGain);
 }
 
 float AudioTransportSource::getGain() const noexcept
 {
-    return gain.load();
+    return dynamicsProcessor->getGain();
 }
 
 void AudioTransportSource::resetClipGain()
 {
-    auto rampDuration = clipGain.getRampDurationSeconds();
-    clipGain.setRampDurationSeconds(0.0);
-    clipGain.setGainLinear(gain.load());
-    clipGain.setRampDurationSeconds(rampDuration);
+    dynamicsProcessor->resetGain();
 }
 
-void AudioTransportSource::setFadeInSeconds(double fadeInSeconds, double offsetInSeconds, bool reset)
+void configureClipFades (AudioTransportSource& source,
+                         const ClipFadeSpec& spec,
+                         double filePositionSeconds,
+                         bool reset)
 {
-    auto fadeTime = fadeInSeconds;
-    auto initialGain = 0.0;
-    if (offsetInSeconds < 0.0) {
-        fadeTime = fadeInSeconds + offsetInSeconds;
-        if (fadeTime < 0.0)
-            fadeTime = 0.0;
-        
-        if (fadeInSeconds > 0.0)
-            initialGain = 1.0 - (fadeTime / fadeInSeconds);
-    }
-    
-    if (reset) {
-        clipFadeIn.setGainLinear(initialGain, true);
-    }
-    clipFadeIn.setRampDurationSeconds(fadeTime);
-    clipFadeIn.setGainLinear(1.0, false);
-}
-
-void AudioTransportSource::setFadeOutSeconds(double fadeOutSeconds, double duration, bool reset)
-{
-    if (duration < 0.0)
-        duration = 0.0;
-
-    if (fadeOutSeconds <= 0.0) {
-        // no fade-out: keep the processor transparent instead of scheduling a
-        // zero-length ramp to gain 0 (which would mute instantly once the
-        // skip counter runs out)
-        clipFadeOut.setSkipSamples(0);
-        clipFadeOut.setRampDurationSeconds(0.0);
-        clipFadeOut.setGainLinear(1.0, true);
-        return;
-    }
-
-    auto fadeTime = fadeOutSeconds;
-    auto initialGain = 1.0;
-    if (fadeOutSeconds <= duration) {
-        // schedule
-        auto start = duration - fadeOutSeconds;
-        clipFadeOut.setSkipSamples(start * sampleRate);
+    if (spec.fadeIn <= 0.0 && spec.fadeInStart == 0.0) {
+        source.clearFadeIn();
     }
     else {
-        fadeTime = duration;
-        
-        if (fadeOutSeconds > 0.0)
-            initialGain = duration / fadeOutSeconds;
+        source.setFadeInCurve(spec.fadeInCurve);
+        // a pre-file clamp makes filePosition > regionStart + fadeInStart,
+        // which arms the ramp mid-way - the ramp progresses through the
+        // pre-file silence
+        source.setFadeInRamp(spec.fadeIn - spec.fadeInStart,
+                             (spec.regionStart + spec.fadeInStart) - filePositionSeconds,
+                             reset);
     }
-    
-    if (reset)
-        clipFadeOut.setGainLinear(initialGain, true);
-    
-    // std::cout << initialGain << " time: " << fadeTime << std::endl;
-    clipFadeOut.setRampDurationSeconds(fadeTime);
-    clipFadeOut.setGainLinear(0.0, false);
+
+    if (spec.fadeOut <= 0.0 && spec.fadeOutEnd == 0.0) {
+        source.clearFadeOut();
+    }
+    else {
+        source.setFadeOutCurve(spec.fadeOutCurve);
+        source.setFadeOutRamp(spec.fadeOut - spec.fadeOutEnd,
+                              (spec.regionEnd - spec.fadeOut) - filePositionSeconds,
+                              reset);
+    }
+}
+
+void AudioTransportSource::clearFadeIn()
+{
+    dynamicsProcessor->clearFadeIn();
+}
+
+void AudioTransportSource::setFadeInCurve(double curve)
+{
+    dynamicsProcessor->setFadeInCurve(curve);
+}
+
+void AudioTransportSource::setFadeOutCurve(double curve)
+{
+    dynamicsProcessor->setFadeOutCurve(curve);
+}
+
+void AudioTransportSource::clearFadeOut()
+{
+    dynamicsProcessor->clearFadeOut();
+}
+
+void AudioTransportSource::setFadeInRamp(double rampSeconds, double rampStartSeconds, bool reset)
+{
+    dynamicsProcessor->setFadeInRamp(rampSeconds, rampStartSeconds, reset);
+}
+
+void AudioTransportSource::setFadeOutRamp(double rampSeconds, double rampStartSeconds, bool reset)
+{
+    dynamicsProcessor->setFadeOutRamp(rampSeconds, rampStartSeconds, reset);
 }
 
 } // namespace audium

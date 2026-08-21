@@ -48,6 +48,44 @@ double DspClip::getAbsolutePosition(audium::TimeContextType context) const
     return 0.0;
 }
 
+double DspClip::getHeadExtension(audium::TimeContextType context) const
+{
+    // pre-file portions are clamped away: the voice cannot start before the
+    // source file's first sample, and the gate must not open before the
+    // voice can start
+    auto headExtSeconds = juce::jmax(0.0, -tempoProvider->clocksToSeconds(dspClipData.clipFadeInStartClocks));
+    auto regionStart = dspClipData.clipData.regionData.getStart();
+    auto effectiveSeconds = juce::jmin(headExtSeconds, regionStart);
+
+    if (context == audium::seconds)
+        return effectiveSeconds;
+    else if (context == audium::clocks)
+        return tempoProvider->secondsToClocks(effectiveSeconds);
+
+    jassertfalse;
+    return 0.0;
+}
+
+double DspClip::getTailExtension(audium::TimeContextType context) const
+{
+    auto tailExtClocks = juce::jmax(0.0, -dspClipData.clipFadeOutEndClocks);
+
+    if (context == audium::clocks)
+        return tailExtClocks;
+    else if (context == audium::seconds)
+        return tempoProvider->clocksToSeconds(tailExtClocks);
+
+    jassertfalse;
+    return 0.0;
+}
+
+juce::Range<double> DspClip::getAudibleRange(audium::TimeContextType context) const
+{
+    auto range = getAbsolutePositionRange(context);
+    return juce::Range<double>(range.getStart() - getHeadExtension(context),
+                               range.getEnd() + getTailExtension(context));
+}
+
 void DspClip::setAbsolutePosition(double newPosition, audium::TimeContextType context)
 {
     if (context == audium::seconds) {

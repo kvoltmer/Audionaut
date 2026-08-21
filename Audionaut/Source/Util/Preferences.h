@@ -62,6 +62,9 @@ namespace PreferenceKeys
     static const char* const assembleSeconds        = "AssembleSeconds";
     static const char* const autoAnalysisEnabled    = "AutoAnalysisEnabled";
     static const char* const autoAnalysisTypes      = "AutoAnalysisTypes";
+    static const char* const autoEditCrossfadesEnabled = "AutoEditCrossfadesEnabled";
+    static const char* const autoEditCrossfadeMs    = "AutoEditCrossfadeMs";
+    static const char* const autoEditCrossfadeType  = "AutoEditCrossfadeType";
 }
 
 } // namespace audium

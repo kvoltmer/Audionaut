@@ -83,8 +83,10 @@ void AudioTrackComponent::updateContents(bool forceRebuildComponents)
     if (forceRebuildComponents) {
         itemComponents.clear();
         removeAllChildren();
+        // the overlay survives the rebuild (owned by us) but was detached
+        addAndMakeVisible(fadeOverlay.get());
     }
-    
+
     const size_t numNeeded = (model != nullptr) ? model->getNumRows() : 0;
     itemComponents.resize (jmin (numNeeded, itemComponents.size()));
     while (numNeeded > itemComponents.size())
@@ -116,10 +118,29 @@ void AudioTrackComponent::updateContents(bool forceRebuildComponents)
             itemComp->update (item);
         }
     }
+
+    // keep the fade overlay above every clip (including ones just added)
+    // and refreshed on zoom/scroll/clip-move relayouts
+    fadeOverlay->setBounds(getLocalBounds());
+    fadeOverlay->toFront(false);
+    fadeOverlay->repaint();
 }
 
 void AudioTrackComponent::resized()
 {
+    fadeOverlay->setBounds(getLocalBounds());
+}
+
+juce::Range<double> AudioTrackComponent::getItemXRange(int index) const
+{
+    if (index >= 0 && index < static_cast<int>(itemComponents.size())) {
+        if (auto* itemComp = itemComponents[static_cast<size_t>(index)].get()) {
+            if (itemComp->isVisible())
+                return itemComp->getBounds().toDouble().getHorizontalRange();
+        }
+    }
+
+    return model->getRangeForItem(index);
 }
 
 bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSourceDetails)

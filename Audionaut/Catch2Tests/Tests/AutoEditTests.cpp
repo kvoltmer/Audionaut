@@ -734,6 +734,18 @@ SCENARIO("AutoEdit can replace the edited clip with its segments",
                         REQUIRE(fixture.isCreated(item->getRegion()));
                 }
 
+                THEN("the whole-clip region is gone - Assemble must not pick it up")
+                {
+                    auto items = playListItems();
+                    REQUIRE(items.size() > 1);
+
+                    auto regionContainer = items[0]->getRegion()->getResourceGroup()->getAudioRegionContainer();
+                    for (const auto& region : regionContainer->getObjects()) {
+                        INFO("remaining region: " << region->getName());
+                        REQUIRE(region->getName() != originalRegionName);
+                    }
+                }
+
                 THEN("the segments are named <clip>-seg-<number>")
                 {
                     const auto prefix = originalRegionName + "-seg-";
@@ -762,6 +774,36 @@ SCENARIO("AutoEdit can replace the edited clip with its segments",
                     }
                 }
 
+                THEN("every joint carries a symmetric 20 ms crossfade")
+                {
+                    auto items = playListItems();
+                    REQUIRE(items.size() > 1);
+
+                    for (size_t i = 0; i < items.size(); ++i)
+                    {
+                        auto& dynamics = items[i]->getDynamics();
+
+                        if (i > 0) {
+                            // fade in over 10 ms inside, 10 ms before the clip
+                            REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.01).margin(0.001));
+                            REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(-0.01).margin(0.001));
+                        }
+                        else {
+                            REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.0));
+                        }
+
+                        if (i < items.size() - 1) {
+                            // fade out over 10 ms inside, ending 10 ms past the clip
+                            REQUIRE(dynamics.getFadeOut(audium::seconds) == Catch::Approx(0.01).margin(0.001));
+                            REQUIRE(dynamics.getFadeOutEnd(audium::seconds) == Catch::Approx(-0.01).margin(0.001));
+                            REQUIRE(dynamics.getFadeOutCurve() == Catch::Approx(0.5));
+                        }
+                        else {
+                            REQUIRE(dynamics.getFadeOut(audium::seconds) == Catch::Approx(0.0));
+                        }
+                    }
+                }
+
                 THEN("one undo puts the clip back")
                 {
                     auto undoManager = fixture.engine->getAudioTrackContainer()->getUndoManager();
@@ -772,6 +814,58 @@ SCENARIO("AutoEdit can replace the edited clip with its segments",
                     auto items = playListItems();
                     REQUIRE(items.size() == 1);
                     REQUIRE(items[0]->getRegion()->getName() == originalRegionName);
+                }
+            }
+        }
+
+        GIVEN("a linear crossfade curve")
+        {
+            config.crossfadeCurve = 1.0;
+
+            WHEN("the clip is auto edited")
+            {
+                INFO("error was: " << reportedError);
+                REQUIRE(autoEdit.invokeAutoEdit(config, onError));
+
+                THEN("the joint fades carry the linear exponent")
+                {
+                    auto items = playListItems();
+                    REQUIRE(items.size() > 1);
+
+                    for (size_t i = 0; i < items.size(); ++i)
+                    {
+                        auto& dynamics = items[i]->getDynamics();
+                        if (i > 0)
+                            REQUIRE(dynamics.getFadeInCurve() == Catch::Approx(1.0));
+                        if (i < items.size() - 1)
+                            REQUIRE(dynamics.getFadeOutCurve() == Catch::Approx(1.0));
+                    }
+                }
+            }
+        }
+
+        GIVEN("crossfades turned off")
+        {
+            config.crossfades = false;
+
+            WHEN("the clip is auto edited")
+            {
+                INFO("error was: " << reportedError);
+                REQUIRE(autoEdit.invokeAutoEdit(config, onError));
+
+                THEN("the segments carry no fades")
+                {
+                    auto items = playListItems();
+                    REQUIRE(items.size() > 1);
+
+                    for (const auto& item : items)
+                    {
+                        auto& dynamics = item->getDynamics();
+                        REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.0));
+                        REQUIRE(dynamics.getFadeOut(audium::seconds) == Catch::Approx(0.0));
+                        REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(0.0));
+                        REQUIRE(dynamics.getFadeOutEnd(audium::seconds) == Catch::Approx(0.0));
+                    }
                 }
             }
         }

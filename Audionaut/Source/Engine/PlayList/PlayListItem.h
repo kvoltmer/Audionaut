@@ -58,6 +58,10 @@ public:
     double getDurationTime(audium::TimeContextType context) const;
     
     double getAbsolutePosition(audium::TimeContextType context) const override;
+
+    // the audible tail extension of a fade-out ending past the clip
+    // (negative fadeOutEnd offset); 0.0 when the fade stays inside
+    double getTailExtension(audium::TimeContextType context) const;
     void setAbsolutePosition(double position, audium::TimeContextType context) override;
     
     PlayListContainer &getPlayListContainer() const { return owner; }

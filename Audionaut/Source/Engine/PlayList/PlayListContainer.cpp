@@ -521,7 +521,11 @@ double PlayListContainer::getTotalLength(audium::TimeContextType context) const
     auto totalLength = 0.0;
     for (auto item : playListItems.getObjects())
     {
-        totalLength = juce::jmax(totalLength, item->getAbsolutePositionRange(context).getEnd());
+        // a fade-out extension keeps sounding past the region window - the
+        // project must be long enough for the tail to ring out
+        totalLength = juce::jmax(totalLength,
+                                 item->getAbsolutePositionRange(context).getEnd()
+                                 + item->getTailExtension(context));
     }
     return totalLength;
 }
