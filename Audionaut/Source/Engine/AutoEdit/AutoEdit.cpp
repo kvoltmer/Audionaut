@@ -1015,12 +1015,12 @@ bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
         return false;
 
     const auto originalStartClocks = original->getAbsolutePosition(audium::clocks);
+    const auto originalRegion = original->getRegion();
 
     // The clip's item goes first: inserting the segments while it still sat
     // there would make way for each of them, pushing the clip - and every
     // neighbouring item behind it - down the timeline, and only the segments
-    // would be moved back. The clip's region stays: it still describes the
-    // audio the segments came from, and other items may reference it.
+    // would be moved back.
     if (! playListContainer->deletePlayListItem(original.get(), false))
         return false;
 
@@ -1066,6 +1066,14 @@ bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
     }
 
     playListContainer->sortByPosition();
+
+    // The segments fully replace the clip, so the whole-clip region goes
+    // too - left behind, Assemble would pick it up alongside the segments
+    // it was cut into. Kept only when another item still references it.
+    if (originalRegion != nullptr &&
+        ! playListContainer->exitsInPlayList(originalRegion.get())) {
+        originalRegion->getResourceGroup()->getAudioRegionContainer()->deleteAudioRegion(originalRegion);
+    }
 
     return true;
 }

@@ -734,6 +734,18 @@ SCENARIO("AutoEdit can replace the edited clip with its segments",
                         REQUIRE(fixture.isCreated(item->getRegion()));
                 }
 
+                THEN("the whole-clip region is gone - Assemble must not pick it up")
+                {
+                    auto items = playListItems();
+                    REQUIRE(items.size() > 1);
+
+                    auto regionContainer = items[0]->getRegion()->getResourceGroup()->getAudioRegionContainer();
+                    for (const auto& region : regionContainer->getObjects()) {
+                        INFO("remaining region: " << region->getName());
+                        REQUIRE(region->getName() != originalRegionName);
+                    }
+                }
+
                 THEN("the segments are named <clip>-seg-<number>")
                 {
                     const auto prefix = originalRegionName + "-seg-";
