@@ -155,6 +155,12 @@ public:
     
     void changeListenerCallback (ChangeBroadcaster* source) override
     {
+        // the drag-zoom factor is applied HERE, atomically with the resize
+        // and re-centring below - never mid-gesture, where an interleaved
+        // paint would draw the grid and ruler with new zoom but old scroll
+        if (source == dragZoomControl.get())
+            zoomHandler->setZoomFactor(dragZoomControl->getTargetZoomFactor());
+
         setContentWidth(zoomHandler->getContentWidth());
 
         if (source == dragZoomControl.get())

@@ -43,7 +43,8 @@ public:
         for (auto seg : segmentList) {
             
             auto seconds = seg.position;
-            auto x = zoomHandler->secondsToX(seconds);
+            // whole pixels, or the marks shimmer while zooming
+            auto x = static_cast<float>(zoomHandler->snapContentX(zoomHandler->secondsToX(seconds)));
             auto itemWidth = zoomHandler->secondsToX(seg.grid);
             g.setColour (gridColour);
             g.fillRect(juce::Rectangle<float>(x,
@@ -83,7 +84,8 @@ public:
         for (auto seg : segmentList) {
             
             auto bars = seg.position;
-            auto x = zoomHandler->barsToX(bars);
+            // whole pixels, or the marks shimmer while zooming
+            auto x = static_cast<float>(zoomHandler->snapContentX(zoomHandler->barsToX(bars)));
             auto itemWidth = zoomHandler->barsToX(seg.grid);
 
             g.setColour (gridColour);

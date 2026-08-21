@@ -55,6 +55,12 @@ public:
     juce::Range<double> clocksToX(juce::Range<double> clocks) const;
     juce::Range<double> xToClocks(juce::Range<double> x) const;
     double clocksToX (const double clocks) const;
+
+    /** Snaps a content x to the pixel it lands on ON SCREEN. The scrollbar
+        holds the ideal scroll as a double while the viewport clamps it to an
+        integer - quantizing only the content x combines two independent
+        roundings and wobbles +/- 1 px against the scroll while zooming. */
+    double snapContentX (const double x) const;
     double xToClocks (const double x) const;
     
     // returns a String in the format Min:Sec
