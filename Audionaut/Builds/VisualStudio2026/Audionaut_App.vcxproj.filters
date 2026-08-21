@@ -4383,6 +4383,9 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\AnalysisSettingsComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>

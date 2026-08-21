@@ -3197,6 +3197,7 @@
     <ClInclude Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\UIContext.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AnalysisSettingsComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingToolWindow.h"/>

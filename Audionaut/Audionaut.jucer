@@ -287,6 +287,8 @@
         <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
           <FILE id="AnStCp" name="AnalysisSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AnalysisSettingsComponent.h"/>
+          <FILE id="AesCmp1" name="AutoEditSettingsComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AutoEditSettingsComponent.h"/>
           <FILE id="AsmDlg" name="AssembleDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AssembleDialog.h"/>
           <FILE id="Y3mnJv" name="FileBrowserView.h" compile="0" resource="0"

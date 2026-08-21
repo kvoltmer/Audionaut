@@ -328,6 +328,7 @@
 		A3346CAE6FB6CD785EE49D2D /* MainComponent.h */ /* MainComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MainComponent.h; path = ../../Source/Interface/Components/MainComponent.h; sourceTree = SOURCE_ROOT; };
 		A40C7A7DFF271A4D4D530CB3 /* AudiumLabel.h */ /* AudiumLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumLabel.h; path = ../../Source/Interface/Controls/AudiumLabel.h; sourceTree = SOURCE_ROOT; };
 		A5BE83E812E74DAFE42DAA76 /* AutoEditOverlayControl.cpp */ /* AutoEditOverlayControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AutoEditOverlayControl.cpp; path = ../../Source/Interface/Controls/AutoEditOverlayControl.cpp; sourceTree = SOURCE_ROOT; };
+		A6225D1073F70749B7408B92 /* AutoEditSettingsComponent.h */ /* AutoEditSettingsComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoEditSettingsComponent.h; path = ../../Source/Interface/Dialogs/AutoEditSettingsComponent.h; sourceTree = SOURCE_ROOT; };
 		A6BE31D73B57D8C96A41DD2C /* LockFreeContainer.h */ /* LockFreeContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LockFreeContainer.h; path = ../../Source/Engine/Core/LockFreeContainer.h; sourceTree = SOURCE_ROOT; };
 		A735B19A59EA0CDBD20031CC /* OnsetSegmenter.cpp */ /* OnsetSegmenter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = OnsetSegmenter.cpp; path = ../../Source/Engine/Analysis/OnsetSegmenter.cpp; sourceTree = SOURCE_ROOT; };
 		A7DBC59B3C2B8291FF5DE5C4 /* WaveFormViewBase.h */ /* WaveFormViewBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WaveFormViewBase.h; path = ../../Source/Interface/Views/WaveFormViewBase.h; sourceTree = SOURCE_ROOT; };
@@ -836,6 +837,7 @@
 			isa = PBXGroup;
 			children = (
 				A83249715DF7ACB1168CDA31,
+				A6225D1073F70749B7408B92,
 				F4DE426B74038D2458D7B572,
 				29D87B31AE24B528AF69492C,
 				F6E5A50D09EF933C9000BC02,
