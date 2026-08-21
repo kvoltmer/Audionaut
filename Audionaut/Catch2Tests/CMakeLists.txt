@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.15)
 
 project(Audionaut_Tests VERSION 0.0.1)
 
+# Required for the add_test() at the bottom to reach CTest. Without it CMake
+# writes no CTestTestfile.cmake, add_test() is silently discarded, and `ctest`
+# exits 0 in about a second having found nothing - a green CI run that never
+# executed a single assertion.
+enable_testing()
+
 set(APP_NAME "AudionautTests")
 message(STATUS "Name: ${APP_NAME}")
 
@@ -24,8 +30,25 @@ message(STATUS "source file root at: ${SRC_PATH}")
 # libessentia.a. Override with -DAUDIONAUT_ENABLE_ESSENTIA=ON/OFF.
 set(ESSENTIA_LIB_PATH "${SUBMODULES_PATH}/essentia/build/src")
 set(ESSENTIA_3RDPARTY_LIB_PATH "${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/lib")
-if(EXISTS "${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3/signature_of_eigen3_matrix_library"
-   AND EXISTS "${ESSENTIA_LIB_PATH}/libessentia.a")
+
+# Windows/MSVC gets Essentia from a different build entirely - CMake + vcpkg
+# instead of waf + packaging/, because waf has no working Windows path. See
+# Audionaut/Builds/Windows/README.md. That build lays things out differently:
+# essentia.lib under build-msvc/lib/<config>/, dependencies from vcpkg, and the
+# generated version.h in build-msvc/generated. Produce it with
+# Audionaut/Builds/build_essentia_windows.ps1.
+set(ESSENTIA_MSVC_ROOT "${SUBMODULES_PATH}/essentia/build-msvc")
+if(MSVC)
+    # Multi-config generator: the configuration is not known until build time,
+    # so accept either and pick per-config with a generator expression below.
+    if(EXISTS "${ESSENTIA_MSVC_ROOT}/lib/Release/essentia.lib"
+       OR EXISTS "${ESSENTIA_MSVC_ROOT}/lib/Debug/essentia.lib")
+        set(ESSENTIA_AVAILABLE ON)
+    else()
+        set(ESSENTIA_AVAILABLE OFF)
+    endif()
+elseif(EXISTS "${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3/signature_of_eigen3_matrix_library"
+       AND EXISTS "${ESSENTIA_LIB_PATH}/libessentia.a")
     set(ESSENTIA_AVAILABLE ON)
 else()
     set(ESSENTIA_AVAILABLE OFF)
@@ -136,14 +159,45 @@ target_include_directories(${APP_NAME}
                         )
 
 if(AUDIONAUT_ENABLE_ESSENTIA)
-    target_include_directories(${APP_NAME}
-                        PUBLIC ${SUBMODULES_PATH}/essentia/src
-                        PUBLIC ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3
-                        )
+    if(MSVC)
+        # Eigen comes from vcpkg rather than Essentia's packaging/ tree, and
+        # version.h is generated into the build dir instead of into src/.
+        target_include_directories(${APP_NAME}
+                            PUBLIC ${SUBMODULES_PATH}/essentia/src
+                            PUBLIC ${ESSENTIA_MSVC_ROOT}/generated
+                            PUBLIC ${AUDIONAUT_VCPKG_PREFIX}/include
+                            PUBLIC ${AUDIONAUT_VCPKG_PREFIX}/include/eigen3
+                            )
+        # Pulling in Essentia's headers drags <windows.h> into this target
+        # (threading.h includes it for the CRITICAL_SECTION mutex), and its
+        # defaults break two other dependencies:
+        #
+        #   NOMINMAX            - windows.h defines min/max as macros, which
+        #                         wrecks the std::min/std::max calls in
+        #                         Essentia's own devnull.h.
+        #   WIN32_LEAN_AND_MEAN - stops windows.h including winsock.h, which
+        #                         otherwise collides with the winsock2.h that
+        #                         Ableton Link's bundled asio requires
+        #                         ("WinSock.h has already been included").
+        target_compile_definitions(${APP_NAME} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
+    else()
+        target_include_directories(${APP_NAME}
+                            PUBLIC ${SUBMODULES_PATH}/essentia/src
+                            PUBLIC ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3
+                            )
+    endif()
 endif()
 # c++ standard
 #set(CMAKE_CXX_STANDARD 20)
 set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 20)
+
+if(MSVC)
+    # /MP: parallel compilation within this target. MSBuild's -m only
+    # parallelizes across projects, and the JUCE modules + engine + interface
+    # + tests all compile into this one target - without /MP that is a single
+    # core doing all of it.
+    target_compile_options(${APP_NAME} PRIVATE /MP)
+endif()
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
@@ -278,7 +332,25 @@ target_link_libraries(${APP_NAME}
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
 
-if(AUDIONAUT_ENABLE_ESSENTIA)
+if(AUDIONAUT_ENABLE_ESSENTIA AND MSVC)
+    # MSVC's linker resolves archives by symbol table rather than left to right,
+    # so the ordering the POSIX branch below needs does not apply here.
+    #
+    # The dependency list is shared with the Essentia build itself via
+    # VcpkgDeps.cmake, so the library set, the debug/release selection and the
+    # required definitions cannot drift between the two. Configuring this build
+    # therefore needs the vcpkg prefix - build_essentia_windows.ps1 prints the
+    # exact command when it finishes.
+    include("${CMAKE_CURRENT_LIST_DIR}/../Builds/Windows/VcpkgDeps.cmake")
+    audionaut_find_essentia_deps()
+
+    target_compile_definitions(${APP_NAME} PUBLIC ${ESSENTIA_DEP_DEFINITIONS})
+
+    target_link_libraries(${APP_NAME}
+        PRIVATE
+            "${ESSENTIA_MSVC_ROOT}/lib/$<CONFIG>/essentia.lib"
+            ${ESSENTIA_DEP_LIBRARIES})
+elseif(AUDIONAUT_ENABLE_ESSENTIA)
     target_link_libraries(${APP_NAME}
         PRIVATE
             # GNU ld resolves static libs left to right, so dependents must

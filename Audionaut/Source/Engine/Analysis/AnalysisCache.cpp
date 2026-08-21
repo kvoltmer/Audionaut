@@ -32,6 +32,27 @@ std::optional<AnalysisType> analysisTypeFromString(const std::string& name)
     return std::nullopt;
 }
 
+std::string analysisTypesToString(const std::vector<AnalysisType>& types)
+{
+    std::string csv;
+    for (auto type : types)
+    {
+        if (! csv.empty())
+            csv += ",";
+        csv += analysisTypeToString(type);
+    }
+    return csv;
+}
+
+std::vector<AnalysisType> analysisTypesFromString(const std::string& csv)
+{
+    std::vector<AnalysisType> types;
+    for (auto token : juce::StringArray::fromTokens(juce::String(csv), ",", {}))
+        if (auto type = analysisTypeFromString(token.trim().toStdString()))
+            types.push_back(*type);
+    return types;
+}
+
 std::string AnalysisCache::makeKey(const juce::String& path,
                                    juce::int64 size,
                                    juce::int64 modificationTime,

@@ -946,6 +946,9 @@
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListContainer.cpp">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\PlayList\ClipDynamics.cpp">
+      <Filter>Audionaut\Source\Engine\PlayList</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListItem.cpp">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClCompile>
@@ -4197,6 +4200,9 @@
     <ClInclude Include="..\..\Source\Engine\Export\AudioExportThread.h">
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Export\AudioExporter.h">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Selection\Selectable.h">
       <Filter>Audionaut\Source\Engine\Selection</Filter>
     </ClInclude>
@@ -4308,6 +4314,9 @@
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListContainer.h">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\PlayList\ClipDynamics.h">
+      <Filter>Audionaut\Source\Engine\PlayList</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListItem.h">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>
@@ -4367,6 +4376,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\UIContext.h">
       <Filter>Audionaut\Source\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\AnalysisSettingsComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>

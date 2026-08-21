@@ -305,7 +305,17 @@ void AudioTransportSource::setFadeOutSeconds(double fadeOutSeconds, double durat
 {
     if (duration < 0.0)
         duration = 0.0;
-    
+
+    if (fadeOutSeconds <= 0.0) {
+        // no fade-out: keep the processor transparent instead of scheduling a
+        // zero-length ramp to gain 0 (which would mute instantly once the
+        // skip counter runs out)
+        clipFadeOut.setSkipSamples(0);
+        clipFadeOut.setRampDurationSeconds(0.0);
+        clipFadeOut.setGainLinear(1.0, true);
+        return;
+    }
+
     auto fadeTime = fadeOutSeconds;
     auto initialGain = 1.0;
     if (fadeOutSeconds <= duration) {

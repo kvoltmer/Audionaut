@@ -47,12 +47,14 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\App\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Audionaut</TargetName>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LibraryPath);../../../Submodules/essentia/build-msvc/lib/Debug;$(AUDIONAUT_VCPKG_PREFIX)/debug/lib;../../../../vcpkg/installed/x64-windows-static-md/debug/lib</LibraryPath>
     <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</PreBuildEventUseInBuild>
     <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</PostBuildEventUseInBuild>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\App\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\App\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Audionaut</TargetName>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LibraryPath);../../../Submodules/essentia/build-msvc/lib/Release;$(AUDIONAUT_VCPKG_PREFIX)/lib;../../../../vcpkg/installed/x64-windows-static-md/lib</LibraryPath>
     <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</PreBuildEventUseInBuild>
     <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</PostBuildEventUseInBuild>
   </PropertyGroup>
@@ -67,8 +69,8 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.2.1;JUCE_APP_VERSION_HEX=0x10201;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;$(AUDIONAUT_VCPKG_PREFIX)/include/eigen3;../../../../vcpkg/installed/x64-windows-static-md/include;../../../../vcpkg/installed/x64-windows-static-md/include/eigen3;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.2.2;JUCE_APP_VERSION_HEX=0x10202;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -81,8 +83,8 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.2.1;JUCE_APP_VERSION_HEX=0x10201;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;$(AUDIONAUT_VCPKG_PREFIX)/include/eigen3;../../../../vcpkg/installed/x64-windows-static-md/include;../../../../vcpkg/installed/x64-windows-static-md/include/eigen3;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.2.2;JUCE_APP_VERSION_HEX=0x10202;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <OutputFile>$(OutDir)\Audionaut.exe</OutputFile>
@@ -91,13 +93,18 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(IntDir)\Audionaut.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
+      <AdditionalLibraryDirectories>../../../Submodules/essentia/build-msvc/lib/Debug;$(AUDIONAUT_VCPKG_PREFIX)/debug/lib;../../../../vcpkg/installed/x64-windows-static-md/debug/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalDependencies>essentia.lib;fftw3f.lib;samplerate.lib;yaml.lib;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;ws2_32.lib;secur32.lib;crypt32.lib;ncrypt.lib;bcrypt.lib;mfplat.lib;mfuuid.lib;strmiids.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <OutputFile>$(IntDir)\Audionaut.bsc</OutputFile>
     </Bscmake>
-    <Lib/>
+    <Lib>
+      <AdditionalDependencies>essentia.lib;fftw3f.lib;samplerate.lib;yaml.lib;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;ws2_32.lib;secur32.lib;crypt32.lib;ncrypt.lib;bcrypt.lib;mfplat.lib;mfuuid.lib;strmiids.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../Submodules/essentia/build-msvc/lib/Debug;$(AUDIONAUT_VCPKG_PREFIX)/debug/lib;../../../../vcpkg/installed/x64-windows-static-md/debug/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -110,8 +117,8 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.2.1;JUCE_APP_VERSION_HEX=0x10201;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;$(AUDIONAUT_VCPKG_PREFIX)/include/eigen3;../../../../vcpkg/installed/x64-windows-static-md/include;../../../../vcpkg/installed/x64-windows-static-md/include/eigen3;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.2.2;JUCE_APP_VERSION_HEX=0x10202;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -124,8 +131,8 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.2.1;JUCE_APP_VERSION_HEX=0x10201;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;$(AUDIONAUT_VCPKG_PREFIX)/include/eigen3;../../../../vcpkg/installed/x64-windows-static-md/include;../../../../vcpkg/installed/x64-windows-static-md/include/eigen3;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.2.2;JUCE_APP_VERSION_HEX=0x10202;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <OutputFile>$(OutDir)\Audionaut.exe</OutputFile>
@@ -136,14 +143,19 @@
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <AdditionalLibraryDirectories>../../../Submodules/essentia/build-msvc/lib/Release;$(AUDIONAUT_VCPKG_PREFIX)/lib;../../../../vcpkg/installed/x64-windows-static-md/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LargeAddressAware>true</LargeAddressAware>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalDependencies>essentia.lib;fftw3f.lib;samplerate.lib;yaml.lib;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;ws2_32.lib;secur32.lib;crypt32.lib;ncrypt.lib;bcrypt.lib;mfplat.lib;mfuuid.lib;strmiids.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <OutputFile>$(IntDir)\Audionaut.bsc</OutputFile>
     </Bscmake>
-    <Lib/>
+    <Lib>
+      <AdditionalDependencies>essentia.lib;fftw3f.lib;samplerate.lib;yaml.lib;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;ws2_32.lib;secur32.lib;crypt32.lib;ncrypt.lib;bcrypt.lib;mfplat.lib;mfuuid.lib;strmiids.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../Submodules/essentia/build-msvc/lib/Release;$(AUDIONAUT_VCPKG_PREFIX)/lib;../../../../vcpkg/installed/x64-windows-static-md/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Source\Application\AudiumMenuModel.cpp"/>
@@ -193,6 +205,7 @@
     <ClCompile Include="..\..\Source\Engine\PlayList\TransportLoop.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PositionableBase.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListContainer.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\PlayList\ClipDynamics.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListItem.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListScheduler.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Region\AudioRegion.cpp"/>
@@ -3123,6 +3136,7 @@
     <ClInclude Include="..\..\Source\Engine\Export\PlayListItemExport.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\ExportAudioConfig.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\AudioExportThread.h"/>
+    <ClInclude Include="..\..\Source\Engine\Export\AudioExporter.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\Selectable.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectableObjectContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionContext.h"/>
@@ -3160,6 +3174,7 @@
     <ClInclude Include="..\..\Source\Engine\PlayList\PositionableBase.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\SampleTimer.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListContainer.h"/>
+    <ClInclude Include="..\..\Source\Engine\PlayList\ClipDynamics.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListItem.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListScheduler.h"/>
     <ClInclude Include="..\..\Source\Engine\Provider\TempoProvider.h"/>
@@ -3180,6 +3195,7 @@
     <ClInclude Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.h"/>
     <ClInclude Include="..\..\Source\Interface\UIContext.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\AnalysisSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingToolWindow.h"/>

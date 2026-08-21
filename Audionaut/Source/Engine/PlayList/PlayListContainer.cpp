@@ -12,6 +12,7 @@
 #include "Engine/Group/ResourceGroup.h"
 #include "Engine/Group/AudioRegionAdapter.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Channel/AudioChannel.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
 namespace audium {
@@ -107,7 +108,11 @@ std::shared_ptr<PlayListItem> PlayListContainer::clonePlayListItem(std::shared_p
                                                    item->getRegion(),
                                                    context);
 
-    return createPlayListItemAtPositionUI(newRegion, item->getAbsolutePosition(context), context);
+    auto newItem = createPlayListItemAtPositionUI(newRegion, item->getAbsolutePosition(context), context);
+    if (newItem != nullptr) {
+        newItem->getDynamics().copyGainsFrom(item->getDynamics());
+    }
+    return newItem;
 }
 
 void PlayListContainer::movePlayListItemsPosition(int startIndex)
@@ -281,7 +286,26 @@ bool PlayListContainer::readFromJson (json& input, bool rebuild)
     return true;
 }
 
-void PlayListContainer::mergeFromJson(json& input)
+bool PlayListContainer::writeChannelToJson(json& output, AudioChannel* audioChannel)
+{
+    jassert(sortedByPosition());
+    const auto channelNumber = audioChannel->getChannelNumber();
+
+    for (auto item : playListItems.getObjects())
+    {
+        json j;
+        if (item->writeToJson(j)) {
+            // the full vector is indexed by source channels - meaningless at the destination
+            j.erase("gain_vector");
+            j["channel_clip_gain"] = item->getDynamics().getGain(channelNumber);
+            output["play_list_vector"] += j;
+        }
+    }
+
+    return true;
+}
+
+void PlayListContainer::mergeFromJson(json& input, int destinationChannel)
 {
     json jsonPlayListItems;
     if (input.contains("play_list_vector")) {
@@ -292,17 +316,27 @@ void PlayListContainer::mergeFromJson(json& input)
         auto jsonPlayList = input["play_list"];
         jsonPlayListItems = jsonPlayList["play_list_items"];
     }
-    
+
     for (auto& jsonElement : jsonPlayListItems) {
-        
+
         if (auto playListItem = createPlayListItemFromJson(jsonElement)) {
             jsonElement["track_id"] = playListItem->getRegion()->getAudioTrack()->getId();
             if (playListItem->readFromJson(jsonElement, false)) {
-                
-                if (!playListItemExists(playListItem))
+
+                auto clipGain = jsonElement.contains("channel_clip_gain")
+                              ? jsonElement["channel_clip_gain"].template get<double>()
+                              : 1.0;
+
+                if (auto existingItem = findExistingItem(playListItem)) {
+                    // item was already merged from a previous channel - only add this channel's gain
+                    if (destinationChannel >= 0)
+                        existingItem->getDynamics().setGain(destinationChannel, clipGain);
+                }
+                else {
+                    if (destinationChannel >= 0)
+                        playListItem->getDynamics().setGain(destinationChannel, clipGain);
                     playListItems.push_back(playListItem);
-                else
-                    std::cout << "playListItemExists" << std::endl;
+                }
             }
         }
     }
@@ -310,15 +344,20 @@ void PlayListContainer::mergeFromJson(json& input)
 }
 
 
-bool PlayListContainer::playListItemExists(std::shared_ptr<PlayListItem> other) const
+std::shared_ptr<PlayListItem> PlayListContainer::findExistingItem(std::shared_ptr<PlayListItem> other) const
 {
     for (auto item : playListItems.getObjects()) {
         if (item->getAbsolutePositionRange(audium::clocks) == other->getAbsolutePositionRange(audium::clocks) &&
             item->getRegion() == other->getRegion()) {
-            return true;
+            return item;
         }
     }
-    return false;
+    return nullptr;
+}
+
+bool PlayListContainer::playListItemExists(std::shared_ptr<PlayListItem> other) const
+{
+    return findExistingItem(other) != nullptr;
 }
 
 std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (json& input)

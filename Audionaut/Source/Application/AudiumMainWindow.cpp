@@ -22,8 +22,42 @@
 #include "Interface/Dialogs/ExportAudioDialog.h"
 #include "Interface/Dialogs/NewAudioTrackDialog.h"
 #include "Interface/Dialogs/AssembleDialog.h"
+#include "Interface/Dialogs/AnalysisSettingsComponent.h"
 
 using namespace audium;
+
+namespace {
+
+// Why toggling the preview showed nothing, precisely enough to act on: an
+// analysis switched off in the settings never finishes by waiting, and only
+// "still analysing" is cured by trying again.
+juce::String describeUnavailablePreview(audium::AutoEdit& autoEdit,
+                                        audium::AutoEditConfig& config)
+{
+    const auto switchedOff = autoEdit.findSwitchedOffMergeAnalyses(config);
+
+    if (! switchedOff.empty())
+    {
+        juce::StringArray names;
+
+        for (auto analysisType : switchedOff)
+            names.add(AnalysisSettingsComponent::displayName(analysisType));
+
+        return "No preview can be prepared for this clip: the "
+               + names.joinIntoString(" and ")
+               + (names.size() > 1 ? " analyses are" : " analysis is")
+               + " switched off. Enable it on the Analysis tab of the "
+                 "settings, then add the clip's audio file again to analyse it.";
+    }
+
+    if (! autoEdit.isAnalysisDone(config))
+        return "This clip is still being analysed. The preview will be "
+               "available once its analyses have finished - please try again shortly.";
+
+    return "No preview is available for this clip - its audio file could not be read.";
+}
+
+} // namespace
 
 AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::AudiumEngine> audiumEngine)
     : DocumentWindow (name,
@@ -439,8 +473,7 @@ void AudiumMainWindow::toggleAutoEditPreview()
     {
         NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::InfoIcon,
                                               "Auto Edit",
-                                              "No preview is available for this clip yet - "
-                                              "its analyses may still be running. Please try again shortly.");
+                                              describeUnavailablePreview(autoEdit, config));
         return;
     }
 

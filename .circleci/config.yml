@@ -1,0 +1,295 @@
+# Windows CI on CircleCI.
+#
+# Mirrors .github/workflows/windows.yml: builds the Projucer-generated Visual
+# Studio solution with MSBuild, then builds and runs the Catch2 suite.
+# See that workflow for the full rationale behind the individual steps; the
+# comments here cover only what is CircleCI-specific.
+#
+# Two jobs rather than one: a cold essentia build (vcpkg's ffmpeg plus ~800
+# Eigen-heavy translation units) runs 50+ minutes on its own, and jobs die at
+# the 60-minute limit - three cold single-job runs in a row timed out. The
+# split gives the essentia build and the app/test build their own 60-minute
+# budgets, connected through the caches.
+version: 2.1
+
+orbs:
+  win: circleci/windows@5.1
+
+commands:
+  compute-essentia-cache-key:
+    description: >-
+      Everything that changes the essentia.lib output: the submodule revision,
+      and the five files that decide what is compiled and against which
+      dependencies. Written to a file because CircleCI's checksum template
+      only reads files, not command output. Both jobs run this, so their
+      cache keys cannot drift apart.
+    steps:
+      - run:
+          name: Compute the Essentia cache key
+          command: |
+            git -C Submodules/essentia rev-parse HEAD > essentia-cache-key.txt
+            cat Audionaut/Builds/build_essentia_windows.ps1 \
+                Audionaut/Builds/Windows/CMakeLists.txt \
+                Audionaut/Builds/Windows/VcpkgDeps.cmake \
+                Audionaut/Builds/Windows/generate_essentia_build.py \
+                Audionaut/Builds/Windows/triplets/x64-windows-static-md.cmake \
+                >> essentia-cache-key.txt
+
+jobs:
+  # Builds essentia.lib and its vcpkg dependencies, then caches both. On an
+  # essentia-v1 cache hit every step short-circuits and the job takes a few
+  # minutes. Worst case - a cache-key change with cold vcpkg archives - can
+  # still graze the 60-minute limit, but the archives cache is saved BEFORE
+  # the essentia compile, so a timed-out run leaves warm dependencies behind
+  # and the retry fits comfortably.
+  build-essentia-windows:
+    executor:
+      name: win/default # windows-server-2022-gui:current, Visual Studio 2022
+      # large (8 vCPU), unlike everything else here: even parallelized with
+      # /MP, Essentia's Eigen-heavy compile ate the whole 60-minute job limit
+      # on medium's 4 vCPUs. Costs 2x credits/minute but roughly half the
+      # minutes, so the price is a wash. If the plan ever stops offering
+      # windows.large this job fails within seconds with a resource-class
+      # error - drop back to medium and shrink the essentia build instead.
+      size: large
+      # Git bash instead of the orb's PowerShell default: with PowerShell, a
+      # failing native command mid-script does not fail the step unless every
+      # call is followed by an explicit $LASTEXITCODE check.
+      shell: bash.exe -eo pipefail
+    environment: &windows-env
+      BUILD_TYPE: Release
+
+      # The image ships Visual Studio 2022 (toolset v143); the .vcxproj that
+      # Projucer generates asks for v145 (VS 2026), which no hosted image
+      # provides. Override on the command line rather than in the .jucer - the
+      # checked-in project must keep matching the toolset developers build with
+      # locally, and v143 still compiles the C++20 the project needs. Drop this
+      # once an image ships v145.
+      APP_TOOLSET: v143
+
+      # Essentia's Windows dependencies. The triplet must stay
+      # x64-windows-static-md - static libraries against the dynamic CRT, which
+      # is what both the .vcxproj and the JUCE CMake test target use.
+      VCPKG_TRIPLET: x64-windows-static-md
+      VCPKG_ROOT_DIR: C:/Users/circleci/vcpkg
+      # Read by the .vcxproj, which expands $(AUDIONAUT_VCPKG_PREFIX) in its
+      # include and library paths, and passed to the test configure. Forward
+      # slashes throughout: MSBuild, MSVC and CMake all accept them, and they
+      # avoid escaping this value twice.
+      AUDIONAUT_VCPKG_PREFIX: C:/Users/circleci/vcpkg/installed/x64-windows-static-md
+
+      # Keep git-lfs from smudging during checkout / submodule update: the
+      # essentia submodule's upstream has LFS disabled, and the resulting
+      # download errors would fail the clone. The test wavs that really do
+      # live in LFS are pulled explicitly where needed.
+      GIT_LFS_SKIP_SMUDGE: "1"
+
+    steps:
+      - checkout
+
+      - run:
+          name: Fetch the Essentia submodule
+          # Only essentia is needed to build essentia.lib. The full recursive
+          # fetch (JUCE and friends) costs several minutes and belongs to
+          # build-windows.
+          command: git submodule update --init --recursive Submodules/essentia
+
+      - run:
+          name: Install Python (Essentia code generation)
+          # Builds/Windows/CMakeLists.txt does find_package(Python3 REQUIRED) to
+          # run generate_essentia_build.py. Only the standard library is used.
+          command: |
+            if ! command -v python > /dev/null && ! command -v python3 > /dev/null; then
+              choco install python3 -y --no-progress
+              echo 'export PATH="/c/Python313:/c/Python313/Scripts:$PATH"' >> "$BASH_ENV"
+            fi
+
+      - compute-essentia-cache-key
+
+      - restore_cache:
+          keys:
+            # No partial-match fallback key: a stale essentia.lib that does not
+            # match the current sources would link and then misbehave at
+            # runtime, which is worse than paying for a rebuild.
+            - essentia-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
+
+      # vcpkg's binary package cache, separate from the exact-key cache above.
+      # It is content-addressed per package (ABI hash), so a partial-match
+      # fallback IS safe here: on a key change vcpkg re-checks every package
+      # and reuses only the archives whose inputs are unchanged - e.g. an
+      # essentia submodule bump no longer rebuilds ffmpeg from scratch.
+      - restore_cache:
+          keys:
+            - vcpkg-archives-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
+            - vcpkg-archives-v1-{{ arch }}-
+
+      - run:
+          name: Install Essentia dependencies (vcpkg)
+          # First of two runs of the build script: -DepsOnly stops after the
+          # vcpkg install so the binary archives can be snapshotted below
+          # BEFORE the essentia compile gets a chance to time the job out - a
+          # timed-out job saves no caches at all. -ReleaseOnlyDeps skips the
+          # Debug flavour of the dependencies (nothing in CI links it) and
+          # must match the Build Essentia invocation, or the second install
+          # would see different package ABIs and rebuild everything. The mkdir
+          # keeps save_cache from tripping over a missing archives directory
+          # when the essentia.lib cache hit and vcpkg never runs.
+          command: |
+            mkdir -p /c/Users/circleci/AppData/Local/vcpkg/archives
+            if [ -f "Submodules/essentia/build-msvc/lib/$BUILD_TYPE/essentia.lib" ]; then
+              echo "Restored from cache - skipping"
+              exit 0
+            fi
+            powershell.exe -NoProfile -ExecutionPolicy Bypass               -File Audionaut/Builds/build_essentia_windows.ps1               -VcpkgRoot "$VCPKG_ROOT_DIR"               -Triplet "$VCPKG_TRIPLET"               -ReleaseOnlyDeps               -DepsOnly
+          no_output_timeout: 30m
+
+      - save_cache:
+          key: vcpkg-archives-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
+          paths:
+            - C:/Users/circleci/AppData/Local/vcpkg/archives
+
+      - run:
+          name: Build Essentia
+          # Second run of the script does the actual build; its vcpkg install
+          # pass is a no-op now that the step above has installed everything.
+          # A cache hit on essentia-v1 restores both the library and the vcpkg
+          # tree, so this whole step is skipped. ~35 minutes even with /MP:
+          # the algorithm sources instantiate a lot of Eigen.
+          command: |
+            if [ -f "Submodules/essentia/build-msvc/lib/$BUILD_TYPE/essentia.lib" ]; then
+              echo "Restored from cache - skipping"
+              exit 0
+            fi
+            powershell.exe -NoProfile -ExecutionPolicy Bypass               -File Audionaut/Builds/build_essentia_windows.ps1               -Configuration "$BUILD_TYPE"               -VcpkgRoot "$VCPKG_ROOT_DIR"               -Triplet "$VCPKG_TRIPLET"               -ReleaseOnlyDeps
+          no_output_timeout: 45m
+
+      - save_cache:
+          key: essentia-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
+          paths:
+            - Submodules/essentia/build-msvc
+            # The installed tree only - not vcpkg's buildtrees/packages, which
+            # are intermediates and dwarf it.
+            - C:/Users/circleci/vcpkg/installed
+
+  # Builds the app, the NSIS installer and the Catch2 suite against the
+  # essentia.lib and vcpkg tree that build-essentia-windows cached.
+  build-windows:
+    executor:
+      name: win/default
+      size: medium
+      shell: bash.exe -eo pipefail
+    environment: *windows-env
+
+    steps:
+      - checkout
+
+      # CircleCI's checkout step does not fetch submodules (unlike
+      # actions/checkout with submodules: recursive).
+      - run:
+          name: Fetch submodules
+          command: git submodule update --init --recursive
+
+      - run:
+          name: Fetch Git LFS test files
+          command: git lfs pull
+
+      - compute-essentia-cache-key
+
+      - restore_cache:
+          keys:
+            - essentia-v1-{{ arch }}-{{ checksum "essentia-cache-key.txt" }}
+
+      - run:
+          name: Verify the Essentia cache restored
+          # The .vcxproj lists essentia.lib in AdditionalDependencies
+          # unconditionally, so a missing library would otherwise surface as a
+          # cryptic LNK1104 twenty minutes in. build-essentia-windows saved
+          # this cache in the same workflow, so a miss here means the key
+          # computation diverged between the two jobs.
+          command: |
+            if [ ! -f "Submodules/essentia/build-msvc/lib/$BUILD_TYPE/essentia.lib" ]; then
+              echo "essentia.lib was not restored from cache; check compute-essentia-cache-key" >&2
+              exit 1
+            fi
+
+      - run:
+          name: Build the app
+          # vswhere locates MSBuild - the image does not put it on PATH.
+          # -m builds projects in parallel; the solution only defines x64.
+          command: |
+            MSBUILD=$("/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe" \
+              -latest -requires Microsoft.Component.MSBuild \
+              -find 'MSBuild\**\Bin\MSBuild.exe' | head -1 | tr -d '\r')
+            echo "MSBuild: $MSBUILD"
+            "$MSBUILD" Audionaut/Builds/VisualStudio2026/Audionaut.sln \
+              -m \
+              -p:Configuration="$BUILD_TYPE" \
+              -p:Platform=x64 \
+              -p:PlatformToolset="$APP_TOOLSET" \
+              -v:minimal
+          no_output_timeout: 30m
+
+      - run:
+          name: Build the installer
+          # The .nsi packs the Release x64 exe the previous step just built.
+          # Run makensis from the script's directory so its relative File
+          # paths (..\..\Builds\...) resolve. NSIS is not preinstalled on the
+          # image. Placed before the test steps so a test failure does not
+          # block the installer artifact.
+          working_directory: Audionaut/Installers/NSIS
+          command: |
+            choco install nsis -y --no-progress
+            "/c/Program Files (x86)/NSIS/makensis.exe" Audionaut-Installer.nsi
+
+      # Shows up on the job's Artifacts tab. CI smoke-check output, not a
+      # release channel - artifacts expire (30 days by default) and the exe is
+      # unsigned.
+      - store_artifacts:
+          path: Audionaut/Installers/NSIS/Audionaut Setup.exe
+          destination: Audionaut-Setup.exe
+
+      - run:
+          name: Configure tests
+          # No -DCMAKE_BUILD_TYPE: the Visual Studio generator is multi-config
+          # and ignores it - the configuration is chosen at build time with
+          # --config instead. No toolset pin either: CMake generates its own
+          # project files and picks the image's installed toolset; only the
+          # checked-in .vcxproj hardcodes one.
+          command: |
+            if ! command -v cmake > /dev/null; then
+              choco install cmake -y --no-progress \
+                --installargs 'ADD_CMAKE_TO_PATH=System'
+              echo 'export PATH="/c/Program Files/CMake/bin:$PATH"' >> "$BASH_ENV"
+              source "$BASH_ENV"
+            fi
+            cmake -B build -S Audionaut/Catch2Tests                   -DAUDIONAUT_VCPKG_PREFIX="$AUDIONAUT_VCPKG_PREFIX"
+
+      - run:
+          name: Build tests
+          command: cmake --build build --config "$BUILD_TYPE" --parallel
+          no_output_timeout: 30m
+
+      - run:
+          name: Run tests
+          working_directory: build
+          # --no-tests=error: ctest's default is to pass when it finds no tests
+          # at all - fail loudly instead.
+          command: ctest -C "$BUILD_TYPE" --output-on-failure --no-tests=error
+
+workflows:
+  windows:
+    jobs:
+      - build-essentia-windows:
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+      - build-windows:
+          requires:
+            - build-essentia-windows
+          filters:
+            branches:
+              only:
+                - main
+                - develop

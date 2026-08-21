@@ -13,6 +13,7 @@
 using json = nlohmann::json;
 
 #include "Engine/TimeContext.h"
+#include "Engine/PlayList/ClipDynamics.h"
 #include "Engine/PlayList/PositionableBase.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
@@ -70,28 +71,10 @@ public:
     
     void onDragStart();
     void onDragEnd();
-    
-    // value range [0, 1]
-    bool setFadeIn(double val);
-    double getFadeIn() const;
-    
-    // value range [0, 1]
-    bool setFadeOut(double val);
-    double getFadeOut() const;
-    
-    double getFadeInClocks() const
-    {
-        return fadeInClocks;
-    }
-    
-    double getFadeOutClocks() const
-    {
-        return fadeOutClocks;
-    }
-    
-    void setClipGain(int channel, double val);
-    double getClipGain(int channel) const;
-    
+
+    ClipDynamics& getDynamics() { return dynamics; }
+    const ClipDynamics& getDynamics() const { return dynamics; }
+
     bool isRecording() const;
     
     const double getRecordedLength(audium::TimeContextType context) const;
@@ -114,11 +97,9 @@ private:
     
     // The absolute transport position
     double absolutePositionClocks = 0.0;
-    
-    double gain = 1.0;
-    double fadeInClocks = 0.0;
-    double fadeOutClocks = 0.0;
-    
+
+    ClipDynamics dynamics{*this};
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItem)
 };
 

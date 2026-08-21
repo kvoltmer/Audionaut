@@ -70,8 +70,8 @@ bool ResourceGroup::writeChannelToJson (json& output, AudioChannel* audioChannel
         }
     }
     
-    audioRegionContainer->writeChannelToJson(output, audioChannel);
-    
+    audioRegionContainer->writeToJson(output);
+
     return true;
 }
 

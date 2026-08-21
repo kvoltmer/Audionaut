@@ -6,7 +6,7 @@
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
-#include "Engine/Export/AudioExportThread.h"
+#include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 #include "TestUtils.h"
@@ -47,7 +47,7 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
             totalLength -= bounceConfig->positionSeconds;
             
             // bounce to file
-            auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
             exporter->bounce();
             std::cout << "bounceToFile -> " << bounceConfig->fileName.getFullPathName() << std::endl;
             exporter = nullptr;
@@ -183,7 +183,7 @@ SCENARIO("tranport source duration scenario", "[engine][dsp][transport][duration
         bounceConfig->blockSize = 64;
         bounceConfig->lengthSeconds = 3.0;
         
-        auto exporter = std::make_unique<AudioExportThread>(*engine, bounceConfig);
+        auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
         
         WHEN("bouncing session")
         {

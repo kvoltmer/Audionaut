@@ -208,14 +208,6 @@ public:
      * @return True if the operation was successful, false otherwise.
      */
     bool writeToJson(json& output) override;
-    
-    /**
-    * @brief Serializes a specific audio channel to a JSON object.
-    * @param output The JSON object to write to.
-    * @param audioChannel The `AudioChannel`context.
-    * @return True if the operation was successful, false otherwise.
-    */
-    bool writeChannelToJson(json& output, AudioChannel* audioChannel);
 
     /**
      * @brief Deserializes the container from a JSON object.

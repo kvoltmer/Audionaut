@@ -8,12 +8,14 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Engine/Playback/PlaybackDefines.h"
+#include "Application/AudiumApplication.h"
+#include "Interface/Dialogs/AnalysisSettingsComponent.h"
 
 using namespace juce;
 
 class SettingsDialog
 {
-    
+
 public:
     SettingsDialog(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
@@ -28,6 +30,15 @@ public:
                                                                          false, // treat channels as stereo pairs
                                                                          false); // hide advanced options
         audioDevSelComp->setSize(500, 300);
+
+        analysisComp = std::make_unique<AnalysisSettingsComponent>(engine, AudiumApplication::getPreferences());
+
+        const auto tabColour = LookAndFeel::getDefaultLookAndFeel().findColour(ResizableWindow::backgroundColourId);
+        tabbedComp = std::make_unique<TabbedComponent>(TabbedButtonBar::TabsAtTop);
+        tabbedComp->setOutline(0);
+        tabbedComp->addTab(TRANS ("Audio"), tabColour, audioDevSelComp.get(), false);
+        tabbedComp->addTab(TRANS ("Analysis"), tabColour, analysisComp.get(), false);
+        tabbedComp->setSize(500, 340);
     }
     
     ~SettingsDialog() = default;
@@ -42,10 +53,11 @@ private:
     void invokeInternal(juce::Component* component)
     {
         mainComponent = component;
-        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Audio Device Settings"),
+        asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Settings"),
                                                           "",
                                                           MessageBoxIconType::NoIcon, mainComponent);
-        asyncAlertWindow->addCustomComponent(audioDevSelComp.get());
+        analysisComp->refreshFromPreferences();
+        asyncAlertWindow->addCustomComponent(tabbedComp.get());
         asyncAlertWindow->addButton (TRANS ("Close"),  1, KeyPress (KeyPress::returnKey));
 
         auto resultCallback = [safeThis = WeakReference<SettingsDialog> { this }, this] (int result)
@@ -67,7 +79,13 @@ private:
     }
     
     std::unique_ptr<AlertWindow> asyncAlertWindow;
+
+    // Tab contents are owned here, not by the TabbedComponent, so declare them
+    // ahead of it: members destruct in reverse order, and the tabbed component
+    // must let go of the pages before they are destroyed.
     std::unique_ptr<juce::AudioDeviceSelectorComponent> audioDevSelComp;
+    std::unique_ptr<AnalysisSettingsComponent> analysisComp;
+    std::unique_ptr<TabbedComponent> tabbedComp;
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     juce::Component *mainComponent = nullptr;

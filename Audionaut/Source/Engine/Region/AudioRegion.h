@@ -170,27 +170,6 @@ public:
     bool deleteAssociatedItems();
 
     /**
-     * @brief Sets the gain for a specific channel.
-     * @param channel The channel index.
-     * @param newGain The new gain value (linear range).
-     * @param continous Whether the gain change is continuous.
-     */
-    void setGain(int channel, double newGain, bool continous = false);
-
-    /**
-     * @brief Retrieves the gain for a specific channel.
-     * @param channel The channel index.
-     * @return The gain value (linear range).
-     */
-    double getGain(int channel) const;
-
-    /**
-     * @brief Handles the deletion of a specific channel.
-     * @param channel The channel index to delete.
-     */
-    void onDeleteChannel(int channel);
-    
-    /**
      * @brief Retrieves the maximum sample rate of the audio resources.
      * @return The sample rate.
      */

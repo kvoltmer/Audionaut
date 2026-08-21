@@ -38,11 +38,20 @@ class AnalysisWorker : private juce::TimeSliceClient {
 public:
     /**
      * @brief Constructs the worker and starts its background thread.
+     *
+     * The default analysis types are the ones Auto Edit's merge is built from
+     * (AnalysisProvider::getMergeAnalysisTypes); the display-only analyses are
+     * off unless enabled via setDefaultAnalysisTypes().
+     *
+     * @param analysisProvider The provider used to run each analysis.
+     */
+    explicit AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider);
+
+    /**
+     * @brief Constructs the worker with an explicit default type list.
      * @param analysisProvider The provider used to run each analysis.
      * @param defaultAnalysisTypes The analyses queued when enqueue() is called
      *        without an explicit type list (e.g. for a newly added resource).
-     *        Defaults to all four; pass a subset (or an empty list) to change
-     *        or disable automatic analysis.
      *
      *        The order matters: jobs run in the order they are queued, so the
      *        analyses the merge is built from (see
@@ -50,19 +59,40 @@ public:
      *        needs only those, so it becomes available without waiting for the
      *        rest.
      */
-    explicit AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider,
-                            std::vector<AnalysisType> defaultAnalysisTypes = {
-                                AnalysisType::SBic,
-                                AnalysisType::BeatDegara,
-                                AnalysisType::Onset,
-                                AnalysisType::Beat
-                            });
+    AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider,
+                   std::vector<AnalysisType> defaultAnalysisTypes);
 
     /** @brief Stops the background thread, waiting for any in-flight analysis. */
     ~AnalysisWorker() override;
 
+    /**
+     * @brief Every analysis type, in the order jobs should be queued: the
+     *        merge analyses first (see the constructor note on ordering).
+     */
+    static const std::vector<AnalysisType>& canonicalAnalysisTypes();
+
     /** @brief The analysis types queued for a file when no list is given. */
-    const std::vector<AnalysisType>& getDefaultAnalysisTypes() const { return defaultTypes; }
+    std::vector<AnalysisType> getDefaultAnalysisTypes() const;
+
+    /**
+     * @brief Replaces the analysis types used by the no-list enqueue().
+     *
+     * The given set is reordered to canonicalAnalysisTypes() order, so the
+     * merge analyses always run first regardless of the caller's ordering.
+     * Safe to call from the message thread.
+     */
+    void setDefaultAnalysisTypes(const std::vector<AnalysisType>& types);
+
+    /**
+     * @brief Enables or disables automatic analysis.
+     *
+     * While disabled, the no-list enqueue() overload is a no-op; explicitly
+     * requested analyses (enqueue with a type list) still run.
+     */
+    void setAutoAnalysisEnabled(bool enabled) { autoAnalysisEnabled = enabled; }
+
+    /** @brief True while the no-list enqueue() overload queues analyses. */
+    bool isAutoAnalysisEnabled() const { return autoAnalysisEnabled.load(); }
 
     /**
      * @brief Queues background analysis of @p audioFile for the given types.
@@ -72,15 +102,21 @@ public:
      *
      * @param audioFile The audio file to analyse.
      * @param types     The analyses to run.
+     * @returns The number of newly queued jobs.
      */
-    void enqueue(const juce::File& audioFile,
-                 const std::vector<AnalysisType>& types);
+    int enqueue(const juce::File& audioFile,
+                const std::vector<AnalysisType>& types);
 
     /**
-     * @brief Queues background analysis of @p audioFile using the default
-     *        analysis types configured at construction.
+     * @brief Queues background analysis of @p audioFile using the configured
+     *        default analysis types.
+     *
+     * Does nothing while automatic analysis is disabled (see
+     * setAutoAnalysisEnabled).
+     *
+     * @returns The number of newly queued jobs.
      */
-    void enqueue(const juce::File& audioFile) { enqueue(audioFile, defaultTypes); }
+    int enqueue(const juce::File& audioFile);
 
     /**
      * @brief Cancels all pending analyses of @p audioFile (any type).
@@ -129,7 +165,11 @@ private:
     };
 
     std::shared_ptr<AnalysisProvider> analysisProvider;
+
+    // The types the no-list enqueue() queues; guarded by mutex.
     std::vector<AnalysisType> defaultTypes;
+
+    std::atomic<bool> autoAnalysisEnabled { true };
 
     mutable std::mutex mutex;
     std::deque<Job> jobs;

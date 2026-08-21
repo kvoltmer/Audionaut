@@ -53,7 +53,8 @@ struct AudioRegionData
     int resource_group_id = -1;
 
     /**
-     * @brief The gain values for each channel.
+     * @brief Legacy read-only: clip gain moved to PlayListItem. Kept so old
+     * projects can be migrated into the playlist item's ClipDynamics on load.
      */
     std::vector<double> gain_vector;
     
@@ -76,7 +77,6 @@ inline void to_json(json& j, const AudioRegionData& r) {
         {"id", r.region_id},
         {"track_id", r.track_id},
         {"resource_group_id", r.resource_group_id},
-        {"gain_vector", r.gain_vector},
         {"recording", r.recording},
     };
 }
@@ -103,7 +103,7 @@ inline void from_json(const json& j, AudioRegionData& r) {
     if (j.contains("resource_group_id"))
         j.at("resource_group_id").get_to(r.resource_group_id);
 
-    if (j.contains("gain_vector"))
+    if (j.contains("gain_vector")) // legacy read-only, see gain_vector above
         j.at("gain_vector").get_to(r.gain_vector);
     
     if (j.contains("recording"))

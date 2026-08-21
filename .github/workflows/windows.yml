@@ -1,0 +1,102 @@
+name: Windows CI
+
+# Builds the Projucer-generated Visual Studio solution with MSBuild, then
+# builds and runs the Catch2 suite. Windows was previously uncovered - the
+# other workflows run macOS and Ubuntu only - which let an MSVC-only break
+# reach develop: <windows.h> declares a global Rectangle() GDI function that
+# collides with juce::Rectangle wherever a file does `using namespace juce`.
+# Header-collision bugs of that shape are invisible to the other runners.
+#
+# This is the Windows gate for pull requests; the CircleCI job
+# (.circleci/config.yml) mirrors it for pushes to main/develop and adds the
+# installer artifact. Keep the two in sync.
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  BUILD_TYPE: Release
+
+  # No toolset pin: the windows-2025 image ships Visual Studio 2026, so the
+  # v145 the .vcxproj asks for is what MSBuild picks natively - and what the
+  # CMake-driven Essentia and test builds pick as their default. Everything
+  # must stay on ONE toolset: an earlier v143 pin on the app alone left
+  # v145-built essentia.lib referencing vectorized STL helpers
+  # (__std_max_element_f_ and friends) that v143's support libraries do not
+  # have, which is a wall of LNK2001s at app link time.
+
+  # Essentia's Windows dependencies. The triplet must stay
+  # x64-windows-static-md - static libraries against the dynamic CRT, which
+  # is what both the .vcxproj and the JUCE CMake test target use. The vcpkg
+  # root is the runner image's preinstalled clone.
+  VCPKG_TRIPLET: x64-windows-static-md
+  VCPKG_ROOT_DIR: C:/vcpkg
+  # Read by the .vcxproj, which expands $(AUDIONAUT_VCPKG_PREFIX) in its
+  # include and library paths, and passed to the test configure.
+  AUDIONAUT_VCPKG_PREFIX: C:/vcpkg/installed/x64-windows-static-md
+
+jobs:
+  build:
+
+    runs-on: windows-2025
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    # Some test wavs (see .gitattributes) live in Git LFS; without this the
+    # tests get pointer stubs and fail loading them. A separate step rather
+    # than `lfs: true` on the checkout: that option also smudges LFS pointers
+    # inside the essentia submodule, whose upstream has LFS disabled, and the
+    # resulting download error fails the whole checkout.
+    - name: Fetch Git LFS test files
+      run: git lfs pull
+
+    # Essentia. build_essentia.sh cannot be used - it is a bash + waf script
+    # targeting macOS/Linux - so this runs the CMake + vcpkg port instead
+    # (cached; see the action for the cache design). It has to come before
+    # the app build: the .vcxproj lists essentia.lib in AdditionalDependencies
+    # unconditionally, so a missing library is a hard linker error rather
+    # than a graceful degradation.
+    - name: Build Essentia
+      uses: ./.github/actions/build-essentia-windows
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build the app
+      # -m builds projects in parallel; the solution only defines x64.
+      run: >
+        msbuild Audionaut/Builds/VisualStudio2026/Audionaut.sln
+        -m
+        -p:Configuration=${{ env.BUILD_TYPE }}
+        -p:Platform=x64
+        -v:minimal
+
+    - name: Configure tests
+      # No -DCMAKE_BUILD_TYPE: the Visual Studio generator is multi-config and
+      # ignores it (CMake warns that the variable went unused). The
+      # configuration is chosen at build time with --config instead.
+      # No toolset pin either - CMake generates its own project files and picks
+      # the runner's installed toolset; only the checked-in .vcxproj hardcodes one.
+      run: >
+        cmake -B build -S Audionaut/Catch2Tests
+        -DAUDIONAUT_VCPKG_PREFIX=${{ env.AUDIONAUT_VCPKG_PREFIX }}
+
+    - name: Build tests
+      run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+
+    - name: Run tests
+      working-directory: build
+      # --no-tests=error: ctest's default is to pass when it finds no tests at
+      # all, which is how a missing enable_testing() once made this step "pass"
+      # in a second without running an assertion. Fail loudly instead.
+      run: ctest -C ${{ env.BUILD_TYPE }} --output-on-failure --no-tests=error
