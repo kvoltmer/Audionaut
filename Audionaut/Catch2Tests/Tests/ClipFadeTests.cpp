@@ -1536,3 +1536,195 @@ SCENARIO("a tail extension past the end of the source file is silent", "[engine]
     juce::DeletedAtShutdown::deleteAll();
     juce::MessageManager::deleteInstance();
 }
+
+SCENARIO("two clips crossfade over a cut at constant gain", "[engine][dsp][fade][level]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    auto sr = 44100.0;
+    auto inputFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/noise0dB.wav"));
+    REQUIRE(inputFile.existsAsFile());
+
+    auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+    bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/xfade-noise.wav"));
+    bounceConfig->sampleRate = sr;
+    bounceConfig->blockSize = 512;
+    bounceConfig->numChannels = 1;
+
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    GIVEN("a 1 second 0 dB noise file split into two clips at 0.5 s")
+    {
+        engine->openFile(inputFile, nullptr);
+
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        auto itemA = track->getPlayListContainer()->getPlayListItem(0);
+        REQUIRE(itemA != nullptr);
+
+        // clone before trimming: the clone gets its own region, so the two
+        // clips can carry different file windows
+        auto itemB = track->getPlayListContainer()->clonePlayListItem(itemA);
+        REQUIRE(itemB != nullptr);
+
+        itemA->setLength(0.5, audium::seconds);
+        itemB->setAbsoluteStartPosition(0.5, audium::seconds);
+        REQUIRE(itemA->getRegionData(audium::seconds).getEnd() == Catch::Approx(0.5));
+        REQUIRE(itemB->getRegionData(audium::seconds).getStart() == Catch::Approx(0.5));
+        REQUIRE(itemB->getAbsolutePosition(audium::seconds) == Catch::Approx(0.5));
+
+        // 100 ms crossfade over the cut: A rings out past its end while B
+        // fades in - the overlap plays the SAME file samples twice, so with
+        // LINEAR curves the fades must sum to exactly unity gain
+        itemA->getDynamics().setFadeOutEnd(-0.2);  // fraction of the 0.5 s region
+        itemA->getDynamics().setFadeOutCurve(1.0);
+        itemB->getDynamics().setFadeIn(0.2);
+        itemB->getDynamics().setFadeInCurve(1.0);
+
+        engine->getPlayListScheduler()->commitPlayListData();
+
+        WHEN("bouncing the session")
+        {
+            bounceConfig->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+            REQUIRE(bounceConfig->lengthSeconds == Catch::Approx(1.0));
+
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
+            exporter->bounce();
+
+            THEN("the magnitude tracks the 0 dB source - no dip, no bump")
+            {
+                auto output = audioFileToAudioBuffer(bounceConfig->fileName);
+                auto source = audioFileToAudioBuffer(inputFile);
+                auto totalSamples = static_cast<int>(sr * 1.0);
+                REQUIRE(output.getNumSamples() >= totalSamples);
+                REQUIRE(source.getNumSamples() >= totalSamples);
+
+                // no NaN / Inf anywhere
+                for (auto s = 0; s < totalSamples; s++) {
+                    auto val = output.getSample(0, s);
+                    INFO("sample " << s << " = " << val);
+                    REQUIRE(std::isfinite(val));
+                }
+
+                // never louder than the source (an equal-power crossfade of
+                // identical material would bump the overlap by +3 dB)
+                auto sourceMagnitude = source.getMagnitude(0, 0, totalSamples);
+                auto outputMagnitude = output.getMagnitude(0, 0, totalSamples);
+                INFO("source " << sourceMagnitude << " output " << outputMagnitude);
+                REQUIRE(outputMagnitude <= sourceMagnitude + 0.02f);
+
+                // window by window (50 ms), the level must match the source -
+                // a broken overlap would dip inside the crossfade. skip the
+                // resampler warm-up at the very start.
+                auto window = static_cast<int>(sr * 0.05);
+                for (auto start = window; start + window <= totalSamples; start += window) {
+                    auto magOut = output.getMagnitude(0, start, window);
+                    auto magIn = source.getMagnitude(0, start, window);
+                    INFO("window at " << start << " out " << magOut << " in " << magIn);
+                    REQUIRE(magOut == Catch::Approx(magIn).margin(0.05));
+                }
+            }
+        }
+    }
+
+    engine = nullptr;
+
+    if (bounceConfig->fileName.existsAsFile())
+        bounceConfig->fileName.deleteFile();
+
+    // noise0dB.wav is a tracked fixture - do not delete it
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO("uncorrelated clips crossfade at constant power", "[engine][dsp][fade][level]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    auto sr = 44100.0;
+    auto inputFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/noise0dB.wav"));
+    REQUIRE(inputFile.existsAsFile());
+
+    auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
+    bounceConfig->fileName = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/xfade-noise-power.wav"));
+    bounceConfig->sampleRate = sr;
+    bounceConfig->blockSize = 512;
+    bounceConfig->numChannels = 1;
+
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    GIVEN("two clips whose 100 ms overlap plays different noise segments")
+    {
+        engine->openFile(inputFile, nullptr);
+
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        auto itemA = track->getPlayListContainer()->getPlayListItem(0);
+        REQUIRE(itemA != nullptr);
+
+        auto itemB = track->getPlayListContainer()->clonePlayListItem(itemA);
+        REQUIRE(itemB != nullptr);
+
+        // A: file [0, 0.4] at timeline 0, ringing out over file [0.4, 0.5].
+        // B: file [0.5, 1.0] at timeline 0.4. the overlap [0.4, 0.5] mixes
+        // file [0.4, 0.5] with file [0.5, 0.6] - independent noise, so the
+        // POWERS add and the default equal-power curves must keep the summed
+        // power constant (a linear pair would dip -3 dB at the centre)
+        itemA->setLength(0.4, audium::seconds);
+        itemA->getDynamics().setFadeOutEnd(-0.25); // fraction of the 0.4 s region
+
+        itemB->setAbsoluteStartPosition(0.5, audium::seconds);
+        itemB->setAbsolutePosition(0.4, audium::seconds);
+        itemB->getDynamics().setFadeIn(0.2);       // fraction of the 0.5 s region
+        REQUIRE(itemB->getRegionData(audium::seconds).getStart() == Catch::Approx(0.5));
+
+        engine->getPlayListScheduler()->commitPlayListData();
+
+        WHEN("bouncing the session")
+        {
+            bounceConfig->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+            REQUIRE(bounceConfig->lengthSeconds == Catch::Approx(0.9));
+
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
+            exporter->bounce();
+
+            THEN("the RMS stays flat through the crossfade")
+            {
+                auto output = audioFileToAudioBuffer(bounceConfig->fileName);
+                auto source = audioFileToAudioBuffer(inputFile);
+                auto totalSamples = static_cast<int>(sr * 0.9);
+                REQUIRE(output.getNumSamples() >= totalSamples);
+
+                for (auto s = 0; s < totalSamples; s++) {
+                    auto val = output.getSample(0, s);
+                    INFO("sample " << s << " = " << val);
+                    REQUIRE(std::isfinite(val));
+                }
+
+                auto sourceRms = source.getRMSLevel(0, 0, source.getNumSamples());
+                REQUIRE(sourceRms > 0.1f);
+
+                // 25 ms sub-windows across the overlap [0.4, 0.5] and its
+                // shoulders: constant power = source RMS within tolerance.
+                // -3 dB (0.707x, linear dip) or +3 dB (1.41x) would fail.
+                auto window = static_cast<int>(sr * 0.025);
+                for (auto start = static_cast<int>(sr * 0.35);
+                     start + window <= static_cast<int>(sr * 0.55);
+                     start += window) {
+                    auto rms = output.getRMSLevel(0, start, window);
+                    INFO("window at " << start << " rms " << rms << " source " << sourceRms);
+                    REQUIRE(rms == Catch::Approx(sourceRms).margin(sourceRms * 0.15));
+                }
+            }
+        }
+    }
+
+    engine = nullptr;
+
+    if (bounceConfig->fileName.existsAsFile())
+        bounceConfig->fileName.deleteFile();
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
