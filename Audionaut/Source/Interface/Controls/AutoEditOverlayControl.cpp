@@ -14,6 +14,11 @@
 #include "Engine/Selection/SelectionManager.h"
 #include "Interface/Controls/RegionSelector.h"
 
+#if !defined(CATCH2_TESTS)
+#include "Application/AudiumApplication.h"
+#include "Interface/Dialogs/AutoEditSettingsComponent.h"
+#endif
+
 namespace {
 
 // A row of icon buttons sized like the header's transport buttons
@@ -54,7 +59,7 @@ constexpr int fadeMilliseconds = 50;
 constexpr int comebackDelayMilliseconds = 500;
 
 constexpr int preferredWidth = padding + buttonWidth + stepGap + buttonWidth
-                                   + gap + buttonWidth + padding;
+                                   + gap + buttonWidth + stepGap + buttonWidth + padding;
 
 // When space is tight the Less/More pair sits out first: an Apply-only
 // control can still finish the edit.
@@ -87,6 +92,22 @@ juce::Path plusIconPath()
     juce::Path path;
     path.addRoundedRectangle (3.0f, 10.75f, 18.0f, 2.5f, 1.25f);
     path.addRoundedRectangle (10.75f, 3.0f, 2.5f, 18.0f, 1.25f);
+    pinToDesignBox (path);
+    return path;
+}
+
+// Xfade: two fade ramps crossing at the joint.
+juce::Path xfadeIconPath()
+{
+    juce::Path lines;
+    lines.startNewSubPath (3.5f, 18.0f);
+    lines.quadraticTo (12.0f, 18.0f, 20.5f, 6.0f);
+    lines.startNewSubPath (20.5f, 18.0f);
+    lines.quadraticTo (12.0f, 18.0f, 3.5f, 6.0f);
+
+    juce::Path path;
+    juce::PathStrokeType (2.5f, juce::PathStrokeType::curved,
+                          juce::PathStrokeType::rounded).createStrokedPath (path, lines);
     pinToDesignBox (path);
     return path;
 }
@@ -159,6 +180,20 @@ AutoEditOverlayControl::AutoEditOverlayControl(std::shared_ptr<audium::AudiumEng
         stepMeasures(false);
     };
 
+    // The crossfade default comes from the Settings dialog's Auto Edit tab;
+    // the button is the per-apply override. The accent colour marks the
+    // toggled state like the header's Loop button.
+    xfadeButton = makeIconButton (TRANS ("Xfade"), xfadeIconPath());
+    xfadeButton->setClickingTogglesState (true);
+#if !defined(CATCH2_TESTS)
+    xfadeButton->setToggleState (AutoEditSettingsComponent::readCrossfadesEnabled (AudiumApplication::getPreferences()),
+                                 juce::dontSendNotification);
+#else
+    xfadeButton->setToggleState (true, juce::dontSendNotification);
+#endif
+    xfadeButton->setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff12a4e2));
+    addAndMakeVisible (xfadeButton.get());
+
     applyButton = makeIconButton (TRANS ("Apply"), checkIconPath());
     addAndMakeVisible (applyButton.get());
     applyButton->onClick = [this]() {
@@ -197,6 +232,14 @@ audium::AutoEditConfig AutoEditOverlayControl::makeConfig() const
     config.trackId = trackId;
     config.playlistItemId = playlistItemId;
     config.segmentMeasures = measures;
+    config.crossfades = xfadeButton->getToggleState();
+
+#if !defined(CATCH2_TESTS)
+    // the crossfade length and curve come from the Settings dialog's
+    // Auto Edit tab; the test build keeps the AutoEditConfig defaults
+    config.crossfadeSeconds = AutoEditSettingsComponent::readCrossfadeSeconds(AudiumApplication::getPreferences());
+    config.crossfadeCurve = AutoEditSettingsComponent::readCrossfadeCurve(AudiumApplication::getPreferences());
+#endif
 
     return config;
 }
@@ -312,7 +355,7 @@ void AutoEditOverlayControl::paint (juce::Graphics& g)
     // button spacing keeps neighbouring labels apart.
     g.setFont (juce::Font (juce::FontOptions (labelFontHeight)));
 
-    for (auto* button : { lessButton.get(), moreButton.get(), applyButton.get() })
+    for (auto* button : { lessButton.get(), moreButton.get(), xfadeButton.get(), applyButton.get() })
     {
         if (! button->isVisible())
             continue;
@@ -338,10 +381,15 @@ void AutoEditOverlayControl::resized()
     applyButton->setBounds (buttonRow.removeFromRight (buttonWidth));
     buttonRow.removeFromRight (gap);
 
-    // At the Apply-only width (see updatePosition) the step pair sits out.
+    // At the Apply-only width (see updatePosition) everything but Apply
+    // sits out.
     const bool stepsFit = getWidth() >= preferredWidth;
     lessButton->setVisible (stepsFit);
     moreButton->setVisible (stepsFit);
+    xfadeButton->setVisible (stepsFit);
+
+    xfadeButton->setBounds (buttonRow.removeFromRight (buttonWidth));
+    buttonRow.removeFromRight (stepGap);
 
     lessButton->setBounds (buttonRow.removeFromLeft (buttonWidth));
     buttonRow.removeFromLeft (stepGap);
@@ -362,6 +410,13 @@ void AutoEditOverlayControl::visibilityChanged()
                 measures = analysisProvider->getMergePreviewMeasures();
 
         updateStepButtons();
+
+#if !defined(CATCH2_TESTS)
+        // each time the overlay comes up, the Xfade button starts from the
+        // stored preference; while shown it stays a per-apply override
+        xfadeButton->setToggleState (AutoEditSettingsComponent::readCrossfadesEnabled (AudiumApplication::getPreferences()),
+                                     juce::dontSendNotification);
+#endif
 
         // Only the visible control follows the selection, so a pending edit
         // has exactly one follower.

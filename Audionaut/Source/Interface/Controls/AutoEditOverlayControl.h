@@ -158,6 +158,7 @@ private:
     double measures = defaultMeasures;
 
     std::unique_ptr<juce::DrawableButton> lessButton, moreButton;
+    std::unique_ptr<juce::DrawableButton> xfadeButton;
     std::unique_ptr<juce::DrawableButton> applyButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AutoEditOverlayControl)
