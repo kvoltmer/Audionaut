@@ -93,7 +93,7 @@ double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 
 double PlayListItem::getTailExtension(audium::TimeContextType context) const
 {
-    auto tailExtClocks = std::max(0.0, -dynamics.getFadeOutEndClocks());
+    auto tailExtClocks = std::max(0.0, -dynamics.getFadeOutEnd(audium::clocks));
 
     if (context == audium::clocks) {
         return tailExtClocks;

@@ -10,6 +10,8 @@
 #include <JuceHeader.h>
 #include <nlohmann/json.hpp>
 
+#include "Engine/TimeContext.h"
+
 using json = nlohmann::json;
 
 namespace audium {
@@ -75,25 +77,13 @@ public:
     bool setFadeOutEnd(double val);
     double getFadeOutEnd() const;
 
-    double getFadeInClocks() const
-    {
-        return fadeInClocks;
-    }
-
-    double getFadeOutClocks() const
-    {
-        return fadeOutClocks;
-    }
-
-    double getFadeInStartClocks() const
-    {
-        return fadeInStartClocks;
-    }
-
-    double getFadeOutEndClocks() const
-    {
-        return fadeOutEndClocks;
-    }
+    // the fade values as absolute times in the requested context - unlike
+    // the argument-less fraction accessors above, which are relative to the
+    // region length
+    double getFadeIn(audium::TimeContextType context) const;
+    double getFadeOut(audium::TimeContextType context) const;
+    double getFadeInStart(audium::TimeContextType context) const;
+    double getFadeOutEnd(audium::TimeContextType context) const;
 
     void writeToJson(json& output) const;
     void readFromJson(json& input);
@@ -101,6 +91,8 @@ public:
 private:
 
     double getRegionLengthClocks() const;
+
+    double clocksToContext(double clocks, audium::TimeContextType context) const;
 
     PlayListItem& owner;
 

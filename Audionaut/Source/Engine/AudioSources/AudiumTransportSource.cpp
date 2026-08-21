@@ -147,10 +147,10 @@ void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item
     auto regionSeconds = item->getRegionData(audium::seconds);
     spec.regionStart = regionSeconds.getStart();
     spec.regionEnd   = regionSeconds.getEnd();
-    spec.fadeIn      = tempoProvider->clocksToSeconds(item->getDynamics().getFadeInClocks());
-    spec.fadeOut     = tempoProvider->clocksToSeconds(item->getDynamics().getFadeOutClocks());
-    spec.fadeInStart = tempoProvider->clocksToSeconds(item->getDynamics().getFadeInStartClocks());
-    spec.fadeOutEnd  = tempoProvider->clocksToSeconds(item->getDynamics().getFadeOutEndClocks());
+    spec.fadeIn      = item->getDynamics().getFadeIn(audium::seconds);
+    spec.fadeOut     = item->getDynamics().getFadeOut(audium::seconds);
+    spec.fadeInStart = item->getDynamics().getFadeInStart(audium::seconds);
+    spec.fadeOutEnd  = item->getDynamics().getFadeOutEnd(audium::seconds);
 
     configureClipFades(*getAudioTransportSource(), spec, spec.voiceFileStart(), true);
 }

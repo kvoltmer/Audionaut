@@ -7,6 +7,7 @@
 
 #include "ClipDynamics.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -73,6 +74,38 @@ void ClipDynamics::copyFrom(const ClipDynamics& other)
 double ClipDynamics::getRegionLengthClocks() const
 {
     return owner.getRegionData(audium::clocks).getLength();
+}
+
+double ClipDynamics::clocksToContext(double clocks, audium::TimeContextType context) const
+{
+    if (context == audium::clocks) {
+        return clocks;
+    }
+    else if (context == audium::seconds) {
+        return owner.getPlayListContainer().getTempoProvider()->clocksToSeconds(clocks);
+    }
+    jassertfalse;
+    return 0.0;
+}
+
+double ClipDynamics::getFadeIn(audium::TimeContextType context) const
+{
+    return clocksToContext(fadeInClocks, context);
+}
+
+double ClipDynamics::getFadeOut(audium::TimeContextType context) const
+{
+    return clocksToContext(fadeOutClocks, context);
+}
+
+double ClipDynamics::getFadeInStart(audium::TimeContextType context) const
+{
+    return clocksToContext(fadeInStartClocks, context);
+}
+
+double ClipDynamics::getFadeOutEnd(audium::TimeContextType context) const
+{
+    return clocksToContext(fadeOutEndClocks, context);
 }
 
 bool ClipDynamics::setFadeIn(double val)
