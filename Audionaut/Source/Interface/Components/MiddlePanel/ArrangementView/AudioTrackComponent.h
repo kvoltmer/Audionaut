@@ -70,6 +70,13 @@ public:
 
     ClipFadeOverlay* getFadeOverlay() const { return fadeOverlay.get(); }
 
+    /** The laid-out clip rect's x-range for a playlist item, in lane
+        coordinates. The clip components carry integer bounds - anything
+        drawn relative to a clip must use these, not a fresh clocksToX,
+        or the two round differently and jitter against each other while
+        zooming. Falls back to the ideal range for culled items. */
+    juce::Range<double> getItemXRange(int index) const;
+
 private:
     class ItemComponent;
 

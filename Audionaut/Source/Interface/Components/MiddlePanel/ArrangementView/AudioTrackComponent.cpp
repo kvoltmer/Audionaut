@@ -131,6 +131,18 @@ void AudioTrackComponent::resized()
     fadeOverlay->setBounds(getLocalBounds());
 }
 
+juce::Range<double> AudioTrackComponent::getItemXRange(int index) const
+{
+    if (index >= 0 && index < static_cast<int>(itemComponents.size())) {
+        if (auto* itemComp = itemComponents[static_cast<size_t>(index)].get()) {
+            if (itemComp->isVisible())
+                return itemComp->getBounds().toDouble().getHorizontalRange();
+        }
+    }
+
+    return model->getRangeForItem(index);
+}
+
 bool AudioTrackComponent::isInterestedInDragSource (const SourceDetails &dragSourceDetails)
 {
     if (auto playListItemComp = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get())) {

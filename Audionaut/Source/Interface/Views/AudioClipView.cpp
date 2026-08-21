@@ -66,9 +66,6 @@ void AudioClipView::updateUI(std::shared_ptr<audium::AudioResource> audioResourc
 {
     //std::cout << "AudioClipView::updateUI " << playListItem->getRegion()->getName() << std::endl;
     channelNumber = theChannel;
-
-    // the bend-handle nodes live on the first channel row's curve
-    fadeInOutView->setShowCurveNodes(theChannel == 0);
     if (audioResource != audioResource_) {
         audioResource = audioResource_;
         createThumbnailCache();

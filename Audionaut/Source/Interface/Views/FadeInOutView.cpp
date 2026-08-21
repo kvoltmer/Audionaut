@@ -12,8 +12,13 @@ void FadeInOutView::paint (juce::Graphics& g)
 {
     if (playListItem == nullptr)
         return;
-    
-    
+
+    // the curves are editing UI: unselected clips show their fades through
+    // the tapered waveform alone
+    if (! playListItem->isSelected())
+        return;
+
+
     auto& dynamics      = playListItem->getDynamics();
     auto fHeight        = static_cast<float>(getHeight());
     auto fWidth         = static_cast<float>(getWidth());
@@ -42,115 +47,67 @@ void FadeInOutView::paint (juce::Graphics& g)
     if (fWidth - fFadeOutEndX >= 1.f)
         g.fillRect(fFadeOutEndX, 0.f, fWidth - fFadeOutEndX, fHeight);
 
-    // the bend-handle node is an open ring threaded onto the line: the
-    // stroke breaks tightly around it. only on the first channel row, while
-    // the clip is selected, on ramps wide enough to grab, and only when the
-    // midpoint lies inside this view (else the lane's ClipFadeOverlay draws
-    // it)
-    constexpr auto nodeRadius = 3.f;
-    constexpr auto gapRadius = 4.f;
-    constexpr auto minNodeRampWidth = 16.f;
-
-    auto nodesActive = showCurveNodes && playListItem->isSelected();
-
-    auto fadeInMidX = (fFadeInStartX + fFadeInEndX) / 2.f;
-    auto fadeInNode = nodesActive && hasFadeIn
-                   && (fFadeInEndX - fFadeInStartX) > minNodeRampWidth
-                   && fadeInMidX >= 0.f && fadeInMidX <= fWidth;
-
-    auto fadeOutMidX = (fFadeOutStartX + fFadeOutEndX) / 2.f;
-    auto fadeOutNode = nodesActive && hasFadeOut
-                    && (fFadeOutEndX - fFadeOutStartX) > minNodeRampWidth
-                    && fadeOutMidX >= 0.f && fadeOutMidX <= fWidth;
-
-    // the fill stays continuous; only the stroke is interrupted at a node
+    // only the two ramp curves are drawn - no plateau or clip-edge lines.
+    // the area OUTSIDE each curve (the attenuated part, above the ramp) is
+    // darkened a little. the bend handle draws its own circle on top.
     juce::Path fillPath;
     juce::Path strokePath;
-    auto strokeOpen = false;
-
-    auto addPoint = [&](float x, float y, float gapMidX, bool hasGap) {
-        fillPath.lineTo(x, y);
-
-        if (hasGap && std::abs(x - gapMidX) <= gapRadius) {
-            strokeOpen = false;
-            return;
-        }
-        if (! strokeOpen) {
-            strokePath.startNewSubPath(x, y);
-            strokeOpen = true;
-        }
-        else {
-            strokePath.lineTo(x, y);
-        }
-    };
-
-    auto startAt = [&](float x, float y) {
-        fillPath.startNewSubPath(x, y);
-        strokePath.startNewSubPath(x, y);
-        strokeOpen = true;
-    };
 
     if (hasFadeIn) {
         auto fRampWidth = fFadeInEndX - fFadeInStartX;
         auto iRampWidth = static_cast<int>(fRampWidth);
 
-        startAt(fFadeInStartX, fHeight);
+        juce::Path curve;
+        curve.startNewSubPath (Point<float> (fFadeInStartX, fHeight));
         auto stride = iRampWidth > 10 ? 4 : 1;
         for (auto w = 0; w < iRampWidth; w += stride) {
             auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(w / fRampWidth, dynamics.getFadeInCurve()));
             auto y      = fHeight - (square * fHeight);
 
-            addPoint(fFadeInStartX + static_cast<float>(w), y, fadeInMidX, fadeInNode);
+            curve.lineTo(fFadeInStartX + static_cast<float>(w), y);
         }
-        addPoint(fFadeInEndX, yOffset, fadeInMidX, fadeInNode);
-        if (! hasFadeOut) {
-            addPoint(fWidth, yOffset, 0.f, false);
-            addPoint(fWidth, fHeight, 0.f, false);
-        }
+        curve.lineTo(fFadeInEndX, yOffset);
+
+        strokePath.addPath(curve);
+
+        // the wedge ABOVE the curve (fill only)
+        curve.lineTo(fFadeInStartX, 0.f);
+        curve.closeSubPath();
+        fillPath.addPath(curve);
     }
 
     if (hasFadeOut) {
-
-        if (! hasFadeIn) {
-            startAt(0.f, fHeight);
-            addPoint(0.f, yOffset, 0.f, false);
-        }
-
         auto fRampWidth = fFadeOutEndX - fFadeOutStartX;
         auto iRampWidth = static_cast<int>(fRampWidth);
 
-        addPoint(fFadeOutStartX, yOffset, fadeOutMidX, fadeOutNode);
+        juce::Path curve;
+        curve.startNewSubPath (Point<float> (fFadeOutStartX, yOffset));
         auto stride = iRampWidth > 10 ? 4 : 1;
         for (auto w = 0; w < iRampWidth; w += stride) {
             auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - (w / fRampWidth), dynamics.getFadeOutCurve()));
             auto y      = fHeight - (square * fHeight);
 
-            addPoint(fFadeOutStartX + static_cast<float>(w), y, fadeOutMidX, fadeOutNode);
+            curve.lineTo(fFadeOutStartX + static_cast<float>(w), y);
         }
-        addPoint(fFadeOutEndX, fHeight, fadeOutMidX, fadeOutNode);
+        curve.lineTo(fFadeOutEndX, fHeight);
+
+        strokePath.addPath(curve);
+
+        // the wedge ABOVE the curve (fill only)
+        curve.lineTo(fFadeOutEndX, 0.f);
+        curve.closeSubPath();
+        fillPath.addPath(curve);
     }
 
 
     if (hasFadeIn ||
         hasFadeOut) {
 
-        g.setColour(Colour(Colours::white).withAlpha(0.1f));
+        g.setColour(Colours::black.withAlpha(0.18f));
         g.fillPath(fillPath.createPathWithRoundedCorners(4));
 
         g.setColour(Colour(Colours::white).withAlpha(0.5f));
         g.strokePath(strokePath.createPathWithRoundedCorners(4), PathStrokeType (2.f));
-
-        // the node rings, threaded onto the line
-        if (fadeInNode) {
-            auto midY = fHeight - static_cast<float>(audium::ClipDynamics::fadeCurve(0.5, dynamics.getFadeInCurve())) * fHeight;
-            g.drawEllipse(fadeInMidX - nodeRadius, midY - nodeRadius,
-                          nodeRadius * 2.f, nodeRadius * 2.f, 1.5f);
-        }
-        if (fadeOutNode) {
-            auto midY = fHeight - static_cast<float>(audium::ClipDynamics::fadeCurve(0.5, dynamics.getFadeOutCurve())) * fHeight;
-            g.drawEllipse(fadeOutMidX - nodeRadius, midY - nodeRadius,
-                          nodeRadius * 2.f, nodeRadius * 2.f, 1.5f);
-        }
     }
 
 }

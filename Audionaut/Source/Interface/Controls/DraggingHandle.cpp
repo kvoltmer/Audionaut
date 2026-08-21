@@ -17,13 +17,9 @@ void DraggingHandle::paint (juce::Graphics& g)
     g.setColour(isMouseOver() ? juce::Colours::orange : juce::Colours::white.withAlpha(0.5f));
 
     if (isCurveType()) {
-        // the resting node is drawn as part of the curve (FadeInOutView /
-        // ClipFadeOverlay); this component only highlights hover and drag
-        if (isMouseOver() || isMouseButtonDown()) {
-            g.setColour(juce::Colours::orange);
-            auto circle = getLocalBounds().withSizeKeepingCentre(visualSize, visualSize).toFloat();
-            g.drawEllipse(circle.reduced(1.f), 2.f);
-        }
+        // the bend handle sits on the curve: a circle drawn on top of it
+        auto circle = getLocalBounds().withSizeKeepingCentre(visualSize, visualSize).toFloat();
+        g.drawEllipse(circle.reduced(1.f), 1.5f);
         return;
     }
 

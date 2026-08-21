@@ -423,6 +423,11 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
     fadeOutEndControl->setVisible(playListItem->isSelected());
     curveInControl->setVisible(playListItem->isSelected() && fadeInRampWide);
     curveOutControl->setVisible(playListItem->isSelected() && fadeOutRampWide);
+
+    // the fade curves draw only while selected - selection changes arrive
+    // through this update, so refresh the rows and the lane overlay
+    repaintClipRows();
+    repaintFadeOverlay();
 }
 
 void PlayListItemComponent::repaintClipRows()

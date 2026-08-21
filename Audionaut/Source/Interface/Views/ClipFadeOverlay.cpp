@@ -19,6 +19,7 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Controls/DraggerControl.h"
+#include "Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.h"
 #include "Interface/Views/WaveFormViewBase.h"
 #include "Interface/Widgets/audium_AudioThumbnail.h"
 
@@ -79,8 +80,15 @@ void ClipFadeOverlay::paint (juce::Graphics& g)
 
     const auto visibleRange = zoomHandler->getVisibleRange();
 
-    for (const auto& item : container->getPlayListItems()) {
+    // the lane's laid-out clip rects are the geometry truth: deriving x from
+    // a fresh clocksToX rounds differently than the integer component bounds
+    // and jitters against the clips while zooming
+    auto* lane = dynamic_cast<AudioTrackComponent*>(getParentComponent());
 
+    const auto& items = container->getPlayListItems();
+    for (size_t itemIndex = 0; itemIndex < items.size(); ++itemIndex) {
+
+        const auto& item = items[itemIndex];
         if (item == nullptr)
             continue;
 
@@ -92,7 +100,9 @@ void ClipFadeOverlay::paint (juce::Graphics& g)
         if (startFrac >= 0.0 && endFrac >= 0.0)
             continue;
 
-        auto clipRange = zoomHandler->clocksToX(item->getAbsolutePositionRange(audium::clocks));
+        auto clipRange = lane != nullptr
+            ? lane->getItemXRange(static_cast<int>(itemIndex))
+            : zoomHandler->clocksToX(item->getAbsolutePositionRange(audium::clocks));
 
         // cull against the visible range, extended by the outside ramps
         auto extended = clipRange;
@@ -148,12 +158,8 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
 
     auto ghostColour = audioTrack->getViewState().getColour().withAlpha(0.4f);
 
-    // bend-handle nodes on the first band, matching FadeInOutView: the
-    // stroke breaks tightly around an open ring at the ramp midpoint. drawn
-    // here only when the midpoint lies OUTSIDE the clip rect.
-    constexpr auto nodeRadius = 3.f;
-    constexpr auto gapRadius = 4.f;
-    constexpr auto minNodeRampWidth = 16.f;
+    // the curves are editing UI, drawn only while the clip is selected; the
+    // ghost waveform always shows since it represents audible material
     auto itemSelected = item.isSelected();
 
     // one continuation band per channel row, so each row's FadeInOutView
@@ -242,114 +248,54 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
         // FADE IN continuation: ramp from (rampStartX, silence) rising over
         // [rampStartX, clipX]; the inside part is drawn by the row's
         // FadeInOutView
-        if (startFrac < 0.f) {
+        if (startFrac < 0.f && itemSelected) {
             auto rampStartX = clipX + startFrac * clipW;
             auto rampEndX   = clipX + fadeInFrac * clipW;
             auto rampWidth  = rampEndX - rampStartX;
 
-            auto midX = (rampStartX + rampEndX) / 2.f;
-            auto drawNode = ch == 0 && itemSelected
-                         && rampWidth > minNodeRampWidth && midX < clipX;
-
-            Path fillP;
-            Path strokeP;
-            auto strokeOpen = true;
-            auto addPoint = [&](float x, float y) {
-                fillP.lineTo(x, y);
-                if (drawNode && std::abs(x - midX) <= gapRadius) {
-                    strokeOpen = false;
-                    return;
-                }
-                if (! strokeOpen) {
-                    strokeP.startNewSubPath(x, y);
-                    strokeOpen = true;
-                }
-                else {
-                    strokeP.lineTo(x, y);
-                }
-            };
-
-            fillP.startNewSubPath(rampStartX, bandBottom);
-            strokeP.startNewSubPath(rampStartX, bandBottom);
+            // outside the clip only the curve is drawn - the attenuation
+            // darkening stops at the clip edge (FadeInOutView shades the
+            // inside part); the bend handle draws its own circle on top
+            Path curve;
+            curve.startNewSubPath(rampStartX, bandBottom);
             auto outsideWidth = static_cast<int>(clipX - rampStartX);
             auto stride = outsideWidth > 10 ? 4 : 1;
             for (auto w = 0; w < outsideWidth; w += stride) {
                 auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(w / rampWidth, fadeInCurve));
-                addPoint(rampStartX + static_cast<float>(w),
-                         bandBottom - (square * bandHeight));
+                curve.lineTo(rampStartX + static_cast<float>(w),
+                             bandBottom - (square * bandHeight));
             }
             auto squareAtEdge = static_cast<float>(audium::ClipDynamics::fadeCurve((clipX - rampStartX) / rampWidth, fadeInCurve));
-            addPoint(clipX, bandBottom - (squareAtEdge * bandHeight));
+            curve.lineTo(clipX, bandBottom - (squareAtEdge * bandHeight));
 
-            fillP.lineTo(clipX, bandBottom);
-            fillP.closeSubPath();
-
-            g.setColour(Colours::white.withAlpha(0.1f));
-            g.fillPath(fillP.createPathWithRoundedCorners(4));
             g.setColour(Colours::white.withAlpha(0.5f));
-            g.strokePath(strokeP.createPathWithRoundedCorners(4), PathStrokeType(2.f));
-
-            if (drawNode) {
-                auto midY = bandBottom - static_cast<float>(audium::ClipDynamics::fadeCurve(0.5, fadeInCurve)) * bandHeight;
-                g.drawEllipse(midX - nodeRadius, midY - nodeRadius,
-                              nodeRadius * 2.f, nodeRadius * 2.f, 1.5f);
-            }
+            g.strokePath(curve.createPathWithRoundedCorners(4), PathStrokeType(2.f));
         }
 
         // FADE OUT continuation: ramp falling to silence over
         // [clipRight, rampEndX]
-        if (endFrac < 0.f) {
+        if (endFrac < 0.f && itemSelected) {
             auto rampStartX = clipRight - fadeOutFrac * clipW;
             auto rampEndX   = clipRight - endFrac * clipW;
             auto rampWidth  = rampEndX - rampStartX;
 
-            auto midX = (rampStartX + rampEndX) / 2.f;
-            auto drawNode = ch == 0 && itemSelected
-                         && rampWidth > minNodeRampWidth && midX > clipRight;
-
-            Path fillP;
-            Path strokeP;
-            auto strokeOpen = true;
-            auto addPoint = [&](float x, float y) {
-                fillP.lineTo(x, y);
-                if (drawNode && std::abs(x - midX) <= gapRadius) {
-                    strokeOpen = false;
-                    return;
-                }
-                if (! strokeOpen) {
-                    strokeP.startNewSubPath(x, y);
-                    strokeOpen = true;
-                }
-                else {
-                    strokeP.lineTo(x, y);
-                }
-            };
-
+            // outside the clip only the curve is drawn - the attenuation
+            // darkening stops at the clip edge (FadeInOutView shades the
+            // inside part); the bend handle draws its own circle on top
+            Path curve;
             auto squareAtEdge = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - ((clipRight - rampStartX) / rampWidth), fadeOutCurve));
-            fillP.startNewSubPath(clipRight, bandBottom - (squareAtEdge * bandHeight));
-            strokeP.startNewSubPath(clipRight, bandBottom - (squareAtEdge * bandHeight));
+            curve.startNewSubPath(clipRight, bandBottom - (squareAtEdge * bandHeight));
             auto outsideWidth = static_cast<int>(rampEndX - clipRight);
             auto stride = outsideWidth > 10 ? 4 : 1;
             for (auto w = stride; w < outsideWidth; w += stride) {
                 auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - ((clipRight - rampStartX + w) / rampWidth), fadeOutCurve));
-                addPoint(clipRight + static_cast<float>(w),
-                         bandBottom - (square * bandHeight));
+                curve.lineTo(clipRight + static_cast<float>(w),
+                             bandBottom - (square * bandHeight));
             }
-            addPoint(rampEndX, bandBottom);
+            curve.lineTo(rampEndX, bandBottom);
 
-            fillP.lineTo(clipRight, bandBottom);
-            fillP.closeSubPath();
-
-            g.setColour(Colours::white.withAlpha(0.1f));
-            g.fillPath(fillP.createPathWithRoundedCorners(4));
             g.setColour(Colours::white.withAlpha(0.5f));
-            g.strokePath(strokeP.createPathWithRoundedCorners(4), PathStrokeType(2.f));
-
-            if (drawNode) {
-                auto midY = bandBottom - static_cast<float>(audium::ClipDynamics::fadeCurve(0.5, fadeOutCurve)) * bandHeight;
-                g.drawEllipse(midX - nodeRadius, midY - nodeRadius,
-                              nodeRadius * 2.f, nodeRadius * 2.f, 1.5f);
-            }
+            g.strokePath(curve.createPathWithRoundedCorners(4), PathStrokeType(2.f));
         }
 
         bandTop = bandBottom;
