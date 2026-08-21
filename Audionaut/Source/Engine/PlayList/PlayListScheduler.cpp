@@ -58,6 +58,8 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     spec.fadeOut     = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
     spec.fadeInStart = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInStartClocks);
     spec.fadeOutEnd  = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutEndClocks);
+    spec.fadeInCurve  = dspClip.dspClipData.clipFadeInCurve;
+    spec.fadeOutCurve = dspClip.dspClipData.clipFadeOutCurve;
 
     // the voice covers the audible span: the region window widened by the
     // fade extensions (head clamped at the file start)
@@ -352,6 +354,8 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     spec.fadeOut     = item->getDynamics().getFadeOut(audium::seconds);
     spec.fadeInStart = item->getDynamics().getFadeInStart(audium::seconds);
     spec.fadeOutEnd  = item->getDynamics().getFadeOutEnd(audium::seconds);
+    spec.fadeInCurve  = item->getDynamics().getFadeInCurve();
+    spec.fadeOutCurve = item->getDynamics().getFadeOutCurve();
 
     auto totalSamples          = static_cast<int64>(spec.audibleLength() * externalSampleRate);
     auto leadingSilenceSamples = static_cast<int64>(spec.preFileSilence() * externalSampleRate);

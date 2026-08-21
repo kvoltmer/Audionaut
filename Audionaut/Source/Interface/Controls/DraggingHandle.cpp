@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include <algorithm>
+#include <cmath>
 
 #include <JuceHeader.h>
 #include "DraggingHandle.h"
@@ -12,8 +13,19 @@
 void DraggingHandle::paint (juce::Graphics& g)
 {
     // draw outline
-    
+
     g.setColour(isMouseOver() ? juce::Colours::orange : juce::Colours::white.withAlpha(0.5f));
+
+    if (isCurveType()) {
+        // the resting node is drawn as part of the curve (FadeInOutView /
+        // ClipFadeOverlay); this component only highlights hover and drag
+        if (isMouseOver() || isMouseButtonDown()) {
+            g.setColour(juce::Colours::orange);
+            auto circle = getLocalBounds().withSizeKeepingCentre(visualSize, visualSize).toFloat();
+            g.drawEllipse(circle.reduced(1.f), 2.f);
+        }
+        return;
+    }
 
     auto bounds = getLocalBounds();
     bounds.setWidth(visualSize);
@@ -49,8 +61,26 @@ void DraggingHandle::mouseUp (const juce::MouseEvent& e)
 void DraggingHandle::mouseDrag (const juce::MouseEvent& e)
 {
     auto distance = e.getOffsetFromDragStart();
-    distance.setY(0); // drag vertically only
-    
+
+    if (isCurveType()) {
+        // the bend handle drags vertically within the channel band
+        distance.setX(0);
+
+        if (std::abs(distance.getY()) > 0) {
+            auto newBounds = originalBounds + distance;
+
+            auto topLimit = DraggerControl::draggerHeight;
+            auto bottomLimit = (bottomAnchorY > 0 ? bottomAnchorY : getParentHeight()) - controlHeight;
+            newBounds.setY(juce::jlimit(topLimit, bottomLimit, newBounds.getY()));
+
+            setBounds(newBounds);
+            NullCheckedInvocation::invoke(onValueChange);
+        }
+        return;
+    }
+
+    distance.setY(0); // drag horizontally only
+
     if (std::abs(distance.getX()) > 0) {
         auto newBounds = originalBounds + distance;
         
@@ -107,6 +137,19 @@ void DraggingHandle::mouseExit (const MouseEvent& e)
 
 double DraggingHandle::getValue() const
 {
+    if (isCurveType()) {
+        // value = the curve exponent p: the handle's centre marks the curve
+        // value at the ramp midpoint, 0.5^p of the band height
+        auto bandBottom = static_cast<double>(bottomAnchorY > 0 ? bottomAnchorY : getParentHeight());
+        auto bandHeight = bandBottom - DraggerControl::draggerHeight;
+        if (bandHeight <= 0.0)
+            return audium::ClipDynamics::defaultFadeCurve;
+
+        auto midValue = (bandBottom - getBounds().toDouble().getCentreY()) / bandHeight;
+        midValue = juce::jlimit(0.03, 0.97, midValue);
+        return std::log(midValue) / std::log(0.5);
+    }
+
     // clipRange set: the handle lives in the lane, values map against the
     // clip's x-range and go negative outside it
     auto clipX = clipRange.isEmpty() ? 0.0 : static_cast<double>(clipRange.getStart());
@@ -127,6 +170,21 @@ double DraggingHandle::getValue() const
 
 void DraggingHandle::setValue(double val)
 {
+    if (isCurveType()) {
+        // val = the curve exponent p; sit on the ramp midpoint (clipRange
+        // holds the RAMP's x-range in lane coords) at 0.5^p band height
+        auto bandBottom = bottomAnchorY > 0 ? bottomAnchorY : getParentHeight();
+        auto bandTop = DraggerControl::draggerHeight;
+        auto bandHeight = static_cast<double>(bandBottom - bandTop);
+
+        auto midValue = std::pow(0.5, val);
+        auto x = clipRange.getStart() + clipRange.getLength() / 2 - controlWidth / 2;
+        auto y = static_cast<int>(bandBottom - midValue * bandHeight) - controlHeight / 2;
+        y = juce::jlimit(bandTop, bandBottom - controlHeight, y);
+        setBounds(x, y, controlWidth, controlHeight);
+        return;
+    }
+
     auto fromLeft = (type == FadeIn || type == FadeInStart);
     auto onBottom = (type == FadeInStart || type == FadeOutEnd);
 

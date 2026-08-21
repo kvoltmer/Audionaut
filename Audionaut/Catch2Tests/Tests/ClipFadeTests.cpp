@@ -867,6 +867,53 @@ SCENARIO("fade ramp offsets serialize with the item", "[engine][fade]")
             }
         }
 
+        WHEN("the curve exponents round-trip through json and reset with it")
+        {
+            dynamics.setFadeInCurve(1.0);
+            dynamics.setFadeOutCurve(2.0);
+
+            json state;
+            dynamics.writeToJson(state);
+            REQUIRE(state.contains("fade_in_curve"));
+            REQUIRE(state.contains("fade_out_curve"));
+
+            dynamics.setFadeInCurve(0.5);
+            dynamics.setFadeOutCurve(0.5);
+            dynamics.readFromJson(state);
+
+            THEN("the curves are restored")
+            {
+                REQUIRE(dynamics.getFadeInCurve() == Catch::Approx(1.0));
+                REQUIRE(dynamics.getFadeOutCurve() == Catch::Approx(2.0));
+            }
+
+            json empty;
+            dynamics.readFromJson(empty);
+
+            THEN("reading a state without curve keys resets to the default")
+            {
+                REQUIRE(dynamics.getFadeInCurve() == Catch::Approx(ClipDynamics::defaultFadeCurve));
+                REQUIRE(dynamics.getFadeOutCurve() == Catch::Approx(ClipDynamics::defaultFadeCurve));
+            }
+        }
+
+        WHEN("a default curve writes no key and setters clamp the exponent")
+        {
+            json state;
+            dynamics.writeToJson(state);
+            REQUIRE_FALSE(state.contains("fade_in_curve"));
+            REQUIRE_FALSE(state.contains("fade_out_curve"));
+
+            dynamics.setFadeInCurve(100.0);
+            dynamics.setFadeOutCurve(0.0);
+
+            THEN("the exponents stay within the legal range")
+            {
+                REQUIRE(dynamics.getFadeInCurve() == Catch::Approx(ClipDynamics::maxFadeCurve));
+                REQUIRE(dynamics.getFadeOutCurve() == Catch::Approx(ClipDynamics::minFadeCurve));
+            }
+        }
+
         WHEN("negative ramp offsets round-trip through json")
         {
             dynamics.setFadeIn(0.5);
@@ -1353,6 +1400,32 @@ SCENARIO("fade extensions extend the audible clip", "[engine][dsp][fade]")
                                       static_cast<int>(sr * 1.75),
                                       static_cast<int>(sr * 2.0),
                                       totalSamples, bounceConfig->blockSize);
+            }
+        }
+
+        WHEN("a linear fade-out curve renders a straight ramp")
+        {
+            item->getDynamics().setFadeOut(0.5);
+            item->getDynamics().setFadeOutCurve(1.0);
+            engine->getPlayListScheduler()->commitPlayListData();
+
+            bounceConfig->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+
+            auto exporter = std::make_unique<AudioExporter>(*engine, bounceConfig);
+            exporter->bounce();
+
+            THEN("the ramp midpoint is 0.5 - not the equal-power 0.707")
+            {
+                auto buffer = audioFileToAudioBuffer(bounceConfig->fileName);
+                REQUIRE(buffer.getNumSamples() >= static_cast<int>(sr * 2.5));
+
+                // fade over timeline [2.0, 2.5]; linear -> midpoint == 0.5
+                auto midpoint = buffer.getSample(0, static_cast<int>(sr * 2.25));
+                INFO("midpoint " << midpoint);
+                REQUIRE(midpoint == Catch::Approx(0.5).margin(0.03));
+
+                auto last = buffer.getSample(0, static_cast<int>(sr * 2.5) - 1);
+                REQUIRE(last < 0.05f);
             }
         }
 

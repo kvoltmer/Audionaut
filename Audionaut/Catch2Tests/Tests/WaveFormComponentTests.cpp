@@ -14,6 +14,14 @@ TEST_CASE( "waveform fade envelope", "[WaveFormComponent][fade]" ) {
         REQUIRE(audium::ClipDynamics::fadeCurve(2.0)  == 1.0);
     }
 
+    SECTION("the curve exponent bends the fade") {
+        // 1 = linear, > 1 = exponential; midpoint value = 0.5^p
+        REQUIRE(audium::ClipDynamics::fadeCurve(0.5, 1.0) == Catch::Approx(0.5));
+        REQUIRE(audium::ClipDynamics::fadeCurve(0.5, 2.0) == Catch::Approx(0.25));
+        REQUIRE(audium::ClipDynamics::fadeCurve(0.0, 2.0) == 0.0);
+        REQUIRE(audium::ClipDynamics::fadeCurve(1.0, 2.0) == 1.0);
+    }
+
     SECTION("a default envelope is inactive") {
         audium::WaveformEnvelope envelope;
         REQUIRE_FALSE(envelope.isActive());
@@ -80,6 +88,18 @@ TEST_CASE( "waveform fade envelope", "[WaveFormComponent][fade]" ) {
         // fade-out ramp over [1000, 1100]
         REQUIRE(envelope.gainAt(1050.0f) == Catch::Approx(std::sqrt(0.5)));
         REQUIRE(envelope.gainAt(1100.0f) == 0.0f);
+    }
+
+    SECTION("the envelope follows the per-ramp curve exponents") {
+        audium::WaveformEnvelope envelope;
+        envelope.fadeInWidth  = 100.0f;
+        envelope.fadeOutWidth = 100.0f;
+        envelope.fadeInCurve  = 1.0f;  // linear
+        envelope.fadeOutCurve = 2.0f;  // exponential
+        envelope.totalWidth   = 1000.0f;
+
+        REQUIRE(envelope.gainAt(50.0f)  == Catch::Approx(0.5));
+        REQUIRE(envelope.gainAt(950.0f) == Catch::Approx(0.25));
     }
 
     SECTION("a ramp crossing the clip edge tapers both sides of it") {

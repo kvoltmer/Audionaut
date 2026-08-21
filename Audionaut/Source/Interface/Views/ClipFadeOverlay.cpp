@@ -3,6 +3,8 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <cmath>
+
 #include <JuceHeader.h>
 #include "ClipFadeOverlay.h"
 
@@ -116,6 +118,8 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
     auto fadeInFrac = static_cast<float>(dynamics.getFadeIn());
     auto endFrac    = static_cast<float>(dynamics.getFadeOutEnd());
     auto fadeOutFrac = static_cast<float>(dynamics.getFadeOut());
+    auto fadeInCurve  = static_cast<float>(dynamics.getFadeInCurve());
+    auto fadeOutCurve = static_cast<float>(dynamics.getFadeOutCurve());
 
     auto clipX = static_cast<float>(clipRange.getStart());
     auto clipW = static_cast<float>(clipRange.getLength());
@@ -139,8 +143,18 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
     envelope.fadeOutWidth     = fadeOutFrac * clipW;
     envelope.fadeInStartWidth = startFrac * clipW;
     envelope.fadeOutEndWidth  = endFrac * clipW;
+    envelope.fadeInCurve      = fadeInCurve;
+    envelope.fadeOutCurve     = fadeOutCurve;
 
     auto ghostColour = audioTrack->getViewState().getColour().withAlpha(0.4f);
+
+    // bend-handle nodes on the first band, matching FadeInOutView: the
+    // stroke breaks tightly around an open ring at the ramp midpoint. drawn
+    // here only when the midpoint lies OUTSIDE the clip rect.
+    constexpr auto nodeRadius = 3.f;
+    constexpr auto gapRadius = 4.f;
+    constexpr auto minNodeRampWidth = 16.f;
+    auto itemSelected = item.isSelected();
 
     // one continuation band per channel row, so each row's FadeInOutView
     // ramp reads as an unbroken curve across the clip edge
@@ -233,28 +247,53 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
             auto rampEndX   = clipX + fadeInFrac * clipW;
             auto rampWidth  = rampEndX - rampStartX;
 
-            Path curve;
-            curve.startNewSubPath(rampStartX, bandBottom);
+            auto midX = (rampStartX + rampEndX) / 2.f;
+            auto drawNode = ch == 0 && itemSelected
+                         && rampWidth > minNodeRampWidth && midX < clipX;
+
+            Path fillP;
+            Path strokeP;
+            auto strokeOpen = true;
+            auto addPoint = [&](float x, float y) {
+                fillP.lineTo(x, y);
+                if (drawNode && std::abs(x - midX) <= gapRadius) {
+                    strokeOpen = false;
+                    return;
+                }
+                if (! strokeOpen) {
+                    strokeP.startNewSubPath(x, y);
+                    strokeOpen = true;
+                }
+                else {
+                    strokeP.lineTo(x, y);
+                }
+            };
+
+            fillP.startNewSubPath(rampStartX, bandBottom);
+            strokeP.startNewSubPath(rampStartX, bandBottom);
             auto outsideWidth = static_cast<int>(clipX - rampStartX);
             auto stride = outsideWidth > 10 ? 4 : 1;
             for (auto w = 0; w < outsideWidth; w += stride) {
-                auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(w / rampWidth));
-                curve.lineTo(rampStartX + static_cast<float>(w),
-                             bandBottom - (square * bandHeight));
+                auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(w / rampWidth, fadeInCurve));
+                addPoint(rampStartX + static_cast<float>(w),
+                         bandBottom - (square * bandHeight));
             }
-            auto squareAtEdge = static_cast<float>(audium::ClipDynamics::fadeCurve((clipX - rampStartX) / rampWidth));
-            curve.lineTo(clipX, bandBottom - (squareAtEdge * bandHeight));
+            auto squareAtEdge = static_cast<float>(audium::ClipDynamics::fadeCurve((clipX - rampStartX) / rampWidth, fadeInCurve));
+            addPoint(clipX, bandBottom - (squareAtEdge * bandHeight));
 
-            auto rounded = curve.createPathWithRoundedCorners(4);
-
-            Path filled(rounded);
-            filled.lineTo(clipX, bandBottom);
-            filled.closeSubPath();
+            fillP.lineTo(clipX, bandBottom);
+            fillP.closeSubPath();
 
             g.setColour(Colours::white.withAlpha(0.1f));
-            g.fillPath(filled);
+            g.fillPath(fillP.createPathWithRoundedCorners(4));
             g.setColour(Colours::white.withAlpha(0.5f));
-            g.strokePath(rounded, PathStrokeType(2.f));
+            g.strokePath(strokeP.createPathWithRoundedCorners(4), PathStrokeType(2.f));
+
+            if (drawNode) {
+                auto midY = bandBottom - static_cast<float>(audium::ClipDynamics::fadeCurve(0.5, fadeInCurve)) * bandHeight;
+                g.drawEllipse(midX - nodeRadius, midY - nodeRadius,
+                              nodeRadius * 2.f, nodeRadius * 2.f, 1.5f);
+            }
         }
 
         // FADE OUT continuation: ramp falling to silence over
@@ -264,28 +303,53 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
             auto rampEndX   = clipRight - endFrac * clipW;
             auto rampWidth  = rampEndX - rampStartX;
 
-            Path curve;
-            auto squareAtEdge = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - ((clipRight - rampStartX) / rampWidth)));
-            curve.startNewSubPath(clipRight, bandBottom - (squareAtEdge * bandHeight));
+            auto midX = (rampStartX + rampEndX) / 2.f;
+            auto drawNode = ch == 0 && itemSelected
+                         && rampWidth > minNodeRampWidth && midX > clipRight;
+
+            Path fillP;
+            Path strokeP;
+            auto strokeOpen = true;
+            auto addPoint = [&](float x, float y) {
+                fillP.lineTo(x, y);
+                if (drawNode && std::abs(x - midX) <= gapRadius) {
+                    strokeOpen = false;
+                    return;
+                }
+                if (! strokeOpen) {
+                    strokeP.startNewSubPath(x, y);
+                    strokeOpen = true;
+                }
+                else {
+                    strokeP.lineTo(x, y);
+                }
+            };
+
+            auto squareAtEdge = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - ((clipRight - rampStartX) / rampWidth), fadeOutCurve));
+            fillP.startNewSubPath(clipRight, bandBottom - (squareAtEdge * bandHeight));
+            strokeP.startNewSubPath(clipRight, bandBottom - (squareAtEdge * bandHeight));
             auto outsideWidth = static_cast<int>(rampEndX - clipRight);
             auto stride = outsideWidth > 10 ? 4 : 1;
             for (auto w = stride; w < outsideWidth; w += stride) {
-                auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - ((clipRight - rampStartX + w) / rampWidth)));
-                curve.lineTo(clipRight + static_cast<float>(w),
-                             bandBottom - (square * bandHeight));
+                auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - ((clipRight - rampStartX + w) / rampWidth), fadeOutCurve));
+                addPoint(clipRight + static_cast<float>(w),
+                         bandBottom - (square * bandHeight));
             }
-            curve.lineTo(rampEndX, bandBottom);
+            addPoint(rampEndX, bandBottom);
 
-            auto rounded = curve.createPathWithRoundedCorners(4);
-
-            Path filled(rounded);
-            filled.lineTo(clipRight, bandBottom);
-            filled.closeSubPath();
+            fillP.lineTo(clipRight, bandBottom);
+            fillP.closeSubPath();
 
             g.setColour(Colours::white.withAlpha(0.1f));
-            g.fillPath(filled);
+            g.fillPath(fillP.createPathWithRoundedCorners(4));
             g.setColour(Colours::white.withAlpha(0.5f));
-            g.strokePath(rounded, PathStrokeType(2.f));
+            g.strokePath(strokeP.createPathWithRoundedCorners(4), PathStrokeType(2.f));
+
+            if (drawNode) {
+                auto midY = bandBottom - static_cast<float>(audium::ClipDynamics::fadeCurve(0.5, fadeOutCurve)) * bandHeight;
+                g.drawEllipse(midX - nodeRadius, midY - nodeRadius,
+                              nodeRadius * 2.f, nodeRadius * 2.f, 1.5f);
+            }
         }
 
         bandTop = bandBottom;

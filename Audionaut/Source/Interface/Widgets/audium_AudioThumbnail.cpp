@@ -23,7 +23,7 @@ float WaveformEnvelope::gainAt (float x) const noexcept
         else
         {
             auto ramp = fadeInWidth - fadeInStartWidth;
-            gain = ramp > 0.0f ? (float) ClipDynamics::fadeCurve ((x - fadeInStartWidth) / ramp)
+            gain = ramp > 0.0f ? (float) ClipDynamics::fadeCurve ((x - fadeInStartWidth) / ramp, fadeInCurve)
                                : 0.0f;
         }
     }
@@ -39,7 +39,7 @@ float WaveformEnvelope::gainAt (float x) const noexcept
         if (x < fadeOutEndX)
         {
             auto ramp = fadeOutEndX - fadeOutStartX;
-            outGain = ramp > 0.0f ? (float) ClipDynamics::fadeCurve ((fadeOutEndX - x) / ramp)
+            outGain = ramp > 0.0f ? (float) ClipDynamics::fadeCurve ((fadeOutEndX - x) / ramp, fadeOutCurve)
                                   : 0.0f;
         }
         gain = jmin (gain, outGain);

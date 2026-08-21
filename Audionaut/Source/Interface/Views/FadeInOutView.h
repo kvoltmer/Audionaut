@@ -32,9 +32,14 @@ public:
     
     void setPlayListItem(std::shared_ptr<audium::PlayListItem> item);
 
+    /** Only the first channel row draws the curve nodes (the bend handles
+        live on that band). */
+    void setShowCurveNodes(bool show) { showCurveNodes = show; }
+
 private:
-    
+
     std::shared_ptr<audium::PlayListItem> playListItem;
+    bool showCurveNodes = false;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FadeInOutView)
 };

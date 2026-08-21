@@ -151,6 +151,8 @@ void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item
     spec.fadeOut     = item->getDynamics().getFadeOut(audium::seconds);
     spec.fadeInStart = item->getDynamics().getFadeInStart(audium::seconds);
     spec.fadeOutEnd  = item->getDynamics().getFadeOutEnd(audium::seconds);
+    spec.fadeInCurve  = item->getDynamics().getFadeInCurve();
+    spec.fadeOutCurve = item->getDynamics().getFadeOutCurve();
 
     configureClipFades(*getAudioTransportSource(), spec, spec.voiceFileStart(), true);
 }

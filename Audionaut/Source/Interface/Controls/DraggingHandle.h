@@ -18,7 +18,9 @@ public:
         FadeIn,         // fade-in ramp end, top strip
         FadeOut,        // fade-out ramp start, top strip
         FadeInStart,    // fade-in ramp start, bottom edge
-        FadeOutEnd      // fade-out ramp end, bottom edge
+        FadeOutEnd,     // fade-out ramp end, bottom edge
+        CurveIn,        // fade-in bend handle on the ramp midpoint, vertical drag
+        CurveOut        // fade-out bend handle on the ramp midpoint, vertical drag
     };
 
     DraggingHandle(FadeType type_,
@@ -28,7 +30,8 @@ public:
         playListItem(playListItem_),
         regionSelector(regionSelector_)
     {
-        setMouseCursor(juce::MouseCursor::LeftRightResizeCursor);
+        setMouseCursor(isCurveType() ? juce::MouseCursor::UpDownResizeCursor
+                                     : juce::MouseCursor::LeftRightResizeCursor);
     }
     
     ~DraggingHandle() override = default;
@@ -65,9 +68,12 @@ public:
     /** The clip's x-range in the parent's coordinates. When set, the handle is
         parented to the track lane instead of the clip and its value maps
         against this range - positions outside it yield negative values (fade
-        extending outside the clip). Empty range = legacy parent-is-the-clip
-        mode. */
+        extending outside the clip). For the curve types this is the RAMP's
+        x-range instead - the handle sits on its midpoint. Empty range =
+        legacy parent-is-the-clip mode. */
     void setClipRange(juce::Range<int> range) { clipRange = range; }
+
+    bool isCurveType() const { return type == CurveIn || type == CurveOut; }
 
     /** The component a mouseExit is forwarded to (the clip component). Used
         instead of getParentComponent() so lane-parented handles still notify

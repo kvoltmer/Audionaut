@@ -36,6 +36,8 @@ void WaveFormViewBase::paint (juce::Graphics& g)
             fadeEnvelope.fadeOutWidth     = static_cast<float>(dynamics.getFadeOut() * getWidth());
             fadeEnvelope.fadeInStartWidth = static_cast<float>(dynamics.getFadeInStart() * getWidth());
             fadeEnvelope.fadeOutEndWidth  = static_cast<float>(dynamics.getFadeOutEnd()  * getWidth());
+            fadeEnvelope.fadeInCurve      = static_cast<float>(dynamics.getFadeInCurve());
+            fadeEnvelope.fadeOutCurve     = static_cast<float>(dynamics.getFadeOutCurve());
             if (fadeEnvelope.isActive())
                 envelopePtr = &fadeEnvelope;
         }

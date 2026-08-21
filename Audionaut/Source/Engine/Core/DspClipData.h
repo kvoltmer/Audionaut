@@ -74,6 +74,14 @@ struct DspClipData
     double clipFadeOutEndClocks = 0.0;
     
     /**
+     * @brief The curve exponents of the two fade ramps.
+     *
+     * 0.5 = sqrt = equal power (default), 1 = linear, > 1 = exponential.
+     */
+    double clipFadeInCurve = 0.5;
+    double clipFadeOutCurve = 0.5;
+
+    /**
      * @brief The transport source index for the clip.
      *
      * An integer representing the index of the transport source associated

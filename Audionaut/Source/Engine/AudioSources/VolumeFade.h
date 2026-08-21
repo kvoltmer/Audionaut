@@ -69,6 +69,18 @@ public:
         silentSamples = numSamples;
     }
 
+    /**
+     * @brief Sets the curve exponent applied to the linear ramp.
+     *
+     * 0.5 = sqrt = equal power (the default), 1 = linear, > 1 =
+     * exponential. Must stay in sync with ClipDynamics::fadeCurve, which
+     * the UI uses to draw the same curve.
+     */
+    void setCurveExponent(FloatType exponent) noexcept
+    {
+        curveExponent = exponent;
+    }
+
     /** Returns the ramp duration in seconds. */
     double getRampDurationSeconds() const noexcept              { return rampDurationSeconds; }
     
@@ -186,21 +198,29 @@ public:
     }
     
 private:
-    /** The fade curve: sqrt of the linear ramp. The smoothed value can drift
-        slightly below zero through float accumulation over long ramps -
-        unclamped, sqrt/pow would turn that into NaN and poison the mix.
-        Must stay in sync with ClipDynamics::fadeCurve, which the UI uses to
-        draw the same curve. */
+    /** The fade curve: the linear ramp raised to the curve exponent. The
+        smoothed value can drift slightly below zero through float
+        accumulation over long ramps - unclamped, sqrt/pow would turn that
+        into NaN and poison the mix. Must stay in sync with
+        ClipDynamics::fadeCurve, which the UI uses to draw the same curve. */
     FloatType nextCurveValue() noexcept
     {
         auto g = gain.getNextValue();
-        return g > FloatType (0) ? std::sqrt (g) : FloatType (0);
+        if (g <= FloatType (0))
+            return FloatType (0);
+
+        // the common equal-power case avoids the costlier pow
+        if (curveExponent == FloatType (0.5))
+            return std::sqrt (g);
+
+        return std::pow (g, curveExponent);
     }
 
     juce::SmoothedValue<FloatType> gain;
     double sampleRate = 0, rampDurationSeconds = 0;
     int skipSamples = 0;
     int silentSamples = 0;
+    FloatType curveExponent = FloatType (0.5);
 };
 
 } // namespace audium

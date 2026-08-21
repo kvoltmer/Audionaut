@@ -42,62 +42,117 @@ void FadeInOutView::paint (juce::Graphics& g)
     if (fWidth - fFadeOutEndX >= 1.f)
         g.fillRect(fFadeOutEndX, 0.f, fWidth - fFadeOutEndX, fHeight);
 
-    juce::Path thePath;
+    // the bend-handle node is an open ring threaded onto the line: the
+    // stroke breaks tightly around it. only on the first channel row, while
+    // the clip is selected, on ramps wide enough to grab, and only when the
+    // midpoint lies inside this view (else the lane's ClipFadeOverlay draws
+    // it)
+    constexpr auto nodeRadius = 3.f;
+    constexpr auto gapRadius = 4.f;
+    constexpr auto minNodeRampWidth = 16.f;
+
+    auto nodesActive = showCurveNodes && playListItem->isSelected();
+
+    auto fadeInMidX = (fFadeInStartX + fFadeInEndX) / 2.f;
+    auto fadeInNode = nodesActive && hasFadeIn
+                   && (fFadeInEndX - fFadeInStartX) > minNodeRampWidth
+                   && fadeInMidX >= 0.f && fadeInMidX <= fWidth;
+
+    auto fadeOutMidX = (fFadeOutStartX + fFadeOutEndX) / 2.f;
+    auto fadeOutNode = nodesActive && hasFadeOut
+                    && (fFadeOutEndX - fFadeOutStartX) > minNodeRampWidth
+                    && fadeOutMidX >= 0.f && fadeOutMidX <= fWidth;
+
+    // the fill stays continuous; only the stroke is interrupted at a node
+    juce::Path fillPath;
+    juce::Path strokePath;
+    auto strokeOpen = false;
+
+    auto addPoint = [&](float x, float y, float gapMidX, bool hasGap) {
+        fillPath.lineTo(x, y);
+
+        if (hasGap && std::abs(x - gapMidX) <= gapRadius) {
+            strokeOpen = false;
+            return;
+        }
+        if (! strokeOpen) {
+            strokePath.startNewSubPath(x, y);
+            strokeOpen = true;
+        }
+        else {
+            strokePath.lineTo(x, y);
+        }
+    };
+
+    auto startAt = [&](float x, float y) {
+        fillPath.startNewSubPath(x, y);
+        strokePath.startNewSubPath(x, y);
+        strokeOpen = true;
+    };
 
     if (hasFadeIn) {
         auto fRampWidth = fFadeInEndX - fFadeInStartX;
         auto iRampWidth = static_cast<int>(fRampWidth);
 
-        thePath.startNewSubPath (Point<float> (fFadeInStartX, fHeight));
+        startAt(fFadeInStartX, fHeight);
         auto stride = iRampWidth > 10 ? 4 : 1;
         for (auto w = 0; w < iRampWidth; w += stride) {
-            auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(w / fRampWidth));
+            auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(w / fRampWidth, dynamics.getFadeInCurve()));
             auto y      = fHeight - (square * fHeight);
 
-            thePath.lineTo(fFadeInStartX + static_cast<float>(w), y);
+            addPoint(fFadeInStartX + static_cast<float>(w), y, fadeInMidX, fadeInNode);
         }
-        thePath.lineTo(fFadeInEndX, yOffset);
+        addPoint(fFadeInEndX, yOffset, fadeInMidX, fadeInNode);
         if (! hasFadeOut) {
-            thePath.lineTo(fWidth, yOffset);
-            thePath.lineTo(fWidth, fHeight);
+            addPoint(fWidth, yOffset, 0.f, false);
+            addPoint(fWidth, fHeight, 0.f, false);
         }
     }
 
     if (hasFadeOut) {
 
         if (! hasFadeIn) {
-            thePath.startNewSubPath (Point<float> (0.f, fHeight));
-            thePath.lineTo(0.f, yOffset);
+            startAt(0.f, fHeight);
+            addPoint(0.f, yOffset, 0.f, false);
         }
 
         auto fRampWidth = fFadeOutEndX - fFadeOutStartX;
         auto iRampWidth = static_cast<int>(fRampWidth);
 
-        thePath.lineTo(fFadeOutStartX, yOffset);
+        addPoint(fFadeOutStartX, yOffset, fadeOutMidX, fadeOutNode);
         auto stride = iRampWidth > 10 ? 4 : 1;
         for (auto w = 0; w < iRampWidth; w += stride) {
-            auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - (w / fRampWidth)));
+            auto square = static_cast<float>(audium::ClipDynamics::fadeCurve(1.f - (w / fRampWidth), dynamics.getFadeOutCurve()));
             auto y      = fHeight - (square * fHeight);
 
-            thePath.lineTo(fFadeOutStartX + static_cast<float>(w), y);
+            addPoint(fFadeOutStartX + static_cast<float>(w), y, fadeOutMidX, fadeOutNode);
         }
-        thePath.lineTo(fFadeOutEndX, fHeight);
+        addPoint(fFadeOutEndX, fHeight, fadeOutMidX, fadeOutNode);
     }
 
 
     if (hasFadeIn ||
         hasFadeOut) {
 
-        juce::Path roundedPath = thePath.createPathWithRoundedCorners(4);
-
         g.setColour(Colour(Colours::white).withAlpha(0.1f));
-        g.fillPath(roundedPath);
+        g.fillPath(fillPath.createPathWithRoundedCorners(4));
 
         g.setColour(Colour(Colours::white).withAlpha(0.5f));
-        g.strokePath(roundedPath, PathStrokeType (2.f));
+        g.strokePath(strokePath.createPathWithRoundedCorners(4), PathStrokeType (2.f));
 
+        // the node rings, threaded onto the line
+        if (fadeInNode) {
+            auto midY = fHeight - static_cast<float>(audium::ClipDynamics::fadeCurve(0.5, dynamics.getFadeInCurve())) * fHeight;
+            g.drawEllipse(fadeInMidX - nodeRadius, midY - nodeRadius,
+                          nodeRadius * 2.f, nodeRadius * 2.f, 1.5f);
+        }
+        if (fadeOutNode) {
+            auto midY = fHeight - static_cast<float>(audium::ClipDynamics::fadeCurve(0.5, dynamics.getFadeOutCurve())) * fHeight;
+            g.drawEllipse(fadeOutMidX - nodeRadius, midY - nodeRadius,
+                          nodeRadius * 2.f, nodeRadius * 2.f, 1.5f);
+        }
     }
-    
+
 }
 
 void FadeInOutView::resized()

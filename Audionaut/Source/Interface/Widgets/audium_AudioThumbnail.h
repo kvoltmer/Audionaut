@@ -27,6 +27,10 @@ struct WaveformEnvelope
     float fadeInStartWidth = 0.0f;
     float fadeOutEndWidth  = 0.0f;
 
+    // curve exponents per ramp (ClipDynamics::fadeCurve)
+    float fadeInCurve  = 0.5f;
+    float fadeOutCurve = 0.5f;
+
     float totalWidth   = 0.0f;  // px, full clip component width
 
     // a ramp lying entirely outside the clip (negative offset, zero fade)

@@ -87,6 +87,19 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngin
     addAndMakeVisible(fadeOutEndControl.get());
     fadeOutEndControl->setVisible(false);
 
+    // CURVE BEND HANDLES (on each ramp's midpoint, vertical drag)
+    curveInControl = std::make_unique<DraggingHandle>(DraggingHandle::CurveIn,
+                                                      playListItem,
+                                                      regionSelector);
+    addAndMakeVisible(curveInControl.get());
+    curveInControl->setVisible(false);
+
+    curveOutControl = std::make_unique<DraggingHandle>(DraggingHandle::CurveOut,
+                                                       playListItem,
+                                                       regionSelector);
+    addAndMakeVisible(curveOutControl.get());
+    curveOutControl->setVisible(false);
+
     // OVERLAY CONTAINER (topmost; transparent itself, children may take clicks)
     overlayContainer = std::make_unique<juce::Component>("PlayListItemOverlay");
     overlayContainer->setInterceptsMouseClicks(false, true);
@@ -169,6 +182,8 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem
     fadeOutControl->setPlayListItem(item);
     fadeInStartControl->setPlayListItem(item);
     fadeOutEndControl->setPlayListItem(item);
+    curveInControl->setPlayListItem(item);
+    curveOutControl->setPlayListItem(item);
 
     // mouseExit must reach this clip component - the bottom handles are
     // parented to the lane overlay, not to us
@@ -176,12 +191,15 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem
     fadeOutControl->setExitTarget(this);
     fadeInStartControl->setExitTarget(this);
     fadeOutEndControl->setExitTarget(this);
+    curveInControl->setExitTarget(this);
+    curveOutControl->setExitTarget(this);
 
     // function pointer setup; a pushed fade value can cascade through the
     // other three, so re-sync every handle whenever the setter reports one
     fadeInControl->onValueChange = [this, item] {
         if (item->getDynamics().setFadeIn(fadeInControl->getValue()))
             syncFadeControls();
+        syncCurveControls();
 
         playListItemListBox->updateContent();
         repaintClipRows();
@@ -194,6 +212,7 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem
     fadeOutControl->onValueChange = [this, item] {
         if (item->getDynamics().setFadeOut(fadeOutControl->getValue()))
             syncFadeControls();
+        syncCurveControls();
         playListItemListBox->updateContent();
         repaintClipRows();
         repaintFadeOverlay();
@@ -205,6 +224,7 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem
     fadeInStartControl->onValueChange = [this, item] {
         if (item->getDynamics().setFadeInStart(fadeInStartControl->getValue()))
             syncFadeControls();
+        syncCurveControls();
         playListItemListBox->updateContent();
         repaintClipRows();
         repaintFadeOverlay();
@@ -216,12 +236,33 @@ void PlayListItemComponent::setPlayListItem(std::shared_ptr<audium::PlayListItem
     fadeOutEndControl->onValueChange = [this, item] {
         if (item->getDynamics().setFadeOutEnd(fadeOutEndControl->getValue()))
             syncFadeControls();
+        syncCurveControls();
         playListItemListBox->updateContent();
         repaintClipRows();
         repaintFadeOverlay();
     };
     fadeOutEndControl->onDragStart = [item] { item->onDragStart(); };
     fadeOutEndControl->onDragEnd = [item] { item->onDragEnd(); };
+
+    // function pointer setup: the bend handles set the curve exponents -
+    // no pushes, so no re-sync needed
+    curveInControl->onValueChange = [this, item] {
+        item->getDynamics().setFadeInCurve(curveInControl->getValue());
+        playListItemListBox->updateContent();
+        repaintClipRows();
+        repaintFadeOverlay();
+    };
+    curveInControl->onDragStart = [item] { item->onDragStart(); };
+    curveInControl->onDragEnd = [item] { item->onDragEnd(); };
+
+    curveOutControl->onValueChange = [this, item] {
+        item->getDynamics().setFadeOutCurve(curveOutControl->getValue());
+        playListItemListBox->updateContent();
+        repaintClipRows();
+        repaintFadeOverlay();
+    };
+    curveOutControl->onDragStart = [item] { item->onDragStart(); };
+    curveOutControl->onDragEnd = [item] { item->onDragEnd(); };
 }
 
 void PlayListItemComponent::syncFadeControls()
@@ -229,14 +270,18 @@ void PlayListItemComponent::syncFadeControls()
     if (playListItem == nullptr)
         return;
 
-    // the bottom-edge handles sit on the bottom of the first channel row
+    // the bottom-edge and bend handles are anchored to the first channel row
     if (auto firstChannel = audioTrack->getChannel(0)) {
         auto bottomY = DraggerControl::draggerHeight + firstChannel->getChannelHeight();
         fadeInStartControl->setBottomAnchorY(bottomY);
         fadeOutEndControl->setBottomAnchorY(bottomY);
+        curveInControl->setBottomAnchorY(bottomY);
+        curveOutControl->setBottomAnchorY(bottomY);
     }
 
-    // once the bottom handles live in the lane overlay, their value math
+    auto& dynamics = playListItem->getDynamics();
+
+    // once the lane-parented handles live in the overlay, their value math
     // maps against the clip rect (the parent ItemComponent) in lane coords
     auto clipRect = getParentComponent();
     if (clipRect != nullptr && fadeInStartControl->getParentComponent() != this) {
@@ -245,11 +290,54 @@ void PlayListItemComponent::syncFadeControls()
         fadeOutEndControl->setClipRange(laneRange);
     }
 
-    auto& dynamics = playListItem->getDynamics();
     fadeInControl->setValue(dynamics.getFadeIn());
     fadeOutControl->setValue(dynamics.getFadeOut());
     fadeInStartControl->setValue(dynamics.getFadeInStart());
     fadeOutEndControl->setValue(dynamics.getFadeOutEnd());
+
+    syncCurveControls();
+}
+
+void PlayListItemComponent::syncCurveControls()
+{
+    if (playListItem == nullptr)
+        return;
+
+    auto clipRect = getParentComponent();
+    if (clipRect == nullptr || curveInControl->getParentComponent() == this)
+        return;
+
+    auto& dynamics = playListItem->getDynamics();
+    auto laneRange = clipRect->getBounds().getHorizontalRange();
+
+    // the bend handles sit on their ramp's midpoint (clipRange = the RAMP's
+    // x-range in lane coords)
+    auto clipX = laneRange.getStart();
+    auto clipW = laneRange.getLength();
+    auto inRamp = juce::Range<int>(clipX + static_cast<int>(dynamics.getFadeInStart() * clipW),
+                                   clipX + static_cast<int>(dynamics.getFadeIn() * clipW));
+    auto outRamp = juce::Range<int>(clipX + clipW - static_cast<int>(dynamics.getFadeOut() * clipW),
+                                    clipX + clipW - static_cast<int>(dynamics.getFadeOutEnd() * clipW));
+    curveInControl->setClipRange(inRamp);
+    curveOutControl->setClipRange(outRamp);
+
+    curveInControl->setValue(dynamics.getFadeInCurve());
+    curveOutControl->setValue(dynamics.getFadeOutCurve());
+
+    // a bend handle needs a ramp wide enough to grab; follow live shrinking
+    // and growing while the other handles are shown
+    fadeInRampWide = inRamp.getLength() > 16;
+    fadeOutRampWide = outRamp.getLength() > 16;
+
+    if (! fadeInRampWide)
+        curveInControl->setVisible(false);
+    else if (fadeInControl->isVisible())
+        curveInControl->setVisible(true);
+
+    if (! fadeOutRampWide)
+        curveOutControl->setVisible(false);
+    else if (fadeOutControl->isVisible())
+        curveOutControl->setVisible(true);
 }
 
 void PlayListItemComponent::attachHandlesToLane()
@@ -267,6 +355,10 @@ void PlayListItemComponent::attachHandlesToLane()
         overlay->addChildComponent(fadeInStartControl.get());
     if (fadeOutEndControl->getParentComponent() != overlay)
         overlay->addChildComponent(fadeOutEndControl.get());
+    if (curveInControl->getParentComponent() != overlay)
+        overlay->addChildComponent(curveInControl.get());
+    if (curveOutControl->getParentComponent() != overlay)
+        overlay->addChildComponent(curveOutControl.get());
 
     if (observedClipRect != clipRect) {
         if (observedClipRect != nullptr)
@@ -299,6 +391,8 @@ void PlayListItemComponent::componentVisibilityChanged (juce::Component& compone
     if (&component == observedClipRect && ! component.isVisible()) {
         fadeInStartControl->setVisible(false);
         fadeOutEndControl->setVisible(false);
+        curveInControl->setVisible(false);
+        curveOutControl->setVisible(false);
     }
 }
 
@@ -327,6 +421,8 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
     fadeOutControl->setVisible(playListItem->isSelected());
     fadeInStartControl->setVisible(playListItem->isSelected());
     fadeOutEndControl->setVisible(playListItem->isSelected());
+    curveInControl->setVisible(playListItem->isSelected() && fadeInRampWide);
+    curveOutControl->setVisible(playListItem->isSelected() && fadeOutRampWide);
 }
 
 void PlayListItemComponent::repaintClipRows()
@@ -389,6 +485,8 @@ void PlayListItemComponent::mouseEnter (const MouseEvent& e)
     fadeOutControl->setVisible(playListItem->isSelected());
     fadeInStartControl->setVisible(playListItem->isSelected());
     fadeOutEndControl->setVisible(playListItem->isSelected());
+    curveInControl->setVisible(playListItem->isSelected() && fadeInRampWide);
+    curveOutControl->setVisible(playListItem->isSelected() && fadeOutRampWide);
 
     playListItemListBox->updateContent();
 }
@@ -400,17 +498,21 @@ void PlayListItemComponent::mouseExit (const MouseEvent& e)
     // hovering a handle hanging outside the clip would hide it mid-approach
     if (! isMouseOverOrDragging (true)
         && ! fadeInStartControl->isMouseOverOrDragging()
-        && ! fadeOutEndControl->isMouseOverOrDragging()) {
+        && ! fadeOutEndControl->isMouseOverOrDragging()
+        && ! curveInControl->isMouseOverOrDragging()
+        && ! curveOutControl->isMouseOverOrDragging()) {
         fadeInControl->setVisible(false);
         fadeOutControl->setVisible(false);
 
-        // a bottom handle sitting outside the clip stays visible while the
+        // a lane handle sitting outside the clip stays visible while the
         // clip is selected - hidden, it could never be reached again (the
         // mouse leaves the clip before it gets there)
         auto selected = playListItem->isSelected();
         auto& dynamics = playListItem->getDynamics();
         fadeInStartControl->setVisible(selected && dynamics.getFadeInStart() < 0.0);
         fadeOutEndControl->setVisible(selected && dynamics.getFadeOutEnd() < 0.0);
+        curveInControl->setVisible(selected && fadeInRampWide && dynamics.getFadeInStart() < 0.0);
+        curveOutControl->setVisible(selected && fadeOutRampWide && dynamics.getFadeOutEnd() < 0.0);
         playListItemListBox->updateContent();
     }
 

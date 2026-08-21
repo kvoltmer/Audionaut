@@ -92,10 +92,20 @@ private:
     std::unique_ptr<DraggingHandle> fadeOutControl;
     std::unique_ptr<DraggingHandle> fadeInStartControl;
     std::unique_ptr<DraggingHandle> fadeOutEndControl;
+    std::unique_ptr<DraggingHandle> curveInControl;
+    std::unique_ptr<DraggingHandle> curveOutControl;
+
+    // bend handles only make sense on a ramp wide enough to grab
+    bool fadeInRampWide = false;
+    bool fadeOutRampWide = false;
 
     // Re-positions every fade handle from the item's dynamics; a fade
     // setter push can cascade across all four values.
     void syncFadeControls();
+
+    // Re-positions the bend handles onto their ramp midpoints - the ramp
+    // geometry changes with EVERY fade edit, not only on pushes.
+    void syncCurveControls();
 
     // Parents the two bottom handles into the lane's ClipFadeOverlay (they
     // may sit outside the clip rect) and registers for the clip rect's

@@ -69,6 +69,8 @@ void ClipDynamics::copyFrom(const ClipDynamics& other)
     fadeOutClocks = other.fadeOutClocks;
     fadeInStartClocks = other.fadeInStartClocks;
     fadeOutEndClocks = other.fadeOutEndClocks;
+    fadeInCurve = other.fadeInCurve;
+    fadeOutCurve = other.fadeOutCurve;
 }
 
 double ClipDynamics::getRegionLengthClocks() const
@@ -106,6 +108,16 @@ double ClipDynamics::getFadeInStart(audium::TimeContextType context) const
 double ClipDynamics::getFadeOutEnd(audium::TimeContextType context) const
 {
     return clocksToContext(fadeOutEndClocks, context);
+}
+
+void ClipDynamics::setFadeInCurve(double curve)
+{
+    fadeInCurve = juce::jlimit(minFadeCurve, maxFadeCurve, curve);
+}
+
+void ClipDynamics::setFadeOutCurve(double curve)
+{
+    fadeOutCurve = juce::jlimit(minFadeCurve, maxFadeCurve, curve);
 }
 
 bool ClipDynamics::setFadeIn(double val)
@@ -242,6 +254,14 @@ void ClipDynamics::writeToJson(json& output) const
         output["fade_out_end_clocks"]   = fadeOutEndClocks;
     }
 
+    if (fadeInCurve != defaultFadeCurve) {
+        output["fade_in_curve"]         = fadeInCurve;
+    }
+
+    if (fadeOutCurve != defaultFadeCurve) {
+        output["fade_out_curve"]        = fadeOutCurve;
+    }
+
     // Written whenever non-empty (even all-1.0): an absent key means "never set"
     // and triggers the legacy migration read from the region's gain_vector.
     if (!gains.empty()) {
@@ -257,6 +277,8 @@ void ClipDynamics::readFromJson(json& input)
     fadeOutClocks = 0.0;
     fadeInStartClocks = 0.0;
     fadeOutEndClocks = 0.0;
+    fadeInCurve = defaultFadeCurve;
+    fadeOutCurve = defaultFadeCurve;
 
     if (input.contains("fade_in_clocks")) {
         fadeInClocks = input.at("fade_in_clocks").get<double>();
@@ -272,6 +294,14 @@ void ClipDynamics::readFromJson(json& input)
 
     if (input.contains("fade_out_end_clocks")) {
         fadeOutEndClocks = input.at("fade_out_end_clocks").get<double>();
+    }
+
+    if (input.contains("fade_in_curve")) {
+        setFadeInCurve(input.at("fade_in_curve").get<double>());
+    }
+
+    if (input.contains("fade_out_curve")) {
+        setFadeOutCurve(input.at("fade_out_curve").get<double>());
     }
 
     if (input.contains("gain_vector")) {

@@ -31,6 +31,7 @@ struct ClipFadeSpec
     double regionStart = 0.0, regionEnd = 0.0;   // the region window
     double fadeIn = 0.0, fadeOut = 0.0;          // ramp end from start / ramp start from end
     double fadeInStart = 0.0, fadeOutEnd = 0.0;  // signed ramp offsets
+    double fadeInCurve = 0.5, fadeOutCurve = 0.5; // curve exponents (0.5 = equal power)
 
     double headExtension()  const noexcept { return juce::jmax(0.0, -fadeInStart); }
     double tailExtension()  const noexcept { return juce::jmax(0.0, -fadeOutEnd); }
@@ -159,6 +160,10 @@ public:
     /** Transparent resets: no fade, no stale skip/silent counters. */
     void clearFadeIn();
     void clearFadeOut();
+
+    /** The curve exponent applied over each ramp (ClipDynamics::fadeCurve). */
+    void setFadeInCurve(double curve);
+    void setFadeOutCurve(double curve);
 
     /** Configures the fade-in as a ramp of rampSeconds starting
         rampStartSeconds after the scheduled position. rampStartSeconds > 0

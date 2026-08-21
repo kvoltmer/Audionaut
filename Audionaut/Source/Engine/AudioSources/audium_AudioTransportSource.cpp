@@ -290,6 +290,7 @@ void configureClipFades (AudioTransportSource& source,
         source.clearFadeIn();
     }
     else {
+        source.setFadeInCurve(spec.fadeInCurve);
         // a pre-file clamp makes filePosition > regionStart + fadeInStart,
         // which arms the ramp mid-way - the ramp progresses through the
         // pre-file silence
@@ -302,6 +303,7 @@ void configureClipFades (AudioTransportSource& source,
         source.clearFadeOut();
     }
     else {
+        source.setFadeOutCurve(spec.fadeOutCurve);
         source.setFadeOutRamp(spec.fadeOut - spec.fadeOutEnd,
                               (spec.regionEnd - spec.fadeOut) - filePositionSeconds,
                               reset);
@@ -313,6 +315,16 @@ void AudioTransportSource::clearFadeIn()
     clipFadeIn.setSilentSamples(0);
     clipFadeIn.setRampDurationSeconds(0.0);
     clipFadeIn.setGainLinear(1.0, true);
+}
+
+void AudioTransportSource::setFadeInCurve(double curve)
+{
+    clipFadeIn.setCurveExponent(static_cast<float>(curve));
+}
+
+void AudioTransportSource::setFadeOutCurve(double curve)
+{
+    clipFadeOut.setCurveExponent(static_cast<float>(curve));
 }
 
 void AudioTransportSource::clearFadeOut()

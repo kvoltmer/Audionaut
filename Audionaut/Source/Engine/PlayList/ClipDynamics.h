@@ -34,11 +34,21 @@ public:
 
     explicit ClipDynamics(PlayListItem& owner);
 
-    /** The fade curve shared by DSP and UI: sqrt of the linear 0..1 progress.
-        Mirrors VolumeFade::nextCurveValue() (Engine/AudioSources/VolumeFade.h). */
-    static double fadeCurve (double linearProgress) noexcept
+    /** The default curve exponent: x^0.5 = sqrt = an equal-power fade. */
+    static constexpr double defaultFadeCurve = 0.5;
+
+    /** The curve exponents' legal range - the bend handle maps the curve's
+        midpoint value into this. */
+    static constexpr double minFadeCurve = 0.1;
+    static constexpr double maxFadeCurve = 4.0;
+
+    /** The fade curve shared by DSP and UI: the linear 0..1 progress raised
+        to the fade's curve exponent (0.5 = sqrt = equal power, 1 = linear,
+        > 1 = exponential). Mirrors VolumeFade::nextCurveValue()
+        (Engine/AudioSources/VolumeFade.h). */
+    static double fadeCurve (double linearProgress, double curve = defaultFadeCurve) noexcept
     {
-        return linearProgress > 0.0 ? std::sqrt (std::min (linearProgress, 1.0)) : 0.0;
+        return linearProgress > 0.0 ? std::pow (std::min (linearProgress, 1.0), curve) : 0.0;
     }
 
     // gain (linear range), per destination channel
@@ -85,6 +95,14 @@ public:
     double getFadeInStart(audium::TimeContextType context) const;
     double getFadeOutEnd(audium::TimeContextType context) const;
 
+    // the curve exponent per fade, clamped to [minFadeCurve, maxFadeCurve];
+    // defaultFadeCurve = the equal-power sqrt curve
+    void setFadeInCurve(double curve);
+    double getFadeInCurve() const { return fadeInCurve; }
+
+    void setFadeOutCurve(double curve);
+    double getFadeOutCurve() const { return fadeOutCurve; }
+
     void writeToJson(json& output) const;
     void readFromJson(json& input);
 
@@ -107,6 +125,10 @@ private:
     // boundary lies outside the clip (extending the audible material)
     double fadeInStartClocks = 0.0;
     double fadeOutEndClocks = 0.0;
+
+    // curve exponents (x^curve over the ramp)
+    double fadeInCurve = defaultFadeCurve;
+    double fadeOutCurve = defaultFadeCurve;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ClipDynamics)
 };
