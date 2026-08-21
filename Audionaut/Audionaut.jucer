@@ -71,6 +71,8 @@
         </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
+          <FILE id="CdpPrc" name="ClipDynamicsProcessor.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/ClipDynamicsProcessor.h"/>
           <FILE id="S0kUtq" name="AudiumTransportSource.cpp" compile="1" resource="0"
                 file="Source/Engine/AudioSources/AudiumTransportSource.cpp"/>
           <FILE id="FrI8bp" name="AudiumTransportSource.h" compile="0" resource="0"
@@ -287,6 +289,8 @@
         <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
           <FILE id="AnStCp" name="AnalysisSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AnalysisSettingsComponent.h"/>
+          <FILE id="AesCmp1" name="AutoEditSettingsComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/AutoEditSettingsComponent.h"/>
           <FILE id="AsmDlg" name="AssembleDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AssembleDialog.h"/>
           <FILE id="Y3mnJv" name="FileBrowserView.h" compile="0" resource="0"
@@ -432,10 +436,10 @@
                 file="Source/Interface/Controls/LoopDraggerControl.cpp"/>
           <FILE id="nuQDk2" name="LoopDraggerControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/LoopDraggerControl.h"/>
-          <FILE id="U33zDH" name="FadeInOutControl.cpp" compile="1" resource="0"
-                file="Source/Interface/Controls/FadeInOutControl.cpp"/>
-          <FILE id="TSCZRX" name="FadeInOutControl.h" compile="0" resource="0"
-                file="Source/Interface/Controls/FadeInOutControl.h"/>
+          <FILE id="U33zDH" name="DraggingHandle.cpp" compile="1" resource="0"
+                file="Source/Interface/Controls/DraggingHandle.cpp"/>
+          <FILE id="TSCZRX" name="DraggingHandle.h" compile="0" resource="0"
+                file="Source/Interface/Controls/DraggingHandle.h"/>
           <FILE id="eBnkUW" name="SliderControl.h" compile="0" resource="0" file="Source/Interface/Controls/SliderControl.h"/>
           <FILE id="huzCxv" name="DefaultLabel.h" compile="0" resource="0" file="Source/Interface/Controls/DefaultLabel.h"/>
           <FILE id="c3NpvE" name="AudiumLabel.h" compile="0" resource="0" file="Source/Interface/Controls/AudiumLabel.h"/>
@@ -473,6 +477,10 @@
                 file="Source/Interface/Controls/AudioTrackListBox.h"/>
         </GROUP>
         <GROUP id="{251C6FB2-3F49-498C-8DDC-157FCCAC8565}" name="Views">
+          <FILE id="Cfovr1" name="ClipFadeOverlay.cpp" compile="1" resource="0"
+                file="Source/Interface/Views/ClipFadeOverlay.cpp"/>
+          <FILE id="Cfovr2" name="ClipFadeOverlay.h" compile="0" resource="0"
+                file="Source/Interface/Views/ClipFadeOverlay.h"/>
           <FILE id="aCyjt9" name="FadeInOutView.cpp" compile="1" resource="0"
                 file="Source/Interface/Views/FadeInOutView.cpp"/>
           <FILE id="FdmpTf" name="FadeInOutView.h" compile="0" resource="0" file="Source/Interface/Views/FadeInOutView.h"/>

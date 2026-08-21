@@ -17,7 +17,7 @@
 class ZoomHandler;
 class RegionSelector;
 class DraggerControl;
-class FadeInOutControl;
+class DraggingHandle;
 class AutoEditPreviewView;
 class AutoEditOverlayControl;
 
@@ -25,7 +25,9 @@ class AutoEditOverlayControl;
 /*
 Display a PlayListItem within a AudioTrack
 */
-class PlayListItemComponent  : public juce::Component, public juce::ChangeListener
+class PlayListItemComponent  : public juce::Component,
+                               public juce::ChangeListener,
+                               public juce::ComponentListener
 {
 public:
     PlayListItemComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine,
@@ -61,6 +63,11 @@ public:
 
     void mouseEnter (const MouseEvent& e) override;
     void mouseExit (const MouseEvent& e) override;
+
+    // Follows the parent ItemComponent (the clip rect) so the lane-parented
+    // fade handles track zoom/scroll relayouts and live dragger drags.
+    void componentMovedOrResized (juce::Component& component, bool wasMoved, bool wasResized) override;
+    void componentVisibilityChanged (juce::Component& component) override;
     
     int getNumAudioTrackChannels() const
     {
@@ -81,8 +88,35 @@ private:
     std::unique_ptr<PlayListItemListBoxModel> playListItemListBoxModel;
 
 
-    std::unique_ptr<FadeInOutControl> fadeInControl;
-    std::unique_ptr<FadeInOutControl> fadeOutControl;
+    std::unique_ptr<DraggingHandle> fadeInControl;
+    std::unique_ptr<DraggingHandle> fadeOutControl;
+    std::unique_ptr<DraggingHandle> fadeInStartControl;
+    std::unique_ptr<DraggingHandle> fadeOutEndControl;
+    std::unique_ptr<DraggingHandle> curveInControl;
+    std::unique_ptr<DraggingHandle> curveOutControl;
+
+    // bend handles only make sense on a ramp wide enough to grab
+    bool fadeInRampWide = false;
+    bool fadeOutRampWide = false;
+
+    // Re-positions every fade handle from the item's dynamics; a fade
+    // setter push can cascade across all four values.
+    void syncFadeControls();
+
+    // Re-positions the bend handles onto their ramp midpoints - the ramp
+    // geometry changes with EVERY fade edit, not only on pushes.
+    void syncCurveControls();
+
+    // Parents the two bottom handles into the lane's ClipFadeOverlay (they
+    // may sit outside the clip rect) and registers for the clip rect's
+    // moves; safe to call repeatedly.
+    void attachHandlesToLane();
+
+    // Repaints the lane overlay that draws the outside-the-clip ramp parts.
+    void repaintFadeOverlay();
+
+    // The parent ItemComponent currently observed via ComponentListener.
+    juce::Component* observedClipRect = nullptr;
 
     // Container stacked over the whole clip (header and all channel rows)
     // hosting overlays that must draw above everything else. Transparent to

@@ -33,7 +33,7 @@ public:
     void setPlayListItem(std::shared_ptr<audium::PlayListItem> item);
 
 private:
-    
+
     std::shared_ptr<audium::PlayListItem> playListItem;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FadeInOutView)

@@ -12,6 +12,7 @@
 #include "Interface/Controls/RegionSelector.h"
 #include "Interface/Components/MiddlePanel/AudioTrackBaseComponent.h"
 #include "Interface/Models/ArrangementModel.h"
+#include "Interface/Views/ClipFadeOverlay.h"
 
 using namespace juce;
 
@@ -41,6 +42,12 @@ public:
         AudioTrackBaseComponent(track, audiumEngine, zoomHandler, regionSelector)
     {
         model.reset(new ArrangementModel(audiumEngine, track, regionSelector, zoomHandler));
+
+        // lane-wide layer above all clips: outside-the-clip fade ramps and
+        // the lane-parented fade handles
+        fadeOverlay = std::make_unique<ClipFadeOverlay>(track, audiumEngine, zoomHandler);
+        addAndMakeVisible(fadeOverlay.get());
+
         refreshComponent(track);
     }
     
@@ -60,14 +67,25 @@ public:
     bool shouldDrawDragImageWhenOver () override { return true; }
     
     ArrangementModel* getModel() const { return model.get(); }
-    
+
+    ClipFadeOverlay* getFadeOverlay() const { return fadeOverlay.get(); }
+
+    /** The laid-out clip rect's x-range for a playlist item, in lane
+        coordinates. The clip components carry integer bounds - anything
+        drawn relative to a clip must use these, not a fresh clocksToX,
+        or the two round differently and jitter against each other while
+        zooming. Falls back to the ideal range for culled items. */
+    juce::Range<double> getItemXRange(int index) const;
+
 private:
     class ItemComponent;
-    
-    
+
+
     std::unique_ptr<ArrangementModel> model;
 
     std::vector<std::unique_ptr<juce::Component>> itemComponents;
+
+    std::unique_ptr<ClipFadeOverlay> fadeOverlay;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackComponent)
     

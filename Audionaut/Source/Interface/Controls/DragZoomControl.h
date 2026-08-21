@@ -111,8 +111,14 @@ public:
             newFactor = mouseDownFactor * f;
             //std::cout << "y:" << y << " f: " << f << " " << newFactor << std::endl;
         }
-        
-        zoomHandler->setZoomFactor(newFactor);
+
+        // deliberately NOT applied here: the factor takes effect in the
+        // change listener together with the content resize and re-centring.
+        // Applied synchronously, any paint before the (async, coalesced)
+        // change message - the playhead timer guarantees them - would render
+        // the grid and ruler with the new zoom against the old scroll,
+        // misplacing them for a frame per zoom step (visible jitter).
+        targetZoomFactor = newFactor;
 
         // where the visible range should end up centred, as a fraction of the
         // content width - the change listener applies it after resizing the
@@ -126,6 +132,7 @@ public:
     }
 
     double getTargetCenterFraction() const noexcept { return targetCenterFraction; }
+    double getTargetZoomFactor() const noexcept { return targetZoomFactor; }
 
     void mouseUp (const juce::MouseEvent& e) override
     {
@@ -148,6 +155,7 @@ private:
     bool                                        arrangementMode;
     
     double mouseDownFactor = 1.0;
+    double targetZoomFactor = 1.0;
 
     double targetCenterFraction = 0.5;
     

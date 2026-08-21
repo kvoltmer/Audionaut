@@ -91,6 +91,20 @@ double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
     return 0.0;
 }
 
+double PlayListItem::getTailExtension(audium::TimeContextType context) const
+{
+    auto tailExtClocks = std::max(0.0, -dynamics.getFadeOutEnd(audium::clocks));
+
+    if (context == audium::clocks) {
+        return tailExtClocks;
+    }
+    else if (context == audium::seconds) {
+        return owner.getTempoProvider()->clocksToSeconds(tailExtClocks);
+    }
+    jassertfalse;
+    return 0.0;
+}
+
 void PlayListItem::setAbsolutePosition(double newPosition, audium::TimeContextType context)
 {
     if (context == audium::seconds) {

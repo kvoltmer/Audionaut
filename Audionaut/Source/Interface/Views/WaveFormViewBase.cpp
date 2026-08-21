@@ -24,6 +24,24 @@ void WaveFormViewBase::paint (juce::Graphics& g)
         const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
         const auto channel      = audioResource->getChannelMapping().getSourceChannel();
         
+        // taper the waveform under the clip fades, matching the FadeInOutView
+        // overlay (which spans the same local bounds)
+        audium::WaveformEnvelope fadeEnvelope;
+        const audium::WaveformEnvelope* envelopePtr = nullptr;
+
+        if (playListItem != nullptr) {
+            const auto& dynamics      = playListItem->getDynamics();
+            fadeEnvelope.totalWidth       = static_cast<float>(getWidth());
+            fadeEnvelope.fadeInWidth      = static_cast<float>(dynamics.getFadeIn()  * getWidth());
+            fadeEnvelope.fadeOutWidth     = static_cast<float>(dynamics.getFadeOut() * getWidth());
+            fadeEnvelope.fadeInStartWidth = static_cast<float>(dynamics.getFadeInStart() * getWidth());
+            fadeEnvelope.fadeOutEndWidth  = static_cast<float>(dynamics.getFadeOutEnd()  * getWidth());
+            fadeEnvelope.fadeInCurve      = static_cast<float>(dynamics.getFadeInCurve());
+            fadeEnvelope.fadeOutCurve     = static_cast<float>(dynamics.getFadeOutCurve());
+            if (fadeEnvelope.isActive())
+                envelopePtr = &fadeEnvelope;
+        }
+
         if (channel >= 0 &&
             channel < audioResource->getNumAudioFileChannels()) {
             audioThumbnail->drawChannel(g,
@@ -31,7 +49,8 @@ void WaveFormViewBase::paint (juce::Graphics& g)
                                         startSeconds,
                                         endSeconds,
                                         channel,
-                                        verticalZoomFactor * getClipGain());
+                                        verticalZoomFactor * getClipGain(),
+                                        envelopePtr);
         }
         else {
             std::cout << "error WaveFormViewBase channel mapping." << std::endl;
@@ -96,13 +115,45 @@ juce::Rectangle<double> WaveFormViewBase::getClippedDrawingArea() const
     const auto parentOffset = static_cast<double>(parentComponent->getBounds().getX());
     const auto scrollOffset = zoomHandler->getVisibleRange().getStart();
     //std::cout << parentComponent.getName().toStdString() << " offset: " << parentOffset << " " << scrollOffset << std::endl;
-    const auto startX = std::max(scrollOffset - parentOffset, 0.0);
-    const auto lengthX = std::min(visibleRange.getLength(), static_cast<double>(thumbArea.getWidth()) - startX);
+    // whole pixels: paint() derives the drawn time range from this x and
+    // hands drawChannel the rounded rect - computed from a fractional x the
+    // two disagree by up to a pixel and the waveform jitters while zooming
+    const auto startX = std::floor(std::max(scrollOffset - parentOffset, 0.0));
+    const auto lengthX = std::min(std::ceil(visibleRange.getLength()),
+                                  static_cast<double>(thumbArea.getWidth()) - startX);
 
     thumbArea.setX(startX);
     thumbArea.setWidth(lengthX);
     //std::cout << thumbArea.getX() << " " << thumbArea.getWidth() << std::endl;
     return thumbArea;
+}
+
+std::shared_ptr<audium::AudioThumbnail> WaveFormViewBase::createThumbnailForResource(
+    const std::shared_ptr<audium::AudiumEngine>& audiumEngine,
+    const std::shared_ptr<audium::AudioResource>& audioResource)
+{
+    if (audioResource == nullptr ||
+        audioResource->audioFormatReader == nullptr)
+        return nullptr;
+
+    auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
+    auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
+    auto sourceSamplesPerThumbnailSample = 64;
+    auto thumbnail = std::make_shared<audium::AudioThumbnail>(sourceSamplesPerThumbnailSample,
+                                                              *formatManager,
+                                                              *thumbnailCache);
+    // reuse shared_ptr if the file is memory mapped
+    if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
+        auto hashCode = audioResource->getUrl().toString(true).hashCode64();
+        thumbnail->setReader(audioResource->audioFormatReader, hashCode);
+    }
+    else {
+        // create a new input source
+        if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
+            thumbnail->setSource(inputSource.release());
+        }
+    }
+    return thumbnail;
 }
 
 void WaveFormViewBase::createThumbnailCache()
@@ -112,26 +163,9 @@ void WaveFormViewBase::createThumbnailCache()
     }
 
     if (audioResource != nullptr) {
-        
+
         if (audioResource->audioFormatReader != nullptr) {
-            // create thumbnail
-            auto thumbnailCache = audiumEngine->getAudioResourceContainer()->getAudioThumbnailCache().get();
-            auto formatManager = audiumEngine->getAudioResourceContainer()->getAudioFormatManager().get();
-            auto sourceSamplesPerThumbnailSample = 64;
-            audioThumbnail = std::make_shared<audium::AudioThumbnail>(sourceSamplesPerThumbnailSample,
-                                                                      *formatManager,
-                                                                      *thumbnailCache);
-            // reuse shared_ptr if the file is memory mapped
-            if (dynamic_cast<MemoryMappedAudioFormatReader*> (audioResource->audioFormatReader.get()) != nullptr) {
-                auto hashCode = audioResource->getUrl().toString(true).hashCode64();
-                audioThumbnail->setReader(audioResource->audioFormatReader, hashCode);
-            }
-            else {
-                // create a new input source
-                if (auto inputSource = std::make_unique<juce::URLInputSource>(audioResource->getUrl())) {
-                    audioThumbnail->setSource(inputSource.release());
-                }
-            }
+            audioThumbnail = createThumbnailForResource(audiumEngine, audioResource);
             jassert(audioThumbnail);
         }
         else {

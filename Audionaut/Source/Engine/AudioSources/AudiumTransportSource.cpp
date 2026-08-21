@@ -16,7 +16,7 @@ audioResource(audioResource_),
 audioFormatReaderSource(audioFormatReaderSource_)
 {
     // the transport source
-    audioTransportSource = std::make_shared<audium::AudioTransportSource>();
+    audioTransportSource = std::make_shared<audium::AudioTransportSource>(std::make_shared<audium::ClipDynamicsProcessor>());
     
     // source
     auto readAheadBufferSize = 48000;
@@ -140,15 +140,21 @@ void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item
     auto channel    = getAudioResource().getChannelMapping().getDestinationChannel();
     auto gain       = item->getDynamics().getGain(channel);
     getAudioTransportSource()->setGain(static_cast<float>(gain));
-    
-    // Fade-in
-    auto fadeIn = tempoProvider->clocksToSeconds(item->getDynamics().getFadeInClocks());
-    auto offset = 0;
-    getAudioTransportSource()->setFadeInSeconds(fadeIn, offset, true);
-    
-    // Fade-out
-    auto fadeOut = tempoProvider->clocksToSeconds(item->getDynamics().getFadeOutClocks());
-    getAudioTransportSource()->setFadeOutSeconds(fadeOut, item->getRegionData(audium::seconds).getLength(), true);
+
+    // Fades: same shared configuration the scheduler uses, for a voice
+    // scheduled at the audible start (see bouncePlayListItem)
+    ClipFadeSpec spec;
+    auto regionSeconds = item->getRegionData(audium::seconds);
+    spec.regionStart = regionSeconds.getStart();
+    spec.regionEnd   = regionSeconds.getEnd();
+    spec.fadeIn      = item->getDynamics().getFadeIn(audium::seconds);
+    spec.fadeOut     = item->getDynamics().getFadeOut(audium::seconds);
+    spec.fadeInStart = item->getDynamics().getFadeInStart(audium::seconds);
+    spec.fadeOutEnd  = item->getDynamics().getFadeOutEnd(audium::seconds);
+    spec.fadeInCurve  = item->getDynamics().getFadeInCurve();
+    spec.fadeOutCurve = item->getDynamics().getFadeOutCurve();
+
+    configureClipFades(*getAudioTransportSource(), spec, spec.voiceFileStart(), true);
 }
 
 } // namespace audium

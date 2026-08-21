@@ -11,24 +11,30 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Interface/Controls/RegionSelector.h"
 
-class FadeInOutControl  : public juce::Component
+class DraggingHandle  : public juce::Component
 {
 public:
     enum FadeType {
-        FadeIn,
-        FadeOut
+        FadeIn,         // fade-in ramp end, top strip
+        FadeOut,        // fade-out ramp start, top strip
+        FadeInStart,    // fade-in ramp start, bottom edge
+        FadeOutEnd,     // fade-out ramp end, bottom edge
+        CurveIn,        // fade-in bend handle on the ramp midpoint, vertical drag
+        CurveOut        // fade-out bend handle on the ramp midpoint, vertical drag
     };
-    
-    FadeInOutControl(FadeType type_,
+
+    DraggingHandle(FadeType type_,
                      std::shared_ptr<audium::PlayListItem> playListItem_,
                      std::shared_ptr<RegionSelector> regionSelector_) :
         type(type_),
         playListItem(playListItem_),
         regionSelector(regionSelector_)
     {
+        setMouseCursor(isCurveType() ? juce::MouseCursor::UpDownResizeCursor
+                                     : juce::MouseCursor::LeftRightResizeCursor);
     }
     
-    ~FadeInOutControl() override = default;
+    ~DraggingHandle() override = default;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -53,7 +59,27 @@ public:
     void setValue(double val);
     
     void setPlayListItem(std::shared_ptr<audium::PlayListItem> playListItem_) { playListItem = playListItem_; }
-    
+
+    /** Parent-relative y the bottom-edge handles (FadeInStart/FadeOutEnd) sit
+        on - the bottom of the first channel row. 0 falls back to the parent
+        bottom. */
+    void setBottomAnchorY(int y) { bottomAnchorY = y; }
+
+    /** The clip's x-range in the parent's coordinates. When set, the handle is
+        parented to the track lane instead of the clip and its value maps
+        against this range - positions outside it yield negative values (fade
+        extending outside the clip). For the curve types this is the RAMP's
+        x-range instead - the handle sits on its midpoint. Empty range =
+        legacy parent-is-the-clip mode. */
+    void setClipRange(juce::Range<int> range) { clipRange = range; }
+
+    bool isCurveType() const { return type == CurveIn || type == CurveOut; }
+
+    /** The component a mouseExit is forwarded to (the clip component). Used
+        instead of getParentComponent() so lane-parented handles still notify
+        their clip. */
+    void setExitTarget(juce::Component* target) { exitTarget = target; }
+
 private:
     FadeType type;
     
@@ -65,6 +91,10 @@ private:
     int visualSize      = 8;
     int controlHeight   = 16;
     int controlWidth    = 8;
+    int bottomAnchorY   = 0;
+
+    juce::Range<int> clipRange;
+    juce::Component* exitTarget = nullptr;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FadeInOutControl)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DraggingHandle)
 };

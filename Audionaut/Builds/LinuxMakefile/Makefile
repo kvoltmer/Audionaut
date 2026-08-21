@@ -146,7 +146,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o \
   $(JUCE_OBJDIR)/AutoEditOverlayControl_e143b2a.o \
   $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o \
-  $(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o \
+  $(JUCE_OBJDIR)/DraggingHandle_64fe2e5b.o \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
   $(JUCE_OBJDIR)/DraggerControl_f198dea1.o \
   $(JUCE_OBJDIR)/LevelMeter_821028e9.o \
@@ -154,6 +154,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/RegionSelector_50640af7.o \
   $(JUCE_OBJDIR)/RegionTableListBox_80e14e37.o \
   $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o \
+  $(JUCE_OBJDIR)/ClipFadeOverlay_7793246e.o \
   $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o \
   $(JUCE_OBJDIR)/SegmentationView_81438847.o \
   $(JUCE_OBJDIR)/AutoEditPreviewView_ccfab99e.o \
@@ -563,9 +564,9 @@ $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o: ../../Source/Interface/Controls/Lo
 	@echo "Compiling LoopDraggerControl.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/FadeInOutControl_f1b87b94.o: ../../Source/Interface/Controls/FadeInOutControl.cpp
+$(JUCE_OBJDIR)/DraggingHandle_64fe2e5b.o: ../../Source/Interface/Controls/DraggingHandle.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling FadeInOutControl.cpp"
+	@echo "Compiling DraggingHandle.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o: ../../Source/Interface/Controls/PlayListItemDraggerControl.cpp
@@ -601,6 +602,11 @@ $(JUCE_OBJDIR)/RegionTableListBox_80e14e37.o: ../../Source/Interface/Controls/Re
 $(JUCE_OBJDIR)/AudioTrackListBox_19d1f4fe.o: ../../Source/Interface/Controls/AudioTrackListBox.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AudioTrackListBox.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ClipFadeOverlay_7793246e.o: ../../Source/Interface/Views/ClipFadeOverlay.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ClipFadeOverlay.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/FadeInOutView_5098f4fc.o: ../../Source/Interface/Views/FadeInOutView.cpp

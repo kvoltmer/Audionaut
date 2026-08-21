@@ -194,7 +194,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.defaultKeypresses.add (KeyPress ('r', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::splitRegion:
-            result.setInfo ("Split Region", "Splits a region", CommandCategories::editing, 0);
+            result.setInfo ("Split", "Splits a region", CommandCategories::editing, 0);
             if (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().anyRangeSelected()) {
                 if (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().canCreateRegion())
                     bActive = true;

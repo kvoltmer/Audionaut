@@ -608,6 +608,8 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
                                                 : target.extent;
 
     const auto replaceClip = config.replacePlayListItem;
+    const auto crossfadeSeconds = config.crossfades ? config.crossfadeSeconds : 0.0;
+    const auto crossfadeCurve = config.crossfadeCurve;
     const auto clipIndex = target.playListItemIndex;
 
     // Segments are named after the clip they are cut from; without one, the
@@ -616,7 +618,8 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
                                                        : track->getAudioTrackName();
 
     if (! applyAsUndoableEdit([this, &boundaries, extent, track, resourceGroup,
-                               replaceClip, clipIndex, baseName]
+                               replaceClip, crossfadeSeconds, crossfadeCurve,
+                               clipIndex, baseName]
         {
             auto created = createRegionsFromBoundaries(boundaries, extent, track,
                                                        resourceGroup, baseName);
@@ -627,7 +630,8 @@ bool AutoEdit::invokeAutoEdit(AutoEditConfig &config,
             // Inside the same transaction, so one Undo takes the arrangement
             // back along with the regions.
             if (replaceClip)
-                replacePlayListItemWithRegions(track, clipIndex, created);
+                replacePlayListItemWithRegions(track, clipIndex, created,
+                                               crossfadeSeconds, crossfadeCurve);
 
             return true;
         }))
@@ -990,7 +994,9 @@ std::vector<std::shared_ptr<AudioRegion>>
 
 bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
                                               int playListItemIndex,
-                                              const std::vector<std::shared_ptr<AudioRegion>>& regions)
+                                              const std::vector<std::shared_ptr<AudioRegion>>& regions,
+                                              double crossfadeSeconds,
+                                              double crossfadeCurve)
 {
     if (track == nullptr || regions.empty())
         return false;
@@ -1009,12 +1015,12 @@ bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
         return false;
 
     const auto originalStartClocks = original->getAbsolutePosition(audium::clocks);
+    const auto originalRegion = original->getRegion();
 
     // The clip's item goes first: inserting the segments while it still sat
     // there would make way for each of them, pushing the clip - and every
     // neighbouring item behind it - down the timeline, and only the segments
-    // would be moved back. The clip's region stays: it still describes the
-    // audio the segments came from, and other items may reference it.
+    // would be moved back.
     if (! playListContainer->deletePlayListItem(original.get(), false))
         return false;
 
@@ -1024,13 +1030,50 @@ bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
     // they are - the segments only ever cover the stretch the clip covered.
     auto positionClocks = originalStartClocks;
 
+    std::vector<std::shared_ptr<PlayListItem>> items;
     for (const auto& region : regions)
         if (auto item = playListContainer->createPlayListItemAtPositionUI(region,
                                                                           positionClocks,
                                                                           audium::clocks))
+        {
             positionClocks += item->getRegionData(audium::clocks).getLength();
+            items.push_back(item);
+        }
+
+    // A symmetric crossfade at every joint: each side fades over half the
+    // crossfade inside its clip and half beyond it (an extension reading the
+    // neighbouring material). Curves stay at the equal-power default.
+    if (crossfadeSeconds > 0.0) {
+        const auto half = crossfadeSeconds / 2.0;
+
+        for (size_t i = 1; i < items.size(); ++i) {
+            auto& left = items[i - 1];
+            auto& right = items[i];
+
+            // fractions of each clip's own region length, clamped so short
+            // segments never fold a fade over their far edge
+            auto leftFrac = juce::jmin(0.45, half / left->getRegionData(audium::seconds).getLength());
+            auto rightFrac = juce::jmin(0.45, half / right->getRegionData(audium::seconds).getLength());
+
+            left->getDynamics().setFadeOut(leftFrac);
+            left->getDynamics().setFadeOutEnd(-leftFrac);
+            left->getDynamics().setFadeOutCurve(crossfadeCurve);
+
+            right->getDynamics().setFadeIn(rightFrac);
+            right->getDynamics().setFadeInStart(-rightFrac);
+            right->getDynamics().setFadeInCurve(crossfadeCurve);
+        }
+    }
 
     playListContainer->sortByPosition();
+
+    // The segments fully replace the clip, so the whole-clip region goes
+    // too - left behind, Assemble would pick it up alongside the segments
+    // it was cut into. Kept only when another item still references it.
+    if (originalRegion != nullptr &&
+        ! playListContainer->exitsInPlayList(originalRegion.get())) {
+        originalRegion->getResourceGroup()->getAudioRegionContainer()->deleteAudioRegion(originalRegion);
+    }
 
     return true;
 }
