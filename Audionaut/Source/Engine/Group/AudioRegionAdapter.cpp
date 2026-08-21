@@ -172,10 +172,12 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                                                                            context);
                 if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, item->getAbsolutePosition(context), context)) {
                     newItem->getDynamics().copyGainsFrom(item->getDynamics());
+                    // this piece keeps the clip's start edge and its fade-in
+                    newItem->getDynamics().copyFadeInFrom(item->getDynamics());
                 }
                 success = true;
             }
-            
+
             // - region of selection
             if (selectedRange.getLength() > 0.0) {
                 localRange = item->absoluteToLocalRange(selectedRange, context);
@@ -188,6 +190,12 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                                                                            context);
                 if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getStart(), context)) {
                     newItem->getDynamics().copyGainsFrom(item->getDynamics());
+                    // the selection piece keeps an original edge only when
+                    // the selection reaches it - then its fade comes along
+                    if (selectedRange.getStart() <= itemRange.getStart())
+                        newItem->getDynamics().copyFadeInFrom(item->getDynamics());
+                    if (selectedRange.getEnd() >= itemRange.getEnd())
+                        newItem->getDynamics().copyFadeOutFrom(item->getDynamics());
                 }
                 success = true;
             }
@@ -206,6 +214,8 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                                                                            context);
                 if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getEnd(), context)) {
                     newItem->getDynamics().copyGainsFrom(item->getDynamics());
+                    // this piece keeps the clip's end edge and its fade-out
+                    newItem->getDynamics().copyFadeOutFrom(item->getDynamics());
                 }
                 success = true;
             }

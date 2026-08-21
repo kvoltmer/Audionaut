@@ -62,6 +62,39 @@ void ClipDynamics::copyGainsFrom(const ClipDynamics& other)
     gains = other.gains;
 }
 
+void ClipDynamics::copyFadeInFrom(const ClipDynamics& other)
+{
+    auto length = getRegionLengthClocks();
+
+    fadeInClocks = std::min(other.fadeInClocks, length);
+    fadeInStartClocks = std::min(other.fadeInStartClocks, fadeInClocks);
+    fadeInCurve = other.fadeInCurve;
+
+    // a split piece carries at most one side, but keep the invariants
+    if (fadeInClocks + fadeOutClocks > length) {
+        fadeOutClocks = length - fadeInClocks;
+        if (fadeOutEndClocks > fadeOutClocks) {
+            fadeOutEndClocks = fadeOutClocks;
+        }
+    }
+}
+
+void ClipDynamics::copyFadeOutFrom(const ClipDynamics& other)
+{
+    auto length = getRegionLengthClocks();
+
+    fadeOutClocks = std::min(other.fadeOutClocks, length);
+    fadeOutEndClocks = std::min(other.fadeOutEndClocks, fadeOutClocks);
+    fadeOutCurve = other.fadeOutCurve;
+
+    if (fadeInClocks + fadeOutClocks > length) {
+        fadeInClocks = length - fadeOutClocks;
+        if (fadeInStartClocks > fadeInClocks) {
+            fadeInStartClocks = fadeInClocks;
+        }
+    }
+}
+
 void ClipDynamics::copyFrom(const ClipDynamics& other)
 {
     gains = other.gains;

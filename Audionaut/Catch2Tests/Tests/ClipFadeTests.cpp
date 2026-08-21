@@ -1728,3 +1728,80 @@ SCENARIO("uncorrelated clips crossfade at constant power", "[engine][dsp][fade][
     juce::DeletedAtShutdown::deleteAll();
     juce::MessageManager::deleteInstance();
 }
+
+SCENARIO("splitting a clip preserves its edge fades", "[engine][fade]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    auto inputFile = generateDcOffsetAudioFile(2.0);
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    GIVEN("a 2 second clip with full fade dynamics")
+    {
+        engine->openFile(inputFile, nullptr);
+
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        auto item = track->getPlayListContainer()->getPlayListItem(0);
+        REQUIRE(item != nullptr);
+
+        // fractions of the 2 s region
+        item->getDynamics().setFadeIn(0.25);        // 0.5 s
+        item->getDynamics().setFadeInStart(0.1);    // 0.2 s silent head
+        item->getDynamics().setFadeInCurve(1.5);
+        item->getDynamics().setFadeOut(0.25);       // 0.5 s
+        item->getDynamics().setFadeOutEnd(-0.1);    // 0.2 s extension
+        item->getDynamics().setFadeOutCurve(2.0);
+
+        WHEN("the clip is split at its middle")
+        {
+            engine->getAudioTrackContainer()->getAudioRegionAdapter().splitRegions(1.0, audium::seconds);
+
+            auto items = track->getPlayListContainer()->getPlayListItems();
+            REQUIRE(items.size() == 2);
+
+            THEN("the left piece keeps the fade-in family, and only that")
+            {
+                auto& dynamics = items[0]->getDynamics();
+                REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.5));
+                REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(0.2));
+                REQUIRE(dynamics.getFadeInCurve() == Catch::Approx(1.5));
+                REQUIRE(dynamics.getFadeOut(audium::seconds) == Catch::Approx(0.0));
+                REQUIRE(dynamics.getFadeOutEnd(audium::seconds) == Catch::Approx(0.0));
+            }
+
+            THEN("the right piece keeps the fade-out family, and only that")
+            {
+                auto& dynamics = items[1]->getDynamics();
+                REQUIRE(dynamics.getFadeOut(audium::seconds) == Catch::Approx(0.5));
+                REQUIRE(dynamics.getFadeOutEnd(audium::seconds) == Catch::Approx(-0.2));
+                REQUIRE(dynamics.getFadeOutCurve() == Catch::Approx(2.0));
+                REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.0));
+                REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(0.0));
+            }
+        }
+
+        WHEN("the clip is split inside its fade-in")
+        {
+            engine->getAudioTrackContainer()->getAudioRegionAdapter().splitRegions(0.3, audium::seconds);
+
+            auto items = track->getPlayListContainer()->getPlayListItems();
+            REQUIRE(items.size() == 2);
+
+            THEN("the left piece's fade-in is clamped to its length")
+            {
+                auto& dynamics = items[0]->getDynamics();
+                REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.3));
+                REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(0.2));
+            }
+        }
+    }
+
+    engine = nullptr;
+
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}

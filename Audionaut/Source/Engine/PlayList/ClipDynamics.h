@@ -56,8 +56,18 @@ public:
     double getGain(int channel) const;
     void onDeleteChannel(int channel);
 
-    // gains only - split/clone don't inherit fades
+    // gains only - clones don't inherit fades; a split piece additionally
+    // copies the fade of the edge it keeps via copyFadeInFrom/copyFadeOutFrom
     void copyGainsFrom(const ClipDynamics& other);
+
+    // the head-side fade family (fade-in, its start offset and curve),
+    // clamped to this clip's length - for the split piece keeping the
+    // original clip's start edge
+    void copyFadeInFrom(const ClipDynamics& other);
+
+    // the tail-side fade family, mirrored - for the piece keeping the
+    // original end edge
+    void copyFadeOutFrom(const ClipDynamics& other);
 
     // the complete dynamics: gains AND all four fade values - for an export
     // item that must sound exactly like its source item
