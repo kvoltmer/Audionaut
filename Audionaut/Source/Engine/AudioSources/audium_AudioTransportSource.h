@@ -7,6 +7,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "ClipDynamicsProcessor.h"
 #include "VolumeFade.h"
 
 using namespace juce;
@@ -84,7 +85,10 @@ public:
     /** Creates an AudioTransportSource.
         After creating one of these, use the setSource() method to select an input source.
     */
-    AudioTransportSource();
+    /** The dynamics processor (clip gain + fades) is injected so the
+        rendering chain can be configured and tested on its own. */
+    explicit AudioTransportSource (std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor_
+                                       = std::make_shared<ClipDynamicsProcessor>());
 
     /** Destructor. */
     ~AudioTransportSource() override;
@@ -178,6 +182,9 @@ public:
         unity pass-through until then). */
     void setFadeOutRamp(double rampSeconds, double rampStartSeconds, bool reset);
 
+    /** The injected dynamics chain, for callers that configure it directly. */
+    std::shared_ptr<ClipDynamicsProcessor> getDynamicsProcessor() const { return dynamicsProcessor; }
+
     //==============================================================================
     /** Implementation of the AudioSource method. */
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
@@ -211,7 +218,7 @@ private:
     PositionableAudioSource* positionableSource = nullptr;
     AudioSource* masterSource = nullptr;
 
-    std::atomic<float> gain = 1.0f;
+    std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor;
 
     std::atomic<bool> playing  = false;
     std::atomic<bool> stopped  = true;
@@ -220,10 +227,7 @@ private:
     int blockSize = 128, readAheadBufferSize = 0;
     std::atomic<bool> isPrepared = false;
 
-    juce::dsp::Gain<float> clipGain;
     
-    audium::VolumeFade<float> clipFadeIn;
-    audium::VolumeFade<float> clipFadeOut;
     
     void releaseMasterResources();
 

@@ -3130,6 +3130,7 @@
     <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisWorker.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\EventMerger.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\ClipDynamicsProcessor.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.h"/>

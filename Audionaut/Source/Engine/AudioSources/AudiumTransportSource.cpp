@@ -16,7 +16,7 @@ audioResource(audioResource_),
 audioFormatReaderSource(audioFormatReaderSource_)
 {
     // the transport source
-    audioTransportSource = std::make_shared<audium::AudioTransportSource>();
+    audioTransportSource = std::make_shared<audium::AudioTransportSource>(std::make_shared<audium::ClipDynamicsProcessor>());
     
     // source
     auto readAheadBufferSize = 48000;

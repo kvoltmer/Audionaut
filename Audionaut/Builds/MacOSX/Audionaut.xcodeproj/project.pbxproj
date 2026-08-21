@@ -203,6 +203,7 @@
 		40C4B2AFB6AEC8724EBF0CC7 /* SubGroupListBoxModel.h */ /* SubGroupListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SubGroupListBoxModel.h; path = ../../Source/Interface/Models/SubGroupListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		41C5D3B1E81DCFA1BE08D14C /* LevelMeter.cpp */ /* LevelMeter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LevelMeter.cpp; path = ../../Source/Interface/Controls/LevelMeter.cpp; sourceTree = SOURCE_ROOT; };
 		42B5F856AB06EB5D3BEDFA0D /* juce_core */ /* juce_core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_core; path = ../../../Submodules/JUCE/modules/juce_core; sourceTree = SOURCE_ROOT; };
+		42CF08811F65DD0560500E19 /* ClipDynamicsProcessor.h */ /* ClipDynamicsProcessor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipDynamicsProcessor.h; path = ../../Source/Engine/AudioSources/ClipDynamicsProcessor.h; sourceTree = SOURCE_ROOT; };
 		42F829C06FF3F8AD4CE6871B /* AudioClipView.cpp */ /* AudioClipView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioClipView.cpp; path = ../../Source/Interface/Views/AudioClipView.cpp; sourceTree = SOURCE_ROOT; };
 		4347FD8278FC68736C4AECD2 /* ChannelsHeaderComponent.h */ /* ChannelsHeaderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelsHeaderComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelsHeaderComponent.h; sourceTree = SOURCE_ROOT; };
 		43E55625169B10927C91EC7C /* Playback.h */ /* Playback.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Playback.h; path = ../../Source/Engine/Playback/Playback.h; sourceTree = SOURCE_ROOT; };
@@ -814,6 +815,7 @@
 			isa = PBXGroup;
 			children = (
 				6F2675F2742A1F6F2D7F238E,
+				42CF08811F65DD0560500E19,
 				AC56136A076FC15C2E904E25,
 				CAFD7E7A5EC218460C239503,
 				4D29270EED662FCEDECFF44A,

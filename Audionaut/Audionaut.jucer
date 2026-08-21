@@ -71,6 +71,8 @@
         </GROUP>
         <GROUP id="{9A6C6646-1E27-4BE7-C47B-E234FDD003D4}" name="AudioSources">
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
+          <FILE id="CdpPrc" name="ClipDynamicsProcessor.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/ClipDynamicsProcessor.h"/>
           <FILE id="S0kUtq" name="AudiumTransportSource.cpp" compile="1" resource="0"
                 file="Source/Engine/AudioSources/AudiumTransportSource.cpp"/>
           <FILE id="FrI8bp" name="AudiumTransportSource.h" compile="0" resource="0"
