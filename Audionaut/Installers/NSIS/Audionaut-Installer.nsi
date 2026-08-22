@@ -1,16 +1,76 @@
+Unicode true ;NSIS 3 still defaults to an ANSI installer, which breaks on any
+             ;non-ASCII character in the install path or the user's name.
+
 !define Name "Audionaut"
+!define Publisher "Voltmer Systems"
+
+;Keyed on the product, not the company: a second product from the same
+;publisher would otherwise overwrite this entry. CI passes -DVersion to keep
+;this in step with Audionaut.jucer; the default is the fallback for a local
+;makensis run and must be bumped with the .jucer.
+!ifndef Version
+  !define Version "1.3.0"
+!endif
+!define UninstKey "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Name}"
+
 Name "${Name}"
 Outfile "${Name} Setup.exe"
+
+;Version resource for Setup.exe's own file properties - without these the
+;installer shows a blank Details tab. VIProductVersion must be four-part and
+;the .jucer version is three-part, hence the trailing .0.
+VIProductVersion "${Version}.0"
+VIAddVersionKey "ProductName"     "${Name}"
+VIAddVersionKey "ProductVersion"  "${Version}"
+VIAddVersionKey "FileVersion"     "${Version}.0"
+VIAddVersionKey "FileDescription" "${Name} ${Version} Setup"
+VIAddVersionKey "CompanyName"     "${Publisher}"
+VIAddVersionKey "LegalCopyright"  "Copyright (C) 2025 Klaus Voltmer"
 RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on)
 InstallDir "$ProgramFiles64\${Name}"
 ;"..\..\Builds\VisualStudio2026\icon.ico"
 
 !include LogicLib.nsh
-!include MUI.nsh
+!include FileFunc.nsh ;${GetSize}, for the EstimatedSize the Settings app shows
 !include "MUI2.nsh"
+
+;Refuse to run while Audionaut is open. Windows holds a running exe's image
+;without FILE_SHARE_WRITE, so opening it for append is a plugin-free test that
+;asks exactly the right question - can we overwrite or delete this file? -
+;rather than guessing at process or window names. Without the check the File
+;command below fails mid-install and leaves a half-written install directory,
+;and the uninstaller silently skips the exe and then cannot remove $INSTDIR.
+;
+;Inserted twice to give the installer and the uninstaller their own copy; the
+;uninstaller cannot call a plain Function. Labels are function-local, so both
+;copies can use the same ones.
+!macro AbortIfRunning un
+Function ${un}AbortIfRunning
+  retry:
+  IfFileExists "$INSTDIR\${Name}.exe" 0 done ;nothing installed yet
+  ClearErrors
+  FileOpen $0 "$INSTDIR\${Name}.exe" a
+  IfErrors 0 unlocked
+    ;/SD IDCANCEL so a silent run (QuietUninstallString passes /S) gives up
+    ;instead of blocking on a dialog nobody can answer.
+    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
+      "${Name} is still running.$\n$\nPlease close it, then press Retry." \
+      /SD IDCANCEL IDRETRY retry
+    Abort "${Name} is still running."
+  unlocked:
+  FileClose $0
+  done:
+FunctionEnd
+!macroend
+!insertmacro AbortIfRunning ""
+!insertmacro AbortIfRunning "un."
 
 Function .onInit
 SetShellVarContext all
+SetRegView 64 ;makensis emits a 32-bit installer, so without this every HKLM
+              ;write is redirected into Software\WOW6432Node - the wrong place
+              ;for a 64-bit-only app. See the legacy cleanup in the install
+              ;section for the migration this needs.
 UserInfo::GetAccountType
 pop $0
 ${If} $0 != "admin" ;Require admin rights on NT4+
@@ -18,6 +78,14 @@ ${If} $0 != "admin" ;Require admin rights on NT4+
     SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
     Quit
 ${EndIf}
+FunctionEnd
+
+;.onInit does NOT run in the uninstaller. Without this the uninstaller's
+;$SMPROGRAMS resolves to the current user's Start Menu rather than the
+;all-users one the installer wrote to, and the shortcut is never removed.
+Function un.onInit
+SetShellVarContext all
+SetRegView 64 ;must match the installer, or DeleteRegKey misses the key
 FunctionEnd
 
 Function LaunchLink
@@ -34,7 +102,13 @@ FunctionEnd
 !define MUI_FINISHPAGE_RUN_TEXT "Launch Audionaut.exe"
 !define MUI_FINISHPAGE_RUN_FUNCTION "LaunchLink"
 
+;License.txt is a plain-text rendering of the repo-root LICENSE.md - the
+;license page feeds a RichEdit control, which shows markdown headings and
+;link syntax as literal noise. Keep the two in step when the license changes;
+;.gitattributes pins this one to CRLF, without which the control runs the
+;lines together.
 !insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_LICENSE "License.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -44,21 +118,46 @@ FunctionEnd
 
 
 Section
+Call AbortIfRunning
 SetOutPath "$INSTDIR"
 WriteUninstaller "$INSTDIR\Uninstall.exe"
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voltmer Systems"   "DisplayName" "${Name}"
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voltmer Systems"   "UninstallString" "$INSTDIR\Uninstall.exe"
 ;Install your files with the File command
 File "..\..\Builds\VisualStudio2026\x64\Release\App\${Name}.exe"
 CreateShortCut "$SMPROGRAMS\${Name}.lnk" "$INSTDIR\${Name}.exe"
+
+;Installers up to v1.2.2 ran in the 32-bit registry view and keyed the entry
+;on the company, so their key sits under WOW6432Node as ...\Uninstall\Voltmer
+;Systems. Upgrading over one of those would otherwise leave a second, stale
+;Apps & Features entry pointing at this same Uninstall.exe. Clear both the old
+;name and the product name from that view before writing the 64-bit entry.
+SetRegView 32
+DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Publisher}"
+DeleteRegKey HKLM "${UninstKey}"
+SetRegView 64
+
+;Apps & Features metadata. Written after the File command so ${GetSize} sees
+;the installed payload. There is nothing to modify or repair, so both are
+;suppressed and only Uninstall is offered.
+WriteRegStr HKLM "${UninstKey}" "DisplayName"     "${Name}"
+WriteRegStr HKLM "${UninstKey}" "DisplayVersion"  "${Version}"
+WriteRegStr HKLM "${UninstKey}" "Publisher"       "${Publisher}"
+WriteRegStr HKLM "${UninstKey}" "DisplayIcon"     "$INSTDIR\${Name}.exe"
+WriteRegStr HKLM "${UninstKey}" "InstallLocation" "$INSTDIR"
+WriteRegStr HKLM "${UninstKey}" "UninstallString" "$INSTDIR\Uninstall.exe"
+WriteRegStr HKLM "${UninstKey}" "QuietUninstallString" "$\"$INSTDIR\Uninstall.exe$\" /S"
+WriteRegDWORD HKLM "${UninstKey}" "NoModify" 1
+WriteRegDWORD HKLM "${UninstKey}" "NoRepair" 1
+${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+IntFmt $0 "0x%08X" $0
+WriteRegDWORD HKLM "${UninstKey}" "EstimatedSize" $0
 SectionEnd
 
 Section "Uninstall"
+Call un.AbortIfRunning
 ;Delete your files
 Delete "$INSTDIR\${Name}.exe"
 Delete "$SMPROGRAMS\${Name}.lnk"
-DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voltmer Systems"
+DeleteRegKey HKLM "${UninstKey}"
 Delete "$INSTDIR\Uninstall.exe"
 RMDir "$INSTDIR"
 SectionEnd
-

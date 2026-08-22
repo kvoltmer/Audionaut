@@ -6,3 +6,7 @@ Audionaut/Catch2Tests/TestFiles/epy-oh-yeah-streicher-fix.wav filter=lfs diff=lf
 # every platform. core.autocrlf=true would otherwise hand Windows CRLF.
 Audionaut/Builds/build_essentia_windows.ps1 text eol=lf
 Audionaut/Builds/Windows/** text eol=lf
+
+# The NSIS license page feeds a RichEdit control that needs CRLF, whatever
+# core.autocrlf happens to be on the machine doing the checkout.
+Audionaut/Installers/NSIS/License.txt text eol=crlf
