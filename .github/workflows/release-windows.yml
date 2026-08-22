@@ -17,7 +17,11 @@ on:
   workflow_dispatch:
 
 permissions:
+  # Workflow-level `permissions:` REPLACES the whole default set, so both must
+  # be listed: id-token for the OIDC exchange with Azure, contents for the
+  # `gh release create/upload` below. Dropping either breaks one of them.
   contents: write
+  id-token: write
 
 env:
   BUILD_TYPE: Release
@@ -32,10 +36,27 @@ env:
   VCPKG_ROOT_DIR: C:/vcpkg
   AUDIONAUT_VCPKG_PREFIX: C:/vcpkg/installed/x64-windows-static-md
 
+  # Azure Artifact Signing (formerly Trusted Signing). These are identifiers,
+  # not secrets - the credentials are the AZURE_* repo secrets used by
+  # azure/login below. Update SIGN_ENDPOINT to the region the signing account
+  # was actually created in; a mismatch fails at sign time, not at configure
+  # time.
+  SIGN_ENDPOINT: https://weu.codesigning.azure.net
+  SIGN_ACCOUNT: CHANGEME-signing-account
+  SIGN_PROFILE: CHANGEME-certificate-profile
+
 jobs:
   package:
 
     runs-on: windows-2025
+
+    env:
+      # Signing runs only for real tag releases on this repo. Computed once so
+      # the makensis step and the signing steps can never disagree about
+      # whether this is a signed build. Manual workflow_dispatch runs and forks
+      # have no OIDC trust and would hard-fail on azure/login, so they build
+      # unsigned instead.
+      SIGN: ${{ startsWith(github.ref, 'refs/tags/') && github.repository == 'kvoltmer/Audionaut' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -75,15 +96,72 @@ jobs:
         -p:Platform=x64
         -v:minimal
 
+    # --- signing -------------------------------------------------------
+    # All three binaries (payload exe, uninstaller, installer) go through
+    # Audionaut/Installers/NSIS/sign.cmd so they share one set of flags. The
+    # uninstaller cannot be signed as a build artifact - it only exists inside
+    # the installer - so the .nsi calls the same script from !uninstfinalize
+    # during the makensis run below.
+
+    - name: Azure login (OIDC)
+      if: env.SIGN == 'true'
+      uses: azure/login@v3
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Set up signing tools
+      if: env.SIGN == 'true'
+      shell: pwsh
+      # Discovers rather than hardcodes the two paths sign.cmd needs, because
+      # both move with SDK and client-package versions. Fails loudly with a
+      # directory listing rather than silently leaving them unset.
+      run: |
+        nuget install Microsoft.Trusted.Signing.Client -OutputDirectory "$env:RUNNER_TEMP\signclient" -ExcludeVersion
+        $dlib = Get-ChildItem "$env:RUNNER_TEMP\signclient" -Recurse -Filter Azure.CodeSigning.Dlib.dll |
+                Where-Object FullName -match 'x64' | Select-Object -First 1
+        if (-not $dlib) {
+          Get-ChildItem "$env:RUNNER_TEMP\signclient" -Recurse -Filter *.dll | Select-Object FullName
+          throw "Azure.CodeSigning.Dlib.dll not found - see listing above"
+        }
+        $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter signtool.exe |
+                    Where-Object FullName -match 'x64' |
+                    Sort-Object FullName -Descending | Select-Object -First 1
+        if (-not $signtool) { throw "signtool.exe not found in the Windows SDK" }
+
+        $metadata = "$env:RUNNER_TEMP\signing-metadata.json"
+        @{
+          Endpoint               = $env:SIGN_ENDPOINT
+          CodeSigningAccountName = $env:SIGN_ACCOUNT
+          CertificateProfileName = $env:SIGN_PROFILE
+        } | ConvertTo-Json | Set-Content -Path $metadata -Encoding utf8
+
+        "SIGNTOOL=$($signtool.FullName)" | Out-File $env:GITHUB_ENV -Append
+        "SIGN_DLIB=$($dlib.FullName)"    | Out-File $env:GITHUB_ENV -Append
+        "SIGN_METADATA=$metadata"        | Out-File $env:GITHUB_ENV -Append
+        Write-Host "signtool: $($signtool.FullName)"
+        Write-Host "dlib:     $($dlib.FullName)"
+
+    - name: Sign the app
+      if: env.SIGN == 'true'
+      # Must run BEFORE the installer is built - makensis packs this exe, so
+      # signing it afterwards would leave the installed application unsigned.
+      shell: cmd
+      run: Audionaut\Installers\NSIS\sign.cmd Audionaut\Builds\VisualStudio2026\x64\Release\App\Audionaut.exe
+
     - name: Build the installer
       # The .nsi packs the Release x64 exe the previous step just built. Run
       # makensis from the script's directory so its relative File paths
-      # (..\..\Builds\...) resolve. The runner image ships NSIS; the choco
-      # install is only a guard against an image that stops doing so. The
+      # (..\..\Builds\...) resolve. NSIS is NOT on the windows-2025 image (it
+      # was removed), so the choco install is the real path, not a fallback -
+      # which also means the NSIS version is pinned by the choco package. The
       # rename gives the artifact a versioned Release filename (mirroring the
       # AppImage) without touching the .nsi; VERSION comes from the .jucer
       # rather than the tag, so manual runs off a branch are named properly
-      # too - on a tag run the check above proves the two agree.
+      # too - on a tag run the check above proves the two agree. The same
+      # VERSION is passed to makensis as -DVersion, which is what lands in
+      # the Apps & Features entry, so the .nsi never carries a stale default.
       working-directory: Audionaut/Installers/NSIS
       shell: bash
       run: |
@@ -91,9 +169,26 @@ jobs:
         if [ ! -f "$MAKENSIS" ]; then
           choco install nsis -y --no-progress
         fi
-        "$MAKENSIS" Audionaut-Installer.nsi
         VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' ../../Audionaut.jucer | head -1 | cut -d'"' -f2)
+
+        # -DSIGN_UNINSTALLER makes the .nsi's !uninstfinalize hook run sign.cmd
+        # on Uninstall.exe before it is embedded. The .nsi asserts the exit
+        # code, so a signing failure aborts the build rather than quietly
+        # shipping an unsigned uninstaller.
+        SIGN_ARGS=""
+        if [ "$SIGN" = "true" ]; then SIGN_ARGS="-DSIGN_UNINSTALLER"; fi
+
+        "$MAKENSIS" -DVersion="$VERSION" $SIGN_ARGS Audionaut-Installer.nsi
         mv "Audionaut Setup.exe" "Audionaut-$VERSION-Setup.exe"
+
+        # Sign the installer last, after the rename, so the signed bytes are
+        # what the upload step globs. This cannot disturb the already-signed
+        # payload inside: that is compressed data in the NSIS block, not a PE
+        # region the outer signature covers.
+        if [ "$SIGN" = "true" ]; then
+          ./sign.cmd "Audionaut-$VERSION-Setup.exe"
+        fi
+
         ls -l Audionaut-*-Setup.exe
 
     - name: Upload to GitHub Release

@@ -68,6 +68,13 @@ cd Audionaut/Builds/LinuxMakefile/
 make CONFIG=Release -j8
 ```
 
+### Windows installer
+
+Tagged releases publish an NSIS installer (`Audionaut-<version>-Setup.exe`) built by
+`.github/workflows/release-windows.yml`. The installer, the application and the
+uninstaller are Authenticode-signed as Voltmer Systems via Azure Artifact Signing.
+Installers built locally or by CI outside a release tag are unsigned.
+
 ### Tests
 
 See the <a href="Audionaut/Catch2Tests/README.md">Catch2 tests README</a>.

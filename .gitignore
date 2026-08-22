@@ -77,3 +77,7 @@ Audionaut/Builds/Debian/*.deb
 Audionaut/Builds/Debian/*.ddeb
 Audionaut/Builds/Debian/*.changes
 Audionaut/Builds/Debian/*.buildinfo
+
+# Locally built NSIS installer output (the release workflow builds its own).
+Audionaut/Installers/NSIS/*Setup.exe
+Audionaut/Installers/NSIS/signing-metadata.json

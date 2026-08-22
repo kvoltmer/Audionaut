@@ -10,3 +10,7 @@ Audionaut/Builds/Windows/** text eol=lf
 # The NSIS license page feeds a RichEdit control that needs CRLF, whatever
 # core.autocrlf happens to be on the machine doing the checkout.
 Audionaut/Installers/NSIS/License.txt text eol=crlf
+
+# Batch files are parsed line by line by cmd.exe; LF-only endings break
+# multi-line constructs.
+Audionaut/Installers/NSIS/sign.cmd text eol=crlf

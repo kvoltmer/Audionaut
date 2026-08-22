@@ -235,15 +235,21 @@ jobs:
           # Run makensis from the script's directory so its relative File
           # paths (..\..\Builds\...) resolve. NSIS is not preinstalled on the
           # image. Placed before the test steps so a test failure does not
-          # block the installer artifact.
+          # block the installer artifact. -DVersion feeds the .jucer version
+          # into the installer's Apps & Features entry.
           working_directory: Audionaut/Installers/NSIS
           command: |
             choco install nsis -y --no-progress
-            "/c/Program Files (x86)/NSIS/makensis.exe" Audionaut-Installer.nsi
+            VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' ../../Audionaut.jucer | head -1 | cut -d'"' -f2)
+            "/c/Program Files (x86)/NSIS/makensis.exe" -DVersion="$VERSION" Audionaut-Installer.nsi
 
       # Shows up on the job's Artifacts tab. CI smoke-check output, not a
       # release channel - artifacts expire (30 days by default) and the exe is
-      # unsigned.
+      # unsigned. That is deliberate: only the tag-triggered GitHub Actions
+      # release workflow holds the Azure signing credentials, so it passes
+      # -DSIGN_UNINSTALLER and this job does not. The .nsi keeps its
+      # !uninstfinalize hook either way (as a no-op here), so both jobs build
+      # the same uninstaller layout.
       - store_artifacts:
           path: Audionaut/Installers/NSIS/Audionaut Setup.exe
           destination: Audionaut-Setup.exe
