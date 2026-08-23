@@ -8,8 +8,6 @@
 
 namespace audium {
 
-class AudioResourceContainer;
-class AudioTrack;
 class AudiumTransportSource;
 class AudioResource;
 class Playback;
@@ -29,8 +27,8 @@ public:
      * @brief Constructs a TransportSourceContainer instance.
      * @param playback_ Shared pointer to the Playback instance.
      */
-    TransportSourceContainer(std::shared_ptr<audium::Playback> playback_) :
-        playback(playback_)
+    explicit TransportSourceContainer(std::shared_ptr<Playback> playback_) :
+        playback(std::move(playback_))
     {}
 
     /**
@@ -94,7 +92,7 @@ public:
     void applyChannelMapping();
 
 private:
-    std::shared_ptr<audium::Playback> playback; ///< Shared pointer to the Playback instance.
+    std::shared_ptr<Playback> playback; ///< Shared pointer to the Playback instance.
     std::vector<std::shared_ptr<AudiumTransportSource>> audioTransportSources; ///< Collection of transport sources.
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TransportSourceContainer)

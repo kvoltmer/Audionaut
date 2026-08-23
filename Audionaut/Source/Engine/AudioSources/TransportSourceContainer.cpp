@@ -4,9 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "TransportSourceContainer.h"
-#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
-#include "Engine/Group/AudioTrack.h"
 #include "Engine/Playback/Playback.h"
 
 namespace audium {
@@ -14,26 +12,26 @@ namespace audium {
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::createAndAddTransportSource(AudioResource& audioResource,
                                                                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
-    auto transportSource = std::shared_ptr<AudiumTransportSource> (new AudiumTransportSource(audioResource, audioFormatReaderSource));
+    auto transportSource = std::make_shared<AudiumTransportSource>(audioResource, std::move(audioFormatReaderSource));
     audioTransportSources.push_back(transportSource);
     return transportSource;
 }
 
 bool TransportSourceContainer::removeTransportSource(std::shared_ptr<AudiumTransportSource> audioTransportSource)
 {
+    if (std::erase(audioTransportSources, audioTransportSource) == 0)
+        return false;
+
     playback->stopVoice(audioTransportSource, false);
-    
-    return std::erase_if(audioTransportSources, [audioTransportSource](const auto& item) {
-        return item == audioTransportSource;
-    }) > 0;
+    return true;
 }
 
 std::vector<std::shared_ptr<AudiumTransportSource>> TransportSourceContainer::getTransportSourcesForResource(const AudioResource &resource) const
 {
     std::vector<std::shared_ptr<AudiumTransportSource>> result;
-    
-    for (auto transportSource : audioTransportSources) {
-        
+
+    for (const auto& transportSource : audioTransportSources)
+    {
         if (&transportSource->getAudioResource() == &resource)
             result.push_back(transportSource);
     }
@@ -49,39 +47,33 @@ void TransportSourceContainer::cleanup()
 void TransportSourceContainer::prepareToPlay (int samplesPerBlockExpected,
                                               double sampleRate)
 {
-    for (auto transportSource : audioTransportSources)
-    {
+    for (const auto& transportSource : audioTransportSources)
         transportSource->prepareToPlay(samplesPerBlockExpected, sampleRate);
-    }
-    
+
     applyChannelMapping();
 }
 
 std::shared_ptr<AudiumTransportSource> TransportSourceContainer::getTransportSourceAtIndex(int index) const
 {
-    if (index >= 0 &&
-        index < (int)audioTransportSources.size())
-    {
-        return audioTransportSources[index];
-    }
+    if (index >= 0 && index < static_cast<int>(audioTransportSources.size()))
+        return audioTransportSources[static_cast<size_t>(index)];
+
     return nullptr;
 }
 
-int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchObject) const
+int TransportSourceContainer::getTransportSourceIndex(std::shared_ptr<AudiumTransportSource> searchTransportSource) const
 {
-    auto it = std::find(audioTransportSources.begin(), audioTransportSources.end(), searchObject);
-    if (it != audioTransportSources.end())
-        return static_cast<int>(std::distance(audioTransportSources.begin(), it));
-    
-    return -1;
+    const auto it = std::ranges::find(audioTransportSources, searchTransportSource);
+    if (it == audioTransportSources.end())
+        return -1;
+
+    return static_cast<int>(std::distance(audioTransportSources.begin(), it));
 }
 
 void TransportSourceContainer::applyChannelMapping()
 {
-    for (auto transportSource : audioTransportSources)
-    {
+    for (const auto& transportSource : audioTransportSources)
         transportSource->applyChannelMapping();
-    }
 }
 
 } // namespace audium
