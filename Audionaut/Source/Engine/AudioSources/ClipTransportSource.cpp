@@ -136,6 +136,9 @@ double ClipTransportSource::getLengthInSeconds() const
 
 bool ClipTransportSource::hasStreamFinished() const noexcept
 {
+    if (positionableSource == nullptr)
+        return true;
+
     return positionableSource->getNextReadPosition() > positionableSource->getTotalLength() + 1
               && ! positionableSource->isLooping();
 }
@@ -241,9 +244,13 @@ void ClipTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInfo&
     if (hasStreamFinished())
         stop(false);
 
-    // clip gain and fades
+    // clip gain and fades - only over the active region: callers split a
+    // callback into sub-blocks (loop wrap, clip end), and the fade ramps
+    // are sample-counter-stateful
     juce::dsp::AudioBlock<float> audioBlock (*info.buffer);
-    juce::dsp::ProcessContextReplacing<float> gainContext(audioBlock);
+    auto activeBlock = audioBlock.getSubBlock ((size_t) info.startSample,
+                                               (size_t) info.numSamples);
+    juce::dsp::ProcessContextReplacing<float> gainContext(activeBlock);
 
     dynamicsProcessor->process(gainContext);
 }
