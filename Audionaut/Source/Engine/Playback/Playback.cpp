@@ -27,7 +27,7 @@ bool Playback::startVoice(std::shared_ptr<AudiumTransportSource> transportSource
 {
     // voice already playing?
     if (auto voice = findVoice(transportSource))
-        if (voice->getTransportSource()->getAudioTransportSource()->isPlaying())
+        if (voice->getTransportSource()->getClipTransportSource()->isPlaying())
             return true;
     
     // start a new voice

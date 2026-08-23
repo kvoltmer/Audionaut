@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumTransportSource.h"
+#include "Engine/AudioSources/ClipFadeSpec.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -14,7 +15,7 @@ AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource_,
                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
 audioResource(audioResource_),
 audioFormatReaderSource(std::move(audioFormatReaderSource_)),
-audioTransportSource(std::make_shared<audium::AudioTransportSource>(std::make_shared<audium::ClipDynamicsProcessor>()))
+clipTransportSource(std::make_shared<ClipTransportSource>())
 {
     const auto* reader = audioFormatReaderSource->getAudioFormatReader();
 
@@ -27,13 +28,13 @@ audioTransportSource(std::make_shared<audium::AudioTransportSource>(std::make_sh
         readAheadThread = nullptr;
     }
 
-    audioTransportSource->setSource (audioFormatReaderSource.get(),
+    clipTransportSource->setSource (audioFormatReaderSource.get(),
                                      readAheadBufferSize,
                                      readAheadThread,
                                      reader->sampleRate,
                                      static_cast<int>(reader->numChannels));
 
-    channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(audioTransportSource.get(), false);
+    channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(clipTransportSource.get(), false);
 }
 
 void AudiumTransportSource::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
@@ -43,8 +44,8 @@ void AudiumTransportSource::prepareToPlay (int samplesPerBlockExpected, double s
 
 void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
-    if (audioTransportSource->getBufferingSource() != nullptr &&
-        audioTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false) {
+    if (clipTransportSource->getBufferingSource() != nullptr &&
+        clipTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false) {
         DBG("AudiumTransportSource: buffering source not ready");
     }
 
@@ -60,7 +61,7 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
                 channelRemapping->getNextAudioBlock(infoStop1);
 
             // reached end of clip -> apply stop
-            audioTransportSource->stop(false);
+            clipTransportSource->stop(false);
 
             // the clip has ended: the remainder of the buffer must stay
             // silent instead of bleeding audio from beyond the clip end
@@ -89,7 +90,7 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
             reScheduled = false;
         }
 
-        audioTransportSource->setPosition(scheduledPosition.load());
+        clipTransportSource->setPosition(scheduledPosition.load());
 
         // process 2nd part
         AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
@@ -99,7 +100,7 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         if (durationTimer.process(infoPart2.numSamples, offset))
         {
             DBG("AudiumTransportSource: stop right after scheduled start");
-            audioTransportSource->stop(false);
+            clipTransportSource->stop(false);
         }
     }
 }
@@ -129,7 +130,7 @@ void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item
     // Gain:
     auto channel    = audioResource.getChannelMapping().getDestinationChannel();
     auto gain       = item->getDynamics().getGain(channel);
-    audioTransportSource->setGain(static_cast<float>(gain));
+    clipTransportSource->setGain(static_cast<float>(gain));
 
     // Fades: same shared configuration the scheduler uses, for a voice
     // scheduled at the audible start (see bouncePlayListItem)
@@ -144,7 +145,7 @@ void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item
     spec.fadeInCurve  = item->getDynamics().getFadeInCurve();
     spec.fadeOutCurve = item->getDynamics().getFadeOutCurve();
 
-    configureClipFades(*audioTransportSource, spec, spec.voiceFileStart(), true);
+    configureClipFades(*clipTransportSource, spec, spec.voiceFileStart(), true);
 }
 
 } // namespace audium

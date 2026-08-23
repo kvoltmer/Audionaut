@@ -14,55 +14,6 @@ using namespace juce;
 
 namespace audium {
 
-class AudioTransportSource;
-
-//==============================================================================
-/**
- * @struct ClipFadeSpec
- * @brief The complete fade geometry of one clip, in seconds, file/source time
- *        domain. One spec drives live scheduling, project bounce and item
- *        bounce identically.
- *
- * The signed offsets follow ClipDynamics: positive = ramp boundary inside
- * the clip (silent head/tail), negative = outside (the fade extends the
- * audible material past the region window).
- */
-struct ClipFadeSpec
-{
-    double regionStart = 0.0, regionEnd = 0.0;   // the region window
-    double fadeIn = 0.0, fadeOut = 0.0;          // ramp end from start / ramp start from end
-    double fadeInStart = 0.0, fadeOutEnd = 0.0;  // signed ramp offsets
-    double fadeInCurve = 0.5, fadeOutCurve = 0.5; // curve exponents (0.5 = equal power)
-
-    double headExtension()  const noexcept { return juce::jmax(0.0, -fadeInStart); }
-    double tailExtension()  const noexcept { return juce::jmax(0.0, -fadeOutEnd); }
-
-    /** Portion of the head extension before the source file's first sample -
-        the voice cannot render it; it is timeline silence. */
-    double preFileSilence() const noexcept { return juce::jmax(0.0, headExtension() - regionStart); }
-
-    /** First file position the voice reads from; never negative. */
-    double voiceFileStart() const noexcept { return regionStart - headExtension() + preFileSilence(); }
-
-    /** File position the voice reads to (past EOF renders silent). */
-    double voiceFileEnd()   const noexcept { return regionEnd + tailExtension(); }
-
-    /** Full audible length including both extensions. */
-    double audibleLength()  const noexcept { return (regionEnd - regionStart) + headExtension() + tailExtension(); }
-};
-
-/**
- * Configures both clip fades on `source` for a voice scheduled to read from
- * filePositionSeconds (>= spec.voiceFileStart()). The one shared fade
- * configuration used by PlayListScheduler::scheduleClip and
- * AudiumTransportSource::configureDynamics - kept in lockstep by
- * construction. Real-time safe.
- */
-void configureClipFades (AudioTransportSource& source,
-                         const ClipFadeSpec& spec,
-                         double filePositionSeconds,
-                         bool reset);
-
 //==============================================================================
 /**
     An AudioSource that takes a PositionableAudioSource and allows it to be
@@ -78,20 +29,20 @@ void configureClipFades (AudioTransportSource& source,
 
     @tags{Audio}
 */
-class AudioTransportSource  : public PositionableAudioSource
+class ClipTransportSource  : public PositionableAudioSource
 {
 public:
     //==============================================================================
-    /** Creates an AudioTransportSource.
+    /** Creates an ClipTransportSource.
         After creating one of these, use the setSource() method to select an input source.
     */
     /** The dynamics processor (clip gain + fades) is injected so the
         rendering chain can be configured and tested on its own. */
-    explicit AudioTransportSource (std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor_
+    explicit ClipTransportSource (std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor_
                                        = std::make_shared<ClipDynamicsProcessor>());
 
     /** Destructor. */
-    ~AudioTransportSource() override;
+    ~ClipTransportSource() override;
 
     //==============================================================================
     /** Sets the reader that is being used as the input source.
@@ -231,7 +182,7 @@ private:
     
     void releaseMasterResources();
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTransportSource)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ClipTransportSource)
 };
 
 } // namespace audium

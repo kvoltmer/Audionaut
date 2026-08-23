@@ -3,24 +3,24 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-#include "audium_AudioTransportSource.h"
+#include "ClipTransportSource.h"
 
 namespace audium
 {
 
-AudioTransportSource::AudioTransportSource (std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor_) :
+ClipTransportSource::ClipTransportSource (std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor_) :
     dynamicsProcessor (std::move (dynamicsProcessor_))
 {
     jassert (dynamicsProcessor != nullptr);
 }
 
-AudioTransportSource::~AudioTransportSource()
+ClipTransportSource::~ClipTransportSource()
 {
     setSource (nullptr);
     releaseMasterResources();
 }
 
-void AudioTransportSource::setSource (PositionableAudioSource* const newSource,
+void ClipTransportSource::setSource (PositionableAudioSource* const newSource,
                                       int readAheadSize, TimeSliceThread* readAheadThread,
                                       double sourceSampleRateToCorrectFor, int maxNumChannels)
 {
@@ -92,7 +92,7 @@ void AudioTransportSource::setSource (PositionableAudioSource* const newSource,
         oldMasterSource->releaseResources();
 }
 
-void AudioTransportSource::start()
+void ClipTransportSource::start()
 {
     jassert(isPrepared);
     if ((! playing) && masterSource != nullptr) {
@@ -102,7 +102,7 @@ void AudioTransportSource::start()
     }
 }
 
-void AudioTransportSource::stop(bool fadeout_)
+void ClipTransportSource::stop(bool fadeout_)
 {
     jassert(isPrepared);
     if (playing) {
@@ -112,14 +112,14 @@ void AudioTransportSource::stop(bool fadeout_)
     fadeOutLastBlock = fadeout_;
 }
 
-void AudioTransportSource::setPosition (double newPosition)
+void ClipTransportSource::setPosition (double newPosition)
 {
     jassert(isPrepared);
     if (sampleRate > 0.0)
         setNextReadPosition ((int64) (newPosition * sampleRate));
 }
 
-double AudioTransportSource::getCurrentPosition() const
+double ClipTransportSource::getCurrentPosition() const
 {
     jassert(isPrepared);
     if (sampleRate > 0.0)
@@ -128,7 +128,7 @@ double AudioTransportSource::getCurrentPosition() const
     return 0.0;
 }
 
-double AudioTransportSource::getLengthInSeconds() const
+double ClipTransportSource::getLengthInSeconds() const
 {
     if (sampleRate > 0.0)
         return (double) getTotalLength() / sampleRate;
@@ -136,13 +136,13 @@ double AudioTransportSource::getLengthInSeconds() const
     return 0.0;
 }
 
-bool AudioTransportSource::hasStreamFinished() const noexcept
+bool ClipTransportSource::hasStreamFinished() const noexcept
 {
     return positionableSource->getNextReadPosition() > positionableSource->getTotalLength() + 1
               && ! positionableSource->isLooping();
 }
 
-void AudioTransportSource::setNextReadPosition (int64 newPosition)
+void ClipTransportSource::setNextReadPosition (int64 newPosition)
 {
     // std::cout << "setNextReadPosition " << newPosition << std::endl;
     if (positionableSource != nullptr) {
@@ -156,7 +156,7 @@ void AudioTransportSource::setNextReadPosition (int64 newPosition)
     }
 }
 
-int64 AudioTransportSource::getNextReadPosition() const
+int64 ClipTransportSource::getNextReadPosition() const
 {
     if (positionableSource != nullptr) {
         const double ratio = (sampleRate > 0 && sourceSampleRate > 0) ? sampleRate / sourceSampleRate : 1.0;
@@ -166,7 +166,7 @@ int64 AudioTransportSource::getNextReadPosition() const
     return 0;
 }
 
-int64 AudioTransportSource::getTotalLength() const
+int64 ClipTransportSource::getTotalLength() const
 {
     if (positionableSource != nullptr) {
         const double ratio = (sampleRate > 0 && sourceSampleRate > 0) ? sampleRate / sourceSampleRate : 1.0;
@@ -175,12 +175,12 @@ int64 AudioTransportSource::getTotalLength() const
     return 0;
 }
 
-bool AudioTransportSource::isLooping() const
+bool ClipTransportSource::isLooping() const
 {
     return positionableSource != nullptr && positionableSource->isLooping();
 }
 
-void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double newSampleRate)
+void ClipTransportSource::prepareToPlay (int samplesPerBlockExpected, double newSampleRate)
 {
     isPrepared = false;
 
@@ -201,7 +201,7 @@ void AudioTransportSource::prepareToPlay (int samplesPerBlockExpected, double ne
     isPrepared = true;
 }
 
-void AudioTransportSource::releaseMasterResources()
+void ClipTransportSource::releaseMasterResources()
 {
     isPrepared = false;
 
@@ -211,12 +211,12 @@ void AudioTransportSource::releaseMasterResources()
     
 }
 
-void AudioTransportSource::releaseResources()
+void ClipTransportSource::releaseResources()
 {
     releaseMasterResources();
 }
 
-void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info)
+void ClipTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info)
 {
     if (masterSource != nullptr &&
         isPrepared)
@@ -255,76 +255,47 @@ void AudioTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info
     }
 }
 
-void AudioTransportSource::setGain (const float newGain) noexcept
+void ClipTransportSource::setGain (const float newGain) noexcept
 {
     dynamicsProcessor->setGain(newGain);
 }
 
-float AudioTransportSource::getGain() const noexcept
+float ClipTransportSource::getGain() const noexcept
 {
     return dynamicsProcessor->getGain();
 }
 
-void AudioTransportSource::resetClipGain()
+void ClipTransportSource::resetClipGain()
 {
     dynamicsProcessor->resetGain();
 }
 
-void configureClipFades (AudioTransportSource& source,
-                         const ClipFadeSpec& spec,
-                         double filePositionSeconds,
-                         bool reset)
-{
-    if (spec.fadeIn <= 0.0 && spec.fadeInStart == 0.0) {
-        source.clearFadeIn();
-    }
-    else {
-        source.setFadeInCurve(spec.fadeInCurve);
-        // a pre-file clamp makes filePosition > regionStart + fadeInStart,
-        // which arms the ramp mid-way - the ramp progresses through the
-        // pre-file silence
-        source.setFadeInRamp(spec.fadeIn - spec.fadeInStart,
-                             (spec.regionStart + spec.fadeInStart) - filePositionSeconds,
-                             reset);
-    }
-
-    if (spec.fadeOut <= 0.0 && spec.fadeOutEnd == 0.0) {
-        source.clearFadeOut();
-    }
-    else {
-        source.setFadeOutCurve(spec.fadeOutCurve);
-        source.setFadeOutRamp(spec.fadeOut - spec.fadeOutEnd,
-                              (spec.regionEnd - spec.fadeOut) - filePositionSeconds,
-                              reset);
-    }
-}
-
-void AudioTransportSource::clearFadeIn()
+void ClipTransportSource::clearFadeIn()
 {
     dynamicsProcessor->clearFadeIn();
 }
 
-void AudioTransportSource::setFadeInCurve(double curve)
+void ClipTransportSource::setFadeInCurve(double curve)
 {
     dynamicsProcessor->setFadeInCurve(curve);
 }
 
-void AudioTransportSource::setFadeOutCurve(double curve)
+void ClipTransportSource::setFadeOutCurve(double curve)
 {
     dynamicsProcessor->setFadeOutCurve(curve);
 }
 
-void AudioTransportSource::clearFadeOut()
+void ClipTransportSource::clearFadeOut()
 {
     dynamicsProcessor->clearFadeOut();
 }
 
-void AudioTransportSource::setFadeInRamp(double rampSeconds, double rampStartSeconds, bool reset)
+void ClipTransportSource::setFadeInRamp(double rampSeconds, double rampStartSeconds, bool reset)
 {
     dynamicsProcessor->setFadeInRamp(rampSeconds, rampStartSeconds, reset);
 }
 
-void AudioTransportSource::setFadeOutRamp(double rampSeconds, double rampStartSeconds, bool reset)
+void ClipTransportSource::setFadeOutRamp(double rampSeconds, double rampStartSeconds, bool reset)
 {
     dynamicsProcessor->setFadeOutRamp(rampSeconds, rampStartSeconds, reset);
 }

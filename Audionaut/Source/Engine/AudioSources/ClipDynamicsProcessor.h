@@ -17,7 +17,7 @@ namespace audium {
  * @brief The per-clip dynamics rendering: clip gain plus the two fade ramps.
  *
  * Applied post-resampling at the device rate, in the order
- * gain -> fade-in -> fade-out. Extracted from AudioTransportSource and
+ * gain -> fade-in -> fade-out. Extracted from ClipTransportSource and
  * injected into it, so the dynamics chain can be configured and exercised
  * on its own. All setters are real-time safe; the scheduler calls them from
  * the audio thread.

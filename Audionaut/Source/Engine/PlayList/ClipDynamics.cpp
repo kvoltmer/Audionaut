@@ -11,7 +11,7 @@
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Resource/ChannelMapping.h"
-#include "Engine/AudioSources/audium_AudioTransportSource.h"
+#include "Engine/AudioSources/ClipTransportSource.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 
 namespace audium {
@@ -36,7 +36,7 @@ void ClipDynamics::setGain(int channel, double val, bool continous)
             if (source != nullptr &&
                 source->getAudioResource().getChannelMapping().getDestinationChannel() == channel &&
                 source->isPlaying()) {
-                source->getAudioTransportSource()->setGain(static_cast<float>(val));
+                source->getClipTransportSource()->setGain(static_cast<float>(val));
             }
         }
     }

@@ -81,10 +81,14 @@
                 file="Source/Engine/AudioSources/TransportSourceContainer.cpp"/>
           <FILE id="BgDcMc" name="TransportSourceContainer.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/TransportSourceContainer.h"/>
-          <FILE id="pLvPaN" name="audium_AudioTransportSource.cpp" compile="1"
-                resource="0" file="Source/Engine/AudioSources/audium_AudioTransportSource.cpp"/>
-          <FILE id="tyX7Fa" name="audium_AudioTransportSource.h" compile="0"
-                resource="0" file="Source/Engine/AudioSources/audium_AudioTransportSource.h"/>
+          <FILE id="pLvPaN" name="ClipTransportSource.cpp" compile="1"
+                resource="0" file="Source/Engine/AudioSources/ClipTransportSource.cpp"/>
+          <FILE id="tyX7Fa" name="ClipTransportSource.h" compile="0"
+                resource="0" file="Source/Engine/AudioSources/ClipTransportSource.h"/>
+          <FILE id="Cfs9Qa" name="ClipFadeSpec.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/ClipFadeSpec.cpp"/>
+          <FILE id="Cfs9Qb" name="ClipFadeSpec.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/ClipFadeSpec.h"/>
         </GROUP>
         <GROUP id="{6F75617E-7F56-58FA-1D3F-51D388D99F41}" name="Export">
           <FILE id="nFV8qJ" name="ExportUtil.h" compile="0" resource="0" file="Source/Engine/Export/ExportUtil.h"/>

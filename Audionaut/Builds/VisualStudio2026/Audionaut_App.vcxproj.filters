@@ -877,7 +877,10 @@
     <ClCompile Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.cpp">
+    <ClCompile Include="..\..\Source\Engine\AudioSources\ClipTransportSource.cpp">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Export\PlayListItemExport.cpp">
@@ -4191,7 +4194,10 @@
     <ClInclude Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.h">
+    <ClInclude Include="..\..\Source\Engine\AudioSources\ClipTransportSource.h">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Export\ExportUtil.h">

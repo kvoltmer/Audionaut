@@ -7,7 +7,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/PlayList/SampleTimer.h"
-#include "Engine/AudioSources/audium_AudioTransportSource.h"
+#include "Engine/AudioSources/ClipTransportSource.h"
 
 namespace audium {
 
@@ -19,7 +19,7 @@ class PlayListItem;
  *
  * This class provides functionality for scheduling playback positions, managing playback states,
  * and applying channel mappings. It wraps around `juce::AudioSource` and integrates with
- * `AudioResource` and `AudioTransportSource` for advanced audio playback control.
+ * `AudioResource` and `ClipTransportSource` for advanced audio playback control.
  */
 class AudiumTransportSource : public juce::AudioSource
 {
@@ -39,7 +39,7 @@ public:
      */
     ~AudiumTransportSource() override
     {
-        audioTransportSource->setSource(nullptr);
+        clipTransportSource->setSource(nullptr);
     }
     
     /**
@@ -65,7 +65,7 @@ public:
     void schedulePosition (double newPosition, int startSample)
     {
         if (startSample == 0) {
-            audioTransportSource->setPosition(newPosition);
+            clipTransportSource->setPosition(newPosition);
         }
         else {
             scheduledStartSample.store(startSample);
@@ -81,12 +81,12 @@ public:
     
     bool isPlaying() const noexcept
     {
-        return audioTransportSource->isPlaying();
+        return clipTransportSource->isPlaying();
     }
     
     bool isStopped() const noexcept
     {
-        return audioTransportSource->isStopped();
+        return clipTransportSource->isStopped();
     }
     
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override;
@@ -96,7 +96,7 @@ public:
     
     void applyChannelMapping(bool withChannelOffset = true);
     
-    std::shared_ptr<audium::AudioTransportSource> getAudioTransportSource() const { return audioTransportSource; }
+    std::shared_ptr<audium::ClipTransportSource> getClipTransportSource() const { return clipTransportSource; }
     
     /// < configure gain, fade-in, fade-out
     void configureDynamics(std::shared_ptr<PlayListItem> item);
@@ -108,7 +108,7 @@ private:
     std::atomic<bool> reScheduled           = false; /// Helper to indicate if position is re-scheduled (loop)
     audium::SampleTimer durationTimer; ///< Timer for managing playback duration.
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
-    std::shared_ptr<audium::AudioTransportSource> audioTransportSource; ///< Underlying audio transport source.
+    std::shared_ptr<audium::ClipTransportSource> clipTransportSource; ///< Underlying audio transport source.
     std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping; ///< Channel remapping source; the outermost source in the chain.
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumTransportSource)

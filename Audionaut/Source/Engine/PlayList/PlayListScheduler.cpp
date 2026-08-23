@@ -13,6 +13,7 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/ClipFadeSpec.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Core/AudioClipContainer.h"
@@ -95,10 +96,10 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     transportSource->schedulePosition(position, startSample);
     transportSource->scheduleDuration(duration, externalSampleRate);
 
-    configureClipFades(*transportSource->getAudioTransportSource(), spec, position, true);
+    configureClipFades(*transportSource->getClipTransportSource(), spec, position, true);
 
-    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
-    transportSource->getAudioTransportSource()->resetClipGain();
+    transportSource->getClipTransportSource()->setGain(dspClip.dspClipData.clipGain);
+    transportSource->getClipTransportSource()->resetClipGain();
     
     
 //    std::cout << "transport-pos: " << transportPosition << " ";
@@ -150,8 +151,8 @@ void PlayListScheduler::process(double transportPositionClocks,
             
             
             if (clipsChanged &&
-                transportSource->getAudioTransportSource()->isPlaying()) {
-                transportSource->getAudioTransportSource()->stop(true);
+                transportSource->getClipTransportSource()->isPlaying()) {
+                transportSource->getClipTransportSource()->stop(true);
             }
             
             if (loopResult.loopEvent) {
@@ -165,13 +166,13 @@ void PlayListScheduler::process(double transportPositionClocks,
                 }
                 
                 // clip might start at loop start
-                if (!transportSource->getAudioTransportSource()->isPlaying()) {
-                    transportSource->getAudioTransportSource()->start();
+                if (!transportSource->getClipTransportSource()->isPlaying()) {
+                    transportSource->getClipTransportSource()->start();
                     playback->startVoice(transportSource);
                 }
             }
             
-            if (not transportSource->getAudioTransportSource()->isPlaying()) {
+            if (not transportSource->getClipTransportSource()->isPlaying()) {
                 
                 if (not scheduleClip(dspClip,
                                      transportSource,
@@ -183,10 +184,10 @@ void PlayListScheduler::process(double transportPositionClocks,
                 
                 // TODO: why? please investigate
                 if (not loopResult.loopEvent) {
-                    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
+                    transportSource->getClipTransportSource()->setGain(dspClip.dspClipData.clipGain);
                 }
                 
-                transportSource->getAudioTransportSource()->start();
+                transportSource->getClipTransportSource()->start();
                 playback->startVoice(transportSource);
             }
         }
@@ -377,9 +378,9 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
         source->configureDynamics(config->playListItem);
         // snap the gain smoother - otherwise the export starts with a
         // 10 ms gain swell (the live scheduler does the same)
-        source->getAudioTransportSource()->resetClipGain();
+        source->getClipTransportSource()->resetClipGain();
         source->applyChannelMapping(false);
-        source->getAudioTransportSource()->start();
+        source->getClipTransportSource()->start();
     }
 
     int64 samplesWritten = 0;

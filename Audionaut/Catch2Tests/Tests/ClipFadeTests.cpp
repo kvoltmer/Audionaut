@@ -6,7 +6,7 @@
 
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "Engine/AudioSources/audium_AudioTransportSource.h"
+#include "Engine/AudioSources/ClipTransportSource.h"
 #include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/PlayList/PlayListContainer.h"
@@ -134,7 +134,7 @@ SCENARIO("fade out on the transport source", "[engine][dsp][fade]")
 
         MemoryAudioSource memorySource(dcBuffer, false);
 
-        audium::AudioTransportSource transportSource;
+        audium::ClipTransportSource transportSource;
         transportSource.setSource(&memorySource, 0, nullptr, 0.0, 1);
         transportSource.prepareToPlay(blockSize, sr);
         transportSource.resetClipGain();
@@ -1176,7 +1176,7 @@ SCENARIO("fade ramps with offsets on the transport source", "[engine][dsp][fade]
 
         MemoryAudioSource memorySource(dcBuffer, false);
 
-        audium::AudioTransportSource transportSource;
+        audium::ClipTransportSource transportSource;
         transportSource.setSource(&memorySource, 0, nullptr, 0.0, 1);
         transportSource.prepareToPlay(blockSize, sr);
         transportSource.resetClipGain();

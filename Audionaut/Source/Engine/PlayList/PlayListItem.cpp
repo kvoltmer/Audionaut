@@ -12,7 +12,6 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudioSources/TransportSourceContainer.h"
-#include "Engine/AudioSources/audium_AudioTransportSource.h"
 #include "Engine/AudioSources/AudiumTransportSource.h"
 
 namespace audium {
