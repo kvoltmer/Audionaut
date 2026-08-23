@@ -13,55 +13,51 @@ namespace audium {
 AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource_,
                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
 audioResource(audioResource_),
-audioFormatReaderSource(audioFormatReaderSource_)
+audioFormatReaderSource(std::move(audioFormatReaderSource_)),
+audioTransportSource(std::make_shared<audium::AudioTransportSource>(std::make_shared<audium::ClipDynamicsProcessor>()))
 {
-    // the transport source
-    audioTransportSource = std::make_shared<audium::AudioTransportSource>(std::make_shared<audium::ClipDynamicsProcessor>());
-    
-    // source
+    const auto* reader = audioFormatReaderSource->getAudioFormatReader();
+
+    // memory-mapped readers need neither buffering nor a read-ahead thread
     auto readAheadBufferSize = 48000;
     auto readAheadThread = audioResource.getContainer().getReadAheadThread();
-    auto memReader = dynamic_cast<MemoryMappedAudioFormatReader*>(audioFormatReaderSource->getAudioFormatReader());
-    if (memReader)
+    if (dynamic_cast<const MemoryMappedAudioFormatReader*>(reader) != nullptr)
     {
         readAheadBufferSize = 0;
         readAheadThread = nullptr;
     }
-    
+
     audioTransportSource->setSource (audioFormatReaderSource.get(),
                                      readAheadBufferSize,
                                      readAheadThread,
-                                     audioFormatReaderSource->getAudioFormatReader()->sampleRate,
-                                     static_cast<int>(audioFormatReaderSource->getAudioFormatReader()->numChannels));
-    
-    // the channel remapping source
+                                     reader->sampleRate,
+                                     static_cast<int>(reader->numChannels));
+
     channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(audioTransportSource.get(), false);
-    
-    // main source is ChannelRemappingAudioSource
-    mainSource = channelRemapping.get();
 }
 
 void AudiumTransportSource::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    if (mainSource != nullptr)
-        mainSource->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    channelRemapping->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
     if (audioTransportSource->getBufferingSource() != nullptr &&
         audioTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false) {
-        std::cout << "waitForNextAudioBlockReady" << std::endl;
+        DBG("AudiumTransportSource: buffering source not ready");
     }
-    
-    if (scheduledStartSample.load() == 0) {
+
+    const auto startSample = scheduledStartSample.load();
+
+    if (startSample == 0) {
         auto samplesUntilStop = 0;
         if (durationTimer.process(info.numSamples, samplesUntilStop)) {
-            
+
             AudioSourceChannelInfo infoStop1 (info);
             infoStop1.numSamples = samplesUntilStop;
             if (infoStop1.numSamples > 0)
-                mainSource->getNextAudioBlock(infoStop1);
+                channelRemapping->getNextAudioBlock(infoStop1);
 
             // reached end of clip -> apply stop
             audioTransportSource->stop(false);
@@ -73,59 +69,54 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
             infoStop2.numSamples = info.numSamples - samplesUntilStop;
             if (infoStop2.numSamples > 0)
                 infoStop2.clearActiveBufferRegion();
-            
         }
         else {
-            mainSource->getNextAudioBlock(info);
+            channelRemapping->getNextAudioBlock(info);
         }
     }
-    else if (scheduledStartSample.load() >= info.numSamples) {
-        scheduledStartSample.store(scheduledStartSample.load() - info.numSamples);
-        mainSource->getNextAudioBlock(info);
+    else if (startSample >= info.numSamples) {
+        scheduledStartSample.store(startSample - info.numSamples);
+        channelRemapping->getNextAudioBlock(info);
     }
     else
     {
-        auto startSample = scheduledStartSample.load();
         scheduledStartSample.store(0);
-        jassert(startSample < info.numSamples);
-    
+
         if (reScheduled) {
             // process 1st part (until start sample, in case we are already playing -> loop)
             AudioSourceChannelInfo infoPart1 (info.buffer, 0, startSample);
-            mainSource->getNextAudioBlock(infoPart1);
+            channelRemapping->getNextAudioBlock(infoPart1);
             reScheduled = false;
         }
 
         audioTransportSource->setPosition(scheduledPosition.load());
-        
+
         // process 2nd part
         AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
-        mainSource->getNextAudioBlock(infoPart2);
-        
+        channelRemapping->getNextAudioBlock(infoPart2);
+
         auto offset = 0;
         if (durationTimer.process(infoPart2.numSamples, offset))
         {
-            std::cout << "AudiumTransportSource::getNextAudioBlock -> stop right after start!" << std::endl;
+            DBG("AudiumTransportSource: stop right after scheduled start");
             audioTransportSource->stop(false);
         }
-        
     }
 }
 
 void AudiumTransportSource::applyChannelMapping(bool withChannelOffset)
 {
-    auto totalChannels = audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels();
-    auto audioFileChannels = static_cast<int>(audioResource.getNumAudioFileChannels());
-    if (audioFileChannels > totalChannels)
-        totalChannels = audioFileChannels;
-    
+    const auto audioFileChannels = static_cast<int>(audioResource.getNumAudioFileChannels());
+    const auto totalChannels = std::max(audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels(),
+                                        audioFileChannels);
+
     channelRemapping->setNumberOfChannelsToProduce(totalChannels);
-    
     channelRemapping->clearAllMappings();
-    
-    auto channelOffset = withChannelOffset ? getAudioResource().getAudioTrack()->getChannelOffset() : 0;
-    auto srcChannel = getAudioResource().getChannelMapping().getSourceChannel();
-    auto dstChannel = getAudioResource().getChannelMapping().getDestinationChannel();
+
+    const auto& channelMapping = audioResource.getChannelMapping();
+    const auto channelOffset = withChannelOffset ? audioResource.getAudioTrack()->getChannelOffset() : 0;
+    const auto srcChannel = channelMapping.getSourceChannel();
+    const auto dstChannel = channelMapping.getDestinationChannel();
     jassert(srcChannel < audioFileChannels);
     jassert(dstChannel + channelOffset < totalChannels);
     channelRemapping->setOutputChannelMapping(srcChannel,
@@ -133,13 +124,12 @@ void AudiumTransportSource::applyChannelMapping(bool withChannelOffset)
 }
 
 
-void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item,
-                                              std::shared_ptr<TempoProvider> tempoProvider)
+void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item)
 {
     // Gain:
-    auto channel    = getAudioResource().getChannelMapping().getDestinationChannel();
+    auto channel    = audioResource.getChannelMapping().getDestinationChannel();
     auto gain       = item->getDynamics().getGain(channel);
-    getAudioTransportSource()->setGain(static_cast<float>(gain));
+    audioTransportSource->setGain(static_cast<float>(gain));
 
     // Fades: same shared configuration the scheduler uses, for a voice
     // scheduled at the audible start (see bouncePlayListItem)
@@ -154,7 +144,7 @@ void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item
     spec.fadeInCurve  = item->getDynamics().getFadeInCurve();
     spec.fadeOutCurve = item->getDynamics().getFadeOutCurve();
 
-    configureClipFades(*getAudioTransportSource(), spec, spec.voiceFileStart(), true);
+    configureClipFades(*audioTransportSource, spec, spec.voiceFileStart(), true);
 }
 
 } // namespace audium

@@ -11,12 +11,8 @@
 
 namespace audium {
 
-#define MAX_AUDIO_FILE_CHANNELS 64
-
-class AudioTrack;
 class AudioResource;
 class PlayListItem;
-class TempoProvider;
 /**
  * @class AudiumTransportSource
  * @brief A wrapper around `juce::AudioSource` for managing audio playback with additional features.
@@ -58,8 +54,7 @@ public:
      */
     void releaseResources() override
     {
-        if (mainSource != nullptr)
-            mainSource->releaseResources();
+        channelRemapping->releaseResources();
     }
     
     /**
@@ -69,7 +64,6 @@ public:
      */
     void schedulePosition (double newPosition, int startSample)
     {
-//        std::cout << "schedulePosition " << newPosition << " " << startSample << std::endl;
         if (startSample == 0) {
             audioTransportSource->setPosition(newPosition);
         }
@@ -105,8 +99,7 @@ public:
     std::shared_ptr<audium::AudioTransportSource> getAudioTransportSource() const { return audioTransportSource; }
     
     /// < configure gain, fade-in, fade-out
-    void configureDynamics(std::shared_ptr<PlayListItem> item,
-                           std::shared_ptr<TempoProvider> tempoProvider);
+    void configureDynamics(std::shared_ptr<PlayListItem> item);
     
 private:
     AudioResource& audioResource; ///< Reference to the associated audio resource.
@@ -116,9 +109,9 @@ private:
     audium::SampleTimer durationTimer; ///< Timer for managing playback duration.
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
     std::shared_ptr<audium::AudioTransportSource> audioTransportSource; ///< Underlying audio transport source.
-    std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping; ///< Channel remapping audio source.
-    juce::AudioSource* mainSource = nullptr; ///< Pointer to the main audio source.
-    
+    std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping; ///< Channel remapping source; the outermost source in the chain.
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumTransportSource)
 };
 
 } // namespace audium 

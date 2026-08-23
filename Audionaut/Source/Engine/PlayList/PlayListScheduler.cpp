@@ -374,7 +374,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
         source->prepareToPlay(config->blockSize, config->sampleRate);
         source->schedulePosition(spec.voiceFileStart(), 0);
         source->scheduleDuration(spec.voiceFileEnd() - spec.voiceFileStart(), config->sampleRate);
-        source->configureDynamics(config->playListItem, tempoProvider);
+        source->configureDynamics(config->playListItem);
         // snap the gain smoother - otherwise the export starts with a
         // 10 ms gain swell (the live scheduler does the same)
         source->getAudioTransportSource()->resetClipGain();
