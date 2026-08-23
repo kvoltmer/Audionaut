@@ -13,6 +13,7 @@ namespace audium {
 
 class AudioResource;
 class PlayListItem;
+struct ClipFadeSpec;
 /**
  * @class AudiumTransportSource
  * @brief A wrapper around `juce::AudioSource` for managing audio playback with additional features.
@@ -88,16 +89,38 @@ public:
     {
         return clipTransportSource->isStopped();
     }
-    
+
+    void start()
+    {
+        clipTransportSource->start();
+    }
+
+    void stop(bool fadeOutLastBlock)
+    {
+        clipTransportSource->stop(fadeOutLastBlock);
+    }
+
+    void setGain(float gain)
+    {
+        clipTransportSource->setGain(gain);
+    }
+
+    void resetClipGain()
+    {
+        clipTransportSource->resetClipGain();
+    }
+
+    /** Configures both clip fades on the inner transport (see the free
+        configureClipFades in ClipFadeSpec.h). Real-time safe. */
+    void configureClipFades(const ClipFadeSpec& spec, double filePositionSeconds, bool reset);
+
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override;
-    
-    
+
+
     AudioResource& getAudioResource() const { return audioResource; }
-    
+
     void applyChannelMapping(bool withChannelOffset = true);
-    
-    std::shared_ptr<audium::ClipTransportSource> getClipTransportSource() const { return clipTransportSource; }
-    
+
     /// < configure gain, fade-in, fade-out
     void configureDynamics(std::shared_ptr<PlayListItem> item);
     

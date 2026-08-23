@@ -20,14 +20,14 @@ Playback::Playback()
 
 void Playback::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    std::cout << "Playback::prepareToPlay " << samplesPerBlockExpected << " " << sampleRate << std::endl;
+    DBG("Playback::prepareToPlay " << samplesPerBlockExpected << " " << sampleRate);
 }
 
 bool Playback::startVoice(std::shared_ptr<AudiumTransportSource> transportSource)
 {
     // voice already playing?
     if (auto voice = findVoice(transportSource))
-        if (voice->getTransportSource()->getClipTransportSource()->isPlaying())
+        if (voice->getTransportSource()->isPlaying())
             return true;
     
     // start a new voice

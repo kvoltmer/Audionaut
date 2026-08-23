@@ -37,9 +37,9 @@ void Voice::start(std::shared_ptr<AudiumTransportSource> transportSource_)
 void Voice::stop(bool fadeOutLastBlock)
 {
     if (transportSource != nullptr &&
-        transportSource->getClipTransportSource()->isPlaying())
+        transportSource->isPlaying())
         
-        transportSource->getClipTransportSource()->stop(fadeOutLastBlock);
+        transportSource->stop(fadeOutLastBlock);
 }
 
 

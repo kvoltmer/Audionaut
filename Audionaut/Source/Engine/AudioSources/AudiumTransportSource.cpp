@@ -125,6 +125,11 @@ void AudiumTransportSource::applyChannelMapping(bool withChannelOffset)
 }
 
 
+void AudiumTransportSource::configureClipFades(const ClipFadeSpec& spec, double filePositionSeconds, bool reset)
+{
+    audium::configureClipFades(*clipTransportSource, spec, filePositionSeconds, reset);
+}
+
 void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item)
 {
     // Gain:
@@ -135,7 +140,7 @@ void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item
     // Fades: same shared configuration the scheduler uses, for a voice
     // scheduled at the audible start (see bouncePlayListItem)
     const auto spec = ClipFadeSpec::fromPlayListItem(*item);
-    configureClipFades(*clipTransportSource, spec, spec.voiceFileStart(), true);
+    configureClipFades(spec, spec.voiceFileStart(), true);
 }
 
 } // namespace audium

@@ -36,7 +36,7 @@ void ClipDynamics::setGain(int channel, double val, bool continous)
             if (source != nullptr &&
                 source->getAudioResource().getChannelMapping().getDestinationChannel() == channel &&
                 source->isPlaying()) {
-                source->getClipTransportSource()->setGain(static_cast<float>(val));
+                source->setGain(static_cast<float>(val));
             }
         }
     }
