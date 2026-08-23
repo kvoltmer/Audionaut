@@ -73,14 +73,14 @@
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
           <FILE id="CdpPrc" name="ClipDynamicsProcessor.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/ClipDynamicsProcessor.h"/>
-          <FILE id="S0kUtq" name="AudiumTransportSource.cpp" compile="1" resource="0"
-                file="Source/Engine/AudioSources/AudiumTransportSource.cpp"/>
-          <FILE id="FrI8bp" name="AudiumTransportSource.h" compile="0" resource="0"
-                file="Source/Engine/AudioSources/AudiumTransportSource.h"/>
-          <FILE id="sc0j2q" name="TransportSourceContainer.cpp" compile="1" resource="0"
-                file="Source/Engine/AudioSources/TransportSourceContainer.cpp"/>
-          <FILE id="BgDcMc" name="TransportSourceContainer.h" compile="0" resource="0"
-                file="Source/Engine/AudioSources/TransportSourceContainer.h"/>
+          <FILE id="S0kUtq" name="VoiceSource.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/VoiceSource.cpp"/>
+          <FILE id="FrI8bp" name="VoiceSource.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/VoiceSource.h"/>
+          <FILE id="sc0j2q" name="VoiceSourceContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/VoiceSourceContainer.cpp"/>
+          <FILE id="BgDcMc" name="VoiceSourceContainer.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/VoiceSourceContainer.h"/>
           <FILE id="pLvPaN" name="ClipTransportSource.cpp" compile="1"
                 resource="0" file="Source/Engine/AudioSources/ClipTransportSource.cpp"/>
           <FILE id="tyX7Fa" name="ClipTransportSource.h" compile="0"

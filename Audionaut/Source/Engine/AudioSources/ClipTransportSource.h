@@ -24,7 +24,7 @@ namespace audium {
     happens off the audio thread and is gated by the atomic isPrepared
     flag; setSource must not race an in-flight getNextAudioBlock.
 
-    @see AudiumTransportSource, ClipDynamicsProcessor, ClipFadeSpec
+    @see VoiceSource, ClipDynamicsProcessor, ClipFadeSpec
 */
 class ClipTransportSource  : public juce::PositionableAudioSource
 {

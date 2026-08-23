@@ -3,7 +3,7 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-#include "AudiumTransportSource.h"
+#include "VoiceSource.h"
 #include "Engine/AudioSources/ClipFadeSpec.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -11,7 +11,7 @@
 
 namespace audium {
 
-AudiumTransportSource::AudiumTransportSource(AudioResource& audioResource_,
+VoiceSource::VoiceSource(AudioResource& audioResource_,
                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
 audioResource(audioResource_),
 audioFormatReaderSource(std::move(audioFormatReaderSource_)),
@@ -37,16 +37,16 @@ clipTransportSource(std::make_shared<ClipTransportSource>())
     channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(clipTransportSource.get(), false);
 }
 
-void AudiumTransportSource::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
+void VoiceSource::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
     channelRemapping->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
-void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
+void VoiceSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
     if (clipTransportSource->getBufferingSource() != nullptr &&
         clipTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false) {
-        DBG("AudiumTransportSource: buffering source not ready");
+        DBG("VoiceSource: buffering source not ready");
     }
 
     const auto startSample = scheduledStartSample.load();
@@ -99,13 +99,13 @@ void AudiumTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInf
         auto offset = 0;
         if (durationTimer.process(infoPart2.numSamples, offset))
         {
-            DBG("AudiumTransportSource: stop right after scheduled start");
+            DBG("VoiceSource: stop right after scheduled start");
             clipTransportSource->stop(false);
         }
     }
 }
 
-void AudiumTransportSource::applyChannelMapping(bool withChannelOffset)
+void VoiceSource::applyChannelMapping(bool withChannelOffset)
 {
     const auto audioFileChannels = static_cast<int>(audioResource.getNumAudioFileChannels());
     const auto totalChannels = std::max(audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels(),
@@ -125,12 +125,12 @@ void AudiumTransportSource::applyChannelMapping(bool withChannelOffset)
 }
 
 
-void AudiumTransportSource::configureClipFades(const ClipFadeSpec& spec, double filePositionSeconds, bool reset)
+void VoiceSource::configureClipFades(const ClipFadeSpec& spec, double filePositionSeconds, bool reset)
 {
     audium::configureClipFades(*clipTransportSource, spec, filePositionSeconds, reset);
 }
 
-void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item)
+void VoiceSource::configureDynamics(std::shared_ptr<PlayListItem> item)
 {
     // Gain:
     auto channel    = audioResource.getChannelMapping().getDestinationChannel();

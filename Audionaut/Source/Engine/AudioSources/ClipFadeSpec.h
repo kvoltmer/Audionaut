@@ -61,7 +61,7 @@ struct ClipFadeSpec
  * Configures both clip fades on `source` for a voice scheduled to read from
  * filePositionSeconds (>= spec.voiceFileStart()). The one shared fade
  * configuration used by PlayListScheduler::scheduleClip and
- * AudiumTransportSource::configureDynamics - kept in lockstep by
+ * VoiceSource::configureDynamics - kept in lockstep by
  * construction. Real-time safe.
  */
 void configureClipFades (ClipTransportSource& source,

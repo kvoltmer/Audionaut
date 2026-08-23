@@ -15,7 +15,7 @@
 
 namespace audium {
 
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class AudiumEngine;
 class AnalysisWorker;
 
@@ -36,20 +36,20 @@ public:
      * @param formatManager_ A shared pointer to the `AudioFormatManager`.
      * @param audioThumbnailCache_ A shared pointer to the `AudioThumbnailCache`.
      * @param tempoProvider_ A shared pointer to the `TempoProvider`.
-     * @param transportSourceContainer_ A shared pointer to the `TransportSourceContainer`.
+     * @param voiceSourceContainer_ A shared pointer to the `VoiceSourceContainer`.
      * @param analysisWorker_ A shared pointer to the background `AnalysisWorker`.
      */
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager_,
                            std::shared_ptr<juce::AudioFormatManager> formatManager_,
                            std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache_,
                            std::shared_ptr<TempoProvider> tempoProvider_,
-                           std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                           std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                            std::shared_ptr<AnalysisWorker> analysisWorker_) :
         audioDeviceManager(audioDeviceManager_),
         formatManager(formatManager_),
         audioThumbnailCache(audioThumbnailCache_),
         tempoProvider(tempoProvider_),
-        transportSourceContainer(transportSourceContainer_),
+        voiceSourceContainer(voiceSourceContainer_),
         analysisWorker(analysisWorker_)
     {
         formatManager->registerBasicFormats();
@@ -148,9 +148,9 @@ public:
     /**
      * @brief Creates a transport source for the specified audio resource.
      * @param audioResource A shared pointer to the `AudioResource`.
-     * @return A shared pointer to the created `AudiumTransportSource`.
+     * @return A shared pointer to the created `VoiceSource`.
      */
-    std::shared_ptr<AudiumTransportSource> createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource);
+    std::shared_ptr<VoiceSource> createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource);
 
     /**
      * @brief Removes the specified audio resource.
@@ -290,8 +290,8 @@ private:
     /// Shared pointer to the `TempoProvider`.
     std::shared_ptr<TempoProvider> tempoProvider;
 
-    /// Shared pointer to the `TransportSourceContainer`.
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    /// Shared pointer to the `VoiceSourceContainer`.
+    std::shared_ptr<VoiceSourceContainer> voiceSourceContainer;
 
     /// Background worker that analyses newly added audio resources off-thread.
     std::shared_ptr<AnalysisWorker> analysisWorker;

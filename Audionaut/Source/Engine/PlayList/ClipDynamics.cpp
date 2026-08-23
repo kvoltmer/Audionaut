@@ -12,7 +12,7 @@
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/AudioSources/ClipTransportSource.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 
 namespace audium {
 
@@ -32,7 +32,7 @@ void ClipDynamics::setGain(int channel, double val, bool continous)
     gains[static_cast<size_t>(channel)] = val;
 
     if (continous) {
-        for (const auto &source : owner.getTransportSources()) {
+        for (const auto &source : owner.getVoiceSources()) {
             if (source != nullptr &&
                 source->getAudioResource().getChannelMapping().getDestinationChannel() == channel &&
                 source->isPlaying()) {

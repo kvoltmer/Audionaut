@@ -71,7 +71,7 @@ void RecordingActionHandler::onRecordingFinished()
     for (auto track : audioTrackContainer->getAudioTracks()) {
         for (auto item : track->getPlayListContainer()->getPlayListItems()) {
             if (not item->isRecording()) {
-                if (item->getTransportSources().size() == 0) {
+                if (item->getVoiceSources().size() == 0) {
                     item->createTransportSources();
                 }
                 item->needsLengthUpdate = false;

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/Group/ResourceGroup.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -45,7 +45,7 @@ public:
         // owned by the container, so every track queries/persists the same data.
         auto audioTrack = std::shared_ptr<AudioTrack>(new AudioTrack(owner,
                                                                      *audioResourceContainer.get(),
-                                                                     owner.getTransportSourceContainer(),
+                                                                     owner.getVoiceSourceContainer(),
                                                                      owner.getSelectionManager(),
                                                                      resourceGroups,
                                                                      channels,

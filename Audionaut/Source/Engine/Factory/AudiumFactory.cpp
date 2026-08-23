@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumFactory.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Link/LinkAudioDevice.h"
@@ -48,7 +48,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording);
     
-    auto transportSourceContainer   = std::make_shared<TransportSourceContainer>(playback);
+    auto voiceSourceContainer   = std::make_shared<VoiceSourceContainer>(playback);
 
     // A single analysis provider (and its cache) is shared across all tracks
     // and owned by the track container; the cache persists to AnalysisData.json.
@@ -69,7 +69,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                                formatManager,
                                                                                audioThumbnailCache,
                                                                                tempoProvider,
-                                                                               transportSourceContainer,
+                                                                               voiceSourceContainer,
                                                                                analysisWorker);
 
     auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
@@ -82,7 +82,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto audioTrackContainer        = std::make_shared<AudioTrackContainer>(undoManager,
                                                                             tempoProvider,
                                                                             audioResourceContainer,
-                                                                            transportSourceContainer,
+                                                                            voiceSourceContainer,
                                                                             selectionManager,
                                                                             audioBusInterface,
                                                                             transportLoop,
@@ -95,7 +95,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                           tempoProvider,
                                                                           linkEngine,
                                                                           audioClipContainer,
-                                                                          transportSourceContainer,
+                                                                          voiceSourceContainer,
                                                                           playback,
                                                                           audioBusInterface,
                                                                           transportLoop);

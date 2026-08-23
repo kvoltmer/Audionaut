@@ -12,7 +12,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/Channel/AudioChannel.h"
 

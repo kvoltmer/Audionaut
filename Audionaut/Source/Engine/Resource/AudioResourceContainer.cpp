@@ -5,8 +5,8 @@
 
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudioResourceFactory.h"
@@ -299,7 +299,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     return nullptr;
 }
 
-std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
+std::shared_ptr<VoiceSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
 {
     if (audioResource->audioFormatReader != nullptr) {
         auto source = std::make_shared<AudioFormatReaderSource>(audioResource->audioFormatReader.get(), false);
@@ -314,9 +314,9 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> 
 {
     for (auto it = audioResources.begin(); it != audioResources.end(); ++it) {
         if ((*it).second == resource) {
-            auto sources = transportSourceContainer->getTransportSourcesForResource(*resource.get());
+            auto sources = voiceSourceContainer->getVoiceSourcesForResource(*resource.get());
             for (auto source : sources) {
-                transportSourceContainer->removeTransportSource(source);
+                voiceSourceContainer->removeVoiceSource(source);
             }
             audioResources.erase(it);
             cancelAnalysisIfUnloaded(juce::File(resource->getFullPathName()));

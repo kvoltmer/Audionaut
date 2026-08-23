@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "PlayListScheduler.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/ActionMessages.h"
@@ -12,13 +12,13 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResource.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/AudioSources/ClipFadeSpec.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Core/DspClip.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeContainer.h"
@@ -38,14 +38,14 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
 {
     externalSampleRate = sampleRate;
     bufferSize = samplesPerBlockExpected;
-    transportSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    voiceSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
     playback->prepareToPlay(samplesPerBlockExpected, sampleRate);
     audioBusInterface->prepareToPlay(samplesPerBlockExpected, sampleRate);
     transportLoop->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
-                                     std::shared_ptr<AudiumTransportSource> transportSource,
+                                     std::shared_ptr<VoiceSource> voiceSource,
                                      double transportPosition,
                                      int sampleOffset,
                                      int numSamples)
@@ -85,13 +85,13 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
         return false;
     }
 
-    transportSource->schedulePosition(position, startSample);
-    transportSource->scheduleDuration(duration, externalSampleRate);
+    voiceSource->schedulePosition(position, startSample);
+    voiceSource->scheduleDuration(duration, externalSampleRate);
 
-    transportSource->configureClipFades(spec, position, true);
+    voiceSource->configureClipFades(spec, position, true);
 
-    transportSource->setGain(dspClip.dspClipData.clipGain);
-    transportSource->resetClipGain();
+    voiceSource->setGain(dspClip.dspClipData.clipGain);
+    voiceSource->resetClipGain();
 
     return true;
 }
@@ -123,8 +123,8 @@ void PlayListScheduler::process(double transportPositionClocks,
         if (dspClip.getRegionData(audium::seconds).isEmpty())
             continue;
         
-        const auto transportSource = transportSourceContainer->getTransportSourceAtIndex(dspClip.dspClipData.transportSourceIndex);
-        if (transportSource == nullptr)
+        const auto voiceSource = voiceSourceContainer->getVoiceSourceAtIndex(dspClip.dspClipData.voiceSourceIndex);
+        if (voiceSource == nullptr)
             continue;
         
         // the audible range includes the fade extensions - a head extension
@@ -134,14 +134,14 @@ void PlayListScheduler::process(double transportPositionClocks,
             
             
             if (clipsChanged &&
-                transportSource->isPlaying()) {
-                transportSource->stop(true);
+                voiceSource->isPlaying()) {
+                voiceSource->stop(true);
             }
             
             if (loopResult.loopEvent) {
                 // re-schedule clip
                 if (not scheduleClip(dspClip,
-                                     transportSource,
+                                     voiceSource,
                                      transportPosition,
                                      loopResult.numSamplesUntilLoop,
                                      numSamples)) {
@@ -149,16 +149,16 @@ void PlayListScheduler::process(double transportPositionClocks,
                 }
                 
                 // clip might start at loop start
-                if (!transportSource->isPlaying()) {
-                    transportSource->start();
-                    playback->startVoice(transportSource);
+                if (!voiceSource->isPlaying()) {
+                    voiceSource->start();
+                    playback->startVoice(voiceSource);
                 }
             }
             
-            if (not transportSource->isPlaying()) {
+            if (not voiceSource->isPlaying()) {
                 
                 if (not scheduleClip(dspClip,
-                                     transportSource,
+                                     voiceSource,
                                      transportPosition,
                                      0,
                                      numSamples)) {
@@ -167,15 +167,15 @@ void PlayListScheduler::process(double transportPositionClocks,
                 
                 // TODO: why? please investigate
                 if (not loopResult.loopEvent) {
-                    transportSource->setGain(dspClip.dspClipData.clipGain);
+                    voiceSource->setGain(dspClip.dspClipData.clipGain);
                 }
                 
-                transportSource->start();
-                playback->startVoice(transportSource);
+                voiceSource->start();
+                playback->startVoice(voiceSource);
             }
         }
         else {
-            playback->stopVoice(transportSource, false);
+            playback->stopVoice(voiceSource, false);
         }
     }
 }
@@ -345,7 +345,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     AudioBuffer<float> audioBusBuffer(config->numChannels, config->blockSize);
     juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
 
-    for (auto source : config->playListItem->getTransportSources()) {
+    for (auto source : config->playListItem->getVoiceSources()) {
         source->prepareToPlay(config->blockSize, config->sampleRate);
         source->schedulePosition(spec.voiceFileStart(), 0);
         source->scheduleDuration(spec.voiceFileEnd() - spec.voiceFileStart(), config->sampleRate);
@@ -372,7 +372,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     for (auto i = 0; i < iterations; ++i) {
         info.clearActiveBufferRegion();
         audioBusInfo.clearActiveBufferRegion();
-        for (auto source : config->playListItem->getTransportSources()) {
+        for (auto source : config->playListItem->getVoiceSources()) {
             source->getNextAudioBlock(audioBusInfo);
             for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
                 info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
@@ -402,7 +402,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
             
             audioBusInfo.numSamples = static_cast<int>(remainder);
             audioBusInfo.clearActiveBufferRegion();
-            for (auto source : config->playListItem->getTransportSources()) {
+            for (auto source : config->playListItem->getVoiceSources()) {
                 source->getNextAudioBlock(audioBusInfo);
                 for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
                     info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
@@ -522,7 +522,7 @@ void PlayListScheduler::commitPlayListData()
     audioClipContainer->commit();
     
     // update channel mapping
-    transportSourceContainer->applyChannelMapping();
+    voiceSourceContainer->applyChannelMapping();
     
     // calc total length
     double totalLength = 0.0;

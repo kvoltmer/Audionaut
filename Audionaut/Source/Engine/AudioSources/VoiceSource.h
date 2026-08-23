@@ -15,30 +15,30 @@ class AudioResource;
 class PlayListItem;
 struct ClipFadeSpec;
 /**
- * @class AudiumTransportSource
+ * @class VoiceSource
  * @brief A wrapper around `juce::AudioSource` for managing audio playback with additional features.
  *
  * This class provides functionality for scheduling playback positions, managing playback states,
  * and applying channel mappings. It wraps around `juce::AudioSource` and integrates with
  * `AudioResource` and `ClipTransportSource` for advanced audio playback control.
  */
-class AudiumTransportSource : public juce::AudioSource
+class VoiceSource : public juce::AudioSource
 {
 public:
     /**
-     * @brief Constructs an AudiumTransportSource instance.
+     * @brief Constructs a VoiceSource instance.
      * @param audioResource Reference to the associated audio resource.
      * @param audioFormatReaderSource Shared pointer to the audio format reader source.
      */
-    AudiumTransportSource(AudioResource& audioResource,
+    VoiceSource(AudioResource& audioResource,
                           std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     
     /**
-     * @brief Destructor for AudiumTransportSource.
+     * @brief Destructor for VoiceSource.
      *
-     * Ensures that the audio transport source is properly released.
+     * Ensures that the clip voice source is properly released.
      */
-    ~AudiumTransportSource() override
+    ~VoiceSource() override
     {
         clipTransportSource->setSource(nullptr);
     }
@@ -131,10 +131,10 @@ private:
     std::atomic<bool> reScheduled           = false; /// Helper to indicate if position is re-scheduled (loop)
     audium::SampleTimer durationTimer; ///< Timer for managing playback duration.
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
-    std::shared_ptr<audium::ClipTransportSource> clipTransportSource; ///< Underlying audio transport source.
+    std::shared_ptr<audium::ClipTransportSource> clipTransportSource; ///< Underlying clip voice source.
     std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping; ///< Channel remapping source; the outermost source in the chain.
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumTransportSource)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VoiceSource)
 };
 
 } // namespace audium 

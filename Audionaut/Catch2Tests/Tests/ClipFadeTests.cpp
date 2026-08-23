@@ -1855,7 +1855,7 @@ SCENARIO("clip dynamics only touch the active sub-block region", "[engine][dsp][
 
         WHEN("each callback is split into two sub-block calls at a non-zero start sample")
         {
-            // mimics AudiumTransportSource::getNextAudioBlock, which splits a
+            // mimics VoiceSource::getNextAudioBlock, which splits a
             // callback into part 1 / part 2 on loop wrap and clip end
             const auto offset = 128;
             const auto sentinel = -2.f;
