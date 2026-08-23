@@ -4,7 +4,7 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
               bundleIdentifier="com.voltmer-systems.audionaut" version="1.3.0"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
-              cppLanguageStandard="20" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0">
+              cppLanguageStandard="20" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0&#10;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
   <MAINGROUP id="HQG80L" name="Audionaut">
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
       <FILE id="A4Cl9P" name="CMakeLists.txt" compile="0" resource="0" file="Catch2Tests/CMakeLists.txt"/>
@@ -27,6 +27,10 @@
         <FILE id="fEnXvH" name="AudiumMainWindow.h" compile="0" resource="0"
               file="Source/Application/AudiumMainWindow.h"/>
         <FILE id="aJEqT2" name="Main.cpp" compile="1" resource="0" file="Source/Application/Main.cpp"/>
+        <FILE id="UsgAn1" name="UsageAnalytics.cpp" compile="1" resource="0"
+              file="Source/Application/UsageAnalytics.cpp"/>
+        <FILE id="UsgAn2" name="UsageAnalytics.h" compile="0" resource="0"
+              file="Source/Application/UsageAnalytics.h"/>
       </GROUP>
       <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
         <GROUP id="{E06E4F23-6CE8-7605-2078-9846BE4FC6DD}" name="native">
@@ -289,6 +293,8 @@
                 file="Source/Interface/Dialogs/AnalysisSettingsComponent.h"/>
           <FILE id="AesCmp1" name="AutoEditSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AutoEditSettingsComponent.h"/>
+          <FILE id="PrvSt1" name="PrivacySettingsComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/PrivacySettingsComponent.h"/>
           <FILE id="AsmDlg" name="AssembleDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AssembleDialog.h"/>
           <FILE id="Y3mnJv" name="FileBrowserView.h" compile="0" resource="0"
