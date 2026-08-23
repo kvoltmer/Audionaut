@@ -10,6 +10,9 @@
 namespace audium {
 
 class ClipTransportSource;
+class PlayListItem;
+class DspClip;
+class TempoProvider;
 
 //==============================================================================
 /**
@@ -44,6 +47,14 @@ struct ClipFadeSpec
 
     /** Full audible length including both extensions. */
     double audibleLength()  const noexcept { return (regionEnd - regionStart) + headExtension() + tailExtension(); }
+
+    /** The item's fade geometry, in seconds (message-thread paths: bounce). */
+    static ClipFadeSpec fromPlayListItem (const PlayListItem& item);
+
+    /** The clip's fade geometry converted from clocks to seconds via the
+        tempo provider (audio-thread path: live scheduling). Real-time safe. */
+    static ClipFadeSpec fromDspClip (const DspClip& dspClip,
+                                     const TempoProvider& tempoProvider);
 };
 
 /**

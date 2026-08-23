@@ -134,17 +134,7 @@ void AudiumTransportSource::configureDynamics(std::shared_ptr<PlayListItem> item
 
     // Fades: same shared configuration the scheduler uses, for a voice
     // scheduled at the audible start (see bouncePlayListItem)
-    ClipFadeSpec spec;
-    auto regionSeconds = item->getRegionData(audium::seconds);
-    spec.regionStart = regionSeconds.getStart();
-    spec.regionEnd   = regionSeconds.getEnd();
-    spec.fadeIn      = item->getDynamics().getFadeIn(audium::seconds);
-    spec.fadeOut     = item->getDynamics().getFadeOut(audium::seconds);
-    spec.fadeInStart = item->getDynamics().getFadeInStart(audium::seconds);
-    spec.fadeOutEnd  = item->getDynamics().getFadeOutEnd(audium::seconds);
-    spec.fadeInCurve  = item->getDynamics().getFadeInCurve();
-    spec.fadeOutCurve = item->getDynamics().getFadeOutCurve();
-
+    const auto spec = ClipFadeSpec::fromPlayListItem(*item);
     configureClipFades(*clipTransportSource, spec, spec.voiceFileStart(), true);
 }
 

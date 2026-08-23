@@ -52,15 +52,7 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
 {
     auto context = audium::seconds;
 
-    ClipFadeSpec spec;
-    spec.regionStart = dspClip.getRegionData(context).getStart();
-    spec.regionEnd   = dspClip.getRegionData(context).getEnd();
-    spec.fadeIn      = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
-    spec.fadeOut     = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
-    spec.fadeInStart = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInStartClocks);
-    spec.fadeOutEnd  = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutEndClocks);
-    spec.fadeInCurve  = dspClip.dspClipData.clipFadeInCurve;
-    spec.fadeOutCurve = dspClip.dspClipData.clipFadeOutCurve;
+    const auto spec = ClipFadeSpec::fromDspClip(dspClip, *tempoProvider);
 
     // the voice covers the audible span: the region window widened by the
     // fade extensions (head clamped at the file start)
@@ -347,16 +339,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     // the exported span is the audible length: region window plus the fade
     // extensions; the portion of a head extension before the source file's
     // first sample is written as leading silence
-    ClipFadeSpec spec;
-    auto regionSeconds = item->getRegionData(audium::seconds);
-    spec.regionStart = regionSeconds.getStart();
-    spec.regionEnd   = regionSeconds.getEnd();
-    spec.fadeIn      = item->getDynamics().getFadeIn(audium::seconds);
-    spec.fadeOut     = item->getDynamics().getFadeOut(audium::seconds);
-    spec.fadeInStart = item->getDynamics().getFadeInStart(audium::seconds);
-    spec.fadeOutEnd  = item->getDynamics().getFadeOutEnd(audium::seconds);
-    spec.fadeInCurve  = item->getDynamics().getFadeInCurve();
-    spec.fadeOutCurve = item->getDynamics().getFadeOutCurve();
+    const auto spec = ClipFadeSpec::fromPlayListItem(*item);
 
     auto totalSamples          = static_cast<int64>(spec.audibleLength() * externalSampleRate);
     auto leadingSilenceSamples = static_cast<int64>(spec.preFileSilence() * externalSampleRate);
