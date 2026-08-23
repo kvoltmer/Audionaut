@@ -20,12 +20,12 @@ ClipTransportSource::~ClipTransportSource()
     releaseMasterResources();
 }
 
-void ClipTransportSource::setSource (PositionableAudioSource* const newSource,
-                                      int readAheadSize, TimeSliceThread* readAheadThread,
+void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSource,
+                                      int readAheadSize, juce::TimeSliceThread* readAheadThread,
                                       double sourceSampleRateToCorrectFor, int maxNumChannels)
 {
     isPrepared = false;
-    
+
     if (source == newSource)
     {
         if (source == nullptr)
@@ -33,16 +33,15 @@ void ClipTransportSource::setSource (PositionableAudioSource* const newSource,
 
         setSource (nullptr, 0, nullptr); // deselect and reselect to avoid releasing resources wrongly
     }
-    
 
-    ResamplingAudioSource* newResamplerSource = nullptr;
-    BufferingAudioSource* newBufferingSource = nullptr;
-    PositionableAudioSource* newPositionableSource = nullptr;
-    AudioSource* newMasterSource = nullptr;
+    juce::ResamplingAudioSource* newResamplerSource = nullptr;
+    juce::BufferingAudioSource* newBufferingSource = nullptr;
+    juce::PositionableAudioSource* newPositionableSource = nullptr;
+    juce::AudioSource* newMasterSource = nullptr;
 
-    std::unique_ptr<ResamplingAudioSource> oldResamplerSource (resamplerSource);
-    std::unique_ptr<BufferingAudioSource> oldBufferingSource (bufferingSource);
-    AudioSource* oldMasterSource = masterSource;
+    std::unique_ptr<juce::ResamplingAudioSource> oldResamplerSource (resamplerSource);
+    std::unique_ptr<juce::BufferingAudioSource> oldBufferingSource (bufferingSource);
+    juce::AudioSource* oldMasterSource = masterSource;
 
     if (newSource != nullptr)
     {
@@ -55,15 +54,15 @@ void ClipTransportSource::setSource (PositionableAudioSource* const newSource,
             jassert (readAheadThread != nullptr);
 
             newPositionableSource = newBufferingSource
-                = new BufferingAudioSource (newPositionableSource, *readAheadThread,
-                                            false, readAheadSize, maxNumChannels);
+                = new juce::BufferingAudioSource (newPositionableSource, *readAheadThread,
+                                                  false, readAheadSize, maxNumChannels);
         }
 
         newPositionableSource->setNextReadPosition (0);
 
         if (sourceSampleRateToCorrectFor > 0)
             newMasterSource = newResamplerSource
-                = new ResamplingAudioSource (newPositionableSource, false, maxNumChannels);
+                = new juce::ResamplingAudioSource (newPositionableSource, false, maxNumChannels);
         else
             newMasterSource = newPositionableSource;
 
@@ -82,7 +81,6 @@ void ClipTransportSource::setSource (PositionableAudioSource* const newSource,
         bufferingSource = newBufferingSource;
         masterSource = newMasterSource;
         positionableSource = newPositionableSource;
-        readAheadBufferSize = readAheadSize;
         sourceSampleRate = sourceSampleRateToCorrectFor;
 
         playing = false;
@@ -116,7 +114,7 @@ void ClipTransportSource::setPosition (double newPosition)
 {
     jassert(isPrepared);
     if (sampleRate > 0.0)
-        setNextReadPosition ((int64) (newPosition * sampleRate));
+        setNextReadPosition ((juce::int64) (newPosition * sampleRate));
 }
 
 double ClipTransportSource::getCurrentPosition() const
@@ -142,12 +140,11 @@ bool ClipTransportSource::hasStreamFinished() const noexcept
               && ! positionableSource->isLooping();
 }
 
-void ClipTransportSource::setNextReadPosition (int64 newPosition)
+void ClipTransportSource::setNextReadPosition (juce::int64 newPosition)
 {
-    // std::cout << "setNextReadPosition " << newPosition << std::endl;
     if (positionableSource != nullptr) {
         if (sampleRate > 0 && sourceSampleRate > 0)
-            newPosition = (int64) ((double) newPosition * sourceSampleRate / sampleRate);
+            newPosition = (juce::int64) ((double) newPosition * sourceSampleRate / sampleRate);
 
         positionableSource->setNextReadPosition (newPosition);
 
@@ -156,21 +153,21 @@ void ClipTransportSource::setNextReadPosition (int64 newPosition)
     }
 }
 
-int64 ClipTransportSource::getNextReadPosition() const
+juce::int64 ClipTransportSource::getNextReadPosition() const
 {
     if (positionableSource != nullptr) {
         const double ratio = (sampleRate > 0 && sourceSampleRate > 0) ? sampleRate / sourceSampleRate : 1.0;
-        return (int64) ((double) positionableSource->getNextReadPosition() * ratio);
+        return (juce::int64) ((double) positionableSource->getNextReadPosition() * ratio);
     }
 
     return 0;
 }
 
-int64 ClipTransportSource::getTotalLength() const
+juce::int64 ClipTransportSource::getTotalLength() const
 {
     if (positionableSource != nullptr) {
         const double ratio = (sampleRate > 0 && sourceSampleRate > 0) ? sampleRate / sourceSampleRate : 1.0;
-        return (int64) ((double) positionableSource->getTotalLength() * ratio);
+        return (juce::int64) ((double) positionableSource->getTotalLength() * ratio);
     }
     return 0;
 }
@@ -207,8 +204,6 @@ void ClipTransportSource::releaseMasterResources()
 
     if (masterSource != nullptr)
         masterSource->releaseResources();
-
-    
 }
 
 void ClipTransportSource::releaseResources()
@@ -216,43 +211,41 @@ void ClipTransportSource::releaseResources()
     releaseMasterResources();
 }
 
-void ClipTransportSource::getNextAudioBlock (const AudioSourceChannelInfo& info)
+void ClipTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
-    if (masterSource != nullptr &&
-        isPrepared)
-    {
-        if (playing || stopped) {
-            
-            masterSource->getNextAudioBlock (info);
-            
-            if (!playing && stopped) {
-                if (fadeOutLastBlock) {
-                    fadeOutLastBlock = false;
-                    // just stopped playing, so fade out the last block..
-                    for (int i = info.buffer->getNumChannels(); --i >= 0;)
-                        info.buffer->applyGainRamp (i, info.startSample, jmin (256, info.numSamples), 1.0f, 0.0f);
-                    
-                    if (info.numSamples > 256)
-                        info.buffer->clear (info.startSample + 256, info.numSamples - 256);
-                    
-                }
-                stopped = true;
-            }
-            
-            if (hasStreamFinished())
-                stop(false);
-            
-            // clip gain and fades
-            juce::dsp::AudioBlock<float> audioBlock (*info.buffer);
-            juce::dsp::ProcessContextReplacing<float> gainContext(audioBlock);
+    if (masterSource == nullptr || ! isPrepared)
+        return;
 
-            dynamicsProcessor->process(gainContext);
-        }
-        else {
-            info.clearActiveBufferRegion();
-            stopped = true;
-        }
+    if (! playing && ! stopped) {
+        // transient window while stop() flips the two flags
+        info.clearActiveBufferRegion();
+        stopped = true;
+        return;
     }
+
+    masterSource->getNextAudioBlock (info);
+
+    if (!playing && stopped) {
+        if (fadeOutLastBlock) {
+            fadeOutLastBlock = false;
+            // just stopped playing, so fade out the last block..
+            for (int i = info.buffer->getNumChannels(); --i >= 0;)
+                info.buffer->applyGainRamp (i, info.startSample, juce::jmin (256, info.numSamples), 1.0f, 0.0f);
+
+            if (info.numSamples > 256)
+                info.buffer->clear (info.startSample + 256, info.numSamples - 256);
+        }
+        stopped = true;
+    }
+
+    if (hasStreamFinished())
+        stop(false);
+
+    // clip gain and fades
+    juce::dsp::AudioBlock<float> audioBlock (*info.buffer);
+    juce::dsp::ProcessContextReplacing<float> gainContext(audioBlock);
+
+    dynamicsProcessor->process(gainContext);
 }
 
 void ClipTransportSource::setGain (const float newGain) noexcept
