@@ -18,7 +18,7 @@
 namespace audium {
 
 class AudioRegionContainer;
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class AudioChannel;
 
 /**
@@ -34,11 +34,11 @@ class PlayListContainer : public audium::Streamable
 public:
     PlayListContainer(const AudioTrack &audioTrack_,
                       std::shared_ptr<TempoProvider> tempoProvider_,
-                      std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                      std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                       std::shared_ptr<SelectionManager> selectionManager_) :
         audioTrack(audioTrack_),
         tempoProvider(tempoProvider_),
-        transportSourceContainer(transportSourceContainer_),
+        voiceSourceContainer(voiceSourceContainer_),
         selectionManager(selectionManager_)
     {
     }
@@ -122,7 +122,7 @@ private:
     
     const AudioTrack &audioTrack;
     std::shared_ptr<TempoProvider> tempoProvider;
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<VoiceSourceContainer> voiceSourceContainer;
     std::shared_ptr<SelectionManager> selectionManager;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListContainer)

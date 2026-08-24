@@ -87,7 +87,7 @@ struct DspClipData
      * An integer representing the index of the transport source associated
      * with the clip. Default is -1 (no source assigned).
      */
-    int transportSourceIndex = -1;
+    int voiceSourceIndex = -1;
 };
 
 } // namespace audium

@@ -874,13 +874,16 @@
     <ClCompile Include="..\..\Source\Engine\Analysis\EventMerger.cpp">
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.cpp">
+    <ClCompile Include="..\..\Source\Engine\AudioSources\VoiceSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.cpp">
+    <ClCompile Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.cpp">
+    <ClCompile Include="..\..\Source\Engine\AudioSources\ClipTransportSource.cpp">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Export\PlayListItemExport.cpp">
@@ -4191,13 +4194,16 @@
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipDynamicsProcessor.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\AudioSources\AudiumTransportSource.h">
+    <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSource.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\AudioSources\TransportSourceContainer.h">
+    <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\AudioSources\audium_AudioTransportSource.h">
+    <ClInclude Include="..\..\Source\Engine\AudioSources\ClipTransportSource.h">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Export\ExportUtil.h">

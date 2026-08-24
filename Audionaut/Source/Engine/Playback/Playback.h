@@ -43,17 +43,17 @@ public:
 
     /**
      * @brief Starts a voice for the specified transport source.
-     * @param source Shared pointer to the `AudiumTransportSource` to start.
+     * @param source Shared pointer to the `VoiceSource` to start.
      * @return True if a voice was successfully started, false otherwise.
      */
-    bool startVoice(std::shared_ptr<AudiumTransportSource> source);
+    bool startVoice(std::shared_ptr<VoiceSource> source);
 
     /**
      * @brief Stops the voice associated with the specified transport source.
-     * @param source Shared pointer to the `AudiumTransportSource` to stop.
+     * @param source Shared pointer to the `VoiceSource` to stop.
      * @return True if the voice was successfully stopped, false otherwise.
      */
-    bool stopVoice(const std::shared_ptr<AudiumTransportSource> source,
+    bool stopVoice(const std::shared_ptr<VoiceSource> source,
                    bool fadeOutLastBlock);
 
     /**
@@ -63,10 +63,10 @@ public:
 
     /**
      * @brief Checks if the specified transport source is currently playing.
-     * @param source Shared pointer to the `AudiumTransportSource` to check.
+     * @param source Shared pointer to the `VoiceSource` to check.
      * @return True if the source is playing, false otherwise.
      */
-    bool isPlaying(const std::shared_ptr<AudiumTransportSource> source);
+    bool isPlaying(const std::shared_ptr<VoiceSource> source);
 
     /**
      * @brief Process audio playback.
@@ -109,10 +109,10 @@ private:
 
     /**
      * @brief Finds the voice associated with the specified transport source.
-     * @param source Shared pointer to the `AudiumTransportSource` to find.
+     * @param source Shared pointer to the `VoiceSource` to find.
      * @return Pointer to the associated `Voice`, or nullptr if not found.
      */
-    Voice* findVoice(const std::shared_ptr<AudiumTransportSource> source);
+    Voice* findVoice(const std::shared_ptr<VoiceSource> source);
 
     /**
      * @brief Gets the total number of voices.

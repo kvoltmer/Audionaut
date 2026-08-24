@@ -19,7 +19,7 @@ class AudioTrack;
 class PlayListContainer;
 class AudioRegionContainer;
 class AudioResourceContainer;
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class PlayListScheduler;
 class LinkAudioDevice;
 class AudioBusInterface;

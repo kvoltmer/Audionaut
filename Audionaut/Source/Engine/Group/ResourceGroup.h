@@ -21,7 +21,7 @@ namespace audium {
 class AudioTrack;
 class AudioResource;
 class AudioRegion;
-class AudiumTransportSource;
+class VoiceSource;
 class AudioClip;
 class AudioChannel;
 class AudioRegionContainer;

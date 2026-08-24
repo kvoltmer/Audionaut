@@ -20,7 +20,7 @@ class AudioRegionContainer;
 class AudiumEngine;
 class TempoProvider;
 class AudioRegion;
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class AudioResourceContainer;
 class AudioBusInterface;
 class TransportLoop;
@@ -42,7 +42,7 @@ public:
      * @param undoManager_ Shared pointer to the undo manager.
      * @param tempoProvider_ Shared pointer to the tempo provider.
      * @param audioResourceContainer_ Shared pointer to the audio resource container.
-     * @param transportSourceContainer_ Shared pointer to the transport source container.
+     * @param voiceSourceContainer_ Shared pointer to the voice source container.
      * @param selectionManager_ Shared pointer to the selection manager.
      * @param audioBusInterface_ Shared pointer to the audio bus interface.
      * @param transportLoop_ Shared pointer to the transport loop.
@@ -50,7 +50,7 @@ public:
     AudioTrackContainer(std::shared_ptr<juce::UndoManager> undoManager_,
                         std::shared_ptr<TempoProvider> tempoProvider_,
                         std::shared_ptr<AudioResourceContainer> audioResourceContainer_,
-                        std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                        std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                         std::shared_ptr<SelectionManager> selectionManager_,
                         std::shared_ptr<AudioBusInterface> audioBusInterface_,
                         std::shared_ptr<TransportLoop> transportLoop_,
@@ -59,7 +59,7 @@ public:
         undoManager(undoManager_),
         tempoProvider(tempoProvider_),
         audioResourceContainer(audioResourceContainer_),
-        transportSourceContainer(transportSourceContainer_),
+        voiceSourceContainer(voiceSourceContainer_),
         selectionManager(selectionManager_),
         transportLoop(transportLoop_),
         analysisProvider(analysisProvider_),
@@ -183,7 +183,7 @@ public:
     
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
-    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const noexcept { return transportSourceContainer; }
+    std::shared_ptr<VoiceSourceContainer> getVoiceSourceContainer() const noexcept { return voiceSourceContainer; }
     std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     std::shared_ptr<TransportLoop> getTransportLoop() const noexcept { return transportLoop; }
     std::shared_ptr<AnalysisProvider> getAnalysisProvider() const noexcept { return analysisProvider; }
@@ -233,7 +233,7 @@ private:
     std::shared_ptr<juce::UndoManager> undoManager; ///< Shared pointer to the undo manager.
     std::shared_ptr<TempoProvider> tempoProvider; ///< Shared pointer to the tempo provider.
     std::shared_ptr<AudioResourceContainer> audioResourceContainer; ///< Shared pointer to the audio resource container.
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer; ///< Shared pointer to the transport source container.
+    std::shared_ptr<VoiceSourceContainer> voiceSourceContainer; ///< Shared pointer to the voice source container.
     std::shared_ptr<SelectionManager> selectionManager; ///< Shared pointer to the selection manager.
     std::shared_ptr<TransportLoop> transportLoop; ///< Shared pointer to the transport loop.
     std::shared_ptr<AnalysisProvider> analysisProvider; ///< Shared analysis provider (owns the analysis cache).

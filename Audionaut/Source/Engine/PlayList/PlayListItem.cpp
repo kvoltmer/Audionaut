@@ -11,9 +11,8 @@
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
-#include "Engine/AudioSources/audium_AudioTransportSource.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
+#include "Engine/AudioSources/VoiceSource.h"
 
 namespace audium {
 
@@ -36,7 +35,7 @@ PlayListItem::~PlayListItem()
 
 void PlayListItem::init()
 {
-    if (transportSources.size() > 0) {
+    if (voiceSources.size() > 0) {
         deinit();
     }
 
@@ -46,18 +45,18 @@ void PlayListItem::init()
 void PlayListItem::createTransportSources()
 {
     for (const auto &resource : getRegion()->getAudioResources()) {
-        auto transportSource = owner.getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
-        if (transportSource != nullptr)
-            transportSources.emplace_back(transportSource);
+        auto voiceSource = owner.getAudioTrack().getAudioResourceContainer().createTransportSourceForAudioResource(resource);
+        if (voiceSource != nullptr)
+            voiceSources.emplace_back(voiceSource);
     }
 }
 
 void PlayListItem::deinit()
 {
-    for (auto transportSource : transportSources) {
-        audioRegion->getAudioTrack()->getTransportSourceContainer()->removeTransportSource(transportSource);
+    for (auto voiceSource : voiceSources) {
+        audioRegion->getAudioTrack()->getVoiceSourceContainer()->removeVoiceSource(voiceSource);
     }
-    transportSources.clear();
+    voiceSources.clear();
 }
 
 juce::Range<double> PlayListItem::getRegionData(audium::TimeContextType context) const

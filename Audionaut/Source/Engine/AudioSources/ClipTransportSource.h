@@ -8,90 +8,37 @@
 
 #include <JuceHeader.h>
 #include "ClipDynamicsProcessor.h"
-#include "VolumeFade.h"
-
-using namespace juce;
 
 namespace audium {
 
-class AudioTransportSource;
-
 //==============================================================================
 /**
- * @struct ClipFadeSpec
- * @brief The complete fade geometry of one clip, in seconds, file/source time
- *        domain. One spec drives live scheduling, project bounce and item
- *        bounce identically.
- *
- * The signed offsets follow ClipDynamics: positive = ramp boundary inside
- * the clip (silent head/tail), negative = outside (the fade extends the
- * audible material past the region window).
- */
-struct ClipFadeSpec
-{
-    double regionStart = 0.0, regionEnd = 0.0;   // the region window
-    double fadeIn = 0.0, fadeOut = 0.0;          // ramp end from start / ramp start from end
-    double fadeInStart = 0.0, fadeOutEnd = 0.0;  // signed ramp offsets
-    double fadeInCurve = 0.5, fadeOutCurve = 0.5; // curve exponents (0.5 = equal power)
+    The transport for one clip: takes a PositionableAudioSource and plays,
+    stops and repositions it, applying the clip's gain and fade ramps.
 
-    double headExtension()  const noexcept { return juce::jmax(0.0, -fadeInStart); }
-    double tailExtension()  const noexcept { return juce::jmax(0.0, -fadeOutEnd); }
+    Forked from juce::AudioTransportSource with three deliberate changes:
+    the ChangeBroadcaster base is gone, the flat gain is replaced by an
+    injected ClipDynamicsProcessor (clip gain + fade-in/out ramps, applied
+    post-resampling), and the callback lock is removed. The threading
+    contract without that lock: configuration (setSource, prepareToPlay)
+    happens off the audio thread and is gated by the atomic isPrepared
+    flag; setSource must not race an in-flight getNextAudioBlock.
 
-    /** Portion of the head extension before the source file's first sample -
-        the voice cannot render it; it is timeline silence. */
-    double preFileSilence() const noexcept { return juce::jmax(0.0, headExtension() - regionStart); }
-
-    /** First file position the voice reads from; never negative. */
-    double voiceFileStart() const noexcept { return regionStart - headExtension() + preFileSilence(); }
-
-    /** File position the voice reads to (past EOF renders silent). */
-    double voiceFileEnd()   const noexcept { return regionEnd + tailExtension(); }
-
-    /** Full audible length including both extensions. */
-    double audibleLength()  const noexcept { return (regionEnd - regionStart) + headExtension() + tailExtension(); }
-};
-
-/**
- * Configures both clip fades on `source` for a voice scheduled to read from
- * filePositionSeconds (>= spec.voiceFileStart()). The one shared fade
- * configuration used by PlayListScheduler::scheduleClip and
- * AudiumTransportSource::configureDynamics - kept in lockstep by
- * construction. Real-time safe.
- */
-void configureClipFades (AudioTransportSource& source,
-                         const ClipFadeSpec& spec,
-                         double filePositionSeconds,
-                         bool reset);
-
-//==============================================================================
-/**
-    An AudioSource that takes a PositionableAudioSource and allows it to be
-    played, stopped, started, etc.
-
-    This can also be told use a buffer and background thread to read ahead, and
-    if can correct for different sample-rates.
-
-    You may want to use one of these along with an AudioSourcePlayer and AudioIODevice
-    to control playback of an audio file.
-
-    @see AudioSource, AudioSourcePlayer
-
-    @tags{Audio}
+    @see VoiceSource, ClipDynamicsProcessor, ClipFadeSpec
 */
-class AudioTransportSource  : public PositionableAudioSource
+class ClipTransportSource  : public juce::PositionableAudioSource
 {
 public:
     //==============================================================================
-    /** Creates an AudioTransportSource.
+    /** Creates a ClipTransportSource.
         After creating one of these, use the setSource() method to select an input source.
-    */
-    /** The dynamics processor (clip gain + fades) is injected so the
+        The dynamics processor (clip gain + fades) is injected so the
         rendering chain can be configured and tested on its own. */
-    explicit AudioTransportSource (std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor_
+    explicit ClipTransportSource (std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor_
                                        = std::make_shared<ClipDynamicsProcessor>());
 
     /** Destructor. */
-    ~AudioTransportSource() override;
+    ~ClipTransportSource() override;
 
     //==============================================================================
     /** Sets the reader that is being used as the input source.
@@ -117,9 +64,9 @@ public:
                                                 this is 0, no sample-rate adjustment will be performed
         @param maxNumChannels                   the maximum number of channels that may need to be played
     */
-    void setSource (PositionableAudioSource* newSource,
+    void setSource (juce::PositionableAudioSource* newSource,
                     int readAheadBufferSize = 0,
-                    TimeSliceThread* readAheadThread = nullptr,
+                    juce::TimeSliceThread* readAheadThread = nullptr,
                     double sourceSampleRateToCorrectFor = 0.0,
                     int maxNumChannels = 2);
 
@@ -146,7 +93,11 @@ public:
     /** Returns true if the player has stopped because its input stream ran out of data. */
     bool hasStreamFinished() const noexcept;
 
+    /** Starts playback (no-op while already playing or without a source). */
     void start();
+
+    /** Stops playback. With fadeout, the next rendered block ramps its
+        first 256 samples to silence instead of cutting hard. */
     void stop(bool fadeout);
 
     /** Returns true if it's currently playing. */
@@ -154,7 +105,6 @@ public:
 
     /** Returns true if it's stopped. */
     bool isStopped() const noexcept     { return stopped; }
-    
 
     void setGain (float newGain) noexcept;
     float getGain() const noexcept;
@@ -182,9 +132,6 @@ public:
         unity pass-through until then). */
     void setFadeOutRamp(double rampSeconds, double rampStartSeconds, bool reset);
 
-    /** The injected dynamics chain, for callers that configure it directly. */
-    std::shared_ptr<ClipDynamicsProcessor> getDynamicsProcessor() const { return dynamicsProcessor; }
-
     //==============================================================================
     /** Implementation of the AudioSource method. */
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
@@ -193,30 +140,30 @@ public:
     void releaseResources() override;
 
     /** Implementation of the AudioSource method. */
-    void getNextAudioBlock (const AudioSourceChannelInfo&) override;
+    void getNextAudioBlock (const juce::AudioSourceChannelInfo&) override;
 
     //==============================================================================
     /** Implements the PositionableAudioSource method. */
-    void setNextReadPosition (int64 newPosition) override;
+    void setNextReadPosition (juce::int64 newPosition) override;
 
     /** Implements the PositionableAudioSource method. */
-    int64 getNextReadPosition() const override;
+    juce::int64 getNextReadPosition() const override;
 
     /** Implements the PositionableAudioSource method. */
-    int64 getTotalLength() const override;
+    juce::int64 getTotalLength() const override;
 
     /** Implements the PositionableAudioSource method. */
     bool isLooping() const override;
 
-    BufferingAudioSource* getBufferingSource() const { return bufferingSource; }
-    
+    juce::BufferingAudioSource* getBufferingSource() const { return bufferingSource; }
+
 private:
     //==============================================================================
-    PositionableAudioSource* source = nullptr;
-    ResamplingAudioSource* resamplerSource = nullptr;
-    BufferingAudioSource* bufferingSource = nullptr;
-    PositionableAudioSource* positionableSource = nullptr;
-    AudioSource* masterSource = nullptr;
+    juce::PositionableAudioSource* source = nullptr;
+    juce::ResamplingAudioSource* resamplerSource = nullptr;
+    juce::BufferingAudioSource* bufferingSource = nullptr;
+    juce::PositionableAudioSource* positionableSource = nullptr;
+    juce::AudioSource* masterSource = nullptr;
 
     std::shared_ptr<ClipDynamicsProcessor> dynamicsProcessor;
 
@@ -224,14 +171,12 @@ private:
     std::atomic<bool> stopped  = true;
     std::atomic<bool> fadeOutLastBlock  = false;
     double sampleRate = 44100.0, sourceSampleRate = 0.0;
-    int blockSize = 128, readAheadBufferSize = 0;
+    int blockSize = 128;
     std::atomic<bool> isPrepared = false;
 
-    
-    
     void releaseMasterResources();
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTransportSource)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ClipTransportSource)
 };
 
 } // namespace audium

@@ -86,9 +86,10 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/BeatSegmenter_1543c9e5.o \
   $(JUCE_OBJDIR)/AnalysisWorker_87f10fc9.o \
   $(JUCE_OBJDIR)/EventMerger_5b3b38cf.o \
-  $(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o \
-  $(JUCE_OBJDIR)/TransportSourceContainer_8c0ec2a6.o \
-  $(JUCE_OBJDIR)/audium_AudioTransportSource_b27fe79d.o \
+  $(JUCE_OBJDIR)/VoiceSource_a16dcd6e.o \
+  $(JUCE_OBJDIR)/VoiceSourceContainer_3bb45bfd.o \
+  $(JUCE_OBJDIR)/ClipTransportSource_2dcf5135.o \
+  $(JUCE_OBJDIR)/ClipFadeSpec_6e5c9b30.o \
   $(JUCE_OBJDIR)/PlayListItemExport_8b6443f0.o \
   $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o \
   $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o \
@@ -265,19 +266,24 @@ $(JUCE_OBJDIR)/EventMerger_5b3b38cf.o: ../../Source/Engine/Analysis/EventMerger.
 	@echo "Compiling EventMerger.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/AudiumTransportSource_f0eb0fd4.o: ../../Source/Engine/AudioSources/AudiumTransportSource.cpp
+$(JUCE_OBJDIR)/VoiceSource_a16dcd6e.o: ../../Source/Engine/AudioSources/VoiceSource.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AudiumTransportSource.cpp"
+	@echo "Compiling VoiceSource.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/TransportSourceContainer_8c0ec2a6.o: ../../Source/Engine/AudioSources/TransportSourceContainer.cpp
+$(JUCE_OBJDIR)/VoiceSourceContainer_3bb45bfd.o: ../../Source/Engine/AudioSources/VoiceSourceContainer.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling TransportSourceContainer.cpp"
+	@echo "Compiling VoiceSourceContainer.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
-$(JUCE_OBJDIR)/audium_AudioTransportSource_b27fe79d.o: ../../Source/Engine/AudioSources/audium_AudioTransportSource.cpp
+$(JUCE_OBJDIR)/ClipTransportSource_2dcf5135.o: ../../Source/Engine/AudioSources/ClipTransportSource.cpp
 	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling audium_AudioTransportSource.cpp"
+	@echo "Compiling ClipTransportSource.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ClipFadeSpec_6e5c9b30.o: ../../Source/Engine/AudioSources/ClipFadeSpec.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ClipFadeSpec.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/PlayListItemExport_8b6443f0.o: ../../Source/Engine/Export/PlayListItemExport.cpp

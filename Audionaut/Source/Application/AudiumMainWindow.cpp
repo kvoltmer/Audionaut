@@ -8,7 +8,7 @@
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Selection/SelectionManager.h"

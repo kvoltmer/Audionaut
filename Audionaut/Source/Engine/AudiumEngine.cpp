@@ -12,7 +12,7 @@
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Application/AudiumApplication.h"
 
 #include "Interface/ColourIds.h"

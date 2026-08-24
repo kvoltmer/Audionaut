@@ -17,7 +17,7 @@ namespace audium {
 
 class PlayListScheduler;
 class AudioResourceContainer;
-class TransportSourceContainer;
+class VoiceSourceContainer;
 
 class LinkAudioDevice : public juce::AudioIODeviceCallback {
     

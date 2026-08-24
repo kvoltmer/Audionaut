@@ -7,43 +7,40 @@
 #include <JuceHeader.h>
 
 #include "Engine/PlayList/SampleTimer.h"
-#include "Engine/AudioSources/audium_AudioTransportSource.h"
+#include "Engine/AudioSources/ClipTransportSource.h"
 
 namespace audium {
 
-#define MAX_AUDIO_FILE_CHANNELS 64
-
-class AudioTrack;
 class AudioResource;
 class PlayListItem;
-class TempoProvider;
+struct ClipFadeSpec;
 /**
- * @class AudiumTransportSource
+ * @class VoiceSource
  * @brief A wrapper around `juce::AudioSource` for managing audio playback with additional features.
  *
  * This class provides functionality for scheduling playback positions, managing playback states,
  * and applying channel mappings. It wraps around `juce::AudioSource` and integrates with
- * `AudioResource` and `AudioTransportSource` for advanced audio playback control.
+ * `AudioResource` and `ClipTransportSource` for advanced audio playback control.
  */
-class AudiumTransportSource : public juce::AudioSource
+class VoiceSource : public juce::AudioSource
 {
 public:
     /**
-     * @brief Constructs an AudiumTransportSource instance.
+     * @brief Constructs a VoiceSource instance.
      * @param audioResource Reference to the associated audio resource.
      * @param audioFormatReaderSource Shared pointer to the audio format reader source.
      */
-    AudiumTransportSource(AudioResource& audioResource,
+    VoiceSource(AudioResource& audioResource,
                           std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     
     /**
-     * @brief Destructor for AudiumTransportSource.
+     * @brief Destructor for VoiceSource.
      *
-     * Ensures that the audio transport source is properly released.
+     * Ensures that the clip voice source is properly released.
      */
-    ~AudiumTransportSource() override
+    ~VoiceSource() override
     {
-        audioTransportSource->setSource(nullptr);
+        clipTransportSource->setSource(nullptr);
     }
     
     /**
@@ -58,8 +55,7 @@ public:
      */
     void releaseResources() override
     {
-        if (mainSource != nullptr)
-            mainSource->releaseResources();
+        channelRemapping->releaseResources();
     }
     
     /**
@@ -69,9 +65,8 @@ public:
      */
     void schedulePosition (double newPosition, int startSample)
     {
-//        std::cout << "schedulePosition " << newPosition << " " << startSample << std::endl;
         if (startSample == 0) {
-            audioTransportSource->setPosition(newPosition);
+            clipTransportSource->setPosition(newPosition);
         }
         else {
             scheduledStartSample.store(startSample);
@@ -87,26 +82,47 @@ public:
     
     bool isPlaying() const noexcept
     {
-        return audioTransportSource->isPlaying();
+        return clipTransportSource->isPlaying();
     }
     
     bool isStopped() const noexcept
     {
-        return audioTransportSource->isStopped();
+        return clipTransportSource->isStopped();
     }
-    
+
+    void start()
+    {
+        clipTransportSource->start();
+    }
+
+    void stop(bool fadeOutLastBlock)
+    {
+        clipTransportSource->stop(fadeOutLastBlock);
+    }
+
+    void setGain(float gain)
+    {
+        clipTransportSource->setGain(gain);
+    }
+
+    void resetClipGain()
+    {
+        clipTransportSource->resetClipGain();
+    }
+
+    /** Configures both clip fades on the inner transport (see the free
+        configureClipFades in ClipFadeSpec.h). Real-time safe. */
+    void configureClipFades(const ClipFadeSpec& spec, double filePositionSeconds, bool reset);
+
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override;
-    
-    
+
+
     AudioResource& getAudioResource() const { return audioResource; }
-    
+
     void applyChannelMapping(bool withChannelOffset = true);
-    
-    std::shared_ptr<audium::AudioTransportSource> getAudioTransportSource() const { return audioTransportSource; }
-    
+
     /// < configure gain, fade-in, fade-out
-    void configureDynamics(std::shared_ptr<PlayListItem> item,
-                           std::shared_ptr<TempoProvider> tempoProvider);
+    void configureDynamics(std::shared_ptr<PlayListItem> item);
     
 private:
     AudioResource& audioResource; ///< Reference to the associated audio resource.
@@ -115,10 +131,10 @@ private:
     std::atomic<bool> reScheduled           = false; /// Helper to indicate if position is re-scheduled (loop)
     audium::SampleTimer durationTimer; ///< Timer for managing playback duration.
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
-    std::shared_ptr<audium::AudioTransportSource> audioTransportSource; ///< Underlying audio transport source.
-    std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping; ///< Channel remapping audio source.
-    juce::AudioSource* mainSource = nullptr; ///< Pointer to the main audio source.
-    
+    std::shared_ptr<audium::ClipTransportSource> clipTransportSource; ///< Underlying clip voice source.
+    std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping; ///< Channel remapping source; the outermost source in the chain.
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VoiceSource)
 };
 
 } // namespace audium 
