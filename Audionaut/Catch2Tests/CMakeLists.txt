@@ -67,6 +67,18 @@ message(STATUS "Essentia libs at: ${ESSENTIA_LIB_PATH} / ${ESSENTIA_3RDPARTY_LIB
 option(AUDIONAUT_ENABLE_COVERAGE "Instrument the test target for code coverage" OFF)
 message(STATUS "Coverage enabled: ${AUDIONAUT_ENABLE_COVERAGE}")
 
+# audionaut-cli: a second console-app target that reuses the same engine
+# sources headlessly (open/inspect/edit/export .audium projects from the
+# command line). Coverage builds skip it - the instrumentation flags are
+# scoped to the test target and a second uninstrumented copy of every TU
+# only slows the build down.
+option(AUDIONAUT_BUILD_CLI "Build the audionaut-cli headless tool" ON)
+if(AUDIONAUT_ENABLE_COVERAGE AND AUDIONAUT_BUILD_CLI)
+    message(STATUS "Coverage build: skipping the audionaut-cli target.")
+    set(AUDIONAUT_BUILD_CLI OFF)
+endif()
+message(STATUS "CLI enabled: ${AUDIONAUT_BUILD_CLI}")
+
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
 # included JUCE directly in your source tree (perhaps as a submodule), you'll need to tell CMake to
@@ -81,22 +93,6 @@ add_subdirectory(${SUBMODULES_PATH}/JUCE juce-bin)                    # If you'v
 #find_package(Catch2)
 
 add_subdirectory(${SUBMODULES_PATH}/Catch2 catch2-bin)
-
-# `juce_add_console_app` adds an executable target with the name passed as the first argument
-# (ConsoleAppExample here). This target is a normal CMake target, but has a lot of extra properties
-# set up by default. This function accepts many optional arguments. Check the readme at
-# `docs/CMake API.md` in the JUCE repo for the full list.
-
-juce_add_console_app(${APP_NAME} PRODUCT_NAME ${APP_NAME})     # The name of the final executable, which can differ from the target name
-
-# `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
-# into the build tree. This header should be included with `#include <JuceHeader.h>`. The include
-# path for this header will be automatically added to the target. The main function of the
-# JuceHeader is to include all the JUCE module headers for a particular target; if you're happy to
-# include module headers directly, you probably don't need to call this.
-
-juce_generate_juce_header(${APP_NAME})
-
 
 file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
@@ -118,7 +114,11 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/AudioSources/*.cpp
         ${SRC_PATH}/Engine/Export/*.cpp
         ${SRC_PATH}/Engine/Selection/*.cpp
-        
+
+        ${SRC_PATH}/Cli/*.cpp
+        ${SRC_PATH}/Cli/Commands/*.cpp
+
+
         ${SRC_PATH}/Interface/*.cpp
         ${SRC_PATH}/Interface/LookAndFeel/*.cpp
         ${SRC_PATH}/Interface/Components/*.cpp
@@ -142,80 +142,167 @@ file(GLOB SRC_TESTS
         Tests/*.cpp
         )
 
+# Ableton Link (the imported Ableton::Link target used below)
+include(${SUBMODULES_PATH}/link/AbletonLinkConfig.cmake)
+
+# The MSVC Essentia build takes its dependencies from vcpkg; the list is
+# shared with the Essentia build itself via VcpkgDeps.cmake so the library
+# set, the debug/release selection and the required definitions cannot drift
+# between the two. Configuring this build therefore needs the vcpkg prefix -
+# build_essentia_windows.ps1 prints the exact command when it finishes.
+if(AUDIONAUT_ENABLE_ESSENTIA AND MSVC)
+    include("${CMAKE_CURRENT_LIST_DIR}/../Builds/Windows/VcpkgDeps.cmake")
+    audionaut_find_essentia_deps()
+endif()
+
+# ---------------------------------------------------------------------------
+# Shared target configuration
+#
+# AudionautTests and AudionautCli compile the same engine/interface sources
+# headlessly; everything they have in common lives here so the two targets
+# cannot drift. Per-target extras (Catch2, test defines, the CLI entry point)
+# are added after the call.
+# ---------------------------------------------------------------------------
+function(audionaut_configure_common target)
+    # Generates the target's JuceHeader.h into the build tree; sources include
+    # it with `#include <JuceHeader.h>`.
+    juce_generate_juce_header(${target})
+
+    target_sources(${target}
+            PRIVATE
+            ${SRC_AUDIUM}
+            ${SRC_PATH}/../JuceLibraryCode/BinaryData.cpp)
+
+    # The source_group function creates a group in the IDE project for the files passed as arguments.
+    source_group(TREE "${SRC_PATH}" PREFIX "Source Files" FILES ${SRC_AUDIUM})
+
+    target_include_directories(${target}
+                            PUBLIC ../Source/
+                            PUBLIC ${SUBMODULES_PATH}/json/include
+                            PUBLIC ${SUBMODULES_PATH}/farbot/include
+                            )
+
+    if(AUDIONAUT_ENABLE_ESSENTIA)
+        if(MSVC)
+            # Eigen comes from vcpkg rather than Essentia's packaging/ tree, and
+            # version.h is generated into the build dir instead of into src/.
+            target_include_directories(${target}
+                                PUBLIC ${SUBMODULES_PATH}/essentia/src
+                                PUBLIC ${ESSENTIA_MSVC_ROOT}/generated
+                                PUBLIC ${AUDIONAUT_VCPKG_PREFIX}/include
+                                PUBLIC ${AUDIONAUT_VCPKG_PREFIX}/include/eigen3
+                                )
+            # Pulling in Essentia's headers drags <windows.h> into this target
+            # (threading.h includes it for the CRITICAL_SECTION mutex), and its
+            # defaults break two other dependencies:
+            #
+            #   NOMINMAX            - windows.h defines min/max as macros, which
+            #                         wrecks the std::min/std::max calls in
+            #                         Essentia's own devnull.h.
+            #   WIN32_LEAN_AND_MEAN - stops windows.h including winsock.h, which
+            #                         otherwise collides with the winsock2.h that
+            #                         Ableton Link's bundled asio requires
+            #                         ("WinSock.h has already been included").
+            target_compile_definitions(${target} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
+        else()
+            target_include_directories(${target}
+                                PUBLIC ${SUBMODULES_PATH}/essentia/src
+                                PUBLIC ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3
+                                )
+        endif()
+    endif()
+
+    set_property(TARGET ${target} PROPERTY CXX_STANDARD 20)
+
+    if(MSVC)
+        # /MP: parallel compilation within this target. MSBuild's -m only
+        # parallelizes across projects, and the JUCE modules + engine + interface
+        # all compile into one target - without /MP that is a single core doing
+        # all of it.
+        target_compile_options(${target} PRIVATE /MP)
+    endif()
+
+    # These definitions are visible both to our code and the JUCE module code,
+    # so pick unique names that are unlikely to collide.
+    target_compile_definitions(${target}
+        PRIVATE
+            JUCE_MODAL_LOOPS_PERMITTED=1
+            AUDIONAUT_HEADLESS=1 # no GUI app: no preferences, no live audio device, no message boxes
+            # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
+            JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
+            JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
+            ESSENTIA_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_ESSENTIA}>)
+
+    target_link_libraries(${target}
+        PRIVATE
+            juce::juce_core
+            juce::juce_audio_formats
+            juce::juce_audio_utils
+            juce::juce_dsp
+            Ableton::Link
+        PUBLIC
+            juce::juce_recommended_config_flags
+            juce::juce_recommended_warning_flags)
+
+    if(AUDIONAUT_ENABLE_ESSENTIA AND MSVC)
+        # MSVC's linker resolves archives by symbol table rather than left to
+        # right, so the ordering the POSIX branch below needs does not apply.
+        target_compile_definitions(${target} PUBLIC ${ESSENTIA_DEP_DEFINITIONS})
+
+        target_link_libraries(${target}
+            PRIVATE
+                "${ESSENTIA_MSVC_ROOT}/lib/$<CONFIG>/essentia.lib"
+                ${ESSENTIA_DEP_LIBRARIES})
+    elseif(AUDIONAUT_ENABLE_ESSENTIA)
+        target_link_libraries(${target}
+            PRIVATE
+                # GNU ld resolves static libs left to right, so dependents must
+                # precede their dependencies: essentia/chromaprint -> avformat ->
+                # avcodec -> swresample -> avutil, codecs and utility libs last.
+                ${ESSENTIA_LIB_PATH}/libessentia.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libchromaprint.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libavformat.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libavcodec.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libswresample.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libavutil.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libmp3lame.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libfftw3f.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libz.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libsamplerate.a
+                ${ESSENTIA_3RDPARTY_LIB_PATH}/libyaml.a)
+        if(APPLE)
+            # glibc provides iconv natively; a separate libiconv exists only on macOS
+            target_link_libraries(${target} PRIVATE libiconv.a)
+        else()
+            # libavutil's hwcontext_drm needs libdrm on Linux
+            target_link_libraries(${target} PRIVATE drm)
+        endif()
+    endif()
+
+    set_target_properties(${target}
+                          PROPERTIES
+                          XCODE_ATTRIBUTE_DEVELOPMENT_TEAM Q89CZBX79G)
+endfunction()
+
+# ---------------------------------------------------------------------------
+# Test target
+# ---------------------------------------------------------------------------
+
+# `juce_add_console_app` adds an executable target with the name passed as the first argument.
+# This target is a normal CMake target, but has a lot of extra properties set up by default.
+# Check the readme at `docs/CMake API.md` in the JUCE repo for the full list.
+juce_add_console_app(${APP_NAME} PRODUCT_NAME ${APP_NAME})
+
+audionaut_configure_common(${APP_NAME})
+
 target_sources(${APP_NAME}
         PRIVATE
-        ${SRC_AUDIUM}
-        ${SRC_TESTS}
-        ${SRC_PATH}/../JuceLibraryCode/BinaryData.cpp)
-        
-# The source_group function creates a group in the IDE project for the files passed as arguments.
-source_group(TREE "${SRC_PATH}" PREFIX "Source Files" FILES ${SRC_AUDIUM})
-
-
-target_include_directories(${APP_NAME}
-                        PUBLIC ../Source/
-                        PUBLIC ${SUBMODULES_PATH}/json/include
-                        PUBLIC ${SUBMODULES_PATH}/farbot/include
-                        )
-
-if(AUDIONAUT_ENABLE_ESSENTIA)
-    if(MSVC)
-        # Eigen comes from vcpkg rather than Essentia's packaging/ tree, and
-        # version.h is generated into the build dir instead of into src/.
-        target_include_directories(${APP_NAME}
-                            PUBLIC ${SUBMODULES_PATH}/essentia/src
-                            PUBLIC ${ESSENTIA_MSVC_ROOT}/generated
-                            PUBLIC ${AUDIONAUT_VCPKG_PREFIX}/include
-                            PUBLIC ${AUDIONAUT_VCPKG_PREFIX}/include/eigen3
-                            )
-        # Pulling in Essentia's headers drags <windows.h> into this target
-        # (threading.h includes it for the CRITICAL_SECTION mutex), and its
-        # defaults break two other dependencies:
-        #
-        #   NOMINMAX            - windows.h defines min/max as macros, which
-        #                         wrecks the std::min/std::max calls in
-        #                         Essentia's own devnull.h.
-        #   WIN32_LEAN_AND_MEAN - stops windows.h including winsock.h, which
-        #                         otherwise collides with the winsock2.h that
-        #                         Ableton Link's bundled asio requires
-        #                         ("WinSock.h has already been included").
-        target_compile_definitions(${APP_NAME} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
-    else()
-        target_include_directories(${APP_NAME}
-                            PUBLIC ${SUBMODULES_PATH}/essentia/src
-                            PUBLIC ${SUBMODULES_PATH}/essentia/packaging/debian_3rdparty/include/eigen3
-                            )
-    endif()
-endif()
-# c++ standard
-#set(CMAKE_CXX_STANDARD 20)
-set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 20)
-
-if(MSVC)
-    # /MP: parallel compilation within this target. MSBuild's -m only
-    # parallelizes across projects, and the JUCE modules + engine + interface
-    # + tests all compile into this one target - without /MP that is a single
-    # core doing all of it.
-    target_compile_options(${APP_NAME} PRIVATE /MP)
-endif()
-
-# `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
-# project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
-# of compile definitions to switch certain features on/off, so if there's a particular feature you
-# need that's not on by default, check the module header for the correct flag to set here. These
-# definitions will be visible both to your code, and also the JUCE module code, so for new
-# definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
+        ${SRC_TESTS})
 
 target_compile_definitions(${APP_NAME}
     PRIVATE
-        JUCE_MODAL_LOOPS_PERMITTED=1
-        AUDIONAUT_HEADLESS=1 # no GUI app: no preferences, no live audio device, no message boxes
-        CATCH2_TESTS=1       # test hooks only (PlayListScheduler)
-        CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}" # This is needed for the Catch2 tests to find the test files
-        # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
-        JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
-        JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
-        ESSENTIA_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_ESSENTIA}>)
+        CATCH2_TESTS=1 # test hooks only (PlayListScheduler)
+        CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}") # This is needed for the Catch2 tests to find the test files
 
 
 # ---------------------------------------------------------------------------
@@ -310,80 +397,33 @@ endif()
 
 # juce_add_binary_data(ConsoleAppData SOURCES ...)
 
-# `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
-# we're linking our executable target to the `juce::juce_core` module. Inter-module dependencies are
-# resolved automatically. If you'd generated a binary data target above, you would need to link to
-# it here too. This is a standard CMake command.
-
-# Ableton Link
-include(${SUBMODULES_PATH}/link/AbletonLinkConfig.cmake)
-#target_link_libraries(${APP_NAME} Ableton::Link)
-
-
+# Catch2 provides main() for the test binary (the CLI has its own).
 target_link_libraries(${APP_NAME}
     PRIVATE
-        # ConsoleAppData            # If you'd created a binary data target, you'd link to it here
-        juce::juce_core
-        juce::juce_audio_formats
-        juce::juce_audio_utils
-        juce::juce_dsp
-        Catch2::Catch2WithMain
-        Ableton::Link
-    PUBLIC
-        juce::juce_recommended_config_flags
-        juce::juce_recommended_warning_flags)
-
-if(AUDIONAUT_ENABLE_ESSENTIA AND MSVC)
-    # MSVC's linker resolves archives by symbol table rather than left to right,
-    # so the ordering the POSIX branch below needs does not apply here.
-    #
-    # The dependency list is shared with the Essentia build itself via
-    # VcpkgDeps.cmake, so the library set, the debug/release selection and the
-    # required definitions cannot drift between the two. Configuring this build
-    # therefore needs the vcpkg prefix - build_essentia_windows.ps1 prints the
-    # exact command when it finishes.
-    include("${CMAKE_CURRENT_LIST_DIR}/../Builds/Windows/VcpkgDeps.cmake")
-    audionaut_find_essentia_deps()
-
-    target_compile_definitions(${APP_NAME} PUBLIC ${ESSENTIA_DEP_DEFINITIONS})
-
-    target_link_libraries(${APP_NAME}
-        PRIVATE
-            "${ESSENTIA_MSVC_ROOT}/lib/$<CONFIG>/essentia.lib"
-            ${ESSENTIA_DEP_LIBRARIES})
-elseif(AUDIONAUT_ENABLE_ESSENTIA)
-    target_link_libraries(${APP_NAME}
-        PRIVATE
-            # GNU ld resolves static libs left to right, so dependents must
-            # precede their dependencies: essentia/chromaprint -> avformat ->
-            # avcodec -> swresample -> avutil, codecs and utility libs last.
-            ${ESSENTIA_LIB_PATH}/libessentia.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libchromaprint.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavformat.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavcodec.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libswresample.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libavutil.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libmp3lame.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libfftw3f.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libz.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libsamplerate.a
-            ${ESSENTIA_3RDPARTY_LIB_PATH}/libyaml.a)
-    if(APPLE)
-        # glibc provides iconv natively; a separate libiconv exists only on macOS
-        target_link_libraries(${APP_NAME} PRIVATE libiconv.a)
-    else()
-        # libavutil's hwcontext_drm needs libdrm on Linux
-        target_link_libraries(${APP_NAME} PRIVATE drm)
-    endif()
-endif()
-
+        Catch2::Catch2WithMain)
 
 add_test(NAME ${APP_NAME}
          COMMAND ${APP_NAME})
 
-set_target_properties(${APP_NAME}
-                      PROPERTIES
-                      XCODE_ATTRIBUTE_DEVELOPMENT_TEAM Q89CZBX79G)
+# ---------------------------------------------------------------------------
+# audionaut-cli target
+# ---------------------------------------------------------------------------
+if(AUDIONAUT_BUILD_CLI)
+    set(CLI_NAME "AudionautCli")
+
+    juce_add_console_app(${CLI_NAME} PRODUCT_NAME audionaut-cli)
+
+    audionaut_configure_common(${CLI_NAME})
+
+    target_sources(${CLI_NAME}
+            PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/../Cli/CliMain.cpp)
+
+    # Real-binary smoke test: the in-process command tests live in the
+    # AudionautTests target; this one checks the executable end to end.
+    add_test(NAME CliSmoke
+             COMMAND ${CLI_NAME} info ${CMAKE_CURRENT_SOURCE_DIR}/TestFiles/Sessions/simple-sine.audium --json)
+endif()
                     
 
 
