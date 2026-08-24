@@ -11,6 +11,7 @@
 #include "Application/AudiumMenuModel.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
+#include "UsageAnalytics.h"
 #include "AudiumMainWindow.h"
 #include "Interface/Dialogs/SettingsDialog.h"
 #include "Interface/Dialogs/FloatingToolWindow.h"
@@ -21,6 +22,14 @@ using namespace audium;
 
 AudiumApplication::AudiumApplication() = default;
 AudiumApplication::~AudiumApplication() = default;
+
+static void logAppLaunch(audium::UsageAnalytics& analytics)
+{
+    StringPairArray params;
+    params.set("app_version", JUCEApplication::getInstance()->getApplicationVersion());
+    params.set("os", SystemStats::getOperatingSystemName());
+    analytics.logEvent("app_launch", params);
+}
 
 AudiumApplication& AudiumApplication::getApp()
 {
@@ -51,7 +60,13 @@ void AudiumApplication::initialise (const juce::String& commandLine)
 
     initPreferences();
     initCommandManager();
-    
+
+    usageAnalytics = std::make_unique<UsageAnalytics>(getPreferences());
+    if (UsageAnalytics::isConsentDecided(getPreferences()))
+        logAppLaunch(*usageAnalytics);
+    // otherwise handleAsyncUpdate asks for consent and logs the launch then
+
+
     // create audium engine
     audiumEngine = audium::AudiumFactory::createAudiumEngine();
     audiumEngine->initialise();
@@ -125,10 +140,31 @@ void AudiumApplication::handleAsyncUpdate()
         splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
         splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
     }
+
+    if (! UsageAnalytics::isConsentDecided (getPreferences())) {
+        auto options = MessageBoxOptions::makeOptionsOkCancel (MessageBoxIconType::QuestionIcon,
+                                                               TRANS ("Share anonymous usage statistics?"),
+                                                               TRANS ("Audionaut can report app launches and feature usage "
+                                                                      "to help improve the app. No audio, project content "
+                                                                      "or personal data is collected.\n\n"
+                                                                      "You can change this anytime in Settings > Privacy."),
+                                                               TRANS ("Share"),
+                                                               TRANS ("No thanks"));
+
+        NativeMessageBox::showAsync (options, [this] (int result) {
+            const auto accepted = result == 0;
+            setUsageStatisticsEnabled (accepted);
+
+            if (accepted)
+                logAppLaunch (*usageAnalytics);
+        });
+    }
 }
 
 void AudiumApplication::shutdown()
 {
+    logUsageEvent("app_quit");
+
     getPreferences().setValue(PreferenceKeys::browserWindowOpen, fileBrowserVisible() ? "true" : "false");
     
     // Add your application's shutdown code here..
@@ -145,6 +181,9 @@ void AudiumApplication::shutdown()
     
     audiumEngine->uninitialise();
     audiumEngine.reset();
+
+    // flushes or saves the queued events; must go while the preferences live
+    usageAnalytics.reset();
 }
 
 void AudiumApplication::askToSaveIfDirtyAndInvoke(std::function<void ()> callback)
@@ -221,6 +260,7 @@ void AudiumApplication::initCommandManager()
 {
     commandManager = std::make_unique<ApplicationCommandManager>();
     commandManager->registerAllCommandsForTarget (this);
+    commandManager->addListener (this);
 }
 
 void AudiumApplication::initPreferences()
@@ -234,6 +274,33 @@ void AudiumApplication::initPreferences()
         recentFiles.restoreFromString (getPreferences().getValue (PreferenceKeys::recentFiles));
         recentFiles.removeNonExistentFiles();
     }
+}
+
+void AudiumApplication::setUsageStatisticsEnabled(bool enabled)
+{
+    if (usageAnalytics != nullptr)
+        usageAnalytics->setEnabled(enabled);
+}
+
+void AudiumApplication::logUsageEvent(const juce::String& name, const juce::StringPairArray& parameters)
+{
+    if (usageAnalytics != nullptr)
+        usageAnalytics->logEvent(name, parameters);
+}
+
+void AudiumApplication::applicationCommandInvoked(const ApplicationCommandTarget::InvocationInfo& info)
+{
+    auto name = commandManager->getNameOfCommand(info.commandID);
+    if (name.isEmpty())
+        name = "0x" + String::toHexString((int) info.commandID);
+
+    // "Save as..." -> "save_as", so the values work as a GA4 dimension
+    StringPairArray params;
+    params.set("command", name.toLowerCase()
+                              .retainCharacters("abcdefghijklmnopqrstuvwxyz0123456789 _")
+                              .trim()
+                              .replaceCharacter(' ', '_'));
+    logUsageEvent("menu_command", params);
 }
 
 void AudiumApplication::applyAnalysisPreferences()
@@ -579,12 +646,14 @@ void AudiumApplication::openFile(juce::File file)
     });
     
     if (success) {
-        
+
         initialOpenDirectory = file.getParentDirectory();
         std::cout << "initialOpenDirectory = " << initialOpenDirectory.getFullPathName() << std::endl;
         RecentlyOpenedFilesList::registerRecentFileNatively (file);
         recentFiles.addFile (file);
         updateSettings();
+
+        logUsageEvent(isProjectFile ? "project_open" : "file_import");
     }
 
     updateUI();
@@ -689,6 +758,7 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
         }
         updateSettings();
 
+        logUsageEvent("project_save");
     }
     return success;
 }

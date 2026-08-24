@@ -17,7 +17,11 @@ class SettingsDialog;
 class AboutSplashScreen;
 class MainComponent;
 
-class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
+namespace audium { class UsageAnalytics; }
+
+class AudiumApplication  : public juce::JUCEApplication,
+                           private juce::AsyncUpdater,
+                           private juce::ApplicationCommandManagerListener
 {
 public:
     AudiumApplication();
@@ -79,7 +83,13 @@ public:
     void restoreUiState();
 
     bool fileBrowserVisible() const;
-    
+
+    /// stores the usage-statistics consent and suspends/resumes the analytics
+    void setUsageStatisticsEnabled(bool enabled);
+
+    /// queues an anonymous usage event; dropped unless the user has opted in
+    void logUsageEvent(const juce::String& name, const juce::StringPairArray& parameters = {});
+
     AudiumLookAndFeel lookAndFeel;
     
     File initialSaveDirectory;
@@ -91,6 +101,7 @@ private:
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<audium::Preferences> preferences;
+    std::unique_ptr<audium::UsageAnalytics> usageAnalytics;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
     std::unique_ptr<juce::Component> aboutComponent;
@@ -102,6 +113,11 @@ private:
     
     void initCommandManager();
     void initPreferences();
+
+    // logs every invoked command (menus and shortcuts) as a usage event
+    void applicationCommandInvoked(const juce::ApplicationCommandTarget::InvocationInfo&) override;
+    void applicationCommandListChanged() override {}
+
     void applyAnalysisPreferences();
     void handleAsyncUpdate() override;
     

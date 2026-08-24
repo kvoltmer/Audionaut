@@ -835,6 +835,9 @@
     <ClCompile Include="..\..\Source\Application\Main.cpp">
       <Filter>Audionaut\Source\Application</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Application\UsageAnalytics.cpp">
+      <Filter>Audionaut\Source\Application</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Util\native\PreferencesLinux.cpp">
       <Filter>Audionaut\Source\Util\native</Filter>
     </ClCompile>
@@ -4152,6 +4155,9 @@
     <ClInclude Include="..\..\Source\Application\AudiumMainWindow.h">
       <Filter>Audionaut\Source\Application</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Application\UsageAnalytics.h">
+      <Filter>Audionaut\Source\Application</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Util\EngineAccess.h">
       <Filter>Audionaut\Source\Util</Filter>
     </ClInclude>
@@ -4387,6 +4393,9 @@
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\PrivacySettingsComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h">
