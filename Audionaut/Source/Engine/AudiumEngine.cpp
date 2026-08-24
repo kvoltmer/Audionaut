@@ -38,7 +38,7 @@ void AudiumEngine::initialise()
     auto numOutputChannelsNeeded = MAX_AUDIO_CHANNELS;
     String result;
 
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
     if (AudiumApplication::getPreferences().valueExists(PreferenceKeys::audioDeviceSettings)) {
         juce::XmlDocument xml (AudiumApplication::getPreferences().getValue(PreferenceKeys::audioDeviceSettings));
         if (auto saveState = xml.getDocumentElement()) {
@@ -62,7 +62,7 @@ void AudiumEngine::initialise()
 
 void AudiumEngine::uninitialise()
 {
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
     if (auto stateXml = audioDeviceManager->createStateXml()) {
         AudiumApplication::getPreferences().setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString().toStdString());
     }

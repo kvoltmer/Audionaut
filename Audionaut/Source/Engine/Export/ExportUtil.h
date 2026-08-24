@@ -66,7 +66,7 @@ public:
                 }
   
                 
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
                 AudiumApplication::getApp().initialSaveDirectory = file.getParentDirectory();
 #endif
                 

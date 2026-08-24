@@ -209,7 +209,8 @@ endif()
 target_compile_definitions(${APP_NAME}
     PRIVATE
         JUCE_MODAL_LOOPS_PERMITTED=1
-        CATCH2_TESTS=1
+        AUDIONAUT_HEADLESS=1 # no GUI app: no preferences, no live audio device, no message boxes
+        CATCH2_TESTS=1       # test hooks only (PlayListScheduler)
         CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}" # This is needed for the Catch2 tests to find the test files
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
