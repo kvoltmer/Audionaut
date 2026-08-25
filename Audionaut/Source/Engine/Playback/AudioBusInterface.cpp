@@ -6,6 +6,7 @@
 
 #include "AudioBusInterface.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Core/HeadlessMode.h"
 
 namespace audium
 {
@@ -31,9 +32,11 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
         ptr->setChannelData(channelNumber, data);
     });
     
-#if AUDIONAUT_HEADLESS
-    lockFreeCommander->invoke();
-#endif
+    // With no audio device running there is no render callback to drain the
+    // fifo (capacity 256, drops on full) - pump it synchronously. Runtime
+    // check so the GUI binary's in-app CLI mode gets the same treatment.
+    if (HeadlessMode::isHeadless())
+        lockFreeCommander->invoke();
     
 }
 
