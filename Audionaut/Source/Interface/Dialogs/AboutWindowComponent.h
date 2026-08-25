@@ -60,7 +60,7 @@ public:
         auto fabotString = "FAbian's Realtime Box o' Tricks";
         auto linkString = "Ableton Link 3.1.2";
 
-        auto librariesText = "Design by sansculotte.\n\n\nWith much gratitude to the following 3rd party libraries:\n\n"
+        auto librariesText = "Design by sansculotte.\nAutoEdit inspired by Oswald Berthold.\n\n\nWith much gratitude to the following 3rd party libraries:\n\n"
                                    + SystemStats::getJUCEVersion()
                                    + "\n" + jsonVersionString
                                    + "\n" + linkString
@@ -102,7 +102,7 @@ public:
         aboutButton.setBounds(aboutButtonRect);
         
         bounds.removeFromTop(50);
-        librariesLabel.setBounds(bounds.removeFromTop(140));
+        librariesLabel.setBounds(bounds.removeFromTop(155));
         
         copyrightLabel.setBounds (getLocalBounds().removeFromBottom(40));
     }
