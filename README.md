@@ -104,6 +104,21 @@ A typical agent flow: `create` → `import` → `analyze` → `auto-edit`/`assem
 → `export`, checking `ok` in each `--json` envelope. Projects written by the
 CLI open in the GUI app and vice versa.
 
+The **main Audionaut app** also accepts the same verbs (Projucer-style): run
+the app binary with a verb and it executes headlessly and quits with the
+command's exit code, even while a GUI instance is open — a file argument or
+no arguments launches the GUI as usual.
+
+```
+./Audionaut.app/Contents/MacOS/Audionaut export ~/Music/song.audium -o ~/Music/mix.wav
+```
+
+Note: the macOS app is sandboxed, so its in-app CLI can only reach
+entitlement-covered locations such as `~/Music`; the standalone
+`audionaut-cli` build has no such restriction. On Windows, the app is a GUI
+program — the shell prompt returns immediately and output interleaves with
+it; prefer `audionaut-cli` for scripting there.
+
 ### License
 
 Audionaut is dual-licensed under GPL3 (or later) and a commercial license — see <a href="LICENSE.md">LICENSE.md</a> for details.
