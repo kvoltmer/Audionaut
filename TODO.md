@@ -27,16 +27,15 @@
 
 ## Agent access — follow-ups (feature/headless-cli, PR #66)
 
-- [ ] **Build the MCP wrapper as a follow-up branch.** A small standalone MCP
-  server (Node or Python, official MCP SDK, e.g. `Tools/audionaut-mcp/`) whose
-  tools — `create_project`, `import_audio`, `get_project_info`, `analyze`,
-  `auto_edit`, `assemble`, `export_audio` — each shell out to `audionaut-cli`
-  with `--json` and relay the `{ok, result|error}` envelope as the tool
-  result. No engine logic in the wrapper; the CLI's JSON contract and exit
-  codes (0/1/2/3) were designed for exactly this. Include a README on
-  registering it (`claude mcp add audionaut -- ...`). The fancier variant —
-  an MCP server talking to the *running* GUI app over a local socket for
-  live-session control — stays deliberately deferred.
+- [x] **Build the MCP wrapper as a follow-up branch.** Done — `Tools/audionaut-mcp/`
+  (Node, `@modelcontextprotocol/sdk`): seven tools (`create_project`,
+  `import_audio`, `get_project_info`, `analyze`, `auto_edit`, `assemble`,
+  `export_audio`) each shell out to `audionaut-cli --json` and relay the
+  `{ok, result|error}` envelope; CLI errors surface as tool errors with the
+  CLI's own code/message. `npm test` drives the server end-to-end through the
+  SDK's stdio client; registration instructions in its README. The fancier
+  variant — an MCP server talking to the *running* GUI app over a local
+  socket for live-session control — stays deliberately deferred.
 
 ## Follow-ups surfaced by the coverage work
 
