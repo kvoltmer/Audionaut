@@ -43,7 +43,7 @@ bool PlayListItemExport::exportItem()
     if (useFileChooser) {
         
         String defaultFileName;
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
         defaultFileName = AudiumApplication::getApp().initialSaveDirectory.getFullPathName();
         defaultFileName += File::getSeparatorString() + audioRegion->getName() + ".wav";
         

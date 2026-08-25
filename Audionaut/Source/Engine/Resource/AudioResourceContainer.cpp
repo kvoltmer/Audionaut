@@ -143,7 +143,7 @@ bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirecto
         }        
     }
 #if _DEBUG
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
     if (debugString.isNotEmpty()) {
         
         auto messageString = "Destination: " + destinationDirectory.getFullPathName() + "\n\n";
@@ -412,7 +412,7 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
                 }
             }
             auto result = true;
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
             result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
                                                             "Redundant files found. Move files to trash?",
                                                             "The following audio files are not used in the project anymore:\n\n" +
@@ -460,7 +460,7 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const juce::File projectDi
         }
         
         auto result = true;
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
         result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
                                                         "Redundant files found. Move files to trash?",
                                                         "The following audio files are not used in the project anymore:\n\n" +

@@ -206,7 +206,7 @@ void MainComponent::updateUI()
 
 void MainComponent::updateWindowTitle()
 {
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
     if (getParentComponent() != nullptr)
     {
         auto projectName = audiumEngine->getCurrentProjectFile().getFileName();

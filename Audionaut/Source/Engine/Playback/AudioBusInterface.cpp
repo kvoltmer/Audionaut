@@ -31,7 +31,7 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
         ptr->setChannelData(channelNumber, data);
     });
     
-#if CATCH2_TESTS
+#if AUDIONAUT_HEADLESS
     lockFreeCommander->invoke();
 #endif
     

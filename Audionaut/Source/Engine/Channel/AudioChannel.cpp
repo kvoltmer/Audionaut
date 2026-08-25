@@ -65,7 +65,7 @@ void AudioChannel::setRecordEnabled(bool bEnabled)
 {
     auto numInputChannels = 0;
     
-#if CATCH2_TESTS
+#if AUDIONAUT_HEADLESS
     numInputChannels = 1;
 #else
     auto currentDevice = getAudioTrack().getAudioResourceContainer().getAudioDeviceManager()->getCurrentAudioDevice();

@@ -14,7 +14,7 @@
 #include "Engine/Selection/SelectionManager.h"
 #include "Interface/Controls/RegionSelector.h"
 
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
 #include "Application/AudiumApplication.h"
 #include "Interface/Dialogs/AutoEditSettingsComponent.h"
 #endif
@@ -185,7 +185,7 @@ AutoEditOverlayControl::AutoEditOverlayControl(std::shared_ptr<audium::AudiumEng
     // toggled state like the header's Loop button.
     xfadeButton = makeIconButton (TRANS ("Xfade"), xfadeIconPath());
     xfadeButton->setClickingTogglesState (true);
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
     xfadeButton->setToggleState (AutoEditSettingsComponent::readCrossfadesEnabled (AudiumApplication::getPreferences()),
                                  juce::dontSendNotification);
 #else
@@ -234,7 +234,7 @@ audium::AutoEditConfig AutoEditOverlayControl::makeConfig() const
     config.segmentMeasures = measures;
     config.crossfades = xfadeButton->getToggleState();
 
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
     // the crossfade length and curve come from the Settings dialog's
     // Auto Edit tab; the test build keeps the AutoEditConfig defaults
     config.crossfadeSeconds = AutoEditSettingsComponent::readCrossfadeSeconds(AudiumApplication::getPreferences());
@@ -301,7 +301,7 @@ void AutoEditOverlayControl::apply()
         audium::AutoEdit autoEdit(engine);
 
         autoEdit.invokeAutoEdit(config, [](std::string error) {
-#if CATCH2_TESTS
+#if AUDIONAUT_HEADLESS
             std::cout << "error: " << error << std::endl;
 #else
             juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
@@ -411,7 +411,7 @@ void AutoEditOverlayControl::visibilityChanged()
 
         updateStepButtons();
 
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
         // each time the overlay comes up, the Xfade button starts from the
         // stored preference; while shown it stays a per-apply override
         xfadeButton->setToggleState (AutoEditSettingsComponent::readCrossfadesEnabled (AudiumApplication::getPreferences()),

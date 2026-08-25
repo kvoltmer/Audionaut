@@ -72,6 +72,38 @@ make CONFIG=Release -j8
 
 See the <a href="Audionaut/Catch2Tests/README.md">Catch2 tests README</a>.
 
+### Command-line tool (audionaut-cli)
+
+`audionaut-cli` gives scripts, CI and AI agents headless access to `.audium`
+projects — no GUI, no audio device. It builds alongside the tests:
+
+```
+cmake -B build -S Audionaut/Catch2Tests
+cmake --build build -j8 --target AudionautCli
+./build/AudionautCli_artefacts/AudionautCli --help
+```
+
+Every command takes `--json` to emit exactly one machine-readable result
+envelope on stdout (`{"ok": true, "result": ...}` or `{"ok": false, "error":
+...}`) with all logging on stderr, plus `--quiet`. Exit codes: `0` success,
+`1` operation failed, `2` usage error, `3` feature unavailable in this build
+(e.g. `analyze` without Essentia). Option values may be given as `--opt value`
+or `--opt=value`.
+
+```
+audionaut-cli create  song.audium --channels 2
+audionaut-cli import  song.audium take1.wav take2.wav --position 4.5
+audionaut-cli info    song.audium --json
+audionaut-cli analyze song.audium --types sbic,beat_degara
+audionaut-cli auto-edit song.audium --track 0 --measures 4
+audionaut-cli assemble  song.audium --duration 60 --mode random
+audionaut-cli export  song.audium -o mix.wav --sample-rate 48000 --bit-depth 24
+```
+
+A typical agent flow: `create` → `import` → `analyze` → `auto-edit`/`assemble`
+→ `export`, checking `ok` in each `--json` envelope. Projects written by the
+CLI open in the GUI app and vice versa.
+
 ### License
 
 Audionaut is dual-licensed under GPL3 (or later) and a commercial license — see <a href="LICENSE.md">LICENSE.md</a> for details.
