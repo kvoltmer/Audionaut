@@ -24,18 +24,31 @@ const accessAsync = promisify(access);
 // ---------------------------------------------------------------------------
 // CLI location: $AUDIONAUT_CLI, else the repo's CMake build output (this
 // package lives at <repo>/Tools/audionaut-mcp), else audionaut-cli on PATH.
+// Single-config generators (Makefile/Ninja) emit AudionautCli_artefacts/
+// directly; multi-config ones (Xcode, Visual Studio) add a configuration
+// subdirectory, and Windows adds .exe.
 // ---------------------------------------------------------------------------
 async function resolveCliPath() {
   if (process.env.AUDIONAUT_CLI) return process.env.AUDIONAUT_CLI;
 
   const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-  const buildBinary = join(repoRoot, "build", "AudionautCli_artefacts", "AudionautCli");
-  try {
-    await accessAsync(buildBinary, constants.X_OK);
-    return buildBinary;
-  } catch {
-    return "audionaut-cli"; // hope it's on PATH; spawn errors are surfaced per call
+  const artefacts = join(repoRoot, "build", "AudionautCli_artefacts");
+  const binary = process.platform === "win32" ? "AudionautCli.exe" : "AudionautCli";
+
+  for (const candidate of [
+    join(artefacts, binary),
+    join(artefacts, "Release", binary),
+    join(artefacts, "Debug", binary),
+  ]) {
+    try {
+      await accessAsync(candidate, constants.X_OK);
+      return candidate;
+    } catch {
+      // try the next layout
+    }
   }
+
+  return "audionaut-cli"; // hope it's on PATH; spawn errors are surfaced per call
 }
 
 const cliPath = await resolveCliPath();

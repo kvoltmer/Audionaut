@@ -81,6 +81,16 @@ try {
       arguments: { project, track: 1, segments: 4 },
     });
     check("auto_edit", !edited.isError, edited.content?.[0]?.text);
+
+    const assembled = await client.callTool({
+      name: "assemble",
+      arguments: { project, track: 1, duration_seconds: 4, mode: "sequential", seed: 42 },
+    });
+    check(
+      "assemble",
+      !assembled.isError && assembled.content[0].text.includes("sequential"),
+      assembled.content?.[0]?.text
+    );
   }
 } finally {
   rmSync(workDir, { recursive: true, force: true });
