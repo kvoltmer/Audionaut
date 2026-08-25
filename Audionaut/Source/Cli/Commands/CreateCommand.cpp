@@ -22,7 +22,7 @@ int runCreate (const juce::ArgumentList& args, CliContext& context)
     if (plain.isEmpty())
         return context.fail (exitUsage, "usage", "create requires a target <project.audium> path");
 
-    auto target = juce::File::getCurrentWorkingDirectory().getChildFile (plain[0]);
+    auto target = workingDirectory().getChildFile (plain[0]);
     if (! target.getFileName().endsWith (AudiumEngine::projectFileExtension))
         return context.fail (exitUsage, "usage",
                              "the project path must end with " + std::string (AudiumEngine::projectFileExtension));

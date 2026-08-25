@@ -62,5 +62,13 @@ juce::String takeOptionValue (juce::ArgumentList& args,
                               juce::StringRef option,
                               const juce::String& defaultValue = {});
 
+/**
+ * The directory relative CLI paths resolve against. Prefers the shell's
+ * $PWD over getCurrentWorkingDirectory(): the sandboxed GUI app is chdir'd
+ * into its container during process init, so in in-app CLI mode the real
+ * invocation directory only survives in the environment.
+ */
+juce::File workingDirectory();
+
 } // namespace cli
 } // namespace audium

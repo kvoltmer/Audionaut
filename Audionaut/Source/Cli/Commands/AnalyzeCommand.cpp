@@ -60,7 +60,7 @@ int runAnalyze (const juce::ArgumentList& args, CliContext& context)
                     }
     }
     else {
-        auto file = juce::File::getCurrentWorkingDirectory().getChildFile (plain[0]);
+        auto file = workingDirectory().getChildFile (plain[0]);
         if (! file.existsAsFile())
             return context.fail (exitUsage, "usage", "file not found: " + plain[0].toStdString());
         audioFiles.push_back (file);
