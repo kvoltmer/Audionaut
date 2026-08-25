@@ -4,7 +4,11 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumApplication.h"
+#include "Cli/CliContext.h"
+#include "Cli/CliDispatch.h"
+#include "Cli/HeadlessEngineSession.h"
 #include "Interface/Components/MainComponent.h"
+#include "Engine/Core/HeadlessMode.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Factory/AudiumFactory.h"
@@ -52,13 +56,73 @@ audium::Preferences& AudiumApplication::getPreferences()
     return *prefs;
 }
 
+// The app is a GUI-subsystem executable on Windows, so stdout/stderr are
+// disconnected when run from a terminal - the CLI output would silently
+// vanish without re-attaching to the parent console. Known caveat: the shell
+// prompt returns immediately (shells don't wait on GUI processes), so output
+// interleaves with it; audionaut-cli is the clean console-subsystem option.
+static void attachToParentConsoleForCli()
+{
+#if JUCE_WINDOWS
+    if (AttachConsole (ATTACH_PARENT_PROCESS))
+    {
+        FILE* unused = nullptr;
+        freopen_s (&unused, "CONOUT$", "w", stdout);
+        freopen_s (&unused, "CONOUT$", "w", stderr);
+        std::ios::sync_with_stdio();
+    }
+#endif
+}
+
 void AudiumApplication::initialise (const juce::String& commandLine)
 {
+    // Preferences first: the CLI path below may need them and they have no
+    // window dependency (mirrors Projucer's settings-before-CLI ordering).
+    initPreferences();
+
+    // Projucer-style in-app CLI: a recognised verb runs headlessly and the
+    // process quits with its exit code; anything else (a project file, no
+    // arguments) falls through to normal GUI startup.
+    isRunningCommandLine = commandLine.trim().isNotEmpty()
+                            && ! commandLine.startsWith ("-NSDocumentRevisionsDebugMode");
+
+    if (isRunningCommandLine)
+    {
+        attachToParentConsoleForCli();
+        HeadlessMode::set (true);
+        cli::HeadlessEngineSession::setUseExternalMessageManager (true);
+
+        juce::ArgumentList args ("Audionaut", commandLine);
+        cli::CliContext context; // captures the real stdout before any redirect
+        context.json = args.removeOptionIfFound ("--json");
+        context.quiet = args.removeOptionIfFound ("--quiet");
+
+        const auto exitCode = cli::performCliCommand (args, context);
+        if (exitCode != cli::cliCommandNotPerformed)
+        {
+            setApplicationReturnValue (exitCode);
+            quit();
+            return; // no window, splash, engine or analytics were created
+        }
+
+        isRunningCommandLine = false;
+        HeadlessMode::set (false);
+        cli::HeadlessEngineSession::setUseExternalMessageManager (false);
+    }
+
+    // Single-instance behavior, handled manually after the CLI block (see
+    // moreThanOneInstanceAllowed): a second GUI launch forwards its command
+    // line to the running instance and quits.
+    if (sendCommandLineToPreexistingInstance())
+    {
+        quit();
+        return;
+    }
+
     LookAndFeel::setDefaultLookAndFeel (&lookAndFeel);
 
     splashScreen = std::make_unique<AboutSplashScreen>();
 
-    initPreferences();
     initCommandManager();
 
     usageAnalytics = std::make_unique<UsageAnalytics>(getPreferences());
@@ -95,7 +159,6 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         ArgumentList list ({}, commandLine);
 
         for (auto& arg : list.arguments) {
-            std::cout << "YO: " << arg.resolveAsFile().getFullPathName() << std::endl;
             openFile (arg.resolveAsFile());
         }
     }
@@ -163,10 +226,17 @@ void AudiumApplication::handleAsyncUpdate()
 
 void AudiumApplication::shutdown()
 {
+    if (isRunningCommandLine)
+    {
+        // CLI mode created none of the GUI objects below - only preferences
+        preferences.reset();
+        return;
+    }
+
     logUsageEvent("app_quit");
 
     getPreferences().setValue(PreferenceKeys::browserWindowOpen, fileBrowserVisible() ? "true" : "false");
-    
+
     // Add your application's shutdown code here..
     mainWindow.reset(); // (deletes our window)
 
@@ -175,12 +245,15 @@ void AudiumApplication::shutdown()
 #if JUCE_MAC
     MenuBarModel::setMacMainMenu (nullptr);
 #endif
-    
+
     menuModel.reset();
     commandManager.reset();
-    
-    audiumEngine->uninitialise();
-    audiumEngine.reset();
+
+    if (audiumEngine != nullptr)
+    {
+        audiumEngine->uninitialise();
+        audiumEngine.reset();
+    }
 
     // flushes or saves the queued events; must go while the preferences live
     usageAnalytics.reset();
@@ -243,6 +316,13 @@ void AudiumApplication::anotherInstanceStarted (const juce::String& commandLine)
 {
     if (! commandLine.trim().startsWithChar ('-')) {
         ArgumentList list ({}, commandLine);
+
+        // a forwarded CLI invocation must not have its verb opened as a file
+        // (CLI runs normally quit before forwarding; this is insurance)
+        if (! list.arguments.isEmpty())
+            for (auto& spec : cli::getCliCommands())
+                if (list.arguments.getReference (0).text == spec.verb)
+                    return;
 
         for (auto& arg : list.arguments) {
             auto file = arg.resolveAsFile();

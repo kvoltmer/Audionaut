@@ -72,6 +72,15 @@ ifeq ($(CONFIG),Release)
 endif
 
 OBJECTS_APP := \
+  $(JUCE_OBJDIR)/Commands_4f85ce61.o \
+  $(JUCE_OBJDIR)/AnalyzeCommand_196d61b8.o \
+  $(JUCE_OBJDIR)/AutoEditCommand_330b54c3.o \
+  $(JUCE_OBJDIR)/CreateCommand_e7133740.o \
+  $(JUCE_OBJDIR)/ExportCommand_9ec36188.o \
+  $(JUCE_OBJDIR)/ImportCommand_302650f7.o \
+  $(JUCE_OBJDIR)/InfoCommand_cbbb374e.o \
+  $(JUCE_OBJDIR)/CliDispatch_d59c360c.o \
+  $(JUCE_OBJDIR)/ProjectSummary_81a7e2c5.o \
   $(JUCE_OBJDIR)/AudiumMenuModel_e3ecba7b.o \
   $(JUCE_OBJDIR)/AudiumApplication_b159b4c1.o \
   $(JUCE_OBJDIR)/AudiumMainWindow_9b19a902.o \
@@ -195,6 +204,51 @@ $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) : $(OBJECTS_APP) $(JUCE_OBJDIR)/execinfo.cmd $
 	-$(V_AT)mkdir -p $(JUCE_LIBDIR)
 	-$(V_AT)mkdir -p $(JUCE_OUTDIR)
 	$(V_AT)$(CXX) -o $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) $(OBJECTS_APP) $(JUCE_LDFLAGS) $(shell cat $(JUCE_OBJDIR)/execinfo.cmd) $(JUCE_LDFLAGS_APP) $(RESOURCES) $(TARGET_ARCH)
+
+$(JUCE_OBJDIR)/Commands_4f85ce61.o: ../../Source/Cli/Commands/Commands.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling Commands.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AnalyzeCommand_196d61b8.o: ../../Source/Cli/Commands/AnalyzeCommand.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AnalyzeCommand.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AutoEditCommand_330b54c3.o: ../../Source/Cli/Commands/AutoEditCommand.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AutoEditCommand.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/CreateCommand_e7133740.o: ../../Source/Cli/Commands/CreateCommand.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling CreateCommand.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ExportCommand_9ec36188.o: ../../Source/Cli/Commands/ExportCommand.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ExportCommand.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ImportCommand_302650f7.o: ../../Source/Cli/Commands/ImportCommand.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ImportCommand.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/InfoCommand_cbbb374e.o: ../../Source/Cli/Commands/InfoCommand.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling InfoCommand.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/CliDispatch_d59c360c.o: ../../Source/Cli/CliDispatch.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling CliDispatch.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ProjectSummary_81a7e2c5.o: ../../Source/Cli/ProjectSummary.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ProjectSummary.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudiumMenuModel_e3ecba7b.o: ../../Source/Application/AudiumMenuModel.cpp
 	-$(V_AT)mkdir -p $(@D)

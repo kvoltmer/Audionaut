@@ -158,6 +158,15 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Source\Cli\Commands\Commands.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\Commands\AnalyzeCommand.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\Commands\AutoEditCommand.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\Commands\CreateCommand.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\Commands\ExportCommand.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\Commands\ImportCommand.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\Commands\InfoCommand.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\ProjectSummary.cpp"/>
     <ClCompile Include="..\..\Source\Application\AudiumMenuModel.cpp"/>
     <ClCompile Include="..\..\Source\Application\AudiumApplication.cpp"/>
     <ClCompile Include="..\..\Source\Application\AudiumMainWindow.cpp"/>
@@ -3118,6 +3127,11 @@
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_gui_extra.cpp"/>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\Cli\Commands\Commands.h"/>
+    <ClInclude Include="..\..\Source\Cli\CliContext.h"/>
+    <ClInclude Include="..\..\Source\Cli\CliDispatch.h"/>
+    <ClInclude Include="..\..\Source\Cli\HeadlessEngineSession.h"/>
+    <ClInclude Include="..\..\Source\Cli\ProjectSummary.h"/>
     <ClInclude Include="..\..\Source\Application\AudiumMenuModel.h"/>
     <ClInclude Include="..\..\Source\Application\AudiumCommandIDs.h"/>
     <ClInclude Include="..\..\Source\Application\AudiumApplication.h"/>
@@ -3152,6 +3166,7 @@
     <ClInclude Include="..\..\Source\Engine\Core\AudioClipContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\DspClip.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\DspClipData.h"/>
+    <ClInclude Include="..\..\Source\Engine\Core\HeadlessMode.h"/>
     <ClInclude Include="..\..\Source\Engine\Streamable.h"/>
     <ClInclude Include="..\..\Source\Engine\TimeContext.h"/>
     <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEdit.h"/>
