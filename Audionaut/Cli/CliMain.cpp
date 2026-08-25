@@ -47,8 +47,11 @@ int main (int argc, char* argv[])
                           spec.usage,
                           spec.shortHelp,
                           spec.longHelp,
-                          [&exitCode, &context, &spec] (const juce::ArgumentList& args) {
-                              exitCode = spec.run (args, context);
+                          // the handler pointer is copied: a captured `&spec`
+                          // is safe here (the table is a static) but reads
+                          // like the classic dangling-loop-variable bug
+                          [&exitCode, &context, run = spec.run] (const juce::ArgumentList& args) {
+                              exitCode = run (args, context);
                           } });
 
     auto findResult = app.findAndRunCommand (argumentList);
