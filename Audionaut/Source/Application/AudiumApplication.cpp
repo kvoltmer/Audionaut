@@ -198,6 +198,11 @@ void AudiumApplication::handleAsyncUpdate()
 
         NativeMessageBox::showAsync(options, [this, orphanedTempProject] (int result) {
             if (result == 0) {
+                // the user may have recorded or edited while the dialog was up,
+                // and opening replaces the session (and deletes its temp
+                // directory) - go through the usual dirty check first
+                askToSaveIfDirtyAndInvoke([this, orphanedTempProject] {
+
                 // promote the snapshot to a project file (atomically, and only
                 // continue on success) and open the temp package like any
                 // other project
@@ -232,6 +237,8 @@ void AudiumApplication::handleAsyncUpdate()
                     if (saveResult == 0)
                         saveProjectAs();
                 });
+
+                }); // askToSaveIfDirtyAndInvoke
             }
             else {
                 orphanedTempProject.deleteRecursively();
@@ -261,13 +268,24 @@ void AudiumApplication::handleAsyncUpdate()
 
     projectMonitor->onExternalChange = [this] {
         projectMonitor->setSuspended(true);
-        const auto reloaded = audiumEngine->reloadFromDisk([](std::string error) {
-            std::cout << "external reload failed: " << error << std::endl;
-        });
-        projectMonitor->setSuspended(false);
 
-        if (reloaded)
-            updateUI(); // includes the window title (dirty + agent markers)
+        if (audiumEngine->projectChangedOnDisk()) {
+            const auto reloaded = audiumEngine->reloadFromDisk([](std::string error) {
+                std::cout << "external reload failed: " << error << std::endl;
+            });
+
+            if (reloaded)
+                updateUI(); // includes the window title (dirty + agent markers)
+        }
+        else {
+            // analysis-only write (e.g. `audionaut-cli analyze`): derived
+            // data - refresh the cache without dirtying the session or
+            // touching the undo history
+            audiumEngine->reloadAnalysisFromDisk();
+            updateUI();
+        }
+
+        projectMonitor->setSuspended(false);
     };
 
     projectMonitor->onProjectFileMissing = [this] {
@@ -807,42 +825,30 @@ void AudiumApplication::askUserToOpenFile()
 void AudiumApplication::openFile(juce::File file)
 {
     // crash recovery: an Autosave.json newer than Project.json means the app
-    // previously quit without a clean save
+    // previously quit without a clean save. The restore is OFFERED only after
+    // the project itself opened successfully (openFileInternal) - openFile
+    // stays synchronous for its callers, and a corrupt Project.json can never
+    // take the snapshot down with it.
     juce::File packageDirectory;
     if (audium::AudiumEngine::isValidProjectStructure(file))
         packageDirectory = file;
     else if (file.getFileName() == audium::AudiumEngine::projectFileName)
         packageDirectory = file.getParentDirectory();
 
+    juce::File autosaveToOffer;
     if (packageDirectory != File()) {
         const auto autosave = packageDirectory.getChildFile(audium::AudiumEngine::autosaveFileName);
         const auto projectJson = packageDirectory.getChildFile(audium::AudiumEngine::projectFileName);
 
         if (autosave.existsAsFile() &&
-            autosave.getLastModificationTime() > projectJson.getLastModificationTime()) {
-
-            auto options = MessageBoxOptions::makeOptionsYesNo (MessageBoxIconType::QuestionIcon,
-                                                                TRANS ("Restore unsaved changes?"),
-                                                                "\"" + packageDirectory.getFileName() + "\" "
-                                                                    + TRANS ("has unsaved changes from a previous session "
-                                                                             "(the app may have quit unexpectedly).\n\n"
-                                                                             "Do you want to restore them?"),
-                                                                TRANS ("Restore"),
-                                                                TRANS ("Discard"));
-
-            NativeMessageBox::showAsync(options, [this, file, autosave] (int result) {
-                if (result != 0)
-                    autosave.deleteFile();
-                openFileInternal(file, result == 0 ? autosave : juce::File());
-            });
-            return;
-        }
+            autosave.getLastModificationTime() > projectJson.getLastModificationTime())
+            autosaveToOffer = autosave;
     }
 
-    openFileInternal(file, juce::File());
+    openFileInternal(file, autosaveToOffer);
 }
 
-void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToRestore)
+void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToOffer)
 {
     // audio files are added to the current project - only a project file brings its own view state
     const auto isProjectFile = audium::AudiumEngine::isValidProjectStructure(file) ||
@@ -864,17 +870,6 @@ void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToR
         updateSettings();
 
         logUsageEvent(isProjectFile ? "project_open" : "file_import");
-
-        // apply the crash-recovery snapshot as an undoable step: the session
-        // starts dirty and Undo returns to the last-saved state; the snapshot
-        // file itself stays until the next clean save deletes it
-        if (autosaveToRestore != File()) {
-            audiumEngine->restoreAutosave([this](std::string error) {
-                NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                      "Error",
-                                                      "Failed to restore unsaved changes.\n\n" + String(error));
-            });
-        }
     }
 
     updateUI();
@@ -886,6 +881,40 @@ void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToR
         restoreUiState();
 
     refreshWindowTitle();
+
+    // offer the crash-recovery snapshot now that the project is open. Restore
+    // applies it as an undoable step: the session starts dirty and Undo
+    // returns to the saved state; the snapshot stays until the next clean
+    // save. Discard only ever runs after a successful open.
+    if (success && autosaveToOffer != File()) {
+        auto options = MessageBoxOptions::makeOptionsYesNo (MessageBoxIconType::QuestionIcon,
+                                                            TRANS ("Restore unsaved changes?"),
+                                                            "\"" + autosaveToOffer.getParentDirectory().getFileName() + "\" "
+                                                                + TRANS ("has unsaved changes from a previous session "
+                                                                         "(the app may have quit unexpectedly).\n\n"
+                                                                         "Do you want to restore them?"),
+                                                            TRANS ("Restore"),
+                                                            TRANS ("Discard"));
+
+        NativeMessageBox::showAsync(options, [this, autosaveToOffer] (int result) {
+            if (result == 0) {
+                const auto restored = audiumEngine->restoreAutosave([this](std::string error) {
+                    NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                          "Error",
+                                                          "Failed to restore unsaved changes.\n\n" + String(error));
+                });
+
+                if (restored) {
+                    updateUI();
+                    restoreUiState();
+                    refreshWindowTitle();
+                }
+            }
+            else {
+                autosaveToOffer.deleteFile();
+            }
+        });
+    }
 }
 
 const File createProjectDirectory(const File &inFile)

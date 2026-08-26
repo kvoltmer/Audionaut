@@ -69,7 +69,7 @@ public:
     
     void askUserToOpenFile();
     void openFile(juce::File file);
-    void openFileInternal(juce::File file, juce::File autosaveToRestore);
+    void openFileInternal(juce::File file, juce::File autosaveToOffer);
     
     bool saveProjectAs();
     bool saveProject();

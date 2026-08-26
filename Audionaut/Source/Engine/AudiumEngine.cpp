@@ -285,8 +285,10 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         projectDirectory = file.getParentDirectory();
         
         std::string writeError;
-        if (writeJsonToFile(file, writeError)) {
+        json serialized;
+        if (writeJsonToFile(file, writeError, &serialized)) {
             currentProjectFile = file;
+            currentJson = std::move(serialized);
             undoManager->clearUndoHistory();
 
             // Persist analysis results alongside the project file.
@@ -354,7 +356,11 @@ bool AudiumEngine::writeToJson (json& output)
     jsonAudium["ui_state"] = uiState;
     jsonAudium["scheduler"] = getPlayListScheduler()->data;
     output["audium"] = jsonAudium;
-    currentJson = output;
+
+    // NOTE: deliberately no currentJson update here. currentJson tracks the
+    // state whose file references are authoritative for obsolete-file cleanup;
+    // snapshots (autosave, undo captures) must not clobber it - only
+    // open/save/apply do, explicitly.
     // std::cout << std::setw(2) << output << std::endl;
     return true;
 }
@@ -499,6 +505,12 @@ bool AudiumEngine::reloadFromDisk (std::function<void (std::string)> callback)
         return false;
     }
 
+    // Capture the mtimes BEFORE reading: a write landing during the (possibly
+    // long) apply must be re-detected on the next poll, not stamped as seen.
+    const auto projectMtimeAtRead = currentProjectFile.getLastModificationTime();
+    const auto analysisMtimeAtRead = projectDirectory.getChildFile(AnalysisCache::fileName)
+                                                     .getLastModificationTime();
+
     // The analysis cache is content-keyed derived data and stays outside the
     // undo snapshot.
     if (analysisChangedOnDisk())
@@ -507,10 +519,20 @@ bool AudiumEngine::reloadFromDisk (std::function<void (std::string)> callback)
     const auto applied = applyFileAsUndoableReload(currentProjectFile, true, true,
                                                    "Reload changes from disk", callback);
 
-    // Refresh even on failure so an unreadable external write doesn't retrigger
+    // Stamp even on failure so an unreadable external write doesn't retrigger
     // the change detector every poll tick.
-    refreshDiskStamps();
+    projectFileStamp = projectMtimeAtRead;
+    analysisFileStamp = analysisMtimeAtRead;
     return applied;
+}
+
+void AudiumEngine::reloadAnalysisFromDisk()
+{
+    audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+
+    // only the analysis stamp: a project write racing in stays detectable
+    analysisFileStamp = projectDirectory.getChildFile(AnalysisCache::fileName)
+                                        .getLastModificationTime();
 }
 
 bool AudiumEngine::restoreAutosave (std::function<void (std::string)> callback)
@@ -541,9 +563,12 @@ bool AudiumEngine::writeAutosave()
     if (!writeJsonToFile(target.getChildFile(autosaveFileName), error))
         return false;
 
-    // temp-directory snapshots are found by findOrphanedTempAutosave - the
-    // pid file keeps it from claiming a running instance's session
-    if (target == tempDirectory)
+    // temp-located snapshots are found by findOrphanedTempAutosave - the pid
+    // file keeps the scan from claiming a running instance's session. This
+    // must cover any package under the temp root, including a project that
+    // was restored from (and still lives in) an orphaned temp package.
+    const auto tempRoot = File::getSpecialLocation(File::tempDirectory);
+    if (target == tempRoot || target.isAChildOf(tempRoot))
         target.getChildFile(autosavePidFileName).replaceWithText(String(getCurrentProcessId()));
 
     return true;
@@ -596,8 +621,14 @@ juce::File AudiumEngine::findOrphanedTempAutosave()
     return newest;
 }
 
-bool AudiumEngine::writeJsonToFile (const juce::File& target, std::string& error)
+bool AudiumEngine::writeJsonToFile (const juce::File& target, std::string& error, json* serializedOut)
 {
+    json serialized;
+    if (!writeToJson(serialized)) {
+        error = "failed to serialize the project";
+        return false;
+    }
+
     juce::TemporaryFile temp (target);
     auto success = false;
     if (auto out = std::unique_ptr<juce::FileOutputStream>(temp.getFile().createOutputStream())) {
@@ -606,13 +637,18 @@ bool AudiumEngine::writeJsonToFile (const juce::File& target, std::string& error
             return false;
         }
 
-        if (writeToStream (*out.get())) {
-            out->flush();
-            success = true;
-        }
+        // same framing as Streamable::writeToStream
+        out->writeString(serialized.dump(2));
+        out->flush();
+        success = true;
     }
 
-    return success && temp.overwriteTargetFileWithTemporary();
+    if (success && temp.overwriteTargetFileWithTemporary()) {
+        if (serializedOut != nullptr)
+            *serializedOut = std::move(serialized);
+        return true;
+    }
+    return false;
 }
 
 void AudiumEngine::refreshDiskStamps()

@@ -45,6 +45,12 @@ struct UndoableReloadAction final : public juce::UndoableAction
         marksExternalChange (marksExternalChange_),
         markerBeforeReload (engine_.wasChangedExternally())
     {
+        // A constant, size-proportional value (KB of stored JSON): the live
+        // engine's track count would both hide the real memory cost from the
+        // UndoManager's trimming budget and drift between insert and removal,
+        // corrupting its unit accounting.
+        sizeInUnits = (int) juce::jmax ((size_t) 1,
+                                        (beforeState.dump().size() + afterState.dump().size()) / 1024);
     }
 
     /**
@@ -54,6 +60,11 @@ struct UndoableReloadAction final : public juce::UndoableAction
     bool perform() override
     {
         try {
+            // an agent write can land mid-take - never swap the project
+            // structure underneath live recorders (mirrors undo())
+            if (engine.getAudioBusInterface()->anyChannelRecording())
+                engine.getAudioBusInterface()->record(false);
+
             const auto ok = engine.applyProjectJson(afterState, preserveUiState);
             if (ok && marksExternalChange)
                 engine.setChangedExternally(true);
@@ -110,10 +121,11 @@ struct UndoableReloadAction final : public juce::UndoableAction
     }
 
     /**
-     * @brief Retrieves the size of the action in units.
+     * @brief Retrieves the size of the action in units (KB of stored JSON,
+     *        captured at construction).
      * @return The size of the action in units.
      */
-    int getSizeInUnits() override    { return engine.getSizeInUnits(); }
+    int getSizeInUnits() override    { return sizeInUnits; }
 
     /**
      * @brief The engine being managed.
@@ -145,6 +157,11 @@ struct UndoableReloadAction final : public juce::UndoableAction
      *        restores it to.
      */
     bool markerBeforeReload = false;
+
+    /**
+     * @brief Constant size of both stored JSON states in KB.
+     */
+    int sizeInUnits = 1;
 
     /**
      * @brief JUCE macro to prevent copying and detect memory leaks.

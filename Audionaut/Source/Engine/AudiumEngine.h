@@ -134,6 +134,13 @@ public:
     bool reloadFromDisk(std::function<void(std::string)> callback);
 
     /**
+     * @brief Reloads only the analysis cache from disk (an external writer ran
+     *        `analyze`). Derived data: touches neither the session state, the
+     *        undo history, nor the external-change marker.
+     */
+    void reloadAnalysisFromDisk();
+
+    /**
      * @brief Applies the package's Autosave.json as an undoable action, so a
      *        restored session starts dirty and Undo returns to the saved state.
      * @param callback A callback function to handle errors or status messages.
@@ -374,9 +381,12 @@ private:
      * @brief Serializes the engine to `target` atomically (temp file + rename).
      * @param target The file to write.
      * @param error Receives an error message on failure.
+     * @param serializedOut Receives the serialized JSON on success (optional) -
+     *        callers that make the written state authoritative (saveFile)
+     *        assign it to currentJson; snapshots leave currentJson alone.
      * @return True if the file was written, false otherwise.
      */
-    bool writeJsonToFile(const juce::File& target, std::string& error);
+    bool writeJsonToFile(const juce::File& target, std::string& error, json* serializedOut = nullptr);
 
     /**
      * @brief Reads `sourceFile` and applies it via an `UndoableReloadAction`.

@@ -81,9 +81,11 @@ void ProjectMonitor::timerCallback()
             if (onAutosaveDue != nullptr)
                 onAutosaveDue();
         }
-        else {
-            // the edits were undone (or the history cleared) - the in-memory
-            // state matches the last save again, so drop the stale snapshot
+        else if (engine->getUndoManager()->canRedo()) {
+            // the edits were undone back to the saved state, so the snapshot
+            // is stale. Only the undone-to-clean case (canRedo) may delete:
+            // clearUndoHistory (open/save) also broadcasts, and deleting then
+            // would destroy a freshly opened package's restorable snapshot.
             engine->deleteAutosave();
         }
     }
