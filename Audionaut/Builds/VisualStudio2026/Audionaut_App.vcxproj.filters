@@ -871,6 +871,9 @@
     <ClCompile Include="..\..\Source\Application\UsageAnalytics.cpp">
       <Filter>Audionaut\Source\Application</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Application\ProjectMonitor.cpp">
+      <Filter>Audionaut\Source\Application</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Util\native\PreferencesLinux.cpp">
       <Filter>Audionaut\Source\Util\native</Filter>
     </ClCompile>
@@ -4209,6 +4212,9 @@
     <ClInclude Include="..\..\Source\Application\UsageAnalytics.h">
       <Filter>Audionaut\Source\Application</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Application\ProjectMonitor.h">
+      <Filter>Audionaut\Source\Application</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Util\EngineAccess.h">
       <Filter>Audionaut\Source\Util</Filter>
     </ClInclude>
@@ -4426,6 +4432,9 @@
       <Filter>Audionaut\Source\Engine\Resource</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableContainerAction.h">
+      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Undo\UndoableReloadAction.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudiumEngine.h">

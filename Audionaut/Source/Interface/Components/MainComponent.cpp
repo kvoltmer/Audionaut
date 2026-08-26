@@ -218,7 +218,9 @@ void MainComponent::updateWindowTitle()
                 projectName = audiumEngine->getCurrentProjectFile().getParentDirectory().getFileName();
             }
         }
-        if (audiumEngine->getUndoManager()->canUndo())
+        if (audiumEngine->wasChangedExternally())
+            projectName += " - " + TRANS("Edited By Agent");
+        else if (audiumEngine->getUndoManager()->canUndo())
             projectName += " - Edited";
 
         getParentComponent()->setName(projectName);

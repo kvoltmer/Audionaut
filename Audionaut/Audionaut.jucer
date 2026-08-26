@@ -57,6 +57,10 @@
               file="Source/Application/UsageAnalytics.cpp"/>
         <FILE id="UsgAn2" name="UsageAnalytics.h" compile="0" resource="0"
               file="Source/Application/UsageAnalytics.h"/>
+        <FILE id="PrjMn1" name="ProjectMonitor.cpp" compile="1" resource="0"
+              file="Source/Application/ProjectMonitor.cpp"/>
+        <FILE id="PrjMn2" name="ProjectMonitor.h" compile="0" resource="0"
+              file="Source/Application/ProjectMonitor.h"/>
       </GROUP>
       <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
         <GROUP id="{E06E4F23-6CE8-7605-2078-9846BE4FC6DD}" name="native">
@@ -296,6 +300,8 @@
         <GROUP id="{71D24ABD-A319-5DE9-E24C-2AE51F6F1A35}" name="Undo">
           <FILE id="S8P8ar" name="UndoableContainerAction.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableContainerAction.h"/>
+          <FILE id="UdRlA1" name="UndoableReloadAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableReloadAction.h"/>
         </GROUP>
         <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumEngine.cpp"/>

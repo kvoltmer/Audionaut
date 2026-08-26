@@ -143,6 +143,7 @@
 		FAB57E2BD000174906B36E11 /* SBicSegmenter.cpp */ = {isa = PBXBuildFile; fileRef = F92285741D1FC2129C528C37; };
 		FD55D963E86683FE75E2B08E /* AudioRegionContainer.cpp */ = {isa = PBXBuildFile; fileRef = 8649B7A8233BFC8D32FA530F; };
 		FF1D6B95696A5DD89D5C9C63 /* CliDispatch.cpp */ = {isa = PBXBuildFile; fileRef = FB2CD60BFD48DCA05975881F; };
+		FFF57811D4411189D06C649F /* ProjectMonitor.cpp */ = {isa = PBXBuildFile; fileRef = FEDF9819DC6E93011CDA3EDF; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -340,6 +341,7 @@
 		9E73B749E8327F615AEA55E1 /* ChannelGroupHeaderComponent.h */ /* ChannelGroupHeaderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelGroupHeaderComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h; sourceTree = SOURCE_ROOT; };
 		9EB1079AF95DA79E5F159630 /* Playback.cpp */ /* Playback.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Playback.cpp; path = ../../Source/Engine/Playback/Playback.cpp; sourceTree = SOURCE_ROOT; };
 		9EE160AC533646BB61CD4DD6 /* AudioExportThread.h */ /* AudioExportThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioExportThread.h; path = ../../Source/Engine/Export/AudioExportThread.h; sourceTree = SOURCE_ROOT; };
+		A0096CEC564551C34E10C825 /* UndoableReloadAction.h */ /* UndoableReloadAction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UndoableReloadAction.h; path = ../../Source/Engine/Undo/UndoableReloadAction.h; sourceTree = SOURCE_ROOT; };
 		A106C95595EC1075A3006383 /* LinkEngine.cpp */ /* LinkEngine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LinkEngine.cpp; path = ../../Source/Engine/Link/LinkEngine.cpp; sourceTree = SOURCE_ROOT; };
 		A1367AD7787D8F61E862A1E1 /* GridView.h */ /* GridView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GridView.h; path = ../../Source/Interface/Views/GridView.h; sourceTree = SOURCE_ROOT; };
 		A1772A9E5D22DA6FA0F26F8C /* ChannelsComponent.cpp */ /* ChannelsComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ChannelsComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.cpp; sourceTree = SOURCE_ROOT; };
@@ -460,6 +462,7 @@
 		F583F48D0FF83F50111B03E8 /* FadeInOutView.cpp */ /* FadeInOutView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FadeInOutView.cpp; path = ../../Source/Interface/Views/FadeInOutView.cpp; sourceTree = SOURCE_ROOT; };
 		F5F7DEF8952E76FA005897ED /* CMakeLists.txt */ /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = CMakeLists.txt; path = ../../Catch2Tests/CMakeLists.txt; sourceTree = SOURCE_ROOT; };
 		F62ECD7362B186DC805B431E /* NewRegionDialog.h */ /* NewRegionDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NewRegionDialog.h; path = ../../Source/Interface/Dialogs/NewRegionDialog.h; sourceTree = SOURCE_ROOT; };
+		F6D6B37E2AE6DA888404BB3F /* ProjectMonitor.h */ /* ProjectMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProjectMonitor.h; path = ../../Source/Application/ProjectMonitor.h; sourceTree = SOURCE_ROOT; };
 		F6E5A50D09EF933C9000BC02 /* FloatingToolWindow.h */ /* FloatingToolWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FloatingToolWindow.h; path = ../../Source/Interface/Dialogs/FloatingToolWindow.h; sourceTree = SOURCE_ROOT; };
 		F83A1BE6180DBB12B016E6FF /* DraggingHandle.h */ /* DraggingHandle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DraggingHandle.h; path = ../../Source/Interface/Controls/DraggingHandle.h; sourceTree = SOURCE_ROOT; };
 		F8CFE8B71FB1DA1627A6C1E0 /* ExportAudioConfig.h */ /* ExportAudioConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ExportAudioConfig.h; path = ../../Source/Engine/Export/ExportAudioConfig.h; sourceTree = SOURCE_ROOT; };
@@ -473,6 +476,7 @@
 		FA93BF48B115085D2B707FEE /* README.md */ /* README.md */ = {isa = PBXFileReference; lastKnownFileType = file.md; name = README.md; path = ../../../README.md; sourceTree = SOURCE_ROOT; };
 		FB2CD60BFD48DCA05975881F /* CliDispatch.cpp */ /* CliDispatch.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = CliDispatch.cpp; path = ../../Source/Cli/CliDispatch.cpp; sourceTree = SOURCE_ROOT; };
 		FCD67B95E8ED469C52987653 /* juce_audio_basics */ /* juce_audio_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_basics; path = ../../../Submodules/JUCE/modules/juce_audio_basics; sourceTree = SOURCE_ROOT; };
+		FEDF9819DC6E93011CDA3EDF /* ProjectMonitor.cpp */ /* ProjectMonitor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ProjectMonitor.cpp; path = ../../Source/Application/ProjectMonitor.cpp; sourceTree = SOURCE_ROOT; };
 		FF8A35828E245DC65B5D294B /* include_juce_gui_extra.mm */ /* include_juce_gui_extra.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_gui_extra.mm; path = ../../JuceLibraryCode/include_juce_gui_extra.mm; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -847,6 +851,8 @@
 				6635C70632EE050E628A48F0,
 				5673A98DDDF091ED0E05D495,
 				CE1CABA19DC7A4D862DBEC39,
+				FEDF9819DC6E93011CDA3EDF,
+				F6D6B37E2AE6DA888404BB3F,
 			);
 			name = Application;
 			sourceTree = "<group>";
@@ -909,6 +915,7 @@
 			isa = PBXGroup;
 			children = (
 				D8950D3AC385340A9172F172,
+				A0096CEC564551C34E10C825,
 			);
 			name = Undo;
 			sourceTree = "<group>";
@@ -1322,6 +1329,7 @@
 				DD7FA514741BD80EB9EA9F19,
 				4ABF177467832242153DF416,
 				E3F0BD25C994EF087531145C,
+				FFF57811D4411189D06C649F,
 				090A584AB0AC23AB9528BCCD,
 				6BD9E0BBB60EAD02583E8F7C,
 				60C7DEA3545A27039A64E1CA,
