@@ -187,9 +187,10 @@ SCENARIO("a never-saved project with audio restores from its temp package", "[en
             FileInputStream in(orphanDir.getChildFile(AudiumEngine::autosaveFileName));
             REQUIRE(in.openedOk());
             auto j = json::parse(in.readString().toStdString());
-            const auto relPath = j["audium"]["audio_tracks"][1]["resource_groups"][0]["resources"][0]
-                                     ["relative_file_path"].template get<std::string>();
-            REQUIRE(relPath == "Media/Audio/" + audioFile.getFileName().toStdString());
+            const auto relPath = String(j["audium"]["audio_tracks"][1]["resource_groups"][0]["resources"][0]
+                                            ["relative_file_path"].template get<std::string>())
+                                     .replaceCharacter('\\', '/'); // Windows writes native separators
+            REQUIRE(relPath == "Media/Audio/" + audioFile.getFileName());
         }
 
         WHEN("the session crashes and a fresh one finds and restores the orphan") {
