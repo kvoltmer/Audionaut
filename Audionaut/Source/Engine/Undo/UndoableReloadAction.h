@@ -42,7 +42,8 @@ struct UndoableReloadAction final : public juce::UndoableAction
         beforeState (std::move(beforeState_)),
         afterState (std::move(afterState_)),
         preserveUiState (preserveUiState_),
-        marksExternalChange (marksExternalChange_)
+        marksExternalChange (marksExternalChange_),
+        markerBeforeReload (engine_.wasChangedExternally())
     {
     }
 
@@ -56,10 +57,13 @@ struct UndoableReloadAction final : public juce::UndoableAction
             const auto ok = engine.applyProjectJson(afterState, preserveUiState);
             if (ok && marksExternalChange)
                 engine.setChangedExternally(true);
+            if (!ok)
+                rollBackTo(beforeState);
             return ok;
         }
         catch (std::exception &e) {
             std::cout << "UndoableReloadAction::perform -> " << e.what() << std::endl;
+            rollBackTo(beforeState);
             return false;
         }
     }
@@ -75,13 +79,33 @@ struct UndoableReloadAction final : public juce::UndoableAction
                 engine.getAudioBusInterface()->record(false);
 
             const auto ok = engine.applyProjectJson(beforeState, preserveUiState);
+
+            // the before-state may itself stem from an earlier external
+            // reload - restore the marker's prior value, don't force it off
             if (ok && marksExternalChange)
-                engine.setChangedExternally(false);
+                engine.setChangedExternally(markerBeforeReload);
+            if (!ok)
+                rollBackTo(afterState);
             return ok;
         }
         catch (std::exception &e) {
             std::cout << "UndoableReloadAction::undo -> " << e.what() << std::endl;
+            rollBackTo(afterState);
             return false;
+        }
+    }
+
+    /**
+     * @brief Best-effort restore after a failed apply, so a rejected state
+     *        doesn't leave a partially mutated session behind.
+     */
+    void rollBackTo (json& state)
+    {
+        try {
+            engine.applyProjectJson(state, preserveUiState);
+        }
+        catch (std::exception &e) {
+            std::cout << "UndoableReloadAction: rollback failed -> " << e.what() << std::endl;
         }
     }
 
@@ -115,6 +139,12 @@ struct UndoableReloadAction final : public juce::UndoableAction
      * @brief Whether this action moves the engine's external-change marker.
      */
     bool marksExternalChange = false;
+
+    /**
+     * @brief The marker's value when this action was created - what undo
+     *        restores it to.
+     */
+    bool markerBeforeReload = false;
 
     /**
      * @brief JUCE macro to prevent copying and detect memory leaks.

@@ -1,12 +1,23 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include <unistd.h>
-
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
+#if !JUCE_WINDOWS
+ #include <unistd.h>
+#endif
+
 using namespace audium;
+
+static int currentTestProcessId()
+{
+#if JUCE_WINDOWS
+    return (int) GetCurrentProcessId();
+#else
+    return (int) getpid();
+#endif
+}
 
 static const auto autosaveTestFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
 
@@ -64,6 +75,19 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
                     REQUIRE_FALSE(autosaveFile.existsAsFile());
                 }
             }
+
+            AND_WHEN("the project is saved-as to another package") {
+                auto otherProject = File(autosaveTestFilesDirectory
+                                         + "Sessions/autosave-saveas-test.audium/"
+                                         + AudiumEngine::projectFileName);
+                REQUIRE(engine->saveFile(otherProject, nullptr));
+
+                THEN("the original package's snapshot is gone too") {
+                    REQUIRE_FALSE(autosaveFile.existsAsFile());
+                }
+
+                otherProject.getParentDirectory().deleteRecursively();
+            }
         }
     }
 
@@ -100,7 +124,7 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
 
         WHEN("its pid file names a live process (this one)") {
             orphan.getChildFile(AudiumEngine::autosavePidFileName)
-                  .replaceWithText(String((int) getpid()));
+                  .replaceWithText(String(currentTestProcessId()));
 
             THEN("the scan leaves it alone") {
                 REQUIRE(AudiumEngine::findOrphanedTempAutosave() == File());

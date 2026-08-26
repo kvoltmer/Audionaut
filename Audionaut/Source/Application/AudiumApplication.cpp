@@ -198,10 +198,21 @@ void AudiumApplication::handleAsyncUpdate()
 
         NativeMessageBox::showAsync(options, [this, orphanedTempProject] (int result) {
             if (result == 0) {
-                // promote the snapshot to a project file and open the temp
-                // package like any other project
-                auto autosave = orphanedTempProject.getChildFile(AudiumEngine::autosaveFileName);
-                autosave.copyFileTo(orphanedTempProject.getChildFile(AudiumEngine::projectFileName));
+                // promote the snapshot to a project file (atomically, and only
+                // continue on success) and open the temp package like any
+                // other project
+                const auto autosave = orphanedTempProject.getChildFile(AudiumEngine::autosaveFileName);
+                juce::TemporaryFile promoted (orphanedTempProject.getChildFile(AudiumEngine::projectFileName));
+
+                if (! (autosave.copyFileTo(promoted.getFile()) &&
+                       promoted.overwriteTargetFileWithTemporary())) {
+                    NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                          "Error",
+                                                          "Failed to restore the project from:\n"
+                                                              + autosave.getFullPathName());
+                    return;
+                }
+
                 orphanedTempProject.getChildFile(AudiumEngine::autosavePidFileName).deleteFile();
 
                 openFile(orphanedTempProject);

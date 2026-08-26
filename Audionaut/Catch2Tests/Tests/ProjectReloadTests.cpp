@@ -166,6 +166,54 @@ SCENARIO("disk stamps tell the app's own writes apart from foreign ones", "[engi
     MessageManager::deleteInstance();
 }
 
+SCENARIO("the agent marker survives undoing only the newest of two reloads", "[engine][reload][undo][marker]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    auto engine = AudiumFactory::createAudiumEngine();
+
+    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-marker-test.audium/" + AudiumEngine::projectFileName);
+
+    GIVEN("two consecutive external changes, each reloaded") {
+        engine->createNewProject();
+        REQUIRE(engine->saveFile(outProject, nullptr));
+
+        auto j = readProjectJson(outProject);
+        j["audium"]["master_gain"] = 0.5;
+        writeProjectJsonExternally(outProject, j);
+        REQUIRE(engine->reloadFromDisk(nullptr));
+
+        j["audium"]["master_gain"] = 0.25;
+        writeProjectJsonExternally(outProject, j);
+        REQUIRE(engine->reloadFromDisk(nullptr));
+
+        REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(0.25));
+        REQUIRE(engine->wasChangedExternally());
+
+        WHEN("only the newest reload is undone") {
+            REQUIRE(engine->getUndoManager()->undo());
+
+            THEN("the first agent version is active, so the marker stays") {
+                REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(0.5));
+                REQUIRE(engine->wasChangedExternally());
+
+                AND_THEN("undoing the first reload finally clears it") {
+                    REQUIRE(engine->getUndoManager()->undo());
+                    REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(1.0));
+                    REQUIRE_FALSE(engine->wasChangedExternally());
+                }
+            }
+        }
+    }
+
+    // cleanup ... comment out in case you need to isolate an issue
+    outProject.getParentDirectory().deleteRecursively();
+
+    engine = nullptr;
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
 SCENARIO("undoing a reload restores unsaved local edits, not the saved state", "[engine][reload][undo][dirty]")
 {
     MessageManager::getInstance();

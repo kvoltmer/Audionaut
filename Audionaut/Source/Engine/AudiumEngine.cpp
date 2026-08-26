@@ -257,6 +257,10 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         if (! file.exists())
             file.create();
         
+        // remember where this project was saved before - a Save As must also
+        // clear that package's crash-recovery snapshot
+        const auto previousProjectDirectory = projectDirectory;
+
         // need to copy or move audio files?
         auto sourceDirectory = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
         if (!sourceDirectory.exists()) {
@@ -289,8 +293,13 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
             audioTrackContainer->getAnalysisProvider()->getCache()->saveToFolder(projectDirectory);
 
             // A successful save supersedes any crash-recovery snapshot,
-            // including a temp-directory one from before the first save.
+            // including a temp-directory one from before the first save and
+            // the one in the package this project was saved-as from.
             deleteAutosave();
+            if (previousProjectDirectory != File() && previousProjectDirectory != projectDirectory) {
+                previousProjectDirectory.getChildFile(autosaveFileName).deleteFile();
+                previousProjectDirectory.getChildFile(autosavePidFileName).deleteFile();
+            }
 
             refreshDiskStamps();
 
@@ -401,9 +410,17 @@ bool AudiumEngine::applyProjectJson (json& input, bool preserveUiState)
         playListScheduler->getTempoProvider()->setTempo(tempo);
 
     // Non-destructive read; AudioTrackContainer falls back to a full rebuild
-    // when the structure differs. Bypass the audio callback for the duration.
+    // when the structure differs. Bypass the audio callback for the duration -
+    // and make sure a throwing read can't leave it bypassed forever.
     setBypass(true);
-    const auto readOk = audioTrackContainer->readFromJson(jsonAudium, false);
+    auto readOk = false;
+    try {
+        readOk = audioTrackContainer->readFromJson(jsonAudium, false);
+    }
+    catch (...) {
+        setBypass(false);
+        throw;
+    }
     setBypass(false);
 
     if (!readOk)
@@ -456,9 +473,14 @@ bool AudiumEngine::applyFileAsUndoableReload (const juce::File& sourceFile,
             beforeState.contains("audium") && beforeState["audium"].contains("ui_state"))
             afterState["audium"]["ui_state"] = beforeState["audium"]["ui_state"];
 
-        undoManager->perform(new UndoableReloadAction(*this, beforeState, afterState,
-                                                      preserveUiState, marksExternalChange),
-                             transactionName);
+        const auto performed = undoManager->perform(new UndoableReloadAction(*this, beforeState, afterState,
+                                                                             preserveUiState, marksExternalChange),
+                                                    transactionName);
+        if (!performed) {
+            NullCheckedInvocation::invoke (callback, "failed to apply the project state");
+            return false;
+        }
+
         undoManager->beginNewTransaction();
         return true;
     }
