@@ -1,0 +1,18 @@
+{
+  "name": "audionaut-mcp",
+  "version": "0.1.0",
+  "description": "MCP server exposing Audionaut's headless CLI (audionaut-cli) as agent tools",
+  "type": "module",
+  "bin": {
+    "audionaut-mcp": "index.js"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.4.3"
+  }
+}
