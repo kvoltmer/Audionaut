@@ -26,7 +26,7 @@ int runImport (const juce::ArgumentList& args, CliContext& context)
     auto plain = getPlainArguments (working);
     juce::StringArray audioFiles;
     for (int i = 1; i < plain.size(); ++i) {
-        auto file = juce::File::getCurrentWorkingDirectory().getChildFile (plain[i]);
+        auto file = workingDirectory().getChildFile (plain[i]);
         if (! file.existsAsFile())
             return context.fail (exitUsage, "usage", "audio file not found: " + plain[i].toStdString());
         audioFiles.add (file.getFullPathName());

@@ -5,6 +5,12 @@
     <Filter Include="Audionaut\Catch2Tests">
       <UniqueIdentifier>{A5516E1B-93FA-21AA-E5F7-F4470EE48EAC}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Cli\Commands">
+      <UniqueIdentifier>{4AECFF5C-8F29-B74B-1467-E63CC3223164}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\Source\Cli">
+      <UniqueIdentifier>{D3A87F72-B5BB-90B2-9FDE-C1BBA5CF8B7E}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Application">
       <UniqueIdentifier>{B153C1B2-9FF0-A3A4-E312-B0ED155AD336}</UniqueIdentifier>
     </Filter>
@@ -823,6 +829,33 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Source\Cli\Commands\Commands.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\AnalyzeCommand.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\AutoEditCommand.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\CreateCommand.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\ExportCommand.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\ImportCommand.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\InfoCommand.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\ProjectSummary.cpp">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Application\AudiumMenuModel.cpp">
       <Filter>Audionaut\Source\Application</Filter>
     </ClCompile>
@@ -4146,6 +4179,21 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\Cli\Commands\Commands.h">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Cli\CliContext.h">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Cli\CliDispatch.h">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Cli\HeadlessEngineSession.h">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Cli\ProjectSummary.h">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Application\AudiumMenuModel.h">
       <Filter>Audionaut\Source\Application</Filter>
     </ClInclude>
@@ -4246,6 +4294,9 @@
       <Filter>Audionaut\Source\Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Core\DspClipData.h">
+      <Filter>Audionaut\Source\Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Core\HeadlessMode.h">
       <Filter>Audionaut\Source\Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Streamable.h">

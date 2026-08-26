@@ -11,6 +11,32 @@
       <FILE id="VLoFk0" name="README.md" compile="0" resource="0" file="Catch2Tests/README.md"/>
     </GROUP>
     <GROUP id="{69119DF9-CC06-2A24-1C4A-CFAF02C4B8BB}" name="Source">
+      <GROUP id="{7C1A2B3D-4E5F-6071-8293-A4B5C6D7E8F9}" name="Cli">
+        <GROUP id="{8D2B3C4E-5F60-7182-93A4-B5C6D7E8F90A}" name="Commands">
+          <FILE id="CliCmH" name="Commands.h" compile="0" resource="0" file="Source/Cli/Commands/Commands.h"/>
+          <FILE id="CliCmC" name="Commands.cpp" compile="1" resource="0" file="Source/Cli/Commands/Commands.cpp"/>
+          <FILE id="CliAn1" name="AnalyzeCommand.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/AnalyzeCommand.cpp"/>
+          <FILE id="CliAe1" name="AutoEditCommand.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/AutoEditCommand.cpp"/>
+          <FILE id="CliCr1" name="CreateCommand.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/CreateCommand.cpp"/>
+          <FILE id="CliEx1" name="ExportCommand.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/ExportCommand.cpp"/>
+          <FILE id="CliIm1" name="ImportCommand.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/ImportCommand.cpp"/>
+          <FILE id="CliIn1" name="InfoCommand.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/InfoCommand.cpp"/>
+        </GROUP>
+        <FILE id="CliCtx" name="CliContext.h" compile="0" resource="0" file="Source/Cli/CliContext.h"/>
+        <FILE id="CliDsH" name="CliDispatch.h" compile="0" resource="0" file="Source/Cli/CliDispatch.h"/>
+        <FILE id="CliDsC" name="CliDispatch.cpp" compile="1" resource="0" file="Source/Cli/CliDispatch.cpp"/>
+        <FILE id="CliHes" name="HeadlessEngineSession.h" compile="0" resource="0"
+              file="Source/Cli/HeadlessEngineSession.h"/>
+        <FILE id="CliPsH" name="ProjectSummary.h" compile="0" resource="0" file="Source/Cli/ProjectSummary.h"/>
+        <FILE id="CliPsC" name="ProjectSummary.cpp" compile="1" resource="0"
+              file="Source/Cli/ProjectSummary.cpp"/>
+      </GROUP>
       <GROUP id="{1D37A931-400E-3356-8013-12CBF3C1C146}" name="Application">
         <FILE id="IsMeaZ" name="AudiumMenuModel.cpp" compile="1" resource="0"
               file="Source/Application/AudiumMenuModel.cpp"/>
@@ -129,6 +155,7 @@
           <FILE id="Ox6quG" name="DspClip.cpp" compile="1" resource="0" file="Source/Engine/Core/DspClip.cpp"/>
           <FILE id="EVuaOX" name="DspClip.h" compile="0" resource="0" file="Source/Engine/Core/DspClip.h"/>
           <FILE id="bNePQp" name="DspClipData.h" compile="0" resource="0" file="Source/Engine/Core/DspClipData.h"/>
+          <FILE id="HmCore" name="HeadlessMode.h" compile="0" resource="0" file="Source/Engine/Core/HeadlessMode.h"/>
         </GROUP>
         <FILE id="f3Gy4c" name="Streamable.h" compile="0" resource="0" file="Source/Engine/Streamable.h"/>
         <FILE id="E21RCr" name="TimeContext.h" compile="0" resource="0" file="Source/Engine/TimeContext.h"/>

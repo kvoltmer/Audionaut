@@ -32,7 +32,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     if (outputValue.isEmpty())
         return context.fail (exitUsage, "usage", "export requires -o <out.wav>");
 
-    auto outputFile = juce::File::getCurrentWorkingDirectory().getChildFile (outputValue);
+    auto outputFile = workingDirectory().getChildFile (outputValue);
     if (! outputFile.hasFileExtension (".wav"))
         return context.fail (exitUsage, "usage", "the output file must end with .wav");
 

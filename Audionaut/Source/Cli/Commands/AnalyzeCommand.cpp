@@ -6,6 +6,18 @@
 #include "Cli/Commands/Commands.h"
 #include "Cli/HeadlessEngineSession.h"
 
+// Same auto-detection as the segmenters (see SBicSegmenter.cpp): the CMake
+// builds define ESSENTIA_ENABLED globally, but the Projucer app build relies
+// on per-file header detection - without this block the in-app CLI would
+// report analysis unavailable even though the app links Essentia.
+#ifndef ESSENTIA_ENABLED
+ #if __has_include(<essentia/algorithmfactory.h>) && __has_include(<unsupported/Eigen/CXX11/Tensor>)
+  #define ESSENTIA_ENABLED 1
+ #else
+  #define ESSENTIA_ENABLED 0
+ #endif
+#endif
+
 #include "Engine/Analysis/AnalysisCache.h"
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Group/AudioTrack.h"
@@ -60,7 +72,7 @@ int runAnalyze (const juce::ArgumentList& args, CliContext& context)
                     }
     }
     else {
-        auto file = juce::File::getCurrentWorkingDirectory().getChildFile (plain[0]);
+        auto file = workingDirectory().getChildFile (plain[0]);
         if (! file.existsAsFile())
             return context.fail (exitUsage, "usage", "file not found: " + plain[0].toStdString());
         audioFiles.push_back (file);

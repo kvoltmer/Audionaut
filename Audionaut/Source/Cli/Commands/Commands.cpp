@@ -51,13 +51,24 @@ juce::String takeOptionValue (juce::ArgumentList& args,
     return {};
 }
 
+juce::File workingDirectory()
+{
+    auto pwd = juce::SystemStats::getEnvironmentVariable ("PWD", {});
+    if (pwd.isNotEmpty() && juce::File::isAbsolutePath (pwd)) {
+        juce::File dir (pwd);
+        if (dir.isDirectory())
+            return dir;
+    }
+    return juce::File::getCurrentWorkingDirectory();
+}
+
 juce::File resolveProjectFile (const juce::ArgumentList& args, int argumentIndex)
 {
     auto plain = getPlainArguments (args);
     if (argumentIndex >= plain.size())
         return {};
 
-    auto file = juce::File::getCurrentWorkingDirectory().getChildFile (plain[argumentIndex]);
+    auto file = workingDirectory().getChildFile (plain[argumentIndex]);
 
     // the .audium document package: point at the Project.json inside it
     if (AudiumEngine::isValidProjectStructure (file))

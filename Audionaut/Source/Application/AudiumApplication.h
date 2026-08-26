@@ -34,7 +34,11 @@ public:
     const juce::String getApplicationName() override       { return ProjectInfo::projectName; }
     const juce::String getApplicationVersion() override    { return ProjectInfo::versionString; }
     const juce::String getApplicationCompanyName()         { return ProjectInfo::companyName; }
-    bool moreThanOneInstanceAllowed() override             { return false; }
+    // Single-instance behavior is handled manually in initialise() (after the
+    // in-app CLI block) so a CLI invocation can run while the GUI is open -
+    // returning false here would make JUCE forward the arguments to the
+    // running instance before initialise() is ever called.
+    bool moreThanOneInstanceAllowed() override             { return true; }
 
     void initialise (const juce::String& commandLine) override;
 
@@ -96,6 +100,10 @@ public:
     File initialOpenDirectory;
 
 private:
+
+    // True while this process is executing a CLI verb instead of the GUI;
+    // initialise() quits early and shutdown() skips GUI teardown.
+    bool isRunningCommandLine = false;
 
     std::unique_ptr<AudiumMainWindow> mainWindow;
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
