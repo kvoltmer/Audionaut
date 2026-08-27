@@ -127,6 +127,13 @@ private:
     void initCommandManager();
     void initPreferences();
 
+    // handleAsyncUpdate startup steps
+    void offerOrphanedTempProjectRestore();
+    void restoreOrphanedTempProject(juce::File packageDirectory);
+    void loadStartupProject();
+    void startProjectMonitor();
+    void askForUsageStatisticsConsent();
+
     // logs every invoked command (menus and shortcuts) as a usage event
     void applicationCommandInvoked(const juce::ApplicationCommandTarget::InvocationInfo&) override;
     void applicationCommandListChanged() override {}

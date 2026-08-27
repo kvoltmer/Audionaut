@@ -174,94 +174,112 @@ void AudiumApplication::initialise (const juce::String& commandLine)
 void AudiumApplication::handleAsyncUpdate()
 {
     menuModel = std::make_unique<AudiumMenuModel>();
-    
+
 #if JUCE_MAC
     rebuildAppleMenu();
     appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
 #endif
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
 
-    auto browserOpen = getPreferences().getValue(PreferenceKeys::browserWindowOpen);
-    if (browserOpen == "true")
+    if (getPreferences().getValue(PreferenceKeys::browserWindowOpen) == "true")
         showFileBrowserWindow();
-    
+
+    offerOrphanedTempProjectRestore();
+    loadStartupProject();
+
+    updateUI();
+    refreshWindowTitle();
+    startProjectMonitor();
+
+    if (splashScreen != nullptr) {
+        splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
+        splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
+    }
+
+    askForUsageStatisticsConsent();
+}
+
+void AudiumApplication::loadStartupProject()
+{
+    // try to load default project from prefs
+    if (!audiumEngine->getCurrentProjectFile().exists() &&
+        getPreferences().valueExists(PreferenceKeys::defaultFile))
+        openFile(juce::File(getPreferences().getValue(PreferenceKeys::defaultFile)));
+
+    // still nothing loaded? -> create new project
+    if (!audiumEngine->getCurrentProjectFile().exists())
+        audiumEngine->createNewProject();
+}
+
+void AudiumApplication::offerOrphanedTempProjectRestore()
+{
     // crash recovery for never-saved projects: a leftover temp package with an
     // autosave means a previous session died with unsaved work
     const auto orphanedTempProject = AudiumEngine::findOrphanedTempAutosave();
-    if (orphanedTempProject != File()) {
-        auto options = MessageBoxOptions::makeOptionsYesNo (MessageBoxIconType::QuestionIcon,
-                                                            TRANS ("Restore unsaved project?"),
-                                                            TRANS ("A previous session ended unexpectedly with an "
-                                                                   "unsaved project.\n\nDo you want to restore it?"),
-                                                            TRANS ("Restore"),
-                                                            TRANS ("Discard"));
+    if (orphanedTempProject == File())
+        return;
 
-        NativeMessageBox::showAsync(options, [this, orphanedTempProject] (int result) {
-            if (result == 0) {
-                // the user may have recorded or edited while the dialog was up,
-                // and opening replaces the session (and deletes its temp
-                // directory) - go through the usual dirty check first
-                askToSaveIfDirtyAndInvoke([this, orphanedTempProject] {
+    auto options = MessageBoxOptions::makeOptionsYesNo (MessageBoxIconType::QuestionIcon,
+                                                        TRANS ("Restore unsaved project?"),
+                                                        TRANS ("A previous session ended unexpectedly with an "
+                                                               "unsaved project.\n\nDo you want to restore it?"),
+                                                        TRANS ("Restore"),
+                                                        TRANS ("Discard"));
 
-                // promote the snapshot to a project file (atomically, and only
-                // continue on success) and open the temp package like any
-                // other project
-                const auto autosave = orphanedTempProject.getChildFile(AudiumEngine::autosaveFileName);
-                juce::TemporaryFile promoted (orphanedTempProject.getChildFile(AudiumEngine::projectFileName));
-
-                if (! (autosave.copyFileTo(promoted.getFile()) &&
-                       promoted.overwriteTargetFileWithTemporary())) {
-                    NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                          "Error",
-                                                          "Failed to restore the project from:\n"
-                                                              + autosave.getFullPathName());
-                    return;
-                }
-
-                orphanedTempProject.getChildFile(AudiumEngine::autosavePidFileName).deleteFile();
-
-                openFile(orphanedTempProject);
-
-                // offer to save it to a real location - but let the user look
-                // at what was recovered first before committing
-                auto saveOptions = MessageBoxOptions::makeOptionsYesNo (MessageBoxIconType::InfoIcon,
-                                                                        TRANS ("Project restored"),
-                                                                        TRANS ("Check that everything was recovered, "
-                                                                               "then choose where to save the project.\n\n"
-                                                                               "Until it is saved it remains in a "
-                                                                               "temporary location."),
-                                                                        TRANS ("Save As..."),
-                                                                        TRANS ("Later"));
-
-                NativeMessageBox::showAsync(saveOptions, [this] (int saveResult) {
-                    if (saveResult == 0)
-                        saveProjectAs();
-                });
-
-                }); // askToSaveIfDirtyAndInvoke
-            }
-            else {
-                orphanedTempProject.deleteRecursively();
-            }
-        });
-    }
-
-    // try to load default project from prefs
-    if (!audiumEngine->getCurrentProjectFile().exists()) {
-        if (getPreferences().valueExists(PreferenceKeys::defaultFile)) {
-            const auto file = juce::File(getPreferences().getValue(PreferenceKeys::defaultFile));
-            openFile(juce::File(getPreferences().getValue(PreferenceKeys::defaultFile)));
+    NativeMessageBox::showAsync(options, [this, orphanedTempProject] (int result) {
+        if (result != 0) {
+            orphanedTempProject.deleteRecursively();
+            return;
         }
+
+        // the user may have recorded or edited while the dialog was up, and
+        // opening replaces the session (and deletes its temp directory) -
+        // go through the usual dirty check first
+        askToSaveIfDirtyAndInvoke([this, orphanedTempProject] {
+            restoreOrphanedTempProject(orphanedTempProject);
+        });
+    });
+}
+
+void AudiumApplication::restoreOrphanedTempProject(juce::File packageDirectory)
+{
+    // promote the snapshot to a project file (atomically, and only continue
+    // on success) and open the temp package like any other project
+    const auto autosave = packageDirectory.getChildFile(AudiumEngine::autosaveFileName);
+    juce::TemporaryFile promoted (packageDirectory.getChildFile(AudiumEngine::projectFileName));
+
+    if (! (autosave.copyFileTo(promoted.getFile()) &&
+           promoted.overwriteTargetFileWithTemporary())) {
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                              "Error",
+                                              "Failed to restore the project from:\n"
+                                                  + autosave.getFullPathName());
+        return;
     }
 
-    // still nothing loaded? -> create new project
-    if (!audiumEngine->getCurrentProjectFile().exists()) {
-        audiumEngine->createNewProject();
-    }
-    
-    updateUI();
-    refreshWindowTitle();
+    packageDirectory.getChildFile(AudiumEngine::autosavePidFileName).deleteFile();
 
+    openFile(packageDirectory);
+
+    // offer to save it to a real location - but let the user look at what
+    // was recovered first before committing
+    auto saveOptions = MessageBoxOptions::makeOptionsYesNo (MessageBoxIconType::InfoIcon,
+                                                            TRANS ("Project restored"),
+                                                            TRANS ("Check that everything was recovered, "
+                                                                   "then choose where to save the project.\n\n"
+                                                                   "Until it is saved it remains in a "
+                                                                   "temporary location."),
+                                                            TRANS ("Save As..."),
+                                                            TRANS ("Later"));
+
+    NativeMessageBox::showAsync(saveOptions, [this] (int saveResult) {
+        if (saveResult == 0)
+            saveProjectAs();
+    });
+}
+
+void AudiumApplication::startProjectMonitor()
+{
     // watch the open package for external (agent) writes and drive the
     // autosave cadence
     projectMonitor = std::make_unique<ProjectMonitor>(audiumEngine);
@@ -301,30 +319,29 @@ void AudiumApplication::handleAsyncUpdate()
         captureUiState();
         audiumEngine->writeAutosave();
     };
+}
 
-    if (splashScreen != nullptr) {
-        splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
-        splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
-    }
+void AudiumApplication::askForUsageStatisticsConsent()
+{
+    if (UsageAnalytics::isConsentDecided (getPreferences()))
+        return;
 
-    if (! UsageAnalytics::isConsentDecided (getPreferences())) {
-        auto options = MessageBoxOptions::makeOptionsOkCancel (MessageBoxIconType::QuestionIcon,
-                                                               TRANS ("Share anonymous usage statistics?"),
-                                                               TRANS ("Audionaut can report app launches and feature usage "
-                                                                      "to help improve the app. No audio, project content "
-                                                                      "or personal data is collected.\n\n"
-                                                                      "You can change this anytime in Settings > Privacy."),
-                                                               TRANS ("Share"),
-                                                               TRANS ("No thanks"));
+    auto options = MessageBoxOptions::makeOptionsOkCancel (MessageBoxIconType::QuestionIcon,
+                                                           TRANS ("Share anonymous usage statistics?"),
+                                                           TRANS ("Audionaut can report app launches and feature usage "
+                                                                  "to help improve the app. No audio, project content "
+                                                                  "or personal data is collected.\n\n"
+                                                                  "You can change this anytime in Settings > Privacy."),
+                                                           TRANS ("Share"),
+                                                           TRANS ("No thanks"));
 
-        NativeMessageBox::showAsync (options, [this] (int result) {
-            const auto accepted = result == 0;
-            setUsageStatisticsEnabled (accepted);
+    NativeMessageBox::showAsync (options, [this] (int result) {
+        const auto accepted = result == 0;
+        setUsageStatisticsEnabled (accepted);
 
-            if (accepted)
-                logAppLaunch (*usageAnalytics);
-        });
-    }
+        if (accepted)
+            logAppLaunch (*usageAnalytics);
+    });
 }
 
 void AudiumApplication::shutdown()
