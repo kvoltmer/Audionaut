@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
@@ -32,7 +33,7 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
     auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a never-saved project") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
 
         THEN("the snapshot goes to the session's temp directory, with a pid file") {
             REQUIRE(store->writeAutosave());
@@ -53,7 +54,7 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
     }
 
     GIVEN("a saved project") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         REQUIRE(store->save(outProject, nullptr));
 
         const auto autosaveFile = outProject.getSiblingFile(ProjectFileStore::autosaveFileName);
@@ -107,7 +108,7 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
     auto store = engine->getProjectFileStore();
-    engine->createNewProject();
+    engine->getProjectSerializer()->createNewProject();
 
     // leftovers from previous test runs must not leak into the assertions
     for (auto stale = ProjectFileStore::findOrphanedTempAutosave(); stale != File();
@@ -181,7 +182,7 @@ SCENARIO("a never-saved project with audio restores from its temp package", "[en
     REQUIRE(audioFile.existsAsFile());
 
     GIVEN("a never-saved project with an audio file, autosaved to the temp directory") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         REQUIRE(store->open(audioFile, nullptr));
         REQUIRE(store->writeAutosave());
 
@@ -237,7 +238,7 @@ SCENARIO("a crash-recovery snapshot restores as a dirty, undoable session", "[en
     auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-restore-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a project whose last session autosaved unsaved changes and then crashed") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         REQUIRE(store->save(outProject, nullptr));
 
         engine->getAudioTrackContainer()->setMasterGain(0.8f);

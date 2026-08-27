@@ -1027,6 +1027,9 @@
     <ClCompile Include="..\..\Source\Engine\Project\ProjectFileStore.cpp">
       <Filter>Audionaut\Source\Engine\Project</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Project\ProjectSerializer.cpp">
+      <Filter>Audionaut\Source\Engine\Project</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp">
       <Filter>Audionaut\Source\Engine</Filter>
     </ClCompile>
@@ -4444,6 +4447,9 @@
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Project\ProjectFileStore.h">
+      <Filter>Audionaut\Source\Engine\Project</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Project\ProjectSerializer.h">
       <Filter>Audionaut\Source\Engine\Project</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudiumEngine.h">

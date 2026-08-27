@@ -14,7 +14,10 @@ using json = nlohmann::json;
 
 namespace audium {
 
-class AudiumEngine;
+class AudioTrackContainer;
+class AudioResourceContainer;
+class PlayListScheduler;
+class ProjectSerializer;
 
 /**
  * @class ProjectFileStore
@@ -23,20 +26,22 @@ class AudiumEngine;
  *        snapshots), and the session orchestration (open/save/autosave/reload)
  *        that used to live on `AudiumEngine`.
  *
- * The engine remains the graph (de)serializer (`writeToJson` /
- * `readFromJson` / `applyProjectJson`); this class owns everything about how
- * and what reaches disk, plus the persistence session state
- * (currentProjectFile, the authoritative currentJson, the external-change
- * marker, the path statics). A future split along the primitives /
- * orchestration seam is possible if this grows further.
+ * `ProjectSerializer` owns what the document JSON contains and how it is
+ * applied to the graph; this class owns everything about how and what reaches
+ * disk, plus the persistence session state (currentProjectFile, the
+ * authoritative currentJson, the external-change marker, the path statics).
  *
- * Wired in `AudiumFactory`: the engine holds this store (shared_ptr), the
- * store holds the engine weakly via `attach()`.
+ * Wired in `AudiumFactory`: constructed with the graph collaborators, then
+ * given the serializer via `setSerializer()` (the serializer holds this store
+ * weakly - see ProjectSerializer).
  */
 class ProjectFileStore
 {
 public:
-    ProjectFileStore() = default;
+    ProjectFileStore(std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
+                     std::shared_ptr<AudioResourceContainer> audioResourceContainer_,
+                     std::shared_ptr<PlayListScheduler> playListScheduler_,
+                     std::shared_ptr<juce::UndoManager> undoManager_);
 
     // project file format constants
     static const char* projectFileExtension;
@@ -97,11 +102,10 @@ public:
     // ==== session orchestration =============================================
 
     /**
-     * @brief Connects the store to the engine whose graph it persists.
-     *        Called once by `AudiumFactory`; held weakly (the engine owns the
-     *        store).
+     * @brief Connects the store to the document serializer. Called once by
+     *        `AudiumFactory` (the serializer is constructed after the store).
      */
-    void attach(std::shared_ptr<AudiumEngine> engine_);
+    void setSerializer(std::shared_ptr<ProjectSerializer> serializer_);
 
     /**
      * @brief Opens a file: an empty file is a no-op (user canceled), a known
@@ -258,11 +262,16 @@ private:
                                    const juce::String& transactionName,
                                    std::function<void(std::string)> callback);
 
+    std::shared_ptr<AudioTrackContainer> audioTrackContainer;
+    std::shared_ptr<AudioResourceContainer> audioResourceContainer;
+    std::shared_ptr<PlayListScheduler> playListScheduler;
+    std::shared_ptr<juce::UndoManager> undoManager;
+
     /**
-     * @brief The engine whose graph this store persists (weak: the engine
-     *        owns the store).
+     * @brief The document serializer (set by the factory after construction;
+     *        the serializer holds this store weakly).
      */
-    std::weak_ptr<AudiumEngine> engine;
+    std::shared_ptr<ProjectSerializer> serializer;
 
     /**
      * @brief The currently open project file.

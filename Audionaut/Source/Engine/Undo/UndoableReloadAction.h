@@ -6,9 +6,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Engine/AudiumEngine.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Engine/Playback/AudioBusInterface.h"
 
 namespace audium
 {
@@ -30,7 +29,7 @@ struct UndoableReloadAction final : public juce::UndoableAction
 {
     /**
      * @brief Constructs an `UndoableReloadAction`.
-     * @param engine_ The engine to apply states to.
+     * @param serializer_ The document serializer to apply states through.
      * @param store_ The store owning the session state (marker, currentJson).
      * @param beforeState_ Full project JSON of the pre-reload in-memory state.
      * @param afterState_ Full project JSON of the state to apply.
@@ -41,10 +40,10 @@ struct UndoableReloadAction final : public juce::UndoableAction
      *        (agent/CLI) change: perform/redo set the store's external-change
      *        marker, undo restores its prior value.
      */
-    UndoableReloadAction (AudiumEngine& engine_, ProjectFileStore& store_,
+    UndoableReloadAction (ProjectSerializer& serializer_, ProjectFileStore& store_,
                           json beforeState_, json afterState_,
                           bool preserveUiState_ = true, bool marksExternalChange_ = false) noexcept :
-        engine (engine_),
+        serializer (serializer_),
         store (store_),
         beforeState (std::move(beforeState_)),
         afterState (std::move(afterState_)),
@@ -67,12 +66,7 @@ struct UndoableReloadAction final : public juce::UndoableAction
     bool perform() override
     {
         try {
-            // an agent write can land mid-take - never swap the project
-            // structure underneath live recorders (mirrors undo())
-            if (engine.getAudioBusInterface()->anyChannelRecording())
-                engine.getAudioBusInterface()->record(false);
-
-            const auto ok = engine.applyProjectJson(afterState, preserveUiState);
+            const auto ok = serializer.applyProjectJson(afterState, preserveUiState);
             if (ok) {
                 store.setCurrentJson(afterState);
                 if (marksExternalChange)
@@ -97,10 +91,7 @@ struct UndoableReloadAction final : public juce::UndoableAction
     bool undo() override
     {
         try {
-            if (engine.getAudioBusInterface()->anyChannelRecording())
-                engine.getAudioBusInterface()->record(false);
-
-            const auto ok = engine.applyProjectJson(beforeState, preserveUiState);
+            const auto ok = serializer.applyProjectJson(beforeState, preserveUiState);
 
             if (ok) {
                 store.setCurrentJson(beforeState);
@@ -129,7 +120,7 @@ struct UndoableReloadAction final : public juce::UndoableAction
     void rollBackTo (json& state)
     {
         try {
-            if (engine.applyProjectJson(state, preserveUiState))
+            if (serializer.applyProjectJson(state, preserveUiState))
                 store.setCurrentJson(state);
         }
         catch (std::exception &e) {
@@ -145,9 +136,9 @@ struct UndoableReloadAction final : public juce::UndoableAction
     int getSizeInUnits() override    { return sizeInUnits; }
 
     /**
-     * @brief The engine being managed.
+     * @brief The document serializer applying the states.
      */
-    AudiumEngine &engine;
+    ProjectSerializer &serializer;
 
     /**
      * @brief The store owning the persistence session state.

@@ -134,6 +134,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioResourceContainer_8bac313a.o \
   $(JUCE_OBJDIR)/ChannelMapping_6a0229a8.o \
   $(JUCE_OBJDIR)/ProjectFileStore_bd5a30.o \
+  $(JUCE_OBJDIR)/ProjectSerializer_4c5334d1.o \
   $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o \
   $(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o \
   $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o \
@@ -515,6 +516,11 @@ $(JUCE_OBJDIR)/ChannelMapping_6a0229a8.o: ../../Source/Engine/Resource/ChannelMa
 $(JUCE_OBJDIR)/ProjectFileStore_bd5a30.o: ../../Source/Engine/Project/ProjectFileStore.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling ProjectFileStore.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ProjectSerializer_4c5334d1.o: ../../Source/Engine/Project/ProjectSerializer.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ProjectSerializer.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o: ../../Source/Engine/AudiumEngine.cpp

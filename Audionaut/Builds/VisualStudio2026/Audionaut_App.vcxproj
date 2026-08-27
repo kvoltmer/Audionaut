@@ -229,6 +229,7 @@
     <ClCompile Include="..\..\Source\Engine\Resource\AudioResourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Resource\ChannelMapping.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Project\ProjectFileStore.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Project\ProjectSerializer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp"/>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp"/>
@@ -3215,6 +3216,7 @@
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableContainerAction.h"/>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableReloadAction.h"/>
     <ClInclude Include="..\..\Source\Engine\Project\ProjectFileStore.h"/>
+    <ClInclude Include="..\..\Source\Engine\Project\ProjectSerializer.h"/>
     <ClInclude Include="..\..\Source\Engine\AudiumEngine.h"/>
     <ClInclude Include="..\..\Source\Engine\ActionMessages.h"/>
     <ClInclude Include="..\..\Source\Interface\DragAndDrop\DragAndDropContainer.h"/>

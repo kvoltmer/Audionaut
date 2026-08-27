@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "ProjectFileStore.h"
-#include "Engine/AudiumEngine.h"
+#include "ProjectSerializer.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Resource/AudioResourceContainer.h"
@@ -114,16 +114,25 @@ bool ProjectFileStore::writeJsonAtomically (const juce::File& target, const json
 
 // ==== session orchestration =================================================
 
-void ProjectFileStore::attach (std::shared_ptr<AudiumEngine> engine_)
+ProjectFileStore::ProjectFileStore(std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
+                                   std::shared_ptr<AudioResourceContainer> audioResourceContainer_,
+                                   std::shared_ptr<PlayListScheduler> playListScheduler_,
+                                   std::shared_ptr<juce::UndoManager> undoManager_) :
+    audioTrackContainer(audioTrackContainer_),
+    audioResourceContainer(audioResourceContainer_),
+    playListScheduler(playListScheduler_),
+    undoManager(undoManager_)
 {
-    engine = engine_;
+}
+
+void ProjectFileStore::setSerializer (std::shared_ptr<ProjectSerializer> serializer_)
+{
+    serializer = serializer_;
 }
 
 bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)> callback)
 {
-    auto e = engine.lock();
-    if (e == nullptr)
-        return false;
+    jassert(serializer != nullptr);
 
     try
     {
@@ -131,12 +140,12 @@ bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)
             // empty file means: user canceled -> do nothing
             return true;
         }
-        else if (e->getAudioResourceContainer()->getAudioFormatManager()->findFormatForFileExtension(inFile.getFileExtension())) {
+        else if (audioResourceContainer->getAudioFormatManager()->findFormatForFileExtension(inFile.getFileExtension())) {
             // try to open an audio file
-            e->getAudioTrackContainer()->addAudioFiles({inFile.getFullPathName()},
-                                                       0.0,
-                                                       callback,
-                                                       true);
+            audioTrackContainer->addAudioFiles({inFile.getFullPathName()},
+                                               0.0,
+                                               callback,
+                                               true);
             return true;
         }
         else {
@@ -153,34 +162,20 @@ bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)
                 // Load persisted analysis data before reading the project: the
                 // subsequent rebuild clears tracks but not the analysis cache,
                 // so segments are available as soon as the UI queries them.
-                e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+                audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
 
-                // Read the framed project JSON; bypass the audio callback for
-                // the duration of the destructive rebuild, and never leave it
-                // bypassed when the read throws.
                 auto projectJson = readProjectJson(inFile);
 
-                e->setBypass(true);
-                auto readOk = false;
-                try {
-                    readOk = e->readFromJson(projectJson, true);
-                }
-                catch (...) {
-                    e->setBypass(false);
-                    throw;
-                }
-                e->setBypass(false);
-
-                if (readOk) {
+                if (serializer->readFromJson(projectJson, true)) {
                     currentProjectFile = inFile;
                     currentJson = std::move(projectJson);
-                    e->getUndoManager()->clearUndoHistory();
-                    e->getPlayListScheduler()->commitPlayListData();
+                    undoManager->clearUndoHistory();
+                    playListScheduler->commitPlayListData();
                     refreshDiskStamps();
                     changedExternally = false;
 
                     auto audioDir = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
-                    e->getAudioResourceContainer()->deleteObsoleteAudioFiles(audioDir);
+                    audioResourceContainer->deleteObsoleteAudioFiles(audioDir);
                     return true;
                 }
             }
@@ -202,18 +197,14 @@ bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)
         NullCheckedInvocation::invoke (callback, ex.what());
     }
 
-    e->cleanup();
-    e->createNewProject();
+    serializer->cleanup();
+    serializer->createNewProject();
 
     return false;
 }
 
 bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::string)> callback)
 {
-    auto e = engine.lock();
-    if (e == nullptr)
-        return false;
-
     try
     {
         auto file = file_;
@@ -243,17 +234,17 @@ bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::s
         }
         auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(file.getParentDirectory());
         if (sourceDirectory != destinationDirectory) {
-            if (!e->getAudioResourceContainer()->copyOrMoveAudioFiles(sourceDirectory, destinationDirectory)) {
+            if (!audioResourceContainer->copyOrMoveAudioFiles(sourceDirectory, destinationDirectory)) {
                 NullCheckedInvocation::invoke (callback, "Failed to copy audio files.");
                 return false;
             }
 
-            e->getAudioResourceContainer()->changeAudioFilePaths(destinationDirectory);
+            audioResourceContainer->changeAudioFilePaths(destinationDirectory);
 
             // Audio files were relocated into the project - re-point the
             // analysis cache at their new location so persisted results survive
             // a Save-As from a temporary/other directory.
-            e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->rebaseAudioFolder(destinationDirectory);
+            audioTrackContainer->getAnalysisProvider()->getCache()->rebaseAudioFolder(destinationDirectory);
         }
         // assign new project directory
         projectDirectory = file.getParentDirectory();
@@ -263,10 +254,10 @@ bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::s
         if (writeJsonToFile(file, writeError, &serialized)) {
             currentProjectFile = file;
             currentJson = std::move(serialized);
-            e->getUndoManager()->clearUndoHistory();
+            undoManager->clearUndoHistory();
 
             // Persist analysis results alongside the project file.
-            e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->saveToFolder(projectDirectory);
+            audioTrackContainer->getAnalysisProvider()->getCache()->saveToFolder(projectDirectory);
 
             // A successful save supersedes any crash-recovery snapshot,
             // including a temp-directory one from before the first save and
@@ -326,10 +317,6 @@ bool ProjectFileStore::restoreAutosave (std::function<void (std::string)> callba
 
 bool ProjectFileStore::reloadFromDisk (std::function<void (std::string)> callback)
 {
-    auto e = engine.lock();
-    if (e == nullptr)
-        return false;
-
     if (currentProjectFile == juce::File()) {
         NullCheckedInvocation::invoke (callback, "no project file open");
         return false;
@@ -344,7 +331,7 @@ bool ProjectFileStore::reloadFromDisk (std::function<void (std::string)> callbac
     // The analysis cache is content-keyed derived data and stays outside the
     // undo snapshot.
     if (analysisChangedOnDisk())
-        e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+        audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
 
     const auto applied = applyFileAsUndoableReload(currentProjectFile, true, true,
                                                    "Reload changes from disk", callback);
@@ -357,11 +344,7 @@ bool ProjectFileStore::reloadFromDisk (std::function<void (std::string)> callbac
 
 void ProjectFileStore::reloadAnalysisFromDisk()
 {
-    auto e = engine.lock();
-    if (e == nullptr)
-        return;
-
-    e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+    audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
 
     // only the analysis stamp: a project write racing in stays detectable
     setAnalysisStamp(projectDirectory.getChildFile(AnalysisCache::fileName)
@@ -390,8 +373,7 @@ bool ProjectFileStore::analysisChangedOnDisk() const
 
 void ProjectFileStore::deleteObsoleteAudioFiles()
 {
-    if (auto e = engine.lock())
-        e->getAudioResourceContainer()->deleteObsoleteAudioFiles(currentJson);
+    audioResourceContainer->deleteObsoleteAudioFiles(currentJson);
 }
 
 void ProjectFileStore::closeProject()
@@ -403,14 +385,10 @@ void ProjectFileStore::closeProject()
 
 bool ProjectFileStore::writeJsonToFile (const juce::File& target, std::string& error, json* serializedOut)
 {
-    auto e = engine.lock();
-    if (e == nullptr) {
-        error = "no engine attached";
-        return false;
-    }
+    jassert(serializer != nullptr);
 
     json serialized;
-    if (!e->writeToJson(serialized)) {
+    if (!serializer->writeToJson(serialized)) {
         error = "failed to serialize the project";
         return false;
     }
@@ -429,9 +407,7 @@ bool ProjectFileStore::applyFileAsUndoableReload (const juce::File& sourceFile,
                                                   const juce::String& transactionName,
                                                   std::function<void (std::string)> callback)
 {
-    auto e = engine.lock();
-    if (e == nullptr)
-        return false;
+    jassert(serializer != nullptr);
 
     try
     {
@@ -443,7 +419,7 @@ bool ProjectFileStore::applyFileAsUndoableReload (const juce::File& sourceFile,
         auto afterState = readProjectJson(sourceFile);
 
         json beforeState;
-        e->writeToJson(beforeState);
+        serializer->writeToJson(beforeState);
 
         // The user's current view wins over whatever the external writer
         // stored - reloads must not move their scroll/zoom.
@@ -451,15 +427,15 @@ bool ProjectFileStore::applyFileAsUndoableReload (const juce::File& sourceFile,
             beforeState.contains("audium") && beforeState["audium"].contains("ui_state"))
             afterState["audium"]["ui_state"] = beforeState["audium"]["ui_state"];
 
-        const auto performed = e->getUndoManager()->perform(new UndoableReloadAction(*e, *this, beforeState, afterState,
-                                                                                     preserveUiState, marksExternalChange),
-                                                            transactionName);
+        const auto performed = undoManager->perform(new UndoableReloadAction(*serializer, *this, beforeState, afterState,
+                                                                             preserveUiState, marksExternalChange),
+                                                    transactionName);
         if (!performed) {
             NullCheckedInvocation::invoke (callback, "failed to apply the project state");
             return false;
         }
 
-        e->getUndoManager()->beginNewTransaction();
+        undoManager->beginNewTransaction();
         return true;
     }
     catch (std::exception &ex)

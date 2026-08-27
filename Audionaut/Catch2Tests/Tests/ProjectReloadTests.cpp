@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
@@ -45,7 +46,7 @@ SCENARIO("external change reloads as an undoable step", "[engine][reload][undo]"
     auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved project") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         REQUIRE(store->save(outProject, nullptr));
         REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(1.0));
 
@@ -101,7 +102,7 @@ SCENARIO("external track addition survives reload, undo and redo", "[engine][rel
     auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-track-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved single-track project") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         REQUIRE(store->save(outProject, nullptr));
         REQUIRE(engine->getAudioTrackContainer()->getNumItems() == 1);
 
@@ -144,7 +145,7 @@ SCENARIO("disk stamps tell the app's own writes apart from foreign ones", "[engi
     auto outProject = File(reloadTestFilesDirectory + "Sessions/stamp-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved project") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         REQUIRE(store->save(outProject, nullptr));
 
         THEN("the app's own save does not read as an external change") {
@@ -180,7 +181,7 @@ SCENARIO("the agent marker survives undoing only the newest of two reloads", "[e
     auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-marker-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("two consecutive external changes, each reloaded") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         REQUIRE(store->save(outProject, nullptr));
 
         auto j = readProjectJson(outProject);
@@ -229,7 +230,7 @@ SCENARIO("undoing a reload restores unsaved local edits, not the saved state", "
     auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-dirty-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved project with an unsaved local edit") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         REQUIRE(store->save(outProject, nullptr));
 
         engine->getAudioTrackContainer()->setMasterGain(0.7f);

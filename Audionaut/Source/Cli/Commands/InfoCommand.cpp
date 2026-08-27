@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Cli/HeadlessEngineSession.h"
 #include "Cli/ProjectSummary.h"
@@ -33,7 +34,7 @@ int runInfo (const juce::ArgumentList& args, CliContext& context)
     nlohmann::json result;
     if (args.containsOption ("--raw")) {
         json full;
-        session->writeToJson (full);
+        session->getProjectSerializer()->writeToJson (full);
         result = full;
     }
     else {

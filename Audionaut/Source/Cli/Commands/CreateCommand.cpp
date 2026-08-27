@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Cli/HeadlessEngineSession.h"
 
 #include "Engine/AudiumEngine.h"
@@ -34,7 +35,7 @@ int runCreate (const juce::ArgumentList& args, CliContext& context)
 
     ScopedCoutToStderr guard (context.json);
     HeadlessEngineSession session;
-    session->createNewProject (numChannels);
+    session->getProjectSerializer()->createNewProject (numChannels);
 
     auto projectFile = target.getChildFile (ProjectFileStore::projectFileName);
     std::string saveError;

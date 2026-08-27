@@ -12,6 +12,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Project/ProjectFileStore.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Application/ProjectMonitor.h"
@@ -136,6 +137,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     // create audium engine
     audiumEngine = audium::AudiumFactory::createAudiumEngine();
     fileStore = audiumEngine->getProjectFileStore();
+    serializer = audiumEngine->getProjectSerializer();
     audiumEngine->initialise();
     applyAnalysisPreferences();
 
@@ -210,7 +212,7 @@ void AudiumApplication::loadStartupProject()
 
     // still nothing loaded? -> create new project
     if (!fileStore->getCurrentProjectFile().exists())
-        audiumEngine->createNewProject();
+        serializer->createNewProject();
 }
 
 void AudiumApplication::offerOrphanedTempProjectRestore()
@@ -811,8 +813,8 @@ bool AudiumApplication::perform (const InvocationInfo& info)
 void AudiumApplication::createNewProject()
 {
     askToSaveIfDirtyAndInvoke([this](void) {
-        audiumEngine->cleanup();
-        audiumEngine->createNewProject();
+        serializer->cleanup();
+        serializer->createNewProject();
         updateUI();
 
         // cleanup() cleared the ui state, so this resets the view to its defaults
@@ -1069,13 +1071,13 @@ void AudiumApplication::refreshWindowTitle()
 void AudiumApplication::captureUiState()
 {
     if (auto comp = getMainComponent())
-        comp->writeUiState(audiumEngine->getUiState());
+        comp->writeUiState(serializer->getUiState());
 }
 
 void AudiumApplication::restoreUiState()
 {
     if (auto comp = getMainComponent())
-        comp->readUiState(audiumEngine->getUiState());
+        comp->readUiState(serializer->getUiState());
 }
 
 void AudiumApplication::showAboutWindow()

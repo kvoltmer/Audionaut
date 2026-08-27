@@ -308,6 +308,10 @@
                 file="Source/Engine/Project/ProjectFileStore.cpp"/>
           <FILE id="PrjFS2" name="ProjectFileStore.h" compile="0" resource="0"
                 file="Source/Engine/Project/ProjectFileStore.h"/>
+          <FILE id="PrjSr1" name="ProjectSerializer.cpp" compile="1" resource="0"
+                file="Source/Engine/Project/ProjectSerializer.cpp"/>
+          <FILE id="PrjSr2" name="ProjectSerializer.h" compile="0" resource="0"
+                file="Source/Engine/Project/ProjectSerializer.h"/>
         </GROUP>
         <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumEngine.cpp"/>

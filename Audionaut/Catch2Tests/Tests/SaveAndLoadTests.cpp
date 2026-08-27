@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
@@ -23,7 +24,7 @@ SCENARIO("create new session, load audio file and save", "[engine][load][save]")
     auto outProjectFile = File(testFilesDirectory + "Sessions/testing.audium/" + ProjectFileStore::projectFileName);
     
     GIVEN("new project") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         
         store->open(inFile, nullptr);
         
@@ -96,18 +97,18 @@ SCENARIO("view state is persisted with the project", "[engine][load][save][ui_st
     auto outProject = File(testFilesDirectory + "/Sessions/ui-state-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a project with a zoom factor and a scroll position") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
 
-        engine->getUiState()["arrangement"]["zoom_factor"] = 4.0;
-        engine->getUiState()["arrangement"]["scroll_x"] = 1234.5;
-        engine->getUiState()["arrangement"]["scroll_y"] = 42.0;
+        engine->getProjectSerializer()->getUiState()["arrangement"]["zoom_factor"] = 4.0;
+        engine->getProjectSerializer()->getUiState()["arrangement"]["scroll_x"] = 1234.5;
+        engine->getProjectSerializer()->getUiState()["arrangement"]["scroll_y"] = 42.0;
 
         WHEN("the project is saved and loaded again") {
             REQUIRE(store->save(outProject, nullptr));
             REQUIRE(store->open(outProject.getParentDirectory(), nullptr));
 
             THEN("the view state is recalled") {
-                auto& arrangement = engine->getUiState()["arrangement"];
+                auto& arrangement = engine->getProjectSerializer()->getUiState()["arrangement"];
                 REQUIRE(arrangement["zoom_factor"].template get<double>() == 4.0);
                 REQUIRE(arrangement["scroll_x"].template get<double>() == 1234.5);
                 REQUIRE(arrangement["scroll_y"].template get<double>() == 42.0);
@@ -115,11 +116,11 @@ SCENARIO("view state is persisted with the project", "[engine][load][save][ui_st
         }
 
         WHEN("a new project is created") {
-            engine->cleanup();
-            engine->createNewProject();
+            engine->getProjectSerializer()->cleanup();
+            engine->getProjectSerializer()->createNewProject();
 
             THEN("the view state does not carry over") {
-                REQUIRE_FALSE(engine->getUiState().contains("arrangement"));
+                REQUIRE_FALSE(engine->getProjectSerializer()->getUiState().contains("arrangement"));
             }
         }
     }
