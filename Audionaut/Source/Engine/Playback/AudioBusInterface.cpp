@@ -145,6 +145,13 @@ void AudioBusInterface::resetGains()
     });
 }
 
+void AudioBusInterface::setStemExport(bool bStemExport)
+{
+    // direct call, not via fifo: the device callback is bypassed during export,
+    // so nothing would drain the fifo (see AudioExporter)
+    audioBusRenderer->setStemExport(bStemExport);
+}
+
 void AudioBusInterface::stopAllVoices()
 {
     auto ptr = audioBusRenderer.get();

@@ -68,29 +68,25 @@ public:
             
 
             
-            // add input to audio bus
-            for (auto i = 0; i < inputChannels; i++) {
-                for (auto k = 0; k < audioBusChannels; k++) {
-                    if (audioChannelData[k].monitor &&
-                        audioChannelData[k].channelNumber == i) {
-                        audioBusBlock.getSingleChannelBlock(k).add( inputBlock.getSingleChannelBlock(i) );
-                    }
-                    
-                    if (audioChannelData[k].record &&
-                        audioChannelData[k].channelNumber == i) {
-                        recordingLevel[k] = std::abs(inputBlock.getSingleChannelBlock(i).findMinAndMax().getEnd());
-                    }
+            // add input to audio bus, each bus channel fed by its effective hardware input
+            for (auto k = 0; k < audioBusChannels; k++) {
+                const auto effectiveInput = AudioChannelData::effectiveInputChannel(audioChannelData[k]);
+                if (effectiveInput < 0 || effectiveInput >= (int) inputChannels)
+                    continue;
 
-                    if (audioChannelData[k].record &&
-                        audioChannelData[k].channelNumber == i) {
-                        if (auto recorder = recording->getAudioRecorder(k)) {
-                            auto input = inputBlock.getSingleChannelBlock(i);
-                            auto output = audioBusBlock.getSingleChannelBlock(i);
-                            ProcessContextNonReplacing<SampleType> recContext(input, output);
-                            recorder->process( recContext );
-                        }
+                if (audioChannelData[k].monitor) {
+                    audioBusBlock.getSingleChannelBlock(k).add( inputBlock.getSingleChannelBlock(effectiveInput) );
+                }
+
+                if (audioChannelData[k].record) {
+                    recordingLevel[k] = std::abs(inputBlock.getSingleChannelBlock(effectiveInput).findMinAndMax().getEnd());
+
+                    if (auto recorder = recording->getAudioRecorder(k)) {
+                        auto input = inputBlock.getSingleChannelBlock(effectiveInput);
+                        auto output = audioBusBlock.getSingleChannelBlock(k);
+                        ProcessContextNonReplacing<SampleType> recContext(input, output);
+                        recorder->process( recContext );
                     }
-                    
                 }
             }
             
@@ -106,46 +102,59 @@ public:
                 channelLevel[i] = std::abs(channelBlock.findMinAndMax().getEnd());
             }
             
-            // mono output
-            if (outputChannels == 1) {
-                for (auto i = 0; i < audioBusChannels; i++) {
-                    // add from audio bus to mono output
-                    outputBlock.getSingleChannelBlock(0).add( audioBusBlock.getSingleChannelBlock(i) );
-                }
-                
-            } // stereo
-            else if (outputChannels == 2) {
-                for (auto i = 0; i < audioBusChannels; i++) {
-
-                    stereoBuffer.clear();
-                    AudioBlock<SampleType> stereoBlock (stereoBuffer);
-                    auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
-                    
-                    // process stereo pan
-                    ProcessContextNonReplacing<SampleType> panContext(channelBlock,
-                                                                                 stereoBlock);
-                    panners[i].process(panContext);
-                    
-                    // mix output
-                    for (auto c = 0; c < outputChannels; c++) {
-                        outputBlock.getSingleChannelBlock(c).add( stereoBlock.getSingleChannelBlock(c) );
-                    }
-                }
-                
-                // master gain
-                ProcessContextReplacing<SampleType> gainContext(outputBlock);
-                masterGain.process(gainContext);
-                
-                // master level
-                for (auto m = 0; m < outputChannels; ++m) {
-                    auto minmax = outputBlock.getSingleChannelBlock(m).findMinAndMax();
-                    masterLevel[m].store( std::abs(minmax.getEnd()) );
-                }
-            }
-            else { // multichannel output
-                jassert(outputChannels == audioBusChannels);
+            if (stemExport.load()) {
+                // offline bounce: identity copy, one output channel per bus channel
                 for (auto c = 0; c < std::min((int)outputChannels, audioBusChannels); c++) {
                     outputBlock.getSingleChannelBlock(c).add( audioBusBlock.getSingleChannelBlock(c) );
+                }
+            }
+            else {
+                const bool stereoMain = outputChannels >= 2;
+                AudioBlock<SampleType> mainMixBlock (mainMixBuffer);
+                if (stereoMain)
+                    mainMixBlock.clear();
+
+                for (auto i = 0; i < audioBusChannels; i++) {
+
+                    auto channelBlock = audioBusBlock.getSingleChannelBlock(i);
+                    const auto destination = audioChannelData[i].outputChannel;
+
+                    if (destination < 0) { // Main: pan into the stereo main mix
+                        if (stereoMain) {
+                            stereoBuffer.clear();
+                            AudioBlock<SampleType> stereoBlock (stereoBuffer);
+
+                            // process stereo pan
+                            ProcessContextNonReplacing<SampleType> panContext(channelBlock,
+                                                                              stereoBlock);
+                            panners[i].process(panContext);
+
+                            for (auto c = 0; c < 2; c++) {
+                                mainMixBlock.getSingleChannelBlock(c).add( stereoBlock.getSingleChannelBlock(c) );
+                            }
+                        }
+                        else if (outputChannels == 1) {
+                            // mono device: sum the main mix into the single output
+                            outputBlock.getSingleChannelBlock(0).add( channelBlock );
+                        }
+                    }
+                    else if (destination < (int) outputChannels) {
+                        // direct mono out: post channel-gain, no pan, no master gain
+                        outputBlock.getSingleChannelBlock(destination).add( channelBlock );
+                    }
+                    // else: routed beyond the current device's outputs -> dropped
+                }
+
+                if (stereoMain) {
+                    // master gain + level metering apply to the main mix only
+                    ProcessContextReplacing<SampleType> gainContext(mainMixBlock);
+                    masterGain.process(gainContext);
+
+                    for (auto m = 0; m < 2; ++m) {
+                        auto minmax = mainMixBlock.getSingleChannelBlock(m).findMinAndMax();
+                        masterLevel[m].store( std::abs(minmax.getEnd()) );
+                        outputBlock.getSingleChannelBlock(m).add( mainMixBlock.getSingleChannelBlock(m) );
+                    }
                 }
             }
         }
@@ -249,7 +258,13 @@ public:
     std::shared_ptr<Playback> getPlayback() const { return playback; }
     
     void setRecordEnabled(int channelNumber, bool bEnabled) { audioChannelData[channelNumber].record = bEnabled; }
-    
+
+    /**
+     * @brief Enables the offline bounce mapping: identity copy of bus channels to output channels,
+     * bypassing output routing. Only set while the live device callback is bypassed.
+     */
+    void setStemExport(bool bStemExport) { stemExport.store(bStemExport); }
+
     void resetGains();
     
     const Gain<SampleType>& getGain(int channel) { return gains[channel]; }
@@ -262,7 +277,10 @@ private:
     
     juce::AudioBuffer<SampleType> audioBus;
     juce::AudioBuffer<SampleType> stereoBuffer;
-        
+    juce::AudioBuffer<SampleType> mainMixBuffer;
+
+    std::atomic<bool> stemExport { false };
+
     Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
     Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
     Gain<SampleType> masterGain;

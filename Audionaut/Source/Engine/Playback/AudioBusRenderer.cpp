@@ -25,6 +25,7 @@ void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, d
     audioBus.setSize(audioBus.getNumChannels(), samplesPerBlockExpected);
     
     stereoBuffer.setSize(2, samplesPerBlockExpected);
+    mainMixBuffer.setSize(2, samplesPerBlockExpected);
 
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize    = samplesPerBlockExpected;
