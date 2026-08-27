@@ -7,6 +7,7 @@
 #include "Cli/HeadlessEngineSession.h"
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/ProjectFileStore.h"
 
 namespace audium {
 namespace cli {
@@ -23,9 +24,9 @@ int runCreate (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "create requires a target <project.audium> path");
 
     auto target = workingDirectory().getChildFile (plain[0]);
-    if (! target.getFileName().endsWith (AudiumEngine::projectFileExtension))
+    if (! target.getFileName().endsWith (ProjectFileStore::projectFileExtension))
         return context.fail (exitUsage, "usage",
-                             "the project path must end with " + std::string (AudiumEngine::projectFileExtension));
+                             "the project path must end with " + std::string (ProjectFileStore::projectFileExtension));
 
     if (target.exists())
         return context.fail (exitFailure, "exists",
@@ -35,7 +36,7 @@ int runCreate (const juce::ArgumentList& args, CliContext& context)
     HeadlessEngineSession session;
     session->createNewProject (numChannels);
 
-    auto projectFile = target.getChildFile (AudiumEngine::projectFileName);
+    auto projectFile = target.getChildFile (ProjectFileStore::projectFileName);
     std::string saveError;
     if (! session->saveFile (projectFile, [&saveError] (std::string error) { saveError = error; }))
         return context.fail (exitFailure, "save_failed",

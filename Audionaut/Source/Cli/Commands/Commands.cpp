@@ -6,6 +6,7 @@
 #include "Cli/Commands/Commands.h"
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/ProjectFileStore.h"
 
 namespace audium {
 namespace cli {
@@ -72,7 +73,7 @@ juce::File resolveProjectFile (const juce::ArgumentList& args, int argumentIndex
 
     // the .audium document package: point at the Project.json inside it
     if (AudiumEngine::isValidProjectStructure (file))
-        return file.getChildFile (AudiumEngine::projectFileName);
+        return file.getChildFile (ProjectFileStore::projectFileName);
 
     // a project file given directly (Project.json, or a legacy single-file .audium)
     if (AudiumEngine::isJsonProjectFile (file))

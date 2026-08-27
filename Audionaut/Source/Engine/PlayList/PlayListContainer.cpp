@@ -388,12 +388,6 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (jso
     return playListItem;
 }
 
-int PlayListContainer::getSizeInUnits()
-{
-    return getNumItems() * 2;
-}
-
-
 double PlayListContainer::getAbsolueStartTimeByOrder(const PlayListItem* playListItem, audium::TimeContextType context) const
 {
     double startTime = 0.0;

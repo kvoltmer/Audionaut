@@ -261,12 +261,6 @@ bool AnalysisCache::readFromJson(json& input, bool /*rebuild*/)
     return true;
 }
 
-int AnalysisCache::getSizeInUnits()
-{
-    const std::lock_guard<std::mutex> lock(mutex);
-    return static_cast<int>(entries.size());
-}
-
 bool AnalysisCache::saveToFolder(const juce::File& projectFolder)
 {
     // Nothing to persist - don't create an empty sidecar.
