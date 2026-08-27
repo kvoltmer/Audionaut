@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"

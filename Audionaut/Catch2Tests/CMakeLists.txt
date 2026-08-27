@@ -96,6 +96,7 @@ add_subdirectory(${SUBMODULES_PATH}/Catch2 catch2-bin)
 
 file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
+        ${SRC_PATH}/Engine/Project/*.cpp
         ${SRC_PATH}/Engine/Analysis/*.cpp
         ${SRC_PATH}/Engine/Core/*.cpp
         ${SRC_PATH}/Engine/Channel/*.cpp

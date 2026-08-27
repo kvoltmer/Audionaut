@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "Cli/Commands/Commands.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Cli/HeadlessEngineSession.h"
 #include "Cli/ProjectSummary.h"
 

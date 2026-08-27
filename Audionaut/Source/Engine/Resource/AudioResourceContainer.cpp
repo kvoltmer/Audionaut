@@ -9,7 +9,7 @@
 #include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Resource/ChannelMapping.h"

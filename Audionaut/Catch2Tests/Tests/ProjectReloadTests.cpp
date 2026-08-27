@@ -2,7 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 

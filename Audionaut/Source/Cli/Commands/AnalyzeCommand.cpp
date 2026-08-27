@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/Commands/Commands.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Cli/HeadlessEngineSession.h"
 
 // Same auto-detection as the segmenters (see SBicSegmenter.cpp): the CMake

@@ -7,7 +7,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Playback/AudioBusInterface.h"
 
 namespace audium

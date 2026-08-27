@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrackContainer.h"

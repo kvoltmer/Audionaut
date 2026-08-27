@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "Cli/Commands/Commands.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/AudiumEngine.h"
 
 using namespace audium;

@@ -71,6 +71,9 @@
     <Filter Include="Audionaut\Source\Engine\Undo">
       <UniqueIdentifier>{8D50E2ED-453C-4AB7-9096-C231358D6F0F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Engine\Project">
+      <UniqueIdentifier>{5178F7DF-FCB9-8A15-3180-5BA72EB56B49}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Engine">
       <UniqueIdentifier>{34AD0A31-F181-518D-26C9-55F68C1CA49E}</UniqueIdentifier>
     </Filter>
@@ -1021,8 +1024,8 @@
     <ClCompile Include="..\..\Source\Engine\Resource\ChannelMapping.cpp">
       <Filter>Audionaut\Source\Engine\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\ProjectFileStore.cpp">
-      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    <ClCompile Include="..\..\Source\Engine\Project\ProjectFileStore.cpp">
+      <Filter>Audionaut\Source\Engine\Project</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp">
       <Filter>Audionaut\Source\Engine</Filter>
@@ -4440,8 +4443,8 @@
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableReloadAction.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\ProjectFileStore.h">
-      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    <ClInclude Include="..\..\Source\Engine\Project\ProjectFileStore.h">
+      <Filter>Audionaut\Source\Engine\Project</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudiumEngine.h">
       <Filter>Audionaut\Source\Engine</Filter>

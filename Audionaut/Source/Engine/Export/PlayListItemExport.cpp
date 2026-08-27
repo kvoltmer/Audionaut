@@ -9,7 +9,7 @@
 */
 
 #include "Engine/Export/PlayListItemExport.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 
 #include "Application/AudiumApplication.h"
 #include "Engine/Export/ExportUtil.h"

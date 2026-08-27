@@ -21,7 +21,7 @@
 #include "Engine/Recording/RecordingActionHandler.h"
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Analysis/AnalysisWorker.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 
 namespace audium {
 

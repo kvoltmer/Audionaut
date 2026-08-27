@@ -5,7 +5,7 @@
 #include <cmath>
 
 #include "Engine/Factory/AudiumFactory.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudioSources/ClipTransportSource.h"
 #include "Engine/Export/AudioExporter.h"

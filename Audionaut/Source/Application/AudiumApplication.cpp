@@ -11,7 +11,7 @@
 #include "Engine/Core/HeadlessMode.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Application/ProjectMonitor.h"

@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "ProjectMonitor.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Analysis/AnalysisCache.h"
 
 namespace audium {

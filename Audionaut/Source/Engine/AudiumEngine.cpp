@@ -15,7 +15,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudioSources/VoiceSource.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Application/AudiumApplication.h"
 
 #include "Interface/ColourIds.h"

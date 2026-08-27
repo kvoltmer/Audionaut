@@ -7,7 +7,7 @@
 #include "Cli/HeadlessEngineSession.h"
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 
 namespace audium {
 namespace cli {
