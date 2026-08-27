@@ -7,10 +7,12 @@
 
 #include <memory>
 #include <JuceHeader.h>
+#include <nlohmann/json.hpp>
 
-#include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
 #include "Engine/Export/ExportAudioConfig.h"
+
+using json = nlohmann::json;
 
 namespace audium {
 
@@ -33,9 +35,9 @@ class ProjectFileStore;
  * The `AudiumEngine` class provides functionality to manage audio tracks, resources, playlists,
  * and playback. It also handles project file operations, undo management, and audio device configuration.
  */
-class AudiumEngine : public audium::Streamable
+class AudiumEngine
 {
-    
+
 public:
     /**
      * @brief Constructs an `AudiumEngine` with the required dependencies.
@@ -72,7 +74,7 @@ public:
     /**
      * @brief Destructor for `AudiumEngine`.
      */
-    ~AudiumEngine() override;
+    ~AudiumEngine();
     
     /**
      * @brief Initializes the engine and its components.
@@ -226,34 +228,11 @@ public:
     void setChangedExternally(bool changed) { changedExternally = changed; }
 
     /**
-     * @brief Writes the engine state to a stream.
-     * @param outputStream The output stream to write to.
-     * @return True if the state was successfully written, false otherwise.
-     */
-    bool writeToStream(juce::OutputStream& outputStream) override;
-
-    /**
-     * @brief Reads the engine state from a stream.
-     * @param inputStream The input stream to read from.
-     * @param rebuild Whether to rebuild the engine state after reading.
-     * @return True if the state was successfully read, false otherwise.
-     */
-    bool readFromStream(juce::InputStream& inputStream, bool rebuild) override;
-
-    /**
      * @brief Writes the engine state to a JSON object.
      * @param output The JSON object to write to.
      * @return True if the state was successfully written, false otherwise.
      */
-    bool writeToJson(json& output) override;
-
-    /**
-     * @brief Reads the engine state from a JSON object.
-     * @param input The JSON object to read from.
-     * @param rebuild Whether to rebuild the engine state after reading.
-     * @return True if the state was successfully read, false otherwise.
-     */
-    bool readFromJson(json& input, bool rebuild) override;
+    bool writeToJson(json& output);
 
     /**
      * @brief Retrieves the current project file.
@@ -369,6 +348,16 @@ public:
     static int recordingCounter;
     
 private:
+    /**
+     * @brief Reads the engine state from a JSON object, destructively: clears
+     *        tracks, resources, undo history and UI state first. Only used by
+     *        `openFile`; non-destructive applies go through `applyProjectJson`.
+     * @param input The JSON object to read from.
+     * @param rebuild Whether to rebuild the engine state after reading.
+     * @return True if the state was successfully read, false otherwise.
+     */
+    bool readFromJson(json& input, bool rebuild);
+
     /**
      * @brief Serializes the engine to `target` atomically (temp file + rename).
      * @param target The file to write.

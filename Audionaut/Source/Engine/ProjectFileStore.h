@@ -34,6 +34,12 @@ public:
     static const char* autosavePidFileName;
 
     /**
+     * @brief The project file format version, written as "file_version" and
+     *        asserted on load.
+     */
+    static constexpr int fileVersion = 1;
+
+    /**
      * @brief Checks if a file is an explicit JSON project file
      *        (foo.json, or legacy foo.audium).
      */

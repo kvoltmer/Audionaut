@@ -141,11 +141,10 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
             if (isValidProjectStructure(inFile))
                 inFile = inFile.getChildFile(ProjectFileStore::projectFileName);
             
-            juce::FileInputStream inputStream(inFile);
-            if (inputStream.openedOk()) {
+            if (inFile.existsAsFile()) {
                 std::cout << "loading: " << inFile.getFullPathName() << std::endl;
                 AudioResourceContainer::createTemporaryProjectDirectory(true);
-                
+
                 projectDirectory = inFile.getParentDirectory();
 
                 // Load persisted analysis data before reading the project: the
@@ -153,7 +152,23 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
                 // so segments are available as soon as the UI queries them.
                 audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
 
-                if (readFromStream(inputStream, true)){
+                // Read the framed project JSON; bypass the audio callback for
+                // the duration of the destructive rebuild, and never leave it
+                // bypassed when the read throws.
+                auto projectJson = ProjectFileStore::readProjectJson(inFile);
+
+                setBypass(true);
+                auto readOk = false;
+                try {
+                    readOk = readFromJson(projectJson, true);
+                }
+                catch (...) {
+                    setBypass(false);
+                    throw;
+                }
+                setBypass(false);
+
+                if (readOk) {
                     currentProjectFile = inFile;
                     undoManager->clearUndoHistory();
                     playListScheduler->commitPlayListData();
@@ -166,10 +181,9 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
                 }
             }
             else {
-                NullCheckedInvocation::invoke (callback,
-                                               inputStream.getStatus().getErrorMessage().toStdString());
+                NullCheckedInvocation::invoke (callback, "file not found");
                 return false;
-                
+
             }
             
         }
@@ -282,20 +296,6 @@ void AudiumEngine::setBypass(bool bypass)
     linkAudioDevice->setBypass(bypass);
 }
 
-bool AudiumEngine::writeToStream (juce::OutputStream& outputStream)
-{
-    return audium::Streamable::writeToStream(outputStream);
-}
-
-bool AudiumEngine::readFromStream (juce::InputStream& inputStream, bool rebuild)
-{
-    setBypass(true);
-    auto result = audium::Streamable::readFromStream(inputStream);
-    // std::cout << "AudiumEngine::readFromStream done" << std::endl;
-    setBypass(false);
-    return result;
-}
-
 bool AudiumEngine::writeToJson (json& output)
 {
     
@@ -303,7 +303,7 @@ bool AudiumEngine::writeToJson (json& output)
     audioTrackContainer->writeToJson(jsonAudium);
     
     jsonAudium["tempo"] = playListScheduler->getTempoProvider()->getTempo();
-    jsonAudium["file_version"] = audium::Streamable::fileVersion;
+    jsonAudium["file_version"] = ProjectFileStore::fileVersion;
     jsonAudium["ui_state"] = uiState;
     jsonAudium["scheduler"] = getPlayListScheduler()->data;
     output["audium"] = jsonAudium;
@@ -327,7 +327,7 @@ bool AudiumEngine::readFromJson (json& input, bool rebuild)
     if (jsonAudium.contains("file_version"))
     {
         const auto version = jsonAudium["file_version"].template get<int>();
-        jassert(version == audium::Streamable::fileVersion);
+        jassert(version == ProjectFileStore::fileVersion);
     }
     
     if (jsonAudium.contains("ui_state"))
@@ -354,7 +354,7 @@ bool AudiumEngine::applyProjectJson (json& input, bool preserveUiState)
     const auto tempo = jsonAudium["tempo"].template get<double>();
     if (jsonAudium.contains("file_version")) {
         const auto version = jsonAudium["file_version"].template get<int>();
-        jassert(version == audium::Streamable::fileVersion);
+        jassert(version == ProjectFileStore::fileVersion);
     }
 
     if (!preserveUiState && jsonAudium.contains("ui_state"))
