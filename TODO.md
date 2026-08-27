@@ -37,6 +37,48 @@
   variant — an MCP server talking to the *running* GUI app over a local
   socket for live-session control — stays deliberately deferred.
 
+- [x] **`split` + `create-region` verbs** (2026-08-27): musical positions
+  (`--unit bars|beats|seconds|clocks`, bars/beats 1-based, 96 clocks/bar),
+  wrapping `AudioRegionAdapter::splitRegions`/`createRegionsFromSelection`;
+  MCP tools `split`/`create_region`.
+
+- [ ] **Commands still needing CLI/MCP exposure** (collected 2026-08-27, in
+  rough priority order; engine APIs exist unless noted):
+
+  *Clip / arrangement editing*
+  - [x] `remove-clip`, `move-clip`, `place-clip`, `set-region` — done
+    2026-08-27 (`Source/Cli/Commands/ClipCommands.cpp` + `RegionCommands.cpp`,
+    MCP tools `remove_clip`/`move_clip`/`place_clip`/`set_region`).
+    `--delete-region` refuses while other clips still use the region (the
+    engine itself does not check). Retrimming a region retrims every clip
+    using it — clips have no length of their own; per-clip trim = `split`
+    first, then `set-region` on the new region.
+  - `duplicate-clip` — GUI's Duplicate (Cmd+D) lives in `MainComponent::duplicate()`;
+    engine equivalent needs a look.
+  - [x] `clip-gain`, `clip-fades` — done 2026-08-27 (MCP tools
+    `clip_gain`/`clip_fades`). Fades are stored as fractions of the region
+    length; the CLI converts from bars/beats/seconds/clocks. Also fixed
+    `takeOptionValue` swallowing negative values (`--gain -6`).
+  - [x] `cleanup-regions` — done 2026-08-27 (MCP tool `cleanup_regions`).
+
+  *Track operations*
+  - `create-track` — GUI's Create Audio Track dialog; verb takes `--channels`,
+    `--name`.
+  - `remove-track` — engine path needs a look.
+  - `set-track` — mute/solo/pan/gain per channel, rename, colour (all
+    persisted per-channel state).
+  - `copy-channels-to-new-track` — GUI command `copyChansToNewTrackId`.
+
+  *Project-level*
+  - `set-tempo` — `TempoProvider::setTempo` + save.
+  - `set-master-gain`.
+  - export of a selection/single clip — `export` already has `--start/--length`;
+    maybe a `--clip`/`--region` addressing mode instead of a new verb.
+
+  Deliberately excluded: transport/view/window commands (play, loop, zoom,
+  snap, fullscreen, browsers — meaningless headless) and undo (history is not
+  persisted across CLI invocations; every verb saves immediately).
+
 ## Follow-ups surfaced by the coverage work
 
 - [ ] **The test suite writes into its own fixture directory.** Running
