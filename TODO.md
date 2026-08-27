@@ -72,8 +72,8 @@
   *Project-level*
   - `set-tempo` — `TempoProvider::setTempo` + save.
   - `set-master-gain`.
-  - export of a selection/single clip — `export` already has `--start/--length`;
-    maybe a `--clip`/`--region` addressing mode instead of a new verb.
+  - [x] region-addressed export — done 2026-08-27: `export --region NAME
+    [--track N]` bounces one region with its clip's gains/fades.
 
   Deliberately excluded: transport/view/window commands (play, loop, zoom,
   snap, fullscreen, browsers — meaningless headless) and undo (history is not
