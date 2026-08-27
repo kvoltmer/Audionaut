@@ -11,6 +11,7 @@
 #include "Engine/Core/HeadlessMode.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Application/ProjectMonitor.h"
@@ -245,8 +246,8 @@ void AudiumApplication::restoreOrphanedTempProject(juce::File packageDirectory)
 {
     // promote the snapshot to a project file (atomically, and only continue
     // on success) and open the temp package like any other project
-    const auto autosave = packageDirectory.getChildFile(AudiumEngine::autosaveFileName);
-    juce::TemporaryFile promoted (packageDirectory.getChildFile(AudiumEngine::projectFileName));
+    const auto autosave = packageDirectory.getChildFile(ProjectFileStore::autosaveFileName);
+    juce::TemporaryFile promoted (packageDirectory.getChildFile(ProjectFileStore::projectFileName));
 
     if (! (autosave.copyFileTo(promoted.getFile()) &&
            promoted.overwriteTargetFileWithTemporary())) {
@@ -257,7 +258,7 @@ void AudiumApplication::restoreOrphanedTempProject(juce::File packageDirectory)
         return;
     }
 
-    packageDirectory.getChildFile(AudiumEngine::autosavePidFileName).deleteFile();
+    packageDirectory.getChildFile(ProjectFileStore::autosavePidFileName).deleteFile();
 
     openFile(packageDirectory);
 
@@ -826,7 +827,7 @@ void AudiumApplication::askUserToOpenFile()
     
         // open chooser...
         
-        auto wildcard = "*" + String(audium::AudiumEngine::projectFileExtension) + ";";
+        auto wildcard = "*" + String(audium::ProjectFileStore::projectFileExtension) + ";";
         wildcard += "*.json;";
         wildcard += audiumEngine->getAudioResourceContainer()->getAudioFormatManager()->getWildcardForAllFormats();
         chooser = std::make_unique<FileChooser> ("Open File", initialOpenDirectory, wildcard);
@@ -849,13 +850,13 @@ void AudiumApplication::openFile(juce::File file)
     juce::File packageDirectory;
     if (audium::AudiumEngine::isValidProjectStructure(file))
         packageDirectory = file;
-    else if (file.getFileName() == audium::AudiumEngine::projectFileName)
+    else if (file.getFileName() == audium::ProjectFileStore::projectFileName)
         packageDirectory = file.getParentDirectory();
 
     juce::File autosaveToOffer;
     if (packageDirectory != File()) {
-        const auto autosave = packageDirectory.getChildFile(audium::AudiumEngine::autosaveFileName);
-        const auto projectJson = packageDirectory.getChildFile(audium::AudiumEngine::projectFileName);
+        const auto autosave = packageDirectory.getChildFile(audium::ProjectFileStore::autosaveFileName);
+        const auto projectJson = packageDirectory.getChildFile(audium::ProjectFileStore::projectFileName);
 
         if (autosave.existsAsFile() &&
             autosave.getLastModificationTime() > projectJson.getLastModificationTime())
@@ -939,12 +940,12 @@ const File createProjectDirectory(const File &inFile)
     auto projectDir =   inFile.getParentDirectory().getFullPathName() +
                         File::getSeparatorString() +
                         inFile.getFileNameWithoutExtension() +
-                        audium::AudiumEngine::projectFileExtension;
+                        audium::ProjectFileStore::projectFileExtension;
     
     if (!File(projectDir).exists()) {
         File(projectDir).createDirectory();
     }
-    return File(projectDir + File::getSeparatorString() + audium::AudiumEngine::projectFileName);
+    return File(projectDir + File::getSeparatorString() + audium::ProjectFileStore::projectFileName);
 }
 
 juce::MessageBoxOptions getAskToOverwriteFileOptions (const File& newFile)
@@ -981,7 +982,7 @@ bool AudiumApplication::saveProjectAs()
         if (file != File()) {
             
             // warn overwrite: special case where user selects an existing project (without the .audium extension)
-            auto existingProject = File(file.getFullPathName() + audium::AudiumEngine::projectFileExtension);
+            auto existingProject = File(file.getFullPathName() + audium::ProjectFileStore::projectFileExtension);
             if (existingProject.exists()) {
                 if (!askToOverwriteFileSync(existingProject))
                     return false;
@@ -1017,10 +1018,10 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
         audiumEngine->deleteObsoleteAudioFiles();
         std::cout << "initialSaveDirectory: " << initialSaveDirectory.getFullPathName() << std::endl;
         
-        if (file.getFileName() == audium::AudiumEngine::projectFileName)
+        if (file.getFileName() == audium::ProjectFileStore::projectFileName)
             file = file.getParentDirectory();
         
-        if (file.getFileName().contains(audium::AudiumEngine::projectFileExtension)) {
+        if (file.getFileName().contains(audium::ProjectFileStore::projectFileExtension)) {
             // only save .audium in recent list
             RecentlyOpenedFilesList::registerRecentFileNatively (file);
             recentFiles.addFile (file);

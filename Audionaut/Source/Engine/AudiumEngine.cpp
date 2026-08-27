@@ -23,12 +23,6 @@
 
 namespace audium {
 
-// single source of truth is ProjectFileStore; these aliases keep the many
-// existing AudiumEngine::… references (app, CLI, tests) working unchanged
-const char* AudiumEngine::projectFileExtension = ProjectFileStore::projectFileExtension;
-const char* AudiumEngine::projectFileName = ProjectFileStore::projectFileName;
-const char* AudiumEngine::autosaveFileName = ProjectFileStore::autosaveFileName;
-const char* AudiumEngine::autosavePidFileName = ProjectFileStore::autosavePidFileName;
 juce::File AudiumEngine::projectDirectory = File();
 juce::File AudiumEngine::tempDirectory = File();
 int AudiumEngine::recordingCounter = 0;
@@ -145,7 +139,7 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
         else {
         
             if (isValidProjectStructure(inFile))
-                inFile = File(inFile.getFullPathName() + File::getSeparatorString() + projectFileName);
+                inFile = inFile.getChildFile(ProjectFileStore::projectFileName);
             
             juce::FileInputStream inputStream(inFile);
             if (inputStream.openedOk()) {
@@ -482,7 +476,7 @@ void AudiumEngine::reloadAnalysisFromDisk()
 
 bool AudiumEngine::restoreAutosave (std::function<void (std::string)> callback)
 {
-    return applyFileAsUndoableReload(projectDirectory.getChildFile(autosaveFileName), false, false,
+    return applyFileAsUndoableReload(projectDirectory.getChildFile(ProjectFileStore::autosaveFileName), false, false,
                                      "Restore autosave", callback);
 }
 
@@ -505,7 +499,7 @@ bool AudiumEngine::writeAutosave()
         return false;
 
     std::string error;
-    if (!writeJsonToFile(target.getChildFile(autosaveFileName), error))
+    if (!writeJsonToFile(target.getChildFile(ProjectFileStore::autosaveFileName), error))
         return false;
 
     projectFileStore->writePidGuardIfTemporary(target);
@@ -557,11 +551,6 @@ bool AudiumEngine::analysisChangedOnDisk() const
     if (currentProjectFile == File())
         return false;
     return projectFileStore->analysisChangedOnDisk(projectDirectory.getChildFile(AnalysisCache::fileName));
-}
-
-int AudiumEngine::getSizeInUnits()
-{
-    return audioTrackContainer->getSizeInUnits() + 1;
 }
 
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const

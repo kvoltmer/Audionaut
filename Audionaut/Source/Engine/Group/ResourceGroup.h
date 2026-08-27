@@ -114,12 +114,6 @@ public:
     void mergeFromJson(json& input, int destinationChannel = -1);
 
     /**
-     * @brief Gets the size of the resource group in units.
-     * @return The size of the resource group in units.
-     */
-    int getSizeInUnits() override;
-
-    /**
      * @brief Gets all audio resources in the resource group.
      * @return A vector of shared pointers to `AudioResource` instances.
      */

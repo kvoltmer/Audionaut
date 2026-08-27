@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
 #if !JUCE_WINDOWS
@@ -27,7 +28,7 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
 
-    auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a never-saved project") {
         engine->createNewProject();
@@ -35,8 +36,8 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
         THEN("the snapshot goes to the session's temp directory, with a pid file") {
             REQUIRE(engine->writeAutosave());
 
-            const auto tempAutosave = AudiumEngine::tempDirectory.getChildFile(AudiumEngine::autosaveFileName);
-            const auto tempPidFile = AudiumEngine::tempDirectory.getChildFile(AudiumEngine::autosavePidFileName);
+            const auto tempAutosave = AudiumEngine::tempDirectory.getChildFile(ProjectFileStore::autosaveFileName);
+            const auto tempPidFile = AudiumEngine::tempDirectory.getChildFile(ProjectFileStore::autosavePidFileName);
             REQUIRE(tempAutosave.existsAsFile());
             REQUIRE(tempPidFile.existsAsFile());
 
@@ -54,7 +55,7 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
         engine->createNewProject();
         REQUIRE(engine->saveFile(outProject, nullptr));
 
-        const auto autosaveFile = outProject.getSiblingFile(AudiumEngine::autosaveFileName);
+        const auto autosaveFile = outProject.getSiblingFile(ProjectFileStore::autosaveFileName);
         const auto projectMtimeBefore = outProject.getLastModificationTime();
 
         WHEN("an autosave is written") {
@@ -79,7 +80,7 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
             AND_WHEN("the project is saved-as to another package") {
                 auto otherProject = File(autosaveTestFilesDirectory
                                          + "Sessions/autosave-saveas-test.audium/"
-                                         + AudiumEngine::projectFileName);
+                                         + ProjectFileStore::projectFileName);
                 REQUIRE(engine->saveFile(otherProject, nullptr));
 
                 THEN("the original package's snapshot is gone too") {
@@ -112,18 +113,18 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
         stale.deleteRecursively();
 
     const auto tempRoot = File::getSpecialLocation(File::tempDirectory);
-    const auto orphan = tempRoot.getChildFile("temp-orphantest" + String(AudiumEngine::projectFileExtension));
+    const auto orphan = tempRoot.getChildFile("temp-orphantest" + String(ProjectFileStore::projectFileExtension));
     REQUIRE(orphan.createDirectory());
 
     GIVEN("a temp package with an autosave and no owning process") {
-        REQUIRE(orphan.getChildFile(AudiumEngine::autosaveFileName).replaceWithText("{}"));
+        REQUIRE(orphan.getChildFile(ProjectFileStore::autosaveFileName).replaceWithText("{}"));
 
         THEN("the scan finds it") {
             REQUIRE(AudiumEngine::findOrphanedTempAutosave() == orphan);
         }
 
         WHEN("its pid file names a live process (this one)") {
-            orphan.getChildFile(AudiumEngine::autosavePidFileName)
+            orphan.getChildFile(ProjectFileStore::autosavePidFileName)
                   .replaceWithText(String(currentTestProcessId()));
 
             THEN("the scan leaves it alone") {
@@ -133,7 +134,7 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
 
         WHEN("its pid file names a dead process") {
             // pid_max on macOS is 99998, so this can never be alive
-            orphan.getChildFile(AudiumEngine::autosavePidFileName).replaceWithText("999999");
+            orphan.getChildFile(ProjectFileStore::autosavePidFileName).replaceWithText("999999");
 
             THEN("the scan claims it") {
                 REQUIRE(AudiumEngine::findOrphanedTempAutosave() == orphan);
@@ -141,7 +142,7 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
         }
 
         WHEN("its Project.json is newer than the autosave (already restored)") {
-            orphan.getChildFile(AudiumEngine::projectFileName).replaceWithText("{}");
+            orphan.getChildFile(ProjectFileStore::projectFileName).replaceWithText("{}");
 
             THEN("the scan leaves it alone") {
                 REQUIRE(AudiumEngine::findOrphanedTempAutosave() == File());
@@ -184,7 +185,7 @@ SCENARIO("a never-saved project with audio restores from its temp package", "[en
         const auto orphanDir = AudiumEngine::tempDirectory;
 
         THEN("resource paths are relative to the temp package, not garbage") {
-            FileInputStream in(orphanDir.getChildFile(AudiumEngine::autosaveFileName));
+            FileInputStream in(orphanDir.getChildFile(ProjectFileStore::autosaveFileName));
             REQUIRE(in.openedOk());
             auto j = json::parse(in.readString().toStdString());
             const auto relPath = String(j["audium"]["audio_tracks"][1]["resource_groups"][0]["resources"][0]
@@ -197,13 +198,13 @@ SCENARIO("a never-saved project with audio restores from its temp package", "[en
             // simulate the crash + relaunch: the temp directory is no longer
             // this session's, and its owning process is gone
             AudiumEngine::tempDirectory = File();
-            orphanDir.getChildFile(AudiumEngine::autosavePidFileName).replaceWithText("999999");
+            orphanDir.getChildFile(ProjectFileStore::autosavePidFileName).replaceWithText("999999");
 
             REQUIRE(AudiumEngine::findOrphanedTempAutosave() == orphanDir);
 
             // promote the snapshot and open the temp package, as the app does
-            REQUIRE(orphanDir.getChildFile(AudiumEngine::autosaveFileName)
-                        .copyFileTo(orphanDir.getChildFile(AudiumEngine::projectFileName)));
+            REQUIRE(orphanDir.getChildFile(ProjectFileStore::autosaveFileName)
+                        .copyFileTo(orphanDir.getChildFile(ProjectFileStore::projectFileName)));
             REQUIRE(engine->openFile(orphanDir, nullptr));
 
             THEN("the audio track is back") {
@@ -229,7 +230,7 @@ SCENARIO("a crash-recovery snapshot restores as a dirty, undoable session", "[en
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
 
-    auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-restore-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-restore-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a project whose last session autosaved unsaved changes and then crashed") {
         engine->createNewProject();

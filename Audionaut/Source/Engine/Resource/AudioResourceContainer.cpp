@@ -9,6 +9,7 @@
 #include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -78,7 +79,7 @@ bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
     if (!AudiumEngine::tempDirectory.exists()) {
         // use a unique directory within the temp location
         // example: ~/Library/Containers/com.voltmer-systems.audionaut/Data/Library/Caches/Audionaut/temp-50a181e5/Media/Audio
-        auto uniqueName = "temp-" + String::toHexString (Random::getSystemRandom().nextInt()) + AudiumEngine::projectFileExtension;
+        auto uniqueName = "temp-" + String::toHexString (Random::getSystemRandom().nextInt()) + ProjectFileStore::projectFileExtension;
         AudiumEngine::tempDirectory = File(File::getSpecialLocation(File::tempDirectory).getFullPathName() +
                                                     File::getSeparatorString() +
                                                     uniqueName);

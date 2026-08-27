@@ -256,12 +256,6 @@ public:
     bool readFromJson(json& input, bool rebuild) override;
 
     /**
-     * @brief Retrieves the size of the engine state in units.
-     * @return The size of the engine state in units.
-     */
-    int getSizeInUnits() override;
-
-    /**
      * @brief Retrieves the current project file.
      * @return The current project file as a `juce::File`.
      */
@@ -368,12 +362,6 @@ public:
      * @brief Deletes obsolete audio files from the project's audio file dir.
      */
     void deleteObsoleteAudioFiles();
-    
-    // static const members for project file handling
-    static const char* projectFileExtension;
-    static const char* projectFileName;
-    static const char* autosaveFileName;
-    static const char* autosavePidFileName;
     
     // static helpers to get project file paths
     static juce::File projectDirectory;

@@ -249,11 +249,6 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     return true;
 }
 
-int AudioTrackContainer::getSizeInUnits()
-{
-    return getNumItems() * 8;
-}
-
 std::shared_ptr<AudioTrack> AudioTrackContainer::getDefaultGroup() const
 {
     // returns the first selected track

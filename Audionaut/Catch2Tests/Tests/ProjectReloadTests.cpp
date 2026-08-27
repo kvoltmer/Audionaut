@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 
@@ -40,7 +41,7 @@ SCENARIO("external change reloads as an undoable step", "[engine][reload][undo]"
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
 
-    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved project") {
         engine->createNewProject();
@@ -95,7 +96,7 @@ SCENARIO("external track addition survives reload, undo and redo", "[engine][rel
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
 
-    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-track-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-track-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved single-track project") {
         engine->createNewProject();
@@ -137,7 +138,7 @@ SCENARIO("disk stamps tell the app's own writes apart from foreign ones", "[engi
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
 
-    auto outProject = File(reloadTestFilesDirectory + "Sessions/stamp-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(reloadTestFilesDirectory + "Sessions/stamp-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved project") {
         engine->createNewProject();
@@ -172,7 +173,7 @@ SCENARIO("the agent marker survives undoing only the newest of two reloads", "[e
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
 
-    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-marker-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-marker-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("two consecutive external changes, each reloaded") {
         engine->createNewProject();
@@ -220,7 +221,7 @@ SCENARIO("undoing a reload restores unsaved local edits, not the saved state", "
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
 
-    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-dirty-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-dirty-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved project with an unsaved local edit") {
         engine->createNewProject();

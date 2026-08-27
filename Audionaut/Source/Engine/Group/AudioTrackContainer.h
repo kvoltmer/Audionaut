@@ -158,12 +158,6 @@ public:
     bool readFromJson(json& input, bool rebuild) override;
 
     /**
-     * @brief Gets the size of the container in units.
-     * @return The size of the container in units.
-     */
-    int getSizeInUnits() override;
-
-    /**
      * @brief Gets the currently selected audio track.
      * @return A shared pointer to the selected `AudioTrack`.
      */

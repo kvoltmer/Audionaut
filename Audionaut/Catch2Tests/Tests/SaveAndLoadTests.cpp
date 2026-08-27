@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 
@@ -18,7 +19,7 @@ SCENARIO("create new session, load audio file and save", "[engine][load][save]")
     auto inFile = File(testFilesDirectory + "silence-fade.aiff");
     REQUIRE(inFile.existsAsFile());
     
-    auto outProjectFile = File(testFilesDirectory + "Sessions/testing.audium/" + AudiumEngine::projectFileName);
+    auto outProjectFile = File(testFilesDirectory + "Sessions/testing.audium/" + ProjectFileStore::projectFileName);
     
     GIVEN("new project") {
         engine->createNewProject();
@@ -58,7 +59,7 @@ SCENARIO("load legacy project and save", "[engine][load][save][leagacy]")
     
     auto inProject = File(testFilesDirectory + "/Sessions/120-funk-export.audium");
     REQUIRE(inProject.existsAsFile());
-    auto outProject = File(testFilesDirectory + "/Sessions/legacy-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(testFilesDirectory + "/Sessions/legacy-test.audium/" + ProjectFileStore::projectFileName);
     
     GIVEN("open legacy project") {
     
@@ -89,7 +90,7 @@ SCENARIO("view state is persisted with the project", "[engine][load][save][ui_st
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
 
-    auto outProject = File(testFilesDirectory + "/Sessions/ui-state-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(testFilesDirectory + "/Sessions/ui-state-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a project with a zoom factor and a scroll position") {
         engine->createNewProject();
@@ -135,7 +136,7 @@ SCENARIO("load project and save", "[engine][load][save][new]")
     
     
     auto inProject = File(testFilesDirectory + "/Sessions/simple-sine.audium/Project.json");
-    auto outProject = File(testFilesDirectory + "/Sessions/out-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(testFilesDirectory + "/Sessions/out-test.audium/" + ProjectFileStore::projectFileName);
     
     GIVEN("open project") {
 
@@ -175,7 +176,7 @@ SCENARIO("clip gain migrates from legacy region gain and persists", "[engine][lo
                              .getNonexistentSibling();
     REQUIRE(sourceSession.copyDirectoryTo(fileUnderTest));
 
-    auto outProject = File(testFilesDirectory + "Sessions/clip-gain-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(testFilesDirectory + "Sessions/clip-gain-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a legacy project with gains stored on the regions") {
         REQUIRE(engine->openFile(fileUnderTest, nullptr));

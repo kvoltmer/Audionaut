@@ -83,11 +83,6 @@ public:
     bool writeToJson(json& output) override;
 
 
-    /**
-    * @brief Retrieves the size of the region in units.
-    * @return The size of the region in units.
-    */
-    int getSizeInUnits() override;
 
     
     /**
