@@ -13,7 +13,6 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
-#include "Engine/PlayList/ClipDynamics.h"
 #include "Engine/Region/AudioRegion.h"
 
 namespace audium {
@@ -71,26 +70,11 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         auto track = matches.front().first;
         auto region = matches.front().second;
 
-        // The same recipe as the GUI's per-clip export (PlayListItemExport):
-        // a fresh item over the region, sounding like its timeline placement.
-        auto exportItem = std::shared_ptr<PlayListItem> (
+        // A fresh item over the region, deliberately without any clip's
+        // dynamics: a region always exports dry - gains and fades belong to
+        // its timeline placements, the region is the raw material.
+        config->playListItem = std::shared_ptr<PlayListItem> (
             new PlayListItem (*track->getPlayListContainer(), region, track->getSelectionManager()));
-
-        // Carry the placement's gains, fades and fade extensions over. An
-        // unplaced region exports dry; a region placed more than once is
-        // ambiguous about which clip's dynamics to use.
-        std::vector<PlayListItem*> placements;
-        for (auto& item : track->getPlayListContainer()->getPlayListItems())
-            if (item->getRegion() == region)
-                placements.push_back (item.get());
-        if (placements.size() > 1)
-            return context.fail (exitFailure, "ambiguous_clip",
-                                 "the region is placed more than once; export applies one clip's "
-                                 "gains and fades, remove the extra placements first");
-        if (placements.size() == 1)
-            exportItem->getDynamics().copyFrom (placements.front()->getDynamics());
-
-        config->playListItem = exportItem;
         config->numChannels = track->getNumAudioTrackChannels();
         config->sampleRate = region->getResourcesMaxSampleRate();
         config->bitDepth = region->getResourcesMaxBitDepth();

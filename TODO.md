@@ -73,7 +73,8 @@
   - `set-tempo` — `TempoProvider::setTempo` + save.
   - `set-master-gain`.
   - [x] region-addressed export — done 2026-08-27: `export --region NAME
-    [--track N]` bounces one region with its clip's gains/fades.
+    [--track N]` bounces one region, always dry (no clip gains/fades —
+    dynamics belong to timeline placements, the region is raw material).
 
   Deliberately excluded: transport/view/window commands (play, loop, zoom,
   snap, fullscreen, browsers — meaningless headless) and undo (history is not

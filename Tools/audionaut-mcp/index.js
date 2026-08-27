@@ -164,7 +164,7 @@ server.registerTool(
     title: "Export audio",
     description:
       "Renders the project offline to a WAV file (no audio device needed). Pass region to bounce a " +
-      "single region instead, carrying its clip's gains and fades.",
+      "single region instead - always dry, without any clip's gains or fades.",
     inputSchema: {
       project: projectParam,
       output: z.string().describe("Output .wav path"),

@@ -36,7 +36,7 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "                          [--region NAME [--track N]] [--json]",
           "Renders the project (or one region) offline to a WAV file.",
           "Renders the project offline (no audio device needed). --multi-mono writes one mono file per "
-          "channel. --region bounces a single region instead, carrying its clip's gains and fades.",
+          "channel. --region bounces a single region instead - always dry, without any clip's gains or fades.",
           runExport },
 
         { "analyze",
