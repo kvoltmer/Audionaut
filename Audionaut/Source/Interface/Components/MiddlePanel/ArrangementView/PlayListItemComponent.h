@@ -99,6 +99,10 @@ private:
     bool fadeInRampWide = false;
     bool fadeOutRampWide = false;
 
+    // Shows the fade handles for a selected clip; a minimized track has no
+    // room for them, so they hide with it.
+    void updateHandleVisibility();
+
     // Re-positions every fade handle from the item's dynamics; a fade
     // setter push can cascade across all four values.
     void syncFadeControls();
