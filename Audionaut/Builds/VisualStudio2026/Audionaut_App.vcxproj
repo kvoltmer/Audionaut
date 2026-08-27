@@ -3227,6 +3227,7 @@
     <ClInclude Include="..\..\Source\Interface\UIContext.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AnalysisSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\ProjectSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\PrivacySettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h"/>

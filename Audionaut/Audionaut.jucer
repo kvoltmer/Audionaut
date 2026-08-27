@@ -344,6 +344,8 @@
                 file="Source/Interface/Dialogs/AnalysisSettingsComponent.h"/>
           <FILE id="AesCmp1" name="AutoEditSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AutoEditSettingsComponent.h"/>
+          <FILE id="GnrSt1" name="ProjectSettingsComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ProjectSettingsComponent.h"/>
           <FILE id="PrvSt1" name="PrivacySettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/PrivacySettingsComponent.h"/>
           <FILE id="AsmDlg" name="AssembleDialog.h" compile="0" resource="0"

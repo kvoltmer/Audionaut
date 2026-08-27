@@ -148,7 +148,10 @@ private:
     void showSettingsDialog();
     
     void clearRecentFiles();
-    
+
+    /// stores the project package path so loadStartupProject() can recall it next launch
+    void rememberLastProject(juce::File projectPackage);
+
     void updateSettings();
 
    #if JUCE_MAC

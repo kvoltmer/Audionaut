@@ -20,6 +20,7 @@
 #include "Util/Preferences.h"
 #include "UsageAnalytics.h"
 #include "AudiumMainWindow.h"
+#include "Interface/Dialogs/ProjectSettingsComponent.h"
 #include "Interface/Dialogs/SettingsDialog.h"
 #include "Interface/Dialogs/FloatingToolWindow.h"
 #include "Interface/Dialogs/FileBrowserView.h"
@@ -209,6 +210,17 @@ void AudiumApplication::loadStartupProject()
     if (!fileStore->getCurrentProjectFile().exists() &&
         getPreferences().valueExists(PreferenceKeys::defaultFile))
         openFile(juce::File(getPreferences().getValue(PreferenceKeys::defaultFile)));
+
+    // no pinned default (or it failed)? -> reopen the last project
+    if (!fileStore->getCurrentProjectFile().exists() &&
+        ProjectSettingsComponent::readOpenLastProjectEnabled(getPreferences()) &&
+        getPreferences().valueExists(PreferenceKeys::lastProjectFile)) {
+        const juce::File last(getPreferences().getValue(PreferenceKeys::lastProjectFile));
+        if (ProjectFileStore::isValidProjectStructure(last))
+            openFile(last);
+        else
+            getPreferences().removeKey(PreferenceKeys::lastProjectFile); // moved/deleted - forget it silently
+    }
 
     // still nothing loaded? -> create new project
     if (!fileStore->getCurrentProjectFile().exists())
@@ -888,6 +900,8 @@ void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToO
         std::cout << "initialOpenDirectory = " << initialOpenDirectory.getFullPathName() << std::endl;
         RecentlyOpenedFilesList::registerRecentFileNatively (file);
         recentFiles.addFile (file);
+        if (isProjectFile)
+            rememberLastProject (file);
         updateSettings();
 
         logUsageEvent(isProjectFile ? "project_open" : "file_import");
@@ -1028,6 +1042,7 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
             // only save .audium in recent list
             RecentlyOpenedFilesList::registerRecentFileNatively (file);
             recentFiles.addFile (file);
+            rememberLastProject (file);
         }
         updateSettings();
 
@@ -1119,6 +1134,14 @@ void AudiumApplication::clearRecentFiles()
     recentFiles.clearRecentFilesNatively();
     updateSettings();
     menuModel->menuItemsChanged();
+}
+
+void AudiumApplication::rememberLastProject(juce::File projectPackage)
+{
+    if (projectPackage.getFileName() == audium::ProjectFileStore::projectFileName)
+        projectPackage = projectPackage.getParentDirectory();
+
+    getPreferences().setValue(PreferenceKeys::lastProjectFile, projectPackage.getFullPathName().toStdString());
 }
 
 void AudiumApplication::updateSettings()
