@@ -32,6 +32,16 @@ public:
     bool monitor = false; ///< Indicates whether the audio channel is in monitor mode.
     int channelNumber = -1; /// The  channel number of the audio track.
     int trackId = -1; /// The audio track id.
+    int inputChannel = -1; ///< Hardware input channel feeding this channel (-1 = default: track-local channel number).
+    int outputChannel = -1; ///< Hardware output channel this channel routes to (-1 = Main stereo mix).
+
+    /**
+     * @brief Resolves the hardware input channel that feeds a channel.
+     * @return The explicit inputChannel if set, otherwise the track-local channelNumber (legacy behavior).
+     */
+    static int effectiveInputChannel(const AudioChannelData& data) noexcept {
+        return data.inputChannel >= 0 ? data.inputChannel : data.channelNumber;
+    }
 };
 
 /**
@@ -46,7 +56,9 @@ inline void to_json(json& j, const AudioChannelData& data) {
         {"mute", data.mute},
         {"solo", data.solo},
         {"record", data.record},
-        {"monitor", data.monitor}
+        {"monitor", data.monitor},
+        {"input_channel", data.inputChannel},
+        {"output_channel", data.outputChannel}
     };
 }
 
@@ -77,7 +89,13 @@ inline void from_json(const json& j, AudioChannelData& data) {
     
     if (j.contains("monitor"))
         data.monitor = j.at("monitor").get<bool>();
-    
+
+    if (j.contains("input_channel"))
+        data.inputChannel = j.at("input_channel").get<int>();
+
+    if (j.contains("output_channel"))
+        data.outputChannel = j.at("output_channel").get<int>();
+
 }
 
 } // namespace audium
