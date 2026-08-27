@@ -31,6 +31,18 @@ int main (int argc, char* argv[])
     context.json = argumentList.removeOptionIfFound ("--json");
     context.quiet = argumentList.removeOptionIfFound ("--quiet");
 
+    // The verbs dispatch directly (same path as the GUI's in-app CLI mode) -
+    // NOT through ConsoleApplication::findAndRunCommand: its short-option
+    // matching mistakes bare negative numbers for options (Argument::
+    // isShortOption(char) stringifies the char through the int constructor,
+    // so 'h' becomes "104" and any argument containing a '1', e.g.
+    // "--gain -1", reroutes the whole command line to --help).
+    const auto exitCode = audium::cli::performCliCommand (argumentList, context);
+    if (exitCode != audium::cli::cliCommandNotPerformed)
+        return exitCode;
+
+    // No verb matched: ConsoleApplication only provides the --help/--version
+    // UX (its matching quirk is harmless there).
     juce::ConsoleApplication app;
     app.addVersionCommand ("--version", "audionaut-cli 0.1.0");
     app.addHelpCommand ("--help|-h",
@@ -38,22 +50,14 @@ int main (int argc, char* argv[])
                         "Usage:",
                         true);
 
-    // ConsoleApplication command callbacks return void; the per-command exit
-    // code travels through this capture instead.
-    auto exitCode = audium::cli::exitOk;
-
+    // Registered for the --help listing only; the real dispatch already
+    // declined this command line, so a match here (a verb behind an unknown
+    // option) is not a runnable invocation.
     for (auto& spec : audium::cli::getCliCommands())
-        app.addCommand ({ spec.verb,
-                          spec.usage,
-                          spec.shortHelp,
-                          spec.longHelp,
-                          // the handler pointer is copied: a captured `&spec`
-                          // is safe here (the table is a static) but reads
-                          // like the classic dangling-loop-variable bug
-                          [&exitCode, &context, run = spec.run] (const juce::ArgumentList& args) {
-                              exitCode = run (args, context);
+        app.addCommand ({ spec.verb, spec.usage, spec.shortHelp, spec.longHelp,
+                          [] (const juce::ArgumentList&) {
+                              juce::ConsoleApplication::fail ("Unrecognised arguments");
                           } });
 
-    auto findResult = app.findAndRunCommand (argumentList);
-    return findResult != 0 ? findResult : exitCode;
+    return app.findAndRunCommand (argumentList);
 }

@@ -1,4 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
+
+#include <algorithm>
+#include <nlohmann/json.hpp>
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
@@ -28,6 +32,57 @@ juce::File makeWorkDirectory()
 }
 
 const auto testFilesDir = juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/";
+
+// Parses a saved Project.json (tolerating the writer's trailing NUL, which
+// strict parsers reject).
+nlohmann::json readProjectJson (const juce::File& project)
+{
+    auto text = project.getChildFile ("Project.json").loadFileAsString().toStdString();
+    while (! text.empty() && (text.back() == '\0' || text.back() == '\n'))
+        text.pop_back();
+    return nlohmann::json::parse (text);
+}
+
+// Empty containers are omitted from the persisted JSON, hence the .value()
+// fallbacks for tracks without clips or resource groups.
+int countPlayListItems (const nlohmann::json& projectJson)
+{
+    int count = 0;
+    for (auto& track : projectJson["audium"]["audio_tracks"])
+        count += (int) track.value ("play_list_vector", nlohmann::json::array()).size();
+    return count;
+}
+
+std::vector<std::string> allRegionNames (const nlohmann::json& projectJson)
+{
+    std::vector<std::string> names;
+    for (auto& track : projectJson["audium"]["audio_tracks"])
+        for (auto& group : track.value ("resource_groups", nlohmann::json::array()))
+            for (auto& region : group.value ("regions", nlohmann::json::array()))
+                names.push_back (region["name"].get<std::string>());
+    return names;
+}
+
+std::vector<double> clipPositionsClocks (const nlohmann::json& projectJson)
+{
+    std::vector<double> positions;
+    for (auto& track : projectJson["audium"]["audio_tracks"])
+        for (auto& item : track.value ("play_list_vector", nlohmann::json::array()))
+            positions.push_back (item["position_clocks"].get<double>());
+    return positions;
+}
+
+// start/end (source-relative seconds) of the region with the given name
+std::pair<double, double> regionRangeSeconds (const nlohmann::json& projectJson,
+                                              const std::string& name)
+{
+    for (auto& track : projectJson["audium"]["audio_tracks"])
+        for (auto& group : track.value ("resource_groups", nlohmann::json::array()))
+            for (auto& region : group.value ("regions", nlohmann::json::array()))
+                if (region["name"] == name)
+                    return { region["start"].get<double>(), region["end"].get<double>() };
+    return { -1.0, -1.0 };
+}
 
 } // namespace
 
@@ -86,6 +141,306 @@ SCENARIO ("cli create and info", "[cli]")
             REQUIRE (cli::runInfo (makeArgs ("info " + workDir.getChildFile ("nope.audium").getFullPathName()),
                                    context)
                      == cli::exitUsage);
+        }
+    }
+
+    workDir.deleteRecursively();
+}
+
+SCENARIO ("cli split and create-region", "[cli][region]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("regions.audium");
+    auto audioFile = juce::File (testFilesDir + "sine-0dB.wav");
+    REQUIRE (audioFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    GIVEN ("a project with a one-second clip at the timeline start") {
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 1"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " "
+                                           + audioFile.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+        auto baselineItems = countPlayListItems (readProjectJson (project));
+
+        WHEN ("split runs at 0.5 seconds") {
+            REQUIRE (cli::runSplit (makeArgs ("split " + project.getFullPathName()
+                                              + " --at 0.5 --unit seconds"),
+                                    context)
+                     == cli::exitOk);
+
+            THEN ("the clip became two and both pieces have derived region names") {
+                auto json = readProjectJson (project);
+                REQUIRE (countPlayListItems (json) == baselineItems + 1);
+
+                auto names = allRegionNames (json);
+                REQUIRE (std::count (names.begin(), names.end(), "sine-0dB-01") == 1);
+                REQUIRE (std::count (names.begin(), names.end(), "sine-0dB-02") == 1);
+            }
+        }
+
+        WHEN ("split runs at beat 2 (1-based, half a second at 120 BPM)") {
+            REQUIRE (cli::runSplit (makeArgs ("split " + project.getFullPathName()
+                                              + " --at 2 --unit beats"),
+                                    context)
+                     == cli::exitOk);
+
+            THEN ("the clip became two") {
+                REQUIRE (countPlayListItems (readProjectJson (project)) == baselineItems + 1);
+            }
+        }
+
+        WHEN ("split targets a position outside every clip") {
+            THEN ("it fails without touching the project") {
+                REQUIRE (cli::runSplit (makeArgs ("split " + project.getFullPathName()
+                                                  + " --at 10 --unit seconds"),
+                                        context)
+                         == cli::exitFailure);
+                REQUIRE (countPlayListItems (readProjectJson (project)) == baselineItems);
+            }
+        }
+
+        WHEN ("split is missing --at") {
+            REQUIRE (cli::runSplit (makeArgs ("split " + project.getFullPathName()), context)
+                     == cli::exitUsage);
+        }
+
+        WHEN ("create-region covers the middle of the clip") {
+            REQUIRE (cli::runCreateRegion (makeArgs ("create-region " + project.getFullPathName()
+                                                     + " --name chorus --start 0.25 --end 0.75 --unit seconds"),
+                                           context)
+                     == cli::exitOk);
+
+            THEN ("a region with that name exists and the arrangement is unchanged") {
+                auto json = readProjectJson (project);
+                auto names = allRegionNames (json);
+                REQUIRE (std::count (names.begin(), names.end(), "chorus") == 1);
+                REQUIRE (countPlayListItems (json) == baselineItems);
+            }
+        }
+
+        WHEN ("create-region's range reaches beyond the clip") {
+            REQUIRE (cli::runCreateRegion (makeArgs ("create-region " + project.getFullPathName()
+                                                     + " --name tail --start 0.5 --end 2.0 --unit seconds"),
+                                           context)
+                     == cli::exitFailure);
+        }
+
+        WHEN ("create-region is missing its name or range") {
+            REQUIRE (cli::runCreateRegion (makeArgs ("create-region " + project.getFullPathName()
+                                                     + " --start 1 --end 2"),
+                                           context)
+                     == cli::exitUsage);
+            REQUIRE (cli::runCreateRegion (makeArgs ("create-region " + project.getFullPathName()
+                                                     + " --name x --start 2 --end 1"),
+                                           context)
+                     == cli::exitUsage);
+        }
+    }
+
+    workDir.deleteRecursively();
+}
+
+SCENARIO ("cli clip editing and set-region", "[cli][region]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("clips.audium");
+    auto audioFile = juce::File (testFilesDir + "sine-0dB.wav");
+    REQUIRE (audioFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    auto projectArg = project.getFullPathName();
+
+    GIVEN ("a project with a one-second clip (region \"sine-0dB\") at the start") {
+        REQUIRE (cli::runCreate (makeArgs ("create " + projectArg + " --channels 1"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + projectArg + " " + audioFile.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+
+        WHEN ("the clip is moved to 2 seconds (96 clocks at 120 BPM)") {
+            REQUIRE (cli::runMoveClip (makeArgs ("move-clip " + projectArg
+                                                 + " --region sine-0dB --to 2 --unit seconds"),
+                                       context)
+                     == cli::exitOk);
+
+            THEN ("its persisted position moved") {
+                auto positions = clipPositionsClocks (readProjectJson (project));
+                REQUIRE (positions.size() == 1);
+                REQUIRE (positions[0] == 96.0);
+            }
+        }
+
+        WHEN ("the region is placed a second time at 5 seconds") {
+            REQUIRE (cli::runPlaceClip (makeArgs ("place-clip " + projectArg
+                                                  + " --region sine-0dB --at 5 --unit seconds"),
+                                        context)
+                     == cli::exitOk);
+
+            THEN ("two clips of the same region exist") {
+                REQUIRE (clipPositionsClocks (readProjectJson (project)).size() == 2);
+            }
+
+            AND_WHEN ("all placements are removed by region name") {
+                REQUIRE (cli::runRemoveClip (makeArgs ("remove-clip " + projectArg
+                                                       + " --region sine-0dB"),
+                                             context)
+                         == cli::exitOk);
+
+                THEN ("the timeline is empty but the region survives") {
+                    auto json = readProjectJson (project);
+                    REQUIRE (clipPositionsClocks (json).empty());
+                    auto names = allRegionNames (json);
+                    REQUIRE (std::count (names.begin(), names.end(), "sine-0dB") == 1);
+                }
+
+                AND_WHEN ("unused regions are cleaned up") {
+                    REQUIRE (cli::runCleanupRegions (makeArgs ("cleanup-regions " + projectArg),
+                                                     context)
+                             == cli::exitOk);
+
+                    THEN ("the orphaned region is gone") {
+                        REQUIRE (allRegionNames (readProjectJson (project)).empty());
+                    }
+                }
+            }
+
+            AND_WHEN ("--delete-region is asked for while another clip still uses the region") {
+                REQUIRE (cli::runRemoveClip (makeArgs ("remove-clip " + projectArg
+                                                       + " --at 5 --unit seconds --delete-region"),
+                                             context)
+                         == cli::exitFailure);
+            }
+        }
+
+        WHEN ("a clip is removed by position") {
+            REQUIRE (cli::runRemoveClip (makeArgs ("remove-clip " + projectArg
+                                                   + " --at 0.5 --unit seconds"),
+                                         context)
+                     == cli::exitOk);
+
+            THEN ("the timeline is empty") {
+                REQUIRE (clipPositionsClocks (readProjectJson (project)).empty());
+            }
+        }
+
+        WHEN ("nothing matches the clip address") {
+            REQUIRE (cli::runRemoveClip (makeArgs ("remove-clip " + projectArg
+                                                   + " --at 30 --unit seconds"),
+                                         context)
+                     == cli::exitFailure);
+            REQUIRE (cli::runMoveClip (makeArgs ("move-clip " + projectArg
+                                                 + " --region nope --to 1"),
+                                       context)
+                     == cli::exitFailure);
+        }
+
+        WHEN ("the region is retrimmed to its first half and renamed") {
+            REQUIRE (cli::runSetRegion (makeArgs ("set-region " + projectArg
+                                                  + " --region sine-0dB --length 0.5 --unit seconds"
+                                                  + " --rename lead"),
+                                        context)
+                     == cli::exitOk);
+
+            THEN ("the persisted range and name changed") {
+                auto json = readProjectJson (project);
+                auto range = regionRangeSeconds (json, "lead");
+                REQUIRE (range.first == 0.0);
+                REQUIRE (range.second == 0.5);
+            }
+        }
+
+        WHEN ("a retrim reaches past the source audio") {
+            REQUIRE (cli::runSetRegion (makeArgs ("set-region " + projectArg
+                                                  + " --region sine-0dB --end 30 --unit seconds"),
+                                        context)
+                     == cli::exitOk);
+
+            THEN ("the range is clamped to the one-second source") {
+                auto range = regionRangeSeconds (readProjectJson (project), "sine-0dB");
+                REQUIRE (range.second == 1.0);
+            }
+        }
+
+        WHEN ("clip gain is set in dB on one channel and linear on all") {
+            REQUIRE (cli::runClipGain (makeArgs ("clip-gain " + projectArg
+                                                 + " --region sine-0dB --gain -6 --db --channel 0"),
+                                       context)
+                     == cli::exitOk);
+
+            THEN ("the persisted gain vector holds -6 dB") {
+                auto json = readProjectJson (project);
+                bool found = false;
+                for (auto& track : json["audium"]["audio_tracks"])
+                    for (auto& item : track.value ("play_list_vector", nlohmann::json::array()))
+                        if (item.contains ("gain_vector")) {
+                            REQUIRE (item["gain_vector"].size() == 1);
+                            REQUIRE (item["gain_vector"][0].get<double>()
+                                     == Catch::Approx (0.5011872336272722));
+                            found = true;
+                        }
+                REQUIRE (found);
+            }
+        }
+
+        WHEN ("clip fades are set in seconds with a linear fade-in curve") {
+            REQUIRE (cli::runClipFades (makeArgs ("clip-fades " + projectArg
+                                                  + " --region sine-0dB --unit seconds"
+                                                  + " --fade-in 0.25 --fade-out 0.1 --fade-in-curve 1"),
+                                        context)
+                     == cli::exitOk);
+
+            THEN ("the persisted fades hold the clock equivalents") {
+                auto json = readProjectJson (project);
+                bool found = false;
+                for (auto& track : json["audium"]["audio_tracks"])
+                    for (auto& item : track.value ("play_list_vector", nlohmann::json::array()))
+                        if (item.contains ("fade_in_clocks")) {
+                            // 0.25 s / 0.1 s at 120 BPM = 12 / 4.8 clocks
+                            REQUIRE (item["fade_in_clocks"].get<double>() == Catch::Approx (12.0));
+                            REQUIRE (item["fade_out_clocks"].get<double>() == Catch::Approx (4.8));
+                            REQUIRE (item["fade_in_curve"].get<double>() == Catch::Approx (1.0));
+                            REQUIRE (! item.contains ("fade_out_curve")); // still the default
+                            found = true;
+                        }
+                REQUIRE (found);
+            }
+        }
+
+        WHEN ("clip-gain and clip-fades get unusable options") {
+            REQUIRE (cli::runClipGain (makeArgs ("clip-gain " + projectArg + " --region sine-0dB"),
+                                       context)
+                     == cli::exitUsage);
+            REQUIRE (cli::runClipGain (makeArgs ("clip-gain " + projectArg
+                                                 + " --region sine-0dB --gain 1 --channel 7"),
+                                       context)
+                     == cli::exitUsage);
+            REQUIRE (cli::runClipFades (makeArgs ("clip-fades " + projectArg + " --region sine-0dB"),
+                                        context)
+                     == cli::exitUsage);
+            REQUIRE (cli::runClipFades (makeArgs ("clip-fades " + projectArg
+                                                  + " --region sine-0dB --fade-in -1"),
+                                        context)
+                     == cli::exitUsage);
+        }
+
+        WHEN ("set-region gets contradictory or missing options") {
+            REQUIRE (cli::runSetRegion (makeArgs ("set-region " + projectArg
+                                                  + " --region sine-0dB --end 2 --length 1"),
+                                        context)
+                     == cli::exitUsage);
+            REQUIRE (cli::runSetRegion (makeArgs ("set-region " + projectArg + " --region sine-0dB"),
+                                        context)
+                     == cli::exitUsage);
+            REQUIRE (cli::runSetRegion (makeArgs ("set-region " + projectArg
+                                                  + " --region nope --length 1"),
+                                        context)
+                     == cli::exitFailure);
         }
     }
 

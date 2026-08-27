@@ -79,6 +79,8 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/ExportCommand_9ec36188.o \
   $(JUCE_OBJDIR)/ImportCommand_302650f7.o \
   $(JUCE_OBJDIR)/InfoCommand_cbbb374e.o \
+  $(JUCE_OBJDIR)/RegionCommands_f6391075.o \
+  $(JUCE_OBJDIR)/ClipCommands_465a1bd1.o \
   $(JUCE_OBJDIR)/CliDispatch_d59c360c.o \
   $(JUCE_OBJDIR)/ProjectSummary_81a7e2c5.o \
   $(JUCE_OBJDIR)/AudiumMenuModel_e3ecba7b.o \
@@ -241,6 +243,16 @@ $(JUCE_OBJDIR)/ImportCommand_302650f7.o: ../../Source/Cli/Commands/ImportCommand
 $(JUCE_OBJDIR)/InfoCommand_cbbb374e.o: ../../Source/Cli/Commands/InfoCommand.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling InfoCommand.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/RegionCommands_f6391075.o: ../../Source/Cli/Commands/RegionCommands.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling RegionCommands.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ClipCommands_465a1bd1.o: ../../Source/Cli/Commands/ClipCommands.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ClipCommands.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/CliDispatch_d59c360c.o: ../../Source/Cli/CliDispatch.cpp

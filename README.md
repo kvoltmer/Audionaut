@@ -97,6 +97,14 @@ audionaut-cli info    song.audium --json
 audionaut-cli analyze song.audium --types sbic,beat_degara
 audionaut-cli auto-edit song.audium --track 0 --measures 4
 audionaut-cli assemble  song.audium --duration 60 --mode random
+audionaut-cli split   song.audium --at 23              # bar 23; --unit beats|seconds|clocks
+audionaut-cli create-region song.audium --name chorus --start 17 --end 25
+audionaut-cli set-region  song.audium --region chorus --rename drop --length 8
+audionaut-cli place-clip  song.audium --region drop --at 33
+audionaut-cli move-clip   song.audium --region drop --to 41
+audionaut-cli remove-clip song.audium --at 41 --track 0
+audionaut-cli clip-gain   song.audium --region drop --gain -6 --db
+audionaut-cli clip-fades  song.audium --region drop --fade-in 1 --fade-out 2 --unit beats
 audionaut-cli export  song.audium -o mix.wav --sample-rate 48000 --bit-depth 24
 ```
 

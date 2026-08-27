@@ -27,6 +27,10 @@
                 file="Source/Cli/Commands/ImportCommand.cpp"/>
           <FILE id="CliIn1" name="InfoCommand.cpp" compile="1" resource="0"
                 file="Source/Cli/Commands/InfoCommand.cpp"/>
+          <FILE id="CliRg1" name="RegionCommands.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/RegionCommands.cpp"/>
+          <FILE id="CliCp1" name="ClipCommands.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/ClipCommands.cpp"/>
         </GROUP>
         <FILE id="CliCtx" name="CliContext.h" compile="0" resource="0" file="Source/Cli/CliContext.h"/>
         <FILE id="CliDsH" name="CliDispatch.h" compile="0" resource="0" file="Source/Cli/CliDispatch.h"/>
