@@ -15,7 +15,8 @@
 class ChannelComponent  :   public juce::Component,
                             private juce::Timer,
                             public juce::ComboBox::Listener,
-                            public juce::DragAndDropTarget
+                            public juce::DragAndDropTarget,
+                            public juce::ChangeListener
 {
 public:
     ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTrack,
@@ -28,6 +29,7 @@ public:
     void timerCallback() override;
     void stopTheTimer() { stopTimer(); }
     void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override;
+    void changeListenerCallback (juce::ChangeBroadcaster* source) override;
 
     void paint (juce::Graphics& g) override;
     void resized() override;
@@ -91,10 +93,16 @@ public:
     void setRecordEnabled(int channelNumber, bool bEnabled);
     
 private:
+    void rebuildRoutingCombos();
+    void updateRoutingComboSelections();
+    void setRoutingChannel(bool isInput, int newChannel);
+
     std::shared_ptr<audium::AudioTrack> audioTrack;
     std::shared_ptr<audium::AudiumEngine> engine;
     std::unique_ptr<LevelMeter> levelMeter;
     std::unique_ptr<juce::ComboBox> channelSizeComboBox;
+    std::unique_ptr<juce::ComboBox> inputComboBox;
+    std::unique_ptr<juce::ComboBox> outputComboBox;
     std::unique_ptr<juce::Slider> volumeSlider;
     std::unique_ptr<juce::Slider> panSlider;
     std::unique_ptr<juce::ImageButton> volumeScaleButton;

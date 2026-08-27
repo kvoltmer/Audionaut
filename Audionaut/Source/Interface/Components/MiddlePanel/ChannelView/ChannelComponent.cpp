@@ -139,6 +139,22 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
         audioTrack->onDragEnd();
     };
 
+    // INPUT / OUTPUT routing
+    inputComboBox.reset (new juce::ComboBox ("input routing combo box"));
+    addAndMakeVisible (inputComboBox.get());
+    inputComboBox->setEditableText (false);
+    inputComboBox->setJustificationType (juce::Justification::centred);
+    inputComboBox->addListener (this);
+
+    outputComboBox.reset (new juce::ComboBox ("output routing combo box"));
+    addAndMakeVisible (outputComboBox.get());
+    outputComboBox->setEditableText (false);
+    outputComboBox->setJustificationType (juce::Justification::centred);
+    outputComboBox->addListener (this);
+
+    // repopulate the routing combos when the audio device changes
+    engine->getAudioDeviceManager()->addChangeListener(this);
+
     setSize (AudiumLookAndFeel::channelsWidth, 100);
   
     startTimerHz(AudiumLookAndFeel::timerHz);
@@ -173,13 +189,17 @@ void ChannelComponent::resized()
                           50,
                           sliderWidth,
                           sliderHeight);
-    
+
+    inputComboBox->setBounds (space, 73, 51, sliderHeight);
+    outputComboBox->setBounds (62, 73, 51, sliderHeight);
+
     levelMeter->setBounds(getWidth() - 20, 3, 7, getHeight() - 6);
     volumeScaleButton->setBounds (getWidth() - 10, 0, 10, proportionOfHeight (1.0000f));
 }
 
 ChannelComponent::~ChannelComponent()
 {
+    engine->getAudioDeviceManager()->removeChangeListener(this);
     stopTimer();
     audioTrack = nullptr;
 }
@@ -252,6 +272,84 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
         startTimerHz(AudiumLookAndFeel::timerHz);
     }
     channelNumber = audioTrack->getChannel(rowNumber)->getChannelNumber() + audioTrack->getChannelOffset();
+
+    rebuildRoutingCombos();
+    updateRoutingComboSelections();
+}
+
+void ChannelComponent::rebuildRoutingCombos()
+{
+    inputComboBox->clear(dontSendNotification);
+    outputComboBox->clear(dontSendNotification);
+
+    // item id 1 = default (input: track-local channel, output: Main mix);
+    // item id = hardware channel + 2 for explicit picks
+    inputComboBox->addItem(TRANS("In (auto)"), 1);
+    outputComboBox->addItem(TRANS("Main"), 1);
+
+    auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
+    if (currentDevice == nullptr)
+        return;
+
+    auto inputNames = currentDevice->getInputChannelNames();
+    for (auto i = 0; i < inputNames.size(); ++i)
+        inputComboBox->addItem(String(i + 1) + ": " + inputNames[i], i + 2);
+
+    auto outputNames = currentDevice->getOutputChannelNames();
+    for (auto i = 0; i < outputNames.size(); ++i)
+        outputComboBox->addItem(String(i + 1) + ": " + outputNames[i], i + 2);
+}
+
+void ChannelComponent::updateRoutingComboSelections()
+{
+    auto channelData = audioTrack->getChannelData(rowNumber);
+
+    inputComboBox->setSelectedId(channelData.inputChannel >= 0 ? channelData.inputChannel + 2 : 1,
+                                 dontSendNotification);
+    outputComboBox->setSelectedId(channelData.outputChannel >= 0 ? channelData.outputChannel + 2 : 1,
+                                  dontSendNotification);
+
+    // the strip is narrow: show an abbreviated label in the closed box, keep the
+    // full device channel names for the popup (channelSizeComboBox pattern)
+    auto inputText = channelData.inputChannel >= 0 ? "In " + String(channelData.inputChannel + 1)
+                                                   : TRANS("In (") + String(rowNumber + 1) + ")";
+    auto outputText = channelData.outputChannel >= 0 ? "Out " + String(channelData.outputChannel + 1)
+                                                     : TRANS("Main");
+
+    // flag selections the current device can't provide
+    if (channelData.inputChannel >= 0 && inputComboBox->getSelectedId() == 0)
+        inputText += " !";
+    if (channelData.outputChannel >= 0 && outputComboBox->getSelectedId() == 0)
+        outputText += " !";
+
+    inputComboBox->setText(inputText, dontSendNotification);
+    outputComboBox->setText(outputText, dontSendNotification);
+}
+
+void ChannelComponent::changeListenerCallback (juce::ChangeBroadcaster* source)
+{
+    if (source == engine->getAudioDeviceManager().get()) {
+        rebuildRoutingCombos();
+        updateRoutingComboSelections();
+    }
+}
+
+void ChannelComponent::setRoutingChannel(bool isInput, int newChannel)
+{
+    // undo
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+
+    if (isInput)
+        audioTrack->getChannel(rowNumber)->setInputChannel(newChannel);
+    else
+        audioTrack->getChannel(rowNumber)->setOutputChannel(newChannel);
+
+    // undo
+    action->storeNewState();
+    audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set channel routing");
+    audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+
+    updateRoutingComboSelections();
 }
 
 void ChannelComponent::timerCallback()
@@ -291,6 +389,16 @@ void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
         action->storeNewState();
         audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set audio track height");
         audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+    }
+    else if (comboBoxThatHasChanged == inputComboBox.get())
+    {
+        if (auto selectedId = inputComboBox->getSelectedId())
+            setRoutingChannel(true, selectedId - 2); // id 1 -> -1 (default)
+    }
+    else if (comboBoxThatHasChanged == outputComboBox.get())
+    {
+        if (auto selectedId = outputComboBox->getSelectedId())
+            setRoutingChannel(false, selectedId - 2); // id 1 -> -1 (Main)
     }
 }
 
@@ -478,12 +586,13 @@ void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
 bool ChannelComponent::audioInputAvailable(int channelNumber)
 {
     auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
+    if (currentDevice == nullptr)
+        return false;
 
-    if (currentDevice != nullptr &&
-        channelNumber < currentDevice->getActiveInputChannels().toInteger()) {
-        return true;
-    }
-    return false;
+    auto channelData = audioTrack->getChannelData(channelNumber);
+    auto effectiveInput = channelData.inputChannel >= 0 ? channelData.inputChannel : channelNumber;
+
+    return effectiveInput < currentDevice->getActiveInputChannels().countNumberOfSetBits();
 }
 
 void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
