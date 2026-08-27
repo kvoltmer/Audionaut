@@ -466,6 +466,49 @@ SCENARIO ("cli import and export round trip", "[cli]")
                                  context)
                  == cli::exitOk);
 
+        WHEN ("one region is exported with a fade-in applied") {
+            auto clipFile = workDir.getChildFile ("clip.wav");
+            REQUIRE (cli::runClipFades (makeArgs ("clip-fades " + project.getFullPathName()
+                                                  + " --region sine-0dB --fade-in 0.4 --unit seconds"),
+                                        context)
+                     == cli::exitOk);
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + clipFile.getFullPathName() + " --region sine-0dB"
+                                               + " --channels 1"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("the bounce is the clip's length and the fade is rendered") {
+                REQUIRE (clipFile.existsAsFile());
+
+                juce::AudioFormatManager formatManager;
+                formatManager.registerBasicFormats();
+                std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (clipFile));
+                REQUIRE (reader != nullptr);
+
+                // the one-second region, within a block of tolerance
+                REQUIRE (reader->lengthInSamples
+                         == Catch::Approx (reader->sampleRate).margin (reader->sampleRate * 0.05));
+
+                juce::AudioBuffer<float> buffer (1, (int) reader->lengthInSamples);
+                reader->read (&buffer, 0, (int) reader->lengthInSamples, 0, true, false);
+
+                auto samples = buffer.getNumSamples();
+                auto headMagnitude = buffer.getMagnitude (0, 0, samples / 10);        // inside the fade
+                auto tailMagnitude = buffer.getMagnitude (0, samples / 2, samples / 2); // after the fade
+
+                REQUIRE (tailMagnitude > 0.9f);          // the 0 dB sine, untouched
+                REQUIRE (headMagnitude < tailMagnitude * 0.6f); // audibly faded down
+            }
+        }
+
+        WHEN ("an unknown region is exported") {
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + outputFile.getFullPathName() + " --region nope"),
+                                     context)
+                     == cli::exitFailure);
+        }
+
         WHEN ("the project is exported") {
             REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
                                                + outputFile.getFullPathName() + " --channels 1"),

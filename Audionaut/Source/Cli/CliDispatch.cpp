@@ -32,9 +32,11 @@ const std::vector<CliCommandSpec>& getCliCommands()
 
         { "export",
           "export <project.audium> -o <out.wav> [--sample-rate N] [--bit-depth N]\n"
-          "                          [--channels N] [--multi-mono] [--start S] [--length S] [--json]",
-          "Renders the project offline to a WAV file.",
-          "Renders the project offline (no audio device needed). --multi-mono writes one mono file per channel.",
+          "                          [--channels N] [--multi-mono] [--start S] [--length S]\n"
+          "                          [--region NAME [--track N]] [--json]",
+          "Renders the project (or one region) offline to a WAV file.",
+          "Renders the project offline (no audio device needed). --multi-mono writes one mono file per "
+          "channel. --region bounces a single region instead, carrying its clip's gains and fades.",
           runExport },
 
         { "analyze",

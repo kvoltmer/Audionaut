@@ -162,7 +162,9 @@ server.registerTool(
   "export_audio",
   {
     title: "Export audio",
-    description: "Renders the project offline to a WAV file (no audio device needed).",
+    description:
+      "Renders the project offline to a WAV file (no audio device needed). Pass region to bounce a " +
+      "single region instead, carrying its clip's gains and fades.",
     inputSchema: {
       project: projectParam,
       output: z.string().describe("Output .wav path"),
@@ -172,9 +174,12 @@ server.registerTool(
       multi_mono: z.boolean().optional().describe("Write one mono file per channel instead"),
       start_seconds: z.number().min(0).optional().describe("Export start position"),
       length_seconds: z.number().positive().optional().describe("Export length (default: whole project)"),
+      region: z.string().min(1).optional().describe("Bounce this region instead of the whole project"),
+      track: z.number().int().min(0).optional().describe("Track id, to disambiguate same-named regions"),
     },
   },
-  async ({ project, output, sample_rate, bit_depth, channels, multi_mono, start_seconds, length_seconds }) =>
+  async ({ project, output, sample_rate, bit_depth, channels, multi_mono, start_seconds, length_seconds,
+           region, track }) =>
     runCli([
       "export",
       project,
@@ -186,6 +191,8 @@ server.registerTool(
       ...(multi_mono ? ["--multi-mono"] : []),
       ...(start_seconds !== undefined ? ["--start", String(start_seconds)] : []),
       ...(length_seconds !== undefined ? ["--length", String(length_seconds)] : []),
+      ...(region !== undefined ? ["--region", region] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
     ])
 );
 
