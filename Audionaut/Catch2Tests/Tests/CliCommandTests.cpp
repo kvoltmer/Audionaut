@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/AudiumEngine.h"
 
 using namespace audium;
@@ -65,7 +66,7 @@ SCENARIO ("cli create and info", "[cli]")
 
         THEN ("a valid project package exists") {
             REQUIRE (exitCode == cli::exitOk);
-            REQUIRE (AudiumEngine::isValidProjectStructure (project));
+            REQUIRE (ProjectFileStore::isValidProjectStructure (project));
         }
 
         WHEN ("info runs on it") {

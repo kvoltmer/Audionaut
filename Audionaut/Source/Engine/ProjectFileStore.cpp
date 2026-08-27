@@ -4,6 +4,13 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "ProjectFileStore.h"
+#include "Engine/AudiumEngine.h"
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Analysis/AnalysisCache.h"
+#include "Engine/Undo/UndoableReloadAction.h"
 
 #if !JUCE_WINDOWS
  #include <unistd.h>
@@ -17,6 +24,9 @@ const char* ProjectFileStore::projectFileExtension = ".audium";
 const char* ProjectFileStore::projectFileName = "Project.json";
 const char* ProjectFileStore::autosaveFileName = "Autosave.json";
 const char* ProjectFileStore::autosavePidFileName = "Autosave.pid";
+
+juce::File ProjectFileStore::projectDirectory = juce::File();
+juce::File ProjectFileStore::tempDirectory = juce::File();
 
 static int getCurrentProcessId()
 {
@@ -42,6 +52,18 @@ static bool isProcessAlive (int pid)
 #else
     return ::kill ((pid_t) pid, 0) == 0 || errno == EPERM;
 #endif
+}
+
+juce::File ProjectFileStore::getSerializationBaseDirectory()
+{
+    if (projectDirectory != juce::File() && projectDirectory.isDirectory())
+        return projectDirectory;
+    return tempDirectory;
+}
+
+juce::File ProjectFileStore::getAutosaveDirectory()
+{
+    return getSerializationBaseDirectory();
 }
 
 bool ProjectFileStore::isJsonProjectFile (const juce::File& file)
@@ -90,6 +112,366 @@ bool ProjectFileStore::writeJsonAtomically (const juce::File& target, const json
     return success && temp.overwriteTargetFileWithTemporary();
 }
 
+// ==== session orchestration =================================================
+
+void ProjectFileStore::attach (std::shared_ptr<AudiumEngine> engine_)
+{
+    engine = engine_;
+}
+
+bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)> callback)
+{
+    auto e = engine.lock();
+    if (e == nullptr)
+        return false;
+
+    try
+    {
+        if (inFile == juce::File()) {
+            // empty file means: user canceled -> do nothing
+            return true;
+        }
+        else if (e->getAudioResourceContainer()->getAudioFormatManager()->findFormatForFileExtension(inFile.getFileExtension())) {
+            // try to open an audio file
+            e->getAudioTrackContainer()->addAudioFiles({inFile.getFullPathName()},
+                                                       0.0,
+                                                       callback,
+                                                       true);
+            return true;
+        }
+        else {
+
+            if (isValidProjectStructure(inFile))
+                inFile = inFile.getChildFile(projectFileName);
+
+            if (inFile.existsAsFile()) {
+                std::cout << "loading: " << inFile.getFullPathName() << std::endl;
+                AudioResourceContainer::createTemporaryProjectDirectory(true);
+
+                projectDirectory = inFile.getParentDirectory();
+
+                // Load persisted analysis data before reading the project: the
+                // subsequent rebuild clears tracks but not the analysis cache,
+                // so segments are available as soon as the UI queries them.
+                e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+
+                // Read the framed project JSON; bypass the audio callback for
+                // the duration of the destructive rebuild, and never leave it
+                // bypassed when the read throws.
+                auto projectJson = readProjectJson(inFile);
+
+                e->setBypass(true);
+                auto readOk = false;
+                try {
+                    readOk = e->readFromJson(projectJson, true);
+                }
+                catch (...) {
+                    e->setBypass(false);
+                    throw;
+                }
+                e->setBypass(false);
+
+                if (readOk) {
+                    currentProjectFile = inFile;
+                    currentJson = std::move(projectJson);
+                    e->getUndoManager()->clearUndoHistory();
+                    e->getPlayListScheduler()->commitPlayListData();
+                    refreshDiskStamps();
+                    changedExternally = false;
+
+                    auto audioDir = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
+                    e->getAudioResourceContainer()->deleteObsoleteAudioFiles(audioDir);
+                    return true;
+                }
+            }
+            else {
+                NullCheckedInvocation::invoke (callback, "file not found");
+                return false;
+
+            }
+
+        }
+
+
+        // we failed to read :(
+        NullCheckedInvocation::invoke (callback, "unknown error");
+    }
+    catch (std::exception &ex)
+    {
+        std::cout << ex.what() << std::endl;
+        NullCheckedInvocation::invoke (callback, ex.what());
+    }
+
+    e->cleanup();
+    e->createNewProject();
+
+    return false;
+}
+
+bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::string)> callback)
+{
+    auto e = engine.lock();
+    if (e == nullptr)
+        return false;
+
+    try
+    {
+        auto file = file_;
+
+        if (!juce::File(file).hasWriteAccess()) {
+            std::string errorString = "No write access. Please select a different location.";
+#if JUCE_MAC
+            errorString += "\n\n";
+            errorString += "As a 'Sandboxed App' you are only allowed to save files in the Music folder.";
+#endif
+            NullCheckedInvocation::invoke (callback, errorString);
+            return false;
+        }
+
+        if (! file.exists())
+            file.create();
+
+        // remember where this project was saved before - a Save As must also
+        // clear that package's crash-recovery snapshot
+        const auto previousProjectDirectory = projectDirectory;
+
+        // need to copy or move audio files?
+        auto sourceDirectory = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
+        if (!sourceDirectory.exists()) {
+            sourceDirectory = AudioResourceContainer::getAudioFileDirectory(tempDirectory);
+            jassert(sourceDirectory.exists());
+        }
+        auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(file.getParentDirectory());
+        if (sourceDirectory != destinationDirectory) {
+            if (!e->getAudioResourceContainer()->copyOrMoveAudioFiles(sourceDirectory, destinationDirectory)) {
+                NullCheckedInvocation::invoke (callback, "Failed to copy audio files.");
+                return false;
+            }
+
+            e->getAudioResourceContainer()->changeAudioFilePaths(destinationDirectory);
+
+            // Audio files were relocated into the project - re-point the
+            // analysis cache at their new location so persisted results survive
+            // a Save-As from a temporary/other directory.
+            e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->rebaseAudioFolder(destinationDirectory);
+        }
+        // assign new project directory
+        projectDirectory = file.getParentDirectory();
+
+        std::string writeError;
+        json serialized;
+        if (writeJsonToFile(file, writeError, &serialized)) {
+            currentProjectFile = file;
+            currentJson = std::move(serialized);
+            e->getUndoManager()->clearUndoHistory();
+
+            // Persist analysis results alongside the project file.
+            e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->saveToFolder(projectDirectory);
+
+            // A successful save supersedes any crash-recovery snapshot,
+            // including a temp-directory one from before the first save and
+            // the one in the package this project was saved-as from.
+            deleteAutosave();
+            if (previousProjectDirectory != projectDirectory)
+                deleteAutosaveIn(previousProjectDirectory);
+
+            refreshDiskStamps();
+
+            // the on-disk file now reflects this session's state
+            changedExternally = false;
+            return true;
+        }
+
+        if (!writeError.empty()) {
+            NullCheckedInvocation::invoke (callback, writeError);
+            return false;
+        }
+
+        jassertfalse;
+        NullCheckedInvocation::invoke (callback, "unknown error");
+    }
+    catch (std::exception &ex)
+    {
+        std::cout << ex.what() << std::endl;
+        NullCheckedInvocation::invoke (callback, ex.what());
+    }
+    return false;
+}
+
+bool ProjectFileStore::writeAutosave()
+{
+    const auto target = getAutosaveDirectory();
+    if (target == juce::File() || !target.isDirectory())
+        return false;
+
+    std::string error;
+    if (!writeJsonToFile(target.getChildFile(autosaveFileName), error))
+        return false;
+
+    writePidGuardIfTemporary(target);
+    return true;
+}
+
+void ProjectFileStore::deleteAutosave()
+{
+    deleteAutosaveIn(projectDirectory);
+    deleteAutosaveIn(tempDirectory);
+}
+
+bool ProjectFileStore::restoreAutosave (std::function<void (std::string)> callback)
+{
+    return applyFileAsUndoableReload(projectDirectory.getChildFile(autosaveFileName), false, false,
+                                     "Restore autosave", callback);
+}
+
+bool ProjectFileStore::reloadFromDisk (std::function<void (std::string)> callback)
+{
+    auto e = engine.lock();
+    if (e == nullptr)
+        return false;
+
+    if (currentProjectFile == juce::File()) {
+        NullCheckedInvocation::invoke (callback, "no project file open");
+        return false;
+    }
+
+    // Capture the mtimes BEFORE reading: a write landing during the (possibly
+    // long) apply must be re-detected on the next poll, not stamped as seen.
+    const auto projectMtimeAtRead = currentProjectFile.getLastModificationTime();
+    const auto analysisMtimeAtRead = projectDirectory.getChildFile(AnalysisCache::fileName)
+                                                     .getLastModificationTime();
+
+    // The analysis cache is content-keyed derived data and stays outside the
+    // undo snapshot.
+    if (analysisChangedOnDisk())
+        e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+
+    const auto applied = applyFileAsUndoableReload(currentProjectFile, true, true,
+                                                   "Reload changes from disk", callback);
+
+    // Stamp even on failure so an unreadable external write doesn't retrigger
+    // the change detector every poll tick.
+    setStamps(projectMtimeAtRead, analysisMtimeAtRead);
+    return applied;
+}
+
+void ProjectFileStore::reloadAnalysisFromDisk()
+{
+    auto e = engine.lock();
+    if (e == nullptr)
+        return;
+
+    e->getAudioTrackContainer()->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+
+    // only the analysis stamp: a project write racing in stays detectable
+    setAnalysisStamp(projectDirectory.getChildFile(AnalysisCache::fileName)
+                                     .getLastModificationTime());
+}
+
+void ProjectFileStore::refreshDiskStamps()
+{
+    refreshStamps(currentProjectFile,
+                  projectDirectory.getChildFile(AnalysisCache::fileName));
+}
+
+bool ProjectFileStore::projectChangedOnDisk() const
+{
+    if (currentProjectFile == juce::File())
+        return false;
+    return projectChangedOnDisk(currentProjectFile);
+}
+
+bool ProjectFileStore::analysisChangedOnDisk() const
+{
+    if (currentProjectFile == juce::File())
+        return false;
+    return analysisChangedOnDisk(projectDirectory.getChildFile(AnalysisCache::fileName));
+}
+
+void ProjectFileStore::deleteObsoleteAudioFiles()
+{
+    if (auto e = engine.lock())
+        e->getAudioResourceContainer()->deleteObsoleteAudioFiles(currentJson);
+}
+
+void ProjectFileStore::closeProject()
+{
+    currentProjectFile = juce::File();
+    currentJson.clear();
+    changedExternally = false;
+}
+
+bool ProjectFileStore::writeJsonToFile (const juce::File& target, std::string& error, json* serializedOut)
+{
+    auto e = engine.lock();
+    if (e == nullptr) {
+        error = "no engine attached";
+        return false;
+    }
+
+    json serialized;
+    if (!e->writeToJson(serialized)) {
+        error = "failed to serialize the project";
+        return false;
+    }
+
+    if (!writeJsonAtomically(target, serialized, error))
+        return false;
+
+    if (serializedOut != nullptr)
+        *serializedOut = std::move(serialized);
+    return true;
+}
+
+bool ProjectFileStore::applyFileAsUndoableReload (const juce::File& sourceFile,
+                                                  bool preserveUiState,
+                                                  bool marksExternalChange,
+                                                  const juce::String& transactionName,
+                                                  std::function<void (std::string)> callback)
+{
+    auto e = engine.lock();
+    if (e == nullptr)
+        return false;
+
+    try
+    {
+        if (!sourceFile.existsAsFile()) {
+            NullCheckedInvocation::invoke (callback, "file missing on disk");
+            return false;
+        }
+
+        auto afterState = readProjectJson(sourceFile);
+
+        json beforeState;
+        e->writeToJson(beforeState);
+
+        // The user's current view wins over whatever the external writer
+        // stored - reloads must not move their scroll/zoom.
+        if (preserveUiState &&
+            beforeState.contains("audium") && beforeState["audium"].contains("ui_state"))
+            afterState["audium"]["ui_state"] = beforeState["audium"]["ui_state"];
+
+        const auto performed = e->getUndoManager()->perform(new UndoableReloadAction(*e, *this, beforeState, afterState,
+                                                                                     preserveUiState, marksExternalChange),
+                                                            transactionName);
+        if (!performed) {
+            NullCheckedInvocation::invoke (callback, "failed to apply the project state");
+            return false;
+        }
+
+        e->getUndoManager()->beginNewTransaction();
+        return true;
+    }
+    catch (std::exception &ex)
+    {
+        std::cout << ex.what() << std::endl;
+        NullCheckedInvocation::invoke (callback, ex.what());
+    }
+    return false;
+}
+
+// ==== file primitives =======================================================
+
 void ProjectFileStore::refreshStamps (const juce::File& projectFile, const juce::File& analysisFile)
 {
     projectFileStamp = projectFile.getLastModificationTime();
@@ -131,6 +513,11 @@ void ProjectFileStore::deleteAutosaveIn (const juce::File& packageDirectory)
         packageDirectory.getChildFile(autosaveFileName).deleteFile();
         packageDirectory.getChildFile(autosavePidFileName).deleteFile();
     }
+}
+
+juce::File ProjectFileStore::findOrphanedTempAutosave()
+{
+    return findOrphanedTempAutosave(tempDirectory);
 }
 
 juce::File ProjectFileStore::findOrphanedTempAutosave (const juce::File& currentTempDirectory)

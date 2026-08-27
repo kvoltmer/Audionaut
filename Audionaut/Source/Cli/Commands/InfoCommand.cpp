@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/ProjectFileStore.h"
 #include "Cli/HeadlessEngineSession.h"
 #include "Cli/ProjectSummary.h"
 
@@ -25,7 +26,7 @@ int runInfo (const juce::ArgumentList& args, CliContext& context)
     HeadlessEngineSession session;
 
     std::string openError;
-    if (! session->openFile (projectFile, [&openError] (std::string error) { openError = error; }))
+    if (! session->getProjectFileStore()->open (projectFile, [&openError] (std::string error) { openError = error; }))
         return context.fail (exitFailure, "open_failed",
                              openError.empty() ? "failed to open project" : openError);
 

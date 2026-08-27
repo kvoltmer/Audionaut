@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudioSources/VoiceSourceContainer.h"
@@ -224,7 +225,7 @@ bool AudioResource::containsAbsolutePosition(double position, audium::TimeContex
 
 bool AudioResource::writeToJson (json& output)
 {
-    output["relative_file_path"]    = getRelativePath(AudiumEngine::getSerializationBaseDirectory()).toStdString();
+    output["relative_file_path"]    = getRelativePath(ProjectFileStore::getSerializationBaseDirectory()).toStdString();
     output["number_of_channels"]    = getNumAudioFileChannels();
     if (not isRecording())
         output["length_in_seconds"]     = getFileLength(audium::seconds);
@@ -253,7 +254,7 @@ const juce::URL AudioResource::urlFromJson (json& input)
     // relative path is always a local file
     if (input.contains("relative_file_path")) {
         juce::String relPath = input["relative_file_path"].template get<std::string>();
-        filePath = AudiumEngine::getSerializationBaseDirectory().getChildFile(relPath).getFullPathName();
+        filePath = ProjectFileStore::getSerializationBaseDirectory().getChildFile(relPath).getFullPathName();
         if (File(filePath).existsAsFile())
             return URL(File(filePath));
     }

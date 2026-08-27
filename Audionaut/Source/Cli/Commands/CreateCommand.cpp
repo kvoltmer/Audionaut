@@ -38,7 +38,7 @@ int runCreate (const juce::ArgumentList& args, CliContext& context)
 
     auto projectFile = target.getChildFile (ProjectFileStore::projectFileName);
     std::string saveError;
-    if (! session->saveFile (projectFile, [&saveError] (std::string error) { saveError = error; }))
+    if (! session->getProjectFileStore()->save (projectFile, [&saveError] (std::string error) { saveError = error; }))
         return context.fail (exitFailure, "save_failed",
                              saveError.empty() ? "failed to save project" : saveError);
 

@@ -120,7 +120,11 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                      audioBusInterface,
                                                                      recordingActionHandler,
                                                                      projectFileStore);
-    
+
+    // the store persists this engine's graph; held weakly (the engine owns
+    // the store)
+    projectFileStore->attach(audiumEngine);
+
     return audiumEngine;
 }
 

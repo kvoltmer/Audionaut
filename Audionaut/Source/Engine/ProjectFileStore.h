@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <functional>
+#include <memory>
 #include <JuceHeader.h>
 #include <nlohmann/json.hpp>
 
@@ -12,15 +14,24 @@ using json = nlohmann::json;
 
 namespace audium {
 
+class AudiumEngine;
+
 /**
  * @class ProjectFileStore
- * @brief File-level persistence services for the engine: the project file
- *        format constants, framing-aware reads, atomic writes, the disk
- *        stamps behind external-change detection, and crash-recovery
- *        snapshot (Autosave.json) management.
+ * @brief Project persistence: the file format constants and paths, the file
+ *        primitives (framed reads, atomic writes, disk stamps, crash-recovery
+ *        snapshots), and the session orchestration (open/save/autosave/reload)
+ *        that used to live on `AudiumEngine`.
  *
- * Knows files only - no engine graph. `AudiumEngine` orchestrates *what* to
- * persist; this class owns *how* it reaches and leaves the disk.
+ * The engine remains the graph (de)serializer (`writeToJson` /
+ * `readFromJson` / `applyProjectJson`); this class owns everything about how
+ * and what reaches disk, plus the persistence session state
+ * (currentProjectFile, the authoritative currentJson, the external-change
+ * marker, the path statics). A future split along the primitives /
+ * orchestration seam is possible if this grows further.
+ *
+ * Wired in `AudiumFactory`: the engine holds this store (shared_ptr), the
+ * store holds the engine weakly via `attach()`.
  */
 class ProjectFileStore
 {
@@ -38,6 +49,23 @@ public:
      *        asserted on load.
      */
     static constexpr int fileVersion = 1;
+
+    // project file paths (session-wide)
+    static juce::File projectDirectory;
+    static juce::File tempDirectory;
+
+    /**
+     * @brief The directory resource paths are serialized relative to: the
+     *        project package for saved projects, the session's temp directory
+     *        (where the audio actually lives) for never-saved ones.
+     */
+    static juce::File getSerializationBaseDirectory();
+
+    /**
+     * @brief The directory autosave snapshots go to: the project package for
+     *        saved projects, the session's temp directory otherwise.
+     */
+    static juce::File getAutosaveDirectory();
 
     /**
      * @brief Checks if a file is an explicit JSON project file
@@ -63,51 +91,147 @@ public:
     /**
      * @brief Writes JSON to `target` atomically (temp file + rename) with the
      *        writeString framing.
-     * @param target The file to write.
-     * @param content The JSON to write.
-     * @param error Receives an error message on failure.
-     * @return True if the file was written, false otherwise.
      */
     bool writeJsonAtomically(const juce::File& target, const json& content, std::string& error);
 
-    // ==== disk stamps (external-change detection) ============================
-    // The engine records the mtimes of its own writes here so the poller can
-    // tell the app's writes apart from foreign (agent/CLI) ones.
+    // ==== session orchestration =============================================
 
     /**
-     * @brief Records both files' current on-disk modification times.
+     * @brief Connects the store to the engine whose graph it persists.
+     *        Called once by `AudiumFactory`; held weakly (the engine owns the
+     *        store).
      */
+    void attach(std::shared_ptr<AudiumEngine> engine_);
+
+    /**
+     * @brief Opens a file: an empty file is a no-op (user canceled), a known
+     *        audio format is imported into the current project, anything else
+     *        is loaded as a project. On a failed project load the engine falls
+     *        back to a fresh project.
+     * @return True on success (or no-op), false otherwise.
+     */
+    bool open(juce::File file, std::function<void(std::string)> callback);
+
+    /**
+     * @brief Saves the current project to `file`, relocating audio files and
+     *        the analysis sidecar as needed. Clears undo history and any
+     *        crash-recovery snapshots (including the previous package's after
+     *        a Save As).
+     */
+    bool save(const juce::File& file, std::function<void(std::string)> callback);
+
+    /**
+     * @brief Writes a crash-recovery snapshot (Autosave.json). Saved projects
+     *        snapshot into their package; never-saved ones into the session's
+     *        temp directory, with a pid guard. Never touches Project.json,
+     *        disk stamps, or undo history.
+     */
+    bool writeAutosave();
+
+    /**
+     * @brief Deletes any crash-recovery snapshot (and pid file) in the
+     *        project package and the session's temp directory.
+     */
+    void deleteAutosave();
+
+    /**
+     * @brief Applies the package's Autosave.json as an undoable action, so a
+     *        restored session starts dirty and Undo returns to the saved state.
+     */
+    bool restoreAutosave(std::function<void(std::string)> callback);
+
+    /**
+     * @brief Reloads the current project file from disk as an undoable action
+     *        (external/agent change). The pre-reload in-memory state becomes
+     *        the undo step; undo/redo never touches the file on disk.
+     */
+    bool reloadFromDisk(std::function<void(std::string)> callback);
+
+    /**
+     * @brief Reloads only the analysis cache from disk (an external writer ran
+     *        `analyze`). Derived data: touches neither the session state, the
+     *        undo history, nor the external-change marker.
+     */
+    void reloadAnalysisFromDisk();
+
+    /**
+     * @brief Records the on-disk modification times of the current project
+     *        file and analysis sidecar, so the app's own writes can be told
+     *        apart from external (agent) writes.
+     */
+    void refreshDiskStamps();
+
+    /**
+     * @brief Whether the current project file changed on disk since the last
+     *        stamp (false when no project file is open).
+     */
+    bool projectChangedOnDisk() const;
+
+    /**
+     * @brief Whether the analysis sidecar changed on disk since the last
+     *        stamp (false when no project file is open).
+     */
+    bool analysisChangedOnDisk() const;
+
+    /**
+     * @brief The currently open project file (invalid for never-saved
+     *        projects).
+     */
+    juce::File getCurrentProjectFile() const { return currentProjectFile; }
+
+    /**
+     * @brief Whether the current in-memory state reflects an external
+     *        (agent/CLI) change that was reloaded from disk. Follows the undo
+     *        stack; a save or opening a project clears it.
+     */
+    bool wasChangedExternally() const { return changedExternally; }
+
+    /**
+     * @brief Sets the external-change marker; used by `UndoableReloadAction`
+     *        so undo/redo of a reload moves the marker with the state.
+     */
+    void setChangedExternally(bool changed) { changedExternally = changed; }
+
+    /**
+     * @brief Sets the authoritative applied state; used by
+     *        `UndoableReloadAction` after a successful apply. Only
+     *        open/save/apply update this - snapshots never do.
+     */
+    void setCurrentJson(json state) { currentJson = std::move(state); }
+
+    /**
+     * @brief Deletes audio files in the package that the authoritative
+     *        state no longer references (with a confirmation prompt).
+     */
+    void deleteObsoleteAudioFiles();
+
+    /**
+     * @brief Clears the persistence session state (current file, authoritative
+     *        JSON, external-change marker). Called by `AudiumEngine::cleanup`;
+     *        deliberately does not touch the engine (teardown-safe).
+     */
+    void closeProject();
+
+    /**
+     * @brief Scans the temp location for a crashed session's leftover
+     *        autosave owned by a no-longer-running process.
+     * @return The newest such directory, or an invalid File if none.
+     */
+    static juce::File findOrphanedTempAutosave();
+    static juce::File findOrphanedTempAutosave(const juce::File& currentTempDirectory);
+
+    // ==== file primitives (stamps by explicit file, pid/autosave files) =====
+
     void refreshStamps(const juce::File& projectFile, const juce::File& analysisFile);
-
-    /**
-     * @brief Records explicit modification times (captured before a read, so
-     *        a write landing during a long apply is re-detected).
-     */
     void setStamps(juce::Time projectMtime, juce::Time analysisMtime);
-
-    /**
-     * @brief Records only the analysis file's modification time.
-     */
     void setAnalysisStamp(juce::Time analysisMtime);
-
-    /**
-     * @brief Whether `projectFile` changed on disk since the last stamp
-     *        (also true when the file vanished).
-     */
     bool projectChangedOnDisk(const juce::File& projectFile) const;
-
-    /**
-     * @brief Whether `analysisFile` changed on disk since the last stamp.
-     */
     bool analysisChangedOnDisk(const juce::File& analysisFile) const;
-
-    // ==== crash-recovery snapshots ==========================================
 
     /**
      * @brief Writes the Autosave.pid owner guard when `packageDirectory` lives
      *        under the temp root, so findOrphanedTempAutosave never claims a
-     *        running instance's session (including a project restored from -
-     *        and still living in - a temp package).
+     *        running instance's session.
      */
     void writePidGuardIfTemporary(const juce::File& packageDirectory);
 
@@ -117,16 +241,45 @@ public:
      */
     void deleteAutosaveIn(const juce::File& packageDirectory);
 
-    /**
-     * @brief Scans the temp location for a crashed session's leftover
-     *        autosave: a temp-*.audium directory (other than
-     *        `currentTempDirectory`) holding an Autosave.json newer than its
-     *        Project.json, whose owning process is no longer alive.
-     * @return The newest such directory, or an invalid File if none.
-     */
-    static juce::File findOrphanedTempAutosave(const juce::File& currentTempDirectory);
-
 private:
+    /**
+     * @brief Serializes the engine and writes it to `target` atomically.
+     * @param serializedOut Receives the serialized JSON on success (optional).
+     */
+    bool writeJsonToFile(const juce::File& target, std::string& error, json* serializedOut = nullptr);
+
+    /**
+     * @brief Reads `sourceFile` and applies it to the engine via an
+     *        `UndoableReloadAction`.
+     */
+    bool applyFileAsUndoableReload(const juce::File& sourceFile,
+                                   bool preserveUiState,
+                                   bool marksExternalChange,
+                                   const juce::String& transactionName,
+                                   std::function<void(std::string)> callback);
+
+    /**
+     * @brief The engine whose graph this store persists (weak: the engine
+     *        owns the store).
+     */
+    std::weak_ptr<AudiumEngine> engine;
+
+    /**
+     * @brief The currently open project file.
+     */
+    juce::File currentProjectFile;
+
+    /**
+     * @brief The last authoritative applied/saved state; its file references
+     *        drive obsolete-file cleanup.
+     */
+    json currentJson;
+
+    /**
+     * @brief See `wasChangedExternally()`.
+     */
+    bool changedExternally = false;
+
     /**
      * @brief On-disk modification times recorded after the app's own writes.
      */

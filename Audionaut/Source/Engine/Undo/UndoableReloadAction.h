@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Playback/AudioBusInterface.h"
 
 namespace audium
@@ -21,29 +22,35 @@ namespace audium
  * on-disk state, `undo()` restores the pre-reload in-memory state. Neither
  * direction touches the file on disk - undoing a reload leaves the external
  * writer's version in the project package.
+ *
+ * The store's external-change marker and authoritative `currentJson` follow
+ * the applied state through perform/undo/redo.
  */
 struct UndoableReloadAction final : public juce::UndoableAction
 {
     /**
      * @brief Constructs an `UndoableReloadAction`.
      * @param engine_ The engine to apply states to.
+     * @param store_ The store owning the session state (marker, currentJson).
      * @param beforeState_ Full project JSON of the pre-reload in-memory state.
      * @param afterState_ Full project JSON of the state to apply.
      * @param preserveUiState_ True to keep the in-memory UI state in both
      *        directions (external reload); false to adopt each snapshot's own
      *        UI state (autosave restore).
      * @param marksExternalChange_ True when the action applies an external
-     *        (agent/CLI) change: perform/redo set the engine's external-change
-     *        marker, undo clears it.
+     *        (agent/CLI) change: perform/redo set the store's external-change
+     *        marker, undo restores its prior value.
      */
-    UndoableReloadAction (AudiumEngine& engine_, json beforeState_, json afterState_,
+    UndoableReloadAction (AudiumEngine& engine_, ProjectFileStore& store_,
+                          json beforeState_, json afterState_,
                           bool preserveUiState_ = true, bool marksExternalChange_ = false) noexcept :
         engine (engine_),
+        store (store_),
         beforeState (std::move(beforeState_)),
         afterState (std::move(afterState_)),
         preserveUiState (preserveUiState_),
         marksExternalChange (marksExternalChange_),
-        markerBeforeReload (engine_.wasChangedExternally())
+        markerBeforeReload (store_.wasChangedExternally())
     {
         // A constant, size-proportional value (KB of stored JSON): the live
         // engine's track count would both hide the real memory cost from the
@@ -66,10 +73,14 @@ struct UndoableReloadAction final : public juce::UndoableAction
                 engine.getAudioBusInterface()->record(false);
 
             const auto ok = engine.applyProjectJson(afterState, preserveUiState);
-            if (ok && marksExternalChange)
-                engine.setChangedExternally(true);
-            if (!ok)
+            if (ok) {
+                store.setCurrentJson(afterState);
+                if (marksExternalChange)
+                    store.setChangedExternally(true);
+            }
+            else {
                 rollBackTo(beforeState);
+            }
             return ok;
         }
         catch (std::exception &e) {
@@ -91,12 +102,17 @@ struct UndoableReloadAction final : public juce::UndoableAction
 
             const auto ok = engine.applyProjectJson(beforeState, preserveUiState);
 
-            // the before-state may itself stem from an earlier external
-            // reload - restore the marker's prior value, don't force it off
-            if (ok && marksExternalChange)
-                engine.setChangedExternally(markerBeforeReload);
-            if (!ok)
+            if (ok) {
+                store.setCurrentJson(beforeState);
+
+                // the before-state may itself stem from an earlier external
+                // reload - restore the marker's prior value, don't force it off
+                if (marksExternalChange)
+                    store.setChangedExternally(markerBeforeReload);
+            }
+            else {
                 rollBackTo(afterState);
+            }
             return ok;
         }
         catch (std::exception &e) {
@@ -113,7 +129,8 @@ struct UndoableReloadAction final : public juce::UndoableAction
     void rollBackTo (json& state)
     {
         try {
-            engine.applyProjectJson(state, preserveUiState);
+            if (engine.applyProjectJson(state, preserveUiState))
+                store.setCurrentJson(state);
         }
         catch (std::exception &e) {
             std::cout << "UndoableReloadAction: rollback failed -> " << e.what() << std::endl;
@@ -133,6 +150,11 @@ struct UndoableReloadAction final : public juce::UndoableAction
     AudiumEngine &engine;
 
     /**
+     * @brief The store owning the persistence session state.
+     */
+    ProjectFileStore &store;
+
+    /**
      * @brief Full project JSON of the pre-reload in-memory state.
      */
     json beforeState;
@@ -148,7 +170,7 @@ struct UndoableReloadAction final : public juce::UndoableAction
     bool preserveUiState = true;
 
     /**
-     * @brief Whether this action moves the engine's external-change marker.
+     * @brief Whether this action moves the store's external-change marker.
      */
     bool marksExternalChange = false;
 

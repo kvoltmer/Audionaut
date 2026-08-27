@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/ProjectSummary.h"
+#include "Engine/ProjectFileStore.h"
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrack.h"
@@ -22,7 +23,7 @@ nlohmann::json makeProjectSummary (AudiumEngine& engine)
     auto trackContainer = engine.getAudioTrackContainer();
 
     nlohmann::json summary;
-    summary["projectFile"] = engine.getCurrentProjectFile().getFullPathName().toStdString();
+    summary["projectFile"] = engine.getProjectFileStore()->getCurrentProjectFile().getFullPathName().toStdString();
     summary["tempoBpm"] = trackContainer->getTempoProvider()->getTempo();
     summary["masterGain"] = trackContainer->getMasterGain();
 

@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -38,10 +39,11 @@ SCENARIO("recording scenario", "[engine][clip][volume]")
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("generated audio file with loop")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
         engine->getAudioTrackContainer()->getAudioRegionAdapter().splitRegions(1.0, audium::seconds);
         
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
@@ -104,10 +106,11 @@ SCENARIO("clip gain is per playlist item, not per region", "[engine][clip][volum
 
     auto inputFile = generateDcOffsetAudioFile(2.0);
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("two playlist items sharing one region")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item0 = track->getPlayListContainer()->getPlayListItem(0);

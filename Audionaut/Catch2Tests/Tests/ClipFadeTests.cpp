@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudioSources/ClipTransportSource.h"
 #include "Engine/Export/AudioExporter.h"
@@ -184,10 +185,11 @@ SCENARIO("fade out on a playlist item survives a bounce", "[engine][dsp][fade]")
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 2 second DC clip with a fade out over its second half")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -264,10 +266,11 @@ SCENARIO("channel levels stay finite when a clip fades out", "[engine][dsp][fade
     bounceConfig->numChannels = 2; // stereo: exercises panners, master gain and master level
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 2 second DC clip with a fade out over its second half")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -390,10 +393,11 @@ SCENARIO("two overlapping clips, one fades out", "[engine][dsp][fade][level]")
     bounceConfig->numChannels = 2;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("clip A (2 s, fade out) and clip B (4 s) playing simultaneously on two tracks")
     {
-        engine->openFile(inputFileA, nullptr);
+        store->open(inputFileA, nullptr);
 
         auto ok = engine->getAudioTrackContainer()->addAudioFiles({ inputFileB.getFullPathName() },
                                                                   0.0, nullptr, false);
@@ -502,10 +506,11 @@ SCENARIO("the mix continues after a faded clip ends", "[engine][dsp][fade][level
     bounceConfig->numChannels = 2;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a faded clip followed by a second clip sharing the same region")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item0 = track->getPlayListContainer()->getPlayListItem(0);
@@ -595,10 +600,11 @@ SCENARIO("fades reset when restoring an item state without fades", "[engine][fad
 
     auto inputFile = generateDcOffsetAudioFile(2.0);
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a playlist item with fades")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -640,10 +646,11 @@ SCENARIO("fade ramp offsets push their partner values", "[engine][fade]")
 
     auto inputFile = generateDcOffsetAudioFile(2.0);
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a playlist item with a fade in and a fade out")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -814,10 +821,11 @@ SCENARIO("fade ramp offsets serialize with the item", "[engine][fade]")
 
     auto inputFile = generateDcOffsetAudioFile(2.0);
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a playlist item")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -962,10 +970,11 @@ SCENARIO("fade out applied while the clip is playing", "[engine][dsp][fade]")
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a playing 2 second DC clip without fades")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -1054,10 +1063,11 @@ SCENARIO("fade out on a clip that does not start at zero", "[engine][dsp][fade]"
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 2 second DC clip placed at second 1 with a fade out over its second half")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -1296,10 +1306,11 @@ SCENARIO("fade extensions extend the audible clip", "[engine][dsp][fade]")
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a clip trimmed to the middle second of a 2 second DC file, placed at second 1")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -1483,10 +1494,11 @@ SCENARIO("a tail extension past the end of the source file is silent", "[engine]
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a full-file clip whose fade-out end reaches past the file")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -1553,10 +1565,11 @@ SCENARIO("two clips crossfade over a cut at constant gain", "[engine][dsp][fade]
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 1 second 0 dB noise file split into two clips at 0.5 s")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto itemA = track->getPlayListContainer()->getPlayListItem(0);
@@ -1654,10 +1667,11 @@ SCENARIO("uncorrelated clips crossfade at constant power", "[engine][dsp][fade][
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("two clips whose 100 ms overlap plays different noise segments")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto itemA = track->getPlayListContainer()->getPlayListItem(0);
@@ -1736,10 +1750,11 @@ SCENARIO("splitting a clip preserves its edge fades", "[engine][fade]")
 
     auto inputFile = generateDcOffsetAudioFile(2.0);
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 2 second clip with full fade dynamics")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);

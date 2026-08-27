@@ -4,12 +4,14 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "ProjectMonitor.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Analysis/AnalysisCache.h"
 
 namespace audium {
 
 ProjectMonitor::ProjectMonitor(std::shared_ptr<AudiumEngine> engine_) :
-    engine(engine_)
+    engine(engine_),
+    store(engine_->getProjectFileStore())
 {
     engine->getUndoManager()->addChangeListener(this);
     startTimer(intervalMilliseconds);
@@ -34,7 +36,7 @@ void ProjectMonitor::timerCallback()
 
     // external-change detection only applies once a project file exists;
     // never-saved projects still get the autosave cadence below
-    const auto projectFile = engine->getCurrentProjectFile();
+    const auto projectFile = store->getCurrentProjectFile();
     if (projectFile != juce::File()) {
 
         if (!projectFile.existsAsFile()) {
@@ -48,9 +50,9 @@ void ProjectMonitor::timerCallback()
         else {
             missingReported = false;
 
-            if (engine->projectChangedOnDisk() || engine->analysisChangedOnDisk()) {
+            if (store->projectChangedOnDisk() || store->analysisChangedOnDisk()) {
                 const auto projectMtime = projectFile.getLastModificationTime();
-                const auto analysisMtime = AudiumEngine::projectDirectory
+                const auto analysisMtime = ProjectFileStore::projectDirectory
                                                .getChildFile(AnalysisCache::fileName)
                                                .getLastModificationTime();
 
@@ -86,7 +88,7 @@ void ProjectMonitor::timerCallback()
             // is stale. Only the undone-to-clean case (canRedo) may delete:
             // clearUndoHistory (open/save) also broadcasts, and deleting then
             // would destroy a freshly opened package's restorable snapshot.
-            engine->deleteAutosave();
+            store->deleteAutosave();
         }
     }
 }

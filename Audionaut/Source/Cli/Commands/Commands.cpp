@@ -72,11 +72,11 @@ juce::File resolveProjectFile (const juce::ArgumentList& args, int argumentIndex
     auto file = workingDirectory().getChildFile (plain[argumentIndex]);
 
     // the .audium document package: point at the Project.json inside it
-    if (AudiumEngine::isValidProjectStructure (file))
+    if (ProjectFileStore::isValidProjectStructure (file))
         return file.getChildFile (ProjectFileStore::projectFileName);
 
     // a project file given directly (Project.json, or a legacy single-file .audium)
-    if (AudiumEngine::isJsonProjectFile (file))
+    if (ProjectFileStore::isJsonProjectFile (file))
         return file;
 
     return {};

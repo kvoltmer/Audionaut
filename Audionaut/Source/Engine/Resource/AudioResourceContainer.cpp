@@ -38,15 +38,15 @@ const juce::File AudioResourceContainer::getAudioFileDirectory(const juce::File 
 
 const juce::File AudioResourceContainer::getAudioFileDirectory()
 {
-    return getAudioFileDirectory(AudiumEngine::projectDirectory);
+    return getAudioFileDirectory(ProjectFileStore::projectDirectory);
 }
 
 const juce::File AudioResourceContainer::getAudioRecordingFile(const int take,
                                                                const int channel)
 {
-    auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+    auto audioDir = getAudioFileDirectory(ProjectFileStore::projectDirectory);
     if (!audioDir.exists()) {
-        audioDir = getAudioFileDirectory(AudiumEngine::tempDirectory);
+        audioDir = getAudioFileDirectory(ProjectFileStore::tempDirectory);
     }
     jassert(audioDir.exists());
     
@@ -66,9 +66,9 @@ const juce::File AudioResourceContainer::getAudioRecordingFile(const int take,
 
 void AudioResourceContainer::deleteTemporaryProjectDirectory()
 {
-    if (AudiumEngine::tempDirectory.exists())
-        AudiumEngine::tempDirectory.deleteRecursively();
-    AudiumEngine::tempDirectory = File();
+    if (ProjectFileStore::tempDirectory.exists())
+        ProjectFileStore::tempDirectory.deleteRecursively();
+    ProjectFileStore::tempDirectory = File();
 }
 
 bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
@@ -76,18 +76,18 @@ bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
     if (reset)
         deleteTemporaryProjectDirectory();
     
-    if (!AudiumEngine::tempDirectory.exists()) {
+    if (!ProjectFileStore::tempDirectory.exists()) {
         // use a unique directory within the temp location
         // example: ~/Library/Containers/com.voltmer-systems.audionaut/Data/Library/Caches/Audionaut/temp-50a181e5/Media/Audio
         auto uniqueName = "temp-" + String::toHexString (Random::getSystemRandom().nextInt()) + ProjectFileStore::projectFileExtension;
-        AudiumEngine::tempDirectory = File(File::getSpecialLocation(File::tempDirectory).getFullPathName() +
+        ProjectFileStore::tempDirectory = File(File::getSpecialLocation(File::tempDirectory).getFullPathName() +
                                                     File::getSeparatorString() +
                                                     uniqueName);
         // make sure the directory is unique!
-        jassert(!AudiumEngine::tempDirectory.exists());
+        jassert(!ProjectFileStore::tempDirectory.exists());
     }
     
-    auto audioDirectory = getAudioFileDirectory(AudiumEngine::tempDirectory);
+    auto audioDirectory = getAudioFileDirectory(ProjectFileStore::tempDirectory);
     
     if (!audioDirectory.exists()) {
         auto success = audioDirectory.createDirectory();
@@ -171,13 +171,13 @@ void AudioResourceContainer::changeAudioFilePaths(const juce::File newPath)
 juce::File AudioResourceContainer::getCurrentAudioFileDirectory()
 {
     // try to use project directory
-    auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+    auto audioDir = getAudioFileDirectory(ProjectFileStore::projectDirectory);
     if ( !audioDir.exists()) {
         
         // use temp dir
         createTemporaryProjectDirectory(false);
         
-        audioDir = getAudioFileDirectory(AudiumEngine::tempDirectory);
+        audioDir = getAudioFileDirectory(ProjectFileStore::tempDirectory);
         jassert(audioDir.exists());
     }
     
@@ -389,10 +389,10 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
         
         
         std::vector<juce::File> redundantFiles;
-        auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+        auto audioDir = getAudioFileDirectory(ProjectFileStore::projectDirectory);
         for (auto& found : audioDir.findChildFiles (File::findFiles, false, "*")) {
             
-            auto relPath = found.getRelativePathFrom(AudiumEngine::projectDirectory);
+            auto relPath = found.getRelativePathFrom(ProjectFileStore::projectDirectory);
             if (std::find(jsonPaths.begin(), jsonPaths.end(), relPath) == jsonPaths.end()) {
                 redundantFiles.push_back(found);
             }

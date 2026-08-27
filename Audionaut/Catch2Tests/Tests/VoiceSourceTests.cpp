@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -27,9 +28,10 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
     GIVEN("Load session file (audio file starts: at second 1 with 1 second duration)")
     {
         auto engine     = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
         
         
-        auto ok = engine->openFile(fileUnderTest, nullptr);
+        auto ok = store->open(fileUnderTest, nullptr);
         REQUIRE(ok);
         
         WHEN("bouncing session")
@@ -173,7 +175,8 @@ SCENARIO("tranport source duration scenario", "[engine][dsp][transport][duration
     GIVEN("engine loading the audio file")
     {
         auto engine = AudiumFactory::createAudiumEngine();
-        auto ok = engine->openFile(testFile, nullptr);
+    auto store = engine->getProjectFileStore();
+        auto ok = store->open(testFile, nullptr);
         REQUIRE(ok);
         engine->getPlayListScheduler()->commitPlayListData();
         
