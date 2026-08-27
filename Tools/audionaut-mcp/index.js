@@ -97,6 +97,9 @@ async function runCli(args) {
 }
 
 // Shared parameter fragments
+// Note for agents: an Autosave.json inside a package is the GUI app's private
+// crash-recovery snapshot - never read or edit it; the project state lives in
+// Project.json.
 const projectParam = z
   .string()
   .describe("Path to the .audium project package (absolute paths recommended)");

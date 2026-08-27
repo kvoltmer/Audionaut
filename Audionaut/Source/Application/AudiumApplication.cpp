@@ -11,8 +11,10 @@
 #include "Engine/Core/HeadlessMode.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/ProjectFileStore.h"
 #include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
+#include "Application/ProjectMonitor.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
 #include "UsageAnalytics.h"
@@ -173,55 +175,174 @@ void AudiumApplication::initialise (const juce::String& commandLine)
 void AudiumApplication::handleAsyncUpdate()
 {
     menuModel = std::make_unique<AudiumMenuModel>();
-    
+
 #if JUCE_MAC
     rebuildAppleMenu();
     appleMenuRebuildListener = std::make_unique<AppleMenuRebuildListener>();
 #endif
     mainWindow.reset (new AudiumMainWindow (getApplicationName(), audiumEngine));
 
-    auto browserOpen = getPreferences().getValue(PreferenceKeys::browserWindowOpen);
-    if (browserOpen == "true")
+    if (getPreferences().getValue(PreferenceKeys::browserWindowOpen) == "true")
         showFileBrowserWindow();
-    
-    // try to load default project from prefs
-    if (!audiumEngine->getCurrentProjectFile().exists()) {
-        if (getPreferences().valueExists(PreferenceKeys::defaultFile)) {
-            const auto file = juce::File(getPreferences().getValue(PreferenceKeys::defaultFile));
-            openFile(juce::File(getPreferences().getValue(PreferenceKeys::defaultFile)));
-        }
-    }
 
-    // still nothing loaded? -> create new project
-    if (!audiumEngine->getCurrentProjectFile().exists()) {
-        audiumEngine->createNewProject();
-    }
-    
+    offerOrphanedTempProjectRestore();
+    loadStartupProject();
+
     updateUI();
+    refreshWindowTitle();
+    startProjectMonitor();
 
     if (splashScreen != nullptr) {
         splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
         splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
     }
 
-    if (! UsageAnalytics::isConsentDecided (getPreferences())) {
-        auto options = MessageBoxOptions::makeOptionsOkCancel (MessageBoxIconType::QuestionIcon,
-                                                               TRANS ("Share anonymous usage statistics?"),
-                                                               TRANS ("Audionaut can report app launches and feature usage "
-                                                                      "to help improve the app. No audio, project content "
-                                                                      "or personal data is collected.\n\n"
-                                                                      "You can change this anytime in Settings > Privacy."),
-                                                               TRANS ("Share"),
-                                                               TRANS ("No thanks"));
+    askForUsageStatisticsConsent();
+}
 
-        NativeMessageBox::showAsync (options, [this] (int result) {
-            const auto accepted = result == 0;
-            setUsageStatisticsEnabled (accepted);
+void AudiumApplication::loadStartupProject()
+{
+    // try to load default project from prefs
+    if (!audiumEngine->getCurrentProjectFile().exists() &&
+        getPreferences().valueExists(PreferenceKeys::defaultFile))
+        openFile(juce::File(getPreferences().getValue(PreferenceKeys::defaultFile)));
 
-            if (accepted)
-                logAppLaunch (*usageAnalytics);
+    // still nothing loaded? -> create new project
+    if (!audiumEngine->getCurrentProjectFile().exists())
+        audiumEngine->createNewProject();
+}
+
+void AudiumApplication::offerOrphanedTempProjectRestore()
+{
+    // crash recovery for never-saved projects: a leftover temp package with an
+    // autosave means a previous session died with unsaved work
+    const auto orphanedTempProject = AudiumEngine::findOrphanedTempAutosave();
+    if (orphanedTempProject == File())
+        return;
+
+    auto options = MessageBoxOptions::makeOptionsYesNo (MessageBoxIconType::QuestionIcon,
+                                                        TRANS ("Restore unsaved project?"),
+                                                        TRANS ("A previous session ended unexpectedly with an "
+                                                               "unsaved project.\n\nDo you want to restore it?"),
+                                                        TRANS ("Restore"),
+                                                        TRANS ("Discard"));
+
+    NativeMessageBox::showAsync(options, [this, orphanedTempProject] (int result) {
+        if (result != 0) {
+            orphanedTempProject.deleteRecursively();
+            return;
+        }
+
+        // the user may have recorded or edited while the dialog was up, and
+        // opening replaces the session (and deletes its temp directory) -
+        // go through the usual dirty check first
+        askToSaveIfDirtyAndInvoke([this, orphanedTempProject] {
+            restoreOrphanedTempProject(orphanedTempProject);
         });
+    });
+}
+
+void AudiumApplication::restoreOrphanedTempProject(juce::File packageDirectory)
+{
+    // promote the snapshot to a project file (atomically, and only continue
+    // on success) and open the temp package like any other project
+    const auto autosave = packageDirectory.getChildFile(ProjectFileStore::autosaveFileName);
+    juce::TemporaryFile promoted (packageDirectory.getChildFile(ProjectFileStore::projectFileName));
+
+    if (! (autosave.copyFileTo(promoted.getFile()) &&
+           promoted.overwriteTargetFileWithTemporary())) {
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                              "Error",
+                                              "Failed to restore the project from:\n"
+                                                  + autosave.getFullPathName());
+        return;
     }
+
+    packageDirectory.getChildFile(ProjectFileStore::autosavePidFileName).deleteFile();
+
+    openFile(packageDirectory);
+
+    // offer to save it to a real location - but let the user look at what
+    // was recovered first before committing
+    auto saveOptions = MessageBoxOptions::makeOptionsYesNo (MessageBoxIconType::InfoIcon,
+                                                            TRANS ("Project restored"),
+                                                            TRANS ("Check that everything was recovered, "
+                                                                   "then choose where to save the project.\n\n"
+                                                                   "Until it is saved it remains in a "
+                                                                   "temporary location."),
+                                                            TRANS ("Save As..."),
+                                                            TRANS ("Later"));
+
+    NativeMessageBox::showAsync(saveOptions, [this] (int saveResult) {
+        if (saveResult == 0)
+            saveProjectAs();
+    });
+}
+
+void AudiumApplication::startProjectMonitor()
+{
+    // watch the open package for external (agent) writes and drive the
+    // autosave cadence
+    projectMonitor = std::make_unique<ProjectMonitor>(audiumEngine);
+
+    projectMonitor->onExternalChange = [this] {
+        projectMonitor->setSuspended(true);
+
+        if (audiumEngine->projectChangedOnDisk()) {
+            const auto reloaded = audiumEngine->reloadFromDisk([](std::string error) {
+                std::cout << "external reload failed: " << error << std::endl;
+            });
+
+            if (reloaded)
+                updateUI(); // includes the window title (dirty + agent markers)
+        }
+        else {
+            // analysis-only write (e.g. `audionaut-cli analyze`): derived
+            // data - refresh the cache without dirtying the session or
+            // touching the undo history
+            audiumEngine->reloadAnalysisFromDisk();
+            updateUI();
+        }
+
+        projectMonitor->setSuspended(false);
+    };
+
+    projectMonitor->onProjectFileMissing = [this] {
+        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                              TRANS ("Project file missing"),
+                                              TRANS ("The project file was moved or deleted on disk:\n")
+                                                  + audiumEngine->getCurrentProjectFile().getFullPathName()
+                                                  + TRANS ("\n\nSave the project to recreate it."));
+    };
+
+    projectMonitor->onAutosaveDue = [this] {
+        // the engine serialises its UI state, so hand it the current view first
+        captureUiState();
+        audiumEngine->writeAutosave();
+    };
+}
+
+void AudiumApplication::askForUsageStatisticsConsent()
+{
+    if (UsageAnalytics::isConsentDecided (getPreferences()))
+        return;
+
+    auto options = MessageBoxOptions::makeOptionsOkCancel (MessageBoxIconType::QuestionIcon,
+                                                           TRANS ("Share anonymous usage statistics?"),
+                                                           TRANS ("Audionaut can report app launches and feature usage "
+                                                                  "to help improve the app. No audio, project content "
+                                                                  "or personal data is collected.\n\n"
+                                                                  "You can change this anytime in Settings > Privacy."),
+                                                           TRANS ("Share"),
+                                                           TRANS ("No thanks"));
+
+    NativeMessageBox::showAsync (options, [this] (int result) {
+        const auto accepted = result == 0;
+        setUsageStatisticsEnabled (accepted);
+
+        if (accepted)
+            logAppLaunch (*usageAnalytics);
+    });
 }
 
 void AudiumApplication::shutdown()
@@ -238,6 +359,7 @@ void AudiumApplication::shutdown()
     getPreferences().setValue(PreferenceKeys::browserWindowOpen, fileBrowserVisible() ? "true" : "false");
 
     // Add your application's shutdown code here..
+    projectMonitor.reset(); // stop polling before the engine goes away
     mainWindow.reset(); // (deletes our window)
 
     updateSettings();
@@ -296,6 +418,10 @@ void AudiumApplication::askToSaveIfDirtyAndInvoke(std::function<void ()> callbac
             }
             else if (result == 1) {
                 audiumEngine->deleteObsoleteAudioFiles();
+
+                // a deliberate discard must not look like a crash on next open
+                audiumEngine->deleteAutosave();
+
                 NullCheckedInvocation::invoke(callback);
             }
         });
@@ -690,6 +816,8 @@ void AudiumApplication::createNewProject()
 
         // cleanup() cleared the ui state, so this resets the view to its defaults
         restoreUiState();
+
+        refreshWindowTitle();
     });
 }
 
@@ -699,7 +827,7 @@ void AudiumApplication::askUserToOpenFile()
     
         // open chooser...
         
-        auto wildcard = "*" + String(audium::AudiumEngine::projectFileExtension) + ";";
+        auto wildcard = "*" + String(audium::ProjectFileStore::projectFileExtension) + ";";
         wildcard += "*.json;";
         wildcard += audiumEngine->getAudioResourceContainer()->getAudioFormatManager()->getWildcardForAllFormats();
         chooser = std::make_unique<FileChooser> ("Open File", initialOpenDirectory, wildcard);
@@ -714,6 +842,32 @@ void AudiumApplication::askUserToOpenFile()
 
 void AudiumApplication::openFile(juce::File file)
 {
+    // crash recovery: an Autosave.json newer than Project.json means the app
+    // previously quit without a clean save. The restore is OFFERED only after
+    // the project itself opened successfully (openFileInternal) - openFile
+    // stays synchronous for its callers, and a corrupt Project.json can never
+    // take the snapshot down with it.
+    juce::File packageDirectory;
+    if (audium::AudiumEngine::isValidProjectStructure(file))
+        packageDirectory = file;
+    else if (file.getFileName() == audium::ProjectFileStore::projectFileName)
+        packageDirectory = file.getParentDirectory();
+
+    juce::File autosaveToOffer;
+    if (packageDirectory != File()) {
+        const auto autosave = packageDirectory.getChildFile(audium::ProjectFileStore::autosaveFileName);
+        const auto projectJson = packageDirectory.getChildFile(audium::ProjectFileStore::projectFileName);
+
+        if (autosave.existsAsFile() &&
+            autosave.getLastModificationTime() > projectJson.getLastModificationTime())
+            autosaveToOffer = autosave;
+    }
+
+    openFileInternal(file, autosaveToOffer);
+}
+
+void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToOffer)
+{
     // audio files are added to the current project - only a project file brings its own view state
     const auto isProjectFile = audium::AudiumEngine::isValidProjectStructure(file) ||
                                audium::AudiumEngine::isJsonProjectFile(file);
@@ -722,9 +876,9 @@ void AudiumApplication::openFile(juce::File file)
         NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
                                               "Error",
                                               "Failed to open:\n" + file.getFullPathName() + "\n\n" + String(error));
-        
+
     });
-    
+
     if (success) {
 
         initialOpenDirectory = file.getParentDirectory();
@@ -743,6 +897,42 @@ void AudiumApplication::openFile(juce::File file)
     // which resets the view to its defaults - that is what we want in that case too.
     if (isProjectFile)
         restoreUiState();
+
+    refreshWindowTitle();
+
+    // offer the crash-recovery snapshot now that the project is open. Restore
+    // applies it as an undoable step: the session starts dirty and Undo
+    // returns to the saved state; the snapshot stays until the next clean
+    // save. Discard only ever runs after a successful open.
+    if (success && autosaveToOffer != File()) {
+        auto options = MessageBoxOptions::makeOptionsYesNo (MessageBoxIconType::QuestionIcon,
+                                                            TRANS ("Restore unsaved changes?"),
+                                                            "\"" + autosaveToOffer.getParentDirectory().getFileName() + "\" "
+                                                                + TRANS ("has unsaved changes from a previous session "
+                                                                         "(the app may have quit unexpectedly).\n\n"
+                                                                         "Do you want to restore them?"),
+                                                            TRANS ("Restore"),
+                                                            TRANS ("Discard"));
+
+        NativeMessageBox::showAsync(options, [this, autosaveToOffer] (int result) {
+            if (result == 0) {
+                const auto restored = audiumEngine->restoreAutosave([this](std::string error) {
+                    NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                          "Error",
+                                                          "Failed to restore unsaved changes.\n\n" + String(error));
+                });
+
+                if (restored) {
+                    updateUI();
+                    restoreUiState();
+                    refreshWindowTitle();
+                }
+            }
+            else {
+                autosaveToOffer.deleteFile();
+            }
+        });
+    }
 }
 
 const File createProjectDirectory(const File &inFile)
@@ -750,12 +940,12 @@ const File createProjectDirectory(const File &inFile)
     auto projectDir =   inFile.getParentDirectory().getFullPathName() +
                         File::getSeparatorString() +
                         inFile.getFileNameWithoutExtension() +
-                        audium::AudiumEngine::projectFileExtension;
+                        audium::ProjectFileStore::projectFileExtension;
     
     if (!File(projectDir).exists()) {
         File(projectDir).createDirectory();
     }
-    return File(projectDir + File::getSeparatorString() + audium::AudiumEngine::projectFileName);
+    return File(projectDir + File::getSeparatorString() + audium::ProjectFileStore::projectFileName);
 }
 
 juce::MessageBoxOptions getAskToOverwriteFileOptions (const File& newFile)
@@ -792,7 +982,7 @@ bool AudiumApplication::saveProjectAs()
         if (file != File()) {
             
             // warn overwrite: special case where user selects an existing project (without the .audium extension)
-            auto existingProject = File(file.getFullPathName() + audium::AudiumEngine::projectFileExtension);
+            auto existingProject = File(file.getFullPathName() + audium::ProjectFileStore::projectFileExtension);
             if (existingProject.exists()) {
                 if (!askToOverwriteFileSync(existingProject))
                     return false;
@@ -828,10 +1018,10 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
         audiumEngine->deleteObsoleteAudioFiles();
         std::cout << "initialSaveDirectory: " << initialSaveDirectory.getFullPathName() << std::endl;
         
-        if (file.getFileName() == audium::AudiumEngine::projectFileName)
+        if (file.getFileName() == audium::ProjectFileStore::projectFileName)
             file = file.getParentDirectory();
         
-        if (file.getFileName().contains(audium::AudiumEngine::projectFileExtension)) {
+        if (file.getFileName().contains(audium::ProjectFileStore::projectFileExtension)) {
             // only save .audium in recent list
             RecentlyOpenedFilesList::registerRecentFileNatively (file);
             recentFiles.addFile (file);
@@ -839,6 +1029,8 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
         updateSettings();
 
         logUsageEvent("project_save");
+
+        refreshWindowTitle();
     }
     return success;
 }
@@ -863,6 +1055,14 @@ void AudiumApplication::updateUI()
         comp->rebuildUI();
         comp->updateUI();
     }
+}
+
+void AudiumApplication::refreshWindowTitle()
+{
+    // MainComponent::updateWindowTitle owns the title format - it derives
+    // everything (project name, dirty marker, agent marker) from the engine
+    if (auto comp = getMainComponent())
+        comp->updateWindowTitle();
 }
 
 void AudiumApplication::captureUiState()

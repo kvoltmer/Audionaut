@@ -134,7 +134,6 @@ public:
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
-    int getSizeInUnits() override;
     bool writeChannelToJson (json& output, AudioChannel* audioChannel);
     void mergeChannelFromJson(json& input);
     

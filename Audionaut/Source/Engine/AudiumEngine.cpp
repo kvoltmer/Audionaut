@@ -5,22 +5,24 @@
 
 #include "AudiumEngine.h"
 #include "Util/Preferences.h"
+#include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Analysis/AnalysisCache.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/AudioSources/VoiceSource.h"
+#include "Engine/Undo/UndoableReloadAction.h"
 #include "Application/AudiumApplication.h"
 
+#include "Engine/ProjectFileStore.h"
 #include "Interface/ColourIds.h"
 
 namespace audium {
 
-const char* AudiumEngine::projectFileExtension = ".audium";
-const char* AudiumEngine::projectFileName = "Project.json";
 juce::File AudiumEngine::projectDirectory = File();
 juce::File AudiumEngine::tempDirectory = File();
 int AudiumEngine::recordingCounter = 0;
@@ -70,6 +72,10 @@ void AudiumEngine::uninitialise()
     
     undoManager->clearUndoHistory();
     audioDeviceManager->removeAudioCallback(linkAudioDevice.get());
+
+    // a clean shutdown passed the save/discard prompt - anything left in an
+    // autosave would wrongly look like a crash on the next launch
+    deleteAutosave();
 }
 
 void AudiumEngine::cleanup()
@@ -81,6 +87,7 @@ void AudiumEngine::cleanup()
     currentProjectFile = File();
     currentJson.clear();
     uiState.clear();
+    changedExternally = false;
 }
 
 void AudiumEngine::createNewProject(const int numChannels)
@@ -105,24 +112,12 @@ void AudiumEngine::createNewProject(const int numChannels)
 
 bool AudiumEngine::isJsonProjectFile(const juce::File &file)
 {
-    // returns true for an explicit project file:
-    // foo.json
-    // or legacy -> foo.audium
-    
-    return (file.existsAsFile() &&
-            (file.hasFileExtension(projectFileExtension) ||
-             file.hasFileExtension(".json")));
+    return ProjectFileStore::isJsonProjectFile(file);
 }
 
 bool AudiumEngine::isValidProjectStructure(const juce::File &file)
 {
-    // expected structure for foo is:
-    // foo.audium/
-    // foo.audium/Project.json
-    
-    return (file.isDirectory() &&
-            file.getFileName().endsWith(projectFileExtension) &&
-            File(file.getFullPathName() + File::getSeparatorString() + projectFileName).existsAsFile());
+    return ProjectFileStore::isValidProjectStructure(file);
 }
 
 bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)> callback)
@@ -144,7 +139,7 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
         else {
         
             if (isValidProjectStructure(inFile))
-                inFile = File(inFile.getFullPathName() + File::getSeparatorString() + projectFileName);
+                inFile = inFile.getChildFile(ProjectFileStore::projectFileName);
             
             juce::FileInputStream inputStream(inFile);
             if (inputStream.openedOk()) {
@@ -162,7 +157,9 @@ bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)
                     currentProjectFile = inFile;
                     undoManager->clearUndoHistory();
                     playListScheduler->commitPlayListData();
-                    
+                    refreshDiskStamps();
+                    changedExternally = false;
+
                     auto audioDir = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
                     audioResourceContainer->deleteObsoleteAudioFiles(audioDir);
                     return true;
@@ -213,6 +210,10 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         if (! file.exists())
             file.create();
         
+        // remember where this project was saved before - a Save As must also
+        // clear that package's crash-recovery snapshot
+        const auto previousProjectDirectory = projectDirectory;
+
         // need to copy or move audio files?
         auto sourceDirectory = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
         if (!sourceDirectory.exists()) {
@@ -236,29 +237,35 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
         // assign new project directory
         projectDirectory = file.getParentDirectory();
         
-        juce::TemporaryFile temp (file);
-        auto success = false;
-        if (auto out = std::unique_ptr<juce::FileOutputStream>(temp.getFile().createOutputStream())) {
-            if (out->failedToOpen()) {
-                NullCheckedInvocation::invoke(callback, out->getStatus().getErrorMessage().toStdString());
-                return false;
-            }
-
-            if (writeToStream (*out.get())) {
-                out->flush();
-                success = true;
-            }
-        }
-
-        if (success && temp.overwriteTargetFileWithTemporary()) {
+        std::string writeError;
+        json serialized;
+        if (writeJsonToFile(file, writeError, &serialized)) {
             currentProjectFile = file;
+            currentJson = std::move(serialized);
             undoManager->clearUndoHistory();
 
             // Persist analysis results alongside the project file.
             audioTrackContainer->getAnalysisProvider()->getCache()->saveToFolder(projectDirectory);
+
+            // A successful save supersedes any crash-recovery snapshot,
+            // including a temp-directory one from before the first save and
+            // the one in the package this project was saved-as from.
+            deleteAutosave();
+            if (previousProjectDirectory != projectDirectory)
+                projectFileStore->deleteAutosaveIn(previousProjectDirectory);
+
+            refreshDiskStamps();
+
+            // the on-disk file now reflects this session's state
+            changedExternally = false;
             return true;
         }
-        
+
+        if (!writeError.empty()) {
+            NullCheckedInvocation::invoke (callback, writeError);
+            return false;
+        }
+
         jassertfalse;
         NullCheckedInvocation::invoke (callback, "unknown error");
     }
@@ -300,7 +307,11 @@ bool AudiumEngine::writeToJson (json& output)
     jsonAudium["ui_state"] = uiState;
     jsonAudium["scheduler"] = getPlayListScheduler()->data;
     output["audium"] = jsonAudium;
-    currentJson = output;
+
+    // NOTE: deliberately no currentJson update here. currentJson tracks the
+    // state whose file references are authoritative for obsolete-file cleanup;
+    // snapshots (autosave, undo captures) must not clobber it - only
+    // open/save/apply do, explicitly.
     // std::cout << std::setw(2) << output << std::endl;
     return true;
 }
@@ -336,9 +347,210 @@ bool AudiumEngine::readFromJson (json& input, bool rebuild)
     return false;
 }
 
-int AudiumEngine::getSizeInUnits()
+bool AudiumEngine::applyProjectJson (json& input, bool preserveUiState)
 {
-    return audioTrackContainer->getSizeInUnits() + 1;
+    auto jsonAudium = input["audium"];
+
+    const auto tempo = jsonAudium["tempo"].template get<double>();
+    if (jsonAudium.contains("file_version")) {
+        const auto version = jsonAudium["file_version"].template get<int>();
+        jassert(version == audium::Streamable::fileVersion);
+    }
+
+    if (!preserveUiState && jsonAudium.contains("ui_state"))
+        uiState = jsonAudium["ui_state"];
+
+    if (jsonAudium.contains("scheduler"))
+        getPlayListScheduler()->data = jsonAudium["scheduler"];
+
+    if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
+        playListScheduler->getTempoProvider()->setTempo(tempo);
+
+    // Non-destructive read; AudioTrackContainer falls back to a full rebuild
+    // when the structure differs. Bypass the audio callback for the duration -
+    // and make sure a throwing read can't leave it bypassed forever.
+    setBypass(true);
+    auto readOk = false;
+    try {
+        readOk = audioTrackContainer->readFromJson(jsonAudium, false);
+    }
+    catch (...) {
+        setBypass(false);
+        throw;
+    }
+    setBypass(false);
+
+    if (!readOk)
+        return false;
+
+    currentJson = input;
+    playListScheduler->commitPlayListData();
+
+    // The UI/scheduler broadcasts normally happen in
+    // AudioTrackContainer::readFromStream; applying JSON directly must
+    // publish them here.
+    audioTrackContainer->sendActionMessage(rebuildAll);
+    audioTrackContainer->sendChangeMessage();
+
+    return true;
+}
+
+bool AudiumEngine::applyFileAsUndoableReload (const juce::File& sourceFile,
+                                              bool preserveUiState,
+                                              bool marksExternalChange,
+                                              const juce::String& transactionName,
+                                              std::function<void (std::string)> callback)
+{
+    try
+    {
+        if (!sourceFile.existsAsFile()) {
+            NullCheckedInvocation::invoke (callback, "file missing on disk");
+            return false;
+        }
+
+        auto afterState = ProjectFileStore::readProjectJson(sourceFile);
+
+        json beforeState;
+        writeToJson(beforeState);
+
+        // The user's current view wins over whatever the external writer
+        // stored - reloads must not move their scroll/zoom.
+        if (preserveUiState &&
+            beforeState.contains("audium") && beforeState["audium"].contains("ui_state"))
+            afterState["audium"]["ui_state"] = beforeState["audium"]["ui_state"];
+
+        const auto performed = undoManager->perform(new UndoableReloadAction(*this, beforeState, afterState,
+                                                                             preserveUiState, marksExternalChange),
+                                                    transactionName);
+        if (!performed) {
+            NullCheckedInvocation::invoke (callback, "failed to apply the project state");
+            return false;
+        }
+
+        undoManager->beginNewTransaction();
+        return true;
+    }
+    catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        NullCheckedInvocation::invoke (callback, e.what());
+    }
+    return false;
+}
+
+bool AudiumEngine::reloadFromDisk (std::function<void (std::string)> callback)
+{
+    if (currentProjectFile == File()) {
+        NullCheckedInvocation::invoke (callback, "no project file open");
+        return false;
+    }
+
+    // Capture the mtimes BEFORE reading: a write landing during the (possibly
+    // long) apply must be re-detected on the next poll, not stamped as seen.
+    const auto projectMtimeAtRead = currentProjectFile.getLastModificationTime();
+    const auto analysisMtimeAtRead = projectDirectory.getChildFile(AnalysisCache::fileName)
+                                                     .getLastModificationTime();
+
+    // The analysis cache is content-keyed derived data and stays outside the
+    // undo snapshot.
+    if (analysisChangedOnDisk())
+        audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+
+    const auto applied = applyFileAsUndoableReload(currentProjectFile, true, true,
+                                                   "Reload changes from disk", callback);
+
+    // Stamp even on failure so an unreadable external write doesn't retrigger
+    // the change detector every poll tick.
+    projectFileStore->setStamps(projectMtimeAtRead, analysisMtimeAtRead);
+    return applied;
+}
+
+void AudiumEngine::reloadAnalysisFromDisk()
+{
+    audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
+
+    // only the analysis stamp: a project write racing in stays detectable
+    projectFileStore->setAnalysisStamp(projectDirectory.getChildFile(AnalysisCache::fileName)
+                                                       .getLastModificationTime());
+}
+
+bool AudiumEngine::restoreAutosave (std::function<void (std::string)> callback)
+{
+    return applyFileAsUndoableReload(projectDirectory.getChildFile(ProjectFileStore::autosaveFileName), false, false,
+                                     "Restore autosave", callback);
+}
+
+juce::File AudiumEngine::getSerializationBaseDirectory()
+{
+    if (projectDirectory != File() && projectDirectory.isDirectory())
+        return projectDirectory;
+    return tempDirectory;
+}
+
+juce::File AudiumEngine::getAutosaveDirectory()
+{
+    return getSerializationBaseDirectory();
+}
+
+bool AudiumEngine::writeAutosave()
+{
+    const auto target = getAutosaveDirectory();
+    if (target == File() || !target.isDirectory())
+        return false;
+
+    std::string error;
+    if (!writeJsonToFile(target.getChildFile(ProjectFileStore::autosaveFileName), error))
+        return false;
+
+    projectFileStore->writePidGuardIfTemporary(target);
+    return true;
+}
+
+void AudiumEngine::deleteAutosave()
+{
+    projectFileStore->deleteAutosaveIn(projectDirectory);
+    projectFileStore->deleteAutosaveIn(tempDirectory);
+}
+
+juce::File AudiumEngine::findOrphanedTempAutosave()
+{
+    return ProjectFileStore::findOrphanedTempAutosave(tempDirectory);
+}
+
+bool AudiumEngine::writeJsonToFile (const juce::File& target, std::string& error, json* serializedOut)
+{
+    json serialized;
+    if (!writeToJson(serialized)) {
+        error = "failed to serialize the project";
+        return false;
+    }
+
+    if (!projectFileStore->writeJsonAtomically(target, serialized, error))
+        return false;
+
+    if (serializedOut != nullptr)
+        *serializedOut = std::move(serialized);
+    return true;
+}
+
+void AudiumEngine::refreshDiskStamps()
+{
+    projectFileStore->refreshStamps(currentProjectFile,
+                                    projectDirectory.getChildFile(AnalysisCache::fileName));
+}
+
+bool AudiumEngine::projectChangedOnDisk() const
+{
+    if (currentProjectFile == File())
+        return false;
+    return projectFileStore->projectChangedOnDisk(currentProjectFile);
+}
+
+bool AudiumEngine::analysisChangedOnDisk() const
+{
+    if (currentProjectFile == File())
+        return false;
+    return projectFileStore->analysisChangedOnDisk(projectDirectory.getChildFile(AnalysisCache::fileName));
 }
 
 std::shared_ptr<PlayListContainer> AudiumEngine::getPlayListContainer(std::shared_ptr<AudioTrack> track) const

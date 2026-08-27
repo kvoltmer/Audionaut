@@ -74,8 +74,6 @@ public:
     std::shared_ptr<PlayListItem> findExistingItem(std::shared_ptr<PlayListItem> item) const;
     std::shared_ptr<PlayListItem> createPlayListItemFromJson (json& jsonItem);
     
-    int getSizeInUnits() override;
-    
     
     
     std::shared_ptr<PlayListItem> getPlayListItem(int index) const;

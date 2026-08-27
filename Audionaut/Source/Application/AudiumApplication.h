@@ -17,7 +17,7 @@ class SettingsDialog;
 class AboutSplashScreen;
 class MainComponent;
 
-namespace audium { class UsageAnalytics; }
+namespace audium { class UsageAnalytics; class ProjectMonitor; }
 
 class AudiumApplication  : public juce::JUCEApplication,
                            private juce::AsyncUpdater,
@@ -69,6 +69,7 @@ public:
     
     void askUserToOpenFile();
     void openFile(juce::File file);
+    void openFileInternal(juce::File file, juce::File autosaveToOffer);
     
     bool saveProjectAs();
     bool saveProject();
@@ -76,6 +77,9 @@ public:
     void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
     
     void updateUI();
+
+    /// updates the window title with the project name and the agent-changed marker
+    void refreshWindowTitle();
 
     /// the window's content component, or nullptr while the window is not up yet
     MainComponent* getMainComponent() const;
@@ -107,6 +111,7 @@ private:
 
     std::unique_ptr<AudiumMainWindow> mainWindow;
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::unique_ptr<audium::ProjectMonitor> projectMonitor;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<audium::Preferences> preferences;
     std::unique_ptr<audium::UsageAnalytics> usageAnalytics;
@@ -121,6 +126,13 @@ private:
     
     void initCommandManager();
     void initPreferences();
+
+    // handleAsyncUpdate startup steps
+    void offerOrphanedTempProjectRestore();
+    void restoreOrphanedTempProject(juce::File packageDirectory);
+    void loadStartupProject();
+    void startProjectMonitor();
+    void askForUsageStatisticsConsent();
 
     // logs every invoked command (menus and shortcuts) as a usage event
     void applicationCommandInvoked(const juce::ApplicationCommandTarget::InvocationInfo&) override;

@@ -153,7 +153,6 @@ public:
     ///@{
     bool writeToJson(json& output) override;
     bool readFromJson(json& input, bool rebuild) override;
-    int getSizeInUnits() override;
     ///@}
 
     /** @brief File name of the analysis sidecar within a project folder. */

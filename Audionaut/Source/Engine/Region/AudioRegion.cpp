@@ -46,11 +46,6 @@ bool AudioRegion::writeToJson (json& output)
     return true;
 }
 
-int AudioRegion::getSizeInUnits()
-{
-    return 1;
-}
-
 const AudioRegionData::tRange AudioRegion::getRegionData(audium::TimeContextType context) const
 {
     if (context == audium::seconds) {

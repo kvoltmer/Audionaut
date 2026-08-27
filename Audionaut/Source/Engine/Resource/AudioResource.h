@@ -176,12 +176,6 @@ public:
     bool readFromJson (json& input, bool rebuild) override;
     
     /**
-     * @brief Retrieves the size of the resource in units.
-     * @return The size of the resource as an integer.
-     */
-    int getSizeInUnits() override { return 1; }
-    
-    /**
      * @brief Creates a URL from a JSON object.
      * @param input The JSON object containing the URL data.
      * @return The created `juce::URL`.

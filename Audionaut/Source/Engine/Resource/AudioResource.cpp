@@ -224,7 +224,7 @@ bool AudioResource::containsAbsolutePosition(double position, audium::TimeContex
 
 bool AudioResource::writeToJson (json& output)
 {
-    output["relative_file_path"]    = getRelativePath(AudiumEngine::projectDirectory).toStdString();
+    output["relative_file_path"]    = getRelativePath(AudiumEngine::getSerializationBaseDirectory()).toStdString();
     output["number_of_channels"]    = getNumAudioFileChannels();
     if (not isRecording())
         output["length_in_seconds"]     = getFileLength(audium::seconds);
@@ -253,7 +253,7 @@ const juce::URL AudioResource::urlFromJson (json& input)
     // relative path is always a local file
     if (input.contains("relative_file_path")) {
         juce::String relPath = input["relative_file_path"].template get<std::string>();
-        filePath = AudiumEngine::projectDirectory.getChildFile(relPath).getFullPathName();
+        filePath = AudiumEngine::getSerializationBaseDirectory().getChildFile(relPath).getFullPathName();
         if (File(filePath).existsAsFile())
             return URL(File(filePath));
     }

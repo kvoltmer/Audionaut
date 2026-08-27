@@ -232,11 +232,6 @@ bool AudioTrack::readFromStream (juce::InputStream& inputStream, bool rebuild)
     return false;
 }
 
-int AudioTrack::getSizeInUnits()
-{
-    return (int)resourceGroupContainer->getObjects().size() * 16;
-}
-
 int AudioTrack::getNumAudioTrackChannels() const
 {
     return static_cast<int>(audioChannelContainer->getObjects().size());

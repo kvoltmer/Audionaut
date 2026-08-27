@@ -86,6 +86,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudiumMainWindow_9b19a902.o \
   $(JUCE_OBJDIR)/Main_70df61c1.o \
   $(JUCE_OBJDIR)/UsageAnalytics_4d1fd2d.o \
+  $(JUCE_OBJDIR)/ProjectMonitor_dc1d1849.o \
   $(JUCE_OBJDIR)/EngineAccess_b7e0d334.o \
   $(JUCE_OBJDIR)/Preferences_96bfe954.o \
   $(JUCE_OBJDIR)/AnalysisProvider_7450833c.o \
@@ -132,6 +133,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioResource_bb5eaf91.o \
   $(JUCE_OBJDIR)/AudioResourceContainer_8bac313a.o \
   $(JUCE_OBJDIR)/ChannelMapping_6a0229a8.o \
+  $(JUCE_OBJDIR)/ProjectFileStore_d305cdda.o \
   $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o \
   $(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o \
   $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o \
@@ -273,6 +275,11 @@ $(JUCE_OBJDIR)/Main_70df61c1.o: ../../Source/Application/Main.cpp
 $(JUCE_OBJDIR)/UsageAnalytics_4d1fd2d.o: ../../Source/Application/UsageAnalytics.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling UsageAnalytics.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ProjectMonitor_dc1d1849.o: ../../Source/Application/ProjectMonitor.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ProjectMonitor.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/EngineAccess_b7e0d334.o: ../../Source/Util/EngineAccess.cpp
@@ -503,6 +510,11 @@ $(JUCE_OBJDIR)/AudioResourceContainer_8bac313a.o: ../../Source/Engine/Resource/A
 $(JUCE_OBJDIR)/ChannelMapping_6a0229a8.o: ../../Source/Engine/Resource/ChannelMapping.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling ChannelMapping.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ProjectFileStore_d305cdda.o: ../../Source/Engine/ProjectFileStore.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ProjectFileStore.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o: ../../Source/Engine/AudiumEngine.cpp

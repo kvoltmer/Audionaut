@@ -179,11 +179,6 @@ bool ResourceGroup::readFromStream (juce::InputStream& inputStream, bool rebuild
     return false;
 }
 
-int ResourceGroup::getSizeInUnits()
-{
-    return (int)getAudioResources().size() * 4;
-}
-
 std::vector<std::shared_ptr<AudioResource>> ResourceGroup::getAudioResources() const
 {
     return audioTrack.getAudioResourceContainer().getAudioResourcesForResourceGroup(this);

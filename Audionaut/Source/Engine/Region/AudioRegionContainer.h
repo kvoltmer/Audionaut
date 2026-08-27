@@ -218,12 +218,6 @@ public:
     bool readFromJson(json& input, bool rebuild) override;
 
     /**
-     * @brief Retrieves the size of the container in units.
-     * @return The size of the container in units.
-     */
-    int getSizeInUnits() override { return static_cast<int>(audioRegions.size() * 2); }
-
-    /**
      * @brief Merges data from a JSON object into the container.
      * @param input The JSON object to merge from.
      */
