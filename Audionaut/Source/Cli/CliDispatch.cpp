@@ -3,11 +3,112 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+// before any JUCE header: MacTypes' Point/Component names clash with juce's
+// once the JUCE declarations are visible (same pattern as Preferences.cpp)
+#if __APPLE__
+ #include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #include "Cli/CliDispatch.h"
 #include "Cli/Commands/Commands.h"
 
+#include "Application/UsageAnalytics.h"
+#include "Util/Preferences.h"
+
 namespace audium {
 namespace cli {
+
+namespace {
+
+#if JUCE_MAC
+/**
+ * The GUI app is sandboxed on macOS: its preferences - the analytics consent
+ * among them - live in its container, invisible to a plain console process
+ * through the normal CFPreferences domains. Mirror the consent (and the
+ * client id, so the install counts as one) from the container plist into the
+ * CLI's own domain; a consent change in the app then governs the CLI from
+ * its next invocation.
+ */
+void mirrorAnalyticsConsentFromAppContainer (Preferences& preferences)
+{
+    const auto containerDomain =
+        juce::File ("~/Library/Containers/com.voltmer-systems.audionaut"
+                    "/Data/Library/Preferences/com.voltmer-systems.audionaut").getFullPathName();
+
+    auto copyKey = [&containerDomain] (const char* key) {
+        std::string result;
+        CFStringRef keyRef = juce::String (key).toCFString();
+        CFStringRef appRef = containerDomain.toCFString();
+        if (auto value = ::CFPreferencesCopyValue (keyRef, appRef,
+                                                   CFSTR ("kCFPreferencesCurrentUser"),
+                                                   CFSTR ("kCFPreferencesAnyHost"))) {
+            if (::CFGetTypeID (value) == ::CFStringGetTypeID())
+                result = juce::String::fromCFString ((CFStringRef) value).toStdString();
+            ::CFRelease (value);
+        }
+        ::CFRelease (appRef);
+        ::CFRelease (keyRef);
+        return result;
+    };
+
+    if (auto consent = copyKey (PreferenceKeys::usageStatsEnabled); ! consent.empty())
+        preferences.setValue (PreferenceKeys::usageStatsEnabled, consent);
+
+    if (auto clientId = copyKey (PreferenceKeys::analyticsClientId);
+        ! clientId.empty() && ! preferences.valueExists (PreferenceKeys::analyticsClientId))
+        preferences.setValue (PreferenceKeys::analyticsClientId, clientId);
+}
+#endif
+
+/**
+ * One `cli_command` analytics event per performed verb - strictly under the
+ * same opt-in consent as the GUI (the usageStatsEnabled preference): without
+ * consent, or with AUDIONAUT_DISABLE_ANALYTICS set (the test suites set it),
+ * nothing is sent and no analytics state is created. The event carries only
+ * the verb and its exit code.
+ */
+void logCliInvocation (const juce::String& verb, int exitCode, CliContext& context)
+{
+    if (! UsageAnalytics::hasEndpointCredentials()) // no-op builds (tests) skip everything
+        return;
+
+    if (juce::SystemStats::getEnvironmentVariable ("AUDIONAUT_DISABLE_ANALYTICS", "").isNotEmpty())
+        return;
+
+    std::unique_ptr<Preferences> owned;
+    auto* preferences = context.preferences;
+    if (preferences == nullptr) {
+        owned = std::make_unique<Preferences>();
+        owned->init ("Audionaut", "voltmer-systems"); // the app's storage domain
+        preferences = owned.get();
+#if JUCE_MAC
+        mirrorAnalyticsConsentFromAppContainer (*preferences);
+#endif
+    }
+
+    if (! UsageAnalytics::isEnabled (*preferences))
+        return;
+
+    {
+        // A tight batch period plus a short flush window: the delivery
+        // thread gets one real chance to post (restored events included)
+        // before this short-lived process ends. Whatever is still queued is
+        // saved and retried on the next consented invocation.
+        UsageAnalytics analytics (*preferences, 50);
+        juce::StringPairArray parameters;
+        parameters.set ("verb", verb);
+        parameters.set ("exit_code", juce::String (exitCode));
+        analytics.logEvent ("cli_command", parameters);
+        juce::Thread::sleep (600);
+    }
+
+    // The standalone binary owns no JUCE shutdown that would collect the
+    // Analytics singleton; in-app the application's own teardown does.
+    if (context.preferences == nullptr)
+        juce::Analytics::deleteInstance();
+}
+
+} // namespace
 
 const std::vector<CliCommandSpec>& getCliCommands()
 {
@@ -146,15 +247,18 @@ int performCliCommand (const juce::ArgumentList& args, CliContext& context)
 
     for (auto& spec : getCliCommands()) {
         if (first.text == spec.verb) {
+            auto exitCode = exitFailure;
             try {
-                return spec.run (args, context);
+                exitCode = spec.run (args, context);
             }
             catch (const std::exception& e) {
-                return context.fail (exitFailure, "exception", e.what());
+                exitCode = context.fail (exitFailure, "exception", e.what());
             }
             catch (...) {
-                return context.fail (exitFailure, "exception", "unknown error");
+                exitCode = context.fail (exitFailure, "exception", "unknown error");
             }
+            logCliInvocation (spec.verb, exitCode, context);
+            return exitCode;
         }
     }
 

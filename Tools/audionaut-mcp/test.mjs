@@ -25,7 +25,13 @@ function check(name, condition, detail = "") {
   if (!condition) failures++;
 }
 
-const transport = new StdioClientTransport({ command: "node", args: [join(here, "index.js")] });
+const transport = new StdioClientTransport({
+  command: "node",
+  args: [join(here, "index.js")],
+  // the smoke suite must never send usage analytics, whatever the local
+  // consent preference says
+  env: { ...process.env, AUDIONAUT_DISABLE_ANALYTICS: "1" },
+});
 const client = new Client({ name: "audionaut-mcp-test", version: "0.0.1" });
 await client.connect(transport);
 

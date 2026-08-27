@@ -36,10 +36,12 @@ static constexpr int maxSavedEvents = 64;
 class GA4Destination : public ThreadedAnalyticsDestination
 {
 public:
-    GA4Destination(Preferences& preferences_, const String& clientId_) :
+    GA4Destination(Preferences& preferences_, const String& clientId_, int initialPeriodMs_) :
         ThreadedAnalyticsDestination("GA4 analytics"),
         preferences(preferences_),
-        clientId(clientId_)
+        clientId(clientId_),
+        initialPeriodMs(initialPeriodMs_),
+        periodMs(initialPeriodMs_)
     {
         startAnalyticsThread(initialPeriodMs);
     }
@@ -152,18 +154,17 @@ private:
         }
     }
 
-    static constexpr int initialPeriodMs = 1000;
-
     Preferences& preferences;
     const String clientId;
-    int periodMs = initialPeriodMs;
+    const int initialPeriodMs;
+    int periodMs;
     std::atomic<bool> shouldExit { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GA4Destination)
 };
 
 
-UsageAnalytics::UsageAnalytics(Preferences& preferences_) :
+UsageAnalytics::UsageAnalytics(Preferences& preferences_, int batchPeriodMs) :
     preferences(preferences_)
 {
     if (! preferences.valueExists(PreferenceKeys::analyticsClientId))
@@ -179,7 +180,8 @@ UsageAnalytics::UsageAnalytics(Preferences& preferences_) :
     if (String(ga4MeasurementId).isNotEmpty() && String(ga4ApiSecret).isNotEmpty())
         Analytics::getInstance()->addDestination(
             new GA4Destination(preferences,
-                               preferences.getValue(PreferenceKeys::analyticsClientId)));
+                               preferences.getValue(PreferenceKeys::analyticsClientId),
+                               batchPeriodMs));
 }
 
 UsageAnalytics::~UsageAnalytics()
@@ -187,6 +189,11 @@ UsageAnalytics::~UsageAnalytics()
     // deletes the destinations, which flushes or saves the event queue while
     // the preferences are still alive
     Analytics::getInstance()->getDestinations().clear();
+}
+
+bool UsageAnalytics::hasEndpointCredentials()
+{
+    return String(ga4MeasurementId).isNotEmpty() && String(ga4ApiSecret).isNotEmpty();
 }
 
 bool UsageAnalytics::isConsentDecided(Preferences& preferences)

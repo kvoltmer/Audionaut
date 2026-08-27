@@ -112,6 +112,12 @@ A typical agent flow: `create` → `import` → `analyze` → `auto-edit`/`assem
 → `export`, checking `ok` in each `--json` envelope. Projects written by the
 CLI open in the GUI app and vice versa.
 
+CLI invocations report anonymous usage statistics under the same strictly
+opt-in consent as the app (one `cli_command` event: verb and exit code) —
+nothing is sent unless consent was granted in the app's settings. Set
+`AUDIONAUT_DISABLE_ANALYTICS=1` to switch the CLI's reporting off regardless
+(CI environments, scripts).
+
 The **main Audionaut app** also accepts the same verbs (Projucer-style): run
 the app binary with a verb and it executes headlessly and quits with the
 command's exit code, even while a GUI instance is open — a file argument or
