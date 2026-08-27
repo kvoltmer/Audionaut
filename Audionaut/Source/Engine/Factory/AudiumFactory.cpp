@@ -21,6 +21,7 @@
 #include "Engine/Recording/RecordingActionHandler.h"
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Analysis/AnalysisWorker.h"
+#include "Engine/ProjectFileStore.h"
 
 namespace audium {
 
@@ -107,7 +108,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     
     auto linkAudioDevice            = std::make_shared<LinkAudioDevice>(linkEngine,
                                                                         playListScheduler);
-    
+
+    auto projectFileStore           = std::make_shared<ProjectFileStore>();
+
     auto audiumEngine               = std::make_shared<AudiumEngine>(audioDeviceManager,
                                                                      audioTrackContainer,
                                                                      audioResourceContainer,
@@ -115,7 +118,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                      linkAudioDevice,
                                                                      undoManager,
                                                                      audioBusInterface,
-                                                                     recordingActionHandler);
+                                                                     recordingActionHandler,
+                                                                     projectFileStore);
     
     return audiumEngine;
 }

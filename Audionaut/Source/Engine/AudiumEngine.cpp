@@ -18,46 +18,17 @@
 #include "Engine/Undo/UndoableReloadAction.h"
 #include "Application/AudiumApplication.h"
 
+#include "Engine/ProjectFileStore.h"
 #include "Interface/ColourIds.h"
-
-#if !JUCE_WINDOWS
- #include <unistd.h>
- #include <signal.h>
- #include <cerrno>
-#endif
 
 namespace audium {
 
-const char* AudiumEngine::projectFileExtension = ".audium";
-const char* AudiumEngine::projectFileName = "Project.json";
-const char* AudiumEngine::autosaveFileName = "Autosave.json";
-const char* AudiumEngine::autosavePidFileName = "Autosave.pid";
-
-static int getCurrentProcessId()
-{
-#if JUCE_WINDOWS
-    return (int) GetCurrentProcessId();
-#else
-    return (int) getpid();
-#endif
-}
-
-static bool isProcessAlive (int pid)
-{
-    if (pid <= 0)
-        return false;
-#if JUCE_WINDOWS
-    if (auto* handle = OpenProcess (PROCESS_QUERY_LIMITED_INFORMATION, FALSE, (DWORD) pid)) {
-        DWORD exitCode = 0;
-        const auto running = GetExitCodeProcess (handle, &exitCode) && exitCode == STILL_ACTIVE;
-        CloseHandle (handle);
-        return running;
-    }
-    return false;
-#else
-    return ::kill ((pid_t) pid, 0) == 0 || errno == EPERM;
-#endif
-}
+// single source of truth is ProjectFileStore; these aliases keep the many
+// existing AudiumEngine::… references (app, CLI, tests) working unchanged
+const char* AudiumEngine::projectFileExtension = ProjectFileStore::projectFileExtension;
+const char* AudiumEngine::projectFileName = ProjectFileStore::projectFileName;
+const char* AudiumEngine::autosaveFileName = ProjectFileStore::autosaveFileName;
+const char* AudiumEngine::autosavePidFileName = ProjectFileStore::autosavePidFileName;
 juce::File AudiumEngine::projectDirectory = File();
 juce::File AudiumEngine::tempDirectory = File();
 int AudiumEngine::recordingCounter = 0;
@@ -147,24 +118,12 @@ void AudiumEngine::createNewProject(const int numChannels)
 
 bool AudiumEngine::isJsonProjectFile(const juce::File &file)
 {
-    // returns true for an explicit project file:
-    // foo.json
-    // or legacy -> foo.audium
-    
-    return (file.existsAsFile() &&
-            (file.hasFileExtension(projectFileExtension) ||
-             file.hasFileExtension(".json")));
+    return ProjectFileStore::isJsonProjectFile(file);
 }
 
 bool AudiumEngine::isValidProjectStructure(const juce::File &file)
 {
-    // expected structure for foo is:
-    // foo.audium/
-    // foo.audium/Project.json
-    
-    return (file.isDirectory() &&
-            file.getFileName().endsWith(projectFileExtension) &&
-            File(file.getFullPathName() + File::getSeparatorString() + projectFileName).existsAsFile());
+    return ProjectFileStore::isValidProjectStructure(file);
 }
 
 bool AudiumEngine::openFile (juce::File inFile, std::function<void (std::string)> callback)
@@ -298,10 +257,8 @@ bool AudiumEngine::saveFile (const juce::File& file_, std::function<void (std::s
             // including a temp-directory one from before the first save and
             // the one in the package this project was saved-as from.
             deleteAutosave();
-            if (previousProjectDirectory != File() && previousProjectDirectory != projectDirectory) {
-                previousProjectDirectory.getChildFile(autosaveFileName).deleteFile();
-                previousProjectDirectory.getChildFile(autosavePidFileName).deleteFile();
-            }
+            if (previousProjectDirectory != projectDirectory)
+                projectFileStore->deleteAutosaveIn(previousProjectDirectory);
 
             refreshDiskStamps();
 
@@ -457,18 +414,7 @@ bool AudiumEngine::applyFileAsUndoableReload (const juce::File& sourceFile,
             return false;
         }
 
-        juce::FileInputStream inputStream (sourceFile);
-        if (!inputStream.openedOk()) {
-            NullCheckedInvocation::invoke (callback, inputStream.getStatus().getErrorMessage().toStdString());
-            return false;
-        }
-
-        // The file is framed by juce::OutputStream::writeString (see
-        // Streamable) - read it back the same way before parsing.
-        auto inputString = inputStream.readString().toStdString();
-        if (inputString.empty())
-            throw std::runtime_error("empty project file");
-        auto afterState = json::parse(inputString);
+        auto afterState = ProjectFileStore::readProjectJson(sourceFile);
 
         json beforeState;
         writeToJson(beforeState);
@@ -521,8 +467,7 @@ bool AudiumEngine::reloadFromDisk (std::function<void (std::string)> callback)
 
     // Stamp even on failure so an unreadable external write doesn't retrigger
     // the change detector every poll tick.
-    projectFileStamp = projectMtimeAtRead;
-    analysisFileStamp = analysisMtimeAtRead;
+    projectFileStore->setStamps(projectMtimeAtRead, analysisMtimeAtRead);
     return applied;
 }
 
@@ -531,8 +476,8 @@ void AudiumEngine::reloadAnalysisFromDisk()
     audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
 
     // only the analysis stamp: a project write racing in stays detectable
-    analysisFileStamp = projectDirectory.getChildFile(AnalysisCache::fileName)
-                                        .getLastModificationTime();
+    projectFileStore->setAnalysisStamp(projectDirectory.getChildFile(AnalysisCache::fileName)
+                                                       .getLastModificationTime());
 }
 
 bool AudiumEngine::restoreAutosave (std::function<void (std::string)> callback)
@@ -563,62 +508,19 @@ bool AudiumEngine::writeAutosave()
     if (!writeJsonToFile(target.getChildFile(autosaveFileName), error))
         return false;
 
-    // temp-located snapshots are found by findOrphanedTempAutosave - the pid
-    // file keeps the scan from claiming a running instance's session. This
-    // must cover any package under the temp root, including a project that
-    // was restored from (and still lives in) an orphaned temp package.
-    const auto tempRoot = File::getSpecialLocation(File::tempDirectory);
-    if (target == tempRoot || target.isAChildOf(tempRoot))
-        target.getChildFile(autosavePidFileName).replaceWithText(String(getCurrentProcessId()));
-
+    projectFileStore->writePidGuardIfTemporary(target);
     return true;
 }
 
 void AudiumEngine::deleteAutosave()
 {
-    for (auto& dir : { projectDirectory, tempDirectory }) {
-        if (dir != File()) {
-            dir.getChildFile(autosaveFileName).deleteFile();
-            dir.getChildFile(autosavePidFileName).deleteFile();
-        }
-    }
+    projectFileStore->deleteAutosaveIn(projectDirectory);
+    projectFileStore->deleteAutosaveIn(tempDirectory);
 }
 
 juce::File AudiumEngine::findOrphanedTempAutosave()
 {
-    juce::File newest;
-    juce::Time newestTime;
-
-    const auto tempRoot = File::getSpecialLocation(File::tempDirectory);
-    const auto pattern = "temp-*" + String(projectFileExtension);
-
-    for (const auto& dir : tempRoot.findChildFiles(File::findDirectories, false, pattern)) {
-
-        if (dir == tempDirectory)
-            continue; // this session's own temp directory
-
-        const auto autosave = dir.getChildFile(autosaveFileName);
-        if (!autosave.existsAsFile())
-            continue;
-
-        // a directory whose Project.json is current was already restored
-        const auto projectJson = dir.getChildFile(projectFileName);
-        if (projectJson.existsAsFile() &&
-            projectJson.getLastModificationTime() >= autosave.getLastModificationTime())
-            continue;
-
-        // skip snapshots owned by another live instance
-        const auto pidFile = dir.getChildFile(autosavePidFileName);
-        if (pidFile.existsAsFile() && isProcessAlive(pidFile.loadFileAsString().getIntValue()))
-            continue;
-
-        if (newest == File() || autosave.getLastModificationTime() > newestTime) {
-            newestTime = autosave.getLastModificationTime();
-            newest = dir;
-        }
-    }
-
-    return newest;
+    return ProjectFileStore::findOrphanedTempAutosave(tempDirectory);
 }
 
 bool AudiumEngine::writeJsonToFile (const juce::File& target, std::string& error, json* serializedOut)
@@ -629,46 +531,32 @@ bool AudiumEngine::writeJsonToFile (const juce::File& target, std::string& error
         return false;
     }
 
-    juce::TemporaryFile temp (target);
-    auto success = false;
-    if (auto out = std::unique_ptr<juce::FileOutputStream>(temp.getFile().createOutputStream())) {
-        if (out->failedToOpen()) {
-            error = out->getStatus().getErrorMessage().toStdString();
-            return false;
-        }
+    if (!projectFileStore->writeJsonAtomically(target, serialized, error))
+        return false;
 
-        // same framing as Streamable::writeToStream
-        out->writeString(serialized.dump(2));
-        out->flush();
-        success = true;
-    }
-
-    if (success && temp.overwriteTargetFileWithTemporary()) {
-        if (serializedOut != nullptr)
-            *serializedOut = std::move(serialized);
-        return true;
-    }
-    return false;
+    if (serializedOut != nullptr)
+        *serializedOut = std::move(serialized);
+    return true;
 }
 
 void AudiumEngine::refreshDiskStamps()
 {
-    projectFileStamp = currentProjectFile.getLastModificationTime();
-    analysisFileStamp = projectDirectory.getChildFile(AnalysisCache::fileName).getLastModificationTime();
+    projectFileStore->refreshStamps(currentProjectFile,
+                                    projectDirectory.getChildFile(AnalysisCache::fileName));
 }
 
 bool AudiumEngine::projectChangedOnDisk() const
 {
     if (currentProjectFile == File())
         return false;
-    return currentProjectFile.getLastModificationTime() != projectFileStamp;
+    return projectFileStore->projectChangedOnDisk(currentProjectFile);
 }
 
 bool AudiumEngine::analysisChangedOnDisk() const
 {
     if (currentProjectFile == File())
         return false;
-    return projectDirectory.getChildFile(AnalysisCache::fileName).getLastModificationTime() != analysisFileStamp;
+    return projectFileStore->analysisChangedOnDisk(projectDirectory.getChildFile(AnalysisCache::fileName));
 }
 
 int AudiumEngine::getSizeInUnits()

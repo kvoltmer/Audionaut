@@ -24,6 +24,7 @@ class PlayListScheduler;
 class LinkAudioDevice;
 class AudioBusInterface;
 class RecordingActionHandler;
+class ProjectFileStore;
 
 /**
  * @class AudiumEngine
@@ -45,6 +46,7 @@ public:
      * @param linkAudioDevice_ A shared pointer to the `LinkAudioDevice` for audio device linking.
      * @param undoManager_ A shared pointer to the `juce::UndoManager` for undo/redo functionality.
      * @param audioBusInterface_ A shared pointer to the `AudioBusInterface` for audio bus management.
+     * @param projectFileStore_ A shared pointer to the `ProjectFileStore` for file-level persistence.
      */
     AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager_,
                  std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
@@ -53,7 +55,8 @@ public:
                  std::shared_ptr<LinkAudioDevice> linkAudioDevice_,
                  std::shared_ptr<juce::UndoManager> undoManager_,
                  std::shared_ptr<AudioBusInterface> audioBusInterface_,
-                 std::shared_ptr<RecordingActionHandler> recordingActionHandler_) :
+                 std::shared_ptr<RecordingActionHandler> recordingActionHandler_,
+                 std::shared_ptr<ProjectFileStore> projectFileStore_) :
         audioDeviceManager(audioDeviceManager_),
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
@@ -61,7 +64,8 @@ public:
         linkAudioDevice(linkAudioDevice_),
         undoManager(undoManager_),
         audioBusInterface(audioBusInterface_),
-        recordingActionHandler(recordingActionHandler_)
+        recordingActionHandler(recordingActionHandler_),
+        projectFileStore(projectFileStore_)
     {
     }
 
@@ -445,6 +449,12 @@ private:
     std::shared_ptr<RecordingActionHandler> recordingActionHandler;
 
     /**
+     * @brief A shared pointer to the `ProjectFileStore` for file-level
+     *        persistence (atomic writes, disk stamps, autosave files).
+     */
+    std::shared_ptr<ProjectFileStore> projectFileStore;
+
+    /**
      * @brief The current project file.
      */
     juce::File currentProjectFile;
@@ -458,13 +468,6 @@ private:
      * @brief The UI state as a JSON object.
      */
     json uiState;
-
-    /**
-     * @brief On-disk modification times recorded after the app's own
-     *        open/save/reload, used to detect external (agent) writes.
-     */
-    juce::Time projectFileStamp;
-    juce::Time analysisFileStamp;
 
     /**
      * @brief See `wasChangedExternally()`.

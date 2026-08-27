@@ -302,6 +302,10 @@
                 file="Source/Engine/Undo/UndoableContainerAction.h"/>
           <FILE id="UdRlA1" name="UndoableReloadAction.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableReloadAction.h"/>
+          <FILE id="PrjFS1" name="ProjectFileStore.cpp" compile="1" resource="0"
+                file="Source/Engine/ProjectFileStore.cpp"/>
+          <FILE id="PrjFS2" name="ProjectFileStore.h" compile="0" resource="0"
+                file="Source/Engine/ProjectFileStore.h"/>
         </GROUP>
         <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumEngine.cpp"/>

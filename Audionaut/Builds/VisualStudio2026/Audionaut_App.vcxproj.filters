@@ -1021,6 +1021,9 @@
     <ClCompile Include="..\..\Source\Engine\Resource\ChannelMapping.cpp">
       <Filter>Audionaut\Source\Engine\Resource</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\ProjectFileStore.cpp">
+      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp">
       <Filter>Audionaut\Source\Engine</Filter>
     </ClCompile>
@@ -4435,6 +4438,9 @@
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableReloadAction.h">
+      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\ProjectFileStore.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudiumEngine.h">
