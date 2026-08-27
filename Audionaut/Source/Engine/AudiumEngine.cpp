@@ -63,9 +63,4 @@ void AudiumEngine::uninitialise()
     projectFileStore->deleteAutosave();
 }
 
-void AudiumEngine::setBypass(bool bypass)
-{
-    linkAudioDevice->setBypass(bypass);
-}
-
 } // namespace audium

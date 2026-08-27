@@ -161,10 +161,13 @@ public:
     }
 
     /**
-     * @brief Sets the bypass state of the audio callback.
-     * @param bypass True to enable bypass, false to disable it.
+     * @brief Retrieves the Link audio device (the audio callback).
+     * @return A shared pointer to the `LinkAudioDevice`.
      */
-    void setBypass(bool bypass);
+    std::shared_ptr<LinkAudioDevice> getLinkAudioDevice() const
+    {
+        return linkAudioDevice;
+    }
 
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
