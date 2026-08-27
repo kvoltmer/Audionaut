@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -137,7 +138,8 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
     GIVEN("generated audio file with loop")
     {
         auto engine = AudiumFactory::createAudiumEngine();
-        auto ok = engine->openFile(testFile, nullptr);
+    auto store = engine->getProjectFileStore();
+        auto ok = store->open(testFile, nullptr);
         REQUIRE(ok);
         engine->getPlayListScheduler()->commitPlayListData();
         auto loop = engine->getPlayListScheduler()->getTransportLoop();

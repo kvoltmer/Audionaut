@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Cli/HeadlessEngineSession.h"
 
 #include "Engine/Analysis/AnalysisWorker.h"
@@ -44,7 +45,7 @@ int runImport (const juce::ArgumentList& args, CliContext& context)
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
 
-    if (! session->openFile (projectFile, captureError))
+    if (! session->getProjectFileStore()->open (projectFile, captureError))
         return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto tempoProvider = session->getAudioTrackContainer()->getTempoProvider();
@@ -53,7 +54,7 @@ int runImport (const juce::ArgumentList& args, CliContext& context)
     if (! session->getAudioTrackContainer()->addAudioFiles (audioFiles, positionClocks, captureError, false))
         return context.fail (exitFailure, "import_failed", error.empty() ? "failed to import audio files" : error);
 
-    if (! session->saveFile (projectFile, captureError))
+    if (! session->getProjectFileStore()->save (projectFile, captureError))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("imported " + juce::String (audioFiles.size()) + " file(s)");

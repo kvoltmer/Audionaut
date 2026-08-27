@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Cli/HeadlessEngineSession.h"
 
 #include "Engine/Export/AudioExporter.h"
@@ -40,7 +41,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     HeadlessEngineSession session;
 
     std::string error;
-    if (! session->openFile (projectFile, [&error] (std::string message) { error = message; }))
+    if (! session->getProjectFileStore()->open (projectFile, [&error] (std::string message) { error = message; }))
         return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto config = std::make_shared<ExportAudioConfig>();

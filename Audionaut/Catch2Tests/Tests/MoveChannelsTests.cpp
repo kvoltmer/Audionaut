@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Channel/AudioChannel.h"
@@ -16,11 +17,12 @@ SCENARIO("move channels scenario", "[engine][channels]")
     GIVEN("Load session file")
     {
         auto engine     = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
         auto sourceSession = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/move-channels.audium"));
         REQUIRE(sourceSession.exists());
 
         // Open a disposable copy, never the checked-in session: openFile()
-        // points the engine's process-wide AudiumEngine::projectDirectory at
+        // points the engine's process-wide ProjectFileStore::projectDirectory at
         // the opened package, and every audio file any later test adds would
         // be copied into the repository's session otherwise.
         auto fileUnderTest = File::getSpecialLocation(File::tempDirectory)
@@ -28,7 +30,7 @@ SCENARIO("move channels scenario", "[engine][channels]")
                                  .getNonexistentSibling();
         REQUIRE(sourceSession.copyDirectoryTo(fileUnderTest));
 
-        auto ok = engine->openFile(fileUnderTest, nullptr);
+        auto ok = store->open(fileUnderTest, nullptr);
         REQUIRE(ok);
         
         const int numChannels = 2;

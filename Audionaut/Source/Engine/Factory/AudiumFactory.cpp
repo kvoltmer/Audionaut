@@ -21,7 +21,8 @@
 #include "Engine/Recording/RecordingActionHandler.h"
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Analysis/AnalysisWorker.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
+#include "Engine/Project/ProjectSerializer.h"
 
 namespace audium {
 
@@ -109,7 +110,22 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
     auto linkAudioDevice            = std::make_shared<LinkAudioDevice>(linkEngine,
                                                                         playListScheduler);
 
-    auto projectFileStore           = std::make_shared<ProjectFileStore>();
+    auto projectFileStore           = std::make_shared<ProjectFileStore>(audioTrackContainer,
+                                                                         audioResourceContainer,
+                                                                         playListScheduler,
+                                                                         undoManager);
+
+    auto projectSerializer          = std::make_shared<ProjectSerializer>(audioTrackContainer,
+                                                                          audioResourceContainer,
+                                                                          playListScheduler,
+                                                                          linkAudioDevice,
+                                                                          audioBusInterface,
+                                                                          undoManager,
+                                                                          projectFileStore);
+
+    // the store serializes through the serializer; the serializer holds the
+    // store weakly, so this forward setter is the only late wiring
+    projectFileStore->setSerializer(projectSerializer);
 
     auto audiumEngine               = std::make_shared<AudiumEngine>(audioDeviceManager,
                                                                      audioTrackContainer,
@@ -119,8 +135,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                      undoManager,
                                                                      audioBusInterface,
                                                                      recordingActionHandler,
-                                                                     projectFileStore);
-    
+                                                                     projectFileStore,
+                                                                     projectSerializer);
+
     return audiumEngine;
 }
 

@@ -302,10 +302,16 @@
                 file="Source/Engine/Undo/UndoableContainerAction.h"/>
           <FILE id="UdRlA1" name="UndoableReloadAction.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableReloadAction.h"/>
+        </GROUP>
+        <GROUP id="{8F2A41C7-55E1-4B29-9D63-0A7B84D21E96}" name="Project">
           <FILE id="PrjFS1" name="ProjectFileStore.cpp" compile="1" resource="0"
-                file="Source/Engine/ProjectFileStore.cpp"/>
+                file="Source/Engine/Project/ProjectFileStore.cpp"/>
           <FILE id="PrjFS2" name="ProjectFileStore.h" compile="0" resource="0"
-                file="Source/Engine/ProjectFileStore.h"/>
+                file="Source/Engine/Project/ProjectFileStore.h"/>
+          <FILE id="PrjSr1" name="ProjectSerializer.cpp" compile="1" resource="0"
+                file="Source/Engine/Project/ProjectSerializer.cpp"/>
+          <FILE id="PrjSr2" name="ProjectSerializer.h" compile="0" resource="0"
+                file="Source/Engine/Project/ProjectSerializer.h"/>
         </GROUP>
         <FILE id="mXceZ2" name="AudiumEngine.cpp" compile="1" resource="0"
               file="Source/Engine/AudiumEngine.cpp"/>

@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Cli/HeadlessEngineSession.h"
 
 #include "Engine/AutoEdit/AutoEdit.h"
@@ -35,7 +36,7 @@ int runAutoEdit (const juce::ArgumentList& args, CliContext& context)
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
 
-    if (! session->openFile (projectFile, captureError))
+    if (! session->getProjectFileStore()->open (projectFile, captureError))
         return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     // Auto-edit consumes cached analysis results; run `analyze` first. Its
@@ -45,7 +46,7 @@ int runAutoEdit (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitFailure, "auto_edit_failed",
                              error.empty() ? "auto-edit failed" : error);
 
-    if (! session->saveFile (projectFile, captureError))
+    if (! session->getProjectFileStore()->save (projectFile, captureError))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("auto-edit applied");
@@ -83,7 +84,7 @@ int runAssemble (const juce::ArgumentList& args, CliContext& context)
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
 
-    if (! session->openFile (projectFile, captureError))
+    if (! session->getProjectFileStore()->open (projectFile, captureError))
         return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     AutoEdit autoEdit (session.get());
@@ -91,7 +92,7 @@ int runAssemble (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitFailure, "assemble_failed",
                              error.empty() ? "assemble failed" : error);
 
-    if (! session->saveFile (projectFile, captureError))
+    if (! session->getProjectFileStore()->save (projectFile, captureError))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("assemble applied");

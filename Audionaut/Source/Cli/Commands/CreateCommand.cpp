@@ -4,10 +4,11 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Cli/HeadlessEngineSession.h"
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectFileStore.h"
 
 namespace audium {
 namespace cli {
@@ -34,11 +35,11 @@ int runCreate (const juce::ArgumentList& args, CliContext& context)
 
     ScopedCoutToStderr guard (context.json);
     HeadlessEngineSession session;
-    session->createNewProject (numChannels);
+    session->getProjectSerializer()->createNewProject (numChannels);
 
     auto projectFile = target.getChildFile (ProjectFileStore::projectFileName);
     std::string saveError;
-    if (! session->saveFile (projectFile, [&saveError] (std::string error) { saveError = error; }))
+    if (! session->getProjectFileStore()->save (projectFile, [&saveError] (std::string error) { saveError = error; }))
         return context.fail (exitFailure, "save_failed",
                              saveError.empty() ? "failed to save project" : saveError);
 

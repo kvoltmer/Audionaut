@@ -5,7 +5,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioBusInterface.h"
-#include "Engine/AudiumEngine.h"
+#include "Engine/Recording/Recording.h"
 #include "Engine/Core/HeadlessMode.h"
 
 namespace audium
@@ -74,7 +74,7 @@ void AudioBusInterface::setRecordEnabled(const int channelNumber,
 void AudioBusInterface::record(bool start, const int channelNumber, const double positionClocks)
 {
     if (start)
-        AudiumEngine::recordingCounter++;
+        Recording::recordingCounter++;
     
     audioBusRenderer->getRecording()->record(start, channelNumber, positionClocks);
 }

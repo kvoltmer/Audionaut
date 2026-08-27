@@ -88,14 +88,6 @@ public:
      * @return True if the operation was successful, false otherwise.
      */
     virtual bool readFromJson (json& /*input*/, bool /*rebuild*/) { return false; }
-    
-    /**
-     * @brief The file version for serialization.
-     *
-     * This constant represents the version of the file format used for
-     * serialization and deserialization.
-     */
-    const int fileVersion = 1;
 };
 
 } // namespace audium
