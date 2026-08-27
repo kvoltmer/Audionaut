@@ -13,11 +13,18 @@
 namespace audium {
 
 class Recording {
-    
+
 public:
     Recording();
     ~Recording();
-    
+
+    /**
+     * @brief Global take counter: incremented by `AudioBusInterface::record`
+     *        when a recording starts, read for naming the recorded file and
+     *        its take region.
+     */
+    static int recordingCounter;
+
     void record(bool start, const int channelNumber, const double positionClocks);
     
     void setRecordEnabled(const int channelNumber,

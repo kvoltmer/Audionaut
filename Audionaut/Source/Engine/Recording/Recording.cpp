@@ -4,9 +4,11 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Recording.h"
-#include "Engine/AudiumEngine.h"
+
 
 namespace audium {
+
+int Recording::recordingCounter = 0;
 
 Recording::Recording() :
     audioThumbnailCache(64)
@@ -36,7 +38,7 @@ void Recording::record(bool start,
             if (start) {
                 recordingStartPositionClocks[channelNumber] = positionClocks;
                 // std::cout << "start rec " << channelNumber << " pos " << positionClocks << std::endl;
-                setRecordedFile(channelNumber, recorder->prepareRecording(AudiumEngine::recordingCounter,
+                setRecordedFile(channelNumber, recorder->prepareRecording(Recording::recordingCounter,
                                                                           channelNumber,
                                                                           sampleRate));
                 recorder->createRecordingThumbnail(formatManager, audioThumbnailCache);

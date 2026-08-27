@@ -166,8 +166,6 @@ public:
      */
     void setBypass(bool bypass);
 
-    static int recordingCounter;
-
 private:
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;

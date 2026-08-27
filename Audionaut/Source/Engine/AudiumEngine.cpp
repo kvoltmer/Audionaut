@@ -12,8 +12,6 @@
 
 namespace audium {
 
-int AudiumEngine::recordingCounter = 0;
-
 AudiumEngine::~AudiumEngine()
 {
     projectSerializer->cleanup();
