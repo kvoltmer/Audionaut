@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
-              bundleIdentifier="com.voltmer-systems.audionaut" version="1.3.0"
+              bundleIdentifier="com.voltmer-systems.audionaut" version="1.4.0"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
               cppLanguageStandard="20" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0&#10;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
   <MAINGROUP id="HQG80L" name="Audionaut">
@@ -25,8 +25,7 @@
                 file="Source/Cli/Commands/ExportCommand.cpp"/>
           <FILE id="CliIm1" name="ImportCommand.cpp" compile="1" resource="0"
                 file="Source/Cli/Commands/ImportCommand.cpp"/>
-          <FILE id="CliIn1" name="InfoCommand.cpp" compile="1" resource="0"
-                file="Source/Cli/Commands/InfoCommand.cpp"/>
+          <FILE id="CliIn1" name="InfoCommand.cpp" compile="1" resource="0" file="Source/Cli/Commands/InfoCommand.cpp"/>
           <FILE id="CliRg1" name="RegionCommands.cpp" compile="1" resource="0"
                 file="Source/Cli/Commands/RegionCommands.cpp"/>
           <FILE id="CliCp1" name="ClipCommands.cpp" compile="1" resource="0"
@@ -37,7 +36,8 @@
         <FILE id="CliDsC" name="CliDispatch.cpp" compile="1" resource="0" file="Source/Cli/CliDispatch.cpp"/>
         <FILE id="CliHes" name="HeadlessEngineSession.h" compile="0" resource="0"
               file="Source/Cli/HeadlessEngineSession.h"/>
-        <FILE id="CliPsH" name="ProjectSummary.h" compile="0" resource="0" file="Source/Cli/ProjectSummary.h"/>
+        <FILE id="CliPsH" name="ProjectSummary.h" compile="0" resource="0"
+              file="Source/Cli/ProjectSummary.h"/>
         <FILE id="CliPsC" name="ProjectSummary.cpp" compile="1" resource="0"
               file="Source/Cli/ProjectSummary.cpp"/>
       </GROUP>
@@ -111,22 +111,19 @@
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
           <FILE id="CdpPrc" name="ClipDynamicsProcessor.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/ClipDynamicsProcessor.h"/>
-          <FILE id="S0kUtq" name="VoiceSource.cpp" compile="1" resource="0"
-                file="Source/Engine/AudioSources/VoiceSource.cpp"/>
-          <FILE id="FrI8bp" name="VoiceSource.h" compile="0" resource="0"
-                file="Source/Engine/AudioSources/VoiceSource.h"/>
+          <FILE id="S0kUtq" name="VoiceSource.cpp" compile="1" resource="0" file="Source/Engine/AudioSources/VoiceSource.cpp"/>
+          <FILE id="FrI8bp" name="VoiceSource.h" compile="0" resource="0" file="Source/Engine/AudioSources/VoiceSource.h"/>
           <FILE id="sc0j2q" name="VoiceSourceContainer.cpp" compile="1" resource="0"
                 file="Source/Engine/AudioSources/VoiceSourceContainer.cpp"/>
           <FILE id="BgDcMc" name="VoiceSourceContainer.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/VoiceSourceContainer.h"/>
-          <FILE id="pLvPaN" name="ClipTransportSource.cpp" compile="1"
-                resource="0" file="Source/Engine/AudioSources/ClipTransportSource.cpp"/>
-          <FILE id="tyX7Fa" name="ClipTransportSource.h" compile="0"
-                resource="0" file="Source/Engine/AudioSources/ClipTransportSource.h"/>
+          <FILE id="pLvPaN" name="ClipTransportSource.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/ClipTransportSource.cpp"/>
+          <FILE id="tyX7Fa" name="ClipTransportSource.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/ClipTransportSource.h"/>
           <FILE id="Cfs9Qa" name="ClipFadeSpec.cpp" compile="1" resource="0"
                 file="Source/Engine/AudioSources/ClipFadeSpec.cpp"/>
-          <FILE id="Cfs9Qb" name="ClipFadeSpec.h" compile="0" resource="0"
-                file="Source/Engine/AudioSources/ClipFadeSpec.h"/>
+          <FILE id="Cfs9Qb" name="ClipFadeSpec.h" compile="0" resource="0" file="Source/Engine/AudioSources/ClipFadeSpec.h"/>
         </GROUP>
         <GROUP id="{6F75617E-7F56-58FA-1D3F-51D388D99F41}" name="Export">
           <FILE id="nFV8qJ" name="ExportUtil.h" compile="0" resource="0" file="Source/Engine/Export/ExportUtil.h"/>
@@ -592,7 +589,7 @@
                appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.downloads.read-write,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;&lt;key&gt;LSMinimumSystemVersion&lt;/key&gt;&#10;&#9;&lt;string&gt;13.0&lt;/string&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
                xcodeValidArchs="arm64,arm64e" documentExtensions="audium" documentTypeIsPackage="1"
-               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="18" microphonePermissionNeeded="1"
+               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="19" microphonePermissionNeeded="1"
                localNetworkPermissionNeeded="1" extraLinkerFlags="$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
