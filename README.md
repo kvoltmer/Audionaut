@@ -112,6 +112,8 @@ A typical agent flow: `create` → `import` → `analyze` → `auto-edit`/`assem
 → `export`, checking `ok` in each `--json` envelope. Projects written by the
 CLI open in the GUI app and vice versa.
 
+End-user documentation lives in the **[User Manual](docs/manual/README.md)**.
+
 CLI invocations report anonymous usage statistics under the same strictly
 opt-in consent as the app (one `cli_command` event: verb and exit code) —
 nothing is sent unless consent was granted in the app's settings. Set
