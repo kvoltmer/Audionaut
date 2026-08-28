@@ -21,12 +21,13 @@ first launch — choose **More info** → **Run anyway**.
 
 ## Linux
 
-Two packages are published per release on
-[GitHub Releases](https://github.com/kvoltmer/Audionaut/releases):
+Pick **one** of the two formats offered on
+[GitHub Releases](https://github.com/kvoltmer/Audionaut/releases) —
+whichever suits your distribution:
 
-- **AppImage** (`Audionaut-<version>-x86_64.AppImage`) — no installation
-  needed; make it executable (`chmod +x`) and run it.
-- **Debian package** (`.deb`, for Debian/Ubuntu and derivatives) — install
+- **AppImage** (`Audionaut-<version>-x86_64.AppImage`) — runs anywhere, no
+  installation needed; make it executable (`chmod +x`) and run it.
+- **Debian package** (`.deb`) — for Debian/Ubuntu and derivatives; install
   with apt, which also resolves dependencies:
   `sudo apt install ./audionaut_<version>_amd64.deb`.
 
