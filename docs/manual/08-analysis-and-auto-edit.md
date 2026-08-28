@@ -46,5 +46,10 @@ with any regions on the track.
 
 ## Seeing the analysis
 
-Segment boundaries and beats can be displayed as overlays in the
-arrangement, so you can check what the analysis found before cutting.
+Analysis results can be displayed as overlays on a track's clips, so you can
+check what the analysis found before cutting.
+
+**Right-click the track header** and open the **Show Analysis** submenu: it
+lists **SBic**, **Onsets**, **Beats** and **Beats (Degara)**, each a toggle
+with a tick when currently shown. The setting is per track, so you can, say,
+show segment boundaries on one track and beats on another.
