@@ -33,8 +33,13 @@ channel:
 - a level meter, gain and pan controls
 
 Channel height is adjustable (micro / small / medium / large / huge) to fit
-many channels on screen. Right-clicking a channel offers **Copy selected
-channel(s) to new track**.
+many channels on screen — set it per channel with the height combo on the
+strip, or for the whole track by **right-clicking the track header** and
+choosing a size from the **Waveform Size** submenu. The same track-header
+menu also holds the **Show Analysis** toggles (see
+[Analysis and Auto Edit](08-analysis-and-auto-edit.md)).
+
+Right-clicking a channel offers **Copy selected channel(s) to new track**.
 
 ## Arrangement
 
