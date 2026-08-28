@@ -5,8 +5,8 @@ All downloads are linked from
 
 ## macOS
 
-Download **Audionaut Pro** from the
-[Mac App Store](https://apps.apple.com/us/app/audionaut-pro/id6743627933).
+Download **Audionaut App** from the
+[Mac App Store](https://apps.apple.com/us/app/id6743627933).
 
 Building the GPL version from source with Xcode is also supported — follow
 the **Checkout** and **Build** sections of the repository
