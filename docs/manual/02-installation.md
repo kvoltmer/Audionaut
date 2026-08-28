@@ -1,27 +1,34 @@
 # Installation
 
-Downloads are linked from [audionaut.app](https://audionaut.app); the release
-files themselves live on the project's GitHub Releases page.
-
-## Windows
-
-Download `Audionaut-<version>-Setup.exe` and run it. The installer places
-Audionaut in the usual program locations and creates a Start-menu entry.
-
-## Linux
-
-Two packages are published per release:
-
-- **AppImage** (`Audionaut-<version>-x86_64.AppImage`) — make it executable
-  (`chmod +x`) and run it directly; no installation required.
-- **Debian package** (`.deb`) — install with your package manager, e.g.
-  `sudo apt install ./audionaut_<version>_amd64.deb`.
+All downloads are linked from
+[audionaut.app](https://audionaut.app/download/).
 
 ## macOS
 
-There is currently no prebuilt macOS download — Audionaut builds from source
-with Xcode in a few steps. Follow the **Checkout** and **Build** sections of
-the repository [README](../../README.md).
+Download **Audionaut Pro** from the
+[Mac App Store](https://apps.apple.com/us/app/audionaut-pro/id6743627933).
+
+Building the GPL version from source with Xcode is also supported — follow
+the **Checkout** and **Build** sections of the repository
+[README](../../README.md).
+
+## Windows
+
+Download the installer (`Audionaut-<version>-Setup.exe`) from
+[GitHub Releases](https://github.com/kvoltmer/Audionaut/releases) and run
+it. The installer is not yet code-signed, so Windows SmartScreen may warn on
+first launch — choose **More info** → **Run anyway**.
+
+## Linux
+
+Two packages are published per release on
+[GitHub Releases](https://github.com/kvoltmer/Audionaut/releases):
+
+- **AppImage** (`Audionaut-<version>-x86_64.AppImage`) — no installation
+  needed; make it executable (`chmod +x`) and run it.
+- **Debian package** (`.deb`, for Debian/Ubuntu and derivatives) — install
+  with apt, which also resolves dependencies:
+  `sudo apt install ./audionaut_<version>_amd64.deb`.
 
 ## First launch
 
