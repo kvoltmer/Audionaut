@@ -48,6 +48,8 @@ private:
 namespace PreferenceKeys
 {
     static const char* const defaultFile            = "DefaultProjectFile";
+    static const char* const lastProjectFile        = "LastProjectFile";
+    static const char* const openLastProjectOnLaunch = "OpenLastProjectOnLaunch";
     static const char* const initialOpenDirectory   = "InitialOpenDirectory";
     static const char* const initialSaveDirectory   = "InitialSaveDirectory";
     static const char* const recentFiles            = "RecentProjectFiles";
@@ -65,6 +67,9 @@ namespace PreferenceKeys
     static const char* const autoEditCrossfadesEnabled = "AutoEditCrossfadesEnabled";
     static const char* const autoEditCrossfadeMs    = "AutoEditCrossfadeMs";
     static const char* const autoEditCrossfadeType  = "AutoEditCrossfadeType";
+    static const char* const usageStatsEnabled      = "UsageStatsEnabled";
+    static const char* const analyticsClientId      = "AnalyticsClientId";
+    static const char* const analyticsUnsentEvents  = "AnalyticsUnsentEvents";
 }
 
 } // namespace audium

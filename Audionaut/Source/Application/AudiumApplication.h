@@ -17,7 +17,11 @@ class SettingsDialog;
 class AboutSplashScreen;
 class MainComponent;
 
-class AudiumApplication  : public juce::JUCEApplication, private juce::AsyncUpdater
+namespace audium { class UsageAnalytics; class ProjectMonitor; class ProjectFileStore; class ProjectSerializer; }
+
+class AudiumApplication  : public juce::JUCEApplication,
+                           private juce::AsyncUpdater,
+                           private juce::ApplicationCommandManagerListener
 {
 public:
     AudiumApplication();
@@ -30,7 +34,11 @@ public:
     const juce::String getApplicationName() override       { return ProjectInfo::projectName; }
     const juce::String getApplicationVersion() override    { return ProjectInfo::versionString; }
     const juce::String getApplicationCompanyName()         { return ProjectInfo::companyName; }
-    bool moreThanOneInstanceAllowed() override             { return false; }
+    // Single-instance behavior is handled manually in initialise() (after the
+    // in-app CLI block) so a CLI invocation can run while the GUI is open -
+    // returning false here would make JUCE forward the arguments to the
+    // running instance before initialise() is ever called.
+    bool moreThanOneInstanceAllowed() override             { return true; }
 
     void initialise (const juce::String& commandLine) override;
 
@@ -61,6 +69,7 @@ public:
     
     void askUserToOpenFile();
     void openFile(juce::File file);
+    void openFileInternal(juce::File file, juce::File autosaveToOffer);
     
     bool saveProjectAs();
     bool saveProject();
@@ -68,6 +77,9 @@ public:
     void askToSaveIfDirtyAndInvoke(std::function<void ()> foo);
     
     void updateUI();
+
+    /// updates the window title with the project name and the agent-changed marker
+    void refreshWindowTitle();
 
     /// the window's content component, or nullptr while the window is not up yet
     MainComponent* getMainComponent() const;
@@ -79,7 +91,13 @@ public:
     void restoreUiState();
 
     bool fileBrowserVisible() const;
-    
+
+    /// stores the usage-statistics consent and suspends/resumes the analytics
+    void setUsageStatisticsEnabled(bool enabled);
+
+    /// queues an anonymous usage event; dropped unless the user has opted in
+    void logUsageEvent(const juce::String& name, const juce::StringPairArray& parameters = {});
+
     AudiumLookAndFeel lookAndFeel;
     
     File initialSaveDirectory;
@@ -87,10 +105,18 @@ public:
 
 private:
 
+    // True while this process is executing a CLI verb instead of the GUI;
+    // initialise() quits early and shutdown() skips GUI teardown.
+    bool isRunningCommandLine = false;
+
     std::unique_ptr<AudiumMainWindow> mainWindow;
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::ProjectFileStore> fileStore;
+    std::shared_ptr<audium::ProjectSerializer> serializer;
+    std::unique_ptr<audium::ProjectMonitor> projectMonitor;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<audium::Preferences> preferences;
+    std::unique_ptr<audium::UsageAnalytics> usageAnalytics;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
     std::unique_ptr<juce::Component> aboutComponent;
@@ -102,6 +128,18 @@ private:
     
     void initCommandManager();
     void initPreferences();
+
+    // handleAsyncUpdate startup steps
+    void offerOrphanedTempProjectRestore();
+    void restoreOrphanedTempProject(juce::File packageDirectory);
+    void loadStartupProject();
+    void startProjectMonitor();
+    void askForUsageStatisticsConsent();
+
+    // logs every invoked command (menus and shortcuts) as a usage event
+    void applicationCommandInvoked(const juce::ApplicationCommandTarget::InvocationInfo&) override;
+    void applicationCommandListChanged() override {}
+
     void applyAnalysisPreferences();
     void handleAsyncUpdate() override;
     
@@ -110,7 +148,10 @@ private:
     void showSettingsDialog();
     
     void clearRecentFiles();
-    
+
+    /// stores the project package path so loadStartupProject() can recall it next launch
+    void rememberLastProject(juce::File projectPackage);
+
     void updateSettings();
 
    #if JUCE_MAC

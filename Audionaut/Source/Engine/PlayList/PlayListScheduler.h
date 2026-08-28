@@ -22,7 +22,7 @@ namespace audium {
 
 class PlayListContainer;
 class PlayListItem;
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class AudioResourceContainer;
 class Playback;
 class DspClip;
@@ -47,7 +47,7 @@ public:
                       std::shared_ptr<TempoProvider> tempoProvider_,
                       std::shared_ptr<audium::LinkEngine> linkEngine_,
                       std::shared_ptr<audium::AudioClipContainer> audioClipContainer_,
-                      std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                      std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
                       std::shared_ptr<AudioBusInterface> audioBusInterface_,
                       std::shared_ptr<TransportLoop> transportLoop_) :
@@ -56,7 +56,7 @@ public:
         tempoProvider(tempoProvider_),
         linkEngine(linkEngine_),
         audioClipContainer(audioClipContainer_),
-        transportSourceContainer(transportSourceContainer_),
+        voiceSourceContainer(voiceSourceContainer_),
         playback(playback_),
         audioBusInterface(audioBusInterface_),
         transportLoop(transportLoop_)
@@ -77,7 +77,7 @@ public:
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     
     bool scheduleClip(const audium::DspClip &clip,
-                      std::shared_ptr<AudiumTransportSource> transportSource,
+                      std::shared_ptr<VoiceSource> voiceSource,
                       double transportPosition,
                       int sampleOffset,
                       int numSamples);
@@ -187,7 +187,7 @@ private:
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<LinkEngine> linkEngine;
     std::shared_ptr<AudioClipContainer> audioClipContainer;
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<VoiceSourceContainer> voiceSourceContainer;
     std::shared_ptr<Playback> playback;
     std::shared_ptr<AudioBusInterface> audioBusInterface;
     std::shared_ptr<TransportLoop> transportLoop;

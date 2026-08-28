@@ -50,7 +50,7 @@ void Preferences::synchronize()
 std::string Preferences::getValue(const std::string& key,
                                   const std::string& defaultValue)
 {
-    return impl->propertiesFile->getValue(juce::StringRef(key)).toStdString();
+    return impl->propertiesFile->getValue(juce::StringRef(key), juce::String(defaultValue)).toStdString();
 }
 
 bool Preferences::setValue(const std::string& key,

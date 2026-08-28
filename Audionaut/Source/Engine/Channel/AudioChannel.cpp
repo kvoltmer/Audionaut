@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioChannel.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
@@ -65,7 +65,7 @@ void AudioChannel::setRecordEnabled(bool bEnabled)
 {
     auto numInputChannels = 0;
     
-#if CATCH2_TESTS
+#if AUDIONAUT_HEADLESS
     numInputChannels = 1;
 #else
     auto currentDevice = getAudioTrack().getAudioResourceContainer().getAudioDeviceManager()->getCurrentAudioDevice();

@@ -166,7 +166,7 @@ void RegionSelector::mouseUp (const juce::MouseEvent& e)
         zoomHandler->getSnapToGridHandler()->clearRange();
     }
     
-#ifndef CATCH2_TESTS
+#ifndef AUDIONAUT_HEADLESS
     // notify the command manager
     AudiumApplication::getCommandManager().commandStatusChanged();
 #endif

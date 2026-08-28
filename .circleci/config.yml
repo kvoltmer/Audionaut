@@ -216,16 +216,26 @@ jobs:
           name: Build the app
           # vswhere locates MSBuild - the image does not put it on PATH.
           # -m builds projects in parallel; the solution only defines x64.
+          # Prefer the amd64 MSBuild and keep cl.exe x64-hosted
+          # (PreferredToolArchitecture): the x86-hosted compiler runs out of
+          # heap on this solution since the MSVC 14.51 update ("fatal error
+          # C1002"). Mirrors .github/workflows/windows.yml.
           command: |
             MSBUILD=$("/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe" \
               -latest -requires Microsoft.Component.MSBuild \
-              -find 'MSBuild\**\Bin\MSBuild.exe' | head -1 | tr -d '\r')
+              -find 'MSBuild\**\Bin\amd64\MSBuild.exe' | head -1 | tr -d '\r')
+            if [ -z "$MSBUILD" ]; then
+              MSBUILD=$("/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe" \
+                -latest -requires Microsoft.Component.MSBuild \
+                -find 'MSBuild\**\Bin\MSBuild.exe' | head -1 | tr -d '\r')
+            fi
             echo "MSBuild: $MSBUILD"
             "$MSBUILD" Audionaut/Builds/VisualStudio2026/Audionaut.sln \
               -m \
               -p:Configuration="$BUILD_TYPE" \
               -p:Platform=x64 \
               -p:PlatformToolset="$APP_TOOLSET" \
+              -p:PreferredToolArchitecture=x64 \
               -v:minimal
           no_output_timeout: 30m
 

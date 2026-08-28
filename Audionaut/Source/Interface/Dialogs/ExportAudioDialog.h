@@ -75,7 +75,7 @@ private:
             
             safeThis->config->bitDepth = exportAudioComponent->getBitDepth().toString().getIntValue();
             juce::File dir;
-        #if !defined(CATCH2_TESTS)
+        #if !defined(AUDIONAUT_HEADLESS)
             dir = AudiumApplication::getApp().initialSaveDirectory;
         #endif
             safeThis->chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");

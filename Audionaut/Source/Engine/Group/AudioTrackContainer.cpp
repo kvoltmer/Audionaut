@@ -9,7 +9,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
@@ -44,7 +44,7 @@ const float AudioTrackContainer::getMasterGain() const noexcept
 void AudioTrackContainer::cleanup()
 {
     selectionManager->clear();
-    transportSourceContainer->cleanup();
+    voiceSourceContainer->cleanup();
     audioResourceContainer->cleanup();
     
     for (auto track : audioTracks)
@@ -247,11 +247,6 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     }
     
     return true;
-}
-
-int AudioTrackContainer::getSizeInUnits()
-{
-    return getNumItems() * 8;
 }
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::getDefaultGroup() const

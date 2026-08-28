@@ -5,8 +5,9 @@
 #include <cmath>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "Engine/AudioSources/audium_AudioTransportSource.h"
+#include "Engine/AudioSources/ClipTransportSource.h"
 #include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/PlayList/PlayListContainer.h"
@@ -134,7 +135,7 @@ SCENARIO("fade out on the transport source", "[engine][dsp][fade]")
 
         MemoryAudioSource memorySource(dcBuffer, false);
 
-        audium::AudioTransportSource transportSource;
+        audium::ClipTransportSource transportSource;
         transportSource.setSource(&memorySource, 0, nullptr, 0.0, 1);
         transportSource.prepareToPlay(blockSize, sr);
         transportSource.resetClipGain();
@@ -184,10 +185,11 @@ SCENARIO("fade out on a playlist item survives a bounce", "[engine][dsp][fade]")
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 2 second DC clip with a fade out over its second half")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -264,10 +266,11 @@ SCENARIO("channel levels stay finite when a clip fades out", "[engine][dsp][fade
     bounceConfig->numChannels = 2; // stereo: exercises panners, master gain and master level
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 2 second DC clip with a fade out over its second half")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -390,10 +393,11 @@ SCENARIO("two overlapping clips, one fades out", "[engine][dsp][fade][level]")
     bounceConfig->numChannels = 2;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("clip A (2 s, fade out) and clip B (4 s) playing simultaneously on two tracks")
     {
-        engine->openFile(inputFileA, nullptr);
+        store->open(inputFileA, nullptr);
 
         auto ok = engine->getAudioTrackContainer()->addAudioFiles({ inputFileB.getFullPathName() },
                                                                   0.0, nullptr, false);
@@ -502,10 +506,11 @@ SCENARIO("the mix continues after a faded clip ends", "[engine][dsp][fade][level
     bounceConfig->numChannels = 2;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a faded clip followed by a second clip sharing the same region")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item0 = track->getPlayListContainer()->getPlayListItem(0);
@@ -595,10 +600,11 @@ SCENARIO("fades reset when restoring an item state without fades", "[engine][fad
 
     auto inputFile = generateDcOffsetAudioFile(2.0);
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a playlist item with fades")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -640,10 +646,11 @@ SCENARIO("fade ramp offsets push their partner values", "[engine][fade]")
 
     auto inputFile = generateDcOffsetAudioFile(2.0);
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a playlist item with a fade in and a fade out")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -814,10 +821,11 @@ SCENARIO("fade ramp offsets serialize with the item", "[engine][fade]")
 
     auto inputFile = generateDcOffsetAudioFile(2.0);
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a playlist item")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -962,10 +970,11 @@ SCENARIO("fade out applied while the clip is playing", "[engine][dsp][fade]")
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a playing 2 second DC clip without fades")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -1054,10 +1063,11 @@ SCENARIO("fade out on a clip that does not start at zero", "[engine][dsp][fade]"
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 2 second DC clip placed at second 1 with a fade out over its second half")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -1176,7 +1186,7 @@ SCENARIO("fade ramps with offsets on the transport source", "[engine][dsp][fade]
 
         MemoryAudioSource memorySource(dcBuffer, false);
 
-        audium::AudioTransportSource transportSource;
+        audium::ClipTransportSource transportSource;
         transportSource.setSource(&memorySource, 0, nullptr, 0.0, 1);
         transportSource.prepareToPlay(blockSize, sr);
         transportSource.resetClipGain();
@@ -1296,10 +1306,11 @@ SCENARIO("fade extensions extend the audible clip", "[engine][dsp][fade]")
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a clip trimmed to the middle second of a 2 second DC file, placed at second 1")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -1483,10 +1494,11 @@ SCENARIO("a tail extension past the end of the source file is silent", "[engine]
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a full-file clip whose fade-out end reaches past the file")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -1553,10 +1565,11 @@ SCENARIO("two clips crossfade over a cut at constant gain", "[engine][dsp][fade]
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 1 second 0 dB noise file split into two clips at 0.5 s")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto itemA = track->getPlayListContainer()->getPlayListItem(0);
@@ -1654,10 +1667,11 @@ SCENARIO("uncorrelated clips crossfade at constant power", "[engine][dsp][fade][
     bounceConfig->numChannels = 1;
 
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("two clips whose 100 ms overlap plays different noise segments")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto itemA = track->getPlayListContainer()->getPlayListItem(0);
@@ -1736,10 +1750,11 @@ SCENARIO("splitting a clip preserves its edge fades", "[engine][fade]")
 
     auto inputFile = generateDcOffsetAudioFile(2.0);
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     GIVEN("a 2 second clip with full fade dynamics")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item = track->getPlayListContainer()->getPlayListItem(0);
@@ -1804,4 +1819,106 @@ SCENARIO("splitting a clip preserves its edge fades", "[engine][fade]")
 
     juce::DeletedAtShutdown::deleteAll();
     juce::MessageManager::deleteInstance();
+}
+
+SCENARIO("clip dynamics only touch the active sub-block region", "[engine][dsp][fade]")
+{
+    auto sr = 44100.0;
+    auto blockSize = 512;
+    auto lengthSeconds = 2.0;
+    auto fadeOutSeconds = 1.0;
+    auto totalSamples = static_cast<int>(sr * lengthSeconds);
+
+    GIVEN("a transport source over a 2 second DC signal with a 1 second fade out")
+    {
+        AudioBuffer<float> dcBuffer(1, totalSamples);
+        for (auto s = 0; s < totalSamples; s++)
+            dcBuffer.setSample(0, s, 1.f);
+
+        // reference: the same clip rendered with one full-buffer call per block
+        AudioBuffer<float> reference(1, totalSamples);
+        {
+            MemoryAudioSource referenceSource(dcBuffer, false);
+            audium::ClipTransportSource referenceTransport;
+            referenceTransport.setSource(&referenceSource, 0, nullptr, 0.0, 1);
+            referenceTransport.prepareToPlay(blockSize, sr);
+            referenceTransport.resetClipGain();
+            referenceTransport.clearFadeIn();
+            referenceTransport.setFadeOutRamp(fadeOutSeconds, lengthSeconds - fadeOutSeconds, true);
+            referenceTransport.start();
+
+            AudioBuffer<float> block(1, blockSize);
+            auto rendered = 0;
+            while (rendered < totalSamples) {
+                auto numSamples = jmin(blockSize, totalSamples - rendered);
+                AudioSourceChannelInfo info(&block, 0, numSamples);
+                info.clearActiveBufferRegion();
+                referenceTransport.getNextAudioBlock(info);
+                reference.copyFrom(0, rendered, block, 0, 0, numSamples);
+                rendered += numSamples;
+            }
+        }
+
+        MemoryAudioSource memorySource(dcBuffer, false);
+        audium::ClipTransportSource transportSource;
+        transportSource.setSource(&memorySource, 0, nullptr, 0.0, 1);
+        transportSource.prepareToPlay(blockSize, sr);
+        transportSource.resetClipGain();
+        transportSource.clearFadeIn();
+        transportSource.setFadeOutRamp(fadeOutSeconds, lengthSeconds - fadeOutSeconds, true);
+        transportSource.start();
+
+        WHEN("each callback is split into two sub-block calls at a non-zero start sample")
+        {
+            // mimics VoiceSource::getNextAudioBlock, which splits a
+            // callback into part 1 / part 2 on loop wrap and clip end
+            const auto offset = 128;
+            const auto sentinel = -2.f;
+
+            AudioBuffer<float> output(1, totalSamples);
+            AudioBuffer<float> block(1, offset + blockSize);
+
+            auto rendered = 0;
+            while (rendered < totalSamples) {
+                auto numSamples = jmin(blockSize, totalSamples - rendered);
+                auto part1 = numSamples / 2;
+                auto part2 = numSamples - part1;
+
+                for (auto s = 0; s < block.getNumSamples(); s++)
+                    block.setSample(0, s, sentinel);
+
+                AudioSourceChannelInfo info1(&block, offset, part1);
+                info1.clearActiveBufferRegion();
+                transportSource.getNextAudioBlock(info1);
+
+                if (part2 > 0) {
+                    AudioSourceChannelInfo info2(&block, offset + part1, part2);
+                    info2.clearActiveBufferRegion();
+                    transportSource.getNextAudioBlock(info2);
+                }
+
+                // samples before the active region must keep the sentinel
+                for (auto s = 0; s < offset; s++) {
+                    INFO("sentinel sample " << s << " at block start " << rendered);
+                    REQUIRE(block.getSample(0, s) == sentinel);
+                }
+
+                output.copyFrom(0, rendered, block, 0, offset, numSamples);
+                rendered += numSamples;
+            }
+
+            THEN("the rendered envelope matches the single-call reference sample for sample")
+            {
+                for (auto s = 0; s < totalSamples; s++) {
+                    INFO("sample " << s << " split " << output.getSample(0, s)
+                                   << " reference " << reference.getSample(0, s));
+                    REQUIRE(output.getSample(0, s)
+                            == Catch::Approx(reference.getSample(0, s)).margin(1e-6));
+                }
+
+                auto fadeStartSample = static_cast<int>(sr * (lengthSeconds - fadeOutSeconds));
+                examineFadeOutEnvelope(output, fadeStartSample, totalSamples, blockSize);
+            }
+        }
+    }
 }

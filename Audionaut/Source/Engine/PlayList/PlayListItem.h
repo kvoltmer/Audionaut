@@ -23,7 +23,7 @@ namespace audium {
 
 class AudioRegion;
 class PlayListContainer;
-class AudiumTransportSource;
+class VoiceSource;
 
 /**
  * \class PlayListItem
@@ -71,7 +71,7 @@ public:
     
     bool validateData();
     
-    const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
+    const std::vector<std::shared_ptr<VoiceSource>> &getVoiceSources() const { return voiceSources; }
     
     void onDragStart();
     void onDragEnd();
@@ -95,7 +95,7 @@ public:
 private:
     PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
-    std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
+    std::vector<std::shared_ptr<VoiceSource>> voiceSources;
     
     std::unique_ptr<audium::UndoableContainerAction> undoableAction;
     

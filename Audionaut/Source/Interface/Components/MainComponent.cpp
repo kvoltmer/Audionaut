@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -206,19 +207,21 @@ void MainComponent::updateUI()
 
 void MainComponent::updateWindowTitle()
 {
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
     if (getParentComponent() != nullptr)
     {
-        auto projectName = audiumEngine->getCurrentProjectFile().getFileName();
+        auto projectName = audiumEngine->getProjectFileStore()->getCurrentProjectFile().getFileName();
         if (projectName.isEmpty()) {
             projectName = "Untitled";
         }
         else {
-            if (AudiumEngine::isValidProjectStructure(audiumEngine->getCurrentProjectFile().getParentDirectory())) {
-                projectName = audiumEngine->getCurrentProjectFile().getParentDirectory().getFileName();
+            if (ProjectFileStore::isValidProjectStructure(audiumEngine->getProjectFileStore()->getCurrentProjectFile().getParentDirectory())) {
+                projectName = audiumEngine->getProjectFileStore()->getCurrentProjectFile().getParentDirectory().getFileName();
             }
         }
-        if (audiumEngine->getUndoManager()->canUndo())
+        if (audiumEngine->getProjectFileStore()->wasChangedExternally())
+            projectName += " - " + TRANS("Edited By Agent");
+        else if (audiumEngine->getUndoManager()->canUndo())
             projectName += " - Edited";
 
         getParentComponent()->setName(projectName);

@@ -24,7 +24,7 @@ class AudioResourceContainer;
 class AudioResource;
 class PlayListItem;
 class PlayListScheduler;
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class ResourceGroup;
 class AudioChannel;
 class PositionableBase;
@@ -51,7 +51,7 @@ public:
      * @brief Constructs an `AudioTrack` instance.
      * @param owner_ Reference to the owning `AudioTrackContainer`.
      * @param audioResourceContainer_ Reference to the container holding audio resources.
-     * @param transportSourceContainer_ Shared pointer to the transport source container.
+     * @param voiceSourceContainer_ Shared pointer to the voice source container.
      * @param selectionManager_ Shared pointer to the selection manager.
      * @param resourceGroups_ Shared pointer to the resource group container.
      * @param channels_ Shared pointer to the audio channel container.
@@ -59,7 +59,7 @@ public:
      */
     AudioTrack(AudioTrackContainer &owner_,
                AudioResourceContainer &audioResourceContainer_,
-               std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+               std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                std::shared_ptr<SelectionManager> selectionManager_,
                std::shared_ptr<tResourceGroupContainer> resourceGroups_,
                std::shared_ptr<tAudioChannelContainer> channels_,
@@ -68,7 +68,7 @@ public:
         Selectable(selectionManager_),
         owner(owner_),
         audioResourceContainer(audioResourceContainer_),
-        transportSourceContainer(transportSourceContainer_),
+        voiceSourceContainer(voiceSourceContainer_),
         selectionManager(selectionManager_),
         analysisProvider(analysisProvider_),
         resourceGroupContainer(resourceGroups_),
@@ -77,7 +77,7 @@ public:
     {
         playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*this,
                                                                                       owner.getTempoProvider(),
-                                                                                      transportSourceContainer,
+                                                                                      voiceSourceContainer,
                                                                                       selectionManager));
     }
     
@@ -119,7 +119,7 @@ public:
     AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
     AudioTrackContainer &getAudioTrackContainer() const { return owner; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
-    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
+    std::shared_ptr<VoiceSourceContainer> getVoiceSourceContainer() const { return voiceSourceContainer; }
     std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     
     /**
@@ -134,7 +134,6 @@ public:
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
-    int getSizeInUnits() override;
     bool writeChannelToJson (json& output, AudioChannel* audioChannel);
     void mergeChannelFromJson(json& input);
     
@@ -225,7 +224,7 @@ private:
     AudioTrackContainer &owner; ///< Reference to the owning container.
     AudioResourceContainer &audioResourceContainer; ///< Reference to the audio resource container.
     std::shared_ptr<PlayListContainer> playListContainer; ///< Shared pointer to the playlist container.
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer; ///< Shared pointer to the transport source container.
+    std::shared_ptr<VoiceSourceContainer> voiceSourceContainer; ///< Shared pointer to the voice source container.
     std::shared_ptr<SelectionManager> selectionManager; ///< Shared pointer to the selection manager.
     std::shared_ptr<AnalysisProvider> analysisProvider;
 public:

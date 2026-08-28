@@ -8,7 +8,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 
@@ -177,11 +177,6 @@ bool ResourceGroup::readFromStream (juce::InputStream& inputStream, bool rebuild
         return true;
     }
     return false;
-}
-
-int ResourceGroup::getSizeInUnits()
-{
-    return (int)getAudioResources().size() * 4;
 }
 
 std::vector<std::shared_ptr<AudioResource>> ResourceGroup::getAudioResources() const

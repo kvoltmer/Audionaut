@@ -3,7 +3,7 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-#include "Engine/AudiumEngine.h"
+#include "Engine/Recording/Recording.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
@@ -11,10 +11,10 @@
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Channel/AudioChannel.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Analysis/AnalysisProvider.h"
 
@@ -230,11 +230,6 @@ bool AudioTrack::readFromStream (juce::InputStream& inputStream, bool rebuild)
         return true;
     }
     return false;
-}
-
-int AudioTrack::getSizeInUnits()
-{
-    return (int)resourceGroupContainer->getObjects().size() * 16;
 }
 
 int AudioTrack::getNumAudioTrackChannels() const
@@ -667,8 +662,8 @@ std::vector<std::shared_ptr<AudioResource>> AudioTrack::addAudioFile (std::share
                                                                               destChannel,
                                                                               sourceChannel);
             if (audioResource != nullptr) {
-                auto transportSource = getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
-                if (transportSource != nullptr)
+                auto voiceSource = getAudioResourceContainer().createTransportSourceForAudioResource(audioResource);
+                if (voiceSource != nullptr)
                     destChannel += 1;
                 
                 result.push_back(audioResource);
@@ -704,7 +699,7 @@ std::shared_ptr<PlayListItem> AudioTrack::createDefaultPlayListItem(std::shared_
     // an empty name indicates a recording
     if (region->getName().isEmpty()) {
         jassert(audioResource->isRecording());
-        auto take = AudiumEngine::recordingCounter;
+        auto take = Recording::recordingCounter;
         auto takeString = juce::String(AudioRegionContainer::formatNumber(take + 1));
         
         // Format as [Year-Month-Day Hour-Minute-Second]
@@ -733,10 +728,10 @@ std::vector<DspClipData> AudioTrack::getDspClipVector() const
     
     // iterate playlist items and it's transport sources
     for (const auto &item : getPlayListContainer()->getPlayListItems()) {
-        for (const auto &transportSource : item->getTransportSources()) {
-            if (transportSource != nullptr) {
+        for (const auto &voiceSource : item->getVoiceSources()) {
+            if (voiceSource != nullptr) {
                 dspClipData.active              = true;
-                auto channel = transportSource->getAudioResource().getChannelMapping().getDestinationChannel();
+                auto channel = voiceSource->getAudioResource().getChannelMapping().getDestinationChannel();
                 dspClipData.clipGain            = static_cast<float>(item->getDynamics().getGain(channel));
                 dspClipData.clipFadeInClocks    = item->getDynamics().getFadeIn(audium::clocks);
                 dspClipData.clipFadeOutClocks   = item->getDynamics().getFadeOut(audium::clocks);
@@ -747,7 +742,7 @@ std::vector<DspClipData> AudioTrack::getDspClipVector() const
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
                 
-                dspClipData.transportSourceIndex = transportSourceContainer->getTransportSourceIndex(transportSource);
+                dspClipData.voiceSourceIndex = voiceSourceContainer->getVoiceSourceIndex(voiceSource);
                 result.push_back(dspClipData);
             }
         }

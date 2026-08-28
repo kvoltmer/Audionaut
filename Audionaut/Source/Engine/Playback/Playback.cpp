@@ -9,7 +9,7 @@
 #include <cassert>
 
 #include "Playback.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 
 namespace audium
 {
@@ -20,25 +20,25 @@ Playback::Playback()
 
 void Playback::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    std::cout << "Playback::prepareToPlay " << samplesPerBlockExpected << " " << sampleRate << std::endl;
+    DBG("Playback::prepareToPlay " << samplesPerBlockExpected << " " << sampleRate);
 }
 
-bool Playback::startVoice(std::shared_ptr<AudiumTransportSource> transportSource)
+bool Playback::startVoice(std::shared_ptr<VoiceSource> voiceSource)
 {
     // voice already playing?
-    if (auto voice = findVoice(transportSource))
-        if (voice->getTransportSource()->getAudioTransportSource()->isPlaying())
+    if (auto voice = findVoice(voiceSource))
+        if (voice->getVoiceSource()->isPlaying())
             return true;
     
     // start a new voice
     if (auto newVoice = getAvailableVoice()) {
-        newVoice->start(transportSource);
+        newVoice->start(voiceSource);
         return true;
     }
     return false;
 }
 
-bool Playback::stopVoice(const std::shared_ptr<AudiumTransportSource> source,
+bool Playback::stopVoice(const std::shared_ptr<VoiceSource> source,
                          bool fadeOutLastBlock)
 {
     if (auto voice = findVoice(source)) {
@@ -56,7 +56,7 @@ void Playback::stopAllVoices()
     }
 }
 
-bool Playback::isPlaying(const std::shared_ptr<AudiumTransportSource> source)
+bool Playback::isPlaying(const std::shared_ptr<VoiceSource> source)
 {
     if (findVoice(source) != nullptr) {
         return true;
@@ -84,10 +84,10 @@ Voice *Playback::getAvailableVoice()
     return nullptr;
 }
 
-Voice *Playback::findVoice(const std::shared_ptr<AudiumTransportSource> source)
+Voice *Playback::findVoice(const std::shared_ptr<VoiceSource> source)
 {
     for (auto i = 0; i < MAX_VOICES; ++i) {
-        if (voices[i].getTransportSource() == source)
+        if (voices[i].getVoiceSource() == source)
             return &voices[i];
     }
     return nullptr;

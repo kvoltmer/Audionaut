@@ -5,15 +5,17 @@
 
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Analysis/AnalysisWorker.h"
+#include "Engine/Core/HeadlessMode.h"
 
 using namespace juce;
 
@@ -36,15 +38,15 @@ const juce::File AudioResourceContainer::getAudioFileDirectory(const juce::File 
 
 const juce::File AudioResourceContainer::getAudioFileDirectory()
 {
-    return getAudioFileDirectory(AudiumEngine::projectDirectory);
+    return getAudioFileDirectory(ProjectFileStore::projectDirectory);
 }
 
 const juce::File AudioResourceContainer::getAudioRecordingFile(const int take,
                                                                const int channel)
 {
-    auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+    auto audioDir = getAudioFileDirectory(ProjectFileStore::projectDirectory);
     if (!audioDir.exists()) {
-        audioDir = getAudioFileDirectory(AudiumEngine::tempDirectory);
+        audioDir = getAudioFileDirectory(ProjectFileStore::tempDirectory);
     }
     jassert(audioDir.exists());
     
@@ -64,9 +66,9 @@ const juce::File AudioResourceContainer::getAudioRecordingFile(const int take,
 
 void AudioResourceContainer::deleteTemporaryProjectDirectory()
 {
-    if (AudiumEngine::tempDirectory.exists())
-        AudiumEngine::tempDirectory.deleteRecursively();
-    AudiumEngine::tempDirectory = File();
+    if (ProjectFileStore::tempDirectory.exists())
+        ProjectFileStore::tempDirectory.deleteRecursively();
+    ProjectFileStore::tempDirectory = File();
 }
 
 bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
@@ -74,18 +76,18 @@ bool AudioResourceContainer::createTemporaryProjectDirectory(bool reset)
     if (reset)
         deleteTemporaryProjectDirectory();
     
-    if (!AudiumEngine::tempDirectory.exists()) {
+    if (!ProjectFileStore::tempDirectory.exists()) {
         // use a unique directory within the temp location
         // example: ~/Library/Containers/com.voltmer-systems.audionaut/Data/Library/Caches/Audionaut/temp-50a181e5/Media/Audio
-        auto uniqueName = "temp-" + String::toHexString (Random::getSystemRandom().nextInt()) + AudiumEngine::projectFileExtension;
-        AudiumEngine::tempDirectory = File(File::getSpecialLocation(File::tempDirectory).getFullPathName() +
+        auto uniqueName = "temp-" + String::toHexString (Random::getSystemRandom().nextInt()) + ProjectFileStore::projectFileExtension;
+        ProjectFileStore::tempDirectory = File(File::getSpecialLocation(File::tempDirectory).getFullPathName() +
                                                     File::getSeparatorString() +
                                                     uniqueName);
         // make sure the directory is unique!
-        jassert(!AudiumEngine::tempDirectory.exists());
+        jassert(!ProjectFileStore::tempDirectory.exists());
     }
     
-    auto audioDirectory = getAudioFileDirectory(AudiumEngine::tempDirectory);
+    auto audioDirectory = getAudioFileDirectory(ProjectFileStore::tempDirectory);
     
     if (!audioDirectory.exists()) {
         auto success = audioDirectory.createDirectory();
@@ -143,16 +145,14 @@ bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirecto
         }        
     }
 #if _DEBUG
-#if !defined(CATCH2_TESTS)
-    if (debugString.isNotEmpty()) {
-        
+    if (debugString.isNotEmpty() && ! HeadlessMode::isHeadless()) {
+
         auto messageString = "Destination: " + destinationDirectory.getFullPathName() + "\n\n";
         messageString += debugString;
         NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
                                               "copyOrMoveAudioFiles",
                                               messageString);
     }
-#endif
 #endif
     return true;
 }
@@ -171,13 +171,13 @@ void AudioResourceContainer::changeAudioFilePaths(const juce::File newPath)
 juce::File AudioResourceContainer::getCurrentAudioFileDirectory()
 {
     // try to use project directory
-    auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+    auto audioDir = getAudioFileDirectory(ProjectFileStore::projectDirectory);
     if ( !audioDir.exists()) {
         
         // use temp dir
         createTemporaryProjectDirectory(false);
         
-        audioDir = getAudioFileDirectory(AudiumEngine::tempDirectory);
+        audioDir = getAudioFileDirectory(ProjectFileStore::tempDirectory);
         jassert(audioDir.exists());
     }
     
@@ -299,7 +299,7 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
     return nullptr;
 }
 
-std::shared_ptr<AudiumTransportSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
+std::shared_ptr<VoiceSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
 {
     if (audioResource->audioFormatReader != nullptr) {
         auto source = std::make_shared<AudioFormatReaderSource>(audioResource->audioFormatReader.get(), false);
@@ -314,9 +314,9 @@ void AudioResourceContainer::removeAudioResource(std::shared_ptr<AudioResource> 
 {
     for (auto it = audioResources.begin(); it != audioResources.end(); ++it) {
         if ((*it).second == resource) {
-            auto sources = transportSourceContainer->getTransportSourcesForResource(*resource.get());
+            auto sources = voiceSourceContainer->getVoiceSourcesForResource(*resource.get());
             for (auto source : sources) {
-                transportSourceContainer->removeTransportSource(source);
+                voiceSourceContainer->removeVoiceSource(source);
             }
             audioResources.erase(it);
             cancelAnalysisIfUnloaded(juce::File(resource->getFullPathName()));
@@ -389,10 +389,10 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
         
         
         std::vector<juce::File> redundantFiles;
-        auto audioDir = getAudioFileDirectory(AudiumEngine::projectDirectory);
+        auto audioDir = getAudioFileDirectory(ProjectFileStore::projectDirectory);
         for (auto& found : audioDir.findChildFiles (File::findFiles, false, "*")) {
             
-            auto relPath = found.getRelativePathFrom(AudiumEngine::projectDirectory);
+            auto relPath = found.getRelativePathFrom(ProjectFileStore::projectDirectory);
             if (std::find(jsonPaths.begin(), jsonPaths.end(), relPath) == jsonPaths.end()) {
                 redundantFiles.push_back(found);
             }
@@ -411,14 +411,17 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
                     break;
                 }
             }
+            // Runtime check, not the compile-time define: the GUI binary runs
+            // this same code windowless in its in-app CLI mode, where a modal
+            // box would hang the run. Headless keeps the silent-trash default.
             auto result = true;
-#if !defined(CATCH2_TESTS)
-            result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
-                                                            "Redundant files found. Move files to trash?",
-                                                            "The following audio files are not used in the project anymore:\n\n" +
-                                                            redundantFilesString +
-                                                            "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
-#endif
+            if (! HeadlessMode::isHeadless()) {
+                result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
+                                                                "Redundant files found. Move files to trash?",
+                                                                "The following audio files are not used in the project anymore:\n\n" +
+                                                                redundantFilesString +
+                                                                "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
+            }
             if (result) {
                 bool success = true;
                 for (auto& file : redundantFiles) {
@@ -427,7 +430,7 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
                         break;
                     }
                 }
-                if (!success) {
+                if (!success && ! HeadlessMode::isHeadless()) {
                     juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
                 }
             }
@@ -459,14 +462,15 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const juce::File projectDi
             }
         }
         
+        // Runtime check, not the compile-time define - see the overload above.
         auto result = true;
-#if !defined(CATCH2_TESTS)
-        result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
-                                                        "Redundant files found. Move files to trash?",
-                                                        "The following audio files are not used in the project anymore:\n\n" +
-                                                        redundantFilesString +
-                                                        "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
-#endif
+        if (! HeadlessMode::isHeadless()) {
+            result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
+                                                            "Redundant files found. Move files to trash?",
+                                                            "The following audio files are not used in the project anymore:\n\n" +
+                                                            redundantFilesString +
+                                                            "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
+        }
         if (result) {
             bool success = true;
             for (auto& file : redundantFiles) {
@@ -475,7 +479,7 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const juce::File projectDi
                     break;
                 }
             }
-            if (!success) {
+            if (!success && ! HeadlessMode::isHeadless()) {
                 juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
             }
         }

@@ -9,6 +9,7 @@
 */
 
 #include "Engine/Export/PlayListItemExport.h"
+#include "Engine/Project/ProjectFileStore.h"
 
 #include "Application/AudiumApplication.h"
 #include "Engine/Export/ExportUtil.h"
@@ -43,7 +44,7 @@ bool PlayListItemExport::exportItem()
     if (useFileChooser) {
         
         String defaultFileName;
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
         defaultFileName = AudiumApplication::getApp().initialSaveDirectory.getFullPathName();
         defaultFileName += File::getSeparatorString() + audioRegion->getName() + ".wav";
         
@@ -56,7 +57,7 @@ bool PlayListItemExport::exportItem()
                                        exportThread);
     }
     else {
-        config->fileName = File(AudiumEngine::tempDirectory.getFullPathName() + File::getSeparatorString() + audioRegion->getName() + ".wav");
+        config->fileName = File(ProjectFileStore::tempDirectory.getFullPathName() + File::getSeparatorString() + audioRegion->getName() + ".wav");
         // create the thread
         
         

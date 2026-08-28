@@ -20,7 +20,7 @@ RecordingActionHandler::RecordingActionHandler(std::shared_ptr<AudioTrackContain
     transportLoop(transportLoop_),
     playListScheduler(playListScheduler_)
 {
-#if CATCH2_TESTS
+#if AUDIONAUT_HEADLESS
     transportLoop->onLoopEnteredFunction        = [this] { onLoopEntered(); };
     transportLoop->onLoopActionFunction         = [this] { onLoopAction(); };
     transportLoop->onPlayListItemUpdateFunction = [this] { onPlayListItemUpdate(); };
@@ -71,7 +71,7 @@ void RecordingActionHandler::onRecordingFinished()
     for (auto track : audioTrackContainer->getAudioTracks()) {
         for (auto item : track->getPlayListContainer()->getPlayListItems()) {
             if (not item->isRecording()) {
-                if (item->getTransportSources().size() == 0) {
+                if (item->getVoiceSources().size() == 0) {
                     item->createTransportSources();
                 }
                 item->needsLengthUpdate = false;

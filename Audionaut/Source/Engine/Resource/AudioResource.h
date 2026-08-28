@@ -20,7 +20,7 @@
 namespace audium {
 
 class AudioPlayer;
-class AudiumTransportSource;
+class VoiceSource;
 class ResourceGroup;
 class AudioRegion;
 class AudioChannel;
@@ -64,9 +64,9 @@ public:
     /**
      * @brief Creates a new transport source for playback.
      * @param audioFormatReaderSource A shared pointer to the `AudioFormatReaderSource`.
-     * @return A shared pointer to the created `AudiumTransportSource`.
+     * @return A shared pointer to the created `VoiceSource`.
      */
-    std::shared_ptr<AudiumTransportSource> createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
+    std::shared_ptr<VoiceSource> createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
     
     /**
      * @brief Retrieves the file name without its extension.
@@ -174,12 +174,6 @@ public:
      * @return True if the data was successfully read, false otherwise.
      */
     bool readFromJson (json& input, bool rebuild) override;
-    
-    /**
-     * @brief Retrieves the size of the resource in units.
-     * @return The size of the resource as an integer.
-     */
-    int getSizeInUnits() override { return 1; }
     
     /**
      * @brief Creates a URL from a JSON object.
