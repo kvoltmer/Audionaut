@@ -27,6 +27,8 @@ Select a clip and choose *Edit → Auto Edit → 1. Create Segments…*
 - **Xfade** — toggle crossfades at the joints
 - **Apply** — perform the cut; **Esc** cancels the preview
 
+![The Create Segments preview: analysed cut points across the clip and the Less / More / Xfade / Apply overlay](img/auto-edit-overlay.png)
+
 Applying replaces the clip with its segments — each a named region placed
 seamlessly where the clip was, with optional equal-power crossfades at every
 joint. One undo restores the original clip.
