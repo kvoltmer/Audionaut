@@ -1,6 +1,6 @@
 # The main window
 
-<!-- screenshot: annotated main window overview -->
+![The main window: header bar, channel strips, arrangement and the right panel](img/main-window.png)
 
 The window has three areas: the **header bar** across the top, the **middle
 area** with channel strips and the arrangement timeline, and the **right

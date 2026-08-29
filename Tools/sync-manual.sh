@@ -29,10 +29,11 @@ COMMIT=false
 [[ -f "$SOURCE_DIR/README.md" ]] || { echo "error: no manual at $SOURCE_DIR" >&2; exit 1; }
 [[ -f "$WEB_DIR/mkdocs.yml" ]]   || { echo "error: no MkDocs site at $WEB_DIR" >&2; exit 1; }
 
-# Replace the target wholesale so deleted chapters disappear too.
-rm -f "$TARGET_DIR"/*.md
+# Replace the target wholesale so deleted chapters and images disappear too.
+rm -rf "$TARGET_DIR"
 mkdir -p "$TARGET_DIR"
 cp "$SOURCE_DIR"/*.md "$TARGET_DIR"/
+[ -d "$SOURCE_DIR/img" ] && cp -R "$SOURCE_DIR/img" "$TARGET_DIR/img"
 mv "$TARGET_DIR/README.md" "$TARGET_DIR/index.md"
 
 # Repo-relative links point at files that only exist on GitHub.
