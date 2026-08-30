@@ -1,5 +1,23 @@
 # TODO
 
+## Stem separation (feature/source-separation)
+
+- [ ] **Confirm the licence of the htdemucs model weights before a release
+  that ships the feature.** demucs.cpp and the Demucs code are MIT; the
+  Demucs README says nothing explicit about the pretrained weights. Check
+  facebookresearch/demucs (issues / model card) and decide whether the
+  download prompt needs a notice. Also relevant for App Store review notes
+  (the app downloads an 84 MB data file on first use).
+- [ ] Mirror the weights on audionaut.app as a fallback download: the
+  Hugging Face URL is pinned to a revision, but rate limits and outages are
+  out of our hands.
+- [ ] Windows/Linux pass: verify the `/external:I` / `-isystem` demotion of
+  Essentia's Eigen keeps the demucs translation units on the vendored Eigen
+  (they need >= 3.4), and check MSVC compile time for the transformer units.
+- [ ] Long clips: the separator holds the whole clip and all stems in
+  memory, so clips are capped at 10 minutes. Stream longer clips through
+  the segmenter in windows.
+
 ## Build / tooling
 
 - [x] **Wire code coverage in properly.** Done — `AUDIONAUT_ENABLE_COVERAGE`

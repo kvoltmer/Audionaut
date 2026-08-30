@@ -21,6 +21,7 @@ on Windows and Linux, read **Cmd** as **Ctrl**.
 10. [Keyboard shortcuts](10-shortcuts.md)
 11. [The command line and AI agents](11-cli-and-agents.md)
 12. [Privacy](12-privacy.md)
+13. [Stem separation](13-stem-separation.md)
 
 Building Audionaut from source is covered in the repository
 [README](../../README.md).
