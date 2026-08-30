@@ -4,7 +4,7 @@ This manual describes Audionaut, the audio editing application for multitrack
 recordings. It covers the desktop app, the command-line tool, and how your
 data is treated.
 
-Written for Audionaut **1.3**. Keyboard shortcuts are given in macOS notation;
+Written for Audionaut **1.4**. Keyboard shortcuts are given in macOS notation;
 on Windows and Linux, read **Cmd** as **Ctrl**.
 
 ## Contents

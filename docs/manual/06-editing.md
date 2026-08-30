@@ -50,6 +50,8 @@ Every clip carries its own dynamics:
   ramps may extend *beyond* the clip's edge — the fade then reads
   neighbouring source material, which is how two butting clips crossfade.
 
+![A crossfade at a clip joint: the outgoing clip's fade-out and the incoming clip's fade-in overlap](img/clip-fades.png)
+
 Crossfades at segment joints can also be created automatically by Auto Edit
 (see [Analysis and Auto Edit](08-analysis-and-auto-edit.md)); their default
 length and curve are configured in *Settings → Auto Edit*.

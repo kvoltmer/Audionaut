@@ -9,6 +9,8 @@ On first launch Audionaut asks once. You can change your answer anytime with
 the *Share anonymous usage statistics* toggle in **Settings → Privacy** —
 the change takes effect immediately.
 
+![Settings → Privacy: the opt-in toggle](img/settings-privacy.png)
+
 ## What is collected — and what is not
 
 When enabled, Audionaut reports events such as app launches and which
