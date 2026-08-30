@@ -57,6 +57,47 @@ option(AUDIONAUT_ENABLE_ESSENTIA "Build against the Essentia library" ${ESSENTIA
 message(STATUS "Essentia enabled: ${AUDIONAUT_ENABLE_ESSENTIA} (detected available: ${ESSENTIA_AVAILABLE})")
 message(STATUS "Essentia libs at: ${ESSENTIA_LIB_PATH} / ${ESSENTIA_3RDPARTY_LIB_PATH}")
 
+# demucs.cpp powers stem separation. It is plain C++ source with no build
+# step of its own, but it needs an Eigen newer than the one Essentia's tree
+# carries, and the two Eigens must never meet in one translation unit. So the
+# demucs sources - plus the one Audionaut file that calls them - go into their
+# own static library, compiled against demucs.cpp's vendored Eigen, and the
+# rest of the code only ever sees the Eigen-free DemucsRunner.h. Default to
+# whatever the submodule checkout provides (the vendored Eigen is a nested
+# submodule); override with -DAUDIONAUT_ENABLE_DEMUCS=ON/OFF.
+set(DEMUCS_SRC_PATH "${SUBMODULES_PATH}/demucs.cpp/src")
+set(DEMUCS_EIGEN_PATH "${SUBMODULES_PATH}/demucs.cpp/vendor/eigen")
+if(EXISTS "${DEMUCS_SRC_PATH}/model.hpp" AND EXISTS "${DEMUCS_EIGEN_PATH}/Eigen/Dense")
+    set(DEMUCS_AVAILABLE ON)
+else()
+    set(DEMUCS_AVAILABLE OFF)
+endif()
+option(AUDIONAUT_ENABLE_DEMUCS "Build the demucs.cpp stem separation backend" ${DEMUCS_AVAILABLE})
+message(STATUS "Demucs enabled: ${AUDIONAUT_ENABLE_DEMUCS} (detected available: ${DEMUCS_AVAILABLE})")
+
+if(AUDIONAUT_ENABLE_DEMUCS)
+    file(GLOB DEMUCS_SOURCES ${DEMUCS_SRC_PATH}/*.cpp)
+    add_library(audionaut_demucs STATIC
+        ${DEMUCS_SOURCES}
+        ${SRC_PATH}/Engine/Separation/Demucs/DemucsRunner.cpp)
+    target_include_directories(audionaut_demucs
+        PRIVATE ${DEMUCS_SRC_PATH}
+        PRIVATE ${DEMUCS_EIGEN_PATH})
+    set_property(TARGET audionaut_demucs PROPERTY CXX_STANDARD 20)
+    set_property(TARGET audionaut_demucs PROPERTY POSITION_INDEPENDENT_CODE ON)
+    find_package(Threads REQUIRED)
+    target_link_libraries(audionaut_demucs PRIVATE Threads::Threads)
+    if(MSVC)
+        # /bigobj: the transformer translation units overflow the default
+        # section limit. Third-party code, so its warnings are not ours.
+        target_compile_options(audionaut_demucs PRIVATE /bigobj /w /MP)
+    else()
+        # Inference at -O0 turns minutes into hours, so optimise this
+        # library even in Debug builds. No -march=native: the binary ships.
+        target_compile_options(audionaut_demucs PRIVATE -O3 -w)
+    endif()
+endif()
+
 # Code coverage. Off by default; the instrumentation is attached to the
 # AudionautTests target only (see below), so JUCE, Catch2 and the other
 # submodules are never instrumented and never appear in the report.
@@ -115,6 +156,8 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/AudioSources/*.cpp
         ${SRC_PATH}/Engine/Export/*.cpp
         ${SRC_PATH}/Engine/Selection/*.cpp
+        ${SRC_PATH}/Engine/Separation/*.cpp
+        # NOT Engine/Separation/Demucs/*.cpp - that goes into audionaut_demucs
 
         ${SRC_PATH}/Cli/*.cpp
         ${SRC_PATH}/Cli/Commands/*.cpp
@@ -236,7 +279,8 @@ function(audionaut_configure_common target)
             # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
             JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
             JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
-            ESSENTIA_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_ESSENTIA}>)
+            ESSENTIA_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_ESSENTIA}>
+            DEMUCS_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_DEMUCS}>)
 
     target_link_libraries(${target}
         PRIVATE
@@ -244,11 +288,16 @@ function(audionaut_configure_common target)
             juce::juce_analytics
             juce::juce_audio_formats
             juce::juce_audio_utils
+            juce::juce_cryptography
             juce::juce_dsp
             Ableton::Link
         PUBLIC
             juce::juce_recommended_config_flags
             juce::juce_recommended_warning_flags)
+
+    if(AUDIONAUT_ENABLE_DEMUCS)
+        target_link_libraries(${target} PRIVATE audionaut_demucs)
+    endif()
 
     if(AUDIONAUT_ENABLE_ESSENTIA AND MSVC)
         # MSVC's linker resolves archives by symbol table rather than left to

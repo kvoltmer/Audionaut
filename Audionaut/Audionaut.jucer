@@ -4,8 +4,28 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
               bundleIdentifier="com.voltmer-systems.audionaut" version="1.4.0"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
-              cppLanguageStandard="20" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0&#10;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
+              cppLanguageStandard="20" compilerFlagSchemes="demucs" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0&#10;DEMUCS_ENABLED=1&#10;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
   <MAINGROUP id="HQG80L" name="Audionaut">
+    <GROUP id="{D3A1C5E7-2B4F-4A6C-9E1D-5F7B9C0A2E4D}" name="Submodules">
+      <GROUP id="{E4B2D6F8-3C5A-4B7D-8F2E-6A8C0D1B3F5E}" name="demucs.cpp">
+        <FILE id="DmcCrs" name="crosstransformer.cpp" compile="1" resource="0" file="../Submodules/demucs.cpp/src/crosstransformer.cpp"
+              compilerFlagScheme="demucs"/>
+        <FILE id="DmcDsp" name="dsp.cpp" compile="1" resource="0" file="../Submodules/demucs.cpp/src/dsp.cpp"
+              compilerFlagScheme="demucs"/>
+        <FILE id="DmcEnc" name="encdec.cpp" compile="1" resource="0" file="../Submodules/demucs.cpp/src/encdec.cpp"
+              compilerFlagScheme="demucs"/>
+        <FILE id="DmcLay" name="layers.cpp" compile="1" resource="0" file="../Submodules/demucs.cpp/src/layers.cpp"
+              compilerFlagScheme="demucs"/>
+        <FILE id="DmcLst" name="lstm.cpp" compile="1" resource="0" file="../Submodules/demucs.cpp/src/lstm.cpp"
+              compilerFlagScheme="demucs"/>
+        <FILE id="DmcMap" name="model_apply.cpp" compile="1" resource="0" file="../Submodules/demucs.cpp/src/model_apply.cpp"
+              compilerFlagScheme="demucs"/>
+        <FILE id="DmcMin" name="model_inference.cpp" compile="1" resource="0" file="../Submodules/demucs.cpp/src/model_inference.cpp"
+              compilerFlagScheme="demucs"/>
+        <FILE id="DmcMld" name="model_load.cpp" compile="1" resource="0" file="../Submodules/demucs.cpp/src/model_load.cpp"
+              compilerFlagScheme="demucs"/>
+      </GROUP>
+    </GROUP>
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
       <FILE id="A4Cl9P" name="CMakeLists.txt" compile="0" resource="0" file="Catch2Tests/CMakeLists.txt"/>
       <FILE id="VLoFk0" name="README.md" compile="0" resource="0" file="Catch2Tests/README.md"/>
@@ -30,6 +50,8 @@
                 file="Source/Cli/Commands/RegionCommands.cpp"/>
           <FILE id="CliCp1" name="ClipCommands.cpp" compile="1" resource="0"
                 file="Source/Cli/Commands/ClipCommands.cpp"/>
+          <FILE id="SepCmd" name="SeparateCommand.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/SeparateCommand.cpp"/>
         </GROUP>
         <FILE id="CliCtx" name="CliContext.h" compile="0" resource="0" file="Source/Cli/CliContext.h"/>
         <FILE id="CliDsH" name="CliDispatch.h" compile="0" resource="0" file="Source/Cli/CliDispatch.h"/>
@@ -298,11 +320,41 @@
           <FILE id="BMWUaX" name="ChannelMapping.h" compile="0" resource="0"
                 file="Source/Engine/Resource/ChannelMapping.h"/>
         </GROUP>
+        <GROUP id="{F5C3E7A9-4D6B-4C8E-9A3F-7B9D1E2C4A6F}" name="Separation">
+          <GROUP id="{A6D4F8B0-5E7C-4D9F-8B4A-8C0E2F3D5B7A}" name="Demucs">
+            <FILE id="SepRnC" name="DemucsRunner.cpp" compile="1" resource="0"
+                  file="Source/Engine/Separation/Demucs/DemucsRunner.cpp" compilerFlagScheme="demucs"/>
+            <FILE id="SepRnH" name="DemucsRunner.h" compile="0" resource="0"
+                  file="Source/Engine/Separation/Demucs/DemucsRunner.h"/>
+          </GROUP>
+          <FILE id="SepBkC" name="DemucsBackend.cpp" compile="1" resource="0"
+                file="Source/Engine/Separation/DemucsBackend.cpp"/>
+          <FILE id="SepBkH" name="DemucsBackend.h" compile="0" resource="0"
+                file="Source/Engine/Separation/DemucsBackend.h"/>
+          <FILE id="SepCfg" name="DemucsConfig.h" compile="0" resource="0"
+                file="Source/Engine/Separation/DemucsConfig.h"/>
+          <FILE id="SepMsC" name="DemucsModelStore.cpp" compile="1" resource="0"
+                file="Source/Engine/Separation/DemucsModelStore.cpp"/>
+          <FILE id="SepMsH" name="DemucsModelStore.h" compile="0" resource="0"
+                file="Source/Engine/Separation/DemucsModelStore.h"/>
+          <FILE id="SepFkB" name="FakeSeparationBackend.h" compile="0" resource="0"
+                file="Source/Engine/Separation/FakeSeparationBackend.h"/>
+          <FILE id="SepBkI" name="SeparationBackend.h" compile="0" resource="0"
+                file="Source/Engine/Separation/SeparationBackend.h"/>
+          <FILE id="SepTyp" name="SeparationTypes.h" compile="0" resource="0"
+                file="Source/Engine/Separation/SeparationTypes.h"/>
+          <FILE id="SepStC" name="StemSeparator.cpp" compile="1" resource="0"
+                file="Source/Engine/Separation/StemSeparator.cpp"/>
+          <FILE id="SepStH" name="StemSeparator.h" compile="0" resource="0"
+                file="Source/Engine/Separation/StemSeparator.h"/>
+        </GROUP>
         <GROUP id="{71D24ABD-A319-5DE9-E24C-2AE51F6F1A35}" name="Undo">
           <FILE id="S8P8ar" name="UndoableContainerAction.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableContainerAction.h"/>
           <FILE id="UdRlA1" name="UndoableReloadAction.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableReloadAction.h"/>
+          <FILE id="UndEdt" name="UndoableEdit.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableEdit.h"/>
         </GROUP>
         <GROUP id="{8F2A41C7-55E1-4B29-9D63-0A7B84D21E96}" name="Project">
           <FILE id="PrjFS1" name="ProjectFileStore.cpp" compile="1" resource="0"
@@ -339,6 +391,12 @@
         <GROUP id="{FDFCF777-912B-E242-9920-2A7DBFBDCFE8}" name="Dialogs">
           <FILE id="AnStCp" name="AnalysisSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AnalysisSettingsComponent.h"/>
+          <FILE id="DlgMdt" name="ModelDownloadThread.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ModelDownloadThread.h"/>
+          <FILE id="DlgSsc" name="SeparationSettingsComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/SeparationSettingsComponent.h"/>
+          <FILE id="DlgSsd" name="StemSeparationDialog.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/StemSeparationDialog.h"/>
           <FILE id="AesCmp1" name="AutoEditSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/AutoEditSettingsComponent.h"/>
           <FILE id="GnrSt1" name="ProjectSettingsComponent.h" compile="0" resource="0"
@@ -583,7 +641,7 @@
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
+    <XCODE_MAC targetFolder="Builds/MacOSX" extraCompilerFlags="-isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3" demucs="-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src" applicationCategory="public.app-category.music"
                extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
                smallIcon="qhU3Rr" bigIcon="gdiYPG" appSandboxInheritance="1"
                appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
@@ -592,10 +650,10 @@
                iosDevelopmentTeamID="Q89CZBX79G" buildNumber="20" microphonePermissionNeeded="1"
                localNetworkPermissionNeeded="1" extraLinkerFlags="$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src"
                        customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"
                        macOSDeploymentTarget="13.0"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src&#10;$(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
+        <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src"
                        customXcodeFlags="INSTALL_PATH=/Applications, GCC_GENERATE_DEBUGGING_SYMBOLS=YES, DEBUG_INFORMATION_FORMAT=dwarf-with-dsym"
                        macOSDeploymentTarget="13.0"/>
       </CONFIGURATIONS>
@@ -605,6 +663,7 @@
         <MODULEPATH id="juce_graphics" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_events" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_core" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_cryptography" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_data_structures" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_gui_extra" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_audio_devices" path="../Submodules/JUCE/modules"/>
@@ -616,13 +675,13 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
-    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" smallIcon="qhU3Rr" bigIcon="gdiYPG"
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" demucs="-O3 -w -I../../../Submodules/demucs.cpp/vendor/eigen -I../../../Submodules/demucs.cpp/src" smallIcon="qhU3Rr" bigIcon="gdiYPG"
                 extraDefs="LINK_PLATFORM_LINUX=1" extraLinkerFlags="../../../Submodules/essentia/build/src/libessentia.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -ldrm">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
-                       extraCompilerFlags="-Wno-multichar" targetName="audionaut"/>
-        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3"
-                       extraCompilerFlags="-Wno-multichar" targetName="audionaut"/>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source&#10;../../../Submodules/essentia/src"
+                       extraCompilerFlags="-Wno-multichar -isystem ../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3" targetName="audionaut"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source&#10;../../../Submodules/essentia/src"
+                       extraCompilerFlags="-Wno-multichar -isystem ../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3" targetName="audionaut"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_analytics" path="../Submodules/JUCE/modules"/>
@@ -632,6 +691,7 @@
         <MODULEPATH id="juce_audio_processors" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_audio_utils" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_core" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_cryptography" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_data_structures" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_dsp" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_events" path="../Submodules/JUCE/modules"/>
@@ -641,12 +701,14 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
-    <VS2026 targetFolder="Builds/VisualStudio2026" extraDefs="LINK_PLATFORM_WINDOWS=1&#10;NOMINMAX&#10;WIN32_LEAN_AND_MEAN&#10;YAML_DECLARE_STATIC"
+    <VS2026 targetFolder="Builds/VisualStudio2026" demucs="/bigobj /w /I..\..\..\Submodules\demucs.cpp\vendor\eigen /I..\..\..\Submodules\demucs.cpp\src" extraDefs="LINK_PLATFORM_WINDOWS=1&#10;NOMINMAX&#10;WIN32_LEAN_AND_MEAN&#10;YAML_DECLARE_STATIC"
             smallIcon="qhU3Rr" bigIcon="gdiYPG" externalLibraries="essentia.lib&#10;fftw3f.lib&#10;samplerate.lib&#10;yaml.lib&#10;avformat.lib&#10;avcodec.lib&#10;avutil.lib&#10;swresample.lib&#10;ws2_32.lib&#10;secur32.lib&#10;crypt32.lib&#10;ncrypt.lib&#10;bcrypt.lib&#10;mfplat.lib&#10;mfuuid.lib&#10;strmiids.lib">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/build-msvc/generated&#10;$(AUDIONAUT_VCPKG_PREFIX)/include&#10;$(AUDIONAUT_VCPKG_PREFIX)/include/eigen3&#10;../../../../vcpkg/installed/x64-windows-static-md/include&#10;../../../../vcpkg/installed/x64-windows-static-md/include/eigen3"
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/build-msvc/generated&#10;$(AUDIONAUT_VCPKG_PREFIX)/include&#10;../../../../vcpkg/installed/x64-windows-static-md/include"
+                       extraCompilerFlags="/external:I $(AUDIONAUT_VCPKG_PREFIX)/include/eigen3 /external:I ../../../../vcpkg/installed/x64-windows-static-md/include/eigen3"
                        libraryPath="../../../Submodules/essentia/build-msvc/lib/Debug&#10;$(AUDIONAUT_VCPKG_PREFIX)/debug/lib&#10;../../../../vcpkg/installed/x64-windows-static-md/debug/lib"/>
-        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/build-msvc/generated&#10;$(AUDIONAUT_VCPKG_PREFIX)/include&#10;$(AUDIONAUT_VCPKG_PREFIX)/include/eigen3&#10;../../../../vcpkg/installed/x64-windows-static-md/include&#10;../../../../vcpkg/installed/x64-windows-static-md/include/eigen3"
+        <CONFIGURATION isDebug="0" name="Release" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/build-msvc/generated&#10;$(AUDIONAUT_VCPKG_PREFIX)/include&#10;../../../../vcpkg/installed/x64-windows-static-md/include"
+                       extraCompilerFlags="/external:I $(AUDIONAUT_VCPKG_PREFIX)/include/eigen3 /external:I ../../../../vcpkg/installed/x64-windows-static-md/include/eigen3"
                        libraryPath="../../../Submodules/essentia/build-msvc/lib/Release&#10;$(AUDIONAUT_VCPKG_PREFIX)/lib&#10;../../../../vcpkg/installed/x64-windows-static-md/lib"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
@@ -658,6 +720,7 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_audio_utils" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_core" path="../Submodules/JUCE/modules"/>
+        <MODULEPATH id="juce_cryptography" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_data_structures" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_dsp" path="../Submodules/JUCE/modules"/>
         <MODULEPATH id="juce_events" path="../Submodules/JUCE/modules"/>
@@ -677,6 +740,7 @@
             useGlobalPath="0"/>
     <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_cryptography" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
