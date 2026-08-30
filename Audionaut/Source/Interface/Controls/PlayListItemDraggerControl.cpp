@@ -9,17 +9,28 @@
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Analysis/AnalysisWorker.h"
 
 
 const juce::String PlayListItemDraggerControl::getLabelSuffix() const
 {
-    if (! isSelected())
-        return {};
+    // Progress takes the BPM's spot while the analyses are still running, and
+    // unlike the BPM it is not gated on selection: the footer status line is
+    // easy to miss, and an unselected clip otherwise gives no hint that its
+    // estimate is still being computed.
+    auto suffix = getAnalysisProgressSuffix();
 
-    auto bpmSuffix = getBpmSuffix();
-    if (bpmSuffix.isEmpty())
-        return {};
+    if (suffix.isEmpty())
+    {
+        if (! isSelected())
+            return {};
+
+        suffix = getBpmSuffix();
+        if (suffix.isEmpty())
+            return {};
+    }
 
     // paintLabel() draws the main label then the suffix right after it; measure
     // with its own metrics so the two cannot disagree. Only show the suffix if it
@@ -28,12 +39,61 @@ const juce::String PlayListItemDraggerControl::getLabelSuffix() const
     const auto labelFont = getLabelFont();
 
     auto nameWidth = juce::GlyphArrangement::getStringWidth (labelFont, getLabelString());
-    auto suffixWidth = juce::GlyphArrangement::getStringWidth (labelFont, bpmSuffix);
+    auto suffixWidth = juce::GlyphArrangement::getStringWidth (labelFont, suffix);
 
     if (labelLeftInset + nameWidth + labelSuffixGap + suffixWidth > (float) getWidth())
         return {};
 
-    return bpmSuffix;
+    return suffix;
+}
+
+int PlayListItemDraggerControl::getAnalysisRemainingCount() const
+{
+    auto resourceContainer = audiumEngine->getAudioResourceContainer();
+    auto analysisWorker = (resourceContainer != nullptr) ? resourceContainer->getAnalysisWorker()
+                                                         : nullptr;
+    if (analysisWorker == nullptr)
+        return 0;
+
+    auto remaining = 0;
+    for (const auto& resource : playListItem->getRegion()->getAudioResources())
+        if (resource != nullptr)
+            remaining += analysisWorker->getRemainingCount(juce::File(resource->getFullPathName()));
+
+    return remaining;
+}
+
+juce::String PlayListItemDraggerControl::getAnalysisProgressSuffix() const
+{
+    const auto remaining = getAnalysisRemainingCount();
+    if (remaining == 0)
+        return {};
+
+    // The footer status line's sweep animation, advanced one frame per
+    // timerCallback(); the count ticks down as the clip's analyses finish.
+    static constexpr const char* sweepFrames[] = { "[=   ]", "[ =  ]", "[  = ]", "[   =]",
+                                                   "[  = ]", "[ =  ]" };
+    constexpr auto numFrames = (int) (sizeof(sweepFrames) / sizeof(sweepFrames[0]));
+    const auto* frame = sweepFrames[analysisAnimationTick % numFrames];
+
+    return juce::String(frame) + " Analysing (" + juce::String(remaining) + ")";
+}
+
+void PlayListItemDraggerControl::timerCallback()
+{
+    const auto analysing = getAnalysisRemainingCount() > 0;
+
+    if (analysing)
+        ++analysisAnimationTick;
+    else
+        analysisAnimationTick = 0;
+
+    // One extra repaint after the last analysis finishes clears the progress
+    // suffix; the results themselves arrive via the provider's change message.
+    if (analysing || wasAnalysing)
+        repaint();
+
+    wasAnalysing = analysing;
 }
 
 juce::String PlayListItemDraggerControl::getBpmSuffix() const

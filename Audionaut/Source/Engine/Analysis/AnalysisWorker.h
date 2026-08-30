@@ -145,6 +145,15 @@ public:
     /** @brief Total analyses left to do: queued plus any currently running. */
     int getRemainingCount() const;
 
+    /**
+     * @brief Analyses left for @p audioFile alone: its queued jobs plus one
+     *        if an analysis of it is running right now.
+     *
+     * Lets the UI show per-clip progress (the arrangement clip header) rather
+     * than only the global status line. Safe to call from the message thread.
+     */
+    int getRemainingCount(const juce::File& audioFile) const;
+
     /** @brief Name of the file being analysed right now, or empty if idle. */
     juce::String getCurrentFileName() const;
 
@@ -179,6 +188,11 @@ private:
 
     // Name of the file currently being analysed (empty when idle); guarded by mutex.
     juce::String currentFileName;
+
+    // Full file currently being analysed (invalid when idle), for the per-file
+    // remaining count - currentFileName alone cannot be compared to a path;
+    // guarded by mutex.
+    juce::File currentFile;
 
     // Type of the analysis currently running (nullopt when idle); guarded by mutex.
     std::optional<AnalysisType> currentAnalysisType;

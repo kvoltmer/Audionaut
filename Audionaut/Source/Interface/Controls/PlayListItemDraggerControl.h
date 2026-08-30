@@ -14,7 +14,8 @@
 
 class PlayListItemDraggerControl : public DraggerControl,
                                    public juce::ChangeListener,
-                                   public juce::ActionListener
+                                   public juce::ActionListener,
+                                   private juce::Timer
 {
 public:
     
@@ -41,10 +42,18 @@ public:
         // The grid-match check mark also depends on the project tempo.
         if (auto tempoProvider = playListContainer->getTempoProvider())
             tempoProvider->addActionListener(this);
+
+        // Polls the AnalysisWorker for this clip's pending analyses and
+        // animates the "Analysing" label suffix while there are any - the
+        // worker has no per-file completion callback to listen to. 200ms
+        // matches the footer status line's animation step.
+        startTimer(200);
     }
 
     ~PlayListItemDraggerControl() override
     {
+        stopTimer();
+
         if (auto tempoProvider = playListContainer->getTempoProvider())
             tempoProvider->removeActionListener(this);
 
@@ -117,6 +126,21 @@ private:
     // file or "(128.0, 132.0) BPM" when the region spans several files with
     // differing estimates. Empty if no BPM estimate is available.
     juce::String getBpmSuffix() const;
+
+    // Analyses still queued or running for the item's audio files.
+    int getAnalysisRemainingCount() const;
+
+    // Animated "[ =  ] Analysing (N)" label suffix while
+    // getAnalysisRemainingCount() is non-zero, empty otherwise. Shown in
+    // place of the BPM suffix, on every clip (not just selected ones), so a
+    // clip whose BPM estimate is still being computed says so right where
+    // the estimate will appear.
+    juce::String getAnalysisProgressSuffix() const;
+
+    void timerCallback() override;
+
+    int analysisAnimationTick = 0;
+    bool wasAnalysing = false;
 
     // Whether every analysed resource of the item sits on the project's beat
     // grid (see AnalysisProvider::matchesGrid). False when nothing has been
