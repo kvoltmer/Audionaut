@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Playback/AudioBusInterface.h"
 
@@ -26,7 +27,7 @@ struct RoutingHarness
         inBuffer(numInputs, kBlockSize),
         outBuffer(numOutputs, kBlockSize)
     {
-        engine->createNewProject(1);
+        engine->getProjectSerializer()->createNewProject(1);
         audioBusInterface = engine->getPlayListScheduler()->getAudioBusInterface();
         audioBusInterface->setNumAudioBusChannels(kBusChannels);
 
