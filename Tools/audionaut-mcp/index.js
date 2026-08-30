@@ -488,6 +488,32 @@ server.registerTool(
 );
 
 server.registerTool(
+  "separate_stems",
+  {
+    title: "Separate stems",
+    description:
+      "Splits a clip into Drums/Bass/Other/Vocals tracks with the Demucs (htdemucs) source separator, " +
+      "aligned with the source clip. Slow: minutes for a full song, CPU only. Needs the model weights, " +
+      "which the Audionaut app downloads once (Settings > Separation); fails with model_missing until then, " +
+      "and with demucs_unavailable in builds without Demucs.",
+    inputSchema: {
+      project: projectParam,
+      track: z.number().int().min(0).optional().describe("Track id (default 0; imported audio lands on a new track)"),
+      clip: z.number().int().optional().describe("Playlist item id (default: the track's first clip)"),
+      threads: z.number().int().positive().optional().describe("Parallel segments (default: physical cores)"),
+    },
+  },
+  async ({ project, track, clip, threads }) =>
+    runCli([
+      "separate",
+      project,
+      ...(track !== undefined ? ["--track", String(track)] : []),
+      ...(clip !== undefined ? ["--clip", String(clip)] : []),
+      ...(threads !== undefined ? ["--threads", String(threads)] : []),
+    ])
+);
+
+server.registerTool(
   "clip_fades",
   {
     title: "Set clip fades",

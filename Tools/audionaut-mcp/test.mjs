@@ -41,11 +41,12 @@ try {
   const { tools } = await client.listTools();
   const names = tools.map((tool) => tool.name).sort();
   check(
-    "all sixteen tools listed",
+    "all seventeen tools listed",
     JSON.stringify(names) ===
       JSON.stringify(["analyze", "assemble", "auto_edit", "cleanup_regions", "clip_fades", "clip_gain",
                       "create_project", "create_region", "export_audio", "get_project_info",
-                      "import_audio", "move_clip", "place_clip", "remove_clip", "set_region", "split"]),
+                      "import_audio", "move_clip", "place_clip", "remove_clip", "separate_stems",
+                      "set_region", "split"]),
     names.join(",")
   );
 
