@@ -29,6 +29,7 @@
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Undo/UndoableEdit.h"
 
 namespace audium {
 
@@ -829,19 +830,7 @@ juce::Range<double> AutoEdit::resolveSegmentLengthBounds(AutoEditConfig &config)
 bool AutoEdit::applyAsUndoableEdit(std::function<bool()> mutate,
                                    const juce::String& transactionName)
 {
-    auto audioTrackContainer = audiumEngine->getAudioTrackContainer();
-    auto action = std::make_unique<audium::UndoableContainerAction>(*audioTrackContainer.get());
-
-    if (! mutate())
-        return false;
-
-    // Undo: store new state, so a single Undo takes back everything this edit
-    // changed.
-    action->storeNewState();
-    audioTrackContainer->getUndoManager()->perform(action.release(), transactionName);
-    audioTrackContainer->getUndoManager()->beginNewTransaction();
-
-    return true;
+    return audium::applyAsUndoableEdit(*audiumEngine->getAudioTrackContainer(), mutate, transactionName);
 }
 
 std::vector<float> AutoEdit::snapBoundariesToGrid(const std::vector<float>& boundarySeconds,
