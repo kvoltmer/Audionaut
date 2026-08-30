@@ -14,9 +14,7 @@
 
 class ChannelComponent  :   public juce::Component,
                             private juce::Timer,
-                            public juce::ComboBox::Listener,
-                            public juce::DragAndDropTarget,
-                            public juce::ChangeListener
+                            public juce::DragAndDropTarget
 {
 public:
     ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTrack,
@@ -28,8 +26,6 @@ public:
     void refreshComponent(std::shared_ptr<audium::AudioTrack> audioTrack, int rowNumber, bool isRowSelected);
     void timerCallback() override;
     void stopTheTimer() { stopTimer(); }
-    void comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged) override;
-    void changeListenerCallback (juce::ChangeBroadcaster* source) override;
 
     void paint (juce::Graphics& g) override;
     void resized() override;
@@ -93,16 +89,27 @@ public:
     void setRecordEnabled(int channelNumber, bool bEnabled);
     
 private:
-    void rebuildRoutingCombos();
-    void updateRoutingComboSelections();
+    /**
+     * A combo box that only ever shows its arrow: clicking it opens the strip menu
+     * (Waveform Size / Routing) instead of the item list.
+     */
+    struct MenuComboBox : public juce::ComboBox
+    {
+        using juce::ComboBox::ComboBox;
+        std::function<void()> onShowPopup;
+        void showPopup() override { if (onShowPopup) onShowPopup(); }
+    };
+
+    static void stripMenuCallback (int result, ChannelComponent* component);
+
+    void showStripMenu();
+    void setChannelHeight(int height);
     void setRoutingChannel(bool isInput, int newChannel);
 
     std::shared_ptr<audium::AudioTrack> audioTrack;
     std::shared_ptr<audium::AudiumEngine> engine;
     std::unique_ptr<LevelMeter> levelMeter;
-    std::unique_ptr<juce::ComboBox> channelSizeComboBox;
-    std::unique_ptr<juce::ComboBox> inputComboBox;
-    std::unique_ptr<juce::ComboBox> outputComboBox;
+    std::unique_ptr<MenuComboBox> channelSizeComboBox;
     std::unique_ptr<juce::Slider> volumeSlider;
     std::unique_ptr<juce::Slider> panSlider;
     std::unique_ptr<juce::ImageButton> volumeScaleButton;

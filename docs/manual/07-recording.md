@@ -6,8 +6,8 @@ Audionaut records onto armed channels while the transport plays.
 
 1. Pick your **input device** in *Settings → Audio* and enable the input
    channels you need.
-2. Choose which input feeds each channel with the **In** combo on its strip.
-   By default a channel records the input with the same number as its
+2. Choose which input feeds each channel in the strip menu under
+   **Routing → Input**. By default a channel records the input with the same number as its
    position in the track; pick any other input to record, say, a single
    microphone onto several tracks or an interface's input 5 onto a mono
    track (see [Audio routing](04-main-window.md#audio-routing)).

@@ -31,12 +31,12 @@ channel:
 - **Record** — arms the channel for recording
 - **Monitor** — routes the channel's input to the output while armed
 - a level meter, gain and pan controls
-- **In** and **Out** — which hardware input feeds the channel and where its
-  signal goes (see [Audio routing](#audio-routing))
+- a small **menu button** in the top-left corner with two submenus:
+  **Waveform Size** and **Routing** (see [Audio routing](#audio-routing))
 
 Channel height is adjustable (micro / small / medium / large / huge) to fit
-many channels on screen — set it per channel with the height combo on the
-strip, or for the whole track by **right-clicking the track header** and
+many channels on screen — set it per channel with **Waveform Size** in the
+strip menu, or for the whole track by **right-clicking the track header** and
 choosing a size from the **Waveform Size** submenu. The same track-header
 menu also holds the **Show Analysis** toggles (see
 [Analysis and Auto Edit](08-analysis-and-auto-edit.md)).
@@ -45,14 +45,15 @@ Right-clicking a channel offers **Copy selected channel(s) to new track**.
 
 ### Audio routing
 
-The two small combos at the bottom of each strip list the channels of the
-current audio device (as chosen in *Settings → Audio*).
+The strip menu's **Routing** submenu offers **Input** and **Output**, each
+listing the channels of the current audio device (as chosen in *Settings →
+Audio*) with the current choice ticked.
 
-- **In** picks the hardware input that feeds the channel when it is armed or
-  monitoring. The default, **In (auto)**, uses the input with the same
-  number as the channel's position in its track — the first channel of a
-  track takes input 1, the second input 2, and so on.
-- **Out** picks where the channel's signal goes. The default, **Main**, sends
+- **Input** picks the hardware input that feeds the channel when it is armed
+  or monitoring. The default, **Auto**, uses the input with the same number
+  as the channel's position in its track — the first channel of a track
+  takes input 1, the second input 2, and so on.
+- **Output** picks where the channel's signal goes. The default, **Main**, sends
   it through the pan control into the stereo main mix, which passes through
   the master volume and shows on the master meter. Choosing a device output
   instead sends the channel — after its own gain, unpanned — directly to
@@ -60,8 +61,8 @@ current audio device (as chosen in *Settings → Audio*).
   this to feed an external mixer or a separate headphone or monitor output.
 
 Routing changes are undoable and saved with the project. If you later open
-the project with a device that lacks the chosen channel, the strip shows the
-selection with a **!** marker and the channel stays silent (or cannot be
+the project with a device that lacks the chosen channel, the menu lists the
+saved choice as *not available* and the channel stays silent (or cannot be
 armed) until you pick an available channel or switch back to the original
 device — the saved routing is kept.
 
