@@ -54,6 +54,46 @@ SCENARIO("AnalysisWorker cancels queued analyses", "[engine][analysis][worker]")
     }
 }
 
+SCENARIO("AnalysisWorker reports per-file remaining counts", "[engine][analysis][worker]")
+{
+    auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
+    auto audioFile = File(testFilesDirectory + "silence-fade.aiff");
+    REQUIRE(audioFile.existsAsFile());
+
+    auto otherFile = File(testFilesDirectory + "_export_TRK-18.wav");
+    REQUIRE(otherFile.existsAsFile());
+
+    AnalysisWorker worker(nullptr);
+
+    // The null-provider worker drains its queue in the background, so only
+    // assertions that hold regardless of how far it has got are made here.
+    WHEN("nothing was ever enqueued for a file")
+    {
+        THEN("its remaining count is zero")
+        {
+            REQUIRE(worker.getRemainingCount(audioFile) == 0);
+        }
+    }
+
+    WHEN("enqueued files have been fully processed")
+    {
+        worker.enqueue(audioFile);
+        worker.enqueue(otherFile);
+
+        // Null-provider jobs are no-ops, so the queue drains promptly; poll
+        // rather than sleep a fixed time.
+        for (int i = 0; i < 500 && worker.getRemainingCount() > 0; ++i)
+            Thread::sleep(10);
+        REQUIRE(worker.getRemainingCount() == 0);
+
+        THEN("every per-file remaining count is zero again")
+        {
+            REQUIRE(worker.getRemainingCount(audioFile) == 0);
+            REQUIRE(worker.getRemainingCount(otherFile) == 0);
+        }
+    }
+}
+
 SCENARIO("AnalysisWorker runs the merge's analyses first", "[engine][analysis][worker]")
 {
     const auto& mergeTypes = AnalysisProvider::getMergeAnalysisTypes();

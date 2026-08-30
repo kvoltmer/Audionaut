@@ -2,7 +2,8 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectSerializer.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 
@@ -40,12 +41,13 @@ SCENARIO("external change reloads as an undoable step", "[engine][reload][undo]"
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved project") {
-        engine->createNewProject();
-        REQUIRE(engine->saveFile(outProject, nullptr));
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(store->save(outProject, nullptr));
         REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(1.0));
 
         WHEN("an external writer changes the master gain on disk") {
@@ -53,13 +55,13 @@ SCENARIO("external change reloads as an undoable step", "[engine][reload][undo]"
             j["audium"]["master_gain"] = 0.5;
             writeProjectJsonExternally(outProject, j);
 
-            REQUIRE(engine->projectChangedOnDisk());
-            REQUIRE(engine->reloadFromDisk(nullptr));
+            REQUIRE(store->projectChangedOnDisk());
+            REQUIRE(store->reloadFromDisk(nullptr));
 
             THEN("the reload applies the external state as an undo step") {
                 REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(0.5));
                 REQUIRE(engine->getUndoManager()->canUndo());
-                REQUIRE(engine->wasChangedExternally());
+                REQUIRE(store->wasChangedExternally());
 
                 AND_THEN("undo restores memory but never touches the disk") {
                     REQUIRE(engine->getUndoManager()->undo());
@@ -67,16 +69,16 @@ SCENARIO("external change reloads as an undoable step", "[engine][reload][undo]"
                     REQUIRE(readProjectJson(outProject)["audium"]["master_gain"].template get<double>() == Catch::Approx(0.5));
 
                     // the marker follows the undo stack
-                    REQUIRE_FALSE(engine->wasChangedExternally());
+                    REQUIRE_FALSE(store->wasChangedExternally());
 
                     REQUIRE(engine->getUndoManager()->redo());
                     REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(0.5));
-                    REQUIRE(engine->wasChangedExternally());
+                    REQUIRE(store->wasChangedExternally());
                 }
 
                 AND_THEN("a save clears the external-change marker") {
-                    REQUIRE(engine->saveFile(outProject, nullptr));
-                    REQUIRE_FALSE(engine->wasChangedExternally());
+                    REQUIRE(store->save(outProject, nullptr));
+                    REQUIRE_FALSE(store->wasChangedExternally());
                 }
             }
         }
@@ -95,12 +97,13 @@ SCENARIO("external track addition survives reload, undo and redo", "[engine][rel
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-track-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved single-track project") {
-        engine->createNewProject();
-        REQUIRE(engine->saveFile(outProject, nullptr));
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(store->save(outProject, nullptr));
         REQUIRE(engine->getAudioTrackContainer()->getNumItems() == 1);
 
         WHEN("an external writer adds a second track on disk") {
@@ -110,7 +113,7 @@ SCENARIO("external track addition survives reload, undo and redo", "[engine][rel
             j["audium"]["audio_tracks"].push_back(secondTrack);
             writeProjectJsonExternally(outProject, j);
 
-            REQUIRE(engine->reloadFromDisk(nullptr));
+            REQUIRE(store->reloadFromDisk(nullptr));
 
             THEN("the track count changes and round-trips across undo/redo") {
                 REQUIRE(engine->getAudioTrackContainer()->getNumItems() == 2);
@@ -137,24 +140,25 @@ SCENARIO("disk stamps tell the app's own writes apart from foreign ones", "[engi
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     auto outProject = File(reloadTestFilesDirectory + "Sessions/stamp-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved project") {
-        engine->createNewProject();
-        REQUIRE(engine->saveFile(outProject, nullptr));
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(store->save(outProject, nullptr));
 
         THEN("the app's own save does not read as an external change") {
-            REQUIRE_FALSE(engine->projectChangedOnDisk());
+            REQUIRE_FALSE(store->projectChangedOnDisk());
         }
 
         WHEN("the file is rewritten externally") {
             writeProjectJsonExternally(outProject, readProjectJson(outProject));
 
             THEN("the change is detected until the reload refreshes the stamps") {
-                REQUIRE(engine->projectChangedOnDisk());
-                REQUIRE(engine->reloadFromDisk(nullptr));
-                REQUIRE_FALSE(engine->projectChangedOnDisk());
+                REQUIRE(store->projectChangedOnDisk());
+                REQUIRE(store->reloadFromDisk(nullptr));
+                REQUIRE_FALSE(store->projectChangedOnDisk());
             }
         }
     }
@@ -172,36 +176,37 @@ SCENARIO("the agent marker survives undoing only the newest of two reloads", "[e
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-marker-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("two consecutive external changes, each reloaded") {
-        engine->createNewProject();
-        REQUIRE(engine->saveFile(outProject, nullptr));
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(store->save(outProject, nullptr));
 
         auto j = readProjectJson(outProject);
         j["audium"]["master_gain"] = 0.5;
         writeProjectJsonExternally(outProject, j);
-        REQUIRE(engine->reloadFromDisk(nullptr));
+        REQUIRE(store->reloadFromDisk(nullptr));
 
         j["audium"]["master_gain"] = 0.25;
         writeProjectJsonExternally(outProject, j);
-        REQUIRE(engine->reloadFromDisk(nullptr));
+        REQUIRE(store->reloadFromDisk(nullptr));
 
         REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(0.25));
-        REQUIRE(engine->wasChangedExternally());
+        REQUIRE(store->wasChangedExternally());
 
         WHEN("only the newest reload is undone") {
             REQUIRE(engine->getUndoManager()->undo());
 
             THEN("the first agent version is active, so the marker stays") {
                 REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(0.5));
-                REQUIRE(engine->wasChangedExternally());
+                REQUIRE(store->wasChangedExternally());
 
                 AND_THEN("undoing the first reload finally clears it") {
                     REQUIRE(engine->getUndoManager()->undo());
                     REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(1.0));
-                    REQUIRE_FALSE(engine->wasChangedExternally());
+                    REQUIRE_FALSE(store->wasChangedExternally());
                 }
             }
         }
@@ -220,12 +225,13 @@ SCENARIO("undoing a reload restores unsaved local edits, not the saved state", "
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-dirty-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a saved project with an unsaved local edit") {
-        engine->createNewProject();
-        REQUIRE(engine->saveFile(outProject, nullptr));
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(store->save(outProject, nullptr));
 
         engine->getAudioTrackContainer()->setMasterGain(0.7f);
 
@@ -234,7 +240,7 @@ SCENARIO("undoing a reload restores unsaved local edits, not the saved state", "
             j["audium"]["master_gain"] = 0.5;
             writeProjectJsonExternally(outProject, j);
 
-            REQUIRE(engine->reloadFromDisk(nullptr));
+            REQUIRE(store->reloadFromDisk(nullptr));
             REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(0.5));
 
             THEN("undo returns to the pre-reload in-memory state") {

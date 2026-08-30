@@ -11,6 +11,9 @@
 #include <nlohmann/json.hpp>
 
 namespace audium {
+
+class Preferences;
+
 namespace cli {
 
 /** Exit codes shared by every command (documented in the CLI help text). */
@@ -31,6 +34,10 @@ class CliContext {
 public:
     bool json = false;  ///< Emit a machine-readable envelope on stdout.
     bool quiet = false; ///< Suppress log output.
+
+    /** The GUI app's live preferences in in-app CLI mode; null in the
+        standalone binary, which opens its own instance when it needs one. */
+    Preferences* preferences = nullptr;
 
     /** Emits a success envelope (or nothing in human mode) and returns exitOk. */
     int ok (const nlohmann::json& result)

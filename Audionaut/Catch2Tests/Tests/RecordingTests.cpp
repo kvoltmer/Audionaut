@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -43,7 +44,7 @@ SCENARIO("recording scenario", "[engine][recording]")
     {
         auto engine = AudiumFactory::createAudiumEngine();
         
-        engine->createNewProject(1);
+        engine->getProjectSerializer()->createNewProject(1);
         auto loop = engine->getPlayListScheduler()->getTransportLoop();
         loop->setLoopActive(true);
         

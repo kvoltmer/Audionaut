@@ -48,6 +48,8 @@ private:
 namespace PreferenceKeys
 {
     static const char* const defaultFile            = "DefaultProjectFile";
+    static const char* const lastProjectFile        = "LastProjectFile";
+    static const char* const openLastProjectOnLaunch = "OpenLastProjectOnLaunch";
     static const char* const initialOpenDirectory   = "InitialOpenDirectory";
     static const char* const initialSaveDirectory   = "InitialSaveDirectory";
     static const char* const recentFiles            = "RecentProjectFiles";

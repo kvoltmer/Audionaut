@@ -27,8 +27,15 @@ namespace audium {
 class UsageAnalytics
 {
 public:
-    explicit UsageAnalytics(Preferences& preferences);
+    /** batchPeriodMs is how soon the delivery thread first posts queued
+        events; the GUI keeps the relaxed default, short-lived CLI runs pass
+        a small value so a brief flush window suffices. */
+    explicit UsageAnalytics(Preferences& preferences, int batchPeriodMs = 1000);
     ~UsageAnalytics();
+
+    /** True when GA4 credentials were compiled in - without them the class
+        is a no-op and callers can skip their flush windows entirely. */
+    static bool hasEndpointCredentials();
 
     /** True once the user has answered the first-run consent question. */
     static bool isConsentDecided(Preferences& preferences);

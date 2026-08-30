@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 
@@ -14,6 +15,7 @@ SCENARIO("PlayList", "[engine][playlist]")
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine     = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
     
     auto testFilesDirectory = String("../../../TestFiles/");
     auto inFile = File(testFilesDirectory + "silence-fade.aiff");
@@ -21,7 +23,7 @@ SCENARIO("PlayList", "[engine][playlist]")
     
     GIVEN("new project") {
         
-        engine->openFile(inFile, nullptr);
+        store->open(inFile, nullptr);
         
         WHEN("") {
             

@@ -2,7 +2,8 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
-#include "Engine/ProjectFileStore.h"
+#include "Engine/Project/ProjectSerializer.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 
 #if !JUCE_WINDOWS
@@ -27,50 +28,51 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a never-saved project") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
 
         THEN("the snapshot goes to the session's temp directory, with a pid file") {
-            REQUIRE(engine->writeAutosave());
+            REQUIRE(store->writeAutosave());
 
-            const auto tempAutosave = AudiumEngine::tempDirectory.getChildFile(ProjectFileStore::autosaveFileName);
-            const auto tempPidFile = AudiumEngine::tempDirectory.getChildFile(ProjectFileStore::autosavePidFileName);
+            const auto tempAutosave = ProjectFileStore::tempDirectory.getChildFile(ProjectFileStore::autosaveFileName);
+            const auto tempPidFile = ProjectFileStore::tempDirectory.getChildFile(ProjectFileStore::autosavePidFileName);
             REQUIRE(tempAutosave.existsAsFile());
             REQUIRE(tempPidFile.existsAsFile());
 
             AND_THEN("deleteAutosave removes both") {
-                engine->deleteAutosave();
+                store->deleteAutosave();
                 REQUIRE_FALSE(tempAutosave.existsAsFile());
                 REQUIRE_FALSE(tempPidFile.existsAsFile());
             }
         }
 
-        engine->deleteAutosave();
+        store->deleteAutosave();
     }
 
     GIVEN("a saved project") {
-        engine->createNewProject();
-        REQUIRE(engine->saveFile(outProject, nullptr));
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(store->save(outProject, nullptr));
 
         const auto autosaveFile = outProject.getSiblingFile(ProjectFileStore::autosaveFileName);
         const auto projectMtimeBefore = outProject.getLastModificationTime();
 
         WHEN("an autosave is written") {
             engine->getAudioTrackContainer()->setMasterGain(0.8f);
-            REQUIRE(engine->writeAutosave());
+            REQUIRE(store->writeAutosave());
 
             THEN("the snapshot exists and Project.json, stamps and undo are untouched") {
                 REQUIRE(autosaveFile.existsAsFile());
                 REQUIRE(outProject.getLastModificationTime() == projectMtimeBefore);
-                REQUIRE_FALSE(engine->projectChangedOnDisk());
+                REQUIRE_FALSE(store->projectChangedOnDisk());
                 REQUIRE_FALSE(engine->getUndoManager()->canUndo());
             }
 
             AND_WHEN("the project is saved cleanly") {
-                REQUIRE(engine->saveFile(outProject, nullptr));
+                REQUIRE(store->save(outProject, nullptr));
 
                 THEN("the stale snapshot is deleted") {
                     REQUIRE_FALSE(autosaveFile.existsAsFile());
@@ -81,7 +83,7 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
                 auto otherProject = File(autosaveTestFilesDirectory
                                          + "Sessions/autosave-saveas-test.audium/"
                                          + ProjectFileStore::projectFileName);
-                REQUIRE(engine->saveFile(otherProject, nullptr));
+                REQUIRE(store->save(otherProject, nullptr));
 
                 THEN("the original package's snapshot is gone too") {
                     REQUIRE_FALSE(autosaveFile.existsAsFile());
@@ -105,11 +107,12 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
-    engine->createNewProject();
+    auto store = engine->getProjectFileStore();
+    engine->getProjectSerializer()->createNewProject();
 
     // leftovers from previous test runs must not leak into the assertions
-    for (auto stale = AudiumEngine::findOrphanedTempAutosave(); stale != File();
-         stale = AudiumEngine::findOrphanedTempAutosave())
+    for (auto stale = ProjectFileStore::findOrphanedTempAutosave(); stale != File();
+         stale = ProjectFileStore::findOrphanedTempAutosave())
         stale.deleteRecursively();
 
     const auto tempRoot = File::getSpecialLocation(File::tempDirectory);
@@ -120,7 +123,7 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
         REQUIRE(orphan.getChildFile(ProjectFileStore::autosaveFileName).replaceWithText("{}"));
 
         THEN("the scan finds it") {
-            REQUIRE(AudiumEngine::findOrphanedTempAutosave() == orphan);
+            REQUIRE(ProjectFileStore::findOrphanedTempAutosave() == orphan);
         }
 
         WHEN("its pid file names a live process (this one)") {
@@ -128,7 +131,7 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
                   .replaceWithText(String(currentTestProcessId()));
 
             THEN("the scan leaves it alone") {
-                REQUIRE(AudiumEngine::findOrphanedTempAutosave() == File());
+                REQUIRE(ProjectFileStore::findOrphanedTempAutosave() == File());
             }
         }
 
@@ -137,7 +140,7 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
             orphan.getChildFile(ProjectFileStore::autosavePidFileName).replaceWithText("999999");
 
             THEN("the scan claims it") {
-                REQUIRE(AudiumEngine::findOrphanedTempAutosave() == orphan);
+                REQUIRE(ProjectFileStore::findOrphanedTempAutosave() == orphan);
             }
         }
 
@@ -145,20 +148,20 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
             orphan.getChildFile(ProjectFileStore::projectFileName).replaceWithText("{}");
 
             THEN("the scan leaves it alone") {
-                REQUIRE(AudiumEngine::findOrphanedTempAutosave() == File());
+                REQUIRE(ProjectFileStore::findOrphanedTempAutosave() == File());
             }
         }
     }
 
     GIVEN("the session's own temp directory holds an autosave") {
-        REQUIRE(engine->writeAutosave());
+        REQUIRE(store->writeAutosave());
 
         THEN("the scan skips it - a pid file of a live process guards it, and it is the current session") {
-            const auto found = AudiumEngine::findOrphanedTempAutosave();
-            REQUIRE(found != AudiumEngine::tempDirectory);
+            const auto found = ProjectFileStore::findOrphanedTempAutosave();
+            REQUIRE(found != ProjectFileStore::tempDirectory);
         }
 
-        engine->deleteAutosave();
+        store->deleteAutosave();
     }
 
     orphan.deleteRecursively();
@@ -173,16 +176,17 @@ SCENARIO("a never-saved project with audio restores from its temp package", "[en
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     const auto audioFile = File(autosaveTestFilesDirectory + "silence-fade.aiff");
     REQUIRE(audioFile.existsAsFile());
 
     GIVEN("a never-saved project with an audio file, autosaved to the temp directory") {
-        engine->createNewProject();
-        REQUIRE(engine->openFile(audioFile, nullptr));
-        REQUIRE(engine->writeAutosave());
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(store->open(audioFile, nullptr));
+        REQUIRE(store->writeAutosave());
 
-        const auto orphanDir = AudiumEngine::tempDirectory;
+        const auto orphanDir = ProjectFileStore::tempDirectory;
 
         THEN("resource paths are relative to the temp package, not garbage") {
             FileInputStream in(orphanDir.getChildFile(ProjectFileStore::autosaveFileName));
@@ -197,15 +201,15 @@ SCENARIO("a never-saved project with audio restores from its temp package", "[en
         WHEN("the session crashes and a fresh one finds and restores the orphan") {
             // simulate the crash + relaunch: the temp directory is no longer
             // this session's, and its owning process is gone
-            AudiumEngine::tempDirectory = File();
+            ProjectFileStore::tempDirectory = File();
             orphanDir.getChildFile(ProjectFileStore::autosavePidFileName).replaceWithText("999999");
 
-            REQUIRE(AudiumEngine::findOrphanedTempAutosave() == orphanDir);
+            REQUIRE(ProjectFileStore::findOrphanedTempAutosave() == orphanDir);
 
             // promote the snapshot and open the temp package, as the app does
             REQUIRE(orphanDir.getChildFile(ProjectFileStore::autosaveFileName)
                         .copyFileTo(orphanDir.getChildFile(ProjectFileStore::projectFileName)));
-            REQUIRE(engine->openFile(orphanDir, nullptr));
+            REQUIRE(store->open(orphanDir, nullptr));
 
             THEN("the audio track is back") {
                 REQUIRE(engine->getAudioTrackContainer()->getNumItems() == 2);
@@ -215,8 +219,8 @@ SCENARIO("a never-saved project with audio restores from its temp package", "[en
         }
 
         // cleanup for the non-crash branch
-        if (orphanDir.exists() && orphanDir == AudiumEngine::tempDirectory)
-            engine->deleteAutosave();
+        if (orphanDir.exists() && orphanDir == ProjectFileStore::tempDirectory)
+            store->deleteAutosave();
     }
 
     engine = nullptr;
@@ -229,23 +233,24 @@ SCENARIO("a crash-recovery snapshot restores as a dirty, undoable session", "[en
     MessageManager::getInstance();
     MessageManagerLock mmLock(Thread::getCurrentThread());
     auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
 
     auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-restore-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a project whose last session autosaved unsaved changes and then crashed") {
-        engine->createNewProject();
-        REQUIRE(engine->saveFile(outProject, nullptr));
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(store->save(outProject, nullptr));
 
         engine->getAudioTrackContainer()->setMasterGain(0.8f);
-        REQUIRE(engine->writeAutosave());
+        REQUIRE(store->writeAutosave());
 
         // "crash": reopen the project from disk - the unsaved edit is gone
-        REQUIRE(engine->openFile(outProject.getParentDirectory(), nullptr));
+        REQUIRE(store->open(outProject.getParentDirectory(), nullptr));
         REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(1.0));
         REQUIRE_FALSE(engine->getUndoManager()->canUndo());
 
         WHEN("the snapshot is restored") {
-            REQUIRE(engine->restoreAutosave(nullptr));
+            REQUIRE(store->restoreAutosave(nullptr));
 
             THEN("the session is dirty and undo returns to the saved state") {
                 REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(0.8));

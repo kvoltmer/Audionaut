@@ -17,7 +17,7 @@ class SettingsDialog;
 class AboutSplashScreen;
 class MainComponent;
 
-namespace audium { class UsageAnalytics; class ProjectMonitor; }
+namespace audium { class UsageAnalytics; class ProjectMonitor; class ProjectFileStore; class ProjectSerializer; }
 
 class AudiumApplication  : public juce::JUCEApplication,
                            private juce::AsyncUpdater,
@@ -111,6 +111,8 @@ private:
 
     std::unique_ptr<AudiumMainWindow> mainWindow;
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
+    std::shared_ptr<audium::ProjectFileStore> fileStore;
+    std::shared_ptr<audium::ProjectSerializer> serializer;
     std::unique_ptr<audium::ProjectMonitor> projectMonitor;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<audium::Preferences> preferences;
@@ -146,7 +148,10 @@ private:
     void showSettingsDialog();
     
     void clearRecentFiles();
-    
+
+    /// stores the project package path so loadStartupProject() can recall it next launch
+    void rememberLastProject(juce::File projectPackage);
+
     void updateSettings();
 
    #if JUCE_MAC

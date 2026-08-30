@@ -16,6 +16,15 @@ and relays the result — no engine logic lives here.
 | `analyze` | `analyze` | Essentia analysis, cached next to the project |
 | `auto_edit` | `auto-edit` | Segment a clip using cached analysis |
 | `assemble` | `assemble` | Build an arrangement from regions |
+| `split` | `split` | Split clips at a timeline position (bars/beats/seconds/clocks) |
+| `create_region` | `create-region` | Create a named region from a timeline range |
+| `set_region` | `set-region` | Rename and/or retrim a region (affects all its clips) |
+| `remove_clip` | `remove-clip` | Remove clip(s) from the timeline |
+| `move_clip` | `move-clip` | Move one clip to a new position |
+| `place_clip` | `place-clip` | Place an existing region on the timeline |
+| `cleanup_regions` | `cleanup-regions` | Delete every region no clip uses |
+| `clip_gain` | `clip-gain` | Set a clip's gain (linear or dB, all channels or one) |
+| `clip_fades` | `clip-fades` | Set a clip's fade lengths, offsets and curves |
 
 A typical agent flow: `create_project` → `import_audio` → `analyze` →
 `auto_edit`/`assemble` → `export_audio`. CLI errors come back as tool errors

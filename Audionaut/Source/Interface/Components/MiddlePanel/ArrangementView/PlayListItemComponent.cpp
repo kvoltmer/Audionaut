@@ -376,9 +376,25 @@ void PlayListItemComponent::repaintFadeOverlay()
                 overlay->repaint();
 }
 
+void PlayListItemComponent::updateHandleVisibility()
+{
+    const auto shown = playListItem != nullptr
+                       && playListItem->isSelected()
+                       && ! audioTrack->getViewState().getMinimized();
+
+    fadeInControl->setVisible(shown);
+    fadeOutControl->setVisible(shown);
+    fadeInStartControl->setVisible(shown);
+    fadeOutEndControl->setVisible(shown);
+    curveInControl->setVisible(shown && fadeInRampWide);
+    curveOutControl->setVisible(shown && fadeOutRampWide);
+}
+
 void PlayListItemComponent::componentMovedOrResized (juce::Component& component, bool wasMoved, bool wasResized)
 {
     if (&component == observedClipRect) {
+        // minimizing/restoring the track arrives here as a lane resize
+        updateHandleVisibility();
         syncFadeControls();
         repaintFadeOverlay();
     }
@@ -417,12 +433,7 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
     attachHandlesToLane();
     syncFadeControls();
 
-    fadeInControl->setVisible(playListItem->isSelected());
-    fadeOutControl->setVisible(playListItem->isSelected());
-    fadeInStartControl->setVisible(playListItem->isSelected());
-    fadeOutEndControl->setVisible(playListItem->isSelected());
-    curveInControl->setVisible(playListItem->isSelected() && fadeInRampWide);
-    curveOutControl->setVisible(playListItem->isSelected() && fadeOutRampWide);
+    updateHandleVisibility();
 
     // the fade curves draw only while selected - selection changes arrive
     // through this update, so refresh the rows and the lane overlay
@@ -486,12 +497,7 @@ void PlayListItemComponent::refreshAutoEditPreview()
 
 void PlayListItemComponent::mouseEnter (const MouseEvent& e)
 {
-    fadeInControl->setVisible(playListItem->isSelected());
-    fadeOutControl->setVisible(playListItem->isSelected());
-    fadeInStartControl->setVisible(playListItem->isSelected());
-    fadeOutEndControl->setVisible(playListItem->isSelected());
-    curveInControl->setVisible(playListItem->isSelected() && fadeInRampWide);
-    curveOutControl->setVisible(playListItem->isSelected() && fadeOutRampWide);
+    updateHandleVisibility();
 
     playListItemListBox->updateContent();
 }

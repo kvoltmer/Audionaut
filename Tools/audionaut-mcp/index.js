@@ -162,7 +162,9 @@ server.registerTool(
   "export_audio",
   {
     title: "Export audio",
-    description: "Renders the project offline to a WAV file (no audio device needed).",
+    description:
+      "Renders the project offline to a WAV file (no audio device needed). Pass region to bounce a " +
+      "single region instead - always dry, without any clip's gains or fades.",
     inputSchema: {
       project: projectParam,
       output: z.string().describe("Output .wav path"),
@@ -172,9 +174,12 @@ server.registerTool(
       multi_mono: z.boolean().optional().describe("Write one mono file per channel instead"),
       start_seconds: z.number().min(0).optional().describe("Export start position"),
       length_seconds: z.number().positive().optional().describe("Export length (default: whole project)"),
+      region: z.string().min(1).optional().describe("Bounce this region instead of the whole project"),
+      track: z.number().int().min(0).optional().describe("Track id, to disambiguate same-named regions"),
     },
   },
-  async ({ project, output, sample_rate, bit_depth, channels, multi_mono, start_seconds, length_seconds }) =>
+  async ({ project, output, sample_rate, bit_depth, channels, multi_mono, start_seconds, length_seconds,
+           region, track }) =>
     runCli([
       "export",
       project,
@@ -186,6 +191,8 @@ server.registerTool(
       ...(multi_mono ? ["--multi-mono"] : []),
       ...(start_seconds !== undefined ? ["--start", String(start_seconds)] : []),
       ...(length_seconds !== undefined ? ["--length", String(length_seconds)] : []),
+      ...(region !== undefined ? ["--region", region] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
     ])
 );
 
@@ -261,6 +268,262 @@ server.registerTool(
       ...(duration_seconds !== undefined ? ["--duration", String(duration_seconds)] : []),
       ...(mode ? ["--mode", mode] : []),
       ...(seed !== undefined ? ["--seed", String(seed)] : []),
+    ])
+);
+
+// Timeline positions are musical by default: bars/beats are 1-based (bar 1 =
+// timeline start, 4/4 assumed app-wide), seconds/clocks absolute from 0.
+const unitParam = z
+  .enum(["bars", "beats", "seconds", "clocks"])
+  .optional()
+  .describe("Unit for positions (default bars; bars/beats are 1-based, seconds/clocks absolute)");
+
+server.registerTool(
+  "split",
+  {
+    title: "Split clips",
+    description:
+      "Splits the clip under the given timeline position into two on every track that has one there " +
+      "(the GUI's Split command). Fails with nothing_to_split when no clip spans the position.",
+    inputSchema: {
+      project: projectParam,
+      at: z.number().describe("Timeline position to split at, e.g. 23 for bar 23"),
+      unit: unitParam,
+    },
+  },
+  async ({ project, at, unit }) =>
+    runCli(["split", project, "--at", String(at), ...(unit ? ["--unit", unit] : [])])
+);
+
+server.registerTool(
+  "create_region",
+  {
+    title: "Create region",
+    description:
+      "Creates a named region from a timeline range on every track whose clip fully contains it " +
+      "(the GUI's Create Region command). The arrangement itself is unchanged.",
+    inputSchema: {
+      project: projectParam,
+      name: z.string().min(1).describe("Name for the new region"),
+      start: z.number().describe("Range start, e.g. 23 for bar 23"),
+      end: z.number().describe("Range end (must be after start)"),
+      unit: unitParam,
+    },
+  },
+  async ({ project, name, start, end, unit }) =>
+    runCli([
+      "create-region",
+      project,
+      "--name",
+      name,
+      "--start",
+      String(start),
+      "--end",
+      String(end),
+      ...(unit ? ["--unit", unit] : []),
+    ])
+);
+
+server.registerTool(
+  "set_region",
+  {
+    title: "Edit region",
+    description:
+      "Renames a region and/or retrims its source-relative range (clamped to the source audio). " +
+      "Clips have no length of their own, so a retrim affects every clip using the region.",
+    inputSchema: {
+      project: projectParam,
+      region: z.string().min(1).describe("Name of the region to edit"),
+      rename: z.string().min(1).optional().describe("New name (must not collide with an existing region)"),
+      start: z.number().optional().describe("New source-relative start"),
+      end: z.number().optional().describe("New source-relative end (exclusive with length)"),
+      length: z.number().positive().optional().describe("New length, keeping the start"),
+      unit: unitParam,
+      track: z.number().int().min(0).optional().describe("Track id, to disambiguate same-named regions"),
+    },
+  },
+  async ({ project, region, rename, start, end, length, unit, track }) =>
+    runCli([
+      "set-region",
+      project,
+      "--region",
+      region,
+      ...(rename !== undefined ? ["--rename", rename] : []),
+      ...(start !== undefined ? ["--start", String(start)] : []),
+      ...(end !== undefined ? ["--end", String(end)] : []),
+      ...(length !== undefined ? ["--length", String(length)] : []),
+      ...(unit ? ["--unit", unit] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
+    ])
+);
+
+server.registerTool(
+  "remove_clip",
+  {
+    title: "Remove clips",
+    description:
+      "Removes the clip at a timeline position (one clip; ambiguity across tracks needs track), or every " +
+      "placement of a named region. delete_region also drops the region itself unless other clips use it.",
+    inputSchema: {
+      project: projectParam,
+      at: z.number().optional().describe("Timeline position of the clip (exclusive with region)"),
+      region: z.string().min(1).optional().describe("Region name; removes every placement"),
+      unit: unitParam,
+      track: z.number().int().min(0).optional().describe("Track id"),
+      delete_region: z.boolean().optional().describe("Also delete the region from the pool"),
+    },
+  },
+  async ({ project, at, region, unit, track, delete_region }) =>
+    runCli([
+      "remove-clip",
+      project,
+      ...(at !== undefined ? ["--at", String(at)] : []),
+      ...(region !== undefined ? ["--region", region] : []),
+      ...(unit ? ["--unit", unit] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
+      ...(delete_region ? ["--delete-region"] : []),
+    ])
+);
+
+server.registerTool(
+  "move_clip",
+  {
+    title: "Move clip",
+    description:
+      "Moves one clip to a new timeline position on its track. Address it by position (at) or region name; " +
+      "the address must match exactly one clip.",
+    inputSchema: {
+      project: projectParam,
+      to: z.number().describe("Target timeline position"),
+      at: z.number().optional().describe("Current position of the clip (exclusive with region)"),
+      region: z.string().min(1).optional().describe("Region name of the clip"),
+      unit: unitParam,
+      track: z.number().int().min(0).optional().describe("Track id"),
+    },
+  },
+  async ({ project, to, at, region, unit, track }) =>
+    runCli([
+      "move-clip",
+      project,
+      "--to",
+      String(to),
+      ...(at !== undefined ? ["--at", String(at)] : []),
+      ...(region !== undefined ? ["--region", region] : []),
+      ...(unit ? ["--unit", unit] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
+    ])
+);
+
+server.registerTool(
+  "place_clip",
+  {
+    title: "Place clip",
+    description:
+      "Creates a new clip from an existing named region at a timeline position, on the track that owns " +
+      "the region (track only disambiguates same-named regions).",
+    inputSchema: {
+      project: projectParam,
+      region: z.string().min(1).describe("Name of the region to place"),
+      at: z.number().describe("Timeline position for the new clip"),
+      unit: unitParam,
+      track: z.number().int().min(0).optional().describe("Track id, to disambiguate same-named regions"),
+    },
+  },
+  async ({ project, region, at, unit, track }) =>
+    runCli([
+      "place-clip",
+      project,
+      "--region",
+      region,
+      "--at",
+      String(at),
+      ...(unit ? ["--unit", unit] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
+    ])
+);
+
+server.registerTool(
+  "cleanup_regions",
+  {
+    title: "Delete unused regions",
+    description:
+      "Deletes every region that has no clip on the timeline (the GUI's Delete Unused Regions). " +
+      "The audio files stay in the package.",
+    inputSchema: { project: projectParam },
+  },
+  async ({ project }) => runCli(["cleanup-regions", project])
+);
+
+server.registerTool(
+  "clip_gain",
+  {
+    title: "Set clip gain",
+    description:
+      "Sets the addressed clip's gain - linear by default, dB with db=true - on every destination " +
+      "channel, or one channel. The address (at or region) must match exactly one clip.",
+    inputSchema: {
+      project: projectParam,
+      gain: z.number().describe("Gain value (linear unless db=true; linear must be >= 0)"),
+      db: z.boolean().optional().describe("Interpret gain as decibels"),
+      channel: z.number().int().min(0).optional().describe("One destination channel (default: all)"),
+      at: z.number().optional().describe("Timeline position of the clip (exclusive with region)"),
+      region: z.string().min(1).optional().describe("Region name of the clip"),
+      unit: unitParam,
+      track: z.number().int().min(0).optional().describe("Track id"),
+    },
+  },
+  async ({ project, gain, db, channel, at, region, unit, track }) =>
+    runCli([
+      "clip-gain",
+      project,
+      "--gain",
+      String(gain),
+      ...(db ? ["--db"] : []),
+      ...(channel !== undefined ? ["--channel", String(channel)] : []),
+      ...(at !== undefined ? ["--at", String(at)] : []),
+      ...(region !== undefined ? ["--region", region] : []),
+      ...(unit ? ["--unit", unit] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
+    ])
+);
+
+server.registerTool(
+  "clip_fades",
+  {
+    title: "Set clip fades",
+    description:
+      "Sets the addressed clip's fade lengths, ramp offsets (0 clears; offsets may be negative to reach " +
+      "outside the clip) and curve exponents (0.1-4, 0.5 = equal power). Values are clamped against each " +
+      "other within the clip. The address must match exactly one clip.",
+    inputSchema: {
+      project: projectParam,
+      fade_in: z.number().min(0).optional().describe("Fade-in length"),
+      fade_out: z.number().min(0).optional().describe("Fade-out length"),
+      fade_in_start: z.number().optional().describe("Fade-in ramp start offset from the clip start"),
+      fade_out_end: z.number().optional().describe("Fade-out ramp end offset from the clip end"),
+      fade_in_curve: z.number().optional().describe("Fade-in curve exponent (0.1-4, 0.5 = equal power)"),
+      fade_out_curve: z.number().optional().describe("Fade-out curve exponent (0.1-4, 0.5 = equal power)"),
+      at: z.number().optional().describe("Timeline position of the clip (exclusive with region)"),
+      region: z.string().min(1).optional().describe("Region name of the clip"),
+      unit: unitParam,
+      track: z.number().int().min(0).optional().describe("Track id"),
+    },
+  },
+  async ({ project, fade_in, fade_out, fade_in_start, fade_out_end, fade_in_curve, fade_out_curve,
+           at, region, unit, track }) =>
+    runCli([
+      "clip-fades",
+      project,
+      ...(fade_in !== undefined ? ["--fade-in", String(fade_in)] : []),
+      ...(fade_out !== undefined ? ["--fade-out", String(fade_out)] : []),
+      ...(fade_in_start !== undefined ? ["--fade-in-start", String(fade_in_start)] : []),
+      ...(fade_out_end !== undefined ? ["--fade-out-end", String(fade_out_end)] : []),
+      ...(fade_in_curve !== undefined ? ["--fade-in-curve", String(fade_in_curve)] : []),
+      ...(fade_out_curve !== undefined ? ["--fade-out-curve", String(fade_out_curve)] : []),
+      ...(at !== undefined ? ["--at", String(at)] : []),
+      ...(region !== undefined ? ["--region", region] : []),
+      ...(unit ? ["--unit", unit] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
     ])
 );
 

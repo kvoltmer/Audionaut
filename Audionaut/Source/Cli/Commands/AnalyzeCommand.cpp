@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Cli/HeadlessEngineSession.h"
 
 // Same auto-detection as the segmenters (see SBicSegmenter.cpp): the CMake
@@ -59,7 +60,7 @@ int runAnalyze (const juce::ArgumentList& args, CliContext& context)
 
     if (projectFile != juce::File()) {
         std::string error;
-        if (! session->openFile (projectFile, [&error] (std::string message) { error = message; }))
+        if (! session->getProjectFileStore()->open (projectFile, [&error] (std::string message) { error = message; }))
             return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
         for (auto& track : session->getAudioTrackContainer()->getAudioTracks())

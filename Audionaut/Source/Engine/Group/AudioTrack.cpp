@@ -3,7 +3,7 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-#include "Engine/AudiumEngine.h"
+#include "Engine/Recording/Recording.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
@@ -699,7 +699,7 @@ std::shared_ptr<PlayListItem> AudioTrack::createDefaultPlayListItem(std::shared_
     // an empty name indicates a recording
     if (region->getName().isEmpty()) {
         jassert(audioResource->isRecording());
-        auto take = AudiumEngine::recordingCounter;
+        auto take = Recording::recordingCounter;
         auto takeString = juce::String(AudioRegionContainer::formatNumber(take + 1));
         
         // Format as [Year-Month-Day Hour-Minute-Second]

@@ -5,11 +5,21 @@
 
 #pragma once
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include <JuceHeader.h>
 
 #include "Cli/CliContext.h"
 
 namespace audium {
+
+class AudioRegion;
+class AudioTrack;
+class AudioTrackContainer;
+class TempoProvider;
+
 namespace cli {
 
 /**
@@ -39,6 +49,61 @@ int runAutoEdit (const juce::ArgumentList& args, CliContext& context);
 
 /** `assemble <project> [--duration S --mode random|sequential]` - build a cut. */
 int runAssemble (const juce::ArgumentList& args, CliContext& context);
+
+/** `split <project> --at P [--unit bars|beats|seconds|clocks]` - split clips. */
+int runSplit (const juce::ArgumentList& args, CliContext& context);
+
+/** `create-region <project> --name N --start A --end B [--unit ...]` - named region. */
+int runCreateRegion (const juce::ArgumentList& args, CliContext& context);
+
+/** `set-region <project> --region N [--rename] [--start/--end/--length]` - edit a region. */
+int runSetRegion (const juce::ArgumentList& args, CliContext& context);
+
+/** `remove-clip <project> (--at P | --region N) [--track] [--delete-region]` */
+int runRemoveClip (const juce::ArgumentList& args, CliContext& context);
+
+/** `move-clip <project> (--at P | --region N) --to Q [--track]` */
+int runMoveClip (const juce::ArgumentList& args, CliContext& context);
+
+/** `place-clip <project> --region N --at P [--track]` */
+int runPlaceClip (const juce::ArgumentList& args, CliContext& context);
+
+/** `cleanup-regions <project>` - delete regions no clip uses. */
+int runCleanupRegions (const juce::ArgumentList& args, CliContext& context);
+
+/** `clip-gain <project> (--at P | --region N) --gain G [--db] [--channel C]` */
+int runClipGain (const juce::ArgumentList& args, CliContext& context);
+
+/** `clip-fades <project> (--at P | --region N) [--fade-in X ...]` */
+int runClipFades (const juce::ArgumentList& args, CliContext& context);
+
+/**
+ * Musical time app-wide is 4/4 with 24 clocks per beat, i.e. 96 clocks per
+ * bar (the arrangement grid makes the same assumption). As positions, bars
+ * and beats are 1-based on the timeline; seconds and clocks are absolute
+ * from 0. As durations (parseMusicalDuration), all units count from 0.
+ */
+constexpr double clocksPerBar  = 96.0;
+constexpr double clocksPerBeat = 24.0;
+
+bool parseMusicalPosition (const juce::String& value,
+                           const juce::String& unit,
+                           const TempoProvider& tempoProvider,
+                           double& outClocks,
+                           std::string& error);
+
+bool parseMusicalDuration (const juce::String& value,
+                           const juce::String& unit,
+                           const TempoProvider& tempoProvider,
+                           double& outClocks,
+                           std::string& error);
+
+/**
+ * All (track, region) pairs whose region name matches exactly, optionally
+ * filtered to one track id (trackId < 0 searches every track).
+ */
+std::vector<std::pair<std::shared_ptr<AudioTrack>, std::shared_ptr<AudioRegion>>>
+findRegionsByName (const AudioTrackContainer& tracks, const juce::String& name, int trackId = -1);
 
 /** Resolves a project argument to its Project.json; invalid File() if absent. */
 juce::File resolveProjectFile (const juce::ArgumentList& args, int argumentIndex = 0);

@@ -118,26 +118,30 @@ int AnalysisWorker::useTimeSlice()
 {
     Job job;
     {
+        // Claiming the job and marking it running happen in one critical
+        // section, so the remaining counts never miss a job that has been
+        // popped but not yet flagged as running.
         std::lock_guard<std::mutex> lock(mutex);
         if (jobs.empty())
             return 500; // idle: poll again in half a second
 
         job = jobs.front();
         jobs.pop_front();
+
+        currentFileName = job.file.getFileName();
+        currentFile = job.file;
+        currentAnalysisType = job.type;
+        busy = true;
     }
+
+    if (analysisProvider != nullptr)
+        analysisProvider->analyzeFile(job.file, job.type);
 
     {
         std::lock_guard<std::mutex> lock(mutex);
-        currentFileName = job.file.getFileName();
-        currentAnalysisType = job.type;
-    }
-    busy = true;
-    if (analysisProvider != nullptr)
-        analysisProvider->analyzeFile(job.file, job.type);
-    busy = false;
-    {
-        std::lock_guard<std::mutex> lock(mutex);
+        busy = false;
         currentFileName = {};
+        currentFile = juce::File();
         currentAnalysisType = std::nullopt;
     }
 
@@ -156,6 +160,19 @@ int AnalysisWorker::getRemainingCount() const
 {
     std::lock_guard<std::mutex> lock(mutex);
     return static_cast<int>(jobs.size()) + (busy ? 1 : 0);
+}
+
+int AnalysisWorker::getRemainingCount(const juce::File& audioFile) const
+{
+    std::lock_guard<std::mutex> lock(mutex);
+
+    auto count = static_cast<int>(std::count_if(jobs.begin(), jobs.end(),
+        [&audioFile] (const Job& job) { return job.file == audioFile; }));
+
+    if (currentFile == audioFile && currentFile != juce::File())
+        ++count;
+
+    return count;
 }
 
 juce::String AnalysisWorker::getCurrentFileName() const

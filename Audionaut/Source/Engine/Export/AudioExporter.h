@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
 namespace audium {
@@ -42,7 +43,7 @@ public:
                 config->userCanceled = true;
         };
 
-        audiumEngine.setBypass(true);
+        audiumEngine.getLinkAudioDevice()->setBypass(true);
         audiumEngine.getPlayListScheduler()->prepareToPlay(config->blockSize, config->sampleRate);
 
         juce::TemporaryFile tempFile (config->fileName);
@@ -121,7 +122,7 @@ public:
             auto sampleRate = device->getCurrentSampleRate();
             audiumEngine.getPlayListScheduler()->prepareToPlay(numSamples, sampleRate);
         }
-        audiumEngine.setBypass(false);
+        audiumEngine.getLinkAudioDevice()->setBypass(false);
     }
 
 private:

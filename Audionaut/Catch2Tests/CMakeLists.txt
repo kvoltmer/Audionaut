@@ -96,6 +96,7 @@ add_subdirectory(${SUBMODULES_PATH}/Catch2 catch2-bin)
 
 file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/*.cpp
+        ${SRC_PATH}/Engine/Project/*.cpp
         ${SRC_PATH}/Engine/Analysis/*.cpp
         ${SRC_PATH}/Engine/Core/*.cpp
         ${SRC_PATH}/Engine/Channel/*.cpp
@@ -117,6 +118,10 @@ file(GLOB SRC_AUDIUM
 
         ${SRC_PATH}/Cli/*.cpp
         ${SRC_PATH}/Cli/Commands/*.cpp
+
+        # NOT Application/*.cpp - only the analytics unit, which the CLI
+        # dispatch consumes; the rest of Application/ is the GUI app shell
+        ${SRC_PATH}/Application/UsageAnalytics.cpp
 
 
         ${SRC_PATH}/Interface/*.cpp
@@ -236,6 +241,7 @@ function(audionaut_configure_common target)
     target_link_libraries(${target}
         PRIVATE
             juce::juce_core
+            juce::juce_analytics
             juce::juce_audio_formats
             juce::juce_audio_utils
             juce::juce_dsp
@@ -415,14 +421,24 @@ if(AUDIONAUT_BUILD_CLI)
 
     audionaut_configure_common(${CLI_NAME})
 
+    # GA4 credentials for the CLI binary only (mirrors the .jucer defines);
+    # the test target stays without them so in-process command tests can
+    # never create an analytics destination.
+    target_compile_definitions(${CLI_NAME}
+            PRIVATE
+            GA4_MEASUREMENT_ID="G-Q6904SZWWY"
+            GA4_API_SECRET="TpBEa6eRRAGeG4BZmqwJDA")
+
     target_sources(${CLI_NAME}
             PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}/../Cli/CliMain.cpp)
 
     # Real-binary smoke test: the in-process command tests live in the
     # AudionautTests target; this one checks the executable end to end.
+    # Analytics stays off however the developer's consent preference is set.
     add_test(NAME CliSmoke
              COMMAND ${CLI_NAME} info ${CMAKE_CURRENT_SOURCE_DIR}/TestFiles/Sessions/simple-sine.audium --json)
+    set_tests_properties(CliSmoke PROPERTIES ENVIRONMENT "AUDIONAUT_DISABLE_ANALYTICS=1")
 endif()
                     
 

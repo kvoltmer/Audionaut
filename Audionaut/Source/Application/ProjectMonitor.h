@@ -10,6 +10,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/Project/ProjectFileStore.h"
 
 namespace audium
 {
@@ -73,6 +74,7 @@ private:
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
     std::shared_ptr<AudiumEngine> engine;
+    std::shared_ptr<ProjectFileStore> store;
 
     bool suspended = false;
     bool missingReported = false;
