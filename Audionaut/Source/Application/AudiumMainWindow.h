@@ -14,6 +14,7 @@ class NewRegionDialog;
 class ExportAudioDialog;
 class NewAudioTrackDialog;
 class AssembleDialog;
+class StemSeparationDialog;
 
 //==============================================================================
 /*
@@ -61,6 +62,14 @@ private:
     // least one region with audio to arrange.
     bool canAssemble();
 
+    // Whether Separate Stems is available: a build with Demucs, exactly one
+    // clip selected, transport stopped. The model itself is checked (and
+    // offered for download) when the command runs.
+    bool canSeparateStems();
+
+    // Splits the selected clip into stem tracks - see StemSeparationDialog.
+    void invokeSeparateStems();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
 
@@ -68,6 +77,7 @@ private:
     std::unique_ptr<ExportAudioDialog> exportAudioDialog;
     std::unique_ptr<NewAudioTrackDialog> newAudioTrackDialog;
     std::unique_ptr<AssembleDialog> assembleDialog;
+    std::unique_ptr<StemSeparationDialog> stemSeparationDialog;
         
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudiumMainWindow)
 };

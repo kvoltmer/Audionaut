@@ -67,6 +67,7 @@ namespace PreferenceKeys
     static const char* const autoEditCrossfadesEnabled = "AutoEditCrossfadesEnabled";
     static const char* const autoEditCrossfadeMs    = "AutoEditCrossfadeMs";
     static const char* const autoEditCrossfadeType  = "AutoEditCrossfadeType";
+    static const char* const separationThreads      = "SeparationThreads";
     static const char* const usageStatsEnabled      = "UsageStatsEnabled";
     static const char* const analyticsClientId      = "AnalyticsClientId";
     static const char* const analyticsUnsentEvents  = "AnalyticsUnsentEvents";

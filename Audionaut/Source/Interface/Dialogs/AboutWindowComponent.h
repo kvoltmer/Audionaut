@@ -9,6 +9,7 @@
 
 #include "Application/AudiumApplication.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Engine/Separation/DemucsConfig.h"
 
 using json = nlohmann::json;
 
@@ -68,6 +69,9 @@ public:
 
 #if ESSENTIA_ENABLED
         librariesText += "\nEssentia " + String (essentia::version) + " (Music Technology Group, Universitat Pompeu Fabra)";
+#endif
+#if DEMUCS_ENABLED
+        librariesText += "\ndemucs.cpp (Sevag Hanssian, MIT) and the Demucs htdemucs model (Meta AI Research)";
 #endif
 
         librariesLabel.setText (librariesText, dontSendNotification);
