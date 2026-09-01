@@ -533,3 +533,103 @@ SCENARIO ("cli import and export round trip", "[cli]")
 
     workDir.deleteRecursively();
 }
+
+SCENARIO ("cli remove-track and remove-channel", "[cli]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("tracks.audium");
+    auto audioFile = juce::File (testFilesDir + "sine-0dB.wav");
+    REQUIRE (audioFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    // channel count of one track in the persisted JSON (empty tracks omit the key)
+    auto numChannels = [] (const nlohmann::json& projectJson, size_t trackIndex) {
+        auto& track = projectJson["audium"]["audio_tracks"][trackIndex];
+        return (int) track.value ("channels", nlohmann::json::array()).size();
+    };
+    auto numTracks = [] (const nlohmann::json& projectJson) {
+        return (int) projectJson["audium"]["audio_tracks"].size();
+    };
+
+    GIVEN ("a project with a two-channel track 0 and an imported clip on track 1") {
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 2"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " "
+                                           + audioFile.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+        REQUIRE (numTracks (readProjectJson (project)) == 2);
+
+        WHEN ("a channel is removed from track 0") {
+            REQUIRE (cli::runRemoveChannel (makeArgs ("remove-channel " + project.getFullPathName()
+                                                      + " --track 0 --channel 1"),
+                                            context)
+                     == cli::exitOk);
+
+            THEN ("one channel remains and the arrangement is untouched") {
+                auto json = readProjectJson (project);
+                REQUIRE (numChannels (json, 0) == 1);
+                REQUIRE (countPlayListItems (json) == 1);
+            }
+        }
+
+        WHEN ("the imported track's only channel is removed") {
+            REQUIRE (cli::runRemoveChannel (makeArgs ("remove-channel " + project.getFullPathName()
+                                                      + " --track 1 --channel 0"),
+                                            context)
+                     == cli::exitOk);
+
+            THEN ("the empty track survives and the project still opens") {
+                REQUIRE (numChannels (readProjectJson (project), 1) == 0);
+                REQUIRE (cli::runInfo (makeArgs ("info " + project.getFullPathName()), context)
+                         == cli::exitOk);
+            }
+        }
+
+        WHEN ("the channel index is out of range") {
+            REQUIRE (cli::runRemoveChannel (makeArgs ("remove-channel " + project.getFullPathName()
+                                                      + " --track 0 --channel 2"),
+                                            context)
+                     == cli::exitUsage);
+        }
+
+        WHEN ("the track does not exist") {
+            REQUIRE (cli::runRemoveChannel (makeArgs ("remove-channel " + project.getFullPathName()
+                                                      + " --track 7 --channel 0"),
+                                            context)
+                     == cli::exitFailure);
+            REQUIRE (cli::runRemoveTrack (makeArgs ("remove-track " + project.getFullPathName()
+                                                    + " --track 7"),
+                                          context)
+                     == cli::exitFailure);
+        }
+
+        WHEN ("the imported track is removed") {
+            REQUIRE (cli::runRemoveTrack (makeArgs ("remove-track " + project.getFullPathName()
+                                                    + " --track 1"),
+                                          context)
+                     == cli::exitOk);
+
+            THEN ("only the empty track remains and its clips are gone") {
+                auto json = readProjectJson (project);
+                REQUIRE (numTracks (json) == 1);
+                REQUIRE (countPlayListItems (json) == 0);
+                REQUIRE (cli::runInfo (makeArgs ("info " + project.getFullPathName()), context)
+                         == cli::exitOk);
+            }
+        }
+
+        WHEN ("--track is missing") {
+            REQUIRE (cli::runRemoveTrack (makeArgs ("remove-track " + project.getFullPathName()), context)
+                     == cli::exitUsage);
+            REQUIRE (cli::runRemoveChannel (makeArgs ("remove-channel " + project.getFullPathName()
+                                                      + " --channel 0"),
+                                            context)
+                     == cli::exitUsage);
+        }
+    }
+
+    workDir.deleteRecursively();
+}

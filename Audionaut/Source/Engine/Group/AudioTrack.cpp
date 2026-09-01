@@ -538,6 +538,8 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
         audioResourceContainer.onDeleteChannel(this, channel);
         
         if (audioChannelContainer->deleteObject(channel)) {
+            result = true;
+
             // mapping changes for resources
             for (auto resource : getAudioResources()) {
                 resource->getChannelMapping().decrementDestinationChannel(channelNumber);

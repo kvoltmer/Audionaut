@@ -859,6 +859,9 @@
     <ClCompile Include="..\..\Source\Cli\Commands\ClipCommands.cpp">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\TrackCommands.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp">
       <Filter>Audionaut\Source\Cli</Filter>
     </ClCompile>
