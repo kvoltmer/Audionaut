@@ -108,6 +108,109 @@ public:
     }
 
 private:
+    /**
+     * The band, dancing while the model works: four ASCII equalizers, one
+     * per stem. Pure entertainment for a minutes-long wait; the real
+     * progress lives in the window's bar and status message.
+     */
+    class StemBandComponent : public juce::Component,
+                              private juce::Timer
+    {
+    public:
+        StemBandComponent()
+        {
+            for (auto& height : heights)
+                height = 1 + random.nextInt (rows);
+
+            setSize (380, rows * lineHeight + lineHeight);
+            startTimerHz (8);
+        }
+
+        void paint (juce::Graphics& g) override
+        {
+            const auto colour = getLookAndFeel().findColour (juce::AlertWindow::textColourId);
+
+            g.setFont (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::plain));
+
+            auto area = getLocalBounds();
+
+            // The bars, top row first. Every line is padded to the same
+            // column count so centring cannot shift them against each other.
+            for (auto row = 0; row < rows; ++row)
+            {
+                juce::String line;
+
+                for (auto group = 0; group < audium::numStems; ++group)
+                {
+                    for (auto column = 0; column < groupWidth; ++column)
+                    {
+                        const auto height = heights[static_cast<size_t> (group * groupWidth + column)];
+                        line << (height >= rows - row ? juce::String::charToString (barCharFor (group))
+                                                      : juce::String (" "));
+                    }
+
+                    if (group < audium::numStems - 1)
+                        line << juce::String::repeatedString (" ", gapWidth);
+                }
+
+                g.setColour (colour.withAlpha (0.9f));
+                g.drawText (line, area.removeFromTop (lineHeight), juce::Justification::centred);
+            }
+
+            // The stem names, centred under their bars.
+            juce::String labels;
+
+            for (auto group = 0; group < audium::numStems; ++group)
+            {
+                const auto name = audium::stemDisplayName (audium::stemFromIndex (group)).toUpperCase();
+                const auto padding = groupWidth - name.length();
+                labels << juce::String::repeatedString (" ", padding / 2) << name
+                       << juce::String::repeatedString (" ", padding - padding / 2);
+
+                if (group < audium::numStems - 1)
+                    labels << juce::String::repeatedString (" ", gapWidth);
+            }
+
+            g.setColour (colour.withAlpha (0.6f));
+            g.drawText (labels, area.removeFromTop (lineHeight), juce::Justification::centred);
+        }
+
+    private:
+        void timerCallback() override
+        {
+            // A smoothed random walk per bar, with the odd full-height hit.
+            for (auto& height : heights)
+                height = juce::jlimit (1, rows, height + random.nextInt (3) - 1);
+
+            if (random.nextInt (4) == 0)
+                heights[static_cast<size_t> (random.nextInt (static_cast<int> (heights.size())))] = rows;
+
+            repaint();
+        }
+
+        static juce::juce_wchar barCharFor (int group)
+        {
+            switch (audium::stemFromIndex (group))
+            {
+                case audium::Stem::Drums:  return '#';
+                case audium::Stem::Bass:   return '=';
+                case audium::Stem::Other:  return '+';
+                case audium::Stem::Vocals: return '~';
+            }
+            return '|';
+        }
+
+        static constexpr int rows = 5;
+        static constexpr int groupWidth = 8;
+        static constexpr int gapWidth = 3;
+        static constexpr int lineHeight = 15;
+
+        std::array<int, static_cast<size_t> (audium::numStems* groupWidth)> heights {};
+        juce::Random random;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StemBandComponent)
+    };
+
     class SeparationThread : public juce::ThreadWithProgressWindow
     {
     public:
@@ -116,6 +219,8 @@ private:
             separator (separator_),
             job (std::move (job_))
         {
+            if (auto* window = getAlertWindow())
+                window->addCustomComponent (&band);
         }
 
         void run() override
@@ -137,6 +242,10 @@ private:
     private:
         audium::StemSeparator& separator;
         audium::SeparationJob job;
+
+        // A child of the alert window for display, but owned here: it
+        // removes itself from the window when this thread object goes away.
+        StemBandComponent band;
     };
 
     static void warn (const juce::String& message, juce::Component* parent)

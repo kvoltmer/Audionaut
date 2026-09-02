@@ -35,7 +35,7 @@ public:
         addAndMakeVisible (threadsBox.get());
 
         threadsHint = std::make_unique<juce::Label> (juce::String{},
-                                                     TRANS ("Each thread separates one segment of the clip; more threads finish sooner but use more memory."));
+                                                     TRANS ("Each thread separates one segment of the clip.\nMore threads finish sooner but use more memory."));
         threadsHint->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
         threadsHint->setAlpha (0.6f);
         threadsHint->setMinimumHorizontalScale (1.0f);
