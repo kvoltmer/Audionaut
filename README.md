@@ -41,6 +41,10 @@ Prerequisites:
 
 Building Essentia is optional: without it, `ESSENTIA_ENABLED` auto-detects off and the app and tests compile with the analysis features disabled.
 
+### demucs.cpp (stem separation)
+
+Stem separation runs [demucs.cpp](https://github.com/sevagh/demucs.cpp), a C++ port of Meta's Demucs, compiled straight from the `Submodules/demucs.cpp` submodule — no separate build step. It needs the submodule's vendored Eigen (`Submodules/demucs.cpp/vendor/eigen`, a nested submodule that `--recursive` fetches); the CMake build detects it and sets `AUDIONAUT_ENABLE_DEMUCS` accordingly. The model weights are not in the repository: the app downloads them on first use into its `Models` folder, or point the CLI at a copy with `--model`.
+
 ### Build
 
 **Xcode** — open the Xcode project located here:
@@ -105,6 +109,7 @@ audionaut-cli move-clip   song.audium --region drop --to 41
 audionaut-cli remove-clip song.audium --at 41 --track 0
 audionaut-cli clip-gain   song.audium --region drop --gain -6 --db
 audionaut-cli clip-fades  song.audium --region drop --fade-in 1 --fade-out 2 --unit beats
+audionaut-cli separate  song.audium --track 1                  # Drums/Bass/Other/Vocals tracks; needs the Demucs model
 audionaut-cli export  song.audium -o mix.wav --sample-rate 48000 --bit-depth 24
 ```
 

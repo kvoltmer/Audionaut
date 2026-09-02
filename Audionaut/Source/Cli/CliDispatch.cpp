@@ -231,6 +231,17 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "reach outside the clip) and curve exponents (0.1-4, 0.5 = equal power). Values are clamped "
           "against each other within the clip.",
           runClipFades },
+
+        { "separate",
+          "separate <project.audium> [--track N] [--clip N] [--threads N] [--model PATH]\n"
+          "                          [--no-mute-source] [--backend demucs|fake] [--json]",
+          "Separates a clip into Drums/Bass/Other/Vocals tracks.",
+          "Renders the clip, runs the Demucs (htdemucs) stem separator on it and adds one new track "
+          "per stem, aligned with the source clip, and mutes the source track (keep it audible with --no-mute-source). Needs the model weights, which the app downloads "
+          "into its Models folder (Settings > Separation); --model points at a copy elsewhere. "
+          "Takes minutes for a full song; --threads defaults to the physical core count. "
+          "--backend fake skips the model and copies the clip into the Vocals stem (for testing).",
+          runSeparate },
     };
 
     return commands;

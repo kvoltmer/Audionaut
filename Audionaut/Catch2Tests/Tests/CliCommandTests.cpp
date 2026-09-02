@@ -533,3 +533,77 @@ SCENARIO ("cli import and export round trip", "[cli]")
 
     workDir.deleteRecursively();
 }
+
+SCENARIO ("cli separate adds four stem tracks with the fake backend", "[cli][separation]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("separate.audium");
+    auto audioFile = juce::File (testFilesDir + "sine-0dB.wav");
+    REQUIRE (audioFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    GIVEN ("a project with an imported sine file on track 1") {
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 1"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " "
+                                           + audioFile.getFullPathName() + " --position 2"),
+                                 context)
+                 == cli::exitOk);
+
+        const auto before = readProjectJson (project);
+        const auto tracksBefore = before["audium"]["audio_tracks"].size();
+        const auto clipsBefore = countPlayListItems (before);
+
+        WHEN ("the clip is separated with the fake backend") {
+            REQUIRE (cli::runSeparate (makeArgs ("separate " + project.getFullPathName()
+                                                 + " --track 1 --backend fake --threads 2"),
+                                       context)
+                     == cli::exitOk);
+
+            THEN ("the saved project has four more tracks, one clip each, named after the stems") {
+                const auto after = readProjectJson (project);
+                const auto tracks = after["audium"]["audio_tracks"];
+                REQUIRE (tracks.size() == tracksBefore + 4);
+                REQUIRE (countPlayListItems (after) == clipsBefore + 4);
+
+                const auto lastName = tracks.back().value ("name", std::string());
+                REQUIRE (lastName.find ("Vocals") != std::string::npos);
+            }
+
+            THEN ("the source track's channels are muted in the saved project") {
+                const auto after = readProjectJson (project);
+                const auto& source = after["audium"]["audio_tracks"][1];
+
+                for (const auto& channel : source.value ("channels", nlohmann::json::array()))
+                    REQUIRE (channel.value ("mute", false));
+            }
+
+            THEN ("the stem files live in the package's audio folder") {
+                auto audioDir = project.getChildFile ("Media").getChildFile ("Audio");
+                REQUIRE (audioDir.getChildFile ("sine-0dB - Vocals.wav").existsAsFile());
+                REQUIRE (audioDir.getChildFile ("sine-0dB - Drums.wav").existsAsFile());
+            }
+        }
+
+        WHEN ("an unknown backend is asked for") {
+            REQUIRE (cli::runSeparate (makeArgs ("separate " + project.getFullPathName() + " --backend nope"), context)
+                     == cli::exitUsage);
+        }
+
+        WHEN ("the model file is missing") {
+            const auto result = cli::runSeparate (makeArgs ("separate " + project.getFullPathName()
+                                                            + " --model " + workDir.getChildFile ("nope.bin").getFullPathName()),
+                                                  context);
+
+            THEN ("it fails before touching the project") {
+                // model_missing when Demucs is compiled in, demucs_unavailable otherwise
+                REQUIRE ((result == cli::exitFailure || result == cli::exitUnavailable));
+                REQUIRE (readProjectJson (project)["audium"]["audio_tracks"].size() == tracksBefore);
+            }
+        }
+    }
+
+    workDir.deleteRecursively();
+}

@@ -77,6 +77,9 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context);
 /** `clip-fades <project> (--at P | --region N) [--fade-in X ...]` */
 int runClipFades (const juce::ArgumentList& args, CliContext& context);
 
+/** `separate <project> [--track N --clip N --threads N --model PATH --no-mute-source]` - stems to new tracks. */
+int runSeparate (const juce::ArgumentList& args, CliContext& context);
+
 /**
  * Musical time app-wide is 4/4 with 24 clocks per beat, i.e. 96 clocks per
  * bar (the arrangement grid makes the same assumption). As positions, bars

@@ -38,6 +38,15 @@ the app, and never asks on its own. Setting the environment variable
 useful in CI and scripts. Nothing can make the CLI report while consent is
 denied or undecided.
 
+## Other network access
+
+Apart from usage statistics, Audionaut contacts the network in one other
+case: when you first use *Separate Stems*, it downloads the separation
+model (about 80 MB) from Hugging Face after asking you. The download
+carries no information about you or your project, and the separation
+itself runs entirely on your machine — see [Stem
+separation](13-stem-separation.md).
+
 ## Where your choice is stored
 
 The consent flag (`UsageStatsEnabled`) lives in Audionaut's ordinary

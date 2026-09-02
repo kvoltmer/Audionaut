@@ -25,6 +25,7 @@ and relays the result — no engine logic lives here.
 | `cleanup_regions` | `cleanup-regions` | Delete every region no clip uses |
 | `clip_gain` | `clip-gain` | Set a clip's gain (linear or dB, all channels or one) |
 | `clip_fades` | `clip-fades` | Set a clip's fade lengths, offsets and curves |
+| `separate_stems` | `separate` | Split a clip into Drums/Bass/Other/Vocals tracks (Demucs; needs the downloaded model) |
 
 A typical agent flow: `create_project` → `import_audio` → `analyze` →
 `auto_edit`/`assemble` → `export_audio`. CLI errors come back as tool errors
