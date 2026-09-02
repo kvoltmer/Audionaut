@@ -2,12 +2,33 @@
 
 ## Stem separation (feature/source-separation)
 
-- [ ] **Confirm the licence of the htdemucs model weights before a release
-  that ships the feature.** demucs.cpp and the Demucs code are MIT; the
-  Demucs README says nothing explicit about the pretrained weights. Check
-  facebookresearch/demucs (issues / model card) and decide whether the
-  download prompt needs a notice. Also relevant for App Store review notes
-  (the app downloads an 84 MB data file on first use).
+- [x] **Confirm the licence of the htdemucs model weights.** Checked
+  2026-09-02, and the answer is bad: they are **not MIT and research-only**.
+  facebookresearch/demucs issue #327, answered by the maintainer
+  (adefossez, 2022-05-23): "The model weights are not covered by the MIT
+  license, and are provided only for scientific purposes." The LICENSE is
+  MIT over the code only; htdemucs was trained on MUSDB HQ (research-only
+  dataset) + 800 internal Meta songs; the repo is archived (Jan 2025), so
+  no relicensing is coming. The Hugging Face re-upload we download from
+  labels the weights MIT, which the uploader had no authority to do.
+- [ ] **Decide what to do about the research-only weights** before a
+  release ships the feature:
+  - The audionaut.app mirror redistributed the weights - taken down
+    2026-09-02 (removed from the Space; the staged copies in the web
+    repo's `docs/models/` and `site/models/` are deleted too). The app's
+    fallback URL stays in place but is dormant: a download simply fails
+    over to it and reports both hosts if Hugging Face is also unreachable,
+    and the hidden `[download-mirror]` test will fail until something is
+    served there again.
+  - Downloading on first use points users at the weights without
+    redistributing them ourselves (what UVR, demucs.cpp's own site and
+    others do), but a consumer app steering users to research-only weights
+    is still a judgement call - and App Store review may ask.
+  - Alternatives with genuinely permissive weights are thin: Spleeter's
+    models are MIT (lower quality); Open-Unmix weights are CC-BY-NC.
+    Training our own htdemucs on licensed data is the clean long-term fix.
+  - Adds to the LICENSE.md commercial-licensing blockers alongside
+    Essentia (AGPL) and Ableton Link (GPL).
 - [x] Mirror the weights on audionaut.app as a fallback download. Done
   2026-09-02: the app tries
   `https://audionaut.app/models/ggml-model-htdemucs-4s-f16.bin` when
