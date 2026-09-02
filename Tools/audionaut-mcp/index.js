@@ -501,15 +501,17 @@ server.registerTool(
       track: z.number().int().min(0).optional().describe("Track id (default 0; imported audio lands on a new track)"),
       clip: z.number().int().optional().describe("Playlist item id (default: the track's first clip)"),
       threads: z.number().int().positive().optional().describe("Parallel segments (default: physical cores)"),
+      mute_source: z.boolean().optional().describe("Mute the source track's channels (default true)"),
     },
   },
-  async ({ project, track, clip, threads }) =>
+  async ({ project, track, clip, threads, mute_source }) =>
     runCli([
       "separate",
       project,
       ...(track !== undefined ? ["--track", String(track)] : []),
       ...(clip !== undefined ? ["--clip", String(clip)] : []),
       ...(threads !== undefined ? ["--threads", String(threads)] : []),
+      ...(mute_source === false ? ["--no-mute-source"] : []),
     ])
 );
 

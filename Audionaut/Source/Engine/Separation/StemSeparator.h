@@ -35,6 +35,10 @@ struct SeparationConfig
     /// Longer clips are refused: the separator holds the whole clip and
     /// all its stems in memory (about 85 MB per minute).
     double maxClipSeconds = 600.0;
+
+    /// Mute the source track when the stems are added, so what plays
+    /// afterwards is the separation. Part of the same undo.
+    bool muteSourceTrack = true;
 };
 
 /// A separation resolved against the project, ready to render. Built on the
@@ -56,6 +60,7 @@ struct SeparationJob
     int sourceTrackId = -1;
     int sourceClipId = -1;
     int numThreads = 1;
+    bool muteSourceTrack = true;
 };
 
 /// Rendered stems waiting to be added to the project.
@@ -67,6 +72,7 @@ struct PendingStems
     juce::String clipName;
     int sourceTrackId = -1;
     int sourceClipId = -1;
+    bool muteSourceTrack = true;
 };
 
 /**
@@ -116,7 +122,8 @@ public:
 
     /**
      * Step 3. Adds one track per stem, named "<clip> - <Stem>", at the
-     * source clip's position, as a single "Separate Stems" undo transaction,
+     * source clip's position - muting the source track's channels when the
+     * stems ask for it - as a single "Separate Stems" undo transaction,
      * then removes the scratch directory.
      *
      * @param newTrackIds  Receives the ids of the tracks created, in Stem

@@ -41,6 +41,7 @@ public:
 
         audium::SeparationConfig config;
         config.numThreads = threads;
+        config.muteSourceTrack = SeparationSettingsComponent::readMuteSource (prefs);
 
         if (! separator.targetSelectedClip (config))
         {

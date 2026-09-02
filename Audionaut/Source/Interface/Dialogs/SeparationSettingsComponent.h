@@ -24,6 +24,10 @@ public:
     explicit SeparationSettingsComponent (audium::Preferences& prefs) :
         preferences (prefs)
     {
+        muteSourceToggle = std::make_unique<juce::ToggleButton> (TRANS ("Mute the original track after separating"));
+        muteSourceToggle->onClick = [this] { applyAndStore(); };
+        addAndMakeVisible (muteSourceToggle.get());
+
         threadsLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Threads"));
         threadsLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
         addAndMakeVisible (threadsLabel.get());
@@ -72,7 +76,7 @@ public:
         };
         addAndMakeVisible (revealButton.get());
 
-        setSize (500, 220);
+        setSize (500, 250);
     }
 
     /// The number of separation threads to use; physical cores by default.
@@ -87,10 +91,21 @@ public:
         return stored >= 1 ? juce::jmin (stored, fallback) : fallback;
     }
 
+    /// Whether the source track is muted when its stems are added; on
+    /// unless explicitly disabled.
+    static bool readMuteSource (audium::Preferences& preferences)
+    {
+        if (! preferences.valueExists (audium::PreferenceKeys::separationMuteSource))
+            return true;
+
+        return preferences.getValue (audium::PreferenceKeys::separationMuteSource) == "true";
+    }
+
     /** Syncs the controls to the stored preferences and the model on disk. */
     void refreshFromPreferences()
     {
         threadsBox->setSelectedId (readThreads (preferences), juce::dontSendNotification);
+        muteSourceToggle->setToggleState (readMuteSource (preferences), juce::dontSendNotification);
         refreshModelStatus();
     }
 
@@ -106,6 +121,9 @@ public:
         const int h = 23;
         const int space = h / 4;
         const int labelWidth = 70;
+
+        muteSourceToggle->setBounds (r.removeFromTop (h));
+        r.removeFromTop (space);
 
         auto row = r.removeFromTop (h);
         threadsLabel->setBounds (row.removeFromLeft (labelWidth));
@@ -138,6 +156,8 @@ private:
     void applyAndStore()
     {
         preferences.setValue (audium::PreferenceKeys::separationThreads, std::to_string (threadsBox->getSelectedId()));
+        preferences.setValue (audium::PreferenceKeys::separationMuteSource,
+                              muteSourceToggle->getToggleState() ? "true" : "false");
         preferences.synchronize();
     }
 
@@ -180,6 +200,7 @@ private:
 
     std::unique_ptr<juce::Label> threadsLabel, threadsHint, modelLabel, modelStatus, modelLocation;
     std::unique_ptr<juce::ComboBox> threadsBox;
+    std::unique_ptr<juce::ToggleButton> muteSourceToggle;
     std::unique_ptr<juce::TextButton> downloadButton, removeButton, revealButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SeparationSettingsComponent)

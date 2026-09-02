@@ -572,6 +572,14 @@ SCENARIO ("cli separate adds four stem tracks with the fake backend", "[cli][sep
                 REQUIRE (lastName.find ("Vocals") != std::string::npos);
             }
 
+            THEN ("the source track's channels are muted in the saved project") {
+                const auto after = readProjectJson (project);
+                const auto& source = after["audium"]["audio_tracks"][1];
+
+                for (const auto& channel : source.value ("channels", nlohmann::json::array()))
+                    REQUIRE (channel.value ("mute", false));
+            }
+
             THEN ("the stem files live in the package's audio folder") {
                 auto audioDir = project.getChildFile ("Media").getChildFile ("Audio");
                 REQUIRE (audioDir.getChildFile ("sine-0dB - Vocals.wav").existsAsFile());

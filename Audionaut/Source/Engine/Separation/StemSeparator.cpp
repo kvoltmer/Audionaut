@@ -227,6 +227,7 @@ bool StemSeparator::prepare (const SeparationConfig& config, SeparationJob& job,
     job.sourceTrackId = resolved.track->getId();
     job.sourceClipId = resolved.item->getId();
     job.numThreads = juce::jmax (1, config.numThreads);
+    job.muteSourceTrack = config.muteSourceTrack;
     job.directory = scratchRoot().getChildFile (juce::Uuid().toString());
 
     // The render starts headExtension() ahead of the clip, so the stems have
@@ -323,14 +324,30 @@ bool StemSeparator::render (const SeparationJob& job,
     }
 
     // 3. One file per stem, named so the imported region and track carry the
-    // clip's name.
+    // clip's name. The backend always answers in stereo; a mono clip gets
+    // mono stems back so the new tracks match the source - its two model
+    // channels are near-identical (the input channels were), so averaging
+    // them is transparent.
+    const auto sourceIsMono = rendered.getNumChannels() == 1;
+
     for (auto index = 0; index < numStems; ++index)
     {
         const auto stem = stemFromIndex (index);
         const auto name = juce::File::createLegalFileName (stemTrackName (job.clipName, stem)) + ".wav";
         const auto file = job.directory.getChildFile (name);
 
-        if (! writeStemFile (file, separated[static_cast<size_t> (index)], sampleRate, error))
+        auto& separatedStem = separated[static_cast<size_t> (index)];
+        juce::AudioBuffer<float> mono;
+
+        if (sourceIsMono)
+        {
+            mono.setSize (1, separatedStem.getNumSamples());
+            mono.copyFrom (0, 0, separatedStem, 0, 0, separatedStem.getNumSamples());
+            mono.addFrom (0, 0, separatedStem, 1, 0, separatedStem.getNumSamples());
+            mono.applyGain (0.5f);
+        }
+
+        if (! writeStemFile (file, sourceIsMono ? mono : separatedStem, sampleRate, error))
             return fail (false);
 
         stems.files[static_cast<size_t> (index)] = file;
@@ -347,6 +364,7 @@ bool StemSeparator::render (const SeparationJob& job,
     stems.clipName = job.clipName;
     stems.sourceTrackId = job.sourceTrackId;
     stems.sourceClipId = job.sourceClipId;
+    stems.muteSourceTrack = job.muteSourceTrack;
     return true;
 }
 
@@ -394,6 +412,13 @@ bool StemSeparator::commit (const PendingStems& stems, std::vector<int>& newTrac
             created.push_back (track);
             newTrackIds.push_back (track->getId());
         }
+
+        // The stems replace the source in the mix: silence the source track
+        // (inside this transaction, so undo unmutes it again).
+        if (stems.muteSourceTrack)
+            if (auto source = container->getAudioTrack (stems.sourceTrackId))
+                for (auto channel = 0; channel < source->getNumAudioTrackChannels(); ++channel)
+                    source->setMute (true, channel);
 
         return true;
     }, "Separate Stems");

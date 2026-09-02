@@ -77,7 +77,7 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context);
 /** `clip-fades <project> (--at P | --region N) [--fade-in X ...]` */
 int runClipFades (const juce::ArgumentList& args, CliContext& context);
 
-/** `separate <project> [--track N --clip N --threads N --model PATH]` - stems to new tracks. */
+/** `separate <project> [--track N --clip N --threads N --model PATH --no-mute-source]` - stems to new tracks. */
 int runSeparate (const juce::ArgumentList& args, CliContext& context);
 
 /**

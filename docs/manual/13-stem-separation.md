@@ -19,7 +19,8 @@ location, with a *Show Folder* button), and verified against a checksum
 before it is used.
 
 *Settings → Separation* also lets you download the model ahead of time,
-remove it again, and pick how many **threads** the separator may use. Each
+remove it again, choose whether the original track is muted after a
+separation, and pick how many **threads** the separator may use. Each
 thread works on its own stretch of the clip, so more threads finish sooner
 at the cost of more memory; the default is the number of processor cores.
 
@@ -41,10 +42,12 @@ laptops. The application is busy for the duration.
 
 When it finishes, four tracks are added at the bottom of the track list,
 named after the clip — *Take 3 - Drums*, *Take 3 - Bass* and so on. Each
-holds one stereo clip starting where the source clip starts (a fade-in that
+holds one clip — mono for a mono source, stereo for a stereo one —
+starting where the source clip starts (a fade-in that
 reaches ahead of the clip is included, so the stems start that much
-earlier). The source clip is left as it is; mute it to hear the stems on
-their own, or solo one stem.
+earlier). The original track is muted, so what plays afterwards is the
+separation; unmute it to compare, or turn this off in *Settings →
+Separation* (*Mute the original track after separating*).
 
 The whole operation is a single edit: **Cmd+Z** removes all four tracks
 again. The stem files stay in the project's *Media/Audio* folder until the

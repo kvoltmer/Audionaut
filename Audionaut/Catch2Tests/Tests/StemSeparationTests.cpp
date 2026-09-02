@@ -89,6 +89,34 @@ float rms (const juce::AudioBuffer<float>& buffer)
     return count > 0 ? static_cast<float> (std::sqrt (sum / count)) : 0.0f;
 }
 
+/// A 2-second stereo file: the saw on the left, silence on the right.
+juce::File createStereoTestFile()
+{
+    auto file = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/stereo-saw.wav");
+    juce::TemporaryFile temp (file);
+
+    std::unique_ptr<juce::OutputStream> stream (temp.getFile().createOutputStream());
+    REQUIRE (stream != nullptr);
+
+    juce::WavAudioFormat wav;
+    auto options = juce::AudioFormatWriter::Options{}
+                       .withSampleRate (44100.0)
+                       .withNumChannels (2)
+                       .withBitsPerSample (32)
+                       .withSampleFormat (juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
+    auto writer = wav.createWriterFor (stream, options);
+    REQUIRE (writer != nullptr);
+
+    juce::AudioBuffer<float> buffer (2, 2 * 44100);
+    buffer.clear();
+    for (auto i = 0; i < buffer.getNumSamples(); ++i)
+        buffer.setSample (0, i, genSaw (i, 44100));
+    writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples());
+    writer.reset();
+    temp.overwriteTargetFileWithTemporary();
+    return file;
+}
+
 } // namespace
 
 SCENARIO ("stem separation turns a clip into four stem tracks", "[engine][separation]")
@@ -161,11 +189,11 @@ SCENARIO ("stem separation turns a clip into four stem tracks", "[engine][separa
                 }
             }
 
-            THEN ("the stems are stereo files at the backend's rate")
+            THEN ("the stems are mono like the source, at the backend's rate")
             {
                 for (auto trackId = 1; trackId <= 4; ++trackId)
                 {
-                    REQUIRE (fixture.container()->getAudioTrack (trackId)->getNumAudioTrackChannels() == 2);
+                    REQUIRE (fixture.container()->getAudioTrack (trackId)->getNumAudioTrackChannels() == 1);
                     REQUIRE (fixture.resource (trackId)->getSampleRate() == Catch::Approx (44100.0));
                 }
             }
@@ -192,16 +220,29 @@ SCENARIO ("stem separation turns a clip into four stem tracks", "[engine][separa
                     REQUIRE (input.getSample (0, i) == input.getSample (1, i));
             }
 
-            THEN ("one undo removes all four tracks and redo brings them back")
+            THEN ("the source track is muted, so the stems play in its place")
+            {
+                auto source = fixture.container()->getAudioTrack (0);
+
+                for (auto channel = 0; channel < source->getNumAudioTrackChannels(); ++channel)
+                    REQUIRE (source->getMute (channel));
+
+                for (auto trackId = 1; trackId <= 4; ++trackId)
+                    REQUIRE_FALSE (fixture.container()->getAudioTrack (trackId)->getMute (0));
+            }
+
+            THEN ("one undo removes all four tracks, unmutes the source, and redo brings them back")
             {
                 auto undoManager = fixture.container()->getUndoManager();
                 REQUIRE (undoManager->canUndo());
 
                 undoManager->undo();
                 REQUIRE (fixture.trackCount() == 1);
+                REQUIRE_FALSE (fixture.container()->getAudioTrack (0)->getMute (0));
 
                 undoManager->redo();
                 REQUIRE (fixture.trackCount() == 5);
+                REQUIRE (fixture.container()->getAudioTrack (0)->getMute (0));
             }
 
             THEN ("nothing is left in the scratch directory")
@@ -210,6 +251,36 @@ SCENARIO ("stem separation turns a clip into four stem tracks", "[engine][separa
                                          .getChildFile ("Audionaut").getChildFile ("Separation");
                 REQUIRE (scratch.getNumberOfChildFiles (juce::File::findFilesAndDirectories) == 0);
             }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO ("a stereo source yields stereo stems", "[engine][separation]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock (Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture (createStereoTestFile());
+        REQUIRE (fixture.container()->getAudioTrack (0)->getNumAudioTrackChannels() == 2);
+
+        StemSeparator separator (fixture.engine, fixture.backend);
+        SeparationConfig config;
+        config.trackId = 0;
+
+        std::vector<int> newTrackIds;
+        juce::String error;
+        REQUIRE (separator.separate (config, nullptr, newTrackIds, error));
+
+        THEN ("every stem track is stereo")
+        {
+            REQUIRE (fixture.trackCount() == 5);
+
+            for (auto trackId = 1; trackId <= 4; ++trackId)
+                REQUIRE (fixture.container()->getAudioTrack (trackId)->getNumAudioTrackChannels() == 2);
         }
     }
 
@@ -270,6 +341,21 @@ SCENARIO ("stem separation leaves the project alone when cancelled or failing",
 
         const auto scratch = juce::File::getSpecialLocation (juce::File::tempDirectory)
                                  .getChildFile ("Audionaut").getChildFile ("Separation");
+
+        WHEN ("the source track is kept audible")
+        {
+            config.muteSourceTrack = false;
+
+            std::vector<int> newTrackIds;
+            juce::String error;
+            REQUIRE (separator.separate (config, nullptr, newTrackIds, error));
+
+            THEN ("the stems are added but the source stays unmuted")
+            {
+                REQUIRE (fixture.trackCount() == 5);
+                REQUIRE_FALSE (fixture.container()->getAudioTrack (0)->getMute (0));
+            }
+        }
 
         WHEN ("the progress callback cancels")
         {

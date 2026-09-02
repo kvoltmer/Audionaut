@@ -26,6 +26,8 @@ int runSeparate (const juce::ArgumentList& args, CliContext& context)
                                          juce::String (juce::jmax (1, juce::SystemStats::getNumPhysicalCpus())))
                             .getIntValue();
 
+    config.muteSourceTrack = ! working.removeOptionIfFound ("--no-mute-source");
+
     const auto modelPath = takeOptionValue (working, "--model");
     const auto backendName = takeOptionValue (working, "--backend", "demucs");
 
@@ -118,6 +120,7 @@ int runSeparate (const juce::ArgumentList& args, CliContext& context)
 
     return context.ok ({ { "sourceTrackId", config.trackId },
                          { "sourceClipId", config.playlistItemId < 0 ? 0 : config.playlistItemId },
+                         { "sourceTrackMuted", config.muteSourceTrack },
                          { "backend", backendName.toStdString() },
                          { "stems", stems } });
 }
