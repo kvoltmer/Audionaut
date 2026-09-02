@@ -555,6 +555,40 @@ server.registerTool(
     ])
 );
 
+server.registerTool(
+  "remove_track",
+  {
+    title: "Remove track",
+    description:
+      "Removes a whole track from the project, including its channels, clips and regions. Track ids " +
+      "are positions in the track list, so the ids of the tracks below shift up by one. " +
+      "The audio files stay in the package.",
+    inputSchema: {
+      project: projectParam,
+      track: z.number().int().min(0).describe("Track id"),
+    },
+  },
+  async ({ project, track }) =>
+    runCli(["remove-track", project, "--track", String(track)])
+);
+
+server.registerTool(
+  "remove_channel",
+  {
+    title: "Remove channel",
+    description:
+      "Removes one channel (0-based) from a track, like deleting a channel strip in the GUI. " +
+      "Channel mappings and per-channel clip gains shift down; the audio files stay in the package.",
+    inputSchema: {
+      project: projectParam,
+      track: z.number().int().min(0).describe("Track id"),
+      channel: z.number().int().min(0).describe("Channel index within the track (0-based)"),
+    },
+  },
+  async ({ project, track, channel }) =>
+    runCli(["remove-channel", project, "--track", String(track), "--channel", String(channel)])
+);
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
 console.error(`audionaut-mcp ready (cli: ${cliPath})`);

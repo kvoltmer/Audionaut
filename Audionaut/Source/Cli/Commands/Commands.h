@@ -77,6 +77,12 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context);
 /** `clip-fades <project> (--at P | --region N) [--fade-in X ...]` */
 int runClipFades (const juce::ArgumentList& args, CliContext& context);
 
+/** `remove-track <project> --track N` - delete a whole track. */
+int runRemoveTrack (const juce::ArgumentList& args, CliContext& context);
+
+/** `remove-channel <project> --track N --channel C` - delete one channel. */
+int runRemoveChannel (const juce::ArgumentList& args, CliContext& context);
+
 /** `separate <project> [--track N --clip N --threads N --model PATH --no-mute-source]` - stems to new tracks. */
 int runSeparate (const juce::ArgumentList& args, CliContext& context);
 

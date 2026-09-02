@@ -14,6 +14,7 @@
 		090A584AB0AC23AB9528BCCD /* EngineAccess.cpp */ = {isa = PBXBuildFile; fileRef = 15B08AD17A4543A6F9323602; };
 		09566A34C9588B0ED1B27345 /* EventMerger.cpp */ = {isa = PBXBuildFile; fileRef = 76BEBF8CDC5D61CC7760994E; };
 		09DA1E72737CDFF5EBF24565 /* include_juce_gui_basics.mm */ = {isa = PBXBuildFile; fileRef = 93967D9818A6F5B95C07B32B; };
+		0BD38A6027BB33D9F0C9CD93 /* TrackCommands.cpp */ = {isa = PBXBuildFile; fileRef = 471E11B8AFB31A104A4F918E; };
 		0DE6588B0D471DEBD8BC26B8 /* ProjectFileStore.cpp */ = {isa = PBXBuildFile; fileRef = 9B6B8AC2CA2C128CC084CC04; };
 		0E051821A554D6A2B0B1CFB9 /* AutoEditCommand.cpp */ = {isa = PBXBuildFile; fileRef = 20337587A016A2258CC20537; };
 		0EB1D0773569032DACF76088 /* DemucsRunner.cpp */ = {isa = PBXBuildFile; fileRef = 60E75ADCA7F8E0B2D851CB80; settings = { COMPILER_FLAGS = "-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src"; }; };
@@ -259,6 +260,7 @@
 		462481D51BD3607FCD44651D /* AudiumApplication.cpp */ /* AudiumApplication.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumApplication.cpp; path = ../../Source/Application/AudiumApplication.cpp; sourceTree = SOURCE_ROOT; };
 		4654BF6D473034F2AF5AE105 /* juce_audio_formats */ /* juce_audio_formats */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_formats; path = ../../../Submodules/JUCE/modules/juce_audio_formats; sourceTree = SOURCE_ROOT; };
 		46D7C0F9FA67B88FA5CE6175 /* SeparationSettingsComponent.h */ /* SeparationSettingsComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SeparationSettingsComponent.h; path = ../../Source/Interface/Dialogs/SeparationSettingsComponent.h; sourceTree = SOURCE_ROOT; };
+		471E11B8AFB31A104A4F918E /* TrackCommands.cpp */ /* TrackCommands.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TrackCommands.cpp; path = ../../Source/Cli/Commands/TrackCommands.cpp; sourceTree = SOURCE_ROOT; };
 		492448CAB8596C414F7AF104 /* MiddlePanelComponent.h */ /* MiddlePanelComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MiddlePanelComponent.h; path = ../../Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h; sourceTree = SOURCE_ROOT; };
 		49867F31566AFBCB30CFA302 /* AudioRegionAdapter.h */ /* AudioRegionAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioRegionAdapter.h; path = ../../Source/Engine/Group/AudioRegionAdapter.h; sourceTree = SOURCE_ROOT; };
 		4A6E22DD026C48EA290728B6 /* AudioClipData.h */ /* AudioClipData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioClipData.h; path = ../../Source/Engine/Group/AudioClipData.h; sourceTree = SOURCE_ROOT; };
@@ -1234,6 +1236,7 @@
 				0E1BF41AFB1E13CF3119EAFB,
 				559E815404EDED1578B82412,
 				04FFF590ED05D0000D3B5B06,
+				471E11B8AFB31A104A4F918E,
 			);
 			name = Commands;
 			sourceTree = "<group>";
@@ -1459,6 +1462,7 @@
 				3509C37D046CC510F8C60458,
 				59451AFC7649C47F021C7C1C,
 				418DFD5463548A63A807D3E5,
+				0BD38A6027BB33D9F0C9CD93,
 				FF1D6B95696A5DD89D5C9C63,
 				B10E7DA1893778F39C362F4A,
 				0ED909B948FDDBF4CB7E2510,

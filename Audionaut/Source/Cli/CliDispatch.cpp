@@ -232,6 +232,21 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "against each other within the clip.",
           runClipFades },
 
+        { "remove-track",
+          "remove-track <project.audium> --track N [--json]",
+          "Removes a whole track from the project.",
+          "Removes the track with the given id, including its channels, clips and regions. Track ids "
+          "are positions in the track list, so the ids of the tracks below shift up by one. "
+          "The audio files stay in the package.",
+          runRemoveTrack },
+
+        { "remove-channel",
+          "remove-channel <project.audium> --track N --channel C [--json]",
+          "Removes one channel from a track.",
+          "Removes channel C (0-based) from track N, like deleting a channel strip in the GUI. "
+          "Channel mappings and per-channel clip gains shift down; the audio files stay in the package.",
+          runRemoveChannel },
+
         { "separate",
           "separate <project.audium> [--track N] [--clip N] [--threads N] [--model PATH]\n"
           "                          [--no-mute-source] [--backend demucs|fake] [--json]",

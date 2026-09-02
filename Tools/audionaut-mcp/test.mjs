@@ -41,12 +41,12 @@ try {
   const { tools } = await client.listTools();
   const names = tools.map((tool) => tool.name).sort();
   check(
-    "all seventeen tools listed",
+    "all nineteen tools listed",
     JSON.stringify(names) ===
       JSON.stringify(["analyze", "assemble", "auto_edit", "cleanup_regions", "clip_fades", "clip_gain",
                       "create_project", "create_region", "export_audio", "get_project_info",
-                      "import_audio", "move_clip", "place_clip", "remove_clip", "separate_stems",
-                      "set_region", "split"]),
+                      "import_audio", "move_clip", "place_clip", "remove_channel", "remove_clip",
+                      "remove_track", "separate_stems", "set_region", "split"]),
     names.join(",")
   );
 
@@ -188,6 +188,39 @@ try {
     !cleaned.isError && cleaned.content[0].text.includes("smoke-lead"),
     cleaned.content?.[0]?.text
   );
+
+  // Structure edits last: they remove the strips the flow above worked on.
+  const channelGone = await client.callTool({
+    name: "remove_channel",
+    arguments: { project, track: 0, channel: 0 },
+  });
+  check(
+    "remove_channel",
+    !channelGone.isError && channelGone.content[0].text.includes("remainingChannels"),
+    channelGone.content?.[0]?.text
+  );
+
+  const channelMiss = await client.callTool({
+    name: "remove_channel",
+    arguments: { project, track: 0, channel: 9 },
+  });
+  check("remove_channel out of range is a tool error", channelMiss.isError === true, channelMiss.content?.[0]?.text);
+
+  const trackGone = await client.callTool({
+    name: "remove_track",
+    arguments: { project, track: 1 },
+  });
+  check(
+    "remove_track",
+    !trackGone.isError && trackGone.content[0].text.includes("removedTrack"),
+    trackGone.content?.[0]?.text
+  );
+
+  const trackMiss = await client.callTool({
+    name: "remove_track",
+    arguments: { project, track: 5 },
+  });
+  check("remove_track on missing id is a tool error", trackMiss.isError === true, trackMiss.content?.[0]?.text);
 } finally {
   rmSync(workDir, { recursive: true, force: true });
   await client.close();

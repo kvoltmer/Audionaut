@@ -52,6 +52,8 @@
                 file="Source/Cli/Commands/ClipCommands.cpp"/>
           <FILE id="SepCmd" name="SeparateCommand.cpp" compile="1" resource="0"
                 file="Source/Cli/Commands/SeparateCommand.cpp"/>
+          <FILE id="CliTr1" name="TrackCommands.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/TrackCommands.cpp"/>
         </GROUP>
         <FILE id="CliCtx" name="CliContext.h" compile="0" resource="0" file="Source/Cli/CliContext.h"/>
         <FILE id="CliDsH" name="CliDispatch.h" compile="0" resource="0" file="Source/Cli/CliDispatch.h"/>

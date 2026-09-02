@@ -194,6 +194,7 @@
     <ClCompile Include="..\..\Source\Cli\Commands\RegionCommands.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\ClipCommands.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\SeparateCommand.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\Commands\TrackCommands.cpp"/>
     <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp"/>
     <ClCompile Include="..\..\Source\Cli\ProjectSummary.cpp"/>
     <ClCompile Include="..\..\Source\Application\AudiumMenuModel.cpp"/>
