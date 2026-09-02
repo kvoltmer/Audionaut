@@ -1100,15 +1100,21 @@ void AudiumApplication::restoreUiState()
 
 void AudiumApplication::showAboutWindow()
 {
-    auto w = 600;
-    auto h = 420;
     if (aboutComponent != nullptr)
+    {
         aboutComponent->toFront (true);
-    else
-        new FloatingToolWindow ("About", "AboutWindowPosition",
-                                new AboutWindowComponent(),
-                                aboutComponent, false,
-                                w, h, w, h, w, h);
+        return;
+    }
+
+    // The credits list varies with the backends compiled in, so the
+    // component decides how tall the window has to be.
+    auto* about = new AboutWindowComponent();
+    auto w = 600;
+    auto h = about->getPreferredHeight();
+    new FloatingToolWindow ("About", "AboutWindowPosition",
+                            about,
+                            aboutComponent, false,
+                            w, h, w, h, w, h);
 }
 
 void AudiumApplication::showFileBrowserWindow()
