@@ -488,6 +488,34 @@ server.registerTool(
 );
 
 server.registerTool(
+  "separate_stems",
+  {
+    title: "Separate stems",
+    description:
+      "Splits a clip into Drums/Bass/Other/Vocals tracks with the Demucs (htdemucs) source separator, " +
+      "aligned with the source clip. Slow: minutes for a full song, CPU only. Needs the model weights, " +
+      "which the Audionaut app downloads once (Settings > Separation); fails with model_missing until then, " +
+      "and with demucs_unavailable in builds without Demucs.",
+    inputSchema: {
+      project: projectParam,
+      track: z.number().int().min(0).optional().describe("Track id (default 0; imported audio lands on a new track)"),
+      clip: z.number().int().optional().describe("Playlist item id (default: the track's first clip)"),
+      threads: z.number().int().positive().optional().describe("Parallel segments (default: physical cores)"),
+      mute_source: z.boolean().optional().describe("Mute the source track's channels (default true)"),
+    },
+  },
+  async ({ project, track, clip, threads, mute_source }) =>
+    runCli([
+      "separate",
+      project,
+      ...(track !== undefined ? ["--track", String(track)] : []),
+      ...(clip !== undefined ? ["--clip", String(clip)] : []),
+      ...(threads !== undefined ? ["--threads", String(threads)] : []),
+      ...(mute_source === false ? ["--no-mute-source"] : []),
+    ])
+);
+
+server.registerTool(
   "clip_fades",
   {
     title: "Set clip fades",
@@ -525,6 +553,40 @@ server.registerTool(
       ...(unit ? ["--unit", unit] : []),
       ...(track !== undefined ? ["--track", String(track)] : []),
     ])
+);
+
+server.registerTool(
+  "remove_track",
+  {
+    title: "Remove track",
+    description:
+      "Removes a whole track from the project, including its channels, clips and regions. Track ids " +
+      "are positions in the track list, so the ids of the tracks below shift up by one. " +
+      "The audio files stay in the package.",
+    inputSchema: {
+      project: projectParam,
+      track: z.number().int().min(0).describe("Track id"),
+    },
+  },
+  async ({ project, track }) =>
+    runCli(["remove-track", project, "--track", String(track)])
+);
+
+server.registerTool(
+  "remove_channel",
+  {
+    title: "Remove channel",
+    description:
+      "Removes one channel (0-based) from a track, like deleting a channel strip in the GUI. " +
+      "Channel mappings and per-channel clip gains shift down; the audio files stay in the package.",
+    inputSchema: {
+      project: projectParam,
+      track: z.number().int().min(0).describe("Track id"),
+      channel: z.number().int().min(0).describe("Channel index within the track (0-based)"),
+    },
+  },
+  async ({ project, track, channel }) =>
+    runCli(["remove-channel", project, "--track", String(track), "--channel", String(channel)])
 );
 
 const transport = new StdioServerTransport();

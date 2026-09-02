@@ -29,6 +29,9 @@ place-clip      place an existing region on the timeline
 cleanup-regions delete every region no clip uses
 clip-gain       set a clip's gain (linear or dB)
 clip-fades      set a clip's fade lengths, offsets and curves
+remove-track    remove a whole track (channels, clips and regions)
+remove-channel  remove one channel from a track
+separate        split a clip into Drums/Bass/Other/Vocals tracks (Demucs)
 ```
 
 Run `audionaut-cli --help` for each verb's options. Positions and durations

@@ -2,6 +2,12 @@
 
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Audionaut\Submodules\demucs.cpp">
+      <UniqueIdentifier>{57B3A6DF-81C6-567D-DBF0-195553615D11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\Submodules">
+      <UniqueIdentifier>{C466D4A6-ED53-DDE5-2A30-37BD2DF4AB9A}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Catch2Tests">
       <UniqueIdentifier>{A5516E1B-93FA-21AA-E5F7-F4470EE48EAC}</UniqueIdentifier>
     </Filter>
@@ -67,6 +73,12 @@
     </Filter>
     <Filter Include="Audionaut\Source\Engine\Resource">
       <UniqueIdentifier>{024C5D5A-AF12-70A4-9A0F-F4FE7DBBBB65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\Source\Engine\Separation\Demucs">
+      <UniqueIdentifier>{8AD1C367-2266-D3A8-36EC-739B2445B230}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\Source\Engine\Separation">
+      <UniqueIdentifier>{B91C57E7-9ADF-97B3-B101-E81C5AF47BEB}</UniqueIdentifier>
     </Filter>
     <Filter Include="Audionaut\Source\Engine\Undo">
       <UniqueIdentifier>{8D50E2ED-453C-4AB7-9096-C231358D6F0F}</UniqueIdentifier>
@@ -572,6 +584,15 @@
     <Filter Include="JUCE Modules\juce_core">
       <UniqueIdentifier>{BAA582FA-40B7-320E-EE7A-4C3892C7BE72}</UniqueIdentifier>
     </Filter>
+    <Filter Include="JUCE Modules\juce_cryptography\encryption">
+      <UniqueIdentifier>{89B3E447-34BE-C691-638E-09796C6B647E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="JUCE Modules\juce_cryptography\hashing">
+      <UniqueIdentifier>{9BE78436-DBF4-658C-579B-ED19FFD0EB5D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="JUCE Modules\juce_cryptography">
+      <UniqueIdentifier>{21E7FA61-9E0A-4BA1-04B7-AF47AFA9CB8B}</UniqueIdentifier>
+    </Filter>
     <Filter Include="JUCE Modules\juce_data_structures\app_properties">
       <UniqueIdentifier>{632B4C79-AF7D-BFB5-D006-5AE67F607130}</UniqueIdentifier>
     </Filter>
@@ -832,6 +853,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\crosstransformer.cpp">
+      <Filter>Audionaut\Submodules\demucs.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\dsp.cpp">
+      <Filter>Audionaut\Submodules\demucs.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\encdec.cpp">
+      <Filter>Audionaut\Submodules\demucs.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\layers.cpp">
+      <Filter>Audionaut\Submodules\demucs.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\lstm.cpp">
+      <Filter>Audionaut\Submodules\demucs.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\model_apply.cpp">
+      <Filter>Audionaut\Submodules\demucs.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\model_inference.cpp">
+      <Filter>Audionaut\Submodules\demucs.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\model_load.cpp">
+      <Filter>Audionaut\Submodules\demucs.cpp</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Cli\Commands\Commands.cpp">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
@@ -857,6 +902,12 @@
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Cli\Commands\ClipCommands.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\SeparateCommand.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\TrackCommands.cpp">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp">
@@ -1029,6 +1080,18 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Resource\ChannelMapping.cpp">
       <Filter>Audionaut\Source\Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Separation\Demucs\DemucsRunner.cpp">
+      <Filter>Audionaut\Source\Engine\Separation\Demucs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Separation\DemucsBackend.cpp">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Separation\DemucsModelStore.cpp">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Separation\StemSeparator.cpp">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Project\ProjectFileStore.cpp">
       <Filter>Audionaut\Source\Engine\Project</Filter>
@@ -2611,6 +2674,30 @@
     <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_core\juce_core_CompilationTime.cpp">
       <Filter>JUCE Modules\juce_core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\encryption\juce_BlowFish.cpp">
+      <Filter>JUCE Modules\juce_cryptography\encryption</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\encryption\juce_Primes.cpp">
+      <Filter>JUCE Modules\juce_cryptography\encryption</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\encryption\juce_RSAKey.cpp">
+      <Filter>JUCE Modules\juce_cryptography\encryption</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\hashing\juce_MD5.cpp">
+      <Filter>JUCE Modules\juce_cryptography\hashing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\hashing\juce_SHA256.cpp">
+      <Filter>JUCE Modules\juce_cryptography\hashing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\hashing\juce_Whirlpool.cpp">
+      <Filter>JUCE Modules\juce_cryptography\hashing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\juce_cryptography.cpp">
+      <Filter>JUCE Modules\juce_cryptography</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\juce_cryptography.mm">
+      <Filter>JUCE Modules\juce_cryptography</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\Submodules\JUCE\modules\juce_data_structures\app_properties\juce_ApplicationProperties.cpp">
       <Filter>JUCE Modules\juce_data_structures\app_properties</Filter>
     </ClCompile>
@@ -4171,6 +4258,9 @@
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_core_CompilationTime.cpp">
       <Filter>JUCE Library Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\JuceLibraryCode\include_juce_cryptography.cpp">
+      <Filter>JUCE Library Code</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_data_structures.cpp">
       <Filter>JUCE Library Code</Filter>
     </ClCompile>
@@ -4446,10 +4536,37 @@
     <ClInclude Include="..\..\Source\Engine\Resource\ChannelMapping.h">
       <Filter>Audionaut\Source\Engine\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Separation\Demucs\DemucsRunner.h">
+      <Filter>Audionaut\Source\Engine\Separation\Demucs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Separation\DemucsBackend.h">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Separation\DemucsConfig.h">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Separation\DemucsModelStore.h">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Separation\FakeSeparationBackend.h">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Separation\SeparationBackend.h">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Separation\SeparationTypes.h">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Separation\StemSeparator.h">
+      <Filter>Audionaut\Source\Engine\Separation</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableContainerAction.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableReloadAction.h">
+      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Undo\UndoableEdit.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Project\ProjectFileStore.h">
@@ -4477,6 +4594,15 @@
       <Filter>Audionaut\Source\Interface</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AnalysisSettingsComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\ModelDownloadThread.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\SeparationSettingsComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\StemSeparationDialog.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h">
@@ -6704,6 +6830,27 @@
     </ClInclude>
     <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_core\juce_core.h">
       <Filter>JUCE Modules\juce_core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\encryption\juce_BlowFish.h">
+      <Filter>JUCE Modules\juce_cryptography\encryption</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\encryption\juce_Primes.h">
+      <Filter>JUCE Modules\juce_cryptography\encryption</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\encryption\juce_RSAKey.h">
+      <Filter>JUCE Modules\juce_cryptography\encryption</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\hashing\juce_MD5.h">
+      <Filter>JUCE Modules\juce_cryptography\hashing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\hashing\juce_SHA256.h">
+      <Filter>JUCE Modules\juce_cryptography\hashing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\hashing\juce_Whirlpool.h">
+      <Filter>JUCE Modules\juce_cryptography\hashing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_cryptography\juce_cryptography.h">
+      <Filter>JUCE Modules\juce_cryptography</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\Submodules\JUCE\modules\juce_data_structures\app_properties\juce_ApplicationProperties.h">
       <Filter>JUCE Modules\juce_data_structures\app_properties</Filter>

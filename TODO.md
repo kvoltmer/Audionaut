@@ -1,5 +1,48 @@
 # TODO
 
+## Stem separation (feature/source-separation)
+
+- [x] **Confirm the licence of the htdemucs model weights.** Checked
+  2026-09-02, and the answer is bad: they are **not MIT and research-only**.
+  facebookresearch/demucs issue #327, answered by the maintainer
+  (adefossez, 2022-05-23): "The model weights are not covered by the MIT
+  license, and are provided only for scientific purposes." The LICENSE is
+  MIT over the code only; htdemucs was trained on MUSDB HQ (research-only
+  dataset) + 800 internal Meta songs; the repo is archived (Jan 2025), so
+  no relicensing is coming. The Hugging Face re-upload we download from
+  labels the weights MIT, which the uploader had no authority to do.
+- [ ] **Decide what to do about the research-only weights** before a
+  release ships the feature:
+  - The audionaut.app mirror redistributed the weights - taken down
+    2026-09-02 (removed from the Space; the staged copies in the web
+    repo's `docs/models/` and `site/models/` are deleted too). The app's
+    fallback URL stays in place but is dormant: a download simply fails
+    over to it and reports both hosts if Hugging Face is also unreachable,
+    and the hidden `[download-mirror]` test will fail until something is
+    served there again.
+  - Downloading on first use points users at the weights without
+    redistributing them ourselves (what UVR, demucs.cpp's own site and
+    others do), but a consumer app steering users to research-only weights
+    is still a judgement call - and App Store review may ask.
+  - Alternatives with genuinely permissive weights are thin: Spleeter's
+    models are MIT (lower quality); Open-Unmix weights are CC-BY-NC.
+    Training our own htdemucs on licensed data is the clean long-term fix.
+  - Adds to the LICENSE.md commercial-licensing blockers alongside
+    Essentia (AGPL) and Ableton Link (GPL).
+- [x] Mirror the weights on audionaut.app as a fallback download. Done
+  2026-09-02: the app tries
+  `https://audionaut.app/models/ggml-model-htdemucs-4s-f16.bin` when
+  Hugging Face fails (same SHA-256 check), the file is uploaded to the
+  Space and verified end to end - the hidden `[download-mirror]` test
+  fetches it through the app's fallback path with the primary disabled.
+  A copy is also staged in the web repo's `docs/models/`.
+- [ ] Windows/Linux pass: verify the `/external:I` / `-isystem` demotion of
+  Essentia's Eigen keeps the demucs translation units on the vendored Eigen
+  (they need >= 3.4), and check MSVC compile time for the transformer units.
+- [ ] Long clips: the separator holds the whole clip and all stems in
+  memory, so clips are capped at 10 minutes. Stream longer clips through
+  the segmenter in windows.
+
 ## Build / tooling
 
 - [x] **Wire code coverage in properly.** Done — `AUDIONAUT_ENABLE_COVERAGE`

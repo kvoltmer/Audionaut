@@ -12,6 +12,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Region/AudioRegion.h"
@@ -22,6 +23,8 @@
 #include "Interface/Dialogs/ExportAudioDialog.h"
 #include "Interface/Dialogs/NewAudioTrackDialog.h"
 #include "Interface/Dialogs/AssembleDialog.h"
+#include "Interface/Dialogs/StemSeparationDialog.h"
+#include "Engine/Separation/DemucsConfig.h"
 #include "Interface/Dialogs/AnalysisSettingsComponent.h"
 
 using namespace audium;
@@ -148,6 +151,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::autoEdit,
         CommandIDs::assembleSequential,
         CommandIDs::assembleRandom,
+        CommandIDs::separateStems,
         CommandIDs::bounceProject,
         CommandIDs::duplicate,
         
@@ -225,6 +229,10 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Random...", "Assembles a new sequence from the track's regions, shuffled", CommandCategories::editing, 0);
             result.setActive (canAssemble());
             result.defaultKeypresses.add (KeyPress ('3', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::separateStems:
+            result.setInfo ("Separate Stems...", "Splits the selected clip into Drums, Bass, Other and Vocals tracks", CommandCategories::editing, 0);
+            result.setActive (canSeparateStems());
             break;
         case CommandIDs::bounceProject:
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
@@ -349,6 +357,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::assembleRandom:
             invokeAssemble(audium::AssembleConfig::Mode::Random);
+            break;
+        case CommandIDs::separateStems:
+            invokeSeparateStems();
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
@@ -513,4 +524,30 @@ void AudiumMainWindow::invokeAssemble(audium::AssembleConfig::Mode mode)
         assembleDialog = std::make_unique<AssembleDialog>();
 
     assembleDialog->assemble(getEngine(), mode);
+}
+
+bool AudiumMainWindow::canSeparateStems()
+{
+#if ! DEMUCS_ENABLED
+    return false;
+#else
+    if (getEngine()->getPlayListScheduler()->isPlaying())
+        return false;
+
+    auto selectedClips = 0;
+
+    for (const auto& object : getEngine()->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects())
+        if (dynamic_cast<audium::PlayListItem*>(object.get()) != nullptr)
+            ++selectedClips;
+
+    return selectedClips == 1;
+#endif
+}
+
+void AudiumMainWindow::invokeSeparateStems()
+{
+    if (stemSeparationDialog == nullptr)
+        stemSeparationDialog = std::make_unique<StemSeparationDialog>();
+
+    stemSeparationDialog->separate(getEngine(), mainComponent.get());
 }

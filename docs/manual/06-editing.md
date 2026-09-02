@@ -56,6 +56,12 @@ Crossfades at segment joints can also be created automatically by Auto Edit
 (see [Analysis and Auto Edit](08-analysis-and-auto-edit.md)); their default
 length and curve are configured in *Settings → Auto Edit*.
 
+## Separate Stems
+
+*Edit → Separate Stems…* splits the selected clip into Drums, Bass, Other
+and Vocals tracks using a source-separation model that runs on your machine.
+See [Stem separation](13-stem-separation.md).
+
 ## Per-clip context menu
 
 Right-click a clip for **Export…** — bounce just that clip to a WAV file
