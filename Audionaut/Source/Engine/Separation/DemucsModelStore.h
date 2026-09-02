@@ -15,6 +15,10 @@ struct DemucsModelInfo
 {
     juce::String fileName;
     juce::URL url;
+
+    /// Tried when the primary host cannot be reached or serves a bad file.
+    juce::URL fallbackUrl;
+
     juce::String sha256Hex;
     juce::int64 expectedBytes = 0;
 };
@@ -89,6 +93,11 @@ public:
     bool remove();
 
 private:
+    bool downloadFrom (const juce::URL& url,
+                       const DownloadProgress& progress,
+                       bool& cancelled,
+                       juce::String& error);
+
     bool moveIntoPlace (const juce::File& candidate, juce::String& error);
 
     juce::File directory;

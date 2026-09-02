@@ -25,6 +25,7 @@ const DemucsModelInfo& DemucsModelStore::defaultModel()
         model.fileName = modelFileName;
         model.url = juce::URL ("https://huggingface.co/datasets/Retrobear/demucs.cpp/resolve/"
                                + juce::String (modelRevision) + "/" + modelFileName);
+        model.fallbackUrl = juce::URL ("https://audionaut.app/models/" + juce::String (modelFileName));
         model.sha256Hex = "72b17c42d308982ddb5069bc3bf48b81a5aac4cb6516e4366c0fa7cef6df0064";
         model.expectedBytes = 83994361;
         return model;
@@ -116,6 +117,40 @@ bool DemucsModelStore::moveIntoPlace (const juce::File& candidate, juce::String&
 
 bool DemucsModelStore::download (const DownloadProgress& progress, juce::String& error)
 {
+    error.clear();
+
+    // The primary host first, the mirror when it cannot deliver. A
+    // cancellation stops the whole download - only failures fall through.
+    for (const auto& url : { model.url, model.fallbackUrl })
+    {
+        if (url.isEmpty())
+            continue;
+
+        auto cancelled = false;
+        juce::String attemptError;
+
+        if (downloadFrom (url, progress, cancelled, attemptError))
+            return true;
+
+        if (cancelled)
+            return false;
+
+        error = error.isEmpty() ? attemptError : error + "; " + attemptError;
+    }
+
+    if (error.isEmpty())
+        error = "the model could not be downloaded";
+
+    return false;
+}
+
+bool DemucsModelStore::downloadFrom (const juce::URL& url,
+                                     const DownloadProgress& progress,
+                                     bool& cancelled,
+                                     juce::String& error)
+{
+    cancelled = false;
+
     if (! directory.createDirectory())
     {
         error = "could not create " + directory.getFullPathName();
@@ -130,11 +165,11 @@ bool DemucsModelStore::download (const DownloadProgress& progress, juce::String&
                        .withConnectionTimeoutMs (30000)
                        .withNumRedirectsToFollow (10);
 
-    std::unique_ptr<juce::InputStream> input (model.url.createInputStream (options));
+    std::unique_ptr<juce::InputStream> input (url.createInputStream (options));
 
     if (input == nullptr)
     {
-        error = "could not connect to " + model.url.getDomain();
+        error = "could not connect to " + url.getDomain();
         return false;
     }
 
@@ -179,6 +214,7 @@ bool DemucsModelStore::download (const DownloadProgress& progress, juce::String&
         {
             output.reset();
             partFile.deleteFile();
+            cancelled = true;
             return false;
         }
 

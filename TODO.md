@@ -8,9 +8,13 @@
   facebookresearch/demucs (issues / model card) and decide whether the
   download prompt needs a notice. Also relevant for App Store review notes
   (the app downloads an 84 MB data file on first use).
-- [ ] Mirror the weights on audionaut.app as a fallback download: the
-  Hugging Face URL is pinned to a revision, but rate limits and outages are
-  out of our hands.
+- [x] Mirror the weights on audionaut.app as a fallback download. Done
+  2026-09-02: the app tries
+  `https://audionaut.app/models/ggml-model-htdemucs-4s-f16.bin` when
+  Hugging Face fails (same SHA-256 check), the file is uploaded to the
+  Space and verified end to end - the hidden `[download-mirror]` test
+  fetches it through the app's fallback path with the primary disabled.
+  A copy is also staged in the web repo's `docs/models/`.
 - [ ] Windows/Linux pass: verify the `/external:I` / `-isystem` demotion of
   Essentia's Eigen keeps the demucs translation units on the vendored Eigen
   (they need >= 3.4), and check MSVC compile time for the transformer units.

@@ -112,6 +112,43 @@ SCENARIO ("the model store installs only files matching the expected checksum", 
     impostor.deleteFile();
 }
 
+SCENARIO ("the download falls back to the mirror when the primary host is dead", "[separation][model]")
+{
+    TempStore temp;
+    auto genuine = writeStandIn ("these are the weights");
+
+    auto info = describe (genuine);
+    info.url = juce::URL ("https://127.0.0.1:1/nowhere.bin");   // nothing listens here
+    info.fallbackUrl = juce::URL (genuine);                     // the "mirror": a local file
+    temp.store.setModel (info);
+
+    juce::String error;
+    REQUIRE (temp.store.download (nullptr, error));
+    REQUIRE (temp.store.isAvailable());
+    REQUIRE (temp.store.verify (temp.store.getModelFile(), error));
+
+    genuine.deleteFile();
+}
+
+// Hidden: fetches the real 84 MB model from the audionaut.app mirror with
+// the primary host disabled. Run with AudionautTests "[download-mirror]".
+SCENARIO ("the audionaut.app mirror delivers the model when the primary is dead", "[.][download-mirror]")
+{
+    TempStore temp;
+
+    auto info = DemucsModelStore::defaultModel();
+    info.url = juce::URL ("https://127.0.0.1:1/nowhere.bin");   // force the fallback
+    temp.store.setModel (info);
+
+    juce::String error;
+    const auto ok = temp.store.download (nullptr, error);
+
+    INFO ("error: " << error);
+    REQUIRE (ok);
+    REQUIRE (temp.store.isAvailable());
+    REQUIRE (temp.store.verify (temp.store.getModelFile(), error));
+}
+
 SCENARIO ("the default model description is the pinned htdemucs download", "[separation][model]")
 {
     const auto& model = DemucsModelStore::defaultModel();
@@ -120,6 +157,9 @@ SCENARIO ("the default model description is the pinned htdemucs download", "[sep
     REQUIRE (model.url.getScheme() == "https");
     REQUIRE (model.url.toString (false).contains ("huggingface.co"));
     REQUIRE_FALSE (model.url.toString (false).contains ("/main/"));   // pinned to a revision
+    REQUIRE (model.fallbackUrl.getScheme() == "https");
+    REQUIRE (model.fallbackUrl.getDomain() == "audionaut.app");
+    REQUIRE (model.fallbackUrl.toString (false).endsWith (model.fileName));
     REQUIRE (model.sha256Hex.length() == 64);
     REQUIRE (model.expectedBytes > 80 * 1024 * 1024);
 
