@@ -191,7 +191,7 @@ void ClipTransportSource::prepareToPlay (int samplesPerBlockExpected, double new
         masterSource->prepareToPlay (samplesPerBlockExpected, sampleRate);
 
     if (resamplerSource != nullptr && sourceSampleRate > 0)
-        resamplerSource->setResamplingRatio (sourceSampleRate / sampleRate);
+        resamplerSource->setResamplingRatio (sourceSampleRate * speedRatio.load() / sampleRate);
 
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize    = samplesPerBlockExpected;
@@ -253,6 +253,15 @@ void ClipTransportSource::getNextAudioBlock (const juce::AudioSourceChannelInfo&
     juce::dsp::ProcessContextReplacing<float> gainContext(activeBlock);
 
     dynamicsProcessor->process(gainContext);
+}
+
+void ClipTransportSource::setSpeedRatio (double newSpeedRatio) noexcept
+{
+    jassert (newSpeedRatio > 0.0);
+    speedRatio.store (newSpeedRatio);
+
+    if (isPrepared && resamplerSource != nullptr && sourceSampleRate > 0 && sampleRate > 0)
+        resamplerSource->setResamplingRatio (sourceSampleRate * newSpeedRatio / sampleRate);
 }
 
 void ClipTransportSource::setGain (const float newGain) noexcept

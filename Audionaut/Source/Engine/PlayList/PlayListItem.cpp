@@ -75,7 +75,16 @@ void PlayListItem::setRegionData(juce::Range<double> newRegionData, audium::Time
 
 double PlayListItem::getDurationTime(audium::TimeContextType context) const
 {
-    return getRegionData(context).getLength();
+    return getRegionData(context).getLength() / getSpeedRatio();
+}
+
+void PlayListItem::setSpeedRatio(double newRatio)
+{
+    // a still-growing recording has no stable length to scale
+    if (isRecording())
+        return;
+
+    speedRatio = juce::jlimit(minSpeedRatio, maxSpeedRatio, newRatio);
 }
 
 double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
@@ -92,7 +101,9 @@ double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 
 double PlayListItem::getTailExtension(audium::TimeContextType context) const
 {
-    auto tailExtClocks = std::max(0.0, -dynamics.getFadeOutEnd(audium::clocks));
+    // the fade extension is source material; it rings out for
+    // source / speed timeline time
+    auto tailExtClocks = std::max(0.0, -dynamics.getFadeOutEnd(audium::clocks)) / getSpeedRatio();
 
     if (context == audium::clocks) {
         return tailExtClocks;
@@ -127,7 +138,12 @@ bool PlayListItem::writeToJson (json& output)
         output["position_clocks"]   = absolutePositionClocks;
         output["selected"]          = isSelected();
         output["track_id"]          = getRegion()->getAudioTrack()->getId();
-        
+
+        // written only when set: an absent key means 1.0, and old projects
+        // stay byte-identical
+        if (speedRatio != 1.0)
+            output["speed_ratio"] = speedRatio;
+
         dynamics.writeToJson(output);
         return true;
     }
@@ -154,6 +170,13 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
             
             init();
             
+            // reset first: undo replays JSON into reused item objects, and
+            // an absent key must mean "no speed set", not "keep the old one"
+            speedRatio = 1.0;
+            if (input.contains("speed_ratio"))
+                speedRatio = juce::jlimit(minSpeedRatio, maxSpeedRatio,
+                                          input.at("speed_ratio").get<double>());
+
             if (input.contains("position_clocks"))
                 absolutePositionClocks = input.at("position_clocks").get<double>();
             

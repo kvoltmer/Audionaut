@@ -4497,6 +4497,9 @@
     <ClInclude Include="..\..\Source\Engine\PlayList\ClipDynamics.h">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\PlayList\StretchMode.h">
+      <Filter>Audionaut\Source\Engine\PlayList</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListItem.h">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>

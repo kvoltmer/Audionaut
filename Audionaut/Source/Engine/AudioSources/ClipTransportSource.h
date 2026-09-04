@@ -106,6 +106,16 @@ public:
     /** Returns true if it's stopped. */
     bool isStopped() const noexcept     { return stopped; }
 
+    /**
+        Sets the clip's playback speed (re-pitch/varispeed): the effective
+        resampling ratio becomes sourceSampleRate * speed / deviceRate.
+        Real-time safe. This is also the seam where a later Stretch mode
+        (pitch-preserving) hooks in - a stretch node would replace the
+        resampler behind this same call (and would then need latency
+        compensation for the scheduling and fade counters).
+    */
+    void setSpeedRatio (double newSpeedRatio) noexcept;
+
     void setGain (float newGain) noexcept;
     float getGain() const noexcept;
     
@@ -171,6 +181,7 @@ private:
     std::atomic<bool> stopped  = true;
     std::atomic<bool> fadeOutLastBlock  = false;
     double sampleRate = 44100.0, sourceSampleRate = 0.0;
+    std::atomic<double> speedRatio { 1.0 };
     int blockSize = 128;
     std::atomic<bool> isPrepared = false;
 

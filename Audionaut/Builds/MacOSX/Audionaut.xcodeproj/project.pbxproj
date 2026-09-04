@@ -305,6 +305,7 @@
 		66CB0C43F5DBAC5718838184 /* AudioTrackComponent.h */ /* AudioTrackComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.h; sourceTree = SOURCE_ROOT; };
 		67373F64E8C8792227D22C53 /* ProjectSummary.h */ /* ProjectSummary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProjectSummary.h; path = ../../Source/Cli/ProjectSummary.h; sourceTree = SOURCE_ROOT; };
 		6B01CBEC63522628ED584952 /* ModelDownloadThread.h */ /* ModelDownloadThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ModelDownloadThread.h; path = ../../Source/Interface/Dialogs/ModelDownloadThread.h; sourceTree = SOURCE_ROOT; };
+		6B90D4B0D2DAEE81DA7B1E7C /* StretchMode.h */ /* StretchMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StretchMode.h; path = ../../Source/Engine/PlayList/StretchMode.h; sourceTree = SOURCE_ROOT; };
 		6BBAA6DFE177CD89EB2B263E /* DraggerControl.h */ /* DraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DraggerControl.h; path = ../../Source/Interface/Controls/DraggerControl.h; sourceTree = SOURCE_ROOT; };
 		6C547AE4E9347FA218C4951B /* AudioClipView.h */ /* AudioClipView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioClipView.h; path = ../../Source/Interface/Views/AudioClipView.h; sourceTree = SOURCE_ROOT; };
 		6CF79CC87DC41EFA1EAA7107 /* LockFreeCommander.h */ /* LockFreeCommander.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LockFreeCommander.h; path = ../../Source/Engine/Core/LockFreeCommander.h; sourceTree = SOURCE_ROOT; };
@@ -668,6 +669,7 @@
 				CEB5F9424FDABC8B2B31BD2E,
 				D459B5B5D32F218D6599B47E,
 				78220737D71F4A95C1825E8A,
+				6B90D4B0D2DAEE81DA7B1E7C,
 				09200639918EB49CFF3382BE,
 				5FD6D72AF76F4D6569EBD29F,
 				3B45C1B587B072E12D0C8FD8,

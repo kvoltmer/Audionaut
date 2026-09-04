@@ -47,6 +47,9 @@ public:
      */
     void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
 
+    /// The clip's playback speed, straight from the committed clip data.
+    double getSpeedRatio() const override { return dspClipData.clipSpeedRatio; }
+
     /**
      * @brief Retrieves the absolute position of the clip in a specific time context.
      * @param context The time context in which to retrieve the position.

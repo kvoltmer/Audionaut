@@ -32,6 +32,10 @@ struct ClipFadeSpec
     double fadeInStart = 0.0, fadeOutEnd = 0.0;  // signed ramp offsets
     double fadeInCurve = 0.5, fadeOutCurve = 0.5; // curve exponents (0.5 = equal power)
 
+    /// The clip's playback speed. Every field above is in source-file
+    /// seconds; one source second lasts 1/speedRatio timeline seconds.
+    double speedRatio = 1.0;
+
     double headExtension()  const noexcept { return juce::jmax(0.0, -fadeInStart); }
     double tailExtension()  const noexcept { return juce::jmax(0.0, -fadeOutEnd); }
 

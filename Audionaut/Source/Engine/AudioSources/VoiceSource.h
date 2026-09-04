@@ -100,6 +100,12 @@ public:
         clipTransportSource->stop(fadeOutLastBlock);
     }
 
+    /// The clip's playback speed - see ClipTransportSource::setSpeedRatio.
+    void setSpeedRatio(double newSpeedRatio)
+    {
+        clipTransportSource->setSpeedRatio(newSpeedRatio);
+    }
+
     void setGain(float gain)
     {
         clipTransportSource->setGain(gain);

@@ -14,6 +14,7 @@ using json = nlohmann::json;
 
 #include "Engine/TimeContext.h"
 #include "Engine/PlayList/ClipDynamics.h"
+#include "Engine/PlayList/StretchMode.h"
 #include "Engine/PlayList/PositionableBase.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
@@ -55,7 +56,21 @@ public:
     juce::Range<double> getRegionData(audium::TimeContextType context) const override;
     void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
     
+    /// The clip's timeline duration: source length / speed ratio.
     double getDurationTime(audium::TimeContextType context) const;
+
+    /**
+     * The clip's playback speed (re-pitch/varispeed): 2.0 plays double
+     * speed one octave up on half the timeline. Clamped to
+     * [minSpeedRatio, maxSpeedRatio]; ignored while the clip is recording.
+     */
+    double getSpeedRatio() const override { return speedRatio; }
+    void setSpeedRatio(double newRatio);
+
+    StretchMode getStretchMode() const { return stretchMode; }
+
+    static constexpr double minSpeedRatio = 0.25;
+    static constexpr double maxSpeedRatio = 4.0;
     
     double getAbsolutePosition(audium::TimeContextType context) const override;
 
@@ -101,6 +116,11 @@ private:
     
     // The absolute transport position
     double absolutePositionClocks = 0.0;
+
+    // Playback speed (see getSpeedRatio) and how it is realised. Only
+    // RePitch exists today.
+    double speedRatio = 1.0;
+    StretchMode stretchMode = StretchMode::RePitch;
 
     ClipDynamics dynamics{*this};
 

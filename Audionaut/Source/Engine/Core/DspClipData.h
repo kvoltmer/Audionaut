@@ -82,6 +82,14 @@ struct DspClipData
     double clipFadeOutCurve = 0.5;
 
     /**
+     * @brief The clip's playback speed (re-pitch/varispeed).
+     *
+     * 2.0 plays the source at double speed, one octave up, on half the
+     * timeline. 1.0 = unchanged.
+     */
+    double clipSpeedRatio = 1.0;
+
+    /**
      * @brief The transport source index for the clip.
      *
      * An integer representing the index of the transport source associated

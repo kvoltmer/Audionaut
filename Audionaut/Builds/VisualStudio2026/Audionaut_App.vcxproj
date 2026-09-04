@@ -3258,6 +3258,7 @@
     <ClInclude Include="..\..\Source\Engine\PlayList\SampleTimer.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\ClipDynamics.h"/>
+    <ClInclude Include="..\..\Source\Engine\PlayList\StretchMode.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListItem.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListScheduler.h"/>
     <ClInclude Include="..\..\Source\Engine\Provider\TempoProvider.h"/>
