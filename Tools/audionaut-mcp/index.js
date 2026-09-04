@@ -488,6 +488,38 @@ server.registerTool(
 );
 
 server.registerTool(
+  "clip_speed",
+  {
+    title: "Set clip speed",
+    description:
+      "Re-pitches a clip (varispeed): the speed ratio plays the source faster or slower, changing pitch " +
+      "and timeline length together (2.0 = double speed, one octave up, half as long; range 0.25-4).",
+    inputSchema: {
+      project: projectParam,
+      at: z.string().optional().describe("Timeline position of the clip (in `unit`)"),
+      region: z.string().optional().describe("Region name of the clip"),
+      track: z.number().int().min(0).optional().describe("Track id to narrow the match"),
+      ratio: z.number().positive().optional().describe("Speed ratio (0.25-4)"),
+      semitones: z.number().optional().describe("Pitch shift in semitones (ratio = 2^(n/12))"),
+      length: z.string().optional().describe("Fit the clip to this timeline duration (in `unit`)"),
+      unit: unitParam,
+    },
+  },
+  async ({ project, at, region, track, ratio, semitones, length, unit }) =>
+    runCli([
+      "clip-speed",
+      project,
+      ...(at !== undefined ? ["--at", at] : []),
+      ...(region !== undefined ? ["--region", region] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
+      ...(ratio !== undefined ? ["--ratio", String(ratio)] : []),
+      ...(semitones !== undefined ? ["--semitones", String(semitones)] : []),
+      ...(length !== undefined ? ["--length", length] : []),
+      ...(unit !== undefined ? ["--unit", unit] : []),
+    ])
+);
+
+server.registerTool(
   "separate_stems",
   {
     title: "Separate stems",
