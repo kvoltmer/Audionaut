@@ -56,6 +56,17 @@ Crossfades at segment joints can also be created automatically by Auto Edit
 (see [Analysis and Auto Edit](08-analysis-and-auto-edit.md)); their default
 length and curve are configured in *Settings → Auto Edit*.
 
+## Clip speed (re-pitch)
+
+Hold **Cmd+Alt** and drag a clip's edge to change its speed, tape-style:
+the audio plays faster or slower, pitch and length change together —
+half-length is double speed and one octave up. The clip shows its ratio
+(*×2.00*) next to its name, and the analysis markers, fades and waveform
+follow the stretch. Speeds range from ×0.25 to ×4; a plain edge drag still
+trims. A clip routed at a speed other than ×1 keeps its region untouched —
+splitting, cloning and exporting all preserve the speed, and one undo
+reverts a stretch.
+
 ## Separate Stems
 
 *Edit → Separate Stems…* splits the selected clip into Drums, Bass, Other

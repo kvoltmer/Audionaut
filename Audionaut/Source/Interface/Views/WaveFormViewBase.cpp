@@ -20,8 +20,12 @@ void WaveFormViewBase::paint (juce::Graphics& g)
         // convert region start to integer x values (avoids jitter when recording in a loop)
         start                   = zoomHandler->reinterpretSeconds(start);
         const auto thumbArea    = getClippedDrawingArea();
-        const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + start;
-        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
+
+        // one pixel covers speedRatio-times as much source material on a
+        // re-pitched clip - the zoom handler speaks timeline seconds
+        const auto speedRatio   = playListItem != nullptr ? playListItem->getSpeedRatio() : 1.0;
+        const auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) * speedRatio + start;
+        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth()) * speedRatio;
         const auto channel      = audioResource->getChannelMapping().getSourceChannel();
         
         // taper the waveform under the clip fades, matching the FadeInOutView

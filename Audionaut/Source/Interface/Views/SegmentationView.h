@@ -40,7 +40,8 @@ public:
      * @param regionStartSeconds The region's source offset into the file (seconds).
      */
     void setSegments(std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType,
-                     double regionStartSeconds);
+                     double regionStartSeconds,
+                     double speedRatio = 1.0);
 
 private:
     static juce::Colour colourForType(audium::AnalysisType analysisType);
@@ -48,6 +49,7 @@ private:
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType;
     double regionStartSeconds = 0.0;
+    double speedRatio = 1.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SegmentationView)
 };
