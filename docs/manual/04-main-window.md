@@ -53,12 +53,17 @@ Audio*) with the current choice ticked.
   or monitoring. The default, **Auto**, uses the input with the same number
   as the channel's position in its track — the first channel of a track
   takes input 1, the second input 2, and so on.
-- **Output** picks where the channel's signal goes. The default, **Main**, sends
+- **Output** picks where the channel's signal goes. The default, **Main Bus**, sends
   it through the pan control into the stereo main mix, which passes through
   the master volume and shows on the master meter. Choosing a device output
   instead sends the channel — after its own gain, unpanned — directly to
   that output, bypassing the main mix, master volume and master meter. Use
   this to feed an external mixer or a separate headphone or monitor output.
+
+A channel routed away from the defaults says so under its pan slider
+(*In 3*, *Out 4*); the note turns red when the current device cannot
+provide the route. With a direct output the pan slider is disabled — the
+signal bypasses the pan and the main bus entirely.
 
 Routing changes are undoable and saved with the project. If you later open
 the project with a device that lacks the chosen channel, the menu lists the

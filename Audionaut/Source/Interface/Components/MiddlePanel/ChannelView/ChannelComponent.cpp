@@ -73,6 +73,18 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     panSlider->onDragStart = [this] {
         audioTrack->onDragStart();
     };
+    // Routing indication: only visible when the channel is routed away
+    // from the defaults; red when the current device cannot provide the
+    // route. Sits under the pan slider.
+    for (auto* labelOwner : { &inputRoutingLabel, &outputRoutingLabel }) {
+        *labelOwner = std::make_unique<juce::Label>();
+        (*labelOwner)->setFont (juce::FontOptions (10.0f));
+        (*labelOwner)->setInterceptsMouseClicks (false, false);
+        addAndMakeVisible (labelOwner->get());
+    }
+    inputRoutingLabel->setJustificationType (juce::Justification::centredLeft);
+    outputRoutingLabel->setJustificationType (juce::Justification::centredRight);
+
     panSlider->onDragEnd = [this] {
         audioTrack->onDragEnd();
     };
@@ -170,6 +182,11 @@ void ChannelComponent::resized()
                           sliderWidth,
                           sliderHeight);
 
+    // the same 8 px air the volume/pan pair has between them
+    inputRoutingLabel->setBounds (space, 73, sliderWidth / 2, 12);
+    outputRoutingLabel->setBounds (space + sliderWidth / 2, 73,
+                                   sliderWidth - sliderWidth / 2, 12);
+
     levelMeter->setBounds(getWidth() - 20, 3, 7, getHeight() - 6);
     volumeScaleButton->setBounds (getWidth() - 10, 0, 10, proportionOfHeight (1.0000f));
 }
@@ -244,10 +261,46 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     recordButton->setToggleState(channelData.record, dontSendNotification);
     
 
+    updateRoutingIndicator();
+
     if (not isTimerRunning()) {
         startTimerHz(AudiumLookAndFeel::timerHz);
     }
     channelNumber = audioTrack->getChannel(rowNumber)->getChannelNumber() + audioTrack->getChannelOffset();
+}
+
+void ChannelComponent::updateRoutingIndicator()
+{
+    const auto channelData = audioTrack->getChannelData(rowNumber);
+    auto* device = engine->getAudioDeviceManager()->getCurrentAudioDevice();
+
+    const auto normalColour = getLookAndFeel().findColour (juce::Label::textColourId).withAlpha (0.7f);
+
+    auto apply = [&normalColour] (juce::Label& label, int routedChannel,
+                                  const juce::String& prefix, const juce::StringArray& names)
+    {
+        if (routedChannel < 0) {
+            label.setVisible (false);
+            return;
+        }
+
+        const auto available = routedChannel < names.size();
+
+        label.setText (prefix + " " + juce::String (routedChannel + 1), juce::dontSendNotification);
+        label.setColour (juce::Label::textColourId, available ? normalColour : juce::Colours::red);
+        label.setTooltip (available ? names[routedChannel]
+                                    : prefix + " " + juce::String (routedChannel + 1) + TRANS (" (not available)"));
+        label.setVisible (true);
+    };
+
+    apply (*inputRoutingLabel, channelData.inputChannel, TRANS ("In"),
+           device != nullptr ? device->getInputChannelNames() : juce::StringArray());
+    apply (*outputRoutingLabel, channelData.outputChannel, TRANS ("Out"),
+           device != nullptr ? device->getOutputChannelNames() : juce::StringArray());
+
+    // A direct out bypasses the pan into the main bus, so the pan slider
+    // has nothing to control.
+    panSlider->setEnabled (channelData.outputChannel < 0);
 }
 
 namespace
@@ -266,9 +319,9 @@ void addRoutingItems(PopupMenu& menu, int baseId, const String& defaultLabel,
     menu.addItem(baseId, defaultLabel, true, selectedChannel < 0);
 
     for (auto i = 0; i < deviceChannelNames.size(); ++i) {
-        // built-in devices name their channels by number only: don't print "1: 1"
-        const auto number = String(i + 1);
-        const auto label = deviceChannelNames[i] == number ? number : number + ": " + deviceChannelNames[i];
+        // the device's own channel name; a bare number when it has none
+        const auto name = deviceChannelNames[i].trim();
+        const auto label = name.isNotEmpty() ? name : String(i + 1);
         menu.addItem(baseId + 1 + i, label, true, selectedChannel == i);
     }
 
@@ -298,12 +351,12 @@ void ChannelComponent::showStripMenu()
 
     PopupMenu inputMenu;
     addRoutingItems(inputMenu, kInputMenuBase,
-                    TRANS("Auto (input ") + String(rowNumber + 1) + ")",
+                    TRANS("Default (input ") + String(rowNumber + 1) + ")",
                     inputNames, channelData.inputChannel,
                     TRANS("Input ") + String(channelData.inputChannel + 1) + TRANS(" (not available)"));
 
     PopupMenu outputMenu;
-    addRoutingItems(outputMenu, kOutputMenuBase, TRANS("Main"),
+    addRoutingItems(outputMenu, kOutputMenuBase, TRANS("Main Bus"),
                     outputNames, channelData.outputChannel,
                     TRANS("Output ") + String(channelData.outputChannel + 1) + TRANS(" (not available)"));
 
@@ -388,6 +441,12 @@ void ChannelComponent::timerCallback()
     
     recordButton->setToggleState(data.record, dontSendNotification);
 
+    // Once a second: the routing indication depends on the audio device,
+    // which can change without this component being refreshed.
+    if (++routingRefreshTick >= AudiumLookAndFeel::timerHz) {
+        routingRefreshTick = 0;
+        updateRoutingIndicator();
+    }
 }
 
 void ChannelComponent::configurePanSlider(juce::Slider *slider)
