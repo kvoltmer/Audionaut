@@ -69,6 +69,10 @@ public:
 
     StretchMode getStretchMode() const { return stretchMode; }
 
+    /// How the speed ratio is realised (varispeed vs pitch-preserving).
+    /// No-op while the clip is recording, like setSpeedRatio.
+    void setStretchMode(StretchMode newMode);
+
     static constexpr double minSpeedRatio = 0.25;
     static constexpr double maxSpeedRatio = 4.0;
     
@@ -128,6 +132,7 @@ private:
     // Playback speed (see getSpeedRatio) and how it is realised. Only
     // RePitch exists today.
     double speedRatio = 1.0;
+
     StretchMode stretchMode = StretchMode::RePitch;
 
     ClipDynamics dynamics{*this};

@@ -56,20 +56,27 @@ Crossfades at segment joints can also be created automatically by Auto Edit
 (see [Analysis and Auto Edit](08-analysis-and-auto-edit.md)); their default
 length and curve are configured in *Settings → Auto Edit*.
 
-## Clip speed (re-pitch)
+## Clip speed
 
 Hold **Cmd+Alt** and drag a clip's edge to change its speed, tape-style:
-the audio plays faster or slower, pitch and length change together —
-half-length is double speed and one octave up. The clip shows its ratio
-(*×2.00*) next to its name, and the analysis markers, fades and waveform
-follow the stretch. Speeds range from ×0.25 to ×4; a plain edge drag still
-trims. A clip routed at a speed other than ×1 keeps its region untouched —
-splitting, cloning and exporting all preserve the speed, and one undo
-reverts a stretch. While the *Stretch Clip* panel (*Edit → Stretch Clip…*)
-is open on a clip, that clip is in stretch mode: its edges stretch on a
-plain drag, no modifiers needed. The check mark applies the session as one
-undo step; Escape or the panel's close chip revert everything since the
-panel opened.
+the audio plays faster or slower — by default pitch and length change
+together (re-pitch), so half-length is double speed and one octave up. The
+clip shows its ratio (*×2.00*) next to its name, and the analysis markers,
+fades and waveform follow the stretch. Speeds range from ×0.25 to ×4; a
+plain edge drag still trims. A clip routed at a speed other than ×1 keeps
+its region untouched — splitting, cloning and exporting all preserve the
+speed and mode, and one undo reverts a stretch. While the *Stretch Clip*
+panel (*Edit → Stretch Clip…*) is open on a clip, that clip is in stretch
+mode: its edges stretch on a plain drag, no modifiers needed. The check
+mark applies the session as one undo step; Escape or the panel's close
+chip revert everything since the panel opened.
+
+The panel's **Mode** box picks how the speed is realised. *Re-Pitch* (the
+default) is classic varispeed. *Time-Stretch* keeps the clip's pitch while
+the length changes — a pitch-preserving time-stretch, powered by
+[Signalsmith Stretch](https://signalsmith-audio.co.uk/code/stretch/). The
+switch applies live and also plays out in exports and bounces; extreme
+ratios smear sharp transients, which is the nature of the technique.
 
 ## Separate Stems
 

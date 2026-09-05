@@ -106,6 +106,12 @@ public:
         clipTransportSource->setSpeedRatio(newSpeedRatio);
     }
 
+    /// Varispeed vs pitch-preserving - see ClipTransportSource::setStretchMode.
+    void setStretchMode(StretchMode newMode)
+    {
+        clipTransportSource->setStretchMode(newMode);
+    }
+
     void setGain(float gain)
     {
         clipTransportSource->setGain(gain);

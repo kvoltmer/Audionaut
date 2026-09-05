@@ -979,6 +979,9 @@
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipTransportSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\StretchAudioSource.cpp">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
@@ -4363,6 +4366,9 @@
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.h">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\StretchAudioSource.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipTransportSource.h">

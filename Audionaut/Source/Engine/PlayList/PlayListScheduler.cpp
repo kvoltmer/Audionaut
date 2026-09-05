@@ -92,6 +92,7 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     }
 
     voiceSource->setSpeedRatio(speedRatio);
+    voiceSource->setStretchMode(spec.stretchMode);
     voiceSource->schedulePosition(position, startSample);
     voiceSource->scheduleDuration(duration / speedRatio, externalSampleRate);
 
@@ -357,6 +358,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     for (auto source : config->playListItem->getVoiceSources()) {
         source->prepareToPlay(config->blockSize, config->sampleRate);
         source->setSpeedRatio(spec.speedRatio);
+        source->setStretchMode(spec.stretchMode);
         source->schedulePosition(spec.voiceFileStart(), 0);
         source->scheduleDuration((spec.voiceFileEnd() - spec.voiceFileStart()) / spec.speedRatio, config->sampleRate);
         source->configureDynamics(config->playListItem);

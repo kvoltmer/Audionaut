@@ -30,6 +30,7 @@ bool PlayListItemExport::exportItem()
     // extensions and the playback speed over to the fresh export item
     config->playListItem->getDynamics().copyFrom(playListItem->getDynamics());
     config->playListItem->setSpeedRatio(playListItem->getSpeedRatio());
+    config->playListItem->setStretchMode(playListItem->getStretchMode());
 
     // the number of audio channels
     config->numChannels = audioRegion->getAudioTrack()->getNumAudioTrackChannels();

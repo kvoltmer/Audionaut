@@ -112,6 +112,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::clonePlayListItem(std::shared_p
     if (newItem != nullptr) {
         newItem->getDynamics().copyGainsFrom(item->getDynamics());
         newItem->setSpeedRatio(item->getSpeedRatio());
+        newItem->setStretchMode(item->getStretchMode());
     }
     return newItem;
 }

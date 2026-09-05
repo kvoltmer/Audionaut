@@ -10,6 +10,7 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/StretchMode.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Selection/ClipOverlayTarget.h"
 #include "Engine/Selection/SelectionManager.h"
@@ -18,6 +19,11 @@
 namespace {
 
 constexpr int sliderWidth = 90;
+constexpr int modeBoxWidth = 96;
+
+// ComboBox item ids (0 is reserved for "nothing selected")
+constexpr int rePitchItemId = 1;
+constexpr int timeStretchItemId = 2;
 
 constexpr double semitoneFactor = 1.0594630943592953;   // 2^(1/12)
 
@@ -66,6 +72,21 @@ StretchOverlayControl::StretchOverlayControl(std::shared_ptr<audium::AudiumEngin
         speedSlider->setValue (speedSlider->getValue() * semitoneFactor, juce::sendNotificationSync);
     };
 
+    modeBox = std::make_unique<juce::ComboBox>();
+    modeBox->addItem (TRANS ("Re-Pitch"), rePitchItemId);
+    modeBox->addItem (TRANS ("Time-Stretch"), timeStretchItemId);
+    modeBox->setSelectedId (rePitchItemId, juce::dontSendNotification);
+    // same grey as the icon buttons (see ClipOverlayBase::makeIconButton)
+    modeBox->setColour (juce::ComboBox::backgroundColourId, juce::Colours::grey);
+    modeBox->setColour (juce::ComboBox::textColourId, juce::Colours::white);
+    modeBox->setColour (juce::ComboBox::arrowColourId, juce::Colours::white);
+    // the buttons' outline (see AudiumLookAndFeel::drawButtonBackground)
+    modeBox->setColour (juce::ComboBox::outlineColourId, juce::Colours::white.withAlpha (0.4f));
+    addAndMakeVisible (modeBox.get());
+    modeBox->onChange = [this] {
+        applyMode (modeBox->getSelectedId() == timeStretchItemId);
+    };
+
     applyButton = makeIconButton (TRANS ("Apply"), checkIconPath());
     addAndMakeVisible (applyButton.get());
     applyButton->onClick = [this] {
@@ -86,8 +107,8 @@ StretchOverlayControl::~StretchOverlayControl()
 
 int StretchOverlayControl::getPreferredWidth() const
 {
-    return padding + buttonWidth + stepGap + sliderWidth + stepGap
-           + buttonWidth + gap + buttonWidth + padding;
+    return padding + modeBoxWidth + gap + buttonWidth + stepGap + sliderWidth
+           + stepGap + buttonWidth + gap + buttonWidth + padding;
 }
 
 int StretchOverlayControl::getMinimumWidth() const
@@ -127,7 +148,12 @@ std::shared_ptr<audium::PlayListItem> StretchOverlayControl::resolveItem() const
 void StretchOverlayControl::syncFromEngine()
 {
     if (auto item = resolveItem())
+    {
         speedSlider->setValue (item->getSpeedRatio(), juce::dontSendNotification);
+        modeBox->setSelectedId (item->getStretchMode() == audium::StretchMode::Stretch
+                                    ? timeStretchItemId : rePitchItemId,
+                                juce::dontSendNotification);
+    }
 }
 
 void StretchOverlayControl::applyRatio(double newRatio)
@@ -140,13 +166,7 @@ void StretchOverlayControl::applyRatio(double newRatio)
         return;
     }
 
-    // The whole overlay session is one undo step: open the container
-    // snapshot on the first change, commit it when the overlay goes away.
-    if (! sessionDirty)
-    {
-        item->onDragStart();
-        sessionDirty = true;
-    }
+    ensureSessionOpen (*item);
 
     item->setSpeedRatio (newRatio);
 
@@ -156,6 +176,37 @@ void StretchOverlayControl::applyRatio(double newRatio)
     // The relayout this triggers resizes the clip under us - follow it in
     // place instead of running the zoom fade.
     expectParentResize();
+    audiumEngine->getAudioTrackContainer()->sendActionMessage (audium::updateArrangementAction);
+}
+
+void StretchOverlayControl::ensureSessionOpen (audium::PlayListItem& item)
+{
+    // The whole overlay session is one undo step: open the container
+    // snapshot on the first change, commit it when the overlay goes away.
+    if (! sessionDirty)
+    {
+        item.onDragStart();
+        sessionDirty = true;
+    }
+}
+
+void StretchOverlayControl::applyMode (bool pitchPreserving)
+{
+    auto item = resolveItem();
+
+    if (item == nullptr || item->isRecording())
+    {
+        syncFromEngine();
+        return;
+    }
+
+    ensureSessionOpen (*item);
+
+    item->setStretchMode (pitchPreserving ? audium::StretchMode::Stretch
+                                          : audium::StretchMode::RePitch);
+
+    // no relayout (the length is mode-independent), but the broadcast
+    // recommits the clip data so playback switches over live
     audiumEngine->getAudioTrackContainer()->sendActionMessage (audium::updateArrangementAction);
 }
 
@@ -197,6 +248,9 @@ void StretchOverlayControl::paintLabels (juce::Graphics& g)
 
     if (speedSlider->isVisible())
         drawLabel (g, *speedSlider, TRANS ("Speed"), true);
+
+    if (modeBox->isVisible())
+        drawLabel (g, *modeBox, TRANS ("Mode"), true);
 }
 
 void StretchOverlayControl::resized()
@@ -214,16 +268,19 @@ void StretchOverlayControl::resized()
     const bool buttonsFit = getWidth() >= getPreferredWidth() + 2 * closeButtonOverhang;
     semitoneDownButton->setVisible (buttonsFit);
     semitoneUpButton->setVisible (buttonsFit);
+    modeBox->setVisible (buttonsFit);
 
     if (buttonsFit)
     {
-        buttonRow.removeFromRight (gap);
-
-        semitoneUpButton->setBounds (buttonRow.removeFromRight (buttonWidth));
-        buttonRow.removeFromRight (stepGap);
+        modeBox->setBounds (buttonRow.removeFromLeft (modeBoxWidth));
+        buttonRow.removeFromLeft (gap);
 
         semitoneDownButton->setBounds (buttonRow.removeFromLeft (buttonWidth));
         buttonRow.removeFromLeft (stepGap);
+
+        buttonRow.removeFromRight (gap);
+        semitoneUpButton->setBounds (buttonRow.removeFromRight (buttonWidth));
+        buttonRow.removeFromRight (stepGap);
     }
     else
     {

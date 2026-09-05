@@ -492,8 +492,9 @@ server.registerTool(
   {
     title: "Set clip speed",
     description:
-      "Re-pitches a clip (varispeed): the speed ratio plays the source faster or slower, changing pitch " +
-      "and timeline length together (2.0 = double speed, one octave up, half as long; range 0.25-4).",
+      "Sets a clip's playback speed (ratio 0.25-4, 2.0 = double speed, half as long). The mode picks how: " +
+      "repitch (default, varispeed - pitch and length change together) or stretch (pitch-preserving " +
+      "time-stretch). Mode can also be changed on its own.",
     inputSchema: {
       project: projectParam,
       at: z.string().optional().describe("Timeline position of the clip (in `unit`)"),
@@ -502,10 +503,12 @@ server.registerTool(
       ratio: z.number().positive().optional().describe("Speed ratio (0.25-4)"),
       semitones: z.number().optional().describe("Pitch shift in semitones (ratio = 2^(n/12))"),
       length: z.string().optional().describe("Fit the clip to this timeline duration (in `unit`)"),
+      mode: z.enum(["repitch", "stretch"]).optional()
+        .describe("How the speed is realised: varispeed or pitch-preserving"),
       unit: unitParam,
     },
   },
-  async ({ project, at, region, track, ratio, semitones, length, unit }) =>
+  async ({ project, at, region, track, ratio, semitones, length, mode, unit }) =>
     runCli([
       "clip-speed",
       project,
@@ -514,6 +517,7 @@ server.registerTool(
       ...(track !== undefined ? ["--track", String(track)] : []),
       ...(ratio !== undefined ? ["--ratio", String(ratio)] : []),
       ...(semitones !== undefined ? ["--semitones", String(semitones)] : []),
+      ...(mode !== undefined ? ["--mode", mode] : []),
       ...(length !== undefined ? ["--length", length] : []),
       ...(unit !== undefined ? ["--unit", unit] : []),
     ])

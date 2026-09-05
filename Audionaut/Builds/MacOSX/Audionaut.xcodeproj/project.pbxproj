@@ -67,6 +67,7 @@
 		5D5ACD630FA6238F1429787B /* RecordingActionHandler.cpp */ = {isa = PBXBuildFile; fileRef = 0C2871C7A8AF0B9971AFED86; };
 		5E58276753980A3B968C5B4A /* AudioTrackContainer.cpp */ = {isa = PBXBuildFile; fileRef = 90A1F23ACDB59F5B8DF7DB30; };
 		60C7DEA3545A27039A64E1CA /* AnalysisProvider.cpp */ = {isa = PBXBuildFile; fileRef = A1B47D6F617B000A13EF9E94; };
+		611E51BE65CA33F8C7AC572A /* StretchAudioSource.cpp */ = {isa = PBXBuildFile; fileRef = 860B6BBD83A3F4E00CE653BA; };
 		61854D98984BB9D5865101FB /* crosstransformer.cpp */ = {isa = PBXBuildFile; fileRef = E50CAB689F2324FA8F53503D; settings = { COMPILER_FLAGS = "-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src"; }; };
 		61B2EF20F9E1283C0FEAD569 /* StemSeparator.cpp */ = {isa = PBXBuildFile; fileRef = 9293D006E5B1641F94DC5E18; };
 		63AE7E83398F33BA6144FBD5 /* PlayListTableListBoxItem.cpp */ = {isa = PBXBuildFile; fileRef = 7E44DB630C41B875C940DDCD; };
@@ -192,6 +193,7 @@
 		0F438419DAEA923F36640757 /* PlayListItemComponent.h */ /* PlayListItemComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListItemComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h; sourceTree = SOURCE_ROOT; };
 		10F4F870D7EDD591FC8B4450 /* model_load.cpp */ /* model_load.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = model_load.cpp; path = ../../../Submodules/demucs.cpp/src/model_load.cpp; sourceTree = SOURCE_ROOT; };
 		11ABDB8E5A840910E3FD71B8 /* MainComponent.cpp */ /* MainComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MainComponent.cpp; path = ../../Source/Interface/Components/MainComponent.cpp; sourceTree = SOURCE_ROOT; };
+		122D5C19345AA10A7AAAF81F /* StretchAudioSource.h */ /* StretchAudioSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StretchAudioSource.h; path = ../../Source/Engine/AudioSources/StretchAudioSource.h; sourceTree = SOURCE_ROOT; };
 		1236925F912643D0B4DF9380 /* include_juce_cryptography.mm */ /* include_juce_cryptography.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_cryptography.mm; path = ../../JuceLibraryCode/include_juce_cryptography.mm; sourceTree = SOURCE_ROOT; };
 		135268B529334D375F4CAB88 /* AnalyzeCommand.cpp */ /* AnalyzeCommand.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AnalyzeCommand.cpp; path = ../../Source/Cli/Commands/AnalyzeCommand.cpp; sourceTree = SOURCE_ROOT; };
 		13947CDC091AAE4C5F1D2A96 /* AutoEditParameter.h */ /* AutoEditParameter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoEditParameter.h; path = ../../Source/Engine/AutoEdit/AutoEditParameter.h; sourceTree = SOURCE_ROOT; };
@@ -354,6 +356,7 @@
 		83360B17F7DF588F86AC517F /* HeadlessMode.h */ /* HeadlessMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HeadlessMode.h; path = ../../Source/Engine/Core/HeadlessMode.h; sourceTree = SOURCE_ROOT; };
 		84484F21C03C97F770F1A3FE /* EngineAccess.h */ /* EngineAccess.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EngineAccess.h; path = ../../Source/Util/EngineAccess.h; sourceTree = SOURCE_ROOT; };
 		8534F57B49669B5BDA634A63 /* ClipFadeSpec.cpp */ /* ClipFadeSpec.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ClipFadeSpec.cpp; path = ../../Source/Engine/AudioSources/ClipFadeSpec.cpp; sourceTree = SOURCE_ROOT; };
+		860B6BBD83A3F4E00CE653BA /* StretchAudioSource.cpp */ /* StretchAudioSource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = StretchAudioSource.cpp; path = ../../Source/Engine/AudioSources/StretchAudioSource.cpp; sourceTree = SOURCE_ROOT; };
 		8649B7A8233BFC8D32FA530F /* AudioRegionContainer.cpp */ /* AudioRegionContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegionContainer.cpp; path = ../../Source/Engine/Region/AudioRegionContainer.cpp; sourceTree = SOURCE_ROOT; };
 		87121392AC06CCE30AB209C5 /* AudiumApplication.h */ /* AudiumApplication.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumApplication.h; path = ../../Source/Application/AudiumApplication.h; sourceTree = SOURCE_ROOT; };
 		8835413CFB618790DBA422FD /* SliderControl.h */ /* SliderControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SliderControl.h; path = ../../Source/Interface/Controls/SliderControl.h; sourceTree = SOURCE_ROOT; };
@@ -983,6 +986,8 @@
 				CCCD94CE9AE0056C118BD3D0,
 				B91E88D89EAF16D1AAD4B24B,
 				8FC68A13891E2E3079553B60,
+				860B6BBD83A3F4E00CE653BA,
+				122D5C19345AA10A7AAAF81F,
 				EC2E4985F29BFF7B4F3F5486,
 				8534F57B49669B5BDA634A63,
 				250E6D9AF4CAD51E2AA78BD8,
@@ -1497,6 +1502,7 @@
 				392CBAFC802A482650C8A347,
 				6DBD2483C1884BBCCB5A7DF9,
 				20531CE9B45123B33913B293,
+				611E51BE65CA33F8C7AC572A,
 				AC12B745E66A082394669AF4,
 				3FAC49EEE4C8BEC37A19455C,
 				BAB1AD43D1FB4CD46AA328EF,
@@ -1671,13 +1677,15 @@
 					"$(SRCROOT)/../../../Submodules/link/include/",
 					"$(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include",
 					"$(SRCROOT)/../../../Submodules/farbot/include/",
+					"$(SRCROOT)/../../../Submodules/signalsmith-stretch/include/",
+					"$(SRCROOT)/../../../Submodules/signalsmith-linear/include/",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = Info-App.plist;
 				INFOPLIST_PREPROCESS = NO;
 				INSTALL_PATH = "/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/";
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/signalsmith-stretch/include/ $(SRCROOT)/../../../Submodules/signalsmith-linear/include/";
 				OTHER_CFLAGS = "-isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_CPLUSPLUSFLAGS = "-isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_LDFLAGS = "$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv";
@@ -1854,6 +1862,8 @@
 					"$(SRCROOT)/../../../Submodules/link/include/",
 					"$(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include",
 					"$(SRCROOT)/../../../Submodules/farbot/include/",
+					"$(SRCROOT)/../../../Submodules/signalsmith-stretch/include/",
+					"$(SRCROOT)/../../../Submodules/signalsmith-linear/include/",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = Info-App.plist;
@@ -1861,7 +1871,7 @@
 				INSTALL_PATH = "/Applications";
 				LLVM_LTO = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/";
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/signalsmith-stretch/include/ $(SRCROOT)/../../../Submodules/signalsmith-linear/include/";
 				OTHER_CFLAGS = "-isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_CPLUSPLUSFLAGS = "-isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_LDFLAGS = "$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv";

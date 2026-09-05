@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/&#10;../../../Submodules/signalsmith-stretch/include/&#10;../../../Submodules/signalsmith-linear/include/"
               bundleIdentifier="com.voltmer-systems.audionaut" version="1.4.0"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
               cppLanguageStandard="20" compilerFlagSchemes="demucs" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0&#10;DEMUCS_ENABLED=1&#10;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
@@ -143,6 +143,10 @@
                 file="Source/Engine/AudioSources/VoiceSourceContainer.h"/>
           <FILE id="pLvPaN" name="ClipTransportSource.cpp" compile="1" resource="0"
                 file="Source/Engine/AudioSources/ClipTransportSource.cpp"/>
+          <FILE id="StrAs1" name="StretchAudioSource.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/StretchAudioSource.cpp"/>
+          <FILE id="StrAs2" name="StretchAudioSource.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/StretchAudioSource.h"/>
           <FILE id="tyX7Fa" name="ClipTransportSource.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/ClipTransportSource.h"/>
           <FILE id="Cfs9Qa" name="ClipFadeSpec.cpp" compile="1" resource="0"

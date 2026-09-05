@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Engine/Group/AudioClipData.h"
+#include "Engine/PlayList/StretchMode.h"
 
 namespace audium {
 
@@ -88,6 +89,7 @@ struct DspClipData
      * timeline. 1.0 = unchanged.
      */
     double clipSpeedRatio = 1.0;
+    StretchMode clipStretchMode = StretchMode::RePitch;
 
     /**
      * @brief The transport source index for the clip.

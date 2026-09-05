@@ -25,6 +25,7 @@ ClipFadeSpec ClipFadeSpec::fromPlayListItem (const PlayListItem& item)
     spec.fadeInCurve  = item.getDynamics().getFadeInCurve();
     spec.fadeOutCurve = item.getDynamics().getFadeOutCurve();
     spec.speedRatio   = item.getSpeedRatio();
+    spec.stretchMode  = item.getStretchMode();
     return spec;
 }
 
@@ -42,6 +43,7 @@ ClipFadeSpec ClipFadeSpec::fromDspClip (const DspClip& dspClip,
     spec.fadeInCurve  = dspClip.dspClipData.clipFadeInCurve;
     spec.fadeOutCurve = dspClip.dspClipData.clipFadeOutCurve;
     spec.speedRatio   = dspClip.dspClipData.clipSpeedRatio;
+    spec.stretchMode  = dspClip.dspClipData.clipStretchMode;
     return spec;
 }
 

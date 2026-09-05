@@ -79,6 +79,8 @@ public:
         addCredit ("Demucs & the htdemucs model (Alexandre Defossez et al., Meta AI Research)",
                    "https://github.com/facebookresearch/demucs");
 #endif
+        addCredit ("Signalsmith Stretch (Signalsmith Audio, MIT)",
+                   "https://signalsmith-audio.co.uk/code/stretch/");
 
         // Copyright
         addAndMakeVisible (copyrightLabel);

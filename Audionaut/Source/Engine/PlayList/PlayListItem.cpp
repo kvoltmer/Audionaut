@@ -87,6 +87,14 @@ void PlayListItem::setSpeedRatio(double newRatio)
     speedRatio = juce::jlimit(minSpeedRatio, maxSpeedRatio, newRatio);
 }
 
+void PlayListItem::setStretchMode(StretchMode newMode)
+{
+    if (isRecording())
+        return;
+
+    stretchMode = newMode;
+}
+
 double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 {
     if (context == audium::seconds) {
@@ -144,6 +152,9 @@ bool PlayListItem::writeToJson (json& output)
         if (speedRatio != 1.0)
             output["speed_ratio"] = speedRatio;
 
+        if (stretchMode != StretchMode::RePitch)
+            output["stretch_mode"] = static_cast<int>(stretchMode);
+
         dynamics.writeToJson(output);
         return true;
     }
@@ -176,6 +187,11 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
             if (input.contains("speed_ratio"))
                 speedRatio = juce::jlimit(minSpeedRatio, maxSpeedRatio,
                                           input.at("speed_ratio").get<double>());
+
+            stretchMode = StretchMode::RePitch;
+            if (input.contains("stretch_mode"))
+                stretchMode = input.at("stretch_mode").get<int>() == 1
+                                  ? StretchMode::Stretch : StretchMode::RePitch;
 
             if (input.contains("position_clocks"))
                 absolutePositionClocks = input.at("position_clocks").get<double>();

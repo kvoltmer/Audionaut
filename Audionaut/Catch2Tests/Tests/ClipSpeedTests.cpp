@@ -78,6 +78,24 @@ Fixture makeFixture(const juce::File& audioFile)
     return fixture;
 }
 
+/// Dominant frequency via positive-going zero crossings over a probe
+/// window - robust against the stretcher's amplitude ripple, sensitive to
+/// exactly the thing the two modes differ in.
+double measureFrequency(const juce::AudioBuffer<float>& buffer, double fromSeconds, double toSeconds)
+{
+    const auto from = static_cast<int>(fromSeconds * 44100.0);
+    const auto to = static_cast<int>(toSeconds * 44100.0);
+    REQUIRE(to > from);
+    REQUIRE(to <= buffer.getNumSamples());
+
+    auto crossings = 0;
+    for (auto i = from + 1; i < to; ++i)
+        if (buffer.getSample(0, i - 1) <= 0.0f && buffer.getSample(0, i) > 0.0f)
+            ++crossings;
+
+    return crossings / (toSeconds - fromSeconds);
+}
+
 /// The ramp's rise per sample between two probe times chosen inside one
 /// saw cycle - endpoint-based, so the resampler's interpolation ripple at
 /// cycle boundaries cannot pollute it.
@@ -282,6 +300,99 @@ SCENARIO("a stretched item bounce is speed-scaled", "[engine][clipspeed]")
     MessageManager::deleteInstance();
 }
 
+SCENARIO("stretch mode keeps the pitch while the length changes", "[engine][clipspeed][stretch]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture(createSineAudioFile(440.0, 2.0));
+        auto item = fixture.item();
+
+        WHEN("a half-speed clip is bounced in both modes")
+        {
+            item->setSpeedRatio(0.5);
+            fixture.commit();
+            auto rePitched = fixture.bounce();
+
+            item->setStretchMode(StretchMode::Stretch);
+            fixture.commit();
+            auto stretched = fixture.bounce();
+
+            THEN("re-pitch drops an octave, stretch holds 440 Hz - at the same length")
+            {
+                REQUIRE(rePitched.getNumSamples() == Catch::Approx(4.0 * 44100.0).margin(512));
+                REQUIRE(stretched.getNumSamples() == Catch::Approx(4.0 * 44100.0).margin(512));
+
+                REQUIRE(measureFrequency(rePitched, 0.5, 3.5) == Catch::Approx(220.0).epsilon(0.02));
+                REQUIRE(measureFrequency(stretched, 0.5, 3.5) == Catch::Approx(440.0).epsilon(0.02));
+            }
+
+            THEN("the stretched level survives within a phase-vocoder tolerance")
+            {
+                REQUIRE(stretched.getRMSLevel(0, static_cast<int>(0.5 * 44100.0),
+                                              static_cast<int>(3.0 * 44100.0))
+                        == Catch::Approx(1.0 / std::sqrt(2.0)).epsilon(0.1));
+            }
+        }
+
+        WHEN("a double-speed stretch clip is bounced")
+        {
+            item->setSpeedRatio(2.0);
+            item->setStretchMode(StretchMode::Stretch);
+            fixture.commit();
+            auto buffer = fixture.bounce();
+
+            THEN("half the length, still 440 Hz")
+            {
+                REQUIRE(buffer.getNumSamples() == Catch::Approx(1.0 * 44100.0).margin(512));
+                REQUIRE(measureFrequency(buffer, 0.1, 0.9) == Catch::Approx(440.0).epsilon(0.02));
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("a stretch-mode clip starts aligned with the timeline", "[engine][clipspeed][stretch]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        // one silent second, then the tone: the stretched onset must land at
+        // its speed-scaled timeline position, which pins down the stretcher's
+        // latency priming
+        auto fixture = makeFixture(createSineAudioFile(440.0, 1.0, 1.0));
+        auto item = fixture.item();
+
+        item->setSpeedRatio(0.5);
+        item->setStretchMode(StretchMode::Stretch);
+        fixture.commit();
+        auto buffer = fixture.bounce();
+
+        THEN("the onset lands at 2.0 timeline seconds")
+        {
+            auto onset = -1;
+            for (auto i = 0; i < buffer.getNumSamples(); ++i)
+            {
+                if (std::abs(buffer.getSample(0, i)) > 0.1f)
+                {
+                    onset = i;
+                    break;
+                }
+            }
+
+            REQUIRE(onset >= 0);
+            REQUIRE(onset / 44100.0 == Catch::Approx(2.0).margin(0.05));
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
 SCENARIO("clip speed persists and resets like the other item state", "[engine][clipspeed]")
 {
     MessageManager::getInstance();
@@ -297,6 +408,7 @@ SCENARIO("clip speed persists and resets like the other item state", "[engine][c
         THEN("the default speed writes no key, so old projects stay identical")
         {
             REQUIRE_FALSE(plain.contains("speed_ratio"));
+            REQUIRE_FALSE(plain.contains("stretch_mode"));
         }
 
         WHEN("a speed is set and the item state round-trips")
@@ -319,6 +431,26 @@ SCENARIO("clip speed persists and resets like the other item state", "[engine][c
             {
                 REQUIRE(item->readFromJson(plain, false));
                 REQUIRE(item->getSpeedRatio() == Catch::Approx(1.0));
+            }
+        }
+
+        WHEN("stretch mode is set and the item state round-trips")
+        {
+            item->setStretchMode(StretchMode::Stretch);
+
+            json withMode;
+            REQUIRE(item->writeToJson(withMode));
+            REQUIRE(withMode.at("stretch_mode").get<int>() == 1);
+
+            item->setStretchMode(StretchMode::RePitch);
+            REQUIRE(item->readFromJson(withMode, false));
+
+            THEN("the stored mode comes back, and a modeless state resets it")
+            {
+                REQUIRE(item->getStretchMode() == StretchMode::Stretch);
+
+                REQUIRE(item->readFromJson(plain, false));
+                REQUIRE(item->getStretchMode() == StretchMode::RePitch);
             }
         }
     }
@@ -400,12 +532,14 @@ SCENARIO("splitting and cloning a stretched clip preserve its speed", "[engine][
 
         WHEN("the clip is cloned")
         {
+            fixture.item()->setStretchMode(StretchMode::Stretch);
             auto clone = playList->clonePlayListItem(fixture.item());
             REQUIRE(clone != nullptr);
 
-            THEN("the clone keeps the speed")
+            THEN("the clone keeps the speed and the mode")
             {
                 REQUIRE(clone->getSpeedRatio() == Catch::Approx(0.5));
+                REQUIRE(clone->getStretchMode() == StretchMode::Stretch);
             }
         }
 

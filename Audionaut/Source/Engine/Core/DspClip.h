@@ -49,6 +49,7 @@ public:
 
     /// The clip's playback speed, straight from the committed clip data.
     double getSpeedRatio() const override { return dspClipData.clipSpeedRatio; }
+    StretchMode getStretchMode() const { return dspClipData.clipStretchMode; }
 
     /**
      * @brief Retrieves the absolute position of the clip in a specific time context.

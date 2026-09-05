@@ -35,11 +35,13 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
     }
 
     juce::ResamplingAudioSource* newResamplerSource = nullptr;
+    StretchAudioSource* newStretchSource = nullptr;
     juce::BufferingAudioSource* newBufferingSource = nullptr;
     juce::PositionableAudioSource* newPositionableSource = nullptr;
     juce::AudioSource* newMasterSource = nullptr;
 
     std::unique_ptr<juce::ResamplingAudioSource> oldResamplerSource (resamplerSource);
+    std::unique_ptr<StretchAudioSource> oldStretchSource (stretchSource);
     std::unique_ptr<juce::BufferingAudioSource> oldBufferingSource (bufferingSource);
     juce::AudioSource* oldMasterSource = masterSource;
 
@@ -61,8 +63,15 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
         newPositionableSource->setNextReadPosition (0);
 
         if (sourceSampleRateToCorrectFor > 0)
+        {
             newMasterSource = newResamplerSource
                 = new juce::ResamplingAudioSource (newPositionableSource, false, maxNumChannels);
+
+            // the pitch-preserving node lives in the chain permanently and
+            // is bypassed in RePitch mode - see setStretchMode
+            newMasterSource = newStretchSource
+                = new StretchAudioSource (newResamplerSource, maxNumChannels);
+        }
         else
             newMasterSource = newPositionableSource;
 
@@ -78,6 +87,7 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
     {
         source = newSource;
         resamplerSource = newResamplerSource;
+        stretchSource = newStretchSource;
         bufferingSource = newBufferingSource;
         masterSource = newMasterSource;
         positionableSource = newPositionableSource;
@@ -153,6 +163,9 @@ void ClipTransportSource::setNextReadPosition (juce::int64 newPosition)
 
         if (resamplerSource != nullptr)
             resamplerSource->flushBuffers();
+
+        if (stretchSource != nullptr)
+            stretchSource->flushBuffers();
     }
 }
 
@@ -190,8 +203,7 @@ void ClipTransportSource::prepareToPlay (int samplesPerBlockExpected, double new
     if (masterSource != nullptr)
         masterSource->prepareToPlay (samplesPerBlockExpected, sampleRate);
 
-    if (resamplerSource != nullptr && sourceSampleRate > 0)
-        resamplerSource->setResamplingRatio (sourceSampleRate * speedRatio.load() / sampleRate);
+    updateSpeedChain();
 
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize    = samplesPerBlockExpected;
@@ -260,8 +272,33 @@ void ClipTransportSource::setSpeedRatio (double newSpeedRatio) noexcept
     jassert (newSpeedRatio > 0.0);
     speedRatio.store (newSpeedRatio);
 
-    if (isPrepared && resamplerSource != nullptr && sourceSampleRate > 0 && sampleRate > 0)
-        resamplerSource->setResamplingRatio (sourceSampleRate * newSpeedRatio / sampleRate);
+    if (isPrepared)
+        updateSpeedChain();
+}
+
+void ClipTransportSource::setStretchMode (StretchMode newMode) noexcept
+{
+    stretchMode.store (newMode);
+
+    if (isPrepared)
+        updateSpeedChain();
+}
+
+void ClipTransportSource::updateSpeedChain() noexcept
+{
+    const auto speed = speedRatio.load();
+    const bool stretching = stretchMode.load() == StretchMode::Stretch;
+
+    // In Stretch mode the resampler only corrects the file's sample rate;
+    // the stretch node realises the speed and keeps the pitch.
+    if (resamplerSource != nullptr && sourceSampleRate > 0 && sampleRate > 0)
+        resamplerSource->setResamplingRatio (sourceSampleRate * (stretching ? 1.0 : speed) / sampleRate);
+
+    if (stretchSource != nullptr)
+    {
+        stretchSource->setEnabled (stretching);
+        stretchSource->setSpeedRatio (speed);
+    }
 }
 
 void ClipTransportSource::setGain (const float newGain) noexcept

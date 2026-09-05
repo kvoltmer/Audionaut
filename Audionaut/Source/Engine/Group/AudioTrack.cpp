@@ -744,6 +744,7 @@ std::vector<DspClipData> AudioTrack::getDspClipVector() const
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
                 dspClipData.clipSpeedRatio      = item->getSpeedRatio();
+                dspClipData.clipStretchMode     = item->getStretchMode();
                 
                 dspClipData.voiceSourceIndex = voiceSourceContainer->getVoiceSourceIndex(voiceSource);
                 result.push_back(dspClipData);

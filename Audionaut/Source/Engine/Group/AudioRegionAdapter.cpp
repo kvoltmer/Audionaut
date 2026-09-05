@@ -173,6 +173,7 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                 if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, item->getAbsolutePosition(context), context)) {
                     newItem->getDynamics().copyGainsFrom(item->getDynamics());
                     newItem->setSpeedRatio(item->getSpeedRatio());
+                    newItem->setStretchMode(item->getStretchMode());
                     // this piece keeps the clip's start edge and its fade-in
                     newItem->getDynamics().copyFadeInFrom(item->getDynamics());
                 }
@@ -192,6 +193,7 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                 if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getStart(), context)) {
                     newItem->getDynamics().copyGainsFrom(item->getDynamics());
                     newItem->setSpeedRatio(item->getSpeedRatio());
+                    newItem->setStretchMode(item->getStretchMode());
                     // the selection piece keeps an original edge only when
                     // the selection reaches it - then its fade comes along
                     if (selectedRange.getStart() <= itemRange.getStart())
@@ -217,6 +219,7 @@ void AudioRegionAdapter::splitRegions(double pos, audium::TimeContextType contex
                 if (auto newItem = track->getPlayListContainer()->createPlayListItemAtPositionUI(region, selectedRange.getEnd(), context)) {
                     newItem->getDynamics().copyGainsFrom(item->getDynamics());
                     newItem->setSpeedRatio(item->getSpeedRatio());
+                    newItem->setStretchMode(item->getStretchMode());
                     // this piece keeps the clip's end edge and its fade-out
                     newItem->getDynamics().copyFadeOutFrom(item->getDynamics());
                 }

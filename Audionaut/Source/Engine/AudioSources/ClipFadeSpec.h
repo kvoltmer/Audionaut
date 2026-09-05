@@ -7,6 +7,8 @@
 
 #include <JuceHeader.h>
 
+#include "Engine/PlayList/StretchMode.h"
+
 namespace audium {
 
 class ClipTransportSource;
@@ -35,6 +37,9 @@ struct ClipFadeSpec
     /// The clip's playback speed. Every field above is in source-file
     /// seconds; one source second lasts 1/speedRatio timeline seconds.
     double speedRatio = 1.0;
+
+    /// How the speed is realised - the scheduler hands it to the voice.
+    StretchMode stretchMode = StretchMode::RePitch;
 
     double headExtension()  const noexcept { return juce::jmax(0.0, -fadeInStart); }
     double tailExtension()  const noexcept { return juce::jmax(0.0, -fadeOutEnd); }
