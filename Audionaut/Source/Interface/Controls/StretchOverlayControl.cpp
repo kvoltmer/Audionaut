@@ -21,31 +21,6 @@ constexpr int sliderWidth = 90;
 
 constexpr double semitoneFactor = 1.0594630943592953;   // 2^(1/12)
 
-// Reset: a circular arrow back to x1, in the base's 24-unit design box.
-juce::Path resetIconPath()
-{
-    juce::Path arc;
-    arc.addCentredArc (12.0f, 12.0f, 7.5f, 7.5f, 0.0f,
-                       juce::MathConstants<float>::pi * 0.4f,
-                       juce::MathConstants<float>::pi * 2.0f, true);
-
-    juce::Path path;
-    juce::PathStrokeType (2.5f, juce::PathStrokeType::curved,
-                          juce::PathStrokeType::rounded).createStrokedPath (path, arc);
-
-    // the arrow head at the arc's start, pointing along the sweep
-    juce::Path head;
-    head.addTriangle (12.0f + 7.5f * std::sin (juce::MathConstants<float>::pi * 0.4f) - 3.5f,
-                      12.0f - 7.5f * std::cos (juce::MathConstants<float>::pi * 0.4f) + 1.0f,
-                      12.0f + 7.5f * std::sin (juce::MathConstants<float>::pi * 0.4f) + 3.0f,
-                      12.0f - 7.5f * std::cos (juce::MathConstants<float>::pi * 0.4f) - 3.0f,
-                      12.0f + 7.5f * std::sin (juce::MathConstants<float>::pi * 0.4f) + 3.0f,
-                      12.0f - 7.5f * std::cos (juce::MathConstants<float>::pi * 0.4f) + 3.5f);
-    path.addPath (head);
-
-    return path;
-}
-
 } // namespace
 
 StretchOverlayControl::StretchOverlayControl(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
@@ -91,13 +66,6 @@ StretchOverlayControl::StretchOverlayControl(std::shared_ptr<audium::AudiumEngin
         speedSlider->setValue (speedSlider->getValue() * semitoneFactor, juce::sendNotificationSync);
     };
 
-    resetButton = makeIconButton (juce::String (juce::CharPointer_UTF8 ("\xc3\x97")) + "1",
-                                  resetIconPath());
-    addAndMakeVisible (resetButton.get());
-    resetButton->onClick = [this] {
-        speedSlider->setValue (1.0, juce::sendNotificationSync);
-    };
-
     applyButton = makeIconButton (TRANS ("Apply"), checkIconPath());
     addAndMakeVisible (applyButton.get());
     applyButton->onClick = [this] {
@@ -119,7 +87,7 @@ StretchOverlayControl::~StretchOverlayControl()
 int StretchOverlayControl::getPreferredWidth() const
 {
     return padding + buttonWidth + stepGap + sliderWidth + stepGap
-           + buttonWidth + gap + buttonWidth + stepGap + buttonWidth + padding;
+           + buttonWidth + gap + buttonWidth + padding;
 }
 
 int StretchOverlayControl::getMinimumWidth() const
@@ -246,12 +214,9 @@ void StretchOverlayControl::resized()
     const bool buttonsFit = getWidth() >= getPreferredWidth() + 2 * closeButtonOverhang;
     semitoneDownButton->setVisible (buttonsFit);
     semitoneUpButton->setVisible (buttonsFit);
-    resetButton->setVisible (buttonsFit);
 
     if (buttonsFit)
     {
-        buttonRow.removeFromRight (stepGap);
-        resetButton->setBounds (buttonRow.removeFromRight (buttonWidth));
         buttonRow.removeFromRight (gap);
 
         semitoneUpButton->setBounds (buttonRow.removeFromRight (buttonWidth));
