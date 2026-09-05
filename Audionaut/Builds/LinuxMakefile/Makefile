@@ -177,6 +177,8 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o \
   $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o \
   $(JUCE_OBJDIR)/AutoEditOverlayControl_e143b2a.o \
+  $(JUCE_OBJDIR)/ClipOverlayBase_9af9d717.o \
+  $(JUCE_OBJDIR)/StretchOverlayControl_da53b958.o \
   $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o \
   $(JUCE_OBJDIR)/DraggingHandle_64fe2e5b.o \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
@@ -740,6 +742,16 @@ $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o: ../../Source/Interface/Models
 $(JUCE_OBJDIR)/AutoEditOverlayControl_e143b2a.o: ../../Source/Interface/Controls/AutoEditOverlayControl.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AutoEditOverlayControl.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ClipOverlayBase_9af9d717.o: ../../Source/Interface/Controls/ClipOverlayBase.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ClipOverlayBase.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/StretchOverlayControl_da53b958.o: ../../Source/Interface/Controls/StretchOverlayControl.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling StretchOverlayControl.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o: ../../Source/Interface/Controls/LoopDraggerControl.cpp

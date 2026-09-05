@@ -65,7 +65,11 @@ half-length is double speed and one octave up. The clip shows its ratio
 follow the stretch. Speeds range from ×0.25 to ×4; a plain edge drag still
 trims. A clip routed at a speed other than ×1 keeps its region untouched —
 splitting, cloning and exporting all preserve the speed, and one undo
-reverts a stretch.
+reverts a stretch. While the *Stretch Clip* panel (*Edit → Stretch Clip…*)
+is open on a clip, that clip is in stretch mode: its edges stretch on a
+plain drag, no modifiers needed. The check mark applies the session as one
+undo step; Escape or the panel's close chip revert everything since the
+panel opened.
 
 ## Separate Stems
 

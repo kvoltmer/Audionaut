@@ -6,12 +6,13 @@
 #include "Interface/Controls/DraggerControl.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/Selection/ClipOverlayTarget.h"
 
 void DraggerControl::mouseDown (const juce::MouseEvent& e)
 {
     
     currentDragMode = getDragMode(e.getPosition().getX());
-    stretchDrag = isStretchModifier(e.mods)
+    stretchDrag = (isStretchModifier(e.mods) || overlayStretchActive())
                   && (currentDragMode == leftEdge || currentDragMode == rightEdge);
     
     originalBounds = componentToDrag->getBounds();
@@ -246,6 +247,21 @@ bool DraggerControl::commitPositionData(const audium::PositionableBase &position
         return true;
     }
     
+    return false;
+}
+
+bool DraggerControl::overlayStretchActive() const
+{
+    auto target = audiumEngine->getAudioTrackContainer()->getClipOverlayTarget();
+
+    if (! target->isActive())
+        return false;
+
+    // Only the clip the overlay is open on is in stretch mode; the loop
+    // dragger and other positionables are unaffected.
+    if (auto item = std::dynamic_pointer_cast<audium::PlayListItem>(positionableObject))
+        return target->matches(item->getRegion()->getAudioTrack()->getId(), item->getId());
+
     return false;
 }
 

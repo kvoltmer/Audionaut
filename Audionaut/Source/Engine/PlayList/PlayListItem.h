@@ -89,7 +89,15 @@ public:
     const std::vector<std::shared_ptr<VoiceSource>> &getVoiceSources() const { return voiceSources; }
     
     void onDragStart();
-    void onDragEnd();
+
+    /// Commits the drag/session as one undo transaction. Safe with no
+    /// preceding onDragStart (then it is a no-op).
+    void onDragEnd(const juce::String& transactionName = "Set Clip Gain");
+
+    /// Rolls the pending drag/session back to the state onDragStart
+    /// captured, leaving no undo entry. Safe with no preceding
+    /// onDragStart (then it is a no-op).
+    void onDragCancel();
 
     ClipDynamics& getDynamics() { return dynamics; }
     const ClipDynamics& getDynamics() const { return dynamics; }

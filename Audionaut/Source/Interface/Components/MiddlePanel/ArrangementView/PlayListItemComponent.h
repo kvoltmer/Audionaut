@@ -20,6 +20,7 @@ class DraggerControl;
 class DraggingHandle;
 class AutoEditPreviewView;
 class AutoEditOverlayControl;
+class StretchOverlayControl;
 
 //==============================================================================
 /*
@@ -79,6 +80,9 @@ private:
     // (AnalysisProvider::getMergePreview for this clip's audio file).
     void refreshAutoEditPreview();
 
+    // Shows/hides the stretch overlay from the engine-held target.
+    void refreshStretchOverlay();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<audium::AudioTrack>     audioTrack;
     std::shared_ptr<audium::PlayListItem>   playListItem;
@@ -132,6 +136,7 @@ private:
     // The pending auto edit's control (measures + Apply), shown while this
     // clip's merge preview is active.
     std::unique_ptr<AutoEditOverlayControl> autoEditOverlayControl;
+    std::unique_ptr<StretchOverlayControl> stretchOverlayControl;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)
 };

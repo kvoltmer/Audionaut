@@ -173,6 +173,7 @@
                 file="Source/Engine/Selection/SelectionManager.cpp"/>
           <FILE id="LcQig6" name="SelectionManager.h" compile="0" resource="0"
                 file="Source/Engine/Selection/SelectionManager.h"/>
+          <FILE id="ClOvTg1" name="ClipOverlayTarget.h" compile="0" resource="0" file="Source/Engine/Selection/ClipOverlayTarget.h"/>
         </GROUP>
         <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
           <FILE id="jX0IBu" name="LockFreeCommander.h" compile="0" resource="0"
@@ -545,6 +546,10 @@
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
           <FILE id="AeOvCp" name="AutoEditOverlayControl.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/AutoEditOverlayControl.cpp"/>
+          <FILE id="ClOvBc1" name="ClipOverlayBase.cpp" compile="1" resource="0" file="Source/Interface/Controls/ClipOverlayBase.cpp"/>
+          <FILE id="ClOvBh1" name="ClipOverlayBase.h" compile="0" resource="0" file="Source/Interface/Controls/ClipOverlayBase.h"/>
+          <FILE id="StrOvC1" name="StretchOverlayControl.cpp" compile="1" resource="0" file="Source/Interface/Controls/StretchOverlayControl.cpp"/>
+          <FILE id="StrOvH1" name="StretchOverlayControl.h" compile="0" resource="0" file="Source/Interface/Controls/StretchOverlayControl.h"/>
           <FILE id="AeOvHd" name="AutoEditOverlayControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/AutoEditOverlayControl.h"/>
           <FILE id="Y7l77u" name="LoopDraggerControl.cpp" compile="1" resource="0"

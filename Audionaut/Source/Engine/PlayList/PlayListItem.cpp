@@ -233,12 +233,22 @@ void PlayListItem::onDragStart()
     undoableAction = std::make_unique<audium::UndoableContainerAction>(audioRegion->getAudioTrack()->getAudioTrackContainer(), false);
 }
 
-void PlayListItem::onDragEnd()
+void PlayListItem::onDragCancel()
+{
+    if (undoableAction != nullptr) {
+        // restore the captured old state directly - nothing reaches the
+        // undo manager, so there is nothing to redo either
+        undoableAction->undo();
+        undoableAction = nullptr;
+    }
+}
+
+void PlayListItem::onDragEnd(const juce::String& transactionName)
 {
     if (undoableAction != nullptr) {
         undoableAction->storeNewState();
         auto undoManager = audioRegion->getAudioTrack()->getAudioTrackContainer().getUndoManager();
-        undoManager->perform(undoableAction.release(), "Set Clip Gain");
+        undoManager->perform(undoableAction.release(), transactionName);
         undoManager->beginNewTransaction();
     }
 }

@@ -409,6 +409,23 @@ SCENARIO("splitting and cloning a stretched clip preserve its speed", "[engine][
             }
         }
 
+        WHEN("a pending speed change is cancelled")
+        {
+            auto undoManager = container->getUndoManager();
+            const auto undoableBefore = undoManager->canUndo();
+
+            fixture.item()->onDragStart();
+            fixture.item()->setSpeedRatio(2.0);
+            fixture.item()->onDragCancel();
+
+            THEN("the speed is rolled back and no undo entry appears")
+            {
+                REQUIRE(fixture.item()->getSpeedRatio() == Catch::Approx(0.5));
+                REQUIRE(undoManager->canUndo() == undoableBefore);
+                REQUIRE_FALSE(undoManager->canRedo());
+            }
+        }
+
         WHEN("a speed change is undone and redone")
         {
             auto undoManager = container->getUndoManager();

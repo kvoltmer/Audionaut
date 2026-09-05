@@ -290,6 +290,8 @@
     <ClCompile Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\ClipOverlayBase.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\StretchOverlayControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\DraggingHandle.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
@@ -3223,6 +3225,7 @@
     <ClInclude Include="..\..\Source\Engine\Selection\SelectableObjectContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionContext.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionManager.h"/>
+    <ClInclude Include="..\..\Source\Engine\Selection\ClipOverlayTarget.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\LockFreeCommander.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\LockFreeContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\AudioClipContainer.h"/>
@@ -3339,6 +3342,8 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\ClipOverlayBase.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\StretchOverlayControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DraggingHandle.h"/>

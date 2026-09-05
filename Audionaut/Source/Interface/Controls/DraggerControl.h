@@ -128,9 +128,13 @@ public:
         return mods.isCommandDown() && mods.isAltDown();
     }
 
+    /// While the stretch overlay is open on this very clip, the clip is in
+    /// stretch mode: plain edge drags stretch too, no modifiers needed.
+    bool overlayStretchActive() const;
+
     void updateMouseZone (const juce::MouseEvent& e)
     {
-        const auto stretching = isStretchModifier(e.mods);
+        const auto stretching = isStretchModifier(e.mods) || overlayStretchActive();
         switch (getDragMode(e.getPosition().getX())) {
             case leftEdge:
                 setMouseCursor (stretching ? juce::MouseCursor::LeftRightResizeCursor
