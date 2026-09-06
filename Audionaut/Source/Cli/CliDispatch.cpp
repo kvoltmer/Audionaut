@@ -232,6 +232,16 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "against each other within the clip.",
           runClipFades },
 
+        { "clip-speed",
+          "clip-speed <project.audium> (--at P | --region NAME) [--track N]\n"
+          "                          (--ratio R | --semitones N | --length L [--unit ...]) [--json]",
+          "Sets a clip's playback speed (re-pitch/varispeed).",
+          "Re-pitches a clip: the ratio plays the source faster or slower, changing pitch and timeline "
+          "length together (2.0 = double speed, one octave up, half as long). --semitones converts "
+          "(ratio = 2^(n/12)); --length fits the clip to a timeline duration in the given unit. "
+          "Ratios are limited to 0.25..4.0.",
+          runClipSpeed },
+
         { "remove-track",
           "remove-track <project.audium> --track N [--json]",
           "Removes a whole track from the project.",

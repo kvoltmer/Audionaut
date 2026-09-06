@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/&#10;../../../Submodules/signalsmith-stretch/include/&#10;../../../Submodules/signalsmith-linear/include/"
               bundleIdentifier="com.voltmer-systems.audionaut" version="1.4.0"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
               cppLanguageStandard="20" compilerFlagSchemes="demucs" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0&#10;DEMUCS_ENABLED=1&#10;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
@@ -143,6 +143,10 @@
                 file="Source/Engine/AudioSources/VoiceSourceContainer.h"/>
           <FILE id="pLvPaN" name="ClipTransportSource.cpp" compile="1" resource="0"
                 file="Source/Engine/AudioSources/ClipTransportSource.cpp"/>
+          <FILE id="StrAs1" name="StretchAudioSource.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/StretchAudioSource.cpp"/>
+          <FILE id="StrAs2" name="StretchAudioSource.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/StretchAudioSource.h"/>
           <FILE id="tyX7Fa" name="ClipTransportSource.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/ClipTransportSource.h"/>
           <FILE id="Cfs9Qa" name="ClipFadeSpec.cpp" compile="1" resource="0"
@@ -173,6 +177,7 @@
                 file="Source/Engine/Selection/SelectionManager.cpp"/>
           <FILE id="LcQig6" name="SelectionManager.h" compile="0" resource="0"
                 file="Source/Engine/Selection/SelectionManager.h"/>
+          <FILE id="ClOvTg1" name="ClipOverlayTarget.h" compile="0" resource="0" file="Source/Engine/Selection/ClipOverlayTarget.h"/>
         </GROUP>
         <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
           <FILE id="jX0IBu" name="LockFreeCommander.h" compile="0" resource="0"
@@ -277,6 +282,7 @@
           <FILE id="Cdyn02" name="ClipDynamics.h" compile="0" resource="0" file="Source/Engine/PlayList/ClipDynamics.h"/>
           <FILE id="y8wZY3" name="PlayListItem.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListItem.cpp"/>
+<FILE id="StrMod1" name="StretchMode.h" compile="0" resource="0" file="Source/Engine/PlayList/StretchMode.h"/>
           <FILE id="iSTHS0" name="PlayListItem.h" compile="0" resource="0" file="Source/Engine/PlayList/PlayListItem.h"/>
           <FILE id="Y4jg8M" name="PlayListScheduler.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListScheduler.cpp"/>
@@ -544,6 +550,10 @@
         <GROUP id="{FD3AFDF7-7DD5-478B-FC8C-E913BA79EF12}" name="Controls">
           <FILE id="AeOvCp" name="AutoEditOverlayControl.cpp" compile="1" resource="0"
                 file="Source/Interface/Controls/AutoEditOverlayControl.cpp"/>
+          <FILE id="ClOvBc1" name="ClipOverlayBase.cpp" compile="1" resource="0" file="Source/Interface/Controls/ClipOverlayBase.cpp"/>
+          <FILE id="ClOvBh1" name="ClipOverlayBase.h" compile="0" resource="0" file="Source/Interface/Controls/ClipOverlayBase.h"/>
+          <FILE id="StrOvC1" name="StretchOverlayControl.cpp" compile="1" resource="0" file="Source/Interface/Controls/StretchOverlayControl.cpp"/>
+          <FILE id="StrOvH1" name="StretchOverlayControl.h" compile="0" resource="0" file="Source/Interface/Controls/StretchOverlayControl.h"/>
           <FILE id="AeOvHd" name="AutoEditOverlayControl.h" compile="0" resource="0"
                 file="Source/Interface/Controls/AutoEditOverlayControl.h"/>
           <FILE id="Y7l77u" name="LoopDraggerControl.cpp" compile="1" resource="0"

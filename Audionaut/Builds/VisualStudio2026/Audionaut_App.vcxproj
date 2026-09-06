@@ -69,7 +69,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.4.0;JUCE_APP_VERSION_HEX=0x10400;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -84,7 +84,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_API_SECRET=\&quot;TpBEa6eRRAGeG4BZmqwJDA\&quot;;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.4.0;JUCE_APP_VERSION_HEX=0x10400;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
@@ -118,7 +118,7 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.4.0;JUCE_APP_VERSION_HEX=0x10400;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -133,7 +133,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x8000c;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_API_SECRET=\&quot;TpBEa6eRRAGeG4BZmqwJDA\&quot;;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.4.0;JUCE_APP_VERSION_HEX=0x10400;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
@@ -224,6 +224,7 @@
     <ClCompile Include="..\..\Source\Engine\AudioSources\VoiceSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipTransportSource.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\StretchAudioSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Export\PlayListItemExport.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Export\AudioExportThread.cpp"/>
@@ -290,6 +291,8 @@
     <ClCompile Include="..\..\Source\Interface\Models\PlayListTableListBoxItem.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Models\RegionTableListBoxModel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\ClipOverlayBase.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\StretchOverlayControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\DraggingHandle.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
@@ -3212,6 +3215,7 @@
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipDynamicsProcessor.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\StretchAudioSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipTransportSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\ExportUtil.h"/>
@@ -3223,6 +3227,7 @@
     <ClInclude Include="..\..\Source\Engine\Selection\SelectableObjectContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionContext.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionManager.h"/>
+    <ClInclude Include="..\..\Source\Engine\Selection\ClipOverlayTarget.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\LockFreeCommander.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\LockFreeContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\AudioClipContainer.h"/>
@@ -3258,6 +3263,7 @@
     <ClInclude Include="..\..\Source\Engine\PlayList\SampleTimer.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\ClipDynamics.h"/>
+    <ClInclude Include="..\..\Source\Engine\PlayList\StretchMode.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListItem.h"/>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListScheduler.h"/>
     <ClInclude Include="..\..\Source\Engine\Provider\TempoProvider.h"/>
@@ -3338,6 +3344,8 @@
     <ClInclude Include="..\..\Source\Interface\Models\PlayListTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\RegionTableListBoxModel.h"/>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\ClipOverlayBase.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\StretchOverlayControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LoopDraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DraggingHandle.h"/>

@@ -152,6 +152,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
         CommandIDs::assembleSequential,
         CommandIDs::assembleRandom,
         CommandIDs::separateStems,
+        CommandIDs::stretchClip,
         CommandIDs::bounceProject,
         CommandIDs::duplicate,
         
@@ -233,6 +234,10 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case CommandIDs::separateStems:
             result.setInfo ("Separate Stems...", "Splits the selected clip into Drums, Bass, Other and Vocals tracks", CommandCategories::editing, 0);
             result.setActive (canSeparateStems());
+            break;
+        case CommandIDs::stretchClip:
+            result.setInfo ("Stretch Clip...", "Adjusts the selected clip's playback speed (re-pitch)", CommandCategories::editing, 0);
+            result.setActive (canToggleStretchOverlay());
             break;
         case CommandIDs::bounceProject:
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
@@ -360,6 +365,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::separateStems:
             invokeSeparateStems();
+            break;
+        case CommandIDs::stretchClip:
+            toggleStretchOverlay();
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
@@ -550,4 +558,41 @@ void AudiumMainWindow::invokeSeparateStems()
         stemSeparationDialog = std::make_unique<StemSeparationDialog>();
 
     stemSeparationDialog->separate(getEngine(), mainComponent.get());
+}
+
+bool AudiumMainWindow::canToggleStretchOverlay()
+{
+    auto target = getEngine()->getAudioTrackContainer()->getClipOverlayTarget();
+
+    // an open overlay can always be dismissed
+    if (target->isActive())
+        return true;
+
+    for (const auto& object : getEngine()->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects())
+        if (auto* item = dynamic_cast<audium::PlayListItem*>(object.get()))
+            return ! item->isRecording();
+
+    return false;
+}
+
+void AudiumMainWindow::toggleStretchOverlay()
+{
+    auto target = getEngine()->getAudioTrackContainer()->getClipOverlayTarget();
+
+    if (target->isActive())
+    {
+        // dismissing commits the overlay's pending edit (see
+        // StretchOverlayControl::visibilityChanged)
+        target->clear();
+        return;
+    }
+
+    for (const auto& object : getEngine()->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects())
+    {
+        if (auto* item = dynamic_cast<audium::PlayListItem*>(object.get()))
+        {
+            target->set(item->getRegion()->getAudioTrack()->getId(), item->getId());
+            return;
+        }
+    }
 }

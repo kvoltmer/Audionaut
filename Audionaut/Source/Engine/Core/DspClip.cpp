@@ -55,7 +55,10 @@ double DspClip::getHeadExtension(audium::TimeContextType context) const
     // voice can start
     auto headExtSeconds = juce::jmax(0.0, -tempoProvider->clocksToSeconds(dspClipData.clipFadeInStartClocks));
     auto regionStart = dspClipData.clipData.regionData.getStart();
-    auto effectiveSeconds = juce::jmin(headExtSeconds, regionStart);
+
+    // the extension is source material: clamp in the source domain, then
+    // scale to the timeline
+    auto effectiveSeconds = juce::jmin(headExtSeconds, regionStart) / getSpeedRatio();
 
     if (context == audium::seconds)
         return effectiveSeconds;
@@ -68,7 +71,8 @@ double DspClip::getHeadExtension(audium::TimeContextType context) const
 
 double DspClip::getTailExtension(audium::TimeContextType context) const
 {
-    auto tailExtClocks = juce::jmax(0.0, -dspClipData.clipFadeOutEndClocks);
+    // source material rings out for source / speed timeline time
+    auto tailExtClocks = juce::jmax(0.0, -dspClipData.clipFadeOutEndClocks) / getSpeedRatio();
 
     if (context == audium::clocks)
         return tailExtClocks;

@@ -127,6 +127,9 @@ private:
     // differing estimates. Empty if no BPM estimate is available.
     juce::String getBpmSuffix() const;
 
+    /// "x0.50" while the clip is re-pitched, empty at normal speed.
+    juce::String getSpeedSuffix() const;
+
     // Analyses still queued or running for the item's audio files.
     int getAnalysisRemainingCount() const;
 

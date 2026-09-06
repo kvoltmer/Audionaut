@@ -242,6 +242,7 @@ bool StemSeparator::prepare (const SeparationConfig& config, SeparationJob& job,
                                                                  resolved.region,
                                                                  resolved.track->getSelectionManager());
     exportConfig->playListItem->getDynamics().copyFrom (resolved.item->getDynamics());
+    exportConfig->playListItem->setSpeedRatio (resolved.item->getSpeedRatio());
     exportConfig->numChannels = resolved.track->getNumAudioTrackChannels();
     exportConfig->sampleRate = backend->getRequiredSampleRate();
     exportConfig->bitDepth = 32;

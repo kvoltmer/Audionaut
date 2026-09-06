@@ -8,6 +8,8 @@
 
 #include <JuceHeader.h>
 #include "ClipDynamicsProcessor.h"
+#include "StretchAudioSource.h"
+#include "Engine/PlayList/StretchMode.h"
 
 namespace audium {
 
@@ -106,6 +108,23 @@ public:
     /** Returns true if it's stopped. */
     bool isStopped() const noexcept     { return stopped; }
 
+    /**
+        Sets the clip's playback speed. How it is realised depends on the
+        stretch mode: RePitch is varispeed (the resampling ratio becomes
+        sourceSampleRate * speed / deviceRate), Stretch keeps the pitch by
+        running the StretchAudioSource node at the speed while the
+        resampler only corrects the file's sample rate. Real-time safe.
+    */
+    void setSpeedRatio (double newSpeedRatio) noexcept;
+
+    /**
+        Chooses between varispeed (RePitch, the default) and
+        pitch-preserving Stretch - see setSpeedRatio. Real-time safe; the
+        scheduler sets it per voice before scheduling the position, and the
+        stretch node re-primes on the position change.
+    */
+    void setStretchMode (StretchMode newMode) noexcept;
+
     void setGain (float newGain) noexcept;
     float getGain() const noexcept;
     
@@ -160,7 +179,11 @@ public:
 private:
     //==============================================================================
     juce::PositionableAudioSource* source = nullptr;
+    /// Re-applies mode and speed to the resampler and the stretch node.
+    void updateSpeedChain() noexcept;
+
     juce::ResamplingAudioSource* resamplerSource = nullptr;
+    StretchAudioSource* stretchSource = nullptr;
     juce::BufferingAudioSource* bufferingSource = nullptr;
     juce::PositionableAudioSource* positionableSource = nullptr;
     juce::AudioSource* masterSource = nullptr;
@@ -171,6 +194,8 @@ private:
     std::atomic<bool> stopped  = true;
     std::atomic<bool> fadeOutLastBlock  = false;
     double sampleRate = 44100.0, sourceSampleRate = 0.0;
+    std::atomic<double> speedRatio { 1.0 };
+    std::atomic<StretchMode> stretchMode { StretchMode::RePitch };
     int blockSize = 128;
     std::atomic<bool> isPrepared = false;
 

@@ -24,6 +24,8 @@ ClipFadeSpec ClipFadeSpec::fromPlayListItem (const PlayListItem& item)
     spec.fadeOutEnd  = item.getDynamics().getFadeOutEnd(audium::seconds);
     spec.fadeInCurve  = item.getDynamics().getFadeInCurve();
     spec.fadeOutCurve = item.getDynamics().getFadeOutCurve();
+    spec.speedRatio   = item.getSpeedRatio();
+    spec.stretchMode  = item.getStretchMode();
     return spec;
 }
 
@@ -40,6 +42,8 @@ ClipFadeSpec ClipFadeSpec::fromDspClip (const DspClip& dspClip,
     spec.fadeOutEnd  = tempoProvider.clocksToSeconds(dspClip.dspClipData.clipFadeOutEndClocks);
     spec.fadeInCurve  = dspClip.dspClipData.clipFadeInCurve;
     spec.fadeOutCurve = dspClip.dspClipData.clipFadeOutCurve;
+    spec.speedRatio   = dspClip.dspClipData.clipSpeedRatio;
+    spec.stretchMode  = dspClip.dspClipData.clipStretchMode;
     return spec;
 }
 
@@ -56,8 +60,11 @@ void configureClipFades (ClipTransportSource& source,
         // a pre-file clamp makes filePosition > regionStart + fadeInStart,
         // which arms the ramp mid-way - the ramp progresses through the
         // pre-file silence
-        source.setFadeInRamp(spec.fadeIn - spec.fadeInStart,
-                             (spec.regionStart + spec.fadeInStart) - filePositionSeconds,
+        // the processor runs post-resampling at the device rate, so the
+        // source-second geometry is scaled to wall-clock time here - the
+        // single conversion point for both the live and the bounce path
+        source.setFadeInRamp((spec.fadeIn - spec.fadeInStart) / spec.speedRatio,
+                             ((spec.regionStart + spec.fadeInStart) - filePositionSeconds) / spec.speedRatio,
                              reset);
     }
 
@@ -66,8 +73,8 @@ void configureClipFades (ClipTransportSource& source,
     }
     else {
         source.setFadeOutCurve(spec.fadeOutCurve);
-        source.setFadeOutRamp(spec.fadeOut - spec.fadeOutEnd,
-                              (spec.regionEnd - spec.fadeOut) - filePositionSeconds,
+        source.setFadeOutRamp((spec.fadeOut - spec.fadeOutEnd) / spec.speedRatio,
+                              ((spec.regionEnd - spec.fadeOut) - filePositionSeconds) / spec.speedRatio,
                               reset);
     }
 }

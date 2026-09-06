@@ -979,6 +979,9 @@
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipTransportSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\StretchAudioSource.cpp">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
@@ -1169,6 +1172,12 @@
       <Filter>Audionaut\Source\Interface\Models</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.cpp">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\ClipOverlayBase.cpp">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\StretchOverlayControl.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\LoopDraggerControl.cpp">
@@ -4359,6 +4368,9 @@
     <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\StretchAudioSource.h">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipTransportSource.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
@@ -4390,6 +4402,9 @@
       <Filter>Audionaut\Source\Engine\Selection</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionManager.h">
+      <Filter>Audionaut\Source\Engine\Selection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Selection\ClipOverlayTarget.h">
       <Filter>Audionaut\Source\Engine\Selection</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Core\LockFreeCommander.h">
@@ -4495,6 +4510,9 @@
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\ClipDynamics.h">
+      <Filter>Audionaut\Source\Engine\PlayList</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\PlayList\StretchMode.h">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListItem.h">
@@ -4736,6 +4754,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Models\PlayListItemListBoxModel.h">
       <Filter>Audionaut\Source\Interface\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\ClipOverlayBase.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\StretchOverlayControl.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\AutoEditOverlayControl.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>

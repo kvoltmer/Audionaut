@@ -39,7 +39,7 @@ ifeq ($(CONFIG),Debug)
     TARGET_ARCH := 
   endif
 
-  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DDEBUG=1" "-D_DEBUG=1" "-DJUCE_PROJUCER_VERSION=0x8000c" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_cryptography=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DDEMUCS_ENABLED=1" "-DGA4_API_SECRET=\"TpBEa6eRRAGeG4BZmqwJDA\"" "-DGA4_MEASUREMENT_ID=\"G-Q6904SZWWY\"" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.4.0" "-DJUCE_APP_VERSION_HEX=0x10400" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/essentia/src -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
+  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DDEBUG=1" "-D_DEBUG=1" "-DJUCE_PROJUCER_VERSION=0x8000c" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_cryptography=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DDEMUCS_ENABLED=1" "-DGA4_API_SECRET=\"TpBEa6eRRAGeG4BZmqwJDA\"" "-DGA4_MEASUREMENT_ID=\"G-Q6904SZWWY\"" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.4.0" "-DJUCE_APP_VERSION_HEX=0x10400" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/essentia/src -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ -I../../../Submodules/signalsmith-stretch/include/ -I../../../Submodules/signalsmith-linear/include/ $(CPPFLAGS)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=0" "-DJucePlugin_Build_Unity=0" "-DJucePlugin_Build_LV2=0"
   JUCE_TARGET_APP := audionaut
 
@@ -60,7 +60,7 @@ ifeq ($(CONFIG),Release)
     TARGET_ARCH := 
   endif
 
-  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DNDEBUG=1" "-DJUCE_PROJUCER_VERSION=0x8000c" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_cryptography=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DDEMUCS_ENABLED=1" "-DGA4_API_SECRET=\"TpBEa6eRRAGeG4BZmqwJDA\"" "-DGA4_MEASUREMENT_ID=\"G-Q6904SZWWY\"" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.4.0" "-DJUCE_APP_VERSION_HEX=0x10400" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/essentia/src -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ $(CPPFLAGS)
+  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DNDEBUG=1" "-DJUCE_PROJUCER_VERSION=0x8000c" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_cryptography=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DAUTO_EDIT_ENABLED=0" "-DDEMUCS_ENABLED=1" "-DGA4_API_SECRET=\"TpBEa6eRRAGeG4BZmqwJDA\"" "-DGA4_MEASUREMENT_ID=\"G-Q6904SZWWY\"" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.4.0" "-DJUCE_APP_VERSION_HEX=0x10400" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/essentia/src -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/asio/include -I../../../Submodules/farbot/include/ -I../../../Submodules/signalsmith-stretch/include/ -I../../../Submodules/signalsmith-linear/include/ $(CPPFLAGS)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=0" "-DJucePlugin_Build_Unity=0" "-DJucePlugin_Build_LV2=0"
   JUCE_TARGET_APP := audionaut
 
@@ -113,6 +113,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/VoiceSource_a16dcd6e.o \
   $(JUCE_OBJDIR)/VoiceSourceContainer_3bb45bfd.o \
   $(JUCE_OBJDIR)/ClipTransportSource_2dcf5135.o \
+  $(JUCE_OBJDIR)/StretchAudioSource_c949d135.o \
   $(JUCE_OBJDIR)/ClipFadeSpec_6e5c9b30.o \
   $(JUCE_OBJDIR)/PlayListItemExport_8b6443f0.o \
   $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o \
@@ -177,6 +178,8 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/PlayListTableListBoxItem_a4ee4574.o \
   $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o \
   $(JUCE_OBJDIR)/AutoEditOverlayControl_e143b2a.o \
+  $(JUCE_OBJDIR)/ClipOverlayBase_9af9d717.o \
+  $(JUCE_OBJDIR)/StretchOverlayControl_da53b958.o \
   $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o \
   $(JUCE_OBJDIR)/DraggingHandle_64fe2e5b.o \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
@@ -420,6 +423,11 @@ $(JUCE_OBJDIR)/VoiceSourceContainer_3bb45bfd.o: ../../Source/Engine/AudioSources
 $(JUCE_OBJDIR)/ClipTransportSource_2dcf5135.o: ../../Source/Engine/AudioSources/ClipTransportSource.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling ClipTransportSource.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/StretchAudioSource_c949d135.o: ../../Source/Engine/AudioSources/StretchAudioSource.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling StretchAudioSource.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/ClipFadeSpec_6e5c9b30.o: ../../Source/Engine/AudioSources/ClipFadeSpec.cpp
@@ -740,6 +748,16 @@ $(JUCE_OBJDIR)/RegionTableListBoxModel_20340f30.o: ../../Source/Interface/Models
 $(JUCE_OBJDIR)/AutoEditOverlayControl_e143b2a.o: ../../Source/Interface/Controls/AutoEditOverlayControl.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling AutoEditOverlayControl.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ClipOverlayBase_9af9d717.o: ../../Source/Interface/Controls/ClipOverlayBase.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ClipOverlayBase.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/StretchOverlayControl_da53b958.o: ../../Source/Interface/Controls/StretchOverlayControl.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling StretchOverlayControl.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/LoopDraggerControl_4cc280e5.o: ../../Source/Interface/Controls/LoopDraggerControl.cpp

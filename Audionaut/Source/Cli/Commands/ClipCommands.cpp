@@ -355,6 +355,103 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context)
                          { "gains", gains } });
 }
 
+int runClipSpeed (const juce::ArgumentList& args, CliContext& context)
+{
+    auto working = args;
+    auto ratioValue = takeOptionValue (working, "--ratio");
+    auto semitonesValue = takeOptionValue (working, "--semitones");
+    auto lengthValue = takeOptionValue (working, "--length");
+    auto modeValue = takeOptionValue (working, "--mode");
+    auto unit = takeOptionValue (working, "--unit", "bars");
+
+    const auto optionsGiven = (ratioValue.isNotEmpty() ? 1 : 0)
+                              + (semitonesValue.isNotEmpty() ? 1 : 0)
+                              + (lengthValue.isNotEmpty() ? 1 : 0);
+    if (optionsGiven > 1)
+        return context.fail (exitUsage, "usage",
+                             "clip-speed takes at most one of --ratio, --semitones or --length");
+    if (optionsGiven == 0 && modeValue.isEmpty())
+        return context.fail (exitUsage, "usage",
+                             "clip-speed requires --ratio, --semitones, --length or --mode");
+    if (modeValue.isNotEmpty() && modeValue != "repitch" && modeValue != "stretch")
+        return context.fail (exitUsage, "usage", "--mode must be repitch or stretch");
+
+    auto projectFile = resolveProjectFile (working);
+    if (projectFile == juce::File())
+        return context.fail (exitUsage, "usage", "clip-speed requires an existing <project.audium>");
+
+    ScopedCoutToStderr guard (context.json);
+    HeadlessEngineSession session;
+
+    std::string error;
+    auto captureError = [&error] (std::string message) { error = message; };
+
+    if (! session->getProjectFileStore()->open (projectFile, captureError))
+        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
+
+    auto& trackContainer = *session->getAudioTrackContainer();
+    auto tempoProvider = trackContainer.getTempoProvider();
+
+    std::vector<ClipMatch> matches;
+    if (auto code = resolveClips (working, context, trackContainer, *tempoProvider,
+                                  "clip-speed", unit, matches);
+        code != exitOk)
+        return code;
+
+    if (matches.size() > 1)
+        return context.fail (exitFailure, "ambiguous_clip",
+                             "several clips match; pass --track or address by --at");
+
+    auto& match = matches.front();
+
+    if (optionsGiven == 1)
+    {
+        auto ratio = 1.0;
+
+        if (ratioValue.isNotEmpty()) {
+            ratio = ratioValue.getDoubleValue();
+        }
+        else if (semitonesValue.isNotEmpty()) {
+            ratio = std::pow (2.0, semitonesValue.getDoubleValue() / 12.0);
+        }
+        else {
+            // --length: the timeline duration the clip should occupy
+            double lengthClocks = 0.0;
+            std::string parseError;
+            if (! parseMusicalDuration (lengthValue, unit, *tempoProvider, lengthClocks, parseError))
+                return context.fail (exitUsage, "usage", parseError);
+            if (lengthClocks <= 0.0)
+                return context.fail (exitUsage, "usage", "--length must be positive");
+
+            ratio = match.item->getRegionData (audium::clocks).getLength() / lengthClocks;
+        }
+
+        if (ratio < PlayListItem::minSpeedRatio || ratio > PlayListItem::maxSpeedRatio)
+            return context.fail (exitUsage, "usage",
+                                 "the speed ratio must be between "
+                                 + juce::String (PlayListItem::minSpeedRatio).toStdString() + " and "
+                                 + juce::String (PlayListItem::maxSpeedRatio).toStdString()
+                                 + " (got " + juce::String (ratio, 4).toStdString() + ")");
+
+        match.item->setSpeedRatio (ratio);
+    }
+
+    if (modeValue.isNotEmpty())
+        match.item->setStretchMode (modeValue == "stretch" ? StretchMode::Stretch
+                                                           : StretchMode::RePitch);
+
+    if (! session->getProjectFileStore()->save (projectFile, captureError))
+        return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
+
+    context.log ("clip speed set");
+    return context.ok ({ { "region", match.item->getRegion()->getName().toStdString() },
+                         { "track", match.track->getId() },
+                         { "speedRatio", match.item->getSpeedRatio() },
+                         { "stretchMode", match.item->getStretchMode() == StretchMode::Stretch
+                                              ? "stretch" : "repitch" },
+                         { "durationSeconds", match.item->getDurationTime (audium::seconds) } });
+}
+
 int runClipFades (const juce::ArgumentList& args, CliContext& context)
 {
     auto working = args;

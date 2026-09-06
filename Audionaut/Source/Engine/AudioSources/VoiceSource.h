@@ -100,6 +100,18 @@ public:
         clipTransportSource->stop(fadeOutLastBlock);
     }
 
+    /// The clip's playback speed - see ClipTransportSource::setSpeedRatio.
+    void setSpeedRatio(double newSpeedRatio)
+    {
+        clipTransportSource->setSpeedRatio(newSpeedRatio);
+    }
+
+    /// Varispeed vs pitch-preserving - see ClipTransportSource::setStretchMode.
+    void setStretchMode(StretchMode newMode)
+    {
+        clipTransportSource->setStretchMode(newMode);
+    }
+
     void setGain(float gain)
     {
         clipTransportSource->setGain(gain);

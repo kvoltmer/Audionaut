@@ -707,3 +707,63 @@ SCENARIO ("cli remove-track and remove-channel", "[cli]")
 
     workDir.deleteRecursively();
 }
+
+SCENARIO ("cli clip-speed re-pitches a clip", "[cli][clipspeed]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("speed.audium");
+    auto audioFile = juce::File (testFilesDir + "sine-0dB.wav");
+    REQUIRE (audioFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    GIVEN ("a project with an imported one-second sine") {
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 1"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " "
+                                           + audioFile.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+
+        WHEN ("the clip is set to half speed by ratio") {
+            REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                  + " --region sine-0dB --ratio 0.5"),
+                                        context)
+                     == cli::exitOk);
+
+            THEN ("the saved project carries the speed ratio") {
+                const auto after = readProjectJson (project);
+                const auto& item = after["audium"]["audio_tracks"][1]["play_list_vector"][0];
+                REQUIRE (item.value ("speed_ratio", 1.0) == Catch::Approx (0.5));
+            }
+        }
+
+        WHEN ("the clip is shifted down an octave in semitones") {
+            REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                  + " --region sine-0dB --semitones -12"),
+                                        context)
+                     == cli::exitOk);
+
+            const auto after = readProjectJson (project);
+            const auto& item = after["audium"]["audio_tracks"][1]["play_list_vector"][0];
+            REQUIRE (item.value ("speed_ratio", 1.0) == Catch::Approx (0.5));
+        }
+
+        WHEN ("an out-of-range ratio is asked for") {
+            REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                  + " --region sine-0dB --ratio 8"),
+                                        context)
+                     == cli::exitUsage);
+        }
+
+        WHEN ("no value option is given") {
+            REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                  + " --region sine-0dB"),
+                                        context)
+                     == cli::exitUsage);
+        }
+    }
+
+    workDir.deleteRecursively();
+}

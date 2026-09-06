@@ -5,16 +5,25 @@
 
 #include "Interface/Controls/DraggerControl.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
+#include "Engine/PlayList/PlayListItem.h"
+#include "Engine/Selection/ClipOverlayTarget.h"
 
 void DraggerControl::mouseDown (const juce::MouseEvent& e)
 {
     
     currentDragMode = getDragMode(e.getPosition().getX());
+    stretchDrag = (isStretchModifier(e.mods) || overlayStretchActive())
+                  && (currentDragMode == leftEdge || currentDragMode == rightEdge);
     
     originalBounds = componentToDrag->getBounds();
     
     if (e.mods.isShiftDown()) {
         shiftSelect();
+    }
+    else if (stretchDrag) {
+        // a stretch acts on the selection: make sure this clip is in it
+        // without toggling anything (on Windows Ctrl doubles as Command)
+        setSelected(true, !isSelected());
     }
     else {
         bool deselectOthers = !isSelected() && !e.mods.isAnyModifierKeyDown();
@@ -39,12 +48,14 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
         validateData();
         if (undoableContainerAction != nullptr) {
             undoableContainerAction->storeNewState();
-            audiumEngine->getUndoManager()->perform(undoableContainerAction.release(), "Modify Item");
+            audiumEngine->getUndoManager()->perform(undoableContainerAction.release(),
+                                                    stretchDrag ? "Stretch Clip" : "Modify Item");
             audiumEngine->getUndoManager()->beginNewTransaction();
         }
         sendChangeMessage();
     }
 
+    stretchDrag = false;
     zoomHandler->getSnapToGridHandler()->clearRange();
 }
 
@@ -62,8 +73,8 @@ void DraggerControl::mouseDrag (const juce::MouseEvent& e)
     beginDragAutoRepeat(40);
     autoScrollOffset += zoomHandler->autoScroll(e);
 
-    if (e.mods.isAltDown() ||
-        dragVertrically) {
+    if (!stretchDrag &&
+        (e.mods.isAltDown() || dragVertrically)) {
 
         if (container != nullptr) {
             // componentToDrag has PlayListItemComponent as a child.
@@ -160,6 +171,40 @@ bool DraggerControl::commitPositionData(const audium::PositionableBase &position
     auto selectedItems = audiumEngine->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects();
     auto diff = 0.0;
     
+    if (stretchDrag && (currentDragMode == leftEdge || currentDragMode == rightEdge))
+    {
+        // stretch: keep every clip's source window and derive the speed
+        // from the dragged timeline length; all selected clips take the
+        // same resulting ratio
+        const auto newLength = newRange.getLength();
+        const auto anchorSource = positionableBase.getRegionData(context).getLength();
+
+        if (newLength <= 0.0 || anchorSource <= 0.0)
+            return false;
+
+        const auto ratio = anchorSource / newLength;
+        auto changed = false;
+
+        for (auto item : selectedItems) {
+            if (auto playItem = dynamic_cast<audium::PlayListItem*>(item.get())) {
+                const auto oldRange = playItem->getAbsolutePositionRange(context);
+                playItem->setSpeedRatio(ratio);
+
+                // a left-edge stretch keeps the right edge anchored
+                if (currentDragMode == leftEdge)
+                    playItem->setAbsolutePosition(oldRange.getEnd()
+                                                  - playItem->getAbsolutePositionRange(context).getLength(),
+                                                  context);
+                changed = true;
+            }
+        }
+
+        if (changed)
+            audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateArrangementAction);
+
+        return changed;
+    }
+
     switch (currentDragMode)
     {
         case leftEdge:
@@ -172,8 +217,9 @@ bool DraggerControl::commitPositionData(const audium::PositionableBase &position
             }
             break;
         case rightEdge:
-            // move length
-            diff = newRange.getLength() - positionableBase.getRegionData(context).getLength();
+            // move timeline length (a re-pitched clip's extent differs from
+            // its source window)
+            diff = newRange.getLength() - positionableBase.getAbsolutePositionRange(context).getLength();
             if (std::abs(diff) > 0.0) {
                 for (auto item : selectedItems) {
                     if (auto pItem = dynamic_cast<audium::PositionableBase*>(item.get()))
@@ -201,6 +247,21 @@ bool DraggerControl::commitPositionData(const audium::PositionableBase &position
         return true;
     }
     
+    return false;
+}
+
+bool DraggerControl::overlayStretchActive() const
+{
+    auto target = audiumEngine->getAudioTrackContainer()->getClipOverlayTarget();
+
+    if (! target->isActive())
+        return false;
+
+    // Only the clip the overlay is open on is in stretch mode; the loop
+    // dragger and other positionables are unaffected.
+    if (auto item = std::dynamic_pointer_cast<audium::PlayListItem>(positionableObject))
+        return target->matches(item->getRegion()->getAudioTrack()->getId(), item->getId());
+
     return false;
 }
 

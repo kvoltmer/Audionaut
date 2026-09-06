@@ -25,6 +25,7 @@ and relays the result — no engine logic lives here.
 | `cleanup_regions` | `cleanup-regions` | Delete every region no clip uses |
 | `clip_gain` | `clip-gain` | Set a clip's gain (linear or dB, all channels or one) |
 | `clip_fades` | `clip-fades` | Set a clip's fade lengths, offsets and curves |
+| `clip_speed` | `clip-speed` | Set a clip's speed and mode (varispeed or pitch-preserving stretch) |
 | `remove_track` | `remove-track` | Remove a whole track (channels, clips and regions) |
 | `remove_channel` | `remove-channel` | Remove one channel from a track |
 | `separate_stems` | `separate` | Split a clip into Drums/Bass/Other/Vocals tracks (Demucs; needs the downloaded model) |

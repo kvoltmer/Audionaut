@@ -23,6 +23,9 @@ const juce::String PlayListItemDraggerControl::getLabelSuffix() const
     auto suffix = getAnalysisProgressSuffix();
 
     if (suffix.isEmpty())
+        suffix = getSpeedSuffix();
+
+    if (suffix.isEmpty())
     {
         if (! isSelected())
             return {};
@@ -94,6 +97,20 @@ void PlayListItemDraggerControl::timerCallback()
         repaint();
 
     wasAnalysing = analysing;
+}
+
+juce::String PlayListItemDraggerControl::getSpeedSuffix() const
+{
+    if (playListItem == nullptr)
+        return {};
+
+    const auto speed = playListItem->getSpeedRatio();
+
+    if (speed == 1.0)
+        return {};
+
+    // e.g. "x0.50" - marks a re-pitched clip at any selection state
+    return juce::String(juce::CharPointer_UTF8("\xc3\x97")) + juce::String(speed, 2);
 }
 
 juce::String PlayListItemDraggerControl::getBpmSuffix() const
