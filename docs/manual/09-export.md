@@ -14,6 +14,13 @@ and the mix of all tracks.
 
 The result is a WAV file.
 
+**Mono** and **stereo** exports render the mix as you hear it, including
+each channel's [output routing](04-main-window.md#audio-routing): channels
+routed directly to outputs 1 or 2 land on those file channels unpanned, and
+channels routed to higher outputs are left out. **Multi-channel** and
+**multi-mono** exports are stems — every channel of the arrangement goes to
+its own file channel (or file), regardless of routing.
+
 ## Exporting a single clip
 
 Right-click a clip and choose **Export…**. The clip is bounced by itself —
