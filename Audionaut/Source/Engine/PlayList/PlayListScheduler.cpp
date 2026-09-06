@@ -427,7 +427,11 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsoluteStartPosition(config->positionSeconds, audium::seconds);
-    
+
+    // multichannel bounce wants one file channel per bus channel, not the live
+    // output routing; mono/stereo bounce renders the routed mix as heard live
+    audioBusInterface->setStemExport(config->numChannels > 2);
+
     startPlaying();
     
     jassert((int)config->sampleRate == (int)externalSampleRate);
@@ -488,6 +492,8 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         jassert(samplesWritten == totalSamples);
     }
     
+    audioBusInterface->setStemExport(false);
+
     setAbsoluteStartPosition(lastPosition, audium::seconds);
     stopPlaying();
 }
