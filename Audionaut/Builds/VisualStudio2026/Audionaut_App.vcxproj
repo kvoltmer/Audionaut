@@ -202,6 +202,7 @@
     <ClCompile Include="..\..\Source\Application\AudiumMainWindow.cpp"/>
     <ClCompile Include="..\..\Source\Application\Main.cpp"/>
     <ClCompile Include="..\..\Source\Application\UsageAnalytics.cpp"/>
+    <ClCompile Include="..\..\Source\Application\UpdateChecker.cpp"/>
     <ClCompile Include="..\..\Source\Application\ProjectMonitor.cpp"/>
     <ClCompile Include="..\..\Source\Util\native\PreferencesLinux.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
@@ -3197,10 +3198,12 @@
     <ClInclude Include="..\..\Source\Application\AudiumCommandIDs.h"/>
     <ClInclude Include="..\..\Source\Application\AudiumApplication.h"/>
     <ClInclude Include="..\..\Source\Application\AudiumMainWindow.h"/>
+    <ClInclude Include="..\..\Source\Application\UpdateChecker.h"/>
     <ClInclude Include="..\..\Source\Application\UsageAnalytics.h"/>
     <ClInclude Include="..\..\Source\Application\ProjectMonitor.h"/>
     <ClInclude Include="..\..\Source\Util\EngineAccess.h"/>
     <ClInclude Include="..\..\Source\Util\Preferences.h"/>
+    <ClInclude Include="..\..\Source\Util\VersionCompare.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisProvider.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\SBicSegmenter.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisCache.h"/>

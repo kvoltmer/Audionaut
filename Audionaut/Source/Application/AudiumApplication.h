@@ -17,7 +17,7 @@ class SettingsDialog;
 class AboutSplashScreen;
 class MainComponent;
 
-namespace audium { class UsageAnalytics; class ProjectMonitor; class ProjectFileStore; class ProjectSerializer; }
+namespace audium { class UsageAnalytics; class UpdateChecker; class ProjectMonitor; class ProjectFileStore; class ProjectSerializer; }
 
 class AudiumApplication  : public juce::JUCEApplication,
                            private juce::AsyncUpdater,
@@ -117,6 +117,7 @@ private:
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<audium::Preferences> preferences;
     std::unique_ptr<audium::UsageAnalytics> usageAnalytics;
+    std::unique_ptr<audium::UpdateChecker> updateChecker;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
     std::unique_ptr<juce::Component> aboutComponent;

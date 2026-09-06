@@ -153,6 +153,7 @@
 		E9EB3C5D6E72B5E2028AADF8 /* App */ = {isa = PBXBuildFile; fileRef = 65EE5B24CA6AA1915694E01E; };
 		EC17943064736AF6F2C07E47 /* PositionableBase.cpp */ = {isa = PBXBuildFile; fileRef = E7E2B0BB192B8377F4275BBE; };
 		ED417347D1385267959D814E /* AudiumLookAndFeel.cpp */ = {isa = PBXBuildFile; fileRef = C850B3C5C5A02130F40F4025; };
+		EF6CA8F2E270D924F52DEA74 /* UpdateChecker.cpp */ = {isa = PBXBuildFile; fileRef = E05D7227B006AF08828CBB34; };
 		F5D241FD039A48617EF1CA56 /* OnsetSegmenter.cpp */ = {isa = PBXBuildFile; fileRef = A735B19A59EA0CDBD20031CC; };
 		F6DB9E50FB9B911D1D30AA15 /* PlayListScheduler.cpp */ = {isa = PBXBuildFile; fileRef = 5FD6D72AF76F4D6569EBD29F; };
 		F71B0F6265EE35A0F68DD83C /* AudioTrackListBox.cpp */ = {isa = PBXBuildFile; fileRef = 7AEEBB541767E0CBA5B16C3F; };
@@ -179,6 +180,7 @@
 		08733DF44C724B9C6381E13C /* AudioTrackListBoxModel.cpp */ /* AudioTrackListBoxModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrackListBoxModel.cpp; path = ../../Source/Interface/Models/AudioTrackListBoxModel.cpp; sourceTree = SOURCE_ROOT; };
 		08A77E4418EC3F878A5A06B4 /* AudioTrackBaseComponent.cpp */ /* AudioTrackBaseComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrackBaseComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/AudioTrackBaseComponent.cpp; sourceTree = SOURCE_ROOT; };
 		08C71B4A6F4687F8D5EBB2EE /* ChannelGroupListBoxModel.h */ /* ChannelGroupListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelGroupListBoxModel.h; path = ../../Source/Interface/Models/ChannelGroupListBoxModel.h; sourceTree = SOURCE_ROOT; };
+		08D15EC77B29FD7238398DD7 /* VersionCompare.h */ /* VersionCompare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VersionCompare.h; path = ../../Source/Util/VersionCompare.h; sourceTree = SOURCE_ROOT; };
 		09200639918EB49CFF3382BE /* PlayListItem.h */ /* PlayListItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListItem.h; path = ../../Source/Engine/PlayList/PlayListItem.h; sourceTree = SOURCE_ROOT; };
 		0A9CA21236C025FF0F391B2E /* AudioTrackViewState.h */ /* AudioTrackViewState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackViewState.h; path = ../../Source/Engine/Group/AudioTrackViewState.h; sourceTree = SOURCE_ROOT; };
 		0C2871C7A8AF0B9971AFED86 /* RecordingActionHandler.cpp */ /* RecordingActionHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RecordingActionHandler.cpp; path = ../../Source/Engine/Recording/RecordingActionHandler.cpp; sourceTree = SOURCE_ROOT; };
@@ -466,6 +468,7 @@
 		D04235F9BAA6971A90F71532 /* AnalysisCache.h */ /* AnalysisCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AnalysisCache.h; path = ../../Source/Engine/Analysis/AnalysisCache.h; sourceTree = SOURCE_ROOT; };
 		D0FD3C88C9809AA0C63BB2DB /* LinkEngine.hpp */ /* LinkEngine.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LinkEngine.hpp; path = ../../Source/Engine/Link/LinkEngine.hpp; sourceTree = SOURCE_ROOT; };
 		D1A83A17077D93FB902AE177 /* TimeContext.h */ /* TimeContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TimeContext.h; path = ../../Source/Engine/TimeContext.h; sourceTree = SOURCE_ROOT; };
+		D2AC1556449B8EE867AA4ED7 /* UpdateChecker.h */ /* UpdateChecker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UpdateChecker.h; path = ../../Source/Application/UpdateChecker.h; sourceTree = SOURCE_ROOT; };
 		D2B7FA8F26B102DD025AD1F4 /* DemucsModelStore.cpp */ /* DemucsModelStore.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DemucsModelStore.cpp; path = ../../Source/Engine/Separation/DemucsModelStore.cpp; sourceTree = SOURCE_ROOT; };
 		D459B5B5D32F218D6599B47E /* ClipDynamics.h */ /* ClipDynamics.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipDynamics.h; path = ../../Source/Engine/PlayList/ClipDynamics.h; sourceTree = SOURCE_ROOT; };
 		D472A758A1E583B5C0E44017 /* DemucsModelStore.h */ /* DemucsModelStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DemucsModelStore.h; path = ../../Source/Engine/Separation/DemucsModelStore.h; sourceTree = SOURCE_ROOT; };
@@ -484,6 +487,7 @@
 		DC439E9FC4BB68035665FF04 /* ChannelGroupComponent.h */ /* ChannelGroupComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelGroupComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupComponent.h; sourceTree = SOURCE_ROOT; };
 		DD3D293D5BE7C2DD00072E80 /* SampleTimer.h */ /* SampleTimer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SampleTimer.h; path = ../../Source/Engine/PlayList/SampleTimer.h; sourceTree = SOURCE_ROOT; };
 		DD7CC22CCB3663A8F34EAE1B /* PlayListContainerComponent.h */ /* PlayListContainerComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListContainerComponent.h; path = ../../Source/Interface/Components/RightPanel/PlayListContainerComponent.h; sourceTree = SOURCE_ROOT; };
+		E05D7227B006AF08828CBB34 /* UpdateChecker.cpp */ /* UpdateChecker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UpdateChecker.cpp; path = ../../Source/Application/UpdateChecker.cpp; sourceTree = SOURCE_ROOT; };
 		E138ACDCC3A702D0B7A742EF /* include_juce_dsp.mm */ /* include_juce_dsp.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_dsp.mm; path = ../../JuceLibraryCode/include_juce_dsp.mm; sourceTree = SOURCE_ROOT; };
 		E1E9E6FDC4142FE18CC7F6B8 /* InfoCommand.cpp */ /* InfoCommand.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = InfoCommand.cpp; path = ../../Source/Cli/Commands/InfoCommand.cpp; sourceTree = SOURCE_ROOT; };
 		E32D5782C167DACDE9EAA9FC /* model_apply.cpp */ /* model_apply.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = model_apply.cpp; path = ../../../Submodules/demucs.cpp/src/model_apply.cpp; sourceTree = SOURCE_ROOT; };
@@ -715,6 +719,7 @@
 				84484F21C03C97F770F1A3FE,
 				352338A322365BD5C3C74D37,
 				ECB46507DAEC7211AEAFD67D,
+				08D15EC77B29FD7238398DD7,
 			);
 			name = Util;
 			sourceTree = "<group>";
@@ -948,6 +953,8 @@
 				3112F89ABC344D7CA74013C6,
 				6635C70632EE050E628A48F0,
 				5673A98DDDF091ED0E05D495,
+				E05D7227B006AF08828CBB34,
+				D2AC1556449B8EE867AA4ED7,
 				CE1CABA19DC7A4D862DBEC39,
 				FEDF9819DC6E93011CDA3EDF,
 				F6D6B37E2AE6DA888404BB3F,
@@ -1470,6 +1477,7 @@
 				DD7FA514741BD80EB9EA9F19,
 				4ABF177467832242153DF416,
 				E3F0BD25C994EF087531145C,
+				EF6CA8F2E270D924F52DEA74,
 				FFF57811D4411189D06C649F,
 				090A584AB0AC23AB9528BCCD,
 				6BD9E0BBB60EAD02583E8F7C,

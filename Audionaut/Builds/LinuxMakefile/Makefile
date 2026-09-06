@@ -100,6 +100,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudiumMainWindow_9b19a902.o \
   $(JUCE_OBJDIR)/Main_70df61c1.o \
   $(JUCE_OBJDIR)/UsageAnalytics_4d1fd2d.o \
+  $(JUCE_OBJDIR)/UpdateChecker_8f4806ee.o \
   $(JUCE_OBJDIR)/ProjectMonitor_dc1d1849.o \
   $(JUCE_OBJDIR)/EngineAccess_b7e0d334.o \
   $(JUCE_OBJDIR)/Preferences_96bfe954.o \
@@ -355,6 +356,11 @@ $(JUCE_OBJDIR)/Main_70df61c1.o: ../../Source/Application/Main.cpp
 $(JUCE_OBJDIR)/UsageAnalytics_4d1fd2d.o: ../../Source/Application/UsageAnalytics.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling UsageAnalytics.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/UpdateChecker_8f4806ee.o: ../../Source/Application/UpdateChecker.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling UpdateChecker.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/ProjectMonitor_dc1d1849.o: ../../Source/Application/ProjectMonitor.cpp

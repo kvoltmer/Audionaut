@@ -18,6 +18,7 @@
 #include "Application/ProjectMonitor.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
+#include "UpdateChecker.h"
 #include "UsageAnalytics.h"
 #include "AudiumMainWindow.h"
 #include "Interface/Dialogs/ProjectSettingsComponent.h"
@@ -203,6 +204,9 @@ void AudiumApplication::handleAsyncUpdate()
     }
 
     askForUsageStatisticsConsent();
+
+    updateChecker = std::make_unique<audium::UpdateChecker> (getPreferences());
+    updateChecker->checkOnStartupIfDue();
 }
 
 void AudiumApplication::loadStartupProject()
@@ -596,7 +600,7 @@ PopupMenu AudiumApplication::createFileMenu()
    #if ! JUCE_MAC
     menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
     menu.addCommandItem (commandManager.get(), CommandIDs::showSettingsWindow);
-//    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
+    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::quit);
    #endif
@@ -667,6 +671,7 @@ PopupMenu AudiumApplication::createExtraAppleMenuItems()
 {
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::showSettingsWindow);
     return menu;
@@ -697,6 +702,7 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::saveProjectAs,
                                 CommandIDs::showAboutWindow,
                                 CommandIDs::showSettingsWindow,
+                                CommandIDs::checkForNewVersion,
                                 CommandIDs::clearRecentFiles,
                                 CommandIDs::showFileBrowser,
     };
@@ -740,7 +746,9 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
         break;
             
     case CommandIDs::checkForNewVersion:
-        result.setInfo ("Check for New Version...", "Checks the web server for a new version", CommandCategories::general, 0);
+        result.setInfo ("Check for Updates...",
+                        "Asks the distribution channel whether a newer version exists",
+                        CommandCategories::general, 0);
         break;
     case CommandIDs::clearRecentFiles:
         result.setInfo ("Clear Recent Files", "Clears all recent files from the menu", CommandCategories::general, 0);
@@ -794,6 +802,11 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             break;
         case CommandIDs::showAboutWindow:
             showAboutWindow();
+            break;
+        case CommandIDs::checkForNewVersion:
+            if (updateChecker == nullptr)
+                updateChecker = std::make_unique<audium::UpdateChecker> (getPreferences());
+            updateChecker->checkNow (true);
             break;
         case CommandIDs::showSettingsWindow:
             showSettingsDialog();

@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 
+#include "Application/UpdateChecker.h"
 #include "Application/UsageAnalytics.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Util/Preferences.h"
@@ -39,13 +40,34 @@ public:
         descriptionLabel.setJustificationType(juce::Justification::topLeft);
         addAndMakeVisible(descriptionLabel);
 
-        setSize(500, 200);
+        updateToggle = std::make_unique<juce::ToggleButton>(TRANS("Check for updates automatically"));
+        updateToggle->onClick = [this] {
+            preferences.setValue(audium::PreferenceKeys::updateCheckEnabled,
+                                 updateToggle->getToggleState() ? "true" : "false");
+            preferences.synchronize();
+        };
+        addAndMakeVisible(updateToggle.get());
+
+        updateDescriptionLabel.setText(TRANS("Once a day, Audionaut asks its distribution channel "
+                                             "(the App Store on macOS, GitHub elsewhere) whether a "
+                                             "newer version exists. One plain request; nothing about "
+                                             "you or your projects is sent."),
+                                       juce::dontSendNotification);
+        updateDescriptionLabel.setFont(juce::FontOptions(AudiumLookAndFeel::defaultFontSize));
+        updateDescriptionLabel.setColour(juce::Label::textColourId,
+                                         findColour(juce::Label::textColourId).withAlpha(0.7f));
+        updateDescriptionLabel.setJustificationType(juce::Justification::topLeft);
+        addAndMakeVisible(updateDescriptionLabel);
+
+        setSize(500, 260);
     }
 
     void refreshFromPreferences()
     {
         enabledToggle->setToggleState(audium::UsageAnalytics::isEnabled(preferences),
                                       juce::dontSendNotification);
+        updateToggle->setToggleState(audium::UpdateChecker::readEnabled(preferences),
+                                     juce::dontSendNotification);
     }
 
     void paint(juce::Graphics& g) override
@@ -62,6 +84,11 @@ public:
         r.removeFromTop(h / 4);
 
         descriptionLabel.setBounds(r.removeFromTop(3 * h).withTrimmedLeft(h + 4));
+
+        r.removeFromTop(h / 2);
+        updateToggle->setBounds(r.removeFromTop(h));
+        r.removeFromTop(h / 4);
+        updateDescriptionLabel.setBounds(r.removeFromTop(3 * h).withTrimmedLeft(h + 4));
     }
 
 private:
@@ -78,6 +105,8 @@ private:
 
     std::unique_ptr<juce::ToggleButton> enabledToggle;
     juce::Label descriptionLabel;
+    std::unique_ptr<juce::ToggleButton> updateToggle;
+    juce::Label updateDescriptionLabel;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PrivacySettingsComponent)
 };

@@ -11,6 +11,16 @@ the change takes effect immediately.
 
 ![Settings → Privacy: the opt-in toggle](img/settings-privacy.png)
 
+## Update check
+
+Separately from statistics, Audionaut checks once a day whether a newer
+version exists — a single plain HTTPS request to its distribution channel
+(the App Store on macOS, GitHub elsewhere) that carries nothing about you
+or your projects. If an update exists you're told once, with a button to
+the store or download page; *Check for Updates…* in the app menu asks on
+demand. The *Check for updates automatically* toggle in
+**Settings → Privacy** turns the daily check off.
+
 ## What is collected — and what is not
 
 When enabled, Audionaut reports events such as app launches and which

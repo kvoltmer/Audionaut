@@ -931,6 +931,9 @@
     <ClCompile Include="..\..\Source\Application\UsageAnalytics.cpp">
       <Filter>Audionaut\Source\Application</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Application\UpdateChecker.cpp">
+      <Filter>Audionaut\Source\Application</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Application\ProjectMonitor.cpp">
       <Filter>Audionaut\Source\Application</Filter>
     </ClCompile>
@@ -4314,6 +4317,9 @@
     <ClInclude Include="..\..\Source\Application\AudiumMainWindow.h">
       <Filter>Audionaut\Source\Application</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Application\UpdateChecker.h">
+      <Filter>Audionaut\Source\Application</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Application\UsageAnalytics.h">
       <Filter>Audionaut\Source\Application</Filter>
     </ClInclude>
@@ -4324,6 +4330,9 @@
       <Filter>Audionaut\Source\Util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Util\Preferences.h">
+      <Filter>Audionaut\Source\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Util\VersionCompare.h">
       <Filter>Audionaut\Source\Util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisProvider.h">
