@@ -3554,6 +3554,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\LevelMeter.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PositionMarker.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\RectangleMarker.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionLabel.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionSelector.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RegionTableListBox.h"/>

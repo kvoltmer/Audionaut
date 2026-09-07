@@ -393,6 +393,7 @@
 		95B1AAE6E9F4E3B758B1B6E3 /* AutoEditPreviewView.cpp */ /* AutoEditPreviewView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AutoEditPreviewView.cpp; path = ../../Source/Interface/Views/AutoEditPreviewView.cpp; sourceTree = SOURCE_ROOT; };
 		963735C0B1CDBB40A2BD217B /* juce_graphics */ /* juce_graphics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_graphics; path = ../../../Submodules/JUCE/modules/juce_graphics; sourceTree = SOURCE_ROOT; };
 		97685BF53A801E7DFE09A038 /* include_juce_graphics_Sheenbidi.c */ /* include_juce_graphics_Sheenbidi.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = include_juce_graphics_Sheenbidi.c; path = ../../JuceLibraryCode/include_juce_graphics_Sheenbidi.c; sourceTree = SOURCE_ROOT; };
+		97ECACCEDE825FA6AADABCCD /* RectangleMarker.h */ /* RectangleMarker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RectangleMarker.h; path = ../../Source/Interface/Controls/RectangleMarker.h; sourceTree = SOURCE_ROOT; };
 		9804409186E4309F03AEBE65 /* DemucsRunner.h */ /* DemucsRunner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DemucsRunner.h; path = ../../Source/Engine/Separation/Demucs/DemucsRunner.h; sourceTree = SOURCE_ROOT; };
 		98761E06E3AA2ACF7AD31005 /* AudioRegion.cpp */ /* AudioRegion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRegion.cpp; path = ../../Source/Engine/Region/AudioRegion.cpp; sourceTree = SOURCE_ROOT; };
 		99CF1EA9B471BEDBBEEAACCB /* AudiumMainWindow.cpp */ /* AudiumMainWindow.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudiumMainWindow.cpp; path = ../../Source/Application/AudiumMainWindow.cpp; sourceTree = SOURCE_ROOT; };
@@ -1087,6 +1088,7 @@
 				41C5D3B1E81DCFA1BE08D14C,
 				9A9AA9F5A0AC2B81BCF919E8,
 				9B1518F189178993146D0C55,
+				97ECACCEDE825FA6AADABCCD,
 				65A6EAD1842D8FFA4768DC84,
 				BD317E4F3A130A3FD8EDC934,
 				BC912F2C45ABACEAA30761C1,

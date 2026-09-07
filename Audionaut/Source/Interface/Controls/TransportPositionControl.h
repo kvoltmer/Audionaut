@@ -12,6 +12,7 @@
 
 #include "Interface/Views/TransportView.h"
 #include "Interface/Controls/LoopDraggerControl.h"
+#include "Interface/Controls/RectangleMarker.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class TransportPositionControl  :   public juce::Component,
@@ -35,17 +36,16 @@ public:
         transportView = std::make_unique<TransportView> (zoomHandler);
         addAndMakeVisible(transportView.get());
 
-        loopRangeMarker.setFill(Colours::white.withAlpha(0.1f));
-        loopRangeMarker.setStrokeFill(Colours::white.withAlpha(0.85f));
-        loopRangeMarker.setStrokeThickness(1.f);
+        loopRangeMarker.setFill (Colours::white.withAlpha (0.1f));
+        loopRangeMarker.setStroke (Colours::white.withAlpha (0.85f), 1.f);
 
-        addAndMakeVisible (loopRangeMarkerComponent);
+        addAndMakeVisible (loopRangeMarker);
         
         startPositionMarker.setFill (Colours::red.withAlpha (0.85f));
-        addAndMakeVisible (startPositionMarkerComponent);
+        addAndMakeVisible (startPositionMarker);
         
         mouseOverGridMarker.setFill(gridColour);
-        addAndMakeVisible (mouseOverGridMarkerComponent);
+        addAndMakeVisible (mouseOverGridMarker);
         
 
         loopDraggerControl = std::make_unique<LoopDraggerControl>(nullptr,
@@ -81,7 +81,11 @@ public:
 
     void resized() override
     {
-        transportView->setBounds(getLocalBounds());
+        transportView->setBounds (getLocalBounds());
+
+        for (auto* marker : { &loopRangeMarker, &startPositionMarker, &mouseOverGridMarker })
+            marker->setBounds (getLocalBounds());
+
         updateLoopView();
     }
     
@@ -93,10 +97,10 @@ public:
             auto height = static_cast<float>(getHeight());
             startPositionMarker.setRectangle(juce::Rectangle<float>(start - 0.75f, 0.f,
                                                                   1.5f, height));
-            startPositionMarkerComponent.setVisible(std::abs(position - start) > 0.0);
+            startPositionMarker.setVisible(std::abs(position - start) > 0.0);
             
             auto loopActive = playListScheduler->getTransportLoop()->isLoopActive();
-            loopRangeMarkerComponent.setVisible(loopActive);
+            loopRangeMarker.setVisible(loopActive);
             loopDraggerControl->setVisible(loopActive);
         }
             
@@ -164,24 +168,24 @@ public:
         
         auto clocks = zoomHandler->xToClocks(x);
         if (zoomHandler->snapToGrid(clocks)) {
-            mouseOverGridMarkerComponent.setVisible(true);
+            mouseOverGridMarker.setVisible(true);
     
             auto gridX = zoomHandler->clocksToX(clocks);
             
             mouseOverGridMarker.setRectangle (juce::Rectangle<float> (gridX - 0.75f, 0, 1.5f, (float) getHeight()));
         }
         else {
-            mouseOverGridMarkerComponent.setVisible(false);
+            mouseOverGridMarker.setVisible(false);
         }
     }
     
     void mouseEnter (const MouseEvent&) override
     {
-        mouseOverGridMarkerComponent.setVisible(true);
+        mouseOverGridMarker.setVisible(true);
     }
     void mouseExit (const MouseEvent&) override
     {
-        mouseOverGridMarkerComponent.setVisible(false);
+        mouseOverGridMarker.setVisible(false);
     }
 
 private:
@@ -191,13 +195,9 @@ private:
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
-    juce::DrawableRectangle startPositionMarker;
-    juce::DrawableRectangle mouseOverGridMarker;
-    juce::DrawableRectangle loopRangeMarker;
-
-    juce::DrawableComponent startPositionMarkerComponent { startPositionMarker };
-    juce::DrawableComponent mouseOverGridMarkerComponent { mouseOverGridMarker };
-    juce::DrawableComponent loopRangeMarkerComponent { loopRangeMarker };
+    RectangleMarker startPositionMarker;
+    RectangleMarker mouseOverGridMarker;
+    RectangleMarker loopRangeMarker;
     
     std::unique_ptr<TransportView> transportView;
     std::unique_ptr<LoopDraggerControl> loopDraggerControl;
