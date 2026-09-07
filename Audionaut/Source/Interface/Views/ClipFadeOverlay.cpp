@@ -142,7 +142,23 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
     auto regionSeconds = region != nullptr ? region->getRegionData(audium::seconds)
                                            : juce::Range<double>();
     auto regionLenSeconds = regionSeconds.getLength();
-    auto secondsPerPx = clipW > 0.f ? regionLenSeconds / clipW : 0.0;
+
+    // The ghost shares the clip view's pixel anchoring (see
+    // WaveFormViewBase::paint): the file time drawn at a timeline pixel is
+    // regionStart + xToSeconds(px) - absoluteStart, and columns are whole
+    // timeline pixels. Scaling by regionLength / clipW instead rounded with
+    // the clip's integer width and anchored the region start to the clip's
+    // integer x, so the ghost jittered against the clip's own waveform while
+    // the start edge was trimmed.
+    const auto absoluteStart = item.getAbsolutePosition(audium::seconds);
+    const auto fileTimeAtX = [&] (double timelineX)
+    {
+        return regionSeconds.getStart() + zoomHandler->xToSeconds(timelineX) - absoluteStart;
+    };
+    const auto timelineXAtFileTime = [&] (double fileTime)
+    {
+        return zoomHandler->secondsToX(absoluteStart + (fileTime - regionSeconds.getStart()));
+    };
 
     // the envelope tapering the ghost, in clip-local pixel space - gainAt
     // handles x outside [0, totalWidth]. Passed unconditionally: isActive()
@@ -178,7 +194,7 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
         // GHOST WAVEFORM of the extended material, dimmed, under the ramps.
         // The band's resource is the one mapped to this destination channel,
         // drawn with the same source channel / gain as the clip's row view.
-        if (resourceGroup != nullptr && secondsPerPx > 0.0) {
+        if (resourceGroup != nullptr && clipW > 0.f) {
             if (auto resource = resourceGroup->getAudioResourceAtChannel(ch)) {
                 auto sourceChannel = resource->getChannelMapping().getSourceChannel();
                 if (sourceChannel >= 0 &&
@@ -195,22 +211,26 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
                             g.setColour(ghostColour);
 
                             // fade-in extension: material before the region
-                            // window. The drawn source range must be clamped
-                            // to the file - negative start times leave stale
-                            // cache columns on the zoomed-in thumbnail path.
+                            // window, ending at the clip's own left column (whose
+                            // file time the clip view draws from). The left column
+                            // is kept inside the file - negative start times leave
+                            // stale cache columns on the zoomed-in thumbnail path.
                             if (startFrac < 0.f) {
                                 auto rawStart     = regionSeconds.getStart() + startFrac * regionLenSeconds;
                                 auto clampedStart = std::max(0.0, rawStart);
-                                auto endSeconds   = regionSeconds.getStart();
-                                auto xLocal   = static_cast<int>(std::floor((clampedStart - endSeconds) / secondsPerPx));
-                                auto widthPx  = static_cast<int>((endSeconds - clampedStart) / secondsPerPx);
-                                if (widthPx > 0)
+                                auto leftX        = std::floor(timelineXAtFileTime(clampedStart));
+                                if (fileTimeAtX(leftX) < 0.0)
+                                    leftX += 1.0;
+                                auto widthPx      = static_cast<int>(std::round(clipX - leftX));
+                                auto startSeconds = fileTimeAtX(leftX);
+                                auto endSeconds   = fileTimeAtX(clipX);
+                                if (widthPx > 0 && endSeconds > startSeconds)
                                     thumbnail->drawChannel(g,
-                                                           juce::Rectangle<int>(xLocal,
+                                                           juce::Rectangle<int>(-widthPx,
                                                                           static_cast<int>(bandTop),
                                                                           widthPx,
                                                                           static_cast<int>(bandHeight)),
-                                                           clampedStart,
+                                                           startSeconds,
                                                            endSeconds,
                                                            sourceChannel,
                                                            gain,
@@ -218,21 +238,24 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
                             }
 
                             // fade-out extension: material after the region
-                            // window, clamped to the file end (missing
-                            // material = silence = simply not drawn)
+                            // window, starting at the clip's right column and
+                            // clamped to the file end (missing material = silence
+                            // = simply not drawn)
                             if (endFrac < 0.f) {
                                 auto rawEnd       = regionSeconds.getEnd() - endFrac * regionLenSeconds;
                                 auto clampedEnd   = std::min(resource->getFileLength(audium::seconds), rawEnd);
-                                auto startSeconds = regionSeconds.getEnd();
-                                auto widthPx  = static_cast<int>((clampedEnd - startSeconds) / secondsPerPx);
-                                if (widthPx > 0)
+                                auto rightX       = std::floor(timelineXAtFileTime(clampedEnd));
+                                auto widthPx      = static_cast<int>(std::round(rightX - clipRight));
+                                auto startSeconds = fileTimeAtX(clipRight);
+                                auto endSeconds   = fileTimeAtX(rightX);
+                                if (widthPx > 0 && endSeconds > startSeconds)
                                     thumbnail->drawChannel(g,
                                                            juce::Rectangle<int>(static_cast<int>(clipW),
                                                                           static_cast<int>(bandTop),
                                                                           widthPx,
                                                                           static_cast<int>(bandHeight)),
                                                            startSeconds,
-                                                           clampedEnd,
+                                                           endSeconds,
                                                            sourceChannel,
                                                            gain,
                                                            &envelope);

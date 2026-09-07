@@ -578,6 +578,8 @@
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
           <FILE id="keLPLt" name="PositionMarker.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PositionMarker.h"/>
+          <FILE id="RmK7Zq" name="RectangleMarker.h" compile="0" resource="0"
+                file="Source/Interface/Controls/RectangleMarker.h"/>
           <FILE id="UGbQL4" name="RegionLabel.cpp" compile="1" resource="0" file="Source/Interface/Controls/RegionLabel.cpp"/>
           <FILE id="M14ssi" name="RegionLabel.h" compile="0" resource="0" file="Source/Interface/Controls/RegionLabel.h"/>
           <FILE id="kQnaR9" name="RegionSelector.cpp" compile="1" resource="0"
