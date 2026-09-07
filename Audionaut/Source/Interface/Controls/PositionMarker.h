@@ -18,7 +18,7 @@ public:
         zoomHandler(zoomHandler)
     {
         setColour(Colours::pink);
-        addAndMakeVisible (currentPositionMarker);
+        addAndMakeVisible (currentPositionMarkerComponent);
         startTimerHz (AudiumLookAndFeel::timerHz);
         setInterceptsMouseClicks(false, false);
     }
@@ -49,12 +49,12 @@ public:
                 lastXPos = iPos;
                 
                 if (xPos >= 0.0) {
-                    currentPositionMarker.setVisible(true);
+                    currentPositionMarkerComponent.setVisible(true);
                     currentPositionMarker.setRectangle (juce::Rectangle<float> (xPos - 0.75f, 0,
                                                                           1.5f, (float) (getHeight() - zoomHandler->getScrollBarHeight())));
                 }
                 else {
-                    currentPositionMarker.setVisible(false);
+                    currentPositionMarkerComponent.setVisible(false);
                 }
             }
         }
@@ -80,6 +80,7 @@ private:
     std::shared_ptr<ZoomHandler> zoomHandler;
     
     juce::DrawableRectangle currentPositionMarker;
+    juce::DrawableComponent currentPositionMarkerComponent { currentPositionMarker };
     
     int lastXPos = -1;
     

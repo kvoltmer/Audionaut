@@ -39,13 +39,13 @@ public:
         loopRangeMarker.setStrokeFill(Colours::white.withAlpha(0.85f));
         loopRangeMarker.setStrokeThickness(1.f);
 
-        addAndMakeVisible(loopRangeMarker);
+        addAndMakeVisible (loopRangeMarkerComponent);
         
         startPositionMarker.setFill (Colours::red.withAlpha (0.85f));
-        addAndMakeVisible (startPositionMarker);
+        addAndMakeVisible (startPositionMarkerComponent);
         
         mouseOverGridMarker.setFill(gridColour);
-        addAndMakeVisible(mouseOverGridMarker);
+        addAndMakeVisible (mouseOverGridMarkerComponent);
         
 
         loopDraggerControl = std::make_unique<LoopDraggerControl>(nullptr,
@@ -93,10 +93,10 @@ public:
             auto height = static_cast<float>(getHeight());
             startPositionMarker.setRectangle(juce::Rectangle<float>(start - 0.75f, 0.f,
                                                                   1.5f, height));
-            startPositionMarker.setVisible(std::abs(position - start) > 0.0);
+            startPositionMarkerComponent.setVisible(std::abs(position - start) > 0.0);
             
             auto loopActive = playListScheduler->getTransportLoop()->isLoopActive();
-            loopRangeMarker.setVisible(loopActive);
+            loopRangeMarkerComponent.setVisible(loopActive);
             loopDraggerControl->setVisible(loopActive);
         }
             
@@ -164,24 +164,24 @@ public:
         
         auto clocks = zoomHandler->xToClocks(x);
         if (zoomHandler->snapToGrid(clocks)) {
-            mouseOverGridMarker.setVisible(true);
+            mouseOverGridMarkerComponent.setVisible(true);
     
             auto gridX = zoomHandler->clocksToX(clocks);
             
             mouseOverGridMarker.setRectangle (juce::Rectangle<float> (gridX - 0.75f, 0, 1.5f, (float) getHeight()));
         }
         else {
-            mouseOverGridMarker.setVisible(false);
+            mouseOverGridMarkerComponent.setVisible(false);
         }
     }
     
     void mouseEnter (const MouseEvent&) override
     {
-        mouseOverGridMarker.setVisible(true);
+        mouseOverGridMarkerComponent.setVisible(true);
     }
     void mouseExit (const MouseEvent&) override
     {
-        mouseOverGridMarker.setVisible(false);
+        mouseOverGridMarkerComponent.setVisible(false);
     }
 
 private:
@@ -194,6 +194,10 @@ private:
     juce::DrawableRectangle startPositionMarker;
     juce::DrawableRectangle mouseOverGridMarker;
     juce::DrawableRectangle loopRangeMarker;
+
+    juce::DrawableComponent startPositionMarkerComponent { startPositionMarker };
+    juce::DrawableComponent mouseOverGridMarkerComponent { mouseOverGridMarker };
+    juce::DrawableComponent loopRangeMarkerComponent { loopRangeMarker };
     
     std::unique_ptr<TransportView> transportView;
     std::unique_ptr<LoopDraggerControl> loopDraggerControl;
