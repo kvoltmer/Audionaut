@@ -73,6 +73,10 @@ public:
     /// No-op while the clip is recording, like setSpeedRatio.
     void setStretchMode(StretchMode newMode);
 
+    /// Speed ratio and stretch mode together - for every place that derives
+    /// a new item from an existing one (clone, split, drop, export items).
+    void copySpeedFrom(const PlayListItem& other);
+
     static constexpr double minSpeedRatio = 0.25;
     static constexpr double maxSpeedRatio = 4.0;
     

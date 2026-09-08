@@ -29,8 +29,7 @@ bool PlayListItemExport::exportItem()
     // the export must sound like the clip: carry gains, fades, the fade
     // extensions and the playback speed over to the fresh export item
     config->playListItem->getDynamics().copyFrom(playListItem->getDynamics());
-    config->playListItem->setSpeedRatio(playListItem->getSpeedRatio());
-    config->playListItem->setStretchMode(playListItem->getStretchMode());
+    config->playListItem->copySpeedFrom(*playListItem);
 
     // the number of audio channels
     config->numChannels = audioRegion->getAudioTrack()->getNumAudioTrackChannels();

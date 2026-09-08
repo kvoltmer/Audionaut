@@ -95,6 +95,12 @@ void PlayListItem::setStretchMode(StretchMode newMode)
     stretchMode = newMode;
 }
 
+void PlayListItem::copySpeedFrom(const PlayListItem& other)
+{
+    setSpeedRatio(other.getSpeedRatio());
+    setStretchMode(other.getStretchMode());
+}
+
 double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 {
     if (context == audium::seconds) {

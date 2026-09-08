@@ -584,3 +584,61 @@ SCENARIO("splitting and cloning a stretched clip preserve its speed", "[engine][
     DeletedAtShutdown::deleteAll();
     MessageManager::deleteInstance();
 }
+
+SCENARIO("dropping a stretched clip keeps its speed and mode", "[engine][clipspeed]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture(createSlowSawTwoSecondsAudioFile());
+        auto container = fixture.engine->getAudioTrackContainer();
+        auto sourceTrack = container->getAudioTrack(0);
+        auto item = fixture.item();
+
+        item->setSpeedRatio(0.5);
+        item->setStretchMode(StretchMode::Stretch);
+
+        auto expectSpeedCopied = [] (const PlayListItem& copy)
+        {
+            REQUIRE(copy.getSpeedRatio() == Catch::Approx(0.5));
+            REQUIRE(copy.getStretchMode() == StretchMode::Stretch);
+        };
+
+        WHEN("the clip is dragged onto a second track")
+        {
+            auto targetTrack = container->createNewAudioTrack(juce::String());
+            REQUIRE(targetTrack != nullptr);
+
+            targetTrack->dropPlayListItem(item, 96.0, audium::clocks);
+
+            THEN("the moved clip keeps the speed and the mode")
+            {
+                REQUIRE(sourceTrack->getPlayListContainer()->getPlayListItems().empty());
+
+                auto moved = targetTrack->getPlayListContainer()->getPlayListItems();
+                REQUIRE(moved.size() == 1);
+                expectSpeedCopied(*moved[0]);
+
+                // and the timeline extent follows: 2 s source at half speed
+                REQUIRE(moved[0]->getAbsolutePositionRange(audium::seconds).getLength()
+                        == Catch::Approx(4.0));
+            }
+        }
+
+        WHEN("the clip is dropped as a new item")
+        {
+            sourceTrack->dropPlayListItem(item, 96.0 * 8.0, audium::clocks, true);
+
+            THEN("the copy keeps the speed and the mode")
+            {
+                auto items = sourceTrack->getPlayListContainer()->getPlayListItems();
+                REQUIRE(items.size() == 2);
+                expectSpeedCopied(*items[1]);
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}

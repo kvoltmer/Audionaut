@@ -822,6 +822,7 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
     if (newPlayListItem) {
         if (auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context)) {
             newItem->getDynamics().copyFrom(item->getDynamics());
+            newItem->copySpeedFrom(*item);
         }
     }
     else if (this != region->getAudioTrack().get()) { // drag on different track -> create region and play list item
@@ -832,6 +833,7 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
                                                                                region)) {
             auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, pos, context);
             newItem->getDynamics().copyFrom(item->getDynamics());
+            newItem->copySpeedFrom(*item);
             item->setSelected(false);
             newItem->setSelected(true);
             if (!ModifierKeys::currentModifiers.isAltDown()) {
@@ -845,6 +847,7 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
             // copy
             if (auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context)) {
                 newItem->getDynamics().copyFrom(item->getDynamics());
+                newItem->copySpeedFrom(*item);
             }
         }
         else {
