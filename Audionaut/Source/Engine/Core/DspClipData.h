@@ -92,6 +92,14 @@ struct DspClipData
     StretchMode clipStretchMode = StretchMode::RePitch;
 
     /**
+     * @brief Tempo lock: the clip's speed is project tempo / clipTempo,
+     *        derived live on the audio thread (see DspClip::getSpeedRatio),
+     *        so clipSpeedRatio is ignored while locked.
+     */
+    bool clipTempoLocked = false;
+    double clipTempo = 0.0;
+
+    /**
      * @brief The transport source index for the clip.
      *
      * An integer representing the index of the transport source associated

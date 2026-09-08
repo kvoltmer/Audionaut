@@ -13,6 +13,11 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/PlayList/ClipSpeed.h"
+#include "Engine/PlayList/ClipTempo.h"
+#include "Engine/AudioSources/VoiceSource.h"
+#include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Analysis/AnalysisCache.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -635,6 +640,343 @@ SCENARIO("dropping a stretched clip keeps its speed and mode", "[engine][clipspe
                 auto items = sourceTrack->getPlayListContainer()->getPlayListItems();
                 REQUIRE(items.size() == 2);
                 expectSpeedCopied(*items[1]);
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+// ---------------------------------------------------------------------------
+// Tempo lock: the clip's speed is project tempo / clip tempo, derived live.
+
+SCENARIO("a tempo-locked clip derives its speed from the project tempo", "[engine][clipspeed][tempolock]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture(createSlowSawTwoSecondsAudioFile());
+        auto item = fixture.item();
+        auto tempoProvider = fixture.engine->getPlayListScheduler()->getTempoProvider();
+        tempoProvider->setTempo(120.0);
+
+        const auto extent = [&item] {
+            return item->getAbsolutePositionRange(audium::seconds).getLength();
+        };
+
+        WHEN("the clip is locked at a clip tempo of 60")
+        {
+            item->setClipTempo(60.0);
+            item->setTempoLocked(true);
+
+            THEN("it plays at double speed on half the timeline, the source window untouched")
+            {
+                REQUIRE(item->isTempoLocked());
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(2.0));
+                REQUIRE(extent() == Catch::Approx(1.0));
+                REQUIRE(item->getRegionData(audium::seconds).getLength() == Catch::Approx(2.0));
+            }
+
+            THEN("a plain ratio is ignored while locked")
+            {
+                item->setSpeedRatio(0.5);
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(2.0));
+            }
+
+            THEN("a tempo change moves the ratio and the extent")
+            {
+                tempoProvider->setTempo(90.0);
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(1.5));
+                REQUIRE(extent() == Catch::Approx(2.0 / 1.5));
+            }
+
+            THEN("unlocking bakes the derived ratio, so the clip stays put")
+            {
+                tempoProvider->setTempo(90.0);
+                item->setTempoLocked(false);
+                REQUIRE_FALSE(item->isTempoLocked());
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(1.5));
+
+                tempoProvider->setTempo(120.0);
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(1.5));
+            }
+
+            THEN("the derived ratio is clamped to the speed range")
+            {
+                tempoProvider->setTempo(999.0);
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(ClipSpeed::maxSpeedRatio));
+            }
+        }
+
+        WHEN("a clip is locked without a known tempo")
+        {
+            item->setTempoLocked(true);
+
+            THEN("it plays as recorded until a tempo is set")
+            {
+                REQUIRE(item->getClipTempo() == 0.0);
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(1.0));
+
+                item->setClipTempo(240.0);
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(0.5));
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("the tempo lock persists, resets and copies like the other item state", "[engine][clipspeed][tempolock]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture(createSlowSawTwoSecondsAudioFile());
+        auto item = fixture.item();
+        auto playList = fixture.engine->getAudioTrackContainer()->getAudioTrack(0)->getPlayListContainer();
+
+        json plain;
+        REQUIRE(item->writeToJson(plain));
+        REQUIRE_FALSE(plain.contains("tempo_locked"));
+        REQUIRE_FALSE(plain.contains("clip_tempo"));
+
+        WHEN("a locked clip's state round-trips")
+        {
+            item->setClipTempo(128.0);
+            item->setTempoLocked(true);
+
+            json locked;
+            REQUIRE(item->writeToJson(locked));
+            REQUIRE(locked.at("tempo_locked").get<bool>());
+            REQUIRE(locked.at("clip_tempo").get<double>() == Catch::Approx(128.0));
+
+            item->setTempoLocked(false);
+            item->setClipTempo(0.0);
+            REQUIRE(item->readFromJson(locked, false));
+
+            THEN("the lock and the tempo come back")
+            {
+                REQUIRE(item->isTempoLocked());
+                REQUIRE(item->getClipTempo() == Catch::Approx(128.0));
+            }
+
+            THEN("restoring an unlocked state resets both - undo reuses items")
+            {
+                REQUIRE(item->readFromJson(plain, false));
+                REQUIRE_FALSE(item->isTempoLocked());
+                REQUIRE(item->getClipTempo() == 0.0);
+            }
+        }
+
+        WHEN("a locked clip is cloned")
+        {
+            item->setClipTempo(128.0);
+            item->setTempoLocked(true);
+            auto clone = playList->clonePlayListItem(item);
+            REQUIRE(clone != nullptr);
+
+            THEN("the clone is locked at the same tempo")
+            {
+                REQUIRE(clone->isTempoLocked());
+                REQUIRE(clone->getClipTempo() == Catch::Approx(128.0));
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("a tempo-locked clip bounces at the project tempo", "[engine][clipspeed][tempolock]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture(createSineAudioFile(440.0, 2.0));
+        auto item = fixture.item();
+        auto tempoProvider = fixture.engine->getPlayListScheduler()->getTempoProvider();
+
+        item->setClipTempo(120.0);
+        item->setTempoLocked(true);
+
+        WHEN("the project runs at half the clip's tempo")
+        {
+            tempoProvider->setTempo(60.0);
+            fixture.commit();
+            auto rePitched = fixture.bounce();
+
+            item->setStretchMode(StretchMode::Stretch);
+            fixture.commit();
+            auto stretched = fixture.bounce();
+
+            THEN("both modes take twice the time; re-pitch drops an octave, stretch holds the pitch")
+            {
+                REQUIRE(rePitched.getNumSamples() == Catch::Approx(4.0 * 44100.0).margin(512));
+                REQUIRE(stretched.getNumSamples() == Catch::Approx(4.0 * 44100.0).margin(512));
+                REQUIRE(measureFrequency(rePitched, 0.5, 3.5) == Catch::Approx(220.0).epsilon(0.02));
+                REQUIRE(measureFrequency(stretched, 0.5, 3.5) == Catch::Approx(440.0).epsilon(0.02));
+            }
+        }
+
+        WHEN("the project runs at the clip's tempo")
+        {
+            tempoProvider->setTempo(120.0);
+            fixture.commit();
+            auto buffer = fixture.bounce();
+
+            THEN("the clip plays as recorded")
+            {
+                REQUIRE(buffer.getNumSamples() == Catch::Approx(2.0 * 44100.0).margin(512));
+                REQUIRE(measureFrequency(buffer, 0.2, 1.8) == Catch::Approx(440.0).epsilon(0.02));
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("a tempo-locked clip follows a tempo change while it plays", "[engine][clipspeed][tempolock]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        // 4 s of sine, locked at the project tempo: ratio 1.0. Two seconds
+        // in, the tempo halves - the remaining two source seconds then take
+        // four, so the clip ends at 6 s.
+        auto fixture = makeFixture(createSineAudioFile(440.0, 4.0));
+        auto item = fixture.item();
+        auto tempoProvider = fixture.engine->getPlayListScheduler()->getTempoProvider();
+
+        constexpr double bounceSeconds = 6.5;
+
+        const auto bounceWithTempoDrop = [&] {
+            tempoProvider->setTempo(120.0);
+            item->setClipTempo(120.0);
+            item->setTempoLocked(true);
+            fixture.commit();
+
+            auto config = std::make_shared<ExportAudioConfig>();
+            config->fileName = fixture.bounceFile;
+            config->sampleRate = 44100.0;
+            config->blockSize = 512;
+            config->numChannels = 1;
+            config->positionSeconds = 0.0;
+            config->lengthSeconds = bounceSeconds;
+
+            auto dropped = false;
+            auto playingAfterDrop = false;
+            auto ratioAfterDrop = 0.0;
+
+            AudioExporter(*fixture.engine, config).bounce([&] (double progress) {
+                const auto seconds = progress * bounceSeconds;
+
+                if (! dropped && seconds >= 2.0) {
+                    tempoProvider->setTempo(60.0);
+                    dropped = true;
+                }
+
+                // well inside the slow half: the voice must still be the
+                // one started at 0 s, now at the new ratio
+                if (dropped && seconds >= 4.0 && seconds < 4.1) {
+                    const auto& voice = item->getVoiceSources().front();
+                    playingAfterDrop = voice->isPlaying();
+                    ratioAfterDrop = voice->getSpeedRatio();
+                }
+                return true;
+            });
+
+            REQUIRE(dropped);
+            REQUIRE(playingAfterDrop);
+            REQUIRE(ratioAfterDrop == Catch::Approx(0.5));
+
+            return audioFileToAudioBuffer(fixture.bounceFile);
+        };
+
+        WHEN("a re-pitched clip is bounced across the tempo drop")
+        {
+            auto buffer = bounceWithTempoDrop();
+
+            THEN("the pitch halves at the drop and the clip runs on to 6 s, no early stop")
+            {
+                REQUIRE(measureFrequency(buffer, 0.5, 1.8) == Catch::Approx(440.0).epsilon(0.02));
+                REQUIRE(measureFrequency(buffer, 3.5, 5.5) == Catch::Approx(220.0).epsilon(0.02));
+
+                const auto rms = [&buffer] (double from, double to) {
+                    return buffer.getRMSLevel(0, static_cast<int>(from * 44100.0),
+                                              static_cast<int>((to - from) * 44100.0));
+                };
+                REQUIRE(rms(5.5, 5.9) > 0.5);
+                REQUIRE(rms(6.1, 6.4) < 0.01);
+            }
+        }
+
+        WHEN("a time-stretched clip is bounced across the tempo drop")
+        {
+            item->setStretchMode(StretchMode::Stretch);
+            auto buffer = bounceWithTempoDrop();
+
+            THEN("the pitch holds on both sides of the drop")
+            {
+                REQUIRE(measureFrequency(buffer, 0.5, 1.8) == Catch::Approx(440.0).epsilon(0.02));
+                REQUIRE(measureFrequency(buffer, 3.5, 5.5) == Catch::Approx(440.0).epsilon(0.02));
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("locking seeds the clip tempo from the beat analysis", "[engine][clipspeed][tempolock]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    {
+        auto fixture = makeFixture(createSlowSawTwoSecondsAudioFile());
+        auto item = fixture.item();
+        auto provider = fixture.engine->getAudioTrackContainer()->getAnalysisProvider();
+        REQUIRE(provider != nullptr);
+
+        const auto file = ClipTempo::sourceFile(*item);
+        REQUIRE(file.existsAsFile());
+
+        WHEN("the source has no beat analysis")
+        {
+            const auto known = ClipTempo::lockToTempo(*item, *provider);
+
+            THEN("the clip is locked, its tempo unknown")
+            {
+                REQUIRE_FALSE(known);
+                REQUIRE(item->isTempoLocked());
+                REQUIRE(item->getClipTempo() == 0.0);
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(1.0));
+            }
+        }
+
+        WHEN("the analysis cache knows the source's tempo")
+        {
+            provider->getCache()->put(file, AnalysisType::BeatDegara, { 0.5f, 1.0f, 1.5f }, 96.0f);
+            const auto known = ClipTempo::lockToTempo(*item, *provider);
+
+            THEN("the clip takes it")
+            {
+                REQUIRE(known);
+                REQUIRE(item->getClipTempo() == Catch::Approx(96.0));
+            }
+
+            THEN("a tempo the user set already is kept")
+            {
+                item->setClipTempo(192.0);
+                ClipTempo::lockToTempo(*item, *provider);
+                REQUIRE(item->getClipTempo() == Catch::Approx(192.0));
             }
         }
     }

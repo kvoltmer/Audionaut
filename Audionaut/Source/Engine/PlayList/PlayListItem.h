@@ -14,6 +14,7 @@ using json = nlohmann::json;
 
 #include "Engine/TimeContext.h"
 #include "Engine/PlayList/ClipDynamics.h"
+#include "Engine/PlayList/ClipSpeed.h"
 #include "Engine/PlayList/StretchMode.h"
 #include "Engine/PlayList/PositionableBase.h"
 #include "Engine/Selection/Selectable.h"
@@ -63,8 +64,12 @@ public:
      * The clip's playback speed (re-pitch/varispeed): 2.0 plays double
      * speed one octave up on half the timeline. Clamped to
      * [minSpeedRatio, maxSpeedRatio]; ignored while the clip is recording.
+     *
+     * A tempo-locked clip derives it instead: project tempo / clip tempo,
+     * read live, so the clip stays on the grid when the tempo changes.
+     * setSpeedRatio is ignored while locked.
      */
-    double getSpeedRatio() const override { return speedRatio; }
+    double getSpeedRatio() const override;
     void setSpeedRatio(double newRatio);
 
     StretchMode getStretchMode() const { return stretchMode; }
@@ -73,12 +78,26 @@ public:
     /// No-op while the clip is recording, like setSpeedRatio.
     void setStretchMode(StretchMode newMode);
 
-    /// Speed ratio and stretch mode together - for every place that derives
-    /// a new item from an existing one (clone, split, drop, export items).
+    /**
+     * Tempo lock: the clip follows the project tempo (see getSpeedRatio).
+     * Unlocking bakes the derived ratio into the plain speed so the clip
+     * does not jump. No-op while recording.
+     */
+    bool isTempoLocked() const { return tempoLocked; }
+    void setTempoLocked(bool shouldLock);
+
+    /// The clip's native tempo in BPM (0 = unknown), clamped to
+    /// [ClipSpeed::minClipTempo, maxClipTempo]. Only matters while locked.
+    double getClipTempo() const { return clipTempo; }
+    void setClipTempo(double bpm);
+
+    /// Speed ratio, stretch mode, tempo lock and clip tempo together - for
+    /// every place that derives a new item from an existing one (clone,
+    /// split, drop, export items).
     void copySpeedFrom(const PlayListItem& other);
 
-    static constexpr double minSpeedRatio = 0.25;
-    static constexpr double maxSpeedRatio = 4.0;
+    static constexpr double minSpeedRatio = ClipSpeed::minSpeedRatio;
+    static constexpr double maxSpeedRatio = ClipSpeed::maxSpeedRatio;
     
     double getAbsolutePosition(audium::TimeContextType context) const override;
 
@@ -133,11 +152,15 @@ private:
     // The absolute transport position
     double absolutePositionClocks = 0.0;
 
-    // Playback speed (see getSpeedRatio) and how it is realised. Only
-    // RePitch exists today.
+    // Playback speed (see getSpeedRatio) and how it is realised.
     double speedRatio = 1.0;
 
     StretchMode stretchMode = StretchMode::RePitch;
+
+    // Tempo lock (see setTempoLocked): while locked the ratio is derived
+    // from clipTempo and the project tempo, and speedRatio is dormant.
+    bool tempoLocked = false;
+    double clipTempo = 0.0;
 
     ClipDynamics dynamics{*this};
 

@@ -1213,6 +1213,9 @@
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListItem.cpp">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\PlayList\ClipTempo.cpp">
+      <Filter>Audionaut\Source\Engine\PlayList</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\PlayList\PlayListScheduler.cpp">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClCompile>
@@ -4900,6 +4903,12 @@
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\StretchMode.h">
+      <Filter>Audionaut\Source\Engine\PlayList</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\PlayList\ClipSpeed.h">
+      <Filter>Audionaut\Source\Engine\PlayList</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\PlayList\ClipTempo.h">
       <Filter>Audionaut\Source\Engine\PlayList</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\PlayList\PlayListItem.h">

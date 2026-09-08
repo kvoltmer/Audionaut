@@ -106,6 +106,18 @@ public:
         clipTransportSource->setSpeedRatio(newSpeedRatio);
     }
 
+    double getSpeedRatio() const noexcept
+    {
+        return clipTransportSource->getSpeedRatio();
+    }
+
+    /// The speed changed mid-clip (a tempo-locked clip following a tempo
+    /// change): the scheduled end moves by @p factor = old / new speed.
+    void rescaleRemainingDuration(double factor)
+    {
+        durationTimer.rescale(factor);
+    }
+
     /// Varispeed vs pitch-preserving - see ClipTransportSource::setStretchMode.
     void setStretchMode(StretchMode newMode)
     {

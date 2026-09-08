@@ -104,6 +104,14 @@ juce::String PlayListItemDraggerControl::getSpeedSuffix() const
     if (playListItem == nullptr)
         return {};
 
+    // a tempo-locked clip shows the tempo it is locked from, e.g. "@128.0"
+    // - the ratio is implied by the project tempo
+    if (playListItem->isTempoLocked())
+    {
+        const auto clipTempo = playListItem->getClipTempo();
+        return clipTempo > 0.0 ? "@" + juce::String(clipTempo, 1) : juce::String("@?");
+    }
+
     const auto speed = playListItem->getSpeedRatio();
 
     if (speed == 1.0)

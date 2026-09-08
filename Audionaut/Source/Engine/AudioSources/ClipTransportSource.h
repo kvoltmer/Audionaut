@@ -117,6 +117,9 @@ public:
     */
     void setSpeedRatio (double newSpeedRatio) noexcept;
 
+    /** The speed the chain currently runs at (see setSpeedRatio). */
+    double getSpeedRatio() const noexcept { return speedRatio.load(); }
+
     /**
         Chooses between varispeed (RePitch, the default) and
         pitch-preserving Stretch - see setSpeedRatio. Real-time safe; the

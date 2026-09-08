@@ -27,9 +27,9 @@ public:
     // returns true once timer is due
     bool process(int numSamples, int& offset) {
         if (active) {
-            if (sampleCounter - numSamples <= 0) {
-                offset = sampleCounter;
-                sampleCounter = 0;
+            if (sampleCounter - numSamples <= 0.0) {
+                offset = static_cast<int>(sampleCounter);
+                sampleCounter = 0.0;
                 active = false;
                 return true;
             }
@@ -44,6 +44,17 @@ public:
         sampleCounter = numSamples;
         active = true;
     }
+
+    /**
+     * Scales the remaining time by @p factor - for a voice whose playback
+     * speed changed mid-clip (a tempo-locked clip following a tempo change):
+     * the source material left is the same, it now takes factor times as
+     * long. Fractional so a stream of small changes does not drift.
+     */
+    void rescale(double factor) {
+        if (active && factor > 0.0)
+            sampleCounter *= factor;
+    }
     
     void invalidate() {
         active = false;
@@ -54,7 +65,7 @@ public:
     }
     
 private:
-    int sampleCounter = 0;
+    double sampleCounter = 0.0;
     std::atomic<bool> active = false;
 };
 

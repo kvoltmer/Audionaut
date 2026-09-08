@@ -42,7 +42,7 @@ ClipFadeSpec ClipFadeSpec::fromDspClip (const DspClip& dspClip,
     spec.fadeOutEnd  = tempoProvider.clocksToSeconds(dspClip.dspClipData.clipFadeOutEndClocks);
     spec.fadeInCurve  = dspClip.dspClipData.clipFadeInCurve;
     spec.fadeOutCurve = dspClip.dspClipData.clipFadeOutCurve;
-    spec.speedRatio   = dspClip.dspClipData.clipSpeedRatio;
+    spec.speedRatio   = dspClip.getSpeedRatio();
     spec.stretchMode  = dspClip.dspClipData.clipStretchMode;
     return spec;
 }

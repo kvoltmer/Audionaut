@@ -288,6 +288,9 @@
           <FILE id="y8wZY3" name="PlayListItem.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListItem.cpp"/>
 <FILE id="StrMod1" name="StretchMode.h" compile="0" resource="0" file="Source/Engine/PlayList/StretchMode.h"/>
+          <FILE id="ClpSpd1" name="ClipSpeed.h" compile="0" resource="0" file="Source/Engine/PlayList/ClipSpeed.h"/>
+          <FILE id="ClpTmp1" name="ClipTempo.cpp" compile="1" resource="0" file="Source/Engine/PlayList/ClipTempo.cpp"/>
+          <FILE id="ClpTmp2" name="ClipTempo.h" compile="0" resource="0" file="Source/Engine/PlayList/ClipTempo.h"/>
           <FILE id="iSTHS0" name="PlayListItem.h" compile="0" resource="0" file="Source/Engine/PlayList/PlayListItem.h"/>
           <FILE id="Y4jg8M" name="PlayListScheduler.cpp" compile="1" resource="0"
                 file="Source/Engine/PlayList/PlayListScheduler.cpp"/>

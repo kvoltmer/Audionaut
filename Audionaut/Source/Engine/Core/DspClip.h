@@ -8,6 +8,7 @@
 #include "Engine/TimeContext.h"
 #include "Engine/PlayList/PositionableBase.h"
 #include "Engine/Core/DspClipData.h"
+#include "Engine/PlayList/ClipSpeed.h"
 #include "Engine/Provider/TempoProvider.h"
 
 namespace audium {
@@ -47,8 +48,16 @@ public:
      */
     void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
 
-    /// The clip's playback speed, straight from the committed clip data.
-    double getSpeedRatio() const override { return dspClipData.clipSpeedRatio; }
+    /// The clip's playback speed: the committed ratio, or - for a
+    /// tempo-locked clip - project tempo / clip tempo read live, so a
+    /// tempo change reaches the scheduler without a recommit.
+    double getSpeedRatio() const override
+    {
+        if (dspClipData.clipTempoLocked)
+            return ClipSpeed::tempoLockedRatio(tempoProvider->getTempo(), dspClipData.clipTempo);
+
+        return dspClipData.clipSpeedRatio;
+    }
     StretchMode getStretchMode() const { return dspClipData.clipStretchMode; }
 
     /**

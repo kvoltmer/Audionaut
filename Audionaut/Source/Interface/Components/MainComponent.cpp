@@ -138,6 +138,11 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
     }
+    else if (message == audium::tempoChanged)
+    {
+        // tempo-locked clips change their timeline extent with the tempo
+        middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
+    }
     else if (message == audium::updateSelection)
     {
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);

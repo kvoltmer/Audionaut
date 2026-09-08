@@ -78,13 +78,43 @@ double PlayListItem::getDurationTime(audium::TimeContextType context) const
     return getRegionData(context).getLength() / getSpeedRatio();
 }
 
+double PlayListItem::getSpeedRatio() const
+{
+    if (tempoLocked && clipTempo > 0.0)
+        return ClipSpeed::tempoLockedRatio(owner.getTempoProvider()->getTempo(), clipTempo);
+
+    return tempoLocked ? 1.0 : speedRatio;
+}
+
 void PlayListItem::setSpeedRatio(double newRatio)
 {
-    // a still-growing recording has no stable length to scale
+    // a still-growing recording has no stable length to scale; a locked
+    // clip's ratio belongs to the tempo
+    if (isRecording() || tempoLocked)
+        return;
+
+    speedRatio = ClipSpeed::clampSpeedRatio(newRatio);
+}
+
+void PlayListItem::setTempoLocked(bool shouldLock)
+{
+    if (isRecording() || shouldLock == tempoLocked)
+        return;
+
+    // unlocking keeps the clip where it is: the derived ratio becomes the
+    // plain one
+    if (! shouldLock)
+        speedRatio = getSpeedRatio();
+
+    tempoLocked = shouldLock;
+}
+
+void PlayListItem::setClipTempo(double bpm)
+{
     if (isRecording())
         return;
 
-    speedRatio = juce::jlimit(minSpeedRatio, maxSpeedRatio, newRatio);
+    clipTempo = bpm > 0.0 ? ClipSpeed::clampClipTempo(bpm) : 0.0;
 }
 
 void PlayListItem::setStretchMode(StretchMode newMode)
@@ -97,8 +127,12 @@ void PlayListItem::setStretchMode(StretchMode newMode)
 
 void PlayListItem::copySpeedFrom(const PlayListItem& other)
 {
-    setSpeedRatio(other.getSpeedRatio());
+    // order matters: the plain ratio only takes while unlocked
+    setTempoLocked(false);
+    setSpeedRatio(other.speedRatio);
     setStretchMode(other.getStretchMode());
+    setClipTempo(other.getClipTempo());
+    setTempoLocked(other.isTempoLocked());
 }
 
 double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
@@ -161,6 +195,12 @@ bool PlayListItem::writeToJson (json& output)
         if (stretchMode != StretchMode::RePitch)
             output["stretch_mode"] = static_cast<int>(stretchMode);
 
+        if (tempoLocked)
+            output["tempo_locked"] = true;
+
+        if (clipTempo > 0.0)
+            output["clip_tempo"] = clipTempo;
+
         dynamics.writeToJson(output);
         return true;
     }
@@ -198,6 +238,14 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
             if (input.contains("stretch_mode"))
                 stretchMode = input.at("stretch_mode").get<int>() == 1
                                   ? StretchMode::Stretch : StretchMode::RePitch;
+
+            tempoLocked = false;
+            if (input.contains("tempo_locked"))
+                tempoLocked = input.at("tempo_locked").get<bool>();
+
+            clipTempo = 0.0;
+            if (input.contains("clip_tempo"))
+                clipTempo = ClipSpeed::clampClipTempo(input.at("clip_tempo").get<double>());
 
             if (input.contains("position_clocks"))
                 absolutePositionClocks = input.at("position_clocks").get<double>();

@@ -12,14 +12,14 @@ namespace audium {
  *
  * RePitch is plain varispeed: the resampler in the clip's playback chain
  * runs the source faster or slower, changing pitch and length together.
- * Stretch (not implemented yet) will keep the pitch by routing the clip
- * through a time-stretch node at the same seam - see the resampler assembly
- * in ClipTransportSource::setSource.
+ * Stretch keeps the pitch by running the StretchAudioSource node behind
+ * the resampler, which then only corrects the file's sample rate - see
+ * ClipTransportSource::updateSpeedChain.
  */
 enum class StretchMode
 {
     RePitch = 0,
-    Stretch = 1   // reserved; no backend yet
+    Stretch = 1
 };
 
 } // namespace audium

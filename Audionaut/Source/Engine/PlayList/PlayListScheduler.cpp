@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "PlayListScheduler.h"
+#include "Engine/PlayList/ClipSpeed.h"
 #include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
@@ -163,6 +164,24 @@ void PlayListScheduler::process(double transportPositionClocks,
                 }
             }
             
+            // a tempo-locked clip follows the tempo while it plays: the
+            // ratio glides (both modes take it per block) and the scheduled
+            // end moves with it - no restart. Skipped at the clamp bounds,
+            // where the timeline extent and the voice would disagree anyway;
+            // the range check below then ends the voice.
+            if (voiceSource->isPlaying() && clipData.clipTempoLocked) {
+                const auto wanted  = dspClip.getSpeedRatio();
+                const auto current = voiceSource->getSpeedRatio();
+                const auto atBound = [] (double ratio) {
+                    return ratio <= ClipSpeed::minSpeedRatio || ratio >= ClipSpeed::maxSpeedRatio;
+                };
+
+                if (wanted != current && current > 0.0 && ! atBound (wanted) && ! atBound (current)) {
+                    voiceSource->setSpeedRatio(wanted);
+                    voiceSource->rescaleRemainingDuration(current / wanted);
+                }
+            }
+
             if (not voiceSource->isPlaying()) {
                 
                 if (not scheduleClip(dspClip,

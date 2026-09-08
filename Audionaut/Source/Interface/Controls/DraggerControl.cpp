@@ -6,6 +6,8 @@
 #include "Interface/Controls/DraggerControl.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/Provider/TempoProvider.h"
 #include "Engine/Selection/ClipOverlayTarget.h"
 
 void DraggerControl::mouseDown (const juce::MouseEvent& e)
@@ -188,7 +190,13 @@ bool DraggerControl::commitPositionData(const audium::PositionableBase &position
         for (auto item : selectedItems) {
             if (auto playItem = dynamic_cast<audium::PlayListItem*>(item.get())) {
                 const auto oldRange = playItem->getAbsolutePositionRange(context);
-                playItem->setSpeedRatio(ratio);
+
+                // a tempo-locked clip owns no ratio: the drag edits the
+                // tempo the ratio is derived from
+                if (playItem->isTempoLocked())
+                    playItem->setClipTempo(playItem->getPlayListContainer().getTempoProvider()->getTempo() / ratio);
+                else
+                    playItem->setSpeedRatio(ratio);
 
                 // a left-edge stretch keeps the right edge anchored
                 if (currentDragMode == leftEdge)

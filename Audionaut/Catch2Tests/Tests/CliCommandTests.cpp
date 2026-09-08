@@ -763,6 +763,60 @@ SCENARIO ("cli clip-speed re-pitches a clip", "[cli][clipspeed]")
                                         context)
                      == cli::exitUsage);
         }
+
+        WHEN ("the clip is locked to the project tempo with its own tempo given") {
+            REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                  + " --region sine-0dB --tempo 60"),
+                                        context)
+                     == cli::exitOk);
+
+            THEN ("the saved clip is locked at that tempo") {
+                const auto after = readProjectJson (project);
+                const auto& item = after["audium"]["audio_tracks"][1]["play_list_vector"][0];
+                REQUIRE (item.value ("tempo_locked", false));
+                REQUIRE (item.value ("clip_tempo", 0.0) == Catch::Approx (60.0));
+            }
+
+            THEN ("a ratio is refused while locked, and accepted once released") {
+                REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                      + " --region sine-0dB --ratio 0.5"),
+                                            context)
+                         == cli::exitUsage);
+                REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                      + " --region sine-0dB --lock-tempo off --ratio 0.5"),
+                                            context)
+                         == cli::exitOk);
+
+                const auto after = readProjectJson (project);
+                const auto& item = after["audium"]["audio_tracks"][1]["play_list_vector"][0];
+                REQUIRE_FALSE (item.value ("tempo_locked", false));
+                REQUIRE (item.value ("speed_ratio", 1.0) == Catch::Approx (0.5));
+            }
+        }
+
+        WHEN ("the lock is asked for without a tempo") {
+            REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                  + " --region sine-0dB --lock-tempo on"),
+                                        context)
+                     == cli::exitOk);
+
+            THEN ("the clip is locked (its tempo detected when the build can)") {
+                const auto after = readProjectJson (project);
+                const auto& item = after["audium"]["audio_tracks"][1]["play_list_vector"][0];
+                REQUIRE (item.value ("tempo_locked", false));
+            }
+        }
+
+        WHEN ("--tempo is combined with a ratio, or the lock value is garbage") {
+            REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                  + " --region sine-0dB --tempo 60 --ratio 0.5"),
+                                        context)
+                     == cli::exitUsage);
+            REQUIRE (cli::runClipSpeed (makeArgs ("clip-speed " + project.getFullPathName()
+                                                  + " --region sine-0dB --lock-tempo maybe"),
+                                        context)
+                     == cli::exitUsage);
+        }
     }
 
     workDir.deleteRecursively();

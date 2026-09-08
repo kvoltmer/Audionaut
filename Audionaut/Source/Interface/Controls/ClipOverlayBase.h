@@ -89,7 +89,9 @@ protected:
     /// too - that runs before the base destructor's cleanup.
     virtual void overlayHidden() {}
 
-    /// Arrangement broadcasts beyond the scroll the base already handles.
+    /// Arrangement broadcasts beyond the scroll the base already handles,
+    /// and the TempoProvider's tempoChanged (the base listens to both while
+    /// shown; the listener base is private, so subclasses cannot).
     virtual void overlayActionReceived (const juce::String& message) { juce::ignoreUnused (message); }
 
     /// Labels under the widgets, on the scrim. The default draws every
@@ -135,6 +137,9 @@ protected:
 
     /// Apply: check mark - shared by both overlays' confirm buttons.
     static juce::Path checkIconPath();
+
+    /// Padlock - the Stretch overlay's tempo-lock toggle.
+    static juce::Path lockIconPath();
 
     /**
      * Where the scrim and the widgets live: the local bounds minus the

@@ -8,6 +8,8 @@
 #include "ClipOverlayBase.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Provider/TempoProvider.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Interface/Controls/RegionSelector.h"
 
@@ -103,6 +105,9 @@ ClipOverlayBase::ClipOverlayBase(std::shared_ptr<audium::AudiumEngine> audiumEng
 
 ClipOverlayBase::~ClipOverlayBase()
 {
+    if (auto tempoProvider = audiumEngine->getPlayListScheduler()->getTempoProvider())
+        tempoProvider->removeActionListener(this);
+
     audiumEngine->getAudioTrackContainer()->removeActionListener(this);
     audiumEngine->getAudioTrackContainer()->getSelectionManager()->removeChangeListener(this);
     releaseRegionSelector();
@@ -153,6 +158,30 @@ juce::Path ClipOverlayBase::checkIconPath()
     juce::Path path;
     juce::PathStrokeType (2.5f, juce::PathStrokeType::curved,
                           juce::PathStrokeType::rounded).createStrokedPath (path, line);
+    pinToDesignBox (path);
+    return path;
+}
+
+juce::Path ClipOverlayBase::lockIconPath()
+{
+    // body
+    juce::Path path;
+    path.addRoundedRectangle (5.0f, 11.0f, 14.0f, 10.0f, 2.0f);
+
+    // shackle: an arc standing on the body
+    juce::Path shackleLine;
+    shackleLine.startNewSubPath (8.0f, 11.0f);
+    shackleLine.lineTo (8.0f, 8.0f);
+    shackleLine.addCentredArc (12.0f, 8.0f, 4.0f, 4.0f, 0.0f,
+                               juce::MathConstants<float>::pi * 1.5f,
+                               juce::MathConstants<float>::pi * 2.5f);
+    shackleLine.lineTo (16.0f, 11.0f);
+
+    juce::Path shackle;
+    juce::PathStrokeType (2.0f, juce::PathStrokeType::curved,
+                          juce::PathStrokeType::rounded).createStrokedPath (shackle, shackleLine);
+    path.addPath (shackle);
+
     pinToDesignBox (path);
     return path;
 }
@@ -280,6 +309,11 @@ void ClipOverlayBase::visibilityChanged()
         // that broadcast is what keeps the position fresh.
         audioTrackContainer->addActionListener(this);
 
+        // Tempo changes re-lay tempo-locked clips out; the subclass hears
+        // them through overlayActionReceived.
+        if (auto tempoProvider = audiumEngine->getPlayListScheduler()->getTempoProvider())
+            tempoProvider->addActionListener(this);
+
         // A previous session may have ended mid-fade.
         hiddenForZoom = false;
         setInterceptsMouseClicks(true, true);
@@ -294,6 +328,9 @@ void ClipOverlayBase::visibilityChanged()
     else
     {
         overlayHidden();
+
+        if (auto tempoProvider = audiumEngine->getPlayListScheduler()->getTempoProvider())
+            tempoProvider->removeActionListener(this);
 
         audioTrackContainer->removeActionListener(this);
         selectionManager->removeChangeListener(this);
@@ -317,7 +354,7 @@ void ClipOverlayBase::actionListenerCallback (const juce::String& message)
     // An arrangement update means edits (drags, live stretches) are
     // re-laying clips out: follow the resizes in place. If listener
     // ordering let a fade start first, come straight back.
-    if (message == audium::updateArrangementAction)
+    if (message == audium::updateArrangementAction || message == audium::tempoChanged)
     {
         expectParentResize();
 
