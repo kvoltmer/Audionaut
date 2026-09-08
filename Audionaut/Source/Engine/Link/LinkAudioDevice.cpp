@@ -43,10 +43,8 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
                                                          static_cast<std::size_t>(numSamples));
         const auto beats = linkEngine->beatAtTime(bufferBeginAtOutput, linkEngine->quantum());
         
-        // TODO: hack hack... we only support 2 output channels at this time
-        if (totalNumOutputChannels > 2) 
-            totalNumOutputChannels = 2;
-
+        // Note: like inBuf below, setDataToReferTo stays allocation-free for up to 32
+        // channels (juce::AudioBuffer's preallocated channel-pointer space).
 		jassert (totalNumOutputChannels > 0);
 		outBuf.setDataToReferTo(outputChannelData, totalNumOutputChannels, numSamples);
         juce::dsp::AudioBlock<float> out (outBuf);

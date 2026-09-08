@@ -14,7 +14,7 @@
     <key>CFBundleExecutable</key>
     <string>${EXECUTABLE_NAME}</string>
     <key>CFBundleIconFile</key>
-    <string>Icon.icns</string>
+    <string>AppIcon.icns</string>
     <key>CFBundleIdentifier</key>
     <string>com.voltmer-systems.audionaut</string>
     <key>CFBundleName</key>
@@ -26,9 +26,9 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.4.0</string>
+    <string>1.5.0</string>
     <key>CFBundleVersion</key>
-    <string>20</string>
+    <string>21</string>
     <key>NSHumanReadableCopyright</key>
     <string></string>
     <key>NSHighResolutionCapable</key>
@@ -47,7 +47,7 @@
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
         <key>CFBundleTypeIconFile</key>
-        <string>Icon</string>
+        <string>AppIcon</string>
         <key>NSPersistentStoreTypeKey</key>
         <string>XML</string>
         <key>LSHandlerRank</key>

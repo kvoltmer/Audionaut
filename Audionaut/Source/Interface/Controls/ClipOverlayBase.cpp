@@ -48,7 +48,7 @@ std::unique_ptr<juce::Drawable> makeCloseChipFace (juce::Colour circleColour)
     circlePath.addEllipse (0.0f, 0.0f, 24.0f, 24.0f);
     circle->setPath (circlePath);
     circle->setFill (juce::FillType (circleColour));
-    face->addAndMakeVisible (circle.release());
+    face->addChild (std::move (circle));
 
     auto cross = std::make_unique<juce::DrawablePath>();
     juce::Path lines;
@@ -61,7 +61,7 @@ std::unique_ptr<juce::Drawable> makeCloseChipFace (juce::Colour circleColour)
                           juce::PathStrokeType::rounded).createStrokedPath (crossPath, lines);
     cross->setPath (crossPath);
     cross->setFill (juce::FillType (juce::Colours::white));
-    face->addAndMakeVisible (cross.release());
+    face->addChild (std::move (cross));
 
     return face;
 }

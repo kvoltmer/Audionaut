@@ -37,16 +37,12 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
 
 
     
-    channelSizeComboBox.reset (new juce::ComboBox ("channel size combo box"));
+    // strip menu: Waveform Size / Routing. Looks like an empty combo box (arrow only)
+    channelSizeComboBox.reset (new MenuComboBox ("channel size combo box"));
     addAndMakeVisible (channelSizeComboBox.get());
     channelSizeComboBox->setEditableText (false);
     channelSizeComboBox->setJustificationType (juce::Justification::centred);
-    channelSizeComboBox->addItem (TRANS ("micro"), AudiumLookAndFeel::SizeIds::micro);
-    channelSizeComboBox->addItem (TRANS ("small"), AudiumLookAndFeel::SizeIds::small);
-    channelSizeComboBox->addItem (TRANS ("medium"), AudiumLookAndFeel::SizeIds::medium);
-    channelSizeComboBox->addItem (TRANS ("large"), AudiumLookAndFeel::SizeIds::large);
-    channelSizeComboBox->addItem (TRANS ("huge"), AudiumLookAndFeel::SizeIds::huge);
-    channelSizeComboBox->addListener (this);
+    channelSizeComboBox->onShowPopup = [this] { showStripMenu(); };
 
 
     // disable mouse clicks. we need them for the list control
@@ -77,6 +73,18 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     panSlider->onDragStart = [this] {
         audioTrack->onDragStart();
     };
+    // Routing indication: only visible when the channel is routed away
+    // from the defaults; red when the current device cannot provide the
+    // route. Sits under the pan slider.
+    for (auto* labelOwner : { &inputRoutingLabel, &outputRoutingLabel }) {
+        *labelOwner = std::make_unique<juce::Label>();
+        (*labelOwner)->setFont (juce::FontOptions (10.0f));
+        (*labelOwner)->setInterceptsMouseClicks (false, false);
+        addAndMakeVisible (labelOwner->get());
+    }
+    inputRoutingLabel->setJustificationType (juce::Justification::centredLeft);
+    outputRoutingLabel->setJustificationType (juce::Justification::centredRight);
+
     panSlider->onDragEnd = [this] {
         audioTrack->onDragEnd();
     };
@@ -173,7 +181,12 @@ void ChannelComponent::resized()
                           50,
                           sliderWidth,
                           sliderHeight);
-    
+
+    // the same 8 px air the volume/pan pair has between them
+    inputRoutingLabel->setBounds (space, 73, sliderWidth / 2, 12);
+    outputRoutingLabel->setBounds (space + sliderWidth / 2, 73,
+                                   sliderWidth - sliderWidth / 2, 12);
+
     levelMeter->setBounds(getWidth() - 20, 3, 7, getHeight() - 6);
     volumeScaleButton->setBounds (getWidth() - 10, 0, 10, proportionOfHeight (1.0000f));
 }
@@ -248,10 +261,166 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     recordButton->setToggleState(channelData.record, dontSendNotification);
     
 
+    updateRoutingIndicator();
+
     if (not isTimerRunning()) {
         startTimerHz(AudiumLookAndFeel::timerHz);
     }
     channelNumber = audioTrack->getChannel(rowNumber)->getChannelNumber() + audioTrack->getChannelOffset();
+}
+
+void ChannelComponent::updateRoutingIndicator()
+{
+    const auto channelData = audioTrack->getChannelData(rowNumber);
+    auto* device = engine->getAudioDeviceManager()->getCurrentAudioDevice();
+
+    const auto normalColour = getLookAndFeel().findColour (juce::Label::textColourId).withAlpha (0.7f);
+
+    auto apply = [&normalColour] (juce::Label& label, int routedChannel,
+                                  const juce::String& prefix, const juce::StringArray& names)
+    {
+        if (routedChannel < 0) {
+            label.setVisible (false);
+            return;
+        }
+
+        const auto available = routedChannel < names.size();
+
+        label.setText (prefix + " " + juce::String (routedChannel + 1), juce::dontSendNotification);
+        label.setColour (juce::Label::textColourId, available ? normalColour : juce::Colours::red);
+        label.setTooltip (available ? names[routedChannel]
+                                    : prefix + " " + juce::String (routedChannel + 1) + TRANS (" (not available)"));
+        label.setVisible (true);
+    };
+
+    apply (*inputRoutingLabel, channelData.inputChannel, TRANS ("In"),
+           device != nullptr ? device->getInputChannelNames() : juce::StringArray());
+    apply (*outputRoutingLabel, channelData.outputChannel, TRANS ("Out"),
+           device != nullptr ? device->getOutputChannelNames() : juce::StringArray());
+
+    // A direct out bypasses the pan into the main bus, so the pan slider
+    // has nothing to control.
+    panSlider->setEnabled (channelData.outputChannel < 0);
+}
+
+namespace
+{
+// strip menu item ids. Waveform sizes use AudiumLookAndFeel::SizeIds (<= 400);
+// routing picks live above them: base id = default (auto input / Main out),
+// base + 1 + hardware channel = explicit pick
+constexpr int kInputMenuBase  = 1000;
+constexpr int kOutputMenuBase = 2000;
+constexpr int kMenuRange      = 1000;
+
+void addRoutingItems(PopupMenu& menu, int baseId, const String& defaultLabel,
+                     const StringArray& deviceChannelNames, int selectedChannel,
+                     const String& unavailableLabel)
+{
+    menu.addItem(baseId, defaultLabel, true, selectedChannel < 0);
+
+    for (auto i = 0; i < deviceChannelNames.size(); ++i) {
+        // the device's own channel name; a bare number when it has none
+        const auto name = deviceChannelNames[i].trim();
+        const auto label = name.isNotEmpty() ? name : String(i + 1);
+        menu.addItem(baseId + 1 + i, label, true, selectedChannel == i);
+    }
+
+    // a saved route the current device can't provide: show it, but it can't be re-picked
+    if (selectedChannel >= deviceChannelNames.size())
+        menu.addItem(baseId + 1 + selectedChannel, unavailableLabel, false, true);
+}
+} // namespace
+
+void ChannelComponent::showStripMenu()
+{
+    auto channelData = audioTrack->getChannelData(rowNumber);
+    auto currentHeight = audioTrack->getChannel(rowNumber)->getChannelHeight();
+
+    PopupMenu sizeMenu;
+    sizeMenu.addItem (AudiumLookAndFeel::SizeIds::micro,  TRANS ("micro"),  true, currentHeight == AudiumLookAndFeel::SizeIds::micro);
+    sizeMenu.addItem (AudiumLookAndFeel::SizeIds::small,  TRANS ("small"),  true, currentHeight == AudiumLookAndFeel::SizeIds::small);
+    sizeMenu.addItem (AudiumLookAndFeel::SizeIds::medium, TRANS ("medium"), true, currentHeight == AudiumLookAndFeel::SizeIds::medium);
+    sizeMenu.addItem (AudiumLookAndFeel::SizeIds::large,  TRANS ("large"),  true, currentHeight == AudiumLookAndFeel::SizeIds::large);
+    sizeMenu.addItem (AudiumLookAndFeel::SizeIds::huge,   TRANS ("huge"),   true, currentHeight == AudiumLookAndFeel::SizeIds::huge);
+
+    StringArray inputNames, outputNames;
+    if (auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice()) {
+        inputNames = currentDevice->getInputChannelNames();
+        outputNames = currentDevice->getOutputChannelNames();
+    }
+
+    PopupMenu inputMenu;
+    addRoutingItems(inputMenu, kInputMenuBase,
+                    TRANS("Default (input ") + String(rowNumber + 1) + ")",
+                    inputNames, channelData.inputChannel,
+                    TRANS("Input ") + String(channelData.inputChannel + 1) + TRANS(" (not available)"));
+
+    PopupMenu outputMenu;
+    addRoutingItems(outputMenu, kOutputMenuBase, TRANS("Main Bus"),
+                    outputNames, channelData.outputChannel,
+                    TRANS("Output ") + String(channelData.outputChannel + 1) + TRANS(" (not available)"));
+
+    PopupMenu routingMenu;
+    routingMenu.addSubMenu(TRANS("Input"), inputMenu);
+    routingMenu.addSubMenu(TRANS("Output"), outputMenu);
+
+    PopupMenu m;
+    m.addSubMenu(TRANS("Waveform Size"), sizeMenu);
+    m.addSubMenu(TRANS("Routing"), routingMenu);
+
+    m.setLookAndFeel (&getLookAndFeel());
+    m.showMenuAsync (PopupMenu::Options()
+                         .withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight)
+                         .withTargetComponent(channelSizeComboBox.get()),
+                     ModalCallbackFunction::forComponent (stripMenuCallback, this));
+}
+
+void ChannelComponent::stripMenuCallback (int result, ChannelComponent* component)
+{
+    if (component == nullptr)
+        return;
+
+    // the combo box flagged itself as showing a popup when it handed over to showStripMenu
+    component->channelSizeComboBox->hidePopup();
+
+    if (result == 0)
+        return;
+
+    if (result >= kOutputMenuBase && result < kOutputMenuBase + kMenuRange)
+        component->setRoutingChannel(false, result - kOutputMenuBase - 1); // base -> -1 (Main)
+    else if (result >= kInputMenuBase && result < kInputMenuBase + kMenuRange)
+        component->setRoutingChannel(true, result - kInputMenuBase - 1);   // base -> -1 (auto)
+    else
+        component->setChannelHeight(result);
+}
+
+void ChannelComponent::setChannelHeight(int height)
+{
+    // undo
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+
+    audioTrack->getChannel(rowNumber)->setChannelHeight(height);
+
+    // undo
+    action->storeNewState();
+    audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set audio track height");
+    audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+}
+
+void ChannelComponent::setRoutingChannel(bool isInput, int newChannel)
+{
+    // undo
+    auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
+
+    if (isInput)
+        audioTrack->getChannel(rowNumber)->setInputChannel(newChannel);
+    else
+        audioTrack->getChannel(rowNumber)->setOutputChannel(newChannel);
+
+    // undo
+    action->storeNewState();
+    audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set channel routing");
+    audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
 }
 
 void ChannelComponent::timerCallback()
@@ -272,25 +441,11 @@ void ChannelComponent::timerCallback()
     
     recordButton->setToggleState(data.record, dontSendNotification);
 
-}
-
-void ChannelComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
-{
-    if (comboBoxThatHasChanged == channelSizeComboBox.get())
-    {
-        auto height = channelSizeComboBox->getSelectedId();
-
-        channelSizeComboBox->setText("", dontSendNotification);
-
-        // undo
-        auto action = std::make_unique<audium::UndoableContainerAction>(audioTrack->getAudioTrackContainer(), false);
-        
-        audioTrack->getChannel(rowNumber)->setChannelHeight(height);
-        
-        // undo
-        action->storeNewState();
-        audioTrack->getAudioTrackContainer().getUndoManager()->perform(action.release(), "Set audio track height");
-        audioTrack->getAudioTrackContainer().getUndoManager()->beginNewTransaction();
+    // Once a second: the routing indication depends on the audio device,
+    // which can change without this component being refreshed.
+    if (++routingRefreshTick >= AudiumLookAndFeel::timerHz) {
+        routingRefreshTick = 0;
+        updateRoutingIndicator();
     }
 }
 
@@ -478,12 +633,13 @@ void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
 bool ChannelComponent::audioInputAvailable(int channelNumber)
 {
     auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
+    if (currentDevice == nullptr)
+        return false;
 
-    if (currentDevice != nullptr &&
-        channelNumber < currentDevice->getActiveInputChannels().toInteger()) {
-        return true;
-    }
-    return false;
+    auto channelData = audioTrack->getChannelData(channelNumber);
+    auto effectiveInput = channelData.inputChannel >= 0 ? channelData.inputChannel : channelNumber;
+
+    return effectiveInput < currentDevice->getActiveInputChannels().countNumberOfSetBits();
 }
 
 void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)

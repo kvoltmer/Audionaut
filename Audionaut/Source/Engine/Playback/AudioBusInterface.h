@@ -99,8 +99,14 @@ public:
     void setMasterGain(const float newGain);
     
     void resetGains();
-    
+
     void stopAllVoices();
+
+    /**
+    * @brief Enables/disables the offline bounce mapping (identity bus -> output copy,
+    * bypassing output routing). Call only while the live device callback is bypassed.
+    */
+    void setStemExport(bool bStemExport);
 
     /**
     * @brief Gets the current level of a specific channel.

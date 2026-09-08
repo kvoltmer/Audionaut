@@ -1,0 +1,16 @@
+# Audio files the test suite writes at runtime - regenerated on every run,
+# never fixtures. Listed by exact name so checked-in fixtures (sine-0dB.wav,
+# noise0dB.wav, the session's own audio, ...) can never be caught by accident.
+TestFiles/slow-saw.wav
+TestFiles/slow-saw-2-seconds.wav
+TestFiles/slow-saw-out.wav
+TestFiles/stereo-saw.wav
+TestFiles/dc-offset.wav
+TestFiles/dc-offset-b.wav
+
+# Copies of generated audio that tests import into the checked-in session
+# package while running.
+TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/_export_TRK-18.wav
+TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/dc-offset.wav
+TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/noise0dB.wav
+TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/slow-saw-2-seconds.wav

@@ -105,8 +105,30 @@ public:
    bool getSolo() const noexcept;
     
     void setRecordEnabled(bool bEnabled);
-    
+
     bool isRecordEnabled() const noexcept;
+
+    /**
+     * @brief Sets the hardware input channel feeding this channel.
+     * @param newInputChannel The device input channel index, or -1 for the default (track-local channel number).
+     */
+    void setInputChannel(const int newInputChannel);
+
+    /**
+     * @brief Retrieves the hardware input channel feeding this channel (-1 = default).
+     */
+    int getInputChannel() const noexcept;
+
+    /**
+     * @brief Sets the hardware output channel this channel routes to.
+     * @param newOutputChannel The device output channel index, or -1 for the Main stereo mix.
+     */
+    void setOutputChannel(const int newOutputChannel);
+
+    /**
+     * @brief Retrieves the hardware output channel this channel routes to (-1 = Main).
+     */
+    int getOutputChannel() const noexcept;
     
     bool isRecording() const;
     
