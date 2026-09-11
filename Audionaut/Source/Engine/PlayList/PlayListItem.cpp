@@ -75,7 +75,64 @@ void PlayListItem::setRegionData(juce::Range<double> newRegionData, audium::Time
 
 double PlayListItem::getDurationTime(audium::TimeContextType context) const
 {
-    return getRegionData(context).getLength();
+    return getRegionData(context).getLength() / getSpeedRatio();
+}
+
+double PlayListItem::getSpeedRatio() const
+{
+    if (tempoLocked && clipTempo > 0.0)
+        return ClipSpeed::tempoLockedRatio(owner.getTempoProvider()->getTempo(), clipTempo);
+
+    return tempoLocked ? 1.0 : speedRatio;
+}
+
+void PlayListItem::setSpeedRatio(double newRatio)
+{
+    // a still-growing recording has no stable length to scale; a locked
+    // clip's ratio belongs to the tempo
+    if (isRecording() || tempoLocked)
+        return;
+
+    speedRatio = ClipSpeed::clampSpeedRatio(newRatio);
+}
+
+void PlayListItem::setTempoLocked(bool shouldLock)
+{
+    if (isRecording() || shouldLock == tempoLocked)
+        return;
+
+    // unlocking keeps the clip where it is: the derived ratio becomes the
+    // plain one
+    if (! shouldLock)
+        speedRatio = getSpeedRatio();
+
+    tempoLocked = shouldLock;
+}
+
+void PlayListItem::setClipTempo(double bpm)
+{
+    if (isRecording())
+        return;
+
+    clipTempo = bpm > 0.0 ? ClipSpeed::clampClipTempo(bpm) : 0.0;
+}
+
+void PlayListItem::setStretchMode(StretchMode newMode)
+{
+    if (isRecording())
+        return;
+
+    stretchMode = newMode;
+}
+
+void PlayListItem::copySpeedFrom(const PlayListItem& other)
+{
+    // order matters: the plain ratio only takes while unlocked
+    setTempoLocked(false);
+    setSpeedRatio(other.speedRatio);
+    setStretchMode(other.getStretchMode());
+    setClipTempo(other.getClipTempo());
+    setTempoLocked(other.isTempoLocked());
 }
 
 double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
@@ -92,7 +149,9 @@ double PlayListItem::getAbsolutePosition(audium::TimeContextType context) const
 
 double PlayListItem::getTailExtension(audium::TimeContextType context) const
 {
-    auto tailExtClocks = std::max(0.0, -dynamics.getFadeOutEnd(audium::clocks));
+    // the fade extension is source material; it rings out for
+    // source / speed timeline time
+    auto tailExtClocks = std::max(0.0, -dynamics.getFadeOutEnd(audium::clocks)) / getSpeedRatio();
 
     if (context == audium::clocks) {
         return tailExtClocks;
@@ -127,7 +186,21 @@ bool PlayListItem::writeToJson (json& output)
         output["position_clocks"]   = absolutePositionClocks;
         output["selected"]          = isSelected();
         output["track_id"]          = getRegion()->getAudioTrack()->getId();
-        
+
+        // written only when set: an absent key means 1.0, and old projects
+        // stay byte-identical
+        if (speedRatio != 1.0)
+            output["speed_ratio"] = speedRatio;
+
+        if (stretchMode != StretchMode::RePitch)
+            output["stretch_mode"] = static_cast<int>(stretchMode);
+
+        if (tempoLocked)
+            output["tempo_locked"] = true;
+
+        if (clipTempo > 0.0)
+            output["clip_tempo"] = clipTempo;
+
         dynamics.writeToJson(output);
         return true;
     }
@@ -154,6 +227,26 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
             
             init();
             
+            // reset first: undo replays JSON into reused item objects, and
+            // an absent key must mean "no speed set", not "keep the old one"
+            speedRatio = 1.0;
+            if (input.contains("speed_ratio"))
+                speedRatio = juce::jlimit(minSpeedRatio, maxSpeedRatio,
+                                          input.at("speed_ratio").get<double>());
+
+            stretchMode = StretchMode::RePitch;
+            if (input.contains("stretch_mode"))
+                stretchMode = input.at("stretch_mode").get<int>() == 1
+                                  ? StretchMode::Stretch : StretchMode::RePitch;
+
+            tempoLocked = false;
+            if (input.contains("tempo_locked"))
+                tempoLocked = input.at("tempo_locked").get<bool>();
+
+            clipTempo = 0.0;
+            if (input.contains("clip_tempo"))
+                clipTempo = ClipSpeed::clampClipTempo(input.at("clip_tempo").get<double>());
+
             if (input.contains("position_clocks"))
                 absolutePositionClocks = input.at("position_clocks").get<double>();
             
@@ -210,12 +303,22 @@ void PlayListItem::onDragStart()
     undoableAction = std::make_unique<audium::UndoableContainerAction>(audioRegion->getAudioTrack()->getAudioTrackContainer(), false);
 }
 
-void PlayListItem::onDragEnd()
+void PlayListItem::onDragCancel()
+{
+    if (undoableAction != nullptr) {
+        // restore the captured old state directly - nothing reaches the
+        // undo manager, so there is nothing to redo either
+        undoableAction->undo();
+        undoableAction = nullptr;
+    }
+}
+
+void PlayListItem::onDragEnd(const juce::String& transactionName)
 {
     if (undoableAction != nullptr) {
         undoableAction->storeNewState();
         auto undoManager = audioRegion->getAudioTrack()->getAudioTrackContainer().getUndoManager();
-        undoManager->perform(undoableAction.release(), "Set Clip Gain");
+        undoManager->perform(undoableAction.release(), transactionName);
         undoManager->beginNewTransaction();
     }
 }

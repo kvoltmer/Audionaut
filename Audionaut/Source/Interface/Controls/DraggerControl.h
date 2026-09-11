@@ -119,14 +119,30 @@ public:
     
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override;
 
+    /// Cmd+Alt (Ctrl+Alt on Windows/Linux) turns an edge drag into a
+    /// stretch. Plain Cmd, Shift and plain Alt are taken by selection and
+    /// drag-and-drop, and Ctrl+click is the macOS right-click emulation -
+    /// it must stay free for the clip context menu.
+    static bool isStretchModifier (const juce::ModifierKeys& mods)
+    {
+        return mods.isCommandDown() && mods.isAltDown();
+    }
+
+    /// While the stretch overlay is open on this very clip, the clip is in
+    /// stretch mode: plain edge drags stretch too, no modifiers needed.
+    bool overlayStretchActive() const;
+
     void updateMouseZone (const juce::MouseEvent& e)
     {
+        const auto stretching = isStretchModifier(e.mods) || overlayStretchActive();
         switch (getDragMode(e.getPosition().getX())) {
             case leftEdge:
-                setMouseCursor (juce::MouseCursor::LeftEdgeResizeCursor);
+                setMouseCursor (stretching ? juce::MouseCursor::LeftRightResizeCursor
+                                           : juce::MouseCursor::LeftEdgeResizeCursor);
                 break;
             case rightEdge:
-                setMouseCursor (juce::MouseCursor::RightEdgeResizeCursor);
+                setMouseCursor (stretching ? juce::MouseCursor::LeftRightResizeCursor
+                                           : juce::MouseCursor::RightEdgeResizeCursor);
                 break;
             case middleEdge:
                 setMouseCursor (juce::MouseCursor::DraggingHandCursor);
@@ -210,6 +226,11 @@ protected:
     std::shared_ptr<audium::PositionableBase> positionableObject;
     
     Edge currentDragMode = outsideEdge;
+
+    // True while an edge drag is a stretch (Ctrl+Alt): the source window
+    // stays fixed and the drag sets the clip's speed ratio instead of
+    // trimming.
+    bool stretchDrag = false;
     
     const int borderSize = 10;
     const int minimumWidth = 2;

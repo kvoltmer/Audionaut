@@ -228,6 +228,8 @@ function(audionaut_configure_common target)
                             PUBLIC ../Source/
                             PUBLIC ${SUBMODULES_PATH}/json/include
                             PUBLIC ${SUBMODULES_PATH}/farbot/include
+                            PUBLIC ${SUBMODULES_PATH}/signalsmith-stretch/include
+                            PUBLIC ${SUBMODULES_PATH}/signalsmith-linear/include
                             )
 
     if(AUDIONAUT_ENABLE_ESSENTIA)

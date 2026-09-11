@@ -40,7 +40,9 @@ void SegmentationView::paint (juce::Graphics& g)
 
         for (auto seconds : segments)
         {
-            const auto x = static_cast<float>(zoomHandler->secondsToX(seconds - regionStartSeconds));
+            // markers are source-time features; on a stretched clip they sit
+            // at (source delta / speed) timeline seconds
+            const auto x = static_cast<float>(zoomHandler->secondsToX((seconds - regionStartSeconds) / speedRatio));
 
             if (x < 0.0f || x > fWidth)
                 continue;
@@ -60,9 +62,11 @@ void SegmentationView::setZoomHandler(std::shared_ptr<ZoomHandler> zoomHandler_)
 }
 
 void SegmentationView::setSegments(std::unordered_map<audium::AnalysisType, std::vector<float>> segmentsByType_,
-                                   double regionStartSeconds_)
+                                   double regionStartSeconds_,
+                                   double speedRatio_)
 {
     segmentsByType = std::move(segmentsByType_);
     regionStartSeconds = regionStartSeconds_;
+    speedRatio = speedRatio_ > 0.0 ? speedRatio_ : 1.0;
     repaint();
 }

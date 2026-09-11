@@ -99,6 +99,45 @@ static const File createSlowSawTwoSecondsAudioFile()
     return File();
 }
 
+/// A pure sine, optionally preceded by silence (for onset-alignment
+/// probes). Written fresh on every call, like the saw generators.
+static const File createSineAudioFile(double frequencyHz, double lengthInSeconds,
+                                      double leadingSilenceSeconds = 0.0)
+{
+    auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/sine-gen.wav"));
+    TemporaryFile tempFile (targetFile);
+
+    std::unique_ptr<OutputStream> stream (tempFile.getFile().createOutputStream());
+    jassert(stream);
+    if (stream != nullptr) {
+        WavAudioFormat wav;
+        auto opt = AudioFormatWriter::Options{}.withSampleRate (44100.0)
+            .withNumChannels (1)
+            .withBitsPerSample (32)
+            .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
+        auto writer = wav.createWriterFor (stream, opt);
+        jassert(writer);
+        if (writer != nullptr) {
+
+            const auto silenceSamples = static_cast<int>(44100.0 * leadingSilenceSeconds);
+            const auto sineSamples = static_cast<int>(44100.0 * lengthInSeconds);
+
+            AudioBuffer<float> buffer(1, silenceSamples + sineSamples);
+            buffer.clear();
+            for (auto s = 0; s < sineSamples; s++)
+                *buffer.getWritePointer(0, silenceSamples + s)
+                    = std::sin(MathConstants<double>::twoPi * frequencyHz * s / 44100.0);
+
+            writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
+
+            writer.reset();
+            tempFile.overwriteTargetFileWithTemporary();
+            return tempFile.getTargetFile();
+        }
+    }
+    return File();
+}
+
 static const File generateDcOffsetAudioFile(double lengthInSeconds)
 {
     auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/dc-offset.wav"));

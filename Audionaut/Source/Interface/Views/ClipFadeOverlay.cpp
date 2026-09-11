@@ -150,14 +150,18 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
     // the clip's integer width and anchored the region start to the clip's
     // integer x, so the ghost jittered against the clip's own waveform while
     // the start edge was trimmed.
+    // Timeline distances are scaled by the clip's speed ratio on the way to
+    // file time (a re-pitched clip covers speedRatio times as much source
+    // per timeline second), matching the clip view.
     const auto absoluteStart = item.getAbsolutePosition(audium::seconds);
+    const auto speedRatio    = item.getSpeedRatio();
     const auto fileTimeAtX = [&] (double timelineX)
     {
-        return regionSeconds.getStart() + zoomHandler->xToSeconds(timelineX) - absoluteStart;
+        return regionSeconds.getStart() + (zoomHandler->xToSeconds(timelineX) - absoluteStart) * speedRatio;
     };
     const auto timelineXAtFileTime = [&] (double fileTime)
     {
-        return zoomHandler->secondsToX(absoluteStart + (fileTime - regionSeconds.getStart()));
+        return zoomHandler->secondsToX(absoluteStart + (fileTime - regionSeconds.getStart()) / speedRatio);
     };
 
     // the envelope tapering the ghost, in clip-local pixel space - gainAt

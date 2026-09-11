@@ -100,6 +100,30 @@ public:
         clipTransportSource->stop(fadeOutLastBlock);
     }
 
+    /// The clip's playback speed - see ClipTransportSource::setSpeedRatio.
+    void setSpeedRatio(double newSpeedRatio)
+    {
+        clipTransportSource->setSpeedRatio(newSpeedRatio);
+    }
+
+    double getSpeedRatio() const noexcept
+    {
+        return clipTransportSource->getSpeedRatio();
+    }
+
+    /// The speed changed mid-clip (a tempo-locked clip following a tempo
+    /// change): the scheduled end moves by @p factor = old / new speed.
+    void rescaleRemainingDuration(double factor)
+    {
+        durationTimer.rescale(factor);
+    }
+
+    /// Varispeed vs pitch-preserving - see ClipTransportSource::setStretchMode.
+    void setStretchMode(StretchMode newMode)
+    {
+        clipTransportSource->setStretchMode(newMode);
+    }
+
     void setGain(float gain)
     {
         clipTransportSource->setGain(gain);

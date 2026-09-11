@@ -42,6 +42,7 @@ namespace CommandIDs
         assembleSequential      = 0x300065,
         assembleRandom          = 0x300066,
         separateStems           = 0x300067,
+        stretchClip             = 0x300068,
 
         enableSnapToGrid        = 0x300070,
         zoomIn                  = 0x300071,

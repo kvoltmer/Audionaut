@@ -271,8 +271,10 @@ private:
     /// A shared pointer to the `LinkEngine`.
     std::shared_ptr<audium::LinkEngine> linkEngine;
 
-    /// The current tempo in beats per minute (BPM).
-    double tempoBPM = 120.0;
+    /// The current tempo in beats per minute (BPM). Written from the
+    /// message thread and Link's callback thread, read every block on the
+    /// audio thread (tempo-locked clips derive their speed from it).
+    std::atomic<double> tempoBPM { 120.0 };
     
 };
 

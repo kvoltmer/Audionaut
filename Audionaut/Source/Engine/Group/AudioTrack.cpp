@@ -743,6 +743,10 @@ std::vector<DspClipData> AudioTrack::getDspClipVector() const
                 dspClipData.clipFadeOutCurve      = item->getDynamics().getFadeOutCurve();
                 dspClipData.clipData.regionData = item->getRegionData(audium::seconds);
                 dspClipData.clipData.absolutePositionClocks = item->getAbsolutePosition(audium::clocks);
+                dspClipData.clipSpeedRatio      = item->getSpeedRatio();
+                dspClipData.clipStretchMode     = item->getStretchMode();
+                dspClipData.clipTempoLocked     = item->isTempoLocked();
+                dspClipData.clipTempo           = item->getClipTempo();
                 
                 dspClipData.voiceSourceIndex = voiceSourceContainer->getVoiceSourceIndex(voiceSource);
                 result.push_back(dspClipData);
@@ -820,6 +824,7 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
     if (newPlayListItem) {
         if (auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context)) {
             newItem->getDynamics().copyFrom(item->getDynamics());
+            newItem->copySpeedFrom(*item);
         }
     }
     else if (this != region->getAudioTrack().get()) { // drag on different track -> create region and play list item
@@ -830,6 +835,7 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
                                                                                region)) {
             auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(newRegion, pos, context);
             newItem->getDynamics().copyFrom(item->getDynamics());
+            newItem->copySpeedFrom(*item);
             item->setSelected(false);
             newItem->setSelected(true);
             if (!ModifierKeys::currentModifiers.isAltDown()) {
@@ -843,6 +849,7 @@ void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
             // copy
             if (auto newItem = getPlayListContainer()->createPlayListItemAtPositionUI(region, pos, context)) {
                 newItem->getDynamics().copyFrom(item->getDynamics());
+                newItem->copySpeedFrom(*item);
             }
         }
         else {

@@ -131,7 +131,8 @@ void AudioClipView::refreshSegments()
         if ((visibleTypes & (1 << i)) != 0)
             segmentsByType[allTypes[i]] = analysisProvider->getSegments(allTypes[i], audioFile);
 
-    segmentationView->setSegments(std::move(segmentsByType), regionStart);
+    segmentationView->setSegments(std::move(segmentsByType), regionStart,
+                                  playListItem != nullptr ? playListItem->getSpeedRatio() : 1.0);
 }
 
 void AudioClipView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible)

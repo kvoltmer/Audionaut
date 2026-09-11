@@ -19,6 +19,12 @@ void WaveFormViewBase::paint (juce::Graphics& g)
         const auto thumbArea    = getClippedDrawingArea();
         const auto regionStart  = getRegionStart(audium::seconds);
 
+        // one pixel covers speedRatio-times as much source material on a
+        // re-pitched clip - the zoom handler speaks timeline seconds, so
+        // every timeline distance is scaled before it is added to the
+        // (source-relative) region start
+        const auto speedRatio   = playListItem != nullptr ? playListItem->getSpeedRatio() : 1.0;
+
         // Derive the drawn file time from the timeline pixel, not from the
         // region start alone. The clip component is placed at
         // floor(clocksToX(absolute position)), so local x = 0 sits up to a
@@ -31,15 +37,15 @@ void WaveFormViewBase::paint (juce::Graphics& g)
         // pixel. Anchoring to the whole timeline pixel keeps every screen
         // column on the same file window for as long as (region start -
         // absolute position) is unchanged, which also covers loop recording.
-        auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) + regionStart;
+        auto startSeconds = zoomHandler->xToSeconds(thumbArea.getX()) * speedRatio + regionStart;
 
         if (playListItem != nullptr && parentComponent != nullptr) {
             const auto absoluteStart = playListItem->getAbsolutePosition(audium::seconds);
             const auto clipX         = static_cast<double>(parentComponent->getBounds().getX());
-            startSeconds = zoomHandler->xToSeconds(clipX + thumbArea.getX()) - absoluteStart + regionStart;
+            startSeconds = (zoomHandler->xToSeconds(clipX + thumbArea.getX()) - absoluteStart) * speedRatio + regionStart;
         }
 
-        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth());
+        const auto endSeconds   = startSeconds + zoomHandler->xToSeconds(thumbArea.getWidth()) * speedRatio;
         const auto channel      = audioResource->getChannelMapping().getSourceChannel();
         
         // taper the waveform under the clip fades, matching the FadeInOutView

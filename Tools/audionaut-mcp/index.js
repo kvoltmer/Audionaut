@@ -488,6 +488,50 @@ server.registerTool(
 );
 
 server.registerTool(
+  "clip_speed",
+  {
+    title: "Set clip speed",
+    description:
+      "Sets a clip's playback speed (ratio 0.25-4, 2.0 = double speed, half as long). The mode picks how: " +
+      "repitch (default, varispeed - pitch and length change together) or stretch (pitch-preserving " +
+      "time-stretch). Mode can also be changed on its own. lockTempo ties the clip to the project tempo " +
+      "(speed = project tempo / clip tempo, following tempo changes); the clip tempo is detected by beat " +
+      "tracking or given with `tempo`, which implies the lock.",
+    inputSchema: {
+      project: projectParam,
+      at: z.string().optional().describe("Timeline position of the clip (in `unit`)"),
+      region: z.string().optional().describe("Region name of the clip"),
+      track: z.number().int().min(0).optional().describe("Track id to narrow the match"),
+      ratio: z.number().positive().optional().describe("Speed ratio (0.25-4)"),
+      semitones: z.number().optional().describe("Pitch shift in semitones (ratio = 2^(n/12))"),
+      length: z.string().optional().describe("Fit the clip to this timeline duration (in `unit`)"),
+      mode: z.enum(["repitch", "stretch"]).optional()
+        .describe("How the speed is realised: varispeed or pitch-preserving"),
+      lockTempo: z.boolean().optional()
+        .describe("Lock the clip to the project tempo (true) or release it (false)"),
+      tempo: z.number().positive().optional()
+        .describe("The clip's own tempo in BPM; sets it and locks the clip"),
+      unit: unitParam,
+    },
+  },
+  async ({ project, at, region, track, ratio, semitones, length, mode, lockTempo, tempo, unit }) =>
+    runCli([
+      "clip-speed",
+      project,
+      ...(at !== undefined ? ["--at", at] : []),
+      ...(region !== undefined ? ["--region", region] : []),
+      ...(track !== undefined ? ["--track", String(track)] : []),
+      ...(ratio !== undefined ? ["--ratio", String(ratio)] : []),
+      ...(semitones !== undefined ? ["--semitones", String(semitones)] : []),
+      ...(mode !== undefined ? ["--mode", mode] : []),
+      ...(lockTempo !== undefined ? ["--lock-tempo", lockTempo ? "on" : "off"] : []),
+      ...(tempo !== undefined ? ["--tempo", String(tempo)] : []),
+      ...(length !== undefined ? ["--length", length] : []),
+      ...(unit !== undefined ? ["--unit", unit] : []),
+    ])
+);
+
+server.registerTool(
   "separate_stems",
   {
     title: "Separate stems",

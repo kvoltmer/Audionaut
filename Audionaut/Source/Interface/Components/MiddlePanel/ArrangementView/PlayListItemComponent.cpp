@@ -13,6 +13,7 @@
 #include "Interface/Controls/LevelMeter.h"
 #include "Interface/Controls/DraggingHandle.h"
 #include "Interface/Controls/AutoEditOverlayControl.h"
+#include "Interface/Controls/StretchOverlayControl.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.h"
 #include "Interface/Views/ClipFadeOverlay.h"
 #include "Interface/Views/AudioClipView.h"
@@ -115,9 +116,17 @@ PlayListItemComponent::PlayListItemComponent(std::shared_ptr<audium::AudiumEngin
     autoEditOverlayControl = std::make_unique<AutoEditOverlayControl>(audiumEngine, regionSelector);
     overlayContainer->addChildComponent(autoEditOverlayControl.get());
 
+    // STRETCH CONTROL (speed slider + semitone steps, shown while this clip
+    // is the overlay target)
+    stretchOverlayControl = std::make_unique<StretchOverlayControl>(audiumEngine, regionSelector);
+    overlayContainer->addChildComponent(stretchOverlayControl.get());
+
     // Follow the preview published/cleared by the Auto Edit window.
     if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
         analysisProvider->addChangeListener(this);
+
+    // Follow the stretch overlay target set/cleared by the Stretch command.
+    audiumEngine->getAudioTrackContainer()->getClipOverlayTarget()->addChangeListener(this);
 }
 
 PlayListItemComponent::~PlayListItemComponent()
@@ -127,6 +136,8 @@ PlayListItemComponent::~PlayListItemComponent()
 
     if (auto analysisProvider = audiumEngine->getAudioTrackContainer()->getAnalysisProvider())
         analysisProvider->removeChangeListener(this);
+
+    audiumEngine->getAudioTrackContainer()->getClipOverlayTarget()->removeChangeListener(this);
 
     playListItemListBox->setModel(nullptr);
 }
@@ -161,6 +172,12 @@ void PlayListItemComponent::changeListenerCallback (ChangeBroadcaster* source)
     if (analysisProvider != nullptr && source == analysisProvider.get())
     {
         refreshAutoEditPreview();
+        return;
+    }
+
+    if (source == audiumEngine->getAudioTrackContainer()->getClipOverlayTarget().get())
+    {
+        refreshStretchOverlay();
         return;
     }
 
@@ -458,6 +475,21 @@ void PlayListItemComponent::refreshAnalysisDisplay()
             clipView->refreshSegments();
 
     refreshAutoEditPreview();
+    refreshStretchOverlay();
+}
+
+void PlayListItemComponent::refreshStretchOverlay()
+{
+    if (playListItem == nullptr || audioTrack == nullptr)
+        return;
+
+    auto target = audiumEngine->getAudioTrackContainer()->getClipOverlayTarget();
+
+    stretchOverlayControl->setTarget(audioTrack->getId(), playListItem->getId());
+
+    // The visibility transition is the session boundary: showing syncs the
+    // slider and arms the session, hiding commits it as one undo step.
+    stretchOverlayControl->setVisible(target->matches(audioTrack->getId(), playListItem->getId()));
 }
 
 void PlayListItemComponent::refreshAutoEditPreview()

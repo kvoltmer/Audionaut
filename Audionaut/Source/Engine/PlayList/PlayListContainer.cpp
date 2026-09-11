@@ -111,6 +111,7 @@ std::shared_ptr<PlayListItem> PlayListContainer::clonePlayListItem(std::shared_p
     auto newItem = createPlayListItemAtPositionUI(newRegion, item->getAbsolutePosition(context), context);
     if (newItem != nullptr) {
         newItem->getDynamics().copyFrom(item->getDynamics());
+        newItem->copySpeedFrom(*item);
     }
     return newItem;
 }
