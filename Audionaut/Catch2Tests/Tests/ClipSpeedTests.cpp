@@ -16,6 +16,7 @@
 #include "Engine/PlayList/ClipSpeed.h"
 #include "Engine/PlayList/ClipTempo.h"
 #include "Engine/AudioSources/VoiceSource.h"
+#include "Engine/AudioSources/Stretch/StretchBackend.h"
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Analysis/AnalysisCache.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -977,6 +978,81 @@ SCENARIO("locking seeds the clip tempo from the beat analysis", "[engine][clipsp
                 item->setClipTempo(192.0);
                 ClipTempo::lockToTempo(*item, *provider);
                 REQUIRE(item->getClipTempo() == Catch::Approx(192.0));
+            }
+        }
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+// ---------------------------------------------------------------------------
+// Every stretch engine this build carries has to satisfy the same contract
+// the Signalsmith scenarios above pin down: length, pitch, alignment.
+
+SCENARIO("every stretch engine keeps the pitch and the alignment", "[engine][clipspeed][stretch][engines]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    struct RestoreEngine {
+        StretchEngine previous = StretchEngines::getSelected();
+        ~RestoreEngine() { StretchEngines::setSelected(previous); }
+    } restore;
+
+    for (auto engine : StretchEngines::available())
+    {
+        DYNAMIC_SECTION("engine " << StretchEngines::name(engine))
+        {
+            REQUIRE(StretchEngines::setSelected(engine));
+
+            WHEN("a 440 Hz clip is stretched to half and double speed")
+            {
+                auto fixture = makeFixture(createSineAudioFile(440.0, 2.0));
+                auto item = fixture.item();
+                item->setStretchMode(StretchMode::Stretch);
+
+                item->setSpeedRatio(0.5);
+                fixture.commit();
+                auto slow = fixture.bounce();
+
+                item->setSpeedRatio(2.0);
+                fixture.commit();
+                auto fast = fixture.bounce();
+
+                THEN("the lengths follow the ratio and the pitch holds")
+                {
+                    REQUIRE(slow.getNumSamples() == Catch::Approx(4.0 * 44100.0).margin(512));
+                    REQUIRE(fast.getNumSamples() == Catch::Approx(1.0 * 44100.0).margin(512));
+                    REQUIRE(measureFrequency(slow, 0.5, 3.5) == Catch::Approx(440.0).epsilon(0.03));
+                    REQUIRE(measureFrequency(fast, 0.15, 0.85) == Catch::Approx(440.0).epsilon(0.03));
+                }
+
+                THEN("the level survives")
+                {
+                    REQUIRE(slow.getRMSLevel(0, static_cast<int>(0.5 * 44100.0), static_cast<int>(3.0 * 44100.0))
+                            == Catch::Approx(1.0 / std::sqrt(2.0)).epsilon(0.15));
+                }
+            }
+
+            WHEN("a clip with a silent second is stretched to half speed")
+            {
+                auto fixture = makeFixture(createSineAudioFile(440.0, 1.0, 1.0));
+                auto item = fixture.item();
+                item->setSpeedRatio(0.5);
+                item->setStretchMode(StretchMode::Stretch);
+                fixture.commit();
+                auto buffer = fixture.bounce();
+
+                THEN("the onset lands at 2.0 timeline seconds")
+                {
+                    auto onset = -1;
+                    for (auto i = 0; i < buffer.getNumSamples(); ++i)
+                        if (std::abs(buffer.getSample(0, i)) > 0.1f) { onset = i; break; }
+
+                    REQUIRE(onset >= 0);
+                    REQUIRE(onset / 44100.0 == Catch::Approx(2.0).margin(0.05));
+                }
             }
         }
     }
