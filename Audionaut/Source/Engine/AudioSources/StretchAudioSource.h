@@ -6,6 +6,7 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <JuceHeader.h>
 
@@ -65,6 +66,18 @@ public:
     /// The engine this node was prepared with.
     StretchEngine getEngine() const noexcept         { return preparedEngine; }
 
+    /**
+        Lets the owner say whether @p numInputSamples (in this node's input
+        domain) can be pulled from upstream right now, and how much
+        look-ahead upstream can hold at all. While the answer is no, a
+        pending prime is deferred: the block plays silent and nothing is
+        consumed, and once the input is there the deferred span is skipped
+        so the clip stays where the timeline put it. Without a probe the
+        node pulls unconditionally.
+    */
+    void setInputReadiness (std::function<bool (int numInputSamples)> isReady,
+                            std::function<int()> maxLookAhead);
+
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
     void releaseResources() override;
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override;
@@ -88,6 +101,10 @@ private:
 
     juce::AudioBuffer<float> inputScratch;
     int preparedBlockSize = 0;
+
+    std::function<bool (int)> inputReady;
+    std::function<int()> maxLookAhead;
+    int deferredOutputSamples = 0;   // silent blocks played while a prime waited for input
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StretchAudioSource)
 };

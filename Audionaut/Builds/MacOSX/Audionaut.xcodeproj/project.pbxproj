@@ -284,6 +284,7 @@
 		25423A74B016191855679F72 /* include_juce_audio_processors.mm */ /* include_juce_audio_processors.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_processors.mm; path = ../../JuceLibraryCode/include_juce_audio_processors.mm; sourceTree = SOURCE_ROOT; };
 		25859141FA1A9E4EE1B15D95 /* LoopDraggerControl.h */ /* LoopDraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LoopDraggerControl.h; path = ../../Source/Interface/Controls/LoopDraggerControl.h; sourceTree = SOURCE_ROOT; };
 		25CDBB40F65DBFFA6C7D2A55 /* Assert.cpp */ /* Assert.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Assert.cpp; path = ../../../Submodules/bungee/src/Assert.cpp; sourceTree = SOURCE_ROOT; };
+		26ECDD24F90411AF15A14CA1 /* RenderTiming.h */ /* RenderTiming.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RenderTiming.h; path = ../../Source/Engine/AudioSources/RenderTiming.h; sourceTree = SOURCE_ROOT; };
 		27AE3F0C97548C970F2795FD /* layers.cpp */ /* layers.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = layers.cpp; path = ../../../Submodules/demucs.cpp/src/layers.cpp; sourceTree = SOURCE_ROOT; };
 		28562E64FD65836517765DA9 /* SBicSegmenter.h */ /* SBicSegmenter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBicSegmenter.h; path = ../../Source/Engine/Analysis/SBicSegmenter.h; sourceTree = SOURCE_ROOT; };
 		28BF73AF0B1F357A0493139C /* sse_optimized.cpp */ /* sse_optimized.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = sse_optimized.cpp; path = ../../../Submodules/soundtouch/source/SoundTouch/sse_optimized.cpp; sourceTree = SOURCE_ROOT; };
@@ -1135,6 +1136,7 @@
 			children = (
 				F4D6E0E7B916664C4F5CED83,
 				6F2675F2742A1F6F2D7F238E,
+				26ECDD24F90411AF15A14CA1,
 				42CF08811F65DD0560500E19,
 				1B61BC72323B5260458C9716,
 				B3151FBDCD3DDA8A2A0327A5,

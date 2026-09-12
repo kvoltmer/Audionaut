@@ -3520,6 +3520,7 @@
     <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\StretchBackend.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\StretchOutputFifo.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\RenderTiming.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipDynamicsProcessor.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.h"/>

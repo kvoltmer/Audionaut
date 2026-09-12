@@ -35,6 +35,7 @@ void StretchAudioSource::prepareToPlay (int samplesPerBlockExpected, double samp
     inputScratch.setSize (numChannels, juce::jmax (1, maxPull));
     inputScratch.clear();
 
+    deferredOutputSamples = 0;
     needsPriming.store (true);
 }
 
@@ -54,12 +55,37 @@ void StretchAudioSource::pullInput (int numSamples)
     }
 }
 
+void StretchAudioSource::setInputReadiness (std::function<bool (int)> isReady,
+                                            std::function<int()> lookAhead)
+{
+    inputReady = std::move (isReady);
+    maxLookAhead = std::move (lookAhead);
+}
+
 void StretchAudioSource::prime (double ratio)
 {
     // look-ahead for the backend: the first output after this starts at
     // the upstream position the pull begins from
-    const auto primeSamples = juce::jlimit (0, inputScratch.getNumSamples(),
-                                            backend->primeInputLength (ratio));
+    auto primeSamples = juce::jlimit (0, inputScratch.getNumSamples(),
+                                      backend->primeInputLength (ratio));
+    if (maxLookAhead != nullptr)
+        primeSamples = juce::jlimit (0, juce::jmax (0, maxLookAhead()), primeSamples);
+
+    // the blocks that played silent while the input was still being
+    // buffered: skip their share of the source so the clip stays on time
+    if (deferredOutputSamples > 0)
+    {
+        auto skip = static_cast<int> (std::lround (deferredOutputSamples * ratio));
+        deferredOutputSamples = 0;
+
+        while (skip > 0)
+        {
+            const auto chunk = juce::jmin (skip, inputScratch.getNumSamples());
+            pullInput (chunk);
+            skip -= chunk;
+        }
+    }
+
     pullInput (primeSamples);
     backend->prime (inputScratch.getArrayOfReadPointers(), primeSamples, ratio);
 }
@@ -80,8 +106,27 @@ void StretchAudioSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& 
 
     const auto ratio = speedRatio.load();
 
-    if (needsPriming.exchange (false))
+    if (needsPriming.load())
+    {
+        // the prime's look-ahead plus this block's input must be there
+        if (inputReady != nullptr)
+        {
+            auto wanted = backend->primeInputLength (ratio)
+                          + static_cast<int> (std::ceil (info.numSamples * ratio)) + 64;
+            if (maxLookAhead != nullptr)
+                wanted = juce::jmin (wanted, juce::jmax (0, maxLookAhead()));
+
+            if (! inputReady (wanted))
+            {
+                info.clearActiveBufferRegion();
+                deferredOutputSamples += info.numSamples;
+                return;
+            }
+        }
+
+        needsPriming.store (false);
         prime (ratio);
+    }
 
     const auto inputSamples = juce::jlimit (0, inputScratch.getNumSamples(),
                                             backend->inputForOutput (info.numSamples, ratio));

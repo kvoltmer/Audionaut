@@ -189,6 +189,7 @@
             <FILE id="Str011" name="StretchOutputFifo.h" compile="0" resource="0" file="Source/Engine/AudioSources/Stretch/StretchOutputFifo.h"/>
           </GROUP>
           <FILE id="VomPtH" name="VolumeFade.h" compile="0" resource="0" file="Source/Engine/AudioSources/VolumeFade.h"/>
+          <FILE id="RndTim1" name="RenderTiming.h" compile="0" resource="0" file="Source/Engine/AudioSources/RenderTiming.h"/>
           <FILE id="CdpPrc" name="ClipDynamicsProcessor.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/ClipDynamicsProcessor.h"/>
           <FILE id="S0kUtq" name="VoiceSource.cpp" compile="1" resource="0" file="Source/Engine/AudioSources/VoiceSource.cpp"/>

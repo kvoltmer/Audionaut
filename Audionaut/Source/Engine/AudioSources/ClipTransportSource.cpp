@@ -3,7 +3,9 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <cmath>
 #include "ClipTransportSource.h"
+#include "Engine/AudioSources/RenderTiming.h"
 
 namespace audium
 {
@@ -71,6 +73,32 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
             // is bypassed in RePitch mode - see setStretchMode
             newMasterSource = newStretchSource
                 = new StretchAudioSource (newResamplerSource, maxNumChannels);
+
+            // The stretcher primes with a large look-ahead right after a
+            // position jump, which the read-ahead thread has not buffered
+            // yet; reading it anyway consumes silence in place of the clip's
+            // start. So the node asks first (in its own, device-rate domain)
+            // and defers the prime while the buffer catches up. Offline the
+            // probe waits, live it gives the reader a moment at most.
+            if (newBufferingSource != nullptr)
+            {
+                auto* buffering = newBufferingSource;
+                const auto sourceRate = sourceSampleRateToCorrectFor;
+                const auto readAhead = readAheadSize;
+
+                newStretchSource->setInputReadiness (
+                    [this, buffering, sourceRate] (int numDeviceSamples)
+                    {
+                        const auto sourceSamples = static_cast<int> (std::ceil (numDeviceSamples * sourceRate / sampleRate)) + 64;
+                        juce::AudioSourceChannelInfo probe (nullptr, 0, sourceSamples);
+                        return buffering->waitForNextAudioBlockReady (probe, RenderTiming::inputReadinessTimeoutMs());
+                    },
+                    [this, sourceRate, readAhead]
+                    {
+                        // what the read-ahead can hold at all, in device samples
+                        return static_cast<int> ((readAhead - 4096) * sampleRate / sourceRate);
+                    });
+            }
         }
         else
             newMasterSource = newPositionableSource;

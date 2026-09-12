@@ -4890,6 +4890,9 @@
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\RenderTiming.h">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipDynamicsProcessor.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
