@@ -5,6 +5,7 @@
 
 #include "VoiceSource.h"
 #include "Engine/AudioSources/ClipFadeSpec.h"
+#include "Engine/AudioSources/RenderTiming.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -45,7 +46,7 @@ void VoiceSource::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 void VoiceSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
     if (clipTransportSource->getBufferingSource() != nullptr &&
-        clipTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false) {
+        clipTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, RenderTiming::inputReadinessTimeoutMs()) == false) {
         DBG("VoiceSource: buffering source not ready");
     }
 

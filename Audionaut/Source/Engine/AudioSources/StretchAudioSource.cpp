@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "StretchAudioSource.h"
-#include "Engine/PlayList/PlayListItem.h"
+#include "Engine/PlayList/ClipSpeed.h"
 
 namespace audium {
 
@@ -16,28 +16,26 @@ StretchAudioSource::StretchAudioSource (juce::AudioSource* inputSource, int numC
     jassert (numChannels > 0);
 }
 
+StretchAudioSource::~StretchAudioSource() = default;
+
 void StretchAudioSource::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
     input->prepareToPlay (samplesPerBlockExpected, sampleRate);
 
     preparedBlockSize = samplesPerBlockExpected;
 
-    stretch.presetDefault (numChannels, static_cast<float> (sampleRate));
+    // the engine is picked here, off the audio thread; the backend allocates
+    // everything it will ever need now
+    preparedEngine = StretchEngines::getSelected();
+    backend = StretchEngines::create (preparedEngine);
+    backend->prepare (numChannels, sampleRate, samplesPerBlockExpected, ClipSpeed::maxSpeedRatio);
 
-    // The scratch must fit the biggest single pull: a priming read at the
-    // maximum speed, or one block's worth of input at the maximum speed.
-    const auto maxPrime = stretch.outputSeekLength (static_cast<float> (PlayListItem::maxSpeedRatio));
-    const auto maxBlockPull = static_cast<int> (std::ceil (samplesPerBlockExpected
-                                                           * PlayListItem::maxSpeedRatio)) + 2;
-    inputScratch.setSize (numChannels, juce::jmax (maxPrime, maxBlockPull));
-
-    // Pre-warm the library's internal temp buffers off the audio thread, so
-    // the first real prime and process allocate nothing.
+    // The scratch must fit the biggest single pull the backend may ask for.
+    const auto maxPull = backend->maxInputLength (samplesPerBlockExpected, ClipSpeed::maxSpeedRatio);
+    inputScratch.setSize (numChannels, juce::jmax (1, maxPull));
     inputScratch.clear();
-    stretch.outputSeek (inputScratch.getArrayOfWritePointers(), maxPrime);
-    stretch.reset();
 
-    inputRemainder = 0.0;
+    deferredOutputSamples = 0;
     needsPriming.store (true);
 }
 
@@ -57,17 +55,39 @@ void StretchAudioSource::pullInput (int numSamples)
     }
 }
 
+void StretchAudioSource::setInputReadiness (std::function<bool (int)> isReady,
+                                            std::function<int()> lookAhead)
+{
+    inputReady = std::move (isReady);
+    maxLookAhead = std::move (lookAhead);
+}
+
 void StretchAudioSource::prime (double ratio)
 {
-    // outputSeek resets, seeks past the analysis latency and discards the
-    // pre-roll internally: the next process() output starts exactly at the
-    // upstream position the pull below began from.
-    auto primeSamples = juce::jmin (stretch.outputSeekLength (static_cast<float> (ratio)),
-                                    inputScratch.getNumSamples());
-    pullInput (primeSamples);
-    stretch.outputSeek (inputScratch.getArrayOfWritePointers(), primeSamples);
+    // look-ahead for the backend: the first output after this starts at
+    // the upstream position the pull begins from
+    auto primeSamples = juce::jlimit (0, inputScratch.getNumSamples(),
+                                      backend->primeInputLength (ratio));
+    if (maxLookAhead != nullptr)
+        primeSamples = juce::jlimit (0, juce::jmax (0, maxLookAhead()), primeSamples);
 
-    inputRemainder = 0.0;
+    // the blocks that played silent while the input was still being
+    // buffered: skip their share of the source so the clip stays on time
+    if (deferredOutputSamples > 0)
+    {
+        auto skip = static_cast<int> (std::lround (deferredOutputSamples * ratio));
+        deferredOutputSamples = 0;
+
+        while (skip > 0)
+        {
+            const auto chunk = juce::jmin (skip, inputScratch.getNumSamples());
+            pullInput (chunk);
+            skip -= chunk;
+        }
+    }
+
+    pullInput (primeSamples);
+    backend->prime (inputScratch.getArrayOfReadPointers(), primeSamples, ratio);
 }
 
 void StretchAudioSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
@@ -78,16 +98,38 @@ void StretchAudioSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& 
         return;
     }
 
+    if (backend == nullptr)
+    {
+        info.clearActiveBufferRegion();
+        return;
+    }
+
     const auto ratio = speedRatio.load();
 
-    if (needsPriming.exchange (false))
+    if (needsPriming.load())
+    {
+        // the prime's look-ahead plus this block's input must be there
+        if (inputReady != nullptr)
+        {
+            auto wanted = backend->primeInputLength (ratio)
+                          + static_cast<int> (std::ceil (info.numSamples * ratio)) + 64;
+            if (maxLookAhead != nullptr)
+                wanted = juce::jmin (wanted, juce::jmax (0, maxLookAhead()));
+
+            if (! inputReady (wanted))
+            {
+                info.clearActiveBufferRegion();
+                deferredOutputSamples += info.numSamples;
+                return;
+            }
+        }
+
+        needsPriming.store (false);
         prime (ratio);
+    }
 
-    // consume ratio input samples per output sample, carrying the fraction
-    const auto wanted = static_cast<double> (info.numSamples) * ratio + inputRemainder;
-    auto inputSamples = juce::jmin (static_cast<int> (wanted), inputScratch.getNumSamples());
-    inputRemainder = wanted - static_cast<double> (inputSamples);
-
+    const auto inputSamples = juce::jlimit (0, inputScratch.getNumSamples(),
+                                            backend->inputForOutput (info.numSamples, ratio));
     pullInput (inputSamples);
 
     const auto outputChannels = juce::jmin (numChannels, info.buffer->getNumChannels());
@@ -102,8 +144,8 @@ void StretchAudioSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& 
             ? info.buffer->getWritePointer (channel, info.startSample)
             : inputScratch.getWritePointer (channel);
 
-    stretch.process (inputScratch.getArrayOfReadPointers(), inputSamples,
-                     outputs, info.numSamples);
+    backend->process (inputScratch.getArrayOfReadPointers(), inputSamples,
+                      outputs, info.numSamples, ratio);
 
     // channels beyond the chain's count carry stale data in this path
     for (int channel = numChannels; channel < info.buffer->getNumChannels(); ++channel)

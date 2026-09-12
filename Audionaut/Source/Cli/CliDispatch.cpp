@@ -147,6 +147,16 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "project so auto-edit/assemble and the GUI can reuse them. Exits 3 in builds without Essentia.",
           runAnalyze },
 
+        { "stretch-eval",
+          "stretch-eval <audio-file> [--engines all|signalsmith,bungee,rubberband,soundtouch]\n"
+          "                          [--ratios 0.5,0.75,1.25,2] [--out DIR] [--block N] [--json]",
+          "Renders a file through each time-stretch engine for comparison.",
+          "Evaluation harness for the pitch-preserving stretch engines: runs the given audio file "
+          "through the production stretch node with every requested engine at every ratio (input "
+          "samples per output sample), writes <name>-<engine>-x<ratio>.wav next to the file (or into "
+          "--out) for listening, and reports render time, real-time factor and levels per render.",
+          runStretchEval },
+
         { "auto-edit",
           "auto-edit <project.audium> [--track N] [--clip N] [--measures M]\n"
           "                          [--segments N] [--duration S] [--no-crossfades] [--json]",

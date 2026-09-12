@@ -42,9 +42,9 @@ SCENARIO ("cli dispatch fall-through and matching", "[cli]")
     GIVEN ("the command table") {
         THEN ("all verbs are present with handlers and help text") {
             auto& commands = cli::getCliCommands();
-            REQUIRE (commands.size() == 20);
+            REQUIRE (commands.size() == 21);
 
-            for (auto verb : { "info", "create", "import", "export", "analyze", "auto-edit", "assemble",
+            for (auto verb : { "info", "create", "import", "export", "analyze", "stretch-eval", "auto-edit", "assemble",
                                "split", "create-region", "set-region",
                                "remove-clip", "move-clip", "place-clip", "cleanup-regions",
                                "clip-gain", "clip-fades", "clip-speed",

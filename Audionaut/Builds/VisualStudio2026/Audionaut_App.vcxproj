@@ -69,8 +69,8 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=&quot;1.0.0&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.5.0;JUCE_APP_VERSION_HEX=0x10500;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;../../../Submodules/bungee/;../../../Submodules/rubberband/;../../../Submodules/soundtouch/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=&quot;1.0.0&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;STRETCH_BUNGEE_ENABLED=1;STRETCH_RUBBERBAND_ENABLED=1;STRETCH_SOUNDTOUCH_ENABLED=1;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.5.0;JUCE_APP_VERSION_HEX=0x10500;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -84,8 +84,8 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\&quot;1.0.0\&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_API_SECRET=\&quot;TpBEa6eRRAGeG4BZmqwJDA\&quot;;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.5.0;JUCE_APP_VERSION_HEX=0x10500;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;../../../Submodules/bungee/;../../../Submodules/rubberband/;../../../Submodules/soundtouch/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\&quot;1.0.0\&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;STRETCH_BUNGEE_ENABLED=1;STRETCH_RUBBERBAND_ENABLED=1;STRETCH_SOUNDTOUCH_ENABLED=1;GA4_API_SECRET=\&quot;TpBEa6eRRAGeG4BZmqwJDA\&quot;;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.5.0;JUCE_APP_VERSION_HEX=0x10500;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <OutputFile>$(OutDir)\Audionaut.exe</OutputFile>
@@ -118,8 +118,8 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=&quot;1.0.0&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.5.0;JUCE_APP_VERSION_HEX=0x10500;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;../../../Submodules/bungee/;../../../Submodules/rubberband/;../../../Submodules/soundtouch/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=&quot;1.0.0&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;STRETCH_BUNGEE_ENABLED=1;STRETCH_RUBBERBAND_ENABLED=1;STRETCH_SOUNDTOUCH_ENABLED=1;GA4_API_SECRET=&quot;TpBEa6eRRAGeG4BZmqwJDA&quot;;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.5.0;JUCE_APP_VERSION_HEX=0x10500;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -133,8 +133,8 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\&quot;1.0.0\&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_API_SECRET=\&quot;TpBEa6eRRAGeG4BZmqwJDA\&quot;;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.5.0;JUCE_APP_VERSION_HEX=0x10500;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/signalsmith-stretch/include/;../../../Submodules/signalsmith-linear/include/;../../../Submodules/bungee/;../../../Submodules/rubberband/;../../../Submodules/soundtouch/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\&quot;1.0.0\&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;STRETCH_BUNGEE_ENABLED=1;STRETCH_RUBBERBAND_ENABLED=1;STRETCH_SOUNDTOUCH_ENABLED=1;GA4_API_SECRET=\&quot;TpBEa6eRRAGeG4BZmqwJDA\&quot;;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.5.0;JUCE_APP_VERSION_HEX=0x10500;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
       <OutputFile>$(OutDir)\Audionaut.exe</OutputFile>
@@ -184,8 +184,99 @@
     <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\model_load.cpp">
       <AdditionalOptions>/bigobj /w /I..\..\..\Submodules\demucs.cpp\vendor\eigen /I..\..\..\Submodules\demucs.cpp\src %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Assert.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Fourier.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Grain.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Grains.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Input.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Instrumentation.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Output.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Partials.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Stretch.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Stretcher.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Synthesis.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Timing.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\src\Window.cpp">
+      <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\submodules\pffft\pffft.c">
+      <AdditionalOptions>/w %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\bungee\submodules\pffft\fftpack.c">
+      <AdditionalOptions>/w %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\rubberband\single\RubberBandSingle.cpp">
+      <AdditionalOptions>/w %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\AAFilter.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\BPMDetect.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\FIFOSampleBuffer.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\FIRFilter.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\InterpolateCubic.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\InterpolateLinear.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\InterpolateShannon.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\PeakFinder.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\RateTransposer.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\SoundTouch.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\TDStretch.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\cpu_detect_x86.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\mmx_optimized.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\sse_optimized.cpp">
+      <AdditionalOptions>/w /I..\..\..\Submodules\soundtouch\include %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Cli\Commands\Commands.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\AnalyzeCommand.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\Commands\StretchEvalCommand.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\AutoEditCommand.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\CreateCommand.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\ExportCommand.cpp"/>
@@ -222,6 +313,12 @@
     <ClCompile Include="..\..\Source\Engine\Analysis\BeatSegmenter.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Analysis\AnalysisWorker.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Analysis\EventMerger.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\BungeeStretchBackend.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\BungeeVersion.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\RubberBandStretchBackend.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\SignalsmithStretchBackend.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\SoundTouchStretchBackend.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\StretchBackend.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\VoiceSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipTransportSource.cpp"/>
@@ -3416,7 +3513,14 @@
     <ClInclude Include="..\..\Source\Engine\Analysis\BeatSegmenter.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\AnalysisWorker.h"/>
     <ClInclude Include="..\..\Source\Engine\Analysis\EventMerger.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\BungeeStretchBackend.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\RubberBandStretchBackend.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\SignalsmithStretchBackend.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\SoundTouchStretchBackend.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\StretchBackend.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\StretchOutputFifo.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\RenderTiming.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipDynamicsProcessor.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.h"/>
@@ -3506,6 +3610,7 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\AnalysisSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ModelDownloadThread.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SeparationSettingsComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\StretchSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\StemSeparationDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ProjectSettingsComponent.h"/>

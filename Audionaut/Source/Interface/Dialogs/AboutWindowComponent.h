@@ -10,6 +10,7 @@
 #include "Application/AudiumApplication.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Engine/Separation/DemucsConfig.h"
+#include "Engine/AudioSources/Stretch/StretchBackend.h"
 
 using json = nlohmann::json;
 
@@ -81,6 +82,15 @@ public:
 #endif
         addCredit ("Signalsmith Stretch (Signalsmith Audio, MIT)",
                    "https://signalsmith-audio.co.uk/code/stretch/");
+#if STRETCH_BUNGEE_ENABLED
+        addCredit ("Bungee (Parabola Research, MPL-2.0)", "https://github.com/bungee-audio-stretch/bungee");
+#endif
+#if STRETCH_RUBBERBAND_ENABLED
+        addCredit ("Rubber Band Library (Particular Programs, GPL)", "https://breakfastquay.com/rubberband/");
+#endif
+#if STRETCH_SOUNDTOUCH_ENABLED
+        addCredit ("SoundTouch (Olli Parviainen, LGPL-2.1)", "https://www.surina.net/soundtouch/");
+#endif
 
         // Copyright
         addAndMakeVisible (copyrightLabel);

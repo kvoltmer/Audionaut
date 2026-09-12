@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/AudioSources/Stretch/StretchBackend.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/AudiumEngine.h"
 
@@ -817,6 +818,40 @@ SCENARIO ("cli clip-speed re-pitches a clip", "[cli][clipspeed]")
                                         context)
                      == cli::exitUsage);
         }
+    }
+
+    workDir.deleteRecursively();
+}
+
+SCENARIO ("cli stretch-eval renders a file through every engine", "[cli][clipspeed][engines]")
+{
+    auto workDir = makeWorkDirectory();
+    auto audioFile = juce::File (testFilesDir + "sine-0dB.wav");
+    REQUIRE (audioFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    WHEN ("the file is rendered at half speed with every engine") {
+        REQUIRE (cli::runStretchEval (makeArgs ("stretch-eval " + audioFile.getFullPathName()
+                                                + " --ratios 0.5 --engines all --out " + workDir.getFullPathName()),
+                                      context)
+                 == cli::exitOk);
+
+        THEN ("one file per engine exists, twice as long as the input") {
+            for (auto engine : StretchEngines::available()) {
+                auto rendered = workDir.getChildFile (juce::String ("sine-0dB-") + StretchEngines::name (engine) + "-x0.50.wav");
+                REQUIRE (rendered.existsAsFile());
+                REQUIRE (rendered.getSize() > audioFile.getSize());
+            }
+        }
+    }
+
+    WHEN ("an unknown engine or ratio is asked for") {
+        REQUIRE (cli::runStretchEval (makeArgs ("stretch-eval " + audioFile.getFullPathName() + " --engines elastique"), context)
+                 == cli::exitUsage);
+        REQUIRE (cli::runStretchEval (makeArgs ("stretch-eval " + audioFile.getFullPathName() + " --ratios 9"), context)
+                 == cli::exitUsage);
     }
 
     workDir.deleteRecursively();

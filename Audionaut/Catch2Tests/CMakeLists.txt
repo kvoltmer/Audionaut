@@ -98,6 +98,86 @@ if(AUDIONAUT_ENABLE_DEMUCS)
     endif()
 endif()
 
+# Time-stretch engine candidates under evaluation against Signalsmith (see
+# Engine/AudioSources/Stretch). Each is plain source from its submodule
+# compiled into its own static library with its own flags; the Audionaut
+# adapters only ever see the Eigen-free public headers. Rubber Band is GPL
+# (evaluation only unless licensed) - keep it off for App Store builds.
+set(BUNGEE_PATH "${SUBMODULES_PATH}/bungee")
+if(EXISTS "${BUNGEE_PATH}/bungee/Bungee.h" AND EXISTS "${BUNGEE_PATH}/submodules/eigen/Eigen/Core"
+   AND EXISTS "${BUNGEE_PATH}/submodules/pffft/pffft.c")
+    set(BUNGEE_AVAILABLE ON)
+else()
+    set(BUNGEE_AVAILABLE OFF)
+endif()
+option(AUDIONAUT_ENABLE_BUNGEE "Build the Bungee stretch backend" ${BUNGEE_AVAILABLE})
+message(STATUS "Bungee enabled: ${AUDIONAUT_ENABLE_BUNGEE} (detected available: ${BUNGEE_AVAILABLE})")
+if(AUDIONAUT_ENABLE_BUNGEE)
+    file(GLOB BUNGEE_SOURCES ${BUNGEE_PATH}/src/*.cpp)
+    list(FILTER BUNGEE_SOURCES EXCLUDE REGEX "version\\.cpp$")   # see Stretch/BungeeVersion.cpp
+    add_library(audionaut_bungee STATIC
+        ${BUNGEE_SOURCES}
+        ${BUNGEE_PATH}/submodules/pffft/pffft.c
+        ${BUNGEE_PATH}/submodules/pffft/fftpack.c)
+    target_include_directories(audionaut_bungee
+        PRIVATE ${BUNGEE_PATH}/submodules/eigen
+        PRIVATE ${BUNGEE_PATH}/submodules
+        PRIVATE ${BUNGEE_PATH})
+    target_compile_definitions(audionaut_bungee PRIVATE BUNGEE_VISIBILITY= EIGEN_DONT_PARALLELIZE=1)
+    set_property(TARGET audionaut_bungee PROPERTY CXX_STANDARD 20)
+    set_property(TARGET audionaut_bungee PROPERTY POSITION_INDEPENDENT_CODE ON)
+    if(MSVC)
+        target_compile_options(audionaut_bungee PRIVATE /w /MP)
+    else()
+        target_compile_options(audionaut_bungee PRIVATE -O3 -w -fwrapv)
+        set_source_files_properties(${BUNGEE_PATH}/submodules/pffft/pffft.c ${BUNGEE_PATH}/submodules/pffft/fftpack.c
+            PROPERTIES COMPILE_OPTIONS "-ffast-math;-fno-finite-math-only")
+    endif()
+endif()
+
+set(RUBBERBAND_PATH "${SUBMODULES_PATH}/rubberband")
+if(EXISTS "${RUBBERBAND_PATH}/single/RubberBandSingle.cpp")
+    set(RUBBERBAND_AVAILABLE ON)
+else()
+    set(RUBBERBAND_AVAILABLE OFF)
+endif()
+option(AUDIONAUT_ENABLE_RUBBERBAND "Build the Rubber Band stretch backend (GPL - evaluation only)" ${RUBBERBAND_AVAILABLE})
+message(STATUS "Rubber Band enabled: ${AUDIONAUT_ENABLE_RUBBERBAND} (detected available: ${RUBBERBAND_AVAILABLE})")
+if(AUDIONAUT_ENABLE_RUBBERBAND)
+    add_library(audionaut_rubberband STATIC ${RUBBERBAND_PATH}/single/RubberBandSingle.cpp)
+    set_property(TARGET audionaut_rubberband PROPERTY CXX_STANDARD 20)
+    set_property(TARGET audionaut_rubberband PROPERTY POSITION_INDEPENDENT_CODE ON)
+    if(MSVC)
+        target_compile_options(audionaut_rubberband PRIVATE /w /MP)
+    else()
+        target_compile_options(audionaut_rubberband PRIVATE -O3 -w)
+    endif()
+    if(APPLE)
+        target_link_libraries(audionaut_rubberband PUBLIC "-framework Accelerate")   # the single-file build uses vDSP
+    endif()
+endif()
+
+set(SOUNDTOUCH_PATH "${SUBMODULES_PATH}/soundtouch")
+if(EXISTS "${SOUNDTOUCH_PATH}/include/SoundTouch.h")
+    set(SOUNDTOUCH_AVAILABLE ON)
+else()
+    set(SOUNDTOUCH_AVAILABLE OFF)
+endif()
+option(AUDIONAUT_ENABLE_SOUNDTOUCH "Build the SoundTouch stretch backend" ${SOUNDTOUCH_AVAILABLE})
+message(STATUS "SoundTouch enabled: ${AUDIONAUT_ENABLE_SOUNDTOUCH} (detected available: ${SOUNDTOUCH_AVAILABLE})")
+if(AUDIONAUT_ENABLE_SOUNDTOUCH)
+    file(GLOB SOUNDTOUCH_SOURCES ${SOUNDTOUCH_PATH}/source/SoundTouch/*.cpp)
+    add_library(audionaut_soundtouch STATIC ${SOUNDTOUCH_SOURCES})
+    target_include_directories(audionaut_soundtouch PRIVATE ${SOUNDTOUCH_PATH}/include)
+    set_property(TARGET audionaut_soundtouch PROPERTY CXX_STANDARD 20)
+    set_property(TARGET audionaut_soundtouch PROPERTY POSITION_INDEPENDENT_CODE ON)
+    if(MSVC)
+        target_compile_options(audionaut_soundtouch PRIVATE /w /MP)
+    else()
+        target_compile_options(audionaut_soundtouch PRIVATE -O3 -w)
+    endif()
+endif()
+
 # Code coverage. Off by default; the instrumentation is attached to the
 # AudionautTests target only (see below), so JUCE, Catch2 and the other
 # submodules are never instrumented and never appear in the report.
@@ -154,6 +234,7 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/Recording/*.cpp
         ${SRC_PATH}/Engine/Undo/*.cpp
         ${SRC_PATH}/Engine/AudioSources/*.cpp
+        ${SRC_PATH}/Engine/AudioSources/Stretch/*.cpp
         ${SRC_PATH}/Engine/Export/*.cpp
         ${SRC_PATH}/Engine/Selection/*.cpp
         ${SRC_PATH}/Engine/Separation/*.cpp
@@ -230,6 +311,9 @@ function(audionaut_configure_common target)
                             PUBLIC ${SUBMODULES_PATH}/farbot/include
                             PUBLIC ${SUBMODULES_PATH}/signalsmith-stretch/include
                             PUBLIC ${SUBMODULES_PATH}/signalsmith-linear/include
+                            PUBLIC ${SUBMODULES_PATH}/bungee
+                            PUBLIC ${SUBMODULES_PATH}/rubberband
+                            PUBLIC ${SUBMODULES_PATH}/soundtouch/include
                             )
 
     if(AUDIONAUT_ENABLE_ESSENTIA)
@@ -282,7 +366,10 @@ function(audionaut_configure_common target)
             JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_console_app` call
             JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_console_app` call
             ESSENTIA_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_ESSENTIA}>
-            DEMUCS_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_DEMUCS}>)
+            DEMUCS_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_DEMUCS}>
+            STRETCH_BUNGEE_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_BUNGEE}>
+            STRETCH_RUBBERBAND_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_RUBBERBAND}>
+            STRETCH_SOUNDTOUCH_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_SOUNDTOUCH}>)
 
     target_link_libraries(${target}
         PRIVATE
@@ -299,6 +386,15 @@ function(audionaut_configure_common target)
 
     if(AUDIONAUT_ENABLE_DEMUCS)
         target_link_libraries(${target} PRIVATE audionaut_demucs)
+    endif()
+    if(AUDIONAUT_ENABLE_BUNGEE)
+        target_link_libraries(${target} PRIVATE audionaut_bungee)
+    endif()
+    if(AUDIONAUT_ENABLE_RUBBERBAND)
+        target_link_libraries(${target} PRIVATE audionaut_rubberband)
+    endif()
+    if(AUDIONAUT_ENABLE_SOUNDTOUCH)
+        target_link_libraries(${target} PRIVATE audionaut_soundtouch)
     endif()
 
     if(AUDIONAUT_ENABLE_ESSENTIA AND MSVC)
