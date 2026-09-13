@@ -49,12 +49,13 @@ the issue URL and the [feature-request discussion](https://github.com/kvoltmer/A
 
 Transports, tried in order:
 
-1. **Relay** — `AUDIONAUT_FEATURE_REQUEST_URL` points at a deployment of
+1. **Relay** — the default: a deployment of
    [`Tools/feature-request-relay`](../feature-request-relay/README.md), a
    Cloudflare Worker that files the issue with its own GitHub token. This is
-   the path for end users, who have no GitHub credentials on the agent side;
-   it becomes the default once the deployment's token is in place.
-2. **GitHub CLI** — when no relay is configured and `gh` is installed and
+   the path for end users, who have no GitHub credentials on the agent side.
+   `AUDIONAUT_FEATURE_REQUEST_URL` points at another deployment; an empty
+   value skips the relay.
+2. **GitHub CLI** — when the relay is skipped and `gh` is installed and
    logged in, the issue is filed with `gh issue create` under the user's own
    account (developer machines).
 3. **Nothing** — otherwise the reply says `sent: false` and carries a

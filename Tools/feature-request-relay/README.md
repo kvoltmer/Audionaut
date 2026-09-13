@@ -22,10 +22,10 @@ capped (120 / 8000 characters); issues get the labels in `LABELS`.
    npx wrangler deploy
    ```
 
-3. Put the printed `https://audionaut-feature-requests.<account>.workers.dev`
-   URL into `AUDIONAUT_FEATURE_REQUEST_URL` for the MCP server - or, once it
-   is stable, as the default in `Tools/audionaut-mcp/index.js` so every
-   installation uses it.
+3. The printed `https://audionaut-feature-requests.<account>.workers.dev`
+   URL is the MCP server's default in `Tools/audionaut-mcp/index.js`; update
+   it there if the subdomain changes, or point `AUDIONAUT_FEATURE_REQUEST_URL`
+   at another deployment.
 
 A `GET` on the worker is a health check: `{ok, repo, hasToken, githubStatus}`,
 where `githubStatus` is GitHub's answer to an authenticated `/user` call
@@ -35,8 +35,7 @@ from that green box and store with `pbpaste | npx wrangler secret put
 GITHUB_TOKEN` so nothing lands in the shell history.
 
 Deployed 2026-09-13 at
-`https://audionaut-feature-requests.feature-request-relay.workers.dev`
-(token still to be sorted out - see TODO.md).
+`https://audionaut-feature-requests.feature-request-relay.workers.dev`.
 
 The worker does no rate limiting of its own beyond the size caps; GitHub's
 abuse limits on the token apply. Rotate the token if the workers.dev URL
