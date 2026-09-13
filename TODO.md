@@ -89,9 +89,18 @@
   developer machines → prefilled new-issue URL. Web3Forms (the website's
   contact form) was the first idea and rejects server-side posts on the free
   plan. Smoke test uses a local stand-in relay.
-  - [ ] **Deploy the relay** (Cloudflare account + fine-grained PAT with
-    Issues read/write on the repo), then hard-code its URL as the default
-    in `Tools/audionaut-mcp/index.js` so end users get transport 1.
+  - [ ] **Relay token** (postponed 2026-09-13). The worker is deployed at
+    `https://audionaut-feature-requests.feature-request-relay.workers.dev`
+    but its `GITHUB_TOKEN` is rejected by GitHub (health check:
+    `githubStatus: 401`). The fine-grained token
+    `audionaut-cli-request` (Issues read/write on kvoltmer/Audionaut) exists
+    - GitHub's token form 500'd repeatedly that day - but its value was never
+    captured correctly. Next: regenerate it, copy from the green box,
+    `pbpaste | npx wrangler secret put GITHUB_TOKEN` from
+    `Tools/feature-request-relay`, `curl` the worker until `githubStatus`
+    is 200, then make the URL the default in `Tools/audionaut-mcp/index.js`.
+    Until then the MCP server uses `gh` on developer machines and the
+    prefilled-issue link elsewhere.
   - [ ] Mention the tool in the manual's CLI-and-agents chapter (web repo).
 
 - [x] **`split` + `create-region` verbs** (2026-08-27): musical positions

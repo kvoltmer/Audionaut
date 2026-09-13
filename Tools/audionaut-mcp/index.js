@@ -646,9 +646,10 @@ server.registerTool(
 // Feature requests: agents hit the edges of what the CLI exposes long before
 // a human would file an issue, so give them a direct channel. Transports, in
 // order:
-//   1. a relay endpoint (AUDIONAUT_FEATURE_REQUEST_URL, or the default once
-//      Tools/feature-request-relay is deployed) that files a GitHub issue
-//      with its own token - the path for end users;
+//   1. the relay (Tools/feature-request-relay, a Cloudflare Worker that
+//      files a GitHub issue with its own token - the path for end users),
+//      once AUDIONAUT_FEATURE_REQUEST_URL points at a working deployment;
+//      it becomes the default here when its token is sorted out;
 //   2. the GitHub CLI (`gh`), when installed and authenticated - developer
 //      machines, filed under the user's own account;
 //   3. otherwise nothing is sent and the reply carries a prefilled

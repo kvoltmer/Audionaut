@@ -27,6 +27,17 @@ capped (120 / 8000 characters); issues get the labels in `LABELS`.
    is stable, as the default in `Tools/audionaut-mcp/index.js` so every
    installation uses it.
 
+A `GET` on the worker is a health check: `{ok, repo, hasToken, githubStatus}`,
+where `githubStatus` is GitHub's answer to an authenticated `/user` call
+(200 = the token works, 401 = bad credentials). The token is never revealed.
+Fine-grained tokens are shown only once, at creation or regeneration - copy
+from that green box and store with `pbpaste | npx wrangler secret put
+GITHUB_TOKEN` so nothing lands in the shell history.
+
+Deployed 2026-09-13 at
+`https://audionaut-feature-requests.feature-request-relay.workers.dev`
+(token still to be sorted out - see TODO.md).
+
 The worker does no rate limiting of its own beyond the size caps; GitHub's
 abuse limits on the token apply. Rotate the token if the workers.dev URL
 starts receiving junk.
