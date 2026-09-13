@@ -80,6 +80,24 @@
   variant — an MCP server talking to the *running* GUI app over a local
   socket for live-session control — stays deliberately deferred.
 
+- [x] **Agents can transmit feature requests** (2026-09-13): MCP tool
+  `request_feature` files a GitHub issue (`enhancement`) with
+  title/description/agent context; server instructions steer agents to it
+  whenever a task hits a missing verb/option. Transports: relay
+  (`AUDIONAUT_FEATURE_REQUEST_URL` → `Tools/feature-request-relay`, a
+  Cloudflare Worker holding a GitHub token) → `gh issue create` on
+  developer machines → prefilled new-issue URL. Web3Forms (the website's
+  contact form) was the first idea and rejects server-side posts on the free
+  plan. Smoke test uses a local stand-in relay.
+  - [x] **Relay deployed and default** (2026-09-13) at
+    `https://audionaut-feature-requests.feature-request-relay.workers.dev`;
+    `GET` on it is a health check (`githubStatus` 200 = token works). Token
+    = fine-grained `audionaut-cli-request` (Issues read/write on the repo);
+    rotate with `pbpaste | npx wrangler secret put GITHUB_TOKEN` from
+    `Tools/feature-request-relay` - fine-grained tokens show their value
+    only once, right after (re)generation.
+  - [ ] Mention the tool in the manual's CLI-and-agents chapter (web repo).
+
 - [x] **`split` + `create-region` verbs** (2026-08-27): musical positions
   (`--unit bars|beats|seconds|clocks`, bars/beats 1-based, 96 clocks/bar),
   wrapping `AudioRegionAdapter::splitRegions`/`createRegionsFromSelection`;

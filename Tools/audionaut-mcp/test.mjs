@@ -8,6 +8,7 @@
 // audionaut-cli (see README). Run with `npm test`.
 
 import { mkdtempSync, rmSync } from "node:fs";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,12 +26,30 @@ function check(name, condition, detail = "") {
   if (!condition) failures++;
 }
 
+// Stand-in for the feature-request relay: records what request_feature posts
+// and rejects titles containing "reject" so the error path is covered too.
+const featureRequests = [];
+const featureEndpoint = createServer((request, response) => {
+  let raw = "";
+  request.on("data", (chunk) => (raw += chunk));
+  request.on("end", () => {
+    const payload = JSON.parse(raw);
+    featureRequests.push(payload);
+    const reject = payload.title.includes("reject");
+    response.writeHead(reject ? 400 : 200, { "Content-Type": "application/json" });
+    response.end(JSON.stringify(reject ? { success: false, message: "rejected" }
+                                       : { success: true, url: "https://github.com/kvoltmer/Audionaut/issues/0" }));
+  });
+});
+await new Promise((resolve) => featureEndpoint.listen(0, "127.0.0.1", resolve));
+const featureEndpointUrl = `http://127.0.0.1:${featureEndpoint.address().port}/submit`;
+
 const transport = new StdioClientTransport({
   command: "node",
   args: [join(here, "index.js")],
   // the smoke suite must never send usage analytics, whatever the local
-  // consent preference says
-  env: { ...process.env, AUDIONAUT_DISABLE_ANALYTICS: "1" },
+  // consent preference says - and feature requests go to the stand-in above
+  env: { ...process.env, AUDIONAUT_DISABLE_ANALYTICS: "1", AUDIONAUT_FEATURE_REQUEST_URL: featureEndpointUrl },
 });
 const client = new Client({ name: "audionaut-mcp-test", version: "0.0.1" });
 await client.connect(transport);
@@ -41,12 +60,12 @@ try {
   const { tools } = await client.listTools();
   const names = tools.map((tool) => tool.name).sort();
   check(
-    "all twenty tools listed",
+    "all twenty-one tools listed",
     JSON.stringify(names) ===
       JSON.stringify(["analyze", "assemble", "auto_edit", "cleanup_regions", "clip_fades", "clip_gain",
                       "clip_speed", "create_project", "create_region", "export_audio", "get_project_info",
                       "import_audio", "move_clip", "place_clip", "remove_channel", "remove_clip",
-                      "remove_track", "separate_stems", "set_region", "split"]),
+                      "remove_track", "request_feature", "separate_stems", "set_region", "split"]),
     names.join(",")
   );
 
@@ -221,9 +240,48 @@ try {
     arguments: { project, track: 5 },
   });
   check("remove_track on missing id is a tool error", trackMiss.isError === true, trackMiss.content?.[0]?.text);
+
+  // Feature requests post to the stand-in endpoint, never to the real one.
+  const requested = await client.callTool({
+    name: "request_feature",
+    arguments: {
+      title: "Duplicate clip",
+      description: "There is no tool to duplicate a clip in place.",
+      context: "Wanted to repeat a 4-bar loop; used place_clip four times instead.",
+      reporter: "smoke@example.com",
+    },
+  });
+  const sentPayload = featureRequests.at(-1);
+  check(
+    "request_feature is sent via the relay",
+    !requested.isError && requested.content[0].text.includes('"via": "relay"') &&
+      requested.content[0].text.includes("issues/0"),
+    requested.content?.[0]?.text
+  );
+  check(
+    "request_feature payload carries title, description, context and reporter",
+    sentPayload?.title === "Duplicate clip" &&
+      sentPayload?.body.includes("no tool to duplicate") &&
+      sentPayload?.body.includes("place_clip four times") &&
+      sentPayload?.reporter === "smoke@example.com" &&
+      sentPayload?.client.startsWith("audionaut-mcp"),
+    JSON.stringify(sentPayload)
+  );
+
+  const rejected = await client.callTool({
+    name: "request_feature",
+    arguments: { title: "please reject this", description: "endpoint error path" },
+  });
+  check(
+    "request_feature endpoint failure is a tool error with the issue fallback",
+    rejected.isError === true && rejected.content[0].text.includes("rejected") &&
+      rejected.content[0].text.includes("issues/new?"),
+    rejected.content?.[0]?.text
+  );
 } finally {
   rmSync(workDir, { recursive: true, force: true });
   await client.close();
+  featureEndpoint.close();
 }
 
 process.exit(failures === 0 ? 0 : 1);
