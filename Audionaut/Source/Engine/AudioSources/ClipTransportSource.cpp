@@ -152,7 +152,7 @@ void ClipTransportSource::setPosition (double newPosition)
 {
     jassert(isPrepared);
     if (sampleRate > 0.0)
-        setNextReadPosition ((juce::int64) (newPosition * sampleRate));
+        setNextReadPosition ((juce::int64) std::llround (newPosition * sampleRate));
 }
 
 double ClipTransportSource::getCurrentPosition() const
@@ -185,7 +185,7 @@ void ClipTransportSource::setNextReadPosition (juce::int64 newPosition)
 {
     if (positionableSource != nullptr) {
         if (sampleRate > 0 && sourceSampleRate > 0)
-            newPosition = (juce::int64) ((double) newPosition * sourceSampleRate / sampleRate);
+            newPosition = (juce::int64) std::llround ((double) newPosition * sourceSampleRate / sampleRate);
 
         positionableSource->setNextReadPosition (newPosition);
 
