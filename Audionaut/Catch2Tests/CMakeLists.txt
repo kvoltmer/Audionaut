@@ -127,6 +127,8 @@ if(AUDIONAUT_ENABLE_BUNGEE)
     set_property(TARGET audionaut_bungee PROPERTY CXX_STANDARD 20)
     set_property(TARGET audionaut_bungee PROPERTY POSITION_INDEPENDENT_CODE ON)
     if(MSVC)
+        # PFFFT's fftpack.c uses M_PI, which MSVC's <math.h> only defines on request
+        target_compile_definitions(audionaut_bungee PRIVATE _USE_MATH_DEFINES)
         target_compile_options(audionaut_bungee PRIVATE /w /MP)
     else()
         target_compile_options(audionaut_bungee PRIVATE -O3 -w -fwrapv)

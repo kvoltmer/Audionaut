@@ -224,10 +224,10 @@
       <AdditionalOptions>/w /DBUNGEE_VISIBILITY= /DEIGEN_DONT_PARALLELIZE=1 /I..\..\..\Submodules\bungee\submodules\eigen /I..\..\..\Submodules\bungee\submodules /I..\..\..\Submodules\bungee %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="..\..\..\Submodules\bungee\submodules\pffft\pffft.c">
-      <AdditionalOptions>/w %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/w /D_USE_MATH_DEFINES %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="..\..\..\Submodules\bungee\submodules\pffft\fftpack.c">
-      <AdditionalOptions>/w %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/w /D_USE_MATH_DEFINES %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="..\..\..\Submodules\rubberband\single\RubberBandSingle.cpp">
       <AdditionalOptions>/w %(AdditionalOptions)</AdditionalOptions>
