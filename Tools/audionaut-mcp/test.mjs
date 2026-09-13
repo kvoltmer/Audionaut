@@ -26,7 +26,7 @@ function check(name, condition, detail = "") {
   if (!condition) failures++;
 }
 
-// Stand-in for the Web3Forms endpoint: records what request_feature posts
+// Stand-in for the feature-request relay: records what request_feature posts
 // and rejects titles containing "reject" so the error path is covered too.
 const featureRequests = [];
 const featureEndpoint = createServer((request, response) => {
@@ -35,9 +35,10 @@ const featureEndpoint = createServer((request, response) => {
   request.on("end", () => {
     const payload = JSON.parse(raw);
     featureRequests.push(payload);
-    const reject = payload.subject.includes("reject");
+    const reject = payload.title.includes("reject");
     response.writeHead(reject ? 400 : 200, { "Content-Type": "application/json" });
-    response.end(JSON.stringify(reject ? { success: false, message: "rejected" } : { success: true }));
+    response.end(JSON.stringify(reject ? { success: false, message: "rejected" }
+                                       : { success: true, url: "https://github.com/kvoltmer/Audionaut/issues/0" }));
   });
 });
 await new Promise((resolve) => featureEndpoint.listen(0, "127.0.0.1", resolve));
@@ -252,18 +253,18 @@ try {
   });
   const sentPayload = featureRequests.at(-1);
   check(
-    "request_feature is sent",
-    !requested.isError && requested.content[0].text.includes('"sent": true') &&
-      requested.content[0].text.includes("issues/new?"),
+    "request_feature is sent via the relay",
+    !requested.isError && requested.content[0].text.includes('"via": "relay"') &&
+      requested.content[0].text.includes("issues/0"),
     requested.content?.[0]?.text
   );
   check(
     "request_feature payload carries title, description, context and reporter",
-    sentPayload?.subject === "Feature request via audionaut-mcp: Duplicate clip" &&
-      sentPayload?.message.includes("no tool to duplicate") &&
-      sentPayload?.message.includes("place_clip four times") &&
-      sentPayload?.email === "smoke@example.com" &&
-      typeof sentPayload?.access_key === "string",
+    sentPayload?.title === "Duplicate clip" &&
+      sentPayload?.body.includes("no tool to duplicate") &&
+      sentPayload?.body.includes("place_clip four times") &&
+      sentPayload?.reporter === "smoke@example.com" &&
+      sentPayload?.client.startsWith("audionaut-mcp"),
     JSON.stringify(sentPayload)
   );
 

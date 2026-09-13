@@ -81,12 +81,18 @@
   socket for live-session control — stays deliberately deferred.
 
 - [x] **Agents can transmit feature requests** (2026-09-13): MCP tool
-  `request_feature` posts title/description/agent context through the
-  website's Web3Forms contact endpoint (public access key) to the
-  maintainer's inbox; server instructions steer agents to it whenever a task
-  hits a missing verb/option. Smoke test uses a local stand-in endpoint
-  (`AUDIONAUT_FEATURE_REQUEST_URL`). Follow-up: mention it in the manual's
-  CLI-and-agents chapter (web repo).
+  `request_feature` files a GitHub issue (`enhancement`) with
+  title/description/agent context; server instructions steer agents to it
+  whenever a task hits a missing verb/option. Transports: relay
+  (`AUDIONAUT_FEATURE_REQUEST_URL` → `Tools/feature-request-relay`, a
+  Cloudflare Worker holding a GitHub token) → `gh issue create` on
+  developer machines → prefilled new-issue URL. Web3Forms (the website's
+  contact form) was the first idea and rejects server-side posts on the free
+  plan. Smoke test uses a local stand-in relay.
+  - [ ] **Deploy the relay** (Cloudflare account + fine-grained PAT with
+    Issues read/write on the repo), then hard-code its URL as the default
+    in `Tools/audionaut-mcp/index.js` so end users get transport 1.
+  - [ ] Mention the tool in the manual's CLI-and-agents chapter (web repo).
 
 - [x] **`split` + `create-region` verbs** (2026-08-27): musical positions
   (`--unit bars|beats|seconds|clocks`, bars/beats 1-based, 96 clocks/bar),

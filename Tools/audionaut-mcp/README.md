@@ -43,16 +43,24 @@ would file an issue, so `request_feature` gives them a direct channel: a
 title, a description and (ideally) what the agent was trying to do and which
 tool fell short. The server's instructions tell agents to use it whenever a
 task needs something the other tools cannot do, and to tell the user they are
-doing so. The request is posted to the same [Web3Forms](https://web3forms.com)
-endpoint as the website's contact form and lands in the maintainer's inbox;
-the reply carries the [feature-request discussion](https://github.com/kvoltmer/Audionaut/discussions/63)
-and a prefilled GitHub issue link the user can open themselves. A `reporter`
-name or e-mail is included only when the user offers one.
+doing so. A `reporter` name or e-mail is included only when the user offers
+one. Requests become GitHub issues labelled `enhancement`; the reply carries
+the issue URL and the [feature-request discussion](https://github.com/kvoltmer/Audionaut/discussions/63).
 
-Environment overrides: `AUDIONAUT_FEATURE_REQUEST_URL` and
-`AUDIONAUT_FEATURE_REQUEST_KEY` redirect the post (the smoke test points it at
-a local stand-in), and `AUDIONAUT_DISABLE_FEATURE_REQUESTS=1` makes the tool
-report what it would have sent without sending anything.
+Transports, tried in order:
+
+1. **Relay** — `AUDIONAUT_FEATURE_REQUEST_URL` points at a deployment of
+   [`Tools/feature-request-relay`](../feature-request-relay/README.md), a
+   Cloudflare Worker that files the issue with its own GitHub token. This is
+   the path for end users, who have no GitHub credentials on the agent side.
+2. **GitHub CLI** — when no relay is configured and `gh` is installed and
+   logged in, the issue is filed with `gh issue create` under the user's own
+   account (developer machines).
+3. **Nothing** — otherwise the reply says `sent: false` and carries a
+   prefilled new-issue URL for the user to open themselves.
+
+`AUDIONAUT_DISABLE_FEATURE_REQUESTS=1` skips the first two (test harnesses,
+air-gapped setups); the smoke test points the relay URL at a local stand-in.
 
 ## Setup
 
