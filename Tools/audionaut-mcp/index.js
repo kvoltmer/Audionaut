@@ -12,6 +12,7 @@ import { execFile } from "node:child_process";
 import { access, constants } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { platform, release } from "node:os";
 import { promisify } from "node:util";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -104,7 +105,15 @@ const projectParam = z
   .string()
   .describe("Path to the .audium project package (absolute paths recommended)");
 
-const server = new McpServer({ name: "audionaut", version: "0.1.0" });
+const server = new McpServer(
+  { name: "audionaut", version: "0.1.0" },
+  {
+    instructions:
+      "Tools for inspecting and editing Audionaut (.audium) multitrack projects. Every tool saves the " +
+      "project immediately. If a task needs something these tools cannot do - a missing verb, option " +
+      "or limit - tell the user and use request_feature to send the gap to the maintainer.",
+  }
+);
 
 server.registerTool(
   "get_project_info",
@@ -631,6 +640,118 @@ server.registerTool(
   },
   async ({ project, track, channel }) =>
     runCli(["remove-channel", project, "--track", String(track), "--channel", String(channel)])
+);
+
+// ---------------------------------------------------------------------------
+// Feature requests: agents hit the edges of what the CLI exposes long before
+// a human would file an issue, so give them a direct channel. Requests go
+// through the same Web3Forms endpoint as the website's contact form (the
+// access key is public by design - it only routes mail to the maintainer)
+// and land in the maintainer's inbox. No engine or GitHub credentials
+// involved; AUDIONAUT_FEATURE_REQUEST_URL/_KEY override the endpoint,
+// AUDIONAUT_DISABLE_FEATURE_REQUESTS=1 turns the tool into a no-op that
+// reports what it would have sent (test harnesses, air-gapped setups).
+// ---------------------------------------------------------------------------
+const featureRequestUrl = process.env.AUDIONAUT_FEATURE_REQUEST_URL ?? "https://api.web3forms.com/submit";
+const featureRequestKey = process.env.AUDIONAUT_FEATURE_REQUEST_KEY ?? "db718ffe-03eb-43ce-a715-0abfc239f38a";
+const featureRequestsDisabled = Boolean(process.env.AUDIONAUT_DISABLE_FEATURE_REQUESTS);
+const discussionsUrl = "https://github.com/kvoltmer/Audionaut/discussions/63";
+
+function prefilledIssueUrl(title, body) {
+  const params = new URLSearchParams({ labels: "enhancement", title, body });
+  return `https://github.com/kvoltmer/Audionaut/issues/new?${params}`;
+}
+
+server.registerTool(
+  "request_feature",
+  {
+    title: "Request a feature",
+    description:
+      "Sends a feature request to the Audionaut maintainer. Use it when a task needs something the " +
+      "other tools cannot do: a missing verb or option, a limit that got in the way, or a workflow " +
+      "that took a clumsy workaround. Say what the user was trying to achieve and why the current " +
+      "tools fall short - that context is what makes the request actionable. Tell the user you are " +
+      "sending it; include their name or e-mail only if they offered it.",
+    inputSchema: {
+      title: z.string().trim().min(1).max(120).describe("One-line summary of the requested feature"),
+      description: z
+        .string()
+        .trim()
+        .min(1)
+        .max(4000)
+        .describe("What is missing, why it matters, and how it should behave"),
+      context: z
+        .string()
+        .trim()
+        .max(2000)
+        .optional()
+        .describe("What you were trying to do, which tool fell short, and any workaround used"),
+      reporter: z
+        .string()
+        .trim()
+        .max(200)
+        .optional()
+        .describe("The user's name or e-mail for follow-up, only if they offered it"),
+    },
+  },
+  async ({ title, description, context, reporter }) => {
+    const sections = [
+      `Title: ${title}`,
+      "",
+      description,
+      ...(context ? ["", "Agent context:", context] : []),
+      "",
+      `Sent by audionaut-mcp 0.1.0 (${platform()} ${release()}, node ${process.version})`,
+    ];
+    const message = sections.join("\n");
+    const issueUrl = prefilledIssueUrl(title, `${description}${context ? `\n\n**Agent context**\n${context}` : ""}`);
+    const result = { title, discussions: discussionsUrl, issueUrl };
+
+    if (featureRequestsDisabled)
+      return {
+        content: [{ type: "text", text: JSON.stringify({ sent: false, reason: "AUDIONAUT_DISABLE_FEATURE_REQUESTS is set", ...result, message }, null, 2) }],
+      };
+
+    const payload = {
+      access_key: featureRequestKey,
+      subject: `Feature request via audionaut-mcp: ${title}`,
+      from_name: "audionaut-mcp",
+      ...(reporter ? { name: reporter } : {}),
+      ...(reporter && reporter.includes("@") ? { email: reporter } : {}),
+      message,
+    };
+
+    let response;
+    try {
+      response = await fetch(featureRequestUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(15_000),
+      });
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: `feature_request_failed: could not reach ${featureRequestUrl} (${error.message}). ` +
+                    `Offer the user the prefilled issue instead: ${issueUrl}` }],
+        isError: true,
+      };
+    }
+
+    let body = {};
+    try {
+      body = await response.json();
+    } catch {
+      // non-JSON reply; fall through to the status check
+    }
+    if (!response.ok || body.success === false)
+      return {
+        content: [{ type: "text", text: `feature_request_failed: endpoint answered ${response.status} ${body.message ?? ""}`.trim() +
+                    `. Offer the user the prefilled issue instead: ${issueUrl}` }],
+        isError: true,
+      };
+
+    return { content: [{ type: "text", text: JSON.stringify({ sent: true, ...result }, null, 2) }] };
+  }
 );
 
 const transport = new StdioServerTransport();

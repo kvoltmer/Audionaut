@@ -28,12 +28,31 @@ and relays the result — no engine logic lives here.
 | `clip_speed` | `clip-speed` | Set a clip's speed and mode (varispeed or pitch-preserving stretch), or lock it to the project tempo |
 | `remove_track` | `remove-track` | Remove a whole track (channels, clips and regions) |
 | `remove_channel` | `remove-channel` | Remove one channel from a track |
+| `request_feature` | — | Send a feature request to the maintainer (see below) |
 | `separate_stems` | `separate` | Split a clip into Drums/Bass/Other/Vocals tracks (Demucs; needs the downloaded model) |
 
 A typical agent flow: `create_project` → `import_audio` → `analyze` →
 `auto_edit`/`assemble` → `export_audio`. CLI errors come back as tool errors
 carrying the CLI's own `code: message` (e.g. `essentia_unavailable: ...` in
 builds without Essentia), so agents can react.
+
+## Feature requests from agents
+
+Agents run into the edges of what the tools expose long before a person
+would file an issue, so `request_feature` gives them a direct channel: a
+title, a description and (ideally) what the agent was trying to do and which
+tool fell short. The server's instructions tell agents to use it whenever a
+task needs something the other tools cannot do, and to tell the user they are
+doing so. The request is posted to the same [Web3Forms](https://web3forms.com)
+endpoint as the website's contact form and lands in the maintainer's inbox;
+the reply carries the [feature-request discussion](https://github.com/kvoltmer/Audionaut/discussions/63)
+and a prefilled GitHub issue link the user can open themselves. A `reporter`
+name or e-mail is included only when the user offers one.
+
+Environment overrides: `AUDIONAUT_FEATURE_REQUEST_URL` and
+`AUDIONAUT_FEATURE_REQUEST_KEY` redirect the post (the smoke test points it at
+a local stand-in), and `AUDIONAUT_DISABLE_FEATURE_REQUESTS=1` makes the tool
+report what it would have sent without sending anything.
 
 ## Setup
 

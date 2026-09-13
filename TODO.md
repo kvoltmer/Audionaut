@@ -80,6 +80,14 @@
   variant — an MCP server talking to the *running* GUI app over a local
   socket for live-session control — stays deliberately deferred.
 
+- [x] **Agents can transmit feature requests** (2026-09-13): MCP tool
+  `request_feature` posts title/description/agent context through the
+  website's Web3Forms contact endpoint (public access key) to the
+  maintainer's inbox; server instructions steer agents to it whenever a task
+  hits a missing verb/option. Smoke test uses a local stand-in endpoint
+  (`AUDIONAUT_FEATURE_REQUEST_URL`). Follow-up: mention it in the manual's
+  CLI-and-agents chapter (web repo).
+
 - [x] **`split` + `create-region` verbs** (2026-08-27): musical positions
   (`--unit bars|beats|seconds|clocks`, bars/beats 1-based, 96 clocks/bar),
   wrapping `AudioRegionAdapter::splitRegions`/`createRegionsFromSelection`;
