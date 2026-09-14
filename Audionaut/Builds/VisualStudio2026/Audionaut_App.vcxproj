@@ -323,6 +323,7 @@
     <ClCompile Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipTransportSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\StretchAudioSource.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\ClipResamplingSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Export\PlayListItemExport.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Export\AudioExportThread.cpp"/>
@@ -3526,6 +3527,7 @@
     <ClInclude Include="..\..\Source\Engine\AudioSources\VoiceSourceContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\StretchAudioSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipTransportSource.h"/>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\ClipResamplingSource.h"/>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\ExportUtil.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\PlayListItemExport.h"/>

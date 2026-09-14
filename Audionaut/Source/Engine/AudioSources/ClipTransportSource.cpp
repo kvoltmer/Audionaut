@@ -36,13 +36,13 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
         setSource (nullptr, 0, nullptr); // deselect and reselect to avoid releasing resources wrongly
     }
 
-    juce::ResamplingAudioSource* newResamplerSource = nullptr;
+    ClipResamplingSource* newResamplerSource = nullptr;
     StretchAudioSource* newStretchSource = nullptr;
     juce::BufferingAudioSource* newBufferingSource = nullptr;
     juce::PositionableAudioSource* newPositionableSource = nullptr;
     juce::AudioSource* newMasterSource = nullptr;
 
-    std::unique_ptr<juce::ResamplingAudioSource> oldResamplerSource (resamplerSource);
+    std::unique_ptr<ClipResamplingSource> oldResamplerSource (resamplerSource);
     std::unique_ptr<StretchAudioSource> oldStretchSource (stretchSource);
     std::unique_ptr<juce::BufferingAudioSource> oldBufferingSource (bufferingSource);
     juce::AudioSource* oldMasterSource = masterSource;
@@ -67,7 +67,7 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
         if (sourceSampleRateToCorrectFor > 0)
         {
             newMasterSource = newResamplerSource
-                = new juce::ResamplingAudioSource (newPositionableSource, false, maxNumChannels);
+                = new ClipResamplingSource (newPositionableSource, maxNumChannels);
 
             // the pitch-preserving node lives in the chain permanently and
             // is bypassed in RePitch mode - see setStretchMode
@@ -151,8 +151,29 @@ void ClipTransportSource::stop(bool fadeout_)
 void ClipTransportSource::setPosition (double newPosition)
 {
     jassert(isPrepared);
-    if (sampleRate > 0.0)
-        setNextReadPosition ((juce::int64) std::llround (newPosition * sampleRate));
+    if (sourceSampleRate > 0.0)
+        seekSource (newPosition * sourceSampleRate);
+    else if (sampleRate > 0.0)
+        seekSource (newPosition * sampleRate);
+}
+
+void ClipTransportSource::seekSource (double sourceSamplePosition)
+{
+    if (positionableSource == nullptr)
+        return;
+
+    if (resamplerSource != nullptr)
+    {
+        // repositions the input itself, fractional, and primes its filter
+        resamplerSource->setNextReadPosition (sourceSamplePosition);
+    }
+    else
+    {
+        positionableSource->setNextReadPosition ((juce::int64) std::llround (sourceSamplePosition));
+    }
+
+    if (stretchSource != nullptr)
+        stretchSource->flushBuffers();
 }
 
 double ClipTransportSource::getCurrentPosition() const
@@ -183,18 +204,11 @@ bool ClipTransportSource::hasStreamFinished() const noexcept
 
 void ClipTransportSource::setNextReadPosition (juce::int64 newPosition)
 {
-    if (positionableSource != nullptr) {
-        if (sampleRate > 0 && sourceSampleRate > 0)
-            newPosition = (juce::int64) std::llround ((double) newPosition * sourceSampleRate / sampleRate);
+    auto sourcePosition = (double) newPosition;
+    if (sampleRate > 0 && sourceSampleRate > 0)
+        sourcePosition *= sourceSampleRate / sampleRate;
 
-        positionableSource->setNextReadPosition (newPosition);
-
-        if (resamplerSource != nullptr)
-            resamplerSource->flushBuffers();
-
-        if (stretchSource != nullptr)
-            stretchSource->flushBuffers();
-    }
+    seekSource (sourcePosition);
 }
 
 juce::int64 ClipTransportSource::getNextReadPosition() const
