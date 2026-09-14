@@ -1,13 +1,15 @@
 # feature-request-relay
 
-A Cloudflare Worker that turns feature requests sent by
-[`audionaut-mcp`](../audionaut-mcp/README.md)'s `request_feature` tool into
-GitHub issues. Agents on end-user machines have no GitHub credentials, so the
+A Cloudflare Worker that turns the feature requests and bug reports sent by
+[`audionaut-mcp`](../audionaut-mcp/README.md)'s `request_feature` and
+`report_bug` tools into GitHub issues. Agents on end-user machines have no GitHub credentials, so the
 worker holds the one token and does the filing.
 
-Contract: `POST` JSON `{title, body, reporter?, client?}` → `{success: true,
-url, number}` or `{success: false, message}`. Title and body are required and
-capped (120 / 8000 characters); issues get the labels in `LABELS`.
+Contract: `POST` JSON `{title, body, kind?, reporter?, client?}` →
+`{success: true, url, number}` or `{success: false, message}`. Title and body
+are required and capped (120 / 8000 characters); `kind` is `"feature"`
+(default) or `"bug"` and picks the labels from `LABELS_FEATURE` /
+`LABELS_BUG` in `wrangler.toml`.
 
 ## Deploy
 

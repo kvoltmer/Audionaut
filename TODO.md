@@ -96,7 +96,11 @@
     rotate with `pbpaste | npx wrangler secret put GITHUB_TOKEN` from
     `Tools/feature-request-relay` - fine-grained tokens show their value
     only once, right after (re)generation.
-  - [ ] Mention the tool in the manual's CLI-and-agents chapter (web repo).
+  - [x] Mention the tool in the manual's CLI-and-agents chapter (web repo
+    PR #3, 2026-09-13).
+  - [x] **`report_bug`** (2026-09-14): same transport chain, `kind: "bug"`
+    → labels `bug` + `agent-report` (relay reads `LABELS_FEATURE` /
+    `LABELS_BUG`); inputs add steps / expected / context.
 
 - [x] **`split` + `create-region` verbs** (2026-08-27): musical positions
   (`--unit bars|beats|seconds|clocks`, bars/beats 1-based, 96 clocks/bar),

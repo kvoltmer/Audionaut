@@ -26,8 +26,8 @@ function check(name, condition, detail = "") {
   if (!condition) failures++;
 }
 
-// Stand-in for the feature-request relay: records what request_feature posts
-// and rejects titles containing "reject" so the error path is covered too.
+// Stand-in for the issue relay: records what request_feature / report_bug
+// post and rejects titles containing "reject" so the error path is covered.
 const featureRequests = [];
 const featureEndpoint = createServer((request, response) => {
   let raw = "";
@@ -60,12 +60,13 @@ try {
   const { tools } = await client.listTools();
   const names = tools.map((tool) => tool.name).sort();
   check(
-    "all twenty-one tools listed",
+    "all twenty-two tools listed",
     JSON.stringify(names) ===
       JSON.stringify(["analyze", "assemble", "auto_edit", "cleanup_regions", "clip_fades", "clip_gain",
                       "clip_speed", "create_project", "create_region", "export_audio", "get_project_info",
                       "import_audio", "move_clip", "place_clip", "remove_channel", "remove_clip",
-                      "remove_track", "request_feature", "separate_stems", "set_region", "split"]),
+                      "remove_track", "report_bug", "request_feature", "separate_stems", "set_region",
+                      "split"]),
     names.join(",")
   );
 
@@ -261,11 +262,38 @@ try {
   check(
     "request_feature payload carries title, description, context and reporter",
     sentPayload?.title === "Duplicate clip" &&
+      sentPayload?.kind === "feature" &&
       sentPayload?.body.includes("no tool to duplicate") &&
       sentPayload?.body.includes("place_clip four times") &&
       sentPayload?.reporter === "smoke@example.com" &&
       sentPayload?.client.startsWith("audionaut-mcp"),
     JSON.stringify(sentPayload)
+  );
+
+  const bug = await client.callTool({
+    name: "report_bug",
+    arguments: {
+      title: "split leaves an empty region",
+      description: "split at a clip boundary reported ok but created a zero-length region.",
+      steps: "1. import_audio 120-funk-1-sec.wav\n2. split at 1.0 seconds",
+      expected: "A usage error, or no region at all.",
+      context: "1 track, 1 clip, 44.1 kHz",
+    },
+  });
+  const bugPayload = featureRequests.at(-1);
+  check(
+    "report_bug is sent via the relay",
+    !bug.isError && bug.content[0].text.includes('"via": "relay"'),
+    bug.content?.[0]?.text
+  );
+  check(
+    "report_bug payload is kind bug with steps, expected and context",
+    bugPayload?.kind === "bug" &&
+      bugPayload?.body.includes("**Steps to reproduce**") &&
+      bugPayload?.body.includes("split at 1.0 seconds") &&
+      bugPayload?.body.includes("**Expected**") &&
+      bugPayload?.body.includes("44.1 kHz"),
+    JSON.stringify(bugPayload)
   );
 
   const rejected = await client.callTool({

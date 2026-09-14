@@ -29,6 +29,7 @@ and relays the result — no engine logic lives here.
 | `remove_track` | `remove-track` | Remove a whole track (channels, clips and regions) |
 | `remove_channel` | `remove-channel` | Remove one channel from a track |
 | `request_feature` | — | Send a feature request to the maintainer (see below) |
+| `report_bug` | — | Send a bug report to the maintainer (see below) |
 | `separate_stems` | `separate` | Split a clip into Drums/Bass/Other/Vocals tracks (Demucs; needs the downloaded model) |
 
 A typical agent flow: `create_project` → `import_audio` → `analyze` →
@@ -36,16 +37,21 @@ A typical agent flow: `create_project` → `import_audio` → `analyze` →
 carrying the CLI's own `code: message` (e.g. `essentia_unavailable: ...` in
 builds without Essentia), so agents can react.
 
-## Feature requests from agents
+## Feature requests and bug reports from agents
 
-Agents run into the edges of what the tools expose long before a person
-would file an issue, so `request_feature` gives them a direct channel: a
-title, a description and (ideally) what the agent was trying to do and which
-tool fell short. The server's instructions tell agents to use it whenever a
-task needs something the other tools cannot do, and to tell the user they are
-doing so. A `reporter` name or e-mail is included only when the user offers
-one. Requests become GitHub issues labelled `enhancement`; the reply carries
-the issue URL and the [feature-request discussion](https://github.com/kvoltmer/Audionaut/discussions/63).
+Agents run into the edges of what the tools expose, and into their bugs,
+long before a person would file an issue, so two tools give them a direct
+channel. `request_feature` takes a title, a description and (ideally) what
+the agent was trying to do and which tool fell short. `report_bug` takes
+the same plus steps to reproduce, the expected behaviour and the project
+shape; its description tells agents to quote the exact tool call and error
+text and never to attach audio. The server's instructions point agents at
+the right one whenever a task needs something the tools cannot do or a tool
+misbehaves, and tell them to say so to the user. A `reporter` name or e-mail
+is included only when the user offers one. Both become GitHub issues -
+`enhancement` + `agent-request` for features, `bug` + `agent-report` for
+bugs; the reply carries the issue URL and the
+[feature-request discussion](https://github.com/kvoltmer/Audionaut/discussions/63).
 
 Transports, tried in order:
 
@@ -61,8 +67,9 @@ Transports, tried in order:
 3. **Nothing** — otherwise the reply says `sent: false` and carries a
    prefilled new-issue URL for the user to open themselves.
 
-`AUDIONAUT_DISABLE_FEATURE_REQUESTS=1` skips the first two (test harnesses,
-air-gapped setups); the smoke test points the relay URL at a local stand-in.
+`AUDIONAUT_DISABLE_FEATURE_REQUESTS=1` skips the first two for both tools
+(test harnesses, air-gapped setups); the smoke test points the relay URL at
+a local stand-in.
 
 ## Setup
 
