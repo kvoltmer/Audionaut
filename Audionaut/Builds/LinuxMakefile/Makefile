@@ -156,6 +156,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/VoiceSourceContainer_3bb45bfd.o \
   $(JUCE_OBJDIR)/ClipTransportSource_2dcf5135.o \
   $(JUCE_OBJDIR)/StretchAudioSource_c949d135.o \
+  $(JUCE_OBJDIR)/ClipResamplingSource_45e937ae.o \
   $(JUCE_OBJDIR)/ClipFadeSpec_6e5c9b30.o \
   $(JUCE_OBJDIR)/PlayListItemExport_8b6443f0.o \
   $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o \
@@ -673,6 +674,11 @@ $(JUCE_OBJDIR)/ClipTransportSource_2dcf5135.o: ../../Source/Engine/AudioSources/
 $(JUCE_OBJDIR)/StretchAudioSource_c949d135.o: ../../Source/Engine/AudioSources/StretchAudioSource.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling StretchAudioSource.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/ClipResamplingSource_45e937ae.o: ../../Source/Engine/AudioSources/ClipResamplingSource.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling ClipResamplingSource.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/ClipFadeSpec_6e5c9b30.o: ../../Source/Engine/AudioSources/ClipFadeSpec.cpp

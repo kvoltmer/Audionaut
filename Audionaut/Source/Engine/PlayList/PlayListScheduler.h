@@ -76,11 +76,16 @@ public:
     
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     
+    /// Positions and arms a voice for the clip at transportPosition, the
+    /// time the block's sample @p sampleOffset stands for; when that
+    /// offset was rounded (a loop wrap), @p sampleOffsetTime is the exact
+    /// time it was rounded from, so the file position can follow.
     bool scheduleClip(const audium::DspClip &clip,
                       std::shared_ptr<VoiceSource> voiceSource,
                       double transportPosition,
                       int sampleOffset,
-                      int numSamples);
+                      int numSamples,
+                      double sampleOffsetTime = 0.0);
     
     void startPlaying();
     void stopPlaying();

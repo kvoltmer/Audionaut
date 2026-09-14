@@ -49,7 +49,8 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
                                      std::shared_ptr<VoiceSource> voiceSource,
                                      double transportPosition,
                                      int sampleOffset,
-                                     int numSamples)
+                                     int numSamples,
+                                     double sampleOffsetTime)
 {
     auto context = audium::seconds;
 
@@ -68,6 +69,14 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     // the voice's first output sample, relative to the loop offset
     auto startSampleInRange = 0;
 
+    // The voice starts on a whole output sample, which sits up to half a
+    // sample from the time it stands for; the file position follows that
+    // rounding, so the material lands where the timeline says. With the
+    // file at the engine's rate this puts the seek on a whole source
+    // sample (the same one as before); resampled, the seek is fractional.
+    // (the loop's restart sample was rounded from sampleOffsetTime)
+    auto startTimeError = static_cast<double>(sampleOffset) / externalSampleRate - sampleOffsetTime;
+
     if (offset < 0.0) {
         // the clip already started: seek the speed-scaled distance into the file
         position = spec.voiceFileStart() - offset * speedRatio;
@@ -79,8 +88,11 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
         position = spec.voiceFileStart();
         startSampleInRange = static_cast<int>(std::round(offset * externalSampleRate));
         startSample = startSampleInRange + sampleOffset;
+        startTimeError += static_cast<double>(startSampleInRange) / externalSampleRate - offset;
     }
-    jassert(position >= 0.0);
+
+    // half a sample before the file's first sample is the file start
+    position = std::max(0.0, position + startTimeError * speedRatio);
 
     // a start that rounds onto the next block boundary (the range test
     // passed on float noise) belongs to the next block, where it lands
@@ -136,6 +148,14 @@ void PlayListScheduler::process(double transportPositionClocks,
     
     const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
     auto transportRange = juce::Range<double> (transportPosition, transportPosition + secondsThisBuffer);
+
+    // the exact time the loop's restart sample was rounded from
+    auto timeUntilLoop = 0.0;
+    if (loopResult.loopEvent) {
+        timeUntilLoop = loopResult.timeUntilLoop;
+        if (loopResult.context == audium::clocks)
+            timeUntilLoop = tempoProvider->clocksToSeconds(timeUntilLoop);
+    }
     
     auto clipsChanged = audioClipContainer->pull();
     auto dspClips = audioClipContainer->getConsumerObjects();
@@ -168,7 +188,8 @@ void PlayListScheduler::process(double transportPositionClocks,
                                      voiceSource,
                                      transportPosition,
                                      loopResult.numSamplesUntilLoop,
-                                     numSamples)) {
+                                     numSamples,
+                                     timeUntilLoop)) {
                     continue;
                 }
                 

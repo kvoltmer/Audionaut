@@ -9,6 +9,7 @@
 #include <JuceHeader.h>
 #include "ClipDynamicsProcessor.h"
 #include "StretchAudioSource.h"
+#include "ClipResamplingSource.h"
 #include "Engine/PlayList/StretchMode.h"
 
 namespace audium {
@@ -18,15 +19,18 @@ namespace audium {
     The transport for one clip: takes a PositionableAudioSource and plays,
     stops and repositions it, applying the clip's gain and fade ramps.
 
-    Forked from juce::AudioTransportSource with three deliberate changes:
+    Forked from juce::AudioTransportSource with four deliberate changes:
     the ChangeBroadcaster base is gone, the flat gain is replaced by an
     injected ClipDynamicsProcessor (clip gain + fade-in/out ramps, applied
-    post-resampling), and the callback lock is removed. The threading
+    post-resampling), the resampler is the ClipResamplingSource fork (a
+    seek lands on a fractional source sample with the anti-aliasing filter
+    primed, so loop wraps do not click), and the callback lock is removed.
+    The threading
     contract without that lock: configuration (setSource, prepareToPlay)
     happens off the audio thread and is gated by the atomic isPrepared
     flag; setSource must not race an in-flight getNextAudioBlock.
 
-    @see VoiceSource, ClipDynamicsProcessor, ClipFadeSpec
+    @see VoiceSource, ClipDynamicsProcessor, ClipFadeSpec, ClipResamplingSource
 */
 class ClipTransportSource  : public juce::PositionableAudioSource
 {
@@ -76,7 +80,10 @@ public:
     /** Changes the current playback position in the source stream.
 
         The next time the getNextAudioBlock() method is called, this
-        is the time from which it'll read data.
+        is the time from which it'll read data. The position is taken to
+        the source at its own rate, fractional: no rounding to a device
+        sample first, and the resampler seeks to the fraction (see
+        ClipResamplingSource::setNextReadPosition).
 
         @param newPosition    the new playback position in seconds
 
@@ -165,7 +172,8 @@ public:
     void getNextAudioBlock (const juce::AudioSourceChannelInfo&) override;
 
     //==============================================================================
-    /** Implements the PositionableAudioSource method. */
+    /** Implements the PositionableAudioSource method (device samples;
+        setPosition is the exact route). */
     void setNextReadPosition (juce::int64 newPosition) override;
 
     /** Implements the PositionableAudioSource method. */
@@ -185,7 +193,10 @@ private:
     /// Re-applies mode and speed to the resampler and the stretch node.
     void updateSpeedChain() noexcept;
 
-    juce::ResamplingAudioSource* resamplerSource = nullptr;
+    /// Positions the chain at a (fractional) source sample.
+    void seekSource (double sourceSamplePosition);
+
+    ClipResamplingSource* resamplerSource = nullptr;
     StretchAudioSource* stretchSource = nullptr;
     juce::BufferingAudioSource* bufferingSource = nullptr;
     juce::PositionableAudioSource* positionableSource = nullptr;
