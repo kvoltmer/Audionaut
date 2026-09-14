@@ -111,7 +111,9 @@ const server = new McpServer(
     instructions:
       "Tools for inspecting and editing Audionaut (.audium) multitrack projects. Every tool saves the " +
       "project immediately. If a task needs something these tools cannot do - a missing verb, option " +
-      "or limit - tell the user and use request_feature to send the gap to the maintainer.",
+      "or limit - tell the user and use request_feature to send the gap to the maintainer. If a tool " +
+      "misbehaves - a crash, a wrong result, a project left in a bad state - tell the user and use " +
+      "report_bug so the maintainer hears about it.",
   }
 );
 
@@ -643,44 +645,51 @@ server.registerTool(
 );
 
 // ---------------------------------------------------------------------------
-// Feature requests: agents hit the edges of what the CLI exposes long before
-// a human would file an issue, so give them a direct channel. Transports, in
-// order:
+// Feature requests and bug reports: agents hit the edges of what the CLI
+// exposes, and its bugs, long before a human would file an issue, so give
+// them a direct channel. Both tools file a GitHub issue; the kind decides
+// the labels. Transports, in order:
 //   1. the relay (Tools/feature-request-relay, a Cloudflare Worker that
-//      files a GitHub issue with its own token - the path for end users;
+//      files the issue with its own token - the path for end users;
 //      AUDIONAUT_FEATURE_REQUEST_URL overrides it, an empty value skips it);
 //   2. the GitHub CLI (`gh`), when installed and authenticated - developer
 //      machines, filed under the user's own account;
 //   3. otherwise nothing is sent and the reply carries a prefilled
 //      new-issue URL for the user to open.
-// AUDIONAUT_DISABLE_FEATURE_REQUESTS=1 skips 1 and 2 (harnesses, air-gapped
-// setups). Web3Forms (the website's contact form) was tried first and
-// rejects server-side posts on the free plan.
+// AUDIONAUT_DISABLE_FEATURE_REQUESTS=1 skips 1 and 2 for both tools
+// (harnesses, air-gapped setups). Web3Forms (the website's contact form)
+// was tried first and rejects server-side posts on the free plan.
 // ---------------------------------------------------------------------------
 const githubRepo = "kvoltmer/Audionaut";
-const featureRequestUrl =
+const issueRelayUrl =
   process.env.AUDIONAUT_FEATURE_REQUEST_URL ?? "https://audionaut-feature-requests.feature-request-relay.workers.dev";
-const featureRequestsDisabled = Boolean(process.env.AUDIONAUT_DISABLE_FEATURE_REQUESTS);
+const issueFilingDisabled = Boolean(process.env.AUDIONAUT_DISABLE_FEATURE_REQUESTS);
 const discussionsUrl = `https://github.com/${githubRepo}/discussions/63`;
+const clientTag = `audionaut-mcp 0.1.0 (${platform()} ${release()})`;
 
-function prefilledIssueUrl(title, body) {
-  const params = new URLSearchParams({ labels: "enhancement", title, body });
+const issueKinds = {
+  feature: { labels: ["enhancement", "agent-request"], failureCode: "feature_request_failed" },
+  bug: { labels: ["bug", "agent-report"], failureCode: "bug_report_failed" },
+};
+
+function prefilledIssueUrl(kind, title, body) {
+  const params = new URLSearchParams({ labels: issueKinds[kind].labels.join(","), title, body });
   return `https://github.com/${githubRepo}/issues/new?${params}`;
 }
 
 // Posts to the relay; resolves to the created issue URL or throws with a
 // message the agent can relay.
-async function sendViaRelay(title, body, reporter) {
+async function sendViaRelay(kind, title, body, reporter) {
   let response;
   try {
-    response = await fetch(featureRequestUrl, {
+    response = await fetch(issueRelayUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ title, body, reporter, client: `audionaut-mcp 0.1.0 (${platform()} ${release()})` }),
+      body: JSON.stringify({ kind, title, body, reporter, client: clientTag }),
       signal: AbortSignal.timeout(15_000),
     });
   } catch (error) {
-    throw new Error(`could not reach ${featureRequestUrl} (${error.message})`);
+    throw new Error(`could not reach ${issueRelayUrl} (${error.message})`);
   }
   let reply = {};
   try {
@@ -695,11 +704,12 @@ async function sendViaRelay(title, body, reporter) {
 
 // Files the issue with the GitHub CLI; resolves to the issue URL, or to null
 // when gh is missing or not logged in (any other failure throws).
-async function sendViaGh(title, body) {
+async function sendViaGh(kind, title, body) {
   try {
     const { stdout } = await execFileAsync(
       "gh",
-      ["issue", "create", "--repo", githubRepo, "--title", title, "--body", body, "--label", "enhancement"],
+      ["issue", "create", "--repo", githubRepo, "--title", title, "--body", body,
+       ...issueKinds[kind].labels.flatMap((label) => ["--label", label])],
       { timeout: 30_000 }
     );
     return stdout.trim().split("\n").pop();
@@ -709,6 +719,45 @@ async function sendViaGh(title, body) {
     throw new Error(`gh issue create failed: ${stderr.trim() || error.message}`);
   }
 }
+
+// Shared tail of request_feature and report_bug: runs the transport chain
+// and shapes the tool result.
+async function fileIssue(kind, title, body, reporter) {
+  const issueUrl = prefilledIssueUrl(kind, title, body);
+  const reply = (fields) =>
+    ({ content: [{ type: "text", text: JSON.stringify({ title, ...fields, discussions: discussionsUrl }, null, 2) }] });
+
+  if (issueFilingDisabled)
+    return reply({ sent: false, reason: "AUDIONAUT_DISABLE_FEATURE_REQUESTS is set", newIssueUrl: issueUrl, body });
+
+  try {
+    if (issueRelayUrl)
+      return reply({ sent: true, via: "relay", issueUrl: await sendViaRelay(kind, title, body, reporter) });
+
+    const ghUrl = await sendViaGh(kind, title, body);
+    if (ghUrl) return reply({ sent: true, via: "gh", issueUrl: ghUrl });
+  } catch (error) {
+    return {
+      content: [{ type: "text", text: `${issueKinds[kind].failureCode}: ${error.message}. Offer the user the prefilled issue instead: ${issueUrl}` }],
+      isError: true,
+    };
+  }
+
+  return reply({
+    sent: false,
+    reason: "no relay configured and gh is not available - ask the user to open the prefilled issue",
+    newIssueUrl: issueUrl,
+  });
+}
+
+const reporterParam = z
+  .string()
+  .trim()
+  .max(200)
+  .optional()
+  .describe("The user's name or e-mail for follow-up, only if they offered it");
+
+const footer = (reporter) => `_Sent via ${clientTag}${reporter ? `, reporter: ${reporter}` : ""}_`;
 
 server.registerTool(
   "request_feature",
@@ -735,47 +784,63 @@ server.registerTool(
         .max(2000)
         .optional()
         .describe("What you were trying to do, which tool fell short, and any workaround used"),
-      reporter: z
-        .string()
-        .trim()
-        .max(200)
-        .optional()
-        .describe("The user's name or e-mail for follow-up, only if they offered it"),
+      reporter: reporterParam,
     },
   },
-  async ({ title, description, context, reporter }) => {
-    const body = [
+  async ({ title, description, context, reporter }) =>
+    fileIssue("feature", title, [
       description,
       ...(context ? ["", "**Agent context**", "", context] : []),
       "",
-      `_Sent via audionaut-mcp 0.1.0 (${platform()} ${release()})${reporter ? `, reporter: ${reporter}` : ""}_`,
-    ].join("\n");
-    const issueUrl = prefilledIssueUrl(title, body);
-    const reply = (fields) =>
-      ({ content: [{ type: "text", text: JSON.stringify({ title, ...fields, discussions: discussionsUrl }, null, 2) }] });
+      footer(reporter),
+    ].join("\n"), reporter)
+);
 
-    if (featureRequestsDisabled)
-      return reply({ sent: false, reason: "AUDIONAUT_DISABLE_FEATURE_REQUESTS is set", newIssueUrl: issueUrl, body });
-
-    try {
-      if (featureRequestUrl)
-        return reply({ sent: true, via: "relay", issueUrl: await sendViaRelay(title, body, reporter) });
-
-      const ghUrl = await sendViaGh(title, body);
-      if (ghUrl) return reply({ sent: true, via: "gh", issueUrl: ghUrl });
-    } catch (error) {
-      return {
-        content: [{ type: "text", text: `feature_request_failed: ${error.message}. Offer the user the prefilled issue instead: ${issueUrl}` }],
-        isError: true,
-      };
-    }
-
-    return reply({
-      sent: false,
-      reason: "no relay configured and gh is not available - ask the user to open the prefilled issue",
-      newIssueUrl: issueUrl,
-    });
-  }
+server.registerTool(
+  "report_bug",
+  {
+    title: "Report a bug",
+    description:
+      "Reports a bug in Audionaut to the maintainer as a GitHub issue. Use it when a tool misbehaves: " +
+      "an error that should not happen, a wrong or inconsistent result, a crash, or a project left in a " +
+      "bad state. Quote the exact tool call and error text - the CLI's code and message - and say what " +
+      "you expected instead; that is what makes the report reproducible. Never include the audio itself, " +
+      "and keep file paths to what is needed. Tell the user you are sending it; include their name or " +
+      "e-mail only if they offered it. If nothing could be sent, the reply carries a prefilled issue link " +
+      "to hand to the user.",
+    inputSchema: {
+      title: z.string().trim().min(1).max(120).describe("One-line summary of the problem"),
+      description: z
+        .string()
+        .trim()
+        .min(1)
+        .max(4000)
+        .describe("What happened, including the exact error text if there was one"),
+      steps: z
+        .string()
+        .trim()
+        .max(4000)
+        .optional()
+        .describe("How to reproduce it: the tool calls in order, with their arguments"),
+      expected: z.string().trim().max(2000).optional().describe("What should have happened instead"),
+      context: z
+        .string()
+        .trim()
+        .max(2000)
+        .optional()
+        .describe("Project shape (tracks, clips, sample rate), platform, anything else relevant"),
+      reporter: reporterParam,
+    },
+  },
+  async ({ title, description, steps, expected, context, reporter }) =>
+    fileIssue("bug", title, [
+      description,
+      ...(steps ? ["", "**Steps to reproduce**", "", steps] : []),
+      ...(expected ? ["", "**Expected**", "", expected] : []),
+      ...(context ? ["", "**Context**", "", context] : []),
+      "",
+      footer(reporter),
+    ].join("\n"), reporter)
 );
 
 const transport = new StdioServerTransport();

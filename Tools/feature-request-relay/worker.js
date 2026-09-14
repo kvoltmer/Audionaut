@@ -3,10 +3,10 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-// Cloudflare Worker relaying feature requests from audionaut-mcp into GitHub
-// issues. It holds the only credential (GITHUB_TOKEN, a fine-grained PAT with
+// Cloudflare Worker relaying feature requests and bug reports from
+// audionaut-mcp into GitHub issues. It holds the only credential (GITHUB_TOKEN, a fine-grained PAT with
 // Issues read/write on the repo) so agents on end-user machines need none.
-// Request: POST JSON {title, body, reporter?, client?}
+// Request: POST JSON {title, body, kind?: "feature" | "bug", reporter?, client?}
 // Reply:   {success: true, url, number} or {success: false, message}
 // GET answers a health check {ok, repo, hasToken} without touching GitHub.
 
@@ -56,7 +56,11 @@ export default {
     const client = String(payload.client ?? "unknown client").slice(0, 200);
     const token = String(env.GITHUB_TOKEN ?? "").trim(); // a pasted secret may carry a newline
     if (!token) return json({ success: false, message: "relay has no GITHUB_TOKEN" }, 500);
-    const labels = (env.LABELS ?? "enhancement,agent-request").split(",").map((label) => label.trim());
+    const kind = payload.kind === "bug" ? "bug" : "feature";
+    const labels = String(kind === "bug" ? env.LABELS_BUG : env.LABELS_FEATURE)
+      .split(",")
+      .map((label) => label.trim())
+      .filter(Boolean);
 
     const response = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/issues`, {
       method: "POST",
