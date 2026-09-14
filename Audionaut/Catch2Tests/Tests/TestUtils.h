@@ -100,9 +100,12 @@ static const File createSlowSawTwoSecondsAudioFile()
 }
 
 /// A pure sine, optionally preceded by silence (for onset-alignment
-/// probes). Written fresh on every call, like the saw generators.
+/// probes). Written fresh on every call, like the saw generators. The
+/// file's sample rate defaults to the 44.1 kHz the tests bounce at;
+/// pass another one to exercise the clip chain's rate correction.
 static const File createSineAudioFile(double frequencyHz, double lengthInSeconds,
-                                      double leadingSilenceSeconds = 0.0)
+                                      double leadingSilenceSeconds = 0.0,
+                                      double sampleRate = 44100.0)
 {
     auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/sine-gen.wav"));
     TemporaryFile tempFile (targetFile);
@@ -111,7 +114,7 @@ static const File createSineAudioFile(double frequencyHz, double lengthInSeconds
     jassert(stream);
     if (stream != nullptr) {
         WavAudioFormat wav;
-        auto opt = AudioFormatWriter::Options{}.withSampleRate (44100.0)
+        auto opt = AudioFormatWriter::Options{}.withSampleRate (sampleRate)
             .withNumChannels (1)
             .withBitsPerSample (32)
             .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
@@ -119,14 +122,14 @@ static const File createSineAudioFile(double frequencyHz, double lengthInSeconds
         jassert(writer);
         if (writer != nullptr) {
 
-            const auto silenceSamples = static_cast<int>(44100.0 * leadingSilenceSeconds);
-            const auto sineSamples = static_cast<int>(44100.0 * lengthInSeconds);
+            const auto silenceSamples = static_cast<int>(sampleRate * leadingSilenceSeconds);
+            const auto sineSamples = static_cast<int>(sampleRate * lengthInSeconds);
 
             AudioBuffer<float> buffer(1, silenceSamples + sineSamples);
             buffer.clear();
             for (auto s = 0; s < sineSamples; s++)
                 *buffer.getWritePointer(0, silenceSamples + s)
-                    = std::sin(MathConstants<double>::twoPi * frequencyHz * s / 44100.0);
+                    = std::sin(MathConstants<double>::twoPi * frequencyHz * s / sampleRate);
 
             writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
 
@@ -138,7 +141,9 @@ static const File createSineAudioFile(double frequencyHz, double lengthInSeconds
     return File();
 }
 
-static const File generateDcOffsetAudioFile(double lengthInSeconds)
+/// A constant +1.0, at the given file sample rate (defaults to the
+/// 44.1 kHz the tests usually bounce at).
+static const File generateDcOffsetAudioFile(double lengthInSeconds, double sampleRate = 44100.0)
 {
     auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/dc-offset.wav"));
     TemporaryFile tempFile (targetFile);
@@ -147,7 +152,7 @@ static const File generateDcOffsetAudioFile(double lengthInSeconds)
     jassert(stream);
     if (stream != nullptr) {
         WavAudioFormat wav;
-        auto opt = AudioFormatWriter::Options{}.withSampleRate (44100.0)
+        auto opt = AudioFormatWriter::Options{}.withSampleRate (sampleRate)
             .withNumChannels (1)
             .withBitsPerSample (32)
             .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
@@ -155,7 +160,7 @@ static const File generateDcOffsetAudioFile(double lengthInSeconds)
         jassert(writer);
         if (writer != nullptr) {
             
-            auto blockSize = static_cast<int>(44100.0 * lengthInSeconds);
+            auto blockSize = static_cast<int>(sampleRate * lengthInSeconds);
             
             AudioBuffer<float> buffer(1, blockSize);
             AudioSourceChannelInfo info (&buffer, 0, blockSize);
@@ -166,6 +171,43 @@ static const File generateDcOffsetAudioFile(double lengthInSeconds)
             }
             writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             
+            writer.reset();
+            tempFile.overwriteTargetFileWithTemporary();
+            return tempFile.getTargetFile();
+        }
+    }
+    return File();
+}
+
+/// One linear ramp from -1 to +1 over the whole file (genSaw over its
+/// length), at the given sample rate: every sample carries its own
+/// position, so a bounce can be checked for which source sample landed
+/// where.
+static const File createRampAudioFile(double lengthInSeconds, double sampleRate = 44100.0)
+{
+    auto targetFile = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/ramp-gen.wav"));
+    TemporaryFile tempFile (targetFile);
+
+    std::unique_ptr<OutputStream> stream (tempFile.getFile().createOutputStream());
+    jassert(stream);
+    if (stream != nullptr) {
+        WavAudioFormat wav;
+        auto opt = AudioFormatWriter::Options{}.withSampleRate (sampleRate)
+            .withNumChannels (1)
+            .withBitsPerSample (32)
+            .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
+        auto writer = wav.createWriterFor (stream, opt);
+        jassert(writer);
+        if (writer != nullptr) {
+
+            const auto numSamples = static_cast<int>(sampleRate * lengthInSeconds);
+
+            AudioBuffer<float> buffer(1, numSamples);
+            for (auto s = 0; s < numSamples; s++)
+                *buffer.getWritePointer(0, s) = genSaw(s, numSamples);
+
+            writer->writeFromAudioSampleBuffer(buffer, 0, numSamples);
+
             writer.reset();
             tempFile.overwriteTargetFileWithTemporary();
             return tempFile.getTargetFile();

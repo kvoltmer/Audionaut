@@ -25,3 +25,12 @@
 [submodule "Submodules/signalsmith-linear"]
 	path = Submodules/signalsmith-linear
 	url = https://github.com/Signalsmith-Audio/linear
+[submodule "Submodules/bungee"]
+	path = Submodules/bungee
+	url = https://github.com/bungee-audio-stretch/bungee.git
+[submodule "Submodules/rubberband"]
+	path = Submodules/rubberband
+	url = https://github.com/breakfastquay/rubberband.git
+[submodule "Submodules/soundtouch"]
+	path = Submodules/soundtouch
+	url = https://codeberg.org/soundtouch/soundtouch.git

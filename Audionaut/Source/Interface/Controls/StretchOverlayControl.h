@@ -16,7 +16,7 @@
  *
  * The Stretch Clip command mounts it on the selected clip:
  * PlayListItemComponent shows it while the engine's ClipOverlayTarget names
- * this clip. The row is Mode, Lock, a slider, and Apply:
+ * this clip. The row is Mode, Lock, a slider, and Done:
  *
  * - Unlocked, the slider is the speed ratio (0.25x-4x, log around 1.0,
  *   double-click for x1) and applies LIVE - the clip stretches as the value
@@ -29,9 +29,9 @@
  *   errors; double-click returns to the detected tempo.
  *
  * The Mode box picks how the speed is realised: Re-Pitch is classic
- * varispeed, Time-Stretch keeps the pitch (see StretchAudioSource). Apply
- * keeps the session as one "Stretch Clip" undo transaction and closes;
- * Escape and the close chip roll the whole session back instead. Moving
+ * varispeed, Time-Stretch keeps the pitch (see StretchAudioSource). Done
+ * (and the close chip) keep the session as one "Stretch Clip" undo
+ * transaction and close; Escape rolls the whole session back instead. Moving
  * the selection to another clip, or toggling the command off, keeps the
  * changes (committing the session) - only the two explicit dismiss
  * gestures on the panel cancel.
@@ -56,12 +56,15 @@ protected:
     int getPreferredWidth() const override;
 
     // When space is tight the Mode box, Lock and the /2 x2 pair sit out
-    // first: a slider-plus-Apply control can still finish the session.
+    // first: a slider-plus-Done control can still finish the session.
     int getMinimumWidth() const override;
 
-    // Escape / the close chip CANCEL: the pending session is rolled back
+    // Escape CANCELS: the pending session is rolled back
     // (no undo entry) before the cleared target hides this control.
     void dismissOverlay() override;
+    // The close chip KEEPS: same as Done, the session is committed and
+    // the overlay closes.
+    void closeOverlay() override;
 
     // Session begin: arm a clean session, sync the widgets from the clip,
     // pick up a detection that finished while the overlay was away.
@@ -69,7 +72,7 @@ protected:
 
     // Session end: commit whatever is still pending as one undo step -
     // this is what keeps the changes on selection moves and the command
-    // toggling off. After Apply or a cancel the session is clean and this
+    // toggling off. After Done or a cancel the session is clean and this
     // is a no-op.
     void overlayHidden() override;
 
@@ -100,7 +103,7 @@ private:
     void ensureSessionOpen (audium::PlayListItem& item);
 
     // Commits the pending session as one "Stretch Clip" undo transaction.
-    // Idempotent; called from Apply, the hidden hook and the destructor (a
+    // Idempotent; called from Done, the hidden hook and the destructor (a
     // rebuild destroys visible overlays without a visibilityChanged).
     void commitSession();
 
