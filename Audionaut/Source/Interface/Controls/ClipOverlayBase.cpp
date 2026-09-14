@@ -95,11 +95,11 @@ ClipOverlayBase::ClipOverlayBase(std::shared_ptr<audium::AudiumEngine> audiumEng
     // has to fire for those too (see the header).
     addMouseListener (this, true);
 
-    // The close chip: a small round dismiss button straddling the scrim's
+    // The close chip: a small round close button straddling the scrim's
     // top-left corner. Same grey-and-white language as the other buttons,
     // but circular and unlabelled - it is its own symbol.
     closeButton = makeCloseChip();
-    closeButton->onClick = [this] { dismissOverlay(); };
+    closeButton->onClick = [this] { closeOverlay(); };
     addAndMakeVisible (closeButton.get());
 }
 

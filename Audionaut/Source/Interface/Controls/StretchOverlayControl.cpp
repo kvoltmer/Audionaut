@@ -90,14 +90,9 @@ StretchOverlayControl::StretchOverlayControl(std::shared_ptr<audium::AudiumEngin
         speedSlider->setValue (speedSlider->getValue() * 2.0, juce::sendNotificationSync);
     };
 
-    applyButton = makeIconButton (TRANS ("Apply"), checkIconPath());
+    applyButton = makeIconButton (TRANS ("Done"), checkIconPath());
     addAndMakeVisible (applyButton.get());
-    applyButton->onClick = [this] {
-        // commit first: the cleared target hides the overlay, whose hidden
-        // hook then finds a clean session and leaves the transaction alone
-        commitSession();
-        audiumEngine->getAudioTrackContainer()->getClipOverlayTarget()->clear();
-    };
+    applyButton->onClick = [this] { closeOverlay(); };
 }
 
 StretchOverlayControl::~StretchOverlayControl()
@@ -180,9 +175,18 @@ int StretchOverlayControl::getMinimumWidth() const
 
 void StretchOverlayControl::dismissOverlay()
 {
-    // Escape / the close chip mean "never mind": roll the session back
-    // before the cleared target hides the control.
+    // Escape means "never mind": roll the session back before the cleared
+    // target hides the control.
     cancelSession();
+    audiumEngine->getAudioTrackContainer()->getClipOverlayTarget()->clear();
+}
+
+void StretchOverlayControl::closeOverlay()
+{
+    // Done and the close chip both keep the live edits. Commit first: the
+    // cleared target hides the overlay, whose hidden hook then finds a
+    // clean session and leaves the transaction alone.
+    commitSession();
     audiumEngine->getAudioTrackContainer()->getClipOverlayTarget()->clear();
 }
 
@@ -366,7 +370,7 @@ void StretchOverlayControl::applyMode (bool pitchPreserving)
                                           : audium::StretchMode::RePitch);
 
     // no relayout (the length is mode-independent); the broadcast keeps
-    // the arrangement's readouts honest, playback switches over on Apply
+    // the arrangement's readouts honest, playback switches over on Done
     audiumEngine->getAudioTrackContainer()->sendActionMessage (audium::updateArrangementAction);
 }
 
@@ -421,9 +425,9 @@ void StretchOverlayControl::resized()
     auto r = getContentArea().reduced (padding, verticalPadding);
     auto buttonRow = r.removeFromTop (buttonHeight);
 
-    // Apply must survive every width tier - the dismiss gestures cancel,
-    // so a panel without Apply could not confirm. At the minimum width
-    // (see ClipOverlayBase::updatePosition) only slider + Apply remain.
+    // Done must survive every width tier - the dismiss gestures cancel,
+    // so a panel without Done could not confirm. At the minimum width
+    // (see ClipOverlayBase::updatePosition) only slider + Done remain.
     applyButton->setBounds (buttonRow.removeFromRight (buttonWidth));
 
     const bool buttonsFit = getWidth() >= getPreferredWidth() + 2 * closeButtonOverhang;
