@@ -13,6 +13,7 @@
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Recording/RecordingActionHandler.h"
+#include "Engine/Channel/AudioChannel.h"
 
 #include "TestUtils.h"
 
@@ -112,3 +113,44 @@ SCENARIO("recording scenario", "[engine][recording]")
     juce::MessageManager::deleteInstance();
 }
 
+
+// isRecordEnabled/isRecording took channel 0 for "any channel" while
+// setRecordEnabled took it for the first channel, so asking about channel
+// 0 answered for the whole track.
+SCENARIO("record-enable is queried per channel, channel 0 included", "[engine][recording]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    GIVEN("a stereo track with only its second channel armed")
+    {
+        auto engine = AudiumFactory::createAudiumEngine();
+        engine->getProjectSerializer()->createNewProject(2);
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        REQUIRE(track != nullptr);
+        REQUIRE(track->getNumAudioTrackChannels() == 2);
+
+        // the headless engine has a single input; route channel 1 to it
+        track->getChannel(1)->setInputChannel(0);
+        track->setRecordEnabled(1, true);
+        // record-enable goes through the lock-free commander, which the
+        // audio thread would drain; here the test drains it
+        engine->getPlayListScheduler()->getAudioBusInterface()->invokeCommands();
+
+        THEN("channel 0 reports not enabled while channel 1 and the track do")
+        {
+            REQUIRE_FALSE(track->isRecordEnabled(0));
+            REQUIRE(track->isRecordEnabled(1));
+            REQUIRE(track->isRecordEnabled());
+            REQUIRE_FALSE(track->isRecording(0));
+            REQUIRE_FALSE(track->isRecording());
+        }
+
+        // the track must not outlive its engine
+        track = nullptr;
+        engine = nullptr;
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
