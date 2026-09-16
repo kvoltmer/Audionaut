@@ -10,10 +10,15 @@ using namespace juce;
 namespace audium {
 
 // GA4 Measurement Protocol credentials: GA4 Admin -> Data streams -> your
-// stream (Measurement ID) -> Measurement Protocol API secrets. With either
-// left empty no destination is created and nothing is ever sent. Meant to be
-// injected at build time (-DGA4_MEASUREMENT_ID=\"G-...\") so the secret stays
-// out of the public sources.
+// stream (Measurement ID) -> Measurement Protocol API secrets. The
+// measurement id is a build define (not secret, it is in every page that
+// embeds the tag); the API secret lives in the git-ignored
+// AnalyticsCredentials.h next to this file (see the .example) so it never
+// enters the public sources - CI writes it from a repository secret. With
+// either left empty no destination is created and nothing is ever sent.
+#if __has_include("AnalyticsCredentials.h")
+ #include "AnalyticsCredentials.h"
+#endif
 #ifndef GA4_MEASUREMENT_ID
  #define GA4_MEASUREMENT_ID ""
 #endif

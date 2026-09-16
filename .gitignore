@@ -91,3 +91,6 @@ Audionaut/Catch2Tests/TestFiles/sine-gen.wav
 Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/sine-gen.wav
 Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/*-autoedit-*.json
 Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/*-autoedit-*.txt
+
+# GA4 Measurement Protocol API secret - local copy of the .example, never committed
+Audionaut/Source/Application/AnalyticsCredentials.h
