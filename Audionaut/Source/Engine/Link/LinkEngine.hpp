@@ -24,6 +24,7 @@
 
 #include <ableton/Link.hpp>
 #include <atomic>
+#include <optional>
 #include <mutex>
 
 
@@ -89,7 +90,10 @@ public:
     
 private:
     
-    std::unique_ptr<ableton::Link::SessionState> sessionState;
+    /// Captured at the start of every audio callback; a value, since a
+    /// fresh heap allocation per callback is not real-time safe. Audio
+    /// thread only.
+    std::optional<ableton::Link::SessionState> sessionState;
     
     std::unique_ptr<ableton::Link> mLink;
   

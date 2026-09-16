@@ -123,11 +123,13 @@ void PlayListScheduler::process(double transportPositionClocks,
     auto transportRange = juce::Range<double> (transportPosition, transportPosition + secondsThisBuffer);
     
     auto clipsChanged = audioClipContainer->pull();
-    auto dspClips = audioClipContainer->getConsumerObjects();
+    // a reference: the copy this used to make was a heap allocation per
+    // audio callback
+    const auto& dspClips = audioClipContainer->getConsumerObjects();
     
-    for (auto clipData : dspClips) {
+    for (const auto& clipData : dspClips) {
         
-        const audium::DspClip dspClip(getTempoProvider(), clipData);
+        const audium::DspClip dspClip(*tempoProvider, clipData);
         
         if (dspClip.getRegionData(audium::seconds).isEmpty())
             continue;

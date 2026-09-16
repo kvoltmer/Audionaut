@@ -79,7 +79,8 @@ public:
         auto numChannels = std::min(static_cast<int>(outputBlock.getNumChannels()),
                                     MAX_AUDIO_CHANNELS);
         
-        // TODO: avoid reallocating in the audio thread
+        // allocation-free for blocks within what prepareToPlay sized
+        // (avoidReallocating keeps the larger allocation)
         processingBuffer.setSize(numChannels, numSamples, false, false, true);
         processingBuffer.clear();
         

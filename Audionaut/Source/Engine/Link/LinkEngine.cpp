@@ -208,7 +208,7 @@ bool LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
 {
     const auto engineData = pullEngineData();
 
-    sessionState = std::make_unique<ableton::Link::SessionState>(mLink->captureAudioSessionState());
+    sessionState = mLink->captureAudioSessionState();
 
     // Clear the buffer
     std::fill(mBuffer.begin(), mBuffer.end(), 0);

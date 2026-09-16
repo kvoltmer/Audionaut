@@ -33,6 +33,9 @@ public:
     LockFreeContainer(int capacity) :
         fifo(capacity)
     {
+        // pull() runs on the audio thread: the consumer side must never
+        // have to grow
+        consumer_objects.reserve(static_cast<size_t>(capacity));
     }
 
 
@@ -104,7 +107,7 @@ public:
             consumer_objects.clear();
             _Tp object;
             while (fifo.pop (object))
-                consumer_objects.push_back(object);
+                consumer_objects.push_back(std::move(object));
             objects_committed.store(false);
             return true;
         }
