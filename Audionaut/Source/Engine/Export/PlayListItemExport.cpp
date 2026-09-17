@@ -52,10 +52,13 @@ bool PlayListItemExport::exportItem()
 #endif
         juce::File dir(defaultFileName);
         chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
-        return ExportUtil::exportAudio(chooser,
-                                       audiumEngine,
-                                       config,
-                                       exportThread);
+        // asynchronous: the export runs when the chooser closes, so there
+        // is no result to report yet
+        ExportUtil::exportAudio(chooser,
+                                audiumEngine,
+                                config,
+                                exportThread);
+        return false;
     }
     else {
         config->fileName = File(ProjectFileStore::tempDirectory.getFullPathName() + File::getSeparatorString() + audioRegion->getName() + ".wav");

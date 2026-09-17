@@ -354,7 +354,7 @@ void AudioTrack::setRecordEnabled(const int channelNumber, bool bEnabled)
 
 bool AudioTrack::isRecordEnabled(const int channelNumber)
 {
-    if (channelNumber > 0 && channelNumber < (int)audioChannelContainer->objects.size()) {
+    if (channelNumber >= 0 && channelNumber < (int)audioChannelContainer->objects.size()) {
         return audioChannelContainer->getObject((std::size_t)channelNumber)->isRecordEnabled();
     }
     else {
@@ -369,7 +369,7 @@ bool AudioTrack::isRecordEnabled(const int channelNumber)
 
 bool AudioTrack::isRecording(const int channelNumber) const
 {
-    if (channelNumber > 0 && (std::size_t)channelNumber < audioChannelContainer->objects.size()) {
+    if (channelNumber >= 0 && (std::size_t)channelNumber < audioChannelContainer->objects.size()) {
         return audioChannelContainer->getObject((std::size_t)channelNumber)->isRecording();
     }
     else {

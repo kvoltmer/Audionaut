@@ -346,12 +346,13 @@ bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
                 }
                 else {
                     region = getRegion(regionData.region_id);
-                    if (region != nullptr) {
-                        region->data = regionData;
-                    }
-                    else {
+                    if (region == nullptr) {
+                        // the file names a region this graph does not have;
+                        // skip it rather than dereference nothing below
                         jassertfalse;
+                        continue;
                     }
+                    region->data = regionData;
                 }
                 
                 // in case the region was in recording state we must assume the file length as region length
