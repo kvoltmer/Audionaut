@@ -150,6 +150,9 @@ if(AUDIONAUT_ENABLE_RUBBERBAND)
     set_property(TARGET audionaut_rubberband PROPERTY CXX_STANDARD 20)
     set_property(TARGET audionaut_rubberband PROPERTY POSITION_INDEPENDENT_CODE ON)
     if(MSVC)
+        # Thread.h / sysutils.cpp include <windows.h>, whose min/max macros
+        # break the std::min/std::max calls throughout the stretcher sources
+        target_compile_definitions(audionaut_rubberband PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
         target_compile_options(audionaut_rubberband PRIVATE /w /MP)
     else()
         target_compile_options(audionaut_rubberband PRIVATE -O3 -w)
