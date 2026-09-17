@@ -573,13 +573,14 @@ if(AUDIONAUT_BUILD_CLI)
 
     audionaut_configure_common(${CLI_NAME})
 
-    # GA4 credentials for the CLI binary only (mirrors the .jucer defines);
-    # the test target stays without them so in-process command tests can
-    # never create an analytics destination.
+    # GA4 measurement id for the CLI binary only (mirrors the .jucer
+    # define); the API secret comes from the git-ignored
+    # Source/Application/AnalyticsCredentials.h. The test target gets
+    # neither, so in-process command tests can never create an analytics
+    # destination.
     target_compile_definitions(${CLI_NAME}
             PRIVATE
-            GA4_MEASUREMENT_ID="G-Q6904SZWWY"
-            GA4_API_SECRET="TpBEa6eRRAGeG4BZmqwJDA")
+            GA4_MEASUREMENT_ID="G-Q6904SZWWY")
 
     target_sources(${CLI_NAME}
             PRIVATE

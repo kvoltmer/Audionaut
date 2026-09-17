@@ -73,6 +73,16 @@ jobs:
         # windows.yml already does.
         msbuild-architecture: x64
 
+    - name: Write analytics credentials
+      # the GA4 API secret is never committed; without the repository
+      # secret the release ships with analytics disabled
+      if: ${{ secrets.GA4_API_SECRET != '' }}
+      shell: pwsh
+      env:
+        GA4_API_SECRET: ${{ secrets.GA4_API_SECRET }}
+      run: |
+        "#pragma once`n#define GA4_API_SECRET `"$env:GA4_API_SECRET`"`n" | Set-Content -NoNewline -Encoding ascii Audionaut/Source/Application/AnalyticsCredentials.h
+
     - name: Build the app
       # -m builds projects in parallel; the solution only defines x64.
       # PreferredToolArchitecture keeps cl.exe itself x64-hosted (the C1002
