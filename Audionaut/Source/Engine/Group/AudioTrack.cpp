@@ -49,7 +49,17 @@ AudioTrack::AudioTrack(AudioTrackContainer &owner_,
 
 AudioTrack::~AudioTrack()
 {
-    cleanup();
+    // cleanup() has already run on every path that drops a track
+    // (deleteAudioTrack, AudioTrackContainer::cleanup, the selectable
+    // containers). A track can still be destroyed after the engine that owned
+    // it - a shared_ptr held by a component or a test - and then
+    // audioResourceContainer is a dangling reference: never reach into it
+    // from here (cleanup() and ResourceGroup::cleanup() both do). Regions and
+    // resources hold a shared_ptr to the track, so none can exist once this
+    // runs; only track-owned objects are left to drop.
+    resourceGroupContainer->release();
+    audioChannelContainer->release();
+    playListContainer->playListItems.release();
 }
 
 void AudioTrack::cleanup()
