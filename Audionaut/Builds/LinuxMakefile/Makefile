@@ -187,6 +187,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/PlayListItemDraggerControl_41919926.o \
   $(JUCE_OBJDIR)/DraggerControl_f198dea1.o \
   $(JUCE_OBJDIR)/LevelMeter_821028e9.o \
+  $(JUCE_OBJDIR)/LoadMeter_18b15b49.o \
   $(JUCE_OBJDIR)/RegionLabel_5a62dea6.o \
   $(JUCE_OBJDIR)/RegionSelector_50640af7.o \
   $(JUCE_OBJDIR)/RegionTableListBox_80e14e37.o \
@@ -807,6 +808,11 @@ $(JUCE_OBJDIR)/DraggerControl_f198dea1.o: ../../Source/Interface/Controls/Dragge
 $(JUCE_OBJDIR)/LevelMeter_821028e9.o: ../../Source/Interface/Controls/LevelMeter.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling LevelMeter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/LoadMeter_18b15b49.o: ../../Source/Interface/Controls/LoadMeter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling LoadMeter.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/RegionLabel_5a62dea6.o: ../../Source/Interface/Controls/RegionLabel.cpp
