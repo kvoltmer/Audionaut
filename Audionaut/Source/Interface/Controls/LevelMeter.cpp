@@ -6,11 +6,6 @@
 #include "LevelMeter.h"
 
 
-static Colour GreenLevel = Colour (0xff23a101);         // green < 20dB
-static Colour GreenLightLevel = Colour (0xff61ff02);    // green light > 20dB
-static Colour OrangeLevel = Colour (0xfffbb203);        // orange > 6dB
-static Colour RedLevel = Colour(0xffff0000);            // red > 0dB
-
 void LevelComponent::paint(Graphics& g)
 {
     /* background
@@ -140,10 +135,10 @@ void LevelComponent::drawLevels(Graphics& g)
     const int width0Db = roundToInt(static_cast<float>(getWidth()) * db0);
     
     auto grey = juce::Colours::grey;
-    auto greenLevel = m_bGrayscale ? grey : GreenLevel;
-    auto greenLightLevel = m_bGrayscale ? grey.brighter() : GreenLightLevel;
-    auto orangeLevel = m_bGrayscale ? grey.brighter().brighter() : OrangeLevel;
-    auto redLevel = RedLevel;
+    auto greenLevel = m_bGrayscale ? grey : MeterColours::green;
+    auto greenLightLevel = m_bGrayscale ? grey.brighter() : MeterColours::greenLight;
+    auto orangeLevel = m_bGrayscale ? grey.brighter().brighter() : MeterColours::orange;
+    auto redLevel = MeterColours::red;
     
     if(bVertical)
     {

@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 
 #include "Interface/Controls/LevelMeter.h"
+#include "Interface/Controls/LoadMeter.h"
 
 #include "Engine/AudiumEngine.h"
 
@@ -50,6 +51,7 @@ private:
     std::unique_ptr<juce::ShapeButton> rightPanelButton;
     
     std::unique_ptr<StereoMeter> stereoMeter;
+    std::unique_ptr<LoadMeter> loadMeter;
     std::unique_ptr<juce::Slider> volumeSlider;
     
     

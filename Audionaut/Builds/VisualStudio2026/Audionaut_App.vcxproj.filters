@@ -1354,6 +1354,9 @@
     <ClCompile Include="..\..\Source\Interface\Controls\LevelMeter.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Controls\LoadMeter.cpp">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Controls\RegionLabel.cpp">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClCompile>
@@ -4815,6 +4818,9 @@
     <ClInclude Include="..\..\Source\Engine\Core\HeadlessMode.h">
       <Filter>Audionaut\Source\Engine\Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Core\DspLoadMeter.h">
+      <Filter>Audionaut\Source\Engine\Core</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Streamable.h">
       <Filter>Audionaut\Source\Engine</Filter>
     </ClInclude>
@@ -5185,6 +5191,9 @@
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\LevelMeter.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\LoadMeter.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h">

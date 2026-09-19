@@ -31,6 +31,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
                                                         int numSamples,
                                                         [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context_)
 {
+    dspLoadMeter.begin();
     
     // clear output
     for (int i = 0; i < totalNumOutputChannels; ++i)
@@ -73,6 +74,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
     }
 
     inCallback.store (false);
+    dspLoadMeter.end (numSamples, sampleRate);
 }
 
 void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)

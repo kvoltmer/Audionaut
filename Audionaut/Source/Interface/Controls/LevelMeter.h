@@ -10,6 +10,15 @@
 
 using namespace juce;
 
+/// Colour zones shared by the level meters and the DSP load meter.
+namespace MeterColours
+{
+    inline const juce::Colour green      { 0xff23a101 };   // < -20dB
+    inline const juce::Colour greenLight { 0xff61ff02 };   // > -20dB
+    inline const juce::Colour orange     { 0xfffbb203 };   // > -6dB
+    inline const juce::Colour red        { 0xffff0000 };   // > 0dB
+}
+
 class LevelComponent  : public Component
 {
 public:
