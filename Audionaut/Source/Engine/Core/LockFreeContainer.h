@@ -55,7 +55,6 @@ public:
     ~LockFreeContainer() = default;
 
     static_assert (farbot::is_realtime_move_assignable<_Tp>::value);
-    static_assert(! std::atomic<_Tp>::is_always_lock_free);
 
     /**
      * @brief Retrieves the producer objects (producer thread).
@@ -104,6 +103,13 @@ public:
      * @return True if a new snapshot was pulled, false if nothing was
      *         committed since the last pull.
      */
+    /** Producer side: true once the consumer has taken over the last commit
+        (so nothing it references only through an older snapshot is reachable). */
+    bool isPulled () const noexcept
+    {
+        return (middle.load() & freshBit) == 0;
+    }
+
     bool pull ()
     {
         // only the producer sets the fresh bit and only this clears it, so
