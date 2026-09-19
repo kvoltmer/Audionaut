@@ -5007,6 +5007,9 @@
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableReloadAction.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Undo\UndoableChannelAction.h">
+      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableEdit.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
