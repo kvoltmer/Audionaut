@@ -77,7 +77,9 @@ public:
      * @param index The index of the voice source.
      * @return Shared pointer to the voice source at the given index.
      */
-    std::shared_ptr<VoiceSource> getVoiceSourceAtIndex(int index) const;
+    /// A reference into the container (an empty pointer for an index out
+    /// of range): the audio thread looks this up per clip per block.
+    const std::shared_ptr<VoiceSource>& getVoiceSourceAtIndex(int index) const;
 
     /**
      * @brief Retrieves the index of a specific voice source.

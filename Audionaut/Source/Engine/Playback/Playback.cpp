@@ -27,7 +27,7 @@ void Playback::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
     processingBuffer.setSize(MAX_AUDIO_CHANNELS, samplesPerBlockExpected);
 }
 
-bool Playback::startVoice(std::shared_ptr<VoiceSource> voiceSource)
+bool Playback::startVoice(const std::shared_ptr<VoiceSource>& voiceSource)
 {
     // voice already playing?
     if (auto voice = findVoice(voiceSource))
@@ -42,9 +42,14 @@ bool Playback::startVoice(std::shared_ptr<VoiceSource> voiceSource)
     return false;
 }
 
-bool Playback::stopVoice(const std::shared_ptr<VoiceSource> source,
+bool Playback::stopVoice(const std::shared_ptr<VoiceSource>& source,
                          bool fadeOutLastBlock)
 {
+    // Voice::stop is a no-op for a source that is not playing; skip the
+    // voice scan for it
+    if (source == nullptr || ! source->isPlaying())
+        return false;
+
     if (auto voice = findVoice(source)) {
         voice->stop(fadeOutLastBlock);
         return true;
@@ -60,7 +65,7 @@ void Playback::stopAllVoices()
     }
 }
 
-bool Playback::isPlaying(const std::shared_ptr<VoiceSource> source)
+bool Playback::isPlaying(const std::shared_ptr<VoiceSource>& source)
 {
     if (findVoice(source) != nullptr) {
         return true;
@@ -88,10 +93,11 @@ Voice *Playback::getAvailableVoice()
     return nullptr;
 }
 
-Voice *Playback::findVoice(const std::shared_ptr<VoiceSource> source)
+Voice *Playback::findVoice(const std::shared_ptr<VoiceSource>& source)
 {
+    // pointer compare: no refcount traffic on the audio thread
     for (auto i = 0; i < MAX_VOICES; ++i) {
-        if (voices[i].getVoiceSource() == source)
+        if (voices[i].getVoiceSource().get() == source.get())
             return &voices[i];
     }
     return nullptr;

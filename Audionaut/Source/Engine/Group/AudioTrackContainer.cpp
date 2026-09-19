@@ -75,7 +75,7 @@ int AudioTrackContainer::getAudioTrackId(std::shared_ptr<const AudioTrack> searc
 int AudioTrackContainer::getChannelOffset(std::shared_ptr<const AudioTrack> searchTrack) const
 {
     int numChannels = 0;
-    for (auto track : audioTracks) {
+    for (const auto& track : audioTracks) {
         if (track == searchTrack)
             return numChannels;
         
@@ -294,7 +294,7 @@ void AudioTrackContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 int AudioTrackContainer::getNumAudioTrackChannels() const
 {
     int channels = 0;
-    for (auto track : audioTracks) {
+    for (const auto& track : audioTracks) {
         channels += track->getNumAudioTrackChannels();
     }
     return channels;

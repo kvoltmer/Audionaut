@@ -56,4 +56,82 @@ SCENARIO("lock free container scenario", "[engine][lock-free][container]")
     }
 }
 
+SCENARIO("lock free container hands over whole snapshots", "[engine][lock-free][container]")
+{
+    auto makeClip = [] (int start)
+    {
+        DspClipData clip;
+        clip.clipData.regionData.setStart(start);
+        clip.clipData.regionData.setEnd(start + 1);
+        return clip;
+    };
 
+    GIVEN("a container with nothing committed")
+    {
+        audium::LockFreeContainer<DspClipData> container(16);
+
+        THEN("pull reports nothing new, and the consumer view is empty")
+        {
+            REQUIRE_FALSE(container.pull());
+            REQUIRE(container.getConsumerObjects().empty());
+        }
+
+        WHEN("two snapshots are committed before the consumer pulls")
+        {
+            container.getProducerObjects().push_back(makeClip(1));
+            container.commit();
+
+            container.clear();
+            container.getProducerObjects().push_back(makeClip(2));
+            container.getProducerObjects().push_back(makeClip(3));
+            container.commit();
+
+            THEN("one pull delivers the latest snapshot whole, and the next pull has nothing")
+            {
+                REQUIRE(container.pull());
+                const auto& clips = container.getConsumerObjects();
+                REQUIRE(clips.size() == 2);
+                REQUIRE((int) clips[0].clipData.regionData.getStart() == 2);
+                REQUIRE((int) clips[1].clipData.regionData.getStart() == 3);
+
+                REQUIRE_FALSE(container.pull());
+                REQUIRE(container.getConsumerObjects().size() == 2);
+            }
+        }
+
+        WHEN("more objects than the reserved capacity are committed")
+        {
+            for (auto i = 0; i < 1000; ++i)
+                container.getProducerObjects().push_back(makeClip(i));
+            container.commit();
+
+            THEN("none are dropped")
+            {
+                REQUIRE(container.pull());
+                REQUIRE(container.getConsumerObjects().size() == 1000);
+                REQUIRE((int) container.getConsumerObjects().back().clipData.regionData.getStart() == 999);
+            }
+        }
+
+        WHEN("commits and pulls alternate many times")
+        {
+            for (auto round = 0; round < 50; ++round)
+            {
+                container.clear();
+                container.getProducerObjects().push_back(makeClip(round));
+                container.commit();
+
+                if (round % 3 != 2)   // every third snapshot is skipped by the consumer
+                {
+                    REQUIRE(container.pull());
+                    REQUIRE((int) container.getConsumerObjects()[0].clipData.regionData.getStart() == round);
+                }
+            }
+
+            THEN("the consumer still sees the last snapshot it pulled")
+            {
+                REQUIRE((int) container.getConsumerObjects()[0].clipData.regionData.getStart() == 49);
+            }
+        }
+    }
+}

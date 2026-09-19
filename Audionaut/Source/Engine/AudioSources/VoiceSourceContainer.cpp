@@ -53,12 +53,13 @@ void VoiceSourceContainer::prepareToPlay (int samplesPerBlockExpected,
     applyChannelMapping();
 }
 
-std::shared_ptr<VoiceSource> VoiceSourceContainer::getVoiceSourceAtIndex(int index) const
+const std::shared_ptr<VoiceSource>& VoiceSourceContainer::getVoiceSourceAtIndex(int index) const
 {
     if (index >= 0 && index < static_cast<int>(voiceSources.size()))
         return voiceSources[static_cast<size_t>(index)];
 
-    return nullptr;
+    static const std::shared_ptr<VoiceSource> none;
+    return none;
 }
 
 int VoiceSourceContainer::getVoiceSourceIndex(std::shared_ptr<VoiceSource> searchVoiceSource) const

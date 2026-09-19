@@ -46,14 +46,16 @@ public:
      * @param source Shared pointer to the `VoiceSource` to start.
      * @return True if a voice was successfully started, false otherwise.
      */
-    bool startVoice(std::shared_ptr<VoiceSource> source);
+    bool startVoice(const std::shared_ptr<VoiceSource>& source);
 
     /**
      * @brief Stops the voice associated with the specified transport source.
      * @param source Shared pointer to the `VoiceSource` to stop.
-     * @return True if the voice was successfully stopped, false otherwise.
+     * @return True if a playing voice was stopped, false if the source was
+     *         not playing (the scheduler asks for every idle clip, every
+     *         block - that case must stay cheap).
      */
-    bool stopVoice(const std::shared_ptr<VoiceSource> source,
+    bool stopVoice(const std::shared_ptr<VoiceSource>& source,
                    bool fadeOutLastBlock);
 
     /**
@@ -66,7 +68,7 @@ public:
      * @param source Shared pointer to the `VoiceSource` to check.
      * @return True if the source is playing, false otherwise.
      */
-    bool isPlaying(const std::shared_ptr<VoiceSource> source);
+    bool isPlaying(const std::shared_ptr<VoiceSource>& source);
 
     /**
      * @brief Process audio playback.
@@ -80,9 +82,9 @@ public:
                                     MAX_AUDIO_CHANNELS);
         
         // allocation-free for blocks within what prepareToPlay sized
-        // (avoidReallocating keeps the larger allocation)
+        // (avoidReallocating keeps the larger allocation). No clear: each
+        // voice clears the block before it renders into it.
         processingBuffer.setSize(numChannels, numSamples, false, false, true);
-        processingBuffer.clear();
         
         juce::dsp::AudioBlock<float> processingBlock(processingBuffer);
         
@@ -113,7 +115,7 @@ private:
      * @param source Shared pointer to the `VoiceSource` to find.
      * @return Pointer to the associated `Voice`, or nullptr if not found.
      */
-    Voice* findVoice(const std::shared_ptr<VoiceSource> source);
+    Voice* findVoice(const std::shared_ptr<VoiceSource>& source);
 
     /**
      * @brief Gets the total number of voices.

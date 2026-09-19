@@ -23,11 +23,10 @@ LinkEngine::LinkEngine() :
     mOutputLatency(std::chrono::microseconds{0}),
     mSharedEngineData({0., false, false, 4., false}),
     mLockfreeEngineData(mSharedEngineData),
-    mTimeAtLastClick{},
-    mIsPlaying(false)
+    mIsPlaying(false),
+    mLink(std::make_unique<ableton::Link>(100.)),
+    sessionState(mLink->captureAudioSessionState())
 {
-    mLink.reset(new ableton::Link(100.f));
-        
     if (!mOutputLatency.is_lock_free())
     {
         std::cout << "WARNING: LinkEngine::mOutputLatency is not lock free!" << std::endl;
@@ -51,11 +50,6 @@ void LinkEngine::stopPlaying()
 bool LinkEngine::isPlaying() const
 {
     return mLink->captureAppSessionState().isPlaying();
-}
-
-double LinkEngine::beatTime() const
-{
-    return sessionState->beatAtTime(mLink->clock().micros(), mSharedEngineData.quantum);
 }
 
 void LinkEngine::setTempo(double tempo)
@@ -89,11 +83,6 @@ bool LinkEngine::isStartStopSyncEnabled() const
 void LinkEngine::setStartStopSyncEnabled(const bool enabled)
 {
     mLink->enableStartStopSync(enabled);
-}
-
-void LinkEngine::setBufferSize(std::size_t size)
-{
-    mBuffer = std::vector<double>(size, 0.);
 }
 
 void LinkEngine::setSampleRate(double sampleRate)
@@ -141,66 +130,9 @@ LinkEngine::EngineData LinkEngine::pullEngineData()
     return engineData;
 }
 
-void LinkEngine::renderMetronomeIntoBuffer( const double quantum,
-                                            const std::chrono::microseconds beginHostTime,
-                                            const std::size_t numSamples)
-{
-
-    // Metronome frequencies
-    static const double highTone = 1567.98;
-    static const double lowTone = 1108.73;
-    // 100ms click duration
-    static const auto clickDuration = duration<double>{0.1};
-
-    // The number of microseconds that elapse between samples
-    const auto microsPerSample = 1e6 / mSampleRate;
-
-    for (std::size_t i = 0; i < numSamples; ++i)
-    {
-        double amplitude = 0.;
-        // Compute the host time for this sample and the last.
-        const auto hostTime = beginHostTime + microseconds(llround(static_cast<double>(i) * microsPerSample));
-        const auto lastSampleHostTime = hostTime - microseconds(llround(microsPerSample));
-
-        // Only make sound for positive beat magnitudes. Negative beat
-        // magnitudes are count-in beats.
-        if (sessionState->beatAtTime(hostTime, quantum) >= 0.)
-        {
-            // If the phase wraps around between the last sample and the
-            // current one with respect to a 1 beat quantum, then a click
-            // should occur.
-            if (sessionState->phaseAtTime(hostTime, 1)
-              < sessionState->phaseAtTime(lastSampleHostTime, 1))
-            {
-                mTimeAtLastClick = hostTime;
-            }
-
-            const auto secondsAfterClick =
-            duration_cast<duration<double>>(hostTime - mTimeAtLastClick);
-
-            // If we're within the click duration of the last beat, render
-            // the click tone into this sample
-            if (secondsAfterClick < clickDuration)
-            {
-                // If the phase of the last beat with respect to the current
-                // quantum was zero, then it was at a quantum boundary and we
-                // want to use the high tone. For other beats within the
-                // quantum, use the low tone.
-                const auto freq =
-                floor(sessionState->phaseAtTime(hostTime, quantum)) == 0 ? highTone : lowTone;
-
-                // Simple cosine synth
-                amplitude = cos(2 * M_PI * secondsAfterClick.count() * freq)
-                        * (1 - sin(5 * M_PI * secondsAfterClick.count()));
-            }
-        }
-        mBuffer[i] = amplitude;
-    }
-}
-
 double LinkEngine::beatAtTime(std::chrono::microseconds time, double quantum) const
 {
-    return sessionState->beatAtTime(time, quantum);
+    return sessionState.beatAtTime(time, quantum);
 }
 
 bool LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
@@ -210,26 +142,23 @@ bool LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
 
     sessionState = mLink->captureAudioSessionState();
 
-    // Clear the buffer
-    std::fill(mBuffer.begin(), mBuffer.end(), 0);
-
     if (engineData.requestStart)
     {
-        sessionState->setIsPlaying(true, hostTime);
+        sessionState.setIsPlaying(true, hostTime);
     }
 
     if (engineData.requestStop)
     {
-        sessionState->setIsPlaying(false, hostTime);
+        sessionState.setIsPlaying(false, hostTime);
     }
 
-    if (!mIsPlaying && sessionState->isPlaying())
+    if (!mIsPlaying && sessionState.isPlaying())
     {
         // Reset the timeline so that beat 0 corresponds to the time when transport starts
-        sessionState->requestBeatAtStartPlayingTime(engineData.beatAtStartPlayingTime, engineData.quantum);
+        sessionState.requestBeatAtStartPlayingTime(engineData.beatAtStartPlayingTime, engineData.quantum);
         mIsPlaying = true;
     }
-    else if (mIsPlaying && !sessionState->isPlaying())
+    else if (mIsPlaying && !sessionState.isPlaying())
     {
         mIsPlaying = false;
     }
@@ -237,19 +166,12 @@ bool LinkEngine::audioCallback(const std::chrono::microseconds hostTime,
     if (engineData.requestedTempo > 0)
     {
         // Set the newly requested tempo from the beginning of this buffer
-        sessionState->setTempo(engineData.requestedTempo, hostTime);
+        sessionState.setTempo(engineData.requestedTempo, hostTime);
     }
 
     // Timeline modifications are complete, commit the results
-    mLink->commitAudioSessionState(*sessionState);
+    mLink->commitAudioSessionState(sessionState);
 
-    if (mIsPlaying)
-    {
-        // As long as the engine is playing, generate metronome clicks in
-        // the buffer at the appropriate beats.
-        // renderMetronomeIntoBuffer(engineData.quantum, hostTime, numSamples);
-    }
-    
     return mIsPlaying;
 }
 

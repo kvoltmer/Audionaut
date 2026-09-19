@@ -60,7 +60,7 @@ public:
      * @brief Gets the associated transport source.
      * @return A shared pointer to the `VoiceSource`.
      */
-    const std::shared_ptr<VoiceSource> getVoiceSource() const { return voiceSource; }
+    const std::shared_ptr<VoiceSource>& getVoiceSource() const { return voiceSource; }
 
 private:
     std::shared_ptr<VoiceSource> voiceSource; ///< Shared pointer to the transport source.
