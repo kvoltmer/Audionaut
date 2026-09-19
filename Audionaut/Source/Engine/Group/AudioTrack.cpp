@@ -17,9 +17,35 @@
 #include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Undo/UndoableChannelAction.h"
 
 namespace audium {
 
+
+// Out of line: the pending undo step is only forward-declared in the header.
+AudioTrack::AudioTrack(AudioTrackContainer &owner_,
+                       AudioResourceContainer &audioResourceContainer_,
+                       std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
+                       std::shared_ptr<SelectionManager> selectionManager_,
+                       std::shared_ptr<tResourceGroupContainer> resourceGroups_,
+                       std::shared_ptr<tAudioChannelContainer> channels_,
+                       std::shared_ptr<AnalysisProvider> analysisProvider_,
+                       juce::String nameString_) :
+    Selectable(selectionManager_),
+    owner(owner_),
+    audioResourceContainer(audioResourceContainer_),
+    voiceSourceContainer(voiceSourceContainer_),
+    selectionManager(selectionManager_),
+    analysisProvider(analysisProvider_),
+    resourceGroupContainer(resourceGroups_),
+    audioChannelContainer(channels_),
+    name(nameString_.toStdString())
+{
+    playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*this,
+                                                                                  owner.getTempoProvider(),
+                                                                                  voiceSourceContainer,
+                                                                                  selectionManager));
+}
 
 AudioTrack::~AudioTrack()
 {
@@ -164,14 +190,18 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     // Channels
     auto jsonChannels = input["channels"];
     
-    if (!rebuild && jsonChannels.size() != audioChannelContainer->size()) {
-        rebuild = true;
+    // Each section decides for itself whether it can be read in place.
+    // Escalating the shared flag here would skip the resource-group cleanup
+    // below and push new groups on top of the existing ones.
+    auto rebuildChannels = rebuild;
+    if (!rebuildChannels && jsonChannels.size() != audioChannelContainer->size()) {
+        rebuildChannels = true;
         audioChannelContainer->cleanup();
     }
     auto c = 0;
     for (auto& jsonElement : jsonChannels) {
         std::shared_ptr<AudioChannel> channel = nullptr;
-        if (rebuild) {
+        if (rebuildChannels) {
             channel = addChannel();
         }
         else {
@@ -193,15 +223,16 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         jsonResourceGroups = input["sub_groups"]; // legacy support
     }
     
-    if (!rebuild && jsonResourceGroups.size() != resourceGroupContainer->size()) {
-        rebuild = true;
+    auto rebuildGroups = rebuild;
+    if (!rebuildGroups && jsonResourceGroups.size() != resourceGroupContainer->size()) {
+        rebuildGroups = true;
         resourceGroupContainer->cleanup();
     }
     auto i = 0;
     for (auto& jsonElement : jsonResourceGroups)
     {
         std::shared_ptr<ResourceGroup> resourceGroup = nullptr;
-        if (rebuild)
+        if (rebuildGroups)
         {
             resourceGroup = AudioTrackFactory::createResourceGroup(*this);
             resourceGroupContainer->push_back(resourceGroup);
@@ -212,7 +243,7 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         }
         
         if (resourceGroup != nullptr)
-            if (!resourceGroup->readFromJson(jsonElement, rebuild))
+            if (!resourceGroup->readFromJson(jsonElement, rebuildGroups))
                 return false;
         
         i++;
@@ -382,19 +413,28 @@ bool AudioTrack::isRecording(const int channelNumber) const
     }
 }
 
-void AudioTrack::onDragStart()
+void AudioTrack::onDragStart(int channelNumber)
 {
-    undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);
+    undoableChannelAction = std::make_unique<UndoableChannelAction>(getAudioTrackContainer(),
+                                                                    getId(),
+                                                                    channelNumber);
 }
 
-void AudioTrack::onDragEnd()
+void AudioTrack::onDragEnd(const juce::String& transactionName)
 {
-    if (undoableContainerAction != nullptr) {
-        undoableContainerAction->storeNewState();
-        getAudioTrackContainer().getUndoManager()->perform(undoableContainerAction.release(),
-                                                           "Set Track Parameter");
-        getAudioTrackContainer().getUndoManager()->beginNewTransaction();
-    }
+    if (undoableChannelAction == nullptr)
+        return;
+
+    auto action = std::move(undoableChannelAction);
+    action->storeNewState();
+
+    // a click or drag that left the channel as it was is not an undo step
+    if (action->isNoOp())
+        return;
+
+    auto undoManager = getAudioTrackContainer().getUndoManager();
+    undoManager->perform(action.release(), transactionName);
+    undoManager->beginNewTransaction();
 }
 
 std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup()

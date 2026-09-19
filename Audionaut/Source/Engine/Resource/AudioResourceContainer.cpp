@@ -398,43 +398,7 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
             }
         }
         
-        // delete redundant files
-        if (redundantFiles.size() > 0) {
-            
-            String redundantFilesString;
-            for (auto i = 0; i < redundantFiles.size(); i++) {
-                redundantFilesString += redundantFiles[i].getFullPathName() + "\n";
-                
-                // don't display more than 10 Files
-                if (i > 10) {
-                    redundantFilesString += "etc...";
-                    break;
-                }
-            }
-            // Runtime check, not the compile-time define: the GUI binary runs
-            // this same code windowless in its in-app CLI mode, where a modal
-            // box would hang the run. Headless keeps the silent-trash default.
-            auto result = true;
-            if (! HeadlessMode::isHeadless()) {
-                result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
-                                                                "Redundant files found. Move files to trash?",
-                                                                "The following audio files are not used in the project anymore:\n\n" +
-                                                                redundantFilesString +
-                                                                "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
-            }
-            if (result) {
-                bool success = true;
-                for (auto& file : redundantFiles) {
-                    if (!file.moveToTrash()) {
-                        success = false;
-                        break;
-                    }
-                }
-                if (!success && ! HeadlessMode::isHeadless()) {
-                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
-                }
-            }
-        }
+        trashRedundantFiles(redundantFiles);
     }
 }
 
@@ -448,40 +412,45 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const juce::File projectDi
         }
     }
     
-    // delete redundant files
-    if (redundantFiles.size() > 0) {
-        
-        String redundantFilesString;
-        for (auto i = 0; i < redundantFiles.size(); i++) {
-            redundantFilesString += redundantFiles[i].getFullPathName() + "\n";
-            
-            // don't display more than 10 Files
-            if (i > 10) {
-                redundantFilesString += "etc...";
-                break;
-            }
+    trashRedundantFiles(redundantFiles);
+}
+
+void AudioResourceContainer::trashRedundantFiles(const std::vector<juce::File>& redundantFiles)
+{
+    if (redundantFiles.empty())
+        return;
+
+    // Headless sessions (CLI, MCP, in-app CLI mode) never delete: there is
+    // nobody to ask, and the remove-track / remove-channel verbs promise that
+    // the audio files stay in the package. Cleaning up is a GUI decision.
+    // Runtime check, not the compile-time define: the GUI binary runs this
+    // same code windowless in its in-app CLI mode.
+    if (HeadlessMode::isHeadless())
+        return;
+
+    String redundantFilesString;
+    for (size_t i = 0; i < redundantFiles.size(); i++) {
+        redundantFilesString += redundantFiles[i].getFullPathName() + "\n";
+
+        // don't display more than 10 Files
+        if (i > 10) {
+            redundantFilesString += "etc...";
+            break;
         }
-        
-        // Runtime check, not the compile-time define - see the overload above.
-        auto result = true;
-        if (! HeadlessMode::isHeadless()) {
-            result = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
-                                                            "Redundant files found. Move files to trash?",
-                                                            "The following audio files are not used in the project anymore:\n\n" +
-                                                            redundantFilesString +
-                                                            "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
-        }
-        if (result) {
-            bool success = true;
-            for (auto& file : redundantFiles) {
-                if (!file.moveToTrash()) {
-                    success = false;
-                    break;
-                }
-            }
-            if (!success && ! HeadlessMode::isHeadless()) {
-                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
-            }
+    }
+
+    const auto confirmed = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
+                                                          "Redundant files found. Move files to trash?",
+                                                          "The following audio files are not used in the project anymore:\n\n" +
+                                                          redundantFilesString +
+                                                          "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
+    if (! confirmed)
+        return;
+
+    for (auto& file : redundantFiles) {
+        if (! file.moveToTrash()) {
+            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
+            return;
         }
     }
 }

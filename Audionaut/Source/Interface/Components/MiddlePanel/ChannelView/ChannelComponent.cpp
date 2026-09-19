@@ -55,12 +55,12 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     volumeSlider->onValueChange = [this, rowNumber] {
         audioTrack->setGain(Decibels::decibelsToGain(volumeSlider->getValue()), rowNumber);
     };
-    volumeSlider->onDragStart = [this] {
-        audioTrack->onDragStart();
+    volumeSlider->onDragStart = [this, rowNumber] {
+        audioTrack->onDragStart(rowNumber);
     };
     
     volumeSlider->onDragEnd = [this] {
-        audioTrack->onDragEnd();
+        audioTrack->onDragEnd("Set Gain");
     };
     
     // pan slider
@@ -70,8 +70,8 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     panSlider->onValueChange = [this, rowNumber] {
         audioTrack->setPan(panSlider->getValue(), rowNumber);
     };
-    panSlider->onDragStart = [this] {
-        audioTrack->onDragStart();
+    panSlider->onDragStart = [this, rowNumber] {
+        audioTrack->onDragStart(rowNumber);
     };
     // Routing indication: only visible when the channel is routed away
     // from the defaults; red when the current device cannot provide the
@@ -86,7 +86,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     outputRoutingLabel->setJustificationType (juce::Justification::centredRight);
 
     panSlider->onDragEnd = [this] {
-        audioTrack->onDragEnd();
+        audioTrack->onDragEnd("Set Pan");
     };
     
     // MUTE
@@ -96,9 +96,9 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     muteButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::muteColourId));
     muteButton->setClickingTogglesState(true);
     muteButton->onClick = [this, rowNumber] {
-        audioTrack->onDragStart();
+        audioTrack->onDragStart(rowNumber);
         audioTrack->setMute(muteButton->getToggleState(), rowNumber);
-        audioTrack->onDragEnd();
+        audioTrack->onDragEnd("Mute");
     };
     
     // SOLO
@@ -108,9 +108,9 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     soloButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::soloColourId));
     soloButton->setClickingTogglesState(true);
     soloButton->onClick = [this, rowNumber] {
-        audioTrack->onDragStart();
+        audioTrack->onDragStart(rowNumber);
         audioTrack->setSolo(soloButton->getToggleState(), rowNumber);
-        audioTrack->onDragEnd();
+        audioTrack->onDragEnd("Solo");
     };
     
 
@@ -140,11 +140,11 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     monitorButton->setColour (juce::TextButton::buttonOnColourId, findColour (audium::soloColourId));
     monitorButton->setClickingTogglesState(true);
     monitorButton->onClick = [this, rowNumber] {
-        audioTrack->onDragStart();
+        audioTrack->onDragStart(rowNumber);
         auto data = audioTrack->getChannelData(rowNumber);
         data.monitor = monitorButton->getToggleState();
         audioTrack->setChannelData(rowNumber, data);
-        audioTrack->onDragEnd();
+        audioTrack->onDragEnd("Monitor");
     };
 
     setSize (AudiumLookAndFeel::channelsWidth, 100);
