@@ -692,6 +692,13 @@ SCENARIO ("cli remove-track and remove-channel", "[cli]")
                 REQUIRE (countPlayListItems (json) == 0);
                 REQUIRE (cli::runInfo (makeArgs ("info " + project.getFullPathName()), context)
                          == cli::exitOk);
+
+                AND_THEN ("the now-unreferenced audio file is still in the package") {
+                    // headless opens must never trash files behind the agent's back
+                    auto packaged = project.getChildFile ("Media").getChildFile ("Audio")
+                                           .getChildFile (audioFile.getFileName());
+                    REQUIRE (packaged.existsAsFile());
+                }
             }
         }
 
