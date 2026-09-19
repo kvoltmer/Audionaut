@@ -271,6 +271,9 @@ public:
     void onRecordingFinished();
     
 private:
+    /** Asks the user and moves the given files to the trash. A no-op in headless mode. */
+    void trashRedundantFiles(const std::vector<juce::File>& redundantFiles);
+
     /// Cancels pending background analysis of the file unless another loaded
     /// resource still references it.
     void cancelAnalysisIfUnloaded(const juce::File& audioFile);
