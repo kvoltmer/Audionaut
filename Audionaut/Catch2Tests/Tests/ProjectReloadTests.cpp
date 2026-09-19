@@ -6,6 +6,7 @@
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Analysis/AnalysisCache.h"
 
 using namespace audium;
 
@@ -246,6 +247,47 @@ SCENARIO("undoing a reload restores unsaved local edits, not the saved state", "
             THEN("undo returns to the pre-reload in-memory state") {
                 REQUIRE(engine->getUndoManager()->undo());
                 REQUIRE(engine->getAudioTrackContainer()->getMasterGain() == Catch::Approx(0.7));
+            }
+        }
+    }
+
+    // cleanup ... comment out in case you need to isolate an issue
+    outProject.getParentDirectory().deleteRecursively();
+
+    engine = nullptr;
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("a corrupt analysis sidecar never blocks reload or open", "[engine][reload][analysis]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
+
+    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-analysis-test.audium/" + ProjectFileStore::projectFileName);
+
+    GIVEN("a saved project") {
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(store->save(outProject, nullptr));
+
+        WHEN("an external writer leaves a truncated AnalysisData.json next to it") {
+            auto sidecar = outProject.getSiblingFile(AnalysisCache::fileName);
+            REQUIRE(sidecar.replaceWithText("{ \"version\": 1, \"entries\": [ truncated"));
+            sidecar.setLastModificationTime(Time::getCurrentTime() + RelativeTime::seconds(2));
+            REQUIRE(store->analysisChangedOnDisk());
+
+            THEN("the reload path (what the project monitor's timer calls) does not throw") {
+                REQUIRE_NOTHROW(store->reloadAnalysisFromDisk());
+                REQUIRE_NOTHROW(store->reloadFromDisk(nullptr));
+            }
+
+            THEN("the project still opens") {
+                bool opened = false;
+                REQUIRE_NOTHROW(opened = store->open(outProject, nullptr));
+                REQUIRE(opened);
+                REQUIRE(engine->getAudioTrackContainer()->getNumItems() == 1);
             }
         }
     }
