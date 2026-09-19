@@ -46,7 +46,7 @@ public:
      * @param source Shared pointer to the `VoiceSource` to start.
      * @return True if a voice was successfully started, false otherwise.
      */
-    bool startVoice(const std::shared_ptr<VoiceSource>& source);
+    bool startVoice(VoiceSource* source);
 
     /**
      * @brief Stops the voice associated with the specified transport source.
@@ -55,7 +55,7 @@ public:
      *         not playing (the scheduler asks for every idle clip, every
      *         block - that case must stay cheap).
      */
-    bool stopVoice(const std::shared_ptr<VoiceSource>& source,
+    bool stopVoice(VoiceSource* source,
                    bool fadeOutLastBlock);
 
     /**
@@ -68,7 +68,11 @@ public:
      * @param source Shared pointer to the `VoiceSource` to check.
      * @return True if the source is playing, false otherwise.
      */
-    bool isPlaying(const std::shared_ptr<VoiceSource>& source);
+    bool isPlaying(VoiceSource* source);
+
+    /** True while any voice still holds the source. Message-thread check
+        before a removed source may be destroyed (VoiceSourceContainer). */
+    bool isVoiceSourceActive(const VoiceSource* source) const noexcept;
 
     /**
      * @brief Process audio playback.
@@ -115,7 +119,7 @@ private:
      * @param source Shared pointer to the `VoiceSource` to find.
      * @return Pointer to the associated `Voice`, or nullptr if not found.
      */
-    Voice* findVoice(const std::shared_ptr<VoiceSource>& source);
+    Voice* findVoice(const VoiceSource* source);
 
     /**
      * @brief Gets the total number of voices.

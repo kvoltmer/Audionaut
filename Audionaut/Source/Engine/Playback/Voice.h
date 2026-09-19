@@ -41,9 +41,9 @@ public:
 
     /**
      * @brief Starts playback using the specified transport source.
-     * @param voiceSource Shared pointer to the `VoiceSource` to use for playback.
+     * @param voiceSource The `VoiceSource` to render; not owned (see VoiceSourceContainer).
      */
-    void start(std::shared_ptr<VoiceSource> voiceSource);
+    void start(VoiceSource* voiceSource);
 
     /**
      * @brief Stops playback.
@@ -60,10 +60,13 @@ public:
      * @brief Gets the associated transport source.
      * @return A shared pointer to the `VoiceSource`.
      */
-    const std::shared_ptr<VoiceSource>& getVoiceSource() const { return voiceSource; }
+    VoiceSource* getVoiceSource() const noexcept { return voiceSource.load(); }
 
 private:
-    std::shared_ptr<VoiceSource> voiceSource; ///< Shared pointer to the transport source.
+    // Not owning: VoiceSourceContainer keeps a removed source alive until no
+    // voice renders it any more, so the last reference never dies here on
+    // the audio thread. Atomic: read by the message thread (retirement).
+    std::atomic<VoiceSource*> voiceSource { nullptr };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Voice)
 };

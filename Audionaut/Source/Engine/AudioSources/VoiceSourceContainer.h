@@ -6,6 +6,8 @@
 #pragma once
 #include <JuceHeader.h>
 
+#include "Engine/Core/LockFreeContainer.h"
+
 namespace audium {
 
 class VoiceSource;
@@ -14,91 +16,79 @@ class Playback;
 
 /**
  * @class VoiceSourceContainer
- * @brief Manages a collection of voice sources for audio playback.
+ * @brief Owns a track's voice sources and publishes them to the audio thread.
  *
- * This class is responsible for creating, managing, and cleaning up transport
- * sources associated with audio resources. It provides methods to prepare
- * playback, manage voice sources, and apply channel mappings.
+ * Ownership lives on the message thread. The audio thread never touches the
+ * owning vector: it reads a triple-buffered snapshot of raw pointers that is
+ * published by commit() (PlayListScheduler::commitPlayListData) and taken
+ * over by pull() at the start of each block - the same generation scheme as
+ * AudioClipContainer, and committed right before it so the clips' indices
+ * always refer to the voices of the same generation.
+ *
+ * Indices are stable: a removed voice leaves a null slot instead of
+ * shifting its neighbours, so a clip snapshot one generation behind can at
+ * worst hit a null and skip. Removed voice sources are retired, not
+ * destroyed: their memory is released on the message thread only once the
+ * audio thread has pulled a snapshot without them and no Voice renders them.
  */
 class VoiceSourceContainer
 {
 public:
-    /**
-     * @brief Constructs a VoiceSourceContainer instance.
-     * @param playback_ Shared pointer to the Playback instance.
-     */
     explicit VoiceSourceContainer(std::shared_ptr<Playback> playback_) :
         playback(std::move(playback_))
     {}
 
-    /**
-     * @brief Destructor for VoiceSourceContainer.
-     */
     ~VoiceSourceContainer() = default;
 
-    /**
-     * @brief Prepares the voice sources for playback.
-     * @param samplesPerBlockExpected The expected number of samples per block.
-     * @param sampleRate The sample rate of the audio playback.
-     */
+    // ---- message thread -------------------------------------------------
+
     void prepareToPlay (int samplesPerBlockExpected,
                         double sampleRate);
 
-    /**
-     * @brief Cleans up the voice sources and releases resources.
-     */
+    /** Stops and retires every voice source. */
     void cleanup();
 
-    /**
-     * @brief Creates and adds a voice source for the given audio resource.
-     * @param audioResource The audio resource to associate with the voice source.
-     * @param audioFormatReaderSource Shared pointer to the audio format reader source.
-     * @return Shared pointer to the created VoiceSource.
-     */
     std::shared_ptr<VoiceSource> createAndAddVoiceSource(AudioResource& audioResource,
-                                                                       std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
+                                                         std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
 
-    /**
-     * @brief Removes a voice source from the container.
-     * @param voiceSource Shared pointer to the voice source to remove.
-     * @return True if the voice source was removed, false otherwise.
-     */
+    /** Stops the voice, frees its index and retires it. Returns false if unknown. */
     bool removeVoiceSource(std::shared_ptr<VoiceSource> voiceSource);
 
-    /**
-     * @brief Retrieves all voice sources associated with a specific audio resource.
-     * @param resource The audio resource to search for.
-     * @return A vector of shared pointers to the matching voice sources.
-     */
     std::vector<std::shared_ptr<VoiceSource>> getVoiceSourcesForResource(const AudioResource &resource) const;
 
-    /**
-     * @brief Retrieves the voice source at the specified index.
-     * @param index The index of the voice source.
-     * @return Shared pointer to the voice source at the given index.
-     */
-    /// A reference into the container (an empty pointer for an index out
-    /// of range): the audio thread looks this up per clip per block.
-    const std::shared_ptr<VoiceSource>& getVoiceSourceAtIndex(int index) const;
-
-    /**
-     * @brief Retrieves the index of a specific voice source.
-     * @param searchVoiceSource Shared pointer to the voice source to search for.
-     * @return The index of the voice source, or -1 if not found.
-     */
+    /** Stable index of a live voice source, -1 if unknown or removed. */
     int getVoiceSourceIndex(std::shared_ptr<VoiceSource> searchVoiceSource) const;
 
-    /**
-     * @brief Applies channel mapping to the voice sources.
-     */
     void applyChannelMapping();
 
+    /** Publishes the current set to the audio thread and releases retired
+        sources the audio thread can no longer reach. */
+    void commit();
+
+    /** Number of retired sources still waiting for the audio thread to let go (tests). */
+    size_t getNumRetired() const noexcept { return retiredPending.size() + retiredCommitted.size(); }
+
+    // ---- audio thread ---------------------------------------------------
+
+    /** Takes over the latest committed snapshot. Returns true if it changed. */
+    bool pull();
+
+    /** Voice source at a stable index in the pulled snapshot, nullptr if none. */
+    VoiceSource* getVoiceSourceAtIndex(int index) const noexcept;
+
 private:
+    void releaseRetired();
+
     std::shared_ptr<Playback> playback; ///< Shared pointer to the Playback instance.
-    std::vector<std::shared_ptr<VoiceSource>> voiceSources; ///< Collection of voice sources.
+
+    std::vector<std::shared_ptr<VoiceSource>> voiceSources; ///< Owning set; null = freed slot, never erased.
+    std::vector<std::shared_ptr<VoiceSource>> retiredPending;   ///< removed since the last commit
+    std::vector<std::shared_ptr<VoiceSource>> retiredCommitted; ///< excluded from the last committed snapshot
+
+    static constexpr int initialCapacity = 1024;
+    mutable LockFreeContainer<VoiceSource*> snapshot { initialCapacity };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VoiceSourceContainer)
 };
 
 } // namespace audium
-

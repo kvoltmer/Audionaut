@@ -14,32 +14,30 @@ namespace audium
 
 void Voice::processAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
-    if (processing.load() && voiceSource != nullptr) {
+    auto* source = voiceSource.load();
+    if (processing.load() && source != nullptr) {
         
         info.clearActiveBufferRegion();
-        voiceSource->getNextAudioBlock(info);
+        source->getNextAudioBlock(info);
         
-        if (voiceSource == nullptr ||
-            voiceSource->isStopped()) {
-            
+        if (source->isStopped()) {
             processing.store(false);
-            voiceSource = nullptr;
+            voiceSource.store(nullptr);
         }
     }
 }
 
-void Voice::start(std::shared_ptr<VoiceSource> voiceSource_)
+void Voice::start(VoiceSource* voiceSource_)
 {
-    voiceSource = voiceSource_;
+    voiceSource.store(voiceSource_);
     processing.store(true);
 }
 
 void Voice::stop(bool fadeOutLastBlock)
 {
-    if (voiceSource != nullptr &&
-        voiceSource->isPlaying())
-        
-        voiceSource->stop(fadeOutLastBlock);
+    if (auto* source = voiceSource.load())
+        if (source->isPlaying())
+            source->stop(fadeOutLastBlock);
 }
 
 
