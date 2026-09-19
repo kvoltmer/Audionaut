@@ -305,7 +305,20 @@ bool AnalysisCache::loadFromFolder(const juce::File& projectFolder)
 
     // Resolve stored relative paths against the current project folder.
     serializationFolder = projectFolder;
-    const bool success = readFromStream(in);
+    bool success = false;
+    try
+    {
+        success = readFromStream(in);
+    }
+    catch (const std::exception& ex)
+    {
+        // Derived data only: a truncated or hand-edited sidecar must never
+        // block a project open or escape into a timer callback. Drop what was
+        // read and let the affected files be analysed again.
+        std::cout << "AnalysisCache: ignoring unreadable " << fileName
+                  << " (" << ex.what() << ")" << std::endl;
+        clear();
+    }
     serializationFolder = juce::File();
     return success;
 }

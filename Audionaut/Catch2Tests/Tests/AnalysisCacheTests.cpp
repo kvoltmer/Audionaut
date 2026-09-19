@@ -412,3 +412,49 @@ SCENARIO("Analysis type lists round-trip through their string form", "[engine][a
         }
     }
 }
+
+SCENARIO("AnalysisCache survives an unreadable sidecar",
+         "[engine][analysis][cache][serialization]")
+{
+    auto projectFolder = File::getSpecialLocation(File::tempDirectory)
+                             .getChildFile("AudionautAnalysisCacheBadSidecar_"
+                                           + String(Time::currentTimeMillis()));
+    REQUIRE(projectFolder.createDirectory().wasOk());
+    auto sidecar = projectFolder.getChildFile(AnalysisCache::fileName);
+
+    GIVEN("a sidecar that is not JSON at all")
+    {
+        REQUIRE(sidecar.replaceWithText("{ \"version\": 1, \"entries\": [ truncated"));
+
+        THEN("loading reports failure without throwing and leaves the cache empty")
+        {
+            AnalysisCache cache;
+            bool loaded = true;
+            REQUIRE_NOTHROW(loaded = cache.loadFromFolder(projectFolder));
+            REQUIRE_FALSE(loaded);
+            REQUIRE(cache.size() == 0);
+        }
+    }
+
+    GIVEN("a sidecar whose record has the wrong field types")
+    {
+        AnalysisCache probe;
+        nlohmann::json j;
+        probe.writeToJson(j); // current version + framing
+        j["entries"] = nlohmann::json::array({
+            { { "type", "sbic" }, { "path", "audio.wav" }, { "segments", "not-an-array" } }
+        });
+        REQUIRE(sidecar.replaceWithText(String(j.dump())));
+
+        THEN("loading reports failure without throwing")
+        {
+            AnalysisCache cache;
+            bool loaded = true;
+            REQUIRE_NOTHROW(loaded = cache.loadFromFolder(projectFolder));
+            REQUIRE_FALSE(loaded);
+            REQUIRE(cache.size() == 0);
+        }
+    }
+
+    projectFolder.deleteRecursively();
+}
