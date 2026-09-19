@@ -46,7 +46,7 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
 }
 
 bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
-                                     const std::shared_ptr<VoiceSource>& voiceSource,
+                                     VoiceSource* voiceSource,
                                      double transportPosition,
                                      int sampleOffset,
                                      int numSamples)
@@ -137,6 +137,9 @@ void PlayListScheduler::process(double transportPositionClocks,
     const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
     auto transportRange = juce::Range<double> (transportPosition, transportPosition + secondsThisBuffer);
     
+    // voices first: the clip snapshot's voiceSourceIndex values refer to the
+    // voice generation committed right before it (commitPlayListData)
+    voiceSourceContainer->pull();
     auto clipsChanged = audioClipContainer->pull();
     // a reference: the copy this used to make was a heap allocation per
     // audio callback
@@ -149,7 +152,7 @@ void PlayListScheduler::process(double transportPositionClocks,
         if (dspClip.getRegionData(audium::seconds).isEmpty())
             continue;
         
-        const auto& voiceSource = voiceSourceContainer->getVoiceSourceAtIndex(dspClip.dspClipData.voiceSourceIndex);
+        auto* voiceSource = voiceSourceContainer->getVoiceSourceAtIndex(dspClip.dspClipData.voiceSourceIndex);
         if (voiceSource == nullptr)
             continue;
         
@@ -572,7 +575,9 @@ void PlayListScheduler::commitPlayListData()
         }
     }
     
-    // commit data
+    // commit data: voices before clips so the indices above resolve against
+    // the same generation on the audio thread (which pulls in this order too)
+    voiceSourceContainer->commit();
     audioClipContainer->commit();
     
     // update channel mapping
