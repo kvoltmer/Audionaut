@@ -164,14 +164,18 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
     // Channels
     auto jsonChannels = input["channels"];
     
-    if (!rebuild && jsonChannels.size() != audioChannelContainer->size()) {
-        rebuild = true;
+    // Each section decides for itself whether it can be read in place.
+    // Escalating the shared flag here would skip the resource-group cleanup
+    // below and push new groups on top of the existing ones.
+    auto rebuildChannels = rebuild;
+    if (!rebuildChannels && jsonChannels.size() != audioChannelContainer->size()) {
+        rebuildChannels = true;
         audioChannelContainer->cleanup();
     }
     auto c = 0;
     for (auto& jsonElement : jsonChannels) {
         std::shared_ptr<AudioChannel> channel = nullptr;
-        if (rebuild) {
+        if (rebuildChannels) {
             channel = addChannel();
         }
         else {
@@ -193,15 +197,16 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         jsonResourceGroups = input["sub_groups"]; // legacy support
     }
     
-    if (!rebuild && jsonResourceGroups.size() != resourceGroupContainer->size()) {
-        rebuild = true;
+    auto rebuildGroups = rebuild;
+    if (!rebuildGroups && jsonResourceGroups.size() != resourceGroupContainer->size()) {
+        rebuildGroups = true;
         resourceGroupContainer->cleanup();
     }
     auto i = 0;
     for (auto& jsonElement : jsonResourceGroups)
     {
         std::shared_ptr<ResourceGroup> resourceGroup = nullptr;
-        if (rebuild)
+        if (rebuildGroups)
         {
             resourceGroup = AudioTrackFactory::createResourceGroup(*this);
             resourceGroupContainer->push_back(resourceGroup);
@@ -212,7 +217,7 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         }
         
         if (resourceGroup != nullptr)
-            if (!resourceGroup->readFromJson(jsonElement, rebuild))
+            if (!resourceGroup->readFromJson(jsonElement, rebuildGroups))
                 return false;
         
         i++;

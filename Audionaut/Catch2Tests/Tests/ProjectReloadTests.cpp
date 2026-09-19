@@ -257,3 +257,67 @@ SCENARIO("undoing a reload restores unsaved local edits, not the saved state", "
     DeletedAtShutdown::deleteAll();
     MessageManager::deleteInstance();
 }
+
+SCENARIO("external channel removal reloads in place without duplicating resource groups", "[engine][reload][rebuild]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
+
+    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-channel-test.audium/" + ProjectFileStore::projectFileName);
+    auto audioFile = File(reloadTestFilesDirectory + "120-funk-1-sec.wav");
+    REQUIRE(audioFile.existsAsFile());
+
+    GIVEN("a saved project whose clip track has a spare channel") {
+        engine->getProjectSerializer()->createNewProject();
+        auto tracks = engine->getAudioTrackContainer();
+        REQUIRE(tracks->addAudioFiles({ audioFile.getFullPathName() }, 0.0, nullptr, false));
+
+        std::shared_ptr<AudioTrack> clipTrack;
+        for (auto i = 0; i < tracks->getNumItems(); ++i)
+            if (! tracks->getAudioTrack(i)->getResourceGroups().empty())
+                clipTrack = tracks->getAudioTrack(i);
+        REQUIRE(clipTrack != nullptr);
+
+        clipTrack->ensureNumChannels(clipTrack->getNumAudioTrackChannels() + 1);
+        const auto trackIndex = clipTrack->getId();
+        const auto numChannels = clipTrack->getNumAudioTrackChannels();
+        const auto numGroups = clipTrack->getResourceGroups().size();
+        const auto numResources = engine->getAudioResourceContainer()->getNumAudioResources();
+        const auto numClips = clipTrack->getPlayListContainer()->playListItems.size();
+        REQUIRE(numGroups == 1);
+        REQUIRE(store->save(outProject, nullptr));
+
+        WHEN("an external writer drops the spare channel on disk") {
+            auto j = readProjectJson(outProject);
+            auto& channels = j["audium"]["audio_tracks"][(size_t) trackIndex]["channels"];
+            REQUIRE(channels.size() == (size_t) numChannels);
+            channels.erase(channels.size() - 1);
+            writeProjectJsonExternally(outProject, j);
+
+            REQUIRE(store->reloadFromDisk(nullptr));
+
+            THEN("the channel goes away and the groups, resources and clips are unchanged") {
+                auto track = tracks->getAudioTrack(trackIndex);
+                REQUIRE(track->getNumAudioTrackChannels() == numChannels - 1);
+                REQUIRE(track->getResourceGroups().size() == numGroups);
+                REQUIRE(engine->getAudioResourceContainer()->getNumAudioResources() == numResources);
+                REQUIRE(track->getPlayListContainer()->playListItems.size() == numClips);
+
+                AND_THEN("a save persists a single group") {
+                    REQUIRE(store->save(outProject, nullptr));
+                    auto saved = readProjectJson(outProject);
+                    REQUIRE(saved["audium"]["audio_tracks"][(size_t) trackIndex]["resource_groups"].size() == numGroups);
+                }
+            }
+        }
+    }
+
+    // cleanup ... comment out in case you need to isolate an issue
+    outProject.getParentDirectory().deleteRecursively();
+
+    engine = nullptr;
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
