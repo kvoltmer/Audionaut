@@ -264,6 +264,7 @@
 		34AD58A889015F0789037B7B /* include_juce_gui_basics_3.cpp */ /* include_juce_gui_basics_3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_gui_basics_3.cpp; path = ../../JuceLibraryCode/include_juce_gui_basics_3.cpp; sourceTree = SOURCE_ROOT; };
 		352338A322365BD5C3C74D37 /* Preferences.cpp */ /* Preferences.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Preferences.cpp; path = ../../Source/Util/Preferences.cpp; sourceTree = SOURCE_ROOT; };
 		374BC297892329AB1C3A5AA6 /* SegmentationView.cpp */ /* SegmentationView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SegmentationView.cpp; path = ../../Source/Interface/Views/SegmentationView.cpp; sourceTree = SOURCE_ROOT; };
+		38136CC55DAFE5D7F0515AF6 /* UndoableChannelAction.h */ /* UndoableChannelAction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UndoableChannelAction.h; path = ../../Source/Engine/Undo/UndoableChannelAction.h; sourceTree = SOURCE_ROOT; };
 		395E123A1C38915A68ED16EE /* HeadlessEngineSession.h */ /* HeadlessEngineSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HeadlessEngineSession.h; path = ../../Source/Cli/HeadlessEngineSession.h; sourceTree = SOURCE_ROOT; };
 		3A5D25510CFC1895974046D0 /* ExportUtil.h */ /* ExportUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ExportUtil.h; path = ../../Source/Engine/Export/ExportUtil.h; sourceTree = SOURCE_ROOT; };
 		3A82F0A264C8847AB3096637 /* Streamable.h */ /* Streamable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Streamable.h; path = ../../Source/Engine/Streamable.h; sourceTree = SOURCE_ROOT; };
@@ -1097,6 +1098,7 @@
 			children = (
 				D8950D3AC385340A9172F172,
 				A0096CEC564551C34E10C825,
+				38136CC55DAFE5D7F0515AF6,
 				CF14DFDB98B305551187FB9E,
 			);
 			name = Undo;

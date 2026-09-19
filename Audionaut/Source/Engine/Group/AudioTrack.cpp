@@ -17,9 +17,35 @@
 #include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/Undo/UndoableChannelAction.h"
 
 namespace audium {
 
+
+// Out of line: the pending undo step is only forward-declared in the header.
+AudioTrack::AudioTrack(AudioTrackContainer &owner_,
+                       AudioResourceContainer &audioResourceContainer_,
+                       std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
+                       std::shared_ptr<SelectionManager> selectionManager_,
+                       std::shared_ptr<tResourceGroupContainer> resourceGroups_,
+                       std::shared_ptr<tAudioChannelContainer> channels_,
+                       std::shared_ptr<AnalysisProvider> analysisProvider_,
+                       juce::String nameString_) :
+    Selectable(selectionManager_),
+    owner(owner_),
+    audioResourceContainer(audioResourceContainer_),
+    voiceSourceContainer(voiceSourceContainer_),
+    selectionManager(selectionManager_),
+    analysisProvider(analysisProvider_),
+    resourceGroupContainer(resourceGroups_),
+    audioChannelContainer(channels_),
+    name(nameString_.toStdString())
+{
+    playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*this,
+                                                                                  owner.getTempoProvider(),
+                                                                                  voiceSourceContainer,
+                                                                                  selectionManager));
+}
 
 AudioTrack::~AudioTrack()
 {
@@ -382,19 +408,28 @@ bool AudioTrack::isRecording(const int channelNumber) const
     }
 }
 
-void AudioTrack::onDragStart()
+void AudioTrack::onDragStart(int channelNumber)
 {
-    undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(getAudioTrackContainer(), false);
+    undoableChannelAction = std::make_unique<UndoableChannelAction>(getAudioTrackContainer(),
+                                                                    getId(),
+                                                                    channelNumber);
 }
 
-void AudioTrack::onDragEnd()
+void AudioTrack::onDragEnd(const juce::String& transactionName)
 {
-    if (undoableContainerAction != nullptr) {
-        undoableContainerAction->storeNewState();
-        getAudioTrackContainer().getUndoManager()->perform(undoableContainerAction.release(),
-                                                           "Set Track Parameter");
-        getAudioTrackContainer().getUndoManager()->beginNewTransaction();
-    }
+    if (undoableChannelAction == nullptr)
+        return;
+
+    auto action = std::move(undoableChannelAction);
+    action->storeNewState();
+
+    // a click or drag that left the channel as it was is not an undo step
+    if (action->isNoOp())
+        return;
+
+    auto undoManager = getAudioTrackContainer().getUndoManager();
+    undoManager->perform(action.release(), transactionName);
+    undoManager->beginNewTransaction();
 }
 
 std::shared_ptr<ResourceGroup> AudioTrack::createNewResourceGroup()

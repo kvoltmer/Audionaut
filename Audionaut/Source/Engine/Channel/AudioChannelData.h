@@ -42,6 +42,8 @@ public:
     static int effectiveInputChannel(const AudioChannelData& data) noexcept {
         return data.inputChannel >= 0 ? data.inputChannel : data.channelNumber;
     }
+
+    bool operator== (const AudioChannelData&) const noexcept = default;
 };
 
 /**

@@ -379,6 +379,8 @@
                 file="Source/Engine/Undo/UndoableContainerAction.h"/>
           <FILE id="UdRlA1" name="UndoableReloadAction.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableReloadAction.h"/>
+          <FILE id="UndChn" name="UndoableChannelAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableChannelAction.h"/>
           <FILE id="UndEdt" name="UndoableEdit.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableEdit.h"/>
         </GROUP>
