@@ -64,6 +64,16 @@ SCENARIO("recording scenario", "[engine][recording]")
             auto recordedFile = engine->getPlayListScheduler()->getAudioBusInterface()->getRecordedAudioFile(0);
             auto recBuffer = audioFileToAudioBuffer(recordedFile);
             REQUIRE(recBuffer.getNumSamples() == int(recordingLength * sr));
+
+            // The waveform thumbnail is fed through a fifo drained off the
+            // audio thread; stopping the take flushes it, so every recorded
+            // sample must have reached the thumbnail (rounded up to its
+            // 64-sample resolution) and none may have been skipped.
+            auto thumbnail = engine->getPlayListScheduler()->getAudioBusInterface()->getRecordingThumbnail(0);
+            REQUIRE(thumbnail != nullptr);
+            const auto recordedSamples = static_cast<int64>(recordingLength * sr);
+            REQUIRE(thumbnail->getNumSamplesFinished() >= recordedSamples);
+            REQUIRE(thumbnail->getNumSamplesFinished() < recordedSamples + 64);
             for (auto i = 0; i < (int)recordingLength; i++) {
                 auto samplePerPhase = 44100;
                 for (auto s = 0; s < samplePerPhase; s++) {

@@ -11,7 +11,7 @@
 
 namespace audium {
 
-class AudioRecorder
+class AudioRecorder : private juce::TimeSliceClient
 {
 public:
     AudioRecorder ()
@@ -35,19 +35,7 @@ public:
     
     void start();
     
-    void stop()
-    {
-        // First, clear this pointer to stop the audio callback from using our writer object..
-        {
-            const juce::ScopedLock sl (writerLock);
-            activeWriter = nullptr;
-        }
-        
-        // Now we can delete the writer object. It's done in this order because the deletion could
-        // take a little time while remaining data gets flushed to disk, so it's best to avoid blocking
-        // the audio callback while this happens.
-        threadedWriter.reset();
-    }
+    void stop();
     
     bool isRecording() const
     {
@@ -75,13 +63,20 @@ public:
             
 //            std::cout << "rec " << buffer.getSample(0, 0) << std::endl;
             
-            activeWriter.load()->write (buffer.getArrayOfReadPointers(), numSamples);
-            samplesWritten += numSamples;
+            // write() returns false when the writer's fifo is full (the disk
+            // thread fell behind); those samples never reach the file, so
+            // they must not count towards the take length either.
+            if (activeWriter.load()->write (buffer.getArrayOfReadPointers(), numSamples))
+                samplesWritten += numSamples;
+            else
+                samplesDropped += numSamples;
             
-            if (recordingThumbnail != nullptr) {
-                recordingThumbnail->addBlock (nextSampleNum, buffer, 0, numSamples);
-                nextSampleNum += numSamples;
-            }
+            // The waveform thumbnail is fed from the recorder's background
+            // thread (see drainThumbnailFifo): AudioThumbnail::addBlock
+            // allocates and takes the lock the arrangement view holds while
+            // painting, neither of which belongs in the audio callback.
+            if (recordingThumbnail != nullptr)
+                pushToThumbnailFifo (inputChannelData[0], numSamples);
         }
     }
         
@@ -89,14 +84,29 @@ public:
         
     const double getTotalLength() const;
     
+    /** Samples the disk writer refused because it fell behind (missing from the take). */
+    juce::int64 getSamplesDropped() const noexcept { return samplesDropped.load(); }
+    
 private:
+    
+    // TimeSliceClient: drains the thumbnail fifo on backgroundThread
+    int useTimeSlice() override;
+    
+    void pushToThumbnailFifo (const float* samples, int numSamples) noexcept;
+    void drainThumbnailFifo();
     
     juce::TimeSliceThread backgroundThread { "Audio Recorder Thread" }; // the thread that will write our audio data to disk
     std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> threadedWriter; // the FIFO used to buffer the incoming data
     
-    juce::int64 nextSampleNum = 0;
+    // audio thread -> background thread hand-off for the waveform thumbnail.
+    // Sized in createRecordingThumbnail (message thread), before start().
+    juce::AbstractFifo thumbnailFifo { 1 };
+    juce::AudioBuffer<float> thumbnailRing;
+    std::atomic<juce::int64> thumbnailSamplesSkipped { 0 }; // fifo overflow: leaves a gap instead of shifting the waveform
+    juce::int64 nextSampleNum = 0; // background thread only
     
-    juce::int64 samplesWritten = 0;
+    std::atomic<juce::int64> samplesWritten { 0 };
+    std::atomic<juce::int64> samplesDropped { 0 };
     
     double sampleRate = 0.0;
     
