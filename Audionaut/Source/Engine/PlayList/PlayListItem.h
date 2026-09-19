@@ -114,6 +114,10 @@ public:
     bool validateData();
     
     const std::vector<std::shared_ptr<VoiceSource>> &getVoiceSources() const { return voiceSources; }
+
+    /// True when there is one voice source per region resource, in order -
+    /// i.e. init() would only recreate what is already there.
+    bool voiceSourcesMatchRegion() const;
     
     void onDragStart();
 

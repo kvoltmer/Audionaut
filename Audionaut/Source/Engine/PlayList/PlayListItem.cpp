@@ -51,6 +51,22 @@ void PlayListItem::createTransportSources()
     }
 }
 
+bool PlayListItem::voiceSourcesMatchRegion() const
+{
+    if (audioRegion == nullptr)
+        return false;
+
+    const auto resources = audioRegion->getAudioResources();
+    if (resources.size() != voiceSources.size())
+        return false;
+
+    for (std::size_t i = 0; i < resources.size(); ++i)
+        if (voiceSources[i] == nullptr || &voiceSources[i]->getAudioResource() != resources[i].get())
+            return false;
+
+    return true;
+}
+
 void PlayListItem::deinit()
 {
     for (auto voiceSource : voiceSources) {
@@ -225,7 +241,12 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
         audioRegion = resourceGroup->getAudioRegionContainer()->getRegion(regionId);
         if (audioRegion != nullptr) {
             
-            init();
+            // Undo replays JSON into reused items. Rebuilding the voice
+            // sources recreates each clip's playback chain (read-ahead
+            // buffer, resampler, stretcher) and restarts clips that are
+            // playing, so only do it when they no longer fit the region.
+            if (! voiceSourcesMatchRegion())
+                init();
             
             // reset first: undo replays JSON into reused item objects, and
             // an absent key must mean "no speed set", not "keep the old one"
