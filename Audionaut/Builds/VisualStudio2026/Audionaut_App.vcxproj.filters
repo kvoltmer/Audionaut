@@ -5,6 +5,9 @@
     <Filter Include="Audionaut\Submodules\demucs.cpp">
       <UniqueIdentifier>{57B3A6DF-81C6-567D-DBF0-195553615D11}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Submodules\rubberband">
+      <UniqueIdentifier>{39DF1458-73AF-9A38-A8AD-C097FF93DCB1}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Submodules">
       <UniqueIdentifier>{C466D4A6-ED53-DDE5-2A30-37BD2DF4AB9A}</UniqueIdentifier>
     </Filter>
@@ -28,6 +31,9 @@
     </Filter>
     <Filter Include="Audionaut\Source\Engine\Analysis">
       <UniqueIdentifier>{D0BC868D-0F64-6D47-E860-837179C691A7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\Source\Engine\AudioSources\Stretch">
+      <UniqueIdentifier>{9A9F5356-5732-26D0-D767-E82A77D17FBC}</UniqueIdentifier>
     </Filter>
     <Filter Include="Audionaut\Source\Engine\AudioSources">
       <UniqueIdentifier>{99B03463-BAA4-F2D8-8F41-CC5450AC2F9E}</UniqueIdentifier>
@@ -1030,6 +1036,9 @@
     <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\model_load.cpp">
       <Filter>Audionaut\Submodules\demucs.cpp</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\Submodules\rubberband\single\RubberBandSingle.cpp">
+      <Filter>Audionaut\Submodules\rubberband</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Cli\Commands\Commands.cpp">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
@@ -1125,6 +1134,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Analysis\EventMerger.cpp">
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\RubberBandStretchBackend.cpp">
+      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudioSources\VoiceSource.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
@@ -4749,7 +4761,16 @@
     <ClInclude Include="..\..\Source\Engine\Analysis\EventMerger.h">
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\RubberBandStretchBackend.h">
+      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\StretchOutputFifo.h">
+      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\VolumeFade.h">
+      <Filter>Audionaut\Source\Engine\AudioSources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\AudioSources\RenderTiming.h">
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\ClipDynamicsProcessor.h">

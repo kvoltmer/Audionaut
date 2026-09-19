@@ -78,6 +78,10 @@ protected:
     /// the toggling command) dismiss.
     virtual void dismissOverlay() = 0;
 
+    /// The close chip. Defaults to dismissOverlay(); a subclass whose
+    /// edits apply live overrides this to keep them and only close.
+    virtual void closeOverlay() { dismissOverlay(); }
+
     /// The session began: the overlay just became visible. Sync widgets
     /// from the engine here. Runs before the base takes its listeners.
     virtual void overlayShown() {}

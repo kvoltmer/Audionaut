@@ -238,6 +238,7 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case CommandIDs::stretchClip:
             result.setInfo ("Stretch Clip...", "Adjusts the selected clip's playback speed (re-pitch)", CommandCategories::editing, 0);
             result.setActive (canToggleStretchOverlay());
+            result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::bounceProject:
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);

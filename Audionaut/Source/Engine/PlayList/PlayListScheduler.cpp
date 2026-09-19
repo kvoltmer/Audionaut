@@ -65,6 +65,9 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     // one timeline second covers speedRatio seconds of source material
     const auto speedRatio = dspClip.getSpeedRatio();
 
+    // the voice's first output sample, relative to the loop offset
+    auto startSampleInRange = 0;
+
     if (offset < 0.0) {
         // the clip already started: seek the speed-scaled distance into the file
         position = spec.voiceFileStart() - offset * speedRatio;
@@ -74,11 +77,16 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     }
     else {
         position = spec.voiceFileStart();
-        startSample = static_cast<int>(std::round(offset * externalSampleRate));
-        startSample += sampleOffset;
+        startSampleInRange = static_cast<int>(std::round(offset * externalSampleRate));
+        startSample = startSampleInRange + sampleOffset;
     }
-    jassert(startSample <= numSamples);
     jassert(position >= 0.0);
+
+    // a start that rounds onto the next block boundary (the range test
+    // passed on float noise) belongs to the next block, where it lands
+    // on sample 0 - starting the voice now would play a block early
+    if (startSample >= numSamples)
+        return false;
 
     // source seconds left to play; the voice renders them in
     // duration / speedRatio timeline seconds
@@ -92,10 +100,17 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
         return false;
     }
 
+    // the voice ends on the output sample the clip's absolute end maps
+    // to - derived from the end position, not from a truncated length,
+    // so adjacent clips meet without a gap and the last sample survives
+    const auto voiceAbsEnd = voiceAbsStart + (spec.voiceFileEnd() - spec.voiceFileStart()) / speedRatio;
+    const auto endSampleInRange = static_cast<int>(std::round((voiceAbsEnd - transportPosition) * externalSampleRate));
+    const auto durationSamples = std::max(0, endSampleInRange - startSampleInRange);
+
     voiceSource->setSpeedRatio(speedRatio);
     voiceSource->setStretchMode(spec.stretchMode);
     voiceSource->schedulePosition(position, startSample);
-    voiceSource->scheduleDuration(duration / speedRatio, externalSampleRate);
+    voiceSource->scheduleDurationSamples(durationSamples);
 
     voiceSource->configureClipFades(spec, position, true);
 
@@ -363,8 +378,8 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
 
     // audibleLength/preFileSilence are source seconds; the render happens at
     // the clip's speed
-    auto totalSamples          = static_cast<int64>(spec.audibleLength() / spec.speedRatio * externalSampleRate);
-    auto leadingSilenceSamples = static_cast<int64>(spec.preFileSilence() / spec.speedRatio * externalSampleRate);
+    auto totalSamples          = static_cast<int64>(std::round(spec.audibleLength() / spec.speedRatio * externalSampleRate));
+    auto leadingSilenceSamples = static_cast<int64>(std::round(spec.preFileSilence() / spec.speedRatio * externalSampleRate));
     auto voiceSamples          = totalSamples - leadingSilenceSamples;
     auto iterations            = voiceSamples / config->blockSize;
     auto remainder             = voiceSamples - (iterations * config->blockSize);
@@ -381,7 +396,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
         source->setSpeedRatio(spec.speedRatio);
         source->setStretchMode(spec.stretchMode);
         source->schedulePosition(spec.voiceFileStart(), 0);
-        source->scheduleDuration((spec.voiceFileEnd() - spec.voiceFileStart()) / spec.speedRatio, config->sampleRate);
+        source->scheduleDurationSamples(static_cast<int>(voiceSamples));
         source->configureDynamics(config->playListItem);
         // snap the gain smoother - otherwise the export starts with a
         // 10 ms gain swell (the live scheduler does the same)

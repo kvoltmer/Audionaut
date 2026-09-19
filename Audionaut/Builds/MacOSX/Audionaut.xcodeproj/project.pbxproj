@@ -67,6 +67,7 @@
 		5561FC8DFB33933C387E245F /* Metal.framework */ = {isa = PBXBuildFile; fileRef = 1F44340B66A109B0DEE52DF7; settings = { ATTRIBUTES = (Weak, ); }; };
 		57AE200C047712C4AFA1276D /* model_apply.cpp */ = {isa = PBXBuildFile; fileRef = E32D5782C167DACDE9EAA9FC; settings = { COMPILER_FLAGS = "-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src"; }; };
 		59451AFC7649C47F021C7C1C /* ClipCommands.cpp */ = {isa = PBXBuildFile; fileRef = 559E815404EDED1578B82412; };
+		5BE25BAC5739BF355E7AF329 /* RubberBandSingle.cpp */ = {isa = PBXBuildFile; fileRef = 2B8CB668F25D8A80AD4A0AAD; settings = { COMPILER_FLAGS = "-O3 -w"; }; };
 		5C62C0C8EE35E00AC1B8E3AC /* RightPanelComponent.cpp */ = {isa = PBXBuildFile; fileRef = BCC2B6A9AAC816A403A24E63; };
 		5D5ACD630FA6238F1429787B /* RecordingActionHandler.cpp */ = {isa = PBXBuildFile; fileRef = 0C2871C7A8AF0B9971AFED86; };
 		5E58276753980A3B968C5B4A /* AudioTrackContainer.cpp */ = {isa = PBXBuildFile; fileRef = 90A1F23ACDB59F5B8DF7DB30; };
@@ -132,6 +133,7 @@
 		B40FC5709483C5774F253F76 /* RegionLabel.cpp */ = {isa = PBXBuildFile; fileRef = 65A6EAD1842D8FFA4768DC84; };
 		B5AEF4B1E77F0E7EBE98AFEC /* ClipFadeOverlay.cpp */ = {isa = PBXBuildFile; fileRef = B7EED01155E14419780EADD8; };
 		B79288CC2F08759E884BEC91 /* DraggingHandle.cpp */ = {isa = PBXBuildFile; fileRef = 1F0C9C9EB51C196202A6C76A; };
+		B82F615BCEB7115B9F3C276C /* RubberBandStretchBackend.cpp */ = {isa = PBXBuildFile; fileRef = 341676772FE8252699B984A6; };
 		BA4C6F5F5892E074E05BDB78 /* DiscRecording.framework */ = {isa = PBXBuildFile; fileRef = 22AD7FAA33DF69C2DCCA4667; };
 		BAB1AD43D1FB4CD46AA328EF /* AudioExportThread.cpp */ = {isa = PBXBuildFile; fileRef = 51102FD0ADB1F5E991BEABC5; };
 		BB9CF3F2C8B4C31201C32AAA /* AudioTrackBaseComponent.cpp */ = {isa = PBXBuildFile; fileRef = 08A77E4418EC3F878A5A06B4; };
@@ -242,11 +244,13 @@
 		250E6D9AF4CAD51E2AA78BD8 /* ClipFadeSpec.h */ /* ClipFadeSpec.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipFadeSpec.h; path = ../../Source/Engine/AudioSources/ClipFadeSpec.h; sourceTree = SOURCE_ROOT; };
 		25423A74B016191855679F72 /* include_juce_audio_processors.mm */ /* include_juce_audio_processors.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_processors.mm; path = ../../JuceLibraryCode/include_juce_audio_processors.mm; sourceTree = SOURCE_ROOT; };
 		25859141FA1A9E4EE1B15D95 /* LoopDraggerControl.h */ /* LoopDraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LoopDraggerControl.h; path = ../../Source/Interface/Controls/LoopDraggerControl.h; sourceTree = SOURCE_ROOT; };
+		26ECDD24F90411AF15A14CA1 /* RenderTiming.h */ /* RenderTiming.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RenderTiming.h; path = ../../Source/Engine/AudioSources/RenderTiming.h; sourceTree = SOURCE_ROOT; };
 		27AE3F0C97548C970F2795FD /* layers.cpp */ /* layers.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = layers.cpp; path = ../../../Submodules/demucs.cpp/src/layers.cpp; sourceTree = SOURCE_ROOT; };
 		28562E64FD65836517765DA9 /* SBicSegmenter.h */ /* SBicSegmenter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBicSegmenter.h; path = ../../Source/Engine/Analysis/SBicSegmenter.h; sourceTree = SOURCE_ROOT; };
 		2939FFF512D6CAC49E48AE7D /* PlayListTableListBoxModel.h */ /* PlayListTableListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListTableListBoxModel.h; path = ../../Source/Interface/Models/PlayListTableListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		29D87B31AE24B528AF69492C /* FileBrowserView.h */ /* FileBrowserView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FileBrowserView.h; path = ../../Source/Interface/Dialogs/FileBrowserView.h; sourceTree = SOURCE_ROOT; };
 		2B3D46B4A25BB609791350BD /* TempoProvider.h */ /* TempoProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TempoProvider.h; path = ../../Source/Engine/Provider/TempoProvider.h; sourceTree = SOURCE_ROOT; };
+		2B8CB668F25D8A80AD4A0AAD /* RubberBandSingle.cpp */ /* RubberBandSingle.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RubberBandSingle.cpp; path = ../../../Submodules/rubberband/single/RubberBandSingle.cpp; sourceTree = SOURCE_ROOT; };
 		2BFE9CE74A1E98A2E52D88A7 /* ClipFadeOverlay.h */ /* ClipFadeOverlay.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipFadeOverlay.h; path = ../../Source/Interface/Views/ClipFadeOverlay.h; sourceTree = SOURCE_ROOT; };
 		2C5C1EAFF66023F86D50E2F0 /* UIContext.h */ /* UIContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UIContext.h; path = ../../Source/Interface/UIContext.h; sourceTree = SOURCE_ROOT; };
 		2DBC2B906A322A93C6867BBE /* AudioTrack.h */ /* AudioTrack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrack.h; path = ../../Source/Engine/Group/AudioTrack.h; sourceTree = SOURCE_ROOT; };
@@ -255,6 +259,7 @@
 		30722D1A7A30DD9F1336E1B2 /* LoadMeter.cpp */ /* LoadMeter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LoadMeter.cpp; path = ../../Source/Interface/Controls/LoadMeter.cpp; sourceTree = SOURCE_ROOT; };
 		3112F89ABC344D7CA74013C6 /* AudiumMainWindow.h */ /* AudiumMainWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumMainWindow.h; path = ../../Source/Application/AudiumMainWindow.h; sourceTree = SOURCE_ROOT; };
 		326D33688206104FED891964 /* include_juce_audio_basics.mm */ /* include_juce_audio_basics.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_basics.mm; path = ../../JuceLibraryCode/include_juce_audio_basics.mm; sourceTree = SOURCE_ROOT; };
+		341676772FE8252699B984A6 /* RubberBandStretchBackend.cpp */ /* RubberBandStretchBackend.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RubberBandStretchBackend.cpp; path = ../../Source/Engine/AudioSources/Stretch/RubberBandStretchBackend.cpp; sourceTree = SOURCE_ROOT; };
 		3435281A3A1EF0D564ABD16C /* ChannelSubGroupListBoxModel.h */ /* ChannelSubGroupListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelSubGroupListBoxModel.h; path = ../../Source/Interface/Models/ChannelSubGroupListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		34AD58A889015F0789037B7B /* include_juce_gui_basics_3.cpp */ /* include_juce_gui_basics_3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_gui_basics_3.cpp; path = ../../JuceLibraryCode/include_juce_gui_basics_3.cpp; sourceTree = SOURCE_ROOT; };
 		352338A322365BD5C3C74D37 /* Preferences.cpp */ /* Preferences.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Preferences.cpp; path = ../../Source/Util/Preferences.cpp; sourceTree = SOURCE_ROOT; };
@@ -548,6 +553,7 @@
 		EC2E4985F29BFF7B4F3F5486 /* ClipTransportSource.h */ /* ClipTransportSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipTransportSource.h; path = ../../Source/Engine/AudioSources/ClipTransportSource.h; sourceTree = SOURCE_ROOT; };
 		ECB46507DAEC7211AEAFD67D /* Preferences.h */ /* Preferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Preferences.h; path = ../../Source/Util/Preferences.h; sourceTree = SOURCE_ROOT; };
 		ED4953391298A2F1212A2BDB /* ArrangementOverview.h */ /* ArrangementOverview.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ArrangementOverview.h; path = ../../Source/Interface/Views/ArrangementOverview.h; sourceTree = SOURCE_ROOT; };
+		ED801ABA34471BB29A1BAC8E /* StretchOutputFifo.h */ /* StretchOutputFifo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StretchOutputFifo.h; path = ../../Source/Engine/AudioSources/Stretch/StretchOutputFifo.h; sourceTree = SOURCE_ROOT; };
 		ED84B062207DEE4EFA81ABBA /* ProjectSerializer.cpp */ /* ProjectSerializer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ProjectSerializer.cpp; path = ../../Source/Engine/Project/ProjectSerializer.cpp; sourceTree = SOURCE_ROOT; };
 		EDD9561EE704339EB0B3F25B /* PlayListContainerComponent.cpp */ /* PlayListContainerComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListContainerComponent.cpp; path = ../../Source/Interface/Components/RightPanel/PlayListContainerComponent.cpp; sourceTree = SOURCE_ROOT; };
 		EE0E7865D0B154D77E3EF265 /* PlayListItemExport.h */ /* PlayListItemExport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListItemExport.h; path = ../../Source/Engine/Export/PlayListItemExport.h; sourceTree = SOURCE_ROOT; };
@@ -557,6 +563,7 @@
 		EFB67C5172FD56D59C0F3443 /* include_juce_audio_utils.mm */ /* include_juce_audio_utils.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_audio_utils.mm; path = ../../JuceLibraryCode/include_juce_audio_utils.mm; sourceTree = SOURCE_ROOT; };
 		F03AE7AF1C33B6318C650D80 /* CreateCommand.cpp */ /* CreateCommand.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = CreateCommand.cpp; path = ../../Source/Cli/Commands/CreateCommand.cpp; sourceTree = SOURCE_ROOT; };
 		F0C4F5AE7B7A830FDF5AEC81 /* PlayListContainer.cpp */ /* PlayListContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListContainer.cpp; path = ../../Source/Engine/PlayList/PlayListContainer.cpp; sourceTree = SOURCE_ROOT; };
+		F1A3CEA5CAB5A18EFEFD4458 /* RubberBandStretchBackend.h */ /* RubberBandStretchBackend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RubberBandStretchBackend.h; path = ../../Source/Engine/AudioSources/Stretch/RubberBandStretchBackend.h; sourceTree = SOURCE_ROOT; };
 		F4CCD042003BA1D9CE67C800 /* AudioTrackListBoxModel.h */ /* AudioTrackListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackListBoxModel.h; path = ../../Source/Interface/Models/AudioTrackListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		F4DE426B74038D2458D7B572 /* AssembleDialog.h */ /* AssembleDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AssembleDialog.h; path = ../../Source/Interface/Dialogs/AssembleDialog.h; sourceTree = SOURCE_ROOT; };
 		F5383E510E28BEC953233776 /* juce_audio_processors_headless */ /* juce_audio_processors_headless */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_processors_headless; path = ../../../Submodules/JUCE/modules/juce_audio_processors_headless; sourceTree = SOURCE_ROOT; };
@@ -1035,7 +1042,9 @@
 		92F42FF8411787223E37422D /* AudioSources */ = {
 			isa = PBXGroup;
 			children = (
+				F4D6E0E7B916664C4F5CED83,
 				6F2675F2742A1F6F2D7F238E,
+				26ECDD24F90411AF15A14CA1,
 				42CF08811F65DD0560500E19,
 				1B61BC72323B5260458C9716,
 				B3151FBDCD3DDA8A2A0327A5,
@@ -1134,6 +1143,14 @@
 			name = Controls;
 			sourceTree = "<group>";
 		};
+		A6F75741B754B190D74FC2C3 /* rubberband */ = {
+			isa = PBXGroup;
+			children = (
+				2B8CB668F25D8A80AD4A0AAD,
+			);
+			name = rubberband;
+			sourceTree = "<group>";
+		};
 		A96AAB05885E992180F91EF2 /* Playback */ = {
 			isa = PBXGroup;
 			children = (
@@ -1225,6 +1242,7 @@
 			isa = PBXGroup;
 			children = (
 				4F9297FA099A96FFE782DF2E,
+				A6F75741B754B190D74FC2C3,
 			);
 			name = Submodules;
 			sourceTree = "<group>";
@@ -1380,6 +1398,16 @@
 				193E557D0B5F362A035F0D6D,
 			);
 			name = Group;
+			sourceTree = "<group>";
+		};
+		F4D6E0E7B916664C4F5CED83 /* Stretch */ = {
+			isa = PBXGroup;
+			children = (
+				341676772FE8252699B984A6,
+				F1A3CEA5CAB5A18EFEFD4458,
+				ED801ABA34471BB29A1BAC8E,
+			);
+			name = Stretch;
 			sourceTree = "<group>";
 		};
 		F6A2B10C9F67009466562221 /* Interface */ = {
@@ -1545,6 +1573,7 @@
 				57AE200C047712C4AFA1276D,
 				07FD58C07240DFB156D3B6C7,
 				327CC41CC4492C242654A620,
+				5BE25BAC5739BF355E7AF329,
 				40472BD14185E19C4CDB1191,
 				2AD445920749B21BFCA206B3,
 				0E051821A554D6A2B0B1CFB9,
@@ -1574,6 +1603,7 @@
 				9EE367062E87E7B98DEFBDCD,
 				774EB253259208BB9A748B4C,
 				09566A34C9588B0ED1B27345,
+				B82F615BCEB7115B9F3C276C,
 				392CBAFC802A482650C8A347,
 				6DBD2483C1884BBCCB5A7DF9,
 				20531CE9B45123B33913B293,
@@ -1767,15 +1797,14 @@
 					"$(SRCROOT)/../../../Submodules/link/include/",
 					"$(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include",
 					"$(SRCROOT)/../../../Submodules/farbot/include/",
-					"$(SRCROOT)/../../../Submodules/signalsmith-stretch/include/",
-					"$(SRCROOT)/../../../Submodules/signalsmith-linear/include/",
+					"$(SRCROOT)/../../../Submodules/rubberband/",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = Info-App.plist;
 				INFOPLIST_PREPROCESS = NO;
 				INSTALL_PATH = "/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/signalsmith-stretch/include/ $(SRCROOT)/../../../Submodules/signalsmith-linear/include/";
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/rubberband/";
 				OTHER_CFLAGS = "$(inherited) -isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_CPLUSPLUSFLAGS = "$(inherited) -isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_LDFLAGS = "$(inherited) $(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv";
@@ -1953,8 +1982,7 @@
 					"$(SRCROOT)/../../../Submodules/link/include/",
 					"$(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include",
 					"$(SRCROOT)/../../../Submodules/farbot/include/",
-					"$(SRCROOT)/../../../Submodules/signalsmith-stretch/include/",
-					"$(SRCROOT)/../../../Submodules/signalsmith-linear/include/",
+					"$(SRCROOT)/../../../Submodules/rubberband/",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = Info-App.plist;
@@ -1962,7 +1990,7 @@
 				INSTALL_PATH = "/Applications";
 				LLVM_LTO = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/signalsmith-stretch/include/ $(SRCROOT)/../../../Submodules/signalsmith-linear/include/";
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/rubberband/";
 				OTHER_CFLAGS = "$(inherited) -isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_CPLUSPLUSFLAGS = "$(inherited) -isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_LDFLAGS = "$(inherited) $(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv";

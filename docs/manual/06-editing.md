@@ -66,15 +66,15 @@ fades and waveform follow the stretch. Speeds range from ×0.25 to ×4; a
 plain edge drag still trims. A clip routed at a speed other than ×1 keeps
 its region untouched — splitting, cloning and exporting all preserve the
 speed and mode, and one undo reverts a stretch. While the *Stretch Clip*
-panel (*Edit → Stretch Clip…*) is open on a clip, that clip is in stretch
+panel (*Edit → Stretch Clip…*, **Cmd+T**) is open on a clip, that clip is in stretch
 mode: its edges stretch on a plain drag, no modifiers needed. The check
-mark applies the session as one undo step; Escape or the panel's close
-chip revert everything since the panel opened.
+mark and the panel's close chip keep the session as one undo step;
+Escape reverts everything since the panel opened.
 
 The panel's **Mode** box picks how the speed is realised. *Re-Pitch* (the
 default) is classic varispeed. *Time-Stretch* keeps the clip's pitch while
-the length changes — a pitch-preserving time-stretch, powered by
-[Signalsmith Stretch](https://signalsmith-audio.co.uk/code/stretch/). The
+the length changes — a pitch-preserving time-stretch, powered by the
+[Rubber Band Library](https://breakfastquay.com/rubberband/) R3 engine. The
 switch applies live and also plays out in exports and bounces; extreme
 ratios smear sharp transients, which is the nature of the technique.
 

@@ -75,9 +75,17 @@ public:
         }
     }
     
+    /// Ends the voice after @p numSamples output samples.
+    void scheduleDurationSamples(int numSamples)
+    {
+        durationTimer.schedule(numSamples);
+    }
+
+    /// Seconds variant; rounded, so a length that is a whole number of
+    /// samples up to float noise does not lose its last sample.
     void scheduleDuration(double duration, double sr)
     {
-        durationTimer.schedule(static_cast<int>(duration * sr));
+        scheduleDurationSamples(static_cast<int>(std::round(duration * sr)));
     }
     
     bool isPlaying() const noexcept
