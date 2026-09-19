@@ -26,10 +26,13 @@ class DspClip : public PositionableBase
 public:
     /**
      * @brief Constructs a `DspClip` with a tempo provider and initial clip data.
-     * @param tempoProvider_ A shared pointer to the `TempoProvider` for tempo-related calculations.
+     * @param tempoProvider_ The `TempoProvider` for tempo-related calculations;
+     *        borrowed, so the clip must not outlive it (the scheduler builds
+     *        clips per block on the audio thread and copying a shared_ptr
+     *        there is refcount traffic for nothing).
      * @param data The initial `DspClipData` associated with this clip.
      */
-    DspClip(std::shared_ptr<TempoProvider> tempoProvider_, DspClipData data_) :
+    DspClip(const TempoProvider& tempoProvider_, const DspClipData& data_) :
         tempoProvider(tempoProvider_),
         dspClipData(data_)
     {}
@@ -54,7 +57,7 @@ public:
     double getSpeedRatio() const override
     {
         if (dspClipData.clipTempoLocked)
-            return ClipSpeed::tempoLockedRatio(tempoProvider->getTempo(), dspClipData.clipTempo);
+            return ClipSpeed::tempoLockedRatio(tempoProvider.getTempo(), dspClipData.clipTempo);
 
         return dspClipData.clipSpeedRatio;
     }
@@ -94,9 +97,9 @@ public:
 
 private:
     /**
-     * @brief A shared pointer to the `TempoProvider` for tempo-related calculations.
+     * @brief The `TempoProvider` for tempo-related calculations (borrowed).
      */
-    std::shared_ptr<TempoProvider> tempoProvider;
+    const TempoProvider& tempoProvider;
 
 public:
     /**

@@ -3,6 +3,8 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+#include <thread>
+
 #include "LinkAudioDevice.h"
 #include "LinkEngine.hpp"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -36,6 +38,12 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
         if (outputChannelData[i] != nullptr)
             juce::zeromem (outputChannelData[i], (size_t) numSamples * sizeof (float));
     
+    // Announce the render path before reading the bypass (both seq_cst):
+    // a bypass request stores its flag and then reads this one, so either
+    // this callback sees the bypass and stays out, or the request sees
+    // the callback and waits for it to finish.
+    inCallback.store (true);
+
     if (not byPass.load()) {
         // Synchronize host time to reference the point when its output reaches the speaker.
         const auto hostTime =  host_time_filter.sampleTimeToHostTime(sample_time);
@@ -65,6 +73,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
         sample_time += static_cast<std::uint64_t>(numSamples);
     }
 
+    inCallback.store (false);
     dspLoadMeter.end (numSamples, sampleRate);
 }
 
@@ -73,7 +82,6 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
     sampleRate = device->getCurrentSampleRate();
     linkEngine->setSampleRate(sampleRate);
     bufferSize = device->getCurrentBufferSizeSamples();
-    linkEngine->setBufferSize(bufferSize);
     
     if (playListScheduler != nullptr)
     {
@@ -105,6 +113,15 @@ void LinkAudioDevice::stopPlaying()
 void LinkAudioDevice::setBypass(bool isByPass)
 {
     byPass.store(isByPass);
+
+    if (! isByPass)
+        return;
+
+    // A callback that read the flag before the store may still be
+    // rendering; let it drain before the caller touches the render path
+    // (it is at most one block, so a short spin is enough).
+    while (inCallback.load())
+        std::this_thread::yield();
 }
 
 } // namespace audium

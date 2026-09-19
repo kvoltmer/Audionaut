@@ -77,7 +77,7 @@ public:
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     
     bool scheduleClip(const audium::DspClip &clip,
-                      std::shared_ptr<VoiceSource> voiceSource,
+                      const std::shared_ptr<VoiceSource>& voiceSource,
                       double transportPosition,
                       int sampleOffset,
                       int numSamples);

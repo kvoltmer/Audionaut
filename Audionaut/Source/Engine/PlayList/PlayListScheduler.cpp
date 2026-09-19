@@ -46,7 +46,7 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
 }
 
 bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
-                                     std::shared_ptr<VoiceSource> voiceSource,
+                                     const std::shared_ptr<VoiceSource>& voiceSource,
                                      double transportPosition,
                                      int sampleOffset,
                                      int numSamples)
@@ -123,16 +123,18 @@ void PlayListScheduler::process(double transportPositionClocks,
     auto transportRange = juce::Range<double> (transportPosition, transportPosition + secondsThisBuffer);
     
     auto clipsChanged = audioClipContainer->pull();
-    auto dspClips = audioClipContainer->getConsumerObjects();
+    // a reference: the copy this used to make was a heap allocation per
+    // audio callback
+    const auto& dspClips = audioClipContainer->getConsumerObjects();
     
-    for (auto clipData : dspClips) {
+    for (const auto& clipData : dspClips) {
         
-        const audium::DspClip dspClip(getTempoProvider(), clipData);
+        const audium::DspClip dspClip(*tempoProvider, clipData);
         
         if (dspClip.getRegionData(audium::seconds).isEmpty())
             continue;
         
-        const auto voiceSource = voiceSourceContainer->getVoiceSourceAtIndex(dspClip.dspClipData.voiceSourceIndex);
+        const auto& voiceSource = voiceSourceContainer->getVoiceSourceAtIndex(dspClip.dspClipData.voiceSourceIndex);
         if (voiceSource == nullptr)
             continue;
         
@@ -230,7 +232,7 @@ void PlayListScheduler::startPlaying()
 {
     if (linkEngine != nullptr) {
         commitPlayListData();
-        linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
+        linkEngine->setStartPlayingTime(tempoProvider->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
         transportLoop->reset();
         transportLoop->setAbsoluteStartPosition(data.startPositionClocks, audium::clocks);
@@ -266,7 +268,7 @@ double PlayListScheduler::getAbsolutePosition(audium::TimeContextType context) c
         return data.transportPositionClocks;
     }
     else if (context == audium::seconds) {
-        return getTempoProvider()->clocksToSeconds(data.transportPositionClocks);
+        return tempoProvider->clocksToSeconds(data.transportPositionClocks);
     }
     
     jassertfalse;
@@ -283,7 +285,7 @@ void PlayListScheduler::setAbsoluteStartPosition(double newPosition, audium::Tim
         positionClocks = newPosition;
     }
     else if (context == audium::seconds) {
-        positionClocks = getTempoProvider()->secondsToClocks(newPosition);
+        positionClocks = tempoProvider->secondsToClocks(newPosition);
     }
     
     data.startPositionClocks = positionClocks;
@@ -301,7 +303,7 @@ double PlayListScheduler::getAbsoluteStartPosition(audium::TimeContextType conte
         return data.startPositionClocks;
     
     if (context == audium::seconds)
-        return getTempoProvider()->clocksToSeconds(data.startPositionClocks);
+        return tempoProvider->clocksToSeconds(data.startPositionClocks);
     
     return 0.0;
 }
@@ -485,7 +487,7 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     
     int64 samplesWritten = 0;
     for (auto i = 0; i < iterations; ++i) {
-        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
+        const auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
         juce::dsp::ProcessContextNonReplacing<float> context (inBlock, outBlock);
@@ -676,7 +678,7 @@ void PlayListScheduler::recordFromAudioBuffer(const AudioBuffer<float> &inputBuf
     
     int64 samplesProcessed = 0;
     for (auto i = 0; i < iterations; ++i) {
-        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(blockSize) / externalSampleRate);
+        const auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
         
