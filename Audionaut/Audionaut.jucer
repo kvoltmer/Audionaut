@@ -195,6 +195,7 @@
           <FILE id="EVuaOX" name="DspClip.h" compile="0" resource="0" file="Source/Engine/Core/DspClip.h"/>
           <FILE id="bNePQp" name="DspClipData.h" compile="0" resource="0" file="Source/Engine/Core/DspClipData.h"/>
           <FILE id="HmCore" name="HeadlessMode.h" compile="0" resource="0" file="Source/Engine/Core/HeadlessMode.h"/>
+          <FILE id="DspLdM" name="DspLoadMeter.h" compile="0" resource="0" file="Source/Engine/Core/DspLoadMeter.h"/>
         </GROUP>
         <FILE id="f3Gy4c" name="Streamable.h" compile="0" resource="0" file="Source/Engine/Streamable.h"/>
         <FILE id="E21RCr" name="TimeContext.h" compile="0" resource="0" file="Source/Engine/TimeContext.h"/>
@@ -587,6 +588,8 @@
                 file="Source/Interface/Controls/DraggerControl.h"/>
           <FILE id="i5qX4Q" name="LevelMeter.h" compile="0" resource="0" file="Source/Interface/Controls/LevelMeter.h"/>
           <FILE id="Fmpma7" name="LevelMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LevelMeter.cpp"/>
+          <FILE id="LdMtrH" name="LoadMeter.h" compile="0" resource="0" file="Source/Interface/Controls/LoadMeter.h"/>
+          <FILE id="LdMtrC" name="LoadMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LoadMeter.cpp"/>
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
           <FILE id="keLPLt" name="PositionMarker.h" compile="0" resource="0"

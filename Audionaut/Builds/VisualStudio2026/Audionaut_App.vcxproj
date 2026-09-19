@@ -300,6 +300,7 @@
     <ClCompile Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\DraggerControl.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\LevelMeter.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Controls\LoadMeter.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\RegionLabel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\RegionSelector.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Controls\RegionTableListBox.cpp"/>
@@ -3439,6 +3440,7 @@
     <ClInclude Include="..\..\Source\Engine\Core\DspClip.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\DspClipData.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\HeadlessMode.h"/>
+    <ClInclude Include="..\..\Source\Engine\Core\DspLoadMeter.h"/>
     <ClInclude Include="..\..\Source\Engine\Streamable.h"/>
     <ClInclude Include="..\..\Source\Engine\TimeContext.h"/>
     <ClInclude Include="..\..\Source\Engine\AutoEdit\AutoEdit.h"/>
@@ -3563,6 +3565,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListItemDraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\DraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LevelMeter.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\LoadMeter.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PositionMarker.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RectangleMarker.h"/>

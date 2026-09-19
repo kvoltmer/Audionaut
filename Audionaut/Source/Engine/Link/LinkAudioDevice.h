@@ -12,6 +12,7 @@
 #include <ableton/Link.hpp>
 #include <ableton/link/HostTimeFilter.hpp>
 #include "LinkEngine.hpp"
+#include "Engine/Core/DspLoadMeter.h"
 
 namespace audium {
 
@@ -43,6 +44,9 @@ public:
     void setBypass(bool isByPass);
     
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
+
+    /// Load measured across the whole audio callback; polled by the UI.
+    DspLoadMeter& getDspLoadMeter() noexcept { return dspLoadMeter; }
     
 private:
     std::shared_ptr<audium::LinkEngine> linkEngine;
@@ -53,6 +57,7 @@ private:
     double sampleRate = 0.0;
     int bufferSize = 0;
     std::atomic<bool> byPass;
+    DspLoadMeter dspLoadMeter;
 
     juce::AudioBuffer<const float> inBuf;
 	juce::AudioBuffer<float> outBuf;
