@@ -24,7 +24,7 @@ ClipTransportSource::~ClipTransportSource()
 
 void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSource,
                                       int readAheadSize, juce::TimeSliceThread* readAheadThread,
-                                      double sourceSampleRateToCorrectFor, int maxNumChannels)
+                                      double sourceSampleRateToCorrectFor, int newMaxNumChannels)
 {
     isPrepared = false;
 
@@ -43,7 +43,11 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
     juce::AudioSource* newMasterSource = nullptr;
 
     std::unique_ptr<juce::ResamplingAudioSource> oldResamplerSource (resamplerSource);
+    std::unique_ptr<juce::ResamplingAudioSource> oldStandbyResampler (standbyResampler);
     std::unique_ptr<StretchAudioSource> oldStretchSource (stretchSource);
+    standbyResampler = nullptr;
+    standbySource = nullptr;
+    maxNumChannels = newMaxNumChannels;
     std::unique_ptr<juce::BufferingAudioSource> oldBufferingSource (bufferingSource);
     juce::AudioSource* oldMasterSource = masterSource;
 
@@ -128,6 +132,60 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
         oldMasterSource->releaseResources();
 }
 
+void ClipTransportSource::setStandbySource (juce::PositionableAudioSource* newStandbySource)
+{
+    std::unique_ptr<juce::ResamplingAudioSource> oldStandbyResampler (standbyResampler);
+    standbyResampler = nullptr;
+    standbySource = nullptr;
+
+    if (stretchSource != nullptr)
+        stretchSource->setStandbyInput (nullptr);
+
+    if (oldStandbyResampler != nullptr)
+        oldStandbyResampler->releaseResources();
+
+    // a buffered chain reads ahead on another thread; a second cursor on
+    // it would need its own read-ahead, so those keep the in-block prime
+    if (newStandbySource == nullptr || stretchSource == nullptr || bufferingSource != nullptr)
+        return;
+
+    newStandbySource->setNextReadPosition (0);
+    standbySource = newStandbySource;
+    standbyResampler = new juce::ResamplingAudioSource (standbySource, false, maxNumChannels);
+
+    // prepares the lane too when the chain already is
+    stretchSource->setStandbyInput (standbyResampler);
+}
+
+juce::int64 ClipTransportSource::toSourceSamples (juce::int64 deviceSamples) const noexcept
+{
+    if (sampleRate > 0 && sourceSampleRate > 0)
+        return (juce::int64) std::llround ((double) deviceSamples * sourceSampleRate / sampleRate);
+
+    return deviceSamples;
+}
+
+void ClipTransportSource::primeStandby (double newPositionSeconds, double ratio, int blocksLeft)
+{
+    if (! isPrepared || stretchSource == nullptr || standbySource == nullptr
+        || standbyResampler == nullptr || sampleRate <= 0.0)
+        return;
+
+    // the same rounding setPosition applies, so the keys meet at the wrap
+    const auto key = toSourceSamples ((juce::int64) std::llround (newPositionSeconds * sampleRate));
+
+    if (! stretchSource->isStandbyPrimingFor (key))
+    {
+        // a fresh prime: the lane's cursor goes to the target, its
+        // resampler only corrects the file's rate (Stretch mode)
+        standbySource->setNextReadPosition (key);
+        standbyResampler->setResamplingRatio (sourceSampleRate > 0 ? sourceSampleRate / sampleRate : 1.0);
+        standbyResampler->flushBuffers();
+    }
+
+    stretchSource->primeStandby (key, ratio, blocksLeft);
+}
+
 void ClipTransportSource::start()
 {
     jassert(isPrepared);
@@ -184,8 +242,20 @@ bool ClipTransportSource::hasStreamFinished() const noexcept
 void ClipTransportSource::setNextReadPosition (juce::int64 newPosition)
 {
     if (positionableSource != nullptr) {
-        if (sampleRate > 0 && sourceSampleRate > 0)
-            newPosition = (juce::int64) std::llround ((double) newPosition * sourceSampleRate / sampleRate);
+        newPosition = toSourceSamples (newPosition);
+
+        // a standby lane primed for exactly this jump takes over: its
+        // cursor already sits past the look-ahead, so nothing is seeked
+        // and no prime runs in this block
+        if (stretchSource != nullptr
+            && stretchMode.load() == StretchMode::Stretch
+            && stretchSource->adoptStandby (newPosition))
+        {
+            std::swap (positionableSource, standbySource);
+            std::swap (resamplerSource, standbyResampler);
+            source = positionableSource;
+            return;
+        }
 
         positionableSource->setNextReadPosition (newPosition);
 

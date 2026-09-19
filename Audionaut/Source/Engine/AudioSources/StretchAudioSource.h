@@ -60,6 +60,39 @@ public:
     /// after the upstream read position changed.
     void flushBuffers() noexcept                     { needsPriming.store (true); }
 
+    /** A standby lane: a second upstream chain (its own reader cursor and
+        resampler, owned by the caller) with its own stretcher, so a known
+        position jump - the loop wrap - can be primed ahead of time instead
+        of inside the callback that makes the jump. Off the audio thread;
+        the lane's stretcher is allocated in prepareToPlay (or here, when
+        already prepared). */
+    void setStandbyInput (juce::AudioSource* standbyInputSource);
+    bool hasStandbyLane() const noexcept             { return standbyInput != nullptr; }
+
+    /** Primes the standby lane for a position jump, one slice per call.
+        The caller has already placed the standby input at the target;
+        positionKey identifies that target (the source sample position),
+        blocksLeft says how many more calls it can expect before the jump
+        and sizes the slice so the prime completes one call early. A call
+        with a new key restarts the prime; calls after completion are
+        no-ops. Real-time safe. */
+    void primeStandby (juce::int64 positionKey, double ratio, int blocksLeft);
+    bool isStandbyPrimingFor (juce::int64 positionKey) const noexcept
+    {
+        return standby.active && standby.key == positionKey;
+    }
+
+    /** Makes the standby lane the live one if it is fully primed for
+        positionKey: the lanes swap (input and stretcher), the next block
+        renders from the primed state and no prime runs. Returns false -
+        and changes nothing - otherwise; the caller then seeks and flushes
+        as usual. Real-time safe. */
+    bool adoptStandby (juce::int64 positionKey) noexcept;
+
+    /// Full primes rendered inside a block, and jumps served by a standby.
+    int getPrimeCount() const noexcept               { return primeCount; }
+    int getStandbyAdoptions() const noexcept         { return standbyAdoptions; }
+
     /**
         Lets the owner say whether @p numInputSamples (in this node's input
         domain) can be pulled from upstream right now, and how much
@@ -75,24 +108,43 @@ public:
     /// Diagnostics: blocks the stretcher could not fill, and rendered
     /// samples it had to drop. Both stay zero when the buffers are sized
     /// right.
-    int getUnderruns() const noexcept    { return backend.getUnderruns(); }
-    int getOverflows() const noexcept    { return backend.getOverflows(); }
+    int getUnderruns() const noexcept    { return backend->getUnderruns(); }
+    int getOverflows() const noexcept    { return backend->getOverflows(); }
 
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
     void releaseResources() override;
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override;
 
 private:
-    /// Fills the first @p numSamples of inputScratch from upstream, pulling
+    /// Fills the first @p numSamples of inputScratch from @p from, pulling
     /// in chunks no larger than the prepared block size.
-    void pullInput (int numSamples);
+    void pullInput (juce::AudioSource& from, int numSamples);
 
     void prime (double ratio);
 
     juce::AudioSource* input;
     const int numChannels;
 
-    RubberBandStretchBackend backend;
+    // the live lane renders; the standby lane (input + backend, present
+    // only with a standby input) is primed ahead of a jump and swapped in
+    std::unique_ptr<RubberBandStretchBackend> backend;
+    juce::AudioSource* standbyInput = nullptr;
+    std::unique_ptr<RubberBandStretchBackend> standbyBackend;
+
+    struct StandbyPrime
+    {
+        bool active = false;
+        bool ready = false;
+        juce::int64 key = 0;
+        int padLeft = 0;      // start-pad zeros still to feed
+        int inputLeft = 0;    // look-ahead input still to feed
+        int slice = 0;        // samples (pad + input) fed per call
+    };
+    StandbyPrime standby;
+    static constexpr int standbyMinSlice = 1024;
+
+    int primeCount = 0;
+    int standbyAdoptions = 0;
     bool prepared = false;
 
     std::atomic<double> speedRatio { 1.0 };
@@ -101,6 +153,7 @@ private:
 
     juce::AudioBuffer<float> inputScratch;
     int preparedBlockSize = 0;
+    double preparedSampleRate = 0.0;
 
     std::function<bool (int)> inputReady;
     std::function<int()> maxLookAhead;

@@ -84,6 +84,23 @@ public:
     */
     void setPosition (double newPosition);
 
+    /** Gives the transport a standby lane for Stretch mode: a second
+        cursor on the same reader (owned by the caller, like the source),
+        which gets its own resampler and stretcher so a known position
+        jump - the loop wrap - can be primed over the callbacks before it
+        instead of inside the one that makes the jump. Only for sources
+        without a read-ahead buffer (memory-mapped readers); a buffered
+        chain ignores it. Call after setSource, off the audio thread. */
+    void setStandbySource (juce::PositionableAudioSource* newStandbySource);
+
+    /** One slice of the standby prime for a jump to newPositionSeconds at
+        the given speed ratio; see StretchAudioSource::primeStandby. The
+        next setPosition to that exact position then swaps the primed lane
+        in instead of re-priming. Real-time safe. */
+    void primeStandby (double newPositionSeconds, double ratio, int blocksLeft);
+
+    const StretchAudioSource* getStretchSource() const noexcept    { return stretchSource; }
+
     /** Returns the position that the next data block will be read from.
         This is a time in seconds.
     */
@@ -178,6 +195,18 @@ public:
     bool isLooping() const override;
 
     juce::BufferingAudioSource* getBufferingSource() const { return bufferingSource; }
+
+private:
+    juce::int64 toSourceSamples (juce::int64 deviceSamples) const noexcept;
+
+    // the standby lane: the second cursor and its resampler (owned here);
+    // the stretch node holds the matching second stretcher. A successful
+    // adoption swaps lane pointers, so after a wrap `source` may be the
+    // cursor that came in through setStandbySource - both are the
+    // caller's and outlive this object either way.
+    juce::PositionableAudioSource* standbySource = nullptr;
+    juce::ResamplingAudioSource* standbyResampler = nullptr;
+    int maxNumChannels = 2;
 
 private:
     //==============================================================================

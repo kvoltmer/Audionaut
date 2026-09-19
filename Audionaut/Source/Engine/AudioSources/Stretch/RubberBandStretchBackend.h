@@ -60,6 +60,17 @@ public:
     /// look-ahead samples so the next process() output starts at input[0].
     void prime (const float* const* input, int numInput, double ratio);
 
+    /** The same prime in pieces, for a standby stretcher warmed over
+        several callbacks: beginPrime resets the stretcher and applies the
+        ratio; the caller then feeds getStartPad() zeros through feedPadding
+        and primeInputLength (ratio) samples through feedInput, in whatever
+        chunks it likes. Once both are in, the stretcher is exactly where
+        prime() would have left it. */
+    void beginPrime (double ratio);
+    void feedPadding (int numZeros);
+    void feedInput (const float* const* input, int numInput)    { feed (input, numInput); }
+    int getStartPad() const noexcept    { return startPad; }
+
     /// Input samples to supply to the next process() producing @p numOutput
     /// samples at @p ratio.
     int inputForOutput (int numOutput, double ratio);

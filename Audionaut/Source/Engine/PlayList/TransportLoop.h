@@ -85,6 +85,11 @@ public:
         double timeUntilLoop    = 0.0;
         int numSamplesUntilLoop = 0;
         TimeContextType context = seconds;
+
+        /// Samples from this block's start to the loop end while playing
+        /// inside the loop (>= numSamples when no loop event fires in this
+        /// block); -1 when the loop is off or the position is outside it.
+        int numSamplesUntilLoopEnd = -1;
     };
     
     /**

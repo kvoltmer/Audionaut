@@ -132,6 +132,16 @@ public:
         clipTransportSource->setStretchMode(newMode);
     }
 
+    /** One slice of the standby prime for a known upcoming jump (the loop
+        wrap) of a Stretch-mode clip; call once per block over the blocks
+        before it. See ClipTransportSource::primeStandby. Real-time safe. */
+    void primeStandby(double filePositionSeconds, double ratio, int blocksLeft)
+    {
+        clipTransportSource->primeStandby(filePositionSeconds, ratio, blocksLeft);
+    }
+
+    const ClipTransportSource& getClipTransportSource() const noexcept { return *clipTransportSource; }
+
     void setGain(float gain)
     {
         clipTransportSource->setGain(gain);
@@ -163,6 +173,7 @@ private:
     std::atomic<bool> reScheduled           = false; /// Helper to indicate if position is re-scheduled (loop)
     audium::SampleTimer durationTimer; ///< Timer for managing playback duration.
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
+    std::shared_ptr<juce::AudioFormatReaderSource> standbyReaderSource; ///< Second cursor on the same reader for the transport's standby lane (memory-mapped readers only).
     std::shared_ptr<audium::ClipTransportSource> clipTransportSource; ///< Underlying clip voice source.
     std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping; ///< Channel remapping source; the outermost source in the chain.
 

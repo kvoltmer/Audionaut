@@ -10,7 +10,8 @@ namespace audium {
 
 StretchAudioSource::StretchAudioSource (juce::AudioSource* inputSource, int numChannels_) :
     input (inputSource),
-    numChannels (numChannels_)
+    numChannels (numChannels_),
+    backend (std::make_unique<RubberBandStretchBackend>())
 {
     jassert (input != nullptr);
     jassert (numChannels > 0);
@@ -23,15 +24,24 @@ void StretchAudioSource::prepareToPlay (int samplesPerBlockExpected, double samp
     input->prepareToPlay (samplesPerBlockExpected, sampleRate);
 
     preparedBlockSize = samplesPerBlockExpected;
+    preparedSampleRate = sampleRate;
 
     // off the audio thread: the stretcher allocates everything it will
     // ever need now
-    backend.prepare (numChannels, sampleRate, samplesPerBlockExpected,
-                     ClipSpeed::minSpeedRatio, ClipSpeed::maxSpeedRatio);
+    backend->prepare (numChannels, sampleRate, samplesPerBlockExpected,
+                      ClipSpeed::minSpeedRatio, ClipSpeed::maxSpeedRatio);
+
+    if (standbyInput != nullptr)
+    {
+        standbyInput->prepareToPlay (samplesPerBlockExpected, sampleRate);
+        standbyBackend->prepare (numChannels, sampleRate, samplesPerBlockExpected,
+                                 ClipSpeed::minSpeedRatio, ClipSpeed::maxSpeedRatio);
+    }
+    standby = {};
     prepared = true;
 
     // The scratch must fit the biggest single pull the stretcher may ask for.
-    inputScratch.setSize (numChannels, juce::jmax (1, backend.maxInputLength()));
+    inputScratch.setSize (numChannels, juce::jmax (1, backend->maxInputLength()));
     inputScratch.clear();
 
     deferredOutputSamples = 0;
@@ -41,15 +51,105 @@ void StretchAudioSource::prepareToPlay (int samplesPerBlockExpected, double samp
 void StretchAudioSource::releaseResources()
 {
     input->releaseResources();
+
+    if (standbyInput != nullptr)
+        standbyInput->releaseResources();
 }
 
-void StretchAudioSource::pullInput (int numSamples)
+void StretchAudioSource::setStandbyInput (juce::AudioSource* standbyInputSource)
+{
+    standbyInput = standbyInputSource;
+    standby = {};
+
+    if (standbyInput == nullptr)
+    {
+        standbyBackend.reset();
+        return;
+    }
+
+    standbyBackend = std::make_unique<RubberBandStretchBackend>();
+
+    if (prepared)
+    {
+        standbyInput->prepareToPlay (preparedBlockSize, preparedSampleRate);
+        standbyBackend->prepare (numChannels, preparedSampleRate, preparedBlockSize,
+                                 ClipSpeed::minSpeedRatio, ClipSpeed::maxSpeedRatio);
+    }
+}
+
+void StretchAudioSource::primeStandby (juce::int64 positionKey, double ratio, int blocksLeft)
+{
+    if (! prepared || standbyInput == nullptr)
+        return;
+
+    if (! standby.active || standby.key != positionKey)
+    {
+        standby = {};
+        standby.active = true;
+        standby.key = positionKey;
+        standby.padLeft = standbyBackend->getStartPad();
+        standby.inputLeft = juce::jlimit (0, inputScratch.getNumSamples(),
+                                          standbyBackend->primeInputLength (ratio));
+
+        // spread over the calls before the jump, done one call early so a
+        // little timing jitter cannot leave the prime short at the wrap.
+        // Never thinner than standbyMinSlice: Rubber Band's real-time
+        // engine renders a stream shifted by a sample or two when it is
+        // fed in small pieces, and from about a kilosample up its output
+        // matches the one-shot prime (see LoopStandbyTests).
+        const auto calls = juce::jmax (1, blocksLeft - 1);
+        standby.slice = juce::jmax (standbyMinSlice,
+                                    (standby.padLeft + standby.inputLeft + calls - 1) / calls);
+
+        standbyBackend->beginPrime (ratio);
+    }
+
+    if (standby.ready)
+        return;
+
+    auto budget = standby.slice;
+
+    const auto pad = juce::jmin (standby.padLeft, budget);
+    if (pad > 0)
+    {
+        standbyBackend->feedPadding (pad);
+        standby.padLeft -= pad;
+        budget -= pad;
+    }
+
+    const auto samples = juce::jmin (standby.inputLeft, budget);
+    if (samples > 0)
+    {
+        pullInput (*standbyInput, samples);
+        standbyBackend->feedInput (inputScratch.getArrayOfReadPointers(), samples);
+        standby.inputLeft -= samples;
+    }
+
+    if (standby.padLeft == 0 && standby.inputLeft == 0)
+        standby.ready = true;
+}
+
+bool StretchAudioSource::adoptStandby (juce::int64 positionKey) noexcept
+{
+    if (! (standby.active && standby.ready && standby.key == positionKey))
+        return false;
+
+    std::swap (input, standbyInput);
+    std::swap (backend, standbyBackend);
+    standby = {};
+    deferredOutputSamples = 0;
+    needsPriming.store (false);
+    ++standbyAdoptions;
+    return true;
+}
+
+void StretchAudioSource::pullInput (juce::AudioSource& from, int numSamples)
 {
     for (int done = 0; done < numSamples;)
     {
         const auto chunk = juce::jmin (preparedBlockSize, numSamples - done);
         juce::AudioSourceChannelInfo chunkInfo (&inputScratch, done, chunk);
-        input->getNextAudioBlock (chunkInfo);
+        from.getNextAudioBlock (chunkInfo);
         done += chunk;
     }
 }
@@ -66,7 +166,7 @@ void StretchAudioSource::prime (double ratio)
     // look-ahead for the backend: the first output after this starts at
     // the upstream position the pull begins from
     auto primeSamples = juce::jlimit (0, inputScratch.getNumSamples(),
-                                      backend.primeInputLength (ratio));
+                                      backend->primeInputLength (ratio));
     if (maxLookAhead != nullptr)
         primeSamples = juce::jlimit (0, juce::jmax (0, maxLookAhead()), primeSamples);
 
@@ -80,13 +180,14 @@ void StretchAudioSource::prime (double ratio)
         while (skip > 0)
         {
             const auto chunk = juce::jmin (skip, inputScratch.getNumSamples());
-            pullInput (chunk);
+            pullInput (*input, chunk);
             skip -= chunk;
         }
     }
 
-    pullInput (primeSamples);
-    backend.prime (inputScratch.getArrayOfReadPointers(), primeSamples, ratio);
+    pullInput (*input, primeSamples);
+    backend->prime (inputScratch.getArrayOfReadPointers(), primeSamples, ratio);
+    ++primeCount;
 }
 
 void StretchAudioSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
@@ -110,7 +211,7 @@ void StretchAudioSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& 
         // the prime's look-ahead plus this block's input must be there
         if (inputReady != nullptr)
         {
-            auto wanted = backend.primeInputLength (ratio)
+            auto wanted = backend->primeInputLength (ratio)
                           + static_cast<int> (std::ceil (info.numSamples * ratio)) + 64;
             if (maxLookAhead != nullptr)
                 wanted = juce::jmin (wanted, juce::jmax (0, maxLookAhead()));
@@ -128,8 +229,8 @@ void StretchAudioSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& 
     }
 
     const auto inputSamples = juce::jlimit (0, inputScratch.getNumSamples(),
-                                            backend.inputForOutput (info.numSamples, ratio));
-    pullInput (inputSamples);
+                                            backend->inputForOutput (info.numSamples, ratio));
+    pullInput (*input, inputSamples);
 
     const auto outputChannels = juce::jmin (numChannels, info.buffer->getNumChannels());
 
@@ -143,8 +244,8 @@ void StretchAudioSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& 
             ? info.buffer->getWritePointer (channel, info.startSample)
             : inputScratch.getWritePointer (channel);
 
-    backend.process (inputScratch.getArrayOfReadPointers(), inputSamples,
-                      outputs, info.numSamples, ratio);
+    backend->process (inputScratch.getArrayOfReadPointers(), inputSamples,
+                       outputs, info.numSamples, ratio);
 
     // channels beyond the chain's count carry stale data in this path
     for (int channel = numChannels; channel < info.buffer->getNumChannels(); ++channel)

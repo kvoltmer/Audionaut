@@ -23,6 +23,7 @@ namespace audium {
 class PlayListContainer;
 class PlayListItem;
 class VoiceSourceContainer;
+struct ClipFadeSpec;
 class AudioResourceContainer;
 class Playback;
 class DspClip;
@@ -76,6 +77,20 @@ public:
     
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     
+    /// The file position (seconds) a voice for the clip starts from when
+    /// the transport is at transportPosition - what scheduleClip seeks to,
+    /// and what the standby prime targets ahead of a loop wrap.
+    static double restartFilePosition(const audium::DspClip &clip,
+                                      const ClipFadeSpec &spec,
+                                      double transportPosition);
+
+    /// Runs the standby prime of a stretched voice over the blocks before
+    /// a loop wrap; a no-op outside that window or for other clips.
+    void primeStandbyForLoopWrap(const audium::DspClip &clip,
+                                 VoiceSource* voiceSource,
+                                 const TransportLoop::LoopResult &loopResult,
+                                 int numSamples);
+
     bool scheduleClip(const audium::DspClip &clip,
                       VoiceSource* voiceSource,
                       double transportPosition,
@@ -171,6 +186,14 @@ public:
 #endif
     
     PlayListSchedulerData data;
+
+    /// Stretched clips prime a standby stretcher over the blocks before a
+    /// loop wrap instead of inside the wrap block (see
+    /// StretchAudioSource::primeStandby). Tests flip it off to compare.
+    std::atomic<bool> standbyPrimingEnabled { true };
+
+    /// How far ahead of the wrap the standby prime starts, in seconds.
+    static constexpr double standbyPrimeHorizonSeconds = 0.25;
     
     std::function<void()> onRecordingStartedFunction;
     
