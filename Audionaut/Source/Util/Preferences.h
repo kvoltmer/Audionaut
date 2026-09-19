@@ -69,7 +69,6 @@ namespace PreferenceKeys
     static const char* const autoEditCrossfadeType  = "AutoEditCrossfadeType";
     static const char* const separationThreads      = "SeparationThreads";
     static const char* const separationMuteSource   = "SeparationMuteSource";
-    static const char* const stretchEngine          = "StretchEngine";
     static const char* const usageStatsEnabled      = "UsageStatsEnabled";
     static const char* const updateCheckEnabled     = "UpdateCheckEnabled";
     static const char* const lastUpdateCheckTime    = "LastUpdateCheckTime";

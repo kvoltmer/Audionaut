@@ -73,8 +73,8 @@ Escape reverts everything since the panel opened.
 
 The panel's **Mode** box picks how the speed is realised. *Re-Pitch* (the
 default) is classic varispeed. *Time-Stretch* keeps the clip's pitch while
-the length changes — a pitch-preserving time-stretch, powered by
-[Signalsmith Stretch](https://signalsmith-audio.co.uk/code/stretch/). The
+the length changes — a pitch-preserving time-stretch, powered by the
+[Rubber Band Library](https://breakfastquay.com/rubberband/) R3 engine. The
 switch applies live and also plays out in exports and bounces; extreme
 ratios smear sharp transients, which is the nature of the technique.
 

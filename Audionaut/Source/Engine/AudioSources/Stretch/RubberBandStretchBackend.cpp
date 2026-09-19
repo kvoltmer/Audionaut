@@ -5,49 +5,65 @@
 
 #include "RubberBandStretchBackend.h"
 
-#if STRETCH_RUBBERBAND_ENABLED
-
 namespace audium {
 
 namespace {
 
-// Rubber Band's real-time mode wants generous input for the finer engine:
-// a fixed per-call ceiling keeps the node's scratch and the library's
-// process size in step.
-constexpr int inputCeiling = 65536;
-constexpr int retrieveChunk = 4096;
+int ceilToInt (double value)
+{
+    return static_cast<int> (std::ceil (value));
+}
 
 } // namespace
 
-void RubberBandStretchBackend::prepare (int numChannels_, double sampleRate, int maxBlockSize, double)
+void RubberBandStretchBackend::prepare (int numChannels_, double sampleRate, int maxBlockSize,
+                                        double minSpeedRatio, double maxSpeedRatio)
 {
     using RubberBand::RubberBandStretcher;
 
     numChannels = numChannels_;
+    blockSize = maxBlockSize;
     headroom = maxBlockSize;
-    maxProcessSize = inputCeiling;
 
     stretcher = std::make_unique<RubberBandStretcher> (static_cast<size_t> (sampleRate),
                                                        static_cast<size_t> (numChannels),
                                                        RubberBandStretcher::OptionProcessRealTime
                                                        | RubberBandStretcher::OptionEngineFiner
                                                        | RubberBandStretcher::OptionThreadingNever);
+
+    // The library's window geometry (we never pitch-shift, so these do not
+    // move with the ratio): a fresh stretcher wants one window of input
+    // before it renders, and the real-time alignment recipe pads and trims
+    // half a window each.
+    windowSize = static_cast<int> (stretcher->getSamplesRequired());
+    startPad   = static_cast<int> (stretcher->getPreferredStartPad());
+    startDelay = static_cast<int> (stretcher->getStartDelay());
+
+    // Feeds go in chunks of one window, drained in between, so the library's
+    // own in/out buffers (2x / 8x this) stay small.
+    maxProcessSize = juce::jmax (windowSize, 1024);
     stretcher->setMaxProcessSize (static_cast<size_t> (maxProcessSize));
 
-    // the finer engine renders in bursts; room for a generous one plus the
-    // alignment trim
-    fifo.prepare (numChannels, juce::jmax (4 * inputCeiling, 16 * maxBlockSize));
-    retrieveScratch.setSize (numChannels, retrieveChunk);
-    zeros.setSize (numChannels, maxProcessSize);
+    // The biggest single pull the node makes: a prime at the fastest ratio,
+    // or one block's worth at the fastest ratio, or the library's fill.
+    maxInput = juce::jmax (primeInputLength (maxSpeedRatio),
+                           ceilToInt ((blockSize + headroom + hopSlack()) * maxSpeedRatio),
+                           windowSize);
+
+    // The most the FIFO ever holds: what a prime at the slowest ratio leaves
+    // after the trim, or a short FIFO topped up by a full window at the
+    // slowest ratio - plus one window of output for the library's hop
+    // granularity.
+    const auto primeOutput = ceilToInt ((startPad + primeInputLength (minSpeedRatio)) / minSpeedRatio) - startDelay;
+    const auto windowOutput = ceilToInt (windowSize / minSpeedRatio);
+    fifo.prepare (numChannels, juce::jmax (primeOutput, blockSize + headroom + hopSlack() + windowOutput) + windowOutput);
+
+    retrieveScratch.setSize (numChannels, maxProcessSize);
+    zeros.setSize (numChannels, juce::jmin (startPad, maxProcessSize));
     zeros.clear();
 
     currentRatio = 0.0;
     pendingDiscard = 0;
-}
-
-int RubberBandStretchBackend::maxInputLength (int, double) const
-{
-    return inputCeiling;
 }
 
 void RubberBandStretchBackend::applyRatio (double ratio)
@@ -60,15 +76,22 @@ void RubberBandStretchBackend::applyRatio (double ratio)
     }
 }
 
-int RubberBandStretchBackend::primeInputLength (double ratio) const
+int RubberBandStretchBackend::primeInputLength (double ratio) const noexcept
 {
-    // enough to cover the start pad's delay, the library's own look-ahead
-    // and one block of headroom
-    const_cast<RubberBandStretchBackend*> (this)->applyRatio (ratio);
-    const auto delay = static_cast<double> (stretcher->getStartDelay());
-    const auto required = static_cast<int> (stretcher->getSamplesRequired());
-    const auto wanted = static_cast<int> (std::ceil ((delay + headroom) * ratio)) + required + 1024;
-    return juce::jlimit (1, inputCeiling, wanted);
+    // The library renders one output hop per frame, and only while it holds
+    // a full window of input: after the pad it needs (windowSize - startPad)
+    // of material for the first frame, then ratio input per output sample.
+    // After the start delay is trimmed the FIFO should hold one block, the
+    // headroom and one hop of slack for the frame granularity.
+    const auto output = startDelay + blockSize + headroom + hopSlack();
+    return juce::jmax (1, windowSize - startPad + ceilToInt (output * ratio));
+}
+
+int RubberBandStretchBackend::hopSlack() const noexcept
+{
+    // an upper bound on the library's output hop at any rate (its preferred
+    // maximum is sampleRate / 128, the window is at least sampleRate / 16)
+    return windowSize / 8;
 }
 
 void RubberBandStretchBackend::feed (const float* const* input, int numInput)
@@ -82,6 +105,7 @@ void RubberBandStretchBackend::feed (const float* const* input, int numInput)
             pointers[channel] = input[channel] + done;
 
         stretcher->process (pointers, static_cast<size_t> (chunk), false);
+        drain();
         done += chunk;
     }
 }
@@ -94,7 +118,7 @@ void RubberBandStretchBackend::drain()
         if (available <= 0)
             break;
 
-        const auto wanted = juce::jmin (available, retrieveChunk, fifo.getFreeSpace() + pendingDiscard);
+        const auto wanted = juce::jmin (available, retrieveScratch.getNumSamples(), fifo.getFreeSpace() + pendingDiscard);
         if (wanted <= 0)
             break;
 
@@ -124,31 +148,31 @@ void RubberBandStretchBackend::prime (const float* const* input, int numInput, d
     applyRatio (ratio);
 
     // the library's alignment recipe for real-time mode
-    const auto pad = static_cast<int> (stretcher->getPreferredStartPad());
-    pendingDiscard = static_cast<int> (stretcher->getStartDelay());
+    pendingDiscard = startDelay;
 
-    for (int done = 0; done < pad;)
+    for (int done = 0; done < startPad;)
     {
-        const auto chunk = juce::jmin (zeros.getNumSamples(), pad - done);
+        const auto chunk = juce::jmin (zeros.getNumSamples(), startPad - done);
         stretcher->process (zeros.getArrayOfReadPointers(), static_cast<size_t> (chunk), false);
         done += chunk;
     }
 
     feed (input, numInput);
-    drain();
 }
 
 int RubberBandStretchBackend::inputForOutput (int numOutput, double ratio)
 {
-    const auto needed = numOutput + headroom - fifo.getNumStored();
-    auto wanted = needed > 0 ? static_cast<int> (std::ceil (needed * ratio)) : 0;
+    // aim one block plus one hop ahead: the library releases output a hop
+    // at a time, so an exact ask can fall short by up to that much
+    const auto needed = numOutput + headroom + hopSlack() - fifo.getNumStored();
+    auto wanted = needed > 0 ? ceilToInt (needed * ratio) : 0;
 
     // short of this block: at least what the library needs to produce
     // anything at all
     if (fifo.getNumStored() < numOutput)
         wanted = juce::jmax (wanted, static_cast<int> (stretcher->getSamplesRequired()));
 
-    return juce::jmin (wanted, inputCeiling);
+    return juce::jmin (wanted, maxInput);
 }
 
 void RubberBandStretchBackend::process (const float* const* input, int numInput,
@@ -159,10 +183,7 @@ void RubberBandStretchBackend::process (const float* const* input, int numInput,
     if (numInput > 0)
         feed (input, numInput);
 
-    drain();
     fifo.pop (output, numOutput);
 }
 
 } // namespace audium
-
-#endif // STRETCH_RUBBERBAND_ENABLED

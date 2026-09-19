@@ -10,7 +10,7 @@
 #include <memory>
 #include <JuceHeader.h>
 
-#include "Engine/AudioSources/Stretch/StretchBackend.h"
+#include "Engine/AudioSources/Stretch/RubberBandStretchBackend.h"
 
 namespace audium {
 
@@ -25,11 +25,8 @@ namespace audium {
     stays put. In RePitch mode the node is bypassed (a plain pass-through)
     and the resampler does the varispeed as before.
 
-    The stretching itself is done by a StretchBackend: the engine selected
-    process-wide (StretchEngines::getSelected) when prepareToPlay runs, so
-    an engine change takes effect when the audio device restarts or on the
-    next bounce. Signalsmith Stretch ships; the other engines are there to
-    be evaluated against it.
+    The stretching itself is Rubber Band's R3 engine, wrapped by
+    RubberBandStretchBackend, which also owns the start alignment.
 
     The node lives in the chain permanently and is toggled per voice: the
     scheduler sets mode and speed before it schedules the position, and a
@@ -41,7 +38,7 @@ namespace audium {
     input is pulled in prepared-block-size chunks so the resampler and
     buffering sources never see a larger request than they prepared for.
 
-    @see ClipTransportSource, StretchMode, StretchBackend
+    @see ClipTransportSource, StretchMode, RubberBandStretchBackend
 */
 class StretchAudioSource : public juce::AudioSource
 {
@@ -63,9 +60,6 @@ public:
     /// after the upstream read position changed.
     void flushBuffers() noexcept                     { needsPriming.store (true); }
 
-    /// The engine this node was prepared with.
-    StretchEngine getEngine() const noexcept         { return preparedEngine; }
-
     /**
         Lets the owner say whether @p numInputSamples (in this node's input
         domain) can be pulled from upstream right now, and how much
@@ -77,6 +71,12 @@ public:
     */
     void setInputReadiness (std::function<bool (int numInputSamples)> isReady,
                             std::function<int()> maxLookAhead);
+
+    /// Diagnostics: blocks the stretcher could not fill, and rendered
+    /// samples it had to drop. Both stay zero when the buffers are sized
+    /// right.
+    int getUnderruns() const noexcept    { return backend.getUnderruns(); }
+    int getOverflows() const noexcept    { return backend.getOverflows(); }
 
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
     void releaseResources() override;
@@ -92,8 +92,8 @@ private:
     juce::AudioSource* input;
     const int numChannels;
 
-    std::unique_ptr<StretchBackend> backend;
-    StretchEngine preparedEngine = StretchEngine::Signalsmith;
+    RubberBandStretchBackend backend;
+    bool prepared = false;
 
     std::atomic<double> speedRatio { 1.0 };
     std::atomic<bool> enabled { false };

@@ -14,7 +14,6 @@
 #include "Interface/Dialogs/ProjectSettingsComponent.h"
 #include "Interface/Dialogs/PrivacySettingsComponent.h"
 #include "Interface/Dialogs/SeparationSettingsComponent.h"
-#include "Interface/Dialogs/StretchSettingsComponent.h"
 
 using namespace juce;
 
@@ -40,7 +39,6 @@ public:
         analysisComp = std::make_unique<AnalysisSettingsComponent>(engine, AudiumApplication::getPreferences());
         autoEditComp = std::make_unique<AutoEditSettingsComponent>(AudiumApplication::getPreferences());
         separationComp = std::make_unique<SeparationSettingsComponent>(AudiumApplication::getPreferences());
-        stretchComp = std::make_unique<StretchSettingsComponent>(engine, AudiumApplication::getPreferences());
         privacyComp = std::make_unique<PrivacySettingsComponent>(AudiumApplication::getPreferences(),
                                                                  [](bool enabled) {
             AudiumApplication::getApp().setUsageStatisticsEnabled(enabled);
@@ -54,7 +52,6 @@ public:
         tabbedComp->addTab(TRANS ("Analysis"), tabColour, analysisComp.get(), false);
         tabbedComp->addTab(TRANS ("Auto Edit"), tabColour, autoEditComp.get(), false);
         tabbedComp->addTab(TRANS ("Separation"), tabColour, separationComp.get(), false);
-        tabbedComp->addTab(TRANS ("Stretch"), tabColour, stretchComp.get(), false);
         tabbedComp->addTab(TRANS ("Privacy"), tabColour, privacyComp.get(), false);
         tabbedComp->setSize(500, 340);
     }
@@ -78,7 +75,6 @@ private:
         analysisComp->refreshFromPreferences();
         autoEditComp->refreshFromPreferences();
         separationComp->refreshFromPreferences();
-        stretchComp->refreshFromPreferences();
         privacyComp->refreshFromPreferences();
         asyncAlertWindow->addCustomComponent(tabbedComp.get());
         asyncAlertWindow->addButton (TRANS ("Close"),  1, KeyPress (KeyPress::returnKey));
@@ -111,7 +107,6 @@ private:
     std::unique_ptr<AnalysisSettingsComponent> analysisComp;
     std::unique_ptr<AutoEditSettingsComponent> autoEditComp;
     std::unique_ptr<SeparationSettingsComponent> separationComp;
-    std::unique_ptr<StretchSettingsComponent> stretchComp;
     std::unique_ptr<PrivacySettingsComponent> privacyComp;
     std::unique_ptr<TabbedComponent> tabbedComp;
 

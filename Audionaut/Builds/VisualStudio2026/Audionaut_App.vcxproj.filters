@@ -5,14 +5,8 @@
     <Filter Include="Audionaut\Submodules\demucs.cpp">
       <UniqueIdentifier>{57B3A6DF-81C6-567D-DBF0-195553615D11}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Audionaut\Submodules\bungee">
-      <UniqueIdentifier>{495DEA4E-70C5-60DF-3D7A-DF99445EF3F6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Audionaut\Submodules\rubberband">
       <UniqueIdentifier>{39DF1458-73AF-9A38-A8AD-C097FF93DCB1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Audionaut\Submodules\soundtouch">
-      <UniqueIdentifier>{8E7F0074-6BC2-7529-3A14-373C46462ED1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Audionaut\Submodules">
       <UniqueIdentifier>{C466D4A6-ED53-DDE5-2A30-37BD2DF4AB9A}</UniqueIdentifier>
@@ -1042,103 +1036,13 @@
     <ClCompile Include="..\..\..\Submodules\demucs.cpp\src\model_load.cpp">
       <Filter>Audionaut\Submodules\demucs.cpp</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Assert.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Fourier.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Grain.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Grains.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Input.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Instrumentation.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Output.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Partials.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Stretch.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Stretcher.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Synthesis.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Timing.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\src\Window.cpp">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\submodules\pffft\pffft.c">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\bungee\submodules\pffft\fftpack.c">
-      <Filter>Audionaut\Submodules\bungee</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\Submodules\rubberband\single\RubberBandSingle.cpp">
       <Filter>Audionaut\Submodules\rubberband</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\AAFilter.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\BPMDetect.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\FIFOSampleBuffer.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\FIRFilter.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\InterpolateCubic.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\InterpolateLinear.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\InterpolateShannon.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\PeakFinder.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\RateTransposer.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\SoundTouch.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\TDStretch.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\cpu_detect_x86.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\mmx_optimized.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Submodules\soundtouch\source\SoundTouch\sse_optimized.cpp">
-      <Filter>Audionaut\Submodules\soundtouch</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Cli\Commands\Commands.cpp">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Cli\Commands\AnalyzeCommand.cpp">
-      <Filter>Audionaut\Source\Cli\Commands</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Cli\Commands\StretchEvalCommand.cpp">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Cli\Commands\AutoEditCommand.cpp">
@@ -1231,22 +1135,7 @@
     <ClCompile Include="..\..\Source\Engine\Analysis\EventMerger.cpp">
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\BungeeStretchBackend.cpp">
-      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\BungeeVersion.cpp">
-      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\RubberBandStretchBackend.cpp">
-      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\SignalsmithStretchBackend.cpp">
-      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\SoundTouchStretchBackend.cpp">
-      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Engine\AudioSources\Stretch\StretchBackend.cpp">
       <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\AudioSources\VoiceSource.cpp">
@@ -4869,19 +4758,7 @@
     <ClInclude Include="..\..\Source\Engine\Analysis\EventMerger.h">
       <Filter>Audionaut\Source\Engine\Analysis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\BungeeStretchBackend.h">
-      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\RubberBandStretchBackend.h">
-      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\SignalsmithStretchBackend.h">
-      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\SoundTouchStretchBackend.h">
-      <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\StretchBackend.h">
       <Filter>Audionaut\Source\Engine\AudioSources\Stretch</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\AudioSources\Stretch\StretchOutputFifo.h">
@@ -5158,9 +5035,6 @@
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SeparationSettingsComponent.h">
-      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Dialogs\StretchSettingsComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\StemSeparationDialog.h">

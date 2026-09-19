@@ -4,7 +4,6 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumApplication.h"
-#include "Interface/Dialogs/StretchSettingsComponent.h"
 #include "Cli/CliContext.h"
 #include "Cli/CliDispatch.h"
 #include "Cli/HeadlessEngineSession.h"
@@ -532,8 +531,6 @@ void AudiumApplication::applicationCommandInvoked(const ApplicationCommandTarget
 
 void AudiumApplication::applyAnalysisPreferences()
 {
-    StretchSettingsComponent::applyPreference (getPreferences());
-
     if (auto worker = audiumEngine->getAudioResourceContainer()->getAnalysisWorker()) {
         worker->setAutoAnalysisEnabled (AnalysisSettingsComponent::readAutoAnalysisEnabled (getPreferences()));
         worker->setDefaultAnalysisTypes (AnalysisSettingsComponent::readAutoAnalysisTypes (getPreferences()));
