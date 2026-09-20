@@ -20,8 +20,8 @@ juce::File ClipTempo::sourceFile (const PlayListItem& item)
         return {};
 
     for (const auto& resource : region->getAudioResources())
-        if (resource != nullptr)
-            return juce::File (resource->getFullPathName());
+        if (resource != nullptr && ! resource->isRecording())
+            return resource->getLocalFile();
 
     return {};
 }

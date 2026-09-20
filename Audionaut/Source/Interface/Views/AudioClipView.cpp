@@ -95,7 +95,7 @@ void AudioClipView::refreshSegments()
     if (audioResource->isRecording())
         return;
     
-    const auto audioFile = juce::File(audioResource->getFullPathName());
+    const auto audioFile = audioResource->getLocalFile();
 
     // Only display the analysis types the track is configured to show.
     constexpr audium::AnalysisType allTypes[] = { audium::AnalysisType::SBic,

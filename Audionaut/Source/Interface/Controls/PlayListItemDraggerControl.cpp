@@ -60,8 +60,8 @@ int PlayListItemDraggerControl::getAnalysisRemainingCount() const
 
     auto remaining = 0;
     for (const auto& resource : playListItem->getRegion()->getAudioResources())
-        if (resource != nullptr)
-            remaining += analysisWorker->getRemainingCount(juce::File(resource->getFullPathName()));
+        if (resource != nullptr && ! resource->isRecording())
+            remaining += analysisWorker->getRemainingCount(resource->getLocalFile());
 
     return remaining;
 }
@@ -177,10 +177,10 @@ void PlayListItemDraggerControl::updateAnalysisPaintCache() const
     auto allMatch = true;
     for (const auto& resource : region->getAudioResources())
     {
-        if (resource == nullptr)
+        if (resource == nullptr || resource->isRecording())
             continue;
 
-        const auto audioFile = juce::File(resource->getFullPathName());
+        const auto audioFile = resource->getLocalFile();
         const auto bpm = analysisProvider->getBpm(audium::AnalysisType::BeatDegara, audioFile);
 
         if (bpm > 0.0f)

@@ -79,6 +79,14 @@ const juce::String AudioResource::getFullPathName() const
     return "not a local file";
 }
 
+juce::File AudioResource::getLocalFile() const
+{
+    if (url.isLocalFile())
+        return url.getLocalFile();
+
+    return {};
+}
+
 const juce::String AudioResource::getUrlAsString() const
 {
     return url.toString(true);

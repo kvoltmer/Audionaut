@@ -511,8 +511,11 @@ void PlayListItemComponent::refreshAutoEditPreview()
     if (auto resourceGroup = region->getResourceGroup())
     {
         auto resources = resourceGroup->getAudioResources();
-        if (! resources.empty())
-            preview = analysisProvider->getMergePreview(juce::File(resources[0]->getFullPathName()),
+
+        // A clip that is still recording has no file yet, so it cannot have
+        // been analysed either.
+        if (! resources.empty() && resources[0] != nullptr && ! resources[0]->isRecording())
+            preview = analysisProvider->getMergePreview(resources[0]->getLocalFile(),
                                                         audioTrack->getId(),
                                                         playListItem->getId());
     }
