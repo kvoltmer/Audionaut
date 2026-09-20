@@ -23,6 +23,9 @@ const juce::String PlayListItemDraggerControl::getLabelSuffix() const
     auto suffix = getAnalysisProgressSuffix();
 
     if (suffix.isEmpty())
+        suffix = getSpeedSuffix();
+
+    if (suffix.isEmpty())
     {
         if (! isSelected())
             return {};
@@ -57,8 +60,8 @@ int PlayListItemDraggerControl::getAnalysisRemainingCount() const
 
     auto remaining = 0;
     for (const auto& resource : playListItem->getRegion()->getAudioResources())
-        if (resource != nullptr)
-            remaining += analysisWorker->getRemainingCount(juce::File(resource->getFullPathName()));
+        if (resource != nullptr && ! resource->isRecording())
+            remaining += analysisWorker->getRemainingCount(resource->getLocalFile());
 
     return remaining;
 }
@@ -94,6 +97,28 @@ void PlayListItemDraggerControl::timerCallback()
         repaint();
 
     wasAnalysing = analysing;
+}
+
+juce::String PlayListItemDraggerControl::getSpeedSuffix() const
+{
+    if (playListItem == nullptr)
+        return {};
+
+    // a tempo-locked clip shows the tempo it is locked from, e.g. "@128.0"
+    // - the ratio is implied by the project tempo
+    if (playListItem->isTempoLocked())
+    {
+        const auto clipTempo = playListItem->getClipTempo();
+        return clipTempo > 0.0 ? "@" + juce::String(clipTempo, 1) : juce::String("@?");
+    }
+
+    const auto speed = playListItem->getSpeedRatio();
+
+    if (speed == 1.0)
+        return {};
+
+    // e.g. "x0.50" - marks a re-pitched clip at any selection state
+    return juce::String(juce::CharPointer_UTF8("\xc3\x97")) + juce::String(speed, 2);
 }
 
 juce::String PlayListItemDraggerControl::getBpmSuffix() const
@@ -152,10 +177,10 @@ void PlayListItemDraggerControl::updateAnalysisPaintCache() const
     auto allMatch = true;
     for (const auto& resource : region->getAudioResources())
     {
-        if (resource == nullptr)
+        if (resource == nullptr || resource->isRecording())
             continue;
 
-        const auto audioFile = juce::File(resource->getFullPathName());
+        const auto audioFile = resource->getLocalFile();
         const auto bpm = analysisProvider->getBpm(audium::AnalysisType::BeatDegara, audioFile);
 
         if (bpm > 0.0f)

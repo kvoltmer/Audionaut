@@ -25,14 +25,51 @@ and relays the result — no engine logic lives here.
 | `cleanup_regions` | `cleanup-regions` | Delete every region no clip uses |
 | `clip_gain` | `clip-gain` | Set a clip's gain (linear or dB, all channels or one) |
 | `clip_fades` | `clip-fades` | Set a clip's fade lengths, offsets and curves |
+| `clip_speed` | `clip-speed` | Set a clip's speed and mode (varispeed or pitch-preserving stretch), or lock it to the project tempo |
 | `remove_track` | `remove-track` | Remove a whole track (channels, clips and regions) |
 | `remove_channel` | `remove-channel` | Remove one channel from a track |
+| `request_feature` | — | Send a feature request to the maintainer (see below) |
+| `report_bug` | — | Send a bug report to the maintainer (see below) |
 | `separate_stems` | `separate` | Split a clip into Drums/Bass/Other/Vocals tracks (Demucs; needs the downloaded model) |
 
 A typical agent flow: `create_project` → `import_audio` → `analyze` →
 `auto_edit`/`assemble` → `export_audio`. CLI errors come back as tool errors
 carrying the CLI's own `code: message` (e.g. `essentia_unavailable: ...` in
 builds without Essentia), so agents can react.
+
+## Feature requests and bug reports from agents
+
+Agents run into the edges of what the tools expose, and into their bugs,
+long before a person would file an issue, so two tools give them a direct
+channel. `request_feature` takes a title, a description and (ideally) what
+the agent was trying to do and which tool fell short. `report_bug` takes
+the same plus steps to reproduce, the expected behaviour and the project
+shape; its description tells agents to quote the exact tool call and error
+text and never to attach audio. The server's instructions point agents at
+the right one whenever a task needs something the tools cannot do or a tool
+misbehaves, and tell them to say so to the user. A `reporter` name or e-mail
+is included only when the user offers one. Both become GitHub issues -
+`enhancement` + `agent-request` for features, `bug` + `agent-report` for
+bugs; the reply carries the issue URL and the
+[feature-request discussion](https://github.com/kvoltmer/Audionaut/discussions/63).
+
+Transports, tried in order:
+
+1. **Relay** — the default: a deployment of
+   [`Tools/feature-request-relay`](../feature-request-relay/README.md), a
+   Cloudflare Worker that files the issue with its own GitHub token. This is
+   the path for end users, who have no GitHub credentials on the agent side.
+   `AUDIONAUT_FEATURE_REQUEST_URL` points at another deployment; an empty
+   value skips the relay.
+2. **GitHub CLI** — when the relay is skipped and `gh` is installed and
+   logged in, the issue is filed with `gh issue create` under the user's own
+   account (developer machines).
+3. **Nothing** — otherwise the reply says `sent: false` and carries a
+   prefilled new-issue URL for the user to open themselves.
+
+`AUDIONAUT_DISABLE_FEATURE_REQUESTS=1` skips the first two for both tools
+(test harnesses, air-gapped setups); the smoke test points the relay URL at
+a local stand-in.
 
 ## Setup
 

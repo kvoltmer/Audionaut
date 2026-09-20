@@ -9,10 +9,14 @@
 #include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/PlayList/ClipTempo.h"
+#include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/Region/AudioRegion.h"
 
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Recording/RecordingActionHandler.h"
+#include "Engine/Channel/AudioChannel.h"
 
 #include "TestUtils.h"
 
@@ -63,6 +67,16 @@ SCENARIO("recording scenario", "[engine][recording]")
             auto recordedFile = engine->getPlayListScheduler()->getAudioBusInterface()->getRecordedAudioFile(0);
             auto recBuffer = audioFileToAudioBuffer(recordedFile);
             REQUIRE(recBuffer.getNumSamples() == int(recordingLength * sr));
+
+            // The waveform thumbnail is fed through a fifo drained off the
+            // audio thread; stopping the take flushes it, so every recorded
+            // sample must have reached the thumbnail (rounded up to its
+            // 64-sample resolution) and none may have been skipped.
+            auto thumbnail = engine->getPlayListScheduler()->getAudioBusInterface()->getRecordingThumbnail(0);
+            REQUIRE(thumbnail != nullptr);
+            const auto recordedSamples = static_cast<int64>(recordingLength * sr);
+            REQUIRE(thumbnail->getNumSamplesFinished() >= recordedSamples);
+            REQUIRE(thumbnail->getNumSamplesFinished() < recordedSamples + 64);
             for (auto i = 0; i < (int)recordingLength; i++) {
                 auto samplePerPhase = 44100;
                 for (auto s = 0; s < samplePerPhase; s++) {
@@ -112,3 +126,90 @@ SCENARIO("recording scenario", "[engine][recording]")
     juce::MessageManager::deleteInstance();
 }
 
+
+// isRecordEnabled/isRecording took channel 0 for "any channel" while
+// setRecordEnabled took it for the first channel, so asking about channel
+// 0 answered for the whole track.
+SCENARIO("record-enable is queried per channel, channel 0 included", "[engine][recording]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    GIVEN("a stereo track with only its second channel armed")
+    {
+        auto engine = AudiumFactory::createAudiumEngine();
+        engine->getProjectSerializer()->createNewProject(2);
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        REQUIRE(track != nullptr);
+        REQUIRE(track->getNumAudioTrackChannels() == 2);
+
+        // the headless engine has a single input; route channel 1 to it
+        track->getChannel(1)->setInputChannel(0);
+        track->setRecordEnabled(1, true);
+        // record-enable goes through the lock-free commander, which the
+        // audio thread would drain; here the test drains it
+        engine->getPlayListScheduler()->getAudioBusInterface()->invokeCommands();
+
+        THEN("channel 0 reports not enabled while channel 1 and the track do")
+        {
+            REQUIRE_FALSE(track->isRecordEnabled(0));
+            REQUIRE(track->isRecordEnabled(1));
+            REQUIRE(track->isRecordEnabled());
+            REQUIRE_FALSE(track->isRecording(0));
+            REQUIRE_FALSE(track->isRecording());
+        }
+
+        // the track must not outlive its engine
+        track = nullptr;
+        engine = nullptr;
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+// A clip that is still recording has a resource without a URL. Its path
+// getter reports a placeholder that is not an absolute path, and passing
+// that to juce::File asserts - which the UI's analysis refresh did on every
+// layout pass during a take. The file accessor hands out an empty File for
+// that state instead, and the tempo lookup skips such resources.
+SCENARIO("a recording resource has no local file yet", "[engine][recording][analysis]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    GIVEN("a clip whose resource is still being recorded")
+    {
+        auto engine = AudiumFactory::createAudiumEngine();
+        engine->getProjectSerializer()->createNewProject(1);
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        REQUIRE(track != nullptr);
+
+        // mirrors RecordingActionHandler::onRecordingStarted: no URL, no reader
+        auto resourceGroup = track->createNewResourceGroup();
+        auto resource = track->getAudioResourceContainer().addAudioResource({}, nullptr, track, resourceGroup, 0, 0);
+        auto item = track->createDefaultPlayListItem(resource, resourceGroup, 0.0, audium::seconds);
+        REQUIRE(item != nullptr);
+        REQUIRE(resource->isRecording());
+
+        THEN("the resource reports an empty file rather than a placeholder path")
+        {
+            REQUIRE(resource->getLocalFile() == juce::File());
+            REQUIRE_FALSE(juce::File::isAbsolutePath(resource->getFullPathName()));
+        }
+
+        THEN("the clip tempo lookup finds no source file")
+        {
+            REQUIRE(ClipTempo::sourceFile(*item) == juce::File());
+        }
+
+        item = nullptr;
+        resource = nullptr;
+        resourceGroup = nullptr;
+        track = nullptr;
+        engine = nullptr;
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}

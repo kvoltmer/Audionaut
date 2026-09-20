@@ -77,3 +77,29 @@ Audionaut/Builds/Debian/*.deb
 Audionaut/Builds/Debian/*.ddeb
 Audionaut/Builds/Debian/*.changes
 Audionaut/Builds/Debian/*.buildinfo
+
+# Test-generated runtime audio (TestUtils and scenarios write these on each run)
+Audionaut/Catch2Tests/TestFiles/slow-saw.wav
+Audionaut/Catch2Tests/TestFiles/slow-saw-2-seconds.wav
+Audionaut/Catch2Tests/TestFiles/stereo-saw.wav
+Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/_export_TRK-18.wav
+Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/noise0dB.wav
+Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/slow-saw.wav
+Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/slow-saw-2-seconds.wav
+Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/dc-offset.wav
+Audionaut/Catch2Tests/TestFiles/sine-gen.wav
+Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/sine-gen.wav
+Audionaut/Catch2Tests/TestFiles/ramp-gen.wav
+Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/ramp-gen.wav
+Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/*-autoedit-*.json
+Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/*-autoedit-*.txt
+
+# Claude Code per-machine permission allowlist
+.claude/settings.json
+
+# GA4 Measurement Protocol API secret - local copy of the .example, never committed
+Audionaut/Source/Application/AnalyticsCredentials.h
+
+# macOS packaging output (package.sh stages the payload and emits the dmg)
+Audionaut/Installers/macOS/staging/
+Audionaut/Installers/macOS/*.dmg

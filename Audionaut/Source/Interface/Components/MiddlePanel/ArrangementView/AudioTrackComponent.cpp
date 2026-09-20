@@ -185,9 +185,11 @@ void AudioTrackComponent::itemDragMove (const SourceDetails &dragSourceDetails)
     {
         // apply x offset
         x -= playListItemComponent->getDraggerControl()->mouseDownOffset.getX();
-        if (auto region = playListItemComponent->getPlayListItem()->getRegion())
+        if (playListItemComponent->getPlayListItem() != nullptr)
         {
-            length = region->getRegionData(audium::clocks).getLength();
+            // the timeline extent - a re-pitched clip is longer or shorter
+            // than its source window
+            length = playListItemComponent->getPlayListItem()->getDurationTime(audium::clocks);
         }
     }
     

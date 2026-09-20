@@ -21,9 +21,13 @@ Playback::Playback()
 void Playback::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
     DBG("Playback::prepareToPlay " << samplesPerBlockExpected << " " << sampleRate);
+
+    // the mix buffer is sized here, once; process() then only shrinks the
+    // view (avoidReallocating) and never allocates for blocks up to this size
+    processingBuffer.setSize(MAX_AUDIO_CHANNELS, samplesPerBlockExpected);
 }
 
-bool Playback::startVoice(std::shared_ptr<VoiceSource> voiceSource)
+bool Playback::startVoice(VoiceSource* voiceSource)
 {
     // voice already playing?
     if (auto voice = findVoice(voiceSource))
@@ -38,9 +42,14 @@ bool Playback::startVoice(std::shared_ptr<VoiceSource> voiceSource)
     return false;
 }
 
-bool Playback::stopVoice(const std::shared_ptr<VoiceSource> source,
+bool Playback::stopVoice(VoiceSource* source,
                          bool fadeOutLastBlock)
 {
+    // Voice::stop is a no-op for a source that is not playing; skip the
+    // voice scan for it
+    if (source == nullptr || ! source->isPlaying())
+        return false;
+
     if (auto voice = findVoice(source)) {
         voice->stop(fadeOutLastBlock);
         return true;
@@ -56,7 +65,7 @@ void Playback::stopAllVoices()
     }
 }
 
-bool Playback::isPlaying(const std::shared_ptr<VoiceSource> source)
+bool Playback::isPlaying(VoiceSource* source)
 {
     if (findVoice(source) != nullptr) {
         return true;
@@ -84,13 +93,22 @@ Voice *Playback::getAvailableVoice()
     return nullptr;
 }
 
-Voice *Playback::findVoice(const std::shared_ptr<VoiceSource> source)
+Voice *Playback::findVoice(const VoiceSource* source)
 {
     for (auto i = 0; i < MAX_VOICES; ++i) {
         if (voices[i].getVoiceSource() == source)
             return &voices[i];
     }
     return nullptr;
+}
+
+bool Playback::isVoiceSourceActive(const VoiceSource* source) const noexcept
+{
+    for (auto i = 0; i < MAX_VOICES; ++i) {
+        if (voices[i].getVoiceSource() == source)
+            return true;
+    }
+    return false;
 }
 
 int Playback::getNumberOfVoices() const

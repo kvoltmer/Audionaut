@@ -140,6 +140,12 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
                 NullCheckedInvocation::invoke (onLoopEnteredFunction);
                 tempoProvider->sendActionMessage(audium::transportLoopEntered);
             }
+
+            // how far the wrap is, for whoever wants to prepare for it
+            auto secondsUntilEnd = loopRange.getEnd() - thePosition;
+            if (context == audium::clocks)
+                secondsUntilEnd = tempoProvider->clocksToSeconds(secondsUntilEnd);
+            result.numSamplesUntilLoopEnd = static_cast<int>(std::round(secondsUntilEnd * externalSampleRate));
         }
         else {
             withinLoop = false;

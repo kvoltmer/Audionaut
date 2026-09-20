@@ -5,6 +5,7 @@
 
 #include "VoiceSource.h"
 #include "Engine/AudioSources/ClipFadeSpec.h"
+#include "Engine/AudioSources/RenderTiming.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -34,6 +35,15 @@ clipTransportSource(std::make_shared<ClipTransportSource>())
                                      reader->sampleRate,
                                      static_cast<int>(reader->numChannels));
 
+    // a memory-mapped reader is stateless per read, so a second cursor on
+    // it costs nothing: the transport's standby lane primes loop wraps
+    // of stretched clips ahead of time
+    if (readAheadBufferSize == 0)
+    {
+        standbyReaderSource = std::make_shared<juce::AudioFormatReaderSource>(audioFormatReaderSource->getAudioFormatReader(), false);
+        clipTransportSource->setStandbySource(standbyReaderSource.get());
+    }
+
     channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(clipTransportSource.get(), false);
 }
 
@@ -45,7 +55,7 @@ void VoiceSource::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 void VoiceSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
     if (clipTransportSource->getBufferingSource() != nullptr &&
-        clipTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, 2) == false) {
+        clipTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, RenderTiming::inputReadinessTimeoutMs()) == false) {
         DBG("VoiceSource: buffering source not ready");
     }
 

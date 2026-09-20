@@ -5,8 +5,13 @@ All downloads are linked from
 
 ## macOS
 
-Download **Audionaut App** from the
-[Mac App Store](https://apps.apple.com/us/app/id6743627933).
+Either download **Audionaut App** from the
+[Mac App Store](https://apps.apple.com/us/app/id6743627933), or grab the
+disk image (`Audionaut-<version>-arm64.dmg`) from
+[GitHub Releases](https://github.com/kvoltmer/Audionaut/releases), open it
+and drag Audionaut into *Applications*. The disk image is signed and
+notarized, so macOS opens it without warnings. Both builds need macOS 13
+or newer on Apple silicon and share the same settings.
 
 Building the GPL version from source with Xcode is also supported — follow
 the **Checkout** and **Build** sections of the repository

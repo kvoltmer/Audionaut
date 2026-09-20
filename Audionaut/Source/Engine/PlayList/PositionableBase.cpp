@@ -18,7 +18,9 @@ const juce::Range<double> PositionableBase::absoluteToLocalRange(const juce::Ran
 const double PositionableBase::absoluteToLocalPosition(const double absolutePosition,
                                                        audium::TimeContextType context) const
 {
-    return absolutePosition - getAbsolutePosition(context) + getRegionData(context).getStart();
+    // a timeline distance covers speed-times as much source material
+    return (absolutePosition - getAbsolutePosition(context)) * getSpeedRatio()
+           + getRegionData(context).getStart();
 }
 
 } // namespace audium

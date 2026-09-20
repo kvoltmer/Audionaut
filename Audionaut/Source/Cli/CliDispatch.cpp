@@ -232,6 +232,19 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "against each other within the clip.",
           runClipFades },
 
+        { "clip-speed",
+          "clip-speed <project.audium> (--at P | --region NAME) [--track N]\n"
+          "                          [--ratio R | --semitones N | --length L [--unit ...]]\n"
+          "                          [--mode repitch|stretch] [--lock-tempo on|off] [--tempo BPM] [--json]",
+          "Sets a clip's playback speed, stretch mode or tempo lock.",
+          "The ratio plays the source faster or slower (2.0 = double speed, half as long); --semitones "
+          "converts (ratio = 2^(n/12)); --length fits the clip to a timeline duration in the given unit. "
+          "Ratios are limited to 0.25..4.0. --mode picks varispeed (repitch, pitch and length change "
+          "together) or pitch-preserving stretch. --lock-tempo on ties the clip to the project tempo "
+          "(speed = project tempo / clip tempo, following tempo changes), seeding the clip tempo from "
+          "the beat analysis; --tempo sets the clip tempo in BPM and locks the clip.",
+          runClipSpeed },
+
         { "remove-track",
           "remove-track <project.audium> --track N [--json]",
           "Removes a whole track from the project.",

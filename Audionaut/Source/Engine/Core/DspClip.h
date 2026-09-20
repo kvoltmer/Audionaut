@@ -8,6 +8,7 @@
 #include "Engine/TimeContext.h"
 #include "Engine/PlayList/PositionableBase.h"
 #include "Engine/Core/DspClipData.h"
+#include "Engine/PlayList/ClipSpeed.h"
 #include "Engine/Provider/TempoProvider.h"
 
 namespace audium {
@@ -25,10 +26,13 @@ class DspClip : public PositionableBase
 public:
     /**
      * @brief Constructs a `DspClip` with a tempo provider and initial clip data.
-     * @param tempoProvider_ A shared pointer to the `TempoProvider` for tempo-related calculations.
+     * @param tempoProvider_ The `TempoProvider` for tempo-related calculations;
+     *        borrowed, so the clip must not outlive it (the scheduler builds
+     *        clips per block on the audio thread and copying a shared_ptr
+     *        there is refcount traffic for nothing).
      * @param data The initial `DspClipData` associated with this clip.
      */
-    DspClip(std::shared_ptr<TempoProvider> tempoProvider_, DspClipData data_) :
+    DspClip(const TempoProvider& tempoProvider_, const DspClipData& data_) :
         tempoProvider(tempoProvider_),
         dspClipData(data_)
     {}
@@ -46,6 +50,18 @@ public:
      * @param context The time context in which to set the region data.
      */
     void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
+
+    /// The clip's playback speed: the committed ratio, or - for a
+    /// tempo-locked clip - project tempo / clip tempo read live, so a
+    /// tempo change reaches the scheduler without a recommit.
+    double getSpeedRatio() const override
+    {
+        if (dspClipData.clipTempoLocked)
+            return ClipSpeed::tempoLockedRatio(tempoProvider.getTempo(), dspClipData.clipTempo);
+
+        return dspClipData.clipSpeedRatio;
+    }
+    StretchMode getStretchMode() const { return dspClipData.clipStretchMode; }
 
     /**
      * @brief Retrieves the absolute position of the clip in a specific time context.
@@ -81,9 +97,9 @@ public:
 
 private:
     /**
-     * @brief A shared pointer to the `TempoProvider` for tempo-related calculations.
+     * @brief The `TempoProvider` for tempo-related calculations (borrowed).
      */
-    std::shared_ptr<TempoProvider> tempoProvider;
+    const TempoProvider& tempoProvider;
 
 public:
     /**

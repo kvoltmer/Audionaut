@@ -1821,6 +1821,93 @@ SCENARIO("splitting a clip preserves its edge fades", "[engine][fade]")
     juce::MessageManager::deleteInstance();
 }
 
+SCENARIO("dropping a clip on another track keeps its dynamics", "[engine][fade]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    auto inputFile = generateDcOffsetAudioFile(2.0);
+    auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
+
+    GIVEN("a 2 second clip with full fade dynamics and a clip gain")
+    {
+        store->open(inputFile, nullptr);
+
+        auto sourceTrack = engine->getAudioTrackContainer()->getAudioTrack(0);
+        auto item = sourceTrack->getPlayListContainer()->getPlayListItem(0);
+        REQUIRE(item != nullptr);
+
+        item->getDynamics().setGain(0, 0.5);
+        item->getDynamics().setFadeIn(0.25);        // 0.5 s
+        item->getDynamics().setFadeInStart(0.1);    // 0.2 s silent head
+        item->getDynamics().setFadeInCurve(1.5);
+        item->getDynamics().setFadeOut(0.25);       // 0.5 s
+        item->getDynamics().setFadeOutEnd(-0.1);    // 0.2 s extension
+        item->getDynamics().setFadeOutCurve(2.0);
+
+        auto expectDynamicsCopied = [] (const ClipDynamics& dynamics)
+        {
+            REQUIRE(dynamics.getGain(0) == Catch::Approx(0.5));
+            REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.5));
+            REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(0.2));
+            REQUIRE(dynamics.getFadeInCurve() == Catch::Approx(1.5));
+            REQUIRE(dynamics.getFadeOut(audium::seconds) == Catch::Approx(0.5));
+            REQUIRE(dynamics.getFadeOutEnd(audium::seconds) == Catch::Approx(-0.2));
+            REQUIRE(dynamics.getFadeOutCurve() == Catch::Approx(2.0));
+        };
+
+        WHEN("the clip is dragged onto a second track")
+        {
+            auto targetTrack = engine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
+            REQUIRE(targetTrack != nullptr);
+
+            targetTrack->dropPlayListItem(item, 96.0, audium::clocks);
+
+            THEN("the moved clip carries the fades and the gain")
+            {
+                REQUIRE(sourceTrack->getPlayListContainer()->getPlayListItems().empty());
+
+                auto moved = targetTrack->getPlayListContainer()->getPlayListItems();
+                REQUIRE(moved.size() == 1);
+                REQUIRE(moved[0]->getAbsolutePosition(audium::clocks) == Catch::Approx(96.0));
+                expectDynamicsCopied(moved[0]->getDynamics());
+            }
+        }
+
+        WHEN("the clip is dropped as a new item")
+        {
+            sourceTrack->dropPlayListItem(item, 96.0 * 8.0, audium::clocks, true);
+
+            THEN("the copy carries the fades and the gain")
+            {
+                auto items = sourceTrack->getPlayListContainer()->getPlayListItems();
+                REQUIRE(items.size() == 2);
+                expectDynamicsCopied(items[1]->getDynamics());
+            }
+        }
+
+        WHEN("the clip is cloned")
+        {
+            auto clone = sourceTrack->getPlayListContainer()->clonePlayListItem(item);
+            REQUIRE(clone != nullptr);
+
+            THEN("the clone carries the fades and the gain")
+            {
+                expectDynamicsCopied(clone->getDynamics());
+            }
+        }
+    }
+
+    engine = nullptr;
+
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
 SCENARIO("clip dynamics only touch the active sub-block region", "[engine][dsp][fade]")
 {
     auto sr = 44100.0;

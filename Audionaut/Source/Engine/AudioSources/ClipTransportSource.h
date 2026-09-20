@@ -8,6 +8,8 @@
 
 #include <JuceHeader.h>
 #include "ClipDynamicsProcessor.h"
+#include "StretchAudioSource.h"
+#include "Engine/PlayList/StretchMode.h"
 
 namespace audium {
 
@@ -82,6 +84,23 @@ public:
     */
     void setPosition (double newPosition);
 
+    /** Gives the transport a standby lane for Stretch mode: a second
+        cursor on the same reader (owned by the caller, like the source),
+        which gets its own resampler and stretcher so a known position
+        jump - the loop wrap - can be primed over the callbacks before it
+        instead of inside the one that makes the jump. Only for sources
+        without a read-ahead buffer (memory-mapped readers); a buffered
+        chain ignores it. Call after setSource, off the audio thread. */
+    void setStandbySource (juce::PositionableAudioSource* newStandbySource);
+
+    /** One slice of the standby prime for a jump to newPositionSeconds at
+        the given speed ratio; see StretchAudioSource::primeStandby. The
+        next setPosition to that exact position then swaps the primed lane
+        in instead of re-priming. Real-time safe. */
+    void primeStandby (double newPositionSeconds, double ratio, int blocksLeft);
+
+    const StretchAudioSource* getStretchSource() const noexcept    { return stretchSource; }
+
     /** Returns the position that the next data block will be read from.
         This is a time in seconds.
     */
@@ -105,6 +124,26 @@ public:
 
     /** Returns true if it's stopped. */
     bool isStopped() const noexcept     { return stopped; }
+
+    /**
+        Sets the clip's playback speed. How it is realised depends on the
+        stretch mode: RePitch is varispeed (the resampling ratio becomes
+        sourceSampleRate * speed / deviceRate), Stretch keeps the pitch by
+        running the StretchAudioSource node at the speed while the
+        resampler only corrects the file's sample rate. Real-time safe.
+    */
+    void setSpeedRatio (double newSpeedRatio) noexcept;
+
+    /** The speed the chain currently runs at (see setSpeedRatio). */
+    double getSpeedRatio() const noexcept { return speedRatio.load(); }
+
+    /**
+        Chooses between varispeed (RePitch, the default) and
+        pitch-preserving Stretch - see setSpeedRatio. Real-time safe; the
+        scheduler sets it per voice before scheduling the position, and the
+        stretch node re-primes on the position change.
+    */
+    void setStretchMode (StretchMode newMode) noexcept;
 
     void setGain (float newGain) noexcept;
     float getGain() const noexcept;
@@ -158,9 +197,25 @@ public:
     juce::BufferingAudioSource* getBufferingSource() const { return bufferingSource; }
 
 private:
+    juce::int64 toSourceSamples (juce::int64 deviceSamples) const noexcept;
+
+    // the standby lane: the second cursor and its resampler (owned here);
+    // the stretch node holds the matching second stretcher. A successful
+    // adoption swaps lane pointers, so after a wrap `source` may be the
+    // cursor that came in through setStandbySource - both are the
+    // caller's and outlive this object either way.
+    juce::PositionableAudioSource* standbySource = nullptr;
+    juce::ResamplingAudioSource* standbyResampler = nullptr;
+    int maxNumChannels = 2;
+
+private:
     //==============================================================================
     juce::PositionableAudioSource* source = nullptr;
+    /// Re-applies mode and speed to the resampler and the stretch node.
+    void updateSpeedChain() noexcept;
+
     juce::ResamplingAudioSource* resamplerSource = nullptr;
+    StretchAudioSource* stretchSource = nullptr;
     juce::BufferingAudioSource* bufferingSource = nullptr;
     juce::PositionableAudioSource* positionableSource = nullptr;
     juce::AudioSource* masterSource = nullptr;
@@ -171,6 +226,8 @@ private:
     std::atomic<bool> stopped  = true;
     std::atomic<bool> fadeOutLastBlock  = false;
     double sampleRate = 44100.0, sourceSampleRate = 0.0;
+    std::atomic<double> speedRatio { 1.0 };
+    std::atomic<StretchMode> stretchMode { StretchMode::RePitch };
     int blockSize = 128;
     std::atomic<bool> isPrepared = false;
 

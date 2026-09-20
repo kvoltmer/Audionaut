@@ -12,8 +12,10 @@ namespace audium
 template <class SampleType>
 void AudioBusRenderer<SampleType>::setNumAudioBusChannels(int numChannels)
 {
+    // called per block from the audio thread: only narrows the view over
+    // the MAX_AUDIO_CHANNELS allocation prepareToPlay made (avoidReallocating)
     if (numChannels != audioBus.getNumChannels()) {
-        audioBus.setSize(numChannels, audioBus.getNumSamples());
+        audioBus.setSize(numChannels, audioBus.getNumSamples(), false, false, true);
     }
 }
 
@@ -22,7 +24,10 @@ void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, d
 {
     sampleRate = sampleRate_;
     recording->setSampleRate(sampleRate);
-    audioBus.setSize(audioBus.getNumChannels(), samplesPerBlockExpected);
+    // sized once for every channel the bus can carry; setNumAudioBusChannels
+    // then never allocates on the audio thread. The channel count is
+    // re-narrowed on the next block.
+    audioBus.setSize(MAX_AUDIO_CHANNELS, samplesPerBlockExpected);
     
     stereoBuffer.setSize(2, samplesPerBlockExpected);
     mainMixBuffer.setSize(2, samplesPerBlockExpected);

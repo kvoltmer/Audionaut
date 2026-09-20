@@ -83,6 +83,9 @@ int runRemoveTrack (const juce::ArgumentList& args, CliContext& context);
 /** `remove-channel <project> --track N --channel C` - delete one channel. */
 int runRemoveChannel (const juce::ArgumentList& args, CliContext& context);
 
+/** `clip-speed <project> (--at P | --region N) (--ratio R | --semitones N | --length L)` - re-pitch a clip. */
+int runClipSpeed (const juce::ArgumentList& args, CliContext& context);
+
 /** `separate <project> [--track N --clip N --threads N --model PATH --no-mute-source]` - stems to new tracks. */
 int runSeparate (const juce::ArgumentList& args, CliContext& context);
 

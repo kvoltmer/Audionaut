@@ -109,6 +109,15 @@ public:
      */
     void pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEngine, bool duplicateAction);
 
+    /**
+     * @brief Pastes objects from already-parsed clipboard JSON (the {"lola": ...} envelope).
+     * Stale track or resource-group ids are skipped, never dereferenced.
+     * @param data The parsed clipboard document.
+     * @param audiumEngine A shared pointer to the AudiumEngine instance.
+     * @param duplicateAction True to duplicate the objects, false to paste them normally.
+     */
+    void pasteFromJson(const json& data, std::shared_ptr<AudiumEngine> audiumEngine, bool duplicateAction);
+
 private:
     /**
      * @brief Pastes playlist items from the clipboard.

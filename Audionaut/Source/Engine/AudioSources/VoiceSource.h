@@ -75,9 +75,17 @@ public:
         }
     }
     
+    /// Ends the voice after @p numSamples output samples.
+    void scheduleDurationSamples(int numSamples)
+    {
+        durationTimer.schedule(numSamples);
+    }
+
+    /// Seconds variant; rounded, so a length that is a whole number of
+    /// samples up to float noise does not lose its last sample.
     void scheduleDuration(double duration, double sr)
     {
-        durationTimer.schedule(static_cast<int>(duration * sr));
+        scheduleDurationSamples(static_cast<int>(std::round(duration * sr)));
     }
     
     bool isPlaying() const noexcept
@@ -99,6 +107,40 @@ public:
     {
         clipTransportSource->stop(fadeOutLastBlock);
     }
+
+    /// The clip's playback speed - see ClipTransportSource::setSpeedRatio.
+    void setSpeedRatio(double newSpeedRatio)
+    {
+        clipTransportSource->setSpeedRatio(newSpeedRatio);
+    }
+
+    double getSpeedRatio() const noexcept
+    {
+        return clipTransportSource->getSpeedRatio();
+    }
+
+    /// The speed changed mid-clip (a tempo-locked clip following a tempo
+    /// change): the scheduled end moves by @p factor = old / new speed.
+    void rescaleRemainingDuration(double factor)
+    {
+        durationTimer.rescale(factor);
+    }
+
+    /// Varispeed vs pitch-preserving - see ClipTransportSource::setStretchMode.
+    void setStretchMode(StretchMode newMode)
+    {
+        clipTransportSource->setStretchMode(newMode);
+    }
+
+    /** One slice of the standby prime for a known upcoming jump (the loop
+        wrap) of a Stretch-mode clip; call once per block over the blocks
+        before it. See ClipTransportSource::primeStandby. Real-time safe. */
+    void primeStandby(double filePositionSeconds, double ratio, int blocksLeft)
+    {
+        clipTransportSource->primeStandby(filePositionSeconds, ratio, blocksLeft);
+    }
+
+    const ClipTransportSource& getClipTransportSource() const noexcept { return *clipTransportSource; }
 
     void setGain(float gain)
     {
@@ -131,6 +173,7 @@ private:
     std::atomic<bool> reScheduled           = false; /// Helper to indicate if position is re-scheduled (loop)
     audium::SampleTimer durationTimer; ///< Timer for managing playback duration.
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
+    std::shared_ptr<juce::AudioFormatReaderSource> standbyReaderSource; ///< Second cursor on the same reader for the transport's standby lane (memory-mapped readers only).
     std::shared_ptr<audium::ClipTransportSource> clipTransportSource; ///< Underlying clip voice source.
     std::unique_ptr<juce::ChannelRemappingAudioSource> channelRemapping; ///< Channel remapping source; the outermost source in the chain.
 

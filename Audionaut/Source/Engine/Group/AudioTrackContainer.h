@@ -11,6 +11,7 @@
 #include "Engine/Region/AudioRegionData.h"
 #include "Engine/Group/AudioRegionAdapter.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/Selection/ClipOverlayTarget.h"
 
 namespace audium {
 
@@ -181,6 +182,11 @@ public:
     std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     std::shared_ptr<TransportLoop> getTransportLoop() const noexcept { return transportLoop; }
     std::shared_ptr<AnalysisProvider> getAnalysisProvider() const noexcept { return analysisProvider; }
+
+    /// Which clip currently shows an in-arrangement overlay editor (the
+    /// stretch overlay). Session state with its own broadcaster - see
+    /// ClipOverlayTarget.
+    std::shared_ptr<ClipOverlayTarget> getClipOverlayTarget() const noexcept { return clipOverlayTarget; }
     
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
@@ -221,6 +227,8 @@ public:
                        bool undo);
     
     std::shared_ptr<AudioBusInterface> audioBusInterface; ///< Shared pointer to the audio bus interface.
+    std::shared_ptr<ClipOverlayTarget> clipOverlayTarget = std::make_shared<ClipOverlayTarget>();
+
     std::vector<std::shared_ptr<AudioTrack>> audioTracks; ///< Vector of shared pointers to audio tracks.
     
 private:

@@ -23,6 +23,7 @@ namespace audium {
 class PlayListContainer;
 class PlayListItem;
 class VoiceSourceContainer;
+struct ClipFadeSpec;
 class AudioResourceContainer;
 class Playback;
 class DspClip;
@@ -76,8 +77,28 @@ public:
     
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     
+    /// The file position (seconds) a voice for the clip starts from when
+    /// the transport is at transportPosition - what scheduleClip seeks to,
+    /// and what the standby prime targets ahead of a loop wrap.
+    static double restartFilePosition(const audium::DspClip &clip,
+                                      const ClipFadeSpec &spec,
+                                      double transportPosition);
+
+    /// Runs the standby prime of a stretched voice over the blocks before
+    /// its next start - the clip's start or the loop wrap, whichever is
+    /// nearer; a no-op outside that window or for other clips.
+    void primeStandbyForUpcomingStart(const audium::DspClip &clip,
+                                      VoiceSource* voiceSource,
+                                      double transportPosition,
+                                      const TransportLoop::LoopResult &loopResult,
+                                      int numSamples);
+
+    /// Primes, whole and on the calling (message) thread, the standbys of
+    /// the stretched clips the first block after play start will schedule.
+    void primeStandbyAtPlayStart();
+
     bool scheduleClip(const audium::DspClip &clip,
-                      std::shared_ptr<VoiceSource> voiceSource,
+                      VoiceSource* voiceSource,
                       double transportPosition,
                       int sampleOffset,
                       int numSamples);
@@ -171,6 +192,15 @@ public:
 #endif
     
     PlayListSchedulerData data;
+
+    /// Stretched clips prime a standby stretcher over the blocks before
+    /// their start (clip start, loop wrap, play start) instead of inside
+    /// that block (see StretchAudioSource::primeStandby). Tests flip it
+    /// off to compare.
+    std::atomic<bool> standbyPrimingEnabled { true };
+
+    /// How far ahead of a start the standby prime begins, in seconds.
+    static constexpr double standbyPrimeHorizonSeconds = 0.25;
     
     std::function<void()> onRecordingStartedFunction;
     

@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/AudioSources/RenderTiming.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
@@ -42,6 +43,13 @@ public:
             if (shouldContinue != nullptr && !shouldContinue(config->progress))
                 config->userCanceled = true;
         };
+
+        // offline: the voices wait for their read-ahead instead of playing
+        // silence, so clip starts (and the stretchers' priming) stay exact
+        struct OfflineScope {
+            OfflineScope()  { RenderTiming::setOffline (true); }
+            ~OfflineScope() { RenderTiming::setOffline (false); }
+        } offlineScope;
 
         audiumEngine.getLinkAudioDevice()->setBypass(true);
         audiumEngine.getPlayListScheduler()->prepareToPlay(config->blockSize, config->sampleRate);

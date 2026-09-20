@@ -70,6 +70,14 @@ private:
     // Splits the selected clip into stem tracks - see StemSeparationDialog.
     void invokeSeparateStems();
 
+    // Whether the Stretch Clip overlay can be toggled: an open overlay can
+    // always be dismissed; otherwise a clip must be selected.
+    bool canToggleStretchOverlay();
+
+    // Opens the stretch overlay on the selected clip, or dismisses an open
+    // one (which commits its pending edit as one undo step).
+    void toggleStretchOverlay();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
 

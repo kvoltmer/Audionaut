@@ -11,6 +11,10 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/Analysis/AnalysisCache.h"
+#include "Engine/Analysis/AnalysisProvider.h"
+#include "Engine/PlayList/ClipSpeed.h"
+#include "Engine/PlayList/ClipTempo.h"
 #include "Engine/PlayList/ClipDynamics.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Provider/TempoProvider.h"
@@ -353,6 +357,154 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context)
     return context.ok ({ { "region", match.item->getRegion()->getName().toStdString() },
                          { "track", match.track->getId() },
                          { "gains", gains } });
+}
+
+int runClipSpeed (const juce::ArgumentList& args, CliContext& context)
+{
+    auto working = args;
+    auto ratioValue = takeOptionValue (working, "--ratio");
+    auto semitonesValue = takeOptionValue (working, "--semitones");
+    auto lengthValue = takeOptionValue (working, "--length");
+    auto modeValue = takeOptionValue (working, "--mode");
+    auto lockValue = takeOptionValue (working, "--lock-tempo");
+    auto tempoValue = takeOptionValue (working, "--tempo");
+    auto unit = takeOptionValue (working, "--unit", "bars");
+
+    const auto optionsGiven = (ratioValue.isNotEmpty() ? 1 : 0)
+                              + (semitonesValue.isNotEmpty() ? 1 : 0)
+                              + (lengthValue.isNotEmpty() ? 1 : 0);
+    if (optionsGiven > 1)
+        return context.fail (exitUsage, "usage",
+                             "clip-speed takes at most one of --ratio, --semitones or --length");
+    if (optionsGiven == 1 && tempoValue.isNotEmpty())
+        return context.fail (exitUsage, "usage",
+                             "--tempo locks the clip to the project tempo; it excludes --ratio, --semitones and --length");
+    if (optionsGiven == 0 && modeValue.isEmpty() && lockValue.isEmpty() && tempoValue.isEmpty())
+        return context.fail (exitUsage, "usage",
+                             "clip-speed requires --ratio, --semitones, --length, --mode, --tempo or --lock-tempo");
+    if (modeValue.isNotEmpty() && modeValue != "repitch" && modeValue != "stretch")
+        return context.fail (exitUsage, "usage", "--mode must be repitch or stretch");
+    if (lockValue.isNotEmpty() && lockValue != "on" && lockValue != "off")
+        return context.fail (exitUsage, "usage", "--lock-tempo must be on or off");
+    if (tempoValue.isNotEmpty()
+        && (tempoValue.getDoubleValue() < ClipSpeed::minClipTempo
+            || tempoValue.getDoubleValue() > ClipSpeed::maxClipTempo))
+        return context.fail (exitUsage, "usage",
+                             "--tempo must be between "
+                             + juce::String (ClipSpeed::minClipTempo).toStdString() + " and "
+                             + juce::String (ClipSpeed::maxClipTempo).toStdString() + " BPM");
+
+    auto projectFile = resolveProjectFile (working);
+    if (projectFile == juce::File())
+        return context.fail (exitUsage, "usage", "clip-speed requires an existing <project.audium>");
+
+    ScopedCoutToStderr guard (context.json);
+    HeadlessEngineSession session;
+
+    std::string error;
+    auto captureError = [&error] (std::string message) { error = message; };
+
+    if (! session->getProjectFileStore()->open (projectFile, captureError))
+        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
+
+    auto& trackContainer = *session->getAudioTrackContainer();
+    auto tempoProvider = trackContainer.getTempoProvider();
+
+    std::vector<ClipMatch> matches;
+    if (auto code = resolveClips (working, context, trackContainer, *tempoProvider,
+                                  "clip-speed", unit, matches);
+        code != exitOk)
+        return code;
+
+    if (matches.size() > 1)
+        return context.fail (exitFailure, "ambiguous_clip",
+                             "several clips match; pass --track or address by --at");
+
+    auto& match = matches.front();
+
+    // release first, so a ratio can follow in the same call
+    if (lockValue == "off")
+        match.item->setTempoLocked (false);
+
+    if (optionsGiven == 1 && match.item->isTempoLocked())
+        return context.fail (exitUsage, "usage",
+                             "the clip is locked to the project tempo; pass --lock-tempo off first, or --tempo");
+
+    if (optionsGiven == 1)
+    {
+        auto ratio = 1.0;
+
+        if (ratioValue.isNotEmpty()) {
+            ratio = ratioValue.getDoubleValue();
+        }
+        else if (semitonesValue.isNotEmpty()) {
+            ratio = std::pow (2.0, semitonesValue.getDoubleValue() / 12.0);
+        }
+        else {
+            // --length: the timeline duration the clip should occupy
+            double lengthClocks = 0.0;
+            std::string parseError;
+            if (! parseMusicalDuration (lengthValue, unit, *tempoProvider, lengthClocks, parseError))
+                return context.fail (exitUsage, "usage", parseError);
+            if (lengthClocks <= 0.0)
+                return context.fail (exitUsage, "usage", "--length must be positive");
+
+            ratio = match.item->getRegionData (audium::clocks).getLength() / lengthClocks;
+        }
+
+        if (ratio < PlayListItem::minSpeedRatio || ratio > PlayListItem::maxSpeedRatio)
+            return context.fail (exitUsage, "usage",
+                                 "the speed ratio must be between "
+                                 + juce::String (PlayListItem::minSpeedRatio).toStdString() + " and "
+                                 + juce::String (PlayListItem::maxSpeedRatio).toStdString()
+                                 + " (got " + juce::String (ratio, 4).toStdString() + ")");
+
+        match.item->setSpeedRatio (ratio);
+    }
+
+    if (modeValue.isNotEmpty())
+        match.item->setStretchMode (modeValue == "stretch" ? StretchMode::Stretch
+                                                           : StretchMode::RePitch);
+
+    if (tempoValue.isNotEmpty())
+    {
+        match.item->setClipTempo (tempoValue.getDoubleValue());
+        match.item->setTempoLocked (true);
+    }
+    else if (lockValue == "on")
+    {
+        // Seed the clip tempo from the beat analysis, running it now when
+        // the source has none yet (a build without Essentia leaves the
+        // tempo unknown: the clip stays locked at ratio 1.0 until --tempo).
+        auto provider = trackContainer.getAnalysisProvider();
+
+        if (provider != nullptr && ! ClipTempo::lockToTempo (*match.item, *provider))
+        {
+            if (auto file = ClipTempo::sourceFile (*match.item); file.existsAsFile())
+            {
+                provider->analyzeFile (file, AnalysisType::BeatDegara);
+                ClipTempo::lockToTempo (*match.item, *provider);
+                provider->getCache()->saveToFolder (projectFile.getParentDirectory());
+            }
+        }
+        else if (provider == nullptr)
+        {
+            match.item->setTempoLocked (true);
+        }
+    }
+
+    if (! session->getProjectFileStore()->save (projectFile, captureError))
+        return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
+
+    context.log ("clip speed set");
+    return context.ok ({ { "region", match.item->getRegion()->getName().toStdString() },
+                         { "track", match.track->getId() },
+                         { "speedRatio", match.item->getSpeedRatio() },
+                         { "stretchMode", match.item->getStretchMode() == StretchMode::Stretch
+                                              ? "stretch" : "repitch" },
+                         { "tempoLocked", match.item->isTempoLocked() },
+                         { "clipTempo", match.item->getClipTempo() },
+                         { "durationSeconds", match.item->getDurationTime (audium::seconds) } });
 }
 
 int runClipFades (const juce::ArgumentList& args, CliContext& context)

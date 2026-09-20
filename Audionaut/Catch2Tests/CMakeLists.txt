@@ -98,6 +98,29 @@ if(AUDIONAUT_ENABLE_DEMUCS)
     endif()
 endif()
 
+# Rubber Band Library (GPL / commercial), the pitch-preserving time-stretch
+# engine behind Engine/AudioSources/Stretch. The single-file build compiles
+# into its own static library with its own flags (vDSP on Apple, the
+# built-in FFT elsewhere).
+set(RUBBERBAND_PATH "${SUBMODULES_PATH}/rubberband")
+if(NOT EXISTS "${RUBBERBAND_PATH}/single/RubberBandSingle.cpp")
+    message(FATAL_ERROR "Rubber Band submodule missing at ${RUBBERBAND_PATH} - run git submodule update --init --recursive")
+endif()
+add_library(audionaut_rubberband STATIC ${RUBBERBAND_PATH}/single/RubberBandSingle.cpp)
+set_property(TARGET audionaut_rubberband PROPERTY CXX_STANDARD 20)
+set_property(TARGET audionaut_rubberband PROPERTY POSITION_INDEPENDENT_CODE ON)
+if(MSVC)
+    # Thread.h / sysutils.cpp include <windows.h>, whose min/max macros
+    # break the std::min/std::max calls throughout the stretcher sources
+    target_compile_definitions(audionaut_rubberband PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+    target_compile_options(audionaut_rubberband PRIVATE /w /MP)
+else()
+    target_compile_options(audionaut_rubberband PRIVATE -O3 -w)
+endif()
+if(APPLE)
+    target_link_libraries(audionaut_rubberband PUBLIC "-framework Accelerate")   # the single-file build uses vDSP
+endif()
+
 # Code coverage. Off by default; the instrumentation is attached to the
 # AudionautTests target only (see below), so JUCE, Catch2 and the other
 # submodules are never instrumented and never appear in the report.
@@ -154,6 +177,7 @@ file(GLOB SRC_AUDIUM
         ${SRC_PATH}/Engine/Recording/*.cpp
         ${SRC_PATH}/Engine/Undo/*.cpp
         ${SRC_PATH}/Engine/AudioSources/*.cpp
+        ${SRC_PATH}/Engine/AudioSources/Stretch/*.cpp
         ${SRC_PATH}/Engine/Export/*.cpp
         ${SRC_PATH}/Engine/Selection/*.cpp
         ${SRC_PATH}/Engine/Separation/*.cpp
@@ -228,6 +252,7 @@ function(audionaut_configure_common target)
                             PUBLIC ../Source/
                             PUBLIC ${SUBMODULES_PATH}/json/include
                             PUBLIC ${SUBMODULES_PATH}/farbot/include
+                            PUBLIC ${SUBMODULES_PATH}/rubberband
                             )
 
     if(AUDIONAUT_ENABLE_ESSENTIA)
@@ -298,6 +323,7 @@ function(audionaut_configure_common target)
     if(AUDIONAUT_ENABLE_DEMUCS)
         target_link_libraries(${target} PRIVATE audionaut_demucs)
     endif()
+    target_link_libraries(${target} PRIVATE audionaut_rubberband)
 
     if(AUDIONAUT_ENABLE_ESSENTIA AND MSVC)
         # MSVC's linker resolves archives by symbol table rather than left to
@@ -470,13 +496,14 @@ if(AUDIONAUT_BUILD_CLI)
 
     audionaut_configure_common(${CLI_NAME})
 
-    # GA4 credentials for the CLI binary only (mirrors the .jucer defines);
-    # the test target stays without them so in-process command tests can
-    # never create an analytics destination.
+    # GA4 measurement id for the CLI binary only (mirrors the .jucer
+    # define); the API secret comes from the git-ignored
+    # Source/Application/AnalyticsCredentials.h. The test target gets
+    # neither, so in-process command tests can never create an analytics
+    # destination.
     target_compile_definitions(${CLI_NAME}
             PRIVATE
-            GA4_MEASUREMENT_ID="G-Q6904SZWWY"
-            GA4_API_SECRET="TpBEa6eRRAGeG4BZmqwJDA")
+            GA4_MEASUREMENT_ID="G-Q6904SZWWY")
 
     target_sources(${CLI_NAME}
             PRIVATE

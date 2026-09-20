@@ -19,3 +19,6 @@
 [submodule "Submodules/demucs.cpp"]
 	path = Submodules/demucs.cpp
 	url = https://github.com/sevagh/demucs.cpp
+[submodule "Submodules/rubberband"]
+	path = Submodules/rubberband
+	url = https://github.com/breakfastquay/rubberband.git

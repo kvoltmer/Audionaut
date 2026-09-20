@@ -97,6 +97,15 @@ public:
      * @return The URL as a `juce::String`.
      */
     const juce::String getUrlAsString() const;
+
+    /**
+     * @brief Retrieves the local audio file.
+     * @return The file, or an invalid (empty) `juce::File` while the resource
+     *         has no local URL yet - e.g. while it is still being recorded.
+     *         Use this instead of `juce::File(getFullPathName())`, which asserts
+     *         on the placeholder path a non-local resource reports.
+     */
+    juce::File getLocalFile() const;
     
     /**
      * @brief Retrieves the relative path of the file.

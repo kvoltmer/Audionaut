@@ -130,12 +130,23 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         middlePanelComponent->updateUI();
     }
+    else if (message == audium::updateChannelsAction)
+    {
+        // mixer parameter changed (undo/redo included): only the channel
+        // strips need refreshing, the arrangement is untouched
+        middlePanelComponent->updateUI(MiddlePanelComponent::ChannelsContext);
+    }
     else if (message == audium::updateRightPanelAction)
     {
         rightPanelComponent->updateUI();
     }
     else if (message == audium::updateArrangementAction)
     {
+        middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
+    }
+    else if (message == audium::tempoChanged)
+    {
+        // tempo-locked clips change their timeline extent with the tempo
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
     }
     else if (message == audium::updateSelection)
