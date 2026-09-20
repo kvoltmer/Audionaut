@@ -171,7 +171,7 @@ void PlayListScheduler::process(double transportPositionClocks,
         if (voiceSource == nullptr)
             continue;
         
-        primeStandbyForLoopWrap(dspClip, voiceSource, loopResult, numSamples);
+        primeStandbyForUpcomingStart(dspClip, voiceSource, transportPosition, loopResult, numSamples);
 
         // the audible range includes the fade extensions - a head extension
         // must start the voice early, a tail extension must not be stopped
@@ -244,39 +244,99 @@ void PlayListScheduler::process(double transportPositionClocks,
     }
 }
 
-void PlayListScheduler::primeStandbyForLoopWrap(const audium::DspClip &dspClip,
-                                                VoiceSource* voiceSource,
-                                                const TransportLoop::LoopResult &loopResult,
-                                                int numSamples)
+void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspClip,
+                                                     VoiceSource* voiceSource,
+                                                     double transportPosition,
+                                                     const TransportLoop::LoopResult &loopResult,
+                                                     int numSamples)
 {
-    // A stretched voice re-primes its stretcher on every position jump,
-    // and the loop wrap jumps every audible clip at once - several
-    // callbacks' worth of Rubber Band work inside the wrap block. The
-    // wrap is known ahead, so over the last quarter second before it the
-    // voice primes a standby lane for the exact restart position, one
-    // slice per block, and the wrap block only swaps lanes.
-    if (! standbyPrimingEnabled.load() || loopResult.loopEvent || loopResult.numSamplesUntilLoopEnd < 0)
+    // A stretched voice re-primes its stretcher on every position jump:
+    // its clip's start, and the loop wrap, which jumps every audible clip
+    // at once - several callbacks' worth of Rubber Band work inside one
+    // block. Both are known ahead, so over the last quarter second before
+    // the nearer one the voice primes a standby lane for the exact restart
+    // position, one slice per block, and the block itself only swaps lanes.
+    if (! standbyPrimingEnabled.load() || loopResult.loopEvent)
         return;
 
     if (dspClip.dspClipData.clipStretchMode != StretchMode::Stretch)
         return;
 
-    const auto blocksUntilWrap = std::max(1, loopResult.numSamplesUntilLoopEnd / numSamples);
-    const auto horizonBlocks = std::max(1, static_cast<int>(standbyPrimeHorizonSeconds * externalSampleRate / numSamples));
-    if (blocksUntilWrap > horizonBlocks)
+    const auto audible = dspClip.getAudibleRange(audium::seconds);
+    const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
+    const auto insideLoop = loopResult.numSamplesUntilLoopEnd >= 0;
+
+    // the clip's own start, if it lies ahead (a start inside this block is
+    // being scheduled right now) and, inside the loop, before the wrap
+    auto samplesUntilStart = -1;
+    auto restartAt = 0.0;
+    if (! voiceSource->isPlaying() && audible.getStart() >= transportPosition + secondsThisBuffer) {
+        const auto samples = static_cast<int>(std::round((audible.getStart() - transportPosition) * externalSampleRate));
+        if (! insideLoop || samples < loopResult.numSamplesUntilLoopEnd) {
+            samplesUntilStart = samples;
+            restartAt = audible.getStart();
+        }
+    }
+
+    // the loop wrap, if the wrap block will schedule this clip (it is
+    // audible in the wrap block's first block) and nothing comes sooner
+    if (insideLoop && samplesUntilStart < 0) {
+        const auto loopStart = transportLoop->getLoopPositionRange(audium::seconds).getStart();
+        if (audible.intersects({loopStart, loopStart + secondsThisBuffer})) {
+            samplesUntilStart = loopResult.numSamplesUntilLoopEnd;
+            restartAt = loopStart;
+        }
+    }
+
+    if (samplesUntilStart < 0)
         return;
 
-    // the wrap block schedules the clips audible in its first block
-    const auto loopStart = transportLoop->getLoopPositionRange(audium::seconds).getStart();
-    const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
-    const juce::Range<double> wrapRange(loopStart, loopStart + secondsThisBuffer);
-    if (! dspClip.getAudibleRange(audium::seconds).intersects(wrapRange))
+    const auto blocksUntilStart = std::max(1, samplesUntilStart / numSamples);
+    const auto horizonBlocks = std::max(1, static_cast<int>(standbyPrimeHorizonSeconds * externalSampleRate / numSamples));
+    if (blocksUntilStart > horizonBlocks)
         return;
 
     const auto spec = ClipFadeSpec::fromDspClip(dspClip, *tempoProvider);
-    voiceSource->primeStandby(restartFilePosition(dspClip, spec, loopStart),
+    voiceSource->primeStandby(restartFilePosition(dspClip, spec, restartAt),
                               dspClip.getSpeedRatio(),
-                              blocksUntilWrap);
+                              blocksUntilStart);
+}
+
+void PlayListScheduler::primeStandbyAtPlayStart()
+{
+    // Play starts inside stretched clips prime them all in the first
+    // block. The transport is stopped here, so the primes can run now,
+    // whole, on this thread; the first block then finds its standbys
+    // ready. Its position is the start position exactly (the Link engine
+    // maps that callback's buffer start to the start beat), which is what
+    // scheduleClip will seek from.
+    if (! standbyPrimingEnabled.load() || externalSampleRate <= 0.0 || bufferSize <= 0)
+        return;
+
+    const auto startPosition = tempoProvider->clocksToSeconds(data.startPositionClocks);
+    const auto secondsFirstBlock = static_cast<double>(bufferSize) / externalSampleRate;
+    const juce::Range<double> firstBlock(startPosition, startPosition + secondsFirstBlock);
+
+    for (auto track : audioTrackContainer->getAudioTracks()) {
+        for (const auto& clipData : track->getDspClipVector()) {
+            if (clipData.clipStretchMode != StretchMode::Stretch)
+                continue;
+
+            const audium::DspClip dspClip(*tempoProvider, clipData);
+            if (dspClip.getRegionData(audium::seconds).isEmpty()
+                || ! dspClip.getAudibleRange(audium::seconds).intersects(firstBlock))
+                continue;
+
+            auto* voiceSource = voiceSourceContainer->getOwnedVoiceSourceAtIndex(clipData.voiceSourceIndex);
+            if (voiceSource == nullptr)
+                continue;
+
+            const auto spec = ClipFadeSpec::fromDspClip(dspClip, *tempoProvider);
+            voiceSource->primeStandby(restartFilePosition(dspClip, spec, startPosition),
+                                      dspClip.getSpeedRatio(),
+                                      1);
+        }
+    }
 }
 
 double PlayListScheduler::getTotalLength(audium::TimeContextType context, bool addOverhead) const
@@ -302,6 +362,7 @@ void PlayListScheduler::startPlaying()
 {
     if (linkEngine != nullptr) {
         commitPlayListData();
+        primeStandbyAtPlayStart();
         linkEngine->setStartPlayingTime(tempoProvider->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
         transportLoop->reset();

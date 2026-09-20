@@ -73,7 +73,8 @@ public:
         The caller has already placed the standby input at the target;
         positionKey identifies that target (the source sample position),
         blocksLeft says how many more calls it can expect before the jump
-        and sizes the slice so the prime completes one call early. A call
+        and sizes the slice so the prime completes one call early (1 =
+        the whole prime now, for a caller off the audio thread). A call
         with a new key restarts the prime; calls after completion are
         no-ops. Real-time safe. */
     void primeStandby (juce::int64 positionKey, double ratio, int blocksLeft);
@@ -81,6 +82,7 @@ public:
     {
         return standby.active && standby.key == positionKey;
     }
+    bool hasReadyStandby() const noexcept            { return standby.active && standby.ready; }
 
     /** Makes the standby lane the live one if it is fully primed for
         positionKey: the lanes swap (input and stretcher), the next block
@@ -142,6 +144,21 @@ private:
     };
     StandbyPrime standby;
     static constexpr int standbyMinSlice = 1024;
+
+    // The lane is worked on from the audio thread (the scheduler's
+    // per-block slices, the adoption at a seek) and, at play start, from
+    // the message thread while the transport is stopped. Neither waits:
+    // whoever finds the lane taken skips - a skipped slice is caught up
+    // by the next, a skipped adoption falls back to the in-block prime.
+    std::atomic<bool> standbyBusy { false };
+
+    struct StandbyClaim
+    {
+        explicit StandbyClaim (std::atomic<bool>& flag_) : flag (flag_), held (! flag_.exchange (true)) {}
+        ~StandbyClaim()   { if (held) flag.store (false); }
+        std::atomic<bool>& flag;
+        const bool held;
+    };
 
     int primeCount = 0;
     int standbyAdoptions = 0;

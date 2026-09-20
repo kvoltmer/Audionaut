@@ -85,11 +85,17 @@ public:
                                       double transportPosition);
 
     /// Runs the standby prime of a stretched voice over the blocks before
-    /// a loop wrap; a no-op outside that window or for other clips.
-    void primeStandbyForLoopWrap(const audium::DspClip &clip,
-                                 VoiceSource* voiceSource,
-                                 const TransportLoop::LoopResult &loopResult,
-                                 int numSamples);
+    /// its next start - the clip's start or the loop wrap, whichever is
+    /// nearer; a no-op outside that window or for other clips.
+    void primeStandbyForUpcomingStart(const audium::DspClip &clip,
+                                      VoiceSource* voiceSource,
+                                      double transportPosition,
+                                      const TransportLoop::LoopResult &loopResult,
+                                      int numSamples);
+
+    /// Primes, whole and on the calling (message) thread, the standbys of
+    /// the stretched clips the first block after play start will schedule.
+    void primeStandbyAtPlayStart();
 
     bool scheduleClip(const audium::DspClip &clip,
                       VoiceSource* voiceSource,
@@ -187,12 +193,13 @@ public:
     
     PlayListSchedulerData data;
 
-    /// Stretched clips prime a standby stretcher over the blocks before a
-    /// loop wrap instead of inside the wrap block (see
-    /// StretchAudioSource::primeStandby). Tests flip it off to compare.
+    /// Stretched clips prime a standby stretcher over the blocks before
+    /// their start (clip start, loop wrap, play start) instead of inside
+    /// that block (see StretchAudioSource::primeStandby). Tests flip it
+    /// off to compare.
     std::atomic<bool> standbyPrimingEnabled { true };
 
-    /// How far ahead of the wrap the standby prime starts, in seconds.
+    /// How far ahead of a start the standby prime begins, in seconds.
     static constexpr double standbyPrimeHorizonSeconds = 0.25;
     
     std::function<void()> onRecordingStartedFunction;

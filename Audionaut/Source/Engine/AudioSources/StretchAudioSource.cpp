@@ -82,6 +82,10 @@ void StretchAudioSource::primeStandby (juce::int64 positionKey, double ratio, in
     if (! prepared || standbyInput == nullptr)
         return;
 
+    StandbyClaim claim (standbyBusy);
+    if (! claim.held)
+        return;
+
     if (! standby.active || standby.key != positionKey)
     {
         standby = {};
@@ -131,6 +135,10 @@ void StretchAudioSource::primeStandby (juce::int64 positionKey, double ratio, in
 
 bool StretchAudioSource::adoptStandby (juce::int64 positionKey) noexcept
 {
+    StandbyClaim claim (standbyBusy);
+    if (! claim.held)
+        return false;
+
     if (! (standby.active && standby.ready && standby.key == positionKey))
         return false;
 

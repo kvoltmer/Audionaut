@@ -125,6 +125,14 @@ bool VoiceSourceContainer::pull()
     return snapshot.pull();
 }
 
+VoiceSource* VoiceSourceContainer::getOwnedVoiceSourceAtIndex(int index) const noexcept
+{
+    if (index >= 0 && index < static_cast<int>(voiceSources.size()))
+        return voiceSources[static_cast<size_t>(index)].get();
+
+    return nullptr;
+}
+
 VoiceSource* VoiceSourceContainer::getVoiceSourceAtIndex(int index) const noexcept
 {
     const auto& objects = snapshot.getConsumerObjects();
