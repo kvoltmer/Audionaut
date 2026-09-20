@@ -76,6 +76,11 @@ public:
     /** Voice source at a stable index in the pulled snapshot, nullptr if none. */
     VoiceSource* getVoiceSourceAtIndex(int index) const noexcept;
 
+    /** The owning side of the same index (message thread): what
+        getVoiceSourceAtIndex answers once the audio thread has pulled
+        the latest commit. Null for a freed slot or out of range. */
+    VoiceSource* getOwnedVoiceSourceAtIndex(int index) const noexcept;
+
 private:
     void releaseRetired();
 

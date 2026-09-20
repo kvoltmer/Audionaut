@@ -142,6 +142,13 @@ void RubberBandStretchBackend::drain()
 
 void RubberBandStretchBackend::prime (const float* const* input, int numInput, double ratio)
 {
+    beginPrime (ratio);
+    feedPadding (startPad);
+    feed (input, numInput);
+}
+
+void RubberBandStretchBackend::beginPrime (double ratio)
+{
     stretcher->reset();
     fifo.clear();
     currentRatio = 0.0;
@@ -149,15 +156,16 @@ void RubberBandStretchBackend::prime (const float* const* input, int numInput, d
 
     // the library's alignment recipe for real-time mode
     pendingDiscard = startDelay;
+}
 
-    for (int done = 0; done < startPad;)
+void RubberBandStretchBackend::feedPadding (int numZeros)
+{
+    for (int done = 0; done < numZeros;)
     {
-        const auto chunk = juce::jmin (zeros.getNumSamples(), startPad - done);
+        const auto chunk = juce::jmin (zeros.getNumSamples(), numZeros - done);
         stretcher->process (zeros.getArrayOfReadPointers(), static_cast<size_t> (chunk), false);
         done += chunk;
     }
-
-    feed (input, numInput);
 }
 
 int RubberBandStretchBackend::inputForOutput (int numOutput, double ratio)
