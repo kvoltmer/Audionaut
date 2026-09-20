@@ -15,11 +15,12 @@ namespace audium {
  * @class UpdateChecker
  * @brief Channel-aware "is a newer Audionaut available?" check.
  *
- * The version source follows the distribution channel: the macOS build
- * ships through the Mac App Store, so it asks Apple's lookup API and the
- * update dialog opens the store page; the Windows/Linux builds ship as
- * GitHub Releases, so they ask the latest-release API and open the release
- * page. Either way it is one small anonymous HTTPS GET - no telemetry.
+ * The version source follows the distribution channel: the Mac App Store
+ * build asks Apple's lookup API and the update dialog opens the store page;
+ * the GitHub Releases builds (Windows, Linux, and the macOS DMG, which is
+ * compiled with AUDIONAUT_GITHUB_CHANNEL) ask the latest-release API and
+ * open the release page. Either way it is one small anonymous HTTPS GET -
+ * no telemetry.
  *
  * Two entry points: checkOnStartupIfDue() is the automatic path (honours
  * the Settings toggle, throttled to one attempt per day, silent unless a

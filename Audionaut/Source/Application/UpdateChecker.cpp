@@ -13,9 +13,22 @@ namespace {
 // One attempt per day on the automatic path.
 constexpr juce::int64 throttleSeconds = 24 * 60 * 60;
 
-#if JUCE_MAC
-// The macOS build ships through the Mac App Store; the lookup reports the
-// version actually approved there (which can lag a GitHub tag).
+// The macOS build normally ships through the Mac App Store, and the lookup
+// reports the version actually approved there (which can lag a GitHub tag).
+// The GitHub release workflow builds the same sources with
+// AUDIONAUT_GITHUB_CHANNEL defined, and that build asks GitHub instead - a
+// DMG user must not be sent to the store for an update.
+#ifndef AUDIONAUT_GITHUB_CHANNEL
+ #define AUDIONAUT_GITHUB_CHANNEL 0
+#endif
+
+#if JUCE_MAC && ! AUDIONAUT_GITHUB_CHANNEL
+ #define AUDIONAUT_APP_STORE_CHANNEL 1
+#else
+ #define AUDIONAUT_APP_STORE_CHANNEL 0
+#endif
+
+#if AUDIONAUT_APP_STORE_CHANNEL
 const char* const endpointUrl =
     "https://itunes.apple.com/lookup?bundleId=com.voltmer-systems.audionaut";
 const char* const fallbackPageUrl = "https://apps.apple.com/app/id6743627933";
@@ -27,7 +40,7 @@ const char* const fallbackPageUrl = "https://github.com/kvoltmer/Audionaut/relea
 
 juce::String openButtonText()
 {
-#if JUCE_MAC
+#if AUDIONAUT_APP_STORE_CHANNEL
     return TRANS ("View in App Store");
 #else
     return TRANS ("Download");
@@ -85,7 +98,7 @@ UpdateChecker::Result UpdateChecker::fetchLatest()
 
     // GitHub rejects requests without a User-Agent; Apple doesn't mind one.
     juce::String headers ("User-Agent: Audionaut/" + juce::String (ProjectInfo::versionString));
-#if ! JUCE_MAC
+#if ! AUDIONAUT_APP_STORE_CHANNEL
     headers << "\r\nAccept: application/vnd.github+json";
 #endif
 
@@ -114,7 +127,7 @@ UpdateChecker::Result UpdateChecker::fetchLatest()
 
     const auto parsed = juce::JSON::parse (body);
 
-#if JUCE_MAC
+#if AUDIONAUT_APP_STORE_CHANNEL
     const auto entry = parsed.getProperty ("results", {})[0];
     result.latestVersion = entry.getProperty ("version", {}).toString();
     result.pageUrl = entry.getProperty ("trackViewUrl", {}).toString();

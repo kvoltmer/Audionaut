@@ -99,3 +99,7 @@ Audionaut/Catch2Tests/TestFiles/Sessions/120-funk-export-v2.audium/Media/Audio/*
 
 # GA4 Measurement Protocol API secret - local copy of the .example, never committed
 Audionaut/Source/Application/AnalyticsCredentials.h
+
+# macOS packaging output (package.sh stages the payload and emits the dmg)
+Audionaut/Installers/macOS/staging/
+Audionaut/Installers/macOS/*.dmg

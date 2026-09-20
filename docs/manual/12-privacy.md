@@ -15,7 +15,8 @@ the change takes effect immediately.
 
 Separately from statistics, Audionaut checks once a day whether a newer
 version exists — a single plain HTTPS request to its distribution channel
-(the App Store on macOS, GitHub elsewhere) that carries nothing about you
+(the App Store for the Mac App Store build, GitHub for the builds
+downloaded from GitHub Releases) that carries nothing about you
 or your projects. If an update exists you're told once, with a button to
 the store or download page; *Check for Updates…* in the app menu asks on
 demand. The *Check for updates automatically* toggle in
