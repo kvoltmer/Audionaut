@@ -11,6 +11,7 @@
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Undo/UndoablePlayListItemAction.h"
@@ -28,6 +29,10 @@ SCENARIO("clip drags undo without rebuilding the clips", "[engine][undo][playlis
 {
     GIVEN("a project with one clip on one track")
     {
+        // the change message the undo step posts to the scheduler needs a
+        // message manager to queue it (each pass deletes it at the end)
+        MessageManager::getInstance();
+
         auto engine = AudiumFactory::createAudiumEngine();
         const auto audioFile = createSlowSawTwoSecondsAudioFile();
         REQUIRE(audioFile.existsAsFile());
@@ -60,6 +65,23 @@ SCENARIO("clip drags undo without rebuilding the clips", "[engine][undo][playlis
             {
                 REQUIRE(item->getAbsolutePosition(clocks) == Catch::Approx(positionBefore + 1000.0));
                 REQUIRE(item->getVoiceSources() == voiceSourcesBefore);
+            }
+
+            THEN("the scheduler republishes its clip snapshot when the change message lands")
+            {
+                // the audio thread plays the committed snapshot, not the items;
+                // total length is recomputed on commit, and nothing has committed
+                // since the file was opened, so a match proves the republish
+                auto scheduler = engine->getPlayListScheduler();
+                REQUIRE(scheduler->getTotalLength(clocks) != Catch::Approx(track->getTotalLength(clocks)));
+
+                container->dispatchPendingMessages();
+                REQUIRE(scheduler->getTotalLength(clocks) == Catch::Approx(track->getTotalLength(clocks)));
+
+                undoManager->undo();
+                container->dispatchPendingMessages();
+                REQUIRE(scheduler->getTotalLength(clocks) == Catch::Approx(track->getTotalLength(clocks)));
+                REQUIRE(track->getTotalLength(clocks) < positionBefore + 1000.0 + regionBefore.getLength());
             }
 
             THEN("undo moves it back and redo forward, still without a rebuild")

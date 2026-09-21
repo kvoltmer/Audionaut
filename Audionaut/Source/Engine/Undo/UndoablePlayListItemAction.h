@@ -145,6 +145,12 @@ private:
             playList->sortByPosition();
 
         container.sendActionMessage (updateArrangementAction);
+
+        // the audio thread plays a committed clip snapshot, not the items:
+        // the change message makes the scheduler republish it (see
+        // PlayListScheduler::changeListenerCallback), and a playing voice
+        // whose clip moved is stopped and rescheduled on the next block
+        container.sendChangeMessage();
         return true;
     }
 
