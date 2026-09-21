@@ -102,6 +102,12 @@ public:
             auto loopActive = playListScheduler->getTransportLoop()->isLoopActive();
             loopRangeMarker.setVisible(loopActive);
             loopDraggerControl->setVisible(loopActive);
+
+            // follow loop changes made elsewhere (Loop Selection, undo) - but
+            // not while the user is dragging the loop handles, the dragger
+            // owns its bounds until onDragEnd commits them to the engine
+            if (loopActive && ! loopDraggerControl->isMouseButtonDown (true))
+                updateLoopView();
         }
             
     }

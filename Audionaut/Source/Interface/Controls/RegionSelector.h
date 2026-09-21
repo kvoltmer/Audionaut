@@ -68,6 +68,10 @@ public:
     /** @brief Dismisses the selection rectangle and clears the engine's
      *         selected range, as a click outside the selection would. */
     void cancelSelection();
+
+    /** @brief Right-click inside the selection: offers the commands that act
+     *         on the selected range (Loop Selection). */
+    void showContextMenu();
     
     // play list dragger controls
     std::vector<PlayListItemDraggerControl*> playListItemDraggerControls;

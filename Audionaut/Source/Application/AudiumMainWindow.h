@@ -78,6 +78,11 @@ private:
     // one (which commits its pending edit as one undo step).
     void toggleStretchOverlay();
 
+    // Makes the selected range (see RegionSelector) the transport loop and
+    // turns the loop on. Reachable from the Edit menu, Cmd+L and the
+    // selection's context menu.
+    void loopSelectedRange();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
 
