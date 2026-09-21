@@ -448,3 +448,178 @@ SCENARIO ("play start inside a stretched clip primes its standby before the firs
     juce::DeletedAtShutdown::deleteAll();
     juce::MessageManager::deleteInstance();
 }
+
+SCENARIO ("a clip that changes while it plays restarts through the standby lane", "[engine][stretch][standby][snapshot]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    auto testFile = createSlowSawAudioFile();
+    REQUIRE (testFile.existsAsFile());
+    const auto bounceFile = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/snapshot-restart-out.wav");
+
+    // A two-second bounce of the stretched clip (it ends later: a stretched
+    // voice runs out of input ahead of its timeline end and is restarted
+    // block by block over the last tenth of a second - a separate defect
+    // that would pollute the prime counts). At 40 % `mutate` runs on the
+    // item and the scheduler recommits its clip snapshot - what a drop, an
+    // undo or a mixer edit does while the transport runs. Every audible
+    // voice used to restart on any recommit; a Stretch voice then primed
+    // its stretcher inside that block.
+    struct Result { juce::AudioBuffer<float> audio; int primes = 0; int adoptions = 0; int mutatedAtSample = -1; };
+    using Mutation = std::function<void (PlayListItem&)>;
+    const auto bounce = [&] (bool standbyEnabled, int blockSize, const Mutation& mutate, const Mutation& before = {}) {
+        auto engine = AudiumFactory::createAudiumEngine();
+        REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+        auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+        REQUIRE (item != nullptr);
+        item->setStretchMode (StretchMode::Stretch);
+        item->setSpeedRatio (1.31);
+        if (before) before (*item);
+        auto scheduler = engine->getPlayListScheduler();
+        scheduler->commitPlayListData();
+        scheduler->standbyPrimingEnabled.store (standbyEnabled);
+
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = bounceFile;
+        config->sampleRate = 44100.0;
+        config->blockSize = blockSize;
+        config->numChannels = 1;
+        config->lengthSeconds = 2.0;
+
+        Result result;
+        const auto iterations = static_cast<int> (config->lengthSeconds * config->sampleRate) / blockSize;
+        AudioExporter (*engine, config).bounce ([&] (double progress) {
+            if (result.mutatedAtSample < 0 && progress >= 0.4)
+            {
+                // the callback runs after block i, with progress = i / iterations;
+                // the next block is the first to pull the new snapshot
+                result.mutatedAtSample = (static_cast<int> (std::llround (progress * iterations)) + 1) * blockSize;
+                mutate (*item);
+                scheduler->commitPlayListData();
+            }
+            return true;
+        });
+
+        result.audio = readAudioFile (bounceFile);
+        const auto* stretch = stretchNodeOf (*engine, item);
+        REQUIRE (stretch->hasStandbyLane());
+        result.primes = stretch->getPrimeCount();
+        result.adoptions = stretch->getStandbyAdoptions();
+        bounceFile.deleteFile();
+        return result;
+    };
+
+    const Mutation moveClip = [] (PlayListItem& item) { item.moveAbsolutePosition (0.3, audium::seconds); };
+    const Mutation gainOnly = [] (PlayListItem& item) { item.getDynamics().setGain (0, 0.5); };
+    const Mutation nothing  = [] (PlayListItem&) {};
+
+    for (const auto blockSize : { 128, 512 })
+    {
+        DYNAMIC_SECTION ("block " << blockSize)
+        {
+            WHEN ("the clip is moved while it plays")
+            {
+                const auto withStandby = bounce (true, blockSize, moveClip);
+                const auto without = bounce (false, blockSize, moveClip);
+                REQUIRE (withStandby.mutatedAtSample == without.mutatedAtSample);
+                REQUIRE (withStandby.mutatedAtSample > 0);
+
+                THEN ("the restart adopted a primed standby instead of priming in the block")
+                {
+                    // play start and the restart
+                    REQUIRE (withStandby.adoptions == 2);
+                    REQUIRE (withStandby.primes == 0);
+
+                    REQUIRE (without.adoptions == 0);
+                    REQUIRE (without.primes == 2);
+                }
+
+                THEN ("the moved material lands where it belongs and the restart renders what an in-block prime renders")
+                {
+                    const auto& a = withStandby.audio;
+                    const auto& b = without.audio;
+                    REQUIRE (a.getNumSamples() == b.getNumSamples());
+                    const auto at = withStandby.mutatedAtSample;
+
+                    // nothing differs before the change
+                    REQUIRE (maxDifference (a, b, 0, at) == 0.0f);
+
+                    // the saw's onset after the move sits where a bounce of the
+                    // already-moved clip has it - the deferred restart re-seeks
+                    // from its own position, so nothing may slip in the meantime
+                    const auto reference = bounce (true, blockSize, nothing, moveClip);
+                    const auto onset = [] (const juce::AudioBuffer<float>& x, int from) {
+                        auto i = from;
+                        while (i < x.getNumSamples() && std::abs (x.getSample (0, i)) < 0.05f)
+                            ++i;
+                        return i;
+                    };
+                    // searched from past the deferral window, where the standby
+                    // render still carries the old alignment. Within a millisecond
+                    // or so: Rubber Band's start alignment after a prime varies
+                    // with how its input was chunked (a few dozen samples at
+                    // 128-sample blocks), and the in-block restart is no closer.
+                    const auto searchFrom = at + static_cast<int> (0.1 * 44100.0);
+                    const auto expected = onset (reference.audio, searchFrom);
+                    REQUIRE (expected < a.getNumSamples());
+                    CAPTURE (blockSize, expected, onset (a, searchFrom), onset (b, searchFrom));
+                    REQUIRE (std::abs (onset (a, searchFrom) - expected) <= 64);
+                    REQUIRE (std::abs (onset (b, searchFrom) - expected) <= 64);
+
+                    // once both restarts have settled they render the same
+                    // material (see align). A short window: Rubber Band's
+                    // real-time output count wanders by a few samples per
+                    // second, differently after every prime, so two renders
+                    // restarted at different points slide apart slowly.
+                    const auto from = at + static_cast<int> (0.35 * 44100.0);
+                    const auto to = at + static_cast<int> (0.70 * 44100.0);
+                    const auto alignment = align (a, b, from, to, 16);
+                    const auto rms = b.getRMSLevel (0, from, to - from);
+                    CAPTURE (alignment.lag, alignment.meanError, rms);
+                    REQUIRE (rms > 0.05f);
+                    REQUIRE (alignment.meanError < 0.01 * rms);
+                }
+            }
+
+            WHEN ("the snapshot is recommitted without a change to the clip")
+            {
+                const auto withStandby = bounce (true, blockSize, nothing);
+                const auto without = bounce (false, blockSize, nothing);
+
+                THEN ("the voice plays on - only play start went through a prime")
+                {
+                    REQUIRE (withStandby.adoptions == 1);
+                    REQUIRE (withStandby.primes == 0);
+                    REQUIRE (without.adoptions == 0);
+                    REQUIRE (without.primes == 1);
+                }
+            }
+
+            WHEN ("only the clip gain changes")
+            {
+                const auto withStandby = bounce (true, blockSize, gainOnly);
+                const auto without = bounce (false, blockSize, gainOnly);
+
+                THEN ("the gain is applied live, without a restart")
+                {
+                    REQUIRE (withStandby.adoptions == 1);
+                    REQUIRE (withStandby.primes == 0);
+                    REQUIRE (without.primes == 1);
+
+                    // the tail is quieter than before the change
+                    const auto& a = withStandby.audio;
+                    const auto at = withStandby.mutatedAtSample;
+                    const auto before = a.getRMSLevel (0, at - 4096, 4096);
+                    const auto after = a.getRMSLevel (0, at + 4096, 4096);
+                    CAPTURE (before, after);
+                    REQUIRE (after < before * 0.75f);
+                }
+            }
+        }
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}

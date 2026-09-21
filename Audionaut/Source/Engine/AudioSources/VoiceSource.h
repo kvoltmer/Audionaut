@@ -8,6 +8,7 @@
 
 #include "Engine/PlayList/SampleTimer.h"
 #include "Engine/AudioSources/ClipTransportSource.h"
+#include "Engine/Core/DspClipData.h"
 
 namespace audium {
 
@@ -142,6 +143,21 @@ public:
 
     const ClipTransportSource& getClipTransportSource() const noexcept { return *clipTransportSource; }
 
+    /** The clip data this voice was last scheduled from (audio thread) - a
+        fresh clip snapshot compares against it, so a voice only restarts
+        when its own clip changed, not when the generation did. */
+    const DspClipData& getScheduledClipData() const noexcept { return scheduledClipData; }
+    void setScheduledClipData(const DspClipData& data) noexcept { scheduledClipData = data; }
+
+    /** A snapshot change moved this playing Stretch-mode clip: the live lane
+        keeps rendering its old alignment up to  transportSeconds while the
+        standby lane primes for that position, and the restart there only
+        swaps lanes (see PlayListScheduler::onClipSnapshotChanged). Audio
+        thread only; cleared by every schedule. */
+    void deferRestart(double transportSeconds) noexcept { pendingRestartAt = transportSeconds; }
+    double getPendingRestartAt() const noexcept { return pendingRestartAt; }
+    void clearPendingRestart() noexcept { pendingRestartAt = -1.0; }
+
     void setGain(float gain)
     {
         clipTransportSource->setGain(gain);
@@ -172,6 +188,8 @@ private:
     std::atomic<double> scheduledPosition   = 0.0; ///< The scheduled playback position in seconds.
     std::atomic<bool> reScheduled           = false; /// Helper to indicate if position is re-scheduled (loop)
     audium::SampleTimer durationTimer; ///< Timer for managing playback duration.
+    DspClipData scheduledClipData; ///< What scheduleClip last applied (audio thread).
+    double pendingRestartAt = -1.0; ///< Timeline seconds of a deferred restart, < 0 when none (audio thread).
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
     std::shared_ptr<juce::AudioFormatReaderSource> standbyReaderSource; ///< Second cursor on the same reader for the transport's standby lane (memory-mapped readers only).
     std::shared_ptr<audium::ClipTransportSource> clipTransportSource; ///< Underlying clip voice source.
