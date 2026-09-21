@@ -383,6 +383,8 @@
                 file="Source/Engine/Undo/UndoableChannelAction.h"/>
           <FILE id="UndEdt" name="UndoableEdit.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableEdit.h"/>
+          <FILE id="UndPLI" name="UndoablePlayListItemAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoablePlayListItemAction.h"/>
         </GROUP>
         <GROUP id="{8F2A41C7-55E1-4B29-9D63-0A7B84D21E96}" name="Project">
           <FILE id="PrjFS1" name="ProjectFileStore.cpp" compile="1" resource="0"

@@ -5013,6 +5013,9 @@
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableEdit.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Undo\UndoablePlayListItemAction.h">
+      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Project\ProjectFileStore.h">
       <Filter>Audionaut\Source\Engine\Project</Filter>
     </ClInclude>

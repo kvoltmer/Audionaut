@@ -341,6 +341,7 @@
 		663B080BB58B01830F242528 /* AudioRecorder.cpp */ /* AudioRecorder.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioRecorder.cpp; path = ../../Source/Engine/Recording/AudioRecorder.cpp; sourceTree = SOURCE_ROOT; };
 		66CB0C43F5DBAC5718838184 /* AudioTrackComponent.h */ /* AudioTrackComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.h; sourceTree = SOURCE_ROOT; };
 		67373F64E8C8792227D22C53 /* ProjectSummary.h */ /* ProjectSummary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProjectSummary.h; path = ../../Source/Cli/ProjectSummary.h; sourceTree = SOURCE_ROOT; };
+		69FEF22879C73C9A0F06DBF1 /* UndoablePlayListItemAction.h */ /* UndoablePlayListItemAction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UndoablePlayListItemAction.h; path = ../../Source/Engine/Undo/UndoablePlayListItemAction.h; sourceTree = SOURCE_ROOT; };
 		6B01CBEC63522628ED584952 /* ModelDownloadThread.h */ /* ModelDownloadThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ModelDownloadThread.h; path = ../../Source/Interface/Dialogs/ModelDownloadThread.h; sourceTree = SOURCE_ROOT; };
 		6B90D4B0D2DAEE81DA7B1E7C /* StretchMode.h */ /* StretchMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StretchMode.h; path = ../../Source/Engine/PlayList/StretchMode.h; sourceTree = SOURCE_ROOT; };
 		6BBAA6DFE177CD89EB2B263E /* DraggerControl.h */ /* DraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DraggerControl.h; path = ../../Source/Interface/Controls/DraggerControl.h; sourceTree = SOURCE_ROOT; };
@@ -1100,6 +1101,7 @@
 				A0096CEC564551C34E10C825,
 				38136CC55DAFE5D7F0515AF6,
 				CF14DFDB98B305551187FB9E,
+				69FEF22879C73C9A0F06DBF1,
 			);
 			name = Undo;
 			sourceTree = "<group>";
