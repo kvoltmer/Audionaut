@@ -21,6 +21,8 @@ using json = nlohmann::json;
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+namespace audium { struct UndoablePlayListItemAction; }
+
 namespace audium {
 
 class AudioRegion;
@@ -147,7 +149,9 @@ private:
     std::shared_ptr<AudioRegion> audioRegion;
     std::vector<std::shared_ptr<VoiceSource>> voiceSources;
     
-    std::unique_ptr<audium::UndoableContainerAction> undoableAction;
+    // The open drag or overlay session (see onDragStart): clip-only, so a
+    // replay neither rebuilds voice sources nor restarts other clips
+    std::unique_ptr<audium::UndoablePlayListItemAction> undoableAction;
     
     // The absolute transport position
     double absolutePositionClocks = 0.0;
