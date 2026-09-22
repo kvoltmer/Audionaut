@@ -13,6 +13,7 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/AudioSources/VoiceSource.h"
+#include "Engine/Undo/UndoablePlayListItemAction.h"
 
 namespace audium {
 
@@ -300,7 +301,10 @@ bool PlayListItem::validateData()
 
 void PlayListItem::onDragStart()
 {
-    undoableAction = std::make_unique<audium::UndoableContainerAction>(audioRegion->getAudioTrack()->getAudioTrackContainer(), false);
+    auto self = std::dynamic_pointer_cast<PlayListItem>(getSharedPtr());
+    jassert(self != nullptr);
+    undoableAction = std::make_unique<audium::UndoablePlayListItemAction>(audioRegion->getAudioTrack()->getAudioTrackContainer(),
+                                                                          std::vector<std::shared_ptr<PlayListItem>>{ self });
 }
 
 void PlayListItem::onDragCancel()
@@ -317,9 +321,12 @@ void PlayListItem::onDragEnd(const juce::String& transactionName)
 {
     if (undoableAction != nullptr) {
         undoableAction->storeNewState();
-        auto undoManager = audioRegion->getAudioTrack()->getAudioTrackContainer().getUndoManager();
-        undoManager->perform(undoableAction.release(), transactionName);
-        undoManager->beginNewTransaction();
+        if (! undoableAction->isNoOp()) {
+            auto undoManager = audioRegion->getAudioTrack()->getAudioTrackContainer().getUndoManager();
+            undoManager->perform(undoableAction.release(), transactionName);
+            undoManager->beginNewTransaction();
+        }
+        undoableAction = nullptr;
     }
 }
 

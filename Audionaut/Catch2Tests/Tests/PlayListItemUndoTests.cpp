@@ -167,6 +167,87 @@ SCENARIO("clip drags undo without rebuilding the clips", "[engine][undo][playlis
             }
         }
 
+        WHEN("a clip gain drag ends (onDragStart / onDragEnd)")
+        {
+            const auto gainBefore = item->getDynamics().getGain(0);
+            item->onDragStart();
+            item->getDynamics().setGain(0, 0.25, true);
+            item->getDynamics().setGain(0, 0.5, true);
+            item->onDragEnd("Set Clip Gain");
+
+            THEN("one clip-only step takes the gain back, the voice sources untouched")
+            {
+                REQUIRE(item->getDynamics().getGain(0) == Catch::Approx(0.5));
+                REQUIRE(item->getVoiceSources() == voiceSourcesBefore);
+                undoManager->undo();
+                REQUIRE(item->getDynamics().getGain(0) == Catch::Approx(gainBefore));
+                REQUIRE(item->getVoiceSources() == voiceSourcesBefore);
+                REQUIRE(undoManager->canUndo() == undoableBefore);
+                undoManager->redo();
+                REQUIRE(item->getDynamics().getGain(0) == Catch::Approx(0.5));
+            }
+        }
+
+        WHEN("a fade handle drag ends")
+        {
+            const auto fadeBefore = item->getDynamics().getFadeIn();
+            item->onDragStart();
+            item->getDynamics().setFadeIn(0.05);
+            item->getDynamics().setFadeInCurve(1.0);
+            item->onDragEnd("Fade In");
+            REQUIRE(item->getDynamics().getFadeIn() != Catch::Approx(fadeBefore));
+
+            THEN("undo restores the fade and its curve")
+            {
+                undoManager->undo();
+                REQUIRE(item->getDynamics().getFadeIn() == Catch::Approx(fadeBefore));
+                REQUIRE(item->getDynamics().getFadeInCurve() == Catch::Approx(ClipDynamics::defaultFadeCurve));
+                REQUIRE(item->getVoiceSources() == voiceSourcesBefore);
+            }
+        }
+
+        WHEN("a drag is cancelled")
+        {
+            const auto gainBefore = item->getDynamics().getGain(0);
+            item->onDragStart();
+            item->getDynamics().setGain(0, 0.1, true);
+            item->onDragCancel();
+
+            THEN("the old state is back and nothing reached the undo manager")
+            {
+                REQUIRE(item->getDynamics().getGain(0) == Catch::Approx(gainBefore));
+                REQUIRE(undoManager->canUndo() == undoableBefore);
+            }
+        }
+
+        WHEN("a stretch overlay session changes the mode and speed")
+        {
+            item->onDragStart();
+            item->setStretchMode(StretchMode::Stretch);
+            item->setSpeedRatio(1.25);
+            item->onDragEnd("Stretch Clip");
+
+            THEN("undo restores re-pitch mode and the speed")
+            {
+                REQUIRE(item->getStretchMode() == StretchMode::Stretch);
+                undoManager->undo();
+                REQUIRE(item->getStretchMode() == StretchMode::RePitch);
+                REQUIRE(item->getSpeedRatio() == Catch::Approx(1.0));
+                REQUIRE(item->getVoiceSources() == voiceSourcesBefore);
+            }
+        }
+
+        WHEN("a drag session ends without a change")
+        {
+            item->onDragStart();
+            item->onDragEnd("Set Clip Gain");
+
+            THEN("no step is recorded")
+            {
+                REQUIRE(undoManager->canUndo() == undoableBefore);
+            }
+        }
+
         engine = nullptr;
     }
 

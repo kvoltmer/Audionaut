@@ -16,8 +16,8 @@ namespace audium
 
 /**
  * @struct UndoablePlayListItemAction
- * @brief Undo step for a clip drag: position, trim (region window) and
- *        speed of the dragged clips.
+ * @brief Undo step for a clip edit: position, trim (region window), speed,
+ *        stretch mode, clip gain and fades of the affected clips.
  *
  * Snapshots only the timeline state of the affected `PlayListItem`s instead
  * of the whole track container. The container snapshot's replay re-read
@@ -42,6 +42,10 @@ struct UndoablePlayListItemAction final : public juce::UndoableAction
         double speedRatio = 1.0;
         bool tempoLocked = false;
         double clipTempo = 0.0;
+        StretchMode stretchMode = StretchMode::RePitch;
+        // gain per channel, fades, curves - the item's own JSON form, so the
+        // snapshot needs no access to ClipDynamics' internals
+        json dynamics;
 
         bool operator== (const State&) const = default;
     };
@@ -87,11 +91,15 @@ struct UndoablePlayListItemAction final : public juce::UndoableAction
 
     static State capture (const PlayListItem& item)
     {
-        return { item.getAbsolutePosition (audium::clocks),
-                 item.getRegionData (audium::clocks),
-                 item.getSpeedRatio(),
-                 item.isTempoLocked(),
-                 item.getClipTempo() };
+        State state { item.getAbsolutePosition (audium::clocks),
+                      item.getRegionData (audium::clocks),
+                      item.getSpeedRatio(),
+                      item.isTempoLocked(),
+                      item.getClipTempo(),
+                      item.getStretchMode(),
+                      json::object() };
+        item.getDynamics().writeToJson (state.dynamics);
+        return state;
     }
 
 private:
@@ -110,6 +118,10 @@ private:
         item.setSpeedRatio (state.speedRatio);
         item.setClipTempo (state.clipTempo);
         item.setTempoLocked (state.tempoLocked);
+        item.setStretchMode (state.stretchMode);
+
+        auto dynamics = state.dynamics;   // readFromJson wants it mutable
+        item.getDynamics().readFromJson (dynamics);
 
         item.setRegionData (state.regionClocks, audium::clocks);
         item.setAbsolutePosition (state.positionClocks, audium::clocks);
