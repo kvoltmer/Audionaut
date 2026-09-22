@@ -3505,6 +3505,7 @@
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableReloadAction.h"/>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableChannelAction.h"/>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableEdit.h"/>
+    <ClInclude Include="..\..\Source\Engine\Undo\UndoablePlayListItemAction.h"/>
     <ClInclude Include="..\..\Source\Engine\Project\ProjectFileStore.h"/>
     <ClInclude Include="..\..\Source\Engine\Project\ProjectSerializer.h"/>
     <ClInclude Include="..\..\Source\Engine\AudiumEngine.h"/>

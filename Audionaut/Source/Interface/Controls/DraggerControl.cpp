@@ -48,11 +48,15 @@ void DraggerControl::mouseUp (const juce::MouseEvent& e)
         zoomHandler->snapToGrid(rangeInClocks);
         commitRangeToEngine(rangeInClocks);
         validateData();
-        if (undoableContainerAction != nullptr) {
-            undoableContainerAction->storeNewState();
-            audiumEngine->getUndoManager()->perform(undoableContainerAction.release(),
-                                                    stretchDrag ? "Stretch Clip" : "Modify Item");
-            audiumEngine->getUndoManager()->beginNewTransaction();
+        if (undoableAction != nullptr) {
+            undoableAction->storeNewState();
+            if (! undoableAction->isNoOp()) {
+                auto transactionName = stretchDrag ? "Stretch Clip"
+                                     : currentDragMode == middleEdge ? "Move Clip" : "Trim Clip";
+                audiumEngine->getUndoManager()->perform(undoableAction.release(), transactionName);
+                audiumEngine->getUndoManager()->beginNewTransaction();
+            }
+            undoableAction = nullptr;
         }
         sendChangeMessage();
     }
@@ -156,10 +160,17 @@ bool DraggerControl::keyPressed (const KeyPress& key, Component* originatingComp
 
 void DraggerControl::commitData(const juce::Range<double> newData, audium::TimeContextType context)
 {
-    // undo
-    if (undoableContainerAction == nullptr)
+    // undo: snapshot the clips this drag acts on (see commitPositionData)
+    // before the first change lands
+    if (undoableAction == nullptr)
     {
-        undoableContainerAction = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer(), false);
+        auto container = audiumEngine->getAudioTrackContainer();
+        std::vector<std::shared_ptr<audium::PlayListItem>> items;
+        for (auto& object : container->getSelectionManager()->getSelectedObjects())
+            if (auto item = std::dynamic_pointer_cast<audium::PlayListItem>(object))
+                items.push_back(item);
+
+        undoableAction = std::make_unique<audium::UndoablePlayListItemAction>(*container, items);
     }
  
     commitPositionData(*positionableObject.get(), newData, context);

@@ -14,7 +14,7 @@
 #include "Interface/ColourIds.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Undo/UndoablePlayListItemAction.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/PlayList/PositionableBase.h"
@@ -237,7 +237,11 @@ protected:
 
     juce::Rectangle<int> originalBounds;
 
-    std::unique_ptr<audium::UndoableContainerAction> undoableContainerAction;
+    // Recorded lazily on the first commit of a drag, for the clips selected
+    // at that point; mouseUp hands it to the undo manager unless nothing
+    // moved. Clip-only on purpose: a whole-container snapshot rebuilt every
+    // clip's voice sources on replay (a DSP spike per drop).
+    std::unique_ptr<audium::UndoablePlayListItemAction> undoableAction;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DraggerControl)
 };

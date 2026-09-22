@@ -212,6 +212,27 @@ private:
                  const TransportLoop::LoopResult loopResult);
     
     
+    /// A fresh clip snapshot reached a playing voice. Only the gain moved:
+    /// applied live. A RePitch clip: restarts now (cheap). A Stretch clip
+    /// with a standby lane: keeps playing its old alignment until a position
+    /// snapshotRestartDeferSeconds ahead while the lane primes for it, so
+    /// the restart there only swaps lanes instead of priming in the block.
+    void onClipSnapshotChanged(const audium::DspClip& dspClip,
+                               VoiceSource* voiceSource,
+                               const TransportLoop::LoopResult& loopResult,
+                               double transportPosition,
+                               int numSamples);
+    /// Lands a deferred restart in the block holding its position: the
+    /// voice re-seeks mid-block at exactly the primed position (like a loop
+    /// wrap), so timing jitter between blocks cannot miss the standby key.
+    void restartAtPendingPosition(const audium::DspClip& dspClip,
+                                  VoiceSource* voiceSource,
+                                  double transportPosition,
+                                  int numSamples);
+    /// How long a playing Stretch clip keeps its old alignment after its
+    /// clip changed while the standby lane primes for the restart.
+    static constexpr double snapshotRestartDeferSeconds = 0.05;
+
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
