@@ -308,6 +308,42 @@ void AudiumApplication::startProjectMonitor()
     projectMonitor->onExternalChange = [this] {
         projectMonitor->setSuspended(true);
 
+        // An agent that read our snapshot wrote its edits on top of the
+        // unsaved ones, so reloading keeps them. A snapshot newer than the
+        // incoming file means the writer never saw them - ask before letting
+        // the reload discard the user's work.
+        if (fileStore->projectChangedOnDisk()
+            && ProjectFileStore::reloadWouldLoseEdits(fileStore->getCurrentProjectFile(),
+                                                      audiumEngine->getUndoManager()->canUndo())) {
+            auto options = MessageBoxOptions::makeOptionsOkCancel(
+                MessageBoxIconType::WarningIcon,
+                TRANS("Project changed on disk"),
+                TRANS("The project file was changed by an agent, but you have unsaved edits "
+                      "it did not see.\n\nReloading replaces your edits with the version on "
+                      "disk (Undo restores them). Keeping yours leaves the file untouched "
+                      "until you save."),
+                TRANS("Reload"),
+                TRANS("Keep mine"));
+
+            NativeMessageBox::showAsync(options, [this] (int result) {
+                if (result == 1) {
+                    if (fileStore->reloadFromDisk([](std::string error) {
+                            std::cout << "external reload failed: " << error << std::endl;
+                        }))
+                        updateUI();
+                }
+                else {
+                    // stamp the file we are deliberately not following, so the
+                    // monitor does not ask again for the same write
+                    fileStore->refreshDiskStamps();
+                }
+
+                projectMonitor->setSuspended(false);
+            });
+
+            return;
+        }
+
         if (fileStore->projectChangedOnDisk()) {
             const auto reloaded = fileStore->reloadFromDisk([](std::string error) {
                 std::cout << "external reload failed: " << error << std::endl;

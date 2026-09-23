@@ -130,6 +130,32 @@ void ProjectFileStore::setSerializer (std::shared_ptr<ProjectSerializer> seriali
     serializer = serializer_;
 }
 
+juce::File ProjectFileStore::autosaveFileFor (const juce::File& projectFile)
+{
+    return projectFile.getSiblingFile (autosaveFileName);
+}
+
+juce::File ProjectFileStore::readSourceFor (const juce::File& projectFile)
+{
+    const auto autosave = autosaveFileFor (projectFile);
+
+    if (autosave.existsAsFile() && projectFile.existsAsFile()
+        && autosave.getLastModificationTime() > projectFile.getLastModificationTime())
+        return autosave;
+
+    return projectFile;
+}
+
+bool ProjectFileStore::reloadWouldLoseEdits (const juce::File& projectFile, bool hasUnsavedEdits)
+{
+    if (! hasUnsavedEdits)
+        return false;
+
+    // No snapshot to compare against: the edits were never written anywhere,
+    // so an incoming file cannot have been built from them.
+    return readSourceFor (projectFile) != projectFile;
+}
+
 bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)> callback)
 {
     jassert(serializer != nullptr);
@@ -164,7 +190,17 @@ bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)
                 // so segments are available as soon as the UI queries them.
                 audioTrackContainer->getAnalysisProvider()->getCache()->loadFromFolder(projectDirectory);
 
-                auto projectJson = readProjectJson(inFile);
+                // A CLI/MCP run follows the crash-recovery snapshot when it is
+                // newer, so an agent sees the GUI's unsaved edits instead of
+                // overwriting them. Crash recovery and the GUI must not: they
+                // open the saved state and replay the snapshot separately.
+                const auto sourceFile = followsUnsavedSnapshot() ? readSourceFor(inFile)
+                                                                 : inFile;
+
+                if (sourceFile != inFile)
+                    std::cout << "reading unsaved state: " << sourceFile.getFullPathName() << std::endl;
+
+                auto projectJson = readProjectJson(sourceFile);
 
                 if (serializer->readFromJson(projectJson, true)) {
                     currentProjectFile = inFile;
