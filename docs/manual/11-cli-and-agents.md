@@ -7,20 +7,13 @@ Everything the timeline can do is also available headlessly. Two front doors:
 - **The app itself** — running the Audionaut binary with a verb executes it
   headlessly and quits, even while a GUI instance is open.
 
-You can keep a project open in the GUI while scripts or agents edit it, in
-both directions:
+The app watches the open package and reloads foreign writes, so an agent's
+edits appear as they land; the reload is undoable. It writes `Project.json`
+itself only when you save, so an agent reading the file sees the project as
+you last saved it — **save before handing a project over to an agent**.
 
-- **Agent → app.** The app watches the package and reloads foreign writes, so
-  an agent's edits appear as they land. The reload is undoable.
-- **App → agent.** The app writes `Project.json` only when you save, but it
-  snapshots unsaved work beside it (`Autosave.json`, the crash-recovery file).
-  A CLI or MCP run reads whichever of the two is newer, so an agent acts on
-  what you currently see rather than on the last save — and its own write
-  carries your unsaved edits into `Project.json` instead of discarding them.
-
-You therefore do not need to save before handing over to an agent. If a
-foreign write does arrive that was made without seeing your unsaved edits, the
-app asks before reloading over them.
+If a write arrives that was made without seeing your unsaved edits, the app
+asks before reloading over them rather than discarding your work.
 
 ## Verbs
 

@@ -13,7 +13,6 @@
 #include "Cli/Commands/Commands.h"
 
 #include "Application/UsageAnalytics.h"
-#include "Engine/Project/ProjectFileStore.h"
 #include "Util/Preferences.h"
 
 namespace audium {
@@ -287,12 +286,6 @@ int performCliCommand (const juce::ArgumentList& args, CliContext& context)
 
     for (auto& spec : getCliCommands()) {
         if (first.text == spec.verb) {
-            // For the length of the command, project reads follow the GUI's
-            // unsaved-work snapshot when it is newer than Project.json, so an
-            // agent edits what the user currently sees rather than saving a
-            // stale project back over their work.
-            const ProjectFileStore::FollowUnsavedSnapshotScope followUnsaved;
-
             auto exitCode = exitFailure;
             try {
                 exitCode = spec.run (args, context);

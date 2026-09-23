@@ -84,48 +84,12 @@ public:
     static juce::File autosaveFileFor(const juce::File& projectFile);
 
     /**
-     * @brief The file an agent should read `projectFile`'s state from: the
-     *        snapshot when the GUI has unsaved edits newer than the saved
-     *        project file, otherwise the project file itself.
-     *
-     * The app only writes Project.json on an explicit save, so a reader that
-     * went straight to it would see a stale project whenever the user has
-     * unsaved work - and, worse, would then save that stale state back over
-     * their edits. Reads follow the snapshot; writes still go to Project.json,
-     * which makes it the newer file again.
-     */
-    static juce::File readSourceFor(const juce::File& projectFile);
-
-    /**
-     * @class FollowUnsavedSnapshotScope
-     * @brief Makes `open()` follow `readSourceFor()` for its lifetime.
-     *
-     * Opt-in rather than ambient, because the snapshot has two consumers that
-     * want opposite things from the same file: crash recovery must open the
-     * *saved* state and replay the snapshot through `restoreAutosave()` (so
-     * Undo returns to it), while an agent run wants the newest state outright.
-     * A headless build alone cannot tell them apart - both are headless - so
-     * the CLI entry point declares the intent for the duration of a command.
-     */
-    class FollowUnsavedSnapshotScope
-    {
-    public:
-        FollowUnsavedSnapshotScope() { flag() = true; }
-        ~FollowUnsavedSnapshotScope() { flag() = false; }
-
-        JUCE_DECLARE_NON_COPYABLE(FollowUnsavedSnapshotScope)
-    };
-
-    /** @brief Whether `open()` is currently following unsaved snapshots. */
-    static bool followsUnsavedSnapshot() { return flag(); }
-
-    /**
      * @brief Whether reloading `projectFile` would discard unsaved edits.
      *
-     * An external write that lands after our newest snapshot was taken was
-     * made by a reader that saw those edits (see `readSourceFor`), so
-     * reloading it keeps them. A snapshot newer than the incoming file means
-     * the writer never saw the edits it is about to overwrite.
+     * The crash-recovery snapshot is the only on-disk trace of unsaved work,
+     * so its timestamp dates them: a snapshot newer than the incoming file
+     * means the writer never saw the edits it is about to overwrite, and the
+     * reload needs the user's consent.
      */
     static bool reloadWouldLoseEdits(const juce::File& projectFile, bool hasUnsavedEdits);
 
@@ -297,13 +261,6 @@ public:
     void deleteAutosaveIn(const juce::File& packageDirectory);
 
 private:
-    /** @brief Backs `FollowUnsavedSnapshotScope`; one CLI command runs at a time. */
-    static bool& flag()
-    {
-        static bool value = false;
-        return value;
-    }
-
     /**
      * @brief Serializes the engine and writes it to `target` atomically.
      * @param serializedOut Receives the serialized JSON on success (optional).
