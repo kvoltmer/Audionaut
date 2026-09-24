@@ -40,6 +40,19 @@ juce::ArgumentList argsFor (const juce::String& commandLine)
     return juce::ArgumentList ("audionaut-cli", commandLine);
 }
 
+/** setenv is POSIX; MSVC has _putenv_s, where an empty value removes it. */
+void setEnvironmentVariable (const char* name, const char* value)
+{
+#if JUCE_WINDOWS
+    _putenv_s (name, value != nullptr ? value : "");
+#else
+    if (value == nullptr || *value == '\0')
+        ::unsetenv (name);
+    else
+        ::setenv (name, value, 1);
+#endif
+}
+
 } // namespace
 
 // The point of routing: when the app holds a project, a verb must see what the
@@ -111,10 +124,10 @@ SCENARIO("a verb addressed at a held project is answered by its host",
         WHEN("routing is switched off for the process") {
             THEN("the verb goes back to the file even though a host is there") {
                 // the kill switch has to work without stopping the host
-                ::setenv (agent::routingDisabledEnvVar, "0", 1);
+                setEnvironmentVariable (agent::routingDisabledEnvVar, "0");
                 auto outcome = agent::routeCommand (argsFor ("info " + package.getFullPathName()),
                                                     "info", true, context);
-                ::unsetenv (agent::routingDisabledEnvVar);
+                setEnvironmentVariable (agent::routingDisabledEnvVar, nullptr);
 
                 REQUIRE_FALSE (outcome.handled);
             }
