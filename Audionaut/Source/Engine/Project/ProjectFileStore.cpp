@@ -37,7 +37,7 @@ static int getCurrentProcessId()
 #endif
 }
 
-static bool isProcessAlive (int pid)
+bool ProjectFileStore::isProcessAlive (int pid)
 {
     if (pid <= 0)
         return false;

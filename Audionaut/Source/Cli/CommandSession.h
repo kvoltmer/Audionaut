@@ -108,5 +108,27 @@ ProjectSession openProjectSession (const juce::File& projectFile,
  */
 ProjectSession openEngineSession();
 
+/**
+ * @class HostedSessionScope
+ * @brief Makes `openProjectSession` hand out the live engine for its lifetime.
+ *
+ * Installed by the host around a verb it is running for a client. While it
+ * stands, the verb addresses the document the user has open instead of the
+ * file on disk - so it reads what they can see, and `commit()` is refused
+ * because the project file is theirs to write, not ours.
+ */
+class HostedSessionScope
+{
+public:
+    HostedSessionScope (std::shared_ptr<AudiumEngine> liveEngine, juce::File projectFile);
+    ~HostedSessionScope();
+
+    HostedSessionScope (const HostedSessionScope&) = delete;
+    HostedSessionScope& operator= (const HostedSessionScope&) = delete;
+};
+
+/** @brief Whether a verb is currently running inside a `HostedSessionScope`. */
+bool isHostedExecution();
+
 } // namespace cli
 } // namespace audium

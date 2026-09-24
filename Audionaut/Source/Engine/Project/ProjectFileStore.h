@@ -73,6 +73,14 @@ public:
     static juce::File getAutosaveDirectory();
 
     /**
+     * @brief Whether a process with this id is still running.
+     *
+     * Used to tell a live owner from the leftovers of a crashed one, both for
+     * autosave pid guards and for the agent host marker.
+     */
+    static bool isProcessAlive(int pid);
+
+    /**
      * @brief Checks if a file is an explicit JSON project file
      *        (foo.json, or legacy foo.audium).
      */

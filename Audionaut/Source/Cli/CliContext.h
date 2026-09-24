@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include <iostream>
 #include <string>
 #include <JuceHeader.h>
@@ -39,9 +41,24 @@ public:
         standalone binary, which opens its own instance when it needs one. */
     Preferences* preferences = nullptr;
 
+    /**
+     * Set by a host running a verb on someone else's behalf: the envelope and
+     * the log are handed over instead of written to this process's streams,
+     * so they can travel back to the client that asked. The client then
+     * renders them through its own context, which is what keeps hosted output
+     * identical to a local run.
+     */
+    std::function<void (const nlohmann::json& envelope)> envelopeSink;
+    std::function<void (const juce::String& line)> logSink;
+
     /** Emits a success envelope (or nothing in human mode) and returns exitOk. */
     int ok (const nlohmann::json& result)
     {
+        if (envelopeSink) {
+            envelopeSink ({ { "ok", true }, { "result", result } });
+            return exitOk;
+        }
+
         if (json)
             resultStream() << nlohmann::json ({ { "ok", true }, { "result", result } }).dump (2) << std::endl;
         return exitOk;
@@ -50,6 +67,12 @@ public:
     /** Emits an error envelope (json mode) or a stderr message, returns exitCode. */
     int fail (int exitCode, const std::string& code, const std::string& message)
     {
+        if (envelopeSink) {
+            envelopeSink ({ { "ok", false },
+                            { "error", { { "code", code }, { "message", message } } } });
+            return exitCode;
+        }
+
         if (json)
             resultStream() << nlohmann::json ({ { "ok", false },
                                                 { "error", { { "code", code }, { "message", message } } } }).dump (2)
@@ -62,6 +85,11 @@ public:
     /** Human-facing progress/log line; never lands on the JSON stdout. */
     void log (const juce::String& message)
     {
+        if (logSink) {
+            logSink (message);
+            return;
+        }
+
         if (! quiet)
             std::cerr << message << std::endl;
     }
