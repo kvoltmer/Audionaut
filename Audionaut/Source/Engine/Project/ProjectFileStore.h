@@ -87,6 +87,21 @@ public:
     static bool isJsonProjectFile(const juce::File& file);
 
     /**
+     * @brief The crash-recovery snapshot beside `projectFile`.
+     */
+    static juce::File autosaveFileFor(const juce::File& projectFile);
+
+    /**
+     * @brief Whether reloading `projectFile` would discard unsaved edits.
+     *
+     * The crash-recovery snapshot is the only on-disk trace of unsaved work,
+     * so its timestamp dates them: a snapshot newer than the incoming file
+     * means the writer never saw the edits it is about to overwrite, and the
+     * reload needs the user's consent.
+     */
+    static bool reloadWouldLoseEdits(const juce::File& projectFile, bool hasUnsavedEdits);
+
+    /**
      * @brief Checks if a file is a valid document package:
      *        a directory named *.audium containing Project.json.
      */

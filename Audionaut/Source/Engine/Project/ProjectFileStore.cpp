@@ -130,6 +130,24 @@ void ProjectFileStore::setSerializer (std::shared_ptr<ProjectSerializer> seriali
     serializer = serializer_;
 }
 
+juce::File ProjectFileStore::autosaveFileFor (const juce::File& projectFile)
+{
+    return projectFile.getSiblingFile (autosaveFileName);
+}
+
+bool ProjectFileStore::reloadWouldLoseEdits (const juce::File& projectFile, bool hasUnsavedEdits)
+{
+    if (! hasUnsavedEdits)
+        return false;
+
+    const auto autosave = autosaveFileFor (projectFile);
+
+    // No snapshot: the edits were never written anywhere, so nothing dates
+    // them against the incoming file.
+    return autosave.existsAsFile() && projectFile.existsAsFile()
+           && autosave.getLastModificationTime() > projectFile.getLastModificationTime();
+}
+
 bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)> callback)
 {
     jassert(serializer != nullptr);

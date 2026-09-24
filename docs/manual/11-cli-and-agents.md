@@ -33,6 +33,11 @@ If the app is holding a project but a command cannot reach it, the command
 you have not saved, and quietly writing over it is the one outcome worth
 refusing. Set `AUDIONAUT_AGENT_ROUTING=0` to work on the file deliberately.
 
+Something else may still write the project file — a script, an older build, or
+a command you ran with routing off. If such a write lands while you have
+unsaved edits it did not see, the app asks before reloading over them rather
+than discarding your work.
+
 Two files inside a package belong to the app and should be left alone:
 `Autosave.json`, its crash-recovery snapshot, and `Host.json`, the marker
 saying which process is holding the project.
