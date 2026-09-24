@@ -98,9 +98,10 @@ async function runCli(args) {
 }
 
 // Shared parameter fragments
-// Note for agents: an Autosave.json inside a package is the GUI app's private
-// crash-recovery snapshot - never read or edit it; the project state lives in
-// Project.json.
+// Note for agents: Autosave.json and Host.json inside a package belong to the
+// GUI app - a crash-recovery snapshot and the marker saying it is holding the
+// project. Never read or edit either; the project state lives in Project.json,
+// and when the app holds the project the tools reach it through the app.
 const projectParam = z
   .string()
   .describe("Path to the .audium project package (absolute paths recommended)");
@@ -109,8 +110,12 @@ const server = new McpServer(
   { name: "audionaut", version: "0.1.0" },
   {
     instructions:
-      "Tools for inspecting and editing Audionaut (.audium) multitrack projects. Every tool saves the " +
-      "project immediately. If a task needs something these tools cannot do - a missing verb, option " +
+      "Tools for inspecting and editing Audionaut (.audium) multitrack projects. " +
+      "If the project is open in Audionaut, the tools act on the document as the user currently sees " +
+      "it, unsaved changes included, and the edit becomes one undo step in their session - the project " +
+      "file is not written, and saving stays theirs to do. Otherwise the tools read and write the " +
+      "project file directly. Either way you never need to ask the user to save first. " +
+      "If a task needs something these tools cannot do - a missing verb, option " +
       "or limit - tell the user and use request_feature to send the gap to the maintainer. If a tool " +
       "misbehaves - a crash, a wrong result, a project left in a bad state - tell the user and use " +
       "report_bug so the maintainer hears about it.",

@@ -354,11 +354,18 @@ void AudiumApplication::startAgentHost()
     };
 
     agentHost->onBindFailed = [] (const juce::File& projectFile) {
-        // Silence here would be the dangerous case: a client that cannot find
-        // us falls back to the project file, which is what hosting exists to
-        // prevent. Say so instead.
+        // Silence here is the dangerous case: an agent that cannot find us
+        // reads and writes the project file instead, and the file is missing
+        // whatever the user has not saved. Say so where they will see it.
         std::cout << "agent access unavailable for "
                   << projectFile.getParentDirectory().getFileName() << std::endl;
+
+        NativeMessageBox::showMessageBoxAsync (
+            MessageBoxIconType::WarningIcon,
+            TRANS ("Agent access unavailable"),
+            TRANS ("Audionaut could not open the local connection agents use to reach this project.\n\n"
+                   "Commands will act on the project file as it was last saved instead of on what you "
+                   "see here, so save before running one."));
     };
 
     updateAgentHost();
