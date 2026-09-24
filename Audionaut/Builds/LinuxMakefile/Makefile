@@ -96,6 +96,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/SeparateCommand_b9775fb9.o \
   $(JUCE_OBJDIR)/TrackCommands_a6175784.o \
   $(JUCE_OBJDIR)/CliDispatch_d59c360c.o \
+  $(JUCE_OBJDIR)/CommandSession_6182fe43.o \
   $(JUCE_OBJDIR)/ProjectSummary_81a7e2c5.o \
   $(JUCE_OBJDIR)/AudiumMenuModel_e3ecba7b.o \
   $(JUCE_OBJDIR)/AudiumApplication_b159b4c1.o \
@@ -351,6 +352,11 @@ $(JUCE_OBJDIR)/TrackCommands_a6175784.o: ../../Source/Cli/Commands/TrackCommands
 $(JUCE_OBJDIR)/CliDispatch_d59c360c.o: ../../Source/Cli/CliDispatch.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling CliDispatch.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/CommandSession_6182fe43.o: ../../Source/Cli/CommandSession.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling CommandSession.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/ProjectSummary_81a7e2c5.o: ../../Source/Cli/ProjectSummary.cpp

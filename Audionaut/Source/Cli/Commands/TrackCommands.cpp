@@ -5,7 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
@@ -40,13 +40,13 @@ int runRemoveTrack (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "remove-track requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
 
@@ -62,7 +62,7 @@ int runRemoveTrack (const juce::ArgumentList& args, CliContext& context)
     if (! trackContainer.deleteAudioTrack (track))
         return context.fail (exitFailure, "remove_failed", "could not remove the track");
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("removed track " + juce::String (removedId) + " (\"" + removedName + "\")");
@@ -87,13 +87,13 @@ int runRemoveChannel (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "remove-channel requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
 
@@ -112,7 +112,7 @@ int runRemoveChannel (const juce::ArgumentList& args, CliContext& context)
     if (! track->deleteChannel (channel.get()))
         return context.fail (exitFailure, "remove_failed", "could not remove the channel");
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("removed channel " + juce::String (channelIndex) + " from track "

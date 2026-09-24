@@ -5,7 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 
 #include "Engine/Export/AudioExporter.h"
 #include "Engine/Export/ExportAudioConfig.h"
@@ -48,11 +48,12 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "the output file must end with .wav");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::readOnly, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
-    if (! session->getProjectFileStore()->open (projectFile, [&error] (std::string message) { error = message; }))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto config = std::make_shared<ExportAudioConfig>();
     config->fileName = outputFile;

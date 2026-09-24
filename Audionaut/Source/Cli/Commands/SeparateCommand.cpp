@@ -4,8 +4,9 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/Commands/Commands.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 #include "Engine/Project/ProjectFileStore.h"
+#include "Engine/Group/AudioTrack.h"
 
 #include "Engine/Separation/DemucsBackend.h"
 #include "Engine/Separation/DemucsModelStore.h"
@@ -68,13 +69,13 @@ int runSeparate (const juce::ArgumentList& args, CliContext& context)
     }
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     StemSeparator separator (session.get(), backend);
 
@@ -101,7 +102,7 @@ int runSeparate (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitFailure, "separation_failed",
                              separationError.isEmpty() ? "separation failed" : separationError.toStdString());
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("stems added");
