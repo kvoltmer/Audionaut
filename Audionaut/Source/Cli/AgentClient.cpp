@@ -88,9 +88,10 @@ int refuse (CliContext& context, const std::string& message)
 
 bool isHostableVerb (const juce::String& verb)
 {
-    // Only read-only verbs so far. Verbs that change the project need a
-    // scratch engine to run on and the guards that come with it.
-    return verb == "info";
+    // `create` has no project to hold, and `analyze` may be given a bare audio
+    // file rather than a project at all; everything else that addresses a
+    // project can run against the open document.
+    return verb != "create";
 }
 
 RouteOutcome routeCommand (const juce::ArgumentList& args,
