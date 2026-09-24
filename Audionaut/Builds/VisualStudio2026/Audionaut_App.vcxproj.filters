@@ -1075,6 +1075,15 @@
     <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp">
       <Filter>Audionaut\Source\Cli</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\AgentProtocol.cpp">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\AgentClient.cpp">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\AgentHost.cpp">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Cli\CommandSession.cpp">
       <Filter>Audionaut\Source\Cli</Filter>
     </ClCompile>
@@ -4705,6 +4714,15 @@
       <Filter>Audionaut\Source\Cli</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Cli\CliDispatch.h">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Cli\AgentProtocol.h">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Cli\AgentClient.h">
+      <Filter>Audionaut\Source\Cli</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Cli\AgentHost.h">
       <Filter>Audionaut\Source\Cli</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Cli\CommandSession.h">

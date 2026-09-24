@@ -96,6 +96,9 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/SeparateCommand_b9775fb9.o \
   $(JUCE_OBJDIR)/TrackCommands_a6175784.o \
   $(JUCE_OBJDIR)/CliDispatch_d59c360c.o \
+  $(JUCE_OBJDIR)/AgentProtocol_7aaf204f.o \
+  $(JUCE_OBJDIR)/AgentClient_c1a08c82.o \
+  $(JUCE_OBJDIR)/AgentHost_8531505f.o \
   $(JUCE_OBJDIR)/CommandSession_6182fe43.o \
   $(JUCE_OBJDIR)/ProjectSummary_81a7e2c5.o \
   $(JUCE_OBJDIR)/AudiumMenuModel_e3ecba7b.o \
@@ -352,6 +355,21 @@ $(JUCE_OBJDIR)/TrackCommands_a6175784.o: ../../Source/Cli/Commands/TrackCommands
 $(JUCE_OBJDIR)/CliDispatch_d59c360c.o: ../../Source/Cli/CliDispatch.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling CliDispatch.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AgentProtocol_7aaf204f.o: ../../Source/Cli/AgentProtocol.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AgentProtocol.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AgentClient_c1a08c82.o: ../../Source/Cli/AgentClient.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AgentClient.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AgentHost_8531505f.o: ../../Source/Cli/AgentHost.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AgentHost.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/CommandSession_6182fe43.o: ../../Source/Cli/CommandSession.cpp

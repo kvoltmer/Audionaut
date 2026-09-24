@@ -16,6 +16,7 @@
 #include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Application/ProjectMonitor.h"
+#include "Cli/AgentHost.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
 #include "UpdateChecker.h"
@@ -197,6 +198,7 @@ void AudiumApplication::handleAsyncUpdate()
     updateUI();
     refreshWindowTitle();
     startProjectMonitor();
+    startAgentHost();
 
     if (splashScreen != nullptr) {
         splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
@@ -342,6 +344,27 @@ void AudiumApplication::startProjectMonitor()
     };
 }
 
+void AudiumApplication::startAgentHost()
+{
+    agentHost = std::make_unique<cli::agent::AgentHost> (audiumEngine);
+
+    agentHost->onBindFailed = [] (const juce::File& projectFile) {
+        // Silence here would be the dangerous case: a client that cannot find
+        // us falls back to the project file, which is what hosting exists to
+        // prevent. Say so instead.
+        std::cout << "agent access unavailable for "
+                  << projectFile.getParentDirectory().getFileName() << std::endl;
+    };
+
+    updateAgentHost();
+}
+
+void AudiumApplication::updateAgentHost()
+{
+    if (agentHost != nullptr)
+        agentHost->setProject (fileStore->getCurrentProjectFile());
+}
+
 void AudiumApplication::askForUsageStatisticsConsent()
 {
     if (UsageAnalytics::isConsentDecided (getPreferences()))
@@ -379,6 +402,7 @@ void AudiumApplication::shutdown()
     getPreferences().setValue(PreferenceKeys::browserWindowOpen, fileBrowserVisible() ? "true" : "false");
 
     // Add your application's shutdown code here..
+    agentHost.reset();      // withdraw the marker and stop serving
     projectMonitor.reset(); // stop polling before the engine goes away
     mainWindow.reset(); // (deletes our window)
 
@@ -852,6 +876,7 @@ void AudiumApplication::createNewProject()
         restoreUiState();
 
         refreshWindowTitle();
+        updateAgentHost();
     });
 }
 
@@ -935,6 +960,7 @@ void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToO
         restoreUiState();
 
     refreshWindowTitle();
+    updateAgentHost();
 
     // offer the crash-recovery snapshot now that the project is open. Restore
     // applies it as an undoable step: the session starts dirty and Undo
@@ -1068,6 +1094,7 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
         logUsageEvent("project_save");
 
         refreshWindowTitle();
+        updateAgentHost(); // Save As moves the document, and the host with it
     }
     return success;
 }

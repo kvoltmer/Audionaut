@@ -137,8 +137,35 @@ juce::String takeOptionValue (juce::ArgumentList& args,
     return {};
 }
 
+namespace {
+
+/** Set while a host resolves a client's relative paths - see ScopedWorkingDirectory. */
+juce::File& overriddenWorkingDirectory()
+{
+    static juce::File directory;
+    return directory;
+}
+
+} // namespace
+
+ScopedWorkingDirectory::ScopedWorkingDirectory (const juce::File& directory)
+{
+    if (directory.isDirectory())
+        overriddenWorkingDirectory() = directory;
+}
+
+ScopedWorkingDirectory::~ScopedWorkingDirectory()
+{
+    overriddenWorkingDirectory() = juce::File();
+}
+
 juce::File workingDirectory()
 {
+    // A hosted verb was typed somewhere else entirely; its relative paths mean
+    // nothing against ours (the sandboxed app runs from its own container).
+    if (overriddenWorkingDirectory() != juce::File())
+        return overriddenWorkingDirectory();
+
     auto pwd = juce::SystemStats::getEnvironmentVariable ("PWD", {});
     if (pwd.isNotEmpty() && juce::File::isAbsolutePath (pwd)) {
         juce::File dir (pwd);

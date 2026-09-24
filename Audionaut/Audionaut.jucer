@@ -61,6 +61,18 @@
         <FILE id="CliCtx" name="CliContext.h" compile="0" resource="0" file="Source/Cli/CliContext.h"/>
         <FILE id="CliDsH" name="CliDispatch.h" compile="0" resource="0" file="Source/Cli/CliDispatch.h"/>
         <FILE id="CliDsC" name="CliDispatch.cpp" compile="1" resource="0" file="Source/Cli/CliDispatch.cpp"/>
+        <FILE id="AgnPrc" name="AgentProtocol.cpp" compile="1" resource="0"
+              file="Source/Cli/AgentProtocol.cpp"/>
+        <FILE id="AgnPrh" name="AgentProtocol.h" compile="0" resource="0"
+              file="Source/Cli/AgentProtocol.h"/>
+        <FILE id="AgnClc" name="AgentClient.cpp" compile="1" resource="0"
+              file="Source/Cli/AgentClient.cpp"/>
+        <FILE id="AgnClh" name="AgentClient.h" compile="0" resource="0"
+              file="Source/Cli/AgentClient.h"/>
+        <FILE id="AgnHoc" name="AgentHost.cpp" compile="1" resource="0"
+              file="Source/Cli/AgentHost.cpp"/>
+        <FILE id="AgnHoh" name="AgentHost.h" compile="0" resource="0"
+              file="Source/Cli/AgentHost.h"/>
         <FILE id="CmdSes" name="CommandSession.cpp" compile="1" resource="0"
               file="Source/Cli/CommandSession.cpp"/>
         <FILE id="CmdSeh" name="CommandSession.h" compile="0" resource="0"
