@@ -8,7 +8,7 @@
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 #include "Cli/ProjectSummary.h"
 
 namespace audium {
@@ -24,12 +24,10 @@ int runInfo (const juce::ArgumentList& args, CliContext& context)
     // the command and teardown all land on stderr in --json mode. The result
     // envelope is immune - CliContext captured the real stdout at startup.
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
-
-    std::string openError;
-    if (! session->getProjectFileStore()->open (projectFile, [&openError] (std::string error) { openError = error; }))
-        return context.fail (exitFailure, "open_failed",
-                             openError.empty() ? "failed to open project" : openError);
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::readOnly, context, openFailure);
+    if (! session)
+        return openFailure;
 
     nlohmann::json result;
     if (args.containsOption ("--raw")) {

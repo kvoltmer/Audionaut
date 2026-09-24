@@ -5,7 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 
 #include "Engine/Analysis/AnalysisWorker.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -36,17 +36,20 @@ int runImport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "import requires at least one audio file");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
-
-    // Imports normally auto-enqueue background analysis; a run-to-completion
-    // CLI wants deterministic output, so analysis stays an explicit `analyze`.
-    session->getAudioResourceContainer()->getAnalysisWorker()->setAutoAnalysisEnabled (false);
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure,
+                                       [] (AudiumEngine& engine) {
+        // Imports normally auto-enqueue background analysis; a
+        // run-to-completion CLI wants deterministic output, so analysis stays
+        // an explicit `analyze`. This has to be in place before the open,
+        // which would otherwise queue every file already in the project.
+        engine.getAudioResourceContainer()->getAnalysisWorker()->setAutoAnalysisEnabled (false);
+    });
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto tempoProvider = session->getAudioTrackContainer()->getTempoProvider();
     auto positionClocks = tempoProvider->secondsToClocks (positionSeconds);
@@ -54,7 +57,7 @@ int runImport (const juce::ArgumentList& args, CliContext& context)
     if (! session->getAudioTrackContainer()->addAudioFiles (audioFiles, positionClocks, captureError, false))
         return context.fail (exitFailure, "import_failed", error.empty() ? "failed to import audio files" : error);
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("imported " + juce::String (audioFiles.size()) + " file(s)");

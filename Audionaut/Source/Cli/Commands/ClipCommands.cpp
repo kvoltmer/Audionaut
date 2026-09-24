@@ -5,7 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
@@ -123,13 +123,13 @@ int runRemoveClip (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "remove-clip requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -163,7 +163,7 @@ int runRemoveClip (const juce::ArgumentList& args, CliContext& context)
         match.track->getPlayListContainer()->deletePlayListItem (match.item, deleteRegion);
     }
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("removed " + juce::String (removed.size()) + " clip(s)");
@@ -185,13 +185,13 @@ int runMoveClip (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "move-clip requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -216,7 +216,7 @@ int runMoveClip (const juce::ArgumentList& args, CliContext& context)
     match.item->setAbsolutePosition (toClocks, audium::clocks);
     match.track->getPlayListContainer()->sortByPosition();
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("moved clip to " + juce::String (toClocks) + " clocks");
@@ -242,13 +242,13 @@ int runPlaceClip (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "place-clip requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -277,7 +277,7 @@ int runPlaceClip (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitFailure, "place_failed", "could not place the region");
     playList->sortByPosition();
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("placed \"" + regionName + "\" at " + juce::String (positionClocks) + " clocks");
@@ -309,13 +309,13 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "clip-gain requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -346,7 +346,7 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context)
             dynamics.setGain (channel, gain);
     }
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     auto gains = nlohmann::json::array();
@@ -399,13 +399,13 @@ int runClipSpeed (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "clip-speed requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -493,7 +493,7 @@ int runClipSpeed (const juce::ArgumentList& args, CliContext& context)
         }
     }
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("clip speed set");
@@ -529,13 +529,13 @@ int runClipFades (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "clip-fades requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -612,7 +612,7 @@ int runClipFades (const juce::ArgumentList& args, CliContext& context)
     if (fadeOutCurve.isNotEmpty())
         dynamics.setFadeOutCurve (fadeOutCurve.getDoubleValue());
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("clip fades set");

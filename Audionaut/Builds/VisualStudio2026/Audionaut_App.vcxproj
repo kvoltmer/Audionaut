@@ -199,6 +199,7 @@
     <ClCompile Include="..\..\Source\Cli\Commands\SeparateCommand.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\TrackCommands.cpp"/>
     <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\CommandSession.cpp"/>
     <ClCompile Include="..\..\Source\Cli\ProjectSummary.cpp"/>
     <ClCompile Include="..\..\Source\Application\AudiumMenuModel.cpp"/>
     <ClCompile Include="..\..\Source\Application\AudiumApplication.cpp"/>
@@ -3402,6 +3403,7 @@
     <ClInclude Include="..\..\Source\Cli\Commands\Commands.h"/>
     <ClInclude Include="..\..\Source\Cli\CliContext.h"/>
     <ClInclude Include="..\..\Source\Cli\CliDispatch.h"/>
+    <ClInclude Include="..\..\Source\Cli\CommandSession.h"/>
     <ClInclude Include="..\..\Source\Cli\HeadlessEngineSession.h"/>
     <ClInclude Include="..\..\Source\Cli\ProjectSummary.h"/>
     <ClInclude Include="..\..\Source\Application\AudiumMenuModel.h"/>

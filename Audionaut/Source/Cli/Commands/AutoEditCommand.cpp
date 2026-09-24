@@ -5,7 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 
 #include "Engine/AutoEdit/AutoEdit.h"
 
@@ -31,13 +31,13 @@ int runAutoEdit (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "auto-edit requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     // Auto-edit consumes cached analysis results; run `analyze` first. Its
     // own error callback reports a missing/incomplete cache.
@@ -46,7 +46,7 @@ int runAutoEdit (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitFailure, "auto_edit_failed",
                              error.empty() ? "auto-edit failed" : error);
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("auto-edit applied");
@@ -79,20 +79,20 @@ int runAssemble (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "assemble requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     AutoEdit autoEdit (session.get());
     if (! autoEdit.invokeAssemble (config, captureError))
         return context.fail (exitFailure, "assemble_failed",
                              error.empty() ? "assemble failed" : error);
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("assemble applied");
