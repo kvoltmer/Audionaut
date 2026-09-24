@@ -57,6 +57,10 @@ public:
     {
     }
 
+    // JUCE requires this before the base destructor, or a pending callback
+    // could land on a half-destroyed connection.
+    ~Connection() override { disconnect(); }
+
     void connectionMade() override
     {
         sendMessage (toBlock (makeHello (host.projectFile, hostProcessId())));
