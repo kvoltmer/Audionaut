@@ -195,10 +195,12 @@ const std::vector<CliCommandSpec>& getCliCommands()
           runRemoveClip },
 
         { "move-clip",
-          "move-clip <project.audium> (--at P | --region NAME) --to Q [--track N]\n"
-          "                          [--unit ...] [--json]",
-          "Moves one clip to a new timeline position.",
-          "Moves the addressed clip (the address must match exactly one) to the given position on its track.",
+          "move-clip <project.audium> (--at P | --region NAME) [--to Q] [--to-track N|new]\n"
+          "                          [--track N] [--unit ...] [--json]",
+          "Moves one clip to a new timeline position and/or another track.",
+          "Moves the addressed clip (the address must match exactly one) to the given position, "
+          "onto the track with id N or a newly created one with --to-track new. Without --to the "
+          "clip keeps its position; at least one of --to and --to-track is required.",
           runMoveClip },
 
         { "place-clip",

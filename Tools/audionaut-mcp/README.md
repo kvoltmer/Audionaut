@@ -38,7 +38,7 @@ read or edit them.
 | `create_region` | `create-region` | Create a named region from a timeline range |
 | `set_region` | `set-region` | Rename and/or retrim a region (affects all its clips) |
 | `remove_clip` | `remove-clip` | Remove clip(s) from the timeline |
-| `move_clip` | `move-clip` | Move one clip to a new position |
+| `move_clip` | `move-clip` | Move one clip to a new position and/or another track |
 | `place_clip` | `place-clip` | Place an existing region on the timeline |
 | `cleanup_regions` | `cleanup-regions` | Delete every region no clip uses |
 | `clip_gain` | `clip-gain` | Set a clip's gain (linear or dB, all channels or one) |

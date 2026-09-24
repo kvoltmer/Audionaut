@@ -61,7 +61,7 @@ split           split clips at a timeline position
 create-region   name a region from a timeline range
 set-region      rename and/or retrim a region
 remove-clip     remove clip(s) from the timeline
-move-clip       move a clip to a new position
+move-clip       move a clip to a new position or track
 place-clip      place an existing region on the timeline
 cleanup-regions delete every region no clip uses
 clip-gain       set a clip's gain (linear or dB)

@@ -406,23 +406,28 @@ server.registerTool(
   {
     title: "Move clip",
     description:
-      "Moves one clip to a new timeline position on its track. Address it by position (at) or region name; " +
-      "the address must match exactly one clip.",
+      "Moves one clip to a new timeline position and/or onto another track. Address it by position (at) or " +
+      "region name; the address must match exactly one clip. to_track takes a track id, or \"new\" to create " +
+      "a track for it; without to the clip keeps its position. Give at least one of to and to_track.",
     inputSchema: {
       project: projectParam,
-      to: z.number().describe("Target timeline position"),
+      to: z.number().optional().describe("Target timeline position (default: unchanged)"),
+      to_track: z
+        .union([z.number().int().min(0), z.literal("new")])
+        .optional()
+        .describe('Target track id, or "new" to create a track'),
       at: z.number().optional().describe("Current position of the clip (exclusive with region)"),
       region: z.string().min(1).optional().describe("Region name of the clip"),
       unit: unitParam,
       track: z.number().int().min(0).optional().describe("Track id"),
     },
   },
-  async ({ project, to, at, region, unit, track }) =>
+  async ({ project, to, to_track, at, region, unit, track }) =>
     runCli([
       "move-clip",
       project,
-      "--to",
-      String(to),
+      ...(to !== undefined ? ["--to", String(to)] : []),
+      ...(to_track !== undefined ? ["--to-track", String(to_track)] : []),
       ...(at !== undefined ? ["--at", String(at)] : []),
       ...(region !== undefined ? ["--region", region] : []),
       ...(unit ? ["--unit", unit] : []),

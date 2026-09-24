@@ -62,7 +62,7 @@ int runSetRegion (const juce::ArgumentList& args, CliContext& context);
 /** `remove-clip <project> (--at P | --region N) [--track] [--delete-region]` */
 int runRemoveClip (const juce::ArgumentList& args, CliContext& context);
 
-/** `move-clip <project> (--at P | --region N) --to Q [--track]` */
+/** `move-clip <project> (--at P | --region N) [--to Q] [--to-track N|new] [--track]` */
 int runMoveClip (const juce::ArgumentList& args, CliContext& context);
 
 /** `place-clip <project> --region N --at P [--track]` */
