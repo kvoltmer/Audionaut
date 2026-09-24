@@ -10,6 +10,7 @@
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/Channel/AudioChannelData.h"
+#include <optional>
 
 namespace audium
 {
@@ -71,6 +72,17 @@ public:
     * @brief Sets the channel data for a specific channel.
     */
     void setChannelData(const int channelNumber, const AudioChannelData data);
+
+    /**
+     * @brief Whether channel commands are drained inline instead of by a
+     *        render callback.
+     *
+     * Defaults to `HeadlessMode`, which is process-wide and therefore wrong
+     * for a scratch engine running inside the GUI: the scratch engine has no
+     * device and must pump its own fifo, while the live engine's device is
+     * draining as usual and must not. Set it explicitly on such an engine.
+     */
+    void setPumpsCommandsSynchronously(bool shouldPump) noexcept { pumpsCommandsSynchronously = shouldPump; }
     
     const AudioChannelData getChannelData(const int channelNumber) const;
 
@@ -129,7 +141,11 @@ public:
     */
     const float getMasterLevel(const int channelNumber) const;
     
+
  private:
+     /// Unset = follow HeadlessMode (the process-wide default).
+     std::optional<bool> pumpsCommandsSynchronously;
+
      std::shared_ptr<audium::LockFreeCommander> lockFreeCommander; ///< Thread-safe command manager.
      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer; ///< Renderer for audio bus processing.
 
