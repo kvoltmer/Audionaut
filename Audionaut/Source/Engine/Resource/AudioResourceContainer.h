@@ -66,6 +66,16 @@ public:
      * @brief Deletes the temporary project directory.
      */
     static void deleteTemporaryProjectDirectory();
+
+    /**
+     * @brief Whether this container owns the session's temporary directory.
+     *
+     * The temp directory is a process-wide static, so a second (scratch)
+     * container sharing a live session's directory must not delete it on
+     * teardown - that would take the running session's audio with it. Owning
+     * is the default; a scratch engine clears it right after construction.
+     */
+    void setOwnsTemporaryDirectory(bool shouldOwn) noexcept { ownsTemporaryDirectory = shouldOwn; }
     
     /**
      * @brief Creates a temporary project directory.
@@ -271,6 +281,9 @@ public:
     void onRecordingFinished();
     
 private:
+    /// False for a scratch container sharing another session's temp directory.
+    bool ownsTemporaryDirectory = true;
+
     /** Asks the user and moves the given files to the trash. A no-op in headless mode. */
     void trashRedundantFiles(const std::vector<juce::File>& redundantFiles);
 
