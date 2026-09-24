@@ -348,6 +348,11 @@ void AudiumApplication::startAgentHost()
 {
     agentHost = std::make_unique<cli::agent::AgentHost> (audiumEngine);
 
+    agentHost->onProjectMutated = [this] {
+        updateUI();
+        refreshWindowTitle(); // now carries the agent marker
+    };
+
     agentHost->onBindFailed = [] (const juce::File& projectFile) {
         // Silence here would be the dangerous case: a client that cannot find
         // us falls back to the project file, which is what hosting exists to

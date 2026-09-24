@@ -135,8 +135,9 @@ SCENARIO("a verb addressed at a held project is answered by its host",
 
         WHEN("the verb is one the host does not serve") {
             THEN("it is left to the file rather than refused") {
-                auto outcome = agent::routeCommand (argsFor ("clip-gain " + package.getFullPathName()),
-                                                    "clip-gain", agent::isHostableVerb ("clip-gain"),
+                // `create` has no open document to run against
+                auto outcome = agent::routeCommand (argsFor ("create " + package.getFullPathName()),
+                                                    "create", agent::isHostableVerb ("create"),
                                                     context);
                 REQUIRE_FALSE (outcome.handled);
             }
@@ -186,6 +187,80 @@ SCENARIO("a verb addressed at a held project is answered by its host",
 
         host.setProject (juce::File());
         REQUIRE_FALSE (agent::markerFileFor (projectJson).existsAsFile());
+    }
+
+    engine = nullptr;
+    workDir.deleteRecursively();
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+// A verb that changes the project is the case the whole design exists for: it
+// must reach the open document and leave the file alone.
+SCENARIO("a hosted verb changes the open document, not the project file",
+         "[cli][agent][routing][mutation]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock (Thread::getCurrentThread());
+
+    auto workDir = makeRoutingWorkDirectory();
+    auto package = workDir.getChildFile ("mutated.audium");
+    auto projectJson = package.getChildFile (ProjectFileStore::projectFileName);
+
+    CliContext setup;
+    setup.quiet = true;
+
+    // a project with one clip, built the ordinary way
+    REQUIRE (runCreate (argsFor ("create " + package.getFullPathName()), setup) == exitOk);
+    const auto sourceAudio = juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/120-funk-1-sec.wav";
+    REQUIRE (runImport (argsFor ("import " + package.getFullPathName() + " " + sourceAudio), setup) == exitOk);
+
+    // the "app" holding it
+    auto engine = AudiumFactory::createAudiumEngine();
+    REQUIRE (engine->getProjectFileStore()->open (projectJson, nullptr));
+
+    CliContext context;
+    context.quiet = true;
+    context.json = true;
+
+    json envelope;
+    context.envelopeSink = [&envelope] (const json& produced) { envelope = produced; };
+
+    GIVEN("the app hosting it, with the file as last saved") {
+        agent::AgentHost host (engine, inlineExecutor());
+        host.setProject (projectJson);
+        REQUIRE (host.isHosting());
+
+        const auto savedAt = projectJson.getLastModificationTime();
+        REQUIRE_FALSE (engine->getUndoManager()->canUndo());
+
+        WHEN("an agent sets a clip gain") {
+            auto outcome = agent::routeCommand (
+                argsFor ("clip-gain " + package.getFullPathName() + " --at 1 --gain 0.5"),
+                "clip-gain", agent::isHostableVerb ("clip-gain"), context);
+
+            THEN("it lands on the open document as one undoable step, and the file is untouched") {
+                REQUIRE (outcome.handled);
+                REQUIRE (envelope.value ("ok", false));
+                REQUIRE (outcome.exitCode == exitOk);
+
+                REQUIRE (projectJson.getLastModificationTime() == savedAt);
+                REQUIRE (engine->getProjectFileStore()->wasChangedExternally());
+                REQUIRE (engine->getUndoManager()->canUndo());
+
+                json afterState;
+                engine->getProjectSerializer()->writeToJson (afterState);
+
+                REQUIRE (engine->getUndoManager()->undo());
+
+                json undoneState;
+                engine->getProjectSerializer()->writeToJson (undoneState);
+                REQUIRE (undoneState != afterState);
+                REQUIRE_FALSE (engine->getProjectFileStore()->wasChangedExternally());
+            }
+        }
+
+        host.setProject (juce::File());
     }
 
     engine = nullptr;

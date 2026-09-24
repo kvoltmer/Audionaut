@@ -5,7 +5,9 @@
 
 #pragma once
 
+#include <atomic>
 #include <functional>
+#include <string>
 #include <memory>
 #include <JuceHeader.h>
 
@@ -55,6 +57,10 @@ public:
      */
     void setProject (const juce::File& projectFile);
 
+    /** @brief Called after a hosted verb changed the document, so the app can
+        refresh its title and views. */
+    std::function<void()> onProjectMutated;
+
     /** @brief Reported when a port could not be bound, so the app can say that
         agent access is unavailable rather than leave it silently broken. */
     std::function<void (const juce::File& projectFile)> onBindFailed;
@@ -72,6 +78,18 @@ private:
     class Connection;
 
     void stop();
+
+    /**
+     * @brief Why this verb cannot run right now, or empty when it can.
+     *
+     * Message thread. Recording is refused outright - applying a state stops
+     * the take. Export is refused while the transport plays, because the
+     * offline-render flag it sets is process-wide and would stretch the live
+     * engine's read-ahead timeout underneath the user.
+     */
+    std::string refusalFor (const juce::String& verb) const;
+
+    std::atomic<bool> busy { false };
 
     std::shared_ptr<AudiumEngine> engine;
     MessageThreadExecutor messageThreadExecutor;

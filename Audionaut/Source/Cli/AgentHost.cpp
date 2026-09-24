@@ -4,12 +4,17 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/AgentHost.h"
+#include "Cli/AgentClient.h"
 #include "Cli/AgentProtocol.h"
 #include "Cli/CliContext.h"
 #include "Cli/CliDispatch.h"
 #include "Cli/CommandSession.h"
 #include "Cli/Commands/Commands.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Project/ProjectFileStore.h"
+#include "Engine/Project/ProjectSerializer.h"
+#include "Engine/Playback/AudioBusInterface.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 #if JUCE_WINDOWS
  #include <windows.h>
@@ -30,12 +35,6 @@ int hostProcessId()
 #else
     return (int) getpid();
 #endif
-}
-
-/** Only these are served for now; everything else keeps using the file. */
-bool isServedVerb (const juce::String& verb)
-{
-    return verb == "info";
 }
 
 } // namespace
@@ -90,7 +89,7 @@ public:
             return;
         }
 
-        if (! isServedVerb (argv[0])) {
+        if (! isHostableVerb (argv[0])) {
             // The client only routes verbs it believes are served; reaching
             // here means the two disagree, so say so rather than guess.
             reply (exitFailure, errorEnvelope ("verb_not_hosted",
@@ -101,7 +100,16 @@ public:
 
         const juce::File workingDirectory (juce::String (request.value ("cwd", std::string())));
 
+        // One command at a time: a separation runs for minutes, and two verbs
+        // interleaving on one document would each undo the other's work.
+        if (host.busy.exchange (true)) {
+            reply (exitFailure, errorEnvelope ("host_busy",
+                                               "Audionaut is already running a command for an agent"), {});
+            return;
+        }
+
         run (argv, workingDirectory);
+        host.busy = false;
     }
 
 private:
@@ -121,6 +129,22 @@ private:
         juce::StringArray log;
         auto exitCode = exitFailure;
 
+        // Everything that touches the graph happens on the message thread, so
+        // it never runs beside the user's own edits.
+        json liveState;
+        std::string refusal;
+
+        host.messageThreadExecutor ([&] {
+            refusal = host.refusalFor (argv[0]);
+            if (refusal.empty())
+                host.engine->getProjectSerializer()->writeToJson (liveState);
+        });
+
+        if (! refusal.empty()) {
+            reply (exitFailure, errorEnvelope (refusalCode (argv[0]), refusal), {});
+            return;
+        }
+
         host.messageThreadExecutor ([&] {
             CliContext context;
             // A host always wants the envelope, never the human rendering:
@@ -130,16 +154,59 @@ private:
             context.logSink      = [&log] (const juce::String& line)  { log.add (line); };
 
             const ScopedWorkingDirectory workingDirectoryScope (workingDirectory);
-            const HostedSessionScope hostedScope (host.engine, host.projectFile);
+            const HostedSessionScope hostedScope (host.engine, host.projectFile, liveState);
 
             juce::ArgumentList arguments ("audionaut", argv);
             exitCode = performCliCommand (arguments, context);
+
+            if (exitCode == exitOk && HostedSessionScope::hasStagedState())
+                applyStaged (argv[0], liveState, HostedSessionScope::takeStagedState(),
+                             exitCode, envelope);
         });
 
         if (envelope.is_null())
             envelope = errorEnvelope ("host_failed", "the command produced no result");
 
         reply (exitCode, envelope, log);
+    }
+
+    /** Message thread. Puts the verb's result on the live document as one
+        undoable step - unless the user changed it while we worked. */
+    void applyStaged (const juce::String& verb, const json& liveStateAtStart,
+                      json staged, int& exitCode, json& envelope)
+    {
+        json liveStateNow;
+        host.engine->getProjectSerializer()->writeToJson (liveStateNow);
+
+        if (liveStateNow != liveStateAtStart) {
+            // Applying now would take the user's edit with it.
+            exitCode = exitFailure;
+            envelope = errorEnvelope ("project_changed",
+                                      "the project changed in Audionaut while the command was running; "
+                                      "nothing was applied - run it again");
+            return;
+        }
+
+        std::string error;
+        const auto applied = host.engine->getProjectFileStore()
+            ->applyStateAsUndoableReload (std::move (staged), true, true,
+                                          "Agent: " + verb,
+                                          [&error] (std::string message) { error = message; });
+
+        if (! applied) {
+            exitCode = exitFailure;
+            envelope = errorEnvelope ("apply_failed",
+                                      error.empty() ? "could not apply the change to the open document" : error);
+            return;
+        }
+
+        if (host.onProjectMutated != nullptr)
+            host.onProjectMutated();
+    }
+
+    static std::string refusalCode (const juce::String& verb)
+    {
+        return verb == "export" ? "transport_busy" : "recording_in_progress";
     }
 
     AgentHost& host;
@@ -243,6 +310,20 @@ void AgentHost::setProject (const juce::File& newProjectFile)
 
     server = std::move (candidate);
     projectFile = newProjectFile;
+}
+
+std::string AgentHost::refusalFor (const juce::String& verb) const
+{
+    if (engine->getAudioBusInterface()->anyChannelRecording())
+        return "Audionaut is recording; applying a change would stop the take";
+
+    // RenderTiming's offline flag is process-wide: a bounce would stretch the
+    // live engine's read-ahead timeout from milliseconds to seconds while the
+    // user is listening.
+    if (verb == "export" && engine->getPlayListScheduler()->isPlaying())
+        return "Audionaut is playing; stop the transport before exporting";
+
+    return {};
 }
 
 juce::File AgentHost::hostedProject() const

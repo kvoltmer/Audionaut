@@ -24,7 +24,8 @@ namespace cli {
  */
 enum class CommandAccess
 {
-    readOnly, ///< reads the project (it may still write its own output, e.g. export)
+    readOnly, ///< reads the project, and may do so on a live document directly
+    isolated, ///< reads the project but needs an engine of its own (export)
     mutating  ///< changes the project; `commit()` persists the work
 };
 
@@ -120,11 +121,27 @@ ProjectSession openEngineSession();
 class HostedSessionScope
 {
 public:
-    HostedSessionScope (std::shared_ptr<AudiumEngine> liveEngine, juce::File projectFile);
+    /**
+     * @param liveEngine The document the user has open.
+     * @param projectFile Where that document lives, for verbs that need a path.
+     * @param liveState The live graph, serialized. A mutating verb runs on a
+     *        scratch engine seeded from this rather than on the live one, so a
+     *        verb that fails leaves the user's document untouched and the whole
+     *        change arrives as a single undoable step.
+     */
+    HostedSessionScope (std::shared_ptr<AudiumEngine> liveEngine,
+                        juce::File projectFile,
+                        nlohmann::json liveState);
     ~HostedSessionScope();
 
     HostedSessionScope (const HostedSessionScope&) = delete;
     HostedSessionScope& operator= (const HostedSessionScope&) = delete;
+
+    /** @brief Whether a verb committed work that is waiting to be applied. */
+    static bool hasStagedState();
+
+    /** @brief The state a verb committed, and clears it. */
+    static nlohmann::json takeStagedState();
 };
 
 /** @brief Whether a verb is currently running inside a `HostedSessionScope`. */
