@@ -145,6 +145,22 @@ public:
     bool restoreAutosave(std::function<void(std::string)> callback);
 
     /**
+     * @brief Applies `afterState` to the running document as one undoable
+     *        action; the pre-apply in-memory state becomes the undo step.
+     *        Touches no file.
+     *
+     * The state-based counterpart of the reload paths: it is how an edit made
+     * somewhere other than this engine - an agent's, computed elsewhere -
+     * reaches the document without a save round-trip. `marksExternalChange`
+     * sets the agent marker that the window title shows.
+     */
+    bool applyStateAsUndoableReload(json afterState,
+                                    bool preserveUiState,
+                                    bool marksExternalChange,
+                                    const juce::String& transactionName,
+                                    std::function<void(std::string)> callback);
+
+    /**
      * @brief Reloads the current project file from disk as an undoable action
      *        (external/agent change). The pre-reload in-memory state becomes
      *        the undo step; undo/redo never touches the file on disk.

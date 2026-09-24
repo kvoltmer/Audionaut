@@ -24,7 +24,11 @@ namespace audium {
 AudioResourceContainer::~AudioResourceContainer()
 {
     audioResources.clear();
-    deleteTemporaryProjectDirectory();
+
+    // The temp directory is a process-wide static: a scratch container running
+    // beside a live session shares it and must leave it alone.
+    if (ownsTemporaryDirectory)
+        deleteTemporaryProjectDirectory();
 }
 
 const juce::File AudioResourceContainer::getAudioFileDirectory(const juce::File projectRoot)

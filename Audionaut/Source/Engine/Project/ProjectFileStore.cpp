@@ -416,13 +416,32 @@ bool ProjectFileStore::applyFileAsUndoableReload (const juce::File& sourceFile,
             return false;
         }
 
-        auto afterState = readProjectJson(sourceFile);
+        return applyStateAsUndoableReload(readProjectJson(sourceFile), preserveUiState,
+                                          marksExternalChange, transactionName, callback);
+    }
+    catch (std::exception &ex)
+    {
+        std::cout << ex.what() << std::endl;
+        NullCheckedInvocation::invoke (callback, ex.what());
+    }
+    return false;
+}
 
+bool ProjectFileStore::applyStateAsUndoableReload (json afterState,
+                                                   bool preserveUiState,
+                                                   bool marksExternalChange,
+                                                   const juce::String& transactionName,
+                                                   std::function<void (std::string)> callback)
+{
+    jassert(serializer != nullptr);
+
+    try
+    {
         json beforeState;
         serializer->writeToJson(beforeState);
 
-        // The user's current view wins over whatever the external writer
-        // stored - reloads must not move their scroll/zoom.
+        // The user's current view wins over whatever the writer stored -
+        // an applied state must not move their scroll/zoom.
         if (preserveUiState &&
             beforeState.contains("audium") && beforeState["audium"].contains("ui_state"))
             afterState["audium"]["ui_state"] = beforeState["audium"]["ui_state"];
