@@ -16,6 +16,7 @@
 #include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Application/ProjectMonitor.h"
+#include "Cli/AgentHost.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
 #include "UpdateChecker.h"
@@ -197,6 +198,7 @@ void AudiumApplication::handleAsyncUpdate()
     updateUI();
     refreshWindowTitle();
     startProjectMonitor();
+    startAgentHost();
 
     if (splashScreen != nullptr) {
         splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
@@ -378,6 +380,39 @@ void AudiumApplication::startProjectMonitor()
     };
 }
 
+void AudiumApplication::startAgentHost()
+{
+    agentHost = std::make_unique<cli::agent::AgentHost> (audiumEngine);
+
+    agentHost->onProjectMutated = [this] {
+        updateUI();
+        refreshWindowTitle(); // now carries the agent marker
+    };
+
+    agentHost->onBindFailed = [] (const juce::File& projectFile) {
+        // Silence here is the dangerous case: an agent that cannot find us
+        // reads and writes the project file instead, and the file is missing
+        // whatever the user has not saved. Say so where they will see it.
+        std::cout << "agent access unavailable for "
+                  << projectFile.getParentDirectory().getFileName() << std::endl;
+
+        NativeMessageBox::showMessageBoxAsync (
+            MessageBoxIconType::WarningIcon,
+            TRANS ("Agent access unavailable"),
+            TRANS ("Audionaut could not open the local connection agents use to reach this project.\n\n"
+                   "Commands will act on the project file as it was last saved instead of on what you "
+                   "see here, so save before running one."));
+    };
+
+    updateAgentHost();
+}
+
+void AudiumApplication::updateAgentHost()
+{
+    if (agentHost != nullptr)
+        agentHost->setProject (fileStore->getCurrentProjectFile());
+}
+
 void AudiumApplication::askForUsageStatisticsConsent()
 {
     if (UsageAnalytics::isConsentDecided (getPreferences()))
@@ -415,6 +450,7 @@ void AudiumApplication::shutdown()
     getPreferences().setValue(PreferenceKeys::browserWindowOpen, fileBrowserVisible() ? "true" : "false");
 
     // Add your application's shutdown code here..
+    agentHost.reset();      // withdraw the marker and stop serving
     projectMonitor.reset(); // stop polling before the engine goes away
     mainWindow.reset(); // (deletes our window)
 
@@ -888,6 +924,7 @@ void AudiumApplication::createNewProject()
         restoreUiState();
 
         refreshWindowTitle();
+        updateAgentHost();
     });
 }
 
@@ -971,6 +1008,7 @@ void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToO
         restoreUiState();
 
     refreshWindowTitle();
+    updateAgentHost();
 
     // offer the crash-recovery snapshot now that the project is open. Restore
     // applies it as an undoable step: the session starts dirty and Undo
@@ -1104,6 +1142,7 @@ bool AudiumApplication::saveProjectToFile(juce::File file)
         logUsageEvent("project_save");
 
         refreshWindowTitle();
+        updateAgentHost(); // Save As moves the document, and the host with it
     }
     return success;
 }

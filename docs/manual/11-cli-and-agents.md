@@ -7,13 +7,45 @@ Everything the timeline can do is also available headlessly. Two front doors:
 - **The app itself** — running the Audionaut binary with a verb executes it
   headlessly and quits, even while a GUI instance is open.
 
-The app watches the open package and reloads foreign writes, so an agent's
-edits appear as they land; the reload is undoable. It writes `Project.json`
-itself only when you save, so an agent reading the file sees the project as
-you last saved it — **save before handing a project over to an agent**.
+## Working on a project that is open in the app
 
-If a write arrives that was made without seeing your unsaved edits, the app
-asks before reloading over them rather than discarding your work.
+You do not have to save, close, or otherwise get out of the way before handing
+a project to an agent.
+
+While Audionaut has a project open it serves commands for it, and a verb
+addressed at that project is handed over instead of going to the file. The
+command then acts on the document **as you currently see it**, unsaved changes
+included. Its result arrives as a single entry in your undo history — labelled
+after the verb, with the window title marked *Edited By Agent* — so ⌘Z takes it
+back like any other edit. Nothing is written to `Project.json`; saving stays
+yours to do.
+
+Your own edits take precedence. If you change the project while a command is
+running, its result is dropped and the agent is told to run it again rather
+than have your work replaced. Commands are refused while you are recording,
+and exports are refused while the transport is playing.
+
+With no app holding the project, verbs read and write the project file exactly
+as they always have.
+
+If the app is holding a project but a command cannot reach it, the command
+**fails** rather than falling back to the file — the file is missing whatever
+you have not saved, and quietly writing over it is the one outcome worth
+refusing. Set `AUDIONAUT_AGENT_ROUTING=0` to work on the file deliberately.
+
+Something else may still write the project file — a script, an older build, or
+a command you ran with routing off. If such a write lands while you have
+unsaved edits it did not see, the app asks before reloading over them rather
+than discarding your work.
+
+Two files inside a package belong to the app and should be left alone:
+`Autosave.json`, its crash-recovery snapshot, and `Host.json`, the marker
+saying which process is holding the project.
+
+One limit worth knowing: a command running inside the app runs inside its
+sandbox, which can write to your Music folder and to places you have picked in
+a file dialog, but not anywhere else. An export elsewhere is refused with
+`sandbox_denied`; quit the app to export there with the command line instead.
 
 ## Verbs
 

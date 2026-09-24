@@ -12,6 +12,8 @@
 #include "Cli/CliDispatch.h"
 #include "Cli/Commands/Commands.h"
 
+#include "Cli/AgentClient.h"
+#include "Cli/CommandSession.h"
 #include "Application/UsageAnalytics.h"
 #include "Util/Preferences.h"
 
@@ -286,6 +288,21 @@ int performCliCommand (const juce::ArgumentList& args, CliContext& context)
 
     for (auto& spec : getCliCommands()) {
         if (first.text == spec.verb) {
+            // When the app holds this project, the verb belongs to it: it can
+            // answer from the live document instead of the last save, and
+            // nothing of ours reaches the user's project file.
+            //
+            // Not while we ARE the host: the marker is still published, so a
+            // hosted verb would find it and connect back to itself.
+            if (! isHostedExecution()) {
+                if (auto routed = agent::routeCommand (args, spec.verb,
+                                                       agent::isHostableVerb (spec.verb), context);
+                    routed.handled) {
+                    logCliInvocation (spec.verb, routed.exitCode, context);
+                    return routed.exitCode;
+                }
+            }
+
             auto exitCode = exitFailure;
             try {
                 exitCode = spec.run (args, context);

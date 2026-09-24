@@ -121,6 +121,25 @@ findRegionsByName (const AudioTrackContainer& tracks, const juce::String& name, 
 juce::File resolveProjectFile (const juce::ArgumentList& args, int argumentIndex = 0);
 
 /**
+ * @class ScopedWorkingDirectory
+ * @brief Resolves relative paths against someone else's directory.
+ *
+ * A host runs verbs that were typed in another process, whose relative paths
+ * mean nothing against its own working directory - the sandboxed app runs from
+ * inside its container. While this stands, `workingDirectory()` answers with
+ * the client's.
+ */
+class ScopedWorkingDirectory
+{
+public:
+    explicit ScopedWorkingDirectory (const juce::File& directory);
+    ~ScopedWorkingDirectory();
+
+    ScopedWorkingDirectory (const ScopedWorkingDirectory&) = delete;
+    ScopedWorkingDirectory& operator= (const ScopedWorkingDirectory&) = delete;
+};
+
+/**
  * The plain (non-option) arguments after the command word, in order.
  * `info foo.audium --json` yields { "foo.audium" }.
  *

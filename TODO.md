@@ -76,9 +76,15 @@
   `export_audio`) each shell out to `audionaut-cli --json` and relay the
   `{ok, result|error}` envelope; CLI errors surface as tool errors with the
   CLI's own code/message. `npm test` drives the server end-to-end through the
-  SDK's stdio client; registration instructions in its README. The fancier
-  variant — an MCP server talking to the *running* GUI app over a local
-  socket for live-session control — stays deliberately deferred.
+  SDK's stdio client; registration instructions in its README.
+  - [x] **Live-session control** (2026-09-24, the "fancier variant" that was
+    deferred here): the app hosts agent commands for the project it holds, so
+    they act on the open document - unsaved changes included - and arrive as
+    one undo step instead of writing the project file. Discovery is a
+    `Host.json` marker beside `Project.json`; a host that cannot be reached
+    makes the command fail rather than fall back to the stale file.
+    `AUDIONAUT_AGENT_ROUTING=0` opts out. See
+    `docs/manual/11-cli-and-agents.md`.
 
 - [x] **Agents can transmit feature requests** (2026-09-13): MCP tool
   `request_feature` files a GitHub issue (`enhancement`) with
