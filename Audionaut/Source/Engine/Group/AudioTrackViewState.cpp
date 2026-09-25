@@ -44,12 +44,16 @@ bool AudioTrackViewState::writeToJson (json& output) const
 
 bool AudioTrackViewState::readFromJson (json& input)
 {
+    // absent keys mean "default": reset so a reused object (undo snapshot,
+    // re-read into an existing graph) doesn't keep a stale minimized flag
+    isMinimized = false;
+    visibleAnalysisTypes.clear();
+
     if (input.contains("minimized"))
         isMinimized = input["minimized"].template get<bool>();
 
     if (input.contains("visible_analysis"))
     {
-        visibleAnalysisTypes.clear();
         for (const auto& element : input["visible_analysis"])
             if (auto type = analysisTypeFromString(element.template get<std::string>()))
                 visibleAnalysisTypes.insert(*type);
