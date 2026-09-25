@@ -955,3 +955,80 @@ SCENARIO ("cli move-clip to a new track keeps the source panning", "[cli][region
 
     workDir.deleteRecursively();
 }
+
+SCENARIO ("cli rejects out-of-range numeric options", "[cli][validation]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("validation.audium");
+    auto outputFile = workDir.getChildFile ("bounce.wav");
+    auto audioFile = juce::File (testFilesDir + "sine-0dB.wav");
+    REQUIRE (audioFile.existsAsFile());
+
+    const auto projectArg = project.getFullPathName();
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    nlohmann::json envelope;
+    context.envelopeSink = [&envelope] (const nlohmann::json& e) { envelope = e; };
+
+    GIVEN ("a project with one imported clip") {
+        REQUIRE (cli::runCreate (makeArgs ("create " + projectArg + " --channels 1"), context) == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + projectArg + " " + audioFile.getFullPathName()), context)
+                 == cli::exitOk);
+        const auto before = readProjectJson (project);
+
+        // each invocation must be a usage error in the standard envelope,
+        // naming the option, and leave the project untouched
+        auto requireUsageError = [&] (int exitCode, const std::string& option) {
+            REQUIRE (exitCode == cli::exitUsage);
+            REQUIRE (envelope["ok"] == false);
+            REQUIRE (envelope["error"]["code"] == "usage");
+            REQUIRE (envelope["error"]["message"].get<std::string>().find (option) != std::string::npos);
+            REQUIRE (readProjectJson (project) == before);
+        };
+
+        WHEN ("import gets a negative or non-numeric --position") {
+            const auto file = " " + audioFile.getFullPathName();
+            requireUsageError (cli::runImport (makeArgs ("import " + projectArg + file + " --position -2"), context),
+                               "--position");
+            requireUsageError (cli::runImport (makeArgs ("import " + projectArg + file + " --position=abc"), context),
+                               "--position");
+        }
+
+        WHEN ("export gets a negative --start or a non-positive --length") {
+            const auto out = " -o " + outputFile.getFullPathName();
+            requireUsageError (cli::runExport (makeArgs ("export " + projectArg + out + " --start -1"), context),
+                               "--start");
+            requireUsageError (cli::runExport (makeArgs ("export " + projectArg + out + " --length 0"), context),
+                               "--length");
+            requireUsageError (cli::runExport (makeArgs ("export " + projectArg + out + " --length -3"), context),
+                               "--length");
+            REQUIRE_FALSE (outputFile.existsAsFile());
+        }
+
+        WHEN ("auto-edit and assemble get out-of-range values") {
+            requireUsageError (cli::runAutoEdit (makeArgs ("auto-edit " + projectArg + " --duration -5"), context),
+                               "--duration");
+            requireUsageError (cli::runAutoEdit (makeArgs ("auto-edit " + projectArg + " --segments 0"), context),
+                               "--segments");
+            requireUsageError (cli::runAutoEdit (makeArgs ("auto-edit " + projectArg + " --measures -1"), context),
+                               "--measures");
+            requireUsageError (cli::runAssemble (makeArgs ("assemble " + projectArg + " --duration 0"), context),
+                               "--duration");
+        }
+
+        WHEN ("export gets a valid zero --start") {
+            REQUIRE (cli::runExport (makeArgs ("export " + projectArg + " -o " + outputFile.getFullPathName()
+                                               + " --start 0 --length 0.5 --channels 1"),
+                                     context)
+                     == cli::exitOk);
+            THEN ("it renders") {
+                REQUIRE (envelope["ok"] == true);
+                REQUIRE (outputFile.existsAsFile());
+            }
+        }
+    }
+
+    workDir.deleteRecursively();
+}

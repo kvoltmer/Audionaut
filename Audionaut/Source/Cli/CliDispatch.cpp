@@ -323,5 +323,20 @@ int performCliCommand (const juce::ArgumentList& args, CliContext& context)
     return cliCommandNotPerformed;
 }
 
+int failUnknownCommand (const juce::ArgumentList& args, CliContext& context)
+{
+    juce::StringArray verbs;
+    for (auto& spec : getCliCommands())
+        verbs.add (spec.verb);
+
+    const auto known = "; known commands: " + verbs.joinIntoString (", ").toStdString();
+
+    if (args.size() == 0)
+        return context.fail (exitUsage, "unknown_command", "no command given" + known);
+
+    return context.fail (exitUsage, "unknown_command",
+                         "unknown command \"" + args.arguments.getReference (0).text.toStdString() + "\"" + known);
+}
+
 } // namespace cli
 } // namespace audium

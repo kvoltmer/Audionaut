@@ -92,6 +92,20 @@ try {
   });
   check("import_audio", !imported.isError, imported.content?.[0]?.text);
 
+  // Out-of-range times are refused before the CLI runs (the CLI itself
+  // rejects them too, in its --json envelope, for callers that bypass MCP).
+  const negativePosition = await client.callTool({
+    name: "import_audio",
+    arguments: { project, files: [join(testFiles, "sine-0dB.wav")], position_seconds: -2 },
+  });
+  check("negative position_seconds is a tool error", negativePosition.isError === true,
+        negativePosition.content?.[0]?.text);
+  const zeroLength = await client.callTool({
+    name: "export_audio",
+    arguments: { project, output: join(workDir, "never.wav"), length_seconds: 0 },
+  });
+  check("zero length_seconds is a tool error", zeroLength.isError === true, zeroLength.content?.[0]?.text);
+
   const exported = await client.callTool({
     name: "export_audio",
     arguments: { project, output: join(workDir, "mix.wav"), channels: 1 },
