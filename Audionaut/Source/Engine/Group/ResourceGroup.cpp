@@ -161,13 +161,13 @@ bool ResourceGroup::readFromJson (json& input, bool rebuild)
             return false;
         }
         
-        resource->readFromJson(jsonElement, rebuild);
+        if (! resource->readFromJson(jsonElement, rebuild))
+            return false;
+
         r++;
     }
         
-    audioRegionContainer->readFromJson(input, rebuild);
-    
-    return true;
+    return audioRegionContainer->readFromJson(input, rebuild);
 }
 
 bool ResourceGroup::readFromStream (juce::InputStream& inputStream, bool rebuild)

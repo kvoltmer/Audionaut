@@ -81,25 +81,38 @@ bool ChannelMapping::writeToJson (json& output)
     return true;
 }
 
-bool ChannelMapping::readFromJson (json& input, bool rebuild)
+bool ChannelMapping::readFromJson (json& input, bool /*rebuild*/)
 {
-    if (input.contains("source_channel"))
-        setSourceChannel(input.at("source_channel").get<int>());
-
-    if (input.contains("destination_channel"))
-        setDestinationChannel(input.at("destination_channel").get<int>());
-    
-    // legacy mapping
+    // legacy mapping: an array of destination channels indexed by source channel
     if (input.contains("channel_mapping")) {
+        const auto& mapping = input.at("channel_mapping");
+        if (! mapping.is_array())
+            return false;
+
+        for (const auto& destIndex : mapping)
+            if (! destIndex.is_number_integer())
+                return false;
+
         clear();
         auto counter = 0;
-        std::vector<int> mapping = input["channel_mapping"];
-        for (auto destIndex : mapping)
-            setOutputChannelMapping(counter++, destIndex);
+        for (const auto& destIndex : mapping)
+            setOutputChannelMapping(counter++, destIndex.get<int>());
 
         return true;
     }
-    return false;
+
+    // current format, as written by writeToJson
+    if (! input.contains("source_channel") || ! input.contains("destination_channel"))
+        return false;
+
+    const auto& source      = input.at("source_channel");
+    const auto& destination = input.at("destination_channel");
+    if (! source.is_number_integer() || ! destination.is_number_integer())
+        return false;
+
+    setSourceChannel(source.get<int>());
+    setDestinationChannel(destination.get<int>());
+    return true;
 }
 
 } // namespace audium
