@@ -52,20 +52,18 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
                                                          static_cast<std::size_t>(numSamples));
         const auto beats = linkEngine->beatAtTime(bufferBeginAtOutput, linkEngine->quantum());
         
-        // Note: like inBuf below, setDataToReferTo stays allocation-free for up to 32
-        // channels (juce::AudioBuffer's preallocated channel-pointer space).
-		jassert (totalNumOutputChannels > 0);
-		outBuf.setDataToReferTo(outputChannelData, totalNumOutputChannels, numSamples);
-        juce::dsp::AudioBlock<float> out (outBuf);
-        
+        // The blocks refer straight to this callback's channel arrays: no
+        // allocation, and nothing outlives the block. In particular an
+        // output-only device yields an empty input block, never the last
+        // block of a previous device (whose buffers may be gone by now).
+        jassert (totalNumOutputChannels > 0);
+        juce::dsp::AudioBlock<float> out (outputChannelData,
+                                          (size_t) totalNumOutputChannels,
+                                          (size_t) numSamples);
+        juce::dsp::AudioBlock<const float> in (inputChannelData,
+                                               (size_t) totalNumInputChannels,
+                                               (size_t) numSamples);
 
-		if (totalNumInputChannels > 0)
-		    inBuf.setDataToReferTo(inputChannelData, totalNumInputChannels, numSamples);
-        else {
-           // inBuf.setSize(1, numSamples); // dummy input buffer with 1 channel and numSamples samples
-        }
-        juce::dsp::AudioBlock<const float> in (inBuf);
-    
         juce::dsp::ProcessContextNonReplacing<float> context (in, out);
         
         playListScheduler->process(context, isPlaying, beats, numSamples);
