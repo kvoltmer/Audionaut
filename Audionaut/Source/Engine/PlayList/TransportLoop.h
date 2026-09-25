@@ -7,6 +7,8 @@
 
 #include <JuceHeader.h>
 
+#include <atomic>
+
 #include "Engine/PlayList/LoopData.h"
 #include "Engine/TimeContext.h"
 
@@ -24,7 +26,7 @@ class AudioTrackContainer;
  * looped playback. It integrates with the undo system and tempo provider for
  * seamless audio editing and playback.
  */
-class TransportLoop {
+class TransportLoop : private juce::AsyncUpdater {
 public:
     /**
      * @brief Constructs a `TransportLoop` instance.
@@ -38,9 +40,12 @@ public:
      }
 
     /**
-     * @brief Default destructor for `TransportLoop`.
+     * @brief Destructor for `TransportLoop`.
      */
-    ~TransportLoop() = default;
+    ~TransportLoop() override
+    {
+        cancelPendingUpdate();
+    }
 
     /**
      * @brief Prepares the transport loop for audio playback.
@@ -136,7 +141,20 @@ private:
     int loopCount = 0; ///< Counter for the number of loop iterations.
     bool withinLoop = false; ///< Flag indicating whether playback is within the loop range.
     double currentPositionClocks = 0.0;
-    
+
+    /// processLoop() runs on the audio thread, so it must not broadcast
+    /// itself: ActionBroadcaster::sendActionMessage takes the listener lock
+    /// and allocates a message (plus a String copy) per listener. Instead
+    /// the audio thread counts the events here and triggers the async
+    /// updater, whose message JUCE preallocates. handleAsyncUpdate() then
+    /// sends one action message per counted event from the message thread,
+    /// so a late message thread still reports every wrap - the recording
+    /// handler moves its region by one loop length per message.
+    std::atomic<int> pendingLoopEntries { 0 };
+    std::atomic<int> pendingLoopWraps { 0 };
+
+    void handleAsyncUpdate() override;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportLoop)
 };
 

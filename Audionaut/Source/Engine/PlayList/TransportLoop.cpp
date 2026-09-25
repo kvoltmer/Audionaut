@@ -138,7 +138,8 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
             if (not withinLoop) {
                 withinLoop = true;
                 NullCheckedInvocation::invoke (onLoopEnteredFunction);
-                tempoProvider->sendActionMessage(audium::transportLoopEntered);
+                pendingLoopEntries.fetch_add (1);
+                triggerAsyncUpdate();
             }
 
             // how far the wrap is, for whoever wants to prepare for it
@@ -166,13 +167,26 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
     
     if (result.loopEvent) {
         NullCheckedInvocation::invoke (onLoopActionFunction);
-        tempoProvider->sendActionMessage(audium::transportLoopAction);
+        pendingLoopWraps.fetch_add (1);
+        triggerAsyncUpdate();
     }
     
     
     NullCheckedInvocation::invoke (onPlayListItemUpdateFunction);
     
     return result;
+}
+
+void TransportLoop::handleAsyncUpdate()
+{
+    // Message thread. Entering the loop always precedes the wraps of that
+    // pass, so the entries go out first. Events that arrive while this
+    // drains are picked up here or by the update they trigger next.
+    for (auto n = pendingLoopEntries.exchange (0); n > 0; --n)
+        tempoProvider->sendActionMessage (audium::transportLoopEntered);
+
+    for (auto n = pendingLoopWraps.exchange (0); n > 0; --n)
+        tempoProvider->sendActionMessage (audium::transportLoopAction);
 }
 
 void TransportLoop::reset()
