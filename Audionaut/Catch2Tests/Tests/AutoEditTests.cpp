@@ -774,7 +774,7 @@ SCENARIO("AutoEdit can replace the edited clip with its segments",
                     }
                 }
 
-                THEN("every joint carries a symmetric 20 ms crossfade")
+                THEN("every joint carries a 20 ms crossfade reaching into the neighbours")
                 {
                     auto items = playListItems();
                     REQUIRE(items.size() > 1);
@@ -784,18 +784,19 @@ SCENARIO("AutoEdit can replace the edited clip with its segments",
                         auto& dynamics = items[i]->getDynamics();
 
                         if (i > 0) {
-                            // fade in over 10 ms inside, 10 ms before the clip
-                            REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.01).margin(0.001));
-                            REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(-0.01).margin(0.001));
+                            // full level from the clip start, fading in over the 20 ms before it
+                            REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.0));
+                            REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(-0.02).margin(0.001));
                         }
                         else {
                             REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.0));
+                            REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(0.0));
                         }
 
                         if (i < items.size() - 1) {
-                            // fade out over 10 ms inside, ending 10 ms past the clip
-                            REQUIRE(dynamics.getFadeOut(audium::seconds) == Catch::Approx(0.01).margin(0.001));
-                            REQUIRE(dynamics.getFadeOutEnd(audium::seconds) == Catch::Approx(-0.01).margin(0.001));
+                            // full level to the clip end, fading out over the 20 ms after it
+                            REQUIRE(dynamics.getFadeOut(audium::seconds) == Catch::Approx(0.0));
+                            REQUIRE(dynamics.getFadeOutEnd(audium::seconds) == Catch::Approx(-0.02).margin(0.001));
                             REQUIRE(dynamics.getFadeOutCurve() == Catch::Approx(0.5));
                         }
                         else {

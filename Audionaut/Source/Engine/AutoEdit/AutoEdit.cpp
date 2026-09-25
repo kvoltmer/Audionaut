@@ -1029,27 +1029,30 @@ bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
             items.push_back(item);
         }
 
-    // A symmetric crossfade at every joint: each side fades over half the
-    // crossfade inside its clip and half beyond it (an extension reading the
-    // neighbouring material). Curves stay at the equal-power default.
+    // A crossfade at every joint that reaches into the neighbours: the left
+    // clip plays at full level to its end and fades out over an extension
+    // into the right clip's time, the right clip fades in over an extension
+    // into the left clip's time and is at full level from its own start.
+    // Neither ramp touches the clip's own material.
     if (crossfadeSeconds > 0.0) {
-        const auto half = crossfadeSeconds / 2.0;
-
         for (size_t i = 1; i < items.size(); ++i) {
             auto& left = items[i - 1];
             auto& right = items[i];
 
-            // fractions of each clip's own region length, clamped so short
-            // segments never fold a fade over their far edge
-            auto leftFrac = juce::jmin(0.45, half / left->getRegionData(audium::seconds).getLength());
-            auto rightFrac = juce::jmin(0.45, half / right->getRegionData(audium::seconds).getLength());
+            const auto leftLength = left->getRegionData(audium::seconds).getLength();
+            const auto rightLength = right->getRegionData(audium::seconds).getLength();
 
-            left->getDynamics().setFadeOut(leftFrac);
-            left->getDynamics().setFadeOutEnd(-leftFrac);
+            // an extension never reaches past most of the neighbour it
+            // overlaps, so a short segment is not faded across entirely
+            const auto fadeSeconds = juce::jmin(crossfadeSeconds, 0.45 * leftLength, 0.45 * rightLength);
+
+            // offsets are fractions of each clip's own region length
+            left->getDynamics().setFadeOut(0.0);
+            left->getDynamics().setFadeOutEnd(-fadeSeconds / leftLength);
             left->getDynamics().setFadeOutCurve(crossfadeCurve);
 
-            right->getDynamics().setFadeIn(rightFrac);
-            right->getDynamics().setFadeInStart(-rightFrac);
+            right->getDynamics().setFadeIn(0.0);
+            right->getDynamics().setFadeInStart(-fadeSeconds / rightLength);
             right->getDynamics().setFadeInCurve(crossfadeCurve);
         }
     }
