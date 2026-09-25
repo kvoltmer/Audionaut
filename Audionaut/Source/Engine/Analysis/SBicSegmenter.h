@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <vector>
 #include <JuceHeader.h>
 
@@ -68,10 +69,17 @@ public:
      * @brief Computes segment boundaries for the given audio file.
      * @param audioFile The audio file to analyse.
      * @param params Segmentation parameters.
-     * @return Segment boundary timestamps in seconds. Empty on failure.
+     * @param shouldAbort Optional flag polled between the analysis stages
+     *        (decoding, every MFCC frame, the BIC pass). Once set, the
+     *        analysis gives up at the next poll and returns empty, so a
+     *        caller shutting down (see AnalysisWorker) waits for one stage
+     *        at most rather than for the whole file.
+     * @return Segment boundary timestamps in seconds. Empty on failure or
+     *         when aborted.
      */
     std::vector<float> analyze(const juce::File& audioFile,
-                               const Parameters& params);
+                               const Parameters& params,
+                               const std::atomic<bool>* shouldAbort = nullptr);
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SBicSegmenter)

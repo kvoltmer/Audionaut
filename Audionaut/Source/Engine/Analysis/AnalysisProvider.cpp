@@ -56,22 +56,25 @@ void AnalysisProvider::analyzeTrack(AudioTrack& audioTrack, AnalysisType analysi
 }
 
 AnalysisProvider::SegmentResult AnalysisProvider::runSegmenter(AnalysisType analysisType,
-                                                                const juce::File& audioFile)
+                                                                const juce::File& audioFile,
+                                                                const std::atomic<bool>* shouldAbort)
 {
     switch (analysisType)
     {
-        case AnalysisType::SBic:  return { sBicSegmenter->analyze(audioFile), 0.0f };
-        case AnalysisType::Onset: return { onsetSegmenter->analyze(audioFile), 0.0f };
+        case AnalysisType::SBic:
+            return { sBicSegmenter->analyze(audioFile, SBicSegmenter::Parameters(), shouldAbort), 0.0f };
+        case AnalysisType::Onset:
+            return { onsetSegmenter->analyze(audioFile, OnsetSegmenter::Parameters(), shouldAbort), 0.0f };
         case AnalysisType::Beat:
         {
-            auto result = beatSegmenter->analyze(audioFile);
+            auto result = beatSegmenter->analyze(audioFile, BeatSegmenter::Parameters(), shouldAbort);
             return { std::move(result.beats), result.bpm };
         }
         case AnalysisType::BeatDegara:
         {
             BeatSegmenter::Parameters params;
             params.method = BeatSegmenter::Method::Degara;
-            auto result = beatSegmenter->analyze(audioFile, params);
+            auto result = beatSegmenter->analyze(audioFile, params, shouldAbort);
             return { std::move(result.beats), result.bpm };
         }
     }
@@ -79,7 +82,8 @@ AnalysisProvider::SegmentResult AnalysisProvider::runSegmenter(AnalysisType anal
 }
 
 std::vector<float> AnalysisProvider::analyzeFile(const juce::File& audioFile,
-                                                 AnalysisType analysisType)
+                                                 AnalysisType analysisType,
+                                                 const std::atomic<bool>* shouldAbort)
 {
     // Reuse a cached result when the file is unchanged; otherwise run the
     // (expensive) analysis and cache it for next time.
@@ -98,7 +102,16 @@ std::vector<float> AnalysisProvider::analyzeFile(const juce::File& audioFile,
         if (auto cached = analysisCache->get(audioFile, analysisType))
             return std::move(*cached);
 
-        result = runSegmenter(analysisType, audioFile);
+        result = runSegmenter(analysisType, audioFile, shouldAbort);
+    }
+
+    // An abandoned analysis (see AnalysisWorker's destructor) has no result
+    // worth caching or announcing.
+    if (shouldAbort != nullptr && shouldAbort->load())
+    {
+        std::cout << "AnalysisProvider::analyzeFile() - abandoned analysis of "
+                  << audioFile.getFileName() << std::endl;
+        return {};
     }
 
     // Only cache successful analyses so failures are retried next time.

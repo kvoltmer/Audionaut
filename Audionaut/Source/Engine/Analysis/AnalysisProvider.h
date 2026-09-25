@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -61,11 +62,17 @@ public:
      *
      * @param audioFile     The audio file to analyse.
      * @param analysisType  The kind of analysis to run.
+     * @param shouldAbort   Optional flag the segmenters poll between their
+     *                      stages; once set, the analysis is abandoned and
+     *                      nothing is cached or announced (AnalysisWorker's
+     *                      destructor sets it so quitting does not wait for a
+     *                      whole file).
      * @return The segment boundaries (seconds), from cache or freshly computed;
-     *         empty on failure.
+     *         empty on failure or when abandoned.
      */
     std::vector<float> analyzeFile(const juce::File& audioFile,
-                                   AnalysisType analysisType);
+                                   AnalysisType analysisType,
+                                   const std::atomic<bool>* shouldAbort = nullptr);
 
     /**
      * @brief Segment boundaries (in seconds) from the most recent analysis of
@@ -263,7 +270,8 @@ private:
 
     // Dispatches to the segmenter matching the analysis type.
     SegmentResult runSegmenter(AnalysisType analysisType,
-                               const juce::File& audioFile);
+                               const juce::File& audioFile,
+                               const std::atomic<bool>* shouldAbort);
 
     std::shared_ptr<SBicSegmenter> sBicSegmenter;
     std::shared_ptr<OnsetSegmenter> onsetSegmenter;

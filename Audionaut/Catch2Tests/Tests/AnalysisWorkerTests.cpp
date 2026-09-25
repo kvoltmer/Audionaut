@@ -1,9 +1,22 @@
 #include <algorithm>
+#include <atomic>
+#include <memory>
 
 #include <catch2/catch_test_macros.hpp>
 
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Analysis/AnalysisWorker.h"
+
+// The in-flight scenario needs a real (slow) analysis, which is only available
+// when the codebase is built against Essentia. See ESSENTIA_ENABLED in the
+// segmenters.
+#ifndef ESSENTIA_ENABLED
+ #if __has_include(<essentia/algorithmfactory.h>) && __has_include(<unsupported/Eigen/CXX11/Tensor>)
+  #define ESSENTIA_ENABLED 1
+ #else
+  #define ESSENTIA_ENABLED 0
+ #endif
+#endif
 
 using namespace audium;
 
@@ -207,3 +220,95 @@ SCENARIO("AnalysisWorker's automatic analysis can be configured", "[engine][anal
         }
     }
 }
+
+namespace {
+
+std::shared_ptr<AnalysisProvider> makeRealProvider(std::shared_ptr<AnalysisCache> cache)
+{
+    return std::make_shared<AnalysisProvider>(std::make_shared<SBicSegmenter>(),
+                                              std::make_shared<OnsetSegmenter>(),
+                                              std::make_shared<BeatSegmenter>(),
+                                              cache);
+}
+
+} // namespace
+
+SCENARIO("AnalysisProvider abandons an analysis whose abort flag is set",
+         "[engine][analysis][worker]")
+{
+    auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
+    auto audioFile = File(testFilesDirectory + "_export_TRK-18.wav");
+    REQUIRE(audioFile.existsAsFile());
+
+    auto cache = std::make_shared<AnalysisCache>();
+    auto provider = makeRealProvider(cache);
+
+    GIVEN("an abort flag that is already set")
+    {
+        std::atomic<bool> shouldAbort { true };
+
+        WHEN("each analysis type is run with it")
+        {
+            for (auto analysisType : AnalysisWorker::canonicalAnalysisTypes())
+            {
+                INFO("analysis type " << static_cast<int>(analysisType));
+
+                THEN("the analysis returns nothing and caches nothing")
+                {
+                    REQUIRE(provider->analyzeFile(audioFile, analysisType, &shouldAbort).empty());
+                    REQUIRE_FALSE(cache->get(audioFile, analysisType).has_value());
+                }
+            }
+        }
+    }
+}
+
+#if ESSENTIA_ENABLED
+SCENARIO("AnalysisWorker's destructor abandons the analysis in flight",
+         "[engine][analysis][worker][essentia]")
+{
+    // Quitting the app destroys the worker; that must not wait for a long
+    // recording's analysis to run to completion.
+    auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
+    auto audioFile = File(testFilesDirectory + "epy-oh-yeah-streicher-fix.wav");
+    REQUIRE(audioFile.existsAsFile());
+
+    auto cache = std::make_shared<AnalysisCache>();
+    auto provider = makeRealProvider(cache);
+
+    GIVEN("a worker busy with the first of several analyses of a long file")
+    {
+        auto worker = std::make_unique<AnalysisWorker>(provider,
+                                                       AnalysisWorker::canonicalAnalysisTypes());
+        REQUIRE(worker->enqueue(audioFile) == 4);
+
+        // Catch the worker early in the first analysis (the decode alone takes
+        // a good part of a second for this file), well before it could finish.
+        while (! worker->isBusy())
+            Thread::yield();
+
+        WHEN("the worker is destroyed")
+        {
+            const auto started = Time::getMillisecondCounterHiRes();
+            worker.reset();
+            const auto elapsedMs = Time::getMillisecondCounterHiRes() - started;
+
+            THEN("it returns without running any analysis to completion")
+            {
+                for (auto analysisType : AnalysisWorker::canonicalAnalysisTypes())
+                {
+                    INFO("analysis type " << static_cast<int>(analysisType));
+                    REQUIRE_FALSE(cache->get(audioFile, analysisType).has_value());
+                }
+            }
+
+            THEN("it returns promptly")
+            {
+                // A full run of the queue takes a few seconds; the destructor
+                // may only wait for the current Essentia stage.
+                REQUIRE(elapsedMs < 5000.0);
+            }
+        }
+    }
+}
+#endif // ESSENTIA_ENABLED
