@@ -17,7 +17,8 @@ class SettingsDialog;
 class AboutSplashScreen;
 class MainComponent;
 
-namespace audium { class UsageAnalytics; class UpdateChecker; class ProjectMonitor; class ProjectFileStore; class ProjectSerializer; }
+namespace audium {
+namespace cli { namespace agent { class AgentHost; } } class UsageAnalytics; class UpdateChecker; class ProjectMonitor; class ProjectFileStore; class ProjectSerializer; }
 
 class AudiumApplication  : public juce::JUCEApplication,
                            private juce::AsyncUpdater,
@@ -114,6 +115,7 @@ private:
     std::shared_ptr<audium::ProjectFileStore> fileStore;
     std::shared_ptr<audium::ProjectSerializer> serializer;
     std::unique_ptr<audium::ProjectMonitor> projectMonitor;
+    std::unique_ptr<audium::cli::agent::AgentHost> agentHost;
     std::unique_ptr<juce::ApplicationCommandManager> commandManager;
     std::unique_ptr<audium::Preferences> preferences;
     std::unique_ptr<audium::UsageAnalytics> usageAnalytics;
@@ -135,6 +137,13 @@ private:
     void restoreOrphanedTempProject(juce::File packageDirectory);
     void loadStartupProject();
     void startProjectMonitor();
+
+    /** Serves agent commands against the open document, so they never reach
+        the project file behind the user's back. */
+    void startAgentHost();
+
+    /** Points the host at whatever project is current now (none, after New). */
+    void updateAgentHost();
     void askForUsageStatisticsConsent();
 
     // logs every invoked command (menus and shortcuts) as a usage event

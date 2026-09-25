@@ -58,6 +58,13 @@ void RegionSelector::mouseDown (const juce::MouseEvent& e)
         }
         else /// click inside -> modify current selection
         {
+            if (e.mods.isPopupMenu())
+            {
+                showContextMenu();
+                avoidDragging = true;
+                return;
+            }
+
             moveStartPos = e.getEventRelativeTo(owner.get()).getMouseDownPosition();
             currentDragMode = getDragMode(e.getPosition().getX());
         }
@@ -232,6 +239,16 @@ bool RegionSelector::keyPressed (const KeyPress& key, Component* originatingComp
     }
     
     return false;
+}
+
+void RegionSelector::showContextMenu()
+{
+#ifndef AUDIONAUT_HEADLESS
+    PopupMenu m;
+    m.addCommandItem (&AudiumApplication::getCommandManager(), CommandIDs::loopSelection);
+    m.setLookAndFeel (&getLookAndFeel());
+    m.showMenuAsync (PopupMenu::Options().withStandardItemHeight (AudiumLookAndFeel::popupMenuItemHeight));
+#endif
 }
 
 void RegionSelector::cancelSelection()

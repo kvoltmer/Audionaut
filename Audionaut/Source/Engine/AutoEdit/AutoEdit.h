@@ -48,8 +48,10 @@ struct AutoEditConfig {
     /// it. Off leaves the arrangement alone and only adds the regions.
     bool replacePlayListItem = true;
 
-    /// Apply a symmetric crossfade at every joint between the segments
-    /// (half the length on each side of the cut).
+    /// Apply a crossfade at every joint between the segments: the left
+    /// segment fades out over crossfadeSeconds past its end, the right one
+    /// fades in over crossfadeSeconds before its start - both reach into
+    /// the neighbour and each plays at full level across its own region.
     bool crossfades = true;
     double crossfadeSeconds = 0.02;
 
@@ -103,6 +105,15 @@ struct AssembleConfig {
     /// mirrors gaborgandalf's config; interactive callers pass a random seed
     /// to get a fresh arrangement each time.
     unsigned int seed = 1234;
+
+    /// Crossfade every joint of the new arrangement, placed like Create
+    /// Segments' (see AutoEditConfig::crossfades): each region at full level
+    /// across its own clip, the ramps reaching into the neighbours.
+    bool crossfades = true;
+    double crossfadeSeconds = 0.02;
+
+    /// 0.5 = equal power, 1.0 = linear.
+    double crossfadeCurve = 0.5;
 };
 
 /**

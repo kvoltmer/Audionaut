@@ -76,9 +76,15 @@
   `export_audio`) each shell out to `audionaut-cli --json` and relay the
   `{ok, result|error}` envelope; CLI errors surface as tool errors with the
   CLI's own code/message. `npm test` drives the server end-to-end through the
-  SDK's stdio client; registration instructions in its README. The fancier
-  variant — an MCP server talking to the *running* GUI app over a local
-  socket for live-session control — stays deliberately deferred.
+  SDK's stdio client; registration instructions in its README.
+  - [x] **Live-session control** (2026-09-24, the "fancier variant" that was
+    deferred here): the app hosts agent commands for the project it holds, so
+    they act on the open document - unsaved changes included - and arrive as
+    one undo step instead of writing the project file. Discovery is a
+    `Host.json` marker beside `Project.json`; a host that cannot be reached
+    makes the command fail rather than fall back to the stale file.
+    `AUDIONAUT_AGENT_ROUTING=0` opts out. See
+    `docs/manual/11-cli-and-agents.md`.
 
 - [x] **Agents can transmit feature requests** (2026-09-13): MCP tool
   `request_feature` files a GitHub issue (`enhancement`) with
@@ -195,3 +201,30 @@ the one-gesture crossfade UX on top:
   the neighbour is found via the playlist container (items are kept sorted by
   position). Needs a paired undo action (one gesture = one transaction across
   two items) and the lane `ClipFadeOverlay` already draws both sides.
+
+## Playback / time stretch — follow-ups (found 2026-09-21 in PR #105)
+
+- [ ] **End-of-clip re-priming of stretched clips (DSP spike at every
+  stretched clip end).** A Stretch-mode voice runs out of input about
+  0.1 s before its timeline end: the stretcher pulls its look-ahead
+  (`RubberBandStretchBackend::primeInputLength`, ~6,744 source samples at
+  ratio 1.31) ahead of the output, so the reader hits EOF and the transport
+  reports the stream finished while the clip's audible range still
+  intersects the transport. `PlayListScheduler::process` then sees a
+  non-playing voice inside an audible clip and re-schedules it every block
+  until the remaining duration drops below a block - each restart a seek
+  plus an in-block `StretchAudioSource::prime` (8 primes at 512-sample
+  blocks, 31 at 128 - measured with a `std::cout` in `prime()`; the
+  `[snapshot]` scenario in `LoopStandbyTests.cpp` had to end its bounce
+  before the clip end to keep its prime counts clean). Fix candidates: let
+  the voice keep rendering the stretcher's buffered tail after the reader's
+  EOF (`ClipTransportSource::hasStreamFinished` should account for the
+  look-ahead the stretcher still holds), or have the scheduler stop
+  restarting a voice that ended less than a look-ahead before the clip's
+  end. Re-pitch clips are unaffected.
+  - Related, not defects to fix: Rubber Band R3's real-time output count
+    wanders by a few samples per second after every prime (direction
+    differs per prime; two renders restarted at different points slide
+    apart ~17 samples over 0.75 s - compare short windows in tests), and its
+    start alignment after a prime is off by 20-35 samples at 128-sample
+    blocks (the in-block restart is worse than the standby one).

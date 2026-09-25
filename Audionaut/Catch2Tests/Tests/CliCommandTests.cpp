@@ -276,6 +276,71 @@ SCENARIO ("cli clip editing and set-region", "[cli][region]")
             }
         }
 
+        // track ids are indices, so a track created now gets the old count as id
+        const auto baselineTracks = readProjectJson (project)["audium"]["audio_tracks"].size();
+        auto clipsOnTrack = [] (const nlohmann::json& track) {
+            return track.value ("play_list_vector", nlohmann::json::array());
+        };
+
+        WHEN ("the clip is moved to a new track without --to") {
+            REQUIRE (cli::runMoveClip (makeArgs ("move-clip " + projectArg
+                                                 + " --region sine-0dB --to-track new"),
+                                       context)
+                     == cli::exitOk);
+
+            THEN ("the new track holds the only clip, at the same position") {
+                auto json = readProjectJson (project);
+                auto tracks = json["audium"]["audio_tracks"];
+                REQUIRE (tracks.size() == baselineTracks + 1);
+                REQUIRE (countPlayListItems (json) == 1);
+                auto moved = clipsOnTrack (tracks.back());
+                REQUIRE (moved.size() == 1);
+                REQUIRE (moved[0]["position_clocks"].get<double>() == 0.0);
+            }
+
+            THEN ("the new track got a track colour, not the pink default") {
+                auto tracks = readProjectJson (project)["audium"]["audio_tracks"];
+                REQUIRE (tracks.back()["colour"].get<std::string>()
+                         != juce::Colours::pink.toString().toStdString());
+            }
+        }
+
+        WHEN ("two placements are moved to the same other track one by one") {
+            REQUIRE (cli::runPlaceClip (makeArgs ("place-clip " + projectArg
+                                                  + " --region sine-0dB --at 5 --unit seconds"),
+                                        context)
+                     == cli::exitOk);
+            REQUIRE (cli::runMoveClip (makeArgs ("move-clip " + projectArg
+                                                 + " --at 5 --unit seconds --to-track new"),
+                                       context)
+                     == cli::exitOk);
+            REQUIRE (cli::runMoveClip (makeArgs ("move-clip " + projectArg
+                                                 + " --at 0.5 --unit seconds --to 2 --to-track "
+                                                 + juce::String ((int) baselineTracks)),
+                                       context)
+                     == cli::exitOk);
+
+            THEN ("both land on the new track and share one resource group there") {
+                auto json = readProjectJson (project);
+                auto tracks = json["audium"]["audio_tracks"];
+                REQUIRE (tracks.size() == baselineTracks + 1);
+                REQUIRE (countPlayListItems (json) == 2);
+                REQUIRE (clipsOnTrack (tracks.back()).size() == 2);
+                auto groups = tracks.back().value ("resource_groups", nlohmann::json::array());
+                auto groupsWithResources = std::count_if (groups.begin(), groups.end(), [] (auto& group) {
+                    return ! group.value ("resources", nlohmann::json::array()).empty();
+                });
+                REQUIRE (groupsWithResources == 1);
+            }
+        }
+
+        WHEN ("a clip is moved to a track that does not exist") {
+            REQUIRE (cli::runMoveClip (makeArgs ("move-clip " + projectArg
+                                                 + " --region sine-0dB --to-track 7"),
+                                       context)
+                     == cli::exitFailure);
+        }
+
         WHEN ("the region is placed a second time at 5 seconds") {
             REQUIRE (cli::runPlaceClip (makeArgs ("place-clip " + projectArg
                                                   + " --region sine-0dB --at 5 --unit seconds"),
@@ -823,6 +888,68 @@ SCENARIO ("cli clip-speed re-pitches a clip", "[cli][clipspeed]")
                                                   + " --region sine-0dB --lock-tempo maybe"),
                                         context)
                      == cli::exitUsage);
+        }
+    }
+
+    workDir.deleteRecursively();
+}
+
+SCENARIO ("cli move-clip to a new track keeps the source panning", "[cli][region]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("pan.audium");
+
+    // Written here rather than borrowed from TestFiles/, where the stem
+    // separation tests generate a file of this name - relying on that made
+    // this scenario depend on test order.
+    auto audioFile = workDir.getChildFile ("stereo-saw.wav");
+    {
+        std::unique_ptr<juce::OutputStream> stream (audioFile.createOutputStream());
+        REQUIRE (stream != nullptr);
+        auto writer = juce::WavAudioFormat().createWriterFor (stream,
+                                                              juce::AudioFormatWriter::Options{}
+                                                                  .withSampleRate (44100.0)
+                                                                  .withNumChannels (2)
+                                                                  .withBitsPerSample (16));
+        REQUIRE (writer != nullptr);
+        juce::AudioBuffer<float> buffer (2, 44100);
+        for (auto i = 0; i < buffer.getNumSamples(); ++i)
+            buffer.setSample (0, i, (float) (i % 100) / 50.f - 1.f);
+        buffer.copyFrom (1, 0, buffer, 0, 0, buffer.getNumSamples());
+        REQUIRE (writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples()));
+    }
+    REQUIRE (audioFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    auto projectArg = project.getFullPathName();
+    auto pans = [] (const nlohmann::json& track) {
+        std::vector<float> result;
+        for (auto& channel : track.value ("channels", nlohmann::json::array()))
+            result.push_back (channel.value ("pan", 0.f));
+        return result;
+    };
+
+    GIVEN ("a stereo import, which is panned hard left and right") {
+        REQUIRE (cli::runCreate (makeArgs ("create " + projectArg + " --channels 1"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + projectArg + " " + audioFile.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+        auto source = readProjectJson (project)["audium"]["audio_tracks"].back();
+        REQUIRE (pans (source) == std::vector<float> { -1.f, 1.f });
+
+        WHEN ("its clip is moved to a new track") {
+            REQUIRE (cli::runMoveClip (makeArgs ("move-clip " + projectArg
+                                                 + " --region stereo-saw --to-track new"),
+                                       context)
+                     == cli::exitOk);
+
+            THEN ("the new track is panned the same way") {
+                auto created = readProjectJson (project)["audium"]["audio_tracks"].back();
+                REQUIRE (pans (created) == std::vector<float> { -1.f, 1.f });
+            }
         }
     }
 

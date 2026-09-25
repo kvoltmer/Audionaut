@@ -98,9 +98,10 @@ async function runCli(args) {
 }
 
 // Shared parameter fragments
-// Note for agents: an Autosave.json inside a package is the GUI app's private
-// crash-recovery snapshot - never read or edit it; the project state lives in
-// Project.json.
+// Note for agents: Autosave.json and Host.json inside a package belong to the
+// GUI app - a crash-recovery snapshot and the marker saying it is holding the
+// project. Never read or edit either; the project state lives in Project.json,
+// and when the app holds the project the tools reach it through the app.
 const projectParam = z
   .string()
   .describe("Path to the .audium project package (absolute paths recommended)");
@@ -109,8 +110,12 @@ const server = new McpServer(
   { name: "audionaut", version: "0.1.0" },
   {
     instructions:
-      "Tools for inspecting and editing Audionaut (.audium) multitrack projects. Every tool saves the " +
-      "project immediately. If a task needs something these tools cannot do - a missing verb, option " +
+      "Tools for inspecting and editing Audionaut (.audium) multitrack projects. " +
+      "If the project is open in Audionaut, the tools act on the document as the user currently sees " +
+      "it, unsaved changes included, and the edit becomes one undo step in their session - the project " +
+      "file is not written, and saving stays theirs to do. Otherwise the tools read and write the " +
+      "project file directly. Either way you never need to ask the user to save first. " +
+      "If a task needs something these tools cannot do - a missing verb, option " +
       "or limit - tell the user and use request_feature to send the gap to the maintainer. If a tool " +
       "misbehaves - a crash, a wrong result, a project left in a bad state - tell the user and use " +
       "report_bug so the maintainer hears about it.",
@@ -269,9 +274,10 @@ server.registerTool(
       duration_seconds: z.number().positive().optional().describe("Target duration (default 60)"),
       mode: z.enum(["random", "sequential"]).optional().describe("Selection mode (default sequential)"),
       seed: z.number().int().optional().describe("Random seed for reproducible random mode"),
+      crossfades: z.boolean().optional().describe("Apply crossfades at joints (default true)"),
     },
   },
-  async ({ project, track, duration_seconds, mode, seed }) =>
+  async ({ project, track, duration_seconds, mode, seed, crossfades }) =>
     runCli([
       "assemble",
       project,
@@ -279,6 +285,7 @@ server.registerTool(
       ...(duration_seconds !== undefined ? ["--duration", String(duration_seconds)] : []),
       ...(mode ? ["--mode", mode] : []),
       ...(seed !== undefined ? ["--seed", String(seed)] : []),
+      ...(crossfades === false ? ["--no-crossfades"] : []),
     ])
 );
 
@@ -401,23 +408,28 @@ server.registerTool(
   {
     title: "Move clip",
     description:
-      "Moves one clip to a new timeline position on its track. Address it by position (at) or region name; " +
-      "the address must match exactly one clip.",
+      "Moves one clip to a new timeline position and/or onto another track. Address it by position (at) or " +
+      "region name; the address must match exactly one clip. to_track takes a track id, or \"new\" to create " +
+      "a track for it; without to the clip keeps its position. Give at least one of to and to_track.",
     inputSchema: {
       project: projectParam,
-      to: z.number().describe("Target timeline position"),
+      to: z.number().optional().describe("Target timeline position (default: unchanged)"),
+      to_track: z
+        .union([z.number().int().min(0), z.literal("new")])
+        .optional()
+        .describe('Target track id, or "new" to create a track'),
       at: z.number().optional().describe("Current position of the clip (exclusive with region)"),
       region: z.string().min(1).optional().describe("Region name of the clip"),
       unit: unitParam,
       track: z.number().int().min(0).optional().describe("Track id"),
     },
   },
-  async ({ project, to, at, region, unit, track }) =>
+  async ({ project, to, to_track, at, region, unit, track }) =>
     runCli([
       "move-clip",
       project,
-      "--to",
-      String(to),
+      ...(to !== undefined ? ["--to", String(to)] : []),
+      ...(to_track !== undefined ? ["--to-track", String(to_track)] : []),
       ...(at !== undefined ? ["--at", String(at)] : []),
       ...(region !== undefined ? ["--region", region] : []),
       ...(unit ? ["--unit", unit] : []),

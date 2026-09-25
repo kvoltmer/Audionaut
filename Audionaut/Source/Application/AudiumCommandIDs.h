@@ -33,6 +33,7 @@ namespace CommandIDs
         
         playStop                = 0x300050,
         loopPlayList            = 0x300051,
+        loopSelection           = 0x300052,
         
         createRegion            = 0x300060,
         autoEdit                = 0x300061,

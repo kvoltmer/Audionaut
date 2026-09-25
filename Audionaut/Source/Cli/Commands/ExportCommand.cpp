@@ -5,7 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 
 #include "Engine/Export/AudioExporter.h"
 #include "Engine/Export/ExportAudioConfig.h"
@@ -48,11 +48,12 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "the output file must end with .wav");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::isolated, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
-    if (! session->getProjectFileStore()->open (projectFile, [&error] (std::string message) { error = message; }))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto config = std::make_shared<ExportAudioConfig>();
     config->fileName = outputFile;
@@ -111,8 +112,19 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     // multi-mono splits into -01.wav, -02.wav, ... and deletes the base file
     auto firstMonoFile = outputFile.getSiblingFile (outputFile.getFileNameWithoutExtension() + "-01.wav");
     auto produced = config->multiMono ? firstMonoFile : outputFile;
-    if (! produced.existsAsFile())
+    if (! produced.existsAsFile()) {
+        // Running inside the app means running inside its sandbox, which can
+        // only write to the Music folder and to places the user picked. A
+        // path outside those fails here with nothing else to show for it.
+        if (session.isHosted())
+            return context.fail (exitFailure, "sandbox_denied",
+                                 "Audionaut is running the export and could not write to \""
+                                     + produced.getFullPathName().toStdString()
+                                     + "\". Choose a location inside your Music folder, or quit "
+                                       "Audionaut to export with the command line instead.");
+
         return context.fail (exitFailure, "export_failed", "export produced no output file");
+    }
 
     context.log ("exported " + produced.getFullPathName());
     nlohmann::json result = { { "outputFile", produced.getFullPathName().toStdString() },

@@ -61,6 +61,25 @@ public:
     void mouseEnter (const juce::MouseEvent& e) override;
     void parentSizeChanged() override;
 
+    /**
+     * An icon button looking like the header's transport buttons - same
+     * style and the stop button's grey. The label is not part of the
+     * button - paintLabels() draws it underneath on the scrim. The disabled
+     * image is handed over explicitly because the look-and-feel dims only
+     * the background of a disabled button, not its drawable. Public, like
+     * xfadeIconPath(), so a dialog can offer the same toggle.
+     */
+    static std::unique_ptr<juce::DrawableButton> makeIconButton (const juce::String& label,
+                                                                 const juce::Path& iconPath);
+
+    /// Xfade: two fade ramps crossing at the joint - the Auto Edit
+    /// overlay's and the Assemble dialog's crossfade toggle.
+    static juce::Path xfadeIconPath();
+
+    /// The accent colour marking a toggled-on icon button, like the
+    /// header's Loop button.
+    static constexpr juce::uint32 toggledOnColour = 0xff12a4e2;
+
 protected:
     // ------------------------------------------------------------------
     // The subclass contract
@@ -152,16 +171,6 @@ protected:
      * this (and call the base resized() first, which places the chip).
      */
     juce::Rectangle<int> getContentArea() const;
-
-    /**
-     * An icon button looking like the header's transport buttons - same
-     * style and the stop button's grey. The label is not part of the
-     * button - paintLabels() draws it underneath on the scrim. The disabled
-     * image is handed over explicitly because the look-and-feel dims only
-     * the background of a disabled button, not its drawable.
-     */
-    static std::unique_ptr<juce::DrawableButton> makeIconButton (const juce::String& label,
-                                                                 const juce::Path& iconPath);
 
     /// One label under @p component on the scrim, dimmed when disabled.
     void drawLabel (juce::Graphics& g, const juce::Component& component,

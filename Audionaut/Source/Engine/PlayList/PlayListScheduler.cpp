@@ -14,6 +14,7 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResource.h"
 #include "Engine/AudioSources/VoiceSource.h"
+#include "Engine/AudioSources/StretchAudioSource.h"
 #include "Engine/AudioSources/ClipFadeSpec.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
@@ -132,6 +133,11 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     voiceSource->setGain(dspClip.dspClipData.clipGain);
     voiceSource->resetClipGain();
 
+    // a snapshot change compares against this; any schedule supersedes a
+    // deferred restart (the loop wrap, a clip start, the restart itself)
+    voiceSource->setScheduledClipData(dspClip.dspClipData);
+    voiceSource->clearPendingRestart();
+
     return true;
 }
 
@@ -179,11 +185,13 @@ void PlayListScheduler::process(double transportPositionClocks,
         if (dspClip.getAudibleRange(audium::seconds).intersects(transportRange)) {
             
             
-            if (clipsChanged &&
-                voiceSource->isPlaying()) {
-                voiceSource->stop(true);
-            }
-            
+            if (clipsChanged && voiceSource->isPlaying())
+                onClipSnapshotChanged(dspClip, voiceSource, loopResult, transportPosition, numSamples);
+
+            // a deferred restart lands in the block holding its position
+            if (voiceSource->getPendingRestartAt() >= 0.0 && voiceSource->isPlaying() && ! loopResult.loopEvent)
+                restartAtPendingPosition(dspClip, voiceSource, transportPosition, numSamples);
+
             if (loopResult.loopEvent) {
                 // re-schedule clip
                 if (not scheduleClip(dspClip,
@@ -278,6 +286,18 @@ void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspC
         }
     }
 
+    // a deferred restart (see onClipSnapshotChanged): the voice plays on to
+    // the position it was aimed at, which is primed like a clip start
+    const auto pendingRestartAt = voiceSource->getPendingRestartAt();
+    if (samplesUntilStart < 0 && voiceSource->isPlaying()
+        && pendingRestartAt >= transportPosition + secondsThisBuffer) {
+        const auto samples = static_cast<int>(std::round((pendingRestartAt - transportPosition) * externalSampleRate));
+        if (! insideLoop || samples < loopResult.numSamplesUntilLoopEnd) {
+            samplesUntilStart = samples;
+            restartAt = pendingRestartAt;
+        }
+    }
+
     // the loop wrap, if the wrap block will schedule this clip (it is
     // audible in the wrap block's first block) and nothing comes sooner
     if (insideLoop && samplesUntilStart < 0) {
@@ -300,6 +320,90 @@ void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspC
     voiceSource->primeStandby(restartFilePosition(dspClip, spec, restartAt),
                               dspClip.getSpeedRatio(),
                               blocksUntilStart);
+}
+
+namespace {
+
+// Whether a clip snapshot change has to re-seek the voice: everything but
+// the gain (applied live) and the bookkeeping fields.
+bool restartNeeded(const audium::DspClipData& scheduled, const audium::DspClipData& current) noexcept
+{
+    return scheduled.clipData.absolutePositionClocks != current.clipData.absolutePositionClocks
+        || scheduled.clipData.regionData != current.clipData.regionData
+        || scheduled.clipFadeInClocks != current.clipFadeInClocks
+        || scheduled.clipFadeOutClocks != current.clipFadeOutClocks
+        || scheduled.clipFadeInStartClocks != current.clipFadeInStartClocks
+        || scheduled.clipFadeOutEndClocks != current.clipFadeOutEndClocks
+        || scheduled.clipFadeInCurve != current.clipFadeInCurve
+        || scheduled.clipFadeOutCurve != current.clipFadeOutCurve
+        || scheduled.clipSpeedRatio != current.clipSpeedRatio
+        || scheduled.clipStretchMode != current.clipStretchMode
+        || scheduled.clipTempoLocked != current.clipTempoLocked
+        || scheduled.clipTempo != current.clipTempo;
+}
+
+} // namespace
+
+void PlayListScheduler::onClipSnapshotChanged(const audium::DspClip& dspClip,
+                                              VoiceSource* voiceSource,
+                                              const TransportLoop::LoopResult& loopResult,
+                                              double transportPosition,
+                                              int numSamples)
+{
+    const auto& current = dspClip.dspClipData;
+    const auto& scheduled = voiceSource->getScheduledClipData();
+
+    // every snapshot change used to restart every audible voice - another
+    // clip's edit re-primed this one's stretcher for nothing
+    if (! restartNeeded(scheduled, current)) {
+        if (current.clipGain != scheduled.clipGain) {
+            voiceSource->setGain(current.clipGain);
+            voiceSource->setScheduledClipData(current);
+        }
+        return;
+    }
+
+    const auto* stretch = voiceSource->getClipTransportSource().getStretchSource();
+    const auto canDefer = standbyPrimingEnabled.load()
+                       && ! loopResult.loopEvent
+                       && current.clipStretchMode == StretchMode::Stretch
+                       && stretch != nullptr && stretch->hasStandbyLane();
+
+    if (! canDefer) {
+        // the restart below seeks in this block: free for RePitch, the
+        // in-block prime for a Stretch clip without a standby lane
+        voiceSource->stop(true);
+        return;
+    }
+
+    // aim at a block boundary a few blocks out (at least two: this block
+    // sets it up, the next primes) and keep playing until then - the old
+    // alignment for a few dozen milliseconds beats a prime inside one block
+    const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
+    const auto blocks = std::max<juce::int64>(2, std::llround(snapshotRestartDeferSeconds / secondsThisBuffer));
+    voiceSource->deferRestart(transportPosition + static_cast<double>(blocks) * secondsThisBuffer);
+}
+
+void PlayListScheduler::restartAtPendingPosition(const audium::DspClip& dspClip,
+                                                 VoiceSource* voiceSource,
+                                                 double transportPosition,
+                                                 int numSamples)
+{
+    const auto pendingRestartAt = voiceSource->getPendingRestartAt();
+    const auto sampleOffset = static_cast<int>(std::llround((pendingRestartAt - transportPosition) * externalSampleRate));
+
+    // a later block
+    if (sampleOffset >= numSamples)
+        return;
+
+    voiceSource->clearPendingRestart();
+
+    // scheduled from the primed position itself, mid-block like a loop
+    // wrap: the seek hits the standby's key and adopts the lane. A block
+    // that slipped past the position (jitter) or a refused schedule falls
+    // back to a plain restart from this block's position below.
+    if (sampleOffset < 0 || ! scheduleClip(dspClip, voiceSource, pendingRestartAt, sampleOffset, numSamples))
+        voiceSource->stop(true);
 }
 
 void PlayListScheduler::primeStandbyAtPlayStart()

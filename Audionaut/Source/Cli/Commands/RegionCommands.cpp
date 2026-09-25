@@ -5,7 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
@@ -56,13 +56,13 @@ int runSplit (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "split requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto tempoProvider = session->getAudioTrackContainer()->getTempoProvider();
 
@@ -80,7 +80,7 @@ int runSplit (const juce::ArgumentList& args, CliContext& context)
     adapter.splitRegions (positionClocks, audium::clocks);
     auto created = newRegionNames (adapter, baseline);
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("split applied at " + juce::String (positionClocks) + " clocks");
@@ -107,13 +107,13 @@ int runCreateRegion (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "create-region requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto tempoProvider = session->getAudioTrackContainer()->getTempoProvider();
 
@@ -139,7 +139,7 @@ int runCreateRegion (const juce::ArgumentList& args, CliContext& context)
     if (created.empty())
         return context.fail (exitFailure, "create_failed", "no region was created");
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("created region(s) from " + juce::String (startClocks)
@@ -176,13 +176,13 @@ int runSetRegion (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "set-region requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -245,7 +245,7 @@ int runSetRegion (const juce::ArgumentList& args, CliContext& context)
             if (item->getRegion() == region)
                 ++affectedClips;
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     auto applied = region->getRegionData (audium::seconds);
@@ -264,13 +264,13 @@ int runCleanupRegions (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "cleanup-regions requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& adapter = session->getAudioTrackContainer()->getAudioRegionAdapter();
 
@@ -283,7 +283,7 @@ int runCleanupRegions (const juce::ArgumentList& args, CliContext& context)
         if (remaining.count (name) == 0)
             removed.push_back (name.toStdString());
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("removed " + juce::String (removed.size()) + " unused region(s)");

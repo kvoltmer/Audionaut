@@ -12,6 +12,8 @@
 #include "Cli/CliDispatch.h"
 #include "Cli/Commands/Commands.h"
 
+#include "Cli/AgentClient.h"
+#include "Cli/CommandSession.h"
 #include "Application/UsageAnalytics.h"
 #include "Util/Preferences.h"
 
@@ -156,7 +158,7 @@ const std::vector<CliCommandSpec>& getCliCommands()
 
         { "assemble",
           "assemble <project.audium> [--track N] [--duration S]\n"
-          "                          [--mode random|sequential] [--seed N] [--json]",
+          "                          [--mode random|sequential] [--seed N] [--no-crossfades] [--json]",
           "Assembles a new arrangement from the project's regions.",
           "Builds an arrangement of the given duration from the project's regions, sequentially or at random.",
           runAssemble },
@@ -193,10 +195,12 @@ const std::vector<CliCommandSpec>& getCliCommands()
           runRemoveClip },
 
         { "move-clip",
-          "move-clip <project.audium> (--at P | --region NAME) --to Q [--track N]\n"
-          "                          [--unit ...] [--json]",
-          "Moves one clip to a new timeline position.",
-          "Moves the addressed clip (the address must match exactly one) to the given position on its track.",
+          "move-clip <project.audium> (--at P | --region NAME) [--to Q] [--to-track N|new]\n"
+          "                          [--track N] [--unit ...] [--json]",
+          "Moves one clip to a new timeline position and/or another track.",
+          "Moves the addressed clip (the address must match exactly one) to the given position, "
+          "onto the track with id N or a newly created one with --to-track new. Without --to the "
+          "clip keeps its position; at least one of --to and --to-track is required.",
           runMoveClip },
 
         { "place-clip",
@@ -286,6 +290,21 @@ int performCliCommand (const juce::ArgumentList& args, CliContext& context)
 
     for (auto& spec : getCliCommands()) {
         if (first.text == spec.verb) {
+            // When the app holds this project, the verb belongs to it: it can
+            // answer from the live document instead of the last save, and
+            // nothing of ours reaches the user's project file.
+            //
+            // Not while we ARE the host: the marker is still published, so a
+            // hosted verb would find it and connect back to itself.
+            if (! isHostedExecution()) {
+                if (auto routed = agent::routeCommand (args, spec.verb,
+                                                       agent::isHostableVerb (spec.verb), context);
+                    routed.handled) {
+                    logCliInvocation (spec.verb, routed.exitCode, context);
+                    return routed.exitCode;
+                }
+            }
+
             auto exitCode = exitFailure;
             try {
                 exitCode = spec.run (args, context);

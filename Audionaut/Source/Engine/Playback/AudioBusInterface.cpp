@@ -35,7 +35,7 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
     // With no audio device running there is no render callback to drain the
     // fifo (capacity 256, drops on full) - pump it synchronously. Runtime
     // check so the GUI binary's in-app CLI mode gets the same treatment.
-    if (HeadlessMode::isHeadless())
+    if (pumpsCommandsSynchronously.value_or (HeadlessMode::isHeadless()))
         lockFreeCommander->invoke();
     
 }

@@ -5,6 +5,24 @@ Code, Claude Desktop, and any other MCP client) work with Audionaut projects.
 It is a thin wrapper: every tool shells out to `audionaut-cli` with `--json`
 and relays the result — no engine logic lives here.
 
+## Projects that are open in Audionaut
+
+The tools do not need the user to save first, and they will not write over a
+document the user has open. When Audionaut is holding the project, the CLI
+hands the command to the app: it acts on the document as the user currently
+sees it, unsaved changes included, and the result lands in their undo history
+as one step instead of touching `Project.json`. Saving stays theirs to do.
+
+With no app holding the project, the tools read and write the project file as
+they always have. If an app is holding one but cannot be reached, the command
+fails (`host_unavailable`) rather than falling back to the file, which would
+be missing whatever is unsaved.
+
+Two caveats. A command running inside the app runs inside its sandbox, so an
+export outside the user's Music folder is refused with `sandbox_denied`. And
+`Autosave.json` and `Host.json` inside a package belong to the app — never
+read or edit them.
+
 ## Tools
 
 | Tool | Wraps | Purpose |
@@ -20,7 +38,7 @@ and relays the result — no engine logic lives here.
 | `create_region` | `create-region` | Create a named region from a timeline range |
 | `set_region` | `set-region` | Rename and/or retrim a region (affects all its clips) |
 | `remove_clip` | `remove-clip` | Remove clip(s) from the timeline |
-| `move_clip` | `move-clip` | Move one clip to a new position |
+| `move_clip` | `move-clip` | Move one clip to a new position and/or another track |
 | `place_clip` | `place-clip` | Place an existing region on the timeline |
 | `cleanup_regions` | `cleanup-regions` | Delete every region no clip uses |
 | `clip_gain` | `clip-gain` | Set a clip's gain (linear or dB, all channels or one) |

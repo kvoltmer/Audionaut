@@ -7,9 +7,10 @@ name: Windows CI
 # collides with juce::Rectangle wherever a file does `using namespace juce`.
 # Header-collision bugs of that shape are invisible to the other runners.
 #
-# This is the Windows gate for pull requests; the CircleCI job
-# (.circleci/config.yml) mirrors it for pushes to main/develop and adds the
-# installer artifact. Keep the two in sync.
+# This is the only Windows CI: it gates pull requests and runs on pushes to
+# main/develop. The installer is built by release-windows.yml on v* tags.
+# (The CircleCI mirror was removed 2026-09-20: its 60-minute plan cap no
+# longer fit the test build, and this workflow covers the same ground.)
 
 on:
   push:

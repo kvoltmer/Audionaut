@@ -5,7 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
@@ -17,6 +17,10 @@
 #include "Engine/PlayList/ClipTempo.h"
 #include "Engine/PlayList/ClipDynamics.h"
 #include "Engine/Region/AudioRegion.h"
+#include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Group/ResourceGroup.h"
+#include "Engine/Resource/AudioResource.h"
+#include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Provider/TempoProvider.h"
 
 #include <cmath>
@@ -109,6 +113,39 @@ int resolveClips (juce::ArgumentList& working,
     return exitOk;
 }
 
+/**
+ * A resource group on `track` playing the same files, channel for channel, as
+ * `source` - reused if there is one, cloned otherwise. Moving several clips
+ * of one recording onto a track then shares a single group there, where
+ * AudioTrack::createNewResourceGroup alone would clone one per clip.
+ */
+std::shared_ptr<ResourceGroup> resourceGroupOn (AudioTrack& track,
+                                                const std::shared_ptr<ResourceGroup>& source)
+{
+    auto sourceResources = source->getAudioResources();
+
+    auto playsSameFiles = [&sourceResources] (const ResourceGroup& candidate) {
+        auto resources = candidate.getAudioResources();
+        if (resources.size() != sourceResources.size())
+            return false;
+        for (size_t i = 0; i < resources.size(); ++i) {
+            auto& mine = resources[i]->getChannelMapping();
+            auto& theirs = sourceResources[i]->getChannelMapping();
+            if (resources[i]->getUrl() != sourceResources[i]->getUrl()
+                || mine.getSourceChannel() != theirs.getSourceChannel()
+                || mine.getDestinationChannel() != theirs.getDestinationChannel())
+                return false;
+        }
+        return true;
+    };
+
+    for (auto& group : track.getResourceGroups())
+        if (playsSameFiles (*group))
+            return group;
+
+    return track.createNewResourceGroup (source);
+}
+
 } // namespace
 
 int runRemoveClip (const juce::ArgumentList& args, CliContext& context)
@@ -123,13 +160,13 @@ int runRemoveClip (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "remove-clip requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -163,7 +200,7 @@ int runRemoveClip (const juce::ArgumentList& args, CliContext& context)
         match.track->getPlayListContainer()->deletePlayListItem (match.item, deleteRegion);
     }
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("removed " + juce::String (removed.size()) + " clip(s)");
@@ -175,29 +212,35 @@ int runMoveClip (const juce::ArgumentList& args, CliContext& context)
 {
     auto working = args;
     auto toValue = takeOptionValue (working, "--to");
+    auto toTrackValue = takeOptionValue (working, "--to-track");
     auto unit = takeOptionValue (working, "--unit", "bars");
 
-    if (toValue.isEmpty())
-        return context.fail (exitUsage, "usage", "move-clip requires --to <position>");
+    if (toValue.isEmpty() && toTrackValue.isEmpty())
+        return context.fail (exitUsage, "usage",
+                             "move-clip requires --to <position>, --to-track <id|new>, or both");
+    if (toTrackValue.isNotEmpty() && toTrackValue != "new"
+        && ! toTrackValue.containsOnly ("0123456789"))
+        return context.fail (exitUsage, "usage", "--to-track must be a track id or \"new\"");
 
     auto projectFile = resolveProjectFile (working);
     if (projectFile == juce::File())
         return context.fail (exitUsage, "usage", "move-clip requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
 
     double toClocks = 0.0;
-    if (! parseMusicalPosition (toValue, unit, *tempoProvider, toClocks, error))
+    if (toValue.isNotEmpty()
+        && ! parseMusicalPosition (toValue, unit, *tempoProvider, toClocks, error))
         return context.fail (exitUsage, "usage", error);
 
     std::vector<ClipMatch> matches;
@@ -211,18 +254,78 @@ int runMoveClip (const juce::ArgumentList& args, CliContext& context)
                              "several clips match; pass --track or address by --at");
 
     auto& match = matches.front();
-    auto fromSeconds = tempoProvider->clocksToSeconds (match.item->getAbsolutePosition (audium::clocks));
+    auto fromClocks = match.item->getAbsolutePosition (audium::clocks);
+    auto fromTrackId = match.track->getId();
+    auto regionName = match.item->getRegion()->getName().toStdString();
 
-    match.item->setAbsolutePosition (toClocks, audium::clocks);
-    match.track->getPlayListContainer()->sortByPosition();
+    // without --to the clip keeps its timeline position
+    if (toValue.isEmpty())
+        toClocks = fromClocks;
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    auto targetTrack = match.track;
+    bool createdTrack = false;
+
+    if (toTrackValue == "new") {
+        targetTrack = trackContainer.createNewAudioTrack ({});
+        targetTrack->getViewState().setColour (trackContainer.getNewAudioTrackColour());
+        createdTrack = true;
+    }
+    else if (toTrackValue.isNotEmpty()) {
+        targetTrack = nullptr;
+        for (auto& track : trackContainer.getAudioTracks())
+            if (track->getId() == toTrackValue.getIntValue())
+                targetTrack = track;
+        if (targetTrack == nullptr)
+            return context.fail (exitFailure, "track_not_found",
+                                 "no track with id " + toTrackValue.toStdString());
+    }
+
+    if (targetTrack == match.track) {
+        match.item->setAbsolutePosition (toClocks, audium::clocks);
+        match.track->getPlayListContainer()->sortByPosition();
+    }
+    else {
+        // Regions live in a track's resource group, so the clip needs a copy
+        // of its region on the target track - what dragging a clip onto
+        // another track does in the GUI (AudioTrack::dropPlayListItem).
+        auto region = match.item->getRegion();
+        auto resourceGroup = resourceGroupOn (*targetTrack, region->getResourceGroup());
+        auto newRegion = resourceGroup->getAudioRegionContainer()->createRegion (targetTrack,
+                                                                                 resourceGroup,
+                                                                                 region);
+        // createRegion added the channels; a track made for this clip starts
+        // centred, so give it the source's panning (a stereo import is L/R)
+        if (createdTrack) {
+            auto sharedChannels = std::min (match.track->getNumAudioTrackChannels(),
+                                            targetTrack->getNumAudioTrackChannels());
+            for (int channel = 0; channel < sharedChannels; ++channel)
+                targetTrack->setPan (match.track->getPan (channel), channel);
+        }
+
+        auto targetPlayList = targetTrack->getPlayListContainer();
+        auto newItem = newRegion != nullptr
+                           ? targetPlayList->createPlayListItemAtPositionUI (newRegion, toClocks, audium::clocks)
+                           : nullptr;
+        if (newItem == nullptr)
+            return context.fail (exitFailure, "move_failed", "could not place the clip on the target track");
+
+        newItem->getDynamics().copyFrom (match.item->getDynamics());
+        newItem->copySpeedFrom (*match.item);
+        targetPlayList->sortByPosition();
+
+        match.track->getPlayListContainer()->deletePlayListItem (match.item, false);
+    }
+
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
-    context.log ("moved clip to " + juce::String (toClocks) + " clocks");
-    return context.ok ({ { "region", match.item->getRegion()->getName().toStdString() },
-                         { "track", match.track->getId() },
-                         { "fromSeconds", fromSeconds },
+    context.log ("moved clip to track " + juce::String (targetTrack->getId()) + " at "
+                 + juce::String (toClocks) + " clocks");
+    return context.ok ({ { "region", regionName },
+                         { "track", targetTrack->getId() },
+                         { "fromTrack", fromTrackId },
+                         { "trackCreated", createdTrack },
+                         { "fromSeconds", tempoProvider->clocksToSeconds (fromClocks) },
                          { "toSeconds", tempoProvider->clocksToSeconds (toClocks) } });
 }
 
@@ -242,13 +345,13 @@ int runPlaceClip (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "place-clip requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -277,7 +380,7 @@ int runPlaceClip (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitFailure, "place_failed", "could not place the region");
     playList->sortByPosition();
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("placed \"" + regionName + "\" at " + juce::String (positionClocks) + " clocks");
@@ -309,13 +412,13 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "clip-gain requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -346,7 +449,7 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context)
             dynamics.setGain (channel, gain);
     }
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     auto gains = nlohmann::json::array();
@@ -399,13 +502,13 @@ int runClipSpeed (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "clip-speed requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -493,7 +596,7 @@ int runClipSpeed (const juce::ArgumentList& args, CliContext& context)
         }
     }
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("clip speed set");
@@ -529,13 +632,13 @@ int runClipFades (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "clip-fades requires an existing <project.audium>");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+    int openFailure = exitFailure;
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
+    if (! session)
+        return openFailure;
 
     std::string error;
     auto captureError = [&error] (std::string message) { error = message; };
-
-    if (! session->getProjectFileStore()->open (projectFile, captureError))
-        return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
 
     auto& trackContainer = *session->getAudioTrackContainer();
     auto tempoProvider = trackContainer.getTempoProvider();
@@ -612,7 +715,7 @@ int runClipFades (const juce::ArgumentList& args, CliContext& context)
     if (fadeOutCurve.isNotEmpty())
         dynamics.setFadeOutCurve (fadeOutCurve.getDoubleValue());
 
-    if (! session->getProjectFileStore()->save (projectFile, captureError))
+    if (! session.commit (error))
         return context.fail (exitFailure, "save_failed", error.empty() ? "failed to save project" : error);
 
     context.log ("clip fades set");

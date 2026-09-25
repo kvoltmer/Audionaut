@@ -145,6 +145,7 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
     {
         CommandIDs::playStop,
         CommandIDs::loopPlayList,
+        CommandIDs::loopSelection,
         CommandIDs::createRegion,
         CommandIDs::splitRegion,
         CommandIDs::cleanupRegions,
@@ -191,7 +192,11 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             break;
         case CommandIDs::loopPlayList:
             result.setInfo ("Loop Playlist", "Loop Playlist On/Off", CommandCategories::transport, 0);
-            result.defaultKeypresses.add (KeyPress ('l', ModifierKeys::ctrlModifier, 0));
+            break;
+        case CommandIDs::loopSelection:
+            result.setInfo ("Loop Selection", "Sets the loop range to the selected range and turns the loop on", CommandCategories::transport, 0);
+            result.setActive (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().anyRangeSelected());
+            result.defaultKeypresses.add (KeyPress ('l', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::createRegion:
             result.setInfo ("Create Region...", "Creates a new region", CommandCategories::create, 0);
@@ -340,6 +345,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::loopPlayList:
             notImplemented();
+            break;
+        case CommandIDs::loopSelection:
+            loopSelectedRange();
             break;
         case CommandIDs::createRegion:
             if (newRegionDialog == nullptr)
@@ -574,6 +582,22 @@ bool AudiumMainWindow::canToggleStretchOverlay()
             return ! item->isRecording();
 
     return false;
+}
+
+void AudiumMainWindow::loopSelectedRange()
+{
+    auto container = getEngine()->getAudioTrackContainer();
+    auto range = container->getAudioRegionAdapter().getSelectedRange(audium::clocks);
+    if (range.isEmpty())
+        return;
+
+    auto transportLoop = getEngine()->getPlayListScheduler()->getTransportLoop();
+    transportLoop->setLoopPositionRange(container, range, audium::clocks);
+    transportLoop->setLoopActive(true);
+
+    // same refresh the header's loop button triggers
+    container->sendActionMessage(audium::updateArrangementAction);
+    mainComponent->updateUI();
 }
 
 void AudiumMainWindow::toggleStretchOverlay()

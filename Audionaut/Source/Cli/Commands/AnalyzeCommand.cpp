@@ -5,7 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
-#include "Cli/HeadlessEngineSession.h"
+#include "Cli/CommandSession.h"
 
 // Same auto-detection as the segmenters (see SBicSegmenter.cpp): the CMake
 // builds define ESSENTIA_ENABLED globally, but the Projucer app build relies
@@ -53,16 +53,20 @@ int runAnalyze (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "analyze requires a <project.audium> or an audio file");
 
     ScopedCoutToStderr guard (context.json);
-    HeadlessEngineSession session;
+
+    // analyze is the one verb that also runs on a bare audio file, so the
+    // session may carry no project at all.
+    int openFailure = exitFailure;
+    auto session = projectFile != juce::File()
+                       ? openProjectSession (projectFile, CommandAccess::readOnly, context, openFailure)
+                       : openEngineSession();
+    if (! session)
+        return openFailure;
 
     // The set of audio files to analyse: the project's, or the one given.
     std::vector<juce::File> audioFiles;
 
     if (projectFile != juce::File()) {
-        std::string error;
-        if (! session->getProjectFileStore()->open (projectFile, [&error] (std::string message) { error = message; }))
-            return context.fail (exitFailure, "open_failed", error.empty() ? "failed to open project" : error);
-
         for (auto& track : session->getAudioTrackContainer()->getAudioTracks())
             for (auto& item : track->getPlayListContainer()->getPlayListItems())
                 if (auto region = item->getRegion())

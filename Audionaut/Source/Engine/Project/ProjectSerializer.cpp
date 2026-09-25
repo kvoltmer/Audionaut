@@ -107,7 +107,9 @@ bool ProjectSerializer::applyProjectJson (json& input, bool preserveUiState)
     if (!preserveUiState && jsonAudium.contains("ui_state"))
         uiState = jsonAudium["ui_state"];
 
-    if (jsonAudium.contains("scheduler"))
+    // The scheduler block is transport state (playhead, start position, edit
+    // mode): applying a state or undoing one must not move a running playhead.
+    if (!preserveUiState && jsonAudium.contains("scheduler"))
         playListScheduler->data = jsonAudium["scheduler"];
 
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
