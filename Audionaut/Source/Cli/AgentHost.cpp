@@ -136,20 +136,26 @@ private:
         // Everything that touches the graph happens on the message thread, so
         // it never runs beside the user's own edits.
         json liveState;
-        std::string refusal;
+        Refusal refusal;
 
         host.messageThreadExecutor ([&] {
             refusal = host.refusalFor (argv[0]);
-            if (refusal.empty())
+            if (refusal.message.empty())
                 host.engine->getProjectSerializer()->writeToJson (liveState);
         });
 
-        if (! refusal.empty()) {
-            reply (exitFailure, errorEnvelope (refusalCode (argv[0]), refusal), {});
+        if (! refusal.message.empty()) {
+            reply (exitFailure, errorEnvelope (refusal.code, refusal.message), {});
             return;
         }
 
         host.messageThreadExecutor ([&] {
+            // The message thread was free between the two trips, so the user
+            // may have started an export or a take since we looked.
+            refusal = host.refusalFor (argv[0]);
+            if (! refusal.message.empty())
+                return;
+
             CliContext context;
             // A host always wants the envelope, never the human rendering:
             // the client re-renders it for whoever actually asked.
@@ -167,6 +173,11 @@ private:
                 applyStaged (argv[0], liveState, HostedSessionScope::takeStagedState(),
                              exitCode, envelope);
         });
+
+        if (! refusal.message.empty()) {
+            reply (exitFailure, errorEnvelope (refusal.code, refusal.message), {});
+            return;
+        }
 
         if (envelope.is_null())
             envelope = errorEnvelope ("host_failed", "the command produced no result");
@@ -218,11 +229,6 @@ private:
             audium->erase ("ui_state");
         }
         return state;
-    }
-
-    static std::string refusalCode (const juce::String& verb)
-    {
-        return verb == "export" ? "transport_busy" : "recording_in_progress";
     }
 
     AgentHost& host;
@@ -328,16 +334,26 @@ void AgentHost::setProject (const juce::File& newProjectFile)
     projectFile = newProjectFile;
 }
 
-std::string AgentHost::refusalFor (const juce::String& verb) const
+AgentHost::Refusal AgentHost::refusalFor (const juce::String& verb) const
 {
     if (engine->getAudioBusInterface()->anyChannelRecording())
-        return "Audionaut is recording; applying a change would stop the take";
+        return { "recording_in_progress",
+                 "Audionaut is recording; applying a change would stop the take" };
+
+    // The app's export and stem separation render on a worker thread while
+    // their progress window's modal loop keeps serving us; a verb applied now
+    // would rebuild the graph that render is walking (an `export` would even
+    // run a second bounce through the same scheduler).
+    if (engine->getPlayListScheduler()->isOfflineRendering())
+        return { "render_in_progress",
+                 "Audionaut is exporting; wait for it to finish, then run the command again" };
 
     // RenderTiming's offline flag is process-wide: a bounce would stretch the
     // live engine's read-ahead timeout from milliseconds to seconds while the
     // user is listening.
     if (verb == "export" && engine->getPlayListScheduler()->isPlaying())
-        return "Audionaut is playing; stop the transport before exporting";
+        return { "transport_busy",
+                 "Audionaut is playing; stop the transport before exporting" };
 
     return {};
 }

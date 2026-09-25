@@ -340,6 +340,14 @@ bool ProjectFileStore::reloadFromDisk (std::function<void (std::string)> callbac
         return false;
     }
 
+    // Before the stamps are touched: a render is walking the graph from its
+    // worker thread, so the change stays pending on disk and is reloaded by
+    // the poll that follows the render, not dropped as seen.
+    if (playListScheduler->isOfflineRendering()) {
+        NullCheckedInvocation::invoke (callback, "a render is in progress");
+        return false;
+    }
+
     // Capture the mtimes BEFORE reading: a write landing during the (possibly
     // long) apply must be re-detected on the next poll, not stamped as seen.
     const auto projectMtimeAtRead = currentProjectFile.getLastModificationTime();
@@ -452,6 +460,14 @@ bool ProjectFileStore::applyStateAsUndoableReload (json afterState,
                                                    std::function<void (std::string)> callback)
 {
     jassert(serializer != nullptr);
+
+    // The callers (ProjectMonitor, AgentHost) hold off while an export or
+    // stem separation renders on a worker thread; this is the backstop for
+    // every other route to a rebuild.
+    if (playListScheduler->isOfflineRendering()) {
+        NullCheckedInvocation::invoke (callback, "a render is in progress");
+        return false;
+    }
 
     try
     {

@@ -5,6 +5,7 @@
 
 #include "ProjectMonitor.h"
 #include "Engine/Project/ProjectFileStore.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Analysis/AnalysisCache.h"
 
 namespace audium {
@@ -32,6 +33,13 @@ void ProjectMonitor::changeListenerCallback(juce::ChangeBroadcaster*)
 void ProjectMonitor::timerCallback()
 {
     if (suspended)
+        return;
+
+    // An export or stem separation is walking the play list from its worker
+    // thread while its progress window's modal loop keeps this timer going.
+    // Leave the on-disk change and the autosave where they are: the stamps
+    // stay stale, so the first tick after the render picks them up.
+    if (engine->getPlayListScheduler()->isOfflineRendering())
         return;
 
     // external-change detection only applies once a project file exists;

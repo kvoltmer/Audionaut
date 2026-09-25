@@ -201,6 +201,33 @@ public:
 
     /// How far ahead of a start the standby prime begins, in seconds.
     static constexpr double standbyPrimeHorizonSeconds = 0.25;
+
+    /// Whether an offline render (export, stem separation) is walking the
+    /// play list and voice sources right now. The app runs those on a worker
+    /// thread behind a modal progress window whose loop keeps dispatching
+    /// timers and agent requests, so whatever would rebuild the graph - an
+    /// external reload, a hosted agent edit - checks this first and waits
+    /// for the render to end.
+    bool isOfflineRendering() const noexcept { return offlineRenders.load() > 0; }
+
+    /// Marks an offline render for its lifetime. Nests: the app takes one on
+    /// the message thread before it starts the worker, so no reload can slip
+    /// in between, and AudioExporter takes one around every bounce.
+    class ScopedOfflineRender
+    {
+    public:
+        explicit ScopedOfflineRender (PlayListScheduler& scheduler_) noexcept : scheduler (scheduler_)
+        {
+            ++scheduler.offlineRenders;
+        }
+
+        ~ScopedOfflineRender() noexcept { --scheduler.offlineRenders; }
+
+    private:
+        PlayListScheduler& scheduler;
+
+        JUCE_DECLARE_NON_COPYABLE (ScopedOfflineRender)
+    };
     
     std::function<void()> onRecordingStartedFunction;
     
@@ -250,6 +277,8 @@ private:
     std::atomic<bool> forcePosition = false;
     
     std::atomic<double> totalLengthClocks = 0.0;
+
+    std::atomic<int> offlineRenders { 0 };
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

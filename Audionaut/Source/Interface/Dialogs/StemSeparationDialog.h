@@ -11,6 +11,7 @@
 #include "Engine/ActionMessages.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Separation/DemucsBackend.h"
 #include "Engine/Separation/DemucsModelStore.h"
 #include "Engine/Separation/StemSeparator.h"
@@ -81,6 +82,13 @@ public:
             warn (error, parent);
             return;
         }
+
+        // Flagged on the message thread before the worker starts (see
+        // ExportUtil): the modal progress loop still dispatches external
+        // reloads and agent edits, which must wait for the render. Held
+        // through the commit below, so the new tracks land on the graph the
+        // stems were rendered from.
+        const audium::PlayListScheduler::ScopedOfflineRender offlineRender (*engine->getPlayListScheduler());
 
         SeparationThread thread (separator, job);
 

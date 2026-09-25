@@ -51,6 +51,10 @@ public:
             ~OfflineScope() { RenderTiming::setOffline (false); }
         } offlineScope;
 
+        // and flagged: an external reload or a hosted agent edit waits for
+        // the render instead of rebuilding the graph underneath it
+        const PlayListScheduler::ScopedOfflineRender offlineRender (*audiumEngine.getPlayListScheduler());
+
         audiumEngine.getLinkAudioDevice()->setBypass(true);
         audiumEngine.getPlayListScheduler()->prepareToPlay(config->blockSize, config->sampleRate);
 
