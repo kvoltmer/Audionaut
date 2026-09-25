@@ -1045,16 +1045,15 @@ void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToO
     }
 }
 
-const File createProjectDirectory(const File &inFile)
+// foo -> foo.audium/Project.json; the package directory itself is created by
+// the save, which also removes it again should the save fail
+const File projectFileForPackage(const File &inFile)
 {
     auto projectDir =   inFile.getParentDirectory().getFullPathName() +
                         File::getSeparatorString() +
                         inFile.getFileNameWithoutExtension() +
                         audium::ProjectFileStore::projectFileExtension;
-    
-    if (!File(projectDir).exists()) {
-        File(projectDir).createDirectory();
-    }
+
     return File(projectDir + File::getSeparatorString() + audium::ProjectFileStore::projectFileName);
 }
 
@@ -1101,7 +1100,7 @@ bool AudiumApplication::saveProjectAs()
             if (file.existsAsFile())
                 return saveProjectToFile(file);
             else
-                return saveProjectToFile(createProjectDirectory(file));
+                return saveProjectToFile(projectFileForPackage(file));
         }
         return false;
     });

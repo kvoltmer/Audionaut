@@ -105,12 +105,18 @@ public:
     bool isAudioFileCurrentlyLoaded(const juce::File audioFile) const;
     
     /**
-     * @brief Copies or moves audio files between directories.
+     * @brief Copies the currently loaded audio files between directories.
+     *        Files are copied, never moved, so the source directory is left
+     *        intact; the caller decides when the originals are obsolete.
      * @param sourceDirectory The source directory.
      * @param destinationDirectory The destination directory.
+     * @param copiedFiles Receives every file created in the destination, so
+     *        a save that fails later can remove them again.
+     * @return False on the first file that couldn't be copied.
      */
-    bool copyOrMoveAudioFiles(const juce::File sourceDirectory,
-                              const juce::File destinationDirectory);
+    bool copyAudioFiles(const juce::File sourceDirectory,
+                        const juce::File destinationDirectory,
+                        juce::Array<juce::File>& copiedFiles);
 
     /**
      * @brief Changes the paths of audio files to a new directory.
