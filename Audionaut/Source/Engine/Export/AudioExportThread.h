@@ -50,11 +50,22 @@ public:
      * @param config Reference to the ExportAudioConfig containing export settings.
      */
     void bounce();
-    
+
+    /**
+     * @brief Whether the last run wrote its output.
+     *
+     * runThread() only says whether the thread ran to completion; this says
+     * whether the file was written. When it is false and the user did not
+     * cancel, the config's error says why.
+     */
+    bool wasSuccessful() const noexcept { return succeeded; }
+
 private:
     AudiumEngine &audiumEngine; ///< Reference to the AudiumEngine instance.
-    
+
     std::shared_ptr<ExportAudioConfig> config;  ///< The export configuration.
+
+    bool succeeded = false;     ///< The outcome of the last bounce().
 };
 
 } // namespace audium

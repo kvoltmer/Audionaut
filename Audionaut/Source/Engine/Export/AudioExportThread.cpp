@@ -10,7 +10,7 @@ namespace audium {
 
 void AudioExportThread::bounce()
 {
-    AudioExporter (audiumEngine, config).bounce ([this] (double progress) {
+    succeeded = AudioExporter (audiumEngine, config).bounce ([this] (double progress) {
         setProgress (progress);
         return ! (threadShouldExit() || ! isThreadRunning());
     });

@@ -574,6 +574,41 @@ SCENARIO ("cli import and export round trip", "[cli]")
                      == cli::exitFailure);
         }
 
+        WHEN ("the project is exported at a bit depth the WAV writer rejects") {
+            nlohmann::json envelope;
+            context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+            auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                      + outputFile.getFullPathName()
+                                                      + " --channels 1 --bit-depth 12"),
+                                            context);
+            context.envelopeSink = nullptr;
+
+            THEN ("the verb fails, says why, and leaves no file behind") {
+                REQUIRE (exitCode != cli::exitOk);
+                REQUIRE (envelope["ok"] == false);
+                auto message = envelope["error"]["message"].get<std::string>();
+                REQUIRE (message.find ("12") != std::string::npos);
+                REQUIRE_FALSE (outputFile.existsAsFile());
+            }
+        }
+
+        WHEN ("a failing export targets a file left over from an earlier run") {
+            REQUIRE (outputFile.replaceWithText ("stale"));
+            nlohmann::json envelope;
+            context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+            auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                      + outputFile.getFullPathName()
+                                                      + " --channels 1 --bit-depth 12"),
+                                            context);
+            context.envelopeSink = nullptr;
+
+            THEN ("the leftover is not passed off as the result") {
+                REQUIRE (exitCode != cli::exitOk);
+                REQUIRE (envelope["ok"] == false);
+                REQUIRE (outputFile.loadFileAsString() == "stale");
+            }
+        }
+
         WHEN ("the project is exported") {
             REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
                                                + outputFile.getFullPathName() + " --channels 1"),

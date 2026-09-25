@@ -286,13 +286,17 @@ bool StemSeparator::render (const SeparationJob& job,
     // 1. Render the clip at the backend's rate.
     {
         AudioExporter exporter (*audiumEngine, job.exportConfig);
-        exporter.bounce ([&report] (double fraction)
+        auto rendered = exporter.bounce ([&report] (double fraction)
         {
             return report (renderShare * fraction, "Rendering clip");
         });
 
-        if (job.exportConfig->userCanceled)
+        if (! rendered)
+        {
+            if (! job.exportConfig->userCanceled)
+                error = job.exportConfig->error;
             return fail (false);
+        }
     }
 
     juce::AudioBuffer<float> rendered;
