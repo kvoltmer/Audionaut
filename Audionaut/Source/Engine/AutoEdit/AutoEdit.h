@@ -105,6 +105,15 @@ struct AssembleConfig {
     /// mirrors gaborgandalf's config; interactive callers pass a random seed
     /// to get a fresh arrangement each time.
     unsigned int seed = 1234;
+
+    /// Crossfade every joint of the new arrangement, placed like Create
+    /// Segments' (see AutoEditConfig::crossfades): each region at full level
+    /// across its own clip, the ramps reaching into the neighbours.
+    bool crossfades = true;
+    double crossfadeSeconds = 0.02;
+
+    /// 0.5 = equal power, 1.0 = linear.
+    double crossfadeCurve = 0.5;
 };
 
 /**

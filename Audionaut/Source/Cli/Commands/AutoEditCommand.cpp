@@ -60,6 +60,7 @@ int runAssemble (const juce::ArgumentList& args, CliContext& context)
 {
     auto working = args;
     AssembleConfig config;
+    config.crossfades = ! working.removeOptionIfFound ("--no-crossfades");
     config.trackId = takeOptionValue (working, "--track", "0").getIntValue();
     if (auto value = takeOptionValue (working, "--duration"); value.isNotEmpty())
         config.duration = value.getDoubleValue();
@@ -98,7 +99,8 @@ int runAssemble (const juce::ArgumentList& args, CliContext& context)
     context.log ("assemble applied");
     return context.ok ({ { "trackId", config.trackId },
                          { "durationSeconds", config.duration },
-                         { "mode", mode.toStdString() } });
+                         { "mode", mode.toStdString() },
+                         { "crossfades", config.crossfades } });
 }
 
 } // namespace cli

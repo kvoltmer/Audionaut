@@ -283,6 +283,39 @@ std::string describeMissing(const std::vector<AnalysisType>& missing)
     return names;
 }
 
+/**
+ * A crossfade at every joint between consecutive, butt-joined items, reaching
+ * into the neighbours: the left item plays at full level to its end and fades
+ * out over an extension into the right item's time, the right item fades in
+ * over an extension into the left item's time and is at full level from its
+ * own start. Neither ramp touches the item's own material.
+ */
+void applyJointCrossfades(const std::vector<std::shared_ptr<PlayListItem>>& items,
+                          double crossfadeSeconds,
+                          double crossfadeCurve)
+{
+    for (size_t i = 1; i < items.size(); ++i) {
+        auto& left = items[i - 1];
+        auto& right = items[i];
+
+        const auto leftLength = left->getRegionData(audium::seconds).getLength();
+        const auto rightLength = right->getRegionData(audium::seconds).getLength();
+
+        // an extension never reaches past most of the neighbour it overlaps,
+        // so a short item is not faded across entirely
+        const auto fadeSeconds = juce::jmin(crossfadeSeconds, 0.45 * leftLength, 0.45 * rightLength);
+
+        // offsets are fractions of each item's own region length
+        left->getDynamics().setFadeOut(0.0);
+        left->getDynamics().setFadeOutEnd(-fadeSeconds / leftLength);
+        left->getDynamics().setFadeOutCurve(crossfadeCurve);
+
+        right->getDynamics().setFadeIn(0.0);
+        right->getDynamics().setFadeInStart(-fadeSeconds / rightLength);
+        right->getDynamics().setFadeInCurve(crossfadeCurve);
+    }
+}
+
 } // namespace
 
 const juce::String AutoEdit::getTempDirectory()
@@ -486,7 +519,7 @@ bool AutoEdit::invokeAssemble(AssembleConfig &config,
         return false;
     }
 
-    return applyAsUndoableEdit([&track, &eligible, &chosen]
+    return applyAsUndoableEdit([&track, &eligible, &chosen, &config]
         {
             auto playListContainer = track->getPlayListContainer();
 
@@ -506,12 +539,19 @@ bool AutoEdit::invokeAssemble(AssembleConfig &config,
             // the start of the timeline in the order the mode chose. Random
             // mode repeats regions, so several items may share one region.
             auto positionClocks = 0.0;
+            std::vector<std::shared_ptr<PlayListItem>> placed;
 
             for (auto index : chosen)
                 if (auto item = playListContainer->createPlayListItemAtPositionUI(eligible[(size_t) index],
                                                                                   positionClocks,
                                                                                   audium::clocks))
+                {
                     positionClocks += item->getRegionData(audium::clocks).getLength();
+                    placed.push_back(item);
+                }
+
+            if (config.crossfades && config.crossfadeSeconds > 0.0)
+                applyJointCrossfades(placed, config.crossfadeSeconds, config.crossfadeCurve);
 
             playListContainer->sortByPosition();
 
@@ -1029,33 +1069,8 @@ bool AutoEdit::replacePlayListItemWithRegions(std::shared_ptr<AudioTrack> track,
             items.push_back(item);
         }
 
-    // A crossfade at every joint that reaches into the neighbours: the left
-    // clip plays at full level to its end and fades out over an extension
-    // into the right clip's time, the right clip fades in over an extension
-    // into the left clip's time and is at full level from its own start.
-    // Neither ramp touches the clip's own material.
-    if (crossfadeSeconds > 0.0) {
-        for (size_t i = 1; i < items.size(); ++i) {
-            auto& left = items[i - 1];
-            auto& right = items[i];
-
-            const auto leftLength = left->getRegionData(audium::seconds).getLength();
-            const auto rightLength = right->getRegionData(audium::seconds).getLength();
-
-            // an extension never reaches past most of the neighbour it
-            // overlaps, so a short segment is not faded across entirely
-            const auto fadeSeconds = juce::jmin(crossfadeSeconds, 0.45 * leftLength, 0.45 * rightLength);
-
-            // offsets are fractions of each clip's own region length
-            left->getDynamics().setFadeOut(0.0);
-            left->getDynamics().setFadeOutEnd(-fadeSeconds / leftLength);
-            left->getDynamics().setFadeOutCurve(crossfadeCurve);
-
-            right->getDynamics().setFadeIn(0.0);
-            right->getDynamics().setFadeInStart(-fadeSeconds / rightLength);
-            right->getDynamics().setFadeInCurve(crossfadeCurve);
-        }
-    }
+    if (crossfadeSeconds > 0.0)
+        applyJointCrossfades(items, crossfadeSeconds, crossfadeCurve);
 
     playListContainer->sortByPosition();
 

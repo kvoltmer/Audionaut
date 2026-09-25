@@ -274,9 +274,10 @@ server.registerTool(
       duration_seconds: z.number().positive().optional().describe("Target duration (default 60)"),
       mode: z.enum(["random", "sequential"]).optional().describe("Selection mode (default sequential)"),
       seed: z.number().int().optional().describe("Random seed for reproducible random mode"),
+      crossfades: z.boolean().optional().describe("Apply crossfades at joints (default true)"),
     },
   },
-  async ({ project, track, duration_seconds, mode, seed }) =>
+  async ({ project, track, duration_seconds, mode, seed, crossfades }) =>
     runCli([
       "assemble",
       project,
@@ -284,6 +285,7 @@ server.registerTool(
       ...(duration_seconds !== undefined ? ["--duration", String(duration_seconds)] : []),
       ...(mode ? ["--mode", mode] : []),
       ...(seed !== undefined ? ["--seed", String(seed)] : []),
+      ...(crossfades === false ? ["--no-crossfades"] : []),
     ])
 );
 

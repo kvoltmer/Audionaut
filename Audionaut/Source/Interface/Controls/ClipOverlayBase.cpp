@@ -162,6 +162,20 @@ juce::Path ClipOverlayBase::checkIconPath()
     return path;
 }
 
+juce::Path ClipOverlayBase::xfadeIconPath()
+{
+    juce::Path lines;
+    lines.startNewSubPath (3.5f, 18.0f);
+    lines.quadraticTo (12.0f, 18.0f, 20.5f, 6.0f);
+    lines.startNewSubPath (20.5f, 18.0f);
+    lines.quadraticTo (12.0f, 18.0f, 3.5f, 6.0f);
+
+    juce::Path path;
+    juce::PathStrokeType (2.5f, juce::PathStrokeType::curved,
+                          juce::PathStrokeType::rounded).createStrokedPath (path, lines);
+    return path;
+}
+
 juce::Path ClipOverlayBase::lockIconPath()
 {
     // body

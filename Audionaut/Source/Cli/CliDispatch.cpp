@@ -158,7 +158,7 @@ const std::vector<CliCommandSpec>& getCliCommands()
 
         { "assemble",
           "assemble <project.audium> [--track N] [--duration S]\n"
-          "                          [--mode random|sequential] [--seed N] [--json]",
+          "                          [--mode random|sequential] [--seed N] [--no-crossfades] [--json]",
           "Assembles a new arrangement from the project's regions.",
           "Builds an arrangement of the given duration from the project's regions, sequentially or at random.",
           runAssemble },

@@ -26,21 +26,6 @@ namespace {
 constexpr double minMeasures = 1.0;
 constexpr double maxMeasures = 64.0;
 
-// Xfade: two fade ramps crossing at the joint.
-juce::Path xfadeIconPath()
-{
-    juce::Path lines;
-    lines.startNewSubPath (3.5f, 18.0f);
-    lines.quadraticTo (12.0f, 18.0f, 20.5f, 6.0f);
-    lines.startNewSubPath (20.5f, 18.0f);
-    lines.quadraticTo (12.0f, 18.0f, 3.5f, 6.0f);
-
-    juce::Path path;
-    juce::PathStrokeType (2.5f, juce::PathStrokeType::curved,
-                          juce::PathStrokeType::rounded).createStrokedPath (path, lines);
-    return path;
-}
-
 } // namespace
 
 AutoEditOverlayControl::AutoEditOverlayControl(std::shared_ptr<audium::AudiumEngine> audiumEngine_,
@@ -73,7 +58,7 @@ AutoEditOverlayControl::AutoEditOverlayControl(std::shared_ptr<audium::AudiumEng
 #else
     xfadeButton->setToggleState (true, juce::dontSendNotification);
 #endif
-    xfadeButton->setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff12a4e2));
+    xfadeButton->setColour (juce::TextButton::buttonOnColourId, juce::Colour (toggledOnColour));
     addAndMakeVisible (xfadeButton.get());
 
     applyButton = makeIconButton (TRANS ("Apply"), checkIconPath());
