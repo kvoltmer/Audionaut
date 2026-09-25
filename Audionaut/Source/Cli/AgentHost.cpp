@@ -182,7 +182,7 @@ private:
         json liveStateNow;
         host.engine->getProjectSerializer()->writeToJson (liveStateNow);
 
-        if (liveStateNow != liveStateAtStart) {
+        if (documentOf (liveStateNow) != documentOf (liveStateAtStart)) {
             // Applying now would take the user's edit with it.
             exitCode = exitFailure;
             envelope = errorEnvelope ("project_changed",
@@ -206,6 +206,18 @@ private:
 
         if (host.onProjectMutated != nullptr)
             host.onProjectMutated();
+    }
+
+    /** The state minus what moves without the user editing anything - the
+        playhead while playing, scroll and zoom - and which applying keeps
+        live anyway. */
+    static json documentOf (json state)
+    {
+        if (auto audium = state.find ("audium"); audium != state.end() && audium->is_object()) {
+            audium->erase ("scheduler");
+            audium->erase ("ui_state");
+        }
+        return state;
     }
 
     static std::string refusalCode (const juce::String& verb)

@@ -13,6 +13,7 @@
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 using namespace audium;
 using namespace audium::cli;
@@ -257,6 +258,39 @@ SCENARIO("a hosted verb changes the open document, not the project file",
                 engine->getProjectSerializer()->writeToJson (undoneState);
                 REQUIRE (undoneState != afterState);
                 REQUIRE_FALSE (engine->getProjectFileStore()->wasChangedExternally());
+            }
+        }
+
+        host.setProject (juce::File());
+    }
+
+    GIVEN("the app hosting it while the transport is playing") {
+        // The host snapshots the document on its first trip to the message
+        // thread and applies on its second; move the playhead in between, as
+        // playback does.
+        auto scheduler = engine->getPlayListScheduler();
+        int trips = 0;
+        agent::AgentHost host (engine, [&] (std::function<void()> task) {
+            if (++trips == 2)
+                scheduler->data.transportPositionClocks = 480.0;
+            task();
+        });
+        host.setProject (projectJson);
+        REQUIRE (host.isHosting());
+
+        WHEN("an agent sets a clip gain") {
+            auto outcome = agent::routeCommand (
+                argsFor ("clip-gain " + package.getFullPathName() + " --at 1 --gain 0.5"),
+                "clip-gain", agent::isHostableVerb ("clip-gain"), context);
+
+            THEN("the edit applies, and neither it nor its undo moves the playhead") {
+                REQUIRE (outcome.handled);
+                REQUIRE (envelope.value ("ok", false));
+                REQUIRE (outcome.exitCode == exitOk);
+                REQUIRE (scheduler->data.transportPositionClocks == 480.0);
+
+                REQUIRE (engine->getUndoManager()->undo());
+                REQUIRE (scheduler->data.transportPositionClocks == 480.0);
             }
         }
 
