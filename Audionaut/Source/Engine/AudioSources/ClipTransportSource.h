@@ -8,6 +8,7 @@
 
 #include <JuceHeader.h>
 #include "ClipDynamicsProcessor.h"
+#include "ClipResamplingSource.h"
 #include "StretchAudioSource.h"
 #include "Engine/PlayList/StretchMode.h"
 
@@ -100,6 +101,11 @@ public:
     void primeStandby (double newPositionSeconds, double ratio, int blocksLeft);
 
     const StretchAudioSource* getStretchSource() const noexcept    { return stretchSource; }
+
+    /** The live lane's resampler and the standby lane's (nullptr without
+        a source at another rate / without a standby); for tests. */
+    const ClipResamplingSource* getResamplerSource() const noexcept  { return resamplerSource; }
+    const ClipResamplingSource* getStandbyResampler() const noexcept { return standbyResampler; }
 
     /** Returns the position that the next data block will be read from.
         This is a time in seconds.
@@ -205,7 +211,7 @@ private:
     // cursor that came in through setStandbySource - both are the
     // caller's and outlive this object either way.
     juce::PositionableAudioSource* standbySource = nullptr;
-    juce::ResamplingAudioSource* standbyResampler = nullptr;
+    ClipResamplingSource* standbyResampler = nullptr;
     int maxNumChannels = 2;
 
 private:
@@ -213,8 +219,11 @@ private:
     juce::PositionableAudioSource* source = nullptr;
     /// Re-applies mode and speed to the resampler and the stretch node.
     void updateSpeedChain() noexcept;
+    /// Gives both lanes' resamplers the ratio they start at and the largest
+    /// one they may reach, so their prepareToPlay can size for it.
+    void boundResamplers() noexcept;
 
-    juce::ResamplingAudioSource* resamplerSource = nullptr;
+    ClipResamplingSource* resamplerSource = nullptr;
     StretchAudioSource* stretchSource = nullptr;
     juce::BufferingAudioSource* bufferingSource = nullptr;
     juce::PositionableAudioSource* positionableSource = nullptr;
