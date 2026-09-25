@@ -20,7 +20,8 @@ namespace audium {
  * The container is snapshotted before and after, so however many objects
  * @p mutate creates, moves or deletes, a single Undo takes all of it back.
  * When @p mutate returns false nothing is recorded and the container is
- * assumed untouched.
+ * assumed untouched. Returns false as well when the recorded state can't be
+ * re-applied (the container is then rolled back to its pre-edit state).
  *
  * Message thread only, like every other container mutation.
  */
@@ -34,10 +35,13 @@ inline bool applyAsUndoableEdit (AudioTrackContainer& container,
         return false;
 
     action->storeNewState();
-    container.getUndoManager()->perform (action.release(), transactionName);
+
+    // a failed perform rolls the container back to the pre-edit snapshot,
+    // so the edit did not happen
+    const auto applied = container.getUndoManager()->perform (action.release(), transactionName);
     container.getUndoManager()->beginNewTransaction();
 
-    return true;
+    return applied;
 }
 
 } // namespace audium
