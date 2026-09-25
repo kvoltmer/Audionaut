@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <vector>
 #include <JuceHeader.h>
 
@@ -64,10 +65,16 @@ public:
      * @brief Tracks beats for the given audio file.
      * @param audioFile The audio file to analyse.
      * @param params Beat-tracking parameters.
-     * @return Beat timestamps and BPM estimate. Empty/zero on failure.
+     * @param shouldAbort Optional flag polled between the streaming network's
+     *        steps. Once set, the analysis gives up at the next poll and
+     *        returns empty, so a caller shutting down (see AnalysisWorker)
+     *        waits for one step at most rather than for the whole file.
+     * @return Beat timestamps and BPM estimate. Empty/zero on failure or when
+     *         aborted.
      */
     Result analyze(const juce::File& audioFile,
-                   const Parameters& params);
+                   const Parameters& params,
+                   const std::atomic<bool>* shouldAbort = nullptr);
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeatSegmenter)

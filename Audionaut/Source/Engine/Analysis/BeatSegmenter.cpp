@@ -35,13 +35,22 @@ BeatSegmenter::Result BeatSegmenter::analyze(const juce::File& audioFile)
 }
 
 BeatSegmenter::Result BeatSegmenter::analyze(const juce::File& audioFile,
-                                             const Parameters& params)
+                                             const Parameters& params,
+                                             const std::atomic<bool>* shouldAbort)
 {
 #if ! ESSENTIA_ENABLED
-    juce::ignoreUnused (audioFile, params);
+    juce::ignoreUnused (audioFile, params, shouldAbort);
     return {};
 #else
     if (! audioFile.existsAsFile())
+        return {};
+
+    const auto aborted = [shouldAbort]
+    {
+        return shouldAbort != nullptr && shouldAbort->load(std::memory_order_relaxed);
+    };
+
+    if (aborted())
         return {};
 
     using namespace essentia;
@@ -76,8 +85,20 @@ BeatSegmenter::Result BeatSegmenter::analyze(const juce::File& audioFile,
     beattracker->output("bpmIntervals") >> NOWHERE;
 
     // The Network takes ownership of the connected algorithms and frees them.
+    // Stepping it by hand instead of run() lets the abort flag be polled
+    // between the steps; an abandoned analysis returns empty, which the caller
+    // treats like a failure (nothing is cached, so it is retried next time).
     Network network(monoloader);
-    network.run();
+    network.runPrepare();
+
+    while (network.runStep())
+    {
+        if (aborted())
+        {
+            essentia::shutdown();
+            return {};
+        }
+    }
 
     // BeatTrackerMultiFeature reports beat positions in seconds. The pool may
     // be empty when no beats were found.
