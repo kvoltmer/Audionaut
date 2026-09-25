@@ -898,7 +898,26 @@ SCENARIO ("cli move-clip to a new track keeps the source panning", "[cli][region
 {
     auto workDir = makeWorkDirectory();
     auto project = workDir.getChildFile ("pan.audium");
-    auto audioFile = juce::File (testFilesDir + "stereo-saw.wav");
+
+    // Written here rather than borrowed from TestFiles/, where the stem
+    // separation tests generate a file of this name - relying on that made
+    // this scenario depend on test order.
+    auto audioFile = workDir.getChildFile ("stereo-saw.wav");
+    {
+        std::unique_ptr<juce::OutputStream> stream (audioFile.createOutputStream());
+        REQUIRE (stream != nullptr);
+        auto writer = juce::WavAudioFormat().createWriterFor (stream,
+                                                              juce::AudioFormatWriter::Options{}
+                                                                  .withSampleRate (44100.0)
+                                                                  .withNumChannels (2)
+                                                                  .withBitsPerSample (16));
+        REQUIRE (writer != nullptr);
+        juce::AudioBuffer<float> buffer (2, 44100);
+        for (auto i = 0; i < buffer.getNumSamples(); ++i)
+            buffer.setSample (0, i, (float) (i % 100) / 50.f - 1.f);
+        buffer.copyFrom (1, 0, buffer, 0, 0, buffer.getNumSamples());
+        REQUIRE (writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples()));
+    }
     REQUIRE (audioFile.existsAsFile());
 
     cli::CliContext context;
