@@ -36,6 +36,15 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage",
                              "--start/--length do not apply to a --region export (the region is its own range)");
 
+    double startSeconds = 0.0, lengthSeconds = 0.0;
+    std::string optionError;
+    if (startValue.isNotEmpty()
+        && ! parseNumericOption ("--start", startValue, 0.0, false, startSeconds, optionError))
+        return context.fail (exitUsage, "usage", optionError);
+    if (lengthValue.isNotEmpty()
+        && ! parseNumericOption ("--length", lengthValue, 0.0, true, lengthSeconds, optionError))
+        return context.fail (exitUsage, "usage", optionError);
+
     auto projectFile = resolveProjectFile (working);
     if (projectFile == juce::File())
         return context.fail (exitUsage, "usage", "export requires an existing <project.audium>");
@@ -86,9 +95,9 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     if (bitDepthValue.isNotEmpty())
         config->bitDepth = bitDepthValue.getIntValue();
     if (startValue.isNotEmpty())
-        config->positionSeconds = startValue.getDoubleValue();
+        config->positionSeconds = startSeconds;
     if (lengthValue.isNotEmpty())
-        config->lengthSeconds = lengthValue.getDoubleValue();
+        config->lengthSeconds = lengthSeconds;
 
     config->multiMono = multiMono;
     if (channelsValue.isNotEmpty())

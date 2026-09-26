@@ -105,9 +105,15 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         context.preferences = &getPreferences(); // consent-gated CLI analytics
 
         const auto exitCode = cli::performCliCommand (args, context);
-        if (exitCode != cli::cliCommandNotPerformed)
+        // --json is only ever passed by a CLI caller expecting one envelope
+        // on stdout; an unknown verb there must not start the GUI instead.
+        const auto result = (exitCode == cli::cliCommandNotPerformed && context.json)
+                                ? cli::failUnknownCommand (args, context)
+                                : exitCode;
+
+        if (result != cli::cliCommandNotPerformed)
         {
-            setApplicationReturnValue (exitCode);
+            setApplicationReturnValue (result);
             quit();
             return; // no window, splash, engine or analytics were created
         }

@@ -41,6 +41,12 @@ int main (int argc, char* argv[])
     if (exitCode != audium::cli::cliCommandNotPerformed)
         return exitCode;
 
+    // A --json caller parses stdout as one envelope; help text or JUCE's
+    // "Unrecognised arguments" would leave it with nothing readable.
+    // --help/--version stay human UX even then.
+    if (context.json && ! argumentList.containsOption ("--help|-h") && ! argumentList.containsOption ("--version"))
+        return audium::cli::failUnknownCommand (argumentList, context);
+
     // No verb matched: ConsoleApplication only provides the --help/--version
     // UX (its matching quirk is harmless there).
     juce::ConsoleApplication app;

@@ -18,12 +18,24 @@ int runAutoEdit (const juce::ArgumentList& args, CliContext& context)
     AutoEditConfig config;
     config.trackId = takeOptionValue (working, "--track", "0").getIntValue();
     config.playlistItemId = takeOptionValue (working, "--clip", "-1").getIntValue();
-    if (auto value = takeOptionValue (working, "--measures"); value.isNotEmpty())
-        config.segmentMeasures = value.getDoubleValue();
-    if (auto value = takeOptionValue (working, "--segments"); value.isNotEmpty())
-        config.numSegments = value.getIntValue();
-    if (auto value = takeOptionValue (working, "--duration"); value.isNotEmpty())
-        config.duration = value.getDoubleValue();
+    std::string optionError;
+    double parsed = 0.0;
+    // 0 measures is the documented "off" (segment by count instead)
+    if (auto value = takeOptionValue (working, "--measures"); value.isNotEmpty()) {
+        if (! parseNumericOption ("--measures", value, 0.0, false, parsed, optionError))
+            return context.fail (exitUsage, "usage", optionError);
+        config.segmentMeasures = parsed;
+    }
+    if (auto value = takeOptionValue (working, "--segments"); value.isNotEmpty()) {
+        if (! parseNumericOption ("--segments", value, 1.0, false, parsed, optionError))
+            return context.fail (exitUsage, "usage", optionError);
+        config.numSegments = static_cast<int> (parsed);
+    }
+    if (auto value = takeOptionValue (working, "--duration"); value.isNotEmpty()) {
+        if (! parseNumericOption ("--duration", value, 0.0, true, parsed, optionError))
+            return context.fail (exitUsage, "usage", optionError);
+        config.duration = parsed;
+    }
     config.crossfades = ! working.removeOptionIfFound ("--no-crossfades");
 
     auto projectFile = resolveProjectFile (working);
@@ -62,8 +74,11 @@ int runAssemble (const juce::ArgumentList& args, CliContext& context)
     AssembleConfig config;
     config.crossfades = ! working.removeOptionIfFound ("--no-crossfades");
     config.trackId = takeOptionValue (working, "--track", "0").getIntValue();
-    if (auto value = takeOptionValue (working, "--duration"); value.isNotEmpty())
-        config.duration = value.getDoubleValue();
+    if (auto value = takeOptionValue (working, "--duration"); value.isNotEmpty()) {
+        std::string optionError;
+        if (! parseNumericOption ("--duration", value, 0.0, true, config.duration, optionError))
+            return context.fail (exitUsage, "usage", optionError);
+    }
     if (auto value = takeOptionValue (working, "--seed"); value.isNotEmpty())
         config.seed = static_cast<unsigned int> (value.getLargeIntValue());
 

@@ -111,6 +111,19 @@ bool parseMusicalDuration (const juce::String& value,
                            std::string& error);
 
 /**
+ * Validates a plain numeric option value (seconds, measures, counts - the
+ * options that do not go through the musical-unit parsers above). Fails with
+ * a message naming the option when the value is not a number or lies below
+ * the bound: minimum itself is allowed unless exclusive is set.
+ */
+bool parseNumericOption (const juce::String& option,
+                         const juce::String& value,
+                         double minimum,
+                         bool exclusive,
+                         double& outValue,
+                         std::string& error);
+
+/**
  * All (track, region) pairs whose region name matches exactly, optionally
  * filtered to one track id (trackId < 0 searches every track).
  */
