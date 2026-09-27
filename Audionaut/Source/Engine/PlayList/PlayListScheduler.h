@@ -129,8 +129,10 @@ public:
     template <typename ProcessContext>
     void process (const ProcessContext& context, bool isPlaying, double beats, int numSamples) noexcept
     {
-        audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
-        
+        // the published count, never the track/channel vectors: the message
+        // thread grows and shrinks those underneath this callback
+        audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getPublishedNumAudioTrackChannels());
+
         if (isPlaying &&
             beats >= 0.0) {
             
