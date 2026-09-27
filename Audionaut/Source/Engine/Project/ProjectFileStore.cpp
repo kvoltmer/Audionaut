@@ -109,7 +109,17 @@ bool ProjectFileStore::writeJsonAtomically (const juce::File& target, const json
         success = true;
     }
 
-    return success && temp.overwriteTargetFileWithTemporary();
+    if (!success) {
+        error = "could not create " + temp.getFile().getFullPathName().toStdString();
+        return false;
+    }
+
+    if (!temp.overwriteTargetFileWithTemporary()) {
+        error = "could not replace " + target.getFullPathName().toStdString();
+        return false;
+    }
+
+    return true;
 }
 
 // ==== session orchestration =================================================
@@ -237,22 +247,57 @@ bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::s
             return false;
         }
 
-        if (! file.exists())
-            file.create();
-
         // remember where this project was saved before - a Save As must also
         // clear that package's crash-recovery snapshot
         const auto previousProjectDirectory = projectDirectory;
 
-        // need to copy or move audio files?
+        // The package is only complete once Project.json is in place, so
+        // everything done before that point must be reversible: the audio is
+        // copied (never moved) and the session re-pointed at the copies, and
+        // if the JSON can't be written the copies, any directory created here
+        // and the re-pointing are undone again. That way a failed save never
+        // leaves a half-created package behind, and the package (or temp
+        // directory) it was saved-as from keeps its audio.
+        const auto packageDirectory = file.getParentDirectory();
+        const auto createdPackage = !packageDirectory.exists();
+        if (!packageDirectory.isDirectory())
+            packageDirectory.createDirectory(); // Project.json itself arrives by the atomic write's rename
+
         auto sourceDirectory = AudioResourceContainer::getAudioFileDirectory(projectDirectory);
         if (!sourceDirectory.exists()) {
             sourceDirectory = AudioResourceContainer::getAudioFileDirectory(tempDirectory);
             jassert(sourceDirectory.exists());
         }
-        auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(file.getParentDirectory());
-        if (sourceDirectory != destinationDirectory) {
-            if (!audioResourceContainer->copyOrMoveAudioFiles(sourceDirectory, destinationDirectory)) {
+        const auto destinationDirectory = AudioResourceContainer::getAudioFileDirectory(packageDirectory);
+        const auto relocating = sourceDirectory != destinationDirectory;
+        const auto createdAudioDirectory = relocating && !destinationDirectory.exists();
+
+        juce::Array<juce::File> copiedFiles;
+        auto relocated = false;
+
+        juce::ErasedScopeGuard discardPartialSave ([&]
+        {
+            if (relocated) {
+                audioResourceContainer->changeAudioFilePaths(sourceDirectory);
+                audioTrackContainer->getAnalysisProvider()->getCache()->rebaseAudioFolder(sourceDirectory);
+            }
+            projectDirectory = previousProjectDirectory;
+
+            for (auto& copied : copiedFiles)
+                copied.deleteFile();
+
+            if (createdPackage) {
+                packageDirectory.deleteRecursively();
+            }
+            else if (createdAudioDirectory) {
+                // Media/Audio and Media - deleteFile only removes them empty
+                destinationDirectory.deleteFile();
+                destinationDirectory.getParentDirectory().deleteFile();
+            }
+        });
+
+        if (relocating) {
+            if (!audioResourceContainer->copyAudioFiles(sourceDirectory, destinationDirectory, copiedFiles)) {
                 NullCheckedInvocation::invoke (callback, "Failed to copy audio files.");
                 return false;
             }
@@ -263,13 +308,16 @@ bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::s
             // analysis cache at their new location so persisted results survive
             // a Save-As from a temporary/other directory.
             audioTrackContainer->getAnalysisProvider()->getCache()->rebaseAudioFolder(destinationDirectory);
+            relocated = true;
         }
         // assign new project directory
-        projectDirectory = file.getParentDirectory();
+        projectDirectory = packageDirectory;
 
         std::string writeError;
         json serialized;
         if (writeJsonToFile(file, writeError, &serialized)) {
+            discardPartialSave.release();
+
             currentProjectFile = file;
             currentJson = std::move(serialized);
             undoManager->clearUndoHistory();
@@ -284,6 +332,13 @@ bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::s
             if (previousProjectDirectory != projectDirectory)
                 deleteAutosaveIn(previousProjectDirectory);
 
+            // A first save used to move the audio out of the session's temp
+            // directory; the copies are the project's audio now, so the
+            // originals there are obsolete.
+            if (sourceDirectory == AudioResourceContainer::getAudioFileDirectory(tempDirectory))
+                for (auto& copied : copiedFiles)
+                    sourceDirectory.getChildFile(copied.getFileName()).deleteFile();
+
             refreshDiskStamps();
 
             // the on-disk file now reflects this session's state
@@ -291,13 +346,8 @@ bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::s
             return true;
         }
 
-        if (!writeError.empty()) {
-            NullCheckedInvocation::invoke (callback, writeError);
-            return false;
-        }
-
-        jassertfalse;
-        NullCheckedInvocation::invoke (callback, "unknown error");
+        jassert(!writeError.empty());
+        NullCheckedInvocation::invoke (callback, writeError.empty() ? "unknown error" : writeError);
     }
     catch (std::exception &ex)
     {
