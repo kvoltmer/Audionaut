@@ -72,6 +72,10 @@ MainComponent::~MainComponent()
     audiumEngine->getAudioTrackContainer()->removeActionListener(this);
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->removeActionListener(this);
+
+    // the engine - and with it the undo manager - outlives this component at
+    // shutdown: unregister, or the next undo broadcast reaches a dead listener
+    audiumEngine->getUndoManager()->removeChangeListener(this);
 }
 
 //==============================================================================
